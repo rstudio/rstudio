@@ -29,7 +29,7 @@ manipulate(`_expr`, ...)
 }
 
 \author{
-RStudio <info@rstudio.org>
+RStudio <info@rstudio.com>
 }
 
 \examples{

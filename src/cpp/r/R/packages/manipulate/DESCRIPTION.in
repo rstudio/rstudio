@@ -4,7 +4,7 @@ Title: Interactive Plots for RStudio
 Version: ${CPACK_PACKAGE_VERSION}
 Date: 2011-04-11
 Author: RStudio
-Maintainer: RStudio <info@rstudio.org>
+Maintainer: RStudio <info@rstudio.com>
 Description: Interactive Plots for RStudio
 Depends: R (>= 2.10.0)
 Suggests: graphics, grid, lattice, ggplot2
