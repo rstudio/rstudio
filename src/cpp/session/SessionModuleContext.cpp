@@ -1107,8 +1107,7 @@ void showFile(const FilePath& filePath, const std::string& window)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      // for pdfs allow default R handling -- uses options("pdfviewer")
-      // on unix & osx and shell.exec on windows
+      // for pdfs handle specially for each platform
       if (filePath.extensionLowerCase() == ".pdf")
       {
          std::string path = filePath.absolutePath();

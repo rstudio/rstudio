@@ -221,18 +221,27 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 
-# view a pdf (based on implementation in RShowDoc and print.vignette)
+# handle viewing a pdf differently on each platform:
+#  - windows: shell.exec
+#  - mac: Preview
+#  - linux: getOption("pdfviewer")
 .rs.addFunction( "shellViewPdf", function(path)
 {
-   if(.Platform$OS.type == "windows")
+   sysName <- Sys.info()[['sysname']]
+
+   if (identical(sysName, "Windows"))
    {
-      require(utils, quietly=TRUE)
-      shell.exec(normalizePath(path))
+     utils:::shell.exec(diagPath)
    }
-   else if (identical(substr(.Platform$pkgType, 1L, 10L), "mac.binary"))
-	  system(paste("open", "-a", "Preview", shQuote(path)), wait = FALSE)
    else
-      system(paste(shQuote(getOption("pdfviewer")), shQuote(path)), wait = FALSE)
+   {
+      # force preview on osx to workaround acrobat reader crashing bug
+      if (identical(sysName, "Darwin"))
+         cmd <- paste("open", "-a", "Preview")
+      else
+         cmd <- shQuote(getOption("pdfviewer"))
+      system(paste(cmd, shQuote(path)), wait = FALSE)
+   }
 })
 
 
