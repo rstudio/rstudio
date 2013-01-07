@@ -97,7 +97,7 @@ void setMemoryLimit()
 
    // some constants
    const DWORDLONG MB_TO_BYTES = 1024 * 1024;
-   const DWORDLONG VIRTUAL_OFFSET = 1024 * MB_TO_BYTES;
+   const DWORDLONG VIRTUAL_OFFSET = 512 * MB_TO_BYTES;
 
    // interograte physical and virtual memory
    MEMORYSTATUSEX memoryStatus;
