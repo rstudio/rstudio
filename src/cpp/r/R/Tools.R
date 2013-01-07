@@ -348,35 +348,13 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 
 .rs.addFunction( "isLibraryWriteable", function(lib)
 {
-   # must be single string
-   if (!is.character(lib) || (length(lib) > 1L))
-      stop("lib must be single element character vector")
-      
-   # implementation based on install.packages
-   ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0)
-   if (.Platform$OS.type == "windows") 
-   {
-      ok <- file.info(lib)$isdir %in% TRUE
-      if (ok) 
-      {
-         fn <- file.path(lib, paste("_test_dir", Sys.getpid(), sep = "_"))
-         unlink(fn, recursive = TRUE)
-         res <- try(dir.create(fn, showWarnings = FALSE))
-         if (inherits(res, "try-error") || !res)
-            ok <- FALSE
-         else 
-            unlink(fn, recursive = TRUE)
-      }
-   } 
-   return (ok)
+   file.exists(lib) && (file.access(lib, 2) == 0)
 })
 
-# based on code in install.packages
 .rs.addFunction( "defaultLibPathIsWriteable", function()
 {
    .rs.isLibraryWriteable(.libPaths()[1L])
 })
-
 
 .rs.addFunction( "disableQuartz", function()
 {

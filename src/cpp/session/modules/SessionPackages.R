@@ -243,9 +243,6 @@
    # selected repository names
    selectedRepositoryNames <- names(repos)
 
-   # are we in dev mode
-   devModeOn <- .rs.devModeOn()
-
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
       packageArchiveExtension <- ".zip; .tar.gz"
@@ -259,24 +256,15 @@
    if (!identical(.Platform$OS.type, "windows"))
       defaultLibraryPath <- normalizePath(defaultLibraryPath)
    
-   # is default library writeable (based on install.packages)
-   defaultLibraryWriteable <- .rs.defaultLibPathIsWriteable()
-   
-   # writeable library paths
-   writeableLibraryPaths <- .rs.writeableLibraryPaths()
-
-   # default user library path (based on install.packages)
-   defaultUserLibraryPath <- .rs.defaultUserLibraryPath()
-
    # return context
    list(cranMirrorConfigured = cranMirrorConfigured,
         selectedRepositoryNames = selectedRepositoryNames,
         packageArchiveExtension = packageArchiveExtension,
         defaultLibraryPath = defaultLibraryPath,
-        defaultLibraryWriteable = defaultLibraryWriteable,
-        writeableLibraryPaths = writeableLibraryPaths,
-        defaultUserLibraryPath = defaultUserLibraryPath,
-        devModeOn = devModeOn)
+        defaultLibraryWriteable = .rs.defaultLibPathIsWriteable(),
+        writeableLibraryPaths = .rs.writeableLibraryPaths(),
+        defaultUserLibraryPath = .rs.defaultUserLibraryPath(),
+        devModeOn = .rs.devModeOn())
 })
 
 .rs.addJsonRpcHandler( "get_cran_mirrors", function()
