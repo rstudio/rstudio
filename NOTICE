@@ -14,7 +14,7 @@ used by these components are included below):
 - AOP Alliance
 - RSA-JS
 - Tree Container Library
-- Hunspell
+- Hunspell (LGPL 2.1)
 - Chromium Hunspell Dictionaries (LGPL 2.1)
 - pdf.js
 - SyncTeX
