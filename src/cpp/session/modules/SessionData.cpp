@@ -83,7 +83,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
    {
       // validate title
       if (!Rf_isString(captionSEXP) || Rf_length(captionSEXP) != 1)
-         throw r::exec::RErrorException("invalid title argument");
+         throw r::exec::RErrorException("invalid caption argument");
            
       // validate data
       if (TYPEOF(dataSEXP) != VECSXP)
