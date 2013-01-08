@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
  */
 public enum CssObfuscationStyle {
   VERBOSE (true, false, true, true),
+  DEBUG (true, false, true, false),
   STABLE_FULL_CLASSNAME (true, true, true, true),
   STABLE_SHORT_CLASSNAME (true, true, true, false),
   STABLE_NO_CLASSNAME (true, true, false, false),
@@ -31,6 +32,8 @@ public enum CssObfuscationStyle {
   static CssObfuscationStyle getObfuscationStyle(String name) {
     if (name.equalsIgnoreCase("pretty")) {
       return VERBOSE;
+    } else if (name.equalsIgnoreCase("debug")) {
+      return DEBUG;
     } else if (name.equalsIgnoreCase("stable")) {
       return STABLE_FULL_CLASSNAME;
     } else if (name.equalsIgnoreCase("stable-shorttype")) {
