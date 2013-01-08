@@ -50,7 +50,7 @@
    <item>
     <widget class="QLabel" name="lblVersion">
      <property name="text">
-      <string>Version 1.0.0</string>
+      <string>Version 1.0.0 - © 2009-2012 RStudio, Inc.</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
@@ -76,15 +76,17 @@
    <item>
     <widget class="QLabel" name="label_4">
      <property name="text">
-      <string>&lt;b&gt;&amp;copy; 2009-2012 RStudio, Inc.&lt;/b&gt;&lt;br&gt;
-This program is licensed to you under the terms of&lt;br&gt;
-version 3 of the GNU &lt;a href=&quot;http://www.gnu.org/licenses/agpl-3.0.txt&quot;&gt;Affero General Public License&lt;/a&gt;</string>
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Grande'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU &lt;a href=&quot;http://www.gnu.org/licenses/agpl-3.0.txt&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Affero General Public License&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
      </property>
      <property name="alignment">
-      <set>Qt::AlignCenter</set>
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

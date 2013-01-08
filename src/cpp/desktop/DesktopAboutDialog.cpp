@@ -3,7 +3,9 @@
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
- * This program is licensed to you under the terms of version 3 of the
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
@@ -33,9 +35,9 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
    ui->buttonBox->addButton(new QPushButton(QString::fromAscii("OK")),
                             QDialogButtonBox::AcceptRole);
-
    ui->lblIcon->setPixmap(QPixmap(QString::fromAscii(":/icons/resources/freedesktop/icons/64x64/rstudio.png")));
-   ui->lblVersion->setText(QString::fromAscii("Version " RSTUDIO_VERSION));
+   ui->lblVersion->setText(QString::fromAscii(
+             "Version " RSTUDIO_VERSION " - © 2009-2012 RStudio, Inc."));
 
    setWindowModality(Qt::ApplicationModal);
 

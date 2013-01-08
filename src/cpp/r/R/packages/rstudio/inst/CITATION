@@ -1,5 +1,5 @@
 bibentry("Manual",
-         title = "RStudio: Integrated Development for R",
+         title = "RStudio: Integrated Development Environment for R",
          author = person("RStudio Team"),
          organization = "RStudio, Inc.",
          address      = "Boston, MA",
@@ -15,5 +15,5 @@ bibentry("Manual",
          
          mheader = "To cite RStudio in publications use:",
 	 
-	       mfooter = ""
+	      mfooter = ""
 	)
