@@ -328,14 +328,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
 
-   // if we are in desktop mode and no agreement file path was
-   // specified then default to gpl-standalone
-   if ( (programMode_ == kSessionProgramModeDesktop) &&
-        agreementFilePath_.empty())
-   {
-      agreementFilePath_ = "resources/agpl-3.0-standalone.html";
-   }
-
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);

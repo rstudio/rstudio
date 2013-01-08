@@ -277,12 +277,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
    endif()
 
-   # add gpl for desktop
-   if(RSTUDIO_DESKTOP)
-      install(FILES resources/agpl-3.0-standalone.html
-              DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-   endif()
-
    # install 64 bit binaries if we are on win64
    if(WIN32)
       if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))

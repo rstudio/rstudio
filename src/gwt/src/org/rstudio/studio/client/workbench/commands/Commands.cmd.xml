@@ -310,7 +310,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="markdownHelp"/>
          <cmd refid="helpKeyboardShortcuts"/>
          <separator/>
-         <cmd refid="rstudioLicense"/>
          <cmd refid="rstudioAgreement"/>
          <separator/>
          <menu label="Dia_gnostics">

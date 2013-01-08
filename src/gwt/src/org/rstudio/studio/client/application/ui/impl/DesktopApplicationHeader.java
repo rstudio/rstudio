@@ -75,9 +75,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
 
       pDesktopHooks.get();
 
-      commands.rstudioLicense().setVisible(true);
-      commands.rstudioAgreement().setVisible(false);
-
       commands.uploadFile().remove();
       commands.exportFiles().remove();
       commands.updateCredentials().remove();

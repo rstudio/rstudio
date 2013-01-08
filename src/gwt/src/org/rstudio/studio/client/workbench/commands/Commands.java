@@ -251,7 +251,6 @@ public abstract class
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioAgreement();
-   public abstract AppCommand rstudioLicense();
 
    public abstract AppCommand showWarningBar();
  
