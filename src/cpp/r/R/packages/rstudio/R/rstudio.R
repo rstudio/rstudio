@@ -21,6 +21,8 @@ saveHistory <- function(file = ".Rhistory") {
 }
 
 viewData <- function(data, caption) {
+  if (missing(caption))
+     caption <- deparse(substitute(data))[1]
   invisible(.Call(getNativeSymbolInfo("rs_viewData", PACKAGE=""), 
                   as.data.frame(data), caption))
 }
