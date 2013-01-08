@@ -12,9 +12,7 @@ used by these components are included below):
 - Guice 
 - GIN 
 - AOP Alliance
-- RSA-JS 
-- FindPAM.cmake
-- CPackRPM.cmake 
+- RSA-JS
 - Tree Container Library
 - Hunspell
 - Chromium Hunspell Dictionaries (LGPL 2.1)
