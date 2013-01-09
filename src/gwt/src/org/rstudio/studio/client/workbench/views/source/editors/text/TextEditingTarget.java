@@ -706,7 +706,9 @@ public class TextEditingTarget implements EditingTarget
       Position pos = docDisplay_.getCursorPosition();
       statusBar_.getPosition().setValue((pos.getRow() + 1) + ":" +
                                         (pos.getColumn() + 1));
-      updateCurrentScope();
+      
+      if (fileType_.canShowScopeTree())
+         updateCurrentScope();
    }
   
    private void updateCurrentScope()
