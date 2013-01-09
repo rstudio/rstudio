@@ -89,6 +89,36 @@
    return ("")
 })
 
+
+.rs.addFunction("registerFunctionEditor", function() {
+
+   defaultEditor <- getOption("editor")
+  
+   options(editor = function(name, file, title) {
+      
+      # use the RStudio editor for functions, otherwise delegate to default
+      if (is.function(name)) {
+         
+         # write the function source to a file
+         functionSrc <- .rs.deparseFunction(name, TRUE)
+         functionFile <- tempfile()
+         writeLines(functionSrc, functionFile)
+         
+         # invoke the RStudio editor on the file
+         if (.Call("rs_editFile", functionFile)) {
+            newFunc <- eval.parent(parse(functionFile))
+            return(newFunc)
+         } 
+         else {
+            stop("Error occurred while editing function '", name, "'")
+         }
+      }
+      else
+         edit(name, file, title, editor=defaultEditor)
+   })
+})
+
+
 .rs.addJsonRpcHandler("remove_all_objects", function(includeHidden)
 {
    env = globalenv()

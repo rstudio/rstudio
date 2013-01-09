@@ -718,6 +718,25 @@ int REditFile(const char* file)
    return 1 ;
 }
 
+SEXP rs_editFile(SEXP fileSEXP)
+{
+   try
+   {
+      std::string file = r::sexp::asString(fileSEXP);
+      bool success = REditFile(file.c_str()) == 0;
+      r::sexp::Protect rProtect;
+      return r::sexp::create(success, &rProtect);
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // keep compiler happy (this code is unreachable)
+   return R_NilValue;
+}
+
 SEXP rs_showFile(SEXP titleSEXP, SEXP fileSEXP, SEXP delSEXP)
 {
    try
@@ -1262,6 +1281,13 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    browseURLMethod.fun = (DL_FUNC)rs_browseURL;
    browseURLMethod.numArgs = 1;
    r::routines::addCallMethod(browseURLMethod);
+
+   // register editFile method
+   R_CallMethodDef editFileMethod;
+   editFileMethod.name = "rs_editFile";
+   editFileMethod.fun = (DL_FUNC)rs_editFile;
+   editFileMethod.numArgs = 1;
+   r::routines::addCallMethod(editFileMethod);
 
    // register showFile method
    R_CallMethodDef showFileMethod;

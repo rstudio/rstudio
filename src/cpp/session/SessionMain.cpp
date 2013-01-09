@@ -1480,6 +1480,14 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    r::session::consoleHistory().setRemoveDuplicates(
                                  userSettings().removeHistoryDuplicates());
 
+
+   // register function editor on windows
+#ifdef _WIN32
+   error = r::exec::RFunction(".rs.registerFunctionEditor").call();
+   if (error)
+      LOG_ERROR(error);
+#endif
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
