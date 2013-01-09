@@ -28,7 +28,9 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -36,6 +38,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -43,13 +46,34 @@ import java.util.TreeMap;
  * Unit test for {@link CodeSplitter2}.
  */
 public class CodeSplitter2Test extends JJSTestBase {
+
+  /**
+   * A {@link MultipleDependencyGraphRecorder} that does nothing.
+   */
+  private static final MultipleDependencyGraphRecorder NULL_RECORDER =
+      new MultipleDependencyGraphRecorder() {
+        public void close() {
+        }
+
+        public void endDependencyGraph() {
+        }
+
+        public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
+        }
+
+        public void open() {
+        }
+
+        public void startDependencyGraph(String name, String extnds) {
+        }
+      };
+
   // These will be the functions that are shared between fragments. This unit test will
   // be based for finding these function in the proper fragments.
   private final String functionA = "public static void functionA() {}";
   private final String functionB = "public static void functionB() {}";
   private final String functionC = "public static void functionC() {}";
   private final String functionD = "public static void functionD() {}";
-
 
   // Compilation Configuration Properties.
   private BindingProperty stackMode = new BindingProperty("compiler.stackMode");
@@ -273,7 +297,7 @@ public class CodeSplitter2Test extends JJSTestBase {
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
             new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null, 0);
+    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, NULL_RECORDER, 0);
   }
 
   /**
@@ -304,7 +328,7 @@ public class CodeSplitter2Test extends JJSTestBase {
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
         new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null,
+    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, NULL_RECORDER,
         mergeLimit);
   }
 
