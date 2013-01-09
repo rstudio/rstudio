@@ -59,7 +59,11 @@
 {
    tryCatch(
    {
-      if (is.data.frame(obj))
+      if (is(obj, "ore.frame"))
+      {
+         return(paste(ncol(obj),"columns"))
+      }
+      else if (is.data.frame(obj))
       {
          return(paste(dim(obj)[1],
                       "obs. of",
