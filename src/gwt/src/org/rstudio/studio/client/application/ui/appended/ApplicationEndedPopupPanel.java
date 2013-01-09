@@ -44,7 +44,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    
    public static void showSuicide(String reason)
    {
-      String description = "<p>R encoutered a fatal error";
+      String description = "<p>R encountered a fatal error.";
       if (reason.length() > 0)
          description += ": " + reason;
       description += "</p>The session was terminated.";
