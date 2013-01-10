@@ -19,10 +19,3 @@ loadHistory <- function(file = ".Rhistory") {
 saveHistory <- function(file = ".Rhistory") {
   invisible(.Call(getNativeSymbolInfo("rs_saveHistory", PACKAGE=""), file))
 }
-
-viewData <- function(data, caption) {
-  if (missing(caption))
-     caption <- deparse(substitute(data))[1]
-  invisible(.Call(getNativeSymbolInfo("rs_viewData", PACKAGE=""), 
-                  as.data.frame(data), caption))
-}

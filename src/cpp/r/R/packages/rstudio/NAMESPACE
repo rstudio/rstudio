@@ -2,4 +2,4 @@ export(versionInfo)
 export(diagnosticsReport)
 export(saveHistory)
 export(loadHistory)
-export(viewData)
+

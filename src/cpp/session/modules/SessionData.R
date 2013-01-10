@@ -23,6 +23,8 @@
    format(x, trim = TRUE, justify = "none", ...)
 })
 
-.rs.registerReplaceHook("View", "utils", function(original, x, ...) {
-   rstudio::viewData(x, deparse(substitute(x))[1])
+.rs.registerReplaceHook("View", "utils", function(original, x, title) {
+   if (missing(title))
+      title <- deparse(substitute(x))[1]
+   invisible(.Call("rs_viewData", as.data.frame(x), title))
 })
