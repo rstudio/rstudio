@@ -1,5 +1,4 @@
 export(versionInfo)
 export(diagnosticsReport)
-export(saveHistory)
-export(loadHistory)
+
 

@@ -12,10 +12,3 @@ diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
 
-loadHistory <- function(file = ".Rhistory") {
-  invisible(.Call(getNativeSymbolInfo("rs_loadHistory", PACKAGE=""), file))
-}
-
-saveHistory <- function(file = ".Rhistory") {
-  invisible(.Call(getNativeSymbolInfo("rs_saveHistory", PACKAGE=""), file))
-}

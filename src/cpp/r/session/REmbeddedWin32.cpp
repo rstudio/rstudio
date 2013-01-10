@@ -219,14 +219,16 @@ Error completeEmbeddedRInitialization(bool useInternet2)
    if (error)
       LOG_ERROR(error);
 
+
+   // register history functions
+   error = r::exec::RFunction(".rs.registerHistoryFunctions").call();
+   if (error)
+      LOG_ERROR(error);
+
    using boost::bind;
    using namespace r::function_hook ;
    ExecBlock block ;
    block.addFunctions()
-      (bind(registerUnsupportedWithAlternative, 
-                            "loadhistory", "utils", "rstudio::loadHistory"))
-      (bind(registerUnsupportedWithAlternative, 
-                            "savehistory", "utils", "rstudio::saveHistory"))
       (bind(registerUnsupported, "history", "utils"))
       (bind(registerUnsupported, "timestamp", "utils"))
       (bind(registerUnsupported, "winMenuAdd", "utils"))

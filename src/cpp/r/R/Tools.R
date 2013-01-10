@@ -421,6 +421,22 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 
+.rs.addFunction("registerHistoryFunctions", function() {
+  
+  # loadhistory
+  .rs.registerReplaceHook("loadhistory", "utils", function(original, 
+                                                           file = ".Rhistory")
+  {
+    invisible(.Call("rs_loadHistory", file))
+  })
+  
+  # savehistory
+  .rs.registerReplaceHook("savehistory", "utils", function(original, 
+                                                           file = ".Rhistory")
+  {
+    invisible(.Call("rs_saveHistory", file))
+  })
+})
 
 
 
