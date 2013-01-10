@@ -75,6 +75,26 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                             SIGNAL(zoomOut()),
                                             QKeySequence::ZoomOut);
    }
+#ifdef Q_OS_LINUX
+   else if (commandId == QString::fromAscii("nextTab"))
+   {
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SLOT(actionInvoked()),
+                                            QKeySequence(Qt::CTRL +
+                                                         Qt::Key_PageDown));
+   }
+   else if (commandId == QString::fromAscii("previousTab"))
+   {
+      pAction = menuStack_.top()->addAction(QIcon(),
+                                            label,
+                                            this,
+                                            SLOT(actionInvoked()),
+                                            QKeySequence(Qt::CTRL +
+                                                         Qt::Key_PageUp));
+   }
+#endif
 
    if (pAction != NULL)
    {
