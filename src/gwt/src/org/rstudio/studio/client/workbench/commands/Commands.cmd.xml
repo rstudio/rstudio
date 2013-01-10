@@ -377,7 +377,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
       <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
-      <shortcut refid="replaceAndFind" value="Cmd+="/>
+      <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
       <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
       <shortcut refid="reindent" value="Cmd+I"/>
