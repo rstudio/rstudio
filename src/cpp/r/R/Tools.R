@@ -421,6 +421,10 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 
+.rs.registerReplaceHook("history", "utils", function(original, ...) {
+   invisible(.Call("rs_activatePane", "history"))
+})
+
 .rs.addFunction("registerHistoryFunctions", function() {
   
   # loadhistory

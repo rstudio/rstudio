@@ -96,6 +96,7 @@ const int kPlotsZoomSizeChanged = 68;
 const int kSourceCppStarted = 69;
 const int kSourceCppCompleted = 70;
 const int kLoadedPackageUpdates = 71;
+const int kActivatePane = 72;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -247,6 +248,8 @@ std::string ClientEvent::typeName() const
          return "source_cpp_completed";
       case client_events::kLoadedPackageUpdates:
          return "loaded_package_updates";
+      case client_events::kActivatePane:
+         return "activate_pane";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

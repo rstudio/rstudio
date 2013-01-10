@@ -260,6 +260,13 @@ public class PaneManager
    {
       tabToPanel_.get(tab).selectTab(tabToIndex_.get(tab));
    }
+   
+   public void activateTab(String tabName)
+   {
+      Tab tab = tabForName(tabName);
+      if (tab != null)
+         activateTab(tab);
+   }
 
    public ConsolePane getConsole()
    {
@@ -404,6 +411,28 @@ public class PaneManager
             return "Build";
       }
       return "??";
+   }
+   
+   private Tab tabForName(String name)
+   {
+      if (name.equalsIgnoreCase("workspace"))
+         return Tab.Workspace;
+      if (name.equalsIgnoreCase("history"))
+         return Tab.History;
+      if (name.equalsIgnoreCase("files"))
+         return Tab.Files;
+      if (name.equalsIgnoreCase("plots"))
+         return Tab.Plots;
+      if (name.equalsIgnoreCase("packages"))
+         return Tab.Packages;
+      if (name.equalsIgnoreCase("help"))
+         return Tab.Help;
+      if (name.equalsIgnoreCase("vcs"))
+         return Tab.VCS;
+      if (name.equalsIgnoreCase("build"))
+         return Tab.Build;
+      
+      return null;
    }
 
    private final EventBus eventBus_;

@@ -143,6 +143,12 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
    return R_NilValue ;
 }
 
+SEXP rs_activatePane(SEXP paneSEXP)
+{
+   module_context::activatePane(r::sexp::safeAsString(paneSEXP));
+   return R_NilValue;
+}
+
 // show error message from R
 SEXP rs_showErrorMessage(SEXP titleSEXP, SEXP messageSEXP)
 {
@@ -413,6 +419,13 @@ Error initialize()
    methodDef9.fun = (DL_FUNC) rs_sourceDiagnostics;
    methodDef9.numArgs = 0;
    r::routines::addCallMethod(methodDef9);
+
+   // register rs_activatePane
+   R_CallMethodDef methodDef10;
+   methodDef10.name = "rs_activatePane" ;
+   methodDef10.fun = (DL_FUNC) rs_activatePane;
+   methodDef10.numArgs = 1;
+   r::routines::addCallMethod(methodDef10);
    
    // register Sys.sleep() hook to notify modules of sleep (currently
    // used by plots to check for changes on sleep so we can support the
@@ -1160,6 +1173,12 @@ void showContent(const std::string& title, const core::FilePath& filePath)
    contentItem["title"] = title;
    contentItem["contentUrl"] = contentUrl;
    ClientEvent event(client_events::kShowContent, contentItem);
+   module_context::enqueClientEvent(event);
+}
+
+void activatePane(const std::string& pane)
+{
+   ClientEvent event(client_events::kActivatePane, pane);
    module_context::enqueClientEvent(event);
 }
 

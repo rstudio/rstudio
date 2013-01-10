@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClos
 public class WorkbenchScreen extends Composite 
                              implements WorkbenchMainView,
                                         SelectionHandler<Integer>,
+                                        ActivatePaneHandler,
                                         RequiresResize
 {
    interface MyCommandBinder extends CommandBinder<Commands, WorkbenchScreen>{}
@@ -95,6 +96,7 @@ public class WorkbenchScreen extends Composite
          commands.toggleFullScreen().remove();
       }
 
+      eventBus_.addHandler(ActivatePaneEvent.TYPE, this);
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
       eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
       {
@@ -280,6 +282,12 @@ public class WorkbenchScreen extends Composite
    {
       eventBus_.fireEvent(new PushClientStateEvent());
    }
+   
+   @Override
+   public void onActivatePane(ActivatePaneEvent event)
+   {
+      paneManager_.activateTab(event.getPane());
+   }
 
    @Handler
    void onActivateWorkspace() { paneManager_.activateTab(Tab.Workspace); }
@@ -338,5 +346,7 @@ public class WorkbenchScreen extends Composite
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;
+
+  
 
 }

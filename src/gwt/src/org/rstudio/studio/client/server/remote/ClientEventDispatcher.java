@@ -426,6 +426,11 @@ public class ClientEventDispatcher
             String installCmd = event.getData();
             eventBus_.fireEvent(new LoadedPackageUpdatesEvent(installCmd));
          }
+         else if (type.equals(ClientEvent.ActivatePane))
+         {
+            String pane = event.getData();
+            eventBus_.fireEvent(new ActivatePaneEvent(pane));
+         }
          else if (type.equals(ClientEvent.ListChanged))
          {
             eventBus_.fireEvent(new ListChangedEvent(event.<JsObject>getData()));
