@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.events.ViewDataHandler;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
@@ -679,6 +680,23 @@ public class Source implements InsertSourceHandler,
                      resultCallback.onFailure(error);
                }
             });
+   }
+   
+   @Handler
+   public void onFindInFiles()
+   {
+      String searchPattern = "";
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {  
+         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
+         String selection = textEditor.getSelectedText();
+         boolean multiLineSelection = selection.indexOf('\n') != -1;
+         
+         if ((selection.length() != 0) && !multiLineSelection)
+            searchPattern = selection; 
+      }
+      
+      events_.fireEvent(new FindInFilesEvent(searchPattern));
    }
 
    @Handler

@@ -794,6 +794,14 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
    }
+   
+   public String getSelectedText()
+   {
+      if (docDisplay_.hasSelection())
+         return docDisplay_.getSelectionValue();
+      else
+         return "";
+   }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {

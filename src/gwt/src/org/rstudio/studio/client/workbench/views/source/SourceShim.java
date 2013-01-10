@@ -74,6 +74,8 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onCloseAllSourceDocs();
       @Handler
+      public abstract void onFindInFiles();
+      @Handler
       public abstract void onActivateSource();
       @Handler
       public abstract void onPreviousTab();

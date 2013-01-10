@@ -21,7 +21,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
@@ -182,8 +183,7 @@ public class FindOutputPresenter extends BasePresenter
          events_.fireEvent(new FindOperationEndedEvent(state.getHandle()));
    }
 
-   @Handler
-   public void onFindInFiles()
+   public void onFindInFiles(FindInFilesEvent event)
    {
       FindInFilesDialog dialog = new FindInFilesDialog(new OperationWithInput<FindInFilesDialog.State>()
       {
@@ -225,6 +225,9 @@ public class FindOutputPresenter extends BasePresenter
          }
       });
 
+      if (!StringUtil.isNullOrEmpty(event.getSearchPattern()))
+         dialog.setSearchPattern(event.getSearchPattern());
+      
       if (dialogState_ == null)
       {
          dialog.setDirectory(

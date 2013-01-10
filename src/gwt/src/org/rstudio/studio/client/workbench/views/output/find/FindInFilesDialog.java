@@ -200,10 +200,16 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       txtSearchPattern_.setFocus(true);
       txtSearchPattern_.selectAll();
    }
+   
+   public void setSearchPattern(String searchPattern)
+   {
+      txtSearchPattern_.setText(searchPattern);
+   }
 
    public void setState(State dialogState)
    {
-      txtSearchPattern_.setText(dialogState.getQuery());
+      if (txtSearchPattern_.getText().isEmpty())
+         txtSearchPattern_.setText(dialogState.getQuery());
       checkboxCaseSensitive_.setValue(dialogState.isCaseSensitive());
       checkboxRegex_.setValue(dialogState.isRegex());
       dirChooser_.setText(dialogState.getPath());
