@@ -148,7 +148,7 @@ public class FindOutputPresenter extends BasePresenter
       });
 
       new JSObjectStateValue(GROUP_FIND_IN_FILES, KEY_DIALOG_STATE,
-                             ClientState.TEMPORARY,
+                             ClientState.PROJECT_PERSISTENT,
                              session.getSessionInfo().getClientState(),
                              false)
       {
@@ -284,6 +284,6 @@ public class FindOutputPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private EventBus events_;
 
-   private static final String GROUP_FIND_IN_FILES = "findInFiles";
-   private static final String KEY_DIALOG_STATE = "dialogState";
+   private static final String GROUP_FIND_IN_FILES = "find-in-files";
+   private static final String KEY_DIALOG_STATE = "dialog-state";
 }
