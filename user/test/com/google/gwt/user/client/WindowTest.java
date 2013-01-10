@@ -16,11 +16,14 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -222,7 +225,7 @@ public class WindowTest extends GWTTestCase {
     largeDOM.setPixelSize(oldClientWidth + 100, oldClientHeight + 100);
     RootPanel.get().add(largeDOM);
     delayTestFinish(1000);
-    DeferredCommand.addCommand(new Command() {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       public void execute() {
         int newClientHeight = Window.getClientHeight();
         int newClientWidth = Window.getClientWidth();
@@ -234,118 +237,15 @@ public class WindowTest extends GWTTestCase {
     });
   }
 
-  /**
-   * Calculates the sizes for Window extras such as border, menu, tool bar, and
-   * stores the original sizes to restore at the end of test.
-   */
-  public static final class ResizeHelper {
-    private static int clientHeight;
-    private static int clientWidth;
-    private static int extraWidth;
-    private static int extraHeight;
-    private static boolean initialized;
-
-    public static int getExtraHeight() {
-      ensureInitialized();
-      return extraHeight;
-    }
-
-    public static int getExtraWidth() {
-      ensureInitialized();
-      return extraWidth;
-    }
-
-    /**
-     * Wraps {@code Window#resizeBy(int, int)} to ensure initialized. This may
-     * be a no-op in Chrome.
-     *
-     * @param width
-     * @param height
-     * @return Whether this operation is done
-     */
-    public static boolean resizeBy(int width, int height) {
-      if (ensureInitialized()) {
-        Window.resizeBy(width, height);
-      }
-      return initialized;
-    }
-
-    /**
-     * Wraps {@code Window#resizeTo(int, int)} to ensure initialized. This may
-     * be a no-op in Chrome.
-     *
-     * @param width
-     * @param height
-     * @return Whether this operation is done
-     */
-    public static boolean resizeTo(int width, int height) {
-      if (ensureInitialized()) {
-        Window.resizeTo(width, height);
-      }
-      return initialized;
-    }
-
-    public static void restoreSize() {
-      // Ignore if not initialized
-      if (initialized) {
-        Window.resizeTo(clientWidth + extraWidth, clientHeight + extraHeight);
-      }
-    }
-
-    private static synchronized boolean ensureInitialized() {
-      if (!initialized) {
-        init();
-      }
-      return initialized;
-    }
-
-    private static void init() {
-      // resizeTo works in Chrome if the window is opened by Window.open(),
-      // which is the case when testing with Selenium and the server is started
-      // with -multiWin. However, the size change is deferred. The test would
-      // involve many nested DeferredCommand.
-      if (Navigator.getUserAgent().toLowerCase().contains("chrome")) {
-        return;
-      }
-
-      // FF4 on win can start in 'almost' fullscreen when the window title bar 
-      // is hidden but accounted incorrectly, so, move the window and resize to 
-      // smaller size first, to take it out of 'full screen mode'.
-      Window.moveTo(10,10);
-      Window.resizeTo(700, 500);
-
-      // store the original size (to be used in restoreSize)
-      clientHeight = Window.getClientHeight();
-      clientWidth = Window.getClientWidth();
-      // IE cannot resize window out of the screen, so we need to move the
-      // window such that it can be resized to below size.
-      // We do not have method to return the window coordinates (screenLeft,
-      // screenTop), so this move is not undone.
-      Window.moveTo(0,0);
-
-      // clientWidth is innerWidth, resizeTo specifies outerWidth
-      // Let's find out the delta for extras such as border, menu, tool bar.
-      // If the sizes are too small to show the extras, resizeTo may not set the
-      // sizes as requested.
-      // If the sizes are too big, for example, height > screen.availHeight + 40
-      // on FF, resizeTo silently sets the height to screen.availHeight + 40.
-      // Some test machines are configured at this time as 800x600, reduce the size 
-      // to give some 'buffer'
-      Window.resizeTo(750, 550);
-      extraWidth = 750 - Window.getClientWidth();
-      extraHeight = 550 - Window.getClientHeight();
-      initialized = true;
-      restoreSize();
-    }
-  }
-
   private static final class TestResizeHandler implements ResizeHandler {
     private int height;
     private int width;
+    private boolean called;
 
     public void onResize(ResizeEvent event) {
       width = event.getWidth();
       height = event.getHeight();
+      called = true;
     }
 
     public int getHeight() {
@@ -355,6 +255,10 @@ public class WindowTest extends GWTTestCase {
     public int getWidth() {
       return width;
     }
+
+    public boolean isCalled() {
+      return called;
+    }
   }
 
   /**
@@ -362,42 +266,37 @@ public class WindowTest extends GWTTestCase {
    */
   @DoNotRunWith({Platform.HtmlUnitLayout})
   public void testResizing() {
+    // There is nothing to test if the browser doesn't support resize
+    if (!ResizeHelper.isResizeSupported()) {
+      return;
+    }
+
     clearBodyContent();
 
-    // Handler for resize events
-    final TestResizeHandler resizeHandler = new TestResizeHandler();
-    final HandlerRegistration handlerRegistration = Window.addResizeHandler(resizeHandler);
+    final int width = 600;
+    final int height = 500;
 
-    delayTestFinish(2000);
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        // Sizes must be appropriate, otherwise browsers may not resize as
-        // requested. See comments in ResizeHelper.
-        int width = 600;
-        int height = 500;
-        // ensureInitialized could fail on Chrome
-        if (!ResizeHelper.resizeTo(width, height)) {
-          handlerRegistration.removeHandler();
-          finishTest(); // nothing we can test
+    final TestResizeHandler handler = new TestResizeHandler();
+    final HandlerRegistration handlerRegistration = Window.addResizeHandler(handler);
+
+    ResizeHelper.resizeTo(width, height);
+    ResizeHelper.assertSize(width, height);
+    ResizeHelper.resizeBy(10, 20);
+    ResizeHelper.assertSize(width + 10, height + 20);
+
+    delayTestFinish(1000);
+    Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+      public boolean execute() {
+        if (!handler.isCalled()) {
+          return true; // we still didn't receive the callback, let's wait more
         }
-
-        assertEquals(width, Window.getClientWidth() + ResizeHelper.getExtraWidth());
-        assertEquals(height, Window.getClientHeight() + ResizeHelper.getExtraHeight());
-        // TODO: TestResizeHandler.getWidth() returns 0 -- need to investigate
-        // assertEquals(resizeHandler.getWidth(), Window.getClientWidth());
-        // assertEquals(resizeHandler.getHeight(), Window.getClientHeight());
-        ResizeHelper.resizeBy(10, 20);
-        assertEquals(width + 10, Window.getClientWidth() + ResizeHelper.getExtraWidth());
-        assertEquals(height + 20, Window.getClientHeight() + ResizeHelper.getExtraHeight());
-        // assertEquals(resizeHandler.getWidth(), Window.getClientWidth());
-        // assertEquals(resizeHandler.getHeight(), Window.getClientHeight());
-
-        // Cleanup the window
+        assertEquals(Window.getClientWidth(), handler.getWidth());
+        assertEquals(Window.getClientHeight(), handler.getHeight());
         handlerRegistration.removeHandler();
-        ResizeHelper.restoreSize();
         finishTest();
+        return false;
       }
-    });
+    }, 10);
   }
 
   /**

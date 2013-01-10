@@ -35,8 +35,8 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.layout.client.Layout.Alignment;
 import com.google.gwt.layout.client.Layout.Layer;
+import com.google.gwt.user.client.ResizeHelper;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.WindowTest;
 
 /**
  * Tests for the {@link Layout} class.
@@ -56,7 +56,6 @@ public class LayoutTest extends GWTTestCase {
   private Element wrapper0, wrapper1;
   private Layout layout;
   private Layer layer0, layer1;
-  private boolean resized;
 
   @Override
   public String getModuleName() {
@@ -307,7 +306,7 @@ public class LayoutTest extends GWTTestCase {
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testStaticConstraints() {
     // This test assumes enough size. Ignore it if size cannot be guaranteed.
-    if (!resized) {
+    if (!ResizeHelper.isResizeSupported()) {
       return;
     }
 
@@ -350,7 +349,7 @@ public class LayoutTest extends GWTTestCase {
   @DoNotRunWith(Platform.HtmlUnitLayout)
   public void testUnits() {
     // This test assumes enough size. Ignore it if size cannot be guaranteed.
-    if (!resized) {
+    if (!ResizeHelper.isResizeSupported()) {
       return;
     }
 
@@ -440,7 +439,7 @@ public class LayoutTest extends GWTTestCase {
   @Override
   protected void gwtSetUp() throws Exception {
     // ensure enough sizes for this test
-    resized = WindowTest.ResizeHelper.resizeTo(800, 600);
+    ResizeHelper.resizeTo(800, 600);
 
     Window.enableScrolling(false);
 
@@ -466,7 +465,6 @@ public class LayoutTest extends GWTTestCase {
     Window.enableScrolling(true);
     Document.get().getBody().removeChild(parent);
     layout.onDetach();
-    WindowTest.ResizeHelper.restoreSize();
   }
 
   private void assertLeftRightTopBottomUnitsMakeSense(Element elem) {

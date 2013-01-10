@@ -766,8 +766,8 @@ public class Window {
    * defined. The top left corner will not be moved (it stays in its original
    * coordinates).
    * <p>
-   * NOTE: In Chrome, this method only works with windows created by
-   * Window.open().
+   * NOTE: In most modern browsers, this method only works with windows created
+   * by Window.open() with a supplied width and height.
    * </p>
    *
    * @param width A positive or a negative number that specifies how many pixels
@@ -782,8 +782,8 @@ public class Window {
   /**
    * Resizes the window to the specified width and height.
    * <p>
-   * NOTE: In Chrome, this method only works with windows created by
-   * Window.open().
+   * NOTE: In most modern browsers, this method only works with windows created
+   * by Window.open() with a supplied width and height.
    * </p>
    *
    * @param width The width of the window, in pixels
