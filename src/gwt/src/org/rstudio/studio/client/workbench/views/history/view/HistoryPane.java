@@ -114,6 +114,12 @@ public class HistoryPane extends WorkbenchPane
          }
       });
    }
+   
+   @Override
+   public void focusSearch()
+   {
+      FocusHelper.setFocusDeferred(searchWidget_);
+   }
 
    @Override
    protected Widget createMainWidget()
@@ -630,4 +636,5 @@ public class HistoryPane extends WorkbenchPane
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();
    private LayoutPanel mainPanel_;
    private Mode mode_ = Mode.Recent;
+  
 }

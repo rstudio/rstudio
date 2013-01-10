@@ -115,6 +115,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       SearchBoxDisplay getSearchBox();
       Mode getMode();
       void scrollToBottom();
+      void focusSearch();
 
       void dismissSearchResults();
       void showSearchResults(String query,
@@ -415,7 +416,11 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
    {
       super.onSelected();
       if (view_.getMode() == Mode.Recent)
+      {
          view_.scrollToBottom();
+         view_.focusSearch();
+      }
+      
    }
 
    private String getSelectedCommands()
