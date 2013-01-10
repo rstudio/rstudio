@@ -43,6 +43,7 @@
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
+#include "DesktopUpdateAvailableDialog.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -477,6 +478,14 @@ int GwtCallback::showMessageBox(int type,
                                 int defaultButton,
                                 int cancelButton)
 {
+   // cancel update checker if it's visible
+   DesktopUpdateAvailableDialog* pUpdateDialog =
+                  qobject_cast<DesktopUpdateAvailableDialog*>(
+                        QApplication::activeModalWidget());
+   if (pUpdateDialog != NULL)
+      pUpdateDialog->close();
+
+
    QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
                        caption,
                        message,
