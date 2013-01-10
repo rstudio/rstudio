@@ -23,6 +23,7 @@
 #include <boost/utility.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/format.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -35,6 +36,8 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -518,6 +521,15 @@ void onHistoryAdd(const std::string& command)
    module_context::enqueClientEvent(event);
 }
 
+SEXP rs_timestamp(SEXP dateSEXP)
+{
+   boost::format fmt("##------ %1% ------##");
+   std::string ts = boost::str(fmt % r::sexp::safeAsString(dateSEXP));
+   r::session::consoleHistory().add(ts);
+   module_context::consoleWriteOutput(ts + "\n");
+   return R_NilValue;
+}
+
 } // anonymous namespace
    
    
@@ -529,6 +541,13 @@ Error initialize()
    // connect to console history add event
    r::session::consoleHistory().connectOnAdd(onHistoryAdd);   
    
+   // register timestamp function
+   R_CallMethodDef methodDef;
+   methodDef.name = "rs_timestamp" ;
+   methodDef.fun = (DL_FUNC) rs_timestamp;
+   methodDef.numArgs = 1;
+   r::routines::addCallMethod(methodDef);
+
    // install handlers
    using boost::bind;
    using namespace session::module_context;
