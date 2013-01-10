@@ -440,6 +440,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
   {
     invisible(.Call("rs_saveHistory", file))
   })
+
+  # timestamp
+  .rs.registerReplaceHook("timestamp", "utils", function(original, ...)
+  {
+    invisible(.Call("rs_timestamp", date()))
+  })
 })
 
 
