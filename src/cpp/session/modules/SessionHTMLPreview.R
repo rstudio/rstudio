@@ -28,31 +28,6 @@
    return (caps)
 })
 
-.rs.addFunction( "stitchScript", function(script, signature)
-{
-   # use the default knitr markdown template
-   rmdTemplate <- system.file("misc",
-                              "knitr-template.Rmd",
-                              package = "knitr")
-
-   # knitr attempts to run markdownToHTML and browseURL on the
-   # output file if it knows it is markdown. Since we do this
-   # internally in RStudio we need to suppress this behavior by
-   # passing in an output file with an alternate extension
-   scriptStem <- tools::file_path_sans_ext(script)
-   rmd <- paste(scriptStem, ".Rmd", sep="")
-   rmdTemp = paste(scriptStem, ".stitch-Rmd", sep="")
-
-   # run the stitch
-   knitr::stitch(script, rmdTemplate, output = rmdTemp)
-
-   # copy the generated rmd to the target rmd path
-   file.copy(rmdTemp, rmd, overwrite = TRUE)
-   file.remove(rmdTemp)
-
-   # append the signature (for overwrite protection)
-   cat(signature, file = rmd, append = TRUE)
-})
 
 .rs.addFunction( "spinScript", function(script, signature)
 {

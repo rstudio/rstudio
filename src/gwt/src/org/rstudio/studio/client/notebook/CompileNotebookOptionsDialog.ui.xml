@@ -35,7 +35,6 @@
          <g:ListBox ui:field="listType_"
                     styleName="{style.type}">
             <g:item value="default">(Default)</g:item>
-            <g:item value="stitch">knitr::stitch</g:item>
             <g:item value="spin">knitr::spin</g:item>
          </g:ListBox>
       </div>

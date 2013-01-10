@@ -697,9 +697,7 @@ Error createNotebook(const json::JsonRpcRequest& request,
 
       // determine the function to be used to convert .R to .Rmd
       std::string rmdFunction;
-      if (type == "stitch")
-         rmdFunction = ".rs.stitchScript";
-      else if (type == "spin")
+      if (type == "spin")
          rmdFunction = ".rs.spinScript";
       else
          return Error(json::errc::ParamInvalid, ERROR_LOCATION);
