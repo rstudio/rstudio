@@ -126,11 +126,11 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
           {
             boost::format fmt(
              "WARNING: Rtools version %1% is on the PATH (intalled at %2%) "
-             "however is "
-             "not compatible with the version of R you are currently running."
+             "but is "
+             "not compatible with the currently running version of R."
              "\n\nPlease download and install the appropriate version of "
              "Rtools to ensure that packages are built correctly:"
-             "\n\nhttp://cran.r-project.org/bin/windows/Rtools/"
+             "\n\nhttp://cran.rstudio.com/bin/windows/Rtools/"
              "\n\nNote that in addition to installing a compatible verison you "
              "also need to remove the incompatible version from your PATH");
             *pWarningMessage = boost::str(
@@ -166,19 +166,19 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
     if (rTools.empty())
     {
        *pWarningMessage =
-           "WARNING: Rtools is required to build R packages however is not "
+           "WARNING: Rtools is required to build R packages but is not "
            "currently installed. "
            "Please download and install the appropriate "
            "version of Rtools before proceeding:\n\n"
-           "http://cran.r-project.org/bin/windows/Rtools/";
+           "http://cran.rstudio.com/bin/windows/Rtools/";
     }
     else
     {
        // Rtools installed but no compatible version, print a suitable warning
        pWarningMessage->append(
-          "WARNING: Rtools is required to build R packages however no version "
-          "of Rtools compatible with the version of R you are currently "
-          "running was found. Note that the following incompatible version(s) "
+          "WARNING: Rtools is required to build R packages but no version "
+          "of Rtools compatible with the currently running version of R "
+          "was found. Note that the following incompatible version(s) "
           "of Rtools were found:\n\n");
 
        std::vector<r_util::RToolsInfo>::const_iterator fwdIt = rTools.begin();
@@ -192,7 +192,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
        pWarningMessage->append(
           "\nPlease download and install the appropriate "
           "version of Rtools before proceeding:\n\n"
-          "http://cran.r-project.org/bin/windows/Rtools/");
+          "http://cran.rstudio.com/bin/windows/Rtools/");
     }
 
     return false;
