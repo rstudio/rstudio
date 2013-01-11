@@ -17,10 +17,10 @@
 package com.google.gwt.event.dom.client;
 
 /**
- * Receiver used to handle all mouse events at once.
+ * Receiver used to handle all touch events at once.
  *
  * WARNING, PLEASE READ: As this class is intended for developers who wish to
- * handle all mouse events in GWT, new mouse handler interfaces will be added to
+ * handle all touch events in GWT, new touch handler interfaces will be added to
  * it. Therefore, updates to GWT could cause breaking API changes.
  *
  */
