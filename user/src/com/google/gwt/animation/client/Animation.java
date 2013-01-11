@@ -242,8 +242,10 @@ public abstract class Animation {
    * 
    * The value of progress is between 0.0 and 1.0 (inclusive) (unless you
    * override the {@link #interpolate(double)} method to provide a wider range
-   * of values). You can override {@link #onStart()} and {@link #onComplete()}
-   * to perform setup and tear down procedures.
+   * of values). There is no guarantee that {@link #onUpdate(double)} is called 
+   * with 0.0 or 1.0. 
+   * If you need to perform setup or tear down procedures, you can override 
+   * {@link #onStart()} and {@link #onComplete()}.
    * 
    * @param progress a double, normally between 0.0 and 1.0 (inclusive)
    */

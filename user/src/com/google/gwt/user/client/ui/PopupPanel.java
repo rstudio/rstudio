@@ -904,7 +904,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * popup. The callback allows positioning to be performed based on the
    * offsetWidth and offsetHeight of the popup, which are normally not available
    * until the popup is showing. By positioning the popup before it is shown,
-   * the the popup will not jump from its original position to the new position.
+   * the popup will not jump from its original position to the new position.
    *
    * @param callback the callback to set the position of the popup
    * @see PositionCallback#setPosition(int offsetWidth, int offsetHeight)

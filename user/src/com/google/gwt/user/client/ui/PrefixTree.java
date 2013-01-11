@@ -365,7 +365,7 @@ class PrefixTree extends AbstractCollection<String> {
 
   /**
    * Retrieve suggestions from the PrefixTree. The number of items returned from
-   * getSuggesstions may slightly exceed <code>limit</code> so that all
+   * getSuggestions may slightly exceed <code>limit</code> so that all
    * suffixes and partial stems will be returned. This prevents the search space
    * from changing size if the PrefixTree is used in an interactive manner.
    * <br/> The returned List is guaranteed to be safe; changing its contents
