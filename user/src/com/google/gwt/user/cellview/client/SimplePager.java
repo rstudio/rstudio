@@ -260,7 +260,6 @@ public class SimplePager extends AbstractPager {
    * @param location the location of the text relative to the buttons
    */
   @UiConstructor
-  // Hack for Google I/O demo
   public SimplePager(TextLocation location) {
     this(location, getDefaultResources(), true, DEFAULT_FAST_FORWARD_ROWS,
         false);
