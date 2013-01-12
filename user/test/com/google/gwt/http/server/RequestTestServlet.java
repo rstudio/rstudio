@@ -29,16 +29,12 @@ public class RequestTestServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    if (request.getRequestURI().endsWith("/204NoContent")) {
-      response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-    } else {
-      try {
-        Thread.sleep(5000);
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      response.setStatus(HttpServletResponse.SC_OK);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
+    response.setStatus(HttpServletResponse.SC_OK);
   }
 }

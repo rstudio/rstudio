@@ -127,32 +127,4 @@ public class RequestTest extends RequestTestBase {
       fail(e.getMessage());
     }
   }
-
-  /*
-   * Checks that the status code is correct when receiving a 204-No-Content. This needs special
-   * handling in IE6-9. See http://code.google.com/p/google-web-toolkit/issues/detail?id=5031
-   */
-  public void test204NoContent() {
-    delayTestFinishForRequest();
-
-    RequestBuilder builder =
-        new RequestBuilder(RequestBuilder.GET, getTestBaseURL() + "204NoContent");
-    try {
-      builder.sendRequest(null, new RequestCallback() {
-
-        @Override
-        public void onResponseReceived(Request request, Response response) {
-          assertEquals(204, response.getStatusCode());
-          finishTest();
-        }
-
-        @Override
-        public void onError(Request request, Throwable exception) {
-          fail(exception.getMessage());
-        }
-      });
-    } catch (RequestException e) {
-      fail(e.getMessage());
-    }
-  }
 }

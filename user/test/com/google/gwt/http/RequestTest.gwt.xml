@@ -15,6 +15,6 @@
 <module>
   <inherits name='com.google.gwt.user.User' />
 
-  <servlet path='/testRequest/*'
+  <servlet path='/testRequest'
     class='com.google.gwt.http.server.RequestTestServlet' />
 </module>

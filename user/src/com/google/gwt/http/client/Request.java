@@ -15,7 +15,6 @@
  */
 package com.google.gwt.http.client;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xhr.client.XMLHttpRequest;
 
@@ -33,51 +32,6 @@ import com.google.gwt.xhr.client.XMLHttpRequest;
 public class Request {
 
   /**
-   * Native implementation associated with {@link Request}. User classes should not use this class
-   * directly.
-   */
-  static class RequestImpl {
-
-    /**
-     * Creates a {@link Response} instance for the given JavaScript XmlHttpRequest object.
-     *
-     * @param xmlHttpRequest xmlHttpRequest object for which we need a response
-     * @return a {@link Response} object instance
-     */
-    Response createResponse(final XMLHttpRequest xmlHttpRequest) {
-      return new ResponseImpl(xmlHttpRequest);
-    }
-  }
-
-  /**
-   * Special {@link RequestImpl} for IE6-9 to work around some IE specialities.
-   */
-  static class RequestImplIE6To9 extends RequestImpl {
-
-    @Override
-    Response createResponse(XMLHttpRequest xmlHttpRequest) {
-      return new ResponseImpl(xmlHttpRequest) {
-
-        @Override
-        public int getStatusCode() {
-          /*
-           * http://code.google.com/p/google-web-toolkit/issues/detail?id=5031
-           *
-           * The XMLHTTPRequest object in IE will return a status code of 1223 and drop some
-           * response headers if the server returns a HTTP/204.
-           *
-           * This issue is fixed in IE10.
-           */
-          int statusCode = super.getStatusCode();
-          return (statusCode == 1223) ? SC_NO_CONTENT : statusCode;
-        }
-      };
-    }
-  }
-
-  private static final RequestImpl impl = GWT.create(RequestImpl.class);
-
-  /**
    * Creates a {@link Response} instance for the given JavaScript XmlHttpRequest
    * object.
    * 
@@ -85,7 +39,94 @@ public class Request {
    * @return a {@link Response} object instance
    */
   private static Response createResponse(final XMLHttpRequest xmlHttpRequest) {
-    return impl.createResponse(xmlHttpRequest);
+    assert (isResponseReady(xmlHttpRequest));
+    Response response = new Response() {
+      @Override
+      public String getHeader(String header) {
+        StringValidator.throwIfEmptyOrNull("header", header);
+
+        return xmlHttpRequest.getResponseHeader(header);
+      }
+
+      @Override
+      public Header[] getHeaders() {
+        return Request.getHeaders(xmlHttpRequest);
+      }
+
+      @Override
+      public String getHeadersAsString() {
+        return xmlHttpRequest.getAllResponseHeaders();
+      }
+
+      @Override
+      public int getStatusCode() {
+        return xmlHttpRequest.getStatus();
+      }
+
+      @Override
+      public String getStatusText() {
+        return xmlHttpRequest.getStatusText();
+      }
+
+      @Override
+      public String getText() {
+        return xmlHttpRequest.getResponseText();
+      }
+    };
+    return response;
+  }
+
+  /**
+   * Returns an array of headers built by parsing the string of headers returned
+   * by the JavaScript <code>XmlHttpRequest</code> object.
+   * 
+   * @param xmlHttpRequest
+   * @return array of Header items
+   */
+  private static Header[] getHeaders(XMLHttpRequest xmlHttp) {
+    String allHeaders = xmlHttp.getAllResponseHeaders();
+    String[] unparsedHeaders = allHeaders.split("\n");
+    Header[] parsedHeaders = new Header[unparsedHeaders.length];
+
+    for (int i = 0, n = unparsedHeaders.length; i < n; ++i) {
+      String unparsedHeader = unparsedHeaders[i];
+
+      if (unparsedHeader.length() == 0) {
+        continue;
+      }
+
+      int endOfNameIdx = unparsedHeader.indexOf(':');
+      if (endOfNameIdx < 0) {
+        continue;
+      }
+
+      final String name = unparsedHeader.substring(0, endOfNameIdx).trim();
+      final String value = unparsedHeader.substring(endOfNameIdx + 1).trim();
+      Header header = new Header() {
+        @Override
+        public String getName() {
+          return name;
+        }
+
+        @Override
+        public String getValue() {
+          return value;
+        }
+
+        @Override
+        public String toString() {
+          return name + " : " + value;
+        }
+      };
+
+      parsedHeaders[i] = header;
+    }
+
+    return parsedHeaders;
+  }
+
+  private static boolean isResponseReady(XMLHttpRequest xhr) {
+    return xhr.getReadyState() == XMLHttpRequest.DONE;
   }
 
   /**
