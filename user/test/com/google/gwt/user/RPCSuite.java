@@ -34,6 +34,8 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTestWithTypeObfuscati
 import com.google.gwt.user.client.rpc.EnumsTest;
 import com.google.gwt.user.client.rpc.EnumsTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ExceptionsTest;
+import com.google.gwt.user.client.rpc.FailedRequestTest;
+import com.google.gwt.user.client.rpc.FailingRequestBuilderTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.InheritanceTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
@@ -86,6 +88,8 @@ public class RPCSuite {
     suite.addTestSuite(RecursiveClassTest.class);
     suite.addTestSuite(TypeCheckedObjectsTest.class);
     suite.addTestSuite(XsrfProtectionTest.class);
+    suite.addTestSuite(FailedRequestTest.class);
+    suite.addTestSuite(FailingRequestBuilderTest.class);
 
     // This test turns on the type-elision feature of RPC
     suite.addTestSuite(ValueTypesTestWithTypeObfuscation.class);
