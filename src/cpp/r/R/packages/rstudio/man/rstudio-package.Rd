@@ -8,16 +8,7 @@ Tools and Utilities for RStudio
 \description{
 Tools, utility functions, and APIs for use within RStudio.
 }
-\details{
-\tabular{ll}{
-Package: \tab rstudio\cr
-Type: \tab Package\cr
-License: \tab AGPL-3\cr
-}
 
-Tools, utility functions, and APIs for use within RStudio.
-
-}
 \author{
 RStudio
 
