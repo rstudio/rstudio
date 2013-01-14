@@ -19,12 +19,10 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
 
-import junit.framework.TestCase;
-
 /**
  * Tests the {@link FailingRequestBuilder} class.
  */
-public class FailingRequestBuilderTest extends TestCase {
+public class FailingRequestBuilderTest extends RpcTestBase {
   public void testBasics() throws RequestException {
     final boolean[] callbackCalled = new boolean[] {false};
 

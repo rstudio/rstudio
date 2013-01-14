@@ -18,12 +18,10 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.user.client.rpc.impl.FailedRequest;
 
-import junit.framework.TestCase;
-
 /**
  * Tests the {@link com.google.gwt.user.client.rpc.impl.FailedRequest} class.
  */
-public class FailedRequestTest extends TestCase {
+public class FailedRequestTest extends RpcTestBase {
   public void testBasics() {
     Request failedRequest = new FailedRequest();
     assertFalse(failedRequest.isPending());
