@@ -18,6 +18,7 @@ package com.google.gwt.user;
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReaderTest;
 import com.google.gwt.user.rebind.rpc.BlacklistTypeFilterTest;
+import com.google.gwt.user.rebind.rpc.SerializationUtilsTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
 import com.google.gwt.user.server.Base64Test;
@@ -52,6 +53,7 @@ public class RpcSuiteNoBrowser {
   public static Test suite() {
     TestSuite suite = new TestSuite("Non-browser tests for com.google.gwt.user.client.rpc");
     suite.addTestSuite(BlacklistTypeFilterTest.class);
+    suite.addTestSuite(SerializationUtilsTest.class);
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(TypeHierarchyUtilsTest.class);
     suite.addTestSuite(RPCTest.class);

@@ -870,6 +870,14 @@ public class SerializabilityUtil {
       generateSerializationSignature(customSerializer, crc, policy);
     } else if (instanceType.isArray()) {
       generateSerializationSignature(instanceType.getComponentType(), crc, policy);
+    } else if (Enum.class.isAssignableFrom(instanceType) && !Enum.class.equals(instanceType)) {
+      if (!instanceType.isEnum()) {
+        instanceType = instanceType.getSuperclass();
+      }
+      Enum<?>[] constants = instanceType.asSubclass(Enum.class).getEnumConstants();
+      for (Enum<?> constant : constants) {
+        crc.update(constant.name().getBytes(RPCServletUtils.CHARSET_UTF8));
+      }
     } else if (!instanceType.isPrimitive()) {
       Field[] fields = applyFieldSerializationPolicy(instanceType);
       Set<String> clientFieldNames = policy.getClientFieldNamesForEnhancedClass(instanceType);
