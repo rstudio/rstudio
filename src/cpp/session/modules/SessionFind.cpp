@@ -186,8 +186,10 @@ private:
 
 FindInFilesState& findResults()
 {
-   static FindInFilesState s_findResults;
-   return s_findResults;
+   static FindInFilesState* s_pFindResults = NULL;
+   if (s_pFindResults == NULL)
+      s_pFindResults = new FindInFilesState();
+   return *s_pFindResults;
 }
 
 class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
