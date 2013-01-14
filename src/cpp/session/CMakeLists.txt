@@ -61,6 +61,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
    modules/SessionHTMLPreview.cpp
+   modules/SessionLearning.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionPackages.cpp
