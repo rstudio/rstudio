@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.htmlpreview.ui;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -23,20 +21,19 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -60,7 +57,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
       panel.setWidgetTopHeight(toolbar, 0, Unit.PX, tbHeight, Unit.PX);
       
-      previewFrame_ = new PreviewFrame();
+      previewFrame_ = new ReloadableFrame();
       previewFrame_.setSize("100%", "100%");
       panel.add(previewFrame_);
       panel.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
@@ -265,75 +262,8 @@ public class HTMLPreviewPanel extends ResizeComposite
    {
       publishButton_.setText(label);
    }
-
-   private class PreviewFrame extends Frame
-   {
-      public PreviewFrame()
-      {
-         setStylePrimaryName("rstudio-HelpFrame");
-         getElement().getStyle().setBackgroundColor("white");
-      }
-      
-      public void navigate(final String url)
-      {
-         RepeatingCommand navigateCommand = new RepeatingCommand() {
-            @Override
-            public boolean execute()
-            {
-               if (getIFrame() != null && getWindow() != null)
-               {
-                  if (reloadCurrentPage(url))
-                  {
-                     getWindow().reload();
-                  }
-                  else
-                  {
-                     getWindow().replaceLocationHref(url);
-                  }
-                  
-                  getWindow().focus();
-                  
-                  return false;
-               }
-               else
-               {
-                  return true;
-               }
-            }
-         };
-
-         if (navigateCommand.execute())
-            Scheduler.get().scheduleFixedDelay(navigateCommand, 50);      
-      }
-      
-      private boolean reloadCurrentPage(String newUrl)
-      {
-         // make sure there is an existing url to compare to
-         String existingUrl = getWindow().getLocationHref();
-         if (existingUrl == null)
-            return false;
-         
-         // strip trailing # before comparing
-         int hashPos = existingUrl.lastIndexOf('#');
-         if (hashPos != -1)
-            existingUrl = existingUrl.substring(0, hashPos);
-         
-         return newUrl.equals(existingUrl);
-      }
-      
-      private IFrameElementEx getIFrame()
-      {
-         return getElement().cast();
-      }
-      
-      protected WindowEx getWindow()
-      {
-         return getIFrame().getContentWindow();
-      }
-
-   }
  
-   private final PreviewFrame previewFrame_;
+   private final ReloadableFrame previewFrame_;
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;

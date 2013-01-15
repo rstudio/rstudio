@@ -126,9 +126,21 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
 void handleLearningContentRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
-   // check for empty
+   // if there is no learning state then return not found
+   if (s_learningState.directory.empty())
+   {
+      pResponse->setError(http::status::NotFound, "Not found");
+      return;
+   }
 
+   // get the requested path
+   std::string path = http::util::pathAfterPrefix(request, "/learning/");
+   if (path.empty())
+      path = "index.html";
 
+   // serve the file back
+   FilePath filePath = s_learningState.directory.childPath(path);
+   pResponse->setFile(filePath, request);
 }
 
 } // anonymous namespace

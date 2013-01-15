@@ -14,13 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.learning;
 
-import com.google.gwt.user.client.ui.Label;
+
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
 
+import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -33,8 +35,6 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
                        Session session)
    {
       super("Learning");
-      commands_ = commands;
-      session_ = session;
       ensureWidget();
    }
    
@@ -51,8 +51,24 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    @Override 
    protected Widget createMainWidget()
    {  
-      mainWidget_ = new Label("Main Widget");
-      return mainWidget_;
+      frame_ = new ReloadableFrame(false) ;
+      frame_.setSize("100%", "100%");
+      frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+
+      return new AutoGlassPanel(frame_);
+   }
+   
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad() ;
+
+      if (!initialized_)
+      {
+         initialized_ = true;
+
+         
+      }
    }
    
    @Override
@@ -61,18 +77,15 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       bringToFront();
       
       titleLabel_.setText(state.getTitle());
-      mainWidget_.setText(state.getDirectory());
+      
+      frame_.navigate("learning/");
    }
    
    
-   @SuppressWarnings("unused")
-   private Commands commands_;
-   @SuppressWarnings("unused")
-   private Session session_;
+   private boolean initialized_ = false;
    
    private ToolbarLabel titleLabel_;
-   private Label mainWidget_;
    
-
+   private ReloadableFrame frame_ ;
 
 }
