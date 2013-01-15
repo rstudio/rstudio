@@ -26,7 +26,7 @@ public abstract class ResizeComposite extends Composite implements
   @Override
   protected void initWidget(Widget widget) {
     assert widget instanceof RequiresResize :
-      "LayoutComposite requires that its wrapped widget implement RequiresResize";
+      "ResizeComposite requires that its wrapped widget implement RequiresResize";
     super.initWidget(widget);
   }
 
