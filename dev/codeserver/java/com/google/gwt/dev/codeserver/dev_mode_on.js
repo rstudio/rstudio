@@ -71,7 +71,7 @@
 
   function makeOverlay() {
     var overlay = document.createElement('div');
-    overlay.style.zIndex = 1000;
+    overlay.style.zIndex = 1000000;
     overlay.style.position = 'absolute';
     overlay.style.top = 0;
     overlay.style.left = 0;
@@ -84,7 +84,7 @@
 
   function makeDialog() {
     var dialog = document.createElement('div');
-    dialog.style.zIndex = 1001;
+    dialog.style.zIndex = 1000001;
     dialog.style.position = 'fixed';
     dialog.style.top = '20pt';
     dialog.style.left = '20pt';
