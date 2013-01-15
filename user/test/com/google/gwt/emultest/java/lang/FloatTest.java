@@ -93,6 +93,41 @@ public class FloatTest extends GWTTestCase {
 //        Float.parseFloat(String.valueOf(Float.MAX_VALUE)), 1e31);
 //    assertEquals("Can't parse MIN_VALUE", Float.MIN_VALUE,
 //        Float.parseFloat(String.valueOf(Float.MIN_VALUE)), Float.MIN_VALUE);
+
+    // Test NaN/Infinity - issue 7713
+    assertTrue(Float.isNaN(Float.parseFloat("+NaN")));
+    assertTrue(Float.isNaN(Float.parseFloat("NaN")));
+    assertTrue(Float.isNaN(Float.parseFloat("-NaN")));
+    assertEquals(Float.POSITIVE_INFINITY, Float.parseFloat("+Infinity"));
+    assertEquals(Float.POSITIVE_INFINITY, Float.parseFloat("Infinity"));
+    assertEquals(Float.NEGATIVE_INFINITY, Float.parseFloat("-Infinity"));
+
+    // check for parsing some invalid values
+    try {
+      Float.parseFloat("nan");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Float.parseFloat("infinity");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Float.parseFloat("1.2.3");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Float.parseFloat("+-1.2");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Float.parseFloat("1e");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
   }
 
   public void testFloatBits() {

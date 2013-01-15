@@ -23,6 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class DoubleTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -77,7 +78,7 @@ public class DoubleTest extends GWTTestCase {
       // Expected behavior
     }
   }
-  
+
   public void testCompare() {
     assertTrue(Double.compare(Double.NaN, Double.NaN) == 0);
     assertTrue(Double.compare(0.0, Double.NaN) < 0);
@@ -88,14 +89,14 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(Double.compare(500.0, 3.0) > 0);
     assertTrue(Double.compare(500.0, 500.0) == 0);
   }
-  
+
   public void testCompareTo() {
     Double zero = new Double(0.0);
     Double three = new Double(3.0);
     Double fiveHundred = new Double(500.0);
     Double infinity = new Double(Double.POSITIVE_INFINITY);
     Double nan = new Double(Double.NaN);
-    
+
     assertTrue(nan.compareTo(nan) == 0);
     assertTrue(zero.compareTo(nan) < 0);
     assertTrue(nan.compareTo(infinity) > 0);
@@ -136,7 +137,7 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(
         "Can't parse MAX_VALUE",
         Double.MAX_VALUE == Double.parseDouble(String.valueOf(Double.MAX_VALUE)));
-    
+
     // Test that leading and trailing whitespace is ignored
     // Test that both 'e' and 'E' may be used as the exponent delimiter
     assertTrue(2.56789e1 == Double.parseDouble("2.56789e1"));
@@ -151,12 +152,47 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(-2.56789e1 == Double.parseDouble("  -2.56789E1"));
     assertTrue(-2.56789e1 == Double.parseDouble("-2.56789e+01   "));
     assertTrue(-2.56789e1 == Double.parseDouble("   -2.56789E1   "));
-    
+
     // Test that a float/double type suffix is allowed
     assertEquals(1.0d, Double.parseDouble("1.0f"), 0.0);
     assertEquals(1.0d, Double.parseDouble("1.0F"), 0.0);
     assertEquals(1.0d, Double.parseDouble("1.0d"), 0.0);
     assertEquals(1.0d, Double.parseDouble("1.0D"), 0.0);
+
+    // Test NaN/Infinity - issue 7713
+    assertTrue(Double.isNaN(Double.parseDouble("+NaN")));
+    assertTrue(Double.isNaN(Double.parseDouble("NaN")));
+    assertTrue(Double.isNaN(Double.parseDouble("-NaN")));
+    assertEquals(Double.POSITIVE_INFINITY, Double.parseDouble("+Infinity"));
+    assertEquals(Double.POSITIVE_INFINITY, Double.parseDouble("Infinity"));
+    assertEquals(Double.NEGATIVE_INFINITY, Double.parseDouble("-Infinity"));
+
+    // check for parsing some invalid values
+    try {
+      Double.parseDouble("nan");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Double.parseDouble("infinity");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Double.parseDouble("1.2.3");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Double.parseDouble("+-1.2");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
+    try {
+      Double.parseDouble("1e");
+      fail("Expected NumberFormatException");
+    } catch (NumberFormatException expected) {
+    }
   }
 
   public void testDoubleBits() {

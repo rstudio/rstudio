@@ -74,12 +74,12 @@ public abstract class Number implements Serializable {
       6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, // base 22-35
       5 // base 36
     };
-  
+
     /**
      * A table of values radix*maxDigitsForRadix[radix].
      */
     private static final int[] maxDigitsRadixPower = new int[37];
-  
+
     /**
      * The largest number of digits (excluding minus sign and leading zeros) that
      * can fit into a long for a given radix between 2 and 36, inclusive.
@@ -121,12 +121,12 @@ public abstract class Number implements Serializable {
       13, // base 35
       13  // base 36
     };
-  
+
     /**
      * A table of floor(MAX_VALUE / maxDigitsRadixPower).
      */
     private static final long[] maxValueForRadix = new long[37];
-  
+
     static {
       for (int i = 2; i <= 36; i++) {
         maxDigitsRadixPower[i] = (int) Math.pow(i, maxDigitsForRadix[i]);
@@ -183,27 +183,21 @@ public abstract class Number implements Serializable {
    * This function contains common logic for parsing a String as a floating-
    * point number and validating the range.
    */
-  protected static double __parseAndValidateDouble(String s)
-      throws NumberFormatException {
-
-    double toReturn = __parseDouble(s);
-
-    if (__isNaN(toReturn)) {
+  protected static double __parseAndValidateDouble(String s) throws NumberFormatException {
+    if (!__isValidDouble(s)) {
       throw NumberFormatException.forInputString(s);
     }
-
-    return toReturn;
+    return __parseDouble(s);
   }
-  
+
   /**
    * @skip
    * 
    * This function contains common logic for parsing a String in a given radix
    * and validating the result.
    */
-  protected static int __parseAndValidateInt(String s, int radix,
-      int lowerBound, int upperBound) throws NumberFormatException {
-
+  protected static int __parseAndValidateInt(String s, int radix, int lowerBound, int upperBound)
+      throws NumberFormatException {
     if (s == null) {
       throw new NumberFormatException("null");
     }
@@ -229,16 +223,14 @@ public abstract class Number implements Serializable {
 
     return toReturn;
   }
-  
+
   /**
    * @skip
    * 
    * This function contains common logic for parsing a String in a given radix
    * and validating the result.
    */
-  protected static long __parseAndValidateLong(String s, int radix)
-      throws NumberFormatException {
-    
+  protected static long __parseAndValidateLong(String s, int radix) throws NumberFormatException {
     if (s == null) {
       throw new NumberFormatException("null");
     }
@@ -261,13 +253,13 @@ public abstract class Number implements Serializable {
       s = s.substring(1);
       length--;
     }
-    
+
     // Immediately eject numbers that are too long -- this avoids more complex
     // overflow handling below
     if (length > __ParseLong.maxLengthForRadix[radix]) {
       throw NumberFormatException.forInputString(s);
     }
-    
+
     // Validate the digits
     int maxNumericDigit = '0' + Math.min(radix, 10);
     int maxLowerCaseDigit = radix + 'a' - 10;
@@ -290,7 +282,7 @@ public abstract class Number implements Serializable {
     int maxDigits = __ParseLong.maxDigitsForRadix[radix];
     long radixPower = __ParseLong.maxDigitsRadixPower[radix];
     long maxValue = __ParseLong.maxValueForRadix[radix];
-    
+
     boolean firstTime = true;
     int head = length % maxDigits;
     if (head > 0) {
@@ -299,7 +291,7 @@ public abstract class Number implements Serializable {
       length -= head;
       firstTime = false;
     }
-    
+
     while (length >= maxDigits) {
       head = __parseInt(s.substring(0, maxDigits), radix);
       s = s.substring(maxDigits);
@@ -309,24 +301,24 @@ public abstract class Number implements Serializable {
         if (toReturn > maxValue) {
           throw new NumberFormatException(s);
         }
-        toReturn *= radixPower;      
+        toReturn *= radixPower;
       } else {
         firstTime = false;
       }
       toReturn += head;
     }
-    
+
     // A negative value means we overflowed Long.MAX_VALUE
     if (toReturn < 0) {
       throw NumberFormatException.forInputString(s);
     }
-    
+
     if (negative) {
       toReturn = -toReturn;
     }
     return toReturn;
   }
-  
+
   /**
    * @skip
    */
@@ -337,21 +329,26 @@ public abstract class Number implements Serializable {
   /**
    * @skip
    * 
-   * @return The floating-point representation of <code>str</code> or
-   *         <code>Number.NaN</code> if the string does not match
-   *         {@link #floatRegex}.
+   * @param str
+   * @return {@code true} if the string matches {@link #floatRegex}, {@code false} otherwise
    */
-  private static native double __parseDouble(String str) /*-{
+  private static native boolean __isValidDouble(String str) /*-{
     var floatRegex = @java.lang.Number::floatRegex;
     if (!floatRegex) {
       // Disallow '.' with no digits on either side
-      floatRegex = @java.lang.Number::floatRegex = /^\s*[+-]?((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?[dDfF]?\s*$/i;
+      floatRegex = @java.lang.Number::floatRegex =
+          /^\s*[+-]?(NaN|Infinity|((\d+\.?\d*)|(\.\d+))([eE][+-]?\d+)?[dDfF]?)\s*$/;
     }
-    if (floatRegex.test(str)) {
-      return parseFloat(str);
-    } else {
-      return Number.NaN;
-    }
+    return floatRegex.test(str);
+  }-*/;
+
+  /**
+   * @skip
+   * 
+   * @return The floating-point representation of <code>str</code>.
+   */
+  private static native double __parseDouble(String str) /*-{
+    return parseFloat(str);
   }-*/;
 
   /**
