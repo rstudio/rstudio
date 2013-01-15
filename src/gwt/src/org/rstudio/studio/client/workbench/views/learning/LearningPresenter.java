@@ -14,35 +14,44 @@
  */
 package org.rstudio.studio.client.workbench.views.learning;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
-import org.rstudio.studio.client.workbench.commands.Commands;
 
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
 import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 
 public class LearningPresenter extends BasePresenter 
 {
    public interface Display extends WorkbenchView
    {
+      void load(String url);
    }
    
    @Inject
    public LearningPresenter(Display display, 
+                            LearningServerOperations server,
                             GlobalDisplay globalDisplay,
-                            final Commands commands,
-                            EventBus eventBus)
+                            EventBus eventBus,
+                            Session session)
    {
       super(display);
       view_ = display;
-      
+      server_ = server;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
-      commands_ = commands;
+      session_ = session;
      
         
     
@@ -50,17 +59,38 @@ public class LearningPresenter extends BasePresenter
    
    public void initialize(LearningState learningState)
    {
-    
-      
+      view_.load(learningState.getUrl());
    }
    
- 
-   @SuppressWarnings("unused")
-   private final GlobalDisplay globalDisplay_;
-   @SuppressWarnings("unused")
+   public void onShowLearningPane(ShowLearningPaneEvent event)
+   {
+      // if the learning pane wasn't previously shown in this 
+      // session then reload
+      if (!session_.getSessionInfo().getLearningState().isActive())
+         eventBus_.fireEvent(new ReloadEvent());
+      else
+         view_.load(event.getLearningState().getUrl());
+   }
+   
+   public void confirmClose(Command onConfirmed)
+   {
+      ProgressIndicator progress = new GlobalProgressDelayer(
+            globalDisplay_,
+            200,
+            "Closing Learning Tab...").getIndicator();
+      
+      server_.closeLearningPane(new VoidServerRequestCallback(progress) {
+         @Override
+         public void onSuccess()
+         {
+            eventBus_.fireEvent(new ReloadEvent());
+         }
+      });
+   }
+
    private final Display view_ ; 
-   @SuppressWarnings("unused")
+   private final LearningServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
-   @SuppressWarnings("unused")
-   private final Commands commands_;
+   private final Session session_;
 }

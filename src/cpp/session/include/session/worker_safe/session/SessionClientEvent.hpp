@@ -95,6 +95,7 @@ extern const int kSourceCppStarted;
 extern const int kSourceCppCompleted;
 extern const int kLoadedPackageUpdates;
 extern const int kActivatePane;
+extern const int kShowLearningPane;
 }
    
 class ClientEvent

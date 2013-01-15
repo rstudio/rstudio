@@ -104,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperatio
 import org.rstudio.studio.client.workbench.views.learning.LearningPane;
 import org.rstudio.studio.client.workbench.views.learning.LearningPresenter;
 import org.rstudio.studio.client.workbench.views.learning.LearningTab;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -283,6 +284,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
+      bind(LearningServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

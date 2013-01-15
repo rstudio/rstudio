@@ -46,15 +46,25 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    
    @Override 
    protected Widget createMainWidget()
-   {      
-      return new Label("Main Widget");
+   {  
+      mainWidget_ = new Label("Main Widget");
+      return mainWidget_;
    }
    
+   @Override
+   public void load(String url)
+   {
+      bringToFront();
+      mainWidget_.setText(url);
+   }
    
    
    @SuppressWarnings("unused")
    private Commands commands_;
    @SuppressWarnings("unused")
    private Session session_;
+   
+   private Label mainWidget_;
+
 
 }

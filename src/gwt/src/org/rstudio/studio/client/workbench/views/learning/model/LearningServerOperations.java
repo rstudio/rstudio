@@ -1,5 +1,5 @@
 /*
- * LearningState.java
+ * LearningServerOperations.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,19 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.learning.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 
-public class LearningState extends JavaScriptObject
+public interface LearningServerOperations
 {
-   protected LearningState()
-   {
-   }
-   
-   public final native boolean isActive() /*-{
-      return this.active;
-   }-*/;
-   
-   public final native String getUrl() /*-{
-      return this.url;
-   }-*/;
+   void closeLearningPane(ServerRequestCallback<Void> requestCallaback);
 }
