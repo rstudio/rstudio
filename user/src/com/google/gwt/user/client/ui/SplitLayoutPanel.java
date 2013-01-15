@@ -141,7 +141,7 @@ public class SplitLayoutPanel extends DockLayoutPanel {
           mouseDown = false;
 
           glassElem.removeFromParent();
-          
+
           // Handle double-clicks.
           // Fake them since the double-click event aren't fired.
           if (this.toggleDisplayAllowed) {
@@ -375,6 +375,16 @@ public class SplitLayoutPanel extends DockLayoutPanel {
       return true;
     }
     return false;
+  }
+
+  @Override
+  public void setWidgetHidden(Widget widget, boolean hidden) {
+    super.setWidgetHidden(widget, hidden);
+    Splitter splitter = getAssociatedSplitter(widget);
+    if (splitter != null) {
+      // The splitter is null for the center element.
+      super.setWidgetHidden(splitter, hidden);
+    }
   }
 
   /**
