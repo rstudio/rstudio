@@ -122,31 +122,18 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
 void handleLearningContentRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
-   // if there is no learning state then return not found
-   if (s_learningState.directory.empty())
+   // get the requested path
+   std::string path = http::util::pathAfterPrefix(request, "/learning/");
+
+   // resolve the file
+   FilePath filePath = learning::learningFilePath(path);
+   if (filePath.empty())
    {
       pResponse->setError(http::status::NotFound, "Not found");
       return;
    }
 
-   // get the requested path
-   std::string path = http::util::pathAfterPrefix(request, "/learning/");
-   if (path.empty())
-   {
-      if (s_learningState.directory.childPath("index.html").exists())
-         path = "index.html";
-      else if (s_learningState.directory.childPath("index.htm").exists())
-         path = "index.htm";
-      else
-      {
-         pResponse->setError(http::status::NotFound, "index.html not found");
-         return;
-      }
-   }
-
-
-   // serve the file back
-   FilePath filePath = s_learningState.directory.childPath(path);
+   // serve it back
    pResponse->setFile(filePath, request);
 }
 
@@ -160,6 +147,25 @@ json::Value learningStateAsJson()
    stateJson["directory"] = s_learningState.directory.absolutePath();
    return stateJson;
 }
+
+FilePath learningFilePath(const std::string& path)
+{
+   if (s_learningState.directory.empty())
+      return FilePath();
+
+   std::string resolvedPath = path;
+
+   if (resolvedPath.empty())
+   {
+      if (s_learningState.directory.childPath("index.html").exists())
+         resolvedPath = "index.html";
+      else
+         resolvedPath = "index.htm";
+   }
+
+   return s_learningState.directory.childPath(resolvedPath);
+}
+
 
 Error initialize()
 {

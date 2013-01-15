@@ -20,6 +20,7 @@
 
 namespace core {
    class Error;
+   class FilePath;
 }
  
 namespace session {
@@ -27,6 +28,8 @@ namespace modules {
 namespace learning {
    
 core::json::Value learningStateAsJson();
+
+core::FilePath learningFilePath(const std::string& path);
 
 core::Error initialize();
                        
