@@ -19,10 +19,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarLabel;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 
 public class LearningPane extends WorkbenchPane implements LearningPresenter.Display
 {
@@ -40,6 +42,8 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
+      titleLabel_ = new ToolbarLabel();
+      toolbar.addLeftWidget(titleLabel_);
         
       return toolbar;
    }
@@ -52,10 +56,12 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    }
    
    @Override
-   public void load(String url)
+   public void load(LearningState state)
    {
       bringToFront();
-      mainWidget_.setText(url);
+      
+      titleLabel_.setText(state.getTitle());
+      mainWidget_.setText(state.getDirectory());
    }
    
    
@@ -64,7 +70,9 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    @SuppressWarnings("unused")
    private Session session_;
    
+   private ToolbarLabel titleLabel_;
    private Label mainWidget_;
+   
 
 
 }

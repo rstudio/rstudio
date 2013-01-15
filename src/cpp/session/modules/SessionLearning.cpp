@@ -40,8 +40,12 @@ struct LearningState
    }
 
    bool active;
-   std::string url;
+   std::string title;
+   FilePath directory;
 };
+
+// write-through cache of learning state
+LearningState s_learningState;
 
 FilePath learningStatePath()
 {
@@ -54,6 +58,10 @@ FilePath learningStatePath()
 
 void saveLearningState(const LearningState& state)
 {
+   // update write-through cache
+   s_learningState = state;
+
+   // save to disk
    Settings settings;
    Error error = settings.initialize(learningStatePath());
    if (error)
@@ -63,55 +71,45 @@ void saveLearningState(const LearningState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
-   settings.set("url", state.url);
-
+   settings.set("title", state.title);
+   settings.set("directory", state.directory.absolutePath());
    settings.endUpdate();
 }
 
-LearningState loadLearningState()
+void loadLearningState()
 {
-   LearningState state;
-
    FilePath statePath = learningStatePath();
    if (statePath.exists())
    {
       Settings settings;
       Error error = settings.initialize(learningStatePath());
       if (error)
-      {
          LOG_ERROR(error);
-         return state;
-      }
-      state.active = settings.getBool("active", false);
-      state.url = settings.get("url");
+
+      s_learningState.active = settings.getBool("active", false);
+      s_learningState.title = settings.get("title");
+      s_learningState.directory = FilePath(settings.get("directory"));
    }
-
-   return state;
+   else
+   {
+      s_learningState = LearningState();
+   }
 }
 
-json::Value learningStateAsJson(const LearningState& state)
-{
-   json::Object stateJson;
-   stateJson["active"] = state.active;
-   stateJson["url"] = state.url;
-   return stateJson;
-}
-
-SEXP rs_showLearningPane(SEXP paneUrlSEXP)
+SEXP rs_showLearningPane(SEXP titleSEXP, SEXP dirSEXP)
 {
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      std::string paneUrl = r::sexp::safeAsString(paneUrlSEXP);
-
       // setup new state and save it
       LearningState state;
       state.active = true;
-      state.url = paneUrl;
+      state.title = r::sexp::asString(titleSEXP);
+      state.directory = FilePath(r::sexp::asString(dirSEXP));
       saveLearningState(state);
 
       // notify the client
       ClientEvent event(client_events::kShowLearningPane,
-                        learningStateAsJson(state));
+                        learning::learningStateAsJson());
       module_context::enqueClientEvent(event);
    }
 
@@ -125,38 +123,55 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
    return Success();
 }
 
+void handleLearningContentRequest(const http::Request& request,
+                                  http::Response* pResponse)
+{
+   // check for empty
+
+
+}
+
 } // anonymous namespace
 
 
 json::Value learningStateAsJson()
 {
-   LearningState state;
-
-   // learning module is server only
-   if (session::options().programMode() == kSessionProgramModeServer)
-      state = loadLearningState();
-
-   return learningStateAsJson(state);
+   json::Object stateJson;
+   stateJson["active"] = s_learningState.active;
+   stateJson["title"] = s_learningState.title;
+   stateJson["directory"] = s_learningState.directory.absolutePath();
+   return stateJson;
 }
 
 Error initialize()
-{  
-   // register rs_showLearningPane
-   R_CallMethodDef methodDefShowLearningPane;
-   methodDefShowLearningPane.name = "rs_showLearningPane" ;
-   methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
-   methodDefShowLearningPane.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowLearningPane);
+{
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      // load learning state -- subsequent reads of learning state
+      // are done from the in-memory cache
+      loadLearningState();
 
+      // register rs_showLearningPane
+      R_CallMethodDef methodDefShowLearningPane;
+      methodDefShowLearningPane.name = "rs_showLearningPane" ;
+      methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
+      methodDefShowLearningPane.numArgs = 2;
+      r::routines::addCallMethod(methodDefShowLearningPane);
 
-   using boost::bind;
-   using namespace session::module_context;
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
-      (bind(sourceModuleRFile, "SessionLearning.R"));
+      using boost::bind;
+      using namespace session::module_context;
+      ExecBlock initBlock ;
+      initBlock.addFunctions()
+         (bind(registerUriHandler, "/learning", handleLearningContentRequest))
+         (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
+         (bind(sourceModuleRFile, "SessionLearning.R"));
 
-   return initBlock.execute();
+      return initBlock.execute();
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 } // namespace learning

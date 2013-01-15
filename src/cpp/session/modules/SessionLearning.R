@@ -13,8 +13,9 @@
 #
 #
 
-.rs.addFunction( "showLearningPane", function(url)
+.rs.addFunction( "showLearningPane", function(title, dir)
 {
-    .Call("rs_showLearningPane", url)
+   require(utils)
+   .Call("rs_showLearningPane", title, normalizePath(path.expand(dir)))
 })
 
