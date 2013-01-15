@@ -28,11 +28,13 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    }
 
    public CompilePdfEvent(FileSystemItem targetFile,
+                          String encoding,
                           SourceLocation sourceLocation,
                           String completedAction,
                           boolean useInternalPreview)
    {
       targetFile_ = targetFile;
+      encoding_ = encoding;
       sourceLocation_ = sourceLocation;
       completedAction_ = completedAction;
       useInternalPreview_ = useInternalPreview;
@@ -41,6 +43,11 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    public FileSystemItem getTargetFile()
    {
       return targetFile_;
+   }
+   
+   public String getEncoding()
+   {
+      return encoding_;
    }
    
    public SourceLocation getSourceLocation()
@@ -71,6 +78,7 @@ public class CompilePdfEvent extends GwtEvent<CompilePdfEvent.Handler>
    }
    
    private final FileSystemItem targetFile_;
+   private final String encoding_;
    private final SourceLocation sourceLocation_;
    private final String completedAction_;
    private final boolean useInternalPreview_;

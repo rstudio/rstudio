@@ -2570,13 +2570,21 @@ public class TextEditingTarget implements EditingTarget
                onBeforeCompile.execute();
             
             String path = docUpdateSentinel_.getPath();
-            if (path != null)
-               fireCompilePdfEvent(path, completedAction, useInternalPreview);
+            if (path != null) 
+            {
+               String encoding = StringUtil.notNull(
+                                          docUpdateSentinel_.getEncoding());
+               fireCompilePdfEvent(path, 
+                                   encoding,
+                                   completedAction, 
+                                   useInternalPreview);
+            }
          }
       });
    }
    
    private void fireCompilePdfEvent(String path, 
+                                    String encoding,
                                     String completedAction,
                                     boolean useInternalPreview)
    {
@@ -2596,6 +2604,7 @@ public class TextEditingTarget implements EditingTarget
       
       CompilePdfEvent event = new CompilePdfEvent(
                                        compilePdfHelper_.getTargetFile(file),
+                                       encoding,
                                        getSelectionAsSourceLocation(false),
                                        completedAction,
                                        useInternalPreview);

@@ -2527,14 +2527,16 @@ public class RemoteServer implements Server
    
    
    public void compilePdf(FileSystemItem targetFile,
+                          String encoding,
                           SourceLocation sourceLocation,
                           String completedAction,
                           ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(targetFile.getPath()));
-      params.set(1, new JSONObject(sourceLocation));
-      params.set(2, new JSONString(completedAction));
+      params.set(1, new JSONString(encoding));
+      params.set(2, new JSONObject(sourceLocation));
+      params.set(3, new JSONString(completedAction));
       sendRequest(RPC_SCOPE, COMPILE_PDF, params, requestCallback);
    }
    

@@ -13,6 +13,11 @@
 #
 #
 
+.rs.addFunction( "knitrHasEncodingParam", function()
+{
+   packageVersion("knitr") >= "1.0"
+})
+
 .rs.addFunction( "knitrChunkOptions", function()
 {
    # starting with v0.4.2 this is avavilable directly from knitr

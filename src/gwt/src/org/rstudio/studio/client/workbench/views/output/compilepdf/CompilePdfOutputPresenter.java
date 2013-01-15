@@ -179,6 +179,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       
       // run the compile
       compilePdf(event.getTargetFile(),
+                 event.getEncoding(),
                  event.getSourceLocation(),
                  event.getCompletedAction());
    }
@@ -238,6 +239,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
    }
    
    private void compilePdf(FileSystemItem targetFile,
+                           String encoding,
                            SourceLocation sourceLocation,
                            String completedAction)
    {
@@ -245,6 +247,7 @@ public class CompilePdfOutputPresenter extends BasePresenter
       // if there is already a compile running)
       server_.compilePdf(
             targetFile,
+            encoding,
             sourceLocation,
             completedAction, 
             new DelayedProgressRequestCallback<Boolean>("Compiling PDF...") 

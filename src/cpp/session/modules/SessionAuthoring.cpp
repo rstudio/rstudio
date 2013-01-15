@@ -90,10 +90,11 @@ Error compilePdf(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // read params
-   std::string targetFile, completedAction;
+   std::string targetFile, encoding, completedAction;
    json::Object sourceLocation;
    Error error = json::readParams(request.params,
                                   &targetFile,
+                                  &encoding,
                                   &sourceLocation,
                                   &completedAction);
    if (error)
@@ -109,6 +110,7 @@ Error compilePdf(const json::JsonRpcRequest& request,
 
    // attempt to kickoff the compile
    bool started = tex::compile_pdf::startCompile(targetFilePath,
+                                                 encoding,
                                                  sourceLocation,
                                                  completedFunction);
 

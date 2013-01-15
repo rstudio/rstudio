@@ -94,7 +94,9 @@ public:
    // that the working directory is already set to that of the file)
    virtual core::Error tangle(const std::string& file) = 0;
 
-   virtual std::vector<std::string> commandArgs(const std::string& file) const
+   virtual std::vector<std::string> commandArgs(
+                                       const std::string& file,
+                                       const std::string& encoding) const
    {
       std::vector<std::string> args;
       args.push_back("--silent");
@@ -102,12 +104,13 @@ public:
       args.push_back("--no-restore");
       args.push_back("-e");
       std::string cmd = "grDevices::pdf.options(useDingbats = FALSE); "
-                        + weaveCommand(file);
+                        + weaveCommand(file, encoding);
       args.push_back(cmd);
       return args;
    }
 
-   virtual std::string weaveCommand(const std::string& file) const = 0;
+   virtual std::string weaveCommand(const std::string& file,
+                                    const std::string& encoding) const = 0;
 
    virtual core::Error parseOutputForErrors(
                                     const std::string& output,
@@ -212,9 +215,17 @@ public:
       return r::exec::RFunction("utils:::Stangle", file).call();
    }
 
-   virtual std::string weaveCommand(const std::string& file) const
+   virtual std::string weaveCommand(const std::string& file,
+                                    const std::string& encoding) const
    {
-      return "utils::Sweave('" + file + "')";
+      std::string cmd = "utils::Sweave('" + file + "'";
+
+      if (!encoding.empty())
+         cmd += (", encoding='" + encoding + "'");
+
+      cmd += ")";
+
+      return cmd;
    }
 };
 
@@ -238,14 +249,21 @@ public:
       return module_context::isPackageInstalled(packageName());
    }
 
-   virtual std::string weaveCommand(const std::string& file) const
+   virtual std::string weaveCommand(const std::string& file,
+                                    const std::string& encoding) const
    {
       std::string format = "require(knitr); ";
       if (userSettings().alwaysEnableRnwCorcordance())
          format += "opts_knit$set(concordance = TRUE); ";
-      format += "knit('%1%')";
+      format += "knit('%1%'";
+      std::string cmd = boost::str(boost::format(format) % file);
 
-      return boost::str(boost::format(format) % file);
+      if (!encoding.empty() && hasEncodingParam())
+         cmd += (", encoding='" + encoding + "'");
+
+      cmd += ")";
+
+      return cmd;
    }
 
    virtual core::Error parseOutputForErrors(
@@ -320,6 +338,18 @@ public:
       purlFunc.addParam("input", file);
       purlFunc.addParam("output", file + ".R");
       return purlFunc.call();
+   }
+
+private:
+   bool hasEncodingParam() const
+   {
+      bool hasEncoding = false;
+      Error error = r::exec::RFunction(".rs.knitrHasEncodingParam").call(
+                                                                  &hasEncoding);
+      if (error)
+         LOG_ERROR(error);
+
+      return hasEncoding;
    }
 };
 
@@ -456,6 +486,7 @@ void runTangle(const std::string& filePath, const std::string& rnwWeave)
 }
 
 void runWeave(const core::FilePath& rnwPath,
+              const std::string& encoding,
               const core::tex::TexMagicComments& magicComments,
               const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted)
@@ -489,7 +520,8 @@ void runWeave(const core::FilePath& rnwPath,
    if (pRnwWeave)
    {
       std::vector<std::string> args = pRnwWeave->commandArgs(
-                                                         rnwPath.filename());
+                                                         rnwPath.filename(),
+                                                         encoding);
 
       // call back-end
       Error error = compile_pdf_supervisor::runProgram(

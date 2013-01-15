@@ -79,6 +79,7 @@ typedef boost::function<void(const Result&)> CompletedFunction;
 void runTangle(const std::string& filePath, const std::string& rnwWeave);
 
 void runWeave(const core::FilePath& filePath,
+              const std::string& encoding,
               const core::tex::TexMagicComments& magicComments,
               const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted);

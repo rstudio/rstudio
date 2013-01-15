@@ -530,11 +530,13 @@ class AsyncPdfCompiler : boost::noncopyable,
 {
 public:
    static void start(const FilePath& targetFilePath,
+                     const std::string& encoding,
                      const json::Object& sourceLocation,
                      const boost::function<void()>& onCompleted)
    {
       boost::shared_ptr<AsyncPdfCompiler> pCompiler(
             new AsyncPdfCompiler(targetFilePath,
+                                 encoding,
                                  sourceLocation,
                                  onCompleted));
 
@@ -545,9 +547,11 @@ public:
 
 private:
    AsyncPdfCompiler(const FilePath& targetFilePath,
+                    const std::string& encoding,
                     const json::Object& sourceLocation,
                     const boost::function<void()>& onCompleted)
       : targetFilePath_(targetFilePath),
+        encoding_(encoding),
         sourceLocation_(sourceLocation),
         onCompleted_(onCompleted)
    {
@@ -608,6 +612,7 @@ private:
 
          // attempt to weave the rnw
          rnw_weave::runWeave(targetFilePath_,
+                             encoding_,
                              magicComments_,
                              enqueOutputEvent,
                              boost::bind(
@@ -792,6 +797,7 @@ private:
 
 private:
    FilePath targetFilePath_;
+   std::string encoding_;
    json::Object sourceLocation_;
    const boost::function<void()> onCompleted_;
    core::tex::TexMagicComments magicComments_;
@@ -804,12 +810,14 @@ private:
 
 
 bool startCompile(const core::FilePath& targetFilePath,
+                  const std::string& encoding,
                   const json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted)
 {
    if (!compile_pdf_supervisor::hasRunningChildren())
    {
       AsyncPdfCompiler::start(targetFilePath,
+                              encoding,
                               sourceLocation,
                               onCompleted);
       return true;
