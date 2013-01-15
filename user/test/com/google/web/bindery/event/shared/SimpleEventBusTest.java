@@ -295,7 +295,6 @@ public class SimpleEventBusTest extends EventBusTestBase {
     HandlerRegistration reg = FooEvent.register(eventBus, fooHandler1);
     reg.removeHandler();
     reg.removeHandler(); // should not throw
-
   }
 
   public void testNoSource() {
