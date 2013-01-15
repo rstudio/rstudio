@@ -19,14 +19,11 @@ import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
 
-import org.json.Cookie;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -97,18 +94,22 @@ public class UrlRequestTransport implements RequestTransport {
       List<String> cookieHeaders = connection.getHeaderFields().get("Set-Cookie");
       if (cookieHeaders != null) {
         for (String header : cookieHeaders) {
+          List<HttpCookie> headerCookies;
           try {
-            JSONObject cookie = Cookie.toJSONObject(header);
-            String name = cookie.getString("name");
-            String value = cookie.getString("value");
-            String domain = cookie.optString("Domain");
+            headerCookies = HttpCookie.parse(header);
+          } catch (IllegalArgumentException e) {
+            // if we can't parse it, ignore it
+            continue;
+          }
+
+          for (HttpCookie cookie : headerCookies) {
+            String domain = cookie.getDomain();
             if (domain == null || url.getHost().endsWith(domain)) {
-              String path = cookie.optString("Path");
+              String path = cookie.getPath();
               if (path == null || url.getPath().startsWith(path)) {
-                cookies.put(name, value);
+                cookies.put(cookie.getName(), cookie.getValue());
               }
             }
-          } catch (JSONException ignored) {
           }
         }
       }
