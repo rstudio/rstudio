@@ -40,7 +40,6 @@ struct LearningState
    }
 
    bool active;
-   std::string title;
    FilePath directory;
 };
 
@@ -71,7 +70,6 @@ void saveLearningState(const LearningState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
-   settings.set("title", state.title);
    settings.set("directory", state.directory.absolutePath());
    settings.endUpdate();
 }
@@ -87,7 +85,6 @@ void loadLearningState()
          LOG_ERROR(error);
 
       s_learningState.active = settings.getBool("active", false);
-      s_learningState.title = settings.get("title");
       s_learningState.directory = FilePath(settings.get("directory"));
    }
    else
@@ -96,14 +93,13 @@ void loadLearningState()
    }
 }
 
-SEXP rs_showLearningPane(SEXP titleSEXP, SEXP dirSEXP)
+SEXP rs_showLearningPane(SEXP dirSEXP)
 {
    if (session::options().programMode() == kSessionProgramModeServer)
    {
       // setup new state and save it
       LearningState state;
       state.active = true;
-      state.title = r::sexp::asString(titleSEXP);
       state.directory = FilePath(r::sexp::asString(dirSEXP));
       saveLearningState(state);
 
@@ -136,7 +132,18 @@ void handleLearningContentRequest(const http::Request& request,
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request, "/learning/");
    if (path.empty())
-      path = "index.html";
+   {
+      if (s_learningState.directory.childPath("index.html").exists())
+         path = "index.html";
+      else if (s_learningState.directory.childPath("index.htm").exists())
+         path = "index.htm";
+      else
+      {
+         pResponse->setError(http::status::NotFound, "index.html not found");
+         return;
+      }
+   }
+
 
    // serve the file back
    FilePath filePath = s_learningState.directory.childPath(path);
@@ -150,7 +157,6 @@ json::Value learningStateAsJson()
 {
    json::Object stateJson;
    stateJson["active"] = s_learningState.active;
-   stateJson["title"] = s_learningState.title;
    stateJson["directory"] = s_learningState.directory.absolutePath();
    return stateJson;
 }
@@ -167,7 +173,7 @@ Error initialize()
       R_CallMethodDef methodDefShowLearningPane;
       methodDefShowLearningPane.name = "rs_showLearningPane" ;
       methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
-      methodDefShowLearningPane.numArgs = 2;
+      methodDefShowLearningPane.numArgs = 1;
       r::routines::addCallMethod(methodDefShowLearningPane);
 
       using boost::bind;

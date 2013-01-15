@@ -26,10 +26,6 @@ public class LearningState extends JavaScriptObject
       return this.active;
    }-*/;
    
-   public final native String getTitle() /*-{
-      return this.title;
-   }-*/;
-   
    public final native String getDirectory() /*-{
       return this.directory;
    }-*/;

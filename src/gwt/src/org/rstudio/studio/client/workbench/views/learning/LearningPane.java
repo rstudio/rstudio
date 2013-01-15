@@ -15,9 +15,12 @@
 package org.rstudio.studio.client.workbench.views.learning;
 
 
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -54,6 +57,16 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       frame_ = new ReloadableFrame(false) ;
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+      frame_.addLoadHandler(new LoadHandler() {
+
+         @Override
+         public void onLoad(LoadEvent event)
+         {
+            String title = StringUtil.notNull(
+                           frame_.getWindow().getDocument().getTitle());
+            titleLabel_.setText(title);
+         }
+      });
 
       return new AutoGlassPanel(frame_);
    }
@@ -75,9 +88,7 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    public void load(LearningState state)
    {
       bringToFront();
-      
-      titleLabel_.setText(state.getTitle());
-      
+       
       frame_.navigate("learning/");
    }
    
