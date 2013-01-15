@@ -214,7 +214,7 @@ public class SimpleEventBus extends EventBus {
     List<H> l = getHandlerList(type, source);
 
     boolean removed = l.remove(handler);
-    assert removed : "redundant remove call";
+
     if (removed && l.isEmpty()) {
       prune(type, source);
     }
