@@ -85,11 +85,11 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    }
    
    @Override
-   public void load(LearningState state)
+   public void load(String url, LearningState state)
    {
       bringToFront();
        
-      frame_.navigate("learning/");
+      frame_.navigate(url);
    }
    
    

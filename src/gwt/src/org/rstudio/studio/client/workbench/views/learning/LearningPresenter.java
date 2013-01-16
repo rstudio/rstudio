@@ -36,7 +36,7 @@ public class LearningPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView
    {
-      void load(LearningState state);
+      void load(String url, LearningState state);
    }
    
    @Inject
@@ -59,7 +59,7 @@ public class LearningPresenter extends BasePresenter
    
    public void initialize(LearningState learningState)
    {
-      view_.load(learningState);
+      load(learningState);
    }
    
    public void onShowLearningPane(ShowLearningPaneEvent event)
@@ -69,7 +69,7 @@ public class LearningPresenter extends BasePresenter
       if (!session_.getSessionInfo().getLearningState().isActive())
          eventBus_.fireEvent(new ReloadEvent());
       else
-         view_.load(event.getLearningState());
+         load(event.getLearningState());
    }
    
    public void confirmClose(Command onConfirmed)
@@ -86,6 +86,11 @@ public class LearningPresenter extends BasePresenter
             eventBus_.fireEvent(new ReloadEvent());
          }
       });
+   }
+   
+   private void load(LearningState state)
+   {
+      view_.load(server_.getApplicationURL("learning/"), state);
    }
 
    private final Display view_ ; 

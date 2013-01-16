@@ -20,4 +20,6 @@ import org.rstudio.studio.client.server.Void;
 public interface LearningServerOperations
 {
    void closeLearningPane(ServerRequestCallback<Void> requestCallaback);
+   
+   String getApplicationURL(String url);
 }
