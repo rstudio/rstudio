@@ -74,6 +74,11 @@ public class JConstructor extends JMethod {
     return getEnclosingType().getNonNull();
   }
 
+  @Override
+  public boolean isConstructor() {
+    return true;
+  }
+
   /**
    * Returns <code>true</code> if this constructor does no real work.
    * 

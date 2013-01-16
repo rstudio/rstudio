@@ -249,7 +249,11 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
         sb.append(type.getJsniSignatureName());
       }
       sb.append(')');
-      sb.append(getOriginalReturnType().getJsniSignatureName());
+      if (!isConstructor()) {
+        sb.append(getOriginalReturnType().getJsniSignatureName());
+      } else {
+        sb.append(" <init>");
+      }
       signature = sb.toString();
     }
     return signature;
@@ -265,6 +269,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public boolean isAbstract() {
     return isAbstract;
+  }
+
+  public boolean isConstructor() {
+    return false;
   }
 
   public boolean isDefault() {

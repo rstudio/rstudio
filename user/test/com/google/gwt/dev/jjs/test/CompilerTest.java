@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.dev.jjs.test.compilertests.MethodNamedSameAsClass;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
@@ -966,6 +967,14 @@ public class CompilerTest extends GWTTestCase {
 
     }.toString();
     assertEquals(result, "foofoofoofoo");
+  }
+
+  /**
+   * test for issue 7824.
+   */
+  public void testMethodNamedSameAsClass() {
+    MethodNamedSameAsClass obj = new MethodNamedSameAsClass();
+    obj.MethodNamedSameAsClass();
   }
 
   public void testNotOptimizations() {
