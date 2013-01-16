@@ -16,8 +16,11 @@
 
 #include "SessionLearning.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -53,6 +56,11 @@ FilePath learningStatePath()
    if (error)
       LOG_ERROR(error);
    return path.childPath("learning-state");
+}
+
+FilePath learningResourcesPath()
+{
+   return session::options().rResourcesPath().complete("learning");
 }
 
 void saveLearningState(const LearningState& state)
@@ -119,44 +127,50 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
    return Success();
 }
 
-FilePath learningFilePath(const std::string& path)
-{
-   if (s_learningState.directory.empty())
-      return FilePath();
-
-   std::string resolvedPath = path;
-
-   if (resolvedPath.empty())
-   {
-      if (s_learningState.directory.childPath("index.html").exists())
-         resolvedPath = "index.html";
-      else
-         resolvedPath = "index.htm";
-   }
-
-   return s_learningState.directory.childPath(resolvedPath);
-}
-
 void handleLearningContentRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
-   // get the requested path
-   std::string path = http::util::pathAfterPrefix(request, "/learning/");
-
-   // resolve the file
-   FilePath filePath = learning::learningFilePath(path);
-   if (filePath.empty())
+   // return not found if learning isn't active
+   if (s_learningState.directory.empty())
    {
-      pResponse->setError(http::status::NotFound, "Not found");
+      pResponse->setError(http::status::NotFound, request.uri() + " not found");
       return;
    }
 
-   // serve it back
-   pResponse->setFile(filePath, request);
+   // get the requested path
+   std::string path = http::util::pathAfterPrefix(request, "/learning/");
+
+   // special handling for the root (process learning template)
+   if (path.empty())
+   {
+      // build template variables
+      std::map<std::string,std::string> vars;
+      vars["title"] = "My title";
+
+      // process the template
+      pResponse->setFile(learningResourcesPath().complete("slides.html"),
+                         request,
+                         text::TemplateFilter(vars));
+
+   }
+
+   // special handling for reveal.js assets
+   else if (boost::algorithm::starts_with(path, "revealjs/"))
+   {
+      path = http::util::pathAfterPrefix(request, "/learning/revealjs/");
+      FilePath filePath = learningResourcesPath().complete("revealjs/" + path);
+      pResponse->setFile(filePath, request);
+   }
+
+   // just serve the file back
+   else
+   {
+      pResponse->setFile(s_learningState.directory.childPath(path),
+                         request);
+   }
 }
 
 } // anonymous namespace
-
 
 json::Value learningStateAsJson()
 {

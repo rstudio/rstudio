@@ -261,6 +261,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # learning
+   install(DIRECTORY "resources/learning"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # R scripts
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")
