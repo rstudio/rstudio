@@ -48,6 +48,11 @@ public class FakeEditorSource<T> extends EditorSource<FakeLeafValueEditor<T>> {
   }
 
   @Override
+  public FakeLeafValueEditor<T> createEditorForTraversal() {
+    return new FakeLeafValueEditor<T>();
+  }
+
+  @Override
   public void dispose(FakeLeafValueEditor<T> subEditor) {
     lastKnownPosition.put(subEditor, DISPOSED);
   }

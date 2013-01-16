@@ -16,6 +16,8 @@
 package com.google.gwt.editor.client.adapters;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.editor.client.EditorContext;
+import com.google.gwt.editor.client.EditorVisitor;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -205,6 +207,26 @@ public class HasDataEditorTest extends GWTTestCase {
     assertEquals(expectedValue, editor.getList());
     assertEquals(expectedValue, hasData.getRowData());
   }
+  
+  /**
+   * See <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=6959">issue 6959</a>
+   */
+  public void testTraverseSyntheticCompositeEditor() {
+    List<Integer> expectedValue = Arrays.asList(1, 2, 3, 4, 5);
+
+    EditorVisitor visitor = new SyntheticVisitor();
+
+    // check that it won't throw
+    driver.accept(visitor);
+
+    driver.edit(expectedValue);
+
+    // Shouldn't affect the editor and HasData
+    driver.accept(visitor);
+
+    assertEquals(expectedValue, editor.getList());
+    assertEquals(expectedValue, hasData.getRowData());
+  }
 
   @Override
   protected void gwtSetUp() throws Exception {
@@ -212,5 +234,15 @@ public class HasDataEditorTest extends GWTTestCase {
     editor = HasDataEditor.of(hasData);
     driver = GWT.create(HasDataEditorDriver.class);
     driver.initialize(editor);
+  }
+
+  /** A visitor that visits synthetic composite editors. */
+  private static class SyntheticVisitor extends EditorVisitor {
+    public <T> boolean visit(EditorContext<T> ctx) {
+      if (ctx.asCompositeEditor() != null) {
+        ctx.traverseSyntheticCompositeEditor(this);
+      }
+      return true;
+    }
   }
 }

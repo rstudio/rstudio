@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * An entity capable of creating and destroying instances of Editors. This type
- * is used by Editors which operate on ordered data, sich as {@link ListEditor}.
+ * is used by Editors which operate on ordered data, such as {@link ListEditor}.
  * 
  * @param <E> the type of Editor required
  * @see com.google.gwt.editor.client.testing.FakeEditorSource
@@ -45,10 +45,27 @@ public abstract class EditorSource<E extends Editor<?>> {
    * @return a List of {@link Editor}s of type E
    */
   public List<E> create(int count, int index) {
+    assert index >= 0;
     List<E> toReturn = new ArrayList<E>(count);
     for (int i = 0; i < count; i++) {
       toReturn.add(create(index + i));
     }
+    return toReturn;
+  }
+
+  /**
+   * Creates a temporary sub-Editor to use for traversal.
+   * <p>
+   * For backwards compatibility with GWT 2.5.0 and earlier, the default implementation calls
+   * {@code create(0)} and {@link #dispose(Editor) disposes} the editor right away.
+   * 
+   * @return an {@link Editor} of type E
+   * @see ListEditor#createEditorForTraversal()
+   * @see com.google.gwt.editor.client.EditorContext#traverseSyntheticCompositeEditor
+   */
+  public E createEditorForTraversal() {
+    E toReturn = create(0);
+    dispose(toReturn);
     return toReturn;
   }
 
@@ -68,5 +85,6 @@ public abstract class EditorSource<E extends Editor<?>> {
    * @param index the index of the Editor
    */
   public void setIndex(E editor, int index) {
+    assert index >= 0;
   }
 }

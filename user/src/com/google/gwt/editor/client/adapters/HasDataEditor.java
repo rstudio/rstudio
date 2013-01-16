@@ -35,21 +35,30 @@ public class HasDataEditor<T> extends ListEditor<T, LeafValueEditor<T>> {
 
     @Override
     public IndexedEditor<T> create(int index) {
+      assert index >= 0;
       return new IndexedEditor<T>(index, data);
     }
 
     @Override
+    public LeafValueEditor<T> createEditorForTraversal() {
+      return new IndexedEditor<T>(-1, null);
+    }
+
+    @Override
     public void dispose(LeafValueEditor<T> subEditor) {
+      // We use a negative index as flag in createEditorForTraversal
+      assert ((IndexedEditor<T>) subEditor).index >= 0;
       data.setRowCount(data.getRowCount() - 1);
     }
 
     @Override
     public void setIndex(LeafValueEditor<T> editor, int index) {
+      assert index >= 0;
       ((IndexedEditor<T>) editor).setIndex(index);
     }
   }
 
-  static class IndexedEditor<Q> implements LeafValueEditor<Q> {
+  private static class IndexedEditor<Q> implements LeafValueEditor<Q> {
     private int index;
     private Q value;
     private final HasData<Q> data;
@@ -59,22 +68,27 @@ public class HasDataEditor<T> extends ListEditor<T, LeafValueEditor<T>> {
       this.data = data;
     }
 
+    @Override
     public Q getValue() {
       return value;
     }
 
-    public void setIndex(int index) {
-      this.index = index;
-      push();
-    }
-
+    @Override
     public void setValue(Q value) {
       this.value = value;
       push();
     }
 
+    void setIndex(int index) {
+      assert index >= 0;
+      this.index = index;
+      push();
+    }
+
     private void push() {
-      data.setRowData(index, Collections.singletonList(value));
+      if (data != null) {
+        data.setRowData(index, Collections.singletonList(value));
+      }
     }
   }
 
@@ -92,7 +106,7 @@ public class HasDataEditor<T> extends ListEditor<T, LeafValueEditor<T>> {
   /**
    * Prevent subclassing.
    */
-  HasDataEditor(HasData<T> data) {
+  private HasDataEditor(HasData<T> data) {
     super(new HasDataEditorSource<T>(data));
   }
 }
