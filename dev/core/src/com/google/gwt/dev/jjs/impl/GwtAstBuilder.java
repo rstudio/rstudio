@@ -2373,16 +2373,25 @@ public class GwtAstBuilder {
       }
     }
 
+    // Only called on nested instances constructors (explicitConstructorCalls) that are of the
+    // form: outer.super(...) or super(...)
+    //
+    // Will set outer (in the first case) or the implicit enclosing object reference to
+    // be the first parameter of super(...)
     private void processSuperCallThisArgs(ReferenceBinding superClass, JMethodCall call,
         JExpression qualifier, Expression qualification) {
+      // Explicit super calls can only happend inside constructors
+      assert curMethod.scope.isInsideConstructor();
       if (superClass.syntheticEnclosingInstanceTypes() != null) {
-        for (ReferenceBinding targetType : superClass.syntheticEnclosingInstanceTypes()) {
-          if (qualification != null && superClass.enclosingType() == targetType) {
-            assert qualification.resolvedType.erasure().isCompatibleWith(targetType);
-            call.addArg(qualifier);
-          } else {
-            call.addArg(makeThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
-          }
+        // there can only be ONE immediate enclosing instance.
+        assert superClass.syntheticEnclosingInstanceTypes().length == 1;
+        ReferenceBinding targetType = superClass.syntheticEnclosingInstanceTypes()[0];
+        if (qualification != null) {
+          // Outer object is the qualifier.
+          call.addArg(qualifier);
+        } else {
+          // Get implicit outer object.
+          call.addArg(makeThisReference(call.getSourceInfo(), targetType, false, curMethod.scope));
         }
       }
     }

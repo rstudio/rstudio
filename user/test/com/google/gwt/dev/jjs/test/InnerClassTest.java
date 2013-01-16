@@ -111,10 +111,88 @@ public class InnerClassTest extends GWTTestCase {
     }
   }
 
+
+  /**
+   * Used in test {@link #testExtendsNested()}
+   */
+  private static class ESOuter {
+    class ESInner {
+      public int value;
+      public ESInner() {
+        value = 1;
+      }
+      public ESInner(int value) {
+        this.value = value;
+      }
+    }
+
+    public ESInner newESInner() {
+      return new ESInner();
+    }
+  }
+
+  private static class ESInnerSubclass extends ESOuter.ESInner {
+    ESInnerSubclass(ESOuter outer) {
+      outer.super();
+    }
+
+    ESInnerSubclass(int value, ESOuter outer) {
+      outer.super(value);
+    }
+  }
+
+  /**
+   * Used in test {@link #testExtendsNestedWithGenerics()}
+   */
+  private static class ESWGOuter<T> {
+    class ESWGInner {
+      public int value;
+      public ESWGInner() {
+        value = 1;
+      }
+      public ESWGInner(int value) {
+        this.value = value;
+      }
+    }
+
+    public ESWGInner newESWGInner() {
+      return new ESWGInner();
+    }
+  }
+
+  private static class ESWGInnerSubclass extends ESWGOuter<String>.ESWGInner {
+    ESWGInnerSubclass(ESWGOuter<String> outer) {
+      outer.super();
+    }
+
+    ESWGInnerSubclass(int value, ESWGOuter<String> outer) {
+      outer.super(value);
+    }
+  }
+
   private StringBuffer testAppend = new StringBuffer();
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  public void testExtendsNested() {
+    ESOuter o = new ESOuter();
+    assertEquals(1, o.new ESInner().value);
+    assertEquals(2, o.new ESInner(2).value);
+    assertEquals(1, new ESInnerSubclass(o).value);
+    assertEquals(2, new ESInnerSubclass(2, o).value);
+  }
+
+  /**
+   * Test for Issue 7789
+   */
+  public void testExtendsNestedWithGenerics() {
+    ESWGOuter<String> o = new ESWGOuter<String>();
+    assertEquals(1, o.new ESWGInner().value);
+    assertEquals(2, o.new ESWGInner(2).value);
+    assertEquals(1, new ESWGInnerSubclass(o).value);
+    assertEquals(2, new ESWGInnerSubclass(2, o).value);
   }
 
   public void testInnerClassCtors() {
