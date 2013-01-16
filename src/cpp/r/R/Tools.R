@@ -229,11 +229,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 #  - linux: getOption("pdfviewer")
 .rs.addFunction( "shellViewPdf", function(path)
 {
+   require(utils)
    sysName <- Sys.info()[['sysname']]
 
    if (identical(sysName, "Windows"))
    {
-     utils:::shell.exec(diagPath)
+     shell.exec(path)
    }
    else
    {
