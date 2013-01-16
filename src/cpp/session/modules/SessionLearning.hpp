@@ -29,8 +29,6 @@ namespace learning {
    
 core::json::Value learningStateAsJson();
 
-core::FilePath learningFilePath(const std::string& path);
-
 core::Error initialize();
                        
 } // namespace learning

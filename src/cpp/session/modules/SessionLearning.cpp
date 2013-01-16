@@ -119,6 +119,24 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
    return Success();
 }
 
+FilePath learningFilePath(const std::string& path)
+{
+   if (s_learningState.directory.empty())
+      return FilePath();
+
+   std::string resolvedPath = path;
+
+   if (resolvedPath.empty())
+   {
+      if (s_learningState.directory.childPath("index.html").exists())
+         resolvedPath = "index.html";
+      else
+         resolvedPath = "index.htm";
+   }
+
+   return s_learningState.directory.childPath(resolvedPath);
+}
+
 void handleLearningContentRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
@@ -147,25 +165,6 @@ json::Value learningStateAsJson()
    stateJson["directory"] = s_learningState.directory.absolutePath();
    return stateJson;
 }
-
-FilePath learningFilePath(const std::string& path)
-{
-   if (s_learningState.directory.empty())
-      return FilePath();
-
-   std::string resolvedPath = path;
-
-   if (resolvedPath.empty())
-   {
-      if (s_learningState.directory.childPath("index.html").exists())
-         resolvedPath = "index.html";
-      else
-         resolvedPath = "index.htm";
-   }
-
-   return s_learningState.directory.childPath(resolvedPath);
-}
-
 
 Error initialize()
 {

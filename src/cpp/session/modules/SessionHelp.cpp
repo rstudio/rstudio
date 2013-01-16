@@ -573,15 +573,19 @@ void handleLearningRequest(const http::Request& request,
                            const Filter& filter,
                            http::Response* pResponse)
 {
-   // get file path
-   std::string path = http::util::pathAfterPrefix(request,
-                                                  std::string(kHelpLocation) +
-                                                  "/learning/");
-
-   FilePath filePath = learning::learningFilePath(path);
-   if (filePath.empty())
+   // read parmaeters
+   std::string file = request.queryParamValue("file");
+   if (file.empty())
    {
-      pResponse->setError(http::status::NotFound, "Not found");
+      pResponse->setError(http::status::BadRequest, "No file parameter");
+      return;
+   }
+
+   // ensure file exists
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   if (!filePath.exists())
+   {
+      pResponse->setError(http::status::NotFound, request.uri());
       return;
    }
 
