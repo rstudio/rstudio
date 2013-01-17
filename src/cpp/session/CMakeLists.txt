@@ -79,7 +79,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
    modules/learning/SessionLearning.cpp
-   modules/learning/SessionLearningState.cpp
+   modules/learning/LearningState.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp

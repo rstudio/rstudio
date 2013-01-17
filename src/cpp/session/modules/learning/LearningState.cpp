@@ -1,5 +1,5 @@
 /*
- * SessionLearningState.cpp
+ * LearningState.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@
  */
 
 
-#include "SessionLearningState.hpp"
+#include "LearningState.hpp"
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>

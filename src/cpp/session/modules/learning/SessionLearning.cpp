@@ -26,7 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionLearningState.hpp"
+#include "LearningState.hpp"
 
 using namespace core;
 
