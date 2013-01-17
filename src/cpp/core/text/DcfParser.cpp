@@ -19,8 +19,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <boost/format.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 
@@ -30,27 +33,15 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
+
 namespace core {
 namespace text {
 
-
-
-Error parseDcfFile(const FilePath& dcfFilePath,
+Error parseDcfFile(const std::string& dcfFileContents,
                    bool preserveKeyCase,
-                   std::map<std::string,std::string>* pFields,
+                   DcfFieldRecorder recordField,
                    std::string* pUserErrMsg)
 {
-   // read the file
-   std::string dcfFileContents;
-   Error error = readStringFromFile(dcfFilePath,
-                                    &dcfFileContents);
-   if (error)
-   {
-      error.addProperty("dcf-file", dcfFilePath.absolutePath());
-      *pUserErrMsg = error.summary();
-      return error;
-   }
-
    // split into lines
    std::vector<std::string> dcfLines;
    boost::algorithm::split(dcfLines,
@@ -86,7 +77,7 @@ Error parseDcfFile(const FilePath& dcfFilePath,
          // if we have a pending key & value then resolve it
          if (!currentKey.empty())
          {
-            pFields->insert(std::make_pair(currentKey,currentValue));
+            recordField(std::make_pair(currentKey,currentValue));
             currentKey.clear();
             currentValue.clear();
          }
@@ -121,9 +112,55 @@ Error parseDcfFile(const FilePath& dcfFilePath,
 
    // resolve any pending key and value
    if (!currentKey.empty())
-      pFields->insert(std::make_pair(currentKey,currentValue));
+      recordField(std::make_pair(currentKey,currentValue));
 
    return Success();
+}
+
+
+Error parseDcfFile(const FilePath& dcfFilePath,
+                   bool preserveKeyCase,
+                   DcfFieldRecorder recordField,
+                   std::string* pUserErrMsg)
+{
+   // read the file
+   std::string dcfFileContents;
+   Error error = readStringFromFile(dcfFilePath,
+                                    &dcfFileContents);
+   if (error)
+   {
+      error.addProperty("dcf-file", dcfFilePath.absolutePath());
+      *pUserErrMsg = error.summary();
+      return error;
+   }
+
+   return parseDcfFile(dcfFileContents,
+                       preserveKeyCase,
+                       recordField,
+                       pUserErrMsg);
+}
+
+
+namespace {
+
+void mapInsert(std::map<std::string,std::string>* pMap,
+               const std::pair<std::string,std::string>& field)
+{
+   pMap->insert(field);
+}
+
+} // anonymous namespace
+
+
+Error parseDcfFile(const FilePath& dcfFilePath,
+                   bool preserveKeyCase,
+                   std::map<std::string,std::string>* pFields,
+                   std::string* pUserErrMsg)
+{
+   return parseDcfFile(dcfFilePath,
+                       preserveKeyCase,
+                       boost::bind(mapInsert, pFields, _1),
+                       pUserErrMsg);
 }
 
 std::string dcfMultilineAsFolded(const std::string& line)
@@ -131,6 +168,7 @@ std::string dcfMultilineAsFolded(const std::string& line)
    return boost::algorithm::trim_copy(
        boost::regex_replace(line, boost::regex("\\s*\r?\n\\s*"), " "));
 }
+
 
 } // namespace dcf
 } // namespace core

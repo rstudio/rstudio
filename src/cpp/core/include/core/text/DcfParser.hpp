@@ -19,6 +19,9 @@
 #include <string>
 #include <map>
 
+#include <boost/function.hpp>
+
+
 namespace core {
 
 class Error;
@@ -26,13 +29,22 @@ class FilePath;
 
 namespace text {
 
-core::Error parseDcfFile(const FilePath& dcfFilePath,
-                         bool preserveKeyCase,
-                         std::map<std::string,std::string>* pFields,
-                         std::string* pUserErrMsg);
+typedef boost::function<void(const std::pair<std::string,std::string>&)>
+                                                           DcfFieldRecorder;
+
+Error parseDcfFile(const std::string& dcfFileContents,
+                   bool preserveKeyCase,
+                   DcfFieldRecorder recordField,
+                   std::string* pUserErrMsg);
+
+Error parseDcfFile(const FilePath& dcfFilePath,
+                   bool preserveKeyCase,
+                   std::map<std::string,std::string>* pFields,
+                   std::string* pUserErrMsg);
 
 
 std::string dcfMultilineAsFolded(const std::string& line);
+
 
 } // namespace text
 } // namespace core
