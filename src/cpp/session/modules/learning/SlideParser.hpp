@@ -21,6 +21,9 @@
 #include <vector>
 #include <map>
 
+#include <core/Error.hpp>
+#include <core/FilePath.hpp>
+
 namespace session {
 namespace modules { 
 namespace learning {
@@ -40,6 +43,7 @@ public:
 
    const std::string& title() const { return title_; }
 
+   std::vector<std::string> fields() const;
    std::string fieldValue(const std::string& name) const;
    std::vector<std::string> fieldValues(const std::string& name) const;
 
@@ -51,6 +55,10 @@ private:
    std::string content_;
 };
 
+
+core::Error readSlides(const core::FilePath& filePath,
+                       std::vector<Slide>* pSlides,
+                       std::string* pUserErrMsg);
 
 
 } // namespace learning

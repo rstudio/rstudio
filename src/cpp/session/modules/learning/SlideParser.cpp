@@ -16,10 +16,16 @@
 
 #include "SlideParser.hpp"
 
+#include <iostream>
+
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/text/DcfParser.hpp>
 
 using namespace core;
 
@@ -41,6 +47,16 @@ struct CompareName
 
 } // anonymous namespace
 
+
+std::vector<std::string> Slide::fields() const
+{
+   std::vector<std::string> fields;
+   BOOST_FOREACH(const Field& field, fields_)
+   {
+      fields.push_back(field.first);
+   }
+   return fields;
+}
 
 std::string Slide::fieldValue(const std::string& name) const
 {
@@ -64,6 +80,106 @@ std::vector<std::string> Slide::fieldValues(const std::string& name) const
    return values;
 }
 
+
+namespace {
+
+void insertField(std::vector<Slide::Field>* pFields, const Slide::Field& field)
+{
+   pFields->push_back(field);
+}
+
+} // anonymous namespace
+
+
+Error readSlides(const FilePath& filePath,
+                 std::vector<Slide>* pSlides,
+                 std::string* pUserErrorMsg)
+{
+   // read the file
+   std::string slides;
+   Error error = readStringFromFile(filePath, &slides);
+   if (error)
+   {
+      *pUserErrorMsg = error.summary();
+      return error;
+   }
+
+   // split into lines
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, slides, boost::algorithm::is_any_of("\r\n"));
+
+   // find indexes of lines with dashes
+   boost::regex re("^\\-{3,}\\s*$");
+   std::vector<std::size_t> headerLines;
+   for (std::size_t i = 0; i<lines.size(); i++)
+   {
+      boost::smatch m;
+      if (boost::regex_match(lines[i], m, re))
+         headerLines.push_back(i);
+   }
+
+   // loop through the header lines to capture the slides
+   for (std::size_t i = 0; i<headerLines.size(); i++)
+   {
+      // line index
+      std::size_t lineIndex = headerLines[i];
+
+      // title is the line before (if there is one)
+      std::string title = lineIndex > 0 ? lines[lineIndex-1] : "";
+
+      // find the begin index (line after)
+      std::size_t beginIndex = lineIndex + 1;
+
+      // find the end index (next section or end of file)
+      std::size_t endIndex;
+      if (i < (headerLines.size()-1))
+         endIndex = headerLines[i+1] - 1;
+      else
+         endIndex = lines.size();
+
+      // now iterate through from begin to end and break into fields and content
+      bool inFields = true;
+      std::string fields, content;
+      for (std::size_t l = beginIndex; l<endIndex; l++)
+      {
+         std::string line = boost::algorithm::trim_copy(lines[l]);
+         if (inFields)
+         {
+            if (!line.empty())
+               fields += line + "\n";
+            else
+               inFields = false;
+         }
+         else
+         {
+            content += line + "\n";
+         }
+      }
+
+      // now parse the fields
+      std::string errMsg;
+      std::vector<Slide::Field> slideFields;
+      Error error = text::parseDcfFile(fields,
+                                       false,
+                                       boost::bind(insertField,
+                                                   &slideFields, _1),
+                                       &errMsg);
+      if (error)
+      {
+         std::string badLine = error.getProperty("line-contents");
+         if (!badLine.empty())
+            *pUserErrorMsg = "Invalid DCF field (no separator?): " + badLine;
+         else
+            *pUserErrorMsg = error.summary();
+         return error;
+      }
+
+      // create the slide
+      pSlides->push_back(Slide(title, slideFields, content));
+   }
+
+   return Success();
+}
 
 
 } // namespace learning

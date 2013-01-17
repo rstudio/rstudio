@@ -19,3 +19,10 @@
    .Call("rs_showLearningPane", normalizePath(path.expand(dir)))
 })
 
+
+.rs.addFunction( "parseSlides", function(file)
+{
+   require(utils)
+   .Call("rs_parseSlides", normalizePath(path.expand(file)))
+})
+
