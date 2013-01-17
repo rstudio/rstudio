@@ -140,9 +140,12 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       // (internal previews are handled by the compile pdf window directly)
       if (event.getResult().getSucceeded() && handleDesktopSynctex())
       {
+         int page = 1;
+         if (event.getResult().isSynctexAvailable())
+            page = event.getResult().getPdfLocation().getPage();
          Desktop.getFrame().externalSynctexPreview(
                                  event.getResult().getPdfPath(), 
-                                 event.getResult().getPdfLocation().getPage());
+                                 page);
       }
    }
    
