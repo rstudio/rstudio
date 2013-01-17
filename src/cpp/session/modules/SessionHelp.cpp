@@ -48,8 +48,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionLearning.hpp"
-
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
 #undef FALSE

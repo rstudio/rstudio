@@ -98,7 +98,6 @@
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionData.hpp"
 #include "modules/SessionHelp.hpp"
-#include "modules/SessionLearning.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
@@ -111,6 +110,7 @@
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
 #include "modules/build/SessionBuild.hpp"
+#include "modules/learning/SessionLearning.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"

@@ -19,13 +19,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
-#include <core/Settings.hpp>
 #include <core/text/TemplateFilter.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include "SessionLearningState.hpp"
 
 using namespace core;
 
@@ -34,86 +35,24 @@ namespace modules {
 namespace learning {
 
 namespace {
-      
-struct LearningState
-{
-   LearningState()
-      : active(false)
-   {
-   }
-
-   bool active;
-   FilePath directory;
-};
-
-// write-through cache of learning state
-LearningState s_learningState;
-
-FilePath learningStatePath()
-{
-   FilePath path = module_context::userScratchPath().childPath("learning");
-   Error error = path.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-   return path.childPath("learning-state");
-}
 
 FilePath learningResourcesPath()
 {
    return session::options().rResourcesPath().complete("learning");
 }
 
-void saveLearningState(const LearningState& state)
-{
-   // update write-through cache
-   s_learningState = state;
-
-   // save to disk
-   Settings settings;
-   Error error = settings.initialize(learningStatePath());
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   settings.beginUpdate();
-   settings.set("active", state.active);
-   settings.set("directory", state.directory.absolutePath());
-   settings.endUpdate();
-}
-
-void loadLearningState()
-{
-   FilePath statePath = learningStatePath();
-   if (statePath.exists())
-   {
-      Settings settings;
-      Error error = settings.initialize(learningStatePath());
-      if (error)
-         LOG_ERROR(error);
-
-      s_learningState.active = settings.getBool("active", false);
-      s_learningState.directory = FilePath(settings.get("directory"));
-   }
-   else
-   {
-      s_learningState = LearningState();
-   }
-}
-
 SEXP rs_showLearningPane(SEXP dirSEXP)
 {
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // setup new state and save it
-      LearningState state;
-      state.active = true;
-      state.directory = FilePath(r::sexp::asString(dirSEXP));
-      saveLearningState(state);
+      // TODO: validate path
+
+      // initialize learning state
+      learning::state::init(FilePath(r::sexp::asString(dirSEXP)));
 
       // notify the client
       ClientEvent event(client_events::kShowLearningPane,
-                        learning::learningStateAsJson());
+                        learning::state::asJson());
       module_context::enqueClientEvent(event);
    }
 
@@ -123,7 +62,8 @@ SEXP rs_showLearningPane(SEXP dirSEXP)
 core::Error closeLearningPane(const json::JsonRpcRequest&,
                               json::JsonRpcResponse*)
 {
-   saveLearningState(LearningState());
+   learning::state::clear();
+
    return Success();
 }
 
@@ -131,7 +71,7 @@ void handleLearningContentRequest(const http::Request& request,
                                   http::Response* pResponse)
 {
    // return not found if learning isn't active
-   if (s_learningState.directory.empty())
+   if (!learning::state::isActive())
    {
       pResponse->setError(http::status::NotFound, request.uri() + " not found");
       return;
@@ -165,7 +105,7 @@ void handleLearningContentRequest(const http::Request& request,
    // just serve the file back
    else
    {
-      pResponse->setFile(s_learningState.directory.childPath(path),
+      pResponse->setFile(learning::state::directory().childPath(path),
                          request);
    }
 }
@@ -174,20 +114,13 @@ void handleLearningContentRequest(const http::Request& request,
 
 json::Value learningStateAsJson()
 {
-   json::Object stateJson;
-   stateJson["active"] = s_learningState.active;
-   stateJson["directory"] = s_learningState.directory.absolutePath();
-   return stateJson;
+   return learning::state::asJson();
 }
 
 Error initialize()
 {
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // load learning state -- subsequent reads of learning state
-      // are done from the in-memory cache
-      loadLearningState();
-
       // register rs_showLearningPane
       R_CallMethodDef methodDefShowLearningPane;
       methodDefShowLearningPane.name = "rs_showLearningPane" ;
@@ -201,6 +134,7 @@ Error initialize()
       initBlock.addFunctions()
          (bind(registerUriHandler, "/learning", handleLearningContentRequest))
          (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
+         (bind(learning::state::initialize))
          (bind(sourceModuleRFile, "SessionLearning.R"));
 
       return initBlock.execute();

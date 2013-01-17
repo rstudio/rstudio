@@ -61,7 +61,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
    modules/SessionHTMLPreview.cpp
-   modules/SessionLearning.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionPackages.cpp
@@ -79,6 +78,8 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/learning/SessionLearning.cpp
+   modules/learning/SessionLearningState.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
