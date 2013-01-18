@@ -52,17 +52,28 @@ FilePath learningResourcesPath()
 
 SEXP rs_showLearningPane(SEXP dirSEXP)
 {
-   if (session::options().programMode() == kSessionProgramModeServer)
+   try
    {
-      // TODO: validate path
+      if (session::options().programMode() == kSessionProgramModeServer)
+      {
+         // validate path
+         FilePath dir(r::sexp::asString(dirSEXP));
+         if (!dir.exists())
+            throw r::exec::RErrorException("Directory " + dir.absolutePath() +
+                                           " does not exist.");
 
-      // initialize learning state
-      learning::state::init(FilePath(r::sexp::asString(dirSEXP)));
+         // initialize learning state
+         learning::state::init(dir);
 
-      // notify the client
-      ClientEvent event(client_events::kShowLearningPane,
-                        learning::state::asJson());
-      module_context::enqueClientEvent(event);
+         // notify the client
+         ClientEvent event(client_events::kShowLearningPane,
+                           learning::state::asJson());
+         module_context::enqueClientEvent(event);
+      }
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
    }
 
    return R_NilValue;
