@@ -33,6 +33,7 @@
 #include "LearningState.hpp"
 
 #include "SlideParser.hpp"
+#include "SlideRenderer.hpp"
 
 using namespace core;
 
@@ -119,9 +120,30 @@ void handleLearningContentRequest(const http::Request& request,
    // special handling for the root (process learning template)
    if (path.empty())
    {
+      // look for slides.md
+      FilePath slidesFile = learning::state::directory().complete("slides.md");
+      if (!slidesFile.exists())
+      {
+         pResponse->setError(http::status::NotFound,
+                             "slides.md file not found in " +
+                             learning::state::directory().absolutePath());
+         return;
+      }
+
+      // parse it
+      std::string slides, errMsg;
+      Error error = learning::renderSlides(slidesFile, &slides, &errMsg);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setError(http::status::InternalServerError, errMsg);
+         return;
+      }
+
       // build template variables
       std::map<std::string,std::string> vars;
       vars["title"] = "My title";
+      vars["slides"] = slides;
 
       // process the template
       pResponse->setFile(learningResourcesPath().complete("slides.html"),

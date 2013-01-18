@@ -81,6 +81,7 @@ set (SESSION_SOURCE_FILES
    modules/learning/SessionLearning.cpp
    modules/learning/LearningState.cpp
    modules/learning/SlideParser.cpp
+   modules/learning/SlideRenderer.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
