@@ -48,6 +48,11 @@ struct CompareName
 } // anonymous namespace
 
 
+bool Slide::showTitle() const
+{
+   return !boost::iequals(fieldValue("title"), "false");
+}
+
 std::vector<std::string> Slide::fields() const
 {
    std::vector<std::string> fields;

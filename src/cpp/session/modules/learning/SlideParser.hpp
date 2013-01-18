@@ -43,6 +43,9 @@ public:
 
    const std::string& title() const { return title_; }
 
+   bool showTitle() const;
+
+
    std::vector<std::string> fields() const;
    std::string fieldValue(const std::string& name) const;
    std::vector<std::string> fieldValues(const std::string& name) const;

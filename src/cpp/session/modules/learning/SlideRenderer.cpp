@@ -54,7 +54,8 @@ Error renderSlides(const SlideDeck& slideDeck,
         it != slideDeck.end(); ++it)
    {
       ostr << "<section>" << std::endl;
-      ostr << "<h3>" << it->title() << "</h3>";
+      if (it->showTitle())
+         ostr << "<h3>" << it->title() << "</h3>";
 
       std::string htmlContent;
       Error error = markdown::markdownToHTML(it->content(),
