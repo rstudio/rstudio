@@ -128,7 +128,7 @@ ResourceFiles& resourceFiles()
 std::string mathjaxIfRequired(const std::string& contents)
 {
    if (markdown::isMathJaxRequired(contents))
-      return resourceFiles().get("mathjax.html");
+      return resourceFiles().get("learning/mathjax.html");
    else
       return std::string();
 }

@@ -52,6 +52,10 @@
   Reveal.addEventListener( 'slidechanged', function( event ) {
     if (window.parent.learningSlideChanged)
       window.parent.learningSlideChanged(event.indexh);
+    
+    if (window.MathJax)
+      window.MathJax.Hub.Rerender(event.currentSlide); 
+    
   });
 
   </script>
