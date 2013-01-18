@@ -20,9 +20,3 @@
 })
 
 
-.rs.addFunction( "parseSlides", function(file)
-{
-   require(utils)
-   .Call("rs_parseSlides", normalizePath(path.expand(file)))
-})
-

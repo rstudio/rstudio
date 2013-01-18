@@ -48,36 +48,6 @@ FilePath learningResourcesPath()
    return session::options().rResourcesPath().complete("learning");
 }
 
-SEXP rs_parseSlides(SEXP fileSEXP)
-{
-   std::string userError;
-   std::vector<Slide> slides;
-   Error error = readSlides(FilePath(r::sexp::asString(fileSEXP)),
-                             &slides,
-                             &userError);
-   if (error)
-   {
-      r::exec::error(userError);
-      LOG_ERROR(error);
-
-   }
-
-   BOOST_FOREACH(const Slide& slide, slides)
-   {
-      std::cout << "TITLE: " << slide.title() << std::endl << std::endl;
-      std::vector<std::string> fields = slide.fields();
-      for (int i=0; i<fields.size(); i++)
-      {
-         std::string field = fields[i];
-         std::cout << field << " = " << slide.fieldValue(field) << std::endl;
-      }
-      std::cout << std::endl;
-      std::cout << slide.content() << std::endl;
-   }
-
-   return R_NilValue;
-}
-
 SEXP rs_showLearningPane(SEXP dirSEXP)
 {
    if (session::options().programMode() == kSessionProgramModeServer)
@@ -185,15 +155,6 @@ Error initialize()
       methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
       methodDefShowLearningPane.numArgs = 1;
       r::routines::addCallMethod(methodDefShowLearningPane);
-
-      // register rs_parseSlides
-      R_CallMethodDef methodDefParseSlides;
-      methodDefParseSlides.name = "rs_parseSlides" ;
-      methodDefParseSlides.fun = (DL_FUNC) rs_parseSlides;
-      methodDefParseSlides.numArgs = 1;
-      r::routines::addCallMethod(methodDefParseSlides);
-
-
 
       using boost::bind;
       using namespace session::module_context;
