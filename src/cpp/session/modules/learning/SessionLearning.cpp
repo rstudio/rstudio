@@ -18,6 +18,7 @@
 
 #include <iostream>
 
+#include <boost/utility.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -75,10 +76,35 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
    return Success();
 }
 
+class ResourceFiles : boost::noncopyable
+{
+public:
+   const std::string& get(const std::string& path)
+   {
+      std::map<std::string, std::string>::const_iterator it =
+                                                      cache_.find(path);
+      if (it == cache_.end())
+         cache_[path] = module_context::resourceFileAsString(path);
+
+      return cache_[path];
+   }
+
+private:
+   friend ResourceFiles& resourceFiles();
+   std::map<std::string, std::string> cache_;
+};
+
+ResourceFiles& resourceFiles()
+{
+   static ResourceFiles instance;
+   return instance;
+}
+
+
 std::string mathjaxIfRequired(const std::string& contents)
 {
    if (markdown::isMathJaxRequired(contents))
-      return module_context::resourceFileAsString("mathjax.html");
+      return resourceFiles().get("mathjax.html");
    else
       return std::string();
 }
@@ -134,16 +160,14 @@ void handleLearningContentRequest(const http::Request& request,
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
       vars["slides"] = slides;
-      vars["r_highlight"] = module_context::resourceFileAsString(
-                                                      "r_highlight.html");
+      vars["styles"] =  resourceFiles().get("learning/slides.css");
+      vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
 
       // process the template
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(learningResourcesPath().complete("slides.html"),
-                         request,
+      pResponse->setBody(resourceFiles().get("learning/slides.html"),
                          text::TemplateFilter(vars));
-
    }
 
    // special handling for reveal.js assets
