@@ -22,6 +22,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
+#include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
 
 #include <r/RExec.hpp>
@@ -72,6 +73,14 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
    learning::state::clear();
 
    return Success();
+}
+
+std::string mathjaxIfRequired(const std::string& contents)
+{
+   if (markdown::isMathJaxRequired(contents))
+      return module_context::resourceFileAsString("mathjax.html");
+   else
+      return std::string();
 }
 
 void handleLearningContentRequest(const http::Request& request,
@@ -127,6 +136,7 @@ void handleLearningContentRequest(const http::Request& request,
       vars["slides"] = slides;
       vars["r_highlight"] = module_context::resourceFileAsString(
                                                       "r_highlight.html");
+      vars["mathjax"] = mathjaxIfRequired(slides);
 
       // process the template
       pResponse->setNoCacheHeaders();
