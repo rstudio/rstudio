@@ -91,10 +91,22 @@ void insertField(std::vector<Slide::Field>* pFields, const Slide::Field& field)
 } // anonymous namespace
 
 
-Error readSlides(const FilePath& filePath,
-                 std::vector<Slide>* pSlides,
-                 std::string* pUserErrorMsg)
+
+std::string SlideDeck::title() const
 {
+   if (!slides_.empty())
+      return slides_[0].title();
+   else
+      return std::string();
+}
+
+
+Error SlideDeck::readSlides(const FilePath& filePath,
+                            std::string* pUserErrorMsg)
+{
+   // clear existing
+   slides_.clear();;
+
    // read the file
    std::string slides;
    Error error = readStringFromFile(filePath, &slides);
@@ -175,7 +187,7 @@ Error readSlides(const FilePath& filePath,
       }
 
       // create the slide
-      pSlides->push_back(Slide(title, slideFields, content));
+      slides_.push_back(Slide(title, slideFields, content));
    }
 
    return Success();

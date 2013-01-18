@@ -55,6 +55,25 @@ private:
    std::string content_;
 };
 
+class SlideDeck
+{
+public:
+   SlideDeck()
+   {
+   }
+
+   core::Error readSlides(const core::FilePath& filePath,
+                          std::string* pUserErrMsg);
+
+   std::string title() const;
+
+   std::vector<Slide>::const_iterator begin() const { return slides_.begin(); }
+   std::vector<Slide>::const_iterator end() const { return slides_.end(); }
+
+private:
+   std::vector<Slide> slides_;
+};
+
 
 core::Error readSlides(const core::FilePath& filePath,
                        std::vector<Slide>* pSlides,

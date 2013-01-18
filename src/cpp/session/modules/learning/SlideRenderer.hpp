@@ -27,7 +27,9 @@ namespace session {
 namespace modules { 
 namespace learning {
 
-core::Error renderSlides(const core::FilePath& slidesDefPath,
+class SlideDeck;
+
+core::Error renderSlides(const SlideDeck& slideDeck,
                          std::string* pSlides,
                          std::string* pUserErrorMsg);
 

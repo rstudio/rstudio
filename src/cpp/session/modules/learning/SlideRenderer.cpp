@@ -40,29 +40,24 @@ namespace {
 } // anonymous namespace
 
 
-Error renderSlides(const FilePath& slidesDefPath,
+Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pSlides,
                    std::string* pUserErrorMsg)
 {
-   // parse slide definition
-   std::vector<Slide> slides;
-   Error error = learning::readSlides(slidesDefPath, &slides, pUserErrorMsg);
-   if (error)
-      return error;
-
    // setup markdown options
    markdown::Extensions extensions;
    markdown::HTMLOptions htmlOptions;
 
    // render the slides to HTML
    std::ostringstream ostr;
-   BOOST_FOREACH(const Slide& slide, slides)
+   for (std::vector<Slide>::const_iterator it = slideDeck.begin();
+        it != slideDeck.end(); ++it)
    {
       ostr << "<section>" << std::endl;
-      ostr << "<h3>" << slide.title() << "</h3>";
+      ostr << "<h3>" << it->title() << "</h3>";
 
       std::string htmlContent;
-      Error error = markdown::markdownToHTML(slide.content(),
+      Error error = markdown::markdownToHTML(it->content(),
                                              extensions,
                                              htmlOptions,
                                              &htmlContent);

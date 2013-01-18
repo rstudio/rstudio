@@ -100,9 +100,20 @@ void handleLearningContentRequest(const http::Request& request,
          return;
       }
 
-      // parse it
-      std::string slides, errMsg;
-      Error error = learning::renderSlides(slidesFile, &slides, &errMsg);
+      // parse the slides
+      std::string errMsg;
+      learning::SlideDeck slideDeck;
+      Error error = slideDeck.readSlides(slidesFile, &errMsg);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setError(http::status::InternalServerError, errMsg);
+         return;
+      }
+
+      // render the slides
+      std::string slides;
+      error = learning::renderSlides(slideDeck, &slides, &errMsg);
       if (error)
       {
          LOG_ERROR(error);
@@ -112,7 +123,7 @@ void handleLearningContentRequest(const http::Request& request,
 
       // build template variables
       std::map<std::string,std::string> vars;
-      vars["title"] = "My title";
+      vars["title"] = slideDeck.title();
       vars["slides"] = slides;
 
       // process the template
