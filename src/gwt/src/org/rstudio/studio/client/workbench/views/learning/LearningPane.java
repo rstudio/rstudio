@@ -38,6 +38,7 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
                        Session session)
    {
       super("Learning");
+      commands_ = commands;
       ensureWidget();
    }
    
@@ -47,6 +48,8 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       Toolbar toolbar = new Toolbar();
       titleLabel_ = new ToolbarLabel();
       toolbar.addLeftWidget(titleLabel_);
+      
+      toolbar.addRightWidget(commands_.refreshLearning().createToolbarButton());
         
       return toolbar;
    }
@@ -92,11 +95,19 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       frame_.navigate(url);
    }
    
+   @Override
+   public void refresh(boolean resetAnchor)
+   {
+      frame_.reload(resetAnchor);
+   }
+   
    
    private boolean initialized_ = false;
    
    private ToolbarLabel titleLabel_;
    
    private ReloadableFrame frame_ ;
+   
+   private final Commands commands_;
 
 }

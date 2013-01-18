@@ -15,8 +15,11 @@
 package org.rstudio.studio.client.workbench.views.learning;
 
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
@@ -26,6 +29,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
@@ -34,9 +38,12 @@ import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 
 public class LearningPresenter extends BasePresenter 
 {
+   public interface Binder extends CommandBinder<Commands, LearningPresenter> {}
+   
    public interface Display extends WorkbenchView
    {
       void load(String url, LearningState state);
+      void refresh(boolean resetAnchor);
    }
    
    @Inject
@@ -44,7 +51,9 @@ public class LearningPresenter extends BasePresenter
                             LearningServerOperations server,
                             GlobalDisplay globalDisplay,
                             EventBus eventBus,
-                            Session session)
+                            Session session,
+                            Binder binder,
+                            Commands commands)
    {
       super(display);
       view_ = display;
@@ -53,8 +62,7 @@ public class LearningPresenter extends BasePresenter
       eventBus_ = eventBus;
       session_ = session;
      
-        
-    
+      binder.bind(commands, this);
    }
    
    public void initialize(LearningState learningState)
@@ -70,6 +78,13 @@ public class LearningPresenter extends BasePresenter
          eventBus_.fireEvent(new ReloadEvent());
       else
          load(event.getLearningState());
+   }
+   
+   @Handler
+   void onRefreshLearning()
+   {
+      boolean resetAnchor = Event.getCurrentEvent().getShiftKey();
+      view_.refresh(resetAnchor);
    }
    
    public void confirmClose(Command onConfirmed)

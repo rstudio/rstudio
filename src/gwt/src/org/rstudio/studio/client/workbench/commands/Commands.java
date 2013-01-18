@@ -157,6 +157,9 @@ public abstract class
    public abstract AppCommand refreshHtmlPreview();
    public abstract AppCommand showHtmlPreviewLog();
    
+   // Learning
+   public abstract AppCommand refreshLearning();
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
