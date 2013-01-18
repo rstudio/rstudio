@@ -1176,6 +1176,23 @@ void showContent(const std::string& title, const core::FilePath& filePath)
    module_context::enqueClientEvent(event);
 }
 
+
+std::string resourceFileAsString(const std::string& fileName)
+{
+   FilePath resPath = session::options().rResourcesPath();
+   FilePath filePath = resPath.complete(fileName);
+   std::string fileContents;
+   Error error = readStringFromFile(filePath, &fileContents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+
+   return fileContents;
+}
+
+
 void activatePane(const std::string& pane)
 {
    ClientEvent event(client_events::kActivatePane, pane);

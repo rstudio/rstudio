@@ -125,6 +125,8 @@ void handleLearningContentRequest(const http::Request& request,
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
       vars["slides"] = slides;
+      vars["r_highlight"] = module_context::resourceFileAsString(
+                                                      "r_highlight.html");
 
       // process the template
       pResponse->setNoCacheHeaders();

@@ -891,16 +891,7 @@ void setVarFromHtmlResourceFile(const std::string& name,
                                 const std::string& fileName,
                                 std::map<std::string,std::string>* pVars)
 {
-   FilePath resPath = session::options().rResourcesPath();
-   FilePath filePath = resPath.complete(fileName);
-   std::string fileContents;
-   Error error = readStringFromFile(filePath, &fileContents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
+   std::string fileContents = module_context::resourceFileAsString(fileName);
    (*pVars)[name] = fileContents;
 }
 
