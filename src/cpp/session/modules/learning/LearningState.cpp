@@ -68,7 +68,8 @@ void saveLearningState(const LearningState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
-   settings.set("directory", state.directory.absolutePath());
+   settings.set("directory",
+                module_context::createAliasedPath(state.directory));
    settings.endUpdate();
 }
 
@@ -83,7 +84,8 @@ void loadLearningState()
          LOG_ERROR(error);
 
       s_learningState.active = settings.getBool("active", false);
-      s_learningState.directory = FilePath(settings.get("directory"));
+      s_learningState.directory = module_context::resolveAliasedPath(
+                                                   settings.get("directory"));
    }
    else
    {
@@ -121,7 +123,8 @@ json::Value asJson()
 {
    json::Object stateJson;
    stateJson["active"] = s_learningState.active;
-   stateJson["directory"] = s_learningState.directory.absolutePath();
+   stateJson["directory"] = module_context::createAliasedPath(
+                                                s_learningState.directory);
    return stateJson;
 }
 

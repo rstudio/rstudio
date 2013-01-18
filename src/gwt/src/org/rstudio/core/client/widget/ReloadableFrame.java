@@ -101,10 +101,9 @@ public class ReloadableFrame extends Frame
       // make sure there is an existing url to compare to
       String existingUrl = getWindow().getLocationHref();
       if (existingUrl == null)
-         return false;
-      
-      // strip trailing # before comparing
-      return newUrl.equals(stripAnchor(existingUrl));
+         return false;      
+     
+      return stripAnchor(newUrl).equals(stripAnchor(existingUrl));
    }
    
    private IFrameElementEx getIFrame()

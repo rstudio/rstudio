@@ -127,6 +127,7 @@ void handleLearningContentRequest(const http::Request& request,
       vars["slides"] = slides;
 
       // process the template
+      pResponse->setNoCacheHeaders();
       pResponse->setFile(learningResourcesPath().complete("slides.html"),
                          request,
                          text::TemplateFilter(vars));
