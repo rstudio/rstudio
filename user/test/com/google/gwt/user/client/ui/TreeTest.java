@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
@@ -342,6 +344,55 @@ public class TreeTest extends GWTTestCase {
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected.
+    }
+  }
+  
+  @DoNotRunWith(Platform.HtmlUnitLayout)
+  public void testScrollOnSelectEnabledFalse() {
+    // With scrolling disabled.
+    Tree tree = createTree();
+    tree.setScrollOnSelectEnabled(false);
+    assertScrollingOnSelection(tree, false);
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitLayout)
+  public void testScrollOnSelectEnabledTrue() {
+    // With scrolling enabled (default)
+    Tree tree = createTree();
+    assertTrue(tree.isScrollOnSelectEnabled());
+    assertScrollingOnSelection(tree, true);
+  }
+
+  private void assertScrollingOnSelection(Tree tree, boolean shouldScroll) {
+    tree.addItem(new Label("hello1"));
+    tree.addItem(new Label("hello2"));
+    TreeItem levelZeroTreeItem = tree.addItem(new Label("level0"));
+    TreeItem selectedItem = levelZeroTreeItem.addItem(new Label("level1"));
+    selectedItem.addItem(SafeHtmlUtils.fromString("level2"));
+
+    // For the tree to be opened. Otherwise, all sizes will be zero and no scrolling would occur,
+    // regardless of the mode.
+    levelZeroTreeItem.setState(true);
+    selectedItem.setState(true);
+
+    ScrollPanel panel = new ScrollPanel();
+    RootPanel.get().add(panel);
+    panel.setWidget(tree);
+    
+    // Set a size that is smaller than the content to allow scrolling
+    panel.setPixelSize(40, 90);
+
+    assertEquals(0, panel.getVerticalScrollPosition());
+    assertEquals(0, panel.getHorizontalScrollPosition());
+
+    tree.setSelectedItem(selectedItem);
+
+    if (shouldScroll) {
+      assertTrue("Expected vertical scroll", panel.getVerticalScrollPosition() != 0);
+      assertTrue("Expected horizontal scroll", panel.getHorizontalScrollPosition() != 0);
+    } else {
+      assertEquals("Expected no vertical scroll", 0, panel.getVerticalScrollPosition());
+      assertEquals("Expected no horizontal scroll", 0, panel.getHorizontalScrollPosition());
     }
   }
 
