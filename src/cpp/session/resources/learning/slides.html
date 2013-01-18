@@ -15,8 +15,8 @@
   
   #!r_highlight#
    
-  #!mathjax#
-   
+  #!mathjax#  
+  
 </head>
 
 <body>
@@ -47,6 +47,12 @@
       ]
 
     });
+    
+    
+  Reveal.addEventListener( 'slidechanged', function( event ) {
+    if (window.parent.learningSlideChanged)
+      window.parent.learningSlideChanged(event.indexh);
+  });
 
   </script>
 

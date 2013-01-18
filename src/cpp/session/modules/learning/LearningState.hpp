@@ -30,9 +30,14 @@ namespace state {
 
 
 void init(const core::FilePath& directory);
+void setSlideIndex(int index);
+
 
 bool isActive();
 core::FilePath directory();
+
+
+
 
 void clear();
 

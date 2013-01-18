@@ -19,6 +19,9 @@ import org.rstudio.studio.client.server.Void;
 
 public interface LearningServerOperations
 {
+   void setLearningSlideIndex(int index, 
+                              ServerRequestCallback<Void> requestCallaback);
+   
    void closeLearningPane(ServerRequestCallback<Void> requestCallaback);
    
    String getApplicationURL(String url);

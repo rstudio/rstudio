@@ -33,12 +33,13 @@ namespace {
 struct LearningState
 {
    LearningState()
-      : active(false)
+      : active(false), slideIndex(0)
    {
    }
 
    bool active;
    FilePath directory;
+   int slideIndex;
 };
 
 // write-through cache of learning state
@@ -70,6 +71,7 @@ void saveLearningState(const LearningState& state)
    settings.set("active", state.active);
    settings.set("directory",
                 module_context::createAliasedPath(state.directory));
+   settings.set("slide-index", state.slideIndex);
    settings.endUpdate();
 }
 
@@ -86,6 +88,7 @@ void loadLearningState()
       s_learningState.active = settings.getBool("active", false);
       s_learningState.directory = module_context::resolveAliasedPath(
                                                    settings.get("directory"));
+      s_learningState.slideIndex = settings.getInt("slide-index", 0);
    }
    else
    {
@@ -101,7 +104,14 @@ void init(const FilePath& directory)
    LearningState state;
    state.active = true;
    state.directory = directory;
+   state.slideIndex = 0;
    saveLearningState(state);
+}
+
+void setSlideIndex(int index)
+{
+   s_learningState.slideIndex = index;
+   saveLearningState(s_learningState);
 }
 
 bool isActive()
@@ -125,6 +135,7 @@ json::Value asJson()
    stateJson["active"] = s_learningState.active;
    stateJson["directory"] = module_context::createAliasedPath(
                                                 s_learningState.directory);
+   stateJson["slide_index"] = s_learningState.slideIndex;
    return stateJson;
 }
 

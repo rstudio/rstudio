@@ -29,4 +29,8 @@ public class LearningState extends JavaScriptObject
    public final native String getDirectory() /*-{
       return this.directory;
    }-*/;
+   
+   public final native int getSlideIndex() /*-{
+      return this.slide_index;
+   }-*/;
 }

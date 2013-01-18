@@ -18,7 +18,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -86,6 +86,8 @@ public class LearningPresenter extends BasePresenter
             }
          }
       });
+      
+      initLearningCallbacks();
    }
    
    public void initialize(LearningState learningState)
@@ -110,6 +112,7 @@ public class LearningPresenter extends BasePresenter
       view_.refresh(resetAnchor);
    }
    
+   
    public void confirmClose(Command onConfirmed)
    {
       ProgressIndicator progress = new GlobalProgressDelayer(
@@ -129,13 +132,45 @@ public class LearningPresenter extends BasePresenter
    private void init(LearningState state)
    {
       currentState_ = state;
-      view_.load(server_.getApplicationURL("learning/"), state);
+      
+      String url = server_.getApplicationURL("learning/");
+      if (currentState_.getSlideIndex() != 0)
+         url = url + "#/" + currentState_.getSlideIndex();
+      
+      view_.load(url, state);
    }
+   
+   private void onLearningSlideChanged(int index)
+   {
+      lastSlideIndex_ = index;
+      saveIndexCommand_.nudge();
+   }
+   
+   public final native void initLearningCallbacks() /*-{
+  
+      var thiz = this;
+      $wnd.learningSlideChanged = function(index) {
+         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::onLearningSlideChanged(I)(index);
+      };
+   }-*/;
 
+   TimeBufferedCommand saveIndexCommand_ = new TimeBufferedCommand(2000)
+   {
+      @Override
+      protected void performAction(boolean shouldSchedulePassive)
+      {
+         server_.setLearningSlideIndex(lastSlideIndex_, 
+                                       new VoidServerRequestCallback());
+      }
+   };
+   
+   
    private final Display view_ ; 
    private final LearningServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Session session_;
+   private int lastSlideIndex_ = 0;
    private LearningState currentState_ = null;
+   
 }

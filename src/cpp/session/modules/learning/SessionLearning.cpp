@@ -79,6 +79,19 @@ SEXP rs_showLearningPane(SEXP dirSEXP)
    return R_NilValue;
 }
 
+core::Error setLearningSlideIndex(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse*)
+{
+   int index;
+   Error error = json::readParam(request.params, 0, &index);
+   if (error)
+      return error;
+
+   learning::state::setSlideIndex(index);
+
+   return Success();
+}
+
 core::Error closeLearningPane(const json::JsonRpcRequest&,
                               json::JsonRpcResponse*)
 {
@@ -220,6 +233,7 @@ Error initialize()
       ExecBlock initBlock ;
       initBlock.addFunctions()
          (bind(registerUriHandler, "/learning", handleLearningContentRequest))
+         (bind(registerRpcMethod, "set_learning_slide_index", setLearningSlideIndex))
          (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
          (bind(learning::state::initialize))
          (bind(sourceModuleRFile, "SessionLearning.R"));
