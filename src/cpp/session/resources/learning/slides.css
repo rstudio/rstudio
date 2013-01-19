@@ -14,3 +14,11 @@ code.r, code.cpp {
   background-color: #F8F8F8;
 }
 
+
+.reveal .controls div.navigate-up {
+  display: none;
+}
+
+.reveal .controls div.navigate-down {
+  display: none;
+}
