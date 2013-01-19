@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.learning;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
@@ -21,6 +22,9 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -154,9 +158,28 @@ public class LearningPresenter extends BasePresenter
       $wnd.learningSlideChanged = function(index) {
          thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::onLearningSlideChanged(I)(index);
       };
+      $wnd.learningKeydown = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      };
    }-*/;
 
-   TimeBufferedCommand saveIndexCommand_ = new TimeBufferedCommand(2000)
+   private void handleKeyDown(NativeEvent e)
+   {  
+      NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
+      ShortcutManager.INSTANCE.onKeyDown(evt);
+      if (evt.isCanceled())
+      {
+         e.preventDefault();
+         e.stopPropagation();
+         
+         // since this is a shortcut handled by the main window
+         // we set focus to it
+         WindowEx.get().focus();
+      } 
+   }
+   
+   
+   TimeBufferedCommand saveIndexCommand_ = new TimeBufferedCommand(500)
    {
       @Override
       protected void performAction(boolean shouldSchedulePassive)

@@ -53,7 +53,10 @@
         window.MathJax.Hub.Rerender(event.currentSlide); 
       
     });
-
+    
+    if (window.parent.learningKeydown)
+      window.onkeydown = function(e) {window.parent.learningKeydown(e);}
+    
   </script>
 
 </body>
