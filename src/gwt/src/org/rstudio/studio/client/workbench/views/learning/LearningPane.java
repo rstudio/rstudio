@@ -15,12 +15,14 @@
 package org.rstudio.studio.client.workbench.views.learning;
 
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -99,6 +101,38 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    public void refresh(boolean resetAnchor)
    {
       frame_.reload(resetAnchor);
+   }
+   
+   @Override
+   public void next()
+   {
+      Reveal.fromWindow(frame_.getWindow()).next();
+   }
+   
+   @Override
+   public void prev()
+   {
+      Reveal.fromWindow(frame_.getWindow()).prev();
+   }
+   
+   
+   private static class Reveal extends JavaScriptObject
+   {
+      protected Reveal()
+      {
+      }
+      
+      public static final native Reveal fromWindow(WindowEx window) /*-{
+         return window.Reveal;
+      }-*/;
+      
+      public final native void next() /*-{
+         this.next();
+      }-*/;
+      
+      public final native void prev() /*-{
+         this.prev;
+      }-*/;
    }
    
    

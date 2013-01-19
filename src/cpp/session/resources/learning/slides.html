@@ -42,21 +42,17 @@
       theme: 'simple', 
       transition: 'default', 
 
-      dependencies: [
-        { src: 'revealjs/plugin/postmessage/postmessage.js' }
-      ]
-
+      dependencies: []
     });
     
-    
-  Reveal.addEventListener( 'slidechanged', function( event ) {
-    if (window.parent.learningSlideChanged)
-      window.parent.learningSlideChanged(event.indexh);
-    
-    if (window.MathJax)
-      window.MathJax.Hub.Rerender(event.currentSlide); 
-    
-  });
+    Reveal.addEventListener( 'slidechanged', function( event ) {
+      if (window.parent.learningSlideChanged)
+        window.parent.learningSlideChanged(event.indexh);
+      
+      if (window.MathJax)
+        window.MathJax.Hub.Rerender(event.currentSlide); 
+      
+    });
 
   </script>
 

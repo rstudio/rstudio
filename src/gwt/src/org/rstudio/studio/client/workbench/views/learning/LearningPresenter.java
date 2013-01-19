@@ -47,6 +47,8 @@ public class LearningPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void load(String url, LearningState state);
+      void next();
+      void prev();
       void refresh(boolean resetAnchor);
    }
    
