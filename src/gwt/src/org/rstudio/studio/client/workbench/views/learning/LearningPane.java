@@ -91,10 +91,15 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    
    @Override
    public void load(String url, LearningState state)
-   {
-      bringToFront();
-       
+   {   
       frame_.navigate(url);
+   }
+   
+   @Override
+   public boolean hasSlides()
+   {
+      String href = frame_.getWindow().getLocationHref();
+      return !"about:blank".equals(href);
    }
    
    @Override

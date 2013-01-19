@@ -51,6 +51,7 @@ public class LearningPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void load(String url, LearningState state);
+      boolean hasSlides();
       void next();
       void prev();
       void refresh(boolean resetAnchor);
@@ -98,6 +99,7 @@ public class LearningPresenter extends BasePresenter
    
    public void initialize(LearningState learningState)
    {
+      view_.bringToFront();
       init(learningState);
    }
    
@@ -108,7 +110,10 @@ public class LearningPresenter extends BasePresenter
       if (!session_.getSessionInfo().getLearningState().isActive())
          eventBus_.fireEvent(new ReloadEvent());
       else
+      {
+         view_.bringToFront();
          init(event.getLearningState());
+      }
    }
    
    @Handler
@@ -116,6 +121,22 @@ public class LearningPresenter extends BasePresenter
    {
       boolean resetAnchor = Event.getCurrentEvent().getShiftKey();
       view_.refresh(resetAnchor);
+   }
+   
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      
+      // after doing a pane reconfig the frame gets wiped (no idea why)
+      // workaround this by doing a check for an active state with
+      // no slides currently displayed
+      if (currentState_ != null && 
+          currentState_.isActive() && 
+          !view_.hasSlides())
+      {
+         init(currentState_);
+      }
    }
    
    
