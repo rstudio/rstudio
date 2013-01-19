@@ -1,17 +1,48 @@
 
-pre {   
+
+.reveal .slides {
+	width: 85%;	
+	text-align: left;
+}
+
+.reveal pre {   
   margin-top: 0;
   max-width: 95%;
   border: 1px solid #ccc;
   white-space: pre-wrap;
 }
 
-pre code {
+.reveal pre code {
   display: block; padding: 0.5em;
 }
 
-code.r, code.cpp {
+.reveal code.r, code.cpp {
   background-color: #F8F8F8;
+}
+
+.reveal h3 { font-size: 1.3em;  }
+
+.reveal p {
+  font-size: 0.8em;
+  line-height: 1.0em;
+}
+
+.reveal li {
+  font-size: 0.8em;
+}
+
+.reveal .controls {
+  right: -20px;
+  bottom: 5px;
+}
+
+.reveal .controls div.navigate-left {
+  top: 75px;
+}
+
+.reveal .controls div.navigate-right {
+  left: 54px;
+  top: 75px;
 }
 
 
