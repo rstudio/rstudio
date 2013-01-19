@@ -36,13 +36,16 @@
     Reveal.initialize({
       controls: true,
       progress: true,
-      history: true,
-      center: true,
+      overview: false,
+      center: false,
+      rollingLinks: false,
 
       theme: 'simple', 
-      transition: 'default', 
+      transition: 'linear', 
 
-      dependencies: []
+      dependencies: [
+        { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } }
+      ]
     });
     
     Reveal.addEventListener( 'slidechanged', function( event ) {

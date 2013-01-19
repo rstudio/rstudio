@@ -29,6 +29,7 @@ cp css/reveal.min.css $TARGET_DIR/css
 cp css/theme/simple.css $TARGET_DIR/css/theme
 cp -R css/shaders $TARGET_DIR/css
 cp lib/js/head.min.js $TARGET_DIR/lib/js
+cp lib/js/classList.js $TARGET_DIR/lib/js
 cp js/reveal.js $TARGET_DIR/js
 cp js/reveal.min.js $TARGET_DIR/js
 
