@@ -22,6 +22,13 @@ public class CodeModel extends JavaScriptObject
 {
    protected CodeModel() {}
 
+   public native final boolean hasScopes() /*-{
+     if (this.getCurrentScope)
+        return true;
+     else
+        return false;
+   }-*/;
+   
    public native final Scope getCurrentScope(Position position) /*-{
       if (!this.getCurrentScope)
          return null;
