@@ -192,6 +192,10 @@ public class StackTraceCreatorTest extends GWTTestCase {
         c.extractName(" at Type.functionName (file.js:1:2)"));
     assertEquals("functionName@@file.js:1:2",
         c.extractName(" at Type.functionName [as methodName] (file.js:1:2)"));
+    
+    // iOS style
+    assertEquals("functionName@@file.js:1",
+        c.extractName("functionName@file.js:1"));
   }
 
   public void testFirefox14ExtractName() {

@@ -338,9 +338,16 @@ public class StackTraceCreator {
 
       index = toReturn.indexOf("(");
       if (index == -1) {
-        // No bracketed items found, hence no function name available
-        location = toReturn;
-        toReturn = "";
+        // No bracketed items found, try '@' (used by iOS).
+        index = toReturn.indexOf("@");
+        if (index == -1) {
+          // No bracketed items nor '@' found, hence no function name available
+          location = toReturn;
+          toReturn = "";
+        } else {
+          location = toReturn.substring(index + 1).trim();
+          toReturn = toReturn.substring(0, index).trim();
+        }
       } else {
         // Bracketed items found: strip them off, parse location info
         int closeParen = toReturn.indexOf(")", index);
