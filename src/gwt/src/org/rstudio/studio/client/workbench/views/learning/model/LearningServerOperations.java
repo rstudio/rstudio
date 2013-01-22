@@ -19,10 +19,12 @@ import org.rstudio.studio.client.server.Void;
 
 public interface LearningServerOperations
 {
+   String getApplicationURL(String url);
+   
+   void showHelpTopic(String topic, String pkgName) ;
+   
    void setLearningSlideIndex(int index, 
                               ServerRequestCallback<Void> requestCallaback);
    
-   void closeLearningPane(ServerRequestCallback<Void> requestCallaback);
-   
-   String getApplicationURL(String url);
+   void closeLearningPane(ServerRequestCallback<Void> requestCallaback); 
 }

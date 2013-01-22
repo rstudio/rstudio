@@ -122,6 +122,8 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
+   if (!is.null(package))
+      require(package, character.only = TRUE)
    print(help(topic, help_type="html"))
 })
 

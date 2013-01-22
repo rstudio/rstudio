@@ -256,8 +256,10 @@ public class LearningPresenter extends BasePresenter
       }
       
       String cmdName = command.getName().toLowerCase();
-      if (cmdName.equals("help"))
-         performHelpCommand(param1, param2);
+      if (cmdName.equals("help-doc"))
+         performHelpDocCommand(param1, param2);
+      else if (cmdName.equals("help-topic"))
+         performHelpTopicCommand(param1, param2);
       else if (cmdName.equals("source"))
          performSourceCommand(param1, param2);
       else 
@@ -268,42 +270,67 @@ public class LearningPresenter extends BasePresenter
       }
    }
    
-   private void performHelpCommand(String param1, String param2)
+   private void performHelpDocCommand(String param1, String param2)
    {
-      String docFile = getLearningPath(param1);
-      String url = "help/learning/?file=" + URL.encodeQueryString(docFile);
-      eventBus_.fireEvent(new ShowHelpEvent(url)) ;  
+      if (param1 != null)
+      {
+         String docFile = getLearningPath(param1);
+         String url = "help/learning/?file=" + URL.encodeQueryString(docFile);
+         eventBus_.fireEvent(new ShowHelpEvent(url));  
+      }
+   }
+   
+   private void performHelpTopicCommand(String param1, String param2)
+   {
+      // split on :: if it's there
+      if (param1 != null)
+      {
+         String topic = param1;
+         String packageName = null;
+         int delimLoc = param1.indexOf("::");
+         if (delimLoc != -1)
+         {
+            packageName = param1.substring(0, delimLoc);
+            topic = param1.substring(delimLoc+2);
+         }
+         
+         server_.showHelpTopic(topic, packageName);
+      }
    }
    
    private void performSourceCommand(String param1, String param2)
-   {    
-      // get filename and type
-      FileSystemItem file = FileSystemItem.createFile(getLearningPath(param1));
-      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file); 
-      
-      // check for a file position and/or pattern
-      FilePosition pos = null;
-      String pattern = null;
-      if (param2 != null)
+   {   
+      if (param1 != null)
       {
-         if (param2.length() > 2 && 
-             param2.startsWith("/") && param2.endsWith("/"))
+         // get filename and type
+         FileSystemItem file = FileSystemItem.createFile(
+                                                  getLearningPath(param1));
+         TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file); 
+         
+         // check for a file position and/or pattern
+         FilePosition pos = null;
+         String pattern = null;
+         if (param2 != null)
          {
-            pattern = param2.substring(1, param2.length()-1);
+            if (param2.length() > 2 && 
+                param2.startsWith("/") && param2.endsWith("/"))
+            {
+               pattern = param2.substring(1, param2.length()-1);
+            }
+            else
+            {
+               int line = StringUtil.parseInt(param2, 0);
+               if (line > 0)
+                  pos = FilePosition.create(line, 1);
+            }
          }
-         else
-         {
-            int line = StringUtil.parseInt(param2, 0);
-            if (line > 0)
-               pos = FilePosition.create(line, 1);
-         }
+         
+         // dispatch
+         eventBus_.fireEvent(new OpenLearningSourceFileEvent(file, 
+                                                             fileType,
+                                                             pos,
+                                                             pattern));
       }
-      
-      // dispatch
-      eventBus_.fireEvent(new OpenLearningSourceFileEvent(file, 
-                                                          fileType,
-                                                          pos,
-                                                          pattern));
       
    }
    
