@@ -2441,6 +2441,23 @@ public class TextEditingTarget implements EditingTarget
       view_.replaceAndFind();
    }
    
+   @Override
+   public Position search(String regex)
+   {
+      InputEditorSelection sel = docDisplay_.search(regex, 
+                                                    false, 
+                                                    false, 
+                                                    false,
+                                                    false,
+                                                    Position.create(0, 0),
+                                                    null, 
+                                                    true);
+      if (sel != null)
+         return docDisplay_.selectionToPosition(sel.getStart());
+      else
+         return null;
+   }
+   
    @Handler
    void onFold()
    {

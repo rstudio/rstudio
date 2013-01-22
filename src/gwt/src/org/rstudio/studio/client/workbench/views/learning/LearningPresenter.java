@@ -22,6 +22,8 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -34,6 +36,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileEvent;
 
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -67,6 +72,7 @@ public class LearningPresenter extends BasePresenter
                             LearningServerOperations server,
                             GlobalDisplay globalDisplay,
                             EventBus eventBus,
+                            FileTypeRegistry fileTypeRegistry,
                             Session session,
                             Binder binder,
                             Commands commands)
@@ -76,6 +82,7 @@ public class LearningPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
      
       binder.bind(commands, this);
@@ -88,7 +95,8 @@ public class LearningPresenter extends BasePresenter
             {
                FileSystemItem fsi = event.getFileChange().getFile(); 
                String path = fsi.getPath();
-               if (path.startsWith(currentState_.getDirectory()))
+               if (path.startsWith(currentState_.getDirectory()) &&
+                   fsi.mimeType().equals("text/x-markdown"))
                {
                   refreshCommand_.nudge();
                }
@@ -229,8 +237,29 @@ public class LearningPresenter extends BasePresenter
    
    private void dispatchCommand(LearningCommand command)
    {
-      if (command.getName().equalsIgnoreCase("helpdoc"))
-         dispatchShowDocCommand(command.getParams());
+      // crack parameters
+      String param1 = null, param2 = null;
+      String params = command.getParams();
+      if (params.length() > 0)
+      {
+         // find the first space and split on that
+         int spaceLoc = params.indexOf(' ');
+         if (spaceLoc == -1)
+         {
+            param1 = params;
+         }
+         else
+         {
+            param1 = params.substring(0, spaceLoc);
+            param2 = params.substring(spaceLoc+1);
+         } 
+      }
+      
+      String cmdName = command.getName().toLowerCase();
+      if (cmdName.equals("help"))
+         performHelpCommand(param1, param2);
+      else if (cmdName.equals("source"))
+         performSourceCommand(param1, param2);
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -239,23 +268,57 @@ public class LearningPresenter extends BasePresenter
       }
    }
    
-   
-   private void dispatchShowDocCommand(String params)
+   private void performHelpCommand(String param1, String param2)
    {
-      String docFile = getLearningDir().completePath(params);
+      String docFile = getLearningPath(param1);
       String url = "help/learning/?file=" + URL.encodeQueryString(docFile);
       eventBus_.fireEvent(new ShowHelpEvent(url)) ;  
    }
    
-   private FileSystemItem getLearningDir()
+   private void performSourceCommand(String param1, String param2)
+   {    
+      // get filename and type
+      FileSystemItem file = FileSystemItem.createFile(getLearningPath(param1));
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file); 
+      
+      // check for a file position and/or pattern
+      FilePosition pos = null;
+      String pattern = null;
+      if (param2 != null)
+      {
+         if (param2.length() > 2 && 
+             param2.startsWith("/") && param2.endsWith("/"))
+         {
+            pattern = param2.substring(1, param2.length()-1);
+         }
+         else
+         {
+            int line = StringUtil.parseInt(param2, 0);
+            if (line > 0)
+               pos = FilePosition.create(line, 1);
+         }
+      }
+      
+      // dispatch
+      eventBus_.fireEvent(new OpenLearningSourceFileEvent(file, 
+                                                          fileType,
+                                                          pos,
+                                                          pattern));
+      
+   }
+   
+   private String getLearningPath(String file)
    {
-      return FileSystemItem.createDir(currentState_.getDirectory());
+      FileSystemItem learningDir = FileSystemItem.createDir(
+                                                currentState_.getDirectory());
+      return learningDir.completePath(file);   
    }
    
    private final Display view_ ; 
    private final LearningServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private int lastSlideIndex_ = 0;
    private LearningState currentState_ = null;

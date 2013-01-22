@@ -72,6 +72,9 @@ public interface EditingTarget extends IsWidget,
    
    void setCursorPosition(Position position);
    
+   Position search(String regex);
+        
+   
    /**
     * @return True if dismissal is allowed, false to cancel.
     */

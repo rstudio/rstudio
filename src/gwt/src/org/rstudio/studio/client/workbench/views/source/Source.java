@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -1080,7 +1081,37 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   public void onOpenSourceFile(final OpenSourceFileEvent event)
+    
+   public void onOpenSourceFile(OpenSourceFileEvent event)
+   {
+      doOpenSourceFile(event.getFile(),
+                       event.getFileType(),
+                       event.getPosition(),
+                       null, 
+                       event.getHighlightLine());
+   }
+   
+   
+   
+   public void onOpenLearningSourceFile(OpenLearningSourceFileEvent event)
+   {
+      // don't do the navigation if the active document is a source
+      // file from this learning module
+      
+      doOpenSourceFile(event.getFile(),
+                       event.getFileType(),
+                       event.getPosition(),
+                       event.getPattern(),
+                       true);
+      
+   }
+   
+   
+   private void doOpenSourceFile(final FileSystemItem file,
+                                 final TextFileType fileType,
+                                 final FilePosition position,
+                                 final String pattern,
+                                 final boolean highlightLine)
    { 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
@@ -1088,45 +1119,59 @@ public class Source implements InsertSourceHandler,
          public void execute(FileSystemItem file)
          {
             openFile(file,
-                     event.getFileType(),
+                     fileType,
                      new CommandWithArg<EditingTarget>() {
 
                @Override
-               public void execute(final EditingTarget target)
+               public void execute(EditingTarget target)
                {
-                  final FilePosition position = event.getPosition();
                   if (position != null)
                   {
-                     Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                     navigate(target, 
+                              SourcePosition.create(position.getLine() - 1,
+                                                    position.getColumn() - 1));
+                  }
+                  else if (pattern != null)
+                  {
+                     Position pos = target.search(pattern);
+                     if (pos != null)
                      {
-                        @Override
-                        public void execute()
-                        {
-                           // now navigate to the new position
-                           boolean highlight = 
-                                 event.getHighlightLine() &&
-                                 !uiPrefs_.highlightSelectedLine().getValue();
-                           target.navigateToPosition(
-                                 SourcePosition.create(position.getLine() - 1,
-                                                       position.getColumn() - 1),
-                                 false,
-                                 highlight);
-                        }
-                     });
+                        navigate(target, 
+                                 SourcePosition.create(pos.getRow(), 0));
+                     }
                   }
                }
 
             });
          }
+         
+         private void navigate(final EditingTarget target,
+                               final SourcePosition srcPosition)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  // now navigate to the new position
+                  boolean highlight = 
+                        highlightLine &&
+                        !uiPrefs_.highlightSelectedLine().getValue();
+                  target.navigateToPosition(srcPosition,
+                                            false,
+                                            highlight);
+               }
+            });
+         }
       };
 
       // Warning: event.getFile() can be null (e.g. new Sweave document)
-      if (event.getFile() != null && event.getFile().getLength() < 0)
+      if (file != null && file.getLength() < 0)
       {
          // If the file has no size info, stat the file from the server. This
          // is to prevent us from opening large files accidentally.
 
-         server_.stat(event.getFile().getPath(), new ServerRequestCallback<FileSystemItem>()
+         server_.stat(file.getPath(), new ServerRequestCallback<FileSystemItem>()
          {
             @Override
             public void onResponseReceived(FileSystemItem response)
@@ -1140,13 +1185,13 @@ public class Source implements InsertSourceHandler,
                // Couldn't stat the file? Proceed anyway. If the file doesn't
                // exist, we'll let the downstream code be the one to show the
                // error.
-               action.execute(event.getFile());
+               action.execute(file);
             }
          });
       }
       else
       {
-         action.execute(event.getFile());
+         action.execute(file);
       }
    }
    

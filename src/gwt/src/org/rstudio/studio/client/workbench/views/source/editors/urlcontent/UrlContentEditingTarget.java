@@ -128,7 +128,12 @@ public class UrlContentEditingTarget implements EditingTarget
    public void verifyPrerequisites()
    {
    }
-   
+      
+   @Override
+   public Position search(String regex)
+   {
+      return null;
+   }
 
    @Handler
    void onPrintSourceDoc()
