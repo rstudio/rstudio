@@ -404,10 +404,7 @@ public class Application implements ApplicationEventHandlers
          @Override
          public void run()
          { 
-            if (SuperDevMode.isActive())
-               SuperDevMode.reload();
-            else
-               Window.Location.reload(); 
+            Window.Location.reload(); 
          }
       }.schedule(100);
    }
