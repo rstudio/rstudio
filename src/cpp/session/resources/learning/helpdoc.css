@@ -1,0 +1,16 @@
+
+
+pre {  
+   margin-top: 0;
+   max-width: 90%;
+   border: 1px solid #ccc;
+   white-space: pre-wrap;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code.r, code.cpp {
+   background-color: #F8F8F8;
+}

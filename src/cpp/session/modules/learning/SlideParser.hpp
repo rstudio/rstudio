@@ -45,6 +45,7 @@ public:
 
    bool showTitle() const;
 
+   std::string commandsJsArray() const;
 
    std::vector<std::string> fields() const;
    std::string fieldValue(const std::string& name) const;

@@ -14,7 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.learning;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
@@ -40,7 +43,9 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
+import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningCommand;
 import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
 import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 
@@ -85,10 +90,7 @@ public class LearningPresenter extends BasePresenter
                String path = fsi.getPath();
                if (path.startsWith(currentState_.getDirectory()))
                {
-                  if (fsi.getName().equals("slides.md"))
-                  {
-                     view_.refresh(false);
-                  }
+                  refreshCommand_.nudge();
                }
             }
          }
@@ -167,17 +169,23 @@ public class LearningPresenter extends BasePresenter
       view_.load(url, state);
    }
    
-   private void onLearningSlideChanged(int index)
+   private void onLearningSlideChanged(int index, JavaScriptObject jsCmds)
    {
+      // record index
       lastSlideIndex_ = index;
       saveIndexCommand_.nudge();
+      
+      // execute commands
+      JsArray<LearningCommand> cmds = jsCmds.cast();
+      for (int i=0; i<cmds.length(); i++)
+         dispatchCommand(cmds.get(i));
    }
    
    public final native void initLearningCallbacks() /*-{
   
       var thiz = this;
-      $wnd.learningSlideChanged = function(index) {
-         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::onLearningSlideChanged(I)(index);
+      $wnd.learningSlideChanged = function(index, cmds) {
+         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::onLearningSlideChanged(ILcom/google/gwt/core/client/JavaScriptObject;)(index, cmds);
       };
       $wnd.learningKeydown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
@@ -210,6 +218,39 @@ public class LearningPresenter extends BasePresenter
       }
    };
    
+   TimeBufferedCommand refreshCommand_ = new TimeBufferedCommand(500)
+   {
+      @Override
+      protected void performAction(boolean shouldSchedulePassive)
+      {
+         view_.refresh(false);
+      }
+   };
+   
+   private void dispatchCommand(LearningCommand command)
+   {
+      if (command.getName().equalsIgnoreCase("helpdoc"))
+         dispatchShowDocCommand(command.getParams());
+      else 
+      {
+         globalDisplay_.showErrorMessage(
+                        "Unknown Learning Command", 
+                        command.getName() + ": " + command.getParams());
+      }
+   }
+   
+   
+   private void dispatchShowDocCommand(String params)
+   {
+      String docFile = getLearningDir().completePath(params);
+      String url = "help/learning/?file=" + URL.encodeQueryString(docFile);
+      eventBus_.fireEvent(new ShowHelpEvent(url)) ;  
+   }
+   
+   private FileSystemItem getLearningDir()
+   {
+      return FileSystemItem.createDir(currentState_.getDirectory());
+   }
    
    private final Display view_ ; 
    private final LearningServerOperations server_;

@@ -25,6 +25,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/text/DcfParser.hpp>
 
 using namespace core;
@@ -45,12 +46,48 @@ struct CompareName
     std::string name_;
 };
 
+
+bool isCommandField(const std::string& name)
+{
+   return !boost::iequals(name, "title");
+}
+
+std::string normalizeFieldValue(const std::string& value)
+{
+   std::string normalized = text::dcfMultilineAsFolded(value);
+   return boost::algorithm::trim_copy(normalized);
+}
+
 } // anonymous namespace
 
 
 bool Slide::showTitle() const
 {
    return !boost::iequals(fieldValue("title"), "false");
+}
+
+std::string Slide::commandsJsArray() const
+{
+   std::ostringstream ostr;
+   ostr << "[ ";
+
+   std::vector<std::string> flds = fields();
+   for (size_t i=0; i<flds.size(); i++)
+   {
+      std::string field = flds[i];
+      if (isCommandField(field))
+      {
+         ostr << "{ name: \""
+              << string_utils::jsLiteralEscape(field)
+              << "\", params: \""
+              << string_utils::jsLiteralEscape(fieldValue(field))
+              << "\" }";
+         if (i != (flds.size()-1))
+            ostr << ", ";
+      }
+   }
+   ostr << " ]";
+   return ostr.str();
 }
 
 std::vector<std::string> Slide::fields() const
@@ -68,7 +105,7 @@ std::string Slide::fieldValue(const std::string& name) const
    std::vector<Field>::const_iterator it =
         std::find_if(fields_.begin(), fields_.end(), CompareName(name));
    if (it != fields_.end())
-      return it->second;
+      return normalizeFieldValue(it->second);
    else
       return std::string();
 }
@@ -80,7 +117,7 @@ std::vector<std::string> Slide::fieldValues(const std::string& name) const
    BOOST_FOREACH(const Field& field, fields_)
    {
       if (boost::iequals(name, field.first))
-         values.push_back(field.second);
+         values.push_back(normalizeFieldValue(field.second));
    }
    return values;
 }

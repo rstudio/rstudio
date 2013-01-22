@@ -32,6 +32,18 @@
   <script src="revealjs/js/reveal.js"></script>
     
   <script>
+    
+    function notifySlideChanged(indexh) {
+      var cmds = []; 
+      switch(event.indexh) {
+#!slide_commands#
+        default:
+          break;
+      };
+      
+      if (window.parent.learningSlideChanged)
+        window.parent.learningSlideChanged(event.indexh, cmds);  
+    }
 
     Reveal.initialize({
       controls: true,
@@ -49,13 +61,19 @@
       ]
     });
     
+    Reveal.addEventListener( 'ready', function( event ) {
+       // notify container
+      notifySlideChanged(event.indexh)
+    } );
+    
     Reveal.addEventListener( 'slidechanged', function( event ) {
-      if (window.parent.learningSlideChanged)
-        window.parent.learningSlideChanged(event.indexh);
-      
+         
+      // notify container
+      notifySlideChanged(event.indexh)
+     
+      // allow mathjax to re-render
       if (window.MathJax)
-        window.MathJax.Hub.Rerender(event.currentSlide); 
-      
+        window.MathJax.Hub.Rerender(event.currentSlide);  
     });
     
     if (window.parent.learningKeydown)

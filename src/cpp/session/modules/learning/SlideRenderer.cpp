@@ -42,17 +42,21 @@ namespace {
 
 Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pSlides,
+                   std::string* pSlideCommands,
                    std::string* pUserErrorMsg)
 {
    // setup markdown options
    markdown::Extensions extensions;
    markdown::HTMLOptions htmlOptions;
 
-   // render the slides to HTML
-   std::ostringstream ostr;
+   // render the slides to HTML and slide commands to case statements
+   std::ostringstream ostr, ostrCmds;
+   std::string cmdPad(8, ' ');
+   int slideNumber = 0;
    for (std::vector<Slide>::const_iterator it = slideDeck.begin();
         it != slideDeck.end(); ++it)
    {
+      // slide
       ostr << "<section>" << std::endl;
       if (it->showTitle())
          ostr << "<h3>" << it->title() << "</h3>";
@@ -71,9 +75,19 @@ Error renderSlides(const SlideDeck& slideDeck,
       ostr << htmlContent << std::endl;
 
       ostr << "</section>" << std::endl;
+
+      // commands
+      ostrCmds << cmdPad << "case " << slideNumber << ":" << std::endl
+               << cmdPad << "  cmds = " << it->commandsJsArray() << ";"
+               << std::endl << cmdPad << "  break;" << std::endl;
+
+
+      // increment slide number
+      slideNumber++;
    }
 
    *pSlides = ostr.str();
+   *pSlideCommands = ostrCmds.str();
    return Success();
 
 

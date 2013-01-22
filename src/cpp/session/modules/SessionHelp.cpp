@@ -48,6 +48,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "learning/SessionLearning.hpp"
+
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
 #undef FALSE
@@ -567,34 +569,6 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 }
 
 template <typename Filter>
-void handleLearningRequest(const http::Request& request,
-                           const Filter& filter,
-                           http::Response* pResponse)
-{
-   // read parmaeters
-   std::string file = request.queryParamValue("file");
-   if (file.empty())
-   {
-      pResponse->setError(http::status::BadRequest, "No file parameter");
-      return;
-   }
-
-   // ensure file exists
-   FilePath filePath = module_context::resolveAliasedPath(file);
-   if (!filePath.exists())
-   {
-      pResponse->setError(http::status::NotFound, request.uri());
-      return;
-   }
-
-   // serve it back (applying the filter if it's HTML)
-   if (filePath.mimeContentType() == "text/html")
-      pResponse->setFile(filePath, request, filter);
-   else
-      pResponse->setFile(filePath, request);
-}
-
-template <typename Filter>
 void handleRdPreviewRequest(const http::Request& request,
                             const Filter& filter,
                             http::Response* pResponse)
@@ -677,7 +651,7 @@ void handleHttpdRequest(const std::string& location,
    // handle learning url
    if (boost::algorithm::starts_with(path, "/learning"))
    {
-      handleLearningRequest(request, filter, pResponse);
+      learning::handleLearningHelpRequest(request, kJsCallbacks, pResponse);
       return;
    }
 

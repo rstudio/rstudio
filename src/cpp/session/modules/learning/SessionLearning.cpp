@@ -23,6 +23,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/HtmlUtils.hpp>
 #include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
 
@@ -133,8 +135,8 @@ std::string mathjaxIfRequired(const std::string& contents)
       return std::string();
 }
 
-void handleLearningContentRequest(const http::Request& request,
-                                  http::Response* pResponse)
+void handleLearningPaneRequest(const http::Request& request,
+                               http::Response* pResponse)
 {
    // return not found if learning isn't active
    if (!learning::state::isActive())
@@ -171,8 +173,11 @@ void handleLearningContentRequest(const http::Request& request,
       }
 
       // render the slides
-      std::string slides;
-      error = learning::renderSlides(slideDeck, &slides, &errMsg);
+      std::string slides, slideCommands;
+      error = learning::renderSlides(slideDeck,
+                                     &slides,
+                                     &slideCommands,
+                                     &errMsg);
       if (error)
       {
          LOG_ERROR(error);
@@ -184,6 +189,7 @@ void handleLearningContentRequest(const http::Request& request,
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
       vars["slides"] = slides;
+      vars["slide_commands"] = slideCommands;
       vars["styles"] =  resourceFiles().get("learning/slides.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
@@ -210,7 +216,84 @@ void handleLearningContentRequest(const http::Request& request,
    }
 }
 
+
+// we save the most recent /help/learning/&file=parameter so we
+// can resolve relative file references against it. we do this
+// separately from learning::state::directory so that the help
+// urls can be available within the help pane (and history)
+// independent of the duration of the learning tab
+FilePath s_learningHelpDir;
+
+
 } // anonymous namespace
+
+void handleLearningHelpRequest(const core::http::Request& request,
+                               const std::string& jsCallbacks,
+                               core::http::Response* pResponse)
+{
+   // check if this is a root request
+   std::string file = request.queryParamValue("file");
+   if (!file.empty())
+   {
+      // ensure file exists
+      FilePath filePath = module_context::resolveAliasedPath(file);
+      if (!filePath.exists())
+      {
+         pResponse->setError(http::status::NotFound, request.uri());
+         return;
+      }
+
+      // save the file's directory (for resolving other resources)
+      s_learningHelpDir = filePath.parent();
+
+
+      // read in the file (process markdown)
+      std::string helpDoc;
+      Error error = markdown::markdownToHTML(filePath,
+                                             markdown::Extensions(),
+                                             markdown::HTMLOptions(),
+                                             &helpDoc);
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+
+      // process the template
+      std::map<std::string,std::string> vars;
+      vars["title"] = html_utils::defaultTitle(helpDoc);
+      vars["styles"] = resourceFiles().get("learning/helpdoc.css");
+      vars["r_highlight"] = resourceFiles().get("r_highlight.html");
+      vars["mathjax"] = mathjaxIfRequired(helpDoc);
+      vars["content"] = helpDoc;
+      vars["js_callbacks"] = jsCallbacks;
+      pResponse->setNoCacheHeaders();
+      pResponse->setBody(resourceFiles().get("learning/helpdoc.html"),
+                         text::TemplateFilter(vars));
+   }
+
+   // it's a relative file reference
+   else
+   {
+      // make sure the directory exists
+      if (!s_learningHelpDir.exists())
+      {
+         pResponse->setError(http::status::NotFound,
+                             "Directory not found: " +
+                             s_learningHelpDir.absolutePath());
+         return;
+      }
+
+      // resolve the file reference
+      std::string path = http::util::pathAfterPrefix(request,
+                                                     "/help/learning/");
+
+      // serve the file back
+      pResponse->setFile(s_learningHelpDir.complete(path), request);
+   }
+}
+
+
 
 json::Value learningStateAsJson()
 {
@@ -232,7 +315,7 @@ Error initialize()
       using namespace session::module_context;
       ExecBlock initBlock ;
       initBlock.addFunctions()
-         (bind(registerUriHandler, "/learning", handleLearningContentRequest))
+         (bind(registerUriHandler, "/learning", handleLearningPaneRequest))
          (bind(registerRpcMethod, "set_learning_slide_index", setLearningSlideIndex))
          (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
          (bind(learning::state::initialize))

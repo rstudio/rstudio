@@ -16,11 +16,17 @@
 #ifndef SESSION_LEARNING_HPP
 #define SESSION_LEARNING_HPP
 
+#include <string>
+
 #include <core/json/Json.hpp>
 
 namespace core {
    class Error;
    class FilePath;
+   namespace http {
+      class Request;
+      class Response;
+   }
 }
  
 namespace session {
@@ -28,6 +34,10 @@ namespace modules {
 namespace learning {
    
 core::json::Value learningStateAsJson();
+
+void handleLearningHelpRequest(const core::http::Request& request,
+                               const std::string& jsCallbacks,
+                               core::http::Response* pResponse);
 
 core::Error initialize();
                        

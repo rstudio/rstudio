@@ -1,5 +1,5 @@
 /*
- * SlideRenderer.hpp
+ * HtmlUtils.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,30 +13,19 @@
  *
  */
 
-#ifndef SESSION_LEARNING_SLIDE_RENDERER_HPP
-#define SESSION_LEARNING_SLIDE_RENDERER_HPP
+#ifndef CORE_HTML_UTILS_HPP
+#define CORE_HTML_UTILS_HPP
 
 #include <string>
 
 namespace core {
-   class Error;
-   class FilePath;
-} // anonymous namespace
+namespace html_utils {
+   
+std::string defaultTitle(const std::string& htmlContent);
 
-namespace session {
-namespace modules { 
-namespace learning {
-
-class SlideDeck;
-
-core::Error renderSlides(const SlideDeck& slideDeck,
-                         std::string* pSlides,
-                         std::string* pSlideCommands,
-                         std::string* pUserErrorMsg);
+} // namespace regex_utils
+} // namespace core 
 
 
-} // namespace learning
-} // namespace modules
-} // namesapce session
+#endif // CORE_HTML_UTILS_HPP
 
-#endif // SESSION_LEARNING_SLIDE_RENDERER_HPP
