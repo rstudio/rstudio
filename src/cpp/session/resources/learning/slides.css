@@ -53,3 +53,12 @@
 .reveal .controls div.navigate-down {
   display: none;
 }
+
+.reveal .slides {
+  left: 48%;
+}
+
+.reveal .slides>section,
+.reveal .slides>section>section {
+  padding: 0px 0px;
+}
