@@ -127,7 +127,7 @@ FileInfo normalizeFileScannerPath(const FileInfo& fileInfo)
 void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle,
                                        const FilePath& filePath,
                                        const std::vector<FileInfo>& prevFiles,
-                                       const std::vector<core::FileInfo>& files)
+                                       const tree<core::FileInfo>& files)
 {
    // set path and current handle
    currentPath_ = filePath;
@@ -135,18 +135,10 @@ void FilesListingMonitor::onRegistered(core::system::file_monitor::Handle handle
 
    // normalize scanned file paths (see comment above for explanation)
    std::vector<FileInfo> currFiles;
-   std::transform(files.begin(),
-                  files.end(),
+   std::transform(files.begin(files.begin()),
+                  files.end(files.begin()),
                   std::back_inserter(currFiles),
                   normalizeFileScannerPath);
-
-   // remove the root if necessary (since the monitor returned a flattened
-   // list of the entire tree including the root)
-   if (!currFiles.empty() &&
-       currFiles.begin()->absolutePath() == filePath.absolutePath())
-   {
-      currFiles.erase(currFiles.begin());
-   }
 
    // compare the previously returned listing with the initial scan to see if any
    // file changes occurred between listings

@@ -45,7 +45,7 @@ namespace projects {
 // file monitoring callbacks (all callbacks are optional)
 struct FileMonitorCallbacks
 {
-   boost::function<void(const std::vector<core::FileInfo>&)> onMonitoringEnabled;
+   boost::function<void(const tree<core::FileInfo>&)> onMonitoringEnabled;
    boost::function<void(
          const std::vector<core::system::FileChangeEvent>&)> onFilesChanged;
    boost::function<void()> onMonitoringDisabled;
@@ -169,7 +169,7 @@ private:
 
    // file monitor event handlers
    void fileMonitorRegistered(core::system::file_monitor::Handle handle,
-                              const std::vector<core::FileInfo>& files);
+                              const tree<core::FileInfo>& files);
    void fileMonitorFilesChanged(
                    const std::vector<core::system::FileChangeEvent>& events);
    void fileMonitorTermination(const core::Error& error);
@@ -193,7 +193,7 @@ private:
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
-   boost::signal<void(const std::vector<core::FileInfo>&)> onMonitoringEnabled_;
+   boost::signal<void(const tree<core::FileInfo>&)> onMonitoringEnabled_;
    boost::signal<void(const std::vector<core::system::FileChangeEvent>&)>
                                                             onFilesChanged_;
    boost::signal<void()> onMonitoringDisabled_;

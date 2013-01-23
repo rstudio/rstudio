@@ -69,15 +69,15 @@ FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 // problem with a child dir or file, and we don't want that to
 // interfere with the caller getting a listing of everything else
 // and proceeding with its work
-Error scanFiles(tcl::unique_tree<FileInfo>::tree_type& fromNode,
+Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                 const core::system::FileScannerOptions& options,
-                tcl::unique_tree<FileInfo>* pTree)
+                tree<FileInfo>* pTree)
 {
    // clear all existing
-   fromNode.clear();
+   pTree->erase_children(fromNode);
 
    // create FilePath for root
-   FilePath rootPath(fromNode.get()->absolutePath());
+   FilePath rootPath(fromNode->absolutePath());
 
    // yield if requested (only applies to recursive scans)
    if (options.recursive && options.yield)
@@ -86,7 +86,7 @@ Error scanFiles(tcl::unique_tree<FileInfo>::tree_type& fromNode,
    // call onBeforeScanDir hook
    if (options.onBeforeScanDir)
    {
-      Error error = options.onBeforeScanDir(*(fromNode.get()));
+      Error error = options.onBeforeScanDir(*fromNode);
       if (error)
          return error;
    }
@@ -120,11 +120,11 @@ Error scanFiles(tcl::unique_tree<FileInfo>::tree_type& fromNode,
       // add the correct type of FileEntry
       if (childFileInfo.isDirectory())
       {
-         tcl::unique_tree<FileInfo>::iterator child
-                              = fromNode.insert(fromNode.end(), childFileInfo);
+         tree<FileInfo>::iterator_base child =
+                              pTree->append_child(fromNode, childFileInfo);
          if (options.recursive && !childFileInfo.isSymlink())
          {
-            Error error = scanFiles(*child.node(), options, pTree);
+            Error error = scanFiles(child, options, pTree);
             if (error &&
                (error.code() != boost::system::windows_error::path_not_found))
                LOG_ERROR(error);
@@ -132,7 +132,7 @@ Error scanFiles(tcl::unique_tree<FileInfo>::tree_type& fromNode,
       }
       else
       {
-         fromNode.insert(fromNode.end(), childFileInfo);
+         pTree->append_child(fromNode, childFileInfo);
       }
    }
 
