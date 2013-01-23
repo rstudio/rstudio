@@ -129,17 +129,17 @@ import java.lang.annotation.Target;
  * &#64;DefaultLocale("en_US")
  * public interface MyMessages extends Messages {
  *   &#64;Key("1234")
- *   &#64;DefaultText("This is a plain string.")
+ *   &#64;DefaultMessage("This is a plain string.")
  *   String oneTwoThreeFour();
  *   
- *   &#64;DefaultText("You have {0} widgets")
+ *   &#64;DefaultMessage("You have {0} widgets")
  *   &#64;PluralText({"one", "You have one widget")
  *   String widgetCount(&#64;PluralCount int count);
  *   
- *   &#64;DefaultText("No reference to the argument")
+ *   &#64;DefaultMessage("No reference to the argument")
  *   String optionalArg(&#64;Optional String ignored);
  *   
- *   &#64;DefaultText("Your cart total is {0,number,currency}")
+ *   &#64;DefaultMessage("Your cart total is {0,number,currency}")
  *   &#64;Description("The total value of the items in the shopping cart in local currency")
  *   String totalAmount(&#64;Example("$5.00") double amount);
  *   
