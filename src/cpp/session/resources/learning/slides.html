@@ -33,7 +33,19 @@
     
   <script>
     
+    function pausePlayers(players) {
+      for(var i = 0; i < players.length; i++) {
+        players[i].pause();
+      }
+    }
+    
     function notifySlideChanged(indexh) {
+    
+      // pause all audio and video
+      pausePlayers(document.getElementsByTagName('video'));
+      pausePlayers(document.getElementsByTagName('audio'))
+     
+      // execute slide-specific commants 
       var cmds = []; 
       switch(event.indexh) {
 #!slide_commands#

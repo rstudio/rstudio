@@ -62,3 +62,10 @@
 .reveal .slides>section>section {
   padding: 0px 0px;
 }
+
+.reveal video {
+  height: 75%;
+  width: 100%;
+}
+
+

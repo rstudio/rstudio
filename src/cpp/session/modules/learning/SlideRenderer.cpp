@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -37,12 +38,46 @@ namespace learning {
 namespace {
 
 
+void renderMedia(const std::string& type,
+                 const std::string& format,
+                 int slideNumber,
+                 const std::string& fileName,
+                 std::ostream& os,
+                 std::vector<std::string>* pJsActions)
+{
+   boost::format fmt("slide%1%%2%");
+   std::string mediaId = boost::str(fmt % slideNumber % type);
+   fmt = boost::format(
+         "<script type=\"text/javascript\">\n"
+         "  function %2%Updated() {\n"
+         "       \n"
+         "  }\n"
+         "  function %2%Ended() {\n"
+         "     %2%.load();\n"
+         "  }\n"
+         "</script>\n"
+
+         "<%1% id=\"%2%\" controls\n"
+         "       ontimeupdate=\"%2%Updated();\"\n"
+         "       onended=\"%2%Ended();\">\n"
+         "  <source src=\"%3%\" type=\"%1%/%4%\">\n"
+         "  Your browser does not support the %1% tag.\n"
+         "</%1%>\n");
+
+   os << boost::str(fmt % type % mediaId % fileName % format) << std::endl;
+
+   // add video autoplay action
+   fmt = boost::format("if (%1%.ended) %1%.load(); %1%.play();");
+   pJsActions->push_back(boost::str(fmt % mediaId));
+}
+
+
 } // anonymous namespace
 
 
 Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pSlides,
-                   std::string* pSlideCommands,
+                   std::string* pSlideActions,
                    std::string* pUserErrorMsg)
 {
    // setup markdown options
@@ -50,7 +85,7 @@ Error renderSlides(const SlideDeck& slideDeck,
    markdown::HTMLOptions htmlOptions;
 
    // render the slides to HTML and slide commands to case statements
-   std::ostringstream ostr, ostrCmds;
+   std::ostringstream ostr, ostrActions;
    std::string cmdPad(8, ' ');
    int slideNumber = 0;
    for (std::vector<Slide>::const_iterator it = slideDeck.begin();
@@ -72,22 +107,40 @@ Error renderSlides(const SlideDeck& slideDeck,
          return error;
       }
 
+      // render content
       ostr << htmlContent << std::endl;
+
+      // setup a vector of js actions to take when the slide loads
+      // (we always take the action of adding any embedded commands)
+      std::vector<std::string> jsActions;
+      jsActions.push_back("cmds = " + it->commandsJsArray());
+
+      // render video if specified
+      std::string video = it->video();
+      if (!video.empty())
+         renderMedia("video", "mp4", slideNumber, video, ostr, &jsActions);
+
+      // render audio if specified
+      std::string audio = it->audio();
+      if (!audio.empty())
+         renderMedia("audio", "mpeg", slideNumber, audio, ostr, &jsActions);
 
       ostr << "</section>" << std::endl;
 
-      // commands
-      ostrCmds << cmdPad << "case " << slideNumber << ":" << std::endl
-               << cmdPad << "  cmds = " << it->commandsJsArray() << ";"
-               << std::endl << cmdPad << "  break;" << std::endl;
-
+      // javascript actions to take on slide load
+      ostrActions << cmdPad << "case " << slideNumber << ":" << std::endl;
+      BOOST_FOREACH(const std::string& jsAction, jsActions)
+      {
+         ostrActions << cmdPad << "  " << jsAction << ";" << std::endl;
+      }
+      ostrActions << std::endl << cmdPad << "  break;" << std::endl;
 
       // increment slide number
       slideNumber++;
    }
 
    *pSlides = ostr.str();
-   *pSlideCommands = ostrCmds.str();
+   *pSlideActions = ostrActions.str();
    return Success();
 
 

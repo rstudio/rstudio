@@ -31,7 +31,7 @@ class SlideDeck;
 
 core::Error renderSlides(const SlideDeck& slideDeck,
                          std::string* pSlides,
-                         std::string* pSlideCommands,
+                         std::string* pSlideActions,
                          std::string* pUserErrorMsg);
 
 

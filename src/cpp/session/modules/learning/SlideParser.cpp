@@ -49,7 +49,9 @@ struct CompareName
 
 bool isCommandField(const std::string& name)
 {
-   return !boost::iequals(name, "title");
+   return boost::iequals(name, "help-doc") ||
+          boost::iequals(name, "help-source") ||
+          boost::iequals(name, "source");
 }
 
 std::string normalizeFieldValue(const std::string& value)
@@ -60,10 +62,13 @@ std::string normalizeFieldValue(const std::string& value)
 
 } // anonymous namespace
 
-
+// default title to true unless this is a video slide
 bool Slide::showTitle() const
 {
-   return !boost::iequals(fieldValue("title"), "false");
+   if (video().empty())
+      return !boost::iequals(fieldValue("title", "true"), "false");
+   else
+      return boost::iequals(fieldValue("title", "false"), "true");
 }
 
 std::string Slide::commandsJsArray() const
@@ -100,14 +105,15 @@ std::vector<std::string> Slide::fields() const
    return fields;
 }
 
-std::string Slide::fieldValue(const std::string& name) const
+std::string Slide::fieldValue(const std::string& name,
+                              const std::string& defaultValue) const
 {
    std::vector<Field>::const_iterator it =
         std::find_if(fields_.begin(), fields_.end(), CompareName(name));
    if (it != fields_.end())
       return normalizeFieldValue(it->second);
    else
-      return std::string();
+      return defaultValue;
 }
 
 

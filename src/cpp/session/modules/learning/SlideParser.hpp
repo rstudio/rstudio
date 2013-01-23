@@ -41,14 +41,18 @@ public:
    {
    }
 
-   const std::string& title() const { return title_; }
-
+   std::string title() const { return title_; }
    bool showTitle() const;
+
+   std::string video() const { return fieldValue("video"); }
+   std::string audio() const { return fieldValue("audio"); }
+
 
    std::string commandsJsArray() const;
 
    std::vector<std::string> fields() const;
-   std::string fieldValue(const std::string& name) const;
+   std::string fieldValue(const std::string& name,
+                          const std::string& defaultValue="") const;
    std::vector<std::string> fieldValues(const std::string& name) const;
 
    const std::string& content() const { return content_; }
