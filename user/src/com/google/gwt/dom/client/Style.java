@@ -1153,7 +1153,7 @@ public class Style extends JavaScriptObject {
   }
 
   /**
-   * Clear the font-size css property.
+   * Clear the float css property.
    */
   public final void clearFloat() {
     clearProperty(DOMImpl.impl.cssFloatPropertyName());
