@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializedTypeViolationException;
 import com.google.gwt.user.client.rpc.TestSetFactory.ReverseSorter;
 import com.google.gwt.user.server.rpc.RPCTypeCheckCollectionsTest.TestHashSet;
+import com.google.gwt.user.server.rpc.testcases.TypeVariableCycle;
 
 import junit.framework.TestCase;
 
@@ -2458,6 +2459,23 @@ public class RPCTypeCheckTest extends TestCase {
   }
 
   /**
+   * Test for <a href="https://code.google.com/p/google-web-toolkit/issues/detail?id=7779">7779</a>.
+   */
+  public void testTypeVariableCycle() throws Exception {
+
+    // Build an RPC request that calls dereference(hello)
+    RPCTypeCheckFactory builder = new RPCTypeCheckFactory(TypeVariableCycle.class, "dereference");
+    builder.write(TypeVariableCycle.HELLO);
+    String request = builder.toString();
+
+    // Make sure we can decode it.
+    RPCRequest decoded = RPC.decodeRequest(request);
+    Object deserializedArg = decoded.getParameters()[0];
+    assertEquals(TypeVariableCycle.PtrPtr.class, deserializedArg.getClass());
+    assertEquals("hello", ((TypeVariableCycle.PtrPtr) deserializedArg).get());
+  }
+
+  /**
    * This checks that HashMap correctly reports that it is an incorrect type.
    */
   public void testHashMapSpoofingClass() {
@@ -2760,6 +2778,7 @@ public class RPCTypeCheckTest extends TestCase {
    * arguments of a primitive value type with another primitive type.
    */
   public void testValueSpoofing() {
+    boolean returned = false;
     try {
       // When an int appears in place of a string, the result will be the
       // int value indexing the string table, which will result in
@@ -2767,10 +2786,14 @@ public class RPCTypeCheckTest extends TestCase {
       // an incorrect string if the integer value is within range of the string
       // table.
       RPC.decodeRequest(generateIntSpoofingString());
-      fail("Expected ArrayIndexOutOfBoundsException from testValueSpoofing (1)");
-    } catch (ArrayIndexOutOfBoundsException e) {
+      returned = true;
+    } catch (AssertionError e) {
       // Expected
     }
+    if (returned) {
+      fail("RPC.decodeRequest should have thrown.");
+    }
+
     try {
       // When a string pretends to be an int, it simply results in an incorrect
       // integer value.

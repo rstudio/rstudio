@@ -27,6 +27,7 @@ import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServletTest;
 import com.google.gwt.user.server.rpc.RPCRequestTest;
 import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
+import com.google.gwt.user.server.rpc.RPCTypeCheckTest;
 import com.google.gwt.user.server.rpc.RemoteServiceServletTest;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
@@ -57,6 +58,7 @@ public class RpcSuiteNoBrowser {
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(TypeHierarchyUtilsTest.class);
     suite.addTestSuite(RPCTest.class);
+    suite.addTestSuite(RPCTypeCheckTest.class);
     suite.addTestSuite(RemoteServiceServletTest.class);
     suite.addTestSuite(LegacySerializationPolicyTest.class);
     suite.addTestSuite(StandardSerializationPolicyTest.class);

@@ -219,25 +219,50 @@ public class SerializabilityUtil {
   }
 
   /**
-   * Return the concrete type that a generic type maps to, if known.
+   * Resolve type variables to concrete types if possible. Otherwise, just return
+   * the type variable.
    *
-   * @param genericType The generic type to resolve.
+   * @param unresolved The type to resolve
    * @param resolvedTypes A map of generic types to actual types.
    * @return The actual type, which may be of any subclass of Type.
    */
-  public static Type findActualType(Type genericType,
+  public static Type findActualType(Type unresolved,
       DequeMap<TypeVariable<?>, Type> resolvedTypes) {
-    Type result = genericType;
-    // Look for things that TypeVariables are mapped to, but stop if mapped
-    // to itself. We map a TypeVariable to itself when we wish to explicitly
-    // mark it as unmapped.
-    while (result instanceof TypeVariable<?> &&
-        resolvedTypes.get((TypeVariable<?>) result) != result &&
-        resolvedTypes.get((TypeVariable<?>) result) != null) {
-      result = resolvedTypes.get((TypeVariable<?>) result);
+
+    // Handle simple cases quickly.
+    if (!(unresolved instanceof TypeVariable<?>)) {
+      return unresolved;
+    }
+    TypeVariable<?> var = (TypeVariable<?>) unresolved;
+    Type target = resolvedTypes.get(var);
+    if (target == null || target == var) {
+      return var;
+    }
+    if (!(target instanceof TypeVariable<?>)) {
+      return target;
     }
 
-    return result;
+    // Type variables that point to other type variables might form a cycle, which
+    // means they're all equivalent. Keep track of visited type variables to detect this.
+    Set<TypeVariable<?>> seen = new HashSet<TypeVariable<?>>();
+    seen.add(var);
+    var = (TypeVariable<?>) target;
+    seen.add(var);
+
+    while (true) {
+      target = resolvedTypes.get(var);
+      if (target == null || target == var) {
+        return var;
+      }
+      if (!(target instanceof TypeVariable<?>)) {
+        return target;
+      }
+      var = (TypeVariable<?>) target;
+      if (!seen.add(var)) {
+        // Cycle detected; returning an arbitrary var in the cycle.
+        return var;
+      }
+    }
   }
 
   /**
