@@ -55,12 +55,11 @@ function notifySlideChanged(indexh) {
   pausePlayers(document.getElementsByTagName('video'));
   pausePlayers(document.getElementsByTagName('audio'))
  
-  // execute slide-specific commants 
- 
-  
-  if (window.parent.learningSlideChanged)
+  // notify parent of slide changed
+  if (window.parent.learningSlideChanged) {
     window.parent.learningSlideChanged(event.indexh, 
                                        commandsForSlide(event.indexh));  
+  }
 }
 
 Reveal.initialize({

@@ -162,7 +162,6 @@ void handleLearningPaneRequest(const http::Request& request,
       }
 
       // parse the slides
-      std::string errMsg;
       learning::SlideDeck slideDeck;
       Error error = slideDeck.readSlides(slidesFile);
       if (error)
@@ -174,9 +173,10 @@ void handleLearningPaneRequest(const http::Request& request,
       }
 
       // render the slides
-      std::string slides, slideCommands;
+      std::string slides, initCommands, slideCommands;
       error = learning::renderSlides(slideDeck,
                                      &slides,
+                                     &initCommands,
                                      &slideCommands);
       if (error)
       {
@@ -195,6 +195,7 @@ void handleLearningPaneRequest(const http::Request& request,
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
       vars["slides_js"] = resourceFiles().get("learning/slides.js");
+      vars["init_commands"] = initCommands;
 
       // process the template
       pResponse->setNoCacheHeaders();
