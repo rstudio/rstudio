@@ -93,7 +93,7 @@ void renderMedia(const std::string& type,
    std::string mediaId = boost::str(fmt % slideNumber % type);
    fmt = boost::format(
          "<%1% id=\"%2%\" controls preload=\"none\"\n"
-         "  <source src=\"%3%\" type=\"%1%/%4%\">\n"
+         "  <source src=\"%3%\" type=\"%1%/%4%\"/>\n"
          "  Your browser does not support the %1% tag.\n"
          "</%1%>\n");
 
