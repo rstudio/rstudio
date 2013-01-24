@@ -164,19 +164,21 @@ void handleRangeRequest(const FilePath& targetFile,
       pResponse->setStatusCode(http::status::PartialContent);
 
       // determine the byte range
-      size_t begin = safe_convert::stringTo<size_t>(match[1], -1);
-      size_t end = safe_convert::stringTo<size_t>(match[2], -1);
+      const size_t kNone = -1;
+      size_t begin = safe_convert::stringTo<size_t>(match[1], kNone);
+      size_t end = safe_convert::stringTo<size_t>(match[2], kNone);
       size_t total = contents.length();
 
-      if (end == -1)
+      if (end == kNone)
       {
          end = total-1;
       }
-      if (begin == -1)
+      if (begin == kNone)
       {
          begin = total - end;
          end = total-1;
       }
+
       // set the byte range
       pResponse->addHeader("Accept-Ranges", "bytes");
       boost::format fmt("bytes %1%-%2%/%3%");
