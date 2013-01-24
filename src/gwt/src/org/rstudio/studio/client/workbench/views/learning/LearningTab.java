@@ -48,7 +48,7 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
                       EventBus eventBus,
                       Session session)
    {
-      super("Learning", shim);
+      super(session.getSessionInfo().getLearningName(), shim);
       binder.bind(commands, shim);
       shim_ = shim;
       session_ = session;

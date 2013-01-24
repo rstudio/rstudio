@@ -251,6 +251,15 @@ public class SessionInfo extends JavaScriptObject
       return this.has_pkg_src;
    }-*/;
    
+   public final String getLearningName()
+   {
+      LearningState state = getLearningState();
+      if (state != null)
+         return state.getPaneCaption();
+      else
+         return "Learning";
+   }
+   
    public final native LearningState getLearningState() /*-{
       return this.learning_state;
    }-*/;

@@ -38,6 +38,7 @@ struct LearningState
    }
 
    bool active;
+   std::string paneCaption;
    FilePath directory;
    int slideIndex;
 };
@@ -69,6 +70,7 @@ void saveLearningState(const LearningState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
+   settings.set("pane-caption", state.paneCaption);
    settings.set("directory",
                 module_context::createAliasedPath(state.directory));
    settings.set("slide-index", state.slideIndex);
@@ -86,6 +88,7 @@ void loadLearningState()
          LOG_ERROR(error);
 
       s_learningState.active = settings.getBool("active", false);
+      s_learningState.paneCaption = settings.get("pane-caption", "Learning");
       s_learningState.directory = module_context::resolveAliasedPath(
                                                    settings.get("directory"));
       s_learningState.slideIndex = settings.getInt("slide-index", 0);
@@ -99,10 +102,12 @@ void loadLearningState()
 } // anonymous namespace
 
 
-void init(const FilePath& directory)
+void init(const std::string& paneCaption,
+          const FilePath& directory)
 {
    LearningState state;
    state.active = true;
+   state.paneCaption = paneCaption;
    state.directory = directory;
    state.slideIndex = 0;
    saveLearningState(state);
@@ -133,6 +138,7 @@ json::Value asJson()
 {
    json::Object stateJson;
    stateJson["active"] = s_learningState.active;
+   stateJson["pane_caption"] = s_learningState.paneCaption;
    stateJson["directory"] = module_context::createAliasedPath(
                                                 s_learningState.directory);
    stateJson["slide_index"] = s_learningState.slideIndex;

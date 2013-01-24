@@ -52,7 +52,7 @@ FilePath learningResourcesPath()
    return session::options().rResourcesPath().complete("learning");
 }
 
-SEXP rs_showLearningPane(SEXP dirSEXP)
+SEXP rs_showLearningPane(SEXP paneCaptionSEXP, SEXP dirSEXP)
 {
    try
    {
@@ -65,12 +65,17 @@ SEXP rs_showLearningPane(SEXP dirSEXP)
                                            " does not exist.");
 
          // initialize learning state
-         learning::state::init(dir);
+         learning::state::init(r::sexp::asString(paneCaptionSEXP), dir);
 
          // notify the client
          ClientEvent event(client_events::kShowLearningPane,
                            learning::state::asJson());
          module_context::enqueClientEvent(event);
+      }
+      else
+      {
+         throw r::exec::RErrorException("Learning pane is not supported "
+                                        "in desktop mode.");
       }
    }
    catch(const r::exec::RErrorException& e)
@@ -311,7 +316,7 @@ Error initialize()
       R_CallMethodDef methodDefShowLearningPane;
       methodDefShowLearningPane.name = "rs_showLearningPane" ;
       methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
-      methodDefShowLearningPane.numArgs = 1;
+      methodDefShowLearningPane.numArgs = 2;
       r::routines::addCallMethod(methodDefShowLearningPane);
 
       using boost::bind;

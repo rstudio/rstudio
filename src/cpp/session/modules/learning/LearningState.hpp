@@ -29,7 +29,8 @@ namespace learning {
 namespace state {
 
 
-void init(const core::FilePath& directory);
+void init(const std::string& paneCaption,
+          const core::FilePath& directory);
 void setSlideIndex(int index);
 
 

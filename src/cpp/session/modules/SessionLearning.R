@@ -13,10 +13,11 @@
 #
 #
 
-.rs.addFunction( "showLearningPane", function(dir)
+.rs.addFunction( "showLearningPane", function(paneCaption, dir)
 {
    require(utils)
-   invisible(.Call("rs_showLearningPane", normalizePath(path.expand(dir))))
+   invisible(.Call("rs_showLearningPane", paneCaption,
+                                          normalizePath(path.expand(dir))))
 })
 
 
