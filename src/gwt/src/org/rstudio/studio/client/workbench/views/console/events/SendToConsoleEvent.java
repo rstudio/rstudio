@@ -28,9 +28,18 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
    
    public SendToConsoleEvent(String code, boolean execute, boolean focus)
    {
+      this(code, execute, focus, false);
+   }
+   
+   public SendToConsoleEvent(String code, 
+                             boolean execute, 
+                             boolean focus,
+                             boolean animate)
+   {
       code_ = code;
       execute_ = execute;
       focus_ = focus;
+      animate_ = animate;
    }
 
    public String getCode()
@@ -48,6 +57,11 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
       return focus_;
    }
    
+   public boolean shouldAnimate()
+   {
+      return animate_;
+   }
+   
    @Override
    public Type<SendToConsoleHandler> getAssociatedType()
    {
@@ -63,4 +77,5 @@ public class SendToConsoleEvent extends GwtEvent<SendToConsoleHandler>
    private final String code_;
    private final boolean execute_;
    private final boolean focus_;
+   private final boolean animate_;
 }
