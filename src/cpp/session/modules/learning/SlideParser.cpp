@@ -25,8 +25,11 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/text/DcfParser.hpp>
+
+#include <session/SessionModuleContext.hpp>
 
 using namespace core;
 
@@ -46,12 +49,21 @@ struct CompareName
     std::string name_;
 };
 
-
 bool isCommandField(const std::string& name)
 {
    return boost::iequals(name, "help-doc") ||
-          boost::iequals(name, "help-source") ||
+          boost::iequals(name, "help-topic") ||
           boost::iequals(name, "source");
+}
+
+
+bool isValidField(const std::string& name)
+{
+   return isCommandField(name) ||
+          boost::iequals(name, "title") ||
+          boost::iequals(name, "audio") ||
+          boost::iequals(name, "video") ||
+          boost::iequals(name, "at");
 }
 
 std::string normalizeFieldValue(const std::string& value)
@@ -88,7 +100,7 @@ std::vector<Command> Slide::commands() const
 std::vector<AtCommand> Slide::atCommands() const
 {
    std::vector<AtCommand> atCommands;
-   boost::regex re("^(?:([0-9]+)\\:)?([0-9]{2})\\s+([^\\:]+)\\:\\s+(.*)$");
+   boost::regex re("^([0-9]+)\\:([0-9]{2})\\s+([^\\:]+)\\:\\s+(.*)$");
 
 
    std::vector<std::string> atFields = fieldValues("at");
@@ -97,7 +109,16 @@ std::vector<AtCommand> Slide::atCommands() const
       boost::smatch match;
       if (boost::regex_match(atField, match, re))
       {
-
+         int minutes = safe_convert::stringTo<int>(match[1], 0);
+         int seconds = (minutes*60) + safe_convert::stringTo<int>(match[2], 0);
+         Command command(match[3], match[4]);
+         atCommands.push_back(AtCommand(seconds, command));
+      }
+      else
+      {
+         module_context::consoleWriteError(
+                  "Skipping at command with invalid syntax:\n   at: " +
+                  atField + "\n");
       }
    }
 
@@ -159,8 +180,7 @@ std::string SlideDeck::title() const
 }
 
 
-Error SlideDeck::readSlides(const FilePath& filePath,
-                            std::string* pUserErrorMsg)
+Error SlideDeck::readSlides(const FilePath& filePath)
 {
    // clear existing
    slides_.clear();;
@@ -169,10 +189,7 @@ Error SlideDeck::readSlides(const FilePath& filePath,
    std::string slides;
    Error error = readStringFromFile(filePath, &slides);
    if (error)
-   {
-      *pUserErrorMsg = error.summary();
       return error;
-   }
 
    // split into lines
    std::vector<std::string> lines;
@@ -238,10 +255,19 @@ Error SlideDeck::readSlides(const FilePath& filePath,
       {
          std::string badLine = error.getProperty("line-contents");
          if (!badLine.empty())
-            *pUserErrorMsg = "Invalid DCF field (no separator?): " + badLine;
-         else
-            *pUserErrorMsg = error.summary();
+            module_context::consoleWriteError("Invalid DCF field:\n   "
+                                              + badLine + "\n");
          return error;
+      }
+
+      // validate all of the fields
+      BOOST_FOREACH(const Slide::Field& field, slideFields)
+      {
+         if (!isValidField(field.first))
+         {
+            module_context::consoleWriteError("Unrecognized field '" +
+                                              field.first + "'\n");
+         }
       }
 
       // create the slide

@@ -164,11 +164,12 @@ void handleLearningPaneRequest(const http::Request& request,
       // parse the slides
       std::string errMsg;
       learning::SlideDeck slideDeck;
-      Error error = slideDeck.readSlides(slidesFile, &errMsg);
+      Error error = slideDeck.readSlides(slidesFile);
       if (error)
       {
          LOG_ERROR(error);
-         pResponse->setError(http::status::InternalServerError, errMsg);
+         pResponse->setError(http::status::InternalServerError,
+                             error.summary());
          return;
       }
 
@@ -176,12 +177,12 @@ void handleLearningPaneRequest(const http::Request& request,
       std::string slides, slideCommands;
       error = learning::renderSlides(slideDeck,
                                      &slides,
-                                     &slideCommands,
-                                     &errMsg);
+                                     &slideCommands);
       if (error)
       {
          LOG_ERROR(error);
-         pResponse->setError(http::status::InternalServerError, errMsg);
+         pResponse->setError(http::status::InternalServerError,
+                             error.summary());
          return;
       }
 

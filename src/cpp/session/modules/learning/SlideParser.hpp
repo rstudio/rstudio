@@ -101,8 +101,7 @@ public:
    {
    }
 
-   core::Error readSlides(const core::FilePath& filePath,
-                          std::string* pUserErrMsg);
+   core::Error readSlides(const core::FilePath& filePath);
 
    std::string title() const;
 

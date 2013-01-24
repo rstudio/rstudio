@@ -101,8 +101,7 @@ std::string commandsAsJsonArray(const Slide& slide)
 
 Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pSlides,
-                   std::string* pSlideActions,
-                   std::string* pUserErrorMsg)
+                   std::string* pSlideActions)
 {
    // setup markdown options
    markdown::Extensions extensions;
@@ -126,10 +125,7 @@ Error renderSlides(const SlideDeck& slideDeck,
                                              htmlOptions,
                                              &htmlContent);
       if (error)
-      {
-         *pUserErrorMsg = error.summary();
          return error;
-      }
 
       // render content
       ostr << htmlContent << std::endl;
@@ -138,6 +134,9 @@ Error renderSlides(const SlideDeck& slideDeck,
       // (we always take the action of adding any embedded commands)
       std::vector<std::string> jsActions;
       jsActions.push_back("cmds = " + commandsAsJsonArray(*it));
+
+      // get at commands
+      std::vector<AtCommand> atCommands = it->atCommands();
 
       // render video if specified
       std::string video = it->video();
