@@ -57,7 +57,7 @@ void renderMedia(const std::string& type,
          "  }\n"
          "</script>\n"
 
-         "<%1% id=\"%2%\" controls\n"
+         "<%1% id=\"%2%\" controls preload=\"none\"\n"
          "       ontimeupdate=\"%2%Updated();\"\n"
          "       onended=\"%2%Ended();\">\n"
          "  <source src=\"%3%\" type=\"%1%/%4%\">\n"
