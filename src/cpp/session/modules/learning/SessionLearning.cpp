@@ -191,9 +191,10 @@ void handleLearningPaneRequest(const http::Request& request,
       vars["title"] = slideDeck.title();
       vars["slides"] = slides;
       vars["slide_commands"] = slideCommands;
-      vars["styles"] =  resourceFiles().get("learning/slides.css");
+      vars["slides_css"] =  resourceFiles().get("learning/slides.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
+      vars["slides_js"] = resourceFiles().get("learning/slides.js");
 
       // process the template
       pResponse->setNoCacheHeaders();

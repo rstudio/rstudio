@@ -10,12 +10,12 @@
   <link rel="stylesheet" href="revealjs/css/theme/simple.css" id="theme">
   
   <style type="text/css">
-  #!styles#
+#!slides_css#
   </style>
   
-  #!r_highlight#
+#!r_highlight#
    
-  #!mathjax#  
+#!mathjax#  
   
 </head>
 
@@ -23,7 +23,7 @@
   <div class="reveal">
   <div class="slides">
 
-     #!slides#
+#!slides#
 
   </div>
   </div>
@@ -31,66 +31,21 @@
   <script src="revealjs/lib/js/head.min.js"></script>
   <script src="revealjs/js/reveal.js"></script>
     
-  <script>
-    
-    function pausePlayers(players) {
-      for(var i = 0; i < players.length; i++) {
-        players[i].pause();
-      }
-    }
-    
-    function notifySlideChanged(indexh) {
-    
-      // pause all audio and video
-      pausePlayers(document.getElementsByTagName('video'));
-      pausePlayers(document.getElementsByTagName('audio'))
-     
-      // execute slide-specific commants 
-      var cmds = []; 
-      switch(event.indexh) {
+  <script type="text/javascript">
+
+// dynamically built function to get slide specific commands
+function commandsForSlide(indexh) {
+  var cmds = []; 
+  switch(event.indexh) {
 #!slide_commands#
-        default:
-          break;
-      };
+    default:
+      break;
+  };
+  return cmds;
+}      
+    
+#!slides_js#
       
-      if (window.parent.learningSlideChanged)
-        window.parent.learningSlideChanged(event.indexh, cmds);  
-    }
-
-    Reveal.initialize({
-      controls: true,
-      progress: true,
-      history: true,
-      overview: false,
-      center: false,
-      rollingLinks: false,
-
-      theme: 'simple', 
-      transition: 'linear', 
-
-      dependencies: [
-        { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } }
-      ]
-    });
-    
-    Reveal.addEventListener( 'ready', function( event ) {
-       // notify container
-      notifySlideChanged(event.indexh)
-    } );
-    
-    Reveal.addEventListener( 'slidechanged', function( event ) {
-         
-      // notify container
-      notifySlideChanged(event.indexh)
-     
-      // allow mathjax to re-render
-      if (window.MathJax)
-        window.MathJax.Hub.Rerender(event.currentSlide);  
-    });
-    
-    if (window.parent.learningKeydown)
-      window.onkeydown = function(e) {window.parent.learningKeydown(e);}
-    
   </script>
 
 </body>
