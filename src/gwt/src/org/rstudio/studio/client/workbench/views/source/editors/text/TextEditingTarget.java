@@ -371,6 +371,12 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.setCursorPosition(position);
    }
    
+   @Override
+   public void forceLineHighlighting()
+   {
+      docDisplay_.setHighlightSelectedLine(true);
+   }
+   
    private void jumpToPreviousFunction()
    {
       Scope jumpTo = scopeHelper_.getPreviousFunction(

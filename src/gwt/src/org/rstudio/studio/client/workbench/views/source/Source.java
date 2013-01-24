@@ -1088,7 +1088,8 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        null, 
-                       event.getHighlightLine());
+                       event.getHighlightLine(),
+                       false);
    }
    
    
@@ -1102,6 +1103,7 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        event.getPattern(),
+                       true,
                        true);
       
    }
@@ -1111,7 +1113,8 @@ public class Source implements InsertSourceHandler,
                                  final TextFileType fileType,
                                  final FilePosition position,
                                  final String pattern,
-                                 final boolean highlightLine)
+                                 final boolean highlightLine,
+                                 final boolean forceHighlightMode)
    { 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
@@ -1153,6 +1156,10 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute()
                {
+                  // force highlight mode if requested
+                  if (forceHighlightMode)
+                     target.forceLineHighlighting();
+                  
                   // now navigate to the new position
                   boolean highlight = 
                         highlightLine &&

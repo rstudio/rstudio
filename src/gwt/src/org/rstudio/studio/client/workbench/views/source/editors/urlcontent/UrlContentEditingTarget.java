@@ -134,6 +134,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       return null;
    }
+   
+   @Override
+   public void forceLineHighlighting()
+   {
+   }
 
    @Handler
    void onPrintSourceDoc()

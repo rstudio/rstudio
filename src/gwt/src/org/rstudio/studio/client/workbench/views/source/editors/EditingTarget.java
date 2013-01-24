@@ -70,6 +70,8 @@ public interface EditingTarget extends IsWidget,
    void restorePosition(SourcePosition position);
    boolean isAtSourceRow(SourcePosition position);
    
+   void forceLineHighlighting();
+   
    void setCursorPosition(Position position);
    
    Position search(String regex);

@@ -449,6 +449,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void forceLineHighlighting()
+   {
+      docDisplay_.setHighlightSelectedLine(true);
+   }
+   
+   @Override
    public boolean onBeforeDismiss()
    {
       return true;
