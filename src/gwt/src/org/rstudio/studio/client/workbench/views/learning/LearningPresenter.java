@@ -186,7 +186,7 @@ public class LearningPresenter extends BasePresenter
       saveIndexCommand_.nudge();
       
       // execute commands
-      JsArray<LearningCommand> cmds = jsCmds.cast();
+      JsArray<JavaScriptObject> cmds = jsCmds.cast();
       for (int i=0; i<cmds.length(); i++)
          dispatchCommand(cmds.get(i));
    }
@@ -199,6 +199,9 @@ public class LearningPresenter extends BasePresenter
       };
       $wnd.learningKeydown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      };
+      $wnd.dispatchLearningCommand = function(cmd) {
+         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
       };
    }-*/;
 
@@ -237,8 +240,11 @@ public class LearningPresenter extends BasePresenter
       }
    };
    
-   private void dispatchCommand(LearningCommand command)
+   private void dispatchCommand(JavaScriptObject jsCommand)
    {
+      // cast
+      LearningCommand command = jsCommand.cast();
+      
       // crack parameters
       String param1 = null, param2 = null;
       String params = command.getParams();
