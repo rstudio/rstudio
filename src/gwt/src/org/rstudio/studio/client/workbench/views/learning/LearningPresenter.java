@@ -109,7 +109,9 @@ public class LearningPresenter extends BasePresenter
    
    public void initialize(LearningState learningState)
    {
-      view_.bringToFront();
+      if (learningState.getSlideIndex() == 0)
+         view_.bringToFront();
+      
       init(learningState);
    }
    
