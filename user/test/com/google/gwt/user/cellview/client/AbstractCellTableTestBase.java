@@ -269,15 +269,22 @@ public abstract class AbstractCellTableTestBase<T extends AbstractCellTable<Stri
   public void testCellEvent() {
     IndexCell<String> cell = new IndexCell<String>("click");
     T table = createAbstractHasData(cell);
+    
     RootPanel.get().add(table);
     table.setRowData(createData(0, 10));
     table.getPresenter().flush();
 
-    // Trigger an event at index 5.
+    // Trigger an event at index 5 inside the child div.
     NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
     getBodyElement(table, 5, 0).getFirstChildElement().dispatchEvent(event);
     cell.assertLastBrowserEventIndex(5);
     cell.assertLastEditingIndex(5);
+
+    // Trigger an event at index 3 outside the child div.
+    event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    getBodyElement(table, 3, 0).dispatchEvent(event);
+    cell.assertLastBrowserEventIndex(3);
+    cell.assertLastEditingIndex(3);
 
     RootPanel.get().remove(table);
   }

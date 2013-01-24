@@ -1793,6 +1793,16 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     {
       Element maybeTableCell = null;
       Element cur = target;
+
+      /*
+       * If an event happens in the TD element but outside the cell's div, we want 
+       * to handle it as if it happened within the table cell.
+       */
+      if (TableCellElement.TAG_TD.equalsIgnoreCase(cur.getTagName()) && 
+          tableBuilder.isColumn(cur.getFirstChildElement())) {
+        cur = cur.getFirstChildElement();
+      }
+      
       while (cur != null && targetTableSection == null) {
         /*
          * Found the table section. Return the most recent cell element that we
