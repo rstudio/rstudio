@@ -28,6 +28,21 @@ namespace session {
 namespace modules { 
 namespace learning {
 
+class Command {
+public:
+   Command(const std::string& name, const std::string& params)
+      : name_(name), params_(params)
+   {
+   }
+
+   const std::string& name() const { return name_; }
+   const std::string& params() const { return params_; }
+
+private:
+   std::string name_;
+   std::string params_;
+};
+
 class Slide
 {
 public:
@@ -47,8 +62,7 @@ public:
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
 
-
-   std::string commandsJsArray() const;
+   std::vector<Command> commands() const;
 
    std::vector<std::string> fields() const;
    std::string fieldValue(const std::string& name,

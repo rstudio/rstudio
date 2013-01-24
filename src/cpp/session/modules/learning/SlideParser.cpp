@@ -62,6 +62,7 @@ std::string normalizeFieldValue(const std::string& value)
 
 } // anonymous namespace
 
+
 // default title to true unless this is a video slide
 bool Slide::showTitle() const
 {
@@ -71,29 +72,19 @@ bool Slide::showTitle() const
       return boost::iequals(fieldValue("title", "false"), "true");
 }
 
-std::string Slide::commandsJsArray() const
+std::vector<Command> Slide::commands() const
 {
-   std::ostringstream ostr;
-   ostr << "[ ";
-
+   std::vector<Command> commands;
    std::vector<std::string> flds = fields();
    for (size_t i=0; i<flds.size(); i++)
    {
       std::string field = flds[i];
       if (isCommandField(field))
-      {
-         ostr << "{ name: \""
-              << string_utils::jsLiteralEscape(field)
-              << "\", params: \""
-              << string_utils::jsLiteralEscape(fieldValue(field))
-              << "\" }";
-         if (i != (flds.size()-1))
-            ostr << ", ";
-      }
+         commands.push_back(Command(field, fieldValue(field)));
    }
-   ostr << " ]";
-   return ostr.str();
+   return commands;
 }
+
 
 std::vector<std::string> Slide::fields() const
 {
@@ -169,7 +160,7 @@ Error SlideDeck::readSlides(const FilePath& filePath,
    boost::algorithm::split(lines, slides, boost::algorithm::is_any_of("\r\n"));
 
    // find indexes of lines with dashes
-   boost::regex re("^\\-{3,}\\s*$");
+   boost::regex re("^\\-{5,}\\s*$");
    std::vector<std::size_t> headerLines;
    for (std::size_t i = 0; i<lines.size(); i++)
    {

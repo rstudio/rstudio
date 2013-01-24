@@ -25,6 +25,8 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
 #include <core/markdown/Markdown.hpp>
 
 #include "SlideParser.hpp"
@@ -71,6 +73,28 @@ void renderMedia(const std::string& type,
    pJsActions->push_back(boost::str(fmt % mediaId));
 }
 
+json::Object commandAsJson(const Command& command)
+{
+   json::Object commandJson;
+   commandJson["name"] = command.name();
+   commandJson["params"] = command.params();
+   return commandJson;
+}
+
+std::string commandsAsJsonArray(const Slide& slide)
+{
+   json::Array commandsJsonArray;
+
+   std::vector<Command> commands = slide.commands();
+   BOOST_FOREACH(const Command& command, commands)
+   {
+      commandsJsonArray.push_back(commandAsJson(command));
+   }
+
+   std::ostringstream ostr;
+   json::write(commandsJsonArray, ostr);
+   return ostr.str();
+}
 
 } // anonymous namespace
 
@@ -113,7 +137,7 @@ Error renderSlides(const SlideDeck& slideDeck,
       // setup a vector of js actions to take when the slide loads
       // (we always take the action of adding any embedded commands)
       std::vector<std::string> jsActions;
-      jsActions.push_back("cmds = " + it->commandsJsArray());
+      jsActions.push_back("cmds = " + commandsAsJsonArray(*it));
 
       // render video if specified
       std::string video = it->video();
@@ -142,8 +166,6 @@ Error renderSlides(const SlideDeck& slideDeck,
    *pSlides = ostr.str();
    *pSlideActions = ostrActions.str();
    return Success();
-
-
 }
 
 
