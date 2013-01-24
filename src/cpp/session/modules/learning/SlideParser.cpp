@@ -85,6 +85,25 @@ std::vector<Command> Slide::commands() const
    return commands;
 }
 
+std::vector<AtCommand> Slide::atCommands() const
+{
+   std::vector<AtCommand> atCommands;
+   boost::regex re("^(?:([0-9]+)\\:)?([0-9]{2})\\s+([^\\:]+)\\:\\s+(.*)$");
+
+
+   std::vector<std::string> atFields = fieldValues("at");
+   BOOST_FOREACH(const std::string& atField, atFields)
+   {
+      boost::smatch match;
+      if (boost::regex_match(atField, match, re))
+      {
+
+      }
+   }
+
+   return atCommands;
+}
+
 
 std::vector<std::string> Slide::fields() const
 {

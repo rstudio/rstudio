@@ -43,6 +43,21 @@ private:
    std::string params_;
 };
 
+class AtCommand {
+public:
+   AtCommand(int seconds, const Command& command)
+      : seconds_(seconds), command_(command)
+   {
+   }
+
+   int seconds() const { return seconds_; }
+   const Command& command() const { return command_; }
+
+private:
+   int seconds_;
+   Command command_;
+};
+
 class Slide
 {
 public:
@@ -63,6 +78,8 @@ public:
    std::string audio() const { return fieldValue("audio"); }
 
    std::vector<Command> commands() const;
+
+   std::vector<AtCommand> atCommands() const;
 
    std::vector<std::string> fields() const;
    std::string fieldValue(const std::string& name,
