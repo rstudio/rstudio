@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -82,6 +83,7 @@ public class LearningPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
      
@@ -264,12 +266,15 @@ public class LearningPresenter extends BasePresenter
       }
       
       String cmdName = command.getName().toLowerCase();
+            
       if (cmdName.equals("help-doc"))
          performHelpDocCommand(param1, param2);
       else if (cmdName.equals("help-topic"))
          performHelpTopicCommand(param1, param2);
       else if (cmdName.equals("source"))
          performSourceCommand(param1, param2);
+      else if (cmdName.equals("console"))
+         performConsoleCommand(params);
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -338,9 +343,24 @@ public class LearningPresenter extends BasePresenter
                                                              fileType,
                                                              pos,
                                                              pattern));
-      }
-      
+      }  
    }
+   
+   private void performConsoleCommand(String params)
+   {  
+      String[] cmds = params.split(",");
+      for (String cmd : cmds)
+      {         
+         cmd = cmd.trim();
+         if (cmd.equals("maximize"))
+            commands_.maximizeConsole().execute();
+         else if (cmd.equals("clear"))
+            commands_.consoleClear().execute();
+         else
+            globalDisplay_.showErrorMessage("Unknown Console Directive", cmd);
+      }
+   }
+   
    
    private String getLearningPath(String file)
    {
@@ -353,6 +373,7 @@ public class LearningPresenter extends BasePresenter
    private final LearningServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
+   private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private int lastSlideIndex_ = 0;

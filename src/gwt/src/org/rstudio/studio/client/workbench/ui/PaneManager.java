@@ -26,6 +26,8 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -57,6 +59,8 @@ import java.util.HashMap;
 
 public class PaneManager
 {
+   public interface Binder extends CommandBinder<Commands, PaneManager> {}
+   
    public enum Tab {
       Workspace, History, Files, Plots, Packages, Help, VCS, Build, Learning
    }
@@ -90,6 +94,7 @@ public class PaneManager
                       WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
+                      Binder binder,
                       Commands commands,
                       UIPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
@@ -126,7 +131,9 @@ public class PaneManager
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
-
+      
+      binder.bind(commands, this);
+      
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
 
@@ -167,6 +174,14 @@ public class PaneManager
                              tabSet2TabPanel_, tabSet2MinPanel_);
          }
       });
+   }
+   
+   @Handler
+   public void onMaximizeConsole()
+   {
+      LogicalWindow consoleWindow = panesByName_.get("Console");
+      consoleWindow.onWindowStateChange(
+                        new WindowStateChangeEvent(WindowState.MAXIMIZE));
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)

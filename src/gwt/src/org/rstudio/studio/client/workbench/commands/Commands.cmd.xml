@@ -1164,5 +1164,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Copy"/>
    <cmd id="pasteDummy"
         menuLabel="_Paste"/>
+        
+   <cmd id="maximizeConsole"
+        menuLabel="Maximize Console"/>
 
 </commands>

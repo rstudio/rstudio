@@ -53,7 +53,8 @@ bool isCommandField(const std::string& name)
 {
    return boost::iequals(name, "help-doc") ||
           boost::iequals(name, "help-topic") ||
-          boost::iequals(name, "source");
+          boost::iequals(name, "source") ||
+          boost::iequals(name, "console");
 }
 
 

@@ -290,4 +290,6 @@ public abstract class
    public abstract AppCommand clearRecentFiles();
 
    public abstract AppCommand checkSpelling();
+   
+   public abstract AppCommand maximizeConsole();
 }
