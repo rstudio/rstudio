@@ -20,6 +20,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
@@ -140,6 +141,67 @@ std::string mathjaxIfRequired(const std::string& contents)
       return std::string();
 }
 
+void handleRangeRequest(const FilePath& targetFile,
+                        const http::Request& request,
+                        http::Response* pResponse)
+{
+   // read the file in from disk
+   std::string contents;
+   Error error = core::readStringFromFile(targetFile, &contents);
+   if (error)
+      pResponse->setError(error);
+
+   // set content type
+   pResponse->setContentType(targetFile.mimeContentType());
+
+   // parse the range field
+   std::string range = request.headerValue("Range");
+   boost::regex re("bytes=(\\d*)\\-(\\d*)");
+   boost::smatch match;
+   if (boost::regex_match(range, match, re))
+   {
+      // specify partial content
+      pResponse->setStatusCode(http::status::PartialContent);
+
+      // determine the byte range
+      size_t begin = safe_convert::stringTo<size_t>(match[1], -1);
+      size_t end = safe_convert::stringTo<size_t>(match[2], -1);
+      size_t total = contents.length();
+
+      if (end == -1)
+      {
+         end = total-1;
+      }
+      if (begin == -1)
+      {
+         begin = total - end;
+         end = total-1;
+      }
+      // set the byte range
+      pResponse->addHeader("Accept-Ranges", "bytes");
+      boost::format fmt("bytes %1%-%2%/%3%");
+      std::string range = boost::str(fmt % begin % end % contents.length());
+      pResponse->addHeader("Content-Range", range);
+
+      // always attempt gzip
+      if (request.acceptsEncoding(http::kGzipEncoding))
+         pResponse->setContentEncoding(http::kGzipEncoding);
+
+      // set body
+      if (begin == 0 && end == (contents.length()-1))
+         pResponse->setBody(contents);
+      else
+         pResponse->setBody(contents.substr(begin, end-begin));
+   }
+   else
+   {
+      pResponse->setStatusCode(http::status::RangeNotSatisfiable);
+      boost::format fmt("bytes */%1%");
+      std::string range = boost::str(fmt % contents.length());
+      pResponse->addHeader("Content-Range", range);
+   }
+}
+
 void handleLearningPaneRequest(const http::Request& request,
                                http::Response* pResponse)
 {
@@ -218,11 +280,22 @@ void handleLearningPaneRequest(const http::Request& request,
       pResponse->setFile(filePath, request);
    }
 
-   // just serve the file back
+   // serve the file back
    else
    {
-      pResponse->setFile(learning::state::directory().childPath(path),
-                         request);
+      FilePath targetFile = learning::state::directory().childPath(path);
+      if (!request.headerValue("Range").empty())
+      {
+         handleRangeRequest(targetFile, request, pResponse);
+      }
+      else
+      {
+         // indicate that we accept byte range requests
+         pResponse->addHeader("Accept-Ranges", "bytes");
+
+         // return the file
+         pResponse->setFile(targetFile, request);
+      }
    }
 }
 

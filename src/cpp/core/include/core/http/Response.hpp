@@ -46,6 +46,7 @@ namespace status {
 enum Code {
    Ok = 200,
    Created = 201,
+   PartialContent = 206,
    MovedPermanently = 301,
    MovedTemporarily = 302,
    SeeOther = 303,
@@ -55,6 +56,7 @@ enum Code {
    Forbidden = 403,
    NotFound = 404,
    MethodNotAllowed = 405,
+   RangeNotSatisfiable = 416,
    InternalServerError = 500 ,
    NotImplemented = 501, 
    BadGateway = 502,

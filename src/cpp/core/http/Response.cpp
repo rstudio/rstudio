@@ -232,6 +232,7 @@ namespace status {
 namespace Message {
 	const char * const Ok = "OK" ;
    const char * const Created = "Created";
+   const char * const PartialContent = "Partial Content";
 	const char * const MovedPermanently = "Moved Permanently" ;
 	const char * const MovedTemporarily = "Moved Temporarily" ;
 	const char * const SeeOther = "See Other" ;
@@ -241,6 +242,7 @@ namespace Message {
 	const char * const Forbidden = "Forbidden" ;
 	const char * const NotFound = "Not Found" ;
 	const char * const MethodNotAllowed = "Method Not Allowed" ;
+   const char * const RangeNotSatisfiable = "Range Not Satisfyable";
 	const char * const InternalServerError = "Internal Server Error" ;
 	const char * const NotImplemented = "Not Implemented" ;
 	const char * const BadGateway = "Bad Gateway" ;
@@ -266,7 +268,11 @@ void Response::ensureStatusMessage() const
             statusMessage_ = status::Message::Created;
             break;
 
-			case MovedPermanently:
+         case PartialContent:
+            statusMessage_ = status::Message::PartialContent;
+            break;
+
+         case MovedPermanently:
 				statusMessage_ = status::Message::MovedPermanently ;
 				break;
 
@@ -301,6 +307,10 @@ void Response::ensureStatusMessage() const
 			case MethodNotAllowed:
 				statusMessage_ = status::Message::MethodNotAllowed ;
 				break;
+
+         case RangeNotSatisfiable:
+            statusMessage_ = status::Message::RangeNotSatisfiable;
+            break;
 
 			case InternalServerError:
 				statusMessage_ = status::Message::InternalServerError ;
