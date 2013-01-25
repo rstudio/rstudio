@@ -29,6 +29,8 @@
 
 #include <core/markdown/Markdown.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
 #include "SlideParser.hpp"
 
 using namespace core;
@@ -116,6 +118,7 @@ void renderMedia(const std::string& type,
 
 Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pSlides,
+                   std::string* pRevealConfig,
                    std::string* pInitActions,
                    std::string* pSlideActions)
 {
@@ -124,19 +127,20 @@ Error renderSlides(const SlideDeck& slideDeck,
    markdown::HTMLOptions htmlOptions;
 
    // render the slides to HTML and slide commands to case statements
-   std::ostringstream ostr, ostrInitActions, ostrSlideActions;
+   std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
    std::string cmdPad(8, ' ');
    int slideNumber = 0;
-   for (std::vector<Slide>::const_iterator it = slideDeck.begin();
-        it != slideDeck.end(); ++it)
+   for (size_t i=0; i<slideDeck.slides().size(); i++)
    {
       // slide
+      const Slide& slide = slideDeck.slides().at(i);
+
       ostr << "<section>" << std::endl;
-      if (it->showTitle())
-         ostr << "<h3>" << it->title() << "</h3>";
+      if (slide.showTitle())
+         ostr << "<h3>" << slide.title() << "</h3>";
 
       std::string htmlContent;
-      Error error = markdown::markdownToHTML(it->content(),
+      Error error = markdown::markdownToHTML(slide.content(),
                                              extensions,
                                              htmlOptions,
                                              &htmlContent);
@@ -146,19 +150,20 @@ Error renderSlides(const SlideDeck& slideDeck,
       // render content
       ostr << htmlContent << std::endl;
 
-      // setup a vector of js actions to take on deck initialization
+      // setup vectors for reveal config and init actions
+      std::vector<std::string> revealConfig;
       std::vector<std::string> initActions;
 
       // setup a vector of js actions to take when the slide loads
       // (we always take the action of adding any embedded commands)
       std::vector<std::string> slideActions;
-      slideActions.push_back("cmds = " + commandsAsJsonArray(*it));
+      slideActions.push_back("cmds = " + commandsAsJsonArray(slide));
 
       // get at commands
-      std::vector<AtCommand> atCommands = it->atCommands();
+      std::vector<AtCommand> atCommands = slide.atCommands();
 
       // render video if specified
-      std::string video = it->video();
+      std::string video = slide.video();
       if (!video.empty())
       {
          renderMedia("video",
@@ -172,7 +177,7 @@ Error renderSlides(const SlideDeck& slideDeck,
       }
 
       // render audio if specified
-      std::string audio = it->audio();
+      std::string audio = slide.audio();
       if (!audio.empty())
       {
          renderMedia("audio",
@@ -186,6 +191,12 @@ Error renderSlides(const SlideDeck& slideDeck,
       }
 
       ostr << "</section>" << std::endl;
+
+      // reveal config actions
+      BOOST_FOREACH(const std::string& config, revealConfig)
+      {
+         ostrRevealConfig << config << "," << std::endl;
+      }
 
       // javascript actions to take on slide deck init
       BOOST_FOREACH(const std::string& jsAction, initActions)
@@ -206,6 +217,7 @@ Error renderSlides(const SlideDeck& slideDeck,
    }
 
    *pSlides = ostr.str();
+   *pRevealConfig = ostrRevealConfig.str();
    *pInitActions = ostrInitActions.str();
    *pSlideActions = ostrSlideActions.str();
    return Success();

@@ -1,4 +1,9 @@
 
+// forward command key events to the rstudio frame
+if (window.parent.learningKeydown)
+  window.onkeydown = function(e) {window.parent.learningKeydown(e);}
+
+// manage media playback, atCommands, etc.
 function mediaManager(media, atCommands) {
 
   // track state for at command execution
@@ -61,38 +66,3 @@ function notifySlideChanged(indexh) {
                                        commandsForSlide(event.indexh));  
   }
 }
-
-Reveal.initialize({
-  controls: true,
-  progress: true,
-  history: true,
-  overview: false,
-  center: false,
-  rollingLinks: false,
-
-  theme: 'simple', 
-  transition: 'linear', 
-
-  dependencies: [
-    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } }
-  ]
-});
-
-Reveal.addEventListener( 'ready', function( event ) {
-   // notify container
-  notifySlideChanged(event.indexh)
-} );
-
-Reveal.addEventListener( 'slidechanged', function( event ) {
-     
-  // notify container
-  notifySlideChanged(event.indexh)
- 
-  // allow mathjax to re-render
-  if (window.MathJax)
-    window.MathJax.Hub.Rerender(event.currentSlide);  
-});
-
-// forward command key events to the rstudio frame
-if (window.parent.learningKeydown)
-  window.onkeydown = function(e) {window.parent.learningKeydown(e);}

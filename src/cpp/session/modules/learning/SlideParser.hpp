@@ -105,8 +105,7 @@ public:
 
    std::string title() const;
 
-   std::vector<Slide>::const_iterator begin() const { return slides_.begin(); }
-   std::vector<Slide>::const_iterator end() const { return slides_.end(); }
+   const std::vector<Slide>& slides() const { return slides_; }
 
 private:
    std::vector<Slide> slides_;

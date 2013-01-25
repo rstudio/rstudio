@@ -178,9 +178,10 @@ void handleLearningPaneRequest(const http::Request& request,
       }
 
       // render the slides
-      std::string slides, initCommands, slideCommands;
+      std::string slides, revealConfig, initCommands, slideCommands;
       error = learning::renderSlides(slideDeck,
                                      &slides,
+                                     &revealConfig,
                                      &initCommands,
                                      &slideCommands);
       if (error)
@@ -200,6 +201,7 @@ void handleLearningPaneRequest(const http::Request& request,
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
       vars["slides_js"] = resourceFiles().get("learning/slides.js");
+      vars["reveal_config"] = revealConfig;
       vars["init_commands"] = initCommands;
 
       // process the template
