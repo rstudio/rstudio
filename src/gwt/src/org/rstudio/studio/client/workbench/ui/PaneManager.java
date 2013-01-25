@@ -180,8 +180,11 @@ public class PaneManager
    public void onMaximizeConsole()
    {
       LogicalWindow consoleWindow = panesByName_.get("Console");
-      consoleWindow.onWindowStateChange(
+      if (consoleWindow.getState() != WindowState.MAXIMIZE)
+      {
+         consoleWindow.onWindowStateChange(
                         new WindowStateChangeEvent(WindowState.MAXIMIZE));
+      }
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
