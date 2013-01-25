@@ -48,7 +48,7 @@ LearningState s_learningState;
 
 FilePath learningStatePath()
 {
-   FilePath path = module_context::userScratchPath().childPath("learning");
+   FilePath path = module_context::scopedScratchPath().childPath("learning");
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
