@@ -13,7 +13,7 @@ function mediaManager(media, atCommands) {
   // reset at command index and reload after ending
   media.addEventListener('ended', function(e) { 
     nextAtCommandIndex = 0;
-    media.load();
+    media.currentTime = 0;
   }, false);
   
   // track time events and fire at commands
