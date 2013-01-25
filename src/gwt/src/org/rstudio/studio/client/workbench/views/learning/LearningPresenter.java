@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -119,6 +120,17 @@ public class LearningPresenter extends BasePresenter
    
    public void onShowLearningPane(ShowLearningPaneEvent event)
    {
+      // if this isn't google chrome then show an error
+      if (!BrowseCap.isChrome())
+      {
+         globalDisplay_.showErrorMessage(
+               "Browser Not Supported",
+               "RStudio learning modules are currently only supported " +
+               "in Google Chrome");
+         return;
+      }
+      
+      
       // if the learning pane wasn't previously shown in this 
       // session then reload
       if (!session_.getSessionInfo().getLearningState().isActive())
