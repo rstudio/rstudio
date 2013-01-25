@@ -366,6 +366,18 @@ public class XMLHttpRequest extends JavaScriptObject {
   }-*/;
 
   /**
+   * Sets withCredentials attribute.
+   * <p>
+   * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-withcredentials-attribute"
+   * >http://www.w3.org/TR/XMLHttpRequest/#the-withcredentials-attribute</a>.
+   *
+   * @param withCredentials whether to include credentials in XHR
+   */
+  public final native void setWithCredentials(boolean withCredentials) /*-{
+    this.xmlHttpRequest.withCredentials = withCredentials;
+  }-*/;
+
+  /**
    * Sets the response type.
    * <p>
    * See <a href="http://www.w3.org/TR/XMLHttpRequest/#the-responsetype-attribute"

@@ -91,6 +91,11 @@ public class RequestBuilder {
   private final String httpMethod;
 
   /**
+   * Whether to include credentials for a Cross Origin Request.
+   */
+  private boolean includeCredentials;
+
+  /**
    * Password to use when opening a JavaScript XmlHttpRequest object.
    */
   private String password;
@@ -355,6 +360,15 @@ public class RequestBuilder {
   }
 
   /**
+   * Sets whether the cross origin request will include credentials.
+   *
+   * @param withCredentials whether to include credentials in XHR
+   */
+  public void setIncludeCredentials(boolean includeCredentials) {
+    this.includeCredentials = includeCredentials;
+  }
+
+  /**
    * Sends an HTTP request based on the current builder configuration. If no
    * request headers have been set, the header "Content-Type" will be used with
    * a value of "text/plain; charset=utf-8".
@@ -384,6 +398,9 @@ public class RequestBuilder {
     }
 
     setHeaders(xmlHttpRequest);
+    if (includeCredentials) {
+      xmlHttpRequest.setWithCredentials(true);
+    }
 
     final Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
 
