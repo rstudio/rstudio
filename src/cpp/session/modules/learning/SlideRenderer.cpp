@@ -21,6 +21,8 @@
 
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -82,24 +84,103 @@ std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
    return ostr.str();
 }
 
+class MediaSource
+{
+public:
+   MediaSource(const std::string& src, const std::string& type)
+      : src_(src), type_(type)
+   {
+   }
+
+   std::string asTag() const
+   {
+      boost::format fmt("<source src=\"%1%\" type=\"%2%\" />");
+      return boost::str(fmt % src_ % type_);
+   }
+
+private:
+   std::string src_;
+   std::string type_;
+};
+
+std::vector<MediaSource> discoverMediaSources(
+                              const std::string& type,
+                              const FilePath& baseDir,
+                              const std::string& filename)
+{
+   // build list of formats based on type
+   std::vector<std::string> formats;
+   if (type == "video")
+   {
+      formats.push_back("mp4");
+      formats.push_back("webm");
+      formats.push_back("ogv");
+   }
+   else if (type == "audio")
+   {
+      formats.push_back("mp3");
+      formats.push_back("wav");
+      formats.push_back("oga");
+      formats.push_back("ogg");
+   }
+
+   std::vector<MediaSource> sources;
+   FilePath mediaFile = baseDir.complete(filename);
+   if (mediaFile.exists())
+   {
+      // get the filename without extension
+      std::string stem = mediaFile.stem();
+      BOOST_FOREACH(std::string fmt, formats)
+      {
+         FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
+         if (targetPath.exists())
+         {
+            std::string file = targetPath.relativePath(baseDir);
+            if (boost::algorithm::starts_with(fmt, "og"))
+               fmt = "ogg";
+            sources.push_back(MediaSource(file, type + "/" + fmt));
+         }
+      }
+   }
+   else
+   {
+      module_context::consoleWriteError("Media file " +
+                                        mediaFile.absolutePath() +
+                                        " does not exist");
+   }
+
+   return sources;
+}
+
 void renderMedia(const std::string& type,
-                 const std::string& format,
                  int slideNumber,
+                 const FilePath& baseDir,
                  const std::string& fileName,
                  const std::vector<AtCommand>& atCommands,
                  std::ostream& os,
                  std::vector<std::string>* pInitActions,
                  std::vector<std::string>* pSlideActions)
 {
+   // discover media sources
+   std::vector<MediaSource> mediaSources = discoverMediaSources(type,
+                                                                baseDir,
+                                                                fileName);
+   std::string sources;
+   BOOST_FOREACH(const MediaSource& source, mediaSources)
+   {
+      sources += (source.asTag() + "\n");
+   }
+
+
    boost::format fmt("slide%1%%2%");
    std::string mediaId = boost::str(fmt % slideNumber % type);
    fmt = boost::format(
-         "<%1% id=\"%2%\" controls preload=\"none\"\n"
-         "  <source src=\"%3%\" type=\"%1%/%4%\"/>\n"
+         "<%1% id=\"%2%\" controls preload=\"none\">\n"
+         "  %3%"
          "  Your browser does not support the %1% tag.\n"
          "</%1%>\n");
 
-   os << boost::str(fmt % type % mediaId % fileName % format) << std::endl;
+   os << boost::str(fmt % type % mediaId % sources) << std::endl;
 
    // define manager during initialization
    std::string atCmds = atCommandsAsJsonArray(atCommands);
@@ -167,8 +248,8 @@ Error renderSlides(const SlideDeck& slideDeck,
       if (!video.empty())
       {
          renderMedia("video",
-                     "mp4",
                      slideNumber,
+                     slideDeck.baseDir(),
                      video,
                      atCommands,
                      ostr,
@@ -181,8 +262,8 @@ Error renderSlides(const SlideDeck& slideDeck,
       if (!audio.empty())
       {
          renderMedia("audio",
-                     "mpeg",
                      slideNumber,
+                     slideDeck.baseDir(),
                      audio,
                      atCommands,
                      ostr,

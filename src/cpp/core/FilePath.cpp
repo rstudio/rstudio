@@ -452,12 +452,20 @@ MimeType s_mimeTypes[] =
    { "xpi",   "application/x-xpinstall" },
    
    { "mp2",   "audio/mpeg" },
-   { "mp3",   "audio/mpeg" },
    
    { "mpg",   "video/mpeg" },
    { "mpeg",  "video/mpeg" },
    { "flv",   "video/x-flv" },
-  
+
+   { "mp4",   "video/mp4" },
+   { "webm",  "video/webm" },
+   { "ogv",   "video/ogg" },
+
+   { "mp3",   "audio/mp3" },
+   { "wav",   "audio/wav" },
+   { "oga",   "audio/ogg" },
+   { "ogg",   "audio/ogg" },
+
    { NULL, NULL } 
 };
    

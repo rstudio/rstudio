@@ -107,7 +107,10 @@ public:
 
    const std::vector<Slide>& slides() const { return slides_; }
 
+   core::FilePath baseDir() const { return baseDir_; }
+
 private:
+   core::FilePath baseDir_;
    std::vector<Slide> slides_;
 };
 

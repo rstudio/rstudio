@@ -185,7 +185,10 @@ std::string SlideDeck::title() const
 Error SlideDeck::readSlides(const FilePath& filePath)
 {
    // clear existing
-   slides_.clear();;
+   slides_.clear();
+
+   // capture base dir
+   baseDir_ = filePath.parent();
 
    // read the file
    std::string slides;
