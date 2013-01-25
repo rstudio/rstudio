@@ -101,6 +101,10 @@ import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.learning.LearningPane;
+import org.rstudio.studio.client.workbench.views.learning.LearningPresenter;
+import org.rstudio.studio.client.workbench.views.learning.LearningTab;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -213,6 +217,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(GitPresenter.Display.class).to(GitPane.class);
       bind(SVNPresenter.Display.class).to(SVNPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
+      bind(LearningPresenter.Display.class).to(LearningPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
@@ -226,6 +231,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Help", HelpTab.class);
       bindTab("VCS", VCSTab.class);
       bindTab("Build", BuildTab.class);
+      bindTab("Learning", LearningTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
@@ -278,6 +284,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
+      bind(LearningServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -37,6 +37,7 @@
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
+#include <core/HtmlUtils.hpp>
 
 #include <core/markdown/Markdown.hpp>
 
@@ -758,17 +759,6 @@ Error createNotebook(const json::JsonRpcRequest& request,
    return Success();
 }
 
-std::string defaultTitle(const std::string& htmlContent)
-{
-   boost::regex re("<[Hh]([1-6]).*?>(.*?)</[Hh]\\1>");
-   boost::smatch match;
-   if (boost::regex_search(htmlContent, match, re))
-      return match[2];
-   else
-      return "";
-}
-
-
 // convert images to base64
 class Base64ImageFilter : public boost::iostreams::regex_filter
 {
@@ -924,16 +914,7 @@ void setVarFromHtmlResourceFile(const std::string& name,
                                 const std::string& fileName,
                                 std::map<std::string,std::string>* pVars)
 {
-   FilePath resPath = session::options().rResourcesPath();
-   FilePath filePath = resPath.complete(fileName);
-   std::string fileContents;
-   Error error = readStringFromFile(filePath, &fileContents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
+   std::string fileContents = module_context::resourceFileAsString(fileName);
    (*pVars)[name] = fileContents;
 }
 
@@ -964,7 +945,7 @@ void handleInternalMarkdownPreviewRequest(
 
       // define template filter
       std::map<std::string,std::string> vars;
-      vars["title"] = defaultTitle(htmlOutput);
+      vars["title"] = html_utils::defaultTitle(htmlOutput);
       setVarFromHtmlResourceFile("markdown_css", "markdown.css", &vars);
       if (requiresHighlighting(htmlOutput))
          setVarFromHtmlResourceFile("r_highlight", &vars);

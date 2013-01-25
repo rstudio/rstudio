@@ -903,6 +903,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHtmlPreview"
         desc="Refresh the preview"/>
         
+   <!-- Learning -->
+   <cmd id="refreshLearning"
+        desc="Refresh the presentation"/>
+        
+     
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"
         buttonLabel="To Source"
@@ -1159,5 +1164,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Copy"/>
    <cmd id="pasteDummy"
         menuLabel="_Paste"/>
+        
+   <cmd id="maximizeConsole"
+        menuLabel="Maximize Console"/>
 
 </commands>

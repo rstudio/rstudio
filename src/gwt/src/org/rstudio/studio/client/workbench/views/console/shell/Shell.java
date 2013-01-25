@@ -18,8 +18,10 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.CommandBinder;
@@ -294,20 +296,80 @@ public class Shell implements ConsoleInputHandler,
       eventBus_.fireEvent(new ConsoleInputEvent(commandText));
    }
 
-   public void onSendToConsole(SendToConsoleEvent event)
+   public void onSendToConsole(final SendToConsoleEvent event)
    {
-      InputEditorDisplay display = view_.getInputEditorDisplay();
+      // get the display and clear it
+      final InputEditorDisplay display = view_.getInputEditorDisplay();
       display.clear();
-      display.setText(event.getCode());
-      if (event.shouldExecute())
-         processCommandEntry();
       
-      if (!event.shouldExecute() || event.shouldFocus())
+      // define code block we execute at finish
+      Command finishSendToConsole = new Command() {
+         @Override
+         public void execute()
+         {
+            if (event.shouldExecute())
+               processCommandEntry();
+            
+            if (!event.shouldExecute() || event.shouldFocus())
+            {
+               display.setFocus(true);
+               display.collapseSelection(false);
+            }  
+         }
+      };
+      
+      // do standrd finish if we aren't animating
+      if (!event.shouldAnimate())
       {
-         display.setFocus(true);
-         display.collapseSelection(false);
+         display.setText(event.getCode()); 
+         finishSendToConsole.execute();
+      }
+      else
+      {
+         Scheduler.get().scheduleFixedPeriod(
+               new ConsoleInputAnimator(event.getCode(), 
+                                        display, 
+                                        finishSendToConsole),
+               100);
       }
    }
+   
+   private class ConsoleInputAnimator implements RepeatingCommand
+   {
+      public ConsoleInputAnimator(String code, 
+                                  InputEditorDisplay display,
+                                  Command onFinished)
+      {
+         code_ = code;
+         display_ = display;
+         onFinished_ = onFinished;
+      }
+      
+      @Override
+      public boolean execute()
+      {
+         // termination condition
+         if ((nextChar_ + 1) > code_.length())
+         {
+            onFinished_.execute();
+            return false;
+         }
+         
+         display_.insertCode(code_.substring(nextChar_, nextChar_+1));
+         
+         nextChar_++;
+         
+         return true;
+      }
+      
+      private int nextChar_ = 0;
+      private final String code_;
+      private final InputEditorDisplay display_;
+      private final Command onFinished_;
+      
+   }
+   
+ 
 
    private final class InputKeyDownHandler implements KeyDownHandler,
                                                       KeyPressHandler

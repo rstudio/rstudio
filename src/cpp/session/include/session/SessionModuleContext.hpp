@@ -328,6 +328,8 @@ void showFile(const core::FilePath& filePath,
 
 void showContent(const std::string& title, const core::FilePath& filePath);
 
+std::string resourceFileAsString(const std::string& fileName);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();

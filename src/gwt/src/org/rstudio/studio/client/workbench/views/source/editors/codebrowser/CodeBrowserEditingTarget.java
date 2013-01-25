@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
@@ -246,6 +247,23 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.findPrevious();
    }
    
+   @Override
+   public Position search(String regex)
+   {
+      InputEditorSelection sel = docDisplay_.search(regex, 
+                                                    false, 
+                                                    false, 
+                                                    false,
+                                                    false,
+                                                    Position.create(0, 0),
+                                                    null, 
+                                                    true);
+      if (sel != null)
+         return docDisplay_.selectionToPosition(sel.getStart());
+      else
+         return null;
+   }
+   
    
    @Override
    public String getId()
@@ -428,6 +446,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public void setCursorPosition(Position position)
    {
       docDisplay_.setCursorPosition(position);
+   }
+   
+   @Override
+   public void forceLineHighlighting()
+   {
+      docDisplay_.setHighlightSelectedLine(true);
    }
    
    @Override

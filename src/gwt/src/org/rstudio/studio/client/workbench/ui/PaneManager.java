@@ -26,6 +26,8 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -57,8 +59,10 @@ import java.util.HashMap;
 
 public class PaneManager
 {
+   public interface Binder extends CommandBinder<Commands, PaneManager> {}
+   
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help, VCS, Build
+      Workspace, History, Files, Plots, Packages, Help, VCS, Build, Learning
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -90,6 +94,7 @@ public class PaneManager
                       WorkbenchServerOperations server,
                       EventBus eventBus,
                       Session session,
+                      Binder binder,
                       Commands commands,
                       UIPrefs uiPrefs,
                       @Named("Console") final Widget consolePane,
@@ -103,6 +108,7 @@ public class PaneManager
                       @Named("Help") final WorkbenchTab helpTab,
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
+                      @Named("Learning") final WorkbenchTab learningTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
@@ -121,10 +127,13 @@ public class PaneManager
       helpTab_ = helpTab;
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
+      learningTab_ = learningTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
-
+      
+      binder.bind(commands, this);
+      
       PaneConfig config = validateConfig(uiPrefs.paneConfig().getValue());
       initPanes(config);
 
@@ -165,6 +174,17 @@ public class PaneManager
                              tabSet2TabPanel_, tabSet2MinPanel_);
          }
       });
+   }
+   
+   @Handler
+   public void onMaximizeConsole()
+   {
+      LogicalWindow consoleWindow = panesByName_.get("Console");
+      if (consoleWindow.getState() != WindowState.MAXIMIZE)
+      {
+         consoleWindow.onWindowStateChange(
+                        new WindowStateChangeEvent(WindowState.MAXIMIZE));
+      }
    }
 
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
@@ -245,6 +265,8 @@ public class PaneManager
             return vcsTab_;
          case Build:
             return buildTab_;
+         case Learning:
+            return learningTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -253,7 +275,7 @@ public class PaneManager
    {
       return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, buildTab_};
+                                  vcsTab_, buildTab_, learningTab_};
    }
 
    public void activateTab(Tab tab)
@@ -409,6 +431,8 @@ public class PaneManager
             return getTab(tab).getTitle();
          case Build:
             return "Build";
+         case Learning:
+            return "Learning";
       }
       return "??";
    }
@@ -431,6 +455,8 @@ public class PaneManager
          return Tab.VCS;
       if (name.equalsIgnoreCase("build"))
          return Tab.Build;
+      if (name.equalsIgnoreCase("learning"))
+         return Tab.Learning;
       
       return null;
    }
@@ -452,6 +478,7 @@ public class PaneManager
    private final WorkbenchTab helpTab_;
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
+   private final WorkbenchTab learningTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

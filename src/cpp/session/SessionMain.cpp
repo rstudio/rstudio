@@ -110,6 +110,7 @@
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
 #include "modules/build/SessionBuild.hpp"
+#include "modules/learning/SessionLearning.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -486,6 +487,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_target_dir"] = json::Value();
       sessionInfo["has_pkg_src"] = false;
    }
+
+   sessionInfo["learning_state"] = modules::learning::learningStateAsJson();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
@@ -1396,6 +1399,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::workbench::initialize)
       (modules::data::initialize)
       (modules::help::initialize)
+      (modules::learning::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::rpubs::initialize)

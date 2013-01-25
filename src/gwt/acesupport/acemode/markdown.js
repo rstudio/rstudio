@@ -24,9 +24,13 @@ var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
+var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
+
 
 var Mode = function() {   
    this.$tokenizer = new Tokenizer(new MarkdownHighlightRules().getRules());
+
+   this.foldingRules = new MarkdownFoldMode();
 };
 oop.inherits(Mode, TextMode);
 

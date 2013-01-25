@@ -68,6 +68,8 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
+import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
+import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
@@ -430,6 +432,11 @@ public class ClientEventDispatcher
          {
             String pane = event.getData();
             eventBus_.fireEvent(new ActivatePaneEvent(pane));
+         }
+         else if (type.equals(ClientEvent.ShowLearningPane))
+         {
+            LearningState state = event.getData();
+            eventBus_.fireEvent(new ShowLearningPaneEvent(state));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

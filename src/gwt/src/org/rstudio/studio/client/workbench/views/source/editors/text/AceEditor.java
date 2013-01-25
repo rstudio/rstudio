@@ -559,6 +559,10 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().scrollToY(y);
    }
    
+   public void insertCode(String code)
+   {
+      insertCode(code, false);
+   }
    
    public void insertCode(String code, boolean blockMode)
    {
@@ -1325,6 +1329,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().revealRange(range, animate);
    }
 
+   public boolean hasScopeTree()
+   {
+      return getSession().getMode().getCodeModel().hasScopes();
+   }
+   
    public JsArray<Scope> getScopeTree()
    {
       return getSession().getMode().getCodeModel().getScopeTree();

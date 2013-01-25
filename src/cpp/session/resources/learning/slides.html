@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>#!title#</title>
+  
+  <!-- reveal.js -->
+  <link rel="stylesheet" href="revealjs/css/reveal.css">
+  <link rel="stylesheet" href="revealjs/css/theme/simple.css" id="theme">
+  
+  <style type="text/css">
+#!slides_css#
+  </style>
+  
+#!r_highlight#
+   
+#!mathjax#  
+  
+</head>
+
+<body>
+  <div class="reveal">
+  <div class="slides">
+
+#!slides#
+
+  </div>
+  </div>
+
+  <script src="revealjs/lib/js/head.min.js"></script>
+  <script src="revealjs/js/reveal.js"></script>
+    
+  <script type="text/javascript">
+
+// dynamically built function to get slide specific commands
+function commandsForSlide(indexh) {
+  var cmds = []; 
+  switch(event.indexh) {
+#!slide_commands#
+    default:
+      break;
+  };
+  return cmds;
+}      
+    
+#!slides_js#
+   
+    Reveal.initialize({
+      controls: true,
+      progress: true,
+      history: true,
+      overview: false,
+      center: false,
+      rollingLinks: false,
+      #!reveal_config#
+      theme: 'simple', 
+      transition: 'linear', 
+    
+      dependencies: [
+        { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } }
+      ]
+    });
+
+    Reveal.addEventListener( 'ready', function( event ) {
+       // notify container
+      notifySlideChanged(event.indexh)
+    } );
+    
+    Reveal.addEventListener( 'slidechanged', function( event ) {
+         
+      // notify container
+      notifySlideChanged(event.indexh)
+     
+      // allow mathjax to re-render
+      if (window.MathJax)
+        window.MathJax.Hub.Rerender(event.currentSlide);  
+    });
+
+   
+#!init_commands#   
+   
+  </script>
+
+</body>
+
+</html>

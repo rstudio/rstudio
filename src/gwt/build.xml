@@ -57,6 +57,7 @@
             <file name="rdoc_highlight_rules.js"/>
             <file name="rdoc.js"/>
             <file name="markdown_highlight_rules.js"/>
+            <file name="markdown_folding.js"/>
             <file name="markdown.js"/>
             <file name="rmarkdown_highlight_rules.js"/>
             <file name="rmarkdown.js"/>

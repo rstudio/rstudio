@@ -38,6 +38,7 @@ set (CORE_SOURCE_FILES
    FileUtils.cpp
    GitGraph.cpp
    Hash.cpp
+   HtmlUtils.cpp
    Log.cpp
    LogWriter.cpp
    PerformanceTimer.cpp

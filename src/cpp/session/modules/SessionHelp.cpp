@@ -48,6 +48,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "learning/SessionLearning.hpp"
+
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
 #undef FALSE
@@ -644,6 +646,13 @@ void handleHttpdRequest(const std::string& location,
          pResponse->setFile(cssFile, request, filter);
          return;
       }
+   }
+
+   // handle learning url
+   if (boost::algorithm::starts_with(path, "/learning"))
+   {
+      learning::handleLearningHelpRequest(request, kJsCallbacks, pResponse);
+      return;
    }
 
    // handle Rd file preview

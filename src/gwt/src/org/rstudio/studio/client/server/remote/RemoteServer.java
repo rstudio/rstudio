@@ -2525,6 +2525,20 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RPUBS_TERMINATE_UPLOAD, requestCallback);
    }
    
+   @Override
+   public void setLearningSlideIndex(
+                                 int index, 
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, SET_LEARNING_SLIDE_INDEX, index, requestCallback);
+   }
+   
+   @Override
+   public void closeLearningPane(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CLOSE_LEARNING_PANE, requestCallback);
+   }
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           String encoding,
@@ -2908,6 +2922,9 @@ public class RemoteServer implements Server
    private static final String RPUBS_UPLOAD = "rpubs_upload";
    private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
+   private static final String SET_LEARNING_SLIDE_INDEX = "set_learning_slide_index";
+   private static final String CLOSE_LEARNING_PANE = "close_learning_pane";
+   
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";
    private static final String TERMINATE_COMPILE_PDF = "terminate_compile_pdf";
@@ -2933,4 +2950,6 @@ public class RemoteServer implements Server
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";
 
    private static final String LOG = "log";
+
+  
 }

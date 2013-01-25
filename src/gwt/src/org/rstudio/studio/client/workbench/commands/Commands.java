@@ -157,6 +157,9 @@ public abstract class
    public abstract AppCommand refreshHtmlPreview();
    public abstract AppCommand showHtmlPreviewLog();
    
+   // Learning
+   public abstract AppCommand refreshLearning();
+   
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
@@ -287,4 +290,6 @@ public abstract class
    public abstract AppCommand clearRecentFiles();
 
    public abstract AppCommand checkSpelling();
+   
+   public abstract AppCommand maximizeConsole();
 }
