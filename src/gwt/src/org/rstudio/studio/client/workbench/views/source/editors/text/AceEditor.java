@@ -559,6 +559,10 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().scrollToY(y);
    }
    
+   public void insertCode(String code)
+   {
+      insertCode(code, false);
+   }
    
    public void insertCode(String code, boolean blockMode)
    {

@@ -22,7 +22,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -47,6 +46,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -275,6 +275,8 @@ public class LearningPresenter extends BasePresenter
          performSourceCommand(param1, param2);
       else if (cmdName.equals("console"))
          performConsoleCommand(params);
+      else if (cmdName.equals("console-input"))
+         performConsoleInputCommand(params);
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -359,6 +361,11 @@ public class LearningPresenter extends BasePresenter
          else
             globalDisplay_.showErrorMessage("Unknown Console Directive", cmd);
       }
+   }
+   
+   private void performConsoleInputCommand(String params)
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent(params, true, false, true));
    }
    
    

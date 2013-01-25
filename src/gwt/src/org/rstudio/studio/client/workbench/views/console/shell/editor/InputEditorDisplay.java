@@ -39,6 +39,8 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    String replaceSelection(String value, boolean collapseSelection) ;
    boolean isSelectionCollapsed() ;
    void clear() ;
+   
+   void insertCode(String code);
 
    void collapseSelection(boolean collapseToStart);
 
