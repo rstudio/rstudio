@@ -374,7 +374,7 @@ public class XMLHttpRequest extends JavaScriptObject {
    * @param withCredentials whether to include credentials in XHR
    */
   public final native void setWithCredentials(boolean withCredentials) /*-{
-    this.xmlHttpRequest.withCredentials = withCredentials;
+    this.withCredentials = withCredentials;
   }-*/;
 
   /**
