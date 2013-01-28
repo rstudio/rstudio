@@ -74,8 +74,7 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 
 # try to determine if devtools::dev_mode is on
 .rs.addFunction( "devModeOn", function(){
-  require(utils)
-
+   
   # determine devmode path (devtools <= 0.6 hard-coded it)
   devToolsPath <- getOption("devtools.path")
   if (is.null(devToolsPath))
@@ -87,7 +86,7 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
     return (FALSE)
 
   # is the devtools path active?
-  devToolsPath <- normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
+  devToolsPath <- .rs.normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
   devToolsPath %in% .libPaths()
 })
 
@@ -228,6 +227,13 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    }
 })
 
+# indirection for normalizePath function
+.rs.addFunction("normalizePath", 
+   if(getRversion() < "2.13.0")
+      utils::normalizePath
+   else
+      normalizePath
+)
 
 # handle viewing a pdf differently on each platform:
 #  - windows: shell.exec
@@ -235,7 +241,6 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 #  - linux: getOption("pdfviewer")
 .rs.addFunction( "shellViewPdf", function(path)
 {
-   require(utils)
    sysName <- Sys.info()[['sysname']]
 
    if (identical(sysName, "Windows"))
@@ -416,8 +421,7 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 
 .rs.addFunction("showDiagnostics", function()
 {
-  require(utils)
-  diagPath <- shQuote(normalizePath("~/rstudio-diagnostics"))
+  diagPath <- shQuote(.rs.normalizePath("~/rstudio-diagnostics"))
   sysName <- Sys.info()[['sysname']]
   if (identical(sysName, "Windows"))
     shell.exec(diagPath)

@@ -15,7 +15,7 @@
 
 # capture output into a file (note this path is in module_context::sourceDiagnostics
 # so changes to the path should be synchronized there)
-require(utils)
+library(utils)
 dir.create("~/rstudio-diagnostics", showWarnings=FALSE)
 diagnosticsFile <- suppressWarnings(normalizePath("~/rstudio-diagnostics/diagnostics-report.txt"))
 

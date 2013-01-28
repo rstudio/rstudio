@@ -212,9 +212,7 @@
 
 
 .rs.addFunction("createDefaultShellRd", function(`_name`, `_type`)
-{
-  require(utils)
-  
+{  
   # create a tempdir and switch to it for the duration of the function
   dirName <- tempfile("RdShell")
   dir.create(dirName)
@@ -225,14 +223,14 @@
   if (identical(`_type`, "function"))
   {
     assign(`_name`, function(x) {})
-    return (normalizePath(paste(getwd(),
+    return (.rs.normalizePath(paste(getwd(),
                                 utils::prompt(name = `_name`),
                                 sep="/")))
   }
   else if (identical(`_type`, "data"))
   {
     assign(`_name`, data.frame(x=integer(), y=integer()))
-    return (normalizePath(paste(getwd(),
+    return (.rs.normalizePath(paste(getwd(),
                                 utils::promptData(name = `_name`),
                                 sep="/")))
   }
@@ -244,8 +242,6 @@
 
 .rs.addFunction("createShellRd", function(name, type, package) 
 {  
-  require(utils)
-  
   # create a tempdir and switch to it for the duration of the function
   dirName <- tempfile("RdShell")
   dir.create(dirName)
@@ -259,7 +255,7 @@
     if (!is.null(func))
     {
       funcRd <- utils::prompt(func, name = name)
-      return (normalizePath(paste(getwd(),funcRd,sep="/")))
+      return (.rs.normalizePath(paste(getwd(),funcRd,sep="/")))
     }
     else
     {
@@ -276,7 +272,7 @@
     }), error = function(e) {print(e); ""})
     
     if (nzchar(dataRd) == TRUE)
-      return (normalizePath(paste(getwd(), dataRd, sep="/")))
+      return (.rs.normalizePath(paste(getwd(), dataRd, sep="/")))
     else
       return ("")
   }
