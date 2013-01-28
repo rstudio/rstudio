@@ -2,7 +2,8 @@
 
 versionInfo <- function() {
   info <- list()
-  info$version <- utils::packageVersion("rstudio")
+  info$version <- package_version(utils:::packageDescription("rstudio", 
+                                                             fields="Version"))
   info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
                                          PACKAGE=""))
   info

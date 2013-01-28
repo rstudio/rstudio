@@ -107,6 +107,12 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
    detach(pos = match(pkg, search()))
 })
 
+.rs.addFunction("getPackageVersion", function(packageName)
+{
+   package_version(utils:::packageDescription(packageName, 
+                                              fields="Version"))   
+})
+
 # save an environment to a file
 .rs.addFunction( "saveEnvironment", function(env, filename)
 {

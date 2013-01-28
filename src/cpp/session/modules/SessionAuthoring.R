@@ -15,13 +15,13 @@
 
 .rs.addFunction( "knitrHasEncodingParam", function()
 {
-   packageVersion("knitr") >= "1.0"
+   .rs.getPackageVersion("knitr") >= "1.0"
 })
 
 .rs.addFunction( "knitrChunkOptions", function()
 {
    # starting with v0.4.2 this is avavilable directly from knitr
-   if (packageVersion("knitr") >= "0.4.2")
+   if (.rs.getPackageVersion("knitr") >= "0.4.2")
       return(knitr:::opts_chunk_attr)
 
    # still try to return correct results for previous versions
@@ -32,7 +32,7 @@
    knitrOptions$fig.show <- list("asis", "hold", "animate")
    knitrOptions$fig.keep <- list("high", "none", "all", "first", "last")
    knitrOptions$fig.align <- list("left", "right", "center")
-   if (packageVersion("knitr") >= "0.4")
+   if (.rs.getPackageVersion("knitr") >= "0.4")
       knitrOptions$dev <- as.list(names(knitr:::auto_exts))
    
    return (knitrOptions)
