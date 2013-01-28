@@ -38,8 +38,10 @@ public class NamedFrame extends Frame {
   interface IFrameTemplate extends SafeHtmlTemplates {
     static final IFrameTemplate INSTANCE = GWT.create(IFrameTemplate.class);
 
-    @Template("<iframe src='{0}' name='{1}'>")
-    SafeHtml get(String src, String name);
+    // Setting a src prevents mixed-content warnings.
+    // http://weblogs.asp.net/bleroy/archive/2005/08/09/how-to-put-a-div-over-a-select-in-ie.aspx
+    @Template("<iframe src=\"javascript:''\" name='{0}'>")
+    SafeHtml get(String name);
   }
 
   // Used inside JSNI, so please don't delete this field just because
@@ -53,9 +55,8 @@ public class NamedFrame extends Frame {
   }
 
   /**
-   * Creates an HTML IFRAME element with a src and name.
+   * Creates an HTML IFRAME element with a name.
    * 
-   * @param src the src of the frame
    * @param name the name of the frame, which must contain at least one
    *          non-whitespace character and must not contain reserved HTML markup
    *          characters such as '<code>&lt;</code>', '<code>&gt;</code>',
@@ -63,7 +64,7 @@ public class NamedFrame extends Frame {
    * @return the newly-created element
    * @throws IllegalArgumentException if the supplied name is not allowed 
    */
-  private static IFrameElement createIFrame(String src, String name) {
+  private static IFrameElement createIFrame(String name) {
     if (name == null || !isValidName(name.trim())) {
       throw new IllegalArgumentException(
           "expecting one or more non-whitespace chars with no '<', '>', or '&'");
@@ -72,7 +73,7 @@ public class NamedFrame extends Frame {
     // Use innerHTML to implicitly create the <iframe>. This is necessary
     // because most browsers will not respect a dynamically-set iframe name.
     Element div = DOM.createDiv();
-    div.setInnerSafeHtml(IFrameTemplate.INSTANCE.get(src, name));
+    div.setInnerSafeHtml(IFrameTemplate.INSTANCE.get(name));
     return div.getFirstChild().cast();
   }
 
@@ -101,9 +102,7 @@ public class NamedFrame extends Frame {
    */
   @UiConstructor
   public NamedFrame(String name) {
-    // Setting a src prevents mixed-content warnings.
-    // http://weblogs.asp.net/bleroy/archive/2005/08/09/how-to-put-a-div-over-a-select-in-ie.aspx
-    super(createIFrame("javascript:''", name));
+    super(createIFrame(name));
     setStyleName(DEFAULT_STYLENAME);
   }
 
