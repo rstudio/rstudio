@@ -119,7 +119,7 @@
    # get library paths (normalize on unix to get rid of duplicate symlinks)
    libPaths <- .libPaths()
    if (!identical(.Platform$OS.type, "windows"))
-      libPaths <- normalizePath(libPaths)
+      libPaths <- .rs.normalizePath(libPaths)
 
    uniqueLibPaths <- subset(libPaths, !duplicated(libPaths))
    return (uniqueLibPaths)
@@ -256,7 +256,7 @@
    # default library path (normalize on unix)
    defaultLibraryPath = .libPaths()[1L]
    if (!identical(.Platform$OS.type, "windows"))
-      defaultLibraryPath <- normalizePath(defaultLibraryPath)
+      defaultLibraryPath <- .rs.normalizePath(defaultLibraryPath)
    
    # return context
    list(cranMirrorConfigured = cranMirrorConfigured,
