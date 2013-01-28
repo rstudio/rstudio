@@ -60,7 +60,7 @@
           <include name="guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <include name="jscomp/r1649/compiler-rebased.jar" />
           <include name="jetty/jetty-6.1.11.jar" />
-          <include name="icu4j/4.4.2/icu4j.jar" />
+          <include name="icu4j/50.1.1/icu4j.jar" />
           <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
           <include name="tomcat/commons-el-1.0.jar" />
@@ -109,7 +109,7 @@
           <zipfileset src="${gwt.tools.lib}/guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/r1649/compiler-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
-          <zipfileset src="${gwt.tools.lib}/icu4j/4.4.2/icu4j.jar" />
+          <zipfileset src="${gwt.tools.lib}/icu4j/50.1.1/icu4j.jar" />
           <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
           <zipfileset src="${gwt.tools.lib}/tomcat/commons-el-1.0.jar" />

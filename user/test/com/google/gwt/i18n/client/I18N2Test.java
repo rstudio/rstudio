@@ -156,9 +156,9 @@ public class I18N2Test extends GWTTestCase {
     String str = timeZoneData.americaLosAngeles();
     TimeZoneInfo tzInfo = TimeZoneInfo.buildTimeZoneData(str);
     TimeZone tz = TimeZone.createTimeZone(tzInfo);
-    assertEquals("in timezone: 2/1/2010 7:04:05 PM", m.inTimezone(date, tz));
+    assertEquals("in timezone: 2/1/2010, 7:04:05 PM", m.inTimezone(date, tz));
 
-    assertEquals("in timezone: 2/1/2010 7:04:05 PM", m.inTimezoneAsSafeHtml(date, tz).asString());
+    assertEquals("in timezone: 2/1/2010, 7:04:05 PM", m.inTimezoneAsSafeHtml(date, tz).asString());
 }
 
   public void testListWithArray() {
@@ -513,9 +513,9 @@ public class I18N2Test extends GWTTestCase {
   public void testStaticTimeZone() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
     Date date = new Date(Date.UTC(2010 - 1900, 1, 2, 3, 4, 5));
-    assertEquals("in GMT: 2/2/2010 3:04:05 AM", m.gmt(date));
+    assertEquals("in GMT: 2/2/2010, 3:04:05 AM", m.gmt(date));
 
-    assertEquals("in GMT: 2/2/2010 3:04:05 AM", m.gmtAsSafeHtml(date).asString(
+    assertEquals("in GMT: 2/2/2010, 3:04:05 AM", m.gmtAsSafeHtml(date).asString(
         ));
   }
 
