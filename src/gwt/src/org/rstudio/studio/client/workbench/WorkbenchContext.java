@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -54,6 +55,19 @@ public class WorkbenchContext
          {
             isServerBusy_ = event.isBusy();
          } 
+      });
+      
+      eventBus.addHandler(RestartStatusEvent.TYPE, 
+                          new RestartStatusEvent.Handler()
+      {
+         @Override
+         public void onRestartStatus(RestartStatusEvent event)
+         {
+            if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+               isRestartInProgress_ = true;
+            else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+               isRestartInProgress_ = false;
+         }
       });
    }
    
@@ -137,7 +151,13 @@ public class WorkbenchContext
       return isServerBusy_;
    }
    
+   public boolean isRestartInProgress()
+   {
+      return isRestartInProgress_;
+   }
+   
    private boolean isServerBusy_ = false;
+   private boolean isRestartInProgress_ = false;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem activeProjectDir_ = null;

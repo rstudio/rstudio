@@ -31,6 +31,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
@@ -353,17 +354,32 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                              "Restarting R...").getIndicator();
                                        
       // perform the suspend and restart
+      eventBus_.fireEvent(
+                  new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
       server_.suspendForRestart(event.getSuspendOptions(),
                                 new VoidServerRequestCallback(progress) {
          @Override 
          protected void onSuccess()
-         {
+         { 
             // send pings until the server restarts
-            sendPing(event.getAfterRestartCommand(), 200, 25);
+            sendPing(event.getAfterRestartCommand(), 200, 25, new Command() {
+
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(new RestartStatusEvent(
+                                    RestartStatusEvent.RESTART_COMPLETED));
+                  
+               }
+               
+            });
          }
          @Override
          protected void onFailure()
          {
+            eventBus_.fireEvent(
+               new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
+            
             setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
          }
       });    
@@ -378,7 +394,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private void sendPing(final String afterRestartCommand,
                          int delayMs, 
-                         final int maxRetries)
+                         final int maxRetries,
+                         final Command onCompleted)
    {  
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
 
@@ -422,12 +439,18 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                           new ConsoleRestartRCompletedEvent());
                         }
                      }
+                     
+                     if (onCompleted != null)
+                        onCompleted.execute();
                   }
                   
                   @Override
                   protected void onFailure()
                   {
                      pingInFlight_ = false;
+                     
+                     if (onCompleted != null)
+                        onCompleted.execute();
                   }
                });
             }

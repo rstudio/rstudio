@@ -491,7 +491,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    @Override
    public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
-      server_.refreshPlot(new PlotRequestCallback());
+      boolean showErrors = !workbenchContext_.isRestartInProgress();
+      server_.refreshPlot(new PlotRequestCallback(showErrors));
    }
    
    void onShowManipulator()
@@ -532,6 +533,16 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    
    private class PlotRequestCallback extends ServerRequestCallback<Void>
    {
+      public PlotRequestCallback()
+      {
+         this(true);
+      }
+      
+      public PlotRequestCallback(boolean showErrors)
+      {
+         showErrors_ = showErrors;
+      }
+      
       @Override
       public void onResponseReceived(Void response)
       {
@@ -544,9 +555,15 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       public void onError(ServerError error)
       {
          view_.setProgress(false);
-         globalDisplay_.showErrorMessage("Server Error", 
-                                         error.getUserMessage());
+         
+         if (showErrors_)
+         {
+            globalDisplay_.showErrorMessage("Server Error", 
+                                            error.getUserMessage());
+         }
       }
+      
+      private final boolean showErrors_;
    }
 
    public void onLocator(LocatorEvent event)

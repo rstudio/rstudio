@@ -362,9 +362,12 @@ public class Workspace
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Listing Objects",
-                                           error.getUserMessage());
-            
+            // ignore errors when a restart is in progress
+            if (!workbenchContext_.isRestartInProgress())
+            {
+               globalDisplay_.showErrorMessage("Error Listing Objects",
+                                               error.getUserMessage());
+            }
             
             if (showProgress)
                view_.setProgress(false);
