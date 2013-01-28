@@ -23,6 +23,6 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
 
 
 .rs.addFunction("haveRcppAttributes", function() {
-   .rs.isPackageInstalled("Rcpp") && (packageVersion("Rcpp") >= "0.10.1")
+   .rs.isPackageInstalled("Rcpp") && (.rs.getPackageVersion("Rcpp") >= "0.10.1")
 })
 

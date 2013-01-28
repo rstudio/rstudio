@@ -21,7 +21,7 @@
    caps$stitch_supported = .rs.scalar(FALSE)
    if (.rs.isPackageInstalled("knitr"))
    {
-      knitrVersion <- packageVersion("knitr")
+      knitrVersion <- .rs.getPackageVersion("knitr")
       caps$r_markdown_supported = .rs.scalar(knitrVersion >= markdownVersion)
       caps$stitch_supported = .rs.scalar(knitrVersion >= stitchVersion)
    }
