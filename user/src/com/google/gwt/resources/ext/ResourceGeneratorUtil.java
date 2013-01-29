@@ -498,7 +498,7 @@ public final class ResourceGeneratorUtil {
         if (resourceURL == null) {
           error = true;
           logger.log(TreeLogger.ERROR, "Resource " + resource
-              + " not found. Is the name specified as Class.getResource()"
+              + " not found. Is the name specified as ClassLoader.getResource()"
               + " would expect?");
         }
 
