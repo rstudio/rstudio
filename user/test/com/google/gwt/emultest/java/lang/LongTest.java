@@ -93,6 +93,9 @@ public class LongTest extends GWTTestCase {
     assertEquals(100000000000L, Long.parseLong("100000000000"));
     assertEquals(-100000000000L, Long.parseLong("-100000000000"));
     assertEquals(10L, Long.parseLong("010"));
+    assertEquals(Long.MAX_VALUE, Long.parseLong("" + Long.MAX_VALUE));
+    // Issue 7308
+    assertEquals(Long.MIN_VALUE, Long.parseLong("" + Long.MIN_VALUE));
     try {
       Long.parseLong("10L");
       fail("expected NumberFormatException");
