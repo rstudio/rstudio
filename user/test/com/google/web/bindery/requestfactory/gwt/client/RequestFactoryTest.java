@@ -16,6 +16,7 @@
 package com.google.web.bindery.requestfactory.gwt.client;
 
 import com.google.web.bindery.autobean.shared.AutoBeanCodex;
+import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
@@ -271,6 +272,63 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         assertEquals(2, handler.updateEventCount); // two bars persisted.
         assertEquals(4, handler.totalEventCount);
         finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * See https://code.google.com/p/google-web-toolkit/issues/detail?id=7900
+   */
+  public void testCreatePersistCascadingAndReturnSelfEditWithReferences() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    SimpleFooRequest context = simpleFooRequest();
+    SimpleFooProxy foo = context.create(SimpleFooProxy.class);
+    SimpleBarProxy bar = context.create(SimpleBarProxy.class);
+    foo.setBarField(bar);
+    Request<SimpleFooProxy> fooReq = context.persistCascadingAndReturnSelf()
+        .using(foo).with("barField");
+    fooReq.fire(new Receiver<SimpleFooProxy>() {
+
+      @Override
+      public void onSuccess(SimpleFooProxy returned) {
+        assertTrue(AutoBeanUtils.getAutoBean(returned).isFrozen());
+        assertTrue(AutoBeanUtils.getAutoBean(returned.getBarField()).isFrozen());
+
+        simpleFooRequest().edit(returned);
+
+        finishTestAndReset();
+      }
+    });
+  }
+
+  /**
+   * See https://code.google.com/p/google-web-toolkit/issues/detail?id=7900
+   */
+  public void testCreateReferencePersistCascadingAndReturnSelfEdit() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    simpleFooRequest().findSimpleFooById(1L).fire(new Receiver<SimpleFooProxy>() {
+      @Override
+      public void onSuccess(SimpleFooProxy response) {
+        SimpleFooRequest context = simpleFooRequest();
+        SimpleFooProxy foo = context.edit(response);
+        SimpleBarProxy bar = context.create(SimpleBarProxy.class);
+        foo.setBarField(bar);
+        Request<SimpleFooProxy> fooReq = context.persistCascadingAndReturnSelf()
+            .using(foo).with("barField");
+        fooReq.fire(new Receiver<SimpleFooProxy>() {
+
+          @Override
+          public void onSuccess(SimpleFooProxy returned) {
+            assertTrue(AutoBeanUtils.getAutoBean(returned).isFrozen());
+            assertTrue(AutoBeanUtils.getAutoBean(returned.getBarField()).isFrozen());
+
+            simpleFooRequest().edit(returned);
+
+            finishTestAndReset();
+          }
+        });
       }
     });
   }
@@ -606,6 +664,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
         assertEquals(2, handler.totalEventCount);
 
         checkStableIdEquals(foo, returned);
+
+        simpleFooRequest().edit(returned);
+
         finishTestAndReset();
       }
     });

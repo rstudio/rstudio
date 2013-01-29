@@ -157,7 +157,8 @@ class RequestState implements EntityCodex.EntitySource {
   /**
    * EntityCodex support. This method is identical to
    * {@link IdFactory#getHistoryToken(SimpleProxyId)} except that it
-   * base64-encodes the server ids.
+   * base64-encodes the server ids and adds client ids for stable ids
+   * that were ephemeral.
    * <p>
    * XXX: Merge this with AbstsractRequestContext's implementation
    */
@@ -172,6 +173,9 @@ class RequestState implements EntityCodex.EntitySource {
       ref.setStrength(Strength.EPHEMERAL);
       ref.setClientId(stableId.getClientId());
     } else {
+      if (stableId.wasEphemeral()) {
+        ref.setClientId(stableId.getClientId());
+      }
       ref.setServerId(SimpleRequestProcessor.toBase64(stableId.getServerId()));
     }
     return AutoBeanCodex.encode(bean);
