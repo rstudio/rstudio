@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import org.w3c.dom.Node;
 
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -538,6 +539,8 @@ class ImageBundleBuilder {
     Graphics2D g2d = bundledImage.createGraphics();
     createGraphicsEvent.end();
 
+    setBetterRenderingQuality(g2d);
+
     g2d.drawImage(rect.getImage(), rect.transform(), null);
     g2d.dispose();
 
@@ -591,6 +594,13 @@ class ImageBundleBuilder {
    */
   private static int lcm(int a, int b) {
     return b / gcd(a, b) * a;
+  }
+
+  private static void setBetterRenderingQuality(Graphics2D g2d) {
+    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+        RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+        RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
   }
 
   private final Map<String, ImageRect> imageNameToImageRectMap = new HashMap<String, ImageRect>();
@@ -818,6 +828,9 @@ class ImageBundleBuilder {
     SpeedTracerLogger.Event graphicsEvent = SpeedTracerLogger.start(CompilerEventType.GRAPHICS_INIT,
         "java.awt.headless", System.getProperty("java.awt.headless"));
     Graphics2D g2d = bundledImage.createGraphics();
+
+    setBetterRenderingQuality(g2d);
+
     graphicsEvent.end();
 
     for (ImageRect imageRect : imageRects) {
