@@ -140,6 +140,7 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
       expandable.getStyle().setHeight(100.0, Unit.PCT);
       expandable.getStyle().setWidth(100.0, Unit.PCT);
       expandable.getStyle().setOverflow(Overflow.SCROLL);
+      expandable.getStyle().setZIndex(-1);
       elem.appendChild(expandable);
       expandableInner = Document.get().createDivElement().cast();
       expandable.appendChild(expandableInner);
@@ -160,6 +161,7 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
       collapsible.getStyle().setHeight(100.0, Unit.PCT);
       collapsible.getStyle().setWidth(100.0, Unit.PCT);
       collapsible.getStyle().setOverflow(Overflow.SCROLL);
+      collapsible.getStyle().setZIndex(-1);
       elem.appendChild(collapsible);
       collapsibleInner = Document.get().createDivElement().cast();
       collapsibleInner.getStyle().setWidth(200, Unit.PCT);
