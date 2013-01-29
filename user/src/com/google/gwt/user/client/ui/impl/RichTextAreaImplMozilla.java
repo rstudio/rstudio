@@ -27,6 +27,11 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
   boolean isFirstFocus;
 
   @Override
+  public String getBackColor() {
+    return queryCommandValue("HiliteColor");
+  }
+
+  @Override
   public native void initElement() /*-{
     // Mozilla doesn't allow designMode to be set reliably until the iframe is
     // fully loaded.
