@@ -22,6 +22,7 @@ mkdir -p $TARGET_DIR
 mkdir -p $TARGET_DIR/css/theme
 mkdir -p $TARGET_DIR/js
 mkdir -p $TARGET_DIR/lib/js
+mkdir -p $TARGET_DIR/plugin
 
 cp LICENSE $TARGET_DIR/LICENSE
 cp css/reveal.css $TARGET_DIR/css
@@ -32,6 +33,7 @@ cp lib/js/head.min.js $TARGET_DIR/lib/js
 cp lib/js/classList.js $TARGET_DIR/lib/js
 cp js/reveal.js $TARGET_DIR/js
 cp js/reveal.min.js $TARGET_DIR/js
+cp -R plugin/print-pdf $TARGET_DIR/plugin
 
 # return to tools dir
 cd ..
