@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.learning;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Widget;
@@ -62,6 +63,13 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       frame_ = new ReloadableFrame(false) ;
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+      
+      // allow full-screen view of iframe
+      Element el = frame_.getElement();
+      el.setAttribute("webkitallowfullscreen", "");
+      el.setAttribute("mozallowfullscreen", "");
+      el.setAttribute("allowfullscreen", "");
+      
       frame_.addLoadHandler(new LoadHandler() {
 
          @Override
