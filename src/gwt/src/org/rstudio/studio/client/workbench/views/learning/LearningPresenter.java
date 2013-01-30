@@ -64,6 +64,7 @@ public class LearningPresenter extends BasePresenter
    {
       void load(String url, LearningState state);
       boolean hasSlides();
+      void home();
       void next();
       void prev();
       void fullScreen();
@@ -142,6 +143,24 @@ public class LearningPresenter extends BasePresenter
          view_.bringToFront();
          init(event.getLearningState());
       }
+   }
+   
+   @Handler
+   void onLearningHome()
+   {
+      view_.home();
+   }
+   
+   @Handler
+   void onLearningNext()
+   {
+      view_.next();
+   }
+   
+   @Handler
+   void onLearningPrev()
+   {
+      view_.prev();
    }
    
    @Handler

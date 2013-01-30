@@ -49,6 +49,13 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
+      
+      toolbar.addLeftWidget(commands_.learningHome().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.learningPrev().createToolbarButton());
+      toolbar.addLeftWidget(commands_.learningNext().createToolbarButton());
+      toolbar.addLeftSeparator();
+      
       titleLabel_ = new ToolbarLabel();
       toolbar.addLeftWidget(titleLabel_);
       
@@ -131,6 +138,12 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    }-*/;
    
    @Override
+   public void home()
+   {
+      Reveal.fromWindow(frame_.getWindow()).home();
+   }
+   
+   @Override
    public void next()
    {
       Reveal.fromWindow(frame_.getWindow()).next();
@@ -151,6 +164,10 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       
       public static final native Reveal fromWindow(WindowEx window) /*-{
          return window.Reveal;
+      }-*/;
+      
+      public final native void home() /*-{
+         this.slide(0);
       }-*/;
       
       public final native void next() /*-{

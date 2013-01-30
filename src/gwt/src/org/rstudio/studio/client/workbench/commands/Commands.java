@@ -160,6 +160,9 @@ public abstract class
    // Learning
    public abstract AppCommand refreshLearning();
    public abstract AppCommand learningFullscreen();
+   public abstract AppCommand learningHome();
+   public abstract AppCommand learningNext();
+   public abstract AppCommand learningPrev();
    
    // View
    public abstract AppCommand showToolbar();

@@ -46,29 +46,6 @@
   color: blue;
 }
 
-.reveal .controls {
-  right: -20px;
-  bottom: 5px;
-}
-
-.reveal .controls div.navigate-left {
-  top: 75px;
-}
-
-.reveal .controls div.navigate-right {
-  left: 54px;
-  top: 75px;
-}
-
-
-.reveal .controls div.navigate-up {
-  display: none;
-}
-
-.reveal .controls div.navigate-down {
-  display: none;
-}
-
 .reveal .slides {
   left: 48%;
 }
@@ -79,7 +56,7 @@
 }
 
 .reveal video {
-  height: 75%;
+  height: 80%;
   width: 100%;
 }
 
