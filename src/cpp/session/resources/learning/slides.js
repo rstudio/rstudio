@@ -49,7 +49,8 @@ function mediaManager(media, atCommands) {
 
 function pausePlayers(players) {
   for(var i = 0; i < players.length; i++) {
-    players[i].pause();
+    if (!players[i].paused) 
+      players[i].pause();
   }
 }
     
