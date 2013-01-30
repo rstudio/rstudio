@@ -633,11 +633,11 @@ public class JavaToJavaScriptCompiler {
 
     try {
       // (2) Assemble the Java AST.
-      UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
+      UnifyAst unifyAst = new UnifyAst(logger, jprogram, jsProgram, options, rpo);
       unifyAst.addRootTypes(allRootTypes);
       // TODO: move this into UnifyAst?
       findEntryPoints(logger, rpo, declEntryPts, jprogram);
-      unifyAst.exec(logger);
+      unifyAst.exec();
 
       List<String> finalTypeOracleTypes = Lists.create();
       if (precompilationMetrics != null) {

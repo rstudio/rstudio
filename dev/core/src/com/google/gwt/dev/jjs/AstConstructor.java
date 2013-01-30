@@ -66,8 +66,8 @@ public class AstConstructor {
 
     JProgram jprogram = new JProgram();
     JsProgram jsProgram = new JsProgram();
-    UnifyAst unifyAst = new UnifyAst(jprogram, jsProgram, options, rpo);
-    unifyAst.buildEverything(logger);
+    UnifyAst unifyAst = new UnifyAst(logger, jprogram, jsProgram, options, rpo);
+    unifyAst.buildEverything();
 
     // Compute all super type/sub type info
     jprogram.typeOracle.computeBeforeAST();
