@@ -439,6 +439,7 @@ public class GenerateJavaScriptAST {
         JsParameter jsParam = jsCatch.getParameter();
         names.put(arg.getTarget(), jsParam.getName());
         catchMap.put(catchBlock, jsCatch);
+        catchParamIdentifiers.add(jsParam.getName());
 
         push(jsCatch.getScope());
         accept(catchBlock);
@@ -1146,7 +1147,9 @@ public class GenerateJavaScriptAST {
       for (int i = 0; i < locals.size(); ++i) {
         JsName name = names.get(x.getLocals().get(i));
         String ident = name.getIdent();
-        if (!alreadySeen.contains(ident)) {
+        if (!alreadySeen.contains(ident)
+            // Catch block params don't need var declarations
+            && !catchParamIdentifiers.contains(name)) {
           alreadySeen.add(ident);
           vars.add(new JsVar(x.getSourceInfo(), name));
         }
@@ -2336,6 +2339,8 @@ public class GenerateJavaScriptAST {
   private Map<String, JsExpression> castMapByString = new HashMap<String, JsExpression>();
 
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
+
+  private final Set<JsName> catchParamIdentifiers = new HashSet<JsName>();
 
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
 
