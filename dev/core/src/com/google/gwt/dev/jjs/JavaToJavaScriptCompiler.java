@@ -485,21 +485,32 @@ public class JavaToJavaScriptCompiler {
       PermutationResult toReturn =
           new PermutationResultImpl(js, permutation, makeSymbolMap(symbolTable, jsProgram), ranges);
       CompilationMetricsArtifact compilationMetrics = null;
+
       // TODO: enable this when ClosureCompiler is enabled
-      if (!options.isClosureCompilerEnabled() && options.isCompilerMetricsEnabled()) {
-        compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
-        compilationMetrics.setCompileElapsedMilliseconds(System.currentTimeMillis()
-            - startTimeMilliseconds);
-        compilationMetrics.setElapsedMilliseconds(System.currentTimeMillis()
-            - ManagementFactory.getRuntimeMXBean().getStartTime());
-        compilationMetrics.setJsSize(sizeBreakdowns);
-        compilationMetrics.setPermutationDescription(permutation.prettyPrint());
-        toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(), unifiedAst
-            .getPrecompilationMetrics(), compilationMetrics));
+      if (options.isCompilerMetricsEnabled()) {
+        if (options.isClosureCompilerEnabled()) {
+          logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
+              + "-XcompilerMetric; ignoring -XcompilerMetric.");
+        } else {
+          compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
+          compilationMetrics.setCompileElapsedMilliseconds(System.currentTimeMillis()
+              - startTimeMilliseconds);
+          compilationMetrics.setElapsedMilliseconds(System.currentTimeMillis()
+              - ManagementFactory.getRuntimeMXBean().getStartTime());
+          compilationMetrics.setJsSize(sizeBreakdowns);
+          compilationMetrics.setPermutationDescription(permutation.prettyPrint());
+          toReturn.addArtifacts(Lists.create(unifiedAst.getModuleMetrics(), unifiedAst
+              .getPrecompilationMetrics(), compilationMetrics));
+        }
       }
 
       // TODO: enable this when ClosureCompiler is enabled
-      if (!options.isClosureCompilerEnabled()) {
+      if (options.isClosureCompilerEnabled()) {
+        if (options.isSoycEnabled()) {
+          logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
+              + "-compileReport; ignoring -compileReport.");
+        }
+      } else {
         toReturn.addArtifacts(makeSoycArtifacts(logger, permutationId, jprogram, js, sizeBreakdowns,
             options.isSoycExtra() ? sourceInfoMaps : null, dependencies, jjsmap, obfuscateMap,
             unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(), compilationMetrics,
@@ -507,10 +518,15 @@ public class JavaToJavaScriptCompiler {
       }
 
       // TODO: enable this when ClosureCompiler is enabled
-      if (!options.isClosureCompilerEnabled() && isSourceMapsEnabled) {
-        logger.log(TreeLogger.INFO, "Source Maps Enabled");
-        toReturn.addArtifacts(SourceMapRecorder.makeSourceMapArtifacts(sourceInfoMaps,
-            permutationId));
+      if (isSourceMapsEnabled) {
+        if (options.isClosureCompilerEnabled()) {
+          logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
+              + "compiler.useSourceMaps=true; ignoring compiler.useSourceMaps=true.");
+        } else {
+          logger.log(TreeLogger.INFO, "Source Maps Enabled");
+          toReturn.addArtifacts(SourceMapRecorder.makeSourceMapArtifacts(sourceInfoMaps,
+              permutationId));
+        }
       }
 
       logTrackingStats(logger);
