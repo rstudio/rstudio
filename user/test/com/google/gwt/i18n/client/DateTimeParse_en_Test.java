@@ -74,6 +74,11 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(9 - 1900, date.getYear());
     assertEquals(12 - 1, date.getMonth());
     assertEquals(2, date.getDate());
+
+    assertEquals(6, parse("dd HHmm", "11 213", 0, date));
+    assertEquals(11, date.getDate());
+    assertEquals(2, date.getHours());
+    assertEquals(13, date.getMinutes());
   }
 
   public void testAmbiguousYear() {
