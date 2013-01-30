@@ -66,3 +66,28 @@ function notifySlideChanged(indexh) {
                                        commandsForSlide(event.indexh));  
   }
 }
+
+function revealEnterFullscreen() {
+   
+   var element = document.body;
+
+   // Check which implementation is available
+   var requestMethod = element.requestFullScreen ||
+				           element.webkitRequestFullScreen ||
+				           element.mozRequestFullScreen ||
+				           element.msRequestFullScreen;
+
+   if (requestMethod) {
+      requestMethod.apply( element );
+   }
+}
+
+// alt-click to zoom
+(function(){
+document.querySelector('.reveal').addEventListener('click', 
+                                                   function( event ) {
+   if (event.altKey) {
+	   event.preventDefault();
+	   revealEnterFullscreen();
+   }
+});
