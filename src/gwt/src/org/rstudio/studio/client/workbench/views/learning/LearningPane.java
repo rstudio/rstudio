@@ -144,7 +144,7 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       }-*/;
       
       public final native void prev() /*-{
-         this.prev;
+         this.prev();
       }-*/;
    }
    
