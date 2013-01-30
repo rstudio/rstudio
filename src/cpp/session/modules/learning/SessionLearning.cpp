@@ -110,20 +110,17 @@ core::Error closeLearningPane(const json::JsonRpcRequest&,
 
 class ResourceFiles : boost::noncopyable
 {
-public:
-   const std::string& get(const std::string& path)
-   {
-      std::map<std::string, std::string>::const_iterator it =
-                                                      cache_.find(path);
-      if (it == cache_.end())
-         cache_[path] = module_context::resourceFileAsString(path);
+private:
+   ResourceFiles() {}
 
-      return cache_[path];
+public:
+   std::string get(const std::string& path)
+   {
+      return module_context::resourceFileAsString(path);
    }
 
 private:
    friend ResourceFiles& resourceFiles();
-   std::map<std::string, std::string> cache_;
 };
 
 ResourceFiles& resourceFiles()
