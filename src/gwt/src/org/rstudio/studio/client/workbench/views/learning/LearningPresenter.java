@@ -100,7 +100,8 @@ public class LearningPresenter extends BasePresenter
                FileSystemItem fsi = event.getFileChange().getFile(); 
                String path = fsi.getPath();
                if (path.startsWith(currentState_.getDirectory()) &&
-                   fsi.mimeType().equals("text/x-markdown"))
+                   (fsi.mimeType().equals("text/x-markdown") ||
+                    fsi.mimeType().equals("text/css")))
                {
                   refreshCommand_.nudge();
                }
