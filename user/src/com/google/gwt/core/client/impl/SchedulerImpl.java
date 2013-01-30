@@ -149,55 +149,7 @@ public class SchedulerImpl extends Scheduler {
     return queue;
   }
 
-  /**
-   * Execute a list of Tasks that hold RepeatingCommands.
-   * 
-   * @return A replacement array that is possibly a shorter copy of
-   *         <code>tasks</code>
-   */
-  private static JsArray<Task> runRepeatingTasks(JsArray<Task> tasks) {
-    assert tasks != null : "tasks";
 
-    int length = tasks.length();
-    if (length == 0) {
-      return null;
-    }
-
-    boolean canceledSomeTasks = false;
-    double start = Duration.currentTimeMillis();
-
-    while (Duration.currentTimeMillis() - start < TIME_SLICE) {
-      for (int i = 0; i < length; i++) {
-        assert tasks.length() == length : "Working array length changed "
-            + tasks.length() + " != " + length;
-        Task t = tasks.get(i);
-        if (t == null) {
-          continue;
-        }
-
-        assert t.isRepeating() : "Found a non-repeating Task";
-
-        if (!t.executeRepeating()) {
-          tasks.set(i, null);
-          canceledSomeTasks = true;
-        }
-      }
-    }
-
-    if (canceledSomeTasks) {
-      JsArray<Task> newTasks = createQueue();
-      // Remove tombstones
-      for (int i = 0; i < length; i++) {
-        if (tasks.get(i) != null) {
-          newTasks.push(tasks.get(i));
-        }
-      }
-      assert newTasks.length() < length;
-      return newTasks.length() == 0 ? null : newTasks;
-    } else {
-      return tasks;
-    }
-  }
 
   /**
    * Execute a list of Tasks that hold both ScheduledCommands and
@@ -374,6 +326,13 @@ public class SchedulerImpl extends Scheduler {
   }
 
   /**
+   * there for testing
+   */
+  Duration createDuration() {
+    return new Duration();
+  }
+
+  /**
    * Called by Flusher.
    */
   void flushPostEventPumpCommands() {
@@ -410,6 +369,61 @@ public class SchedulerImpl extends Scheduler {
         rescue = new Rescuer();
       }
       scheduleFixedDelayImpl(rescue, RESCUE_DELAY);
+    }
+  }
+
+  /**
+   * Execute a list of Tasks that hold RepeatingCommands.
+   *
+   * @return A replacement array that is possibly a shorter copy of <code>tasks</code>
+   */
+  private JsArray<Task> runRepeatingTasks(JsArray<Task> tasks) {
+    assert tasks != null : "tasks";
+
+    int length = tasks.length();
+    if (length == 0) {
+      return null;
+    }
+
+    boolean canceledSomeTasks = false;
+
+    Duration duration = createDuration();
+    while (duration.elapsedMillis() < TIME_SLICE) {
+      boolean executedSomeTask = false;
+      for (int i = 0; i < length; i++) {
+        assert tasks.length() == length : "Working array length changed " + tasks.length() + " != "
+            + length;
+        Task t = tasks.get(i);
+        if (t == null) {
+          continue;
+        }
+        executedSomeTask = true;
+
+        assert t.isRepeating() : "Found a non-repeating Task";
+
+        if (!t.executeRepeating()) {
+          tasks.set(i, null);
+          canceledSomeTasks = true;
+        }
+      }
+      if (!executedSomeTask) {
+        // no work left to do, break to avoid busy waiting until TIME_SLICE is reached
+        break;
+      }
+    }
+
+    if (canceledSomeTasks) {
+      JsArray<Task> newTasks = createQueue();
+      // Remove tombstones
+      for (int i = 0; i < length; i++) {
+        if (tasks.get(i) != null) {
+          newTasks.push(tasks.get(i));
+        }
+      }
+      assert newTasks.length() < length;
+      return newTasks.length() == 0 ? null : newTasks;
+    } else {
+      return tasks;
     }
   }
 }
