@@ -159,6 +159,7 @@ public abstract class
    
    // Learning
    public abstract AppCommand refreshLearning();
+   public abstract AppCommand learningFullscreen();
    
    // View
    public abstract AppCommand showToolbar();

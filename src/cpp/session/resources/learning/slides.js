@@ -82,12 +82,3 @@ function revealEnterFullscreen() {
    }
 }
 
-// alt-click to zoom
-(function(){
-document.querySelector('.reveal').addEventListener('click', 
-                                                   function( event ) {
-   if (event.altKey) {
-	   event.preventDefault();
-	   revealEnterFullscreen();
-   }
-});

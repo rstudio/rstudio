@@ -907,7 +907,8 @@ well as menu structures (for main menu and popup menus).
    <!-- Learning -->
    <cmd id="refreshLearning"
         desc="Refresh the presentation"/>
-        
+   <cmd id="learningFullscreen"
+        desc="Show slides in full screen mode"/>     
      
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"

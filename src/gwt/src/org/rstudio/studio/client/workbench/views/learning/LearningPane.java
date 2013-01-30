@@ -52,6 +52,8 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       titleLabel_ = new ToolbarLabel();
       toolbar.addLeftWidget(titleLabel_);
       
+      toolbar.addRightWidget(commands_.learningFullscreen().createToolbarButton());
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshLearning().createToolbarButton());
         
       return toolbar;
@@ -110,11 +112,23 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       return !"about:blank".equals(href);
    }
    
+  
+   
    @Override
    public void refresh(boolean resetAnchor)
    {
       frame_.reload(resetAnchor);
    }
+   
+   @Override
+   public void fullScreen()
+   {
+      enterFullscreen(frame_.getWindow());
+   }
+   
+   public static final native void enterFullscreen(WindowEx window) /*-{
+      return window.revealEnterFullscreen();
+   }-*/;
    
    @Override
    public void next()

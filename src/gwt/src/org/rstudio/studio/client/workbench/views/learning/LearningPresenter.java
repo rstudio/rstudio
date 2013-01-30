@@ -66,6 +66,7 @@ public class LearningPresenter extends BasePresenter
       boolean hasSlides();
       void next();
       void prev();
+      void fullScreen();
       void refresh(boolean resetAnchor);
    }
    
@@ -140,6 +141,12 @@ public class LearningPresenter extends BasePresenter
          view_.bringToFront();
          init(event.getLearningState());
       }
+   }
+   
+   @Handler
+   void onLearningFullscreen()
+   {
+      view_.fullScreen();
    }
    
    @Handler
