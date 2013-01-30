@@ -20,15 +20,30 @@
   background-color: #F8F8F8;
 }
 
-.reveal h3 { font-size: 1.3em;  }
-
-.reveal p {
-  font-size: 0.8em;
-  line-height: 1.0em;
+@media screen and (max-width: 900px), (max-height: 600px) {
+   .reveal .slides {
+		font-size: 0.82em;
+	}
 }
 
-.reveal li {
-  font-size: 0.8em;
+@media screen and (max-width: 700px), (max-height: 400px) {
+	.reveal .slides {
+		font-size: 0.4em;
+	}
+}
+
+@media screen and (max-width: 400px), (max-height: 300px) {
+   .reveal .slides {
+		font-size: 0.4em;
+	}
+}
+
+:-webkit-full-screen .reveal .slides {
+   font-size: 1.3em;
+}
+
+.reveal strong {
+  color: blue;
 }
 
 .reveal .controls {
