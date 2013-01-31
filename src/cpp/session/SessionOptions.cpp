@@ -328,6 +328,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
 
+   // allow session timeout to be supressed via environment variable
+   if (!core::system::getenv("RSTUDIO_NO_SESSION_TIMEOUT").empty())
+      timeoutMinutes_ = 0;
+
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
