@@ -24,6 +24,11 @@
    border: none;
 }
 
+.reveal section img.standalone { 
+   float: left; 
+   height: 65%;
+}
+
 .reveal section img.floatLeft { 
    float: left; 
    width: 50%;
