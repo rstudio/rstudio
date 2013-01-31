@@ -128,13 +128,23 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    }
    
    @Override
+   public void pauseMedia()
+   {
+      pausePlayers(frame_.getWindow());
+   }
+   
+   private static final native void pausePlayers(WindowEx window) /*-{
+      window.pauseAllPlayers();
+   }-*/;
+   
+   @Override
    public void fullScreen()
    {
       enterFullscreen(frame_.getWindow());
    }
    
-   public static final native void enterFullscreen(WindowEx window) /*-{
-      return window.revealEnterFullscreen();
+   private static final native void enterFullscreen(WindowEx window) /*-{
+      window.revealEnterFullscreen();
    }-*/;
    
    @Override

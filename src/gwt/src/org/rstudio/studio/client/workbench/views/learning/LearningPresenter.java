@@ -68,6 +68,7 @@ public class LearningPresenter extends BasePresenter
       void next();
       void prev();
       void fullScreen();
+      void pauseMedia();
       void refresh(boolean resetAnchor);
    }
    
@@ -316,6 +317,8 @@ public class LearningPresenter extends BasePresenter
          performConsoleCommand(params);
       else if (cmdName.equals("console-input"))
          performConsoleInputCommand(params);
+      else if (cmdName.equals("pause"))
+         performPauseCommand();
       else 
       {
          globalDisplay_.showErrorMessage(
@@ -400,6 +403,11 @@ public class LearningPresenter extends BasePresenter
          else
             globalDisplay_.showErrorMessage("Unknown Console Directive", cmd);
       }
+   }
+   
+   private void performPauseCommand()
+   {
+      view_.pauseMedia();
    }
    
    private void performConsoleInputCommand(String params)

@@ -47,19 +47,25 @@ function mediaManager(media, atCommands) {
   };
 }
 
-function pausePlayers(players) {
-  for(var i = 0; i < players.length; i++) {
-    if (!players[i].paused) 
-      players[i].pause();
+function pausePlayers(players) {   
+  if (players != null) {
+     for(var i = 0; i < players.length; i++) {
+       if (!players[i].paused) 
+         players[i].pause();
+     }
   }
+}
+
+function pauseAllPlayers() {
+   pausePlayers(document.getElementsByTagName('video'));
+   pausePlayers(document.getElementsByTagName('audio'));
 }
     
     
 function notifySlideChanged(indexh) {
 
   // pause all audio and video
-  pausePlayers(document.getElementsByTagName('video'));
-  pausePlayers(document.getElementsByTagName('audio'))
+  pauseAllPlayers();
  
   // notify parent of slide changed
   if (window.parent.learningSlideChanged) {

@@ -55,7 +55,14 @@ bool isCommandField(const std::string& name)
           boost::iequals(name, "help-topic") ||
           boost::iequals(name, "source") ||
           boost::iequals(name, "console") ||
-          boost::iequals(name, "console-input");
+          boost::iequals(name, "console-input") ||
+          boost::iequals(name, "pause");
+}
+
+bool isAtCommandField(const std::string& name)
+{
+   return isCommandField(name) ||
+          boost::iequals(name, "pause");
 }
 
 
@@ -102,7 +109,7 @@ std::vector<Command> Slide::commands() const
 std::vector<AtCommand> Slide::atCommands() const
 {
    std::vector<AtCommand> atCommands;
-   boost::regex re("^([0-9]+)\\:([0-9]{2})\\s+([^\\:]+)\\:\\s+(.*)$");
+   boost::regex re("^([0-9]+)\\:([0-9]{2})\\s+([^\\:]+)(?:\\:\\s+(.*))?$");
 
 
    std::vector<std::string> atFields = fieldValues("at");
@@ -111,10 +118,19 @@ std::vector<AtCommand> Slide::atCommands() const
       boost::smatch match;
       if (boost::regex_match(atField, match, re))
       {
-         int minutes = safe_convert::stringTo<int>(match[1], 0);
-         int seconds = (minutes*60) + safe_convert::stringTo<int>(match[2], 0);
-         Command command(match[3], match[4]);
-         atCommands.push_back(AtCommand(seconds, command));
+         std::string cmd = match[3];
+         if (isAtCommandField(cmd))
+         {
+            int mins = safe_convert::stringTo<int>(match[1], 0);
+            int secs = (mins*60) + safe_convert::stringTo<int>(match[2], 0);
+            Command command(cmd, match[4]);
+            atCommands.push_back(AtCommand(secs, command));
+         }
+         else
+         {
+            module_context::consoleWriteError("Unrecognized command '" +
+                                              cmd + "'\n");
+         }
       }
       else
       {
