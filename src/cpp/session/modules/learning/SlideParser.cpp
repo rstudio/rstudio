@@ -70,6 +70,7 @@ bool isValidField(const std::string& name)
 {
    return isCommandField(name) ||
           boost::iequals(name, "title") ||
+          boost::iequals(name, "id") ||
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||
           boost::iequals(name, "state") ||

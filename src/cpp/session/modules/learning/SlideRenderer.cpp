@@ -222,6 +222,8 @@ Error renderSlides(const SlideDeck& slideDeck,
       const Slide& slide = slideDeck.slides().at(i);
 
       ostr << "<section";
+      if (!slide.id().empty())
+         ostr << " id=\"" << slide.id() << "\"";
       if (!slide.state().empty())
          ostr << " data-state=\"" << slide.state() <<  "\"";
       ostr << ">" << std::endl;

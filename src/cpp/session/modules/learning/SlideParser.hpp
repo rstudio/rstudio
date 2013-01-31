@@ -74,6 +74,8 @@ public:
    std::string title() const { return title_; }
    bool showTitle() const;
 
+   std::string id() const { return fieldValue("id"); }
+
    std::string state() const { return fieldValue("state"); }
 
    std::string video() const { return fieldValue("video"); }
