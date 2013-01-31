@@ -432,7 +432,7 @@ public class PaneManager
          case Build:
             return "Build";
          case Learning:
-            return "Learning";
+            return getTab(tab).getTitle();
       }
       return "??";
    }
