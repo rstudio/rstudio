@@ -250,9 +250,9 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       std::string fields, content;
       for (std::size_t l = beginIndex; l<endIndex; l++)
       {
-         std::string line = boost::algorithm::trim_copy(lines[l]);
          if (inFields)
          {
+            std::string line = boost::algorithm::trim_copy(lines[l]);
             if (!line.empty())
                fields += line + "\n";
             else
@@ -260,7 +260,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
          }
          else
          {
-            content += line + "\n";
+            content += lines[l] + "\n";
          }
       }
 
