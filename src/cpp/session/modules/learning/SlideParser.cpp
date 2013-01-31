@@ -72,6 +72,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||
+          boost::iequals(name, "state") ||
           boost::iequals(name, "at");
 }
 
@@ -224,6 +225,14 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       boost::smatch m;
       if (boost::regex_match(lines[i], m, re))
          headerLines.push_back(i);
+   }
+
+   // capture the preamble (if any)
+   preamble_.clear();
+   if (!headerLines.empty())
+   {
+      for (std::size_t i = 0; i<headerLines[0]; i++)
+         preamble_.append(lines[i]);
    }
 
    // loop through the header lines to capture the slides

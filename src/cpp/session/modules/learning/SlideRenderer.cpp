@@ -209,6 +209,11 @@ Error renderSlides(const SlideDeck& slideDeck,
 
    // render the slides to HTML and slide commands to case statements
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
+
+   // first the preamble
+   ostr << slideDeck.preamble() << std::endl;
+
+   // now the slides
    std::string cmdPad(8, ' ');
    int slideNumber = 0;
    for (size_t i=0; i<slideDeck.slides().size(); i++)
@@ -216,7 +221,10 @@ Error renderSlides(const SlideDeck& slideDeck,
       // slide
       const Slide& slide = slideDeck.slides().at(i);
 
-      ostr << "<section>" << std::endl;
+      ostr << "<section";
+      if (!slide.state().empty())
+         ostr << " data-state=\"" << slide.state() <<  "\"";
+      ostr << ">" << std::endl;
       if (slide.showTitle())
          ostr << "<h3>" << slide.title() << "</h3>";
 

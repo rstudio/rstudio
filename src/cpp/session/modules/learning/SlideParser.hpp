@@ -74,6 +74,8 @@ public:
    std::string title() const { return title_; }
    bool showTitle() const;
 
+   std::string state() const { return fieldValue("state"); }
+
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
 
@@ -105,12 +107,15 @@ public:
 
    std::string title() const;
 
+   std::string preamble() const { return preamble_; }
+
    const std::vector<Slide>& slides() const { return slides_; }
 
    core::FilePath baseDir() const { return baseDir_; }
 
 private:
    core::FilePath baseDir_;
+   std::string preamble_;
    std::vector<Slide> slides_;
 };
 
