@@ -52,10 +52,6 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       
       toolbar.addLeftWidget(commands_.learningHome().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.learningPrev().createToolbarButton());
-      toolbar.addLeftWidget(commands_.learningNext().createToolbarButton());
-      toolbar.addLeftSeparator();
-      
       titleLabel_ = new ToolbarLabel();
       toolbar.addLeftWidget(titleLabel_);
       
