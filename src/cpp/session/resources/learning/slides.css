@@ -44,6 +44,21 @@
    margin-left: 20px; 
 }
 
+.your-turn .reveal .state-background {
+   background: #E7F5FE;
+}
+
+.deck-section .reveal .state-background {
+   background: rgba( 0, 0, 0, 0.6 );
+}
+
+.deck-section .reveal h1 {
+   color: white;
+   margin-top: 25px;
+   font-size: 3.0em;
+}
+
+
 @media screen and (max-width: 900px), (max-height: 600px) {
    .reveal .slides {
 		font-size: 0.82em;

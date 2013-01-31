@@ -76,7 +76,7 @@ public:
 
    std::string id() const { return fieldValue("id"); }
 
-   std::string state() const { return fieldValue("state"); }
+   std::string type() const { return fieldValue("type"); }
 
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }

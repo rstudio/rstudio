@@ -221,11 +221,23 @@ Error renderSlides(const SlideDeck& slideDeck,
       ostr << "<section";
       if (!slide.id().empty())
          ostr << " id=\"" << slide.id() << "\"";
-      if (!slide.state().empty())
-         ostr << " data-state=\"" << slide.state() <<  "\"";
+      if (!slide.type().empty())
+      {
+         std::string type = slide.type();
+         if (type == "section")
+            type = "deck-section";
+         ostr << " data-state=\"" << type <<  "\"";
+      }
       ostr << ">" << std::endl;
       if (slide.showTitle())
-         ostr << "<h3>" << slide.title() << "</h3>";
+      {
+         std::string hTag = "h3";
+         if (slide.type() == "section")
+         {
+            hTag = "h1";
+         }
+         ostr << "<" << hTag << ">" << slide.title() << "</" << hTag << ">";
+      }
 
       std::string htmlContent;
       Error error = markdown::markdownToHTML(slide.content(),
