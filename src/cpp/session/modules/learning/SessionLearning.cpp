@@ -256,6 +256,7 @@ void handleLearningPaneRequest(const http::Request& request,
       // build template variables
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
+      vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
       vars["slide_commands"] = slideCommands;
       vars["slides_css"] =  resourceFiles().get("learning/slides.css");

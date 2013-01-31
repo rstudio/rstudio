@@ -210,9 +210,6 @@ Error renderSlides(const SlideDeck& slideDeck,
    // render the slides to HTML and slide commands to case statements
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
 
-   // first the preamble
-   ostr << slideDeck.preamble() << std::endl;
-
    // now the slides
    std::string cmdPad(8, ' ');
    int slideNumber = 0;

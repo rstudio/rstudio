@@ -232,7 +232,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    preamble_.clear();
    if (!headerLines.empty())
    {
-      for (std::size_t i = 0; i<headerLines[0]; i++)
+      for (std::size_t i = 0; i<(headerLines[0]-1); i++)
          preamble_.append(lines[i]);
    }
 
