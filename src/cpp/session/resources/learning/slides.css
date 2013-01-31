@@ -14,6 +14,7 @@
 
 .reveal pre code {
   display: block; padding: 0.5em;
+  font-size: 1.8em;
 }
 
 .reveal code.r, code.cpp {
