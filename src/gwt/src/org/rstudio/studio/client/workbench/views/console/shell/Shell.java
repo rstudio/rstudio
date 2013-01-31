@@ -326,11 +326,17 @@ public class Shell implements ConsoleInputHandler,
       }
       else
       {
+         // calculate the period (make sure the command takes no longer
+         // than 1600ms to input)
+         final int kMaxMs = 1600;
+         String code = event.getCode();
+         int period = Math.min( kMaxMs / code.length(), 75);
+         
          Scheduler.get().scheduleFixedPeriod(
                new ConsoleInputAnimator(event.getCode(), 
                                         display, 
                                         finishSendToConsole),
-               100);
+               period);
       }
    }
    
