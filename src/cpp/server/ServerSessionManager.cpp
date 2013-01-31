@@ -27,6 +27,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/Environment.hpp>
 
 #include <session/SessionConstants.hpp>
 
@@ -238,6 +239,11 @@ Error launchSession(const std::string& username,
    // pass the user-identity
    args.push_back(std::make_pair("-" kUserIdentitySessionOptionShort,
                                  username));
+
+   // allow session timeout to be overridden via environment variable
+   std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
+   if (!timeout.empty())
+      args.push_back(std::make_pair("--" kTimeoutSessionOption, timeout));
 
    // pass our uid to instruct rsession to limit rpc clients to us and itself
    core::system::Options environment;
