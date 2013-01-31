@@ -280,6 +280,15 @@ void handleLearningPaneRequest(const http::Request& request,
       pResponse->setFile(filePath, request);
    }
 
+   // special handling for mathjax assets
+   else if (boost::algorithm::starts_with(path, "mathjax/"))
+   {
+      FilePath filePath =
+            session::options().mathjaxPath().parent().childPath(path);
+      pResponse->setFile(filePath, request);
+   }
+
+
    // serve the file back
    else
    {

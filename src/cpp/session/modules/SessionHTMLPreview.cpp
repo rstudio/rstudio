@@ -891,14 +891,14 @@ void modifyOutputForPreview(std::string* pOutput)
                   " });"
                "</script>");
 #endif
-
-      // serve mathjax locally
-      std::string previewMathjax = "mathjax";
-      boost::algorithm::replace_first(
-           *pOutput,
-           "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
-           previewMathjax);
    }
+
+   // serve mathjax locally
+   std::string previewMathjax = "mathjax";
+   boost::algorithm::replace_first(
+        *pOutput,
+        "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+        previewMathjax);
 }
 
 

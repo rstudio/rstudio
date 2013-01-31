@@ -279,10 +279,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install mathjax for local html preview
-   if(RSTUDIO_DESKTOP)
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
-              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
-   endif()
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
+           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install 64 bit binaries if we are on win64
    if(WIN32)
