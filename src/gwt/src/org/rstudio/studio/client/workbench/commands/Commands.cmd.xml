@@ -904,17 +904,17 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHtmlPreview"
         desc="Refresh the preview"/>
         
-   <!-- Learning -->
-   <cmd id="refreshLearning"
+   <!-- Presentation -->
+   <cmd id="refreshPresentation"
         desc="Refresh the presentation"/>
-   <cmd id="learningFullscreen"
-        desc="Show slides in full screen mode"/> 
+   <cmd id="presentationFullscreen"
+        desc="Show presentation in full screen mode"/> 
         
-   <cmd id="learningHome"
+   <cmd id="presentationHome"
         desc="Go to the first slide"/>
-   <cmd id="learningNext"
+   <cmd id="presentationNext"
         desc="Go to the next slide"/>
-   <cmd id="learningPrev"
+   <cmd id="presentationPrev"
         desc="Go to the previous slide"/>          
      
    <cmd id="historySendToSource"

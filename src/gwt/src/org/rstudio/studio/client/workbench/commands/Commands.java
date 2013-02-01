@@ -157,12 +157,12 @@ public abstract class
    public abstract AppCommand refreshHtmlPreview();
    public abstract AppCommand showHtmlPreviewLog();
    
-   // Learning
-   public abstract AppCommand refreshLearning();
-   public abstract AppCommand learningFullscreen();
-   public abstract AppCommand learningHome();
-   public abstract AppCommand learningNext();
-   public abstract AppCommand learningPrev();
+   // Presentation
+   public abstract AppCommand refreshPresentation();
+   public abstract AppCommand presentationFullscreen();
+   public abstract AppCommand presentationHome();
+   public abstract AppCommand presentationNext();
+   public abstract AppCommand presentationPrev();
    
    // View
    public abstract AppCommand showToolbar();

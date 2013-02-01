@@ -50,14 +50,14 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    {
       Toolbar toolbar = new Toolbar();
       
-      toolbar.addLeftWidget(commands_.learningHome().createToolbarButton());
+      toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
       titleLabel_ = new ToolbarLabel();
       toolbar.addLeftWidget(titleLabel_);
       
-      toolbar.addRightWidget(commands_.learningFullscreen().createToolbarButton());
+      toolbar.addRightWidget(commands_.presentationFullscreen().createToolbarButton());
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshLearning().createToolbarButton());
+      toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
         
       return toolbar;
    }

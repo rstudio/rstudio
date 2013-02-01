@@ -147,31 +147,31 @@ public class LearningPresenter extends BasePresenter
    }
    
    @Handler
-   void onLearningHome()
+   void onPresentationHome()
    {
       view_.home();
    }
    
    @Handler
-   void onLearningNext()
+   void onPresentationNext()
    {
       view_.next();
    }
    
    @Handler
-   void onLearningPrev()
+   void onPresentationPrev()
    {
       view_.prev();
    }
    
    @Handler
-   void onLearningFullscreen()
+   void onPresentationFullscreen()
    {
       view_.fullScreen();
    }
    
    @Handler
-   void onRefreshLearning()
+   void onRefreshPresentation()
    {
       boolean resetAnchor = Event.getCurrentEvent().getShiftKey();
       view_.refresh(resetAnchor);
