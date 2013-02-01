@@ -242,8 +242,10 @@ bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
-                     "opts_chunk$set(cache=TRUE, "
-                     "               eval=FALSE, tidy=FALSE, comment=NA); "
+                     "opts_chunk$set(cache=TRUE,     "
+                     "               results='hide', "
+                     "               tidy=FALSE,     "
+                     "               comment=NA);    "
                      "knit('%2%', encoding='%1%');");
    std::string encoding = projects::projectContext().defaultEncoding();
    std::string cmd = boost::str(fmt % encoding % slidesRmd.filename());
