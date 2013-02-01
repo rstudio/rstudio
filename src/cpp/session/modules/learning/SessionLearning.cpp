@@ -216,7 +216,7 @@ void handleLearningPaneRequest(const http::Request& request,
    }
 
    // get the requested path
-   std::string path = http::util::pathAfterPrefix(request, "/learning/");
+   std::string path = http::util::pathAfterPrefix(request, "/presentation/");
 
    // special handling for the root (process learning template)
    if (path.empty())
@@ -288,7 +288,7 @@ void handleLearningPaneRequest(const http::Request& request,
    // special handling for reveal.js assets
    else if (boost::algorithm::starts_with(path, "revealjs/"))
    {
-      path = http::util::pathAfterPrefix(request, "/learning/revealjs/");
+      path = http::util::pathAfterPrefix(request, "/presentation/revealjs/");
       FilePath filePath = learningResourcesPath().complete("revealjs/" + path);
       pResponse->setFile(filePath, request);
    }
@@ -420,7 +420,7 @@ Error initialize()
       using namespace session::module_context;
       ExecBlock initBlock ;
       initBlock.addFunctions()
-         (bind(registerUriHandler, "/learning", handleLearningPaneRequest))
+         (bind(registerUriHandler, "/presentation", handleLearningPaneRequest))
          (bind(registerRpcMethod, "set_presentation_slide_index", setLearningSlideIndex))
          (bind(registerRpcMethod, "close_presentation_pane", closeLearningPane))
          (bind(learning::state::initialize))

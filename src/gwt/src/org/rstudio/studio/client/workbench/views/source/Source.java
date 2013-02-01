@@ -49,7 +49,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -1094,10 +1094,10 @@ public class Source implements InsertSourceHandler,
    
    
    
-   public void onOpenLearningSourceFile(OpenLearningSourceFileEvent event)
+   public void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event)
    {
       // don't do the navigation if the active document is a source
-      // file from this learning module
+      // file from this presentation module
       
       doOpenSourceFile(event.getFile(),
                        event.getFileType(),

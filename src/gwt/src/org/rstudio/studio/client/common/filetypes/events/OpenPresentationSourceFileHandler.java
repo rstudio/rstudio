@@ -1,5 +1,5 @@
 /*
- * OpenLearningSourceFileHandler.java
+ * OpenPresentationSourceFileHandler.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,7 +16,7 @@ package org.rstudio.studio.client.common.filetypes.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface OpenLearningSourceFileHandler extends EventHandler
+public interface OpenPresentationSourceFileHandler extends EventHandler
 {
-   void onOpenLearningSourceFile(OpenLearningSourceFileEvent event);
+   void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
 }

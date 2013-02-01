@@ -1,5 +1,5 @@
 /*
- * LearningPresenter.java
+ * Presentation.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning;
+package org.rstudio.studio.client.workbench.views.presentation;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -39,7 +39,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -56,9 +56,9 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
-public class LearningPresenter extends BasePresenter 
+public class Presentation extends BasePresenter 
 {
-   public interface Binder extends CommandBinder<Commands, LearningPresenter> {}
+   public interface Binder extends CommandBinder<Commands, Presentation> {}
    
    public interface Display extends WorkbenchView
    {
@@ -73,14 +73,14 @@ public class LearningPresenter extends BasePresenter
    }
    
    @Inject
-   public LearningPresenter(Display display, 
-                            PresentationServerOperations server,
-                            GlobalDisplay globalDisplay,
-                            EventBus eventBus,
-                            FileTypeRegistry fileTypeRegistry,
-                            Session session,
-                            Binder binder,
-                            Commands commands)
+   public Presentation(Display display, 
+                       PresentationServerOperations server,
+                       GlobalDisplay globalDisplay,
+                       EventBus eventBus,
+                       FileTypeRegistry fileTypeRegistry,
+                       Session session,
+                       Binder binder,
+                       Commands commands)
    {
       super(display);
       view_ = display;
@@ -111,15 +111,15 @@ public class LearningPresenter extends BasePresenter
          }
       });
       
-      initLearningCallbacks();
+      initPresentationCallbacks();
    }
    
-   public void initialize(PresentationState learningState)
+   public void initialize(PresentationState state)
    {
-      if (learningState.getSlideIndex() == 0)
+      if (state.getSlideIndex() == 0)
          view_.bringToFront();
       
-      init(learningState);
+      init(state);
    }
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
@@ -129,19 +129,19 @@ public class LearningPresenter extends BasePresenter
       {
          globalDisplay_.showErrorMessage(
                "Browser Not Supported",
-               "RStudio learning modules are currently only supported " +
+               "RStudio presentations are currently only supported " +
                "in Google Chrome");
          return;
       }
       
-      // if the learning pane wasn't previously shown in this 
+      // if the presentation pane wasn't previously shown in this 
       // session then reload
       if (!session_.getSessionInfo().getPresentationState().isActive())
          eventBus_.fireEvent(new ReloadEvent());
       else
       {
          view_.bringToFront();
-         init(event.getLearningState());
+         init(event.getPresentationState());
       }
    }
    
@@ -198,7 +198,7 @@ public class LearningPresenter extends BasePresenter
       ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             200,
-            "Closing Learning Tab...").getIndicator();
+            "Closing Presentation...").getIndicator();
       
       server_.closePresentationPane(new VoidServerRequestCallback(progress) {
          @Override
@@ -213,14 +213,14 @@ public class LearningPresenter extends BasePresenter
    {
       currentState_ = state;
       
-      String url = server_.getApplicationURL("learning/");
+      String url = server_.getApplicationURL("presentation/");
       if (currentState_.getSlideIndex() != 0)
          url = url + "#/" + currentState_.getSlideIndex();
       
       view_.load(url, state);
    }
    
-   private void onLearningSlideChanged(int index, JavaScriptObject jsCmds)
+   private void onPresentationSlideChanged(int index, JavaScriptObject jsCmds)
    {
       // record index
       lastSlideIndex_ = index;
@@ -232,17 +232,17 @@ public class LearningPresenter extends BasePresenter
          dispatchCommand(cmds.get(i));
    }
    
-   public final native void initLearningCallbacks() /*-{
+   public final native void initPresentationCallbacks() /*-{
   
       var thiz = this;
-      $wnd.learningSlideChanged = function(index, cmds) {
-         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::onLearningSlideChanged(ILcom/google/gwt/core/client/JavaScriptObject;)(index, cmds);
+      $wnd.presentationSlideChanged = function(index, cmds) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::onPresentationSlideChanged(ILcom/google/gwt/core/client/JavaScriptObject;)(index, cmds);
       };
-      $wnd.learningKeydown = function(e) {
-         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      $wnd.presentationKeydown = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
       };
-      $wnd.dispatchLearningCommand = function(cmd) {
-         thiz.@org.rstudio.studio.client.workbench.views.learning.LearningPresenter::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
+      $wnd.dispatchPresentationCommand = function(cmd) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
       };
    }-*/;
 
@@ -321,7 +321,7 @@ public class LearningPresenter extends BasePresenter
       else 
       {
          globalDisplay_.showErrorMessage(
-                        "Unknown Learning Command", 
+                        "Unknown Presentation Command", 
                         command.getName() + ": " + command.getParams());
       }
    }
@@ -330,8 +330,8 @@ public class LearningPresenter extends BasePresenter
    {
       if (param1 != null)
       {
-         String docFile = getLearningPath(param1);
-         String url = "help/learning/?file=" + URL.encodeQueryString(docFile);
+         String docFile = getPresentationPath(param1);
+         String url = "help/presentation/?file=" + URL.encodeQueryString(docFile);
          eventBus_.fireEvent(new ShowHelpEvent(url));  
       }
    }
@@ -360,7 +360,7 @@ public class LearningPresenter extends BasePresenter
       {
          // get filename and type
          FileSystemItem file = FileSystemItem.createFile(
-                                                  getLearningPath(param1));
+                                                  getPresentationPath(param1));
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file); 
          
          // check for a file position and/or pattern
@@ -382,7 +382,7 @@ public class LearningPresenter extends BasePresenter
          }
          
          // dispatch
-         eventBus_.fireEvent(new OpenLearningSourceFileEvent(file, 
+         eventBus_.fireEvent(new OpenPresentationSourceFileEvent(file, 
                                                              fileType,
                                                              pos,
                                                              pattern));
@@ -415,11 +415,11 @@ public class LearningPresenter extends BasePresenter
    }
    
    
-   private String getLearningPath(String file)
+   private String getPresentationPath(String file)
    {
-      FileSystemItem learningDir = FileSystemItem.createDir(
+      FileSystemItem presentationDir = FileSystemItem.createDir(
                                                 currentState_.getDirectory());
-      return learningDir.completePath(file);   
+      return presentationDir.completePath(file);   
    }
    
    private final Display view_ ; 

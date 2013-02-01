@@ -108,7 +108,7 @@ public class PaneManager
                       @Named("Help") final WorkbenchTab helpTab,
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
-                      @Named("Presentation") final WorkbenchTab learningTab,
+                      @Named("Presentation") final WorkbenchTab presentationTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
@@ -127,7 +127,7 @@ public class PaneManager
       helpTab_ = helpTab;
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
-      learningTab_ = learningTab;
+      presentationTab_ = presentationTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
@@ -266,7 +266,7 @@ public class PaneManager
          case Build:
             return buildTab_;
          case Presentation:
-            return learningTab_;
+            return presentationTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -275,7 +275,7 @@ public class PaneManager
    {
       return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, buildTab_, learningTab_};
+                                  vcsTab_, buildTab_, presentationTab_};
    }
 
    public void activateTab(Tab tab)
@@ -478,7 +478,7 @@ public class PaneManager
    private final WorkbenchTab helpTab_;
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
-   private final WorkbenchTab learningTab_;
+   private final WorkbenchTab presentationTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

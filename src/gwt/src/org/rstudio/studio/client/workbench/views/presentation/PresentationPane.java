@@ -1,5 +1,5 @@
 /*
- * LearningPane.java
+ * PresentationPane.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning;
+package org.rstudio.studio.client.workbench.views.presentation;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -34,11 +34,10 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
-public class LearningPane extends WorkbenchPane implements LearningPresenter.Display
+public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
    @Inject
-   public LearningPane(Commands commands,
-                       Session session)
+   public PresentationPane(Commands commands, Session session)
    {
       super("Presentation");
       commands_ = commands;
@@ -114,8 +113,6 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
       String href = frame_.getWindow().getLocationHref();
       return !"about:blank".equals(href);
    }
-   
-  
    
    @Override
    public void refresh(boolean resetAnchor)

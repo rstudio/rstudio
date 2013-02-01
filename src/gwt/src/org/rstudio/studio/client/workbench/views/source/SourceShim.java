@@ -33,8 +33,8 @@ import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenLearningSourceFileHandler;
+import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -51,12 +51,12 @@ public class SourceShim extends Composite
 
    public abstract static class AsyncSource extends AsyncShim<Source>
       implements OpenSourceFileHandler, 
-                 OpenLearningSourceFileHandler,
+                 OpenPresentationSourceFileHandler,
                  InsertSourceHandler, 
                  FileEditHandler
    {
       public abstract void onOpenSourceFile(OpenSourceFileEvent event);
-      public abstract void onOpenLearningSourceFile(OpenLearningSourceFileEvent event);
+      public abstract void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
       
       @Handler
       public abstract void onNewSourceDoc();
@@ -149,7 +149,7 @@ public class SourceShim extends Composite
       binder.bind(commands, asyncSource);
       asyncSource.setParent(this);
       events.addHandler(OpenSourceFileEvent.TYPE, asyncSource);
-      events.addHandler(OpenLearningSourceFileEvent.TYPE, asyncSource);
+      events.addHandler(OpenPresentationSourceFileEvent.TYPE, asyncSource);
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       asyncSource_ = asyncSource;
 

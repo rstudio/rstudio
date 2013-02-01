@@ -31,7 +31,7 @@ public class ShowPresentationPaneEvent extends GwtEvent<ShowPresentationPaneEven
       presentationState_ = presentationState;
    }
 
-   public PresentationState getLearningState()
+   public PresentationState getPresentationState()
    {
       return presentationState_;
    }

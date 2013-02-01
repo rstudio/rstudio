@@ -1,5 +1,5 @@
 /*
- * LearningTab.java
+ * PresentationTab.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning;
+package org.rstudio.studio.client.workbench.views.presentation;
 
 
 import com.google.gwt.user.client.Command;
@@ -30,19 +30,19 @@ import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresent
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
 
-public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
+public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
    
-   public abstract static class Shim extends DelayLoadTabShim<LearningPresenter, LearningTab> 
+   public abstract static class Shim extends DelayLoadTabShim<Presentation, PresentationTab> 
                                      implements ShowPresentationPaneEvent.Handler
    {
-      abstract void initialize(PresentationState learningState);
+      abstract void initialize(PresentationState state);
       abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
-   public LearningTab(final Shim shim,
+   public PresentationTab(final Shim shim,
                       Binder binder, 
                       final Commands commands,
                       EventBus eventBus,
@@ -57,10 +57,10 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
         
          public void onSessionInit(SessionInitEvent sie)
          {
-            PresentationState learningState = 
+            PresentationState state = 
                               session_.getSessionInfo().getPresentationState();
-            if (learningState.isActive())
-               shim.initialize(learningState);           
+            if (state.isActive())
+               shim.initialize(state);           
          }
       });
       

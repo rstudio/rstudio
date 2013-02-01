@@ -1,5 +1,5 @@
 /*
- * OpenLearningSourceFileEvent.java
+ * OpenPresentationSourceFileEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -20,31 +20,31 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 
-public class OpenLearningSourceFileEvent extends GwtEvent<OpenLearningSourceFileHandler>
+public class OpenPresentationSourceFileEvent extends GwtEvent<OpenPresentationSourceFileHandler>
 {
-   public static final GwtEvent.Type<OpenLearningSourceFileHandler> TYPE =
-      new GwtEvent.Type<OpenLearningSourceFileHandler>();
+   public static final GwtEvent.Type<OpenPresentationSourceFileHandler> TYPE =
+      new GwtEvent.Type<OpenPresentationSourceFileHandler>();
 
-   public OpenLearningSourceFileEvent(FileSystemItem file, 
-                                      TextFileType fileType,
-                                      FilePosition position)
+   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+                                          TextFileType fileType,
+                                          FilePosition position)
    {
       this(file, fileType, position, null);
    }
    
   
-   public OpenLearningSourceFileEvent(FileSystemItem file, 
-                                      TextFileType fileType,
-                                      String pattern)
+   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+                                          TextFileType fileType,
+                                          String pattern)
    {
       this(file, fileType, null, pattern);
    }
 
    
-   public OpenLearningSourceFileEvent(FileSystemItem file, 
-                                      TextFileType fileType,
-                                      FilePosition position, 
-                                      String pattern)
+   public OpenPresentationSourceFileEvent(FileSystemItem file, 
+                                          TextFileType fileType,
+                                          FilePosition position, 
+                                          String pattern)
    {
       file_ = file;
       position_ = position;
@@ -73,13 +73,13 @@ public class OpenLearningSourceFileEvent extends GwtEvent<OpenLearningSourceFile
    }
 
    @Override
-   protected void dispatch(OpenLearningSourceFileHandler handler)
+   protected void dispatch(OpenPresentationSourceFileHandler handler)
    {
-      handler.onOpenLearningSourceFile(this);
+      handler.onOpenPresentationSourceFile(this);
    }
 
    @Override
-   public GwtEvent.Type<OpenLearningSourceFileHandler> getAssociatedType()
+   public GwtEvent.Type<OpenPresentationSourceFileHandler> getAssociatedType()
    {
       return TYPE;
    }

@@ -649,7 +649,7 @@ void handleHttpdRequest(const std::string& location,
    }
 
    // handle learning url
-   if (boost::algorithm::starts_with(path, "/learning"))
+   if (boost::algorithm::starts_with(path, "/presentation"))
    {
       learning::handleLearningHelpRequest(request, kJsCallbacks, pResponse);
       return;

@@ -1,7 +1,7 @@
 
 // forward command key events to the rstudio frame
-if (window.parent.learningKeydown)
-  window.onkeydown = function(e) {window.parent.learningKeydown(e);}
+if (window.parent.presentationKeydown)
+  window.onkeydown = function(e) {window.parent.presentationKeydown(e);}
 
 // manage media playback, atCommands, etc.
 function mediaManager(media, atCommands) {
@@ -68,9 +68,9 @@ function notifySlideChanged(indexh) {
   pauseAllPlayers();
  
   // notify parent of slide changed
-  if (window.parent.learningSlideChanged) {
-    window.parent.learningSlideChanged(event.indexh, 
-                                       commandsForSlide(event.indexh));  
+  if (window.parent.presentationSlideChanged) {
+    window.parent.presentationSlideChanged(event.indexh, 
+                                           commandsForSlide(event.indexh));  
   }
 }
 
