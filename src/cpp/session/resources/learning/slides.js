@@ -36,7 +36,7 @@ function mediaManager(media, atCommands) {
     if (nextAtCommandIndex < atCommands.length) {
        nextCommand = atCommands[nextAtCommandIndex];
        if (media.currentTime > nextCommand.at) {
-          window.parent.dispatchLearningCommand(nextCommand.command);
+          window.parent.dispatchPresentationCommand(nextCommand.command);
           nextAtCommandIndex++;
        }
     }
