@@ -1,5 +1,5 @@
 /*
- * LearningState.cpp
+ * PresentationState.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@
  */
 
 
-#include "LearningState.hpp"
+#include "PresentationState.hpp"
 
 #include <core/FilePath.hpp>
 #include <core/Settings.hpp>
@@ -25,14 +25,14 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
 namespace state {
 
 namespace {
       
-struct LearningState
+struct PresentationState
 {
-   LearningState()
+   PresentationState()
       : active(false), authorMode(false), slideIndex(0)
    {
    }
@@ -44,26 +44,26 @@ struct LearningState
    int slideIndex;
 };
 
-// write-through cache of learning state
-LearningState s_learningState;
+// write-through cache of presentation state
+PresentationState s_presentationState;
 
-FilePath learningStatePath()
+FilePath presentationStatePath()
 {
-   FilePath path = module_context::scopedScratchPath().childPath("learning");
+   FilePath path = module_context::scopedScratchPath().childPath("presentation");
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   return path.childPath("learning-state");
+   return path.childPath("presentation-state");
 }
 
-void saveLearningState(const LearningState& state)
+void savePresentationState(const PresentationState& state)
 {
    // update write-through cache
-   s_learningState = state;
+   s_presentationState = state;
 
    // save to disk
    Settings settings;
-   Error error = settings.initialize(learningStatePath());
+   Error error = settings.initialize(presentationStatePath());
    if (error)
    {
       LOG_ERROR(error);
@@ -79,26 +79,26 @@ void saveLearningState(const LearningState& state)
    settings.endUpdate();
 }
 
-void loadLearningState()
+void loadPresentationState()
 {
-   FilePath statePath = learningStatePath();
+   FilePath statePath = presentationStatePath();
    if (statePath.exists())
    {
       Settings settings;
-      Error error = settings.initialize(learningStatePath());
+      Error error = settings.initialize(presentationStatePath());
       if (error)
          LOG_ERROR(error);
 
-      s_learningState.active = settings.getBool("active", false);
-      s_learningState.authorMode = settings.getBool("author-mode", false);
-      s_learningState.paneCaption = settings.get("pane-caption", "Presentaiton");
-      s_learningState.directory = module_context::resolveAliasedPath(
+      s_presentationState.active = settings.getBool("active", false);
+      s_presentationState.authorMode = settings.getBool("author-mode", false);
+      s_presentationState.paneCaption = settings.get("pane-caption", "Presentaiton");
+      s_presentationState.directory = module_context::resolveAliasedPath(
                                                    settings.get("directory"));
-      s_learningState.slideIndex = settings.getInt("slide-index", 0);
+      s_presentationState.slideIndex = settings.getInt("slide-index", 0);
    }
    else
    {
-      s_learningState = LearningState();
+      s_presentationState = PresentationState();
    }
 }
 
@@ -109,61 +109,61 @@ void init(const FilePath& directory,
           const std::string& paneCaption,
           bool authorMode)
 {
-   LearningState state;
+   PresentationState state;
    state.active = true;
    state.paneCaption = paneCaption;
    state.authorMode = authorMode;
    state.directory = directory;
    state.slideIndex = 0;
-   saveLearningState(state);
+   savePresentationState(state);
 }
 
 void setSlideIndex(int index)
 {
-   s_learningState.slideIndex = index;
-   saveLearningState(s_learningState);
+   s_presentationState.slideIndex = index;
+   savePresentationState(s_presentationState);
 }
 
 bool isActive()
 {
-   return s_learningState.active;
+   return s_presentationState.active;
 }
 
 bool authorMode()
 {
-   return s_learningState.authorMode;
+   return s_presentationState.authorMode;
 }
 
 FilePath directory()
 {
-   return s_learningState.directory;
+   return s_presentationState.directory;
 }
 
 void clear()
 {
-   saveLearningState(LearningState());
+   savePresentationState(PresentationState());
 }
 
 json::Value asJson()
 {
    json::Object stateJson;
-   stateJson["active"] = s_learningState.active;
-   stateJson["author_mode"] = s_learningState.authorMode;
-   stateJson["pane_caption"] = s_learningState.paneCaption;
+   stateJson["active"] = s_presentationState.active;
+   stateJson["author_mode"] = s_presentationState.authorMode;
+   stateJson["pane_caption"] = s_presentationState.paneCaption;
    stateJson["directory"] = module_context::createAliasedPath(
-                                                s_learningState.directory);
-   stateJson["slide_index"] = s_learningState.slideIndex;
+                                                s_presentationState.directory);
+   stateJson["slide_index"] = s_presentationState.slideIndex;
    return stateJson;
 }
 
 Error initialize()
 {
-   loadLearningState();
+   loadPresentationState();
    return Success();
 }
 
 } // namespace state
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 

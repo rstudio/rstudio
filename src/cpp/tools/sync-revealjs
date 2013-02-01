@@ -17,7 +17,7 @@ VERSION=`git rev-parse HEAD`
 echo "$VERSION" > ../revealjs-version
 
 # copy files
-TARGET_DIR=../../session/resources/learning/revealjs
+TARGET_DIR=../../session/resources/presentation/revealjs
 mkdir -p $TARGET_DIR
 mkdir -p $TARGET_DIR/css/theme
 mkdir -p $TARGET_DIR/js

@@ -110,7 +110,7 @@
 #include "modules/SessionLists.hpp"
 #include "modules/SessionContentUrls.hpp"
 #include "modules/build/SessionBuild.hpp"
-#include "modules/learning/SessionLearning.hpp"
+#include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -488,7 +488,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_src"] = false;
    }
 
-   sessionInfo["presentation_state"] = modules::learning::learningStateAsJson();
+   sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
@@ -1399,7 +1399,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::workbench::initialize)
       (modules::data::initialize)
       (modules::help::initialize)
-      (modules::learning::initialize)
+      (modules::presentation::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::rpubs::initialize)

@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_LEARNING_SLIDE_PARSER_HPP
-#define SESSION_LEARNING_SLIDE_PARSER_HPP
+#ifndef SESSION_PRESENTATION_SLIDE_PARSER_HPP
+#define SESSION_PRESENTATION_SLIDE_PARSER_HPP
 
 
 #include <string>
@@ -26,7 +26,7 @@
 
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
 
 class Command {
 public:
@@ -127,8 +127,8 @@ core::Error readSlides(const core::FilePath& filePath,
                        std::string* pUserErrMsg);
 
 
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_LEARNING_SLIDE_PARSER_HPP
+#endif // SESSION_PRESENTATION_SLIDE_PARSER_HPP

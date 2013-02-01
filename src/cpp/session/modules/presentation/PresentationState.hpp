@@ -1,5 +1,5 @@
 /*
- * SlideRenderer.hpp
+ * PresentationState.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,31 +13,47 @@
  *
  */
 
-#ifndef SESSION_LEARNING_SLIDE_RENDERER_HPP
-#define SESSION_LEARNING_SLIDE_RENDERER_HPP
+#ifndef SESSION_PRESENTATION_STATE_HPP
+#define SESSION_PRESENTATION_STATE_HPP
 
-#include <string>
+#include <core/json/Json.hpp>
 
 namespace core {
    class Error;
    class FilePath;
-} // anonymous namespace
-
+}
+ 
 namespace session {
 namespace modules { 
-namespace learning {
-
-class SlideDeck;
-
-core::Error renderSlides(const SlideDeck& slideDeck,
-                         std::string* pSlides,
-                         std::string* pRevealConfig,
-                         std::string* pInitActions,
-                         std::string* pSlideActions);
+namespace presentation {
+namespace state {
 
 
-} // namespace learning
+void init(const core::FilePath& directory,
+          const std::string& paneCaption,
+          bool authorMode);
+void setSlideIndex(int index);
+
+
+bool isActive();
+bool authorMode();
+core::FilePath directory();
+
+
+
+
+void clear();
+
+
+core::json::Value asJson();
+
+
+
+core::Error initialize();
+
+} // namespace state
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_LEARNING_SLIDE_RENDERER_HPP
+#endif // SESSION_PRESENTATION_STATE_HPP

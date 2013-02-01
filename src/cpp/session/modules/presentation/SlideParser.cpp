@@ -35,7 +35,7 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
 
 namespace {
 
@@ -309,7 +309,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
 }
 
 
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 

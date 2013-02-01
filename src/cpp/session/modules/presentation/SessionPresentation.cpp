@@ -1,5 +1,5 @@
 /*
- * SessionLearning.cpp
+ * SessionPresentation.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,7 +14,7 @@
  */
 
 
-#include "SessionLearning.hpp"
+#include "SessionPresentation.hpp"
 
 #include <iostream>
 
@@ -35,7 +35,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "LearningState.hpp"
+#include "PresentationState.hpp"
 
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
@@ -44,13 +44,13 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
 
 namespace {
 
-FilePath learningResourcesPath()
+FilePath presentationResourcesPath()
 {
-   return session::options().rResourcesPath().complete("learning");
+   return session::options().rResourcesPath().complete("presentation");
 }
 
 SEXP rs_showPresentation(SEXP directorySEXP,
@@ -67,14 +67,14 @@ SEXP rs_showPresentation(SEXP directorySEXP,
             throw r::exec::RErrorException("Directory " + dir.absolutePath() +
                                            " does not exist.");
 
-         // initialize learning state
-         learning::state::init(dir,
-                               r::sexp::asString(tabCaptionSEXP),
-                               r::sexp::asLogical(authorModeSEXP));
+         // initialize state
+         presentation::state::init(dir,
+                                   r::sexp::asString(tabCaptionSEXP),
+                                   r::sexp::asLogical(authorModeSEXP));
 
          // notify the client
          ClientEvent event(client_events::kShowPresentationPane,
-                           learning::state::asJson());
+                           presentation::state::asJson());
          module_context::enqueClientEvent(event);
       }
       else
@@ -91,23 +91,23 @@ SEXP rs_showPresentation(SEXP directorySEXP,
    return R_NilValue;
 }
 
-core::Error setLearningSlideIndex(const json::JsonRpcRequest& request,
-                                  json::JsonRpcResponse*)
+core::Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
+                                      json::JsonRpcResponse*)
 {
    int index;
    Error error = json::readParam(request.params, 0, &index);
    if (error)
       return error;
 
-   learning::state::setSlideIndex(index);
+   presentation::state::setSlideIndex(index);
 
    return Success();
 }
 
-core::Error closeLearningPane(const json::JsonRpcRequest&,
-                              json::JsonRpcResponse*)
+core::Error closePresentationPane(const json::JsonRpcRequest&,
+                                 json::JsonRpcResponse*)
 {
-   learning::state::clear();
+   presentation::state::clear();
 
    return Success();
 }
@@ -137,7 +137,7 @@ ResourceFiles& resourceFiles()
 std::string mathjaxIfRequired(const std::string& contents)
 {
    if (markdown::isMathJaxRequired(contents))
-      return resourceFiles().get("learning/mathjax.html");
+      return resourceFiles().get("presentation/mathjax.html");
    else
       return std::string();
 }
@@ -205,11 +205,11 @@ void handleRangeRequest(const FilePath& targetFile,
    }
 }
 
-void handleLearningPaneRequest(const http::Request& request,
-                               http::Response* pResponse)
+void handlePresentationPaneRequest(const http::Request& request,
+                                   http::Response* pResponse)
 {
-   // return not found if learning isn't active
-   if (!learning::state::isActive())
+   // return not found if presentation isn't active
+   if (!presentation::state::isActive())
    {
       pResponse->setError(http::status::NotFound, request.uri() + " not found");
       return;
@@ -218,21 +218,21 @@ void handleLearningPaneRequest(const http::Request& request,
    // get the requested path
    std::string path = http::util::pathAfterPrefix(request, "/presentation/");
 
-   // special handling for the root (process learning template)
+   // special handling for the root (process template)
    if (path.empty())
    {
       // look for slides.md
-      FilePath slidesFile = learning::state::directory().complete("slides.md");
+      FilePath slidesFile = presentation::state::directory().complete("slides.md");
       if (!slidesFile.exists())
       {
          pResponse->setError(http::status::NotFound,
                              "slides.md file not found in " +
-                             learning::state::directory().absolutePath());
+                             presentation::state::directory().absolutePath());
          return;
       }
 
       // parse the slides
-      learning::SlideDeck slideDeck;
+      presentation::SlideDeck slideDeck;
       Error error = slideDeck.readSlides(slidesFile);
       if (error)
       {
@@ -244,11 +244,11 @@ void handleLearningPaneRequest(const http::Request& request,
 
       // render the slides
       std::string slides, revealConfig, initCommands, slideCommands;
-      error = learning::renderSlides(slideDeck,
-                                     &slides,
-                                     &revealConfig,
-                                     &initCommands,
-                                     &slideCommands);
+      error = presentation::renderSlides(slideDeck,
+                                         &slides,
+                                         &revealConfig,
+                                         &initCommands,
+                                         &slideCommands);
       if (error)
       {
          LOG_ERROR(error);
@@ -259,7 +259,7 @@ void handleLearningPaneRequest(const http::Request& request,
 
       // get user css if it exists
       std::string userSlidesCss;
-      FilePath cssPath = learning::state::directory().complete("slides.css");
+      FilePath cssPath = presentation::state::directory().complete("slides.css");
       if (cssPath.exists())
       {
          userSlidesCss = "<link rel=\"stylesheet\" href=\"slides.css\">\n";
@@ -272,16 +272,16 @@ void handleLearningPaneRequest(const http::Request& request,
       vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
       vars["slide_commands"] = slideCommands;
-      vars["slides_css"] =  resourceFiles().get("learning/slides.css");
+      vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(slides);
-      vars["slides_js"] = resourceFiles().get("learning/slides.js");
+      vars["slides_js"] = resourceFiles().get("presentation/slides.js");
       vars["reveal_config"] = revealConfig;
       vars["init_commands"] = initCommands;
 
       // process the template
       pResponse->setNoCacheHeaders();
-      pResponse->setBody(resourceFiles().get("learning/slides.html"),
+      pResponse->setBody(resourceFiles().get("presentation/slides.html"),
                          text::TemplateFilter(vars));
    }
 
@@ -289,7 +289,7 @@ void handleLearningPaneRequest(const http::Request& request,
    else if (boost::algorithm::starts_with(path, "revealjs/"))
    {
       path = http::util::pathAfterPrefix(request, "/presentation/revealjs/");
-      FilePath filePath = learningResourcesPath().complete("revealjs/" + path);
+      FilePath filePath = presentationResourcesPath().complete("revealjs/" + path);
       pResponse->setFile(filePath, request);
    }
 
@@ -305,7 +305,7 @@ void handleLearningPaneRequest(const http::Request& request,
    // serve the file back
    else
    {
-      FilePath targetFile = learning::state::directory().childPath(path);
+      FilePath targetFile = presentation::state::directory().childPath(path);
       if (!request.headerValue("Range").empty())
       {
          handleRangeRequest(targetFile, request, pResponse);
@@ -322,19 +322,19 @@ void handleLearningPaneRequest(const http::Request& request,
 }
 
 
-// we save the most recent /help/learning/&file=parameter so we
+// we save the most recent /help/presentation/&file=parameter so we
 // can resolve relative file references against it. we do this
-// separately from learning::state::directory so that the help
+// separately from presentation::state::directory so that the help
 // urls can be available within the help pane (and history)
-// independent of the duration of the learning tab
-FilePath s_learningHelpDir;
+// independent of the duration of the presentation tab
+FilePath s_presentationHelpDir;
 
 
 } // anonymous namespace
 
-void handleLearningHelpRequest(const core::http::Request& request,
-                               const std::string& jsCallbacks,
-                               core::http::Response* pResponse)
+void handlePresentationHelpRequest(const core::http::Request& request,
+                                   const std::string& jsCallbacks,
+                                   core::http::Response* pResponse)
 {
    // check if this is a root request
    std::string file = request.queryParamValue("file");
@@ -349,7 +349,7 @@ void handleLearningHelpRequest(const core::http::Request& request,
       }
 
       // save the file's directory (for resolving other resources)
-      s_learningHelpDir = filePath.parent();
+      s_presentationHelpDir = filePath.parent();
 
 
       // read in the file (process markdown)
@@ -367,13 +367,13 @@ void handleLearningHelpRequest(const core::http::Request& request,
       // process the template
       std::map<std::string,std::string> vars;
       vars["title"] = html_utils::defaultTitle(helpDoc);
-      vars["styles"] = resourceFiles().get("learning/helpdoc.css");
+      vars["styles"] = resourceFiles().get("presentation/helpdoc.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
       vars["mathjax"] = mathjaxIfRequired(helpDoc);
       vars["content"] = helpDoc;
       vars["js_callbacks"] = jsCallbacks;
       pResponse->setNoCacheHeaders();
-      pResponse->setBody(resourceFiles().get("learning/helpdoc.html"),
+      pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
                          text::TemplateFilter(vars));
    }
 
@@ -381,28 +381,28 @@ void handleLearningHelpRequest(const core::http::Request& request,
    else
    {
       // make sure the directory exists
-      if (!s_learningHelpDir.exists())
+      if (!s_presentationHelpDir.exists())
       {
          pResponse->setError(http::status::NotFound,
                              "Directory not found: " +
-                             s_learningHelpDir.absolutePath());
+                             s_presentationHelpDir.absolutePath());
          return;
       }
 
       // resolve the file reference
       std::string path = http::util::pathAfterPrefix(request,
-                                                     "/help/learning/");
+                                                     "/help/presentation/");
 
       // serve the file back
-      pResponse->setFile(s_learningHelpDir.complete(path), request);
+      pResponse->setFile(s_presentationHelpDir.complete(path), request);
    }
 }
 
 
 
-json::Value learningStateAsJson()
+json::Value presentationStateAsJson()
 {
-   return learning::state::asJson();
+   return presentation::state::asJson();
 }
 
 Error initialize()
@@ -420,11 +420,11 @@ Error initialize()
       using namespace session::module_context;
       ExecBlock initBlock ;
       initBlock.addFunctions()
-         (bind(registerUriHandler, "/presentation", handleLearningPaneRequest))
-         (bind(registerRpcMethod, "set_presentation_slide_index", setLearningSlideIndex))
-         (bind(registerRpcMethod, "close_presentation_pane", closeLearningPane))
-         (bind(learning::state::initialize))
-         (bind(sourceModuleRFile, "SessionLearning.R"));
+         (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
+         (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
+         (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
+         (bind(presentation::state::initialize))
+         (bind(sourceModuleRFile, "SessionPresentation.R"));
 
       return initBlock.execute();
    }
@@ -434,7 +434,7 @@ Error initialize()
    }
 }
 
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 

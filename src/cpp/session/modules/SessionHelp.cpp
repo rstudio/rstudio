@@ -48,7 +48,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "learning/SessionLearning.hpp"
+#include "presentation/SessionPresentation.hpp"
 
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
@@ -648,10 +648,10 @@ void handleHttpdRequest(const std::string& location,
       }
    }
 
-   // handle learning url
+   // handle presentation url
    if (boost::algorithm::starts_with(path, "/presentation"))
    {
-      learning::handleLearningHelpRequest(request, kJsCallbacks, pResponse);
+      presentation::handlePresentationHelpRequest(request, kJsCallbacks, pResponse);
       return;
    }
 

@@ -78,10 +78,10 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
-   modules/learning/SessionLearning.cpp
-   modules/learning/LearningState.cpp
-   modules/learning/SlideParser.cpp
-   modules/learning/SlideRenderer.cpp
+   modules/presentation/SessionPresentation.cpp
+   modules/presentation/PresentationState.cpp
+   modules/presentation/SlideParser.cpp
+   modules/presentation/SlideRenderer.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
@@ -264,8 +264,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-   # learning
-   install(DIRECTORY "resources/learning"
+   # presentation
+   install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # R scripts

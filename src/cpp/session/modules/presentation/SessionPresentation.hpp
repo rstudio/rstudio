@@ -1,5 +1,5 @@
 /*
- * SessionLearning.hpp
+ * SessionPresentation.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_LEARNING_HPP
-#define SESSION_LEARNING_HPP
+#ifndef SESSION_PRESENTATION_HPP
+#define SESSION_PRESENTATION_HPP
 
 #include <string>
 
@@ -31,18 +31,18 @@ namespace core {
  
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
    
-core::json::Value learningStateAsJson();
+core::json::Value presentationStateAsJson();
 
-void handleLearningHelpRequest(const core::http::Request& request,
-                               const std::string& jsCallbacks,
-                               core::http::Response* pResponse);
+void handlePresentationHelpRequest(const core::http::Request& request,
+                                   const std::string& jsCallbacks,
+                                   core::http::Response* pResponse);
 
 core::Error initialize();
                        
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_LEARNING_HPP
+#endif // SESSION_PRESENTATION_HPP

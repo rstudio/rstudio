@@ -39,7 +39,7 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace learning {
+namespace presentation {
 
 namespace {
 
@@ -324,7 +324,7 @@ Error renderSlides(const SlideDeck& slideDeck,
 }
 
 
-} // namespace learning
+} // namespace presentation
 } // namespace modules
 } // namesapce session
 
