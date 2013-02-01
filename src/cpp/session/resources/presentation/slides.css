@@ -16,6 +16,7 @@
   display: block; padding: 0.5em;
   font-size: 1.8em;
   line-height: 1.2em;
+  background-color: white;
 }
 
 .reveal code.r, code.cpp {
