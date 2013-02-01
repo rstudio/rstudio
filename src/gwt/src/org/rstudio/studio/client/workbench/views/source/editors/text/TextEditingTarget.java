@@ -2467,7 +2467,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onFold()
    {
-      if (docDisplay_.hasScopeTree())
+      if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -2503,7 +2503,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onUnfold()
    {
-      if (docDisplay_.hasScopeTree())
+      if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -2563,7 +2563,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onFoldAll()
    {
-      if (docDisplay_.hasScopeTree())
+      if (useScopeTreeFolding())
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<Integer>();
@@ -2588,7 +2588,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onUnfoldAll()
    {
-      if (docDisplay_.hasScopeTree())
+      if (useScopeTreeFolding())
       {
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             docDisplay_.unfold(f);
@@ -2599,7 +2599,10 @@ public class TextEditingTarget implements EditingTarget
       }
    }
    
-  
+   boolean useScopeTreeFolding()
+   {
+      return docDisplay_.hasScopeTree() && !fileType_.isRmd();
+   }
 
    void handlePdfCommand(final String completedAction,
                          final boolean useInternalPreview,

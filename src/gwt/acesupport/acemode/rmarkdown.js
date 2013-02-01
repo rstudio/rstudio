@@ -28,8 +28,12 @@ var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBr
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
+var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
+
 
 var Mode = function(suppressHighlighting, doc, session) {
+   var that = this;
+
    this.$session = session;
    this.$tokenizer = new Tokenizer(new RMarkdownHighlightRules().getRules());
 
@@ -39,7 +43,27 @@ var Mode = function(suppressHighlighting, doc, session) {
 
    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
                                    /^`{3,}\s*\{r(.*)\}\s*$/);
-   this.foldingRules = this.codeModel;
+
+   var markdownFoldingRules = new MarkdownFoldMode();
+
+   this.foldingRules = {
+
+      getFoldWidget: function(session, foldStyle, row) {
+         if (that.getLanguageMode({row: row, column: 0}) == "Markdown")
+            return markdownFoldingRules.getFoldWidget(session, foldStyle, row);
+         else
+            return that.codeModel.getFoldWidget(session, foldStyle, row);
+      },
+
+      getFoldWidgetRange: function(session, foldStyle, row) {
+         if (that.getLanguageMode({row: row, column: 0}) == "Markdown")
+            return markdownFoldingRules.getFoldWidgetRange(session, foldStyle, row);
+         else
+            return that.codeModel.getFoldWidgetRange(session, foldStyle, row);
+      }
+
+   };   
+
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
          /^`{3,}\s*\{r(?:.*)\}\s*$/,
