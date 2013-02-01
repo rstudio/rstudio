@@ -1,5 +1,5 @@
 /*
- * LearningCommand.java
+ * PresentationServerOperations.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,21 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning.model;
+package org.rstudio.studio.client.workbench.views.presentation.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.server.*;
+import org.rstudio.studio.client.server.Void;
 
-public class LearningCommand extends JavaScriptObject
+public interface PresentationServerOperations
 {
-   protected LearningCommand()
-   {
-   }
-  
-   public final native String getName() /*-{
-      return this.name;
-   }-*/;
+   String getApplicationURL(String url);
    
-   public final native String getParams() /*-{
-      return this.params;
-   }-*/;
+   void showHelpTopic(String topic, String pkgName) ;
+   
+   void setPresentationSlideIndex(int index, 
+                              ServerRequestCallback<Void> requestCallaback);
+   
+   void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
 }

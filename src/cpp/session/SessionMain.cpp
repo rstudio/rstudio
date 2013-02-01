@@ -488,7 +488,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_src"] = false;
    }
 
-   sessionInfo["learning_state"] = modules::learning::learningStateAsJson();
+   sessionInfo["presentation_state"] = modules::learning::learningStateAsJson();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(

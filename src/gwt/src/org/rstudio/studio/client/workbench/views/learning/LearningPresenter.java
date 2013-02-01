@@ -51,10 +51,10 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
-import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningCommand;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
+import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
 public class LearningPresenter extends BasePresenter 
 {
@@ -62,7 +62,7 @@ public class LearningPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
-      void load(String url, LearningState state);
+      void load(String url, PresentationState state);
       boolean hasSlides();
       void home();
       void next();
@@ -74,7 +74,7 @@ public class LearningPresenter extends BasePresenter
    
    @Inject
    public LearningPresenter(Display display, 
-                            LearningServerOperations server,
+                            PresentationServerOperations server,
                             GlobalDisplay globalDisplay,
                             EventBus eventBus,
                             FileTypeRegistry fileTypeRegistry,
@@ -114,7 +114,7 @@ public class LearningPresenter extends BasePresenter
       initLearningCallbacks();
    }
    
-   public void initialize(LearningState learningState)
+   public void initialize(PresentationState learningState)
    {
       if (learningState.getSlideIndex() == 0)
          view_.bringToFront();
@@ -122,7 +122,7 @@ public class LearningPresenter extends BasePresenter
       init(learningState);
    }
    
-   public void onShowLearningPane(ShowLearningPaneEvent event)
+   public void onShowPresentationPane(ShowPresentationPaneEvent event)
    {
       // if this isn't google chrome then show an error
       if (!BrowseCap.isChrome())
@@ -134,10 +134,9 @@ public class LearningPresenter extends BasePresenter
          return;
       }
       
-      
       // if the learning pane wasn't previously shown in this 
       // session then reload
-      if (!session_.getSessionInfo().getLearningState().isActive())
+      if (!session_.getSessionInfo().getPresentationState().isActive())
          eventBus_.fireEvent(new ReloadEvent());
       else
       {
@@ -201,7 +200,7 @@ public class LearningPresenter extends BasePresenter
             200,
             "Closing Learning Tab...").getIndicator();
       
-      server_.closeLearningPane(new VoidServerRequestCallback(progress) {
+      server_.closePresentationPane(new VoidServerRequestCallback(progress) {
          @Override
          public void onSuccess()
          {
@@ -210,7 +209,7 @@ public class LearningPresenter extends BasePresenter
       });
    }
    
-   private void init(LearningState state)
+   private void init(PresentationState state)
    {
       currentState_ = state;
       
@@ -268,7 +267,7 @@ public class LearningPresenter extends BasePresenter
       @Override
       protected void performAction(boolean shouldSchedulePassive)
       {
-         server_.setLearningSlideIndex(lastSlideIndex_, 
+         server_.setPresentationSlideIndex(lastSlideIndex_, 
                                        new VoidServerRequestCallback());
       }
    };
@@ -285,7 +284,7 @@ public class LearningPresenter extends BasePresenter
    private void dispatchCommand(JavaScriptObject jsCommand)
    {
       // cast
-      LearningCommand command = jsCommand.cast();
+      PresentationCommand command = jsCommand.cast();
       
       // crack parameters
       String param1 = null, param2 = null;
@@ -424,13 +423,13 @@ public class LearningPresenter extends BasePresenter
    }
    
    private final Display view_ ; 
-   private final LearningServerOperations server_;
+   private final PresentationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private int lastSlideIndex_ = 0;
-   private LearningState currentState_ = null;
+   private PresentationState currentState_ = null;
    
 }

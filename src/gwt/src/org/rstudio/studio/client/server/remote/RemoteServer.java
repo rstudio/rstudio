@@ -2526,17 +2526,17 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void setLearningSlideIndex(
+   public void setPresentationSlideIndex(
                                  int index, 
                                  ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SET_LEARNING_SLIDE_INDEX, index, requestCallback);
+      sendRequest(RPC_SCOPE, SET_PRESENTATION_SLIDE_INDEX, index, requestCallback);
    }
    
    @Override
-   public void closeLearningPane(ServerRequestCallback<Void> requestCallback)
+   public void closePresentationPane(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CLOSE_LEARNING_PANE, requestCallback);
+      sendRequest(RPC_SCOPE, CLOSE_PRESENTATION_PANE, requestCallback);
    }
    
    
@@ -2922,8 +2922,8 @@ public class RemoteServer implements Server
    private static final String RPUBS_UPLOAD = "rpubs_upload";
    private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
-   private static final String SET_LEARNING_SLIDE_INDEX = "set_learning_slide_index";
-   private static final String CLOSE_LEARNING_PANE = "close_learning_pane";
+   private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
+   private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

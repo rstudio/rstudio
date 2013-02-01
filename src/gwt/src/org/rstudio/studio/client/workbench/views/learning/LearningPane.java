@@ -32,7 +32,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
 public class LearningPane extends WorkbenchPane implements LearningPresenter.Display
 {
@@ -103,7 +103,7 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    }
    
    @Override
-   public void load(String url, LearningState state)
+   public void load(String url, PresentationState state)
    {   
       frame_.navigate(url);
    }

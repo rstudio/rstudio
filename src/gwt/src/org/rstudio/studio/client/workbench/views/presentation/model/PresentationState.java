@@ -1,5 +1,5 @@
 /*
- * LearningState.java
+ * PresentationState.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning.model;
+package org.rstudio.studio.client.workbench.views.presentation.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class LearningState extends JavaScriptObject
+public class PresentationState extends JavaScriptObject
 {
-   protected LearningState()
+   protected PresentationState()
    {
    }
    

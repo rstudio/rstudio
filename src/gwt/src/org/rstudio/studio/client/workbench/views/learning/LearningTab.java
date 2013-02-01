@@ -26,8 +26,8 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
+import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
 
 public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
@@ -35,9 +35,9 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
    public interface Binder extends CommandBinder<Commands, Shim> {}
    
    public abstract static class Shim extends DelayLoadTabShim<LearningPresenter, LearningTab> 
-                                     implements ShowLearningPaneEvent.Handler
+                                     implements ShowPresentationPaneEvent.Handler
    {
-      abstract void initialize(LearningState learningState);
+      abstract void initialize(PresentationState learningState);
       abstract void confirmClose(Command onConfirmed);
    }
 
@@ -48,7 +48,7 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
                       EventBus eventBus,
                       Session session)
    {
-      super(session.getSessionInfo().getLearningName(), shim);
+      super(session.getSessionInfo().getPresentationName(), shim);
       binder.bind(commands, shim);
       shim_ = shim;
       session_ = session;
@@ -57,14 +57,14 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
         
          public void onSessionInit(SessionInitEvent sie)
          {
-            LearningState learningState = 
-                              session_.getSessionInfo().getLearningState();
+            PresentationState learningState = 
+                              session_.getSessionInfo().getPresentationState();
             if (learningState.isActive())
                shim.initialize(learningState);           
          }
       });
       
-      eventBus.addHandler(ShowLearningPaneEvent.TYPE, shim);
+      eventBus.addHandler(ShowPresentationPaneEvent.TYPE, shim);
    }
    
    @Override
@@ -82,7 +82,7 @@ public class LearningTab extends DelayLoadWorkbenchTab<LearningPresenter>
    @Override
    public boolean isSuppressed()
    {
-      return !session_.getSessionInfo().getLearningState().isActive();
+      return !session_.getSessionInfo().getPresentationState().isActive();
    }
 
    private Session session_;

@@ -26,8 +26,8 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 public class SessionInfo extends JavaScriptObject
@@ -251,17 +251,17 @@ public class SessionInfo extends JavaScriptObject
       return this.has_pkg_src;
    }-*/;
    
-   public final String getLearningName()
+   public final String getPresentationName()
    {
-      LearningState state = getLearningState();
+      PresentationState state = getPresentationState();
       if (state != null)
          return state.getPaneCaption();
       else
          return "Presentation";
    }
    
-   public final native LearningState getLearningState() /*-{
-      return this.learning_state;
+   public final native PresentationState getPresentationState() /*-{
+      return this.presentation_state;
    }-*/;
    
    public final native BuildState getBuildState() /*-{

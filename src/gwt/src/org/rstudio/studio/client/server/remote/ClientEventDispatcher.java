@@ -68,8 +68,6 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAddedEvent;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
-import org.rstudio.studio.client.workbench.views.learning.events.ShowLearningPaneEvent;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
@@ -83,6 +81,8 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
+import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
@@ -433,10 +433,10 @@ public class ClientEventDispatcher
             String pane = event.getData();
             eventBus_.fireEvent(new ActivatePaneEvent(pane));
          }
-         else if (type.equals(ClientEvent.ShowLearningPane))
+         else if (type.equals(ClientEvent.ShowPresentationPane))
          {
-            LearningState state = event.getData();
-            eventBus_.fireEvent(new ShowLearningPaneEvent(state));
+            PresentationState state = event.getData();
+            eventBus_.fireEvent(new ShowPresentationPaneEvent(state));
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

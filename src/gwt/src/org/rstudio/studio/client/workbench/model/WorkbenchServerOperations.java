@@ -36,12 +36,12 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
-import org.rstudio.studio.client.workbench.views.learning.model.LearningServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 
@@ -69,7 +69,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FindInFilesServerOperations,
                                                    SynctexServerOperations,
                                                    BuildServerOperations,
-                                                   LearningServerOperations
+                                                   PresentationServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

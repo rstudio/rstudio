@@ -73,7 +73,7 @@ SEXP rs_showPresentation(SEXP directorySEXP,
                                r::sexp::asLogical(authorModeSEXP));
 
          // notify the client
-         ClientEvent event(client_events::kShowLearningPane,
+         ClientEvent event(client_events::kShowPresentationPane,
                            learning::state::asJson());
          module_context::enqueClientEvent(event);
       }
@@ -421,8 +421,8 @@ Error initialize()
       ExecBlock initBlock ;
       initBlock.addFunctions()
          (bind(registerUriHandler, "/learning", handleLearningPaneRequest))
-         (bind(registerRpcMethod, "set_learning_slide_index", setLearningSlideIndex))
-         (bind(registerRpcMethod, "close_learning_pane", closeLearningPane))
+         (bind(registerRpcMethod, "set_presentation_slide_index", setLearningSlideIndex))
+         (bind(registerRpcMethod, "close_presentation_pane", closeLearningPane))
          (bind(learning::state::initialize))
          (bind(sourceModuleRFile, "SessionLearning.R"));
 

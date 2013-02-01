@@ -97,7 +97,7 @@ const int kSourceCppStarted = 69;
 const int kSourceCppCompleted = 70;
 const int kLoadedPackageUpdates = 71;
 const int kActivatePane = 72;
-const int kShowLearningPane = 73;
+const int kShowPresentationPane = 73;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -251,8 +251,8 @@ std::string ClientEvent::typeName() const
          return "loaded_package_updates";
       case client_events::kActivatePane:
          return "activate_pane";
-      case client_events::kShowLearningPane:
-         return "show_learning_pane";
+      case client_events::kShowPresentationPane:
+         return "show_presentation_pane";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

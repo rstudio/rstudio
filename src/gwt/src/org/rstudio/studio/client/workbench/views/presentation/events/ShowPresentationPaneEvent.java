@@ -1,5 +1,5 @@
 /*
- * ShowLearningPaneEvent.java
+ * ShowPresentationPaneEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.learning.events;
+package org.rstudio.studio.client.workbench.views.presentation.events;
 
-import org.rstudio.studio.client.workbench.views.learning.model.LearningState;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowLearningPaneEvent extends GwtEvent<ShowLearningPaneEvent.Handler>
+public class ShowPresentationPaneEvent extends GwtEvent<ShowPresentationPaneEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onShowLearningPane(ShowLearningPaneEvent event);
+      void onShowPresentationPane(ShowPresentationPaneEvent event);
    }
 
-   public ShowLearningPaneEvent(LearningState learningState)
+   public ShowPresentationPaneEvent(PresentationState presentationState)
    {
-      learningState_ = learningState;
+      presentationState_ = presentationState;
    }
 
-   public LearningState getLearningState()
+   public PresentationState getLearningState()
    {
-      return learningState_;
+      return presentationState_;
    }
 
    @Override
@@ -45,10 +45,10 @@ public class ShowLearningPaneEvent extends GwtEvent<ShowLearningPaneEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onShowLearningPane(this);
+      handler.onShowPresentationPane(this);
    }
 
-   private final LearningState learningState_;
+   private final PresentationState presentationState_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
