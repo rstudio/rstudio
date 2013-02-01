@@ -40,7 +40,7 @@ public class LearningPane extends WorkbenchPane implements LearningPresenter.Dis
    public LearningPane(Commands commands,
                        Session session)
    {
-      super("Learning");
+      super("Presentation");
       commands_ = commands;
       ensureWidget();
    }

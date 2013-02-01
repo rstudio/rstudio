@@ -13,3 +13,19 @@ diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
 
+showPresentation <- function(directory, 
+                             tabCaption = "Presentation",
+                             authorMode = FALSE) {
+   
+   if (!is.character(directory))
+      stop("directory must be of type character")
+   if (!is.character(tabCaption))
+      stop("tabCaption must be of type character")
+   if (!is.logical(authorMode))
+      stop("authorMode must be of type logical")
+   
+   invisible(.Call(getNativeSymbolInfo("rs_showPresentation", PACKAGE=""), 
+                   .rs.normalizePath(path.expand(directory)),
+                   tabCaption,
+                   authorMode))
+}

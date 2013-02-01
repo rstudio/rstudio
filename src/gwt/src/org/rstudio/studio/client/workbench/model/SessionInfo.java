@@ -257,7 +257,7 @@ public class SessionInfo extends JavaScriptObject
       if (state != null)
          return state.getPaneCaption();
       else
-         return "Learning";
+         return "Presentation";
    }
    
    public final native LearningState getLearningState() /*-{

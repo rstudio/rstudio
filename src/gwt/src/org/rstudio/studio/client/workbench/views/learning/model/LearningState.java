@@ -26,6 +26,10 @@ public class LearningState extends JavaScriptObject
       return this.active;
    }-*/;
    
+   public final native boolean isAuthorMode() /*-{
+      return this.author_mode;
+   }-*/;
+   
    public final native String getPaneCaption() /*-{
       return this.pane_caption;
    }-*/;

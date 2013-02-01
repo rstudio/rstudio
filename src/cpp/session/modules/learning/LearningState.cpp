@@ -33,12 +33,13 @@ namespace {
 struct LearningState
 {
    LearningState()
-      : active(false), slideIndex(0)
+      : active(false), authorMode(false), slideIndex(0)
    {
    }
 
    bool active;
    std::string paneCaption;
+   bool authorMode;
    FilePath directory;
    int slideIndex;
 };
@@ -70,6 +71,7 @@ void saveLearningState(const LearningState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
+   settings.set("author-mode", state.authorMode);
    settings.set("pane-caption", state.paneCaption);
    settings.set("directory",
                 module_context::createAliasedPath(state.directory));
@@ -88,7 +90,8 @@ void loadLearningState()
          LOG_ERROR(error);
 
       s_learningState.active = settings.getBool("active", false);
-      s_learningState.paneCaption = settings.get("pane-caption", "Learning");
+      s_learningState.authorMode = settings.getBool("author-mode", false);
+      s_learningState.paneCaption = settings.get("pane-caption", "Presentaiton");
       s_learningState.directory = module_context::resolveAliasedPath(
                                                    settings.get("directory"));
       s_learningState.slideIndex = settings.getInt("slide-index", 0);
@@ -102,12 +105,14 @@ void loadLearningState()
 } // anonymous namespace
 
 
-void init(const std::string& paneCaption,
-          const FilePath& directory)
+void init(const FilePath& directory,
+          const std::string& paneCaption,
+          bool authorMode)
 {
    LearningState state;
    state.active = true;
    state.paneCaption = paneCaption;
+   state.authorMode = authorMode;
    state.directory = directory;
    state.slideIndex = 0;
    saveLearningState(state);
@@ -124,6 +129,11 @@ bool isActive()
    return s_learningState.active;
 }
 
+bool authorMode()
+{
+   return s_learningState.authorMode;
+}
+
 FilePath directory()
 {
    return s_learningState.directory;
@@ -138,6 +148,7 @@ json::Value asJson()
 {
    json::Object stateJson;
    stateJson["active"] = s_learningState.active;
+   stateJson["author_mode"] = s_learningState.authorMode;
    stateJson["pane_caption"] = s_learningState.paneCaption;
    stateJson["directory"] = module_context::createAliasedPath(
                                                 s_learningState.directory);

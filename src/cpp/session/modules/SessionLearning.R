@@ -13,10 +13,4 @@
 #
 #
 
-.rs.addFunction( "showLearningPane", function(paneCaption, dir)
-{
-   invisible(.Call("rs_showLearningPane", paneCaption,
-                                          .rs.normalizePath(path.expand(dir))))
-})
-
 

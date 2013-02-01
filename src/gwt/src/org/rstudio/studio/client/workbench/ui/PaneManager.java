@@ -62,7 +62,7 @@ public class PaneManager
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
    
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help, VCS, Build, Learning
+      Workspace, History, Files, Plots, Packages, Help, VCS, Build, Presentation
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -108,7 +108,7 @@ public class PaneManager
                       @Named("Help") final WorkbenchTab helpTab,
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
-                      @Named("Learning") final WorkbenchTab learningTab,
+                      @Named("Presentation") final WorkbenchTab learningTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
@@ -265,7 +265,7 @@ public class PaneManager
             return vcsTab_;
          case Build:
             return buildTab_;
-         case Learning:
+         case Presentation:
             return learningTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
@@ -431,7 +431,7 @@ public class PaneManager
             return getTab(tab).getTitle();
          case Build:
             return "Build";
-         case Learning:
+         case Presentation:
             return getTab(tab).getTitle();
       }
       return "??";
@@ -455,8 +455,8 @@ public class PaneManager
          return Tab.VCS;
       if (name.equalsIgnoreCase("build"))
          return Tab.Build;
-      if (name.equalsIgnoreCase("learning"))
-         return Tab.Learning;
+      if (name.equalsIgnoreCase("presentation"))
+         return Tab.Presentation;
       
       return null;
    }

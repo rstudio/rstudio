@@ -231,7 +231,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Help", HelpTab.class);
       bindTab("VCS", VCSTab.class);
       bindTab("Build", BuildTab.class);
-      bindTab("Learning", LearningTab.class);
+      bindTab("Presentation", LearningTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);

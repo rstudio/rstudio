@@ -53,20 +53,24 @@ FilePath learningResourcesPath()
    return session::options().rResourcesPath().complete("learning");
 }
 
-SEXP rs_showLearningPane(SEXP paneCaptionSEXP, SEXP dirSEXP)
+SEXP rs_showPresentation(SEXP directorySEXP,
+                         SEXP tabCaptionSEXP,
+                         SEXP authorModeSEXP)
 {
    try
    {
       if (session::options().programMode() == kSessionProgramModeServer)
       {
          // validate path
-         FilePath dir(r::sexp::asString(dirSEXP));
+         FilePath dir(r::sexp::asString(directorySEXP));
          if (!dir.exists())
             throw r::exec::RErrorException("Directory " + dir.absolutePath() +
                                            " does not exist.");
 
          // initialize learning state
-         learning::state::init(r::sexp::asString(paneCaptionSEXP), dir);
+         learning::state::init(dir,
+                               r::sexp::asString(tabCaptionSEXP),
+                               r::sexp::asLogical(authorModeSEXP));
 
          // notify the client
          ClientEvent event(client_events::kShowLearningPane,
@@ -75,7 +79,7 @@ SEXP rs_showLearningPane(SEXP paneCaptionSEXP, SEXP dirSEXP)
       }
       else
       {
-         throw r::exec::RErrorException("Learning pane is not supported "
+         throw r::exec::RErrorException("Presentations are not supported "
                                         "in desktop mode.");
       }
    }
@@ -405,12 +409,12 @@ Error initialize()
 {
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // register rs_showLearningPane
-      R_CallMethodDef methodDefShowLearningPane;
-      methodDefShowLearningPane.name = "rs_showLearningPane" ;
-      methodDefShowLearningPane.fun = (DL_FUNC) rs_showLearningPane;
-      methodDefShowLearningPane.numArgs = 2;
-      r::routines::addCallMethod(methodDefShowLearningPane);
+      // register rs_showPresentation
+      R_CallMethodDef methodDefShowPresentation;
+      methodDefShowPresentation.name = "rs_showPresentation" ;
+      methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
+      methodDefShowPresentation.numArgs = 3;
+      r::routines::addCallMethod(methodDefShowPresentation);
 
       using boost::bind;
       using namespace session::module_context;

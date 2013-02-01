@@ -42,7 +42,7 @@ public class PaneConfig extends JavaScriptObject
       tabSet1.push("History");
       tabSet1.push("Build");
       tabSet1.push("VCS");
-      tabSet1.push("Learning");
+      tabSet1.push("Presentation");
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
@@ -61,7 +61,7 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAllTabs()
    {
       return new String[] {"Workspace", "History", "Files", "Plots",
-                           "Packages", "Help", "Build", "VCS", "Learning"};
+                           "Packages", "Help", "Build", "VCS", "Presentation"};
    }
 
    public static String[] getAlwaysVisibleTabs()
@@ -72,13 +72,13 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Learning"};
+      return new String[] {"Build", "VCS", "Presentation"};
    }
 
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Learning"};
+      return new String[] {"Build", "VCS", "Presentation"};
    }
 
    protected PaneConfig()
