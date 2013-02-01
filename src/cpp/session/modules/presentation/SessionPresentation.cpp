@@ -122,11 +122,21 @@ private:
 public:
    std::string get(const std::string& path)
    {
-      return module_context::resourceFileAsString(path);
+      if (presentation::state::authorMode())
+      {
+         return module_context::resourceFileAsString(path);
+      }
+      else
+      {
+         if (cache_.find(path) == cache_.end())
+            cache_[path] = module_context::resourceFileAsString(path);
+         return cache_[path];
+      }
    }
 
 private:
    friend ResourceFiles& resourceFiles();
+   std::map<std::string,std::string> cache_;
 };
 
 ResourceFiles& resourceFiles()
@@ -359,6 +369,10 @@ void handlePresentationPaneRequest(const http::Request& request,
       // build template variables
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
+      vars["reveal_css"] = resourceFiles().get("presentation/revealjs/css/reveal.min.css");
+      vars["reveal_theme_css"] = resourceFiles().get("presentation/revealjs/css/theme/simple.css");
+      vars["reveal_head_js"] = resourceFiles().get("presentation/revealjs/lib/js/head.min.js");
+      vars["reveal_js"] = resourceFiles().get("presentation/revealjs/js/reveal.min.js");
       vars["user_slides_css"] = userSlidesCss;
       vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
@@ -369,11 +383,60 @@ void handlePresentationPaneRequest(const http::Request& request,
       vars["slides_js"] = resourceFiles().get("presentation/slides.js");
       vars["reveal_config"] = revealConfig;
       vars["init_commands"] = initCommands;
+      text::TemplateFilter templateFilter(vars);
 
-      // process the template
-      pResponse->setNoCacheHeaders();
-      pResponse->setBody(resourceFiles().get("presentation/slides.html"),
-                         text::TemplateFilter(vars));
+      try
+      {
+         // get base directory
+         FilePath dirPath = presentation::state::directory();
+
+         // get template
+         std::string presentationTemplate =
+                              resourceFiles().get("presentation/slides.html");
+
+         // generate standalone version
+         std::istringstream templateStream(presentationTemplate);
+         html_utils::Base64ImageFilter imageFilter(dirPath);
+         FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
+         boost::shared_ptr<std::ostream> pOfs;
+         Error error = htmlPath.open_w(&pOfs);
+         if (error)
+         {
+            pResponse->setError(error);
+            return;
+         }
+         pOfs->exceptions(std::istream::failbit | std::istream::badbit);
+         boost::iostreams::filtering_ostream standaloneStream ;
+         standaloneStream.push(templateFilter);
+         standaloneStream.push(imageFilter);
+         standaloneStream.push(*pOfs);
+         boost::iostreams::copy(templateStream, standaloneStream, 128);
+
+         // generate preview version
+         templateStream.seekg (0, std::ios::beg);
+         std::stringstream previewOutputStream;
+         boost::iostreams::filtering_ostream previewStream ;
+         previewStream.push(templateFilter);
+         previewStream.push(previewOutputStream);
+         boost::iostreams::copy(templateStream, previewStream, 128);
+
+         // serve mathjax locally for preview (offline)
+         std::string preview = previewOutputStream.str();
+         boost::algorithm::replace_first(
+              preview,
+              "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+              "mathjax");
+
+         // return the presentation
+         pResponse->setNoCacheHeaders();
+         pResponse->setBody(preview);
+      }
+      catch(const std::exception& e)
+      {
+         pResponse->setError(http::status::InternalServerError,
+                             e.what());
+         return;
+      }
    }
 
    // special handling for reveal.js assets

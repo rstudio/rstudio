@@ -18,10 +18,28 @@
 
 #include <string>
 
+#include <boost/regex.hpp>
+#include <boost/iostreams/filter/regex.hpp>
+
+#include <core/FilePath.hpp>
+
 namespace core {
 namespace html_utils {
    
 std::string defaultTitle(const std::string& htmlContent);
+
+// convert images to base64
+class Base64ImageFilter : public boost::iostreams::regex_filter
+{
+public:
+   Base64ImageFilter(const FilePath& basePath);
+
+private:
+   std::string toBase64Image(const boost::cmatch& match);
+
+private:
+   FilePath basePath_;
+};
 
 } // namespace regex_utils
 } // namespace core 

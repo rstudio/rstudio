@@ -31,7 +31,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/Base64.hpp>
+#include <core/HtmlUtils.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/text/TemplateFilter.hpp>
@@ -759,60 +759,6 @@ Error createNotebook(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// convert images to base64
-class Base64ImageFilter : public boost::iostreams::regex_filter
-{
-public:
-   Base64ImageFilter(const FilePath& basePath)
-      : boost::iostreams::regex_filter(
-          boost::regex(
-           "(<\\s*[Ii][Mm][Gg] [^\\>]*[Ss][Rr][Cc]\\s*=\\s*)([\"'])(.*?)(\\2)"),
-           boost::bind(&Base64ImageFilter::toBase64Image, this, _1)),
-        basePath_(basePath)
-   {
-   }
-
-private:
-   std::string toBase64Image(const boost::cmatch& match)
-   {
-      // extract image reference
-      std::string imgRef = match[3];
-
-      // see if this is an image within the base directory. if it is then
-      // base64 encode it
-      FilePath imagePath = basePath_.childPath(imgRef);
-      if (imagePath.exists() &&
-          boost::algorithm::starts_with(imagePath.mimeContentType(), "image/"))
-      {
-         std::string imageContents;
-         Error error = core::readStringFromFile(imagePath, &imageContents);
-         if (!error)
-         {
-            std::string imageBase64;
-            Error error = core::base64::encode(imageContents, &imageBase64);
-            if (!error)
-            {
-               imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
-               imgRef.append(imageBase64);
-            }
-            else
-            {
-               LOG_ERROR(error);
-            }
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
-      }
-
-      // return the filtered result
-      return match[1] + match[2] + imgRef + match[4];
-   }
-
-private:
-   FilePath basePath_;
-};
 
 bool requiresHighlighting(const std::string& htmlOutput)
 {
@@ -959,7 +905,8 @@ void handleInternalMarkdownPreviewRequest(
       text::TemplateFilter templateFilter(vars);
 
       // define base64 image filter
-      Base64ImageFilter imageFilter(s_pCurrentPreview_->targetDirectory());
+      html_utils::Base64ImageFilter imageFilter(
+                                    s_pCurrentPreview_->targetDirectory());
 
       // write into in-memory string
       std::istringstream previewInputStream(previewTemplate);
