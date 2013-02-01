@@ -114,6 +114,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("soft_wrap_r_files", false);
    }
+   
+   public PrefValue<Boolean> softWrapToMarginColumn()
+   {
+      return bool("soft_wrap_to_margin_column", false);
+   }
 
    public PrefValue<Boolean> focusConsoleAfterExec()
    {

@@ -53,6 +53,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -443,11 +444,15 @@ public class AceEditor implements DocDisplay,
       // other wrapping problems that were solvable by chaning the wrap
       // mode from "free" to a specific range. So, for Chrome on Linux
       // we sync the wrap limit to the user-specified margin width.
-      if (fileType_.getWordWrap() && BrowseCap.isChromeLinux()) 
+      if (fileType_.getWordWrap())     
       {
-         int margin = RStudioGinjector.INSTANCE.getUIPrefs()
-                                             .printMarginColumn().getValue();
-         getSession().setWrapLimitRange(margin, margin);
+         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
+         if (uiPrefs.softWrapToMarginColumn().getValue() ||
+             BrowseCap.isChromeLinux()) 
+         {
+            int margin = uiPrefs.printMarginColumn().getValue();
+            getSession().setWrapLimitRange(margin, margin);
+         }
       }
    }
    
