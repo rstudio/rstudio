@@ -97,16 +97,34 @@ public class Presentation extends BasePresenter
          @Override
          public void onFileChange(FileChangeEvent event)
          {  
-            if (currentState_ != null)
+            if (currentState_ != null && currentState_.isAuthorMode())
             {
                FileSystemItem fsi = event.getFileChange().getFile(); 
                String path = fsi.getPath();
-               if (path.startsWith(currentState_.getDirectory()) &&
-                   (fsi.mimeType().equals("text/x-markdown") ||
-                    fsi.mimeType().equals("text/css")))
+               if (path.startsWith(currentState_.getDirectory()))
                {
-                  refreshCommand_.nudge();
-               }
+                  boolean refresh = false;
+                  String type = fsi.mimeType();        
+                  if (type.equals("text/x-r-markdown"))
+                  {
+                     refresh = true;
+                  }
+                  else if (type.equals("text/x-markdown"))
+                  {
+                     if (!currentState_.isUsingRmd() || 
+                         !fsi.getName().equals("slides.md"))
+                     {
+                        refresh = true;
+                     }
+                  }
+                  else if (fsi.mimeType().equals("text/css"))
+                  {
+                     refresh = true;
+                  }
+                  
+                  if (refresh)
+                     refreshCommand_.nudge();
+               } 
             }
          }
       });
@@ -134,15 +152,8 @@ public class Presentation extends BasePresenter
          return;
       }
       
-      // if the presentation pane wasn't previously shown in this 
-      // session then reload
-      if (!session_.getSessionInfo().getPresentationState().isActive())
-         eventBus_.fireEvent(new ReloadEvent());
-      else
-      {
-         view_.bringToFront();
-         init(event.getPresentationState());
-      }
+      // always reload
+      eventBus_.fireEvent(new ReloadEvent());
    }
    
    @Handler
@@ -212,7 +223,7 @@ public class Presentation extends BasePresenter
    private void init(PresentationState state)
    {
       currentState_ = state;
-      
+         
       String url = server_.getApplicationURL("presentation/");
       if (currentState_.getSlideIndex() != 0)
          url = url + "#/" + currentState_.getSlideIndex();
@@ -431,5 +442,6 @@ public class Presentation extends BasePresenter
    private final Session session_;
    private int lastSlideIndex_ = 0;
    private PresentationState currentState_ = null;
+   private boolean usingRmd_ = false;
    
 }

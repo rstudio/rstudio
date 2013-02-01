@@ -28,12 +28,14 @@
 #include <core/HtmlUtils.hpp>
 #include <core/markdown/Markdown.hpp>
 #include <core/text/TemplateFilter.hpp>
+#include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include "PresentationState.hpp"
 
@@ -205,6 +207,76 @@ void handleRangeRequest(const FilePath& targetFile,
    }
 }
 
+
+bool hasKnitrVersion1()
+{
+   bool hasVersion = false;
+   Error error = r::exec::RFunction(".rs.hasKnitrVersion1").call(&hasVersion);
+   if (error)
+      LOG_ERROR(error);
+   return hasVersion;
+}
+
+bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
+{
+   // R binary
+   FilePath rProgramPath;
+   Error error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+   {
+      *pErrMsg = error.summary();
+      return false;
+   }
+
+   // confirm correct version of knitr
+   if (!hasKnitrVersion1())
+   {
+      *pErrMsg = "knitr version 1.0 or greater is required for presentations";
+      return false;
+   }
+
+   // args
+   std::vector<std::string> args;
+   args.push_back("--silent");
+   args.push_back("--no-save");
+   args.push_back("--no-restore");
+   args.push_back("-e");
+   boost::format fmt("library(knitr); "
+                     "opts_chunk$set(cache=TRUE, "
+                     "               eval=FALSE, tidy=FALSE, comment=NA); "
+                     "knit('%2%', encoding='%1%');");
+   std::string encoding = projects::projectContext().defaultEncoding();
+   std::string cmd = boost::str(fmt % encoding % slidesRmd.filename());
+   args.push_back(cmd);
+
+   // options
+   core::system::ProcessOptions options;
+   core::system::ProcessResult result;
+   options.workingDir = slidesRmd.parent();
+
+   // run knit
+   error = core::system::runProgram(
+            core::string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            "",
+            options,
+            &result);
+   if (error)
+   {
+      *pErrMsg = error.summary();
+      return false;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      *pErrMsg = "Error occurred during knit: " + result.stdErr;
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
 void handlePresentationPaneRequest(const http::Request& request,
                                    http::Response* pResponse)
 {
@@ -221,8 +293,25 @@ void handlePresentationPaneRequest(const http::Request& request,
    // special handling for the root (process template)
    if (path.empty())
    {
+      // look for slides.Rmd and knit it if we are in author mode
+      FilePath presDir = presentation::state::directory();
+      if (presentation::state::authorMode())
+      {
+         FilePath rmdFile = presDir.complete("slides.Rmd");
+         if (rmdFile.exists())
+         {
+            std::string errMsg;
+            if (!knitSlides(rmdFile, &errMsg))
+            {
+               pResponse->setError(http::status::InternalServerError,
+                                   errMsg);
+               return;
+            }
+         }
+      }
+
       // look for slides.md
-      FilePath slidesFile = presentation::state::directory().complete("slides.md");
+      FilePath slidesFile = presDir.complete("slides.md");
       if (!slidesFile.exists())
       {
          pResponse->setError(http::status::NotFound,

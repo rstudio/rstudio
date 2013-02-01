@@ -13,4 +13,7 @@
 #
 #
 
+.rs.addFunction("hasKnitrVersion1", function() {
+   .rs.isPackageInstalled("knitr") && .rs.getPackageVersion("knitr") >= "1.0"
+})
 

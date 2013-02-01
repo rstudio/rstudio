@@ -30,6 +30,10 @@ public class PresentationState extends JavaScriptObject
       return this.author_mode;
    }-*/;
    
+   public final native boolean isUsingRmd() /*-{
+      return this.using_rmd;
+   }-*/;
+   
    public final native String getPaneCaption() /*-{
       return this.pane_caption;
    }-*/;
