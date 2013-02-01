@@ -253,9 +253,18 @@ void handleLearningPaneRequest(const http::Request& request,
          return;
       }
 
+      // get user css if it exists
+      std::string userSlidesCss;
+      FilePath cssPath = learning::state::directory().complete("slides.css");
+      if (cssPath.exists())
+      {
+         userSlidesCss = "<link rel=\"stylesheet\" href=\"slides.css\">\n";
+      }
+
       // build template variables
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
+      vars["user_slides_css"] = userSlidesCss;
       vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
       vars["slide_commands"] = slideCommands;
