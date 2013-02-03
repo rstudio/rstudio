@@ -146,6 +146,55 @@ ResourceFiles& resourceFiles()
 }
 
 
+
+std::string revealResource(const std::string& path, bool embed)
+{
+   // determine type
+   bool isCss = boost::algorithm::ends_with(path, "css");
+
+   // generate code for link vs. embed
+   std::string code;
+   if (embed)
+   {
+      if (isCss)
+      {
+         code = "<style type=\"text/css\">\n" +
+               resourceFiles().get("presentation/" + path) + "\n"
+               + "</style>";
+      }
+      else
+      {
+         code = "<script type=\"text/javascript\">\n" +
+               resourceFiles().get("presentation/" + path) + "\n"
+               + "</script>";
+      }
+   }
+   else
+   {
+      if (isCss)
+      {
+         code = "<link rel=\"stylesheet\" href=\"" + path + "\">";
+      }
+      else
+      {
+         code = "<script src=\"" + path + "\"></script>";
+      }
+   }
+
+   return code;
+}
+
+std::string revealEmbed(const std::string& path)
+{
+   return revealResource(path, true);
+}
+
+std::string revealLink(const std::string& path)
+{
+   return revealResource(path, false);
+}
+
+
 std::string mathjaxIfRequired(const std::string& contents)
 {
    if (markdown::isMathJaxRequired(contents))
@@ -369,10 +418,6 @@ void handlePresentationPaneRequest(const http::Request& request,
       // build template variables
       std::map<std::string,std::string> vars;
       vars["title"] = slideDeck.title();
-      vars["reveal_css"] = resourceFiles().get("presentation/revealjs/css/reveal.min.css");
-      vars["reveal_theme_css"] = resourceFiles().get("presentation/revealjs/css/theme/simple.css");
-      vars["reveal_head_js"] = resourceFiles().get("presentation/revealjs/lib/js/head.min.js");
-      vars["reveal_js"] = resourceFiles().get("presentation/revealjs/js/reveal.min.js");
       vars["user_slides_css"] = userSlidesCss;
       vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
@@ -383,7 +428,6 @@ void handlePresentationPaneRequest(const http::Request& request,
       vars["slides_js"] = resourceFiles().get("presentation/slides.js");
       vars["reveal_config"] = revealConfig;
       vars["init_commands"] = initCommands;
-      text::TemplateFilter templateFilter(vars);
 
       try
       {
@@ -394,7 +438,14 @@ void handlePresentationPaneRequest(const http::Request& request,
          std::string presentationTemplate =
                               resourceFiles().get("presentation/slides.html");
 
-         // generate standalone version
+          // generate standalone version
+
+         // embedded versions of reveal assets
+         vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
+         vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
+         vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
+         vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
          std::istringstream templateStream(presentationTemplate);
          html_utils::Base64ImageFilter imageFilter(dirPath);
          FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
@@ -407,16 +458,26 @@ void handlePresentationPaneRequest(const http::Request& request,
          }
          pOfs->exceptions(std::istream::failbit | std::istream::badbit);
          boost::iostreams::filtering_ostream standaloneStream ;
-         standaloneStream.push(templateFilter);
+         text::TemplateFilter standaloneTemplateFilter(vars);
+         standaloneStream.push(standaloneTemplateFilter);
          standaloneStream.push(imageFilter);
          standaloneStream.push(*pOfs);
          boost::iostreams::copy(templateStream, standaloneStream, 128);
 
          // generate preview version
+
+         // linked versions of reveal assets
+         vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
+         vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
+         vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
+         vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
+
          templateStream.seekg (0, std::ios::beg);
          std::stringstream previewOutputStream;
          boost::iostreams::filtering_ostream previewStream ;
-         previewStream.push(templateFilter);
+         text::TemplateFilter previewTemplateFilter(vars);
+         standaloneStream.push(previewTemplateFilter);
+         previewStream.push(previewTemplateFilter);
          previewStream.push(previewOutputStream);
          boost::iostreams::copy(templateStream, previewStream, 128);
 
