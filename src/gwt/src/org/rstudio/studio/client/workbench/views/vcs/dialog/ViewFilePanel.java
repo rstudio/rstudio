@@ -87,7 +87,15 @@ public class ViewFilePanel extends Composite implements TextDisplay
       
       TextEditingTarget.registerPrefs(releaseOnDismiss_, 
             uiPrefs, 
-            docDisplay_);
+            docDisplay_,
+            new TextEditingTarget.PrefsContext()
+            {
+               @Override
+               public FileSystemItem getActiveFile()
+               {
+                  return targetFile_;
+               }
+            });
 
       TextEditingTarget.syncFontSize(releaseOnDismiss_, 
            events, 

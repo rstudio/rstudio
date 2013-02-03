@@ -411,6 +411,16 @@ public class TextEditingTarget implements EditingTarget
             dirtyState_,
             events_);
 
+      // ensure that Makefile always uses tabs
+      name_.addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            if ("Makefile".equals(event.getValue()))
+               docDisplay_.setUseSoftTabs(false);
+         }
+      });
+      
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       docDisplay_.setCode(document.getContents(), false);
 
@@ -425,8 +435,8 @@ public class TextEditingTarget implements EditingTarget
          }
       });
 
-      registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
-
+      registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);
+      
       // Initialize sourceOnSave, and keep it in sync
       view_.getSourceOnSave().setValue(document.sourceOnSave(), false);
       view_.getSourceOnSave().addValueChangeHandler(new ValueChangeHandler<Boolean>()
@@ -2789,10 +2799,38 @@ public class TextEditingTarget implements EditingTarget
    // display source code (but don't inherit from TextEditingTarget) can share
    // their implementation
    
+   public static interface PrefsContext
+   {
+      FileSystemItem getActiveFile();
+   }
+   
    public static void registerPrefs(
                      ArrayList<HandlerRegistration> releaseOnDismiss,
                      UIPrefs prefs,
-                     final DocDisplay docDisplay)
+                     DocDisplay docDisplay,
+                     final SourceDocument sourceDoc)
+   {
+      registerPrefs(releaseOnDismiss,
+                    prefs,
+                    docDisplay,
+                    new PrefsContext() {
+                        @Override
+                        public FileSystemItem getActiveFile()
+                        {
+                           String path = sourceDoc.getPath();
+                           if (path != null)
+                              return FileSystemItem.createFile(path);
+                           else
+                              return null;
+                        }
+                    });
+   }
+   
+   public static void registerPrefs(
+                     ArrayList<HandlerRegistration> releaseOnDismiss,
+                     UIPrefs prefs,
+                     final DocDisplay docDisplay,
+                     final PrefsContext context)
    {
       releaseOnDismiss.add(prefs.highlightSelectedLine().bind(
             new CommandWithArg<Boolean>() {
@@ -2812,7 +2850,12 @@ public class TextEditingTarget implements EditingTarget
       releaseOnDismiss.add(prefs.useSpacesForTab().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  docDisplay.setUseSoftTabs(arg);
+                  // Makefile always uses tabs
+                  FileSystemItem file = context.getActiveFile();
+                  if ((file != null) && "Makefile".equals(file.getName()))
+                     docDisplay.setUseSoftTabs(false);
+                  else
+                     docDisplay.setUseSoftTabs(arg);
                }}));
       releaseOnDismiss.add(prefs.numSpacesForTab().bind(
             new CommandWithArg<Integer>() {

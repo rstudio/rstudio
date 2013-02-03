@@ -145,7 +145,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                                  server_, 
                                                  docDisplay_);
       
-      TextEditingTarget.registerPrefs(releaseOnDismiss_, prefs_, docDisplay_);
+      TextEditingTarget.registerPrefs(releaseOnDismiss_, 
+                                      prefs_, 
+                                      docDisplay_,
+                                      document);
       
       TextEditingTarget.syncFontSize(releaseOnDismiss_, 
                                      events_, 
