@@ -211,6 +211,20 @@ std::string mathjaxLocal(const std::string& mathjax)
         "mathjax");
 }
 
+void setLocalWebFonts(std::map<std::string,std::string>* pVars)
+{
+   (*pVars)["news_cycle_webfont_url"] = "revealjs/fonts/NewsCycle.css";
+   (*pVars)["lato_webfont_url"] = "revealjs/fonts/Lato.css";
+}
+
+void setRemoteWebFonts(std::map<std::string,std::string>* pVars)
+{
+   (*pVars)["news_cycle_webfont_url"] =
+     "http://fonts.googleapis.com/css?family=News+Cycle:400,700";
+   (*pVars)["lato_webfont_url"] =
+     "http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic";
+}
+
 void handleRangeRequest(const FilePath& targetFile,
                         const http::Request& request,
                         http::Response* pResponse)
@@ -453,6 +467,9 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
          vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
 
+         // webfonts w/ remote url
+         setRemoteWebFonts(&vars);
+
          // mathjax w/ remote url
          vars["mathjax"] = mathjaxIfRequired(slides);
 
@@ -481,6 +498,9 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
          vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
          vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
+
+         // webfonts local
+         setLocalWebFonts(&vars);
 
          // mathjax local
          vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
