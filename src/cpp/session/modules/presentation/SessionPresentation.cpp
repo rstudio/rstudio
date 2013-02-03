@@ -203,6 +203,14 @@ std::string mathjaxIfRequired(const std::string& contents)
       return std::string();
 }
 
+std::string mathjaxLocal(const std::string& mathjax)
+{
+   return boost::algorithm::replace_first_copy(
+        mathjax,
+        "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+        "mathjax");
+}
+
 void handleRangeRequest(const FilePath& targetFile,
                         const http::Request& request,
                         http::Response* pResponse)
@@ -424,7 +432,6 @@ void handlePresentationPaneRequest(const http::Request& request,
       vars["slide_commands"] = slideCommands;
       vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
-      vars["mathjax"] = mathjaxIfRequired(slides);
       vars["slides_js"] = resourceFiles().get("presentation/slides.js");
       vars["reveal_config"] = revealConfig;
       vars["init_commands"] = initCommands;
@@ -445,6 +452,9 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
          vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
          vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
+         // mathjax w/ remote url
+         vars["mathjax"] = mathjaxIfRequired(slides);
 
          std::istringstream templateStream(presentationTemplate);
          html_utils::Base64ImageFilter imageFilter(dirPath);
@@ -472,6 +482,9 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
          vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
 
+         // mathjax local
+         vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
+
          templateStream.seekg (0, std::ios::beg);
          std::stringstream previewOutputStream;
          boost::iostreams::filtering_ostream previewStream ;
@@ -481,16 +494,9 @@ void handlePresentationPaneRequest(const http::Request& request,
          previewStream.push(previewOutputStream);
          boost::iostreams::copy(templateStream, previewStream, 128);
 
-         // serve mathjax locally for preview (offline)
-         std::string preview = previewOutputStream.str();
-         boost::algorithm::replace_first(
-              preview,
-              "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
-              "mathjax");
-
          // return the presentation
          pResponse->setNoCacheHeaders();
-         pResponse->setBody(preview);
+         pResponse->setBody(previewOutputStream);
       }
       catch(const std::exception& e)
       {
