@@ -634,7 +634,11 @@ std::string node_value(rapidxml::xml_node<>* pNode, const std::string& nodeName)
 
 FilePath resolveAliasedJsonPath(const json::Value& value)
 {
-   return module_context::resolveAliasedPath(value.get_str());
+   std::string path = value.get_str();
+   if (boost::algorithm::starts_with(path, "~/"))
+      return module_context::resolveAliasedPath(path);
+   else
+      return s_workingDir.childPath(path);
 }
 
 Error svnAdd(const json::JsonRpcRequest& request,
