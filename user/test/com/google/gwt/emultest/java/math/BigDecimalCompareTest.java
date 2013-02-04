@@ -248,6 +248,23 @@ public class BigDecimalCompareTest extends EmulTestBase {
   }
 
   /**
+   * Test identical fraction values with different scales.
+   * http://code.google.com/p/google-web-toolkit/issues/detail?id=7834
+   */
+  public void testFractionScale() {
+    BigDecimal a = new BigDecimal("0.02");
+    BigDecimal b = new BigDecimal("0.02000");
+    assertEquals(0, a.compareTo(b));
+
+    BigDecimal a1 = new BigDecimal("0.029900000000000003");
+    BigDecimal a2 = new BigDecimal("0.0001");
+    a = a1.add(a2);
+    // a is 0.030000000000000003 (0.029900000000000003 + 0.0001)
+    b = new BigDecimal("0.03990");
+    assertEquals(-1, a.compareTo(b));
+  }
+
+  /**
    * hashCode() for equal BigDecimals.
    */
   public void testHashCodeEqual() {
