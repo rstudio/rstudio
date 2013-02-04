@@ -76,7 +76,27 @@ public class CountingEventBus extends com.google.gwt.event.shared.EventBus {
     castFireEventFromSource(event, source);
   }
 
+  /**
+   * How many handlers are registered for the given {@code type}.
+   *
+   * @deprecated Please use {@code getHandlerCount}.
+   */
   public int getCount(GwtEvent.Type<?> type) {
     return real.getCount(type);
+  }
+
+  /**
+   * How many events have fired for the given {@code type}. These events may not have been
+   * passed to any handlers.
+   */
+  public int getFiredCount(Type<?> type) {
+    return real.getFiredCount(type);
+  }
+
+  /**
+   * How many handlers are registered for the given {@code type}.
+   */
+  public int getHandlerCount(Type<?> type) {
+    return real.getHandlerCount(type);
   }
 }
