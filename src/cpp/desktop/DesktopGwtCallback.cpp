@@ -485,6 +485,11 @@ int GwtCallback::showMessageBox(int type,
    if (pUpdateDialog != NULL)
       pUpdateDialog->close();
 
+   // cancel other message box if it's visible
+   QMessageBox* pMsgBox = qobject_cast<QMessageBox*>(
+                        QApplication::activeModalWidget());
+   if (pMsgBox != NULL)
+      pMsgBox->close();
 
    QMessageBox msgBox(safeMessageBoxIcon(static_cast<QMessageBox::Icon>(type)),
                        caption,
