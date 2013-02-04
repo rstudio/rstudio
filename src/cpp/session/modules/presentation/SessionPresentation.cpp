@@ -487,6 +487,11 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["slides_js"] = "";
          vars["init_commands"] = "";
 
+         // width and height
+         vars["reveal_width"] = "960";
+         vars["reveal_height"] = "700";
+
+
          std::istringstream templateStream(presentationTemplate);
          html_utils::Base64ImageFilter imageFilter(dirPath);
          FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
@@ -525,6 +530,10 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["slide_commands"] = slideCommands;
          vars["slides_js"] = resourceFiles().get("presentation/slides.js");
          vars["init_commands"] = initCommands;
+
+         // width and height
+         vars["reveal_width"] = "window.innerWidth * 2.0";
+         vars["reveal_height"] = "window.innerHeight * 2.0";
 
          templateStream.seekg (0, std::ios::beg);
          std::stringstream previewOutputStream;

@@ -46,6 +46,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
+import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -128,6 +130,17 @@ public class Presentation extends BasePresenter
                } 
             }
          }
+      });
+      
+      // refresh when metrics change
+      eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, 
+                          new WorkbenchMetricsChangedHandler() {
+         @Override
+         public void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent e)
+         {
+            if (currentState_ != null && currentState_.isActive())
+               refreshCommand_.nudge();
+         }  
       });
       
       initPresentationCallbacks();
