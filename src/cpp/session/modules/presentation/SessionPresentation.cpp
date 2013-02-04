@@ -147,7 +147,9 @@ ResourceFiles& resourceFiles()
 
 
 
-std::string revealResource(const std::string& path, bool embed)
+std::string revealResource(const std::string& path,
+                           bool embed,
+                           const std::string& extraAttribs)
 {
    // determine type
    bool isCss = boost::algorithm::ends_with(path, "css");
@@ -158,13 +160,13 @@ std::string revealResource(const std::string& path, bool embed)
    {
       if (isCss)
       {
-         code = "<style type=\"text/css\">\n" +
+         code = "<style type=\"text/css\" " + extraAttribs + " >\n" +
                resourceFiles().get("presentation/" + path) + "\n"
                + "</style>";
       }
       else
       {
-         code = "<script type=\"text/javascript\">\n" +
+         code = "<script type=\"text/javascript\" " + extraAttribs + " >\n" +
                resourceFiles().get("presentation/" + path) + "\n"
                + "</script>";
       }
@@ -173,25 +175,28 @@ std::string revealResource(const std::string& path, bool embed)
    {
       if (isCss)
       {
-         code = "<link rel=\"stylesheet\" href=\"" + path + "\">";
+         code = "<link rel=\"stylesheet\" href=\"" + path + "\" "
+                 + extraAttribs + " >";
       }
       else
       {
-         code = "<script src=\"" + path + "\"></script>";
+         code = "<script src=\"" + path + "\" " + extraAttribs + " ></script>";
       }
    }
 
    return code;
 }
 
-std::string revealEmbed(const std::string& path)
+std::string revealEmbed(const std::string& path,
+                        const std::string& extraAttribs = std::string())
 {
-   return revealResource(path, true);
+   return revealResource(path, true, extraAttribs);
 }
 
-std::string revealLink(const std::string& path)
+std::string revealLink(const std::string& path,
+                       const std::string& extraAttribs = std::string())
 {
-   return revealResource(path, false);
+   return revealResource(path, false, extraAttribs);
 }
 
 
@@ -464,6 +469,9 @@ void handlePresentationPaneRequest(const http::Request& request,
           // generate standalone version
 
          // embedded versions of reveal assets
+         const char * const kMediaPrint = "media=\"print\"";
+         vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
+                                                    kMediaPrint);
          vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
          vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
          vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
@@ -496,6 +504,8 @@ void handlePresentationPaneRequest(const http::Request& request,
          // generate preview version
 
          // linked versions of reveal assets
+         vars["reveal_print_pdf_css"] = revealLink("revealjs/css/print/pdf.css",
+                                                    kMediaPrint);
          vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
          vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
          vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
