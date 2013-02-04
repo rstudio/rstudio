@@ -15,6 +15,7 @@
  */
 package com.google.gwt.animation;
 
+import com.google.gwt.animation.client.AnimationApiUsageTest;
 import com.google.gwt.animation.client.AnimationSchedulerImplTimerTest;
 import com.google.gwt.animation.client.AnimationTest;
 
@@ -28,6 +29,7 @@ public class AnimationSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Tests of the animation package");
 
+    suite.addTestSuite(AnimationApiUsageTest.class);
     suite.addTestSuite(AnimationSchedulerImplTimerTest.class);
     suite.addTestSuite(AnimationTest.class);
 

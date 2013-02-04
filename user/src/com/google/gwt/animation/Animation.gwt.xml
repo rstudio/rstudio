@@ -32,11 +32,13 @@
   <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplMozilla">
     <when-type-is class="com.google.gwt.animation.client.AnimationScheduler"/>
     <when-property-is name="user.agent" value="gecko1_8"/>
+    <when-property-is name="webApiUsage" value="modern"/>
   </replace-with>
 
   <!-- Implementation based on webkitRequestAnimationFrame -->
   <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplWebkit">
     <when-type-is class="com.google.gwt.animation.client.AnimationScheduler"/>
     <when-property-is name="user.agent" value="safari"/>
+    <when-property-is name="webApiUsage" value="modern"/>
   </replace-with>
 </module>
