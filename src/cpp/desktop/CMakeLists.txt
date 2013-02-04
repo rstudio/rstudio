@@ -51,6 +51,12 @@ endif()
 find_package(Qt4 ${QT_VERSION} COMPONENTS ${RSTUDIO_QT_COMPONENTS} REQUIRED)
 include(${QT_USE_FILE})
 
+# disable clang warnings for qt sources
+if(APPLE)
+   add_definitions(-Wno-unused-private-field
+                   -Wno-uninitialized)
+endif()
+
 # configure NOTICE file into build directory so it can be read at dev time
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
                ${CMAKE_CURRENT_BINARY_DIR}/.. COPYONLY)
