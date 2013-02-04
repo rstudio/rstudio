@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
@@ -96,6 +95,8 @@ public class Shell implements ConsoleInputHandler,
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
 
+      inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
+      
       view_.setMaxOutputLines(session.getSessionInfo().getConsoleActionsLimit());
 
       keyDownPreviewHandlers_ = new ArrayList<KeyDownPreviewHandler>() ;
@@ -297,10 +298,8 @@ public class Shell implements ConsoleInputHandler,
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
-   {
-      // get the display and clear it
+   {  
       final InputEditorDisplay display = view_.getInputEditorDisplay();
-      display.clear();
       
       // define code block we execute at finish
       Command finishSendToConsole = new Command() {
@@ -321,61 +320,15 @@ public class Shell implements ConsoleInputHandler,
       // do standrd finish if we aren't animating
       if (!event.shouldAnimate())
       {
+         display.clear();
          display.setText(event.getCode()); 
          finishSendToConsole.execute();
       }
       else
       {
-         // calculate the period (make sure the command takes no longer
-         // than 1600ms to input)
-         final int kMaxMs = 1600;
-         String code = event.getCode();
-         int period = Math.min( kMaxMs / code.length(), 75);
-         
-         Scheduler.get().scheduleFixedPeriod(
-               new ConsoleInputAnimator(event.getCode(), 
-                                        display, 
-                                        finishSendToConsole),
-               period);
+         inputAnimator_.enque(event.getCode(), finishSendToConsole);
       }
    }
-   
-   private class ConsoleInputAnimator implements RepeatingCommand
-   {
-      public ConsoleInputAnimator(String code, 
-                                  InputEditorDisplay display,
-                                  Command onFinished)
-      {
-         code_ = code;
-         display_ = display;
-         onFinished_ = onFinished;
-      }
-      
-      @Override
-      public boolean execute()
-      {
-         // termination condition
-         if ((nextChar_ + 1) > code_.length())
-         {
-            onFinished_.execute();
-            return false;
-         }
-         
-         display_.insertCode(code_.substring(nextChar_, nextChar_+1));
-         
-         nextChar_++;
-         
-         return true;
-      }
-      
-      private int nextChar_ = 0;
-      private final String code_;
-      private final InputEditorDisplay display_;
-      private final Command onFinished_;
-      
-   }
-   
- 
 
    private final class InputKeyDownHandler implements KeyDownHandler,
                                                       KeyPressHandler
@@ -553,6 +506,8 @@ public class Shell implements ConsoleInputHandler,
    private String lastPromptText_ ;
 
    private final CommandLineHistory historyManager_;
+   
+   private final ShellInputAnimator inputAnimator_;
 
    private String initialInput_ ;
 
