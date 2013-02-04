@@ -78,13 +78,15 @@ function commandsForSlide(indexh) {
 
     Reveal.addEventListener( 'ready', function( event ) {
        // notify container
-      notifySlideChanged(event.indexh)
+      if (window.notifySlideChanged)
+        notifySlideChanged(event.indexh)
     } );
     
     Reveal.addEventListener( 'slidechanged', function( event ) {
          
       // notify container
-      notifySlideChanged(event.indexh)
+      if (window.notifySlideChanged)
+        notifySlideChanged(event.indexh)
      
       // allow mathjax to re-render
       if (window.MathJax)

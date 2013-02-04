@@ -452,12 +452,9 @@ void handlePresentationPaneRequest(const http::Request& request,
       vars["user_slides_css"] = userSlidesCss;
       vars["preamble"] = slideDeck.preamble();
       vars["slides"] = slides;
-      vars["slide_commands"] = slideCommands;
       vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
       vars["r_highlight"] = resourceFiles().get("r_highlight.html");
-      vars["slides_js"] = resourceFiles().get("presentation/slides.js");
       vars["reveal_config"] = revealConfig;
-      vars["init_commands"] = initCommands;
 
       try
       {
@@ -484,6 +481,11 @@ void handlePresentationPaneRequest(const http::Request& request,
 
          // mathjax w/ remote url
          vars["mathjax"] = mathjaxIfRequired(slides);
+
+         // no IDE interaction
+         vars["slide_commands"] = "";
+         vars["slides_js"] = "";
+         vars["init_commands"] = "";
 
          std::istringstream templateStream(presentationTemplate);
          html_utils::Base64ImageFilter imageFilter(dirPath);
@@ -518,6 +520,11 @@ void handlePresentationPaneRequest(const http::Request& request,
 
          // mathjax local
          vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
+
+         // javascript supporting IDE interaction
+         vars["slide_commands"] = slideCommands;
+         vars["slides_js"] = resourceFiles().get("presentation/slides.js");
+         vars["init_commands"] = initCommands;
 
          templateStream.seekg (0, std::ios::beg);
          std::stringstream previewOutputStream;
