@@ -434,7 +434,9 @@ void handlePresentationPaneRequest(const http::Request& request,
       FilePath cssPath = presentation::state::directory().complete("slides.css");
       if (cssPath.exists())
       {
-         userSlidesCss = "<link rel=\"stylesheet\" href=\"slides.css\">\n";
+         Error error = core::readStringFromFile(cssPath, &userSlidesCss);
+         if (error)
+            LOG_ERROR(error);
       }
 
       // build template variables
