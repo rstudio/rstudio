@@ -18,6 +18,10 @@ project(CORE_HUNSPELL)
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+
+# disable warnings
+add_definitions(-w)
+
 # include files
 file(GLOB_RECURSE CORE_HUNSPELL_HEADER_FILES "*.h*")
 
