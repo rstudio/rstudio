@@ -81,7 +81,7 @@ RToolsInfo::RToolsInfo(const std::string& name, const FilePath& installPath)
       relativePathEntries.push_back("bin");
       relativePathEntries.push_back("gcc-4.6.3/bin");
    }
-   else if (name == "2.16")
+   else if (name == "2.16" || name == "3.0")
    {
       versionMin = "2.15.2";
       versionMax = "3.0.0";
