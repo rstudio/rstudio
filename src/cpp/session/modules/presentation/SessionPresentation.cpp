@@ -331,6 +331,8 @@ bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
                      "opts_chunk$set(cache=TRUE,     "
                      "               results='hide', "
                      "               tidy=FALSE,     "
+                     "               warning=FALSE,  "
+                     "               message=FALSE,  "
                      "               comment=NA);    "
                      "knit('%2%', encoding='%1%');");
    std::string encoding = projects::projectContext().defaultEncoding();
