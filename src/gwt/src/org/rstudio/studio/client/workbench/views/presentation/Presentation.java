@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
@@ -231,16 +232,27 @@ public class Presentation extends BasePresenter
       view_.load(url, state);
    }
    
-   private void onPresentationSlideChanged(int index, JavaScriptObject jsCmds)
+   private void onPresentationSlideChanged(final int index, 
+                                           final JavaScriptObject jsCmds)
    {
       // record index
       lastSlideIndex_ = index;
       saveIndexCommand_.nudge();
-      
-      // execute commands
-      JsArray<JavaScriptObject> cmds = jsCmds.cast();
-      for (int i=0; i<cmds.length(); i++)
-         dispatchCommand(cmds.get(i));
+            
+      new Timer() {
+         @Override
+         public void run()
+         {
+            // execute commands if we're still on the same slide
+            if (index == lastSlideIndex_)
+            {
+               JsArray<JavaScriptObject> cmds = jsCmds.cast();
+               for (int i=0; i<cmds.length(); i++)
+                  dispatchCommand(cmds.get(i));  
+            }
+         }   
+      }.schedule(1000);
+    
    }
    
    public final native void initPresentationCallbacks() /*-{
