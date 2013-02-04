@@ -1,7 +1,6 @@
 
 
 .reveal .slides {
-  width: 85%;	
   text-align: left;
 }
 
@@ -14,8 +13,8 @@
 
 .reveal pre code {
   display: block; padding: 0.5em;
-  font-size: 1.8em;
-  line-height: 1.2em;
+  font-size: 1.2em;
+  line-height: 1.1em;
   background-color: white;
 }
 
@@ -59,33 +58,9 @@
    background: rgba( 0, 0, 0, 0.6 );
 }
 
-.deck-section .reveal h1 {
+.deck-section .reveal h2 {
    color: white;
-   margin-top: 25px;
-   font-size: 3.0em;
-}
-
-
-@media screen and (max-width: 900px), (max-height: 600px) {
-   .reveal .slides {
-		font-size: 0.82em;
-	}
-}
-
-@media screen and (max-width: 700px), (max-height: 400px) {
-	.reveal .slides {
-		font-size: 0.4em;
-	}
-}
-
-@media screen and (max-width: 400px), (max-height: 300px) {
-   .reveal .slides {
-		font-size: 0.4em;
-	}
-}
-
-:-webkit-full-screen .reveal .slides {
-   font-size: 1.3em;
+   margin-top: 50px;
 }
 
 .reveal strong {
@@ -113,10 +88,6 @@
 
 .reveal .controls div.navigate-down {
   display: none;
-}
-
-.reveal .slides {
-  left: 48%;
 }
 
 .reveal .slides>section,

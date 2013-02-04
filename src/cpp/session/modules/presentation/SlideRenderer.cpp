@@ -234,7 +234,7 @@ Error renderSlides(const SlideDeck& slideDeck,
          std::string hTag = "h3";
          if (slide.type() == "section")
          {
-            hTag = "h1";
+            hTag = "h2";
          }
          ostr << "<" << hTag << ">" << slide.title() << "</" << hTag << ">";
       }

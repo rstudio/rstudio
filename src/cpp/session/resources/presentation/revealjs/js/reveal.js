@@ -3,7 +3,7 @@
  * http://lab.hakim.se/reveal-js
  * MIT licensed
  *
- * Copyright (C) 2011-2012 Hakim El Hattab, http://hakim.se
+ * Copyright (C) 2011-2013 Hakim El Hattab, http://hakim.se
  */
 var Reveal = (function(){
 
@@ -16,6 +16,19 @@ var Reveal = (function(){
 
 		// Configurations defaults, can be overridden at initialization time
 		config = {
+
+			// The "normal" size of the presentation, aspect ratio will be preserved
+			// when the presentation is scaled to fit different resolutions
+			width: 960,
+			height: 700,
+
+			// Factor of the display size that should remain empty around the content
+			margin: 0.1,
+
+			// Bounds for smallest/largest possible scale to apply to content
+			minScale: 0.2,
+			maxScale: 1.0,
+
 			// Display controls in the bottom right corner
 			controls: true,
 
@@ -81,6 +94,9 @@ var Reveal = (function(){
 		// all current slides.
 		state = [],
 
+		// The current scale of the presentation (see width/height config)
+		scale = 1,
+
 		// Cached references to DOM elements
 		dom = {},
 
@@ -128,7 +144,7 @@ var Reveal = (function(){
 	 */
 	function initialize( options ) {
 
-		if( ( !supports2DTransforms && !supports3DTransforms ) ) {
+		if( !supports2DTransforms && !supports3DTransforms ) {
 			document.body.setAttribute( 'class', 'no-transforms' );
 
 			// If the browser doesn't support core features we won't be
@@ -218,11 +234,7 @@ var Reveal = (function(){
 	 */
 	function hideAddressBar() {
 
-		if( navigator.userAgent.match( /(iphone|ipod)/i ) ) {
-			// Give the page some scrollable overflow
-			document.documentElement.style.overflow = 'scroll';
-			document.body.style.height = '120%';
-
+		if( /iphone|ipod|android/gi.test( navigator.userAgent ) && !/crios/gi.test( navigator.userAgent ) ) {
 			// Events that should trigger the address bar to hide
 			window.addEventListener( 'load', removeAddressBar, false );
 			window.addEventListener( 'orientationchange', removeAddressBar, false );
@@ -392,17 +404,17 @@ var Reveal = (function(){
 		}
 
 		if ( config.progress && dom.progress ) {
-			dom.progress.addEventListener( 'click', preventAndForward( onProgressClick ), false );
+			dom.progress.addEventListener( 'click', onProgressClicked, false );
 		}
 
 		if ( config.controls && dom.controls ) {
 			var actionEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
-			dom.controlsLeft.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigateLeft ), false ); } );
-			dom.controlsRight.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigateRight ), false ); } );
-			dom.controlsUp.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigateUp ), false ); } );
-			dom.controlsDown.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigateDown ), false ); } );
-			dom.controlsPrev.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigatePrev ), false ); } );
-			dom.controlsNext.forEach( function( el ) { el.addEventListener( actionEvent, preventAndForward( navigateNext ), false ); } );
+			dom.controlsLeft.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateLeftClicked, false ); } );
+			dom.controlsRight.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateRightClicked, false ); } );
+			dom.controlsUp.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateUpClicked, false ); } );
+			dom.controlsDown.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateDownClicked, false ); } );
+			dom.controlsPrev.forEach( function( el ) { el.addEventListener( actionEvent, onNavigatePrevClicked, false ); } );
+			dom.controlsNext.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateNextClicked, false ); } );
 		}
 
 	}
@@ -423,17 +435,17 @@ var Reveal = (function(){
 		}
 
 		if ( config.progress && dom.progress ) {
-			dom.progress.removeEventListener( 'click', preventAndForward( onProgressClick ), false );
+			dom.progress.removeEventListener( 'click', onProgressClicked, false );
 		}
 
 		if ( config.controls && dom.controls ) {
 			var actionEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
-			dom.controlsLeft.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigateLeft ), false ); } );
-			dom.controlsRight.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigateRight ), false ); } );
-			dom.controlsUp.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigateUp ), false ); } );
-			dom.controlsDown.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigateDown ), false ); } );
-			dom.controlsPrev.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigatePrev ), false ); } );
-			dom.controlsNext.forEach( function( el ) { el.removeEventListener( actionEvent, preventAndForward( navigateNext ), false ); } );
+			dom.controlsLeft.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateLeftClicked, false ); } );
+			dom.controlsRight.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateRightClicked, false ); } );
+			dom.controlsUp.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateUpClicked, false ); } );
+			dom.controlsDown.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateDownClicked, false ); } );
+			dom.controlsPrev.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigatePrevClicked, false ); } );
+			dom.controlsNext.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateNextClicked, false ); } );
 		}
 
 	}
@@ -476,30 +488,23 @@ var Reveal = (function(){
 	}
 
 	/**
-	 * Prevents an events defaults behavior calls the
-	 * specified delegate.
-	 *
-	 * @param {Function} delegate The method to call
-	 * after the wrapper has been executed
-	 */
-	function preventAndForward( delegate ) {
-
-		return function( event ) {
-			event.preventDefault();
-			delegate.call( null, event );
-		};
-
-	}
-
-	/**
 	 * Causes the address bar to hide on mobile devices,
 	 * more vertical space ftw.
 	 */
 	function removeAddressBar() {
 
+		if( window.orientation === 0 ) {
+			document.documentElement.style.overflow = 'scroll';
+			document.body.style.height = '120%';
+		}
+		else {
+			document.documentElement.style.overflow = '';
+			document.body.style.height = '100%';
+		}
+
 		setTimeout( function() {
 			window.scrollTo( 0, 1 );
-		}, 0 );
+		}, 10 );
 
 	}
 
@@ -547,13 +552,61 @@ var Reveal = (function(){
 	 */
 	function layout() {
 
+		// Available space to scale within
+		var availableWidth = dom.wrapper.offsetWidth,
+			availableHeight = dom.wrapper.offsetHeight;
+
+		// Reduce availabe space by margin
+		availableWidth -= ( availableHeight * config.margin );
+		availableHeight -= ( availableHeight * config.margin );
+
+		// Dimensions of the content
+		var slideWidth = config.width,
+			slideHeight = config.height;
+
+		// Slide width may be a percentage of available width
+		if( typeof slideWidth === 'string' && /%$/.test( slideWidth ) ) {
+			slideWidth = parseInt( slideWidth, 10 ) / 100 * availableWidth;
+		}
+
+		// Slide height may be a percentage of available height
+		if( typeof slideHeight === 'string' && /%$/.test( slideHeight ) ) {
+			slideHeight = parseInt( slideHeight, 10 ) / 100 * availableHeight;
+		}
+
+		dom.slides.style.width = slideWidth + 'px';
+		dom.slides.style.height = slideHeight + 'px';
+
+		// Determine scale of content to fit within available space
+		scale = Math.min( availableWidth / slideWidth, availableHeight / slideHeight );
+
+		// Respect max/min scale settings
+		scale = Math.max( scale, config.minScale );
+		scale = Math.min( scale, config.maxScale );
+
+		// Prefer applying scale via zoom since Chrome blurs scaled content
+		// with nested transforms
+		if( typeof dom.slides.style.zoom !== 'undefined' && !navigator.userAgent.match( /(iphone|ipod|android)/gi ) ) {
+			dom.slides.style.zoom = scale;
+		}
+		// Apply scale transform as a fallback
+		else {
+			var transform = 'translate(-50%, -50%) scale('+ scale +') translate(50%, 50%)';
+
+			dom.slides.style.WebkitTransform = transform;
+			dom.slides.style.MozTransform = transform;
+			dom.slides.style.msTransform = transform;
+			dom.slides.style.OTransform = transform;
+			dom.slides.style.transform = transform;
+		}
+
 		if( config.center ) {
 
 			// Select all slides, vertical and horizontal
 			var slides = toArray( document.querySelectorAll( SLIDES_SELECTOR ) );
 
 			// Determine the minimum top offset for slides
-			var minTop = -dom.wrapper.offsetHeight / 2;
+			var minTop = -slideHeight / 2;
 
 			for( var i = 0, len = slides.length; i < len; i++ ) {
 				var slide = slides[ i ];
@@ -563,7 +616,7 @@ var Reveal = (function(){
 					continue;
 				}
 
-				// Vertical stacks are not centered since their section 
+				// Vertical stacks are not centered since their section
 				// children will be
 				if( slide.classList.contains( 'stack' ) ) {
 					slide.style.top = 0;
@@ -594,7 +647,7 @@ var Reveal = (function(){
 	}
 
 	/**
-	 * Retrieves the vertical index which was stored using 
+	 * Retrieves the vertical index which was stored using
 	 * #setPreviousVerticalIndex() or 0 if no previous index
 	 * exists.
 	 *
@@ -1066,7 +1119,7 @@ var Reveal = (function(){
 			var slideAutoSlide = slides[index].getAttribute( 'data-autoslide' );
 			if( slideAutoSlide ) {
 				autoSlide = parseInt( slideAutoSlide, 10 );
-			} 
+			}
 			else {
 				autoSlide = config.autoSlide;
 			}
@@ -1476,9 +1529,14 @@ var Reveal = (function(){
 
 		// Disregard the event if there's a focused element or a
 		// keyboard modifier key is present
-		if ( hasFocus || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ) return;
+		if( hasFocus || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey ) return;
 
 		var triggered = true;
+
+		// while paused only allow "unpausing" keyboard events (b and .)
+		if( isPaused() && [66,190,191].indexOf( event.keyCode ) === -1 ) {
+			return false;
+		}
 
 		switch( event.keyCode ) {
 			// p, page up
@@ -1659,7 +1717,9 @@ var Reveal = (function(){
 	 *
 	 * ( clickX / presentationWidth ) * numberOfSlides
 	 */
-	function onProgressClick( event ) {
+	function onProgressClicked( event ) {
+
+		event.preventDefault();
 
 		var slidesTotal = toArray( document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR ) ).length;
 		var slideIndex = Math.floor( ( event.clientX / dom.wrapper.offsetWidth ) * slidesTotal );
@@ -1667,6 +1727,16 @@ var Reveal = (function(){
 		slide( slideIndex );
 
 	}
+
+	/**
+	 * Event handler for navigation control buttons.
+	 */
+	function onNavigateLeftClicked( event ) { event.preventDefault(); navigateLeft(); }
+	function onNavigateRightClicked( event ) { event.preventDefault(); navigateRight(); }
+	function onNavigateUpClicked( event ) { event.preventDefault(); navigateUp(); }
+	function onNavigateDownClicked( event ) { event.preventDefault(); navigateDown(); }
+	function onNavigatePrevClicked( event ) { event.preventDefault(); navigatePrev(); }
+	function onNavigateNextClicked( event ) { event.preventDefault(); navigateNext(); }
 
 	/**
 	 * Handler for the window level 'hashchange' event.
@@ -1759,6 +1829,18 @@ var Reveal = (function(){
 		// Returns the indices of the current, or specified, slide
 		getIndices: getIndices,
 
+		// Returns the slide at the specified index, y is optional
+		getSlide: function( x, y ) {
+			var horizontalSlide = document.querySelectorAll( HORIZONTAL_SLIDES_SELECTOR )[ x ];
+			var verticalSlides = horizontalSlide && horizontalSlide.querySelectorAll( 'section' );
+
+			if( typeof y !== 'undefined' ) {
+				return verticalSlides ? verticalSlides[ y ] : undefined;
+			}
+
+			return horizontalSlide;
+		},
+
 		// Returns the previous slide element, may be null
 		getPreviousSlide: function() {
 			return previousSlide;
@@ -1767,6 +1849,11 @@ var Reveal = (function(){
 		// Returns the current slide element
 		getCurrentSlide: function() {
 			return currentSlide;
+		},
+
+		// Returns the current scale of the presentation content
+		getScale: function() {
+			return scale;
 		},
 
 		// Helper method, retrieves query string as a key/value hash
