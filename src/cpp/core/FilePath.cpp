@@ -379,6 +379,7 @@ MimeType s_mimeTypes[] =
    { "pdf",   "application/pdf" },
    { "svg",   "image/svg+xml" },
    { "swf",   "application/x-shockwave-flash" },
+   { "ttf",   "application/x-font-ttf" },
    
    // markdown types
    { "md",       "text/x-markdown" },
