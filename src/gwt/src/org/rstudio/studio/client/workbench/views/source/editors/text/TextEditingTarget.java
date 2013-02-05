@@ -89,6 +89,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocumentSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
@@ -914,7 +915,7 @@ public class TextEditingTarget implements EditingTarget
    
    public void save(Command onCompleted)
    {
-      saveThenExecute(null, CommandUtil.join(sourceOnSaveCommandIfApplicable(), 
+      saveThenExecute(null, CommandUtil.join(postSaveCommand(), 
                                              onCompleted));
    }
    
@@ -1297,7 +1298,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onSaveSourceDoc()
    {
-      saveThenExecute(null, sourceOnSaveCommandIfApplicable());
+      saveThenExecute(null, postSaveCommand());
    }
 
    @Handler
@@ -1305,7 +1306,7 @@ public class TextEditingTarget implements EditingTarget
    {
       saveNewFile(docUpdateSentinel_.getPath(),
                   null,
-                  sourceOnSaveCommandIfApplicable());
+                  postSaveCommand());
    }
 
    @Handler
@@ -1321,7 +1322,7 @@ public class TextEditingTarget implements EditingTarget
             {
                public void execute(String encoding)
                {
-                  saveThenExecute(encoding, sourceOnSaveCommandIfApplicable());
+                  saveThenExecute(encoding, postSaveCommand());
                }
             });
    }
@@ -2678,12 +2679,18 @@ public class TextEditingTarget implements EditingTarget
       events_.fireEvent(event);
    }
    
-   private Command sourceOnSaveCommandIfApplicable()
+   private Command postSaveCommand()
    {
       return new Command()
       {
          public void execute()
          {
+            // fire source document saved event
+            FileSystemItem file = FileSystemItem.createFile(
+                                             docUpdateSentinel_.getPath());
+            events_.fireEvent(new SourceDocumentSavedEvent(file));
+            
+            // check for source on save
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
                if (fileType_.isRd())
