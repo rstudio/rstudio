@@ -1,5 +1,5 @@
 /*
- * SessionPresentation.hpp
+ * SlideRequestHandler.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,16 +13,12 @@
  *
  */
 
-#ifndef SESSION_PRESENTATION_HPP
-#define SESSION_PRESENTATION_HPP
+#ifndef SESSION_PRESENTATION_SLIDE_REQUEST_HANDLER_HPP
+#define SESSION_PRESENTATION_SLIDE_REQUEST_HANDLER_HPP
 
 #include <string>
 
-#include <core/json/Json.hpp>
-
 namespace core {
-   class Error;
-   class FilePath;
    namespace http {
       class Request;
       class Response;
@@ -32,13 +28,17 @@ namespace core {
 namespace session {
 namespace modules { 
 namespace presentation {
-
-core::json::Value presentationStateAsJson();
-
-core::Error initialize();
+   
+void handlePresentationPaneRequest(const core::http::Request& request,
+                                  core::http::Response* pResponse);
                        
+
+void handlePresentationHelpRequest(const core::http::Request& request,
+                                   const std::string& jsCallbacks,
+                                   core::http::Response* pResponse);
+
 } // namespace presentation
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_PRESENTATION_HPP
+#endif // SESSION_PRESENTATION_SLIDE_REQUEST_HANDLER_HPP

@@ -48,7 +48,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "presentation/SessionPresentation.hpp"
+#include "presentation/SlideRequestHandler.hpp"
 
 // protect R against windows TRUE/FALSE defines
 #undef TRUE
