@@ -193,7 +193,7 @@ void Response::setRangeableFile(const FilePath& filePath,
       if (begin == 0 && end == (contents.length()-1))
          setBody(contents);
       else
-         setBody(contents.substr(begin, end-begin));
+         setBody(contents.substr(begin, end-begin+1));
    }
    else
    {
