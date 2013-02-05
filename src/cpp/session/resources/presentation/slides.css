@@ -94,6 +94,7 @@
 /*********************************************
  * NAVIGATION CONTROLS
  *********************************************/
+ 
 .reveal .controls div.navigate-left,
 .reveal .controls div.navigate-left.enabled {
   border-right-color: #25679E;
@@ -196,4 +197,9 @@
     content: '';
 }
 
+
+.reveal ol,
+.reveal ul {
+	margin: 0 0 .5em 2em;
+}
 
