@@ -1,0 +1,194 @@
+
+.ace_editor {
+  border: 2px solid rgb(159, 159, 159);
+}
+
+.ace_editor.ace_focus {
+  border: 2px solid #327fbd;
+}
+
+.ace_gutter {
+  background: #1a1a1a;
+  color: #DEDEDE;
+}
+
+.ace_print_margin {
+  width: 1px;
+  background: #1a1a1a;
+}
+
+.ace_scroller {
+  background-color: #000000;
+}
+
+.ace_text-layer {
+  color: #DEDEDE;
+}
+
+.ace_cursor {
+  border-left: 2px solid #FFFFFF;
+}
+
+.ace_cursor.ace_overwrite {
+  border-left: 0px;
+  border-bottom: 1px solid #FFFFFF;
+}
+
+.ace_marker-layer .ace_selection {
+  background: #424242;
+}
+
+.multiselect .ace_selection.start {
+  box-shadow: 0 0 3px 0px #000000;
+  border-radius: 2px;
+}
+
+.ace_marker-layer .ace_step {
+  background: rgb(102, 82, 0);
+}
+
+.ace_marker-layer .ace_bracket {
+  margin: -1px 0 0 -1px;
+  border: 1px solid #343434;
+}
+
+.ace_marker-layer .ace_active_line {
+  background: #2A2A2A;
+}
+
+.ace_gutter_active_line {
+  background-color: #2A2A2A;
+}
+
+.ace_marker-layer .ace_selected_word {
+  border: 1px solid #424242;
+}
+
+.ace_invisible {
+  color: #f1f0f0;
+}
+
+.ace_paren {
+	color: #fc0fe8;
+}
+
+.ace_keyword, .ace_meta {
+  color: #0093ff;
+}
+
+.ace_keyword.ace_operator {
+  color: #19fe00;
+}
+
+.ace_constant.ace_language {
+  color: #f30101;
+  font-style: italic;
+  font-weight: bold;
+}
+/*
+.ace_identifier {
+	color: #fc0fe8;
+}*/
+
+.ace_constant.ace_numeric {
+  color: #ff8800;
+}
+
+.ace_constant.ace_other {
+  color: #da16fb;
+}
+
+.ace_invalid {
+  color:#CED2CF;
+background-color:#DF5F5F;
+}
+
+.ace_invalid.ace_deprecated {
+  color:#CED2CF;
+background-color:#B798BF;
+}
+
+.ace_support.ace_constant {
+  color: #b3b4fd;
+}
+
+.ace_fold {
+    background-color: #7AA6DA;
+    border-color: #DEDEDE;
+}
+
+.ace_support.ace_function {
+  color: #0e7bfc;
+}
+
+.ace_storage {
+  color: #0deefc;
+}
+
+.ace_storage.ace_type,  .ace_support.ace_type{
+  color: #abfda6;
+}
+
+.ace_variable {
+  color: #fc0784;
+}
+
+.ace_variable.ace_parameter {
+  color: #c623fd;
+}
+
+.ace_string {
+  color: #fd09f2;
+}
+
+.ace_string.ace_regexp {
+  color: #c95202;
+}
+
+.ace_comment {
+  color:#969896;
+  font-style: italic;
+}
+
+.ace_meta.ace_tag {
+  color: #b36afe;
+}
+
+.ace_entity.ace_other.ace_attribute-name {
+  color:#D54E53;
+}
+
+.ace_entity.ace_name.ace_function {
+  color: #0ef9f2;
+}
+
+.ace_markup.ace_underline {
+    text-decoration:underline;
+}
+
+.ace_markup.ace_heading {
+  color:#B9CA4A;
+}
+
+.ace_indent-guide {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWNgYGD4z7Bq1ar/AAz9A/2naJQKAAAAAElFTkSuQmCC) right repeat-y;
+}
+.nocolor.ace_editor .ace_line span {
+    color: #C397D8 !important;
+}
+.ace_bracket {
+    margin: 0 !important;
+    border: 0 !important;
+    background-color: #343434;
+    color: #0cf6fd;
+}
+.ace_marker-layer .ace_foreign_line {
+    position: absolute;
+    z-index: -1;
+    background-color: rgb(44, 44, 44);
+}
+.ace_marker-layer .ace_find_line {
+    position: absolute;
+    z-index: -1;
+    background-color: rgb(111, 111, 111);
+}
