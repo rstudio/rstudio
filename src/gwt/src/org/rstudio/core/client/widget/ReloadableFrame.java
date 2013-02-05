@@ -36,11 +36,6 @@ public class ReloadableFrame extends Frame
       getElement().getStyle().setBackgroundColor("white");
    }
    
-   public String getCurrentLocationHref()
-   {
-      return getWindow().getLocationHref();
-   }
-   
    public void reload()
    {
       reload(false);

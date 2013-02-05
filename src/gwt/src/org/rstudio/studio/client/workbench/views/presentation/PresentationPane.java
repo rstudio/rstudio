@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.presentation;
 
-
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -28,8 +26,6 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
-import org.rstudio.studio.client.workbench.views.presentation.zoom.PresentationZoomPopupPanel;
 
 public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
@@ -67,9 +63,15 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public void load(String url, PresentationState state)
+   public void load(String url)
    {   
       frame_.navigate(url);
+   }
+   
+   @Override
+   public void clear()
+   {
+      frame_.setUrl("about:blank");
    }
    
    @Override
@@ -96,69 +98,33 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }-*/;
    
    @Override
-   public void fullScreen()
-   {
-      enterFullscreen(frame_.getWindow());
-   }
-   
-   @Override
-   public void zoom()
-   {
-      PresentationZoomPopupPanel zoomPanel = new PresentationZoomPopupPanel(
-                                              frame_.getCurrentLocationHref());
-      zoomPanel.center();
-   }
-   
-   private static final native void enterFullscreen(WindowEx window) /*-{
-      window.revealEnterFullscreen();
-   }-*/;
-   
-   @Override
    public void home()
    {
-      Reveal.fromWindow(frame_.getWindow()).home();
+      frame_.home();
+   }
+   
+   @Override
+   public void slide(int index)
+   {
+      frame_.slide(index);
    }
    
    @Override
    public void next()
    {
-      Reveal.fromWindow(frame_.getWindow()).next();
+      frame_.next();
    }
    
    @Override
    public void prev()
    {
-      Reveal.fromWindow(frame_.getWindow()).prev();
+      frame_.prev();
    }
    
    @Override
    public Size getFrameSize()
    {
       return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
-   }
-   
-   
-   private static class Reveal extends JavaScriptObject
-   {
-      protected Reveal()
-      {
-      }
-      
-      public static final native Reveal fromWindow(WindowEx window) /*-{
-         return window.Reveal;
-      }-*/;
-      
-      public final native void home() /*-{
-         this.slide(0);
-      }-*/;
-      
-      public final native void next() /*-{
-         this.next();
-      }-*/;
-      
-      public final native void prev() /*-{
-         this.prev();
-      }-*/;
    }
    
    

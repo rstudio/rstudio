@@ -17,10 +17,14 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
@@ -47,8 +51,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedEvent;
-import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocum
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.presentation.zoom.PresentationZoomPopupPanel;
 
 public class Presentation extends BasePresenter 
 {
@@ -65,13 +68,13 @@ public class Presentation extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
-      void load(String url, PresentationState state);
+      void load(String url);
+      void clear();
       boolean hasSlides();
       void home();
+      void slide(int index);
       void next();
       void prev();
-      void fullScreen();
-      void zoom();
       void pauseMedia();
       void refresh(boolean resetAnchor);
       Size getFrameSize();
@@ -123,28 +126,6 @@ public class Presentation extends BasePresenter
          view_.bringToFront();
       
       init(state);
-      
-      // refresh when metrics change
-      eventBus_.addHandler(WorkbenchMetricsChangedEvent.TYPE, 
-                           new WorkbenchMetricsChangedHandler() {
-         @Override
-         public void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent e)
-         {
-            if (isPresentationActive())
-               refreshCommand_.nudge();   
-         }  
-         
-         TimeBufferedCommand refreshCommand_ = new TimeBufferedCommand(300)
-         {
-            @Override
-            protected void performAction(boolean shouldSchedulePassive)
-            {
-               Size frameSize = view_.getFrameSize();
-               if (frameSize.width > 0 && frameSize.height > 0)
-                  view_.refresh(false);
-            }
-         };
-      });
    }
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
@@ -184,7 +165,26 @@ public class Presentation extends BasePresenter
    @Handler
    void onPresentationFullscreen()
    {
-      view_.fullScreen();
+      // clear the internal iframe so there is no conflict over handling
+      // presentation events (we'll restore it on zoom close)
+      view_.clear();
+      
+      // create the popup panel
+      String url = buildPresentationUrl("zoom");
+      activeZoomPanel_ = new PresentationZoomPopupPanel(url);
+      
+      // add a close handler to restore the internal iframe
+      activeZoomPanel_.addCloseHandler(new CloseHandler<PopupPanel>() {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            activeZoomPanel_ = null;
+            view_.load(buildPresentationUrl()); 
+         }
+      });
+      
+      // show it
+      activeZoomPanel_.center();
    }
    
    @Handler
@@ -230,12 +230,22 @@ public class Presentation extends BasePresenter
    private void init(PresentationState state)
    {
       currentState_ = state;
-         
+      view_.load(buildPresentationUrl());
+   }
+   
+   private String buildPresentationUrl()
+   {
+      return buildPresentationUrl(null);
+   }
+   
+   private String buildPresentationUrl(String extraPath)
+   {
       String url = server_.getApplicationURL("presentation/");
+      if (extraPath != null)
+         url = url + extraPath;
       if (currentState_.getSlideIndex() != 0)
          url = url + "#/" + currentState_.getSlideIndex();
-      
-      view_.load(url, state);
+      return url;
    }
    
    private boolean isPresentationActive()
@@ -247,25 +257,24 @@ public class Presentation extends BasePresenter
    
    private void onPresentationSlideChanged(final int index, 
                                            final JavaScriptObject jsCmds)
-   {
-      // record index
-      lastSlideIndex_ = index;
-      saveIndexCommand_.nudge();
-            
+   {   
+      currentState_.setSlideIndex(index);
+      indexPersister_.setIndex(index);
+      
+      // execute commands if we stay on the slide for > 1 second
       new Timer() {
          @Override
          public void run()
          {
             // execute commands if we're still on the same slide
-            if (index == lastSlideIndex_)
+            if (index == currentState_.getSlideIndex())
             {
                JsArray<JavaScriptObject> cmds = jsCmds.cast();
                for (int i=0; i<cmds.length(); i++)
                   dispatchCommand(cmds.get(i));  
             }
          }   
-      }.schedule(1000);
-    
+      }.schedule(1000);  
    }
    
    public final native void initPresentationCallbacks() /*-{
@@ -284,29 +293,59 @@ public class Presentation extends BasePresenter
 
    private void handleKeyDown(NativeEvent e)
    {  
+      // get the event
       NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
-      ShortcutManager.INSTANCE.onKeyDown(evt);
-      if (evt.isCanceled())
+      
+      // if there is a zoom panel then ignore other shortcuts
+      // (only handle Esc)
+      if (activeZoomPanel_ != null)
       {
-         e.preventDefault();
-         e.stopPropagation();
-         
-         // since this is a shortcut handled by the main window
-         // we set focus to it
-         WindowEx.get().focus();
-      } 
+         if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            e.preventDefault();
+            e.stopPropagation();
+            activeZoomPanel_.close();
+         }
+      }
+      else
+      {
+         ShortcutManager.INSTANCE.onKeyDown(evt);
+         if (evt.isCanceled())
+         {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // since this is a shortcut handled by the main window
+            // we set focus to it
+            WindowEx.get().focus();
+         } 
+      }
    }
    
    
-   TimeBufferedCommand saveIndexCommand_ = new TimeBufferedCommand(500)
+   private class IndexPersister extends TimeBufferedCommand
    {
+      public IndexPersister()
+      {
+         super(500);
+      }
+      
+      public void setIndex(int index)
+      {
+         index_ = index;
+         nudge();
+      }
+      
       @Override
       protected void performAction(boolean shouldSchedulePassive)
       {
-         server_.setPresentationSlideIndex(lastSlideIndex_, 
-                                       new VoidServerRequestCallback());
+         server_.setPresentationSlideIndex(index_, 
+                                           new VoidServerRequestCallback());
       }
+      
+      private int index_ = 0;
    };
+   private IndexPersister indexPersister_ = new IndexPersister();
    
    private void dispatchCommand(JavaScriptObject jsCommand)
    {
@@ -456,8 +495,8 @@ public class Presentation extends BasePresenter
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
-   private int lastSlideIndex_ = 0;
    private PresentationState currentState_ = null;
    private boolean usingRmd_ = false;
+   private PresentationZoomPopupPanel activeZoomPanel_ = null;
    
 }

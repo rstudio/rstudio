@@ -74,32 +74,41 @@ function notifySlideChanged(indexh) {
   }
 }
 
-function revealEnterFullscreen() {
-   
-   var element = document.body;
-
-   // Check which implementation is available
-   var requestMethod = element.requestFullScreen ||
-				           element.webkitRequestFullScreen ||
-				           element.mozRequestFullScreen ||
-				           element.msRequestFullScreen;
-
-   if (requestMethod) {
-      requestMethod.apply( element );
-   }
-}
-
-function revealDetectWidth() {
+function revealDetectWidth(zoomed) {
   if (window.innerWidth > 0)
-    return window.innerWidth * 2.0;
+  {
+    if (zoomed)
+      return window.innerWidth;
+    else
+      return window.innerWidth * 2.0;
+  }
   else
+  {
     return 960;
+  }
 }
 
-function revealDetectHeight() {
+function revealDetectHeight(zoomed) {
   if (window.innerHeight > 0)
-    return window.innerHeight * 2.0;
+  {
+    if (zoomed)
+      return window.innerHeight;
+    else
+      return window.innerHeight * 2.0;
+  }
   else
+  {
     return 700;
+  }
+}
+
+window.onresize = function() { 
+  
+  if(window.activeTimer)
+    clearTimeout(window.activeTimer);
+    
+  window.activeTimer = setTimeout(function() { 
+    window.location.reload(true); 
+  }, 300);
 }
 

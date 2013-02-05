@@ -43,6 +43,10 @@ public class PresentationState extends JavaScriptObject
       return this.directory;
    }-*/;
    
+   public final native void setSlideIndex(int index) /*-{
+      this.slide_index = index;
+   }-*/;
+   
    public final native int getSlideIndex() /*-{
       return this.slide_index;
    }-*/;

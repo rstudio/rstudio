@@ -16,8 +16,10 @@
 package org.rstudio.studio.client.workbench.views.presentation;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ReloadableFrame;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
@@ -50,9 +52,55 @@ public class PresentationFrame extends ReloadableFrame
             if (titleWidget != null)
                titleWidget.setText(title);
          }
-      });
-      
-      
+      }); 
    }
+   
+   public void home()
+   {
+      Reveal.fromWindow(getWindow()).home();
+   }
+   
+   public void slide(int index)
+   {
+      Reveal.fromWindow(getWindow()).slide(index);
+   }
+   
+   public void next()
+   {
+      Reveal.fromWindow(getWindow()).next();
+   }
+   
+   public void prev()
+   {
+      Reveal.fromWindow(getWindow()).prev();
+   }
+   
+   private static class Reveal extends JavaScriptObject
+   {
+      protected Reveal()
+      {
+      }
+      
+      public static final native Reveal fromWindow(WindowEx window) /*-{
+         return window.Reveal;
+      }-*/;
+      
+      public final native void home() /*-{
+         this.slide(0);
+      }-*/;
+      
+      public final native void slide(int index) /*-{
+         this.slide(index);
+      }-*/;
+      
+      public final native void next() /*-{
+         this.next();
+      }-*/;
+      
+      public final native void prev() /*-{
+         this.prev();
+      }-*/;
+   }
+   
 
 }
