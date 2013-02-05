@@ -370,8 +370,6 @@ void handlePresentationRootRequest(const std::string& path,
       // generate preview version
 
       // linked versions of reveal assets
-      vars["reveal_print_pdf_css"] = revealLink("revealjs/css/print/pdf.css",
-                                                 kMediaPrint);
       vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
       vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
       vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
