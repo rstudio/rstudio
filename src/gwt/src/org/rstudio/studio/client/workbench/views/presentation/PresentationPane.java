@@ -16,16 +16,11 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Size;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
 
@@ -34,6 +29,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.presentation.zoom.PresentationZoomPopupPanel;
 
 public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
@@ -65,41 +61,9 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override 
    protected Widget createMainWidget()
    {  
-      frame_ = new ReloadableFrame(false) ;
+      frame_ = new PresentationFrame(false, true, titleLabel_) ;
       frame_.setSize("100%", "100%");
-      frame_.setStylePrimaryName("rstudio-HelpFrame") ;
-      
-      // allow full-screen view of iframe
-      Element el = frame_.getElement();
-      el.setAttribute("webkitallowfullscreen", "");
-      el.setAttribute("mozallowfullscreen", "");
-      el.setAttribute("allowfullscreen", "");
-      
-      frame_.addLoadHandler(new LoadHandler() {
-
-         @Override
-         public void onLoad(LoadEvent event)
-         {
-            String title = StringUtil.notNull(
-                           frame_.getWindow().getDocument().getTitle());
-            titleLabel_.setText(title);
-         }
-      });
-
       return new AutoGlassPanel(frame_);
-   }
-   
-   @Override
-   protected void onLoad()
-   {
-      super.onLoad() ;
-
-      if (!initialized_)
-      {
-         initialized_ = true;
-
-         
-      }
    }
    
    @Override
@@ -135,6 +99,14 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public void fullScreen()
    {
       enterFullscreen(frame_.getWindow());
+   }
+   
+   @Override
+   public void zoom()
+   {
+      PresentationZoomPopupPanel zoomPanel = new PresentationZoomPopupPanel(
+                                              frame_.getCurrentLocationHref());
+      zoomPanel.center();
    }
    
    private static final native void enterFullscreen(WindowEx window) /*-{
@@ -190,12 +162,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    
-   private boolean initialized_ = false;
-   
    private ToolbarLabel titleLabel_;
-   
-   private ReloadableFrame frame_ ;
-   
+   private PresentationFrame frame_ ;
    private final Commands commands_;
 
 }

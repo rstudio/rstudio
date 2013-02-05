@@ -1,5 +1,5 @@
 /*
- * PresentationZoomPopup
+ * PresentationZoomPopupPanel
  *
  * Copyright (C) 2009-11 by RStudio, Inc.
  *
@@ -25,9 +25,10 @@ import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.core.client.widget.NineUpBorder;
+import org.rstudio.core.client.widget.ReloadableFrame;
 
 
-public class PresentationZoomPopup
+public class PresentationZoomPopupPanel extends ModalPopupPanel
 {
    interface Resources extends NineUpBorder.Resources, ClientBundle
    {
@@ -79,30 +80,31 @@ public class PresentationZoomPopup
    {
    }
 
-   public static void show()
+   public PresentationZoomPopupPanel(String url)
    {
-      Label mainWidget = new Label("mainWidget");
-      mainWidget.setSize("100%", "100%");
+      super(false, false, true);
+      
+      ReloadableFrame frame = new ReloadableFrame(true) ;    
+      frame.setSize("100%", "100%");
 
       LayoutPanel layoutPanel = new LayoutPanel();
       layoutPanel.setSize("100%", "100%");
-      layoutPanel.add(mainWidget);
-      layoutPanel.setWidgetLeftRight(mainWidget, 0, Unit.PX, 0, Unit.PX);
-      layoutPanel.setWidgetTopBottom(mainWidget, 0, Unit.PX, 0, Unit.PX);
-     
-      ModalPopupPanel popup = new ModalPopupPanel(false, false, true);
+      layoutPanel.add(frame);
+      layoutPanel.setWidgetLeftRight(frame, 0, Unit.PX, 0, Unit.PX);
+      layoutPanel.setWidgetTopBottom(frame, 0, Unit.PX, 0, Unit.PX);
+         
       Resources res = GWT.<Resources>create(Resources.class);
       NineUpBorder border = new NineUpBorder(
             res,
             32, 20, 17, 20);
-      addCloseButton(popup, border);
+      addCloseButton(border);
       border.setSize("100%", "100%");
       border.setFillColor("white");
       border.setWidget(layoutPanel);
-      popup.setWidget(border);
-      popup.setGlassEnabled(true);
+      setWidget(border);
+      setGlassEnabled(true);
 
-      Style popupStyle = popup.getElement().getStyle();
+      Style popupStyle = getElement().getStyle();
       popupStyle.setZIndex(1001);
       popupStyle.setPosition(Style.Position.ABSOLUTE);
       popupStyle.setTop(0, Unit.PX);
@@ -111,15 +113,14 @@ public class PresentationZoomPopup
       popupStyle.setRight(0, Unit.PX);
 
       Style contentStyle =
-            ((Element) popup.getElement().getFirstChild()).getStyle();
+            ((Element) getElement().getFirstChild()).getStyle();
       contentStyle.setWidth(100, Unit.PCT);
       contentStyle.setHeight(100, Unit.PCT);
-
-      popup.center();
+  
+      frame.navigate(url);
    }
 
-   private static void addCloseButton(final ModalPopupPanel popupPanel,
-                                      NineUpBorder border)
+   private void addCloseButton(NineUpBorder border)
    {
       Resources res = GWT.create(Resources.class);
       Image closeIcon = new Image(res.close());
@@ -129,7 +130,7 @@ public class PresentationZoomPopup
          @Override
          public void onClick(ClickEvent event)
          {
-            popupPanel.close();
+            close();
          }
       });
 

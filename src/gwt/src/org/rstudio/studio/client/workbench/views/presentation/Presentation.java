@@ -71,6 +71,7 @@ public class Presentation extends BasePresenter
       void next();
       void prev();
       void fullScreen();
+      void zoom();
       void pauseMedia();
       void refresh(boolean resetAnchor);
       Size getFrameSize();
