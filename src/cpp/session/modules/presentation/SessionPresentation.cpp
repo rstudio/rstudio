@@ -230,70 +230,6 @@ void setRemoteWebFonts(std::map<std::string,std::string>* pVars)
      "https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic";
 }
 
-void handleRangeRequest(const FilePath& targetFile,
-                        const http::Request& request,
-                        http::Response* pResponse)
-{
-   // read the file in from disk
-   std::string contents;
-   Error error = core::readStringFromFile(targetFile, &contents);
-   if (error)
-      pResponse->setError(error);
-
-   // set content type
-   pResponse->setContentType(targetFile.mimeContentType());
-
-   // parse the range field
-   std::string range = request.headerValue("Range");
-   boost::regex re("bytes=(\\d*)\\-(\\d*)");
-   boost::smatch match;
-   if (boost::regex_match(range, match, re))
-   {
-      // specify partial content
-      pResponse->setStatusCode(http::status::PartialContent);
-
-      // determine the byte range
-      const size_t kNone = -1;
-      size_t begin = safe_convert::stringTo<size_t>(match[1], kNone);
-      size_t end = safe_convert::stringTo<size_t>(match[2], kNone);
-      size_t total = contents.length();
-
-      if (end == kNone)
-      {
-         end = total-1;
-      }
-      if (begin == kNone)
-      {
-         begin = total - end;
-         end = total-1;
-      }
-
-      // set the byte range
-      pResponse->addHeader("Accept-Ranges", "bytes");
-      boost::format fmt("bytes %1%-%2%/%3%");
-      std::string range = boost::str(fmt % begin % end % contents.length());
-      pResponse->addHeader("Content-Range", range);
-
-      // always attempt gzip
-      if (request.acceptsEncoding(http::kGzipEncoding))
-         pResponse->setContentEncoding(http::kGzipEncoding);
-
-      // set body
-      if (begin == 0 && end == (contents.length()-1))
-         pResponse->setBody(contents);
-      else
-         pResponse->setBody(contents.substr(begin, end-begin));
-   }
-   else
-   {
-      pResponse->setStatusCode(http::status::RangeNotSatisfiable);
-      boost::format fmt("bytes */%1%");
-      std::string range = boost::str(fmt % contents.length());
-      pResponse->addHeader("Content-Range", range);
-   }
-}
-
-
 bool hasKnitrVersion1()
 {
    bool hasVersion = false;
@@ -579,7 +515,7 @@ void handlePresentationPaneRequest(const http::Request& request,
       FilePath targetFile = presentation::state::directory().childPath(path);
       if (!request.headerValue("Range").empty())
       {
-         handleRangeRequest(targetFile, request, pResponse);
+         pResponse->setRangeableFile(targetFile, request);
       }
       else
       {

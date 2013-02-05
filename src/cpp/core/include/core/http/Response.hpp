@@ -307,6 +307,8 @@ public:
          setFile(filePath, request, filter);
       }
    }
+
+   void setRangeableFile(const FilePath& filePath, const Request& request);
    
    // these calls do no stream io or encoding so don't return errors
    void setBodyUnencoded(const std::string& body);

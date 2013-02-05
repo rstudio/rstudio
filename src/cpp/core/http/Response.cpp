@@ -17,6 +17,8 @@
 
 #include <algorithm>
 
+#include <boost/regex.hpp>
+#include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -26,6 +28,8 @@
 #include <core/http/Util.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/Hash.hpp>
+
+#include <core/FileSerializer.hpp>
 
 namespace core {
 namespace http {
@@ -133,6 +137,71 @@ void Response::setDynamicHtml(const std::string& html,
 
    // set body
    setBody(html);
+}
+
+void Response::setRangeableFile(const FilePath& filePath,
+                                const Request& request)
+{
+   // read the file in from disk
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      setError(error);
+      return;
+   }
+
+   // set content type
+   setContentType(filePath.mimeContentType());
+
+   // parse the range field
+   std::string range = request.headerValue("Range");
+   boost::regex re("bytes=(\\d*)\\-(\\d*)");
+   boost::smatch match;
+   if (boost::regex_match(range, match, re))
+   {
+      // specify partial content
+      setStatusCode(http::status::PartialContent);
+
+      // determine the byte range
+      const size_t kNone = -1;
+      size_t begin = safe_convert::stringTo<size_t>(match[1], kNone);
+      size_t end = safe_convert::stringTo<size_t>(match[2], kNone);
+      size_t total = contents.length();
+
+      if (end == kNone)
+      {
+         end = total-1;
+      }
+      if (begin == kNone)
+      {
+         begin = total - end;
+         end = total-1;
+      }
+
+      // set the byte range
+      addHeader("Accept-Ranges", "bytes");
+      boost::format fmt("bytes %1%-%2%/%3%");
+      std::string range = boost::str(fmt % begin % end % contents.length());
+      addHeader("Content-Range", range);
+
+      // always attempt gzip
+      if (request.acceptsEncoding(http::kGzipEncoding))
+         setContentEncoding(http::kGzipEncoding);
+
+      // set body
+      if (begin == 0 && end == (contents.length()-1))
+         setBody(contents);
+      else
+         setBody(contents.substr(begin, end-begin));
+   }
+   else
+   {
+      setStatusCode(http::status::RangeNotSatisfiable);
+      boost::format fmt("bytes */%1%");
+      std::string range = boost::str(fmt % contents.length());
+      addHeader("Content-Range", range);
+   }
 }
    
 void Response::setBodyUnencoded(const std::string& body)
