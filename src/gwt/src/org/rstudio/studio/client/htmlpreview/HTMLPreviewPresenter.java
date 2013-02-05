@@ -23,7 +23,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -280,15 +279,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       if (lastSuccessfulPreview_ != null)
       {
          String htmlFile = lastSuccessfulPreview_.getHtmlFile();
-         if (Desktop.isDesktop())
-         {
-            Desktop.getFrame().showFile(htmlFile);
-         }
-         else
-         {
-            globalDisplay_.openWindow(server_.getFileUrl(
-                                       FileSystemItem.createFile(htmlFile)));
-         }
+         globalDisplay_.showHtmlFile(htmlFile);
       }
    }
    

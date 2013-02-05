@@ -23,8 +23,10 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.studio.client.common.dialog.DialogBuilderFactory;
@@ -333,10 +335,20 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       // open window
       openWindow(url);
    }
+   
+   @Override
+   public void showHtmlFile(String path)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().showFile(path);
+      else
+         openWindow(server_.getFileUrl(FileSystemItem.createFile(path)));
+   }
 
    private final Provider<ApplicationView> view_;
    private final Session session_;
    private final ApplicationServerOperations server_;
    private final WindowOpener windowOpener_ = GWT.create(WindowOpener.class);
+  
 }
 

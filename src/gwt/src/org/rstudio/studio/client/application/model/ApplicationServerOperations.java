@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.model;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -54,6 +55,8 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    // get an application URL
    String getApplicationURL(String pathName);
+   
+   String getFileUrl(FileSystemItem file);
    
    void suspendForRestart(SuspendOptions options,
                           ServerRequestCallback<Void> requestCallback);
