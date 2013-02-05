@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -51,10 +52,9 @@ import org.rstudio.studio.client.workbench.events.WorkbenchMetricsChangedHandler
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
-import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocumentSavedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
@@ -73,6 +73,7 @@ public class Presentation extends BasePresenter
       void fullScreen();
       void pauseMedia();
       void refresh(boolean resetAnchor);
+      Size getFrameSize();
    }
    
    @Inject
@@ -96,51 +97,20 @@ public class Presentation extends BasePresenter
      
       binder.bind(commands, this);
       
-      eventBus.addHandler(FileChangeEvent.TYPE, new FileChangeHandler() {
+      // auto-refresh for presentation files saved
+      eventBus.addHandler(SourceDocumentSavedEvent.TYPE, 
+                         new SourceDocumentSavedEvent.Handler() { 
          @Override
-         public void onFileChange(FileChangeEvent event)
-         {  
+         public void onSourceDocumentSaved(SourceDocumentSavedEvent event)
+         {
             if (currentState_ != null && currentState_.isAuthorMode())
             {
-               FileSystemItem fsi = event.getFileChange().getFile(); 
-               String path = fsi.getPath();
-               if (path.startsWith(currentState_.getDirectory()))
-               {
-                  boolean refresh = false;
-                  String type = fsi.mimeType();        
-                  if (type.equals("text/x-r-markdown"))
-                  {
-                     refresh = true;
-                  }
-                  else if (type.equals("text/x-markdown"))
-                  {
-                     if (!currentState_.isUsingRmd() || 
-                         !fsi.getName().equals("slides.md"))
-                     {
-                        refresh = true;
-                     }
-                  }
-                  else if (fsi.mimeType().equals("text/css"))
-                  {
-                     refresh = true;
-                  }
-                  
-                  if (refresh)
-                     refreshCommand_.nudge();
-               } 
+               if (event.getSourceFile().getPath().startsWith(
+                                          currentState_.getDirectory()))
+                  view_.refresh(false);
             }
+            
          }
-      });
-      
-      // refresh when metrics change
-      eventBus.addHandler(WorkbenchMetricsChangedEvent.TYPE, 
-                          new WorkbenchMetricsChangedHandler() {
-         @Override
-         public void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent e)
-         {
-            if (currentState_ != null && currentState_.isActive())
-               refreshCommand_.nudge();
-         }  
       });
       
       initPresentationCallbacks();
@@ -152,6 +122,28 @@ public class Presentation extends BasePresenter
          view_.bringToFront();
       
       init(state);
+      
+      // refresh when metrics change
+      eventBus_.addHandler(WorkbenchMetricsChangedEvent.TYPE, 
+                           new WorkbenchMetricsChangedHandler() {
+         @Override
+         public void onWorkbenchMetricsChanged(WorkbenchMetricsChangedEvent e)
+         {
+            if (isPresentationActive())
+               refreshCommand_.nudge();   
+         }  
+         
+         TimeBufferedCommand refreshCommand_ = new TimeBufferedCommand(300)
+         {
+            @Override
+            protected void performAction(boolean shouldSchedulePassive)
+            {
+               Size frameSize = view_.getFrameSize();
+               if (frameSize.width > 0 && frameSize.height > 0)
+                  view_.refresh(false);
+            }
+         };
+      });
    }
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
@@ -245,6 +237,13 @@ public class Presentation extends BasePresenter
       view_.load(url, state);
    }
    
+   private boolean isPresentationActive()
+   {
+      return (currentState_ != null) && 
+             (currentState_.isActive())&& 
+             view_.hasSlides();
+   }
+   
    private void onPresentationSlideChanged(final int index, 
                                            final JavaScriptObject jsCmds)
    {
@@ -305,15 +304,6 @@ public class Presentation extends BasePresenter
       {
          server_.setPresentationSlideIndex(lastSlideIndex_, 
                                        new VoidServerRequestCallback());
-      }
-   };
-   
-   TimeBufferedCommand refreshCommand_ = new TimeBufferedCommand(500)
-   {
-      @Override
-      protected void performAction(boolean shouldSchedulePassive)
-      {
-         view_.refresh(false);
       }
    };
    

@@ -532,8 +532,8 @@ void handlePresentationPaneRequest(const http::Request& request,
          vars["init_commands"] = initCommands;
 
          // width and height
-         vars["reveal_width"] = "window.innerWidth * 2.0";
-         vars["reveal_height"] = "window.innerHeight * 2.0";
+         vars["reveal_width"] = "revealDetectWidth()";
+         vars["reveal_height"] = "revealDetectHeight()";
 
          templateStream.seekg (0, std::ios::beg);
          std::stringstream previewOutputStream;

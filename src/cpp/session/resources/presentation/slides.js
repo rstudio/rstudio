@@ -89,3 +89,17 @@ function revealEnterFullscreen() {
    }
 }
 
+function revealDetectWidth() {
+  if (window.innerWidth > 0)
+    return window.innerWidth * 2.0;
+  else
+    return 960;
+}
+
+function revealDetectHeight() {
+  if (window.innerHeight > 0)
+    return window.innerHeight * 2.0;
+  else
+    return 700;
+}
+

@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ReloadableFrame;
@@ -156,6 +157,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public void prev()
    {
       Reveal.fromWindow(frame_.getWindow()).prev();
+   }
+   
+   @Override
+   public Size getFrameSize()
+   {
+      return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
    
    
