@@ -22,6 +22,14 @@ public class PresentationCommand extends JavaScriptObject
    {
    }
   
+   public final static native PresentationCommand create(String name,
+                                                         String params) /*-{
+      var obj = new Object();
+      obj.name = name;
+      obj.params = params;
+      return obj;
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;

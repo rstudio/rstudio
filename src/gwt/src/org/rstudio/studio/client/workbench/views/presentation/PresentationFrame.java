@@ -18,11 +18,15 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ReloadableFrame;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.HasText;
 
 public class PresentationFrame extends ReloadableFrame
@@ -47,10 +51,48 @@ public class PresentationFrame extends ReloadableFrame
          @Override
          public void onLoad(LoadEvent event)
          {
+            // set title
+            Document doc = getWindow().getDocument();
             String title = StringUtil.notNull(
                                 getWindow().getDocument().getTitle());
             if (titleWidget != null)
                titleWidget.setText(title);
+            
+            // fixup links
+            NodeList<Element> links = doc.getElementsByTagName("a");
+            for (int i=0; i<links.getLength(); i++)
+            {
+               Element link = links.getItem(i);
+               String href = StringUtil.notNull(link.getAttribute("href"));
+               if (href.startsWith("#"))
+               {
+                  // internal link, leave it alone
+               }
+               else if (href.contains("://"))
+               {
+                  // external link, show in new window
+                  link.setAttribute("target", "_blank");
+               }
+               else if (href.startsWith("help-doc:") ||
+                        href.startsWith("help-topic:"))
+               {
+                  // help command, change the link to dispatch it
+                  int colonLoc = href.indexOf(':');
+                  if (href.length() > (colonLoc+2))
+                  {
+                     String command = href.substring(0, colonLoc).trim();
+                     String params = href.substring(colonLoc + 1).trim();
+                     PresentationCommand cmd = PresentationCommand.create(
+                                                             command, params);
+                     String cmdObj = new JSONObject(cmd).toString();
+                     String onClick = 
+                            "window.parent.dispatchPresentationCommand(" +
+                            cmdObj + "); return false;";
+                     link.setAttribute("onclick", onClick);
+                  }
+               }
+                  
+            }
          }
       }); 
    }
