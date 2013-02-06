@@ -23,6 +23,9 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <boost/regex.hpp>
+#include <boost/iostreams/filter/regex.hpp>
+
 #include <core/FileSerializer.hpp>
 #include <core/HtmlUtils.hpp>
 #include <core/markdown/Markdown.hpp>
@@ -235,6 +238,56 @@ bool performKnit(const FilePath& rmdFilePath, std::string* pErrMsg)
    }
 }
 
+std::string fixupLink(const boost::cmatch& match)
+{
+   std::string href = http::util::urlDecode(match[1]);
+
+   if (boost::algorithm::starts_with(href, "#"))
+   {
+      // leave internal links alone
+      return match[0];
+   }
+   else if (href.find("://") != std::string::npos)
+   {
+      // open external links in a new window
+      return match[0] + " target=\"_blank\"";
+   }
+   else if (boost::algorithm::starts_with(href, "help-topic:") ||
+            boost::algorithm::starts_with(href, "help-doc:"))
+   {
+      // convert help commands to javascript calls
+      std::string onClick;
+      std::size_t colonLoc = href.find_first_of(':');
+      if (href.size() > colonLoc+2)
+      {
+         std::ostringstream ostr;
+         ostr << "onclick='";
+         ostr << "window.parent.dispatchPresentationCommand(";
+         json::Object cmdObj;
+         using namespace boost::algorithm;
+         cmdObj["name"] = trim_copy(href.substr(0, colonLoc));
+         cmdObj["params"] = trim_copy(href.substr(colonLoc+1));
+         json::write(cmdObj, ostr);
+         ostr << "); return false;'";
+         onClick = ostr.str();
+      }
+
+      return match[0] + " " + onClick;
+   }
+   else
+   {
+      return match[0];
+   }
+}
+
+boost::iostreams::regex_filter linkFilter()
+{
+   return boost::iostreams::regex_filter(
+            boost::regex("<a href=\"([^\"]+)\""),
+            fixupLink);
+}
+
+
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
 {
@@ -398,6 +451,7 @@ void handlePresentationRootRequest(const std::string& path,
       text::TemplateFilter previewTemplateFilter(vars);
       standaloneStream.push(previewTemplateFilter);
       previewStream.push(previewTemplateFilter);
+      previewStream.push(linkFilter());
       previewStream.push(previewOutputStream);
       boost::iostreams::copy(templateStream, previewStream, 128);
 
