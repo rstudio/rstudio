@@ -170,7 +170,7 @@ bool hasKnitrVersion1()
    return hasVersion;
 }
 
-bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
+bool performKnit(const FilePath& rmdFilePath, std::string* pErrMsg)
 {
    // R binary
    FilePath rProgramPath;
@@ -204,13 +204,13 @@ bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
                      "               comment=NA);    "
                      "knit('%2%', encoding='%1%');");
    std::string encoding = projects::projectContext().defaultEncoding();
-   std::string cmd = boost::str(fmt % encoding % slidesRmd.filename());
+   std::string cmd = boost::str(fmt % encoding % rmdFilePath.filename());
    args.push_back(cmd);
 
    // options
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
-   options.workingDir = slidesRmd.parent();
+   options.workingDir = rmdFilePath.parent();
 
    // run knit
    error = core::system::runProgram(
@@ -249,7 +249,7 @@ void handlePresentationRootRequest(const std::string& path,
       if (rmdFile.exists())
       {
          std::string errMsg;
-         if (!knitSlides(rmdFile, &errMsg))
+         if (!performKnit(rmdFile, &errMsg))
          {
             pResponse->setError(http::status::InternalServerError,
                                 errMsg);
@@ -413,6 +413,62 @@ void handlePresentationRootRequest(const std::string& path,
    }
 }
 
+void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
+                                           const std::string& jsCallbacks,
+                                           core::http::Response* pResponse)
+{
+   // indirection on the actual md file (related to processing R markdown)
+   FilePath mdFilePath;
+
+   // knit if required
+   if (filePath.mimeContentType() == "text/x-r-markdown")
+   {
+      // actual file path will be the md file
+      mdFilePath = filePath.parent().complete(filePath.stem() + ".md");
+
+      // do the knit if we are in author mode
+      if (presentation::state::authorMode())
+      {
+         std::string errMsg;
+         if (!performKnit(filePath, &errMsg))
+         {
+            pResponse->setError(http::status::InternalServerError,
+                                errMsg);
+            return;
+         }
+      }
+   }
+   else
+   {
+      mdFilePath = filePath;
+   }
+
+   // read in the file (process markdown)
+   std::string helpDoc;
+   Error error = markdown::markdownToHTML(mdFilePath,
+                                          markdown::Extensions(),
+                                          markdown::HTMLOptions(),
+                                          &helpDoc);
+   if (error)
+   {
+      pResponse->setError(error);
+      return;
+   }
+
+   // process the template
+   std::map<std::string,std::string> vars;
+   vars["title"] = html_utils::defaultTitle(helpDoc);
+   vars["styles"] = resourceFiles().get("presentation/helpdoc.css");
+   vars["r_highlight"] = resourceFiles().get("r_highlight.html");
+   vars["mathjax"] = mathjaxIfRequired(helpDoc);
+   vars["content"] = helpDoc;
+   vars["js_callbacks"] = jsCallbacks;
+   pResponse->setNoCacheHeaders();
+   pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
+                      text::TemplateFilter(vars));
+}
+
+
 } // anonymous namespace
 
 
@@ -498,30 +554,20 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // save the help dir
       s_presentationHelpDir = filePath.parent();
 
-
-      // read in the file (process markdown)
-      std::string helpDoc;
-      Error error = markdown::markdownToHTML(filePath,
-                                             markdown::Extensions(),
-                                             markdown::HTMLOptions(),
-                                             &helpDoc);
-      if (error)
+      // check for markdown
+      if (filePath.mimeContentType() == "text/x-markdown" ||
+          filePath.mimeContentType() == "text/x-r-markdown")
       {
-         pResponse->setError(error);
-         return;
+         handlePresentationHelpMarkdownRequest(filePath,
+                                               jsCallbacks,
+                                               pResponse);
       }
 
-      // process the template
-      std::map<std::string,std::string> vars;
-      vars["title"] = html_utils::defaultTitle(helpDoc);
-      vars["styles"] = resourceFiles().get("presentation/helpdoc.css");
-      vars["r_highlight"] = resourceFiles().get("r_highlight.html");
-      vars["mathjax"] = mathjaxIfRequired(helpDoc);
-      vars["content"] = helpDoc;
-      vars["js_callbacks"] = jsCallbacks;
-      pResponse->setNoCacheHeaders();
-      pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
-                         text::TemplateFilter(vars));
+      // just a stock file
+      else
+      {
+         pResponse->setFile(filePath, request);
+      }
    }
 
    // it's a relative file reference
