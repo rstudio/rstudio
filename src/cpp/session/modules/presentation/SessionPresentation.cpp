@@ -20,6 +20,8 @@
 #include <boost/bind.hpp>
 
 #include <core/Exec.hpp>
+#include <core/http/Util.hpp>
+
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -63,6 +65,51 @@ SEXP rs_showPresentation(SEXP directorySEXP,
          // notify the client
          ClientEvent event(client_events::kShowPresentationPane,
                            presentation::state::asJson());
+         module_context::enqueClientEvent(event);
+      }
+      else
+      {
+         throw r::exec::RErrorException("Presentations are not supported "
+                                        "in desktop mode.");
+      }
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+
+   return R_NilValue;
+}
+
+SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
+{
+   try
+   {
+      if (session::options().programMode() == kSessionProgramModeServer)
+      {
+         // verify a presentation is active
+         if (!presentation::state::isActive())
+         {
+            throw r::exec::RErrorException(
+                                    "No presentation is currently active");
+         }
+
+         // resolve against presentation directory
+         std::string helpDoc = r::sexp::asString(helpDocSEXP);
+         FilePath helpDocPath = presentation::state::directory().childPath(
+                                                                     helpDoc);
+         if (!helpDocPath.exists())
+         {
+            throw r::exec::RErrorException("Path " + helpDocPath.absolutePath()
+                                           + " not found.");
+         }
+
+         // build url and fire event
+         std::string url = "help/presentation/?file=";
+         std::string file = module_context::createAliasedPath(helpDocPath);
+         url += http::util::urlEncode(file, true);
+
+         ClientEvent event(client_events::kShowHelp, url);
          module_context::enqueClientEvent(event);
       }
       else
@@ -156,6 +203,13 @@ Error initialize()
       methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
       methodDefShowPresentation.numArgs = 3;
       r::routines::addCallMethod(methodDefShowPresentation);
+
+      // register rs_showPresentationHelpDoc
+      R_CallMethodDef methodDefShowHelpDoc;
+      methodDefShowHelpDoc.name = "rs_showPresentationHelpDoc" ;
+      methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
+      methodDefShowHelpDoc.numArgs = 1;
+      r::routines::addCallMethod(methodDefShowHelpDoc);
 
       using boost::bind;
       using namespace session::module_context;
