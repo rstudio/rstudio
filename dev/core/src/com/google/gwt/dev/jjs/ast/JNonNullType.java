@@ -40,6 +40,16 @@ public class JNonNullType extends JReferenceType {
   }
 
   @Override
+  public String getJavahSignatureName() {
+    return ref.getJavahSignatureName();
+  }
+
+  @Override
+  public String getJsniSignatureName() {
+    return ref.getJsniSignatureName();
+  }
+
+  @Override
   public JNonNullType getNonNull() {
     return this;
   }

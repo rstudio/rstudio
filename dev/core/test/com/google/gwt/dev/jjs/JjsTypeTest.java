@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
+import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
@@ -196,6 +197,22 @@ public class JjsTypeTest extends TestCase {
         JReferenceType generalized = generalizeTypes(type1, type2);
         assertTrue(typeOracle.canTriviallyCast(type1, generalized));
         assertTrue(typeOracle.canTriviallyCast(type2, generalized));
+      }
+    }
+  }
+
+  public void testJavahSignatures() {
+    for (JReferenceType type : severalTypes()) {
+      if (!(type instanceof JNullType)) {
+        assertEquals(type.getJavahSignatureName(), type.getNonNull().getJavahSignatureName());
+      }
+    }
+  }
+
+  public void testJsniSignatures() {
+    for (JReferenceType type : severalTypes()) {
+      if (!(type instanceof JNullType)) {
+        assertEquals(type.getJsniSignatureName(), type.getNonNull().getJsniSignatureName());
       }
     }
   }
