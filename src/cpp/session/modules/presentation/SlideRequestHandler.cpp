@@ -468,6 +468,53 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
                       text::TemplateFilter(vars));
 }
 
+void handleRangeRequest(const FilePath& targetFile,
+                        const http::Request& request,
+                        http::Response* pResponse)
+{
+   // cache the last file
+   struct RangeFileCache
+   {
+      FileInfo file;
+      std::string contentType;
+      std::string contents;
+
+      void clear()
+      {
+         file = FileInfo();
+         contentType.clear();
+         contents.clear();
+      }
+   };
+   static RangeFileCache s_cache;
+
+   // see if we need to do a fresh read
+   if (targetFile.absolutePath() != s_cache.file.absolutePath() ||
+       targetFile.lastWriteTime() != s_cache.file.lastWriteTime())
+   {
+      // clear the cache
+      s_cache.clear();
+
+      // read the file in from disk
+      Error error = core::readStringFromFile(targetFile, &(s_cache.contents));
+      if (error)
+      {
+         pResponse->setError(error);
+         return;
+      }
+
+      // update the cache
+      s_cache.file = FileInfo(targetFile);
+      s_cache.contentType = targetFile.mimeContentType();
+   }
+
+   // always serve from the cache
+   pResponse->setRangeableFile(s_cache.contents,
+                               s_cache.contentType,
+                               request);
+
+
+}
 
 } // anonymous namespace
 
@@ -515,7 +562,7 @@ void handlePresentationPaneRequest(const http::Request& request,
       FilePath targetFile = presentation::state::directory().childPath(path);
       if (!request.headerValue("Range").empty())
       {
-         pResponse->setRangeableFile(targetFile, request);
+         handleRangeRequest(targetFile, request, pResponse);
       }
       else
       {

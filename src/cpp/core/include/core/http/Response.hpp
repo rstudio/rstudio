@@ -309,7 +309,11 @@ public:
    }
 
    void setRangeableFile(const FilePath& filePath, const Request& request);
-   
+
+   void setRangeableFile(const std::string& contents,
+                         const std::string& mimeType,
+                         const Request& request);
+
    // these calls do no stream io or encoding so don't return errors
    void setBodyUnencoded(const std::string& body);
    void setError(int statusCode, const std::string& message);

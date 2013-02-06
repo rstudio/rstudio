@@ -151,8 +151,15 @@ void Response::setRangeableFile(const FilePath& filePath,
       return;
    }
 
+   setRangeableFile(contents, filePath.mimeContentType(), request);
+}
+
+void Response::setRangeableFile(const std::string& contents,
+                                const std::string& mimeType,
+                                const Request& request)
+{
    // set content type
-   setContentType(filePath.mimeContentType());
+   setContentType(mimeType);
 
    // parse the range field
    std::string range = request.headerValue("Range");
