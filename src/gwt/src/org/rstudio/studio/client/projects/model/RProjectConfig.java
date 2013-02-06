@@ -121,6 +121,14 @@ public class RProjectConfig extends JavaScriptObject
       this.root_document = rootDocument;
    }-*/;
    
+   public native final boolean getShowPresentation() /*-{
+      return this.show_presentation;
+   }-*/;
+   
+   public native final void setShowPresentation(boolean show) /*-{
+      this.show_presentation = show;
+   }-*/;
+   
    public static final String BUILD_TYPE_NONE = "None";
    public static final String BUILD_TYPE_PACKAGE = "Package";
    public static final String BUILD_TYPE_MAKEFILE = "Makefile";

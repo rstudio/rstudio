@@ -60,4 +60,9 @@ public class RProjectOptions extends JavaScriptObject
    public native final RProjectBuildContext getBuildContext() /*-{
       return this.build_context;
    }-*/;
+   
+   public native final boolean getHasPresentation() /*-{
+      return this.has_presentation;
+   }-*/;
+   
 }

@@ -30,8 +30,8 @@ namespace state {
 
 
 void init(const core::FilePath& directory,
-          const std::string& paneCaption,
-          bool authorMode);
+          const std::string& paneCaption = "Presentation",
+          bool authorMode = false);
 void setSlideIndex(int index);
 
 

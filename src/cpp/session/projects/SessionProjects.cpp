@@ -225,6 +225,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["package_roxygenize"] = config.packageRoxygenize;
    configJson["makefile_path"] = config.makefilePath;
    configJson["custom_script_path"] = config.customScriptPath;
+   configJson["show_presentation"] = config.showPresentation;
    return configJson;
 }
 
@@ -301,6 +302,8 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["vcs_context"] = projectVcsContextJson();
    optionsJson["build_options"] = projectBuildOptionsJson();
    optionsJson["build_context"] = projectBuildContextJson();
+   optionsJson["has_presentation"] = s_projectContext.directory()
+                                          .childPath("slides.md").exists();
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -381,7 +384,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_check_args", &(config.packageCheckArgs),
                     "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
-                    "custom_script_path", &(config.customScriptPath));
+                    "custom_script_path", &(config.customScriptPath),
+                    "show_presentation", &(config.showPresentation));
    if (error)
       return error;
 

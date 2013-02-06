@@ -19,6 +19,7 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -52,6 +53,15 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       add(grid);
       
       
+      // add presentation option
+      chkShowPresentation_ = new CheckBox(
+                           "Always show presentation when opening project");
+      chkShowPresentation_.addStyleName(RESOURCES.styles().showPresentationCheckBox());
+      chkShowPresentation_.setVisible(false);
+      add(chkShowPresentation_);
+      
+      
+      
    }
 
    @Override
@@ -73,6 +83,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       restoreWorkspace_.setSelectedValue(config.getRestoreWorkspace());
       saveWorkspace_.setSelectedValue(config.getSaveWorkspace());
       alwaysSaveHistory_.setSelectedValue(config.getAlwaysSaveHistory());
+      
+      chkShowPresentation_.setValue(config.getShowPresentation());
+      chkShowPresentation_.setVisible(options.getHasPresentation());
    }
 
    @Override
@@ -82,7 +95,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
       config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
-
+      config.setShowPresentation(chkShowPresentation_.getValue());
       return false;
    }
    
@@ -122,5 +135,6 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
    
+   private CheckBox chkShowPresentation_;
    
 }

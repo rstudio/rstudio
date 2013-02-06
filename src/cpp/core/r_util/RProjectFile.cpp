@@ -494,6 +494,18 @@ Error readProjectFile(const FilePath& projectFilePath,
          *pProvidedDefaults = true;
    }
 
+   // extract show presentation
+   it = dcfFields.find("ShowPresentation");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->showPresentation)))
+         return requiredFieldError("ShowPresentation", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->showPresentation = true;
+   }
+
    return Success();
 }
 
@@ -608,6 +620,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
          // add to contents
          contents.append(build);
       }
+   }
+
+   // add ShowPresentation if it's false
+   if (!config.showPresentation)
+   {
+      contents.append("\nShowPresentation: No\n");
    }
 
    // write it

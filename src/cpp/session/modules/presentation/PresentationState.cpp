@@ -20,6 +20,7 @@
 #include <core/Settings.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core;
 
@@ -81,7 +82,7 @@ void savePresentationState(const PresentationState& state)
    settings.endUpdate();
 }
 
-void loadPresentationState()
+bool loadPresentationState()
 {
    FilePath statePath = presentationStatePath();
    if (statePath.exists())
@@ -103,6 +104,8 @@ void loadPresentationState()
    {
       s_presentationState = PresentationState();
    }
+
+   return s_presentationState.active;
 }
 
 } // anonymous namespace
@@ -163,7 +166,20 @@ json::Value asJson()
 
 Error initialize()
 {
-   loadPresentationState();
+   // load existing state
+   bool loaded = loadPresentationState();
+
+   // if we didn't load any state see if the project defines an autoload
+   if (!loaded)
+   {
+      const projects::ProjectContext& context = projects::projectContext();
+      if (context.hasProject() && context.config().showPresentation)
+      {
+         if (context.directory().childPath("slides.md").exists())
+            init(context.directory());
+      }
+   }
+
    return Success();
 }
 
