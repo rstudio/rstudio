@@ -56,6 +56,7 @@ bool isCommandField(const std::string& name)
           boost::iequals(name, "source") ||
           boost::iequals(name, "console") ||
           boost::iequals(name, "console-input") ||
+          boost::iequals(name, "execute") ||
           boost::iequals(name, "pause");
 }
 

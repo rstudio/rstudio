@@ -24,7 +24,10 @@ public interface PresentationServerOperations
    void showHelpTopic(String topic, String pkgName) ;
    
    void setPresentationSlideIndex(int index, 
-                              ServerRequestCallback<Void> requestCallaback);
+                              ServerRequestCallback<Void> requestCallback);
+   
+   void presentationExecuteCode(String code,
+                                ServerRequestCallback<Void> requestCallback);
    
    void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
 }

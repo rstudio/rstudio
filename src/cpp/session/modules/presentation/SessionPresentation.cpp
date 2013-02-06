@@ -79,8 +79,8 @@ SEXP rs_showPresentation(SEXP directorySEXP,
    return R_NilValue;
 }
 
-core::Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
-                                      json::JsonRpcResponse*)
+Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
+                                json::JsonRpcResponse*)
 {
    int index;
    Error error = json::readParam(request.params, 0, &index);
@@ -92,13 +92,51 @@ core::Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
    return Success();
 }
 
-core::Error closePresentationPane(const json::JsonRpcRequest&,
-                                 json::JsonRpcResponse*)
+Error closePresentationPane(const json::JsonRpcRequest&,
+                            json::JsonRpcResponse*)
 {
    presentation::state::clear();
 
    return Success();
 }
+
+Error presentationExecuteCode(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   // get the code
+   std::string code;
+   Error error = json::readParam(request.params, 0, &code);
+   if (error)
+      return error;
+
+   // confirm we are active
+   if (!presentation::state::isActive())
+   {
+      pResponse->setError(json::errc::MethodUnexpected);
+      return Success();
+   }
+
+   // execute within the context of the presentation directory
+   RestoreCurrentPathScope restorePathScope(
+                                    module_context::safeCurrentPath());
+   error = presentation::state::directory().makeCurrentPath();
+   if (error)
+      return error;
+
+
+   // actually execute the code (show error in the console)
+   error = r::exec::executeString(code);
+   if (error)
+   {
+      std::string errMsg = "Error executing code: " + code + "\n";
+      errMsg += r::endUserErrorMessage(error);
+      module_context::consoleWriteError(errMsg + "\n");
+   }
+
+   return Success();
+}
+
+
 
 } // anonymous namespace
 
@@ -126,6 +164,7 @@ Error initialize()
          (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
          (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
          (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
+         (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
          (bind(presentation::state::initialize))
          (bind(sourceModuleRFile, "SessionPresentation.R"));
 

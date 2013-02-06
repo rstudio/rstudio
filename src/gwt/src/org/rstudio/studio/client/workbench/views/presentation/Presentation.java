@@ -382,6 +382,8 @@ public class Presentation extends BasePresenter
          performConsoleCommand(params);
       else if (cmdName.equals("console-input"))
          performConsoleInputCommand(params);
+      else if (cmdName.equals("execute"))
+         performExecuteCommand(params);
       else if (cmdName.equals("pause"))
          performPauseCommand();
       else 
@@ -478,6 +480,11 @@ public class Presentation extends BasePresenter
    private void performConsoleInputCommand(String params)
    {
       eventBus_.fireEvent(new SendToConsoleEvent(params, true, false, true));
+   }
+   
+   private void performExecuteCommand(String params)
+   {
+      server_.presentationExecuteCode(params, new VoidServerRequestCallback());
    }
    
    
