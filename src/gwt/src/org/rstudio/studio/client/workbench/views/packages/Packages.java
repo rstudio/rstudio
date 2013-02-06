@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -103,6 +104,7 @@ public class Packages
                    Session session,
                    Binder binder,
                    Commands commands,
+                   WorkbenchContext workbenchContext,
                    DefaultCRANMirror defaultCRANMirror)
    {
       super(view);
@@ -112,6 +114,7 @@ public class Packages
       view_.setObserver(this) ;
       events_ = events ;
       defaultCRANMirror_ = defaultCRANMirror;
+      workbenchContext_ = workbenchContext;
       binder.bind(commands, this);
 
       events.addHandler(InstalledPackagesChangedEvent.TYPE, this);
@@ -503,7 +506,10 @@ public class Packages
          @Override
          public void onError(ServerError error)
          {
-            super.onError(error);
+            // don't show errors during restart
+            if (!workbenchContext_.isRestartInProgress())
+               super.onError(error);
+            
             view_.setProgress(false);
          }
 
@@ -811,6 +817,7 @@ public class Packages
    private HandlerRegistration consolePromptHandlerReg_ = null;
    private final EventBus events_ ;
    private final GlobalDisplay globalDisplay_ ;
+   private final WorkbenchContext workbenchContext_;
    private final DefaultCRANMirror defaultCRANMirror_;
    private PackageInstallOptions installOptions_ = 
                                   PackageInstallOptions.create(true, "", true);
