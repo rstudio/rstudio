@@ -197,6 +197,7 @@ bool knitSlides(const FilePath& slidesRmd, std::string* pErrMsg)
    boost::format fmt("library(knitr); "
                      "opts_chunk$set(cache=TRUE,     "
                      "               results='hide', "
+                     "               fig.keep='none',"
                      "               tidy=FALSE,     "
                      "               warning=FALSE,  "
                      "               message=FALSE,  "
