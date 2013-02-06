@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.HasText;
 
@@ -64,6 +65,7 @@ public class PresentationFrame extends ReloadableFrame
             {
                Element link = links.getItem(i);
                String href = StringUtil.notNull(link.getAttribute("href"));
+               href = URL.decode(href);
                if (href.startsWith("#"))
                {
                   // internal link, leave it alone
