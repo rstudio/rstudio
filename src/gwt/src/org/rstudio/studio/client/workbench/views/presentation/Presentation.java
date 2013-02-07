@@ -295,6 +295,10 @@ public class Presentation extends BasePresenter
          // get slide
          SlideInfo slideInfo = currentSlides_.get(i);
          
+         // if there is no title then ignore the slide
+         if (slideInfo.getTitle().trim().length() == 0)
+            continue;
+         
          // if this slide denotes a section then we are not in 
          // a section for this menu item
          if (slideInfo.isSection())
