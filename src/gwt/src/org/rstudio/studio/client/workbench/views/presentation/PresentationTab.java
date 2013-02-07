@@ -43,10 +43,10 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
 
    @Inject
    public PresentationTab(final Shim shim,
-                      Binder binder, 
-                      final Commands commands,
-                      EventBus eventBus,
-                      Session session)
+                          Binder binder, 
+                          final Commands commands,
+                          EventBus eventBus,
+                          Session session)
    {
       super(session.getSessionInfo().getPresentationName(), shim);
       binder.bind(commands, shim);

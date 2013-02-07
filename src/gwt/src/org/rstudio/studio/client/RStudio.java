@@ -78,7 +78,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ViewFilePanel;
 import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
 
 public class RStudio implements EntryPoint
@@ -223,7 +222,6 @@ public class RStudio implements EntryPoint
       LineTableView.ensureStylesInjected();
       ChangelistTable.ensureStylesInjected();
       DiffFrame.ensureStylesInjected();
-      ViewFilePanel.ensureStylesInjected();
       CodeBrowserEditingTargetWidget.ensureStylesInjected();
       ShowPublicKeyDialog.ensureStylesInjected();
       CreateKeyDialog.ensureStylesInjected();

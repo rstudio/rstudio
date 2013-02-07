@@ -1095,3 +1095,18 @@ body.ubuntu_mono .searchBox {
 .textBoxWithButton .gwt-Label {
    margin-bottom: 1px;	
 }
+
+
+.fullscreenCaptionIcon {
+  margin-top: -1px;
+  margin-right: 5px;
+}
+ 
+.fullscreenCaptionLabel {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 11px;
+  cursor: default;
+}
+

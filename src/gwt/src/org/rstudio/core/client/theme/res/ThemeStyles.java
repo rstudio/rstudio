@@ -155,4 +155,7 @@ public interface ThemeStyles extends CssResource
    String forceMacScrollbars();
    
    String adornedText();
+   
+   String fullscreenCaptionIcon();
+   String fullscreenCaptionLabel();
 }

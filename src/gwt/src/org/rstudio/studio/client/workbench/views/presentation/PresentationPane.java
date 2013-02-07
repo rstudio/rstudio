@@ -14,11 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.views.presentation;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.NativeKeyDownEvent;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FullscreenPopupPanel;
+import org.rstudio.core.client.widget.ReloadableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarLabel;
 
@@ -35,6 +49,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       super("Presentation");
       commands_ = commands;
       ensureWidget();
+      
+      initPresentationCallbacks();
    }
    
    @Override
@@ -66,6 +82,36 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public void load(String url)
    {   
       frame_.navigate(url);
+   }
+   
+   @Override
+   public void zoom(String title, String url, final Command onClosed)
+   {
+      // create the titlebar (no title for now)
+      HorizontalPanel titlePanel = new HorizontalPanel();
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
+      Label titleLabel = new Label(title);
+      titleLabel.addStyleName(styles.fullscreenCaptionLabel());
+      titlePanel.add(titleLabel);
+      
+      // create the frame
+      ReloadableFrame frame = new ReloadableFrame(true);
+      frame.setSize("100%", "100%");
+      
+      // create the popup panel & add close handler 
+      activeZoomPanel_ = new FullscreenPopupPanel(titlePanel, frame, false);
+      activeZoomPanel_.addCloseHandler(new CloseHandler<PopupPanel>() {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            activeZoomPanel_ = null;
+            onClosed.execute();
+         }
+      });
+      
+      // load the frame and show the zoom panel
+      frame.navigate(url);
+      activeZoomPanel_.center();  
    }
    
    @Override
@@ -127,9 +173,48 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
    
+   private final native void initPresentationCallbacks() /*-{
+      var thiz = this;
+      $wnd.presentationKeydown = $entry(function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.PresentationPane::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
+      });
+   }-*/;
+
+   private void handleKeyDown(NativeEvent e)
+   {  
+      // get the event
+      NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
+      
+      // if there is a zoom panel then ignore other shortcuts
+      // (only handle Esc)
+      if (activeZoomPanel_ != null)
+      {
+         if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            e.preventDefault();
+            e.stopPropagation();
+            activeZoomPanel_.close();
+         }
+      }
+      else
+      {
+         ShortcutManager.INSTANCE.onKeyDown(evt);
+         if (evt.isCanceled())
+         {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // since this is a shortcut handled by the main window
+            // we set focus to it
+            WindowEx.get().focus();
+         } 
+      }
+   }
    
    private ToolbarLabel titleLabel_;
    private PresentationFrame frame_ ;
    private final Commands commands_;
+   
+   private FullscreenPopupPanel activeZoomPanel_ = null;
 
 }

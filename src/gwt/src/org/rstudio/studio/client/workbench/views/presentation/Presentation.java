@@ -16,15 +16,10 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
@@ -34,9 +29,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -61,7 +53,6 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideInfo;
-import org.rstudio.studio.client.workbench.views.presentation.zoom.PresentationZoomPopupPanel;
 
 public class Presentation extends BasePresenter 
 {
@@ -71,6 +62,7 @@ public class Presentation extends BasePresenter
    {
       void load(String url);
       void clear();
+      void zoom(String title, String url, Command onClosed);
       boolean hasSlides();
       void home();
       void slide(int index);
@@ -170,22 +162,17 @@ public class Presentation extends BasePresenter
       // presentation events (we'll restore it on zoom close)
       view_.clear();
       
-      // create the popup panel
-      String url = buildPresentationUrl("zoom");
-      activeZoomPanel_ = new PresentationZoomPopupPanel(url);
-      
-      // add a close handler to restore the internal iframe
-      activeZoomPanel_.addCloseHandler(new CloseHandler<PopupPanel>() {
+      // show the zoomed version of the presentation. after it closes
+      // restore the inline version
+      view_.zoom(session_.getSessionInfo().getPresentationName(),
+                 buildPresentationUrl("zoom"), 
+                 new Command() {
          @Override
-         public void onClose(CloseEvent<PopupPanel> event)
+         public void execute()
          {
-            activeZoomPanel_ = null;
             view_.load(buildPresentationUrl()); 
-         }
+         } 
       });
-      
-      // show it
-      activeZoomPanel_.center();
    }
    
    @Handler
@@ -287,14 +274,10 @@ public class Presentation extends BasePresenter
       }
    }
    
-   public final native void initPresentationCallbacks() /*-{
-  
+   private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationSlideChanged = $entry(function(index, cmds) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::onPresentationSlideChanged(ILcom/google/gwt/core/client/JavaScriptObject;)(index, cmds);
-      });
-      $wnd.presentationKeydown = $entry(function(e) {
-         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
       });
       $wnd.dispatchPresentationCommand = $entry(function(cmd) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
@@ -302,39 +285,7 @@ public class Presentation extends BasePresenter
       $wnd.initPresentationSlideList = $entry(function(slides) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationSlideList(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
       });
-   }-*/;
-
-   private void handleKeyDown(NativeEvent e)
-   {  
-      // get the event
-      NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
-      
-      // if there is a zoom panel then ignore other shortcuts
-      // (only handle Esc)
-      if (activeZoomPanel_ != null)
-      {
-         if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
-         {
-            e.preventDefault();
-            e.stopPropagation();
-            activeZoomPanel_.close();
-         }
-      }
-      else
-      {
-         ShortcutManager.INSTANCE.onKeyDown(evt);
-         if (evt.isCanceled())
-         {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // since this is a shortcut handled by the main window
-            // we set focus to it
-            WindowEx.get().focus();
-         } 
-      }
-   }
-   
+   }-*/;   
    
    private class IndexPersister extends TimeBufferedCommand
    {
@@ -517,6 +468,4 @@ public class Presentation extends BasePresenter
    private final Session session_;
    private PresentationState currentState_ = null;
    private boolean usingRmd_ = false;
-   private PresentationZoomPopupPanel activeZoomPanel_ = null;
-   
 }

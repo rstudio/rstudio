@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -44,7 +46,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -52,8 +53,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -186,16 +185,18 @@ public class ViewFilePanel extends Composite implements TextDisplay
       docDisplay_.setCode(contents, false);  
       
       adaptToFileType(fileTypeRegistry_.getTextTypeForFile(file));
+     
+      ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       
       // header widget has icon + label
       HorizontalPanel panel = new HorizontalPanel();
      
       Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
-      imgFile.addStyleName(RES.styles().captionIcon());
+      imgFile.addStyleName(styles.fullscreenCaptionIcon());
       panel.add(imgFile);
       
       Label lblCaption = new Label(file.getPath() + " @ " + commitId);
-      lblCaption.addStyleName(RES.styles().captionLabel());
+      lblCaption.addStyleName(styles.fullscreenCaptionLabel());
       panel.add(lblCaption);
       
       popupPanel_ = new FullscreenPopupPanel(panel,asWidget(), false);
@@ -329,23 +330,6 @@ public class ViewFilePanel extends Composite implements TextDisplay
             });
    }
    
-   public interface Resources extends ClientBundle
-   {
-      @Source("ViewFilePanel.css")
-      Styles styles();
-   }
-   
-   public interface Styles extends CssResource
-   {
-      String captionIcon();
-      String captionLabel();
-   }
-   
-   public static void ensureStylesInjected()
-   {
-      RES.styles().ensureInjected();
-   }
-   
    private class ViewFileToolbar extends Toolbar
    {
       @Override
@@ -369,8 +353,6 @@ public class ViewFilePanel extends Composite implements TextDisplay
    
    private String commitId_ = null;
    private FileSystemItem targetFile_ = null;
-   
-   private static final Resources RES = GWT.<Resources>create(Resources.class);
    
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
