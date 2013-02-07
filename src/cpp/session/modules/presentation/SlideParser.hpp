@@ -74,6 +74,9 @@ public:
    std::string title() const { return title_; }
    bool showTitle() const;
 
+   std::string author() const { return fieldValue("author"); }
+   std::string date() const { return fieldValue("date"); }
+
    std::string id() const { return fieldValue("id"); }
 
    std::string type() const { return fieldValue("type"); }

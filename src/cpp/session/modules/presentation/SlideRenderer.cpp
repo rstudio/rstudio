@@ -26,7 +26,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
-
+#include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
 
 #include <core/markdown/Markdown.hpp>
@@ -246,28 +246,56 @@ Error renderSlides(const SlideDeck& slideDeck,
       // slide
       const Slide& slide = slideDeck.slides().at(i);
 
+      // is this the first slide?
+      bool isFirstSlide = (i == 0);
+
       // track in list
       slideList.add(slide);
 
       ostr << "<section";
       if (!slide.id().empty())
          ostr << " id=\"" << slide.id() << "\"";
-      if (!slide.type().empty())
-      {
-         std::string type = slide.type();
-         if (type == "section")
-            type = "deck-section";
+
+      // get the slide type
+      std::string type = isFirstSlide ? "section" : slide.type();
+
+      // add the state if there is a type
+      if (!type.empty())
          ostr << " data-state=\"" << type <<  "\"";
-      }
+
+      // end section tag
       ostr << ">" << std::endl;
-      if (slide.showTitle())
+
+      // show the title with the appropriate header
+      if (isFirstSlide || slide.showTitle())
       {
-         std::string hTag = "h3";
-         if (slide.type() == "section")
-         {
+         std::string hTag;
+         if (isFirstSlide)
+            hTag = "h1";
+         else if (type == "section")
             hTag = "h2";
+         else
+            hTag = "h3";
+
+         ostr << "<" << hTag << ">"
+              << string_utils::htmlEscape(slide.title())
+              << "</" << hTag << ">";
+      }
+
+      // if this is slide one then render author and date if they are included
+      if (isFirstSlide)
+      {
+         ostr << "<p>";
+         if (!slide.author().empty())
+         {
+            ostr << string_utils::htmlEscape(slide.author());
+            if (!slide.date().empty())
+               ostr << "<br/>";
          }
-         ostr << "<" << hTag << ">" << slide.title() << "</" << hTag << ">";
+         if (!slide.date().empty())
+            ostr << string_utils::htmlEscape(slide.date());
+
+         ostr << "</p>" << std::endl;
       }
 
       std::string htmlContent;

@@ -1,4 +1,7 @@
 
+.reveal h1 { 
+  font-size: 2.5em; 
+}
 
 .reveal .slides {
   text-align: left;
@@ -54,12 +57,13 @@
    background: #C6D7DC;
 }
 
-.deck-section .reveal .state-background {
+.section .reveal .state-background {
    background: #96A2B6;
 }
 
-.deck-section .reveal h2,
-.deck-section .reveal p {
+.section .reveal h1,
+.section .reveal h2,
+.section .reveal p {
    color: white;
    margin-top: 50px;
 }
