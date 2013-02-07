@@ -19,13 +19,15 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Size;
+
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -33,13 +35,14 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.ReloadableFrame;
+import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarLabel;
 
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.presentation.Presentation.SlideMenu;
 
 public class PresentationPane extends WorkbenchPane implements Presentation.Display
 {
@@ -60,8 +63,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
-      titleLabel_ = new ToolbarLabel();
-      toolbar.addLeftWidget(titleLabel_);
+      toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
       
       toolbar.addRightWidget(commands_.presentationFullscreen().createToolbarButton());
       toolbar.addRightSeparator();
@@ -73,7 +75,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override 
    protected Widget createMainWidget()
    {  
-      frame_ = new PresentationFrame(false, true, titleLabel_) ;
+      frame_ = new PresentationFrame(false, true) ;
       frame_.setSize("100%", "100%");
       return new AutoGlassPanel(frame_);
    }
@@ -168,10 +170,31 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    }
    
    @Override
-   public Size getFrameSize()
+   public SlideMenu getSlideMenu()
    {
-      return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
+      return slideMenu_;
    }
+
+   private SlideMenu slideMenu_ = new SlideMenu() {
+
+      @Override
+      public void setCaption(String caption)
+      {
+         titleLabel_.setText(caption);
+      }
+
+      @Override
+      public void addItem(MenuItem menu)
+      {
+         slidesMenu_.addItem(menu);  
+      }
+
+      @Override
+      public void clear()
+      {
+         slidesMenu_.clearItems();
+      }
+   };
    
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
@@ -211,10 +234,25 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       }
    }
    
-   private ToolbarLabel titleLabel_;
+   private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
+   {
+      public SlidesPopupMenu()
+      {
+         addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
+      }
+      
+      @Override
+      protected int getMaxHeight()
+      {
+         return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
+                titleLabel_.getOffsetHeight() - 50;
+      }
+   }
+   
+   private Label titleLabel_ = new Label();
+   private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private PresentationFrame frame_ ;
    private final Commands commands_;
    
    private FullscreenPopupPanel activeZoomPanel_ = null;
-
 }

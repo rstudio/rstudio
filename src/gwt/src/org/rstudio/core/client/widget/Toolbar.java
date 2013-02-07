@@ -166,16 +166,33 @@ public class Toolbar extends Composite
       return widget;
    }
    
+   public interface MenuSource
+   {
+      ToolbarPopupMenu getMenu();
+   }
+   
+   public void addLeftPopupMenu(Label label, final ToolbarPopupMenu menu)
+   {
+      addLeftPopupMenu(label, new MenuSource() {
+
+         @Override
+         public ToolbarPopupMenu getMenu()
+         {
+            return menu;
+         }
+      });
+   }
+   
    public void addLeftPopupMenu(final Label label, 
-                                final ToolbarPopupMenu menu)
+                                final MenuSource menuSource)
    {
       label.setStylePrimaryName("rstudio-StrongLabel") ;
       label.setWordWrap(false);
       label.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
       label.getElement().getStyle().setOverflow(Overflow.HIDDEN);
       addLeftWidget(label) ;
-      Image image = new Image(ThemeResources.INSTANCE.mediumDropDownArrow());
-      image.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      Image image = new Image(ThemeResources.INSTANCE.menuDownArrow());
+      image.getElement().getStyle().setMarginLeft(5, Unit.PX);
       image.getElement().getStyle().setMarginRight(8, Unit.PX);
       image.getElement().getStyle().setMarginBottom(2, Unit.PX);
       addLeftWidget(image);
@@ -184,6 +201,7 @@ public class Toolbar extends Composite
       {
          public void onClick(ClickEvent event)
          {
+            ToolbarPopupMenu menu = menuSource.getMenu();
             menu.showRelativeTo(label);
             menu.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
          }

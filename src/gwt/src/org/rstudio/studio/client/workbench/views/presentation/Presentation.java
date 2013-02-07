@@ -17,14 +17,15 @@ package org.rstudio.studio.client.workbench.views.presentation;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
-import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -59,18 +60,28 @@ public class Presentation extends BasePresenter
    public interface Binder extends CommandBinder<Commands, Presentation> {}
    
    public interface Display extends WorkbenchView
-   {
+   {  
       void load(String url);
-      void clear();
       void zoom(String title, String url, Command onClosed);
+      void clear();
       boolean hasSlides();
+      
       void home();
       void slide(int index);
       void next();
       void prev();
+      
       void pauseMedia();
       void refresh(boolean resetAnchor);
-      Size getFrameSize();
+      
+      SlideMenu getSlideMenu();
+   }
+   
+   public interface SlideMenu
+   {
+      void setCaption(String caption);
+      void addItem(MenuItem menu);
+      void clear();
    }
    
    @Inject
@@ -245,9 +256,14 @@ public class Presentation extends BasePresenter
    
    private void onPresentationSlideChanged(final int index, 
                                            final JavaScriptObject jsCmds)
-   {   
+   {  
+      // note the slide index and save it
       currentState_.setSlideIndex(index);
       indexPersister_.setIndex(index);
+      
+      // set the title if we can (defensive code for dom timing issues)
+      if (currentSlides_ != null && currentSlides_.length() > index)
+         view_.getSlideMenu().setCaption(currentSlides_.get(index).getTitle());
       
       // execute commands if we stay on the slide for > 750ms
       new Timer() {
@@ -267,11 +283,42 @@ public class Presentation extends BasePresenter
    
    private void initPresentationSlideList(JavaScriptObject jsSlides)
    {
-      JsArray<SlideInfo> slides = jsSlides.cast();
-      for (int i=0; i<slides.length(); i++)
+      // record current slides
+      currentSlides_ = jsSlides.cast();
+      
+      // reset the slides menu
+      SlideMenu slideMenu = view_.getSlideMenu();
+      slideMenu.clear(); 
+      boolean inSection = false;
+      for (int i=0; i<currentSlides_.length(); i++)
       {
- 
-      }
+         // get slide
+         SlideInfo slideInfo = currentSlides_.get(i);
+         
+         // if this slide denotes a section then we are not in 
+         // a section for this menu item
+         if (slideInfo.isSection())
+            inSection = false;
+         
+         // build html
+         SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
+         if (inSection)
+            menuHtml.appendHtmlConstant("&nbsp;&nbsp;&nbsp;");
+         menuHtml.appendEscaped(slideInfo.getTitle());
+         
+         final int index = i;
+         slideMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
+                                        new Command() {
+            @Override
+            public void execute()
+            {
+               view_.slide(index); 
+            }
+         }));
+         
+         if (slideInfo.isSection())
+            inSection = true;
+      }  
    }
    
    private final native void initPresentationCallbacks() /*-{
@@ -467,5 +514,6 @@ public class Presentation extends BasePresenter
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private PresentationState currentState_ = null;
+   private JsArray<SlideInfo> currentSlides_ = null;
    private boolean usingRmd_ = false;
 }

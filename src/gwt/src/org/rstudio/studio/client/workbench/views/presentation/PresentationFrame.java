@@ -28,6 +28,12 @@ import com.google.gwt.user.client.ui.HasText;
 public class PresentationFrame extends ReloadableFrame
 {
    public PresentationFrame(boolean autoFocus, 
+                            boolean allowFullScreen)
+   {
+      this(autoFocus, allowFullScreen, null);
+   }
+                           
+   public PresentationFrame(boolean autoFocus, 
                             boolean allowFullScreen,
                             final HasText titleWidget)
    {
