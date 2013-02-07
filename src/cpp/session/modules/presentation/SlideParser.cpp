@@ -219,8 +219,8 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    std::vector<std::string> lines;
    boost::algorithm::split(lines, slides, boost::algorithm::is_any_of("\r\n"));
 
-   // find indexes of lines with dashes
-   boost::regex re("^\\-{5,}\\s*$");
+   // find indexes of lines with 3 or more consecutive equals
+   boost::regex re("^\\={3,}\\s*$");
    std::vector<std::size_t> headerLines;
    for (std::size_t i = 0; i<lines.size(); i++)
    {
