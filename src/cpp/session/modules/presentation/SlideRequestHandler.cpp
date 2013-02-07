@@ -198,16 +198,20 @@ bool performKnit(const FilePath& rmdFilePath, std::string* pErrMsg)
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
-                     "opts_chunk$set(cache=TRUE,     "
-                     "               results='hide', "
-                     "               fig.keep='none',"
-                     "               tidy=FALSE,     "
-                     "               warning=FALSE,  "
-                     "               message=FALSE,  "
-                     "               comment=NA);    "
-                     "knit('%2%', encoding='%1%');");
+                     "opts_chunk$set(cache=TRUE, "
+                                    "cache.path='%1%-cache/', "
+                                    "fig.path='%1%-figure/', "
+                                    "results='hide', "
+                                    "fig.keep='none', "
+                                    "tidy=FALSE, "
+                                    "warning=FALSE, "
+                                    "message=FALSE, "
+                                    "comment=NA); "
+                     "knit('%2%', encoding='%3%');");
    std::string encoding = projects::projectContext().defaultEncoding();
-   std::string cmd = boost::str(fmt % encoding % rmdFilePath.filename());
+   std::string cmd = boost::str(fmt % rmdFilePath.stem()
+                                    % rmdFilePath.filename()
+                                    % encoding);
    args.push_back(cmd);
 
    // options
