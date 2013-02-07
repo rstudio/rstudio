@@ -262,7 +262,7 @@ public class Presentation extends BasePresenter
       currentState_.setSlideIndex(index);
       indexPersister_.setIndex(index);
       
-      // execute commands if we stay on the slide for > 1 second
+      // execute commands if we stay on the slide for > 750ms
       new Timer() {
          @Override
          public void run()
@@ -275,7 +275,7 @@ public class Presentation extends BasePresenter
                   dispatchCommand(cmds.get(i));  
             }
          }   
-      }.schedule(1000);  
+      }.schedule(750);  
    }
    
    private void initPresentationSlideList(JavaScriptObject jsSlides)
