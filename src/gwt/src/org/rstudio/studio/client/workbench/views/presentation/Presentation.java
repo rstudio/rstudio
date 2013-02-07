@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocum
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideInfo;
 import org.rstudio.studio.client.workbench.views.presentation.zoom.PresentationZoomPopupPanel;
 
 public class Presentation extends BasePresenter 
@@ -279,7 +280,11 @@ public class Presentation extends BasePresenter
    
    private void initPresentationSlideList(JavaScriptObject jsSlides)
    {
-
+      JsArray<SlideInfo> slides = jsSlides.cast();
+      for (int i=0; i<slides.length(); i++)
+      {
+ 
+      }
    }
    
    public final native void initPresentationCallbacks() /*-{
