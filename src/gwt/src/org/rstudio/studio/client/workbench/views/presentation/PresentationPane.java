@@ -245,7 +245,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       protected int getMaxHeight()
       {
          return Window.getClientHeight() - titleLabel_.getAbsoluteTop() -
-                titleLabel_.getOffsetHeight() - 50;
+                titleLabel_.getOffsetHeight() - 300;
       }
    }
    
