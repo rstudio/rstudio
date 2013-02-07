@@ -16,6 +16,11 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import org.rstudio.core.client.SeparatorManager;
@@ -159,6 +164,32 @@ public class Toolbar extends Composite
       leftToolbarPanel_.setCellVerticalAlignment(widget, alignment);
       invalidateSeparators();
       return widget;
+   }
+   
+   public void addLeftPopupMenu(final Label label, 
+                                final ToolbarPopupMenu menu)
+   {
+      label.setStylePrimaryName("rstudio-StrongLabel") ;
+      label.setWordWrap(false);
+      label.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
+      label.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+      addLeftWidget(label) ;
+      Image image = new Image(ThemeResources.INSTANCE.mediumDropDownArrow());
+      image.getElement().getStyle().setMarginLeft(2, Unit.PX);
+      image.getElement().getStyle().setMarginRight(8, Unit.PX);
+      image.getElement().getStyle().setMarginBottom(2, Unit.PX);
+      addLeftWidget(image);
+
+      final ClickHandler clickHandler = new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            menu.showRelativeTo(label);
+            menu.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
+         }
+      };
+      label.addClickHandler(clickHandler);
+      image.addClickHandler(clickHandler);
    }
 
    public Widget addLeftSeparator()

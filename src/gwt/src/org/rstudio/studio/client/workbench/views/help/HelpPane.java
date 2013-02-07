@@ -19,7 +19,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -46,7 +45,6 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -295,29 +293,7 @@ public class HelpPane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar() ;
-      title_ = new Label() ;
-      title_.setStylePrimaryName("rstudio-StrongLabel") ;
-      title_.setWordWrap(false);
-      title_.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
-      title_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
-      toolbar.addLeftWidget(title_) ;
-      final Image image = new Image(ThemeResources.INSTANCE.mediumDropDownArrow());
-      image.getElement().getStyle().setMarginLeft(2, Unit.PX);
-      image.getElement().getStyle().setMarginRight(8, Unit.PX);
-      image.getElement().getStyle().setMarginBottom(2, Unit.PX);
-      toolbar.addLeftWidget(image);
-
-      final ClickHandler clickHandler = new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            final PopupPanel pp = history_.getMenu();
-            pp.showRelativeTo(title_);
-            pp.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
-         }
-      };
-      title_.addClickHandler(clickHandler);
-      image.addClickHandler(clickHandler);
+      toolbar.addLeftPopupMenu(title_ = new Label(), history_.getMenu());
       
       if (isFindSupported())
       {
