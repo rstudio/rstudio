@@ -277,18 +277,26 @@ public class Presentation extends BasePresenter
       }.schedule(1000);  
    }
    
+   private void initPresentationSlideList(JavaScriptObject jsSlides)
+   {
+
+   }
+   
    public final native void initPresentationCallbacks() /*-{
   
       var thiz = this;
-      $wnd.presentationSlideChanged = function(index, cmds) {
+      $wnd.presentationSlideChanged = $entry(function(index, cmds) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::onPresentationSlideChanged(ILcom/google/gwt/core/client/JavaScriptObject;)(index, cmds);
-      };
-      $wnd.presentationKeydown = function(e) {
+      });
+      $wnd.presentationKeydown = $entry(function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
-      };
-      $wnd.dispatchPresentationCommand = function(cmd) {
+      });
+      $wnd.dispatchPresentationCommand = $entry(function(cmd) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
-      };
+      });
+      $wnd.initPresentationSlideList = $entry(function(slides) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationSlideList(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
+      });
    }-*/;
 
    private void handleKeyDown(NativeEvent e)

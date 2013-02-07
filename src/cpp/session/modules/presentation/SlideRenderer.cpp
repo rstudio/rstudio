@@ -194,6 +194,31 @@ void renderMedia(const std::string& type,
    pSlideActions->push_back(boost::str(fmt % managerId));
 }
 
+class InitPresentationSlideList
+{
+public:
+   void add(const Slide& slide)
+   {
+      json::Object slideJson;
+      slideJson["title"] = slide.title();
+      slideJson["is_section"] = slide.type() == "section";
+      slides_.push_back(slideJson);
+   }
+
+   std::string asCall() const
+   {
+      std::ostringstream ostr;
+      ostr << "window.parent.initPresentationSlideList(";
+      json::write(slides_, ostr);
+      ostr << ");";
+      return ostr.str();
+   }
+
+private:
+   json::Array slides_;
+};
+
+
 } // anonymous namespace
 
 
@@ -210,6 +235,9 @@ Error renderSlides(const SlideDeck& slideDeck,
    // render the slides to HTML and slide commands to case statements
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
 
+   // track json version of slide list
+   InitPresentationSlideList slideList;
+
    // now the slides
    std::string cmdPad(8, ' ');
    int slideNumber = 0;
@@ -217,6 +245,9 @@ Error renderSlides(const SlideDeck& slideDeck,
    {
       // slide
       const Slide& slide = slideDeck.slides().at(i);
+
+      // track in list
+      slideList.add(slide);
 
       ostr << "<section";
       if (!slide.id().empty())
@@ -315,6 +346,9 @@ Error renderSlides(const SlideDeck& slideDeck,
       // increment slide number
       slideNumber++;
    }
+
+   // init slide list as part of actions
+   ostrInitActions << slideList.asCall() << std::endl;
 
    *pSlides = ostr.str();
    *pRevealConfig = ostrRevealConfig.str();
