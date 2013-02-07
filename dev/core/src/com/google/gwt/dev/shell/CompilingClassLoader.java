@@ -1159,7 +1159,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
       if (className.equals("com.google.gwt.core.client.GWT")) {
         gwtClass = newClass;
-        updateGwtClass();
+        setGwtBridge(makeGwtBridge());
       }
 
       return newClass;
@@ -1212,6 +1212,7 @@ public final class CompilingClassLoader extends ClassLoader implements
     weakJsoCache.clear();
     weakJavaWrapperCache.clear();
     dispClassInfoOracle.clear();
+    setGwtBridge(null);
   }
 
   /**
@@ -1396,23 +1397,14 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   /**
-   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
-   * sets its static 'host' field to our module space.
-   * 
-   * @see JavaScriptHost
+   * Calls setBridge method on the GWT class inside this classloader, if possible.
    */
-  private void updateGwtClass() {
+  private void setGwtBridge(GWTBridgeImpl bridge) {
     if (gwtClass == null) {
       return;
     }
     Throwable caught;
     try {
-      GWTBridgeImpl bridge;
-      if (shellJavaScriptHost == null) {
-        bridge = null;
-      } else {
-        bridge = new GWTBridgeImpl(shellJavaScriptHost);
-      }
       final Class<?>[] paramTypes = new Class[]{GWTBridge.class};
       Method setBridgeMethod = gwtClass.getDeclaredMethod("setBridge",
           paramTypes);
@@ -1431,6 +1423,16 @@ public final class CompilingClassLoader extends ClassLoader implements
       caught = e.getTargetException();
     }
     throw new RuntimeException("Error initializing GWT bridge", caught);
+  }
+
+  /**
+   * Returns a new bridge or null.
+   */
+  private GWTBridgeImpl makeGwtBridge() {
+    if (shellJavaScriptHost == null) {
+      return null;
+    }
+    return new GWTBridgeImpl(shellJavaScriptHost);
   }
 
   /**
