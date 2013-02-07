@@ -73,6 +73,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "navigation") ||
           boost::iequals(name, "id") ||
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||

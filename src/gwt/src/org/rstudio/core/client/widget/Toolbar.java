@@ -171,9 +171,9 @@ public class Toolbar extends Composite
       ToolbarPopupMenu getMenu();
    }
    
-   public void addLeftPopupMenu(Label label, final ToolbarPopupMenu menu)
+   public Widget addLeftPopupMenu(Label label, final ToolbarPopupMenu menu)
    {
-      addLeftPopupMenu(label, new MenuSource() {
+      return addLeftPopupMenu(label, new MenuSource() {
 
          @Override
          public ToolbarPopupMenu getMenu()
@@ -183,8 +183,8 @@ public class Toolbar extends Composite
       });
    }
    
-   public void addLeftPopupMenu(final Label label, 
-                                final MenuSource menuSource)
+   public Widget addLeftPopupMenu(final Label label, 
+                                  final MenuSource menuSource)
    {
       label.setStylePrimaryName("rstudio-StrongLabel") ;
       label.setWordWrap(false);
@@ -208,6 +208,8 @@ public class Toolbar extends Composite
       };
       label.addClickHandler(clickHandler);
       image.addClickHandler(clickHandler);
+      
+      return image;
    }
 
    public Widget addLeftSeparator()

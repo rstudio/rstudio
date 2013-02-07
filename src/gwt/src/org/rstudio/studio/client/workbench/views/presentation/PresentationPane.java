@@ -63,7 +63,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
+      menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
+      getSlideMenu().setDropDownVisible(false);
       
       toolbar.addRightWidget(commands_.presentationFullscreen().createToolbarButton());
       toolbar.addRightSeparator();
@@ -194,6 +195,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       {
          slidesMenu_.clearItems();
       }
+
+      @Override
+      public void setDropDownVisible(boolean visible)
+      {
+         menuWidget_.setVisible(visible);
+      }
    };
    
    private final native void initPresentationCallbacks() /*-{
@@ -251,6 +258,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
+   private Widget menuWidget_;
    private PresentationFrame frame_ ;
    private final Commands commands_;
    

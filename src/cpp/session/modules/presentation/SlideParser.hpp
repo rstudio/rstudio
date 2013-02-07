@@ -74,8 +74,10 @@ public:
    std::string title() const { return title_; }
    bool showTitle() const;
 
+   // title slide fields
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string navigation() const { return fieldValue("navigation"); }
 
    std::string id() const { return fieldValue("id"); }
 

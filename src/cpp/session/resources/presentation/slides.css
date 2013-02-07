@@ -68,6 +68,15 @@
    margin-top: 50px;
 }
 
+.sub-section .reveal .state-background {
+  background: #E7E8EA
+}
+
+.sub-section .reveal h2,
+.sub-section .reveal p {
+  margin-top: 50px;
+}
+
 .reveal strong {
   color: #25679E;
 }

@@ -1,5 +1,5 @@
 /*
- * SlideInfo.java
+ * SlideNavigationItem.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,9 +16,9 @@ package org.rstudio.studio.client.workbench.views.presentation.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class SlideInfo extends JavaScriptObject
+public class SlideNavigationItem extends JavaScriptObject
 {
-   protected SlideInfo()
+   protected SlideNavigationItem()
    {
    }
       
@@ -26,7 +26,11 @@ public class SlideInfo extends JavaScriptObject
       return this.title;
    }-*/;
  
-   public final native boolean isSection() /*-{
-      return this.is_section;
+   public final native int getIndent() /*-{
+      return this.indent;
+   }-*/;
+   
+   public final native int getIndex() /*-{
+      return this.index;
    }-*/;
 }

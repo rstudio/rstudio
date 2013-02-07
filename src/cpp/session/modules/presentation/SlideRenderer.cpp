@@ -194,28 +194,128 @@ void renderMedia(const std::string& type,
    pSlideActions->push_back(boost::str(fmt % managerId));
 }
 
-class InitPresentationSlideList
+class PresentationNavigationList
 {
 public:
+   PresentationNavigationList()
+      : allowNavigation_(true),
+        allowSlideNavigation_(true),
+        index_(0),
+        inSubSection_(false),
+        hasSections_(false)
+   {
+   }
+
+   void setNavigationType(const std::string& type)
+   {
+      if (type.empty() || (type == "slides"))
+      {
+         allowNavigation_ = true;
+         allowSlideNavigation_ = true;
+      }
+      else if (type == "sections")
+      {
+         allowNavigation_ = true;
+         allowSlideNavigation_ = false;
+      }
+      else if (type == "none")
+      {
+         allowNavigation_ = false;
+         allowSlideNavigation_ = false;
+      }
+      else
+      {
+         allowNavigation_ = true;
+         allowSlideNavigation_ = true;
+         module_context::consoleWriteError("Unknown type '" + type + "' " +
+                                           "for navigation field");
+      }
+   }
+
+
    void add(const Slide& slide)
    {
-      json::Object slideJson;
-      slideJson["title"] = slide.title();
-      slideJson["is_section"] = slide.type() == "section";
-      slides_.push_back(slideJson);
+      // if there is no navigation then we only add the first slide
+      if (!allowNavigation_)
+      {
+         if (slides_.empty())
+            addSlide(slide.title(), 0, 0);
+      }
+      else if (!allowSlideNavigation_)
+      {
+         if (slide.type() == "section")
+            addSlide(slide.title(), 0, index_);
+      }
+      else
+      {
+         int indent = 0;
+         if (slides_.empty())
+         {
+            inSubSection_ = false;
+            indent = 0;
+         }
+         else if (slide.type() == "section")
+         {
+            inSubSection_ = false;
+            indent = 0;
+            hasSections_ = true;
+         }
+         else if (slide.type() == "sub-section")
+         {
+            inSubSection_ = true;
+            indent = 1;
+            hasSections_ = true;
+         }
+         else
+         {
+            indent = inSubSection_ ? 2 : 1;
+         }
+
+         addSlide(slide.title(), indent, index_);
+      }
+
+      index_++;
+   }
+
+   // post-process
+   void complete()
+   {
+      // if we don't have any sections then flatted the indents
+      if (!hasSections_)
+      {
+         BOOST_FOREACH(json::Value& slide, slides_)
+         {
+            slide.get_obj()["indent"] = 0;
+         }
+      }
    }
 
    std::string asCall() const
    {
       std::ostringstream ostr;
-      ostr << "window.parent.initPresentationSlideList(";
+      ostr << "window.parent.initPresentationNavigator(";
       json::write(slides_, ostr);
       ostr << ");";
       return ostr.str();
    }
 
 private:
+   void addSlide(const std::string& title, int indent, int index)
+   {
+      json::Object slideJson;
+      slideJson["title"] = title;
+      slideJson["indent"] = indent;
+      slideJson["index"] = index;
+      slides_.push_back(slideJson);
+   }
+
+private:
    json::Array slides_;
+   bool allowNavigation_;
+   bool allowSlideNavigation_;
+   int index_;
+   bool inSubSection_;
+   bool hasSections_;
 };
 
 
@@ -236,7 +336,7 @@ Error renderSlides(const SlideDeck& slideDeck,
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
 
    // track json version of slide list
-   InitPresentationSlideList slideList;
+   PresentationNavigationList navigationList;
 
    // now the slides
    std::string cmdPad(8, ' ');
@@ -249,8 +349,12 @@ Error renderSlides(const SlideDeck& slideDeck,
       // is this the first slide?
       bool isFirstSlide = (i == 0);
 
+      // if this is the first slide then set the navigation type from it
+      if (isFirstSlide)
+         navigationList.setNavigationType(slide.navigation());
+
       // track in list
-      slideList.add(slide);
+      navigationList.add(slide);
 
       ostr << "<section";
       if (!slide.id().empty())
@@ -272,7 +376,7 @@ Error renderSlides(const SlideDeck& slideDeck,
          std::string hTag;
          if (isFirstSlide)
             hTag = "h1";
-         else if (type == "section")
+         else if (type == "section" || type == "sub-section")
             hTag = "h2";
          else
             hTag = "h3";
@@ -376,7 +480,8 @@ Error renderSlides(const SlideDeck& slideDeck,
    }
 
    // init slide list as part of actions
-   ostrInitActions << slideList.asCall() << std::endl;
+   navigationList.complete();
+   ostrInitActions << navigationList.asCall() << std::endl;
 
    *pSlides = ostr.str();
    *pRevealConfig = ostrRevealConfig.str();

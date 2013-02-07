@@ -53,7 +53,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocum
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
-import org.rstudio.studio.client.workbench.views.presentation.model.SlideInfo;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
 
 public class Presentation extends BasePresenter 
 {
@@ -80,6 +80,7 @@ public class Presentation extends BasePresenter
    public interface SlideMenu
    {
       void setCaption(String caption);
+      void setDropDownVisible(boolean visible);
       void addItem(MenuItem menu);
       void clear();
    }
@@ -261,10 +262,21 @@ public class Presentation extends BasePresenter
       currentState_.setSlideIndex(index);
       indexPersister_.setIndex(index);
       
-      // set the title if we can (defensive code for dom timing issues)
-      if (currentSlides_ != null && currentSlides_.length() > index)
-         view_.getSlideMenu().setCaption(currentSlides_.get(index).getTitle());
       
+      // find the first navigation item that is <= to the index
+      if (navigationItems_ != null)
+      {
+         for (int i=(navigationItems_.length()-1); i>=0; i--)
+         {
+            if (navigationItems_.get(i).getIndex() <= index)
+            {
+               view_.getSlideMenu().setCaption(
+                                 navigationItems_.get(i).getTitle());
+               break;
+            }
+         }
+      }
+         
       // execute commands if we stay on the slide for > 750ms
       new Timer() {
          @Override
@@ -281,48 +293,37 @@ public class Presentation extends BasePresenter
       }.schedule(750);  
    }
    
-   private void initPresentationSlideList(JavaScriptObject jsSlides)
+   private void initPresentationNavigator(JavaScriptObject jsNavigator)
    {
       // record current slides
-      currentSlides_ = jsSlides.cast();
+      navigationItems_ = jsNavigator.cast();
       
       // reset the slides menu
       SlideMenu slideMenu = view_.getSlideMenu();
       slideMenu.clear(); 
-      boolean inSection = false;
-      for (int i=0; i<currentSlides_.length(); i++)
+      for (int i=0; i<navigationItems_.length(); i++)
       {
          // get slide
-         SlideInfo slideInfo = currentSlides_.get(i);
-         
-         // if there is no title then ignore the slide
-         if (slideInfo.getTitle().trim().length() == 0)
-            continue;
-         
-         // if this slide denotes a section then we are not in 
-         // a section for this menu item
-         if (slideInfo.isSection())
-            inSection = false;
-         
+         final SlideNavigationItem item = navigationItems_.get(i);
+          
          // build html
          SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
-         if (inSection)
+         for (int j=0; j<item.getIndent(); j++)
             menuHtml.appendHtmlConstant("&nbsp;&nbsp;&nbsp;");
-         menuHtml.appendEscaped(slideInfo.getTitle());
+         menuHtml.appendEscaped(item.getTitle());
          
-         final int index = i;
+      
          slideMenu.addItem(new MenuItem(menuHtml.toSafeHtml(),
                                         new Command() {
             @Override
             public void execute()
             {
-               view_.slide(index); 
+               view_.slide(item.getIndex()); 
             }
-         }));
-         
-         if (slideInfo.isSection())
-            inSection = true;
+         })); 
       }  
+      
+      slideMenu.setDropDownVisible(navigationItems_.length() > 1);
    }
    
    private final native void initPresentationCallbacks() /*-{
@@ -333,8 +334,8 @@ public class Presentation extends BasePresenter
       $wnd.dispatchPresentationCommand = $entry(function(cmd) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::dispatchCommand(Lcom/google/gwt/core/client/JavaScriptObject;)(cmd);
       });
-      $wnd.initPresentationSlideList = $entry(function(slides) {
-         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationSlideList(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
+      $wnd.initPresentationNavigator = $entry(function(slides) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationNavigator(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
       });
    }-*/;   
    
@@ -518,6 +519,6 @@ public class Presentation extends BasePresenter
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private PresentationState currentState_ = null;
-   private JsArray<SlideInfo> currentSlides_ = null;
+   private JsArray<SlideNavigationItem> navigationItems_ = null;
    private boolean usingRmd_ = false;
 }
