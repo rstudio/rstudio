@@ -90,6 +90,22 @@ std::string normalizeFieldValue(const std::string& value)
 } // anonymous namespace
 
 
+json::Object Command::asJson() const
+{
+   json::Object commandJson;
+   commandJson["name"] = name();
+   commandJson["params"] = params();
+   return commandJson;
+}
+
+json::Object AtCommand::asJson() const
+{
+   json::Object atCommandJson;
+   atCommandJson["at"] = seconds();
+   atCommandJson["command"] = command().asJson();
+   return atCommandJson;
+}
+
 // default title to true unless this is a video slide
 bool Slide::showTitle() const
 {

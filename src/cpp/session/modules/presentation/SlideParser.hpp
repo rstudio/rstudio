@@ -24,6 +24,8 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+#include <core/json/Json.hpp>
+
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -37,6 +39,8 @@ public:
 
    const std::string& name() const { return name_; }
    const std::string& params() const { return params_; }
+
+   core::json::Object asJson() const;
 
 private:
    std::string name_;
@@ -52,6 +56,8 @@ public:
 
    int seconds() const { return seconds_; }
    const Command& command() const { return command_; }
+
+   core::json::Object asJson() const;
 
 private:
    int seconds_;

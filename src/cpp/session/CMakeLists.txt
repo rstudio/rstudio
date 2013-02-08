@@ -80,6 +80,8 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionSourceCpp.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationState.cpp
+   modules/presentation/SlideMediaRenderer.cpp
+   modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp

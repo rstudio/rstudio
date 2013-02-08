@@ -16,13 +16,7 @@
 
 #include "SlideRenderer.hpp"
 
-#include <iostream>
-#include <sstream>
-
 #include <boost/foreach.hpp>
-#include <boost/format.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -34,6 +28,8 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SlideParser.hpp"
+#include "SlideMediaRenderer.hpp"
+#include "SlideNavigationList.hpp"
 
 using namespace core;
 
@@ -43,15 +39,6 @@ namespace presentation {
 
 namespace {
 
-
-json::Object commandAsJson(const Command& command)
-{
-   json::Object commandJson;
-   commandJson["name"] = command.name();
-   commandJson["params"] = command.params();
-   return commandJson;
-}
-
 std::string commandsAsJsonArray(const Slide& slide)
 {
    json::Array commandsJsonArray;
@@ -59,7 +46,7 @@ std::string commandsAsJsonArray(const Slide& slide)
    std::vector<Command> commands = slide.commands();
    BOOST_FOREACH(const Command& command, commands)
    {
-      commandsJsonArray.push_back(commandAsJson(command));
+      commandsJsonArray.push_back(command.asJson());
    }
 
    std::ostringstream ostr;
@@ -67,257 +54,19 @@ std::string commandsAsJsonArray(const Slide& slide)
    return ostr.str();
 }
 
-std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
+
+Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
 {
-   json::Array cmdsArray;
+   // setup markdown options
+   markdown::Extensions extensions;
+   markdown::HTMLOptions htmlOptions;
 
-   BOOST_FOREACH(const AtCommand atCmd, atCommands)
-   {
-      json::Object obj;
-      obj["at"] = atCmd.seconds();
-      obj["command"] = commandAsJson(atCmd.command());
-      cmdsArray.push_back(obj);
-   }
+   return markdown::markdownToHTML(slide.content(),
+                                   extensions,
+                                   htmlOptions,
+                                   pHTML);
 
-   std::ostringstream ostr;
-   json::write(cmdsArray, ostr);
-   return ostr.str();
 }
-
-class MediaSource
-{
-public:
-   MediaSource(const std::string& src, const std::string& type)
-      : src_(src), type_(type)
-   {
-   }
-
-   std::string asTag() const
-   {
-      boost::format fmt("<source src=\"%1%\" type=\"%2%\" />");
-      return boost::str(fmt % src_ % type_);
-   }
-
-private:
-   std::string src_;
-   std::string type_;
-};
-
-std::vector<MediaSource> discoverMediaSources(
-                              const std::string& type,
-                              const FilePath& baseDir,
-                              const std::string& filename)
-{
-   // build list of formats based on type
-   std::vector<std::string> formats;
-   if (type == "video")
-   {
-      formats.push_back("mp4");
-      formats.push_back("webm");
-      formats.push_back("ogv");
-   }
-   else if (type == "audio")
-   {
-      formats.push_back("mp3");
-      formats.push_back("wav");
-      formats.push_back("oga");
-      formats.push_back("ogg");
-   }
-
-   std::vector<MediaSource> sources;
-   FilePath mediaFile = baseDir.complete(filename);
-   if (mediaFile.exists())
-   {
-      // get the filename without extension
-      std::string stem = mediaFile.stem();
-      BOOST_FOREACH(std::string fmt, formats)
-      {
-         FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
-         if (targetPath.exists())
-         {
-            std::string file = targetPath.relativePath(baseDir);
-            if (boost::algorithm::starts_with(fmt, "og"))
-               fmt = "ogg";
-            sources.push_back(MediaSource(file, type + "/" + fmt));
-         }
-      }
-   }
-   else
-   {
-      module_context::consoleWriteError("Media file " +
-                                        mediaFile.absolutePath() +
-                                        " does not exist");
-   }
-
-   return sources;
-}
-
-void renderMedia(const std::string& type,
-                 int slideNumber,
-                 const FilePath& baseDir,
-                 const std::string& fileName,
-                 const std::vector<AtCommand>& atCommands,
-                 std::ostream& os,
-                 std::vector<std::string>* pInitActions,
-                 std::vector<std::string>* pSlideActions)
-{
-   // discover media sources
-   std::vector<MediaSource> mediaSources = discoverMediaSources(type,
-                                                                baseDir,
-                                                                fileName);
-   std::string sources;
-   BOOST_FOREACH(const MediaSource& source, mediaSources)
-   {
-      sources += (source.asTag() + "\n");
-   }
-
-
-   boost::format fmt("slide%1%%2%");
-   std::string mediaId = boost::str(fmt % slideNumber % type);
-   fmt = boost::format(
-         "<%1% id=\"%2%\" controls preload=\"none\">\n"
-         "  %3%"
-         "  Your browser does not support the %1% tag.\n"
-         "</%1%>\n");
-
-   os << boost::str(fmt % type % mediaId % sources) << std::endl;
-
-   // define manager during initialization
-   std::string atCmds = atCommandsAsJsonArray(atCommands);
-   fmt = boost::format("%1%Manager");
-   std::string managerId = boost::str(fmt % mediaId);
-   fmt = boost::format("%1% = mediaManager(%2%, %3%)");
-   pInitActions->push_back(boost::str(fmt % managerId % mediaId % atCmds));
-
-   // add video autoplay action
-   fmt = boost::format("%1%.play()");
-   pSlideActions->push_back(boost::str(fmt % managerId));
-}
-
-class PresentationNavigationList
-{
-public:
-   PresentationNavigationList()
-      : allowNavigation_(true),
-        allowSlideNavigation_(true),
-        index_(0),
-        inSubSection_(false),
-        hasSections_(false)
-   {
-   }
-
-   void setNavigationType(const std::string& type)
-   {
-      if (type.empty() || (type == "slides"))
-      {
-         allowNavigation_ = true;
-         allowSlideNavigation_ = true;
-      }
-      else if (type == "sections")
-      {
-         allowNavigation_ = true;
-         allowSlideNavigation_ = false;
-      }
-      else if (type == "none")
-      {
-         allowNavigation_ = false;
-         allowSlideNavigation_ = false;
-      }
-      else
-      {
-         allowNavigation_ = true;
-         allowSlideNavigation_ = true;
-         module_context::consoleWriteError("Unknown type '" + type + "' " +
-                                           "for navigation field");
-      }
-   }
-
-
-   void add(const Slide& slide)
-   {
-      // if there is no navigation then we only add the first slide
-      if (!allowNavigation_)
-      {
-         if (slides_.empty())
-            addSlide(slide.title(), 0, 0);
-      }
-      else if (!allowSlideNavigation_)
-      {
-         if (slide.type() == "section")
-            addSlide(slide.title(), 0, index_);
-      }
-      else
-      {
-         int indent = 0;
-         if (slides_.empty())
-         {
-            inSubSection_ = false;
-            indent = 0;
-         }
-         else if (slide.type() == "section")
-         {
-            inSubSection_ = false;
-            indent = 0;
-            hasSections_ = true;
-         }
-         else if (slide.type() == "sub-section")
-         {
-            inSubSection_ = true;
-            indent = 1;
-            hasSections_ = true;
-         }
-         else
-         {
-            indent = inSubSection_ ? 2 : 1;
-         }
-
-         addSlide(slide.title(), indent, index_);
-      }
-
-      index_++;
-   }
-
-   // post-process
-   void complete()
-   {
-      // if we don't have any sections then flatted the indents
-      if (!hasSections_)
-      {
-         BOOST_FOREACH(json::Value& slide, slides_)
-         {
-            slide.get_obj()["indent"] = 0;
-         }
-      }
-   }
-
-   std::string asCall() const
-   {
-      std::ostringstream ostr;
-      ostr << "window.parent.initPresentationNavigator(";
-      json::write(slides_, ostr);
-      ostr << ");";
-      return ostr.str();
-   }
-
-private:
-   void addSlide(const std::string& title, int indent, int index)
-   {
-      json::Object slideJson;
-      slideJson["title"] = title;
-      slideJson["indent"] = indent;
-      slideJson["index"] = index;
-      slides_.push_back(slideJson);
-   }
-
-private:
-   json::Array slides_;
-   bool allowNavigation_;
-   bool allowSlideNavigation_;
-   int index_;
-   bool inSubSection_;
-   bool hasSections_;
-};
-
 
 } // anonymous namespace
 
@@ -328,15 +77,11 @@ Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pInitActions,
                    std::string* pSlideActions)
 {
-   // setup markdown options
-   markdown::Extensions extensions;
-   markdown::HTMLOptions htmlOptions;
-
    // render the slides to HTML and slide commands to case statements
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
 
    // track json version of slide list
-   PresentationNavigationList navigationList;
+   SlideNavigationList navigationList;
 
    // now the slides
    std::string cmdPad(8, ' ');
@@ -402,11 +147,9 @@ Error renderSlides(const SlideDeck& slideDeck,
          ostr << "</p>" << std::endl;
       }
 
+      // render markdown
       std::string htmlContent;
-      Error error = markdown::markdownToHTML(slide.content(),
-                                             extensions,
-                                             htmlOptions,
-                                             &htmlContent);
+      Error error = slideMarkdownToHtml(slide, &htmlContent);
       if (error)
          return error;
 
