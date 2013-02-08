@@ -18,6 +18,8 @@
 
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
+
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -72,6 +74,18 @@ std::string divWrap(const std::string& className, const std::string& contents)
    return boost::str(fmt % className % contents);
 }
 
+std::string imageClass(const std::string& html)
+{
+   boost::regex imageRegex(
+     "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*/>\\s*</p>\\s*");
+
+   boost::smatch match;
+   if (boost::regex_match(html, match, imageRegex))
+      return "imageOnly";
+   else
+      return std::string();
+}
+
 Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
 {
    // render the markdown
@@ -79,20 +93,21 @@ Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
    if (error)
       return error;
 
+   // generate a special class for no title included
+   std::string titleClass;
+   if (!slide.showTitle())
+      titleClass = " noTitle";
+
    // look for an <hr/> splitting the html into columns
    const std::string kHRTag = "<hr/>";
    std::size_t hrLoc = pHTML->find(kHRTag);
    if (hrLoc != std::string::npos)
    {
+      // get the columns
       std::string column1 = pHTML->substr(0, hrLoc);
       std::string column2;
       if (pHTML->length() > (column1.length() + kHRTag.length()))
          column2 = pHTML->substr(hrLoc + kHRTag.length());
-
-      // build classes
-      std::string titleClass;
-      if (!slide.showTitle())
-         titleClass = " noTitle";
 
       // now render two divs with the columns
       pHTML->clear();
@@ -106,6 +121,9 @@ Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
    // above text, or below text
    else
    {
+      std::string extraClass = imageClass(*pHTML);
+      if (!extraClass.empty())
+         *pHTML = divWrap(extraClass + titleClass, *pHTML);
    }
 
    return Success();

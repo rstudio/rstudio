@@ -43,11 +43,6 @@
    border: none;
 }
 
-.reveal section img.standalone { 
-   float: left; 
-   height: 65%;
-}
-
 .prompt .reveal .state-background {
    background: #C6D7DC;
 }
@@ -218,7 +213,7 @@
 
 .reveal .slides section .column {
    position: fixed;
-   width: 50%;
+   width: 48%;
    top: 2.5em;
    bottom: 0;
 }
@@ -231,15 +226,27 @@
    right: 0;
 }
 
+.reveal .slides section .column img {
+   max-width: 95%;
+   max-height: 95%;
+   height: auto;
+}
+
+.reveal .slides section .imageOnly {
+   position: fixed;
+   width: 100%;
+   top: 2.5em;
+   bottom: 0;
+}
+
+.reveal .slides section .imageOnly img {
+   max-width: 90%;
+   max-height: 90%;
+   height: auto;
+}
+
 .reveal .slides section .noTitle {
    top: 0;
 }
-
-.reveal .slides section .column img {
-   width: 95%;
-   margin: 0px;
-}
-
-
 
 
