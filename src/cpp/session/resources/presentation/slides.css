@@ -3,6 +3,15 @@
   font-size: 2.5em; 
 }
 
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal h5,
+.reveal h6 {
+   margin-bottom: .6em;    
+}
+
 .reveal .slides {
   text-align: left;
 }
@@ -214,6 +223,6 @@
 
 .reveal ol,
 .reveal ul {
-	margin: 0 0 .5em 2em;
+	margin: 0 0 .5em 1.2em;
 }
 
