@@ -16,6 +16,10 @@
   text-align: left;
 }
 
+.reveal small {
+	font-size: 0.85em;
+}
+
 .reveal pre {   
   margin-top: 0;
   max-width: 95%;
@@ -254,5 +258,6 @@
 .reveal .slides section .noTitle {
    top: 0;
 }
+
 
 
