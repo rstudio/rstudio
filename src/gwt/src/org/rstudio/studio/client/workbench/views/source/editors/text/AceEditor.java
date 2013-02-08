@@ -437,6 +437,10 @@ public class AceEditor implements DocDisplay,
    
    private void syncWrapLimit()
    {
+      // bail if there is no filetype yet
+      if (fileType_ == null)
+         return;
+      
       // We noted that large word-wrapped documents were freezing Chrome
       // on Linux (eventually running of of memory). Running the profiler
       // indicated that the time was being spent inside wrap width 
