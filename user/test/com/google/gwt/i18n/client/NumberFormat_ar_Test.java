@@ -52,8 +52,8 @@ public class NumberFormat_ar_Test extends GWTTestCase {
     NumberFormat.setForcedLatinDigits(true);
     assertTrue(NumberFormat.forcedLatinDigits());
     NumberFormat decLatin = NumberFormat.getDecimalFormat();
-    assertEquals("1\u00A0003,14", decLatin.format(1003.14));
-    assertEquals("1\u00A0003,14-", decLatin.format(-1003.14));
+    assertEquals("1003,14", decLatin.format(1003.14));
+    assertEquals("1003,14-", decLatin.format(-1003.14));
     NumberFormat.setForcedLatinDigits(false);
     assertFalse(NumberFormat.forcedLatinDigits());
     assertEquals("3,14", decLatin.format(3.14));
