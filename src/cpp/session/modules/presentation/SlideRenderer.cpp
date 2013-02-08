@@ -89,11 +89,16 @@ Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
       if (pHTML->length() > (column1.length() + kHRTag.length()))
          column2 = pHTML->substr(hrLoc + kHRTag.length());
 
+      // build classes
+      std::string titleClass;
+      if (!slide.showTitle())
+         titleClass = " noTitle";
+
       // now render two divs with the columns
       pHTML->clear();
       std::ostringstream ostr;
-      ostr << divWrap("column1", column1);
-      ostr << divWrap("column2", column2);
+      ostr << divWrap("column column1" + titleClass, column1);
+      ostr << divWrap("column column2" + titleClass, column2);
       *pHTML = ostr.str();
    }
 

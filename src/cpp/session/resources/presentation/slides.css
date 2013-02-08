@@ -48,20 +48,6 @@
    height: 65%;
 }
 
-.reveal section img.floatLeft { 
-   float: left; 
-   width: 50%;
-   margin-top: 0px;
-   margin-right: 20px; 
-}
-
-.reveal section img.floatRight { 
-   float: right; 
-   width: 50%;
-   margin-top: 0px;
-   margin-left: 20px; 
-}
-
 .prompt .reveal .state-background {
    background: #C6D7DC;
 }
@@ -226,17 +212,34 @@
 	margin: 0 0 .5em 1.2em;
 }
 
+.reveal .slides section {
+   height: 100%;
+}
+
+.reveal .slides section .column {
+   position: fixed;
+   width: 50%;
+   top: 2.5em;
+   bottom: 0;
+}
 
 .reveal .slides section .column1 {
-   float:left;
-   width: 50%;
-   max-height: 100%;
+   left: 0;
 }
 
 .reveal .slides section .column2 {
-   float:right;
-   width: 50%;
-   max-height: 100%;
+   right: 0;
 }
+
+.reveal .slides section .noTitle {
+   top: 0;
+}
+
+.reveal .slides section .column img {
+   width: 95%;
+   margin: 0px;
+}
+
+
 
 
