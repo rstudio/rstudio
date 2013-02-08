@@ -54,18 +54,43 @@ std::string commandsAsJsonArray(const Slide& slide)
    return ostr.str();
 }
 
-
-Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
+Error renderMarkdown(const std::string& content, std::string* pHTML)
 {
-   // setup markdown options
    markdown::Extensions extensions;
    markdown::HTMLOptions htmlOptions;
-
-   return markdown::markdownToHTML(slide.content(),
+   return markdown::markdownToHTML(content,
                                    extensions,
                                    htmlOptions,
                                    pHTML);
+}
 
+
+Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
+{
+   // render the markdown
+   Error error = renderMarkdown(slide.content(), pHTML);
+   if (error)
+      return error;
+
+   // look for an <hr/> splitting the html into columns
+   const std::string kHRTag = "<hr/>";
+   std::size_t hrLoc = pHTML->find(kHRTag);
+   if (hrLoc != std::string::npos)
+   {
+      std::string columnOne = pHTML->substr(0, hrLoc);
+      std::string columnTwo;
+      if (pHTML->length() > (columnOne.length() + kHRTag.length()))
+         columnTwo = pHTML->substr(hrLoc + kHRTag.length());
+
+      // now render two divs with the columns
+      pHTML->clear();
+      std::ostringstream ostr;
+      ostr << "<div class=\"column1\">" << columnOne << "</div>";
+      ostr << "<div class=\"column2\">" << columnTwo << "</div>";
+      *pHTML = ostr.str();
+   }
+
+   return Success();
 }
 
 } // anonymous namespace

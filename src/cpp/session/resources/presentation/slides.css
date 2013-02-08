@@ -226,3 +226,17 @@
 	margin: 0 0 .5em 1.2em;
 }
 
+
+.reveal .slides section .column1 {
+   float:left;
+   width: 50%;
+   max-height: 100%;
+}
+
+.reveal .slides section .column2 {
+   float:right;
+   width: 50%;
+   max-height: 100%;
+}
+
+
