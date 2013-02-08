@@ -17,6 +17,7 @@
 #include "SlideRenderer.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -65,6 +66,12 @@ Error renderMarkdown(const std::string& content, std::string* pHTML)
 }
 
 
+std::string divWrap(const std::string& className, const std::string& contents)
+{
+   boost::format fmt("\n<div class=\"%1%\">\n%2%\n</div>\n");
+   return boost::str(fmt % className % contents);
+}
+
 Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
 {
    // render the markdown
@@ -77,17 +84,23 @@ Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
    std::size_t hrLoc = pHTML->find(kHRTag);
    if (hrLoc != std::string::npos)
    {
-      std::string columnOne = pHTML->substr(0, hrLoc);
-      std::string columnTwo;
-      if (pHTML->length() > (columnOne.length() + kHRTag.length()))
-         columnTwo = pHTML->substr(hrLoc + kHRTag.length());
+      std::string column1 = pHTML->substr(0, hrLoc);
+      std::string column2;
+      if (pHTML->length() > (column1.length() + kHRTag.length()))
+         column2 = pHTML->substr(hrLoc + kHRTag.length());
 
       // now render two divs with the columns
       pHTML->clear();
       std::ostringstream ostr;
-      ostr << "<div class=\"column1\">" << columnOne << "</div>";
-      ostr << "<div class=\"column2\">" << columnTwo << "</div>";
+      ostr << divWrap("column1", column1);
+      ostr << divWrap("column2", column2);
       *pHTML = ostr.str();
+   }
+
+   // see if we have an image, and if so whether it is standalone,
+   // above text, or below text
+   else
+   {
    }
 
    return Success();
