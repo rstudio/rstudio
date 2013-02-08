@@ -13,7 +13,7 @@ diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
 
-showPresentation <- function(directory, 
+showPresentation <- function(directory = ".", 
                              caption = "Presentation",
                              author = FALSE) {
    
