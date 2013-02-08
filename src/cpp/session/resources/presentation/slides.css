@@ -245,6 +245,12 @@
    height: auto;
 }
 
+.reveal .slides section .imageInline img {
+   max-width: 90%;
+   max-height: 50%;
+   width: auto;
+}
+
 .reveal .slides section .noTitle {
    top: 0;
 }

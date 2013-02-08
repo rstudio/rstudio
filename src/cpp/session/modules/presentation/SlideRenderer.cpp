@@ -80,8 +80,16 @@ std::string imageClass(const std::string& html)
      "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*/>\\s*</p>\\s*");
 
    boost::smatch match;
-   if (boost::regex_match(html, match, imageRegex))
-      return "imageOnly";
+   if (boost::regex_search(html, match, imageRegex))
+   {
+      std::string::const_iterator begin = match[0].first;
+      std::string::const_iterator end = match[0].second;
+
+      if (begin == html.begin() && end == html.end())
+         return "imageOnly";
+      else
+         return "imageInline";
+   }
    else
       return std::string();
 }
