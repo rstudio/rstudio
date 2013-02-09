@@ -28,18 +28,14 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
-SlideNavigationList::SlideNavigationList()
+SlideNavigationList::SlideNavigationList(const std::string& type)
       : allowNavigation_(true),
         allowSlideNavigation_(true),
         index_(0),
         inSubSection_(false),
         hasSections_(false)
 {
-}
-
-void SlideNavigationList::setNavigationType(const std::string& type)
-{
-   if (type.empty() || (type == "slides"))
+   if (type == "slides")
    {
       allowNavigation_ = true;
       allowSlideNavigation_ = true;
@@ -54,15 +50,7 @@ void SlideNavigationList::setNavigationType(const std::string& type)
       allowNavigation_ = false;
       allowSlideNavigation_ = false;
    }
-   else
-   {
-      allowNavigation_ = true;
-      allowSlideNavigation_ = true;
-      module_context::consoleWriteError("Unknown type '" + type + "' " +
-                                        "for navigation field");
-   }
 }
-
 
 void SlideNavigationList::add(const Slide& slide)
 {

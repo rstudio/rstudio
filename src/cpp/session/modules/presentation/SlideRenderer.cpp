@@ -19,7 +19,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
-
+#include <boost/algorithm/string.hpp>
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -94,7 +94,9 @@ std::string imageClass(const std::string& html)
       return std::string();
 }
 
-Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
+Error slideMarkdownToHtml(const Slide& slide,
+                          const std::string& incremental,
+                          std::string* pHTML)
 {
    // render the markdown
    Error error = renderMarkdown(slide.content(), pHTML);
@@ -134,7 +136,59 @@ Error slideMarkdownToHtml(const Slide& slide, std::string* pHTML)
          *pHTML = divWrap(extraClass + titleClass, *pHTML);
    }
 
+
+   // check whether we need to apply incremental styles
+   std::string fragmentClass;
+   if (incremental != "false")
+   {
+      fragmentClass = "fragment";
+      if (boost::iequals(incremental, "roll"))
+         fragmentClass += " roll-in";
+      else if (boost::iequals(incremental, "highlight"))
+         fragmentClass += " highlight-red";
+   }
+
+   // apply them if necessary
+   if (!fragmentClass.empty())
+   {
+      std::string classAttrib = "class=\"" + fragmentClass + "\"";
+      boost::algorithm::replace_all(*pHTML, "<li>", "<li " + classAttrib + ">");
+   }
+
    return Success();
+}
+
+void validateNavigationType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "slides") ||
+                  boost::iequals(type, "sections") ||
+                  boost::iequals(type, "none");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for navigation field: "
+                                        + type + "\n");
+   }
+}
+
+void validateIncrementalType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "false") ||
+                  boost::iequals(type, "true") ||
+                  boost::iequals(type, "roll") ||
+                  boost::iequals(type, "highlight");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for incremental field: "
+                                        + type + "\n");
+   }
+}
+
+void validateSlideDeckFields(const SlideDeck& slideDeck)
+{
+   validateNavigationType(slideDeck.navigation());
+   validateIncrementalType(slideDeck.incremental());
 }
 
 } // anonymous namespace
@@ -146,11 +200,14 @@ Error renderSlides(const SlideDeck& slideDeck,
                    std::string* pInitActions,
                    std::string* pSlideActions)
 {
+   // validate global slide deck fields (will just print warnings)
+   validateSlideDeckFields(slideDeck);
+
    // render the slides to HTML and slide commands to case statements
    std::ostringstream ostr, ostrRevealConfig, ostrInitActions, ostrSlideActions;
 
    // track json version of slide list
-   SlideNavigationList navigationList;
+   SlideNavigationList navigationList(slideDeck.navigation());
 
    // now the slides
    std::string cmdPad(8, ' ');
@@ -163,11 +220,7 @@ Error renderSlides(const SlideDeck& slideDeck,
       // is this the first slide?
       bool isFirstSlide = (i == 0);
 
-      // if this is the first slide then set the navigation type from it
-      if (isFirstSlide)
-         navigationList.setNavigationType(slide.navigation());
-
-      // track in list
+      // track slide in list
       navigationList.add(slide);
 
       ostr << "<section";
@@ -184,16 +237,27 @@ Error renderSlides(const SlideDeck& slideDeck,
       // end section tag
       ostr << ">" << std::endl;
 
-      // show the title with the appropriate header
+      // show the title with the appropriate header. also track whether
+      // this slide is eligible for incremental display (first slide
+      // and section slides are not)
+      bool canShowIncremental = true;
       if (isFirstSlide || slide.showTitle())
       {
          std::string hTag;
          if (isFirstSlide)
+         {
             hTag = "h1";
+            canShowIncremental = false;
+         }
          else if (type == "section" || type == "sub-section")
+         {
             hTag = "h2";
+            canShowIncremental = false;
+         }
          else
+         {
             hTag = "h3";
+         }
 
          ostr << "<" << hTag << ">"
               << string_utils::htmlEscape(slide.title())
@@ -216,9 +280,24 @@ Error renderSlides(const SlideDeck& slideDeck,
          ostr << "</p>" << std::endl;
       }
 
+      // determine incremental property
+      std::string incremental = "false";
+      if (canShowIncremental)
+      {
+         if (!slide.incremental().empty())
+         {
+            validateIncrementalType(slide.incremental());
+            incremental = slide.incremental();
+         }
+         else
+         {
+            incremental = slideDeck.incremental();
+         }
+      }
+
       // render markdown
       std::string htmlContent;
-      Error error = slideMarkdownToHtml(slide, &htmlContent);
+      Error error = slideMarkdownToHtml(slide, incremental, &htmlContent);
       if (error)
          return error;
 

@@ -31,9 +31,7 @@ namespace presentation {
 class SlideNavigationList : public boost::noncopyable
 {
 public:
-   SlideNavigationList();
-
-   void setNavigationType(const std::string& type);
+   SlideNavigationList(const std::string& type);
    void add(const Slide& slide);
    void complete();
 

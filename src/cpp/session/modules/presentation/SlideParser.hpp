@@ -83,7 +83,8 @@ public:
    // title slide fields
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
-   std::string navigation() const { return fieldValue("navigation"); }
+   std::string navigation() const { return fieldValue("navigation", "slides"); }
+   std::string incremental() const { return fieldValue("incremental"); }
 
    std::string id() const { return fieldValue("id"); }
 
@@ -119,6 +120,9 @@ public:
    core::Error readSlides(const core::FilePath& filePath);
 
    std::string title() const;
+
+   std::string navigation() const;
+   std::string incremental() const;
 
    std::string preamble() const { return preamble_; }
 

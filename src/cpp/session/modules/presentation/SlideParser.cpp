@@ -74,6 +74,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
           boost::iequals(name, "navigation") ||
+          boost::iequals(name, "incremental") ||
           boost::iequals(name, "id") ||
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||
@@ -217,6 +218,23 @@ std::string SlideDeck::title() const
       return slides_[0].title();
    else
       return std::string();
+}
+
+std::string SlideDeck::navigation() const
+{
+   if (!slides_.empty())
+      return slides_[0].navigation();
+   else
+      return "slides";
+}
+
+std::string SlideDeck::incremental() const
+{
+   std::string val = !slides_.empty() ? slides_[0].incremental() : "";
+   if (!val.empty())
+      return val;
+   else
+      return "false";
 }
 
 
