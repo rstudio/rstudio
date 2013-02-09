@@ -13,17 +13,13 @@ diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
 
-showPresentation <- function(directory = ".", 
-                             caption = "Presentation") {
+showPresentation <- function(directory = ".") {
    
    if (!is.character(directory))
       stop("directory must be of type character")
-   if (!is.character(caption))
-      stop("tabCaption must be of type character")
-   
+  
    invisible(.Call(getNativeSymbolInfo("rs_showPresentation", PACKAGE=""), 
-                   .rs.normalizePath(path.expand(directory)),
-                   caption))
+                   .rs.normalizePath(path.expand(directory))))
 }
 
 showPresentationHelpDoc <- function(doc) {

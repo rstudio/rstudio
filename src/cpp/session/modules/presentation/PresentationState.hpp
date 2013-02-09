@@ -29,8 +29,7 @@ namespace presentation {
 namespace state {
 
 
-void init(const core::FilePath& directory,
-          const std::string& paneCaption = "Presentation");
+void init(const core::FilePath& directory);
 void setSlideIndex(int index);
 
 

@@ -105,12 +105,11 @@ bool loadPresentationState()
 } // anonymous namespace
 
 
-void init(const FilePath& directory,
-          const std::string& paneCaption)
+void init(const FilePath& directory)
 {
    PresentationState state;
    state.active = true;
-   state.paneCaption = paneCaption;
+   state.paneCaption = "Presentation";
    state.directory = directory;
    state.slideIndex = 0;
    savePresentationState(state);
