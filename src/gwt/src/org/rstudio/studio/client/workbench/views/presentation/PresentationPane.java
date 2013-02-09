@@ -76,7 +76,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override 
    protected Widget createMainWidget()
    {  
-      frame_ = new PresentationFrame(false, true) ;
+      frame_ = new PresentationFrame(false) ;
       frame_.setSize("100%", "100%");
       return new AutoGlassPanel(frame_);
    }
@@ -98,7 +98,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       titlePanel.add(titleLabel);
       
       // create the frame
-      ReloadableFrame frame = new ReloadableFrame(true);
+      ReloadableFrame frame = new PresentationFrame(true);
       frame.setSize("100%", "100%");
       
       // create the popup panel & add close handler 
