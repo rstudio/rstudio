@@ -44,8 +44,7 @@ namespace {
 
 
 SEXP rs_showPresentation(SEXP directorySEXP,
-                         SEXP tabCaptionSEXP,
-                         SEXP authorModeSEXP)
+                         SEXP tabCaptionSEXP)
 {
    try
    {
@@ -58,9 +57,7 @@ SEXP rs_showPresentation(SEXP directorySEXP,
                                            " does not exist.");
 
          // initialize state
-         presentation::state::init(dir,
-                                   r::sexp::asString(tabCaptionSEXP),
-                                   r::sexp::asLogical(authorModeSEXP));
+         presentation::state::init(dir, r::sexp::asString(tabCaptionSEXP));
 
          // notify the client
          ClientEvent event(client_events::kShowPresentationPane,
@@ -201,7 +198,7 @@ Error initialize()
       R_CallMethodDef methodDefShowPresentation;
       methodDefShowPresentation.name = "rs_showPresentation" ;
       methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
-      methodDefShowPresentation.numArgs = 3;
+      methodDefShowPresentation.numArgs = 2;
       r::routines::addCallMethod(methodDefShowPresentation);
 
       // register rs_showPresentationHelpDoc

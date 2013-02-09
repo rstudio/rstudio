@@ -112,13 +112,20 @@ public class Presentation extends BasePresenter
          @Override
          public void onSourceDocumentSaved(SourceDocumentSavedEvent event)
          {
-            if (currentState_ != null && currentState_.isAuthorMode())
+            if (currentState_ != null)
             {
-               if (event.getSourceFile().getPath().startsWith(
-                                          currentState_.getDirectory()))
-                  view_.refresh(false);
+               FileSystemItem file = event.getSourceFile();
+               String mimeType = file.mimeType();
+               String dir = currentState_.getDirectory();
+               if (file.getPath().startsWith(dir) &&
+                   (mimeType.equals("text/x-markdown") ||
+                    mimeType.equals("text/x-r-markdown") ||
+                    mimeType.equals("text/css") ||
+                    mimeType.equals("text/html")))
+               {
+                  view_.load(buildPresentationUrl());
+               }
             }
-            
          }
       });
       
@@ -190,8 +197,8 @@ public class Presentation extends BasePresenter
    @Handler
    void onRefreshPresentation()
    {
-      boolean resetAnchor = Event.getCurrentEvent().getShiftKey();
-      view_.refresh(resetAnchor);
+      boolean resetSlideIndex = Event.getCurrentEvent().getShiftKey();
+      view_.load(buildPresentationUrl(resetSlideIndex));
    }
    
    @Override
@@ -235,15 +242,26 @@ public class Presentation extends BasePresenter
    
    private String buildPresentationUrl()
    {
-      return buildPresentationUrl(null);
+      return buildPresentationUrl(false);
+   }
+   
+   private String buildPresentationUrl(boolean resetSlideIndex)
+   {
+      return buildPresentationUrl(resetSlideIndex, null);
    }
    
    private String buildPresentationUrl(String extraPath)
    {
+      return buildPresentationUrl(false, extraPath);
+   }
+   
+   private String buildPresentationUrl(boolean resetSlideIndex,
+                                       String extraPath)
+   {
       String url = server_.getApplicationURL("presentation/");
       if (extraPath != null)
          url = url + extraPath;
-      if (currentState_.getSlideIndex() != 0)
+      if (!resetSlideIndex && (currentState_.getSlideIndex() != 0))
          url = url + "#/" + currentState_.getSlideIndex();
       return url;
    }

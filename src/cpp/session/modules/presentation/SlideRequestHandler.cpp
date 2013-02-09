@@ -57,16 +57,9 @@ private:
 public:
    std::string get(const std::string& path)
    {
-      if (presentation::state::authorMode())
-      {
-         return module_context::resourceFileAsString(path);
-      }
-      else
-      {
-         if (cache_.find(path) == cache_.end())
-            cache_[path] = module_context::resourceFileAsString(path);
-         return cache_[path];
-      }
+      if (cache_.find(path) == cache_.end())
+         cache_[path] = module_context::resourceFileAsString(path);
+      return cache_[path];
    }
 
 private:
@@ -173,8 +166,14 @@ bool hasKnitrVersion1()
    return hasVersion;
 }
 
-bool performKnit(const FilePath& rmdFilePath, std::string* pErrMsg)
+bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
 {
+   // first detect whether we even need to knit -- if there is an .md
+   // file with timestamp the same as or later than the .Rmd then skip it
+   FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
+   if (mdPath.exists() && (mdPath.lastWriteTime() >= rmdPath.lastWriteTime()))
+      return true;
+
    // R binary
    FilePath rProgramPath;
    Error error = module_context::rScriptPath(&rProgramPath);
@@ -209,15 +208,15 @@ bool performKnit(const FilePath& rmdFilePath, std::string* pErrMsg)
                                     "comment=NA); "
                      "knit('%2%', encoding='%3%');");
    std::string encoding = projects::projectContext().defaultEncoding();
-   std::string cmd = boost::str(fmt % rmdFilePath.stem()
-                                    % rmdFilePath.filename()
+   std::string cmd = boost::str(fmt % rmdPath.stem()
+                                    % rmdPath.filename()
                                     % encoding);
    args.push_back(cmd);
 
    // options
    core::system::ProcessOptions options;
    core::system::ProcessResult result;
-   options.workingDir = rmdFilePath.parent();
+   options.workingDir = rmdPath.parent();
 
    // run knit
    error = core::system::runProgram(
@@ -291,27 +290,23 @@ boost::iostreams::regex_filter linkFilter()
             fixupLink);
 }
 
-
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
 {
    // detect zoomed
    bool zoomed = path == "zoom";
 
-   // look for slides.Rmd and knit it if we are in author mode
+   // look for slides.Rmd and knit if we need to
    FilePath presDir = presentation::state::directory();
-   if (presentation::state::authorMode())
+   FilePath rmdFile = presDir.complete("slides.Rmd");
+   if (rmdFile.exists())
    {
-      FilePath rmdFile = presDir.complete("slides.Rmd");
-      if (rmdFile.exists())
+      std::string errMsg;
+      if (!performKnit(rmdFile, &errMsg))
       {
-         std::string errMsg;
-         if (!performKnit(rmdFile, &errMsg))
-         {
-            pResponse->setError(http::status::InternalServerError,
-                                errMsg);
-            return;
-         }
+         pResponse->setError(http::status::InternalServerError,
+                             errMsg);
+         return;
       }
    }
 
@@ -484,16 +479,14 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       // actual file path will be the md file
       mdFilePath = filePath.parent().complete(filePath.stem() + ".md");
 
-      // do the knit if we are in author mode
-      if (presentation::state::authorMode())
+      // do the knit if we need to
+      std::string errMsg;
+      if (!performKnit(filePath, &errMsg))
       {
-         std::string errMsg;
-         if (!performKnit(filePath, &errMsg))
-         {
-            pResponse->setError(http::status::InternalServerError,
-                                errMsg);
-            return;
-         }
+         pResponse->setError(http::status::InternalServerError,
+                             errMsg);
+         return;
+
       }
    }
    else

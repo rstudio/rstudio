@@ -30,13 +30,11 @@ namespace state {
 
 
 void init(const core::FilePath& directory,
-          const std::string& paneCaption = "Presentation",
-          bool authorMode = false);
+          const std::string& paneCaption = "Presentation");
 void setSlideIndex(int index);
 
 
 bool isActive();
-bool authorMode();
 core::FilePath directory();
 
 

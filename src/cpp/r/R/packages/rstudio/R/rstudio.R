@@ -14,20 +14,16 @@ diagnosticsReport <- function() {
 }
 
 showPresentation <- function(directory = ".", 
-                             caption = "Presentation",
-                             author = FALSE) {
+                             caption = "Presentation") {
    
    if (!is.character(directory))
       stop("directory must be of type character")
    if (!is.character(caption))
       stop("tabCaption must be of type character")
-   if (!is.logical(author))
-      stop("authorMode must be of type logical")
    
    invisible(.Call(getNativeSymbolInfo("rs_showPresentation", PACKAGE=""), 
                    .rs.normalizePath(path.expand(directory)),
-                   caption,
-                   author))
+                   caption))
 }
 
 showPresentationHelpDoc <- function(doc) {

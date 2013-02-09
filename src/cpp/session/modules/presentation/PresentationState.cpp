@@ -34,14 +34,12 @@ namespace {
 struct PresentationState
 {
    PresentationState()
-      : active(false), authorMode(false), usingRmd(false), slideIndex(0)
+      : active(false), slideIndex(0)
    {
    }
 
    bool active;
    std::string paneCaption;
-   bool authorMode;
-   bool usingRmd;
    FilePath directory;
    int slideIndex;
 };
@@ -73,8 +71,6 @@ void savePresentationState(const PresentationState& state)
    }
    settings.beginUpdate();
    settings.set("active", state.active);
-   settings.set("author-mode", state.authorMode);
-   settings.set("using-rmd", state.usingRmd);
    settings.set("pane-caption", state.paneCaption);
    settings.set("directory",
                 module_context::createAliasedPath(state.directory));
@@ -93,8 +89,6 @@ bool loadPresentationState()
          LOG_ERROR(error);
 
       s_presentationState.active = settings.getBool("active", false);
-      s_presentationState.authorMode = settings.getBool("author-mode", false);
-      s_presentationState.usingRmd = settings.getBool("using-rmd", false);
       s_presentationState.paneCaption = settings.get("pane-caption", "Presentaiton");
       s_presentationState.directory = module_context::resolveAliasedPath(
                                                    settings.get("directory"));
@@ -112,14 +106,11 @@ bool loadPresentationState()
 
 
 void init(const FilePath& directory,
-          const std::string& paneCaption,
-          bool authorMode)
+          const std::string& paneCaption)
 {
    PresentationState state;
    state.active = true;
    state.paneCaption = paneCaption;
-   state.authorMode = authorMode;
-   state.usingRmd = directory.childPath("slides.Rmd").exists();
    state.directory = directory;
    state.slideIndex = 0;
    savePresentationState(state);
@@ -136,11 +127,6 @@ bool isActive()
    return s_presentationState.active;
 }
 
-bool authorMode()
-{
-   return s_presentationState.authorMode;
-}
-
 FilePath directory()
 {
    return s_presentationState.directory;
@@ -155,8 +141,6 @@ json::Value asJson()
 {
    json::Object stateJson;
    stateJson["active"] = s_presentationState.active;
-   stateJson["author_mode"] = s_presentationState.authorMode;
-   stateJson["using_rmd"] = s_presentationState.usingRmd;
    stateJson["pane_caption"] = s_presentationState.paneCaption;
    stateJson["directory"] = module_context::createAliasedPath(
                                                 s_presentationState.directory);
@@ -175,8 +159,11 @@ Error initialize()
       const projects::ProjectContext& context = projects::projectContext();
       if (context.hasProject() && context.config().showPresentation)
       {
-         if (context.directory().childPath("slides.md").exists())
+         if (context.directory().childPath("slides.md").exists() ||
+             context.directory().childPath("slides.Rmd").exists())
+         {
             init(context.directory());
+         }
       }
    }
 
