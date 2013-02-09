@@ -42,7 +42,7 @@ import java.util.Map;
  * @param <T> the value type
  */
 public class ValueListBox<T> extends Composite implements
-    HasConstrainedValue<T>, IsEditor<TakesValueEditor<T>> {
+    Focusable, HasConstrainedValue<T>, IsEditor<TakesValueEditor<T>> {
 
   private final List<T> values = new ArrayList<T>();
   private final Map<Object, Integer> valueKeyToIndex = new HashMap<Object, Integer>();
@@ -88,6 +88,11 @@ public class ValueListBox<T> extends Composite implements
     return editor;
   }
 
+  @Override
+  public int getTabIndex() {
+    return getListBox().getTabIndex();
+  }
+
   public T getValue() {
     return value;
   }
@@ -103,6 +108,21 @@ public class ValueListBox<T> extends Composite implements
     }
 
     updateListBox();
+  }
+
+  @Override
+  public void setAccessKey(char key) {
+    getListBox().setAccessKey(key);
+  }
+
+  @Override
+  public void setFocus(boolean focused) {
+    getListBox().setFocus(focused);
+  }
+
+  @Override
+  public void setTabIndex (int index) {
+    getListBox().setTabIndex(index);
   }
 
   /**
