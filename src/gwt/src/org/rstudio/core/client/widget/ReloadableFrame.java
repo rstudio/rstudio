@@ -103,7 +103,7 @@ public class ReloadableFrame extends Frame
       if (existingUrl == null)
          return false;      
      
-      return stripAnchor(newUrl).equals(stripAnchor(existingUrl));
+      return newUrl.equals(stripAnchor(existingUrl));
    }
    
    private IFrameElementEx getIFrame()
