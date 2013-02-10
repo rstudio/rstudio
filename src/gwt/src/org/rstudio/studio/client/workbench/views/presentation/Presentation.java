@@ -49,7 +49,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
-import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocumentSavedEvent;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
@@ -107,10 +107,10 @@ public class Presentation extends BasePresenter
       binder.bind(commands, this);
       
       // auto-refresh for presentation files saved
-      eventBus.addHandler(SourceDocumentSavedEvent.TYPE, 
-                         new SourceDocumentSavedEvent.Handler() { 
+      eventBus.addHandler(SourceFileSaveCompletedEvent.TYPE, 
+                         new SourceFileSaveCompletedEvent.Handler() { 
          @Override
-         public void onSourceDocumentSaved(SourceDocumentSavedEvent event)
+         public void onSourceFileSaveCompleted(SourceFileSaveCompletedEvent event)
          {
             if (currentState_ != null)
             {
@@ -123,6 +123,17 @@ public class Presentation extends BasePresenter
                     mimeType.equals("text/css") ||
                     mimeType.equals("text/html")))
                {
+                  // if this is a slides file then find the slide index
+                  // the user was editing
+                  boolean editingSlides = isSlidesFile(event.getSourceFile());
+                  if (editingSlides)
+                  {
+                     int index = detectSlideIndex(event.getContents(),
+                                                  event.getCursorPos().getRow());
+                     if (index != -1)
+                        currentState_.setSlideIndex(index);
+                  }
+                  
                   view_.load(buildPresentationUrl());
                }
             }
@@ -528,6 +539,30 @@ public class Presentation extends BasePresenter
                                                 currentState_.getDirectory());
       return presentationDir.completePath(file);   
    }
+   
+   private static boolean isSlidesFile(FileSystemItem fsi)
+   {
+      String filename = fsi.getName();
+      return "slides.md".equals(filename) || "slides.Rmd".equals(filename);
+   }
+   
+   private static int detectSlideIndex(String contents, int cursorLine)
+   {
+      int currentLine = 0;
+      int slideIndex = -1; 
+      Iterable<String> lines = StringUtil.getLineIterator(contents);
+      for (String line : lines)
+      {
+         if (line.matches("^\\={3,}\\s*$"))
+            slideIndex++;
+         
+         if (currentLine++ >= cursorLine)
+            return slideIndex;
+      }
+      
+      
+      return -1;
+   } 
    
    private final Display view_ ; 
    private final PresentationServerOperations server_;

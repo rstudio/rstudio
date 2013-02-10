@@ -89,7 +89,7 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
-import org.rstudio.studio.client.workbench.views.presentation.events.SourceDocumentSavedEvent;
+import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
@@ -2688,7 +2688,10 @@ public class TextEditingTarget implements EditingTarget
             // fire source document saved event
             FileSystemItem file = FileSystemItem.createFile(
                                              docUpdateSentinel_.getPath());
-            events_.fireEvent(new SourceDocumentSavedEvent(file));
+            events_.fireEvent(new SourceFileSaveCompletedEvent(
+                                             file,
+                                             docUpdateSentinel_.getContents(),
+                                             docDisplay_.getCursorPosition()));
             
             // check for source on save
             if (fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())

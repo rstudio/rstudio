@@ -485,6 +485,11 @@ public class DocUpdateSentinel
    {
       return sourceDoc_.getPath();
    }
+   
+   public String getContents()
+   {
+      return sourceDoc_.getContents();
+   }
 
    public void stop()
    {

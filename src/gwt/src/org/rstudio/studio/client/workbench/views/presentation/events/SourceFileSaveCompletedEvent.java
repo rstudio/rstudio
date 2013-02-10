@@ -1,5 +1,5 @@
 /*
- * SourceDocumentSavedEvent.java
+ * SourceFileSaveCompletedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,25 +15,40 @@
 package org.rstudio.studio.client.workbench.views.presentation.events;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SourceDocumentSavedEvent extends GwtEvent<SourceDocumentSavedEvent.Handler>
+public class SourceFileSaveCompletedEvent extends GwtEvent<SourceFileSaveCompletedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onSourceDocumentSaved(SourceDocumentSavedEvent event);
+      void onSourceFileSaveCompleted(SourceFileSaveCompletedEvent event);
    }
 
-   public SourceDocumentSavedEvent(FileSystemItem sourceFile)
+   public SourceFileSaveCompletedEvent(FileSystemItem sourceFile, 
+                                       String contents,
+                                       Position cursorPos)
    {
       sourceFile_ = sourceFile;
+      contents_ = contents;
+      cursorPos_ = cursorPos;
    }
 
    public FileSystemItem getSourceFile()
    {
       return sourceFile_;
+   }
+   
+   public String getContents()
+   {
+      return contents_;
+   }
+   
+   public Position getCursorPos()
+   {
+      return cursorPos_;
    }
 
    @Override
@@ -45,10 +60,12 @@ public class SourceDocumentSavedEvent extends GwtEvent<SourceDocumentSavedEvent.
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onSourceDocumentSaved(this);
+      handler.onSourceFileSaveCompleted(this);
    }
 
    private final FileSystemItem sourceFile_;
+   private final String contents_;
+   private final Position cursorPos_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

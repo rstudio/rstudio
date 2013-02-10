@@ -72,7 +72,10 @@ public class ReloadableFrame extends Frame
                }
                else
                {
-                  getWindow().replaceLocationHref(url);
+                  if (!url.equals(getWindow().getLocationHref()))
+                     getWindow().replaceLocationHref(url);
+                  else 
+                     getWindow().reload();
                }
                
                if (autoFocus_)
