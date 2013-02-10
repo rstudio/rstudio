@@ -137,18 +137,12 @@ Error slideMarkdownToHtml(const Slide& slide,
    }
 
 
-   // check whether we need to apply incremental styles
+   // check whether we need to apply the fragment style
    std::string fragmentClass;
-   if (incremental != "false")
-   {
+   if (incremental == "true")
       fragmentClass = "fragment";
-      if (boost::iequals(incremental, "roll"))
-         fragmentClass += " roll-in";
-      else if (boost::iequals(incremental, "highlight"))
-         fragmentClass += " highlight-red";
-   }
 
-   // apply them if necessary
+   // apply if necessary
    if (!fragmentClass.empty())
    {
       std::string classAttrib = "class=\"" + fragmentClass + "\"";
@@ -174,9 +168,7 @@ void validateNavigationType(const std::string& type)
 void validateIncrementalType(const std::string& type)
 {
    bool isValid = boost::iequals(type, "false") ||
-                  boost::iequals(type, "true") ||
-                  boost::iequals(type, "roll") ||
-                  boost::iequals(type, "highlight");
+                  boost::iequals(type, "true");
 
    if (!isValid)
    {
