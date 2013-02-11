@@ -171,7 +171,7 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
    // first detect whether we even need to knit -- if there is an .md
    // file with timestamp the same as or later than the .Rmd then skip it
    FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
-   if (mdPath.exists() && (mdPath.lastWriteTime() >= rmdPath.lastWriteTime()))
+   if (mdPath.exists() && (mdPath.lastWriteTime() > rmdPath.lastWriteTime()))
       return true;
 
    // R binary
@@ -189,6 +189,11 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
       *pErrMsg = "knitr version 1.0 or greater is required for presentations";
       return false;
    }
+
+   // removet the target file
+   error = mdPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
 
    // args
    std::vector<std::string> args;
