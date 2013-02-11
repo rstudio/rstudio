@@ -63,7 +63,7 @@ public class GWTTestCaseTest extends GWTTestCase {
       fail("Expected failure for assertEquals(" + a + ", " + b + ", " + delta + ")");
     }
   }
-  
+
   private Object obj1 = Collections.nCopies(1, "data");
   private Object obj2 = Collections.nCopies(2, "data");
   private Object obj1Equal = Collections.nCopies(1, "data");
@@ -82,10 +82,8 @@ public class GWTTestCaseTest extends GWTTestCase {
     throw new Exception();
   }
 
-  // Fails in 'web' mode.
-  // Issue: http://code.google.com/p/google-web-toolkit/issues/detail?id=7847
   @ExpectedFailure(withType = JavaScriptException.class)
-  public void _suppressed_testThrowsNonSerializableException() {
+  public void testThrowsNonSerializableException() {
     throw new JavaScriptException("name", "desc");
   }
 
