@@ -41,13 +41,13 @@ var MarkdownHighlightRules = function() {
             token: "markup.heading.1",
             regex: "^=+(?=\\s*$)"
         }, { // h2
-            token: "markup.heading.1",
+            token: "markup.heading.2",
             regex: "^\\-+(?=\\s*$)"
         }, { // header
             token : function(value) {
-                return "markup.heading." + value.length;
+                return "markup.heading." + value.search(/[^#]/);
             },
-            regex : "^#{1,6}"
+            regex : "^#{1,6}(?:[^ #].*| +.*(?:[^ #].*|[^ ]+.* +#+ *))$"
         },
         { // Github style block
             token : "support.function",
