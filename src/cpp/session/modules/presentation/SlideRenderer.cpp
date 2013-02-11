@@ -68,10 +68,10 @@ Error renderMarkdown(const std::string& content, std::string* pHTML)
 }
 
 
-std::string divWrap(const std::string& className, const std::string& contents)
+std::string divWrap(const std::string& classNames, const std::string& contents)
 {
    boost::format fmt("\n<div class=\"%1%\">\n%2%\n</div>\n");
-   return boost::str(fmt % className % contents);
+   return boost::str(fmt % classNames % contents);
 }
 
 std::string imageClass(const std::string& html)
@@ -92,6 +92,19 @@ std::string imageClass(const std::string& html)
    }
    else
       return std::string();
+}
+
+void addFragmentClass(const std::string& tag,
+                      const std::string& fragmentClass,
+                      bool includeFirst,
+                      std::string* pHTML)
+{
+   std::string classAttrib = "class=\"" + fragmentClass + "\"";
+   std::string tagMarkup = "<" + tag + ">";
+   std::string tagMarkupWithClass = "<" + tag + " " + classAttrib + ">";
+   boost::algorithm::replace_all(*pHTML, tagMarkup, tagMarkupWithClass);
+   if (!includeFirst)
+      boost::algorithm::replace_first(*pHTML, tagMarkupWithClass, tagMarkup);
 }
 
 Error slideMarkdownToHtml(const Slide& slide,
@@ -145,8 +158,9 @@ Error slideMarkdownToHtml(const Slide& slide,
    // apply if necessary
    if (!fragmentClass.empty())
    {
-      std::string classAttrib = "class=\"" + fragmentClass + "\"";
-      boost::algorithm::replace_all(*pHTML, "<li>", "<li " + classAttrib + ">");
+      addFragmentClass("p", fragmentClass, false, pHTML);
+      addFragmentClass("pre", fragmentClass, true, pHTML);
+      addFragmentClass("li", fragmentClass, true, pHTML);
    }
 
    return Success();
