@@ -56,9 +56,9 @@ then
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install || true
    else
-     sudo ./bjam --prefix=$BOOST_DIR variant=release threading=multi link=static install
+     sudo ./bjam --prefix=$BOOST_DIR variant=release threading=multi link=static install || true
    fi
 
    # go back to the original install dir and remove build dir
