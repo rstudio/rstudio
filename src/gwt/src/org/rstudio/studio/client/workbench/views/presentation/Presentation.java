@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.presentation;
 
+import java.util.Iterator;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.URL;
@@ -208,8 +210,10 @@ public class Presentation extends BasePresenter
    @Handler
    void onRefreshPresentation()
    {
-      boolean resetSlideIndex = Event.getCurrentEvent().getShiftKey();
-      view_.load(buildPresentationUrl(resetSlideIndex));
+      if (Event.getCurrentEvent().getShiftKey())
+         currentState_.setSlideIndex(0);
+      
+      view_.load(buildPresentationUrl());
    }
    
    @Override
@@ -253,27 +257,15 @@ public class Presentation extends BasePresenter
    
    private String buildPresentationUrl()
    {
-      return buildPresentationUrl(false);
-   }
-   
-   private String buildPresentationUrl(boolean resetSlideIndex)
-   {
-      return buildPresentationUrl(resetSlideIndex, null);
+      return buildPresentationUrl(null);
    }
    
    private String buildPresentationUrl(String extraPath)
    {
-      return buildPresentationUrl(false, extraPath);
-   }
-   
-   private String buildPresentationUrl(boolean resetSlideIndex,
-                                       String extraPath)
-   {
       String url = server_.getApplicationURL("presentation/");
       if (extraPath != null)
          url = url + extraPath;
-      if (!resetSlideIndex && (currentState_.getSlideIndex() != 0))
-         url = url + "#/" + currentState_.getSlideIndex();
+      url = url + "#/" + currentState_.getSlideIndex();
       return url;
    }
    
@@ -550,14 +542,23 @@ public class Presentation extends BasePresenter
    {
       int currentLine = 0;
       int slideIndex = -1; 
-      Iterable<String> lines = StringUtil.getLineIterator(contents);
-      for (String line : lines)
+      String slideRegex = "^\\={3,}\\s*$";
+      
+      Iterator<String> it = StringUtil.getLineIterator(contents).iterator();
+      while (it.hasNext())
       {
-         if (line.matches("^\\={3,}\\s*$"))
+         String line = it.next();
+         if (line.matches(slideRegex))
             slideIndex++;
          
          if (currentLine++ >= cursorLine)
+         {
+            // bump the slide index if the next line is a header
+            if (it.hasNext() && it.next().matches(slideRegex))
+               slideIndex++;
+            
             return slideIndex;
+         }
       }
       
       
