@@ -19,14 +19,14 @@
 #include <boost/system/error_code.hpp>
 
 // bridges for boost libraries without support for system::error_code
-namespace boost {
+namespace rstudio_boost {
 
 namespace interprocess {
 
-const boost::system::error_category& interprocess_category() ;
+const rstudio_boost::system::error_category& interprocess_category() ;
 
 class interprocess_exception ;
-boost::system::error_code ec_from_exception(const interprocess_exception& e) ;
+rstudio_boost::system::error_code ec_from_exception(const interprocess_exception& e) ;
 
 } // namespace interprocess
 
@@ -34,14 +34,14 @@ class thread_resource_error ;
 
 namespace thread_error {
 
-const boost::system::error_category& thread_category() ;
+const rstudio_boost::system::error_category& thread_category() ;
 
-boost::system::error_code ec_from_exception(
+rstudio_boost::system::error_code ec_from_exception(
       const boost::thread_resource_error& e) ;
 
 } // namespace thread_error
 
-} // namespace boost
+} // namespace rstudio_boost
 
 #endif // CORE_BOOST_ERRORS_HPP
 

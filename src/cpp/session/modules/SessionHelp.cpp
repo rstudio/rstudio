@@ -17,7 +17,6 @@
 
 #include <algorithm>
 
-#include <boost/ref.hpp>
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
 #include <boost/range/iterator_range.hpp>

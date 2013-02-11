@@ -24,17 +24,16 @@ INSTALL_DIR=`pwd`
 PLATFORM=`uname`
 
 # vars
-BOOST_VERSION_NUMBER=1.50.0
-BOOST_VERSION=boost_1_50_0
+BOOST_VERSION=boost_1_53_0
 BOOST_DIR=/opt/rstudio-tools/boost/$BOOST_VERSION
-BOOST_TAR=$BOOST_VERSION.tar.bz2
+BOOST_TAR=rstudio_$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
 
 # install if we aren't already installed
 if ! test -e $BOOST_DIR
 then
    # download boost
-   BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
+   BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/$BOOST_TAR
    if [ "$PLATFORM" == "Darwin" ]
    then
       curl -L $BOOST_URL > $BOOST_TAR
@@ -52,15 +51,34 @@ then
    tar --bzip2 -xf ../$BOOST_TAR
 
    # bootstrap boost
-   cd $BOOST_VERSION
    ./bootstrap.sh  
    
    # special variation of build for osx (multi-arch, tied to 10.5)
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static \
+                     --with-chrono \
+                     --with-date_time \
+                     --with-filesystem \
+                     --with-iostreams \
+                     --with-program_options \
+                     --with-regex \
+                     --with-signals \
+                     --with-system \
+                     --with-thread \
+                 install
    else
-     sudo ./bjam --prefix=$BOOST_DIR variant=release install
+     sudo ./bjam --prefix=$BOOST_DIR variant=release \ 
+                     --with-chrono \
+                     --with-date_time \
+                     --with-filesystem \
+                     --with-iostreams \
+                     --with-program_options \
+                     --with-regex \
+                     --with-signals \
+                     --with-system \
+                     --with-thread \
+                 install
    fi
 
    # go back to the original install dir and remove build dir
@@ -70,7 +88,7 @@ then
 
 else
 
-   echo "$BOOST_VERSION_NUMBER already installed in $BOOST_DIR"
+   echo "$BOOST_VERSION already installed in $BOOST_DIR"
 
 fi
 

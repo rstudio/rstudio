@@ -1,0 +1,102 @@
+
+#!/bin/bash
+
+set -e
+
+INSTALL_DIR=`pwd`
+
+# determine platform
+PLATFORM=`uname`
+
+# define boost variables
+BOOST_VERSION_NUMBER=1.53.0
+BOOST_VERSION=boost_1_53_0
+BOOST_TAR=$BOOST_VERSION.tar.bz2
+
+# remove existing boost artifacts
+rm -rf $BOOST_VERSION
+rm -f $BOOST_TAR
+
+# re-initialize the directory where we'll extract boost sources to
+RSTUDIO_BOOST=rstudio_$BOOST_VERSION
+RSTUDIO_BOOST_SRC_DIR=$INSTALL_DIR/$RSTUDIO_BOOST
+rm -rf $RSTUDIO_BOOST_SRC_DIR
+mkdir -p $RSTUDIO_BOOST_SRC_DIR
+
+# download boost
+BOOST_URL=http://sourceforge.net/projects/boost/files/boost/$BOOST_VERSION_NUMBER/$BOOST_TAR/download?use_mirror=autoselect
+if [ "$PLATFORM" == "Darwin" ]
+then
+  curl -L $BOOST_URL > $BOOST_TAR
+else
+  wget $BOOST_URL -O $BOOST_TAR
+fi
+
+# extract boost
+rm -rf $BOOST_VERSION
+tar --bzip2 -xf $BOOST_TAR
+
+# bootstrap and create bcp
+cd $BOOST_VERSION
+./bootstrap.sh
+./b2 tools/bcp
+cp dist/bin/bcp .
+
+# extract the subset we want
+./bcp --namespace=rstudio_boost --namespace-alias \
+        algorithm \
+        asio \
+        array \
+        bind \
+        chrono \
+        circular_buffer \
+        crc \
+    	date_time \
+    	filesystem \
+    	foreach \
+    	format \
+    	function \
+    	interprocess \
+    	iostreams \
+    	lambda \
+    	lexical_cast \
+    	optional \
+    	program_options \
+    	random \
+    	range \
+    	ref \
+    	regex \
+    	scope_exit \
+    	signals \
+    	smart_ptr \
+    	spirit \
+    	string_algo \
+    	system \
+    	test \
+    	thread \
+    	tokenizer \
+    	type_traits \
+    	typeof \
+    	unordered \
+    	utility \
+    	variant \
+    	config build \
+    $RSTUDIO_BOOST_SRC_DIR
+
+# switch to the install dir
+cd $INSTALL_DIR
+
+# now create a tarball for the extracted version of boost
+RSTUDIO_BOOST_TAR=$RSTUDIO_BOOST.tar.bz2
+rm -f $RSTUDIO_BOOST_TAR
+tar -cjf $RSTUDIO_BOOST_TAR -C $RSTUDIO_BOOST . 
+
+# remove intermediate files and directories
+rm -rf $RSTUDIO_BOOST_SRC_DIR
+rm -rf $BOOST_VERSION
+rm -f $BOOST_TAR
+
+
+
+
+

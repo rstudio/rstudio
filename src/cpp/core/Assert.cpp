@@ -25,7 +25,7 @@
 
 using namespace core;
 
-namespace boost
+namespace rstudio_boost
 {
 void assertion_failed(char const * expr,
                       char const * function,
@@ -72,7 +72,7 @@ void assertion_failed_msg(char const * expr,
 #endif
 }
 
-} // namespace boost
+} // namespace rstudio_boost
 
 
 
