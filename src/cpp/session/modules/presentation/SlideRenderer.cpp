@@ -121,10 +121,10 @@ Error slideMarkdownToHtml(const Slide& slide,
    if (error)
       return error;
 
-   // generate a special class for no title included
-   std::string titleClass;
+   // slide content classes
+   std::string slideClasses = "slideContent";
    if (!slide.showTitle())
-      titleClass = " noTitle";
+      slideClasses += " noTitle";
 
    // look for an <hr/> splitting the html into columns
    const std::string kHRTag = "<hr/>";
@@ -140,20 +140,20 @@ Error slideMarkdownToHtml(const Slide& slide,
       // now render two divs with the columns
       pHTML->clear();
       std::ostringstream ostr;
-      ostr << divWrap("column column1" + titleClass, column1);
-      ostr << divWrap("column column2" + titleClass, column2);
+      ostr << divWrap("column column1 " + slideClasses, column1);
+      ostr << divWrap("column column2 " + slideClasses, column2);
       *pHTML = ostr.str();
    }
 
-   // see if we have an image, and if so whether it is standalone,
-   // above text, or below text
+   // apply standard (and optional image) classes
    else
    {
-      std::string extraClass = imageClass(*pHTML);
-      if (!extraClass.empty())
-         *pHTML = divWrap(extraClass + titleClass, *pHTML);
-   }
+      std::string extraImageClass = imageClass(*pHTML);
+      if (!extraImageClass.empty())
+         slideClasses = extraImageClass + " " + slideClasses;
 
+      *pHTML = divWrap(slideClasses, *pHTML);
+   }
 
    // check whether we need to apply the fragment style (create
    // fragmentClass string so we can support other fragment

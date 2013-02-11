@@ -215,6 +215,16 @@
    height: 100%;
 }
 
+.reveal .slides section .slideContent h2 {
+   font-size: 1.3em;
+   font-weight: bold;
+}
+
+.reveal .slides section .slideContent h3 {
+   font-size: 1.1em;
+   font-weight: bold;
+}
+
 .reveal .slides section .column {
    position: fixed;
    width: 48%;
