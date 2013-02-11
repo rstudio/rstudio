@@ -111,7 +111,8 @@ public abstract class AsyncProxyBase<T> implements AsyncProxy<T> {
       if (getCallback0() != null) {
         getCallback0().onFailure(t);
       } else {
-        GWT.getUncaughtExceptionHandler().onUncaughtException(t);
+        // TODO(goktug): this is a no-op if handler is not set and exception will be swallowed.
+        GWT.maybeReportUncaughtException(t);
       }
     }
   }

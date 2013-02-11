@@ -17,6 +17,7 @@ package com.google.gwt.core.client.impl;
 
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
@@ -157,6 +158,35 @@ public final class Impl {
   }-*/;
 
   /**
+   * UncaughtExceptionHandler that is used by unit tests to spy on uncaught
+   * exceptions.
+   */
+  private static UncaughtExceptionHandler uncaughtExceptionHandlerForTest;
+
+  /**
+   * Set an uncaught exception handler to spy on uncaught exceptions in unit
+   * tests.
+   * <p>
+   * Setting this method will not interfere with any exception handling logic;
+   * i.e. {@link GWT#getUncaughtExceptionHandler()} will still return null if a
+   * handler is not set via {@link GWT#setUncaughtExceptionHandler}.
+   */
+  public static void setUncaughtExceptionHandlerForTest(
+      UncaughtExceptionHandler handler) {
+    uncaughtExceptionHandlerForTest = handler;
+  }
+
+  public static void maybeReportUncaughtException(
+      UncaughtExceptionHandler handler, Throwable t) {
+    if (uncaughtExceptionHandlerForTest != null) {
+      uncaughtExceptionHandlerForTest.onUncaughtException(t);
+    }
+    if (handler != null) {
+      handler.onUncaughtException(t);
+    }
+  }
+
+  /**
    * Indicates if <code>$entry</code> has been called.
    */
   public static boolean isEntryOnStack() {
@@ -241,7 +271,7 @@ public final class Impl {
         try {
           return apply(jsFunction, thisObj, arguments);
         } catch (Throwable t) {
-          GWT.getUncaughtExceptionHandler().onUncaughtException(t);
+          GWT.maybeReportUncaughtException(t);
           return undefined();
         }
       } else {

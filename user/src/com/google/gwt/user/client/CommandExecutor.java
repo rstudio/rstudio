@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,6 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,16 +27,16 @@ import java.util.List;
  * all currently pending event handlers have completed. This class attempts to
  * protect against slow script warnings by running commands in small time
  * increments.
- * 
+ *
  * <p>
  * It is still possible that a poorly written command could cause a slow script
  * warning which a user may choose to cancel. In that event, a
  * {@link CommandCanceledException} or an
- * {@link IncrementalCommandCanceledException} is reported through the current
- * {@link UncaughtExceptionHandler} depending on the type of command which
+ * {@link IncrementalCommandCanceledException} is reported through
+ * {@link GWT#maybeReportUncaughtException} depending on the type of command which
  * caused the warning. All other commands will continue to be executed.
  * </p>
- * 
+ *
  * TODO(mmendez): Can an SSW be detected without using a timer? Currently, if a
  * {@link Command} or an {@link IncrementalCommand} calls either
  * {@link Window#alert(String)} or the JavaScript <code>alert(String)</code>
@@ -250,18 +249,11 @@ class CommandExecutor {
     iterator.remove();
     assert (cmd != null);
 
-    RuntimeException ex = null;
     if (cmd instanceof Command) {
-      ex = new CommandCanceledException((Command) cmd);
+      GWT.maybeReportUncaughtException(new CommandCanceledException((Command) cmd));
     } else if (cmd instanceof IncrementalCommand) {
-      ex = new IncrementalCommandCanceledException((IncrementalCommand) cmd);
-    }
-
-    if (ex != null) {
-      UncaughtExceptionHandler ueh = GWT.getUncaughtExceptionHandler();
-      if (ueh != null) {
-        ueh.onUncaughtException(ex);
-      }
+      GWT.maybeReportUncaughtException(
+          new IncrementalCommandCanceledException((IncrementalCommand) cmd));
     }
 
     setExecuting(false);

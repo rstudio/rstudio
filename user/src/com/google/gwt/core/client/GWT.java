@@ -61,7 +61,7 @@ public final class GWT {
    * Defaults to <code>null</code> in Production Mode and an instance of
    * {@link DefaultUncaughtExceptionHandler} in Development Mode.
    */
-  private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
+  private static UncaughtExceptionHandler uncaughtExceptionHandler = null;
 
   /**
    * Instantiates a class via deferred binding.
@@ -157,18 +157,27 @@ public final class GWT {
   }
 
   /**
-   * Returns the currently active uncaughtExceptionHandler. "Top level" methods
-   * that dispatch events from the browser into user code must call this method
-   * on entry to get the active handler. If the active handler is null, the
-   * entry point must allow exceptions to escape into the browser. If the
-   * handler is non-null, exceptions must be caught and routed to the handler.
-   * See the source code for <code>DOM.dispatchEvent()</code> for an example
-   * of how to handle this correctly.
-   * 
+   * Returns the currently active uncaughtExceptionHandler.
+   *
    * @return the currently active handler, or null if no handler is active.
+   *
+   * @see #maybeReportUncaughtException(Throwable)
    */
   public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
-    return sUncaughtExceptionHandler;
+    return uncaughtExceptionHandler;
+  }
+
+  /**
+   * Reports an exception caught at the "top level" to a handler set via
+   * {@link #setUncaughtExceptionHandler(UncaughtExceptionHandler)}. This is
+   * used in places where the browser calls into user code such as event
+   * callbacks, timers, and RPC. See {@link Impl#entry0} for an example how to
+   * handle this correctly.
+   * <p>
+   * This method is a no-op if no handler is set.
+   */
+  public static void maybeReportUncaughtException(Throwable t) {
+    Impl.maybeReportUncaughtException(uncaughtExceptionHandler, t);
   }
 
   /**
@@ -258,14 +267,14 @@ public final class GWT {
   /**
    * Sets a custom uncaught exception handler. See
    * {@link #getUncaughtExceptionHandler()} for details.
-   * 
-   * @param handler the handler that should be called when an exception is about
-   *          to escape to the browser, or <code>null</code> to clear the
-   *          handler and allow exceptions to escape.
+   *
+   * @param handler the handler that should be called when an exception is
+   *        about to escape to the browser, or <code>null</code> to clear the
+   *        handler and allow exceptions to escape.
    */
   public static void setUncaughtExceptionHandler(
       UncaughtExceptionHandler handler) {
-    sUncaughtExceptionHandler = handler;
+    uncaughtExceptionHandler = handler;
   }
 
   /**

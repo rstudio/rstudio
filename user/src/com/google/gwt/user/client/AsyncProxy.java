@@ -180,9 +180,8 @@ public interface AsyncProxy<T> {
      * Invokes the global uncaught exception handler.
      */
     public void onFailure(Throwable t) {
-      if (GWT.getUncaughtExceptionHandler() != null) {
-        GWT.getUncaughtExceptionHandler().onUncaughtException(t);
-      }
+      // TODO(goktug): this is a no-op if handler is not set and exception will be swallowed.
+      GWT.maybeReportUncaughtException(t);
     }
 
     /**

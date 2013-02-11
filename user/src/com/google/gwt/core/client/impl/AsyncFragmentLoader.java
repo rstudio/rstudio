@@ -575,8 +575,8 @@ public class AsyncFragmentLoader {
         } else {
           try {
             ((RunAsyncCallback) callback).onSuccess();
-          } catch (Throwable e) {
-            handler.onUncaughtException(e);
+          } catch (Throwable t) {
+            GWT.maybeReportUncaughtException(t);
           }
         }
       }

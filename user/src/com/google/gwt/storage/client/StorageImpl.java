@@ -57,7 +57,7 @@ class StorageImpl {
         try {
           handler.onStorageChange(event);
         } catch (Throwable t) {
-          ueh.onUncaughtException(t);
+          GWT.maybeReportUncaughtException(t);
         }
       } else {
         handler.onStorageChange(event);
