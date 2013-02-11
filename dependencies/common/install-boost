@@ -45,40 +45,20 @@ then
    sudo rm -rf $BOOST_DIR
   
    # untar source (remove existing)
-   rm -rf $BOOST_BUILD_DIR
-   mkdir -p $BOOST_BUILD_DIR
+   sudo rm -rf $BOOST_BUILD_DIR
+   sudo mkdir -p $BOOST_BUILD_DIR
    cd $BOOST_BUILD_DIR
-   tar --bzip2 -xf ../$BOOST_TAR
+   sudo tar --bzip2 -xf ../$BOOST_TAR
 
    # bootstrap boost
    ./bootstrap.sh  
    
-   # special variation of build for osx (multi-arch, tied to 10.5)
+   # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static \
-                     --with-chrono \
-                     --with-date_time \
-                     --with-filesystem \
-                     --with-iostreams \
-                     --with-program_options \
-                     --with-regex \
-                     --with-signals \
-                     --with-system \
-                     --with-thread \
-                 install
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
    else
-     sudo ./bjam --prefix=$BOOST_DIR variant=release \ 
-                     --with-chrono \
-                     --with-date_time \
-                     --with-filesystem \
-                     --with-iostreams \
-                     --with-program_options \
-                     --with-regex \
-                     --with-signals \
-                     --with-system \
-                     --with-thread \
-                 install
+     sudo ./bjam --prefix=$BOOST_DIR variant=release threading=multi link=static install
    fi
 
    # go back to the original install dir and remove build dir
