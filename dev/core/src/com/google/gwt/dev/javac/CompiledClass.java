@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.DiskCacheToken;
@@ -83,7 +82,6 @@ public final class CompiledClass implements Serializable {
   private String signatureHash;
 
   private final String sourceName;
-  private transient TypeData typeData;
 
   private CompilationUnit unit;
 
@@ -116,13 +114,12 @@ public final class CompiledClass implements Serializable {
     this.sourceName = orig.sourceName;
     this.classBytesToken = orig.classBytesToken;
     this.isLocal = orig.isLocal;
-    this.typeData = orig.typeData;
     this.unit = newUnit;
     this.signatureHash = orig.signatureHash;
   }
 
   /**
-   * Returns the bytes of the compiled class.
+   * Reads the bytes of the compiled class from the disk cache.
    */
   public byte[] getBytes() {
     return classBytesToken.readByteArray();
@@ -162,15 +159,6 @@ public final class CompiledClass implements Serializable {
    */
   public String getSourceName() {
     return sourceName;
-  }
-
-  public TypeData getTypeData() {
-    if (typeData == null) {
-      typeData =
-          new TypeData(getPackageName(), getSourceName(), getInternalName(), null, getBytes(),
-              getUnit().getLastModified());
-    }
-    return typeData;
   }
 
   public CompilationUnit getUnit() {

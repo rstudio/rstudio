@@ -78,7 +78,7 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    * A container to hold all the information we need to add one type to the
    * TypeOracle.
    */
-  public static class TypeData {
+  static class TypeData {
 
     /**
      * Bytecode from compiled Java source.
@@ -373,7 +373,8 @@ public class TypeOracleMediator extends TypeOracleBuilder {
    * Adds new units to an existing TypeOracle.
    *
    * @param logger logger to use
-   * @param typeDataList collection of data need to build types
+   * @param typeDataList collection of data need to build types. (Doesn't retain
+   *                     references to TypeData instances.)
    * @param argsLookup Allows the caller to pass the method argument names which
    *          are not normally available in bytecode.
    */
@@ -501,6 +502,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return AnnotationProxyFactory.create(annotationClass, values);
   }
 
+  /**
+   * Doesn't retain a reference to the TypeData.
+   */
   private JRealClassType createType(TypeData typeData,
       CollectClassData collectClassData, CollectClassData enclosingClassData) {
     int access = collectClassData.getAccess();
@@ -548,6 +552,9 @@ public class TypeOracleMediator extends TypeOracleBuilder {
     return resultType;
   }
 
+  /**
+   * Doesn't retain a reference to the TypeData.
+   */
   private JRealClassType createType(TypeData typeData,
       Set<JRealClassType> unresolvedTypes,
       TypeOracleBuildContext context) {

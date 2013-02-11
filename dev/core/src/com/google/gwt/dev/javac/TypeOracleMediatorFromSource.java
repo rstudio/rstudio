@@ -42,9 +42,10 @@ public class TypeOracleMediatorFromSource extends TypeOracleMediator {
 
     // Create list including byte code for each type to add
     for (CompilationUnit unit : units) {
-      Collection<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      for (CompiledClass compiledClass : compiledClasses) {
-        classDataList.add(compiledClass.getTypeData());
+      for (CompiledClass cc : unit.getCompiledClasses()) {
+        TypeData data = new TypeData(cc.getPackageName(), cc.getSourceName(), cc.getInternalName(),
+            null, cc.getBytes(), cc.getUnit().getLastModified());
+        classDataList.add(data);
       }
     }
 
