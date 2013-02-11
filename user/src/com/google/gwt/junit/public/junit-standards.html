@@ -24,7 +24,7 @@ the License.
 <script language='javascript'>
 <!--
 function junitOnLoadErrorFn(moduleName) {
-  junitError('Failed to load module "' + moduleName +
+  junitLaunchError('Failed to load module "' + moduleName +
     '".\nPlease see the log for details.');
 }
 
@@ -36,14 +36,21 @@ function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
     msg += '" was not specified';
   }
   msg += 'Allowed values: ' + allowedValues;
-  junitError(msg);
+  junitLaunchError(msg);
 }
 
-function junitError(msg) {
+function junitLaunchError(msg) {
+  junitError("launch", msg);
+}
+
+function junitError(type, msg) {
   var xmlHttpRequest = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-  xmlHttpRequest.open('POST', 'junithost/loadError', true);
+  xmlHttpRequest.open('POST', 'junithost/error/' + type, true);
   xmlHttpRequest.setRequestHeader('Content-Type', 'text/x-gwt-rpc; charset=utf-8');
   xmlHttpRequest.send(msg);
+  if (window.console && window.console.log) {
+    window.console.log(type + " error: " + msg);
+  }
 }
 
 function loadSelectionScript() {
