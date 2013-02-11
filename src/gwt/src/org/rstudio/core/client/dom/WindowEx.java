@@ -78,7 +78,7 @@ public class WindowEx extends JavaScriptObject
    }-*/;
 
    public final native void reload() /*-{
-      this.location.reload();
+      this.location.reload(true);
    }-*/;
   
    public final native void setLocationHref(String helpURL) /*-{

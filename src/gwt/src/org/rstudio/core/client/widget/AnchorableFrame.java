@@ -44,16 +44,22 @@ public class AnchorableFrame extends Frame
          {
             if (getIFrame() != null && getWindow() != null)
             {
-               if (reloadCurrentPage(url))
+               // if this is the same page but without an anchor qualification
+               // then reload (so we preserve the anchor location)
+               if (isBasePageOfCurrentAnchor(url))
                {
                   getWindow().reload();
                }
+               // if it's the same page then set the anchor and force a reload
+               else if (isSamePage(url))
+               {
+                  getWindow().replaceLocationHref(url);
+                  getWindow().reload();
+               }
+               // otherwise a new url, merely replacing will force a reload
                else
                {
-                  if (!url.equals(getWindow().getLocationHref()))
-                     getWindow().replaceLocationHref(url);
-                  else 
-                     getWindow().reload();
+                  getWindow().replaceLocationHref(url);
                }
                
                if (autoFocus_)
@@ -77,7 +83,9 @@ public class AnchorableFrame extends Frame
       return getIFrame().getContentWindow();
    }
    
-   private boolean reloadCurrentPage(String newUrl)
+
+   
+   private boolean isBasePageOfCurrentAnchor(String newUrl)
    {
       // make sure there is an existing url to compare to
       String existingUrl = getWindow().getLocationHref();
@@ -85,6 +93,16 @@ public class AnchorableFrame extends Frame
          return false;      
      
       return newUrl.equals(stripAnchor(existingUrl));
+   }
+   
+   private boolean isSamePage(String newUrl)
+   {
+      // make sure there is an existing url to compare to
+      String existingUrl = getWindow().getLocationHref();
+      if (existingUrl == null)
+         return false;      
+      
+      return stripAnchor(newUrl).equals(stripAnchor(existingUrl));
    }
    
    private IFrameElementEx getIFrame()
