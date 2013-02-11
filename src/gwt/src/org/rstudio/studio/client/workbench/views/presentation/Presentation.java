@@ -74,7 +74,6 @@ public class Presentation extends BasePresenter
       void prev();
       
       void pauseMedia();
-      void refresh(boolean resetAnchor);
       
       SlideMenu getSlideMenu();
    }

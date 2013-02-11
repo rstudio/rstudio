@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.presentation;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.widget.ReloadableFrame;
+import org.rstudio.core.client.widget.AnchorableFrame;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -25,7 +25,7 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.HasText;
 
-public class PresentationFrame extends ReloadableFrame
+public class PresentationFrame extends AnchorableFrame
 {
    public PresentationFrame(boolean autoFocus)
    {
@@ -69,7 +69,7 @@ public class PresentationFrame extends ReloadableFrame
    
    public void clear()
    {
-      getWindow().replaceLocationHref("javascript:void(0)");
+      getWindow().replaceLocationHref("about:blank");
    }
    
    public void home()

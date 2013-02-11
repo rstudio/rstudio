@@ -34,7 +34,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
-import org.rstudio.core.client.widget.ReloadableFrame;
+import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
 
@@ -77,6 +77,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    protected Widget createMainWidget()
    {  
       frame_ = new PresentationFrame(false) ;
+      frame_.setUrl("about:blank");
       frame_.setSize("100%", "100%");
       return new AutoGlassPanel(frame_);
    }
@@ -98,7 +99,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       titlePanel.add(titleLabel);
       
       // create the frame
-      ReloadableFrame frame = new PresentationFrame(true);
+      AnchorableFrame frame = new PresentationFrame(true);
       frame.setSize("100%", "100%");
       
       // create the popup panel & add close handler 
@@ -129,12 +130,6 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       String href = frame_.getWindow().getLocationHref();
       return !"about:blank".equals(href) &&
              !"javascript:void(0)".equals(href);
-   }
-   
-   @Override
-   public void refresh(boolean resetAnchor)
-   {
-      frame_.reload(resetAnchor);
    }
    
    @Override

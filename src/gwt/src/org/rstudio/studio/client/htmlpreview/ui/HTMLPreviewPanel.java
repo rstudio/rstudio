@@ -33,7 +33,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.ReloadableFrame;
+import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -57,7 +57,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
       panel.setWidgetTopHeight(toolbar, 0, Unit.PX, tbHeight, Unit.PX);
       
-      previewFrame_ = new ReloadableFrame();
+      previewFrame_ = new AnchorableFrame();
       previewFrame_.setSize("100%", "100%");
       panel.add(previewFrame_);
       panel.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
@@ -263,7 +263,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       publishButton_.setText(label);
    }
  
-   private final ReloadableFrame previewFrame_;
+   private final AnchorableFrame previewFrame_;
    private ToolbarLabel fileLabel_;
    private FindTextBox findTextBox_;
    private Widget saveHtmlPreviewAsSeparator_;

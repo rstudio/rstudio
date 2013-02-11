@@ -1,5 +1,5 @@
 /*
- * ReloadableFrame.java
+ * AnchorableFrame.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -22,43 +22,21 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.user.client.ui.Frame;
 
-public class ReloadableFrame extends Frame
+public class AnchorableFrame extends Frame
 {
-   public ReloadableFrame()
+   public AnchorableFrame()
    {
       this(true);
    }
    
-   public ReloadableFrame(boolean autoFocus)
+   public AnchorableFrame(boolean autoFocus)
    {
       autoFocus_ = autoFocus;
       setStylePrimaryName("rstudio-HelpFrame");
       getElement().getStyle().setBackgroundColor("white");
    }
-   
-   public void reload()
-   {
-      reload(false);
-   }
-   
-   public void reload(boolean resetAnchor)
-   {
-      String existingUrl = getWindow().getLocationHref();
-      if (existingUrl == null)
-         return;
-      
-      if (resetAnchor)
-         existingUrl = stripAnchor(existingUrl);
-      
-      navigate(existingUrl, resetAnchor);
-   }
-   
+       
    public void navigate(final String url)
-   {
-      navigate(url, false);
-   }
-   
-   private void navigate(final String url, final boolean resetAnchor)
    {
       RepeatingCommand navigateCommand = new RepeatingCommand() {
          @Override
@@ -66,7 +44,7 @@ public class ReloadableFrame extends Frame
          {
             if (getIFrame() != null && getWindow() != null)
             {
-               if (!resetAnchor && reloadCurrentPage(url))
+               if (reloadCurrentPage(url))
                {
                   getWindow().reload();
                }
