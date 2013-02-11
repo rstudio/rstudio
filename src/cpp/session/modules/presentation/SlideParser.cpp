@@ -107,13 +107,13 @@ json::Object AtCommand::asJson() const
    return atCommandJson;
 }
 
-// default title to true unless this is a video slide
+// default title to true if there is a title provided and we
+// aren't in a video slide
 bool Slide::showTitle() const
 {
-   if (video().empty())
-      return !boost::iequals(fieldValue("title", "true"), "false");
-   else
-      return boost::iequals(fieldValue("title", "false"), "true");
+   std::string defaultTitle = (!title().empty() && video().empty()) ? "true" :
+                                                                      "false";
+   return boost::iequals(fieldValue("title", defaultTitle), "true");
 }
 
 std::vector<Command> Slide::commands() const
