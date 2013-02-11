@@ -30,7 +30,9 @@ import java.util.Date;
  * This class is responsible for hosting BenchMarks test case execution.
  * 
  * @see JUnitShell
+ * @deprecated This class is scheduled to be removed in the next GWT release.
  */
+@Deprecated
 public class BenchmarkShell {
 
   /**

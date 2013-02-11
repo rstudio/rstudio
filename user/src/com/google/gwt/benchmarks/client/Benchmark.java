@@ -92,7 +92,10 @@ import junit.framework.TestCase;
  * test methods, parameterized test methods, and time limits.
  * 
  * {@example com.google.gwt.examples.benchmarks.ArrayListBenchmark}
+ *
+ * @deprecated This class is scheduled to be removed in the next GWT release.
  */
+@Deprecated
 public abstract class Benchmark extends GWTTestCase {
 
   /**
