@@ -351,21 +351,9 @@ void handlePresentationRootRequest(const std::string& path,
       return;
    }
 
-   // get user css if it exists
-   std::string userSlidesCss;
-   FilePath cssPath = presentation::state::directory().complete("slides.css");
-   if (cssPath.exists())
-   {
-      Error error = core::readStringFromFile(cssPath, &userSlidesCss);
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // build template variables
    std::map<std::string,std::string> vars;
    vars["title"] = slideDeck.title();
-   vars["user_slides_css"] = userSlidesCss;
-   vars["preamble"] = slideDeck.preamble();
    vars["slides"] = slides;
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
