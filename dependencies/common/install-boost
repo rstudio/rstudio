@@ -51,7 +51,7 @@ then
    sudo tar --bzip2 -xf ../$BOOST_TAR
 
    # bootstrap boost
-   ./bootstrap.sh  
+   sudo ./bootstrap.sh  
    
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
