@@ -67,6 +67,11 @@ public class PresentationFrame extends ReloadableFrame
       }); 
    }
    
+   public void clear()
+   {
+      getWindow().replaceLocationHref("javascript:void(0)");
+   }
+   
    public void home()
    {
       Reveal.fromWindow(getWindow()).home();

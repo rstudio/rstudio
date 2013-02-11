@@ -120,14 +120,15 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    public void clear()
    {
-      frame_.setUrl("about:blank");
+      frame_.clear();
    }
    
    @Override
    public boolean hasSlides()
    {
       String href = frame_.getWindow().getLocationHref();
-      return !"about:blank".equals(href);
+      return !"about:blank".equals(href) &&
+             !"javascript:void(0)".equals(href);
    }
    
    @Override
