@@ -343,6 +343,14 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       slides_.push_back(Slide(title, slideFields, content));
    }
 
+   // if the deck is empty then insert a placeholder first slide
+   if (slides_.empty())
+   {
+      slides_.push_back(Slide(filePath.parent().filename(),
+                              std::vector<Slide::Field>(),
+                              std::string()));
+   }
+
    return Success();
 }
 
