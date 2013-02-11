@@ -94,17 +94,22 @@ std::string imageClass(const std::string& html)
       return std::string();
 }
 
-void addFragmentClass(const std::string& tag,
-                      const std::string& fragmentClass,
-                      bool includeFirst,
+void addFragmentClass(const std::string& fragmentClass,
                       std::string* pHTML)
 {
-   std::string classAttrib = "class=\"" + fragmentClass + "\"";
-   std::string tagMarkup = "<" + tag + ">";
-   std::string tagMarkupWithClass = "<" + tag + " " + classAttrib + ">";
-   boost::algorithm::replace_all(*pHTML, tagMarkup, tagMarkupWithClass);
-   if (!includeFirst)
-      boost::algorithm::replace_first(*pHTML, tagMarkupWithClass, tagMarkup);
+   // add fragment class to elements eligible for incremental build
+   *pHTML = boost::regex_replace(*pHTML,
+                                 boost::regex("<(h[1-6]|p|blockquote|pre|li)>"),
+                                 "<$1 class=\"" + fragmentClass + "\">");
+
+   // remove class from first paragraph element
+   std::string pWithClass = "<p class=\"" + fragmentClass + "\">";
+   boost::algorithm::replace_first(*pHTML, pWithClass, "<p>");
+
+   // remove class from paragraph inside blockquote
+   std::string bqWithClass = "<blockquote class=\"" + fragmentClass + "\">";
+   boost::algorithm::replace_first(*pHTML, bqWithClass + "\n" + pWithClass,
+                                   bqWithClass + "\n<p>");
 }
 
 Error slideMarkdownToHtml(const Slide& slide,
@@ -150,18 +155,16 @@ Error slideMarkdownToHtml(const Slide& slide,
    }
 
 
-   // check whether we need to apply the fragment style
+   // check whether we need to apply the fragment style (create
+   // fragmentClass string so we can support other fragment
+   // reveal visual styles in the future if we want)
    std::string fragmentClass;
    if (incremental == "true")
       fragmentClass = "fragment";
 
-   // apply if necessary
+   // apply fragmentClass if necessary
    if (!fragmentClass.empty())
-   {
-      addFragmentClass("p", fragmentClass, false, pHTML);
-      addFragmentClass("pre", fragmentClass, true, pHTML);
-      addFragmentClass("li", fragmentClass, true, pHTML);
-   }
+      addFragmentClass(fragmentClass, pHTML);
 
    return Success();
 }
@@ -241,7 +244,7 @@ Error renderSlides(const SlideDeck& slideDeck,
          ostr << " data-state=\"" << type <<  "\"";
 
       // end section tag
-      ostr << ">" << std::endl;
+      ostr << ">\n";
 
       // show the title with the appropriate header. also track whether
       // this slide is eligible for incremental display (first slide
@@ -283,7 +286,7 @@ Error renderSlides(const SlideDeck& slideDeck,
          if (!slide.date().empty())
             ostr << string_utils::htmlEscape(slide.date());
 
-         ostr << "</p>" << std::endl;
+         ostr << "</p>" << "\n";
       }
 
       // determine incremental property
@@ -308,7 +311,7 @@ Error renderSlides(const SlideDeck& slideDeck,
          return error;
 
       // render content
-      ostr << htmlContent << std::endl;
+      ostr << htmlContent << "\n";
 
       // setup vectors for reveal config and init actions
       std::vector<std::string> revealConfig;
@@ -350,27 +353,27 @@ Error renderSlides(const SlideDeck& slideDeck,
                      &slideActions);
       }
 
-      ostr << "</section>" << std::endl;
+      ostr << "</section>" << "\n";
 
       // reveal config actions
       BOOST_FOREACH(const std::string& config, revealConfig)
       {
-         ostrRevealConfig << config << "," << std::endl;
+         ostrRevealConfig << config << "," << "\n";
       }
 
       // javascript actions to take on slide deck init
       BOOST_FOREACH(const std::string& jsAction, initActions)
       {
-         ostrInitActions <<  jsAction << ";" << std::endl;
+         ostrInitActions <<  jsAction << ";" << "\n";
       }
 
       // javascript actions to take on slide load
-      ostrSlideActions << cmdPad << "case " << slideNumber << ":" << std::endl;
+      ostrSlideActions << cmdPad << "case " << slideNumber << ":" << "\n";
       BOOST_FOREACH(const std::string& jsAction, slideActions)
       {
-         ostrSlideActions << cmdPad << "  " << jsAction << ";" << std::endl;
+         ostrSlideActions << cmdPad << "  " << jsAction << ";" << "\n";
       }
-      ostrSlideActions << std::endl << cmdPad << "  break;" << std::endl;
+      ostrSlideActions << "\n" << cmdPad << "  break;" << "\n";
 
       // increment slide number
       slideNumber++;
@@ -378,7 +381,7 @@ Error renderSlides(const SlideDeck& slideDeck,
 
    // init slide list as part of actions
    navigationList.complete();
-   ostrInitActions << navigationList.asCall() << std::endl;
+   ostrInitActions << navigationList.asCall() << "\n";
 
    *pSlides = ostr.str();
    *pRevealConfig = ostrRevealConfig.str();
