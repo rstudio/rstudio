@@ -20,7 +20,7 @@ set(QT_VERSION 4.8.0)
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
-if(UNIX AND NOT APPLE)
+if(NOT WIN32)
    # prefer rstudio qtsdk install then home qtsdk install
    if(NOT QT_QMAKE_EXECUTABLE)
       set(QMAKE_QT48_SDK "/opt/RStudio-QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
@@ -33,17 +33,13 @@ if(UNIX AND NOT APPLE)
          endif()
       endif()
    endif()
-# on windows hard-code to default Qt 4.8.4 install location
-elseif(WIN32)
+else()
    if(NOT QT_QMAKE_EXECUTABLE)
       set(QMAKE_QT48_SDK "C:\\Qt\\4.8.4\\bin\\qmake.exe")
       if(EXISTS ${QMAKE_QT48_SDK})
          set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
       endif()
    endif()
-# on apple use the default framework installation
-elseif(APPLE)
-
 endif()
 
 # find and include Qt
