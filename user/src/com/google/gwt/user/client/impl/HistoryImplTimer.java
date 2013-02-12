@@ -46,7 +46,7 @@ class HistoryImplTimer extends HistoryImpl {
     });
 
     var checkHistoryCycle = function() {
-      $wnd.setTimeout(checkHistoryCycle, 250);
+      @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(checkHistoryCycle, 250);
       checkHistory();
     }
 

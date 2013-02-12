@@ -229,6 +229,11 @@ public abstract class DOMImplTrident extends DOMImpl {
     sinkEventsImpl(elem, bits);
   }
 
+  @Override
+  protected void disposeEventSystem() {
+    // TODO(cromwellian) support shutdown of event system if possible
+  }
+
   private native void releaseCaptureImpl(Element elem) /*-{
     elem.releaseCapture();
   }-*/;

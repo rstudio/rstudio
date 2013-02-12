@@ -161,7 +161,7 @@ public class XMLHttpRequest extends JavaScriptObject {
    */
   public final native void clearOnReadyStateChange() /*-{
     var self = this;
-    $wnd.setTimeout(function() {
+    @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(function() {
       // Using a function literal here leaks memory on ie6
       // Using the same function object kills HtmlUnit
       self.onreadystatechange = new Function();
