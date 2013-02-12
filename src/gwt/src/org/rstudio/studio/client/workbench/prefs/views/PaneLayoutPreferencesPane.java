@@ -96,6 +96,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
             panel.add(checkBox);
+            if (module.equals("Presentation"))
+               checkBox.setVisible(false);
          }
          initWidget(panel);
       }
