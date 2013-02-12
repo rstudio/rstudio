@@ -8,7 +8,7 @@ set WGET_ARGS=--no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_FILE=boost-1.50-win.zip
+set BOOST_FILE=boost-1.53-win.zip
 set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.5.0.rc1.zip
@@ -18,7 +18,7 @@ set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys_ssh.zip
 set SUMATRA_PDF_FILE=SumatraPDF-2.1.1.zip
 
-if not exist boost-1.50-win (
+if not exist boost-1.53-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
   echo Unzipping %BOOST_FILE%
   unzip %UNZIP_ARGS% "%BOOST_FILE%"
