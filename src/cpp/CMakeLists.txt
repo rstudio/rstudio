@@ -145,7 +145,7 @@ else()
    # define library list manually (special naming convention)
    set(BOOST_LIB_DIR ${BOOST_ROOT}/lib)
    foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/librstudio_boost_${BOOST_LIB}.a)
+      list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/librstudio_boost_${BOOST_LIB}-mgw44-mt-1_53.a)
    endforeach()
 endif()
 
