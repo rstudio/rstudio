@@ -154,6 +154,17 @@ public class Presentation extends BasePresenter
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
    {
+      // if this isn't google chrome then show an error
+      if (!BrowseCap.isChrome())
+      {
+         globalDisplay_.showErrorMessage(
+               "Browser Not Supported",
+               "RStudio presentations are currently only supported " +
+               "in Google Chrome");
+         return;
+      }
+      
+      // always reload
       eventBus_.fireEvent(new ReloadEvent());
    }
    

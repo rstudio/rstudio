@@ -47,19 +47,27 @@ SEXP rs_showPresentation(SEXP directorySEXP)
 {
    try
    {
-      // validate path
-      FilePath dir(r::sexp::asString(directorySEXP));
-      if (!dir.exists())
-         throw r::exec::RErrorException("Directory " + dir.absolutePath() +
-                                        " does not exist.");
+      if (session::options().programMode() == kSessionProgramModeServer)
+      {
+         // validate path
+         FilePath dir(r::sexp::asString(directorySEXP));
+         if (!dir.exists())
+            throw r::exec::RErrorException("Directory " + dir.absolutePath() +
+                                           " does not exist.");
 
-      // initialize state
-      presentation::state::init(dir);
+         // initialize state
+         presentation::state::init(dir);
 
-      // notify the client
-      ClientEvent event(client_events::kShowPresentationPane,
-                        presentation::state::asJson());
-      module_context::enqueClientEvent(event);
+         // notify the client
+         ClientEvent event(client_events::kShowPresentationPane,
+                           presentation::state::asJson());
+         module_context::enqueClientEvent(event);
+      }
+      else
+      {
+         throw r::exec::RErrorException("Presentations are not supported "
+                                        "in desktop mode.");
+      }
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -73,30 +81,38 @@ SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
 {
    try
    {
-      // verify a presentation is active
-      if (!presentation::state::isActive())
+      if (session::options().programMode() == kSessionProgramModeServer)
       {
-         throw r::exec::RErrorException(
-                                 "No presentation is currently active");
-      }
+         // verify a presentation is active
+         if (!presentation::state::isActive())
+         {
+            throw r::exec::RErrorException(
+                                    "No presentation is currently active");
+         }
 
-      // resolve against presentation directory
-      std::string helpDoc = r::sexp::asString(helpDocSEXP);
-      FilePath helpDocPath = presentation::state::directory().childPath(
-                                                                  helpDoc);
-      if (!helpDocPath.exists())
+         // resolve against presentation directory
+         std::string helpDoc = r::sexp::asString(helpDocSEXP);
+         FilePath helpDocPath = presentation::state::directory().childPath(
+                                                                     helpDoc);
+         if (!helpDocPath.exists())
+         {
+            throw r::exec::RErrorException("Path " + helpDocPath.absolutePath()
+                                           + " not found.");
+         }
+
+         // build url and fire event
+         std::string url = "help/presentation/?file=";
+         std::string file = module_context::createAliasedPath(helpDocPath);
+         url += http::util::urlEncode(file, true);
+
+         ClientEvent event(client_events::kShowHelp, url);
+         module_context::enqueClientEvent(event);
+      }
+      else
       {
-         throw r::exec::RErrorException("Path " + helpDocPath.absolutePath()
-                                        + " not found.");
+         throw r::exec::RErrorException("Presentations are not supported "
+                                        "in desktop mode.");
       }
-
-      // build url and fire event
-      std::string url = "help/presentation/?file=";
-      std::string file = module_context::createAliasedPath(helpDocPath);
-      url += http::util::urlEncode(file, true);
-
-      ClientEvent event(client_events::kShowHelp, url);
-      module_context::enqueClientEvent(event);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -163,6 +179,8 @@ Error presentationExecuteCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+
 } // anonymous namespace
 
 
@@ -173,32 +191,39 @@ json::Value presentationStateAsJson()
 
 Error initialize()
 {
-   // register rs_showPresentation
-   R_CallMethodDef methodDefShowPresentation;
-   methodDefShowPresentation.name = "rs_showPresentation" ;
-   methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
-   methodDefShowPresentation.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowPresentation);
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      // register rs_showPresentation
+      R_CallMethodDef methodDefShowPresentation;
+      methodDefShowPresentation.name = "rs_showPresentation" ;
+      methodDefShowPresentation.fun = (DL_FUNC) rs_showPresentation;
+      methodDefShowPresentation.numArgs = 1;
+      r::routines::addCallMethod(methodDefShowPresentation);
 
-   // register rs_showPresentationHelpDoc
-   R_CallMethodDef methodDefShowHelpDoc;
-   methodDefShowHelpDoc.name = "rs_showPresentationHelpDoc" ;
-   methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
-   methodDefShowHelpDoc.numArgs = 1;
-   r::routines::addCallMethod(methodDefShowHelpDoc);
+      // register rs_showPresentationHelpDoc
+      R_CallMethodDef methodDefShowHelpDoc;
+      methodDefShowHelpDoc.name = "rs_showPresentationHelpDoc" ;
+      methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
+      methodDefShowHelpDoc.numArgs = 1;
+      r::routines::addCallMethod(methodDefShowHelpDoc);
 
-   using boost::bind;
-   using namespace session::module_context;
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
-      (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
-      (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
-      (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
-      (bind(presentation::state::initialize))
-      (bind(sourceModuleRFile, "SessionPresentation.R"));
+      using boost::bind;
+      using namespace session::module_context;
+      ExecBlock initBlock ;
+      initBlock.addFunctions()
+         (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
+         (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
+         (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
+         (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
+         (bind(presentation::state::initialize))
+         (bind(sourceModuleRFile, "SessionPresentation.R"));
 
-   return initBlock.execute();
+      return initBlock.execute();
+   }
+   else
+   {
+      return Success();
+   }
 }
 
 } // namespace presentation
