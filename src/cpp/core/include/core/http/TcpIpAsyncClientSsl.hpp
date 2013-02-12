@@ -109,7 +109,7 @@ private:
       boost::shared_ptr<AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > > ptrShared
                                                  = shared_from_this();
 
-      return boost::shared_static_cast<TcpIpAsyncClientSsl>(ptrShared);
+      return boost::static_pointer_cast<TcpIpAsyncClientSsl>(ptrShared);
    }
 
    virtual bool isShutdownError(const boost::system::error_code& ec)
