@@ -69,8 +69,7 @@ function notifySlideChanged(indexh) {
  
   // notify parent of slide changed
   if (window.parent.presentationSlideChanged) {
-    window.parent.presentationSlideChanged(event.indexh, 
-                                           commandsForSlide(event.indexh));  
+    window.parent.presentationSlideChanged(indexh, commandsForSlide(indexh));  
   }
 }
 
