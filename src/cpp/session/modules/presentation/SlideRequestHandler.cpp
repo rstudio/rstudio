@@ -394,6 +394,8 @@ void handlePresentationRootRequest(const std::string& path,
       vars["reveal_width"] = "960";
       vars["reveal_height"] = "700";
 
+      // use linear transitions for standalone
+      vars["reveal_transition"] = "linear";
 
       std::istringstream templateStream(presentationTemplate);
       html_utils::Base64ImageFilter imageFilter(dirPath);
@@ -436,6 +438,10 @@ void handlePresentationRootRequest(const std::string& path,
       std::string zoomStr = zoomed ? "true" : "false";
       vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
       vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+
+      // no transition in desktop mode (qtwebkit can't keep up)
+      bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
+      vars["reveal_transition"] =  isDesktop? "none" : "linear";
 
       templateStream.seekg (0, std::ios::beg);
       std::stringstream previewOutputStream;
