@@ -43,7 +43,7 @@ function mediaManager(media, atCommands) {
   }, false);
   
   return {
-    play: function() { media.play(); }
+    play: function() { if (media.play) media.play(); }
   };
 }
 
