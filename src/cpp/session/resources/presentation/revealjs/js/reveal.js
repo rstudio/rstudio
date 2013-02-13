@@ -3,7 +3,7 @@
  * http://lab.hakim.se/reveal-js
  * MIT licensed
  *
- * Copyright (C) 2011-2013 Hakim El Hattab, http://hakim.se
+ * Copyright (C) 2013 Hakim El Hattab, http://hakim.se
  */
 var Reveal = (function(){
 
@@ -552,78 +552,82 @@ var Reveal = (function(){
 	 */
 	function layout() {
 
-		// Available space to scale within
-		var availableWidth = dom.wrapper.offsetWidth,
-			availableHeight = dom.wrapper.offsetHeight;
+		if( dom.wrapper ) {
 
-		// Reduce availabe space by margin
-		availableWidth -= ( availableHeight * config.margin );
-		availableHeight -= ( availableHeight * config.margin );
+			// Available space to scale within
+			var availableWidth = dom.wrapper.offsetWidth,
+				availableHeight = dom.wrapper.offsetHeight;
 
-		// Dimensions of the content
-		var slideWidth = config.width,
-			slideHeight = config.height;
+			// Reduce availabe space by margin
+			availableWidth -= ( availableHeight * config.margin );
+			availableHeight -= ( availableHeight * config.margin );
 
-		// Slide width may be a percentage of available width
-		if( typeof slideWidth === 'string' && /%$/.test( slideWidth ) ) {
-			slideWidth = parseInt( slideWidth, 10 ) / 100 * availableWidth;
-		}
+			// Dimensions of the content
+			var slideWidth = config.width,
+				slideHeight = config.height;
 
-		// Slide height may be a percentage of available height
-		if( typeof slideHeight === 'string' && /%$/.test( slideHeight ) ) {
-			slideHeight = parseInt( slideHeight, 10 ) / 100 * availableHeight;
-		}
+			// Slide width may be a percentage of available width
+			if( typeof slideWidth === 'string' && /%$/.test( slideWidth ) ) {
+				slideWidth = parseInt( slideWidth, 10 ) / 100 * availableWidth;
+			}
 
-		dom.slides.style.width = slideWidth + 'px';
-		dom.slides.style.height = slideHeight + 'px';
+			// Slide height may be a percentage of available height
+			if( typeof slideHeight === 'string' && /%$/.test( slideHeight ) ) {
+				slideHeight = parseInt( slideHeight, 10 ) / 100 * availableHeight;
+			}
 
-		// Determine scale of content to fit within available space
-		scale = Math.min( availableWidth / slideWidth, availableHeight / slideHeight );
+			dom.slides.style.width = slideWidth + 'px';
+			dom.slides.style.height = slideHeight + 'px';
 
-		// Respect max/min scale settings
-		scale = Math.max( scale, config.minScale );
-		scale = Math.min( scale, config.maxScale );
+			// Determine scale of content to fit within available space
+			scale = Math.min( availableWidth / slideWidth, availableHeight / slideHeight );
 
-		// Prefer applying scale via zoom since Chrome blurs scaled content
-		// with nested transforms
-		if( typeof dom.slides.style.zoom !== 'undefined' && !navigator.userAgent.match( /(iphone|ipod|android)/gi ) ) {
-			dom.slides.style.zoom = scale;
-		}
-		// Apply scale transform as a fallback
-		else {
-			var transform = 'translate(-50%, -50%) scale('+ scale +') translate(50%, 50%)';
+			// Respect max/min scale settings
+			scale = Math.max( scale, config.minScale );
+			scale = Math.min( scale, config.maxScale );
 
-			dom.slides.style.WebkitTransform = transform;
-			dom.slides.style.MozTransform = transform;
-			dom.slides.style.msTransform = transform;
-			dom.slides.style.OTransform = transform;
-			dom.slides.style.transform = transform;
-		}
+			// Prefer applying scale via zoom since Chrome blurs scaled content
+			// with nested transforms
+			if( typeof dom.slides.style.zoom !== 'undefined' && !navigator.userAgent.match( /(iphone|ipod|ipad|android)/gi ) ) {
+				dom.slides.style.zoom = scale;
+			}
+			// Apply scale transform as a fallback
+			else {
+				var transform = 'translate(-50%, -50%) scale('+ scale +') translate(50%, 50%)';
 
-		if( config.center ) {
+				dom.slides.style.WebkitTransform = transform;
+				dom.slides.style.MozTransform = transform;
+				dom.slides.style.msTransform = transform;
+				dom.slides.style.OTransform = transform;
+				dom.slides.style.transform = transform;
+			}
 
-			// Select all slides, vertical and horizontal
-			var slides = toArray( document.querySelectorAll( SLIDES_SELECTOR ) );
+			if( config.center ) {
 
-			// Determine the minimum top offset for slides
-			var minTop = -slideHeight / 2;
+				// Select all slides, vertical and horizontal
+				var slides = toArray( document.querySelectorAll( SLIDES_SELECTOR ) );
 
-			for( var i = 0, len = slides.length; i < len; i++ ) {
-				var slide = slides[ i ];
+				// Determine the minimum top offset for slides
+				var minTop = -slideHeight / 2;
 
-				// Don't bother updating invisible slides
-				if( slide.style.display === 'none' ) {
-					continue;
+				for( var i = 0, len = slides.length; i < len; i++ ) {
+					var slide = slides[ i ];
+
+					// Don't bother updating invisible slides
+					if( slide.style.display === 'none' ) {
+						continue;
+					}
+
+					// Vertical stacks are not centered since their section
+					// children will be
+					if( slide.classList.contains( 'stack' ) ) {
+						slide.style.top = 0;
+					}
+					else {
+						slide.style.top = Math.max( - ( slide.offsetHeight / 2 ) - 20, minTop ) + 'px';
+					}
 				}
 
-				// Vertical stacks are not centered since their section
-				// children will be
-				if( slide.classList.contains( 'stack' ) ) {
-					slide.style.top = 0;
-				}
-				else {
-					slide.style.top = Math.max( - ( slide.offsetHeight / 2 ) - 20, minTop ) + 'px';
-				}
 			}
 
 		}
@@ -674,6 +678,9 @@ var Reveal = (function(){
 
 		// Only proceed if enabled in config
 		if( config.overview ) {
+
+			// Don't auto-slide while in overview mode
+			cancelAutoSlide();
 
 			var wasActive = dom.wrapper.classList.contains( 'overview' );
 
@@ -794,6 +801,8 @@ var Reveal = (function(){
 
 			slide( indexh, indexv );
 
+			cueAutoSlide();
+
 			// Notify observers of the overview hiding
 			dispatchEvent( 'overviewhidden', {
 				'indexh': indexh,
@@ -817,7 +826,7 @@ var Reveal = (function(){
 			override ? activateOverview() : deactivateOverview();
 		}
 		else {
-			isOverviewActive() ? deactivateOverview() : activateOverview();
+			isOverview() ? deactivateOverview() : activateOverview();
 		}
 
 	}
@@ -828,7 +837,7 @@ var Reveal = (function(){
 	 * @return {Boolean} true if the overview is active,
 	 * false otherwise
 	 */
-	function isOverviewActive() {
+	function isOverview() {
 
 		return dom.wrapper.classList.contains( 'overview' );
 
@@ -862,6 +871,7 @@ var Reveal = (function(){
 	 */
 	function pause() {
 
+		cancelAutoSlide();
 		dom.wrapper.classList.add( 'paused' );
 
 	}
@@ -871,6 +881,7 @@ var Reveal = (function(){
 	 */
 	function resume() {
 
+		cueAutoSlide();
 		dom.wrapper.classList.remove( 'paused' );
 
 	}
@@ -966,7 +977,7 @@ var Reveal = (function(){
 		}
 
 		// If the overview is active, re-activate it to update positions
-		if( isOverviewActive() ) {
+		if( isOverview() ) {
 			activateOverview();
 		}
 
@@ -1077,7 +1088,7 @@ var Reveal = (function(){
 
 				// Optimization; hide all slides that are three or more steps
 				// away from the present slide
-				if( isOverviewActive() === false ) {
+				if( isOverview() === false ) {
 					// The distance loops so that it measures 1 between the first
 					// and last slides
 					var distance = Math.abs( ( index - i ) % ( slidesLength - 3 ) ) || 0;
@@ -1424,16 +1435,25 @@ var Reveal = (function(){
 		clearTimeout( autoSlideTimeout );
 
 		// Cue the next auto-slide if enabled
-		if( autoSlide ) {
+		if( autoSlide && !isPaused() && !isOverview() ) {
 			autoSlideTimeout = setTimeout( navigateNext, autoSlide );
 		}
+
+	}
+
+	/**
+	 * Cancels any ongoing request to auto-slide.
+	 */
+	function cancelAutoSlide() {
+
+		clearTimeout( autoSlideTimeout );
 
 	}
 
 	function navigateLeft() {
 
 		// Prioritize hiding fragments
-		if( availableRoutes().left && isOverviewActive() || previousFragment() === false ) {
+		if( availableRoutes().left && isOverview() || previousFragment() === false ) {
 			slide( indexh - 1 );
 		}
 
@@ -1442,7 +1462,7 @@ var Reveal = (function(){
 	function navigateRight() {
 
 		// Prioritize revealing fragments
-		if( availableRoutes().right && isOverviewActive() || nextFragment() === false ) {
+		if( availableRoutes().right && isOverview() || nextFragment() === false ) {
 			slide( indexh + 1 );
 		}
 
@@ -1451,7 +1471,7 @@ var Reveal = (function(){
 	function navigateUp() {
 
 		// Prioritize hiding fragments
-		if( availableRoutes().up && isOverviewActive() || previousFragment() === false ) {
+		if( availableRoutes().up && isOverview() || previousFragment() === false ) {
 			slide( indexh, indexv - 1 );
 		}
 
@@ -1460,7 +1480,7 @@ var Reveal = (function(){
 	function navigateDown() {
 
 		// Prioritize revealing fragments
-		if( availableRoutes().down && isOverviewActive() || nextFragment() === false ) {
+		if( availableRoutes().down && isOverview() || nextFragment() === false ) {
 			slide( indexh, indexv + 1 );
 		}
 
@@ -1556,9 +1576,9 @@ var Reveal = (function(){
 			// end
 			case 35: slide( Number.MAX_VALUE ); break;
 			// space
-			case 32: isOverviewActive() ? deactivateOverview() : navigateNext(); break;
+			case 32: isOverview() ? deactivateOverview() : navigateNext(); break;
 			// return
-			case 13: isOverviewActive() ? deactivateOverview() : triggered = false; break;
+			case 13: isOverview() ? deactivateOverview() : triggered = false; break;
 			// b, period, Logitech presenter tools "black screen" button
 			case 66: case 190: case 191: togglePause(); break;
 			// f
@@ -1763,7 +1783,7 @@ var Reveal = (function(){
 
 		// TODO There's a bug here where the event listeners are not
 		// removed after deactivating the overview.
-		if( isOverviewActive() ) {
+		if( isOverview() ) {
 			event.preventDefault();
 
 			deactivateOverview();
@@ -1821,6 +1841,10 @@ var Reveal = (function(){
 
 		// Toggles the "black screen" mode on/off
 		togglePause: togglePause,
+
+		// State checks
+		isOverview: isOverview,
+		isPaused: isPaused,
 
 		// Adds or removes all internal event listeners (such as keyboard)
 		addEventListeners: addEventListeners,
