@@ -19,8 +19,6 @@ package com.google.gwt.geolocation.client;
 import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.dom.client.PartialSupport;
 
 /**
@@ -261,14 +259,7 @@ public class Geolocation {
    *         {@link #clearWatch(int)} to stop watching the user's position.
    */
   public int watchPosition(Callback<Position, PositionError> callback) {
-    final int watchId = watchPosition(callback, null);
-    Impl.scheduleDispose(new Disposable() {
-      @Override
-      public void dispose() {
-        clearWatch(watchId);
-      }
-    });
-    return watchId;
+    return watchPosition(callback, null);
   }
 
   /**

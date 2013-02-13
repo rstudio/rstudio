@@ -189,7 +189,7 @@ public class SchedulerImpl extends Scheduler {
 
   private static native void scheduleFixedDelayImpl(RepeatingCommand cmd,
       int delayMs) /*-{
-    @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(function() {
+    $wnd.setTimeout(function() {
       // $entry takes care of uncaught exception handling
       var ret = $entry(@com.google.gwt.core.client.impl.SchedulerImpl::execute(Lcom/google/gwt/core/client/Scheduler$RepeatingCommand;))(cmd);
       if (!@com.google.gwt.core.client.GWT::isScript()()) {
@@ -197,7 +197,7 @@ public class SchedulerImpl extends Scheduler {
         ret = ret == true;
       }
       if (ret) {
-        @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(arguments.callee, delayMs);
+        $wnd.setTimeout(arguments.callee, delayMs);
       }
     }, delayMs);
   }-*/;
@@ -213,10 +213,10 @@ public class SchedulerImpl extends Scheduler {
       }
       if (!ret) {
         // Either canceled or threw an exception
-        @com.google.gwt.core.client.impl.Impl::clearInterval(I)(arguments.callee.token);
+        $wnd.clearInterval(arguments.callee.token);
       }
     };
-    fn.token = @com.google.gwt.core.client.impl.Impl::setInterval(Lcom/google/gwt/core/client/JavaScriptObject;I)(fn, delayMs);
+    fn.token = $wnd.setInterval(fn, delayMs);
   }-*/;
 
   /**

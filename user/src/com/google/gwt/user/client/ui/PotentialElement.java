@@ -16,9 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
-import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.builder.shared.HtmlElementBuilder;
+import com.google.gwt.dom.builder.shared.HtmlBuilderFactory;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.

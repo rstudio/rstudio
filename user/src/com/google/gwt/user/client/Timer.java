@@ -50,21 +50,21 @@ public abstract class Timer {
   }
 
   private static native void clearInterval(int id) /*-{
-    @com.google.gwt.core.client.impl.Impl::clearInterval(I)(id);
+    $wnd.clearInterval(id);
   }-*/;
 
   private static native void clearTimeout(int id) /*-{
-    @com.google.gwt.core.client.impl.Impl::clearTimeout(I)(id);
+    $wnd.clearTimeout(id);
   }-*/;
 
   private static native int createInterval(Timer timer, int period) /*-{
-    return @com.google.gwt.core.client.impl.Impl::setInterval(Lcom/google/gwt/core/client/JavaScriptObject;I)(
-        $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
+    return $wnd.setInterval(
+      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
       period);
   }-*/;
 
   private static native int createTimeout(Timer timer, int delay) /*-{
-    return @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(
+    return $wnd.setTimeout(
       $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
       delay);
   }-*/;

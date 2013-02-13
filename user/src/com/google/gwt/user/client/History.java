@@ -16,8 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.impl.HistoryImpl;
@@ -72,13 +70,6 @@ public class History {
           + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
           + "style='position:absolute;width:0;height:0;border:0'>"
           + "</iframe>");
-    } else {
-      Impl.scheduleDispose(new Disposable() {
-        @Override
-        public void dispose() {
-          impl.dispose();
-        }
-      });
     }
   }
 

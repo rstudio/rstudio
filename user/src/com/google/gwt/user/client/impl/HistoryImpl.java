@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -59,8 +58,6 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
     HistoryImpl.token = token;
   }
 
-  private JavaScriptObject oldHandler;
-
   private HandlerManager handlers = new HandlerManager(null);
 
   /**
@@ -73,10 +70,6 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
       ValueChangeHandler<String> handler) {
     return handlers.addHandler(ValueChangeEvent.getType(), handler);
   }
-
-  public native void dispose() /*-{
-    $wnd.onhashchange = this.@com.google.gwt.user.client.impl.HistoryImpl::oldHandler;
-  }-*/;
 
   public native String encodeFragment(String fragment) /*-{
     // encodeURI() does *not* encode the '#' character.
@@ -111,7 +104,7 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
 
     var historyImpl = this;
 
-    historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::oldHandler = $wnd.onhashchange;
+    var oldHandler = $wnd.onhashchange;
 
     $wnd.onhashchange = $entry(function() {
       var token = '', hash = $wnd.location.hash;
@@ -120,7 +113,7 @@ public class HistoryImpl implements HasValueChangeHandlers<String> {
       }
 
       historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
-      var oldHandler = historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::oldHandler;
+
       if (oldHandler) {
         oldHandler();
       }

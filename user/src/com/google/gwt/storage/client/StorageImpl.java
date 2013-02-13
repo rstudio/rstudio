@@ -19,8 +19,6 @@ package com.google.gwt.storage.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.ArrayList;
@@ -95,17 +93,9 @@ class StorageImpl {
     if (storageEventHandlers.size() == 1) {
       addStorageEventHandler0();
     }
-
-    final Disposable disposeHandler = new Disposable() {
-      @Override
-      public void dispose() {
-        StorageImpl.this.removeStorageEventHandler(handler);
-      }
-    };
-    Impl.scheduleDispose(disposeHandler);
     return new HandlerRegistration() {
       public void removeHandler() {
-        Impl.dispose(disposeHandler);
+        StorageImpl.this.removeStorageEventHandler(handler);
       }
     };
   }
