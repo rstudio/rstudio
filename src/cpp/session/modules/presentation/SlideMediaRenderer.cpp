@@ -141,9 +141,11 @@ void renderMedia(const std::string& type,
    boost::format fmt("slide%1%%2%");
    std::string mediaId = boost::str(fmt % slideNumber % type);
    fmt = boost::format(
-         "<%1% id=\"%2%\" controls preload=\"none\">\n"
+         "<%1% id=\"%2%\" controls preload=\"auto\">\n"
          "  %3%"
-         "  Your browser does not support the %1% tag.\n"
+         "  The &lt;%1%&gt; tag is not supported in this context"
+         " (however the %1% will still play correctly when the presentation"
+         " is shown within a browser that supports the %1% tag).\n"
          "</%1%>\n");
 
    os << boost::str(fmt % type % mediaId % sources) << std::endl;

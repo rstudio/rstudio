@@ -417,6 +417,12 @@ void handlePresentationRootRequest(const std::string& path,
 
       // generate preview version
 
+      // set preload to none for media
+      vars["slides"] = boost::algorithm::replace_all_copy(
+                                             slides,
+                                             "controls preload=\"auto\"",
+                                             "controls preload=\"none\"");
+
       // linked versions of reveal assets
       vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
       vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
