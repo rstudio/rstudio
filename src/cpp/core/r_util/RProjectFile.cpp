@@ -503,7 +503,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->showPresentation = true;
+      pConfig->showPresentation = false;
    }
 
    return Success();
@@ -622,10 +622,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
       }
    }
 
-   // add ShowPresentation if it's false
-   if (!config.showPresentation)
+   // add ShowPresentation if it's true
+   if (config.showPresentation)
    {
-      contents.append("\nShowPresentation: No\n");
+      contents.append("\nShowPresentation: Yes\n");
    }
 
    // write it

@@ -64,7 +64,7 @@ struct RProjectConfig
         packageRoxygenize(),
         makefilePath(),
         customScriptPath(),
-        showPresentation(true)
+        showPresentation(false)
    {
    }
 
