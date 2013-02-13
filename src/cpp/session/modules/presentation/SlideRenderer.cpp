@@ -74,7 +74,7 @@ std::string divWrap(const std::string& classNames, const std::string& contents)
    return boost::str(fmt % classNames % contents);
 }
 
-std::string imageClass(const std::string& html)
+std::string mediaClass(const std::string& html)
 {
    boost::regex imageRegex(
      "\\s*<p>\\s*<img src=\"([^\"]+)\"(?: [\\w]+=\"[^\"]*\")*/>\\s*</p>\\s*");
@@ -86,12 +86,27 @@ std::string imageClass(const std::string& html)
       std::string::const_iterator end = match[0].second;
 
       if (begin == html.begin() && end == html.end())
-         return "imageOnly";
+         return "mediaOnly";
       else
-         return "imageInline";
+         return "mediaInline";
    }
+   // look for videos
    else
-      return std::string();
+   {
+      // trim for comparison
+      std::string trimmedHtml = boost::algorithm::trim_copy(html);
+      if (boost::algorithm::contains(trimmedHtml, "<video id="))
+      {
+         bool starts = boost::algorithm::starts_with(trimmedHtml, "<video id=");
+         bool ends = boost::algorithm::ends_with(trimmedHtml, "</video>");
+         if (starts && ends)
+            return "mediaOnly";
+         else
+            return "mediaInline";
+      }
+   }
+
+   return std::string();
 }
 
 void addFragmentClass(const std::string& fragmentClass,
@@ -113,6 +128,7 @@ void addFragmentClass(const std::string& fragmentClass,
 }
 
 Error slideMarkdownToHtml(const Slide& slide,
+                          const std::string& extraContent,
                           const std::string& incremental,
                           std::string* pHTML)
 {
@@ -120,6 +136,9 @@ Error slideMarkdownToHtml(const Slide& slide,
    Error error = renderMarkdown(slide.content(), pHTML);
    if (error)
       return error;
+
+   // add the extra content
+   pHTML->append(extraContent);
 
    // slide content classes
    std::string slideClasses = "slideContent";
@@ -145,12 +164,12 @@ Error slideMarkdownToHtml(const Slide& slide,
       *pHTML = ostr.str();
    }
 
-   // apply standard (and optional image) classes
+   // apply standard (and optional media) classes
    else
    {
-      std::string extraImageClass = imageClass(*pHTML);
-      if (!extraImageClass.empty())
-         slideClasses = extraImageClass + " " + slideClasses;
+      std::string extraMediaClass = mediaClass(*pHTML);
+      if (!extraMediaClass.empty())
+         slideClasses = extraMediaClass + " " + slideClasses;
 
       *pHTML = divWrap(slideClasses, *pHTML);
    }
@@ -304,15 +323,6 @@ Error renderSlides(const SlideDeck& slideDeck,
          }
       }
 
-      // render markdown
-      std::string htmlContent;
-      Error error = slideMarkdownToHtml(slide, incremental, &htmlContent);
-      if (error)
-         return error;
-
-      // render content
-      ostr << htmlContent << "\n";
-
       // setup vectors for reveal config and init actions
       std::vector<std::string> revealConfig;
       std::vector<std::string> initActions;
@@ -326,6 +336,7 @@ Error renderSlides(const SlideDeck& slideDeck,
       std::vector<AtCommand> atCommands = slide.atCommands();
 
       // render video if specified
+      std::ostringstream ostrMedia;
       std::string video = slide.video();
       if (!video.empty())
       {
@@ -334,7 +345,7 @@ Error renderSlides(const SlideDeck& slideDeck,
                      slideDeck.baseDir(),
                      video,
                      atCommands,
-                     ostr,
+                     ostrMedia,
                      &initActions,
                      &slideActions);
       }
@@ -348,11 +359,23 @@ Error renderSlides(const SlideDeck& slideDeck,
                      slideDeck.baseDir(),
                      audio,
                      atCommands,
-                     ostr,
+                     ostrMedia,
                      &initActions,
                      &slideActions);
       }
 
+
+      // render markdown
+      std::string htmlContent;
+      Error error = slideMarkdownToHtml(slide,
+                                        ostrMedia.str(),
+                                        incremental,
+                                        &htmlContent);
+      if (error)
+         return error;
+      ostr << htmlContent << "\n";
+
+      // render end section
       ostr << "</section>" << "\n";
 
       // reveal config actions

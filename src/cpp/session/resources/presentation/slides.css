@@ -148,10 +148,6 @@
   padding: 0px 0px;
 }
 
-.reveal video {
-  height: 85%;
-  width: 100%;
-}
 
 .reveal table {
   border-width: 1px;
@@ -246,23 +242,33 @@
    height: auto;
 }
 
-.reveal .slides section .imageOnly {
+.reveal .slides section .mediaOnly {
    position: fixed;
    width: 100%;
    top: 2.5em;
    bottom: 0;
 }
 
-.reveal .slides section .imageOnly img {
+.reveal .slides section .mediaOnly img {
    max-width: 90%;
    max-height: 90%;
    height: auto;
 }
 
-.reveal .slides section .imageInline img {
+.reveal .slides section .mediaInline img {
    max-width: 90%;
    max-height: 50%;
    width: auto;
+}
+
+.reveal .slides section .mediaOnly video {
+   height: 90%;
+   width: 90%;
+}
+
+.reveal .slides section .mediaInline video {
+   height: 50%;
+   width: 90%;
 }
 
 .reveal .slides section .noTitle {
