@@ -46,7 +46,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
    std::vector<std::string> dcfLines;
    boost::algorithm::split(dcfLines,
                            dcfFileContents,
-                           boost::algorithm::is_any_of("\r\n"));
+                           boost::algorithm::is_any_of("\n"));
 
    // iterate over lines
    int lineNumber = 0;
@@ -126,7 +126,8 @@ Error parseDcfFile(const FilePath& dcfFilePath,
    // read the file
    std::string dcfFileContents;
    Error error = readStringFromFile(dcfFilePath,
-                                    &dcfFileContents);
+                                    &dcfFileContents,
+                                    string_utils::LineEndingPosix);
    if (error)
    {
       error.addProperty("dcf-file", dcfFilePath.absolutePath());
