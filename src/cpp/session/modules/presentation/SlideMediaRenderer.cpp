@@ -148,7 +148,7 @@ void renderMedia(const std::string& type,
          " is shown within a browser that supports the %1% tag).\n"
          "</%1%>\n");
 
-   os << boost::str(fmt % type % mediaId % sources) << std::endl;
+   os << boost::str(fmt % type % mediaId % sources);
 
    // define manager during initialization
    std::string atCmds = atCommandsAsJsonArray(atCommands);

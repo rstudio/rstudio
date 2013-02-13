@@ -247,14 +247,10 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    baseDir_ = filePath.parent();
 
    // read the file
-   std::string slides;
-   Error error = readStringFromFile(filePath, &slides);
+   std::vector<std::string> lines;
+   Error error = readStringVectorFromFile(filePath, &lines, false);
    if (error)
       return error;
-
-   // split into lines
-   std::vector<std::string> lines;
-   boost::algorithm::split(lines, slides, boost::algorithm::is_any_of("\r\n"));
 
    // find indexes of lines with 3 or more consecutive equals
    boost::regex re("^\\={3,}\\s*$");
