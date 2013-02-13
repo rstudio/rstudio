@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class JPackage implements com.google.gwt.core.ext.typeinfo.JPackage {
 
-  private final Annotations annotations = new Annotations();
+  private ImmutableAnnotations annotations = ImmutableAnnotations.EMPTY;
 
   private final String name;
 
@@ -86,8 +86,8 @@ public class JPackage implements com.google.gwt.core.ext.typeinfo.JPackage {
     return "package " + name;
   }
 
-  void addAnnotations(Map<Class<? extends Annotation>, Annotation> annotations) {
-    this.annotations.addAnnotations(annotations);
+  void addAnnotations(Map<Class<? extends Annotation>, Annotation> additions) {
+    annotations = annotations.plus(additions);
   }
 
   void addType(JRealClassType type) {

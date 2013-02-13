@@ -29,7 +29,7 @@ import java.util.Map;
 public abstract class JAbstractMethod implements
     com.google.gwt.core.ext.typeinfo.JAbstractMethod {
 
-  private final Annotations annotations;
+  private final ImmutableAnnotations annotations;
 
   private boolean isVarArgs = false;
 
@@ -46,7 +46,7 @@ public abstract class JAbstractMethod implements
   private List<JTypeParameter> typeParams = Lists.create();
 
   JAbstractMethod(JAbstractMethod srcMethod) {
-    this.annotations = new Annotations(srcMethod.annotations);
+    this.annotations = srcMethod.annotations;
     this.isVarArgs = srcMethod.isVarArgs;
     this.modifierBits = srcMethod.modifierBits;
     this.name = srcMethod.name;
@@ -57,7 +57,7 @@ public abstract class JAbstractMethod implements
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
     this.name = StringInterner.get().intern(name);
-    annotations = new Annotations(declaredAnnotations);
+    annotations = ImmutableAnnotations.EMPTY.plus(declaredAnnotations);
 
     if (jtypeParameters != null) {
       typeParams = Lists.create(jtypeParameters);

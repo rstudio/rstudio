@@ -27,7 +27,8 @@ import java.lang.annotation.Annotation;
 public interface HasAnnotations {
   /**
    * Returns an instance of the specified annotation type if it is present on
-   * this element or <code>null</code> if it is not.
+   * this element or <code>null</code> if it is not. For a class, this will
+   * look for annotations on supertypes as well.
    * 
    * @param annotationClass annotation type to search for
    * @return instance of the specified annotation type if it is present on this
@@ -36,7 +37,8 @@ public interface HasAnnotations {
   <T extends Annotation> T getAnnotation(Class<T> annotationClass);
 
   /**
-   * Returns all the annotations present on this element.
+   * Returns all the annotations present on this element. For a class, the list
+   * will include annotations on supertypes as well.
    */
   Annotation[] getAnnotations();
 
@@ -48,9 +50,7 @@ public interface HasAnnotations {
 
   /**
    * Returns <code>true</code> if this item has an annotation of the specified
-   * type.
-   * 
-   * @param annotationClass
+   * type. For a class, this will look at supertypes as well.
    * 
    * @return <code>true</code> if this item has an annotation of the specified
    *         type

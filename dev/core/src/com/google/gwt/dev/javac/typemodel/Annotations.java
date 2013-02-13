@@ -29,11 +29,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Default implementation of the {@link HasAnnotations} interface.
+ * An implementation of the {@link HasAnnotations} interface that supports inheritance
+ * of annotations. This is a mutable type, but it's an error to change it after doing
+ * a query that looks at inherited annotations.
  */
 class Annotations implements HasAnnotations {
 
-  private static final Comparator<Annotation> ANNOTATION_COMPARATOR = new Comparator<Annotation>() {
+  static final Comparator<Annotation> ANNOTATION_COMPARATOR = new Comparator<Annotation>() {
     /**
      * An element can only be annotated with one annotation of a particular
      * type. So we only need to sort by annotation type name, since there won't
@@ -44,23 +46,6 @@ class Annotations implements HasAnnotations {
           o2.annotationType().getName());
     }
   };
-
-  private static Map<Class<? extends Annotation>, Annotation> copyOfAnnotations(
-      Annotations otherAnnotations) {
-    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
-    if (otherAnnotations != null) {
-      Annotation[] otherDeclaredAnnotations = otherAnnotations.getDeclaredAnnotations();
-      for (Annotation otherDeclaredAnnotation : otherDeclaredAnnotations) {
-        Class<? extends Annotation> otherDeclaredAnnotationType = otherDeclaredAnnotation.annotationType();
-        assert (otherDeclaredAnnotationType != null);
-        assert (!declaredAnnotations.containsKey(otherDeclaredAnnotationType));
-
-        declaredAnnotations.put(otherDeclaredAnnotationType,
-            otherDeclaredAnnotation);
-      }
-    }
-    return declaredAnnotations;
-  }
 
   /**
    * All annotations declared on the annotated element.
@@ -82,19 +67,21 @@ class Annotations implements HasAnnotations {
     this.declaredAnnotations = Maps.create();
   }
 
-  Annotations(Annotations otherAnnotations) {
-    this(copyOfAnnotations(otherAnnotations));
-  }
-
   Annotations(Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this.declaredAnnotations = Maps.normalize(declaredAnnotations);
   }
 
+  /**
+   * Adds annotations to the set. It's an error to call this after calling
+   * {@link #getAnnotation}, {@link #getAnnotations}, or
+   * {@link #isAnnotationPresent}.
+   */
   public void addAnnotations(
-      Map<Class<? extends Annotation>, Annotation> annotations) {
-    if (annotations != null) {
-      assert (!annotations.containsValue(null));
-      declaredAnnotations = Maps.putAll(declaredAnnotations, annotations);
+      Map<Class<? extends Annotation>, Annotation> additions) {
+    assert lazyAnnotations == null;
+    if (additions != null) {
+      assert (!additions.containsValue(null));
+      declaredAnnotations = Maps.putAll(declaredAnnotations, additions);
     }
   }
 
@@ -105,8 +92,7 @@ class Annotations implements HasAnnotations {
 
   public Annotation[] getAnnotations() {
     initializeAnnotations();
-    List<Annotation> values = new ArrayList<Annotation>(
-        lazyAnnotations.values());
+    List<Annotation> values = new ArrayList<Annotation>(lazyAnnotations.values());
     Collections.sort(values, ANNOTATION_COMPARATOR);
     return values.toArray(new Annotation[values.size()]);
   }
@@ -122,7 +108,13 @@ class Annotations implements HasAnnotations {
     return getAnnotation(annotationClass) != null;
   }
 
+  /**
+   * Sets a parent to inherit annotations from, or null to clear. It's an error to call
+   * this after calling {@link #getAnnotation}, {@link #getAnnotations}, or
+   * {@link #isAnnotationPresent}.
+   */
   void setParent(Annotations parent) {
+    assert lazyAnnotations == null;
     this.parent = parent;
   }
 

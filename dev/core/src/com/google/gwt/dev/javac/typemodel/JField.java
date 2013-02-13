@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class JField implements com.google.gwt.core.ext.typeinfo.JField {
 
-  private final Annotations annotations;
+  private final ImmutableAnnotations annotations;
 
   private final JClassType enclosingType;
 
@@ -37,7 +37,7 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
   private JType type;
 
   JField(JClassType enclosingType, JField srcField) {
-    this.annotations = new Annotations(srcField.annotations);
+    this.annotations = srcField.annotations;
     this.enclosingType = enclosingType;
     this.modifierBits = srcField.modifierBits;
     this.name = srcField.name;
@@ -50,7 +50,7 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
     this.enclosingType = enclosingType;
     this.name = StringInterner.get().intern(name);
     this.enclosingType.addField(this);
-    annotations = new Annotations(declaredAnnotations);
+    annotations = ImmutableAnnotations.EMPTY.plus(declaredAnnotations);
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {

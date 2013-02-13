@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
 
-  private final Annotations annotations;
+  private final ImmutableAnnotations annotations;
 
   private boolean argNameIsReal;
 
@@ -40,12 +40,7 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
     this.enclosingMethod = enclosingMethod;
     this.type = srcParam.type;
     this.name = StringInterner.get().intern(srcParam.name);
-    this.annotations = new Annotations(srcParam.annotations);
-  }
-
-  JParameter(JAbstractMethod enclosingMethod, JType type, String name,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    this(enclosingMethod, type, name, declaredAnnotations, true);
+    this.annotations = srcParam.annotations;
   }
 
   JParameter(JAbstractMethod enclosingMethod, JType type, String name,
@@ -58,7 +53,7 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
 
     enclosingMethod.addParameter(this);
 
-    annotations = new Annotations(declaredAnnotations);
+    annotations = ImmutableAnnotations.EMPTY.plus(declaredAnnotations);
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
