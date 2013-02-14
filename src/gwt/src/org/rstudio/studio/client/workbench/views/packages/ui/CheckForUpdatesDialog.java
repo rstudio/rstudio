@@ -156,7 +156,6 @@ public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
                 GlobalDisplay.NewWindowOptions options = 
                                   new GlobalDisplay.NewWindowOptions();
                 options.setName("_rstudio_package_news");
-                options.setAlwaysUseBrowser(true);
                 globalDisplay_.openWindow(update.getUpdateInfo().getNewsUrl(),
                                           options);
              }  
