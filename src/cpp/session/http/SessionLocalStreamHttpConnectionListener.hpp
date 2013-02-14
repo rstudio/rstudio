@@ -35,8 +35,9 @@ class LocalStreamHttpConnectionListener :
 {
 public:
    LocalStreamHttpConnectionListener(const FilePath& streamPath,
+                                     core::system::FileMode streamFileMode,
                                      int limitRpcClientUid)
-      : localStreamPath_(streamPath)
+      : localStreamPath_(streamPath), streamFileMode_(streamFileMode)
    {
       if (limitRpcClientUid != -1)
       {
@@ -55,7 +56,9 @@ private:
       http::SocketAcceptorService<boost::asio::local::stream_protocol>*
                                                                   pAcceptor)
    {
-      return http::initLocalStreamAcceptor(*pAcceptor, localStreamPath_);
+      return http::initLocalStreamAcceptor(*pAcceptor,
+                                           localStreamPath_,
+                                           streamFileMode_);
    }
 
    virtual bool validateConnection(
@@ -108,6 +111,7 @@ private:
 
 private:
    core::FilePath localStreamPath_;
+   core::system::FileMode streamFileMode_;
 
    // user-ids we will accept connections from
    std::vector<uid_t> permittedClients_;
