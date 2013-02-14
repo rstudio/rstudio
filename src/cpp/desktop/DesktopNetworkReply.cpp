@@ -97,11 +97,6 @@ NetworkReply::NetworkReply(const FilePath& streamFilePath,
       QByteArray queryString = req.url().encodedQuery();
       uri.append(queryString.begin(), queryString.end());
    }
-   if (req.url().hasFragment())
-   {
-      uri.append("#");
-      uri.append(req.url().fragment().toStdString());
-   }
    request.setUri(uri);
 
    // headers
