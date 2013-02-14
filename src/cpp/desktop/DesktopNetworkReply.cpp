@@ -99,11 +99,17 @@ NetworkReply::NetworkReply(const FilePath& streamFilePath,
    }
    request.setUri(uri);
 
+   // host
+   request.setHost("127.0.0.1");
+
    // headers
    QList<QByteArray> headers = req.rawHeaderList();
-   BOOST_FOREACH(QByteArray header, headers)
+   for (int i=0; i<headers.size(); i++)
    {
-      request.setHeaderLine(std::string(header.begin(), header.end()));
+      QByteArray name = headers.at(i);
+      QByteArray value = req.rawHeader(name);
+      request.setHeader(std::string(name.begin(), name.end()),
+                        std::string(value.begin(), value.end()));
    }
 
    // body
