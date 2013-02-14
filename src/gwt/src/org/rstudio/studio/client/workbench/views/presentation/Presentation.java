@@ -26,7 +26,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
