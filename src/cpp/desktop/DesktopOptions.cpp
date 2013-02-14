@@ -305,6 +305,10 @@ FilePath Options::wwwDocsPath() const
    FilePath wwwDocsPath = supportingFilePath.complete("www/docs");
    if (!wwwDocsPath.exists())
       wwwDocsPath = supportingFilePath.complete("../gwt/www/docs");
+#ifdef __APPLE__
+   if (!wwwDocsPath.exists())
+      wwwDocsPath = supportingFilePath.complete("../../../../../gwt/www/docs");
+#endif
    return wwwDocsPath;
 }
 
