@@ -72,6 +72,15 @@ SecondaryWindow::SecondaryWindow(QUrl baseUrl, QWidget* pParent) :
            this, SLOT(manageCommandState()));
 
    manageCommandState();
+
+   // Size it (use computed size if it seems sane; otherwise let Qt set it)
+   QSize size = QSize(850, 1100).boundedTo(
+         QApplication::desktop()->availableGeometry().size());
+   if (size.width() > 500 && size.height() > 500)
+   {
+      size.setHeight(size.height()-75);
+      resize(size);
+   }
 }
 
 void SecondaryWindow::print()
