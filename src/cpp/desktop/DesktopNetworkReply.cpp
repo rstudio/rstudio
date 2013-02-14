@@ -148,7 +148,10 @@ qint64 NetworkReply::bytesAvailable() const
 {
    // check for bytes available
    qint64 avail = pImpl_->replyData.size() - pImpl_->replyReadOffset;
-   return avail;
+
+   // Qt will never call readData unless you tell it that at least
+   // 512 bytes are available
+   return std::max(avail, (qint64)512);
 }
 
 bool NetworkReply::isSequential() const
