@@ -43,7 +43,8 @@ QNetworkReply* NetworkAccessManager::createRequest(
       QIODevice* outgoingData)
 { 
    if (req.url().scheme() == QString::fromAscii("http") &&
-       req.url().host() == QString::fromAscii("127.0.0.1"))
+       (req.url().host() == QString::fromAscii("127.0.0.1") ||
+        req.url().host() == QString::fromAscii("localhost")))
    {
       return new NetworkReply(
             desktop::options().localPeerPath(),
