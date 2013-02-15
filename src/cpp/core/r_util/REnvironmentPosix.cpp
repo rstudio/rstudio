@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include <boost/tokenizer.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -651,6 +652,16 @@ bool detectREnvironment(const FilePath& whichRScript,
 
    // determine library path (existing + r lib dir + r extra lib dirs)
    std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
+#ifdef __APPLE__
+   // if this isn't set explicitly then initalize it with the default
+   // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
+   // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
+   if (libraryPath.empty())
+   {
+      boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
+      libraryPath = boost::str(fmt % core::system::getenv("HOME"));
+   }
+#endif
    if (!libraryPath.empty())
       libraryPath.append(":");
    libraryPath.append(ldLibraryPath);
