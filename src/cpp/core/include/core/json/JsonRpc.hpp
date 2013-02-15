@@ -59,13 +59,13 @@ enum errc_t {
 } // namespace json
 } // namespace core
 
-namespace rstudio_boost {
+namespace boost {
 namespace system {
 template <>
 struct is_error_code_enum<core::json::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
-} // namespace rstudio_boost
+} // namespace boost
 
 
 

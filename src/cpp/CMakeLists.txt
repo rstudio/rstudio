@@ -97,8 +97,8 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# require boost 1.53
-set(BOOST_VERSION 1.53.0)
+# require boost 1.50
+set(BOOST_VERSION 1.50.0)
 
 list(APPEND BOOST_LIBS
    date_time
@@ -115,17 +115,17 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_53_0)
+   set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
    if(EXISTS ${RSTUDIO_TOOLS_BOOST})
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
       find_package(Boost ${BOOST_VERSION} REQUIRED)
 
-      # define library list manually (special naming convention)
+      # define library list manually (find_package doesn't always pick them up)
       set(BOOST_LIB_DIR ${RSTUDIO_TOOLS_BOOST}/lib)
       foreach(BOOST_LIB ${BOOST_LIBS})
-         list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/librstudio_boost_${BOOST_LIB}.a)
+         list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/libboost_${BOOST_LIB}.a)
       endforeach()
    else()
       find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
@@ -135,18 +135,12 @@ if(UNIX)
 else()
      # hard-code to our own prebuilt boost libs
      if(RSTUDIO_SESSION_WIN64)
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.53-win/boost64")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win/boost64")
      else()
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.53-win/boost32")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win/boost32")
      endif()
-     set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_53")
-
-   find_package(Boost ${BOOST_VERSION} REQUIRED)
-   # define library list manually (special naming convention)
-   set(BOOST_LIB_DIR ${BOOST_ROOT}/lib)
-   foreach(BOOST_LIB ${BOOST_LIBS})
-      list(APPEND Boost_LIBRARIES ${BOOST_LIB_DIR}/librstudio_boost_${BOOST_LIB}-mgw44-mt-1_53.a)
-   endforeach()
+     set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_50")
+     find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()
 
 

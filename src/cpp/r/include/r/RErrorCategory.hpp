@@ -37,13 +37,13 @@ enum errc_t {
 } // namespace r
 
 
-namespace rstudio_boost {
+namespace boost {
 namespace system {
 template <>
 struct is_error_code_enum<r::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
-} // namespace rstudio_boost
+} // namespace boost
 
 
 

@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 
-namespace rstudio_boost {
+namespace boost {
 namespace asio {
    class const_buffer ;
 }

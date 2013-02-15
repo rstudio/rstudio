@@ -27,9 +27,9 @@
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
 
-using namespace rstudio_boost::system ;
+using namespace boost::system ;
 
-namespace rstudio_boost {
+namespace boost {
 namespace interprocess {
 
 class interprocess_error_category : public error_category
@@ -145,7 +145,7 @@ std::string interprocess_error_category::message(int ev) const
 
 
 
-rstudio_boost::system::error_code ec_from_exception(const interprocess_exception& e)
+boost::system::error_code ec_from_exception(const interprocess_exception& e) 
 {
    if (e.get_error_code() == system_error)
       return error_code(e.get_native_error(), get_system_category()) ;
@@ -198,7 +198,7 @@ std::string thread_error_category::message(int ev) const
    return message ;
 }
 
-rstudio_boost::system::error_code ec_from_exception(
+boost::system::error_code ec_from_exception(
       const boost::thread_resource_error& e) 
 {
    return error_code(errc::thread_resource_error, thread_category()) ;
@@ -206,7 +206,7 @@ rstudio_boost::system::error_code ec_from_exception(
 
 } // namespace thread_error
 
-} // namespace rstudio_boost
+} // namespace boost
 
 
 

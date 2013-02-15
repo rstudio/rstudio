@@ -87,7 +87,7 @@ private:
       boost::shared_ptr<AsyncClient<boost::asio::local::stream_protocol::socket> >
                                     ptrShared = shared_from_this();
 
-      return boost::static_pointer_cast<LocalStreamAsyncClient>(ptrShared);
+      return boost::shared_static_cast<LocalStreamAsyncClient>(ptrShared);
    }
 
 private:
