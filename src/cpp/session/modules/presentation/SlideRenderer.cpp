@@ -188,6 +188,22 @@ Error slideMarkdownToHtml(const Slide& slide,
    return Success();
 }
 
+void validateTransitionType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "none") ||
+                  boost::iequals(type, "rotate") ||
+                  boost::iequals(type, "linear") ||
+                  boost::iequals(type, "fade") ||
+                  boost::iequals(type, "zoom") ||
+                  boost::iequals(type, "concave");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for transition field: "
+                                        + type + "\n");
+   }
+}
+
 void validateNavigationType(const std::string& type)
 {
    bool isValid = boost::iequals(type, "slides") ||
@@ -215,6 +231,7 @@ void validateIncrementalType(const std::string& type)
 
 void validateSlideDeckFields(const SlideDeck& slideDeck)
 {
+   validateTransitionType(slideDeck.transition());
    validateNavigationType(slideDeck.navigation());
    validateIncrementalType(slideDeck.incremental());
 }

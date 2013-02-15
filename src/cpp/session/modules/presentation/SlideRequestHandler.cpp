@@ -394,8 +394,8 @@ void handlePresentationRootRequest(const std::string& path,
       vars["reveal_width"] = "960";
       vars["reveal_height"] = "700";
 
-      // use linear transitions for standalone
-      vars["reveal_transition"] = "linear";
+      // use transitions for standalone
+      vars["reveal_transition"] = slideDeck.transition();
 
       std::istringstream templateStream(presentationTemplate);
       html_utils::Base64ImageFilter imageFilter(dirPath);
@@ -447,7 +447,7 @@ void handlePresentationRootRequest(const std::string& path,
 
       // no transition in desktop mode (qtwebkit can't keep up)
       bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-      vars["reveal_transition"] =  isDesktop? "none" : "linear";
+      vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
 
       templateStream.seekg (0, std::ios::beg);
       std::stringstream previewOutputStream;

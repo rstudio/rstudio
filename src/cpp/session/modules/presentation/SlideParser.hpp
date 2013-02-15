@@ -83,6 +83,7 @@ public:
    // title slide fields
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string transition() const;
    std::string navigation() const { return fieldValue("navigation", "slides"); }
    std::string incremental() const { return fieldValue("incremental"); }
 
@@ -121,6 +122,7 @@ public:
 
    std::string title() const;
 
+   std::string transition() const;
    std::string navigation() const;
    std::string incremental() const;
 
