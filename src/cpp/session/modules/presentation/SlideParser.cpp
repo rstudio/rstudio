@@ -120,12 +120,10 @@ bool Slide::showTitle() const
 std::vector<Command> Slide::commands() const
 {
    std::vector<Command> commands;
-   std::vector<std::string> flds = fields();
-   for (size_t i=0; i<flds.size(); i++)
+   BOOST_FOREACH(const Slide::Field& field, fields_)
    {
-      std::string field = flds[i];
-      if (isCommandField(field))
-         commands.push_back(Command(field, fieldValue(field)));
+      if (isCommandField(field.first))
+         commands.push_back(Command(field.first, field.second));
    }
    return commands;
 }
