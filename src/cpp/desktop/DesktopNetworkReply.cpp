@@ -217,6 +217,9 @@ void NetworkReply::onResponse(const http::Response& response)
 
    // notify listeners that data is ready
    QTimer::singleShot(0, this, SIGNAL(readyRead()));
+
+   // set finished flag
+   setFinished(true);
 }
 
 void NetworkReply::onError(const Error& error)
