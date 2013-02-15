@@ -34,7 +34,7 @@ import java.util.Collections;
  * This class tests our implementation of the GWTTestCase class which provides the behavior of
  * TestCase that is necessary in GWT.
  */
-public class GWTTestCaseTest extends GWTTestCase {
+public class GWTTestCaseTest extends GWTTestCaseTestBase {
 
   private static void assertNotEquals(double a, double b, double delta) {
     boolean failed = false;
@@ -68,10 +68,6 @@ public class GWTTestCaseTest extends GWTTestCase {
   private Object obj2 = Collections.nCopies(2, "data");
   private Object obj1Equal = Collections.nCopies(1, "data");
 
-  public String getModuleName() {
-    return "com.google.gwt.junit.JUnit";
-  }
-
   @ExpectedFailure(withMessage = "testFail")
   public void testFail() {
     fail("testFail");
@@ -82,7 +78,7 @@ public class GWTTestCaseTest extends GWTTestCase {
     throw new Exception();
   }
 
-  @ExpectedFailure(withType = JavaScriptException.class)
+  @ExpectedFailure(withType = Exception.class)
   public void testThrowsNonSerializableException() {
     throw new JavaScriptException("name", "desc");
   }

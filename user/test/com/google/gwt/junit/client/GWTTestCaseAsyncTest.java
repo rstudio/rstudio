@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,12 +15,7 @@
  */
 package com.google.gwt.junit.client;
 
-import com.google.gwt.dom.client.ButtonElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.ExpectedFailure;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 
 /**
@@ -28,11 +23,7 @@ import com.google.gwt.user.client.Timer;
  *
  * Note: This test requires some test methods to be executed in a specific order.
  */
-public class GWTTestCaseAsyncTest extends GWTTestCase {
-
-  public String getModuleName() {
-    return "com.google.gwt.junit.JUnit";
-  }
+public class GWTTestCaseAsyncTest extends GWTTestCaseTestBase {
 
   // The following tests (all prefixed with test_) are intended to test the
   // interaction of synchronous failures (within event handlers) with various
@@ -41,7 +32,7 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
   //
   // Nomenclature for these tests:
   // DTF => delayTestFinish()
-  // SF => synchronous failure (from event handler)
+  // SF => synchronous failure (from event handler using failViaUncaughtException)
   // FT => finishTest()
   // F => fail()
   // R => return;
@@ -49,20 +40,20 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
   @ExpectedFailure(withMessage = "test_dtf_sf")
   public void test_dtf_sf() {
     delayTestFinish();
-    synchronousFailure("test_dtf_sf");
+    failViaUncaughtException("test_dtf_sf");
   }
 
   @ExpectedFailure(withMessage = "test_dtf_sf_f")
   public void test_dtf_sf_f() {
     delayTestFinish();
-    synchronousFailure("test_dtf_sf_f");
+    failViaUncaughtException("test_dtf_sf_f");
     failNow("test_dtf_sf_f");
   }
 
   @ExpectedFailure(withMessage = "test_dtf_sf_ft")
   public void test_dtf_sf_ft() {
     delayTestFinish();
-    synchronousFailure("test_dtf_sf_ft");
+    failViaUncaughtException("test_dtf_sf_ft");
     finishTest();
   }
 
@@ -70,32 +61,27 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
   @ExpectedFailure(withMessage = "test_dtf_sf_r_f")
   public void _suppressed_test_dtf_sf_r_f() {
     delayTestFinish();
-    synchronousFailure("test_dtf_sf_r_f");
+    failViaUncaughtException("test_dtf_sf_r_f");
     failLater("test_dtf_sf_r_f");
   }
 
   @ExpectedFailure(withMessage = "test_dtf_sf_r_ft")
   public void test_dtf_sf_r_ft() {
     delayTestFinish();
-    synchronousFailure("test_dtf_sf_r_ft");
+    failViaUncaughtException("test_dtf_sf_r_ft");
     finishTestLater();
-  }
-
-  @ExpectedFailure(withMessage = "test_sf")
-  public void test_sf() {
-    synchronousFailure("test_sf");
   }
 
   @ExpectedFailure(withMessage = "test_sf_dtf_f")
   public void test_sf_dtf_f() {
-    synchronousFailure("test_sf_dtf_f");
+    failViaUncaughtException("test_sf_dtf_f");
     delayTestFinish();
     failNow("test_sf_dtf_f");
   }
 
   @ExpectedFailure(withMessage = "test_sf_dtf_ft")
   public void test_sf_dtf_ft() {
-    synchronousFailure("test_sf_dtf_ft");
+    failViaUncaughtException("test_sf_dtf_ft");
     delayTestFinish();
     finishTest();
   }
@@ -103,22 +89,16 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
   // Issue: http://code.google.com/p/google-web-toolkit/issues/detail?id=7846
   @ExpectedFailure(withMessage = "test_sf_dtf_r_f")
   public void _suppressed_test_sf_dtf_r_f() {
-    synchronousFailure("test_sf_dtf_r_f");
+    failViaUncaughtException("test_sf_dtf_r_f");
     delayTestFinish();
     failLater("test_sf_dtf_r_f");
   }
 
   @ExpectedFailure(withMessage = "test_sf_dtf_r_ft")
   public void test_sf_dtf_r_ft() {
-    synchronousFailure("test_sf_dtf_r_ft");
+    failViaUncaughtException("test_sf_dtf_r_ft");
     delayTestFinish();
     finishTestLater();
-  }
-
-  @ExpectedFailure(withMessage = "test_sf_f")
-  public void test_sf_f() {
-    synchronousFailure("test_sf_f");
-    failNow("test_sf_f");
   }
 
   /**
@@ -179,6 +159,7 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
       finishTest();
       fail("finishTest should have failed");
     } catch (IllegalStateException e) {
+      // Expected
     }
   }
 
@@ -227,10 +208,6 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
     }.schedule(delay);
   }
 
-  private void failNow(String failMsg) {
-    fail("Expected failure (" + failMsg + ")");
-  }
-
   private void finishTestLater() {
     finishTestLater(1);
   }
@@ -242,22 +219,5 @@ public class GWTTestCaseAsyncTest extends GWTTestCase {
         finishTest();
       }
     }.schedule(delay);
-  }
-
-  // Trigger a test failure synchronously, but from within an event handler.
-  // (The exception thrown from fail() will get caught by the GWT UncaughtExceptionHandler).
-  private void synchronousFailure(final String failMsg) {
-    ButtonElement btn = Document.get().createPushButtonElement();
-    Document.get().getBody().appendChild(btn);
-    Event.sinkEvents(btn, Event.ONCLICK);
-
-    EventListener listener = new EventListener() {
-      public void onBrowserEvent(Event event) {
-        failNow(failMsg);
-      }
-    };
-
-    DOM.setEventListener(btn.<com.google.gwt.user.client.Element>cast(), listener);
-    btn.click();
   }
 }

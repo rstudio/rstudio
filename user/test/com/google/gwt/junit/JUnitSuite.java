@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import com.google.gwt.junit.client.DevModeOnCompiledScriptTest;
 import com.google.gwt.junit.client.GWTTestCaseAsyncTest;
 import com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest;
 import com.google.gwt.junit.client.GWTTestCaseTest;
+import com.google.gwt.junit.client.GWTTestCaseUncaughtExceptionHandlerTest;
 import com.google.gwt.junit.client.PropertyDefiningGWTTest;
 
 import junit.framework.Test;
@@ -36,6 +37,7 @@ public class JUnitSuite {
     // suite.addTestSuite(BenchmarkTest.class);
 
     suite.addTestSuite(GWTTestCaseTest.class);
+    suite.addTestSuite(GWTTestCaseUncaughtExceptionHandlerTest.class);
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseSetupTearDownTest.class));
 

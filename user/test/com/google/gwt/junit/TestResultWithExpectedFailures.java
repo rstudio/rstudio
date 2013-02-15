@@ -75,7 +75,7 @@ class TestResultWithExpectedFailures extends ForwardingTestResult {
     ExpectedFailure annotation = getExpectedFailureAnnotation(test);
     if (annotation != null) {
       t = normalizeGwtTestException(t);
-      return t.getClass().isAssignableFrom(annotation.withType())
+      return annotation.withType().isAssignableFrom(t.getClass())
           && getExceptionMessage(t).contains(annotation.withMessage());
     }
     return false;
