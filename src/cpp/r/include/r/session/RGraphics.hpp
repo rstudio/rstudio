@@ -40,13 +40,13 @@ enum errc_t
 } // namespace session
 } // namespace r
 
-namespace rstudio_boost {
+namespace boost {
 namespace system {
 template <>
 struct is_error_code_enum<r::session::graphics::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
-} // namespace rstudio_boost
+} // namespace boost
 
 
 #include <string>

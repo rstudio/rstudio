@@ -73,6 +73,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "transition") ||
           boost::iequals(name, "navigation") ||
           boost::iequals(name, "incremental") ||
           boost::iequals(name, "id") ||
@@ -210,7 +211,13 @@ void insertField(std::vector<Slide::Field>* pFields, const Slide::Field& field)
 
 } // anonymous namespace
 
-
+std::string Slide::transition() const
+{
+   std::string value = fieldValue("transition", "linear");
+   if (value == "rotate")
+      value = "default";
+   return value;
+}
 
 std::string SlideDeck::title() const
 {
@@ -218,6 +225,14 @@ std::string SlideDeck::title() const
       return slides_[0].title();
    else
       return std::string();
+}
+
+std::string SlideDeck::transition() const
+{
+   if (!slides_.empty())
+      return slides_[0].transition();
+   else
+      return "linear";
 }
 
 std::string SlideDeck::navigation() const

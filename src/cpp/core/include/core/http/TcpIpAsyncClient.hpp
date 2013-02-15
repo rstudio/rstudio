@@ -74,7 +74,7 @@ private:
       boost::shared_ptr<AsyncClient<boost::asio::ip::tcp::socket> > ptrShared
                                                 = shared_from_this();
 
-      return boost::static_pointer_cast<TcpIpAsyncClient>(ptrShared);
+      return boost::shared_static_cast<TcpIpAsyncClient>(ptrShared);
    }
 
 private:
