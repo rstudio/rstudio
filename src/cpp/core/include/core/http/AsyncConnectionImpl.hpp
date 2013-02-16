@@ -163,7 +163,7 @@ private:
                LOG_ERROR(error);
             
             // close the socket
-            error = closeSocket(socket_);
+            error = closeServerSocket(socket_);
             if (error)
                LOG_ERROR(error);
             
@@ -190,7 +190,7 @@ private:
          }
          
          // close the socket
-         Error error = closeSocket(socket_);
+         Error error = closeServerSocket(socket_);
          if (error)
             LOG_ERROR(error);
          

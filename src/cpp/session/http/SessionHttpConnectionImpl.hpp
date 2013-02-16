@@ -144,7 +144,7 @@ public:
    virtual void close()
    {
       // always close connection
-      core::Error error = core::http::closeSocket(socket_);
+      core::Error error = core::http::closeServerSocket(socket_);
       if (error)
          LOG_ERROR(error);
    }

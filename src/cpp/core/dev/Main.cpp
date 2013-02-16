@@ -22,6 +22,10 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
+#include <core/http/NamedPipeAsyncClient.hpp>
+
+#include <core/http/AsyncServer.hpp>
+
 using namespace core ;
 
 int test_main(int argc, char * argv[])
@@ -31,6 +35,14 @@ int test_main(int argc, char * argv[])
       // initialize log
       initializeSystemLog("coredev", core::system::kLogLevelWarning);
 
+      boost::asio::io_service ioService;
+      http::NamedPipeAsyncClient client(ioService, "MyPipe");
+
+      // client.request().assign(myRequest);
+
+      // client.execute();
+
+      http::AsyncServer<http::NamedPipeProtocol> asyncServer("", "");
 
 
       return EXIT_SUCCESS;
