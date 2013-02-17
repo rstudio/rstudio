@@ -24,8 +24,7 @@
 
 #include <core/http/NamedPipeAsyncClient.hpp>
 #include <core/http/NamedPipeBlockingClient.hpp>
-
-#include <core/http/AsyncServer.hpp>
+#include <core/http/NamedPipeAsyncServer.hpp>
 
 using namespace core ;
 
@@ -49,9 +48,7 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
-
-      http::AsyncServer<http::NamedPipeProtocol> asyncServer("", "");
-
+      http::NamedPipeAsyncServer asyncServer("RStudio");
 
       return EXIT_SUCCESS;
    }

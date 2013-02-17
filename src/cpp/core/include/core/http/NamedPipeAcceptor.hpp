@@ -19,6 +19,8 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
 
+#include <core/Error.hpp>
+
 namespace core {
 namespace http {
 
@@ -30,9 +32,22 @@ public:
    {
    }
 
+   Error init(const std::string& pipeName)
+   {
+      pipeName_ = pipeName;
+
+
+      return Success();
+   }
+
    bool is_open()
    {
-      return false;
+      return !pipeName_.empty();
+   }
+
+   void close(boost::system::error_code& ec)
+   {
+      // nothing to close
    }
 
    void accept(boost::asio::windows::stream_handle& socket,
@@ -53,13 +68,9 @@ public:
 
    }
 
-   void close(boost::system::error_code& ec)
-   {
-
-   }
-
 private:
    boost::asio::io_service& ioService_;
+   std::string pipeName_;
 };
 
    
