@@ -23,6 +23,7 @@
 #include <core/system/System.hpp>
 
 #include <core/http/NamedPipeAsyncClient.hpp>
+#include <core/http/NamedPipeBlockingClient.hpp>
 
 #include <core/http/AsyncServer.hpp>
 
@@ -41,6 +42,13 @@ int test_main(int argc, char * argv[])
       // client.request().assign(myRequest);
 
       // client.execute();
+
+      http::Request request;
+      http::Response response;
+      Error error = http::sendRequest("MyPipe", request, &response);
+      if (error)
+         LOG_ERROR(error);
+
 
       http::AsyncServer<http::NamedPipeProtocol> asyncServer("", "");
 
