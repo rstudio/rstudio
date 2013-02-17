@@ -50,12 +50,6 @@ public:
       // nothing to close
    }
 
-   void accept(boost::asio::windows::stream_handle& socket,
-               boost::system::error_code& ec)
-   {
-
-   }
-
    void async_accept(
       boost::asio::windows::stream_handle& socket,
       boost::function<void(const boost::system::error_code& ec)> acceptHandler)
@@ -75,11 +69,6 @@ public:
 
       // Check for example uses of overlapped_ptr, especially
       // with ConnectNamedPipe
-   }
-
-   void cancel(boost::system::error_code& ec)
-   {
-
    }
 
 private:
