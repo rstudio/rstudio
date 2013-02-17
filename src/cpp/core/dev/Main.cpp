@@ -35,8 +35,13 @@ int test_main(int argc, char * argv[])
       // initialize log
       initializeSystemLog("coredev", core::system::kLogLevelWarning);
 
+      // default connection retry profile
+      http::ConnectionRetryProfile retryProfile(
+                              boost::posix_time::seconds(10),
+                              boost::posix_time::milliseconds(50));
+
       boost::asio::io_service ioService;
-      http::NamedPipeAsyncClient client(ioService, "MyPipe");
+      http::NamedPipeAsyncClient client(ioService, "MyPipe", retryProfile);
 
       // client.request().assign(myRequest);
 
@@ -44,7 +49,10 @@ int test_main(int argc, char * argv[])
 
       http::Request request;
       http::Response response;
-      Error error = http::sendRequest("MyPipe", request, &response);
+      Error error = http::sendRequest("MyPipe",
+                                      request,
+                                      retryProfile,
+                                      &response);
       if (error)
          LOG_ERROR(error);
 

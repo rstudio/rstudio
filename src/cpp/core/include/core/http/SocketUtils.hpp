@@ -19,6 +19,10 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/socket_base.hpp>
 
+#ifdef _WIN32
+#include <boost/system/windows_error.hpp>
+#endif
+
 #include <core/Error.hpp>
 
 namespace core {
@@ -53,18 +57,12 @@ inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection
    bool timedOut = error.code() == boost::asio::error::timed_out;
-   
-   bool sysTimedOut = error.code() == boost::system::errc::timed_out;
-   
    bool eof = error.code() == boost::asio::error::eof;
-   
-   bool reset = error.code() == boost::system::errc::connection_reset;
-   
-   bool brokenPipe = error.code() == boost::system::errc::broken_pipe;
-
+   bool reset = error.code() == boost::asio::error::connection_reset;
+   bool brokenPipe = error.code() == boost::asio::error::broken_pipe;
    bool noFile = boost::system::errc::no_such_file_or_directory;
    
-   return timedOut || sysTimedOut || eof || reset || brokenPipe || noFile;
+   return timedOut || eof || reset || brokenPipe || noFile;
 }
 
 inline bool isConnectionUnavailableError(const Error& error)
@@ -77,7 +75,15 @@ inline bool isConnectionUnavailableError(const Error& error)
       error.code() == boost::system::errc::no_such_file_or_directory ||
 
       // for tcp-ip and unix domain sockets
-      error.code() == boost::system::errc::connection_refused
+      error.code() == boost::asio::error::connection_refused
+
+      // for windows named pipes
+ #ifdef _WIN32
+      || error.code() == boost::system::windows_error::file_not_found
+      || error.code() == boost::system::error_code(
+                                       ERROR_PIPE_BUSY,
+                                       boost::system::get_system_category())
+ #endif
    );
 }
 

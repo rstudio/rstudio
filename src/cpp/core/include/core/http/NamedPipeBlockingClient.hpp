@@ -26,12 +26,13 @@ namespace http {
 
 inline Error sendRequest(const std::string& pipeName,
                          const http::Request& request,
+                         const http::ConnectionRetryProfile& retryProfile,
                          http::Response* pResponse)
 {
    // create client
    boost::asio::io_service ioService;
    boost::shared_ptr<NamedPipeAsyncClient> pClient(
-         new NamedPipeAsyncClient(ioService, pipeName));
+         new NamedPipeAsyncClient(ioService, pipeName, retryProfile));
 
    // execute blocking request
    return sendRequest<boost::asio::windows::stream_handle>(ioService,

@@ -225,7 +225,7 @@ private:
             // or bad file descriptor since it happens in the ordinary course
             // of shutting down the server)
             if (ec != boost::asio::error::operation_aborted &&
-                ec != boost::system::errc::bad_file_descriptor)
+                ec != boost::asio::error::bad_descriptor)
             {
                // log the error
                LOG_ERROR(Error(ec, ERROR_LOCATION)) ;

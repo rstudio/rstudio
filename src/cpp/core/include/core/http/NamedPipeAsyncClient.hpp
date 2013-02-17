@@ -35,12 +35,20 @@ class NamedPipeAsyncClient
    : public AsyncClient<boost::asio::windows::stream_handle>
 {
 public:
+   // create a named pipe client -- note that the connectionRetryProfile is
+   // required because named pipes typically require a retry loop (due to
+   // servers either not having a pipe available or being between calls
+   // to ConnectNamedPipe). rather than create yet another timer-based
+   // retry mechanism for CreateFile on the named pipe client handle we
+   // require that clients use a connection retry profile
    NamedPipeAsyncClient(boost::asio::io_service& ioService,
-                        const std::string& pipeName)
+                        const std::string& pipeName,
+                        const http::ConnectionRetryProfile& retryProfile)
      : AsyncClient<boost::asio::windows::stream_handle>(ioService),
        handle_(ioService),
        pipeName_(pipeName)
    {  
+      setConnectionRetryProfile(retryProfile);
    }
 
 protected:
@@ -54,33 +62,28 @@ private:
 
    virtual void connectAndWriteRequest()
    {
-
       try
       {
-         // connect to named pipe -- note for our purposes we can
-         // probably do this synchronously, but if we wanted to
-         // do it async we'd have to use an ioService timer
+         // connect to named pipe
+         HANDLE hPipe = ::CreateFileA(
+                  pipeName_.c_str(),		// pipe name
+                  GENERIC_READ |          // allow reading
+                  GENERIC_WRITE,          // allow writing
+                  0,                      // no sharing
+                  NULL,                   // default security attributes
+                  OPEN_EXISTING,          // opens existing
+                  FILE_FLAG_OVERLAPPED,   // allow overlapped io
+                  NULL);               	// no template file
 
-
-         HANDLE hPipe = INVALID_HANDLE_VALUE;
-
-         // we can either:
-         //   - try once then call handleConnectionError which assumes
-         //     there is a retry profile established
-         //   - try in a loop (avoiding common failure modes associated
-         //     with intermitent availability of server pipe)
-         //   - setup a timer and retry in the timer (then also do
-         //     handleConnectionError
-
-         // if we fail then need to call handleConnectionError (to get
-         // automatic retrying)
-         //
-         // handleConnectionError(Error(ec, ERROR_LOCATION));
-         //
+         // handle connection error if necessary)
+         if (hPipe == INVALID_HANDLE_VALUE)
+         {
+            handleConnectionError(systemError(::GetLastError(),ERROR_LOCATION));
+            return;
+         }
 
          // assign the pipe to our handle
          handle_.assign(hPipe);
-
 
          // write the request
          writeRequest();
