@@ -60,7 +60,21 @@ public:
       boost::asio::windows::stream_handle& socket,
       boost::function<void(const boost::system::error_code& ec)> acceptHandler)
    {
+      // NOTE: socket is not yet initialied so we can assign
+      // it after we accept (verify this)
 
+      // NOTE: after we create the pipe we can probably use
+      // boost::overlapped_ptr to allow a handler to get called
+      // back from ConnectNamedPipe (we pass the overlapped_ptr
+      // to ConnectNamedPipe and it calls the handle back once
+      // the overlapped event is signaled
+
+      // ....BUT....does this handle ERROR_PIPE_CONNECTED. I
+      // guess we could check for that in the ec and
+      // act accordingly
+
+      // Check for example uses of overlapped_ptr, especially
+      // with ConnectNamedPipe
    }
 
    void cancel(boost::system::error_code& ec)

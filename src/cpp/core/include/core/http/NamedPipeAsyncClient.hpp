@@ -64,6 +64,13 @@ private:
 
          HANDLE hPipe = INVALID_HANDLE_VALUE;
 
+         // we can either:
+         //   - try once then call handleConnectionError which assumes
+         //     there is a retry profile established
+         //   - try in a loop (avoiding common failure modes associated
+         //     with intermitent availability of server pipe)
+         //   - setup a timer and retry in the timer (then also do
+         //     handleConnectionError
 
          // if we fail then need to call handleConnectionError (to get
          // automatic retrying)
