@@ -18,6 +18,7 @@
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
+#include <boost/asio/windows/overlapped_ptr.hpp>
 
 #include <core/Error.hpp>
 
@@ -35,8 +36,6 @@ public:
    Error init(const std::string& pipeName)
    {
       pipeName_ = pipeName;
-
-
       return Success();
    }
 
@@ -50,25 +49,77 @@ public:
       // nothing to close
    }
 
-   void async_accept(
-      boost::asio::windows::stream_handle& socket,
-      boost::function<void(const boost::system::error_code& ec)> acceptHandler)
+   // standard asio handler signature
+   typedef boost::function<void(const boost::system::error_code& ec)>
+                                                               AcceptHandler;
+
+   void async_accept(boost::asio::windows::stream_handle& socket,
+                     AcceptHandler acceptHandler)
    {
-      // NOTE: socket is not yet initialied so we can assign
-      // it after we accept (verify this)
 
-      // NOTE: after we create the pipe we can probably use
-      // boost::overlapped_ptr to allow a handler to get called
-      // back from ConnectNamedPipe (we pass the overlapped_ptr
-      // to ConnectNamedPipe and it calls the handle back once
-      // the overlapped event is signaled
+      // create the named pipe.
+      // TODO: security attributes for local authenticated pipe only
+      // TODO: should we add this flag to pipe-mode?
+      const DWORD PIPE_REJECT_REMOTE_CLIENTS = 0x00000008;
+      HANDLE hPipe = ::CreateNamedPipeA(
+            pipeName_.c_str(),            // pipe name
+            PIPE_ACCESS_DUPLEX |          // support reading and writing
+            FILE_FLAG_OVERLAPPED,         // enable asynchronous i/o
+            PIPE_TYPE_BYTE |              // byte writes
+            PIPE_READMODE_BYTE |          // byte reads
+            PIPE_WAIT,                    // no lan manager no-blocking mode
+            PIPE_UNLIMITED_INSTANCES,     // no limit on instances
+            4096,                         // output buffer size
+            4096,                         // input buffer size
+            0,                            // use default client timeout (50ms)
+            NULL);                        // no security attributes
+      if (hPipe == INVALID_HANDLE_VALUE)
+      {
+         acceptHandler(lastSystemError());
+         return;
+      }
 
-      // ....BUT....does this handle ERROR_PIPE_CONNECTED. I
-      // guess we could check for that in the ec and
-      // act accordingly
+      // use an overlapped_ptr to map the handler to an overlapped ptr
+      boost::asio::windows::overlapped_ptr overlapped(ioService_,
+          boost::bind(&NamedPipeAcceptor::handleAccept, this,
+                      boost::ref(socket), hPipe, acceptHandler, _1));
 
-      // Check for example uses of overlapped_ptr, especially
-      // with ConnectNamedPipe
+      // wait for the connection asynchronously using the overlapped ptr
+      BOOL success = ::ConnectNamedPipe(hPipe, overlapped.get());
+      DWORD lastError = ::GetLastError();
+
+      // failure with either ERROR_IO_PENDING or ERROR_PIPE_CONNECTED is
+      // actually success so check those along with the success flag
+      if (!success &&
+          (lastError != ERROR_IO_PENDING) &&
+          (lastError != ERROR_PIPE_CONNECTED))
+      {
+          // error so complete immediately
+          overlapped.complete(lastSystemError(), 0);
+      }
+      else
+      {
+         // success - release ownership of the overlapped ptr to the io service
+         overlapped.release();
+      }
+   }
+
+private:
+   void handleAccept(boost::asio::windows::stream_handle& stream,
+                     HANDLE hPipe,
+                     AcceptHandler acceptHandler,
+                     const boost::system::error_code& ec)
+   {
+      stream.assign(hPipe);
+      acceptHandler(ec);
+   }
+
+   boost::system::error_code lastSystemError() const
+   {
+      boost::system::error_code ec(
+                                ::GetLastError(),
+                                boost::asio::error::get_system_category());
+      return ec;
    }
 
 private:
