@@ -95,20 +95,19 @@ public:
       // wait for the connection asynchronously using the overlapped ptr
       BOOL success = ::ConnectNamedPipe(hPipe, overlapped.get());
       DWORD lastError = ::GetLastError();
-
-      // failure with either ERROR_IO_PENDING or ERROR_PIPE_CONNECTED is
-      // actually success so check those along with the success flag
-      if (!success &&
-          (lastError != ERROR_IO_PENDING) &&
-          (lastError != ERROR_PIPE_CONNECTED))
+      if (success || (lastError == ERROR_PIPE_CONNECTED))
       {
-          // error so complete immediately
-          overlapped.complete(lastSystemError(), 0);
+         overlapped.complete(boost::system::error_code(), 0);
+      }
+      else if (lastError == ERROR_IO_PENDING)
+      {
+         overlapped.release();
       }
       else
       {
-         // success - release ownership of the overlapped ptr to the io service
-         overlapped.release();
+         boost::system::error_code ec(lastError,
+                                      boost::system::get_system_category());
+         overlapped.complete(ec, 0);
       }
    }
 
