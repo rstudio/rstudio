@@ -57,6 +57,14 @@ public:
                      AcceptHandler acceptHandler)
    {
 
+
+      // login sid:
+      //    http://msdn.microsoft.com/en-us/library/windows/desktop/aa365600(v=vs.85).aspx
+      //    http://msdn.microsoft.com/en-us/library/windows/desktop/aa446670(v=vs.85).aspx
+
+      // http://us.generation-nt.com/answer/named-pipes-intra-session-ipc-help-27898332.html
+
+
       // create the named pipe.
       // TODO: security attributes for local authenticated pipe only
       // TODO: should we add this flag to pipe-mode?

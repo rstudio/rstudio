@@ -42,6 +42,8 @@ public:
    }
    
 public:
+   // TODO: some assistance with constructing correct pipe names:
+   // http://msdn.microsoft.com/en-us/library/aa365783(VS.85).aspx
    Error init(const std::string& pipeName)
    {
       return acceptorService().acceptor().init(pipeName);
