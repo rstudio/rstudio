@@ -20,7 +20,11 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/Log.hpp>
+#include <core/Thread.hpp>
 #include <core/system/System.hpp>
+
+#include <core/http/Request.hpp>
+#include <core/http/Response.hpp>
 
 #include <core/http/NamedPipeAsyncClient.hpp>
 #include <core/http/NamedPipeBlockingClient.hpp>
@@ -28,35 +32,99 @@
 
 using namespace core ;
 
+const char * const kPipeName = "\\\\.\\pipe\\TestPipeName";
+
+void handleRequest(const http::Request& request, http::Response* pResponse)
+{
+   std::cerr << request << std::endl;
+
+   pResponse->setStatusCode(http::status::Ok);
+   pResponse->setContentType("text/plain");
+   pResponse->setBody("Hello client!");
+}
+
+
 int test_main(int argc, char * argv[])
 {
    try
    { 
-      // initialize log
+      // setup log
       initializeSystemLog("coredev", core::system::kLogLevelWarning);
 
+      // ignore sigpipe
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
+      // create server (runs on a background thread)
+      http::NamedPipeAsyncServer asyncServer("RStudio");
+      asyncServer.setBlockingDefaultHandler(handleRequest);
+      error = asyncServer.init(kPipeName);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return EXIT_FAILURE;
+      }
+
+      // run server
+      error = asyncServer.run();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return EXIT_FAILURE;
+      }
+
+      std::cerr << "trying request..." << std::endl;
+
+      http::ConnectionRetryProfile retryProfile(
+                              boost::posix_time::seconds(1),
+                              boost::posix_time::milliseconds(50));
+
+      http::Request request;
+      request.setMethod("GET");
+      request.setUri("/");
+      request.setHeader("Accept", "*/*");
+      request.setHeader("Connection", "close");
+
+      http::Response response;
+      error = http::sendRequest(kPipeName, request, retryProfile, &response);
+      if (error)
+         LOG_ERROR(error);
+
+      std::cerr << response << std::endl;
+
+
+      /*
+      // create ioservice for client
+      boost::asio::io_service ioService;
+
+
+      boost::asio::io_service ioService;
+      http::NamedPipeAsyncClient client(ioService, "MyPipe", retryProfile);
+      client.request().assign(myRequest);
+      client.execute();
+
+
+      // run the io service
+      boost::system::error_code ec;
+      ioService.run(ec);
+      if (ec)
+      {
+         LOG_ERROR(Error(ec, ERROR_LOCATION));
+         return EXIT_FAILURE;
+      }
+      */
+
       // default connection retry profile
+      /*
       http::ConnectionRetryProfile retryProfile(
                               boost::posix_time::seconds(10),
                               boost::posix_time::milliseconds(50));
 
-      boost::asio::io_service ioService;
-      http::NamedPipeAsyncClient client(ioService, "MyPipe", retryProfile);
 
-      // client.request().assign(myRequest);
+      */
 
-      // client.execute();
 
-      http::Request request;
-      http::Response response;
-      Error error = http::sendRequest("MyPipe",
-                                      request,
-                                      retryProfile,
-                                      &response);
-      if (error)
-         LOG_ERROR(error);
-
-      http::NamedPipeAsyncServer asyncServer("RStudio");
 
       return EXIT_SUCCESS;
    }
