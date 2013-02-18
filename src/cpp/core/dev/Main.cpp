@@ -43,27 +43,18 @@ void handleRequest(const http::Request& request, http::Response* pResponse)
    pResponse->setBody("Hello client!");
 }
 
-
-int test_main(int argc, char * argv[])
+void serverThread()
 {
    try
-   { 
-      // setup log
-      initializeSystemLog("coredev", core::system::kLogLevelWarning);
-
-      // ignore sigpipe
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
-      if (error)
-         LOG_ERROR(error);
-
+   {
       // create server (runs on a background thread)
       http::NamedPipeAsyncServer asyncServer("RStudio");
       asyncServer.setBlockingDefaultHandler(handleRequest);
-      error = asyncServer.init(kPipeName);
+      Error error = asyncServer.init(kPipeName);
       if (error)
       {
          LOG_ERROR(error);
-         return EXIT_FAILURE;
+         return;
       }
 
       // run server
@@ -71,8 +62,31 @@ int test_main(int argc, char * argv[])
       if (error)
       {
          LOG_ERROR(error);
-         return EXIT_FAILURE;
+         return;
       }
+
+      asyncServer.waitUntilStopped();
+
+
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+
+int test_main(int argc, char * argv[])
+{
+   try
+   { 
+      // setup log
+      initializeStderrLog("coredev", core::system::kLogLevelWarning);
+
+      // ignore sigpipe
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
+
+
+      core::thread::safeLaunchThread(serverThread);
 
       std::cerr << "trying request..." << std::endl;
 
