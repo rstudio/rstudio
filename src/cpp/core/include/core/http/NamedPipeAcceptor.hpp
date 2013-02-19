@@ -31,7 +31,7 @@ class NamedPipeAcceptor : boost::noncopyable
 {
 public:
    explicit NamedPipeAcceptor(boost::asio::io_service& ioService)
-      : ioService_(ioService), hAcceptEvent_(ioService)
+      : ioService_(ioService)
    {
    }
 
@@ -89,8 +89,7 @@ public:
          return;
       }
 
-      // create OVERLAPPED structure to wait with and attach the event
-      // to an object_handle
+      // create OVERLAPPED structure to wait with
       OVERLAPPED overlapped;
       ZeroMemory(&overlapped, sizeof(overlapped));
       overlapped.hEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -99,9 +98,12 @@ public:
          acceptHandler(lastSystemError());
          return;
       }
-      BOOST_ASSERT(!hAcceptEvent_.is_open());
+
+      // assign the event to an object handle we can async_wait on
+      boost::shared_ptr<boost::asio::windows::object_handle> pAcceptEvent(
+               new boost::asio::windows::object_handle(ioService_));
       boost::system::error_code ec;
-      hAcceptEvent_.assign(overlapped.hEvent, ec);
+      pAcceptEvent->assign(overlapped.hEvent, ec);
       if (ec)
       {
          acceptHandler(ec);
@@ -113,24 +115,24 @@ public:
       DWORD lastError = ::GetLastError();
       if (success || (lastError == ERROR_PIPE_CONNECTED))
       {
-         hAcceptEvent_.close(ec);
-         if (ec)
-            LOG_ERROR(Error(ec, ERROR_LOCATION));
+         closeAcceptEvent(pAcceptEvent, ERROR_LOCATION);
 
          acceptHandler(boost::system::error_code());
       }
       else if (lastError == ERROR_IO_PENDING)
       {
          // need to wait asynchronously on the event
-         hAcceptEvent_.async_wait(
+         pAcceptEvent->async_wait(
             boost::bind(&NamedPipeAcceptor::handleAccept, this,
-                        boost::ref(socket), hPipe, acceptHandler, _1));
+                        pAcceptEvent,
+                        boost::ref(socket),
+                        hPipe,
+                        acceptHandler,
+                        _1));
       }
       else
       {
-         hAcceptEvent_.close(ec);
-         if (ec)
-            LOG_ERROR(Error(ec, ERROR_LOCATION));
+         closeAcceptEvent(pAcceptEvent, ERROR_LOCATION);
 
          boost::system::error_code ec(lastError,
                                       boost::system::get_system_category());
@@ -139,23 +141,40 @@ public:
    }
 
 private:
-   void handleAccept(boost::asio::windows::stream_handle& stream,
-                     HANDLE hPipe,
-                     AcceptHandler acceptHandler,
-                     const boost::system::error_code& ec)
+   void handleAccept(
+          boost::shared_ptr<boost::asio::windows::object_handle> pEvent,
+          boost::asio::windows::stream_handle& stream,
+          HANDLE hPipe,
+          AcceptHandler acceptHandler,
+          const boost::system::error_code& ec)
    {
-      boost::system::error_code closeEc;
-      hAcceptEvent_.close(closeEc);
-      if (closeEc)
-         LOG_ERROR(Error(closeEc, ERROR_LOCATION));
+      closeAcceptEvent(pEvent, ERROR_LOCATION);
 
       boost::system::error_code assignEc;
       stream.assign(hPipe, assignEc);
-      if (assignEc)
+      if (!assignEc)
+      {
+         acceptHandler(ec);
+      }
+      else if (!ec)
+      {
+         acceptHandler(assignEc);
+      }
+      else
+      {
          LOG_ERROR(Error(assignEc, ERROR_LOCATION));
+         acceptHandler(ec);
+      }
+   }
 
-
-      acceptHandler(ec);
+   void closeAcceptEvent(
+       boost::shared_ptr<boost::asio::windows::object_handle> pAcceptEvent,
+       const core::ErrorLocation& location)
+   {
+      boost::system::error_code ec;
+      pAcceptEvent->close(ec);
+      if (ec)
+         LOG_ERROR(Error(ec, location));
    }
 
    boost::system::error_code lastSystemError() const
@@ -169,7 +188,6 @@ private:
 private:
    boost::asio::io_service& ioService_;
    std::string pipeName_;
-   boost::asio::windows::object_handle hAcceptEvent_;
 };
 
    
