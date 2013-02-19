@@ -58,12 +58,14 @@ void serverThread()
       }
 
       // run server
-      error = asyncServer.runSingleThreaded();
+      error = asyncServer.run();
       if (error)
       {
          LOG_ERROR(error);
          return;
       }
+
+      asyncServer.waitUntilStopped();
 
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -85,10 +87,8 @@ int test_main(int argc, char * argv[])
 
       core::thread::safeLaunchThread(serverThread);
 
-      std::cerr << "trying request..." << std::endl;
-
       http::ConnectionRetryProfile retryProfile(
-                              boost::posix_time::seconds(1),
+                              boost::posix_time::seconds(10),
                               boost::posix_time::milliseconds(50));
 
       http::Request request;
