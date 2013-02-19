@@ -25,7 +25,7 @@
 namespace core {
 namespace http {
 
-class NamedPipeAcceptor
+class NamedPipeAcceptor : boost::noncopyable
 {
 public:
    explicit NamedPipeAcceptor(boost::asio::io_service& ioService)

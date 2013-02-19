@@ -58,15 +58,12 @@ void serverThread()
       }
 
       // run server
-      error = asyncServer.run();
+      error = asyncServer.runSingleThreaded();
       if (error)
       {
          LOG_ERROR(error);
          return;
       }
-
-      asyncServer.waitUntilStopped();
-
 
    }
    CATCH_UNEXPECTED_EXCEPTION

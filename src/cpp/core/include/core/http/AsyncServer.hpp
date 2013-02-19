@@ -106,6 +106,31 @@ public:
       scheduledCommands_.push_back(pCmd);
    }
 
+   Error runSingleThreaded()
+   {
+      try
+      {
+         // update state
+         running_ = true;
+
+         // get ready for next connection
+         acceptNextConnection();
+
+         // initialize scheduled command timer
+         waitForScheduledCommandTimer();
+
+         // run
+         runServiceThread();
+      }
+      catch(const boost::thread_resource_error& e)
+      {
+         return Error(boost::thread_error::ec_from_exception(e),
+                      ERROR_LOCATION);
+      }
+
+      return Success();
+   }
+
    Error run(std::size_t threadPoolSize = 1)
    {
       try
