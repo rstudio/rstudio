@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -47,11 +48,9 @@ const char * const kPipeName = "\\\\.\\pipe\\TestPipeName";
 
 void handleRequest(const http::Request& request, http::Response* pResponse)
 {
-   std::cerr << request << std::endl;
-
    pResponse->setStatusCode(http::status::Ok);
    pResponse->setContentType("text/plain");
-   pResponse->setBody("Hello client!");
+   pResponse->setBody(request.uri());
 }
 
 void serverThread()
@@ -69,17 +68,27 @@ void serverThread()
       }
 
       // run server
-      error = asyncServer.run();
+      error = asyncServer.runSingleThreaded();
       if (error)
       {
          LOG_ERROR(error);
          return;
       }
 
-      asyncServer.waitUntilStopped();
+
 
    }
    CATCH_UNEXPECTED_EXCEPTION
+}
+
+void responseHandler(const http::Response& response)
+{
+   std::cerr << response.body() << std::endl;
+}
+
+void errorHandler(const Error& error)
+{
+   LOG_ERROR(error);
 }
 
 
@@ -98,22 +107,43 @@ int test_main(int argc, char * argv[])
 
       core::thread::safeLaunchThread(serverThread);
 
+      boost::asio::io_service ioService;
       http::ConnectionRetryProfile retryProfile(
                               boost::posix_time::seconds(10),
                               boost::posix_time::milliseconds(50));
 
-      http::Request request;
-      request.setMethod("GET");
-      request.setUri("/");
-      request.setHeader("Accept", "*/*");
-      request.setHeader("Connection", "close");
+      for (int i=0; i<10; i++)
+      {
+         http::Request request;
+         request.setMethod("GET");
+         request.setUri("/" + safe_convert::numberToString(i));
+         request.setHeader("Accept", "*/*");
+         request.setHeader("Connection", "close");
 
+         boost::shared_ptr<http::NamedPipeAsyncClient> pClient(
+           new http::NamedPipeAsyncClient(ioService, kPipeName, retryProfile));
+         pClient->request().assign(request);
+         pClient->execute(responseHandler, errorHandler);
+      }
+
+
+      // run the io service
+      boost::system::error_code ec;
+      ioService.run(ec);
+      if (ec)
+      {
+         LOG_ERROR(Error(ec, ERROR_LOCATION));
+         return EXIT_FAILURE;
+      }
+
+      /*
       http::Response response;
       error = http::sendRequest(kPipeName, request, retryProfile, &response);
       if (error)
          LOG_ERROR(error);
 
       std::cerr << response << std::endl;
+      */
 
 
       /*
