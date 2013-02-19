@@ -91,6 +91,20 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   virtual bool isShutdownError(const boost::system::error_code& ec)
+   {
+      if (ec.category() == boost::system::get_system_category() &&
+          (ec.value() == ERROR_PIPE_NOT_CONNECTED) )
+      {
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+
+   }
+
    const boost::shared_ptr<NamedPipeAsyncClient> sharedFromThis()
    {
       boost::shared_ptr<AsyncClient<boost::asio::windows::stream_handle> >

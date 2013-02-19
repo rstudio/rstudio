@@ -16,8 +16,10 @@
 #ifndef CORE_HTTP_NAMED_PIPE_ACCEPTOR_HPP
 #define CORE_HTTP_NAMED_PIPE_ACCEPTOR_HPP
 
+#include <boost/assert.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
+#include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
 
 #include <core/Error.hpp>
@@ -29,7 +31,7 @@ class NamedPipeAcceptor : boost::noncopyable
 {
 public:
    explicit NamedPipeAcceptor(boost::asio::io_service& ioService)
-      : ioService_(ioService)
+      : ioService_(ioService), hAcceptEvent_(ioService)
    {
    }
 
@@ -87,27 +89,52 @@ public:
          return;
       }
 
-      // use an overlapped_ptr to map the handler to an overlapped ptr
-      boost::asio::windows::overlapped_ptr overlapped(ioService_,
-          boost::bind(&NamedPipeAcceptor::handleAccept, this,
-                      boost::ref(socket), hPipe, acceptHandler, _1));
+      // create OVERLAPPED structure to wait with and attach the event
+      // to an object_handle
+      OVERLAPPED overlapped;
+      ZeroMemory(&overlapped, sizeof(overlapped));
+      overlapped.hEvent = ::CreateEvent(NULL, TRUE, FALSE, NULL);
+      if (!overlapped.hEvent)
+      {
+         acceptHandler(lastSystemError());
+         return;
+      }
+      BOOST_ASSERT(!hAcceptEvent_.is_open());
+      boost::system::error_code ec;
+      hAcceptEvent_.assign(overlapped.hEvent, ec);
+      if (ec)
+      {
+         acceptHandler(ec);
+         return;
+      }
 
-      // wait for the connection asynchronously using the overlapped ptr
-      BOOL success = ::ConnectNamedPipe(hPipe, overlapped.get());
+      // wait for the connection
+      BOOL success = ::ConnectNamedPipe(hPipe, &overlapped);
       DWORD lastError = ::GetLastError();
       if (success || (lastError == ERROR_PIPE_CONNECTED))
       {
-         overlapped.complete(boost::system::error_code(), 0);
+         hAcceptEvent_.close(ec);
+         if (ec)
+            LOG_ERROR(Error(ec, ERROR_LOCATION));
+
+         acceptHandler(boost::system::error_code());
       }
       else if (lastError == ERROR_IO_PENDING)
       {
-         overlapped.release();
+         // need to wait asynchronously on the event
+         hAcceptEvent_.async_wait(
+            boost::bind(&NamedPipeAcceptor::handleAccept, this,
+                        boost::ref(socket), hPipe, acceptHandler, _1));
       }
       else
       {
+         hAcceptEvent_.close(ec);
+         if (ec)
+            LOG_ERROR(Error(ec, ERROR_LOCATION));
+
          boost::system::error_code ec(lastError,
                                       boost::system::get_system_category());
-         overlapped.complete(ec, 0);
+         acceptHandler(ec);
       }
    }
 
@@ -117,7 +144,17 @@ private:
                      AcceptHandler acceptHandler,
                      const boost::system::error_code& ec)
    {
-      stream.assign(hPipe);
+      boost::system::error_code closeEc;
+      hAcceptEvent_.close(closeEc);
+      if (closeEc)
+         LOG_ERROR(Error(closeEc, ERROR_LOCATION));
+
+      boost::system::error_code assignEc;
+      stream.assign(hPipe, assignEc);
+      if (assignEc)
+         LOG_ERROR(Error(assignEc, ERROR_LOCATION));
+
+
       acceptHandler(ec);
    }
 
@@ -132,6 +169,7 @@ private:
 private:
    boost::asio::io_service& ioService_;
    std::string pipeName_;
+   boost::asio::windows::object_handle hAcceptEvent_;
 };
 
    
