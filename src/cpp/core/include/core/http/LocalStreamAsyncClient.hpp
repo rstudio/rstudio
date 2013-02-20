@@ -34,11 +34,14 @@ class LocalStreamAsyncClient
 {
 public:
    LocalStreamAsyncClient(boost::asio::io_service& ioService,
-                          const FilePath localStreamPath)
+                          const FilePath localStreamPath,
+                          const http::ConnectionRetryProfile& retryProfile =
+                                                http::ConnectionRetryProfile())
      : AsyncClient<boost::asio::local::stream_protocol::socket>(ioService),
        socket_(ioService),
        localStreamPath_(localStreamPath)
    {
+      setConnectionRetryProfile(retryProfile);
    }
 
 protected:
