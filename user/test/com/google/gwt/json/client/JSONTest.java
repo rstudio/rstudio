@@ -73,24 +73,29 @@ public class JSONTest extends GWTTestCase {
     if (expected.isArray() != null) {
       JSONArray expArray = expected.isArray();
       JSONArray actArray = actual.isArray();
+      assertNonNull(actArray);
       assertJSONArrayEquals(expArray, actArray);
     } else if (expected.isBoolean() != null) {
       JSONBoolean expBool = expected.isBoolean();
       JSONBoolean actBool = actual.isBoolean();
+      assertNonNull(actBool);
       assertEquals(expBool.booleanValue(), actBool.booleanValue());
     } else if (expected.isNull() != null) {
       assertNotNull(actual.isNull());
     } else if (expected.isNumber() != null) {
       JSONNumber expNum = expected.isNumber();
       JSONNumber actNum = actual.isNumber();
+      assertNonNull(actNum);
       assertEquals(expNum.doubleValue(), actNum.doubleValue());
     } else if (expected.isObject() != null) {
       JSONObject expObj = expected.isObject();
       JSONObject actObj = actual.isObject();
+      assertNonNull(actObj);
       assertJSONObjectEquals(expObj, actObj);
     } else if (expected.isString() != null) {
       JSONString expStr = expected.isString();
       JSONString actStr = actual.isString();
+      assertNonNull(actStr);
       assertEquals(expStr.stringValue(), actStr.stringValue());
     } else {
       fail("Unknown JSONValue " + expected);
