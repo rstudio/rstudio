@@ -409,7 +409,6 @@ var Reveal = (function(){
 
 		if ( config.controls && dom.controls ) {
 			var actionEvent = 'ontouchstart' in window && window.ontouchstart != null ? 'touchstart' : 'click';
-	;
 			dom.controlsLeft.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateLeftClicked, false ); } );
 			dom.controlsRight.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateRightClicked, false ); } );
 			dom.controlsUp.forEach( function( el ) { el.addEventListener( actionEvent, onNavigateUpClicked, false ); } );
@@ -440,7 +439,7 @@ var Reveal = (function(){
 		}
 
 		if ( config.controls && dom.controls ) {
-			var actionEvent = 'ontouchstart' in window ? 'touchstart' : 'click';
+			var actionEvent = 'ontouchstart' in window && window.ontouchstart != null ? 'touchstart' : 'click';
 			dom.controlsLeft.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateLeftClicked, false ); } );
 			dom.controlsRight.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateRightClicked, false ); } );
 			dom.controlsUp.forEach( function( el ) { el.removeEventListener( actionEvent, onNavigateUpClicked, false ); } );
@@ -1890,6 +1889,21 @@ var Reveal = (function(){
 			} );
 
 			return query;
+		},
+
+		// Returns true if we're currently on the first slide
+		isFirstSlide: function() {
+			return document.querySelector( SLIDES_SELECTOR + '.past' ) == null ? true : false;
+		},
+
+		// Returns true if we're currently on the last slide
+		isLastSlide: function() {
+			if( currentSlide && currentSlide.classList.contains( '.stack' ) ) {
+				return currentSlide.querySelector( SLIDES_SELECTOR + '.future' ) == null ? true : false;
+			}
+			else {
+				return document.querySelector( SLIDES_SELECTOR + '.future' ) == null ? true : false;
+			}
 		},
 
 		// Forward event binding to the reveal DOM element
