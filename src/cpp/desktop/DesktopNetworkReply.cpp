@@ -22,7 +22,12 @@
 #include <core/Log.hpp>
 
 #include <core/http/Response.hpp>
+
+#ifdef _WIN32
+#include <core/http/NamedPipeAsyncClient.hpp>
+#else
 #include <core/http/LocalStreamAsyncClient.hpp>
+#endif
 
 #include <QTimer>
 
@@ -34,24 +39,43 @@ namespace desktop {
 
 struct NetworkReply::Impl
 {
-   Impl(const FilePath& streamFilePath)
+   Impl(const std::string& localPeer)
+ #ifdef _WIN32
+      : pClient(new http::NamedPipeAsyncClient(ioService(),
+                                               localPeer,
+                                               retryProfile())),
+ #else
       : pClient(new http::LocalStreamAsyncClient(ioService(),
-                                                 streamFilePath)),
+                                                 FilePath(localPeer),
+                                                 retryProfile())),
+ #endif
         replyReadOffset(0)
    {
    }
-   boost::shared_ptr<http::LocalStreamAsyncClient> pClient;
+ #ifdef _WIN32
+    boost::shared_ptr<http::NamedPipeAsyncClient> pClient;
+ #else
+    boost::shared_ptr<http::LocalStreamAsyncClient> pClient;
+ #endif
    QByteArray replyData;
    qint64 replyReadOffset;
+
+private:
+   static http::ConnectionRetryProfile retryProfile()
+   {
+      return http::ConnectionRetryProfile(
+               boost::posix_time::seconds(10),
+               boost::posix_time::milliseconds(50));
+   }
 };
 
 
-NetworkReply::NetworkReply(const FilePath& streamFilePath,
+NetworkReply::NetworkReply(const std::string& localPeer,
                            QNetworkAccessManager::Operation op,
                            const QNetworkRequest& req,
                            QIODevice* outgoingData,
                            QObject *parent)
-   : QNetworkReply(parent), pImpl_(new Impl(streamFilePath))
+   : QNetworkReply(parent), pImpl_(new Impl(localPeer))
 {   
    // set our attributes
    setOperation(op);
@@ -121,11 +145,6 @@ NetworkReply::NetworkReply(const FilePath& streamFilePath,
 
    // set the request
    pImpl_->pClient->request().assign(request);
-
-   // set the retry profile
-   pImpl_->pClient->setConnectionRetryProfile(
-       http::ConnectionRetryProfile(boost::posix_time::seconds(10),
-                                    boost::posix_time::milliseconds(50)));
 
    // execute and bind to response handlers
    pImpl_->pClient->execute(boost::bind(&NetworkReply::onResponse, this, _1),

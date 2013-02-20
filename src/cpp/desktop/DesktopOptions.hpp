@@ -47,7 +47,7 @@ public:
    void saveMainWindowBounds(QMainWindow* window);
    QString portNumber() const;
    QString newPortNumber();
-   core::FilePath localPeerPath() const; // derived from portNumber
+   std::string localPeer() const; // derived from portNumber
 
    QString proportionalFont() const;
    QString fixedWidthFont() const;

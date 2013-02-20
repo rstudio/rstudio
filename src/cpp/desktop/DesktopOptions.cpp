@@ -86,9 +86,14 @@ QString Options::portNumber() const
 
       // recalculate the local peer and set RS_LOCAL_PEER so that
       // rsession and it's children can use it
+#ifdef _WIN32
+      QString localPeer = QString::fromAscii("\\\\.\\pipe\\") +
+                          portNumber_ + QString::fromAscii("-rsession");
+#else
       QString localPeer = QDir(QDir::tempPath()).absolutePath() +
                           QString::fromAscii("/") + portNumber_ +
                           QString::fromAscii("-rsession");
+#endif
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
    }
@@ -102,9 +107,9 @@ QString Options::newPortNumber()
    return portNumber();
 }
 
-FilePath Options::localPeerPath() const
+std::string Options::localPeer() const
 {
-   return FilePath(localPeer_);
+   return localPeer_;
 }
 
 

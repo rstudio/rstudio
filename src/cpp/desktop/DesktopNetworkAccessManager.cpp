@@ -47,7 +47,7 @@ QNetworkReply* NetworkAccessManager::createRequest(
         req.url().host() == QString::fromAscii("localhost")))
    {
       return new NetworkReply(
-            desktop::options().localPeerPath(),
+            desktop::options().localPeer(),
             op,
             req,
             outgoingData,

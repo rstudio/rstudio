@@ -34,7 +34,7 @@ class NetworkReply : public QNetworkReply
 {   
    Q_OBJECT
 public:
-   NetworkReply(const core::FilePath& streamFilePath,
+   NetworkReply(const std::string& localPeer,
                 QNetworkAccessManager::Operation op,
                 const QNetworkRequest& req,
                 QIODevice* outgoingData,
