@@ -19,7 +19,7 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.JUnitShell.Strategy;
 import com.google.gwt.junit.client.WithProperties;
 import com.google.gwt.junit.client.WithProperties.Property;
 
@@ -34,7 +34,7 @@ import java.util.TreeSet;
  * A {@link JUnitShell.Strategy} that will alter the module the tests are run
  * in by defining module properties as requested by annotations on the tests.
  */
-public class PropertyDefiningStrategy extends GWTTestCase.BaseStrategy {
+public class PropertyDefiningStrategy implements Strategy {
   private TestCase testCase;
   private Set<Property> properties;
 
@@ -42,13 +42,9 @@ public class PropertyDefiningStrategy extends GWTTestCase.BaseStrategy {
     this.testCase = testCase;
   }
 
-  protected String getBaseModuleExtension() {
-    return super.getSyntheticModuleExtension();
-  }
-
   @Override
   public String getSyntheticModuleExtension() {
-    String extension = getBaseModuleExtension();
+    String extension = "JUnit";
     computePropertiesMap();
     if (properties.size() > 0) {
       StringBuilder sb = new StringBuilder();
@@ -63,7 +59,6 @@ public class PropertyDefiningStrategy extends GWTTestCase.BaseStrategy {
 
   @Override
   public void processModule(ModuleDef module) {
-    super.processModule(module);
     computePropertiesMap();
     if (properties.size() > 0) {
       Properties props = module.getProperties();

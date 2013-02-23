@@ -19,11 +19,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.JUnitBridge;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.JUnitShell.Strategy;
-import com.google.gwt.junit.client.impl.JUnitResult;
-
-import junit.framework.TestCase;
+import com.google.gwt.junit.Platform;
 
 /**
  * Tests that we can run a test in dev mode even when the selection script is
@@ -45,10 +42,6 @@ public class DevModeOnCompiledScriptTest extends GWTTestCase {
   public Strategy getStrategy() {
     final Strategy impl = super.getStrategy();
     return new Strategy() {
-      public String getModuleInherit() {
-        return impl.getModuleInherit();
-      }
-
       public String getSyntheticModuleExtension() {
         return impl.getSyntheticModuleExtension();
       }
@@ -61,10 +54,6 @@ public class DevModeOnCompiledScriptTest extends GWTTestCase {
           throw new RuntimeException("Failed to manually compile test module",
               e);
         }
-      }
-
-      public void processResult(TestCase testCase, JUnitResult result) {
-        impl.processResult(testCase, result);
       }
     };
   }

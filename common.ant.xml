@@ -111,9 +111,6 @@
   <property name="gwt.junit.port" value="8888" />
   <property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 
-  <!-- Benchmark support -->
-  <property name="gwt.benchmark.testcase.includes" value="**/*SuiteBenchmark.class"/>
-
   <!-- Shared class paths -->
   <path id="project.classpath.class">
     <pathelement location="${javac.out}" />

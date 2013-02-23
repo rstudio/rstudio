@@ -28,10 +28,6 @@
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}" />
   <property name="gwt.junit.testcase.dev.excludes" value="" />
 
-  <property name="benchmark.timeout" value="30" />
-  <property name="gwt.benchmark.testcase.web.includes" value="${gwt.benchmark.testcase.includes}" />
-  <property name="gwt.benchmark.testcase.web.excludes" value="${gwt.benchmark.testcase.excludes}" />
-  
   <property name="gwt.tck.testcase.dev.includes" value="com/google/gwt/validation/tck/**/*GwtSuite.class" />
   <property name="gwt.tct.testcase.dev.excludes" value="" />
 
@@ -886,80 +882,6 @@
       </gwt.junit>
     </target>
   
-  <target name="benchmark"
-      description="Run all benchmarks for this project.">
-
-    <property.ensure name="distro.built" location="${gwt.dev.staging.jar}"
-        message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
-    <limit failonerror="true" hours="${benchmark.timeout}">
-      <!-- no-op unless gwt.hosts.web.remote is defined -->
-      <antcall target="benchmark.web.remote"/>
-      <!-- no-op unless gwt.hosts.web.selenium is defined -->
-      <antcall target="benchmark.web.selenium"/>
-      <antcall target="benchmark.web.htmlunit"/>
-    </limit>
-  </target>
-
-  <target name="benchmark.web.htmlunit"
-      depends="compile, compile.tests"
-      description="Run web-mode benchmarks with HtmlUnit."
-      unless="benchmark.web.htmlunit.disable">
-    <fileset id="benchmark.web.htmlunit.tests" dir="${javac.junit.out}"
-        includes="${gwt.benchmark.testcase.web.includes}"
-        excludes="${gwt.benchmark.testcase.web.excludes}" />
-    <gwt.junit test.name="benchmark.web.htmlunit"
-        test.args="${test.args} -testMethodTimeout ${benchmark.timeout} -out www -prod -standardsMode"
-        test.jvmargs="${test.jvmargs}"
-        test.out="${junit.out}/web-htmlunit-benchmark"
-        test.cases="benchmark.web.htmlunit.tests" >
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="benchmark.web.selenium"
-      depends="compile, compile.tests"
-      description="Run web benchmark using Selenium RC"
-      if="gwt.hosts.web.selenium"
-      unless="benchmark.web.selenium.disable">
-    <echo message="Performing web benchmarking using Selenium RC at ${gwt.hosts.web.selenium}" />
-    <property name="test.web.selenium.args" value="${test.args.web.selenium}" />
-    <fileset id="benchmark.web.selenium.tests" dir="${javac.junit.out}"
-        includes="${gwt.benchmark.testcase.web.includes}"
-        excludes="${gwt.benchmark.testcase.web.excludes}" />
-    <gwt.junit test.name="benchmark.web.selenium"
-        test.args='${test.web.selenium.args} -testMethodTimeout ${benchmark.timeout}'
-        test.jvmargs="${test.jvmargs}"
-        test.out="${junit.out}/web-selenium-benchmark"
-        test.cases="benchmark.web.selenium.tests" >
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
-  <target name="benchmark.web.remote"
-      depends="compile, compile.tests"
-      description="Run web benchmarks with remote browsers"
-      if="gwt.hosts.web.remote"
-      unless="benchmark.web.remote.disable">
-    <echo message="Performing web remote benchmarking at ${gwt.hosts.web.remote}" />
-    <property name="test.web.remote.args" value="${test.args.web.remote}" />
-    <fileset id="benchmark.web.remote.tests" dir="${javac.junit.out}"
-        includes="${gwt.benchmark.testcase.web.includes}"
-        excludes="${gwt.benchmark.testcase.web.excludes}" />
-    <gwt.junit test.name="benchmark.web.remote"
-        test.args="${test.web.remote.args} -testMethodTimeout ${benchmark.timeout}"
-        test.jvmargs="${test.jvmargs}"
-        test.out="${junit.out}/web-remote-benchmark"
-        test.cases="benchmark.web.remote.tests" >
-      <extraclasspaths>
-        <path refid="test.extraclasspath" />
-      </extraclasspaths>
-    </gwt.junit>
-  </target>
-
   <!--
       Merges coverage data for the entire project
   -->

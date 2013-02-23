@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry excluding="**/rebind/|**/tools/|com/google/gwt/json/|com/google/gwt/junit/*.java|com/google/gwt/junit/benchmarks/|com/google/gwt/junit/client/Benchmark.java|com/google/gwt/junit/client/GWTTestCase.java|com/google/gwt/junit/remote/|com/google/gwt/junit/server/" kind="src" path="core/src"/>
+	<classpathentry excluding="**/rebind/|**/tools/|com/google/gwt/json/|com/google/gwt/junit/*.java|com/google/gwt/junit/client/GWTTestCase.java|com/google/gwt/junit/remote/|com/google/gwt/junit/server/" kind="src" path="core/src"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.4.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>

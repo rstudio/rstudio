@@ -32,10 +32,6 @@ public class JUnitSuite {
   public static Test suite() {
     TestSuite suite = new GwtTestSuiteWithExpectedFailures("Test suite for com.google.gwt.junit");
 
-    // client
-    // Suppressed due to flakiness on Linux
-    // suite.addTestSuite(BenchmarkTest.class);
-
     suite.addTestSuite(GWTTestCaseTest.class);
     suite.addTestSuite(GWTTestCaseUncaughtExceptionHandlerTest.class);
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));

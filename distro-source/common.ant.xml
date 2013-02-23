@@ -9,12 +9,10 @@
 
   <patternset id="chmod.executables">
     <include name="*Creator" />
-    <include name="benchmarkViewer" />
   </patternset>
 
   <patternset id="chmod.not.executables">
     <exclude name="*Creator" />
-    <exclude name="benchmarkViewer" />
   </patternset>
 
   <target name="filter" description="Filters distro files for versioning">

@@ -152,11 +152,6 @@
     <call-subproject subproject="requestfactory" subtarget="test" />
   </target>
 
-  <target name="benchmark" depends="dist-dev" 
-          description="[action] Runs all the GWT benchmarks">
-    <call-subproject subproject="user" subtarget="benchmark" />
-  </target>
-
   <path id="emma.classpath.src">
     <pathelement location="${gwt.root}/user/src" />
     <pathelement location="${gwt.root}/dev/**/src/com/google" />

@@ -202,13 +202,6 @@ e.g. "gwt-dev-linux.jar".
     http://asm.objectweb.org/license.html
   Source code availability: com/google/gwt/dev/asm/ within gwt-dev.jar
   
-* Browser Detect v2.1.6
-  License: Creative Commons Attribution 1.0
-    http://creativecommons.org/licenses/by/1.0/
-  Source code availability:
-    http://google-web-toolkit.googlecode.com/svn/trunk/tools/benchmark-viewer/src/com/google/gwt/benchmarks/viewer/client/BrowserInfo.java
-    (transliterated into Java source)
-
 * Eclipse Java Development Tools (JDT)
   License: Eclipse Public License v. 1.0 
     http://www.eclipse.org/legal/epl-v10.html

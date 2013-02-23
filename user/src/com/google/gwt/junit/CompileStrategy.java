@@ -163,8 +163,7 @@ public abstract class CompileStrategy {
      * but also includes JUnit support.
      */
     ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(treeLogger,
-        syntheticModuleName, new String[]{
-            moduleName, strategy.getModuleInherit()}, false);
+        syntheticModuleName, new String[] {moduleName, "com.google.gwt.junit.JUnit"}, false);
 
     // Replace any user entry points with our test runner.
     moduleDef.clearEntryPoints();

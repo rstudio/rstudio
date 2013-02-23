@@ -23,9 +23,8 @@ package com.google.gwt.core.client.impl;
  * 
  * <p>
  * All of the implementations have been carefully tweaked to get the most
- * inlining possible, so be sure to check with
- * {@link com.google.gwt.emultest.java.lang.StringBuilderBenchmark StringBuilderBenchmark}
- * whenever these classes are modified.
+ * inlining possible, so be sure to check with benchmark whenever these classes
+ * are modified.
  * </p>
  */
 public abstract class StringBufferImpl {

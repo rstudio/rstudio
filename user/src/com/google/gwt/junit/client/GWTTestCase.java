@@ -15,11 +15,9 @@
  */
 package com.google.gwt.junit.client;
 
-import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.junit.JUnitShell;
-import com.google.gwt.junit.PropertyDefiningStrategy;
 import com.google.gwt.junit.JUnitShell.Strategy;
-import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.junit.PropertyDefiningStrategy;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import junit.framework.TestCase;
@@ -46,25 +44,6 @@ import java.util.Set;
  */
 @SuppressWarnings("unused") 
 public abstract class GWTTestCase extends TestCase {
-
-  /**
-   * The base class for strategies to use for tests.
-   */
-  public static class BaseStrategy implements Strategy {
-    public String getModuleInherit() {
-      return "com.google.gwt.junit.JUnit";
-    }
-
-    public String getSyntheticModuleExtension() {
-      return "JUnit";
-    }
-
-    public void processModule(ModuleDef module) {
-    }
-
-    public void processResult(TestCase testCase, JUnitResult result) {
-    }
-  }
 
   /**
    * Information about a synthetic module used for testing.
@@ -254,7 +233,7 @@ public abstract class GWTTestCase extends TestCase {
    */
   public Strategy getStrategy() {
     if (strategy == null) {
-      strategy = createStrategy();
+      strategy = new PropertyDefiningStrategy(this);
     }
     return strategy;
   }
@@ -331,13 +310,6 @@ public abstract class GWTTestCase extends TestCase {
       moduleInfo.getTests().add(
           new TestInfo(syntheticModuleName, getClass().getName(), getName()));
     }
-  }
-
-  /**
-   * Creates the test strategy to use (see {@link #getStrategy()}).
-   */
-  protected Strategy createStrategy() {
-    return new PropertyDefiningStrategy(this);
   }
 
   /**

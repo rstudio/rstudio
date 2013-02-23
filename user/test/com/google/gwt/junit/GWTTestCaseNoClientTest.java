@@ -39,7 +39,6 @@ public class GWTTestCaseNoClientTest extends TestCase {
   public void testGetStrategy() {
     GWTTestCase testCase = new MockGWTTestCase();
     Strategy strategy = testCase.getStrategy();
-    assertEquals("com.google.gwt.junit.JUnit", strategy.getModuleInherit());
     assertEquals("JUnit", strategy.getSyntheticModuleExtension());
     assertEquals("com.google.gwt.mock.Mock.JUnit",
         testCase.getSyntheticModuleName());

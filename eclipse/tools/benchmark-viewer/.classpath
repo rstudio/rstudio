@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry kind="src" path="core/src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jfreechart/jfreechart-1.0.3.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jfreechart/jcommon-1.0.6.jar"/>
-	<classpathentry kind="output" path="bin"/>
-</classpath>

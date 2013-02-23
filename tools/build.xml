@@ -6,11 +6,6 @@
         <!-- "build" is the default when subprojects are directly targeted -->
         <property name="target" value="build" />
 
-        <target name="benchmark-viewer" depends=""
-          description="Run benchmark-viewer">
-                <gwt.ant dir="benchmark-viewer" />
-        </target>
-
         <target name="api-checker" depends=""
           description="Compile api-checker">
                 <gwt.ant dir="api-checker" />
@@ -24,7 +19,7 @@
                 <gwt.ant dir="cldr-import" />
         </target>
 
-  <target name="-do" depends="benchmark-viewer,api-checker,soyc-vis,cldr-import"
+  <target name="-do" depends="api-checker,soyc-vis,cldr-import"
     description="Run all subfolders that don't have additional dependencies" />
 
   <target name="build" description="Build each subfolder">

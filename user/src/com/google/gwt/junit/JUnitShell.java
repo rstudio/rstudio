@@ -118,13 +118,9 @@ public class JUnitShell extends DevMode {
    * A strategy for running the test.
    */
   public interface Strategy {
-    String getModuleInherit();
-
     String getSyntheticModuleExtension();
 
     void processModule(ModuleDef module);
-
-    void processResult(TestCase testCase, JUnitResult result);
   }
 
   static class ArgProcessor extends ArgProcessorBase {
@@ -1253,8 +1249,7 @@ public class JUnitShell extends DevMode {
     return true;
   }
 
-  private void processTestResult(TestCase testCase, TestResult testResult,
-      Strategy strategy) {
+  private void processTestResult(TestCase testCase, TestResult testResult) {
 
     Map<ClientStatus, JUnitResult> results = messageQueue.getResults(currentTestInfo);
     assert results != null;
@@ -1294,8 +1289,6 @@ public class JUnitShell extends DevMode {
         }
         testResult.addError(testCase, exception);
       }
-
-      strategy.processResult(testCase, result);
     }
   }
 
@@ -1350,7 +1343,7 @@ public class JUnitShell extends DevMode {
     numTries++;
     if (messageQueue.hasResults(currentTestInfo)) {
       // Already have a result.
-      processTestResult(testCase, testResult, strategy);
+      processTestResult(testCase, testResult);
       return;
     }
     compileStrategy.maybeAddTestBlockForCurrentTest(testCase, batchingStrategy);
@@ -1400,7 +1393,7 @@ public class JUnitShell extends DevMode {
       }
     }
     assert (messageQueue.hasResults(currentTestInfo));
-    processTestResult(testCase, testResult, testCase.getStrategy());
+    processTestResult(testCase, testResult);
   }
 
   /**

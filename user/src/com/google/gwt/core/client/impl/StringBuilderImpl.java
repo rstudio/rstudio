@@ -24,11 +24,10 @@ package com.google.gwt.core.client.impl;
  * </p>
  * 
  * <p>
- * The main implementations are static classes nested within this one. All of
- * the implementations have been carefully tweaked to get the most inlining
- * possible, so be sure to check with
- * {@link com.google.gwt.emultest.java.lang.StringBuilderBenchmark StringBuilderBenchmark}
- * whenever these classes are modified.
+ * The main implementations are static classes nested within this one.
+ * All of the implementations have been carefully tweaked to get the most
+ * inlining possible, so be sure to check with benchmark whenever these classes
+ * are modified.
  * </p>
  */
 public class StringBuilderImpl {
