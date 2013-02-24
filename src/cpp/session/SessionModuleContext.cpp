@@ -794,7 +794,8 @@ bool isTextFile(const FilePath& targetPath)
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
-          boost::algorithm::ends_with(fileType, "x-empty");
+          boost::algorithm::ends_with(fileType, "x-empty") ||
+          boost::algorithm::equals(fileType, "application/postscript");
 #else
 
    // read contents of file
