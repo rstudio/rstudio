@@ -49,6 +49,7 @@ set (CORE_SOURCE_FILES
    StderrLogWriter.cpp
    StringUtils.cpp
    Thread.cpp
+   Trace.cpp
    WaitUtils.cpp
    gwt/GwtFileHandler.cpp
    gwt/GwtLogHandler.cpp
