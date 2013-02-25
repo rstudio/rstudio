@@ -21,15 +21,12 @@ file(GLOB_RECURSE CORE_DEV_HEADER_FILES "*.h*")
 # source files
 set(CORE_DEV_SOURCE_FILES 
    Main.cpp
-   SessionNamedPipeHttpConnectionListener.cpp
-   ${CORE_SOURCE_DIR}/../session/http/SessionHttpConnectionQueue.cpp
 )
 
 # set include directories
 include_directories(
    ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
-   ${CORE_SOURCE_DIR}/../session/include
 )
 
 # define executable
