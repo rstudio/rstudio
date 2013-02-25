@@ -62,7 +62,6 @@ set (CORE_SOURCE_FILES
    http/Header.cpp
    http/Message.cpp
    http/MultipartRelated.cpp
-   http/NamedPipeProtocol.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
@@ -211,6 +210,7 @@ else()
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       Win32StringUtils.cpp
+      http/NamedPipeProtocol.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32Environment.cpp

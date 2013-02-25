@@ -22,7 +22,6 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
 
-#include "SessionTcpIpHttpConnectionListener.hpp"
 #include "SessionLocalStreamHttpConnectionListener.hpp"
 
 using namespace core ;

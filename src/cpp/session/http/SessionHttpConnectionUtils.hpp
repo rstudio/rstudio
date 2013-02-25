@@ -39,7 +39,7 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
 
 bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection);
 
-static void handleAbortNextProjParam(
+void handleAbortNextProjParam(
                boost::shared_ptr<HttpConnection> ptrConnection);
 
 bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
