@@ -29,7 +29,7 @@
 
 #include <core/http/NamedPipeAsyncClient.hpp>
 #include <core/http/NamedPipeBlockingClient.hpp>
-#include <core/http/NamedPipeAsyncServer.hpp>
+
 
 // TODO: ensure shared_ptr with event handle is correct idiom
 // TODO: test wtih many concurrent clients
@@ -57,6 +57,7 @@ void serverThread()
 {
    try
    {
+      /*
       // create server (runs on a background thread)
       http::NamedPipeAsyncServer asyncServer("RStudio");
       asyncServer.setBlockingDefaultHandler(handleRequest);
@@ -74,9 +75,7 @@ void serverThread()
          LOG_ERROR(error);
          return;
       }
-
-
-
+      */
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

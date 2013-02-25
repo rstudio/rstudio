@@ -47,12 +47,6 @@ Error closeSocket(SocketService& socket)
    return Success() ; 
 }
 
-template <typename SocketService>
-Error closeServerSocket(SocketService& socket)
-{
-   return closeSocket(socket);
-}
-
 inline bool isConnectionTerminatedError(const core::Error& error)
 {
    // look for errors that indicate the client closing the connection
