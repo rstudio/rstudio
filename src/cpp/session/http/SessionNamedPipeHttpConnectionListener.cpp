@@ -48,8 +48,6 @@
 
 // TODO: should we make the listener thread interruptable?
 
-// TODO: named pipes for rspostback
-// TODO: named pipes for rsinverse
 
 using namespace core ;
 
