@@ -45,7 +45,12 @@ std::string Message::contentType() const
 {
    return headerValue("Content-Type") ;
 }
-   
+
+int Message::contentLength() const
+{
+   return safe_convert::stringTo<int>(headerValue("Content-Length"), 0);
+}
+
 void Message::setContentLength(int contentLength)
 {
    setHeader("Content-Length", contentLength);
