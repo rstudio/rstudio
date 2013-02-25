@@ -35,6 +35,9 @@
 #include <core/system/Environment.hpp>
 
 #include <windows.h>
+#ifndef PIPE_REJECT_REMOTE_CLIENTS
+#define PIPE_REJECT_REMOTE_CLIENTS 0x00000008
+#endif
 
 #include <session/SessionOptions.hpp>
 
@@ -44,7 +47,6 @@
 
 // TODO: memory management tests
 // TODO: security for local session only
-// TODO: consider addding PIPE_REJECT_REMOTE_CLIENTS flag
 
 // TODO: should we make the listener thread interruptable?
 
@@ -285,7 +287,8 @@ private:
                                               PIPE_ACCESS_DUPLEX,
                                               PIPE_TYPE_BYTE |
                                               PIPE_READMODE_BYTE |
-                                              PIPE_WAIT,
+                                              PIPE_WAIT |
+                                              PIPE_REJECT_REMOTE_CLIENTS,
                                               PIPE_UNLIMITED_INSTANCES,
                                               4096,
                                               4096,
