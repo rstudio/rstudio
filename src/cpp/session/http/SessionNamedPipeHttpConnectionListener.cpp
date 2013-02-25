@@ -51,10 +51,6 @@
 // TODO: named pipes for rspostback
 // TODO: named pipes for rsinverse
 
-// TODO: address duplication in enqueConnection?
-
-
-
 using namespace core ;
 
 namespace session {
