@@ -349,8 +349,7 @@ private:
             // still more to read?
             readSomeContentIfNecessary();
          }
-         else if (ec == boost::asio::error::eof ||
-                  isShutdownError(ec))
+         else if (ec == boost::asio::error::eof || isShutdownError(ec))
          {
             closeAndRespond();
          }

@@ -34,15 +34,9 @@
 
 #include <session/SessionHttpConnectionListener.hpp>
 
-// TODO: ensure shared_ptr with event handle is correct idiom
-// TODO: test wtih many concurrent clients
-// TODO: ensure isShutdownError is a complete implementation
 // TODO: memory management tests
-// TODO: correct pipe names for local
 // TODO: security for local session only
 // TODO: consider addding PIPE_REJECT_REMOTE_CLIENTS flag
-// TODO: consider use of GetNamedPipeInfo to confirm handle is a
-//       pipe before destructor operations
 
 
 using namespace core ;

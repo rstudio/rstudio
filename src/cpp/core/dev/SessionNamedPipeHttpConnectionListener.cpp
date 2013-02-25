@@ -313,22 +313,10 @@ private:
                // if we can successfully read a request then enque the connection
                if (ptrPipeConnection->readRequest())
                {
-
-                  std::cerr << ptrPipeConnection->request() << std::endl;
-
-                  core::http::Response response;
-                  response.setStatusCode(http::status::Ok);
-                  response.setContentType("text/plain");
-                  response.setBody( ptrPipeConnection->request().uri());
-
-                  ptrPipeConnection->sendResponse(response);
-
-                  /*
                   // convert to cannonical HttpConnection
                   boost::shared_ptr<HttpConnection> ptrConnection =
                    boost::shared_static_cast<HttpConnection>(ptrPipeConnection);
                   mainConnectionQueue().enqueConnection(ptrConnection);
-                  */
                }
             }
             else
