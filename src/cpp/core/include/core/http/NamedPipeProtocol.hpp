@@ -22,6 +22,7 @@
 
 #include <core/http/SocketUtils.hpp>
 #include <core/http/NamedPipeAcceptor.hpp>
+#include <core/http/AsyncConnectionImpl.hpp>
 
 namespace core {
 namespace http {
@@ -42,6 +43,11 @@ template<> Error closeSocket(boost::asio::windows::stream_handle& socket);
 
 // specialization of closeServerSocket
 template<> Error closeServerSocket(boost::asio::windows::stream_handle& socket);
+
+// specialization of handleWrite
+template<> void AsyncConnectionImpl<NamedPipeProtocol>::handleWrite(
+                          const boost::system::error_code& e);
+
 
 } // namespace http
 } // namespace core

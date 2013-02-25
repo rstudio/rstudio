@@ -59,6 +59,36 @@ template<> Error closeServerSocket(boost::asio::windows::stream_handle& socket)
    return closeSocket(socket);
 }
 
+// specialization of handleWrite (note: this isn't currently any
+// different from the generic form but we have it here in case
+// we need to do a read prior to disconnecting from the named pipe
+// (as per the microsoft named pipes with overlapped io example)
+template<> void AsyncConnectionImpl<NamedPipeProtocol>::handleWrite(
+                          const boost::system::error_code& e)
+{
+   try
+   {
+      if (e)
+      {
+         // log the error if it wasn't connection terminated
+         Error error(e, ERROR_LOCATION);
+         if (!http::isConnectionTerminatedError(error))
+            LOG_ERROR(error);
+      }
+
+      // close the socket
+      Error error = closeServerSocket(socket_);
+      if (error)
+         LOG_ERROR(error);
+
+      //
+      // no more async operations are initiated here so the shared_ptr to
+      // this connection no more references and is automatically destroyed
+      //
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
    
 } // namespace http
 } // namespace core
