@@ -251,6 +251,8 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   // NOTE: this logic is duplicated btw here and NamedPipeConnectionListener
+
    void enqueConnection(
          boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection)
    {
@@ -271,108 +273,19 @@ private:
       // we do this in the background listener thread so it can always
       // be processed even if the foreground thread is deadlocked or otherwise
       // unresponsive
-      if (checkForAbort(ptrHttpConnection))
+      if (connection::checkForAbort(
+             ptrHttpConnection,
+             boost::bind(&HttpConnectionListenerImpl<ProtocolType>::cleanup,
+                         this)))
+      {
          return;
+      }
 
       // place the connection on the correct queue
-      if (isGetEvents(ptrHttpConnection))
+      if (connection::isGetEvents(ptrHttpConnection))
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
       else
          mainConnectionQueue_.enqueConnection(ptrHttpConnection);
-   }
-
-   static bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
-                        const std::string& method)
-   {
-      return boost::algorithm::ends_with(ptrConnection->request().uri(),
-                                         "rpc/" + method);
-   }
-
-   static bool isGetEvents(boost::shared_ptr<HttpConnection> ptrConnection)
-   {
-      return boost::algorithm::ends_with(ptrConnection->request().uri(),
-                                         "events/get_events");
-   }
-
-   static void handleAbortNextProjParam(
-                  boost::shared_ptr<HttpConnection> ptrConnection)
-   {
-      std::string nextProj;
-      core::json::JsonRpcRequest jsonRpcRequest;
-      core::Error error = core::json::parseJsonRpcRequest(
-                                            ptrConnection->request().body(),
-                                            &jsonRpcRequest);
-      if (!error)
-      {
-         error = core::json::readParam(jsonRpcRequest.params, 0, &nextProj);
-         if (error)
-            LOG_ERROR(error);
-
-         if (!nextProj.empty())
-         {
-            // NOTE: this must be synchronized with the implementation of
-            // ProjectContext::setNextSessionProject -- we do this using
-            // constants rather than code so that this code (which runs in
-            // a background thread) don't call into the projects module (which
-            // is designed to be foreground and single-threaded)
-            core::FilePath userScratch = session::options().userScratchPath();
-            core::FilePath settings = userScratch.complete(kProjectsSettings);
-            error = settings.ensureDirectory();
-            if (error)
-               LOG_ERROR(error);
-            core::FilePath writePath = settings.complete(kNextSessionProject);
-            core::Error error = core::writeStringToFile(writePath, nextProj);
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
-      else
-      {
-         LOG_ERROR(error);
-      }
-   }
-
-   bool checkForAbort(
-                  boost::shared_ptr<HttpConnection> ptrConnection)
-   {
-      if (isMethod(ptrConnection, "abort"))
-      {
-         // respond and log (try/catch so we are ALWAYS guaranteed to abort)
-         try
-         {
-            // handle the nextProj param if it's specified
-            handleAbortNextProjParam(ptrConnection);
-
-            // respond
-            ptrConnection->sendJsonRpcResponse();
-
-            // log
-            LOG_WARNING_MESSAGE("Abort requested");
-         }
-         catch(...)
-         {
-         }
-
-         // cleanup (if we don't do this then the user may be locked out of
-         // future requests). note that this should occur in the normal
-         // course of a graceful shutdown but we do it here anyway just
-         // to be paranoid
-         try
-         {
-            cleanup();
-         }
-         catch(...)
-         {
-         }
-
-         // abort
-         ::abort();
-         return true;
-      }
-      else
-      {
-         return false;
-      }
    }
 
 private:

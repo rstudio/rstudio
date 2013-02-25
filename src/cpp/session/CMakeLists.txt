@@ -45,6 +45,7 @@ set (SESSION_SOURCE_FILES
    SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
+   http/SessionHttpConnectionUtils.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
@@ -112,7 +113,7 @@ if(UNIX)
    endif()
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
-      http/SessionWin32HttpConnectionListener.cpp
+      http/SessionNamedPipeHttpConnectionListener.cpp
    )
 endif()
 

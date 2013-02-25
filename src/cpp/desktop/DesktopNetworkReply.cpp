@@ -69,8 +69,8 @@ private:
    }
 };
 
-
 NetworkReply::NetworkReply(const std::string& localPeer,
+                           const QString& secret,
                            QNetworkAccessManager::Operation op,
                            const QNetworkRequest& req,
                            QIODevice* outgoingData,
@@ -135,6 +135,9 @@ NetworkReply::NetworkReply(const std::string& localPeer,
       request.setHeader(std::string(name.begin(), name.end()),
                         std::string(value.begin(), value.end()));
    }
+
+   // shared secret header
+   request.setHeader("X-Shared-Secret", secret.toStdString());
 
    // body
    if (outgoingData != NULL)

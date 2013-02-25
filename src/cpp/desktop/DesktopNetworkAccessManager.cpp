@@ -48,6 +48,7 @@ QNetworkReply* NetworkAccessManager::createRequest(
    {
       return new NetworkReply(
             desktop::options().localPeer(),
+            secret_,
             op,
             req,
             outgoingData,

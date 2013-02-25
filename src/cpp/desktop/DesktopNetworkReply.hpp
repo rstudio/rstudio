@@ -35,6 +35,7 @@ class NetworkReply : public QNetworkReply
    Q_OBJECT
 public:
    NetworkReply(const std::string& localPeer,
+                const QString& secret,
                 QNetworkAccessManager::Operation op,
                 const QNetworkRequest& req,
                 QIODevice* outgoingData,
