@@ -46,6 +46,9 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
                    const boost::function<void()> cleanupHandler);
 
 
+bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
+                  const std::string& secret);
+
 
 } // namespace connection
 } // namespace session

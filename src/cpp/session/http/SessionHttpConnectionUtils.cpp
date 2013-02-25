@@ -173,6 +173,17 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
 }
 
 
+bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
+                  const std::string& secret)
+{
+   // allow all requests if no secret
+   if (secret.empty())
+      return true;
+
+   // validate against shared secret
+   return secret == ptrConnection->request().headerValue("X-Shared-Secret");
+}
+
 } // namespace connection
 } // namespace session
 

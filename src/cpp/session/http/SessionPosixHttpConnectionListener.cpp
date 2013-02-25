@@ -47,6 +47,7 @@ void initializeHttpConnectionListener()
       s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
                                            core::system::UserReadWriteMode,
+                                           options.sharedSecret(),
                                            -1);
    }
    else // mode == "server"
@@ -57,6 +58,7 @@ void initializeHttpConnectionListener()
       s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            localStreamPath,
                                            core::system::EveryoneReadWriteMode,
+                                           "", // no shared secret
                                            options.limitRpcClientUid());
    }
 }

@@ -45,7 +45,6 @@
 // TODO: memory management tests
 // TODO: security for local session only
 // TODO: consider addding PIPE_REJECT_REMOTE_CLIENTS flag
-// TODO: add shared secret on desktop for posix
 
 // TODO: should we make the listener thread interruptable?
 
@@ -364,14 +363,9 @@ private:
          mainConnectionQueue_.enqueConnection(ptrHttpConnection);
    }
 
-   bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
+   virtual bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
-      // allow all requests if no secret
-      if (secret_.empty())
-         return true;
-
-      // validate against shared secret
-      return secret_ == ptrConnection->request().headerValue("X-Shared-Secret");
+      return connection::authenticate(ptrConnection, secret_);
    }
 
    core::Error cleanup()
