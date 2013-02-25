@@ -50,10 +50,6 @@ template<> Error closeServerSocket(boost::asio::windows::stream_handle& socket)
    // disconnect named pipe
    if (socket.native_handle() != INVALID_HANDLE_VALUE)
    {
-      // flush buffers -- TODO: make sure this can never hang!!!!
-      if (!::FlushFileBuffers(socket.native_handle()))
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-
       // disconnect named pipe
       if (!::DisconnectNamedPipe(socket.native_handle()))
          LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
