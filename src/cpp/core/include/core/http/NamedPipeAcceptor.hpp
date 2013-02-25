@@ -16,12 +16,16 @@
 #ifndef CORE_HTTP_NAMED_PIPE_ACCEPTOR_HPP
 #define CORE_HTTP_NAMED_PIPE_ACCEPTOR_HPP
 
+
 #include <boost/assert.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
 #include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
 
+#include <core/Log.hpp>
 #include <core/Error.hpp>
 
 namespace core {

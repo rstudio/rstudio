@@ -20,6 +20,7 @@
 
 #include <core/Error.hpp>
 
+#include <core/http/SocketUtils.hpp>
 #include <core/http/NamedPipeAcceptor.hpp>
 
 namespace core {
@@ -34,49 +35,14 @@ public:
 
 // specialization of closeSocket for stream handle lowest level
 template<> Error closeSocket(
-              boost::asio::windows::stream_handle::lowest_layer_type& socket)
-{
-   if (socket.is_open())
-   {
-      boost::system::error_code ec;
-      socket.close(ec);
-      if (ec)
-        return Error(ec, ERROR_LOCATION) ;
-   }
-
-   return Success();
-}
+           boost::asio::windows::stream_handle::lowest_layer_type& socket);
 
 // specialization of closeSocket for stream handles
-template<> Error closeSocket(boost::asio::windows::stream_handle& socket)
-{
-   // delegate to lowest_layer (it's the same object)
-   return closeSocket(socket.lowest_layer());
-}
+template<> Error closeSocket(boost::asio::windows::stream_handle& socket);
 
 // specialization of closeServerSocket
-template<> Error closeServerSocket(boost::asio::windows::stream_handle& socket)
-{
-   // TODO: call GetNamedPipeInfo to confirm that the handle
-   // is to a named pipe
+template<> Error closeServerSocket(boost::asio::windows::stream_handle& socket);
 
-   // disconnect named pipe
-   if (socket.native_handle() != INVALID_HANDLE_VALUE)
-   {
-      // flush buffers -- TODO: make sure this can never hang!!!!
-      if (!::FlushFileBuffers(socket.native_handle()))
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-
-      // disconnect named pipe
-      if (!::DisconnectNamedPipe(socket.native_handle()))
-         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-   }
-
-   // close handle
-   return closeSocket(socket);
-}
-
-   
 } // namespace http
 } // namespace core
 
