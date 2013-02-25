@@ -76,15 +76,8 @@ template<> void AsyncConnectionImpl<NamedPipeProtocol>::handleWrite(
             LOG_ERROR(error);
       }
 
-      // close the socket
-      Error error = closeServerSocket(socket_);
-      if (error)
-         LOG_ERROR(error);
-
-      //
-      // no more async operations are initiated here so the shared_ptr to
-      // this connection no more references and is automatically destroyed
-      //
+      // call readSome to wait for the client to disconnect
+      readSome();
    }
    CATCH_UNEXPECTED_EXCEPTION
 }
