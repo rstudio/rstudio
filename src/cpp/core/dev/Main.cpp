@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 #include <core/SafeConvert.hpp>
 
 #include <core/http/Request.hpp>
@@ -30,6 +31,8 @@
 #include <core/http/NamedPipeAsyncClient.hpp>
 #include <core/http/NamedPipeBlockingClient.hpp>
 
+
+#include <session/SessionHttpConnectionListener.hpp>
 
 // TODO: ensure shared_ptr with event handle is correct idiom
 // TODO: test wtih many concurrent clients
@@ -104,14 +107,16 @@ int test_main(int argc, char * argv[])
          LOG_ERROR(error);
 
 
-      core::thread::safeLaunchThread(serverThread);
+      core::system::setenv("RS_LOCAL_PEER", kPipeName);
+
+      session::initializeHttpConnectionListener();
 
       boost::asio::io_service ioService;
       http::ConnectionRetryProfile retryProfile(
                               boost::posix_time::seconds(10),
                               boost::posix_time::milliseconds(50));
 
-      for (int i=0; i<10; i++)
+      for (int i=0; i<1000; i++)
       {
          http::Request request;
          request.setMethod("GET");
