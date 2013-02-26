@@ -45,10 +45,7 @@
 
 // TODO: detailed review of named pipe connection listener code
 
-// TODO: memory management tests
 // TODO: security for local session only
-
-// TODO: should we make the listener thread interruptable?
 
 
 using namespace core ;
@@ -222,7 +219,7 @@ class NamedPipeHttpConnectionListener : public HttpConnectionListener,
 public:
    explicit NamedPipeHttpConnectionListener(const std::string& pipeName,
                                             const std::string& secret)
-      : started_(false), pipeName_(pipeName), secret_(secret)
+      : pipeName_(pipeName), secret_(secret)
    {
    }
 
@@ -231,36 +228,15 @@ public:
    {
       core::thread::safeLaunchThread(
          boost::bind(&NamedPipeHttpConnectionListener::listenerThread,
-                     this),
-         &listenerThread_);
-
-      started_ = true;
+                     this));
 
       return Success();
    }
 
    virtual void stop()
    {
-      // don't stop if we never started
-      if (!started_)
-      {
-         LOG_WARNING_MESSAGE("Stopping NamedPipeHttpConnectionListener "
-                             "which wasn't started");
-         return;
-      }
+      // we don't support stop because it is never called in desktop mode
 
-      if (listenerThread_.joinable())
-      {
-         listenerThread_.interrupt();
-
-         if (!listenerThread_.timed_join(boost::posix_time::seconds(3)))
-         {
-            LOG_WARNING_MESSAGE(
-               "NamedPipeHttpConnectionListener didn't stop within 3 sec");
-         }
-
-         listenerThread_.detach();
-      }
    }
 
    // connection queues
@@ -371,10 +347,8 @@ private:
    }
 
 private:
-   bool started_;
    std::string pipeName_;
    std::string secret_;
-   boost::thread listenerThread_ ;
    HttpConnectionQueue mainConnectionQueue_;
    HttpConnectionQueue eventsConnectionQueue_;
 };
