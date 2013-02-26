@@ -61,6 +61,8 @@ namespace session {
 
 namespace {
 
+const int kReadBufferSize = 4096;
+
 class NamedPipeHttpConnection : public HttpConnection,
                                 boost::noncopyable
 {
@@ -82,13 +84,13 @@ public:
    bool readRequest()
    {
       core::http::RequestParser parser;
-      CHAR buff[256];
+      CHAR buff[kReadBufferSize];
       DWORD bytesRead;
 
       while(TRUE)
       {
          // read from pipe
-         BOOL result = ::ReadFile(hPipe_, buff, sizeof(buff), &bytesRead, NULL);
+         BOOL result = ::ReadFile(hPipe_, buff, kReadBufferSize, &bytesRead, NULL);
 
          // check for error
          if (!result)
@@ -289,8 +291,8 @@ private:
                                               PIPE_WAIT |
                                               PIPE_REJECT_REMOTE_CLIENTS,
                                               PIPE_UNLIMITED_INSTANCES,
-                                              4096,
-                                              4096,
+                                              kReadBufferSize,
+                                              kReadBufferSize,
                                               0,
                                               pSA);
             DWORD lastError = ::GetLastError(); // capture err before LocalFree
