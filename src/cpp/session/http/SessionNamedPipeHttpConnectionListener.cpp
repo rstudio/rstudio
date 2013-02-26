@@ -18,6 +18,7 @@
 #include <string>
 
 #include <boost/utility.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -32,9 +33,11 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include <windows.h>
+#include <sddl.h>
 
 // Vista+
 #ifndef PIPE_REJECT_REMOTE_CLIENTS
@@ -273,24 +276,13 @@ private:
             sa.lpSecurityDescriptor = NULL;
             sa.bInheritHandle = FALSE;
 
-            // create security descriptor -- proceed without one if
-            // we fail since we don't have 100% assurance this will
+            // get login session only descriptor -- proceed without one
+            // if we fail since we don't have 100% assurance this will
             // work in all configurations and the world ends if we don't
             // proceed with creating the pipe
-            std::string descriptor = "D:(D;;GA;;;AN)(A;;GA;;;AU)";
-            ULONG sdSize;
-            if (::ConvertStringSecurityDescriptorToSecurityDescriptorA(
-                   descriptor.c_str(),
-                   SDDL_REVISION_1,
-                   &(sa.lpSecurityDescriptor),
-                   &sdSize))
-            {
+            sa.lpSecurityDescriptor = pipeServerSecurityDescriptor();
+            if (sa.lpSecurityDescriptor)
                pSA = &sa;
-            }
-            else
-            {
-               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
-            }
 
             // create pipe
             HANDLE hPipe = ::CreateNamedPipeA(pipeName_.c_str(),
@@ -306,7 +298,7 @@ private:
                                               pSA);
             DWORD lastError = ::GetLastError(); // capture err before LocalFree
 
-            // free security descriptor
+            // free security descriptor if we used one
             if (pSA)
                ::LocalFree(pSA->lpSecurityDescriptor);
 
@@ -386,6 +378,96 @@ private:
    {
       return Success();
    }
+
+   static LPVOID pipeServerSecurityDescriptor()
+   {
+      // NOTE: if this doesn't work for whatever reason we could consider
+      // falling back to this: "D:(D;;GA;;;AN)(A;;GA;;;AU)"
+      // (which would be deny access to anonymous users and grant access
+      // to authenticated users)
+
+      std::string securityDescriptor;
+      Error error = logonSessionOnlyDescriptor(&securityDescriptor);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return NULL;
+      }
+
+      ULONG sdSize;
+      LPVOID pSA;
+      if (::ConvertStringSecurityDescriptorToSecurityDescriptorA(
+          securityDescriptor.c_str(),
+          SDDL_REVISION_1,
+          &pSA,
+          &sdSize))
+      {
+         return pSA;
+      }
+      else
+      {
+         LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+         return NULL;
+      }
+   }
+
+   static core::Error logonSessionOnlyDescriptor(std::string* pDescriptor)
+   {
+      // token for current process
+      HANDLE hToken = NULL;
+      if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
+         return systemError(::GetLastError(), ERROR_LOCATION);
+      core::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
+
+      // size of token groups structure (note that we exepct the error
+      // since we pass NULL for the token information buffer)
+      DWORD tgSize = 0;
+      BOOL res = ::GetTokenInformation(hToken, TokenGroups, NULL, 0, &tgSize);
+      if (res != FALSE && ::GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+         return systemError(::GetLastError(), ERROR_LOCATION);
+
+      // get the token groups structure
+      std::vector<char> tg(tgSize);
+      TOKEN_GROUPS* pTG = reinterpret_cast<TOKEN_GROUPS*>(&tg[0]);
+      if (!::GetTokenInformation(hToken, TokenGroups, pTG, tgSize, &tgSize))
+         return systemError(::GetLastError(), ERROR_LOCATION);
+
+      // find login sid
+      SID* pSid = NULL;
+      for (DWORD i = 0; i < pTG->GroupCount ; ++i)
+      {
+         if ((pTG->Groups[i].Attributes & SE_GROUP_LOGON_ID)
+                                                   == SE_GROUP_LOGON_ID)
+         {
+           pSid = reinterpret_cast<SID*>(pTG->Groups[i].Sid);
+           break;
+         }
+      }
+
+      // ensure we found it
+      if (pSid == NULL)
+      {
+         return systemError(boost::system::windows_error::file_not_found,
+                            "Failed to find SE_GROUP_LOGON_ID",
+                            ERROR_LOCATION);
+      }
+
+      // convert to a string
+      char* pSidString = NULL;
+      if (!::ConvertSidToStringSid(pSid, &pSidString))
+         return systemError(::GetLastError(), ERROR_LOCATION);
+
+      // format string for caller
+      boost::format fmt("D:(A;OICI;GA;;;%1%)");
+      *pDescriptor = boost::str(fmt % pSidString);
+
+      // free sid string
+      ::LocalFree(pSidString);
+
+      // return success
+      return Success();
+   }
+
 
 private:
    std::string pipeName_;
