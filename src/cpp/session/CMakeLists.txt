@@ -219,6 +219,7 @@ add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
+   set(SESSION_SYSTEM_LIBRARIES ${SESSION_SYSTEM_LIBRARIES} -ladvapi32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)

@@ -35,9 +35,16 @@
 #include <core/system/Environment.hpp>
 
 #include <windows.h>
+
+// Vista+
 #ifndef PIPE_REJECT_REMOTE_CLIENTS
 #define PIPE_REJECT_REMOTE_CLIENTS 0x00000008
 #endif
+
+// Mingw doesn't have this declaration
+#define SDDL_REVISION_1 1
+extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
+                           LPCSTR, DWORD, LPVOID *, PULONG);
 
 #include <session/SessionOptions.hpp>
 
@@ -258,6 +265,33 @@ private:
       {
          while (true)
          {
+            // create security attributes
+            PSECURITY_ATTRIBUTES pSA = NULL;
+            SECURITY_ATTRIBUTES sa;
+            ZeroMemory(&sa, sizeof(sa));
+            sa.nLength = sizeof(sa);
+            sa.lpSecurityDescriptor = NULL;
+            sa.bInheritHandle = FALSE;
+
+            // create security descriptor -- proceed without one if
+            // we fail since we don't have 100% assurance this will
+            // work in all configurations and the world ends if we don't
+            // proceed with creating the pipe
+            std::string descriptor = "D:(D;;GA;;;AN)(A;;GA;;;AU)";
+            ULONG sdSize;
+            if (::ConvertStringSecurityDescriptorToSecurityDescriptorA(
+                   descriptor.c_str(),
+                   SDDL_REVISION_1,
+                   &(sa.lpSecurityDescriptor),
+                   &sdSize))
+            {
+               pSA = &sa;
+            }
+            else
+            {
+               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+            }
+
             // create pipe
             HANDLE hPipe = ::CreateNamedPipeA(pipeName_.c_str(),
                                               PIPE_ACCESS_DUPLEX,
@@ -269,10 +303,17 @@ private:
                                               4096,
                                               4096,
                                               0,
-                                              NULL);
+                                              pSA);
+            DWORD lastError = ::GetLastError(); // capture err before LocalFree
+
+            // free security descriptor
+            if (pSA)
+               ::LocalFree(pSA->lpSecurityDescriptor);
+
+            // check for error
             if (hPipe == INVALID_HANDLE_VALUE)
             {
-               LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+               LOG_ERROR(systemError(lastError, ERROR_LOCATION));
                continue;
             }
 
