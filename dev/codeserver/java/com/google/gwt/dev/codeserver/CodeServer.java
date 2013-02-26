@@ -46,6 +46,20 @@ public class CodeServer {
       System.exit(1);
     }
 
+    if (options.isCompileTest()) {
+      PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.Type.INFO);
+      try {
+        makeModules(options, logger);
+      } catch (Throwable t) {
+        t.printStackTrace();
+        System.out.println("FAIL");
+        System.exit(1);
+      }
+      System.out.println("PASS");
+      System.exit(0);
+    }
+
     try {
       start(options);
 
@@ -68,24 +82,10 @@ public class CodeServer {
    * a lot of static variables.</p>
    */
   public static WebServer start(Options options) throws IOException, UnableToCompleteException {
-    if (options.getModuleNames().isEmpty()) {
-      throw new IllegalArgumentException("Usage: at least one module must be supplied");
-    }
-
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.Type.INFO);
-    Modules modules = new Modules();
 
-    File workDir = ensureWorkDir(options);
-    System.out.println("workDir: " + workDir);
-
-    for (String moduleName : options.getModuleNames()) {
-      AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
-
-      Recompiler recompiler = new Recompiler(appSpace, moduleName,
-          options.getSourcePath(), options.getPreferredHost() + ":" + options.getPort(), logger);
-      modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
-    }
+    Modules modules = makeModules(options, logger);
 
     SourceHandler sourceHandler = new SourceHandler(modules, logger);
 
@@ -94,6 +94,26 @@ public class CodeServer {
     webServer.start();
 
     return webServer;
+  }
+
+  /**
+   * Configures and compiles all the modules (unless {@link Options#getNoPrecompile} is false).
+   */
+  private static Modules makeModules(Options options, PrintWriterTreeLogger logger)
+      throws IOException, UnableToCompleteException {
+
+    File workDir = ensureWorkDir(options);
+    System.out.println("workDir: " + workDir);
+
+    Modules modules = new Modules();
+    for (String moduleName : options.getModuleNames()) {
+      AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
+
+      Recompiler recompiler = new Recompiler(appSpace, moduleName,
+          options.getSourcePath(), options.getPreferredHost() + ":" + options.getPort(), logger);
+      modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
+    }
+    return modules;
   }
 
   /**

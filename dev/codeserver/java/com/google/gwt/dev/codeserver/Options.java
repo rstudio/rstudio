@@ -37,6 +37,7 @@ import java.util.List;
  */
 public class Options {
   private boolean noPrecompile = false;
+  private boolean isCompileTest = false;
   private File workDir;
   private List<String> moduleNames = new ArrayList<String>();
   private boolean allowMissingSourceDir = false;
@@ -51,7 +52,22 @@ public class Options {
    * @return true if the arguments were parsed successfully.
    */
   public boolean parseArgs(String[] args) {
-    return new ArgProcessor().processArgs(args);
+    boolean ok = new ArgProcessor().processArgs(args);
+    if (!ok) {
+      return false;
+    }
+
+    if (isCompileTest && noPrecompile) {
+      System.err.println("Usage: -noprecompile and -compiletest are incompatible");
+      return false;
+    }
+
+    if (moduleNames.isEmpty()) {
+      System.err.println("Usage: at least one module must be supplied");
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -73,6 +89,13 @@ public class Options {
    */
   boolean getNoPrecompile() {
     return noPrecompile;
+  }
+
+  /**
+   * If true, just compile the modules, then exit.
+   */
+  boolean isCompileTest() {
+    return isCompileTest;
   }
 
   /**
@@ -104,6 +127,7 @@ public class Options {
 
     public ArgProcessor() {
       registerHandler(new NoPrecompileFlag());
+      registerHandler(new CompileTestFlag());
       registerHandler(new BindAddressFlag());
       registerHandler(new PortFlag());
       registerHandler(new WorkDirFlag());
@@ -134,6 +158,25 @@ public class Options {
     @Override
     public boolean setFlag() {
       noPrecompile = true;
+      return true;
+    }
+  }
+
+  private class CompileTestFlag extends ArgHandlerFlag {
+
+    @Override
+    public String getTag() {
+      return "-compileTest";
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Just compile the modules and exit.";
+    }
+
+    @Override
+    public boolean setFlag() {
+      isCompileTest = true;
       return true;
     }
   }

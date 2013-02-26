@@ -74,7 +74,10 @@ class Recompiler {
       throws UnableToCompleteException {
     if (compilesDone == 0) {
       System.setProperty("java.awt.headless", "true");
-      System.setProperty("gwt.speedtracerlog", appSpace.getSpeedTracerLogFile().getAbsolutePath());
+      if (System.getProperty("gwt.speedtracerlog") == null) {
+        System.setProperty("gwt.speedtracerlog",
+            appSpace.getSpeedTracerLogFile().getAbsolutePath());
+      }
       CompilationStateBuilder.init(logger, appSpace.getUnitCacheDir());
     }
 
