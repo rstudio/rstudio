@@ -15,6 +15,9 @@
 
 #include <session/SessionHttpConnectionListener.hpp>
 
+#include <windows.h>
+#include <sddl.h>
+
 #include <string>
 
 #include <boost/utility.hpp>
@@ -35,9 +38,6 @@
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-
-#include <windows.h>
-#include <sddl.h>
 
 // Vista+
 #ifndef PIPE_REJECT_REMOTE_CLIENTS
