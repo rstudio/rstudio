@@ -16,6 +16,8 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.i18n.client.Messages;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -57,7 +59,11 @@ public class FakeMessagesMaker implements InvocationHandler {
       throws Throwable {
     String name = method.getName();
 
-    return (args == null || args.length == 0) ? name : name
+    String result = (args == null || args.length == 0) ? name : name
         + Arrays.asList(args);
+    if (SafeHtml.class.isAssignableFrom(method.getReturnType())) {
+      return SafeHtmlUtils.fromString(result);
+    }
+    return result;
   }
 }
