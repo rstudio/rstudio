@@ -55,9 +55,6 @@ extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
 
 // TODO: detailed review of named pipe connection listener code
 
-// TODO: security for local session only
-
-
 using namespace core ;
 
 namespace session {

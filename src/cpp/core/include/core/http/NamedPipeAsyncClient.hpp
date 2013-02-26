@@ -72,7 +72,9 @@ private:
                   0,                      // no sharing
                   NULL,                   // default security attributes
                   OPEN_EXISTING,          // opens existing
-                  FILE_FLAG_OVERLAPPED,   // allow overlapped io
+                  FILE_FLAG_OVERLAPPED |  // allow overlapped io
+                  SECURITY_SQOS_PRESENT | // custom security attribs
+                  SECURITY_IDENTIFICATION,// impersonate identity only
                   NULL);               	// no template file
 
          // handle connection error if necessary)
