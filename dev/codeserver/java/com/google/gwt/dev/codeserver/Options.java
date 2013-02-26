@@ -39,6 +39,7 @@ public class Options {
   private boolean noPrecompile = false;
   private File workDir;
   private List<String> moduleNames = new ArrayList<String>();
+  private boolean allowMissingSourceDir = false;
   private final List<File> sourcePath = new ArrayList<File>();
   private String bindAddress = "127.0.0.1";
   private String preferredHost = "localhost";
@@ -106,6 +107,7 @@ public class Options {
       registerHandler(new BindAddressFlag());
       registerHandler(new PortFlag());
       registerHandler(new WorkDirFlag());
+      registerHandler(new AllowMissingSourceDirFlag());
       registerHandler(new SourceFlag());
       registerHandler(new ModuleNameArgument());
     }
@@ -117,7 +119,7 @@ public class Options {
 
   }
 
-  public class NoPrecompileFlag extends ArgHandlerFlag {
+  private class NoPrecompileFlag extends ArgHandlerFlag {
 
     @Override
     public String getTag() {
@@ -217,6 +219,25 @@ public class Options {
     }
   }
 
+  private class AllowMissingSourceDirFlag extends ArgHandlerFlag {
+
+    @Override
+    public String getTag() {
+      return "-allowMissingSrc";
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Disables the directory existence check for -src flags.";
+    }
+
+    @Override
+    public boolean setFlag() {
+      allowMissingSourceDir = true;
+      return true;
+    }
+  }
+
   private class SourceFlag extends ArgHandler {
 
     @Override
@@ -242,7 +263,7 @@ public class Options {
       }
 
       File candidate = new File(args[startIndex + 1]);
-      if (!candidate.isDirectory()) {
+      if (!allowMissingSourceDir && !candidate.isDirectory()) {
         System.err.println("not a directory: " + candidate);
         return -1;
       }
