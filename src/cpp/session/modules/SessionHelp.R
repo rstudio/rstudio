@@ -32,14 +32,6 @@ options(help_type = "html")
    unlockBinding("httpdPort", env)
    assign("httpdPort", port, envir = env)
    lockBinding("httpdPort", env)
-
-   # set helpr load hook
-   setHook(packageEvent("helpr", "onLoad"),
-      function(...)
-      {
-         helpr:::deactivate_internetz()
-         helpr:::set_router_custom_route(TRUE)
-      })
 })
 
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
@@ -107,19 +99,6 @@ options(help_type = "html")
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
 });
 
-.rs.addFunction("helprIsActive", function()
-{
-   if ("helpr" %in% .packages())
-   {
-      return ( !identical(helpr:::router_url(), "") &&
-               helpr:::router_custom_route())
-   }
-   else
-   {
-      return (FALSE)
-   }
-})
-
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
    if (!is.null(package))
@@ -132,14 +111,7 @@ options(help_type = "html")
    exactMatch = help(query, help_type="html")
    if (length(exactMatch) == 1)
    {
-      if (.rs.helprIsActive())
-      {
-         helpr::print.help_files_with_topic(exactMatch)
-      }
-      else
-      {
-         print(exactMatch)
-      }
+      print(exactMatch)
       return ()
    }
    else

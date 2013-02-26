@@ -65,7 +65,6 @@ namespace {
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
 const char * const kSessionLocation = "/session";
-const char * const kCustomHelprLocation = "/custom/helpr";
 
 // flag indicating whether we should send headers to custom handlers
 // (only do this for 2.13 or higher)
@@ -128,15 +127,6 @@ bool isLocalURL(const std::string& url,
 // the browse_url event. for help URLs fire the appropraite show_help event
 bool handleLocalHttpUrl(const std::string& url)
 {
-   // check for helpr
-   std::string helprPath;
-   if (isLocalURL(url, "custom/helpr", &helprPath))
-   {
-      ClientEvent helpEvent(client_events::kShowHelp, helprPath);
-      module_context::enqueClientEvent(helpEvent);
-      return true;
-   }
-
    // check for custom
    std::string customPath;
    if (isLocalURL(url, "custom", &customPath))
@@ -235,18 +225,6 @@ public:
    }
 private:
    std::string requestUri_;
-};
-
-
-class CustomHelprContentsFilter
-   : public boost::iostreams::aggregate_filter<char>
-{
-   void do_filter(const std::vector<char>& src, std::vector<char>& dest)
-   {
-      std::string js(kJsCallbacks);
-      std::copy(src.begin(), src.end(), std::back_inserter(dest));
-      std::copy(js.begin(), js.end(), std::back_inserter(dest));
-   }
 };
 
 
@@ -673,21 +651,6 @@ void handleHttpdRequest(const std::string& location,
       }
    }
 
-   // redirect from stock home to helpr home if it is active
-   if (path == "/doc/html/index.html")
-   {
-      bool helprActive = false;
-      Error error = r::exec::RFunction(".rs.helprIsActive").call(&helprActive);
-      if (error)
-         LOG_ERROR(error);
-
-      if (helprActive)
-      {
-         pResponse->setMovedTemporarily(request, "/custom/helpr/index.html");
-         return;
-      }
-   }
-
    // evalute the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;
@@ -761,16 +724,6 @@ SEXP lookupCustomHandler(const std::string& uri)
    return r::sexp::findFunction(".rs.handlerLookupError");
 }
 
-
-void handleCustomHelprRequest(const http::Request& request,
-                              http::Response* pResponse)
-{
-   handleHttpdRequest("",
-                      lookupCustomHandler,
-                      request,
-                      CustomHelprContentsFilter(),
-                      pResponse);
-}
    
 // .httpd.handlers.env
 void handleCustomRequest(const http::Request& request, 
@@ -834,7 +787,6 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
-      (bind(registerUriHandler, kCustomHelprLocation, handleCustomHelprRequest))
       (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
       (bind(registerUriHandler, kSessionLocation, handleSessionRequest))
       (bind(sourceModuleRFile, "SessionHelp.R"));
