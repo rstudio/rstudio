@@ -154,21 +154,8 @@ public abstract class GWTTestCase extends TestCase {
   }
   // CHECKSTYLE_ON
 
-  @Deprecated
-  public void addCheckpoint(String msg) {
-  }
-
   public boolean catchExceptions() {
     return true;
-  }
-
-  @Deprecated
-  public void clearCheckpoints() {
-  }
-
-  @Deprecated
-  public String[] getCheckpoints() {
-    return new String[0];
   }
 
   public abstract String getModuleName();

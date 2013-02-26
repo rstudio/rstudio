@@ -64,11 +64,8 @@ public class DateTimeParse_zh_CN_Test extends GWTTestCase {
       Date expectedDate = new Date(expectedTimeUTC);
 
       // Compare the actual and expected results.
-      addCheckpoint("2a");
       assertEquals(expectedDate.getYear(), date.getYear());
-      addCheckpoint("2b");
       assertEquals(expectedDate.getMonth(), date.getMonth());
-      addCheckpoint("2c");
       assertEquals(expectedDate.getDate(), date.getDate());
     }
 
@@ -84,11 +81,8 @@ public class DateTimeParse_zh_CN_Test extends GWTTestCase {
       Date expectedDate = new Date(expectedTimeUTC);
 
       // Compare the actual and expected results.
-      addCheckpoint("3a");
       assertEquals(expectedDate.getYear(), date.getYear());
-      addCheckpoint("3b");
       assertEquals(expectedDate.getMonth(), date.getMonth());
-      addCheckpoint("3c");
       assertEquals(expectedDate.getDate(), date.getDate());
     }
   }
