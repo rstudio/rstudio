@@ -53,8 +53,6 @@ extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
 
 #include "SessionHttpConnectionUtils.hpp"
 
-// TODO: detailed review of named pipe connection listener code
-
 using namespace core ;
 
 namespace session {
