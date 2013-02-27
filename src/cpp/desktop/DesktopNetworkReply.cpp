@@ -151,7 +151,7 @@ NetworkReply::NetworkReply(const std::string& localPeer,
 
    // execute and bind to response handlers
    pImpl_->pClient->execute(boost::bind(&NetworkReply::onResponse, this, _1),
-                            boost::bind(&NetworkReply::onError, _1));
+                            boost::bind(&NetworkReply::onError, this, _1));
 }
 
 NetworkReply::~NetworkReply()
@@ -250,6 +250,10 @@ void NetworkReply::onError(const Error& error)
    {
       LOG_ERROR(error);
    }
+
+   core::http::Response response;
+   response.setError(error);
+   onResponse(response);
 }
 
 } // namespace desktop

@@ -57,7 +57,7 @@ protected:
 
 private:
    void onResponse(const core::http::Response& response);
-   static void onError(const core::Error& error);
+   void onError(const core::Error& error);
 
 private:
    struct Impl;
