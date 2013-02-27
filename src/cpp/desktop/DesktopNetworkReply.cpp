@@ -248,7 +248,8 @@ void NetworkReply::onResponse(const http::Response& response)
 
 void NetworkReply::onError(const Error& error)
 {
-   if (error.code() != boost::asio::error::operation_aborted)
+   if (error.code() != boost::asio::error::operation_aborted &&
+       error.code() != boost::asio::error::broken_pipe)
    {
       LOG_ERROR(error);
    }

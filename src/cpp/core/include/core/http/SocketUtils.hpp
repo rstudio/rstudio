@@ -74,6 +74,7 @@ inline bool isConnectionUnavailableError(const Error& error)
       // for windows named pipes
  #ifdef _WIN32
       || error.code() == boost::system::windows_error::file_not_found
+      || error.code() == boost::system::windows_error::broken_pipe
       || error.code() == boost::system::error_code(
                                        ERROR_PIPE_BUSY,
                                        boost::system::get_system_category())
