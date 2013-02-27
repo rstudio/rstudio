@@ -183,8 +183,10 @@ bool NetworkReply::isSequential() const
 
 void NetworkReply::abort()
 {
+   close();
+   setFinished(true);
+   QTimer::singleShot(0, this, SIGNAL(finished()));
 }
-
 
 qint64 NetworkReply::readData(char *data, qint64 maxSize)
 {  
@@ -251,9 +253,7 @@ void NetworkReply::onError(const Error& error)
       LOG_ERROR(error);
    }
 
-   core::http::Response response;
-   response.setError(error);
-   onResponse(response);
+   abort();
 }
 
 } // namespace desktop
