@@ -204,6 +204,20 @@ bool isWin64()
          || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
+bool isVistaOrLater()
+{
+   OSVERSIONINFOA osVersion;
+   if (::GetVersionExA(&osVersion))
+   {
+      return osVersion.dwMajorVersion >= 6;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return false;
+   }
+}
+
 std::string username()
 {
    return system::getenv("USERNAME");
