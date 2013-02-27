@@ -207,6 +207,9 @@ bool isWin64()
 bool isVistaOrLater()
 {
    OSVERSIONINFOA osVersion;
+   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
+   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
    if (::GetVersionExA(&osVersion))
    {
       return osVersion.dwMajorVersion >= 6;
