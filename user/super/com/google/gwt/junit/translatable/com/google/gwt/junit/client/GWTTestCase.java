@@ -110,6 +110,16 @@ public abstract class GWTTestCase extends TestCase {
    */
   private TestCaseUncaughtExceptionHandler uncaughtHandler;
 
+  /**
+   * Name of the test class.
+   */
+  private String testClass;
+
+  public void init(String testClass, String testName) {
+    this.testClass = testClass;
+    setName(testName);
+  }
+
   // CHECKSTYLE_OFF
   /**
    * Actually run the user's test. Called from {@link GWTRunner}.
@@ -169,6 +179,11 @@ public abstract class GWTTestCase extends TestCase {
     setUp();
     runTest();
     // No tearDown call here; we do it from reportResults.
+  }
+
+  @Override
+  protected void doRunTest(String name) throws Throwable {
+    GWTRunner.get().executeTestMethod(this, testClass, name);
   }
 
   public void setForcePureJava(boolean forcePureJava) {

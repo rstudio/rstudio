@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.impl.GWTRunnerProxy.TestAccessor;
 import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
 import com.google.gwt.junit.client.impl.JUnitHost.InitialResponse;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
@@ -41,7 +42,7 @@ import java.util.HashMap;
  * are reported back through {@link #junitHost}, and the next method to run is
  * returned. This process repeats until the next method to run is null.
  */
-public abstract class GWTRunner implements EntryPoint {
+public class GWTRunner implements EntryPoint {
 
   private final class InitialResponseListener implements
       AsyncCallback<InitialResponse> {
@@ -194,6 +195,9 @@ public abstract class GWTRunner implements EntryPoint {
    */
   private boolean serverless = false;
 
+  private String userAgentProperty;
+  private TestAccessor testAccessor;
+
   // TODO(FINDBUGS): can this be a private constructor to avoid multiple
   // instances?
   public GWTRunner() {
@@ -209,6 +213,10 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
+    GWTRunnerProxy proxy = GWT.create(GWTRunnerProxy.class);
+    userAgentProperty = proxy.getUserAgentProperty();
+    testAccessor = proxy.createTestAccessor();
+
     clientInfo = new ClientInfo(parseQueryParamInteger(
         SESSIONID_QUERY_PARAM, -1), getUserAgentProperty());
     maxRetryCount = parseQueryParamInteger(RETRYCOUNT_QUERY_PARAM, 3);
@@ -233,7 +241,7 @@ public abstract class GWTRunner implements EntryPoint {
       // That's it, we're done
       return;
     }
-    if (result != null && failureMessage != null) {
+    if (failureMessage != null) {
       RuntimeException ex = new RuntimeException(failureMessage);
       result.setException(ex);
     } else if (result.exceptionWrapper != null) {
@@ -274,16 +282,19 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   /**
-   * Implemented by the generated subclass. Creates an instance of the specified
-   * test class by fully qualified name.
+   * Executes a test on provided test class instance.
    */
-  protected abstract GWTTestCase createNewTestCase(String testClass);
+  public void executeTestMethod(GWTTestCase testCase, String className, String methodName)
+      throws Throwable {
+    testAccessor.invoke(testCase, className, methodName);
+  }
 
   /**
-   * Implemented by the generated subclass. Get the value of the user agent
-   * property.
+   * Get the value of the user agent property.
    */
-  protected abstract String getUserAgentProperty();
+  protected String getUserAgentProperty() {
+    return userAgentProperty;
+  }
 
   private TestBlock checkForQueryParamTestToRun() {
     String testClass = Window.Location.getParameter(TESTCLASS_QUERY_PARAM);
@@ -359,22 +370,17 @@ public abstract class GWTRunner implements EntryPoint {
     // Dynamically create a new test case.
     TestInfo currentTest = getCurrentTest();
     GWTTestCase testCase = null;
-    Throwable caught = null;
     try {
-      testCase = createNewTestCase(currentTest.getTestClass());
+      testCase = testAccessor.newInstance(currentTest.getTestClass());
     } catch (Throwable e) {
-      caught = e;
-    }
-    if (testCase == null) {
       RuntimeException ex = new RuntimeException(currentTest
-          + ": could not instantiate the requested class", caught);
+          + ": could not instantiate the requested class", e);
       JUnitResult result = new JUnitResult();
       result.setException(ex);
       reportResultsAndGetNextMethod(result);
       return;
     }
-
-    testCase.setName(currentTest.getTestMethod());
+    testCase.init(currentTest.getTestClass(), currentTest.getTestMethod());
     testCase.__doRunTest();
   }
 
