@@ -33,6 +33,11 @@ public class StackTraceCreator {
   public static final int LINE_NUMBER_UNKNOWN = -1;
 
   /**
+   * Replacement for function names that cannot be extracted from a stack.
+   */
+  private static final String ANONYMOUS = "anonymous";
+
+  /**
    * This class acts as a deferred-binding hook point to allow more optimal
    * versions to be substituted. This base version simply crawls
    * <code>arguments.callee.caller</code>.
@@ -150,7 +155,7 @@ public class StackTraceCreator {
       JsArrayString toReturn = JsArrayString.createArray().cast();
       JsArray<JavaScriptObject> stack = getStack();
       for (int i = 0, j = getStackDepth(); i < j; i++) {
-        String name = stack.get(i) == null ? "anonymous"
+        String name = stack.get(i) == null ? ANONYMOUS
             : extractName(stack.get(i).toString());
         // Reverse the order
         toReturn.set(j - i - 1, name);
@@ -308,14 +313,17 @@ public class StackTraceCreator {
         // Safari should fall back to default Collector:
         return new Collector().inferFrom(e);
       } else {
-        // Chrome contains the error itself as the first line of the stack:
-        return splice(stack, 1);
+        // Chrome contains the error itself as the first line of the stack (iOS doesn't).
+        if (stack.get(0).startsWith(ANONYMOUS + "@@")) {
+          stack = splice(stack, 1);
+        }
+        return stack;
       }
     }
 
     @Override
     protected String extractName(String fnToString) {
-      String extractedName = "anonymous";
+      String extractedName = ANONYMOUS;
       String location = "";
 
       if (fnToString.length() == 0) {
@@ -360,7 +368,7 @@ public class StackTraceCreator {
       if (index != -1) {
         toReturn = toReturn.substring(index + 1);
       }
-      return (toReturn.length() > 0 ? toReturn : "anonymous") + "@@" + location;
+      return (toReturn.length() > 0 ? toReturn : ANONYMOUS) + "@@" + location;
     }
 
     protected int replaceIfNoSourceMap(int line) {
@@ -423,7 +431,7 @@ public class StackTraceCreator {
      */
     @Override
     protected String extractName(String fnToString) {
-      return fnToString.length() == 0 ? "anonymous" : fnToString;
+      return fnToString.length() == 0 ? ANONYMOUS : fnToString;
     }
 
     /**
@@ -554,7 +562,7 @@ public class StackTraceCreator {
     if (index != -1) {
       toReturn = fnToString.substring(start, index).trim();
     }
-    return toReturn.length() > 0 ? toReturn : "anonymous";
+    return toReturn.length() > 0 ? toReturn : ANONYMOUS;
   }
 
   private static native JsArrayString splice(JsArrayString arr, int length) /*-{
