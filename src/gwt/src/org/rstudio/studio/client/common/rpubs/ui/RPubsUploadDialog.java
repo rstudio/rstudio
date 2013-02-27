@@ -251,10 +251,7 @@ public class RPubsUploadDialog extends ModalDialogBase
                }
                else
                {
-                  NewWindowOptions options = new NewWindowOptions();
-                  options.setAlwaysUseBrowser(true);
-                  globalDisplay_.openWindow(status.getContinueUrl(), 
-                                            options);
+                  globalDisplay_.openWindow(status.getContinueUrl());
                }
             }
 

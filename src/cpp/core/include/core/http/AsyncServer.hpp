@@ -106,6 +106,26 @@ public:
       scheduledCommands_.push_back(pCmd);
    }
 
+   Error runSingleThreaded()
+   {
+
+      // update state
+      running_ = true;
+
+      // get ready for next connection
+      acceptNextConnection();
+
+      // initialize scheduled command timer
+      waitForScheduledCommandTimer();
+
+
+      // run
+      runServiceThread();
+
+
+      return Success();
+   }
+
    Error run(std::size_t threadPoolSize = 1)
    {
       try
@@ -225,7 +245,7 @@ private:
             // or bad file descriptor since it happens in the ordinary course
             // of shutting down the server)
             if (ec != boost::asio::error::operation_aborted &&
-                ec != boost::system::errc::bad_file_descriptor)
+                ec != boost::asio::error::bad_descriptor)
             {
                // log the error
                LOG_ERROR(Error(ec, ERROR_LOCATION)) ;

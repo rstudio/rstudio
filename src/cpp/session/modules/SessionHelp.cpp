@@ -65,12 +65,14 @@ namespace {
 const char * const kHelpLocation = "/help";
 const char * const kCustomLocation = "/custom";
 const char * const kSessionLocation = "/session";
-const char * const kCustomHelprLocation = "/custom/helpr";
 
 // flag indicating whether we should send headers to custom handlers
 // (only do this for 2.13 or higher)
 bool s_provideHeaders = false;
 
+// are we handling custom urls internally or allowing them to
+// show in an external browser
+bool s_handleCustom = false;
 
 std::string rLocalHelpPort()
 {
@@ -128,31 +130,36 @@ bool isLocalURL(const std::string& url,
 // the browse_url event. for help URLs fire the appropraite show_help event
 bool handleLocalHttpUrl(const std::string& url)
 {
-   // check for helpr
-   std::string helprPath;
-   if (isLocalURL(url, "custom/helpr", &helprPath))
-   {
-      ClientEvent helpEvent(client_events::kShowHelp, helprPath);
-      module_context::enqueClientEvent(helpEvent);
-      return true;
-   }
-
    // check for custom
    std::string customPath;
    if (isLocalURL(url, "custom", &customPath))
    {
-      ClientEvent event = browseUrlEvent(customPath);
-      module_context::enqueClientEvent(event);
-      return true;
+      if (s_handleCustom)
+      {
+         ClientEvent event = browseUrlEvent(customPath);
+         module_context::enqueClientEvent(event);
+         return true;
+      }
+      else // leave alone (show in external browser)
+      {
+         return false;
+      }
    }
 
    // check for session
    std::string sessionPath;
    if (isLocalURL(url, "session", &sessionPath))
    {
-      ClientEvent event = browseUrlEvent(sessionPath);
-      module_context::enqueClientEvent(event);
-      return true;
+      if (s_handleCustom)
+      {
+         ClientEvent event = browseUrlEvent(sessionPath);
+         module_context::enqueClientEvent(event);
+         return true;
+      }
+      else // leave alone (show in external browser)
+      {
+         return false;
+      }
    }
 
    // otherwise look for help (which would be all other localhost urls)
@@ -235,18 +242,6 @@ public:
    }
 private:
    std::string requestUri_;
-};
-
-
-class CustomHelprContentsFilter
-   : public boost::iostreams::aggregate_filter<char>
-{
-   void do_filter(const std::vector<char>& src, std::vector<char>& dest)
-   {
-      std::string js(kJsCallbacks);
-      std::copy(src.begin(), src.end(), std::back_inserter(dest));
-      std::copy(js.begin(), js.end(), std::back_inserter(dest));
-   }
 };
 
 
@@ -673,21 +668,6 @@ void handleHttpdRequest(const std::string& location,
       }
    }
 
-   // redirect from stock home to helpr home if it is active
-   if (path == "/doc/html/index.html")
-   {
-      bool helprActive = false;
-      Error error = r::exec::RFunction(".rs.helprIsActive").call(&helprActive);
-      if (error)
-         LOG_ERROR(error);
-
-      if (helprActive)
-      {
-         pResponse->setMovedTemporarily(request, "/custom/helpr/index.html");
-         return;
-      }
-   }
-
    // evalute the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;
@@ -761,16 +741,6 @@ SEXP lookupCustomHandler(const std::string& uri)
    return r::sexp::findFunction(".rs.handlerLookupError");
 }
 
-
-void handleCustomHelprRequest(const http::Request& request,
-                              http::Response* pResponse)
-{
-   handleHttpdRequest("",
-                      lookupCustomHandler,
-                      request,
-                      CustomHelprContentsFilter(),
-                      pResponse);
-}
    
 // .httpd.handlers.env
 void handleCustomRequest(const http::Request& request, 
@@ -834,19 +804,32 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
-      (bind(registerUriHandler, kCustomHelprLocation, handleCustomHelprRequest))
-      (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
-      (bind(registerUriHandler, kSessionLocation, handleSessionRequest))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();
    if (error)
       return error;
 
-   // complete initialization
+   // init help
+   bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
    int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
-   error = r::exec::RFunction(".rs.initHelp", port).call();
+   error = r::exec::RFunction(".rs.initHelp", port, isDesktop).call(
+                                                            &s_handleCustom);
    if (error)
       LOG_ERROR(error);
+
+   // handle /custom and /session urls internally if necessary (always in
+   // server mode, in desktop mode if the internal http server can't
+   // bind to a port)
+   if (s_handleCustom)
+   {
+      ExecBlock serverInitBlock;
+      serverInitBlock.addFunctions()
+         (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
+         (bind(registerUriHandler, kSessionLocation, handleSessionRequest));
+      error = serverInitBlock.execute();
+      if (error)
+         return error;
+   }
 
    return Success();
 }

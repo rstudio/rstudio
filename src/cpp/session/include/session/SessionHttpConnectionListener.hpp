@@ -91,7 +91,7 @@ public:
 
 	// start and stop
 	virtual core::Error start() = 0;
-	virtual void stop() = 0;
+   virtual void stop() = 0;
 
    // connection queues
 	virtual HttpConnectionQueue& mainConnectionQueue() = 0;

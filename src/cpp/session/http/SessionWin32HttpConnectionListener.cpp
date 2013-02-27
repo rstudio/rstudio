@@ -13,13 +13,16 @@
  *
  */
 
+// Necessary to avoid compile error on Win x64
 #include <winsock2.h>
 
 #include <session/SessionHttpConnectionListener.hpp>
 
 #include <boost/scoped_ptr.hpp>
 
-#include "SessionTcpIpHttpConnectionListener.hpp"
+#include <core/system/System.hpp>
+
+#include "SessionNamedPipeHttpConnectionListener.hpp"
 
 using namespace core ;
 
@@ -36,10 +39,10 @@ HttpConnectionListener* s_pHttpConnectionListener = NULL ;
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
-   s_pHttpConnectionListener =
-         new TcpIpHttpConnectionListener("127.0.0.1",
-                                         options.wwwPort(),
-                                         options.sharedSecret());
+   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+   std::string secret = options.sharedSecret();
+   s_pHttpConnectionListener = new NamedPipeHttpConnectionListener(pipeName,
+                                                                   secret);
 }
 
 HttpConnectionListener& httpConnectionListener()

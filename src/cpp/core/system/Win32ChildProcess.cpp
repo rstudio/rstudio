@@ -24,6 +24,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
@@ -98,55 +99,6 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
       }
    }
 }
-
-// close a handle then set it to NULL (so we can call this function
-// repeatedly without failure or other side effects)
-Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
-{
-   if (*pHandle != NULL)
-   {
-      BOOL result = ::CloseHandle(*pHandle);
-      *pHandle = NULL;
-
-      if (!result)
-         return systemError(::GetLastError(), location);
-      else
-         return Success();
-   }
-   else
-   {
-      return Success();
-   }
-}
-
-class CloseHandleOnExitScope
-{
-public:
-   CloseHandleOnExitScope(HANDLE* pHandle, const ErrorLocation& location)
-      : pHandle_(pHandle), location_(location)
-   {
-   }
-
-   virtual ~CloseHandleOnExitScope()
-   {
-      try
-      {
-         if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE)
-            return;
-
-         Error error = closeHandle(pHandle_, location_);
-         if (error)
-            LOG_ERROR(error);
-      }
-      catch(...)
-      {
-      }
-   }
-
-private:
-   HANDLE* pHandle_;
-   ErrorLocation location_;
-};
 
 
 Error readPipeAvailableBytes(HANDLE hPipe, std::string* pOutput)

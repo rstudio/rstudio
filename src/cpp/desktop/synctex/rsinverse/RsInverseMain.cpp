@@ -24,11 +24,12 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-#include <core/http/TcpIpBlockingClient.hpp>
+#include <core/http/NamedPipeBlockingClient.hpp>
 
 // NOTE: this is a cut and paste job from SessionConstants.hpp so these
 // should not be changed unless also changed there
@@ -126,12 +127,13 @@ int main(int argc, char** argv)
 
       // send it
       http::Response response;
-      error = http::sendRequest("127.0.0.1", port, request, &response);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return EXIT_FAILURE;
-      }
+      std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+      error = http::sendRequest(pipeName,
+                                request,
+                                http::ConnectionRetryProfile(
+                                     boost::posix_time::seconds(10),
+                                     boost::posix_time::milliseconds(50)),
+                                &response);
 
       std::string exitCode = response.headerValue(kPostbackExitCodeHeader);
       return safe_convert::stringTo<int>(exitCode, EXIT_FAILURE);

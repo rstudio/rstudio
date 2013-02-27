@@ -156,7 +156,6 @@ public class Workbench implements BusyHandler,
       BrowseUrlInfo urlInfo = event.getUrlInfo();
       NewWindowOptions newWindowOptions = new NewWindowOptions();
       newWindowOptions.setName(urlInfo.getWindow());
-      newWindowOptions.setAlwaysUseBrowser(true);
       globalDisplay_.openWindow(urlInfo.getUrl(), newWindowOptions);
    }
      

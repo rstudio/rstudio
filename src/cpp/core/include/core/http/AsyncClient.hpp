@@ -327,7 +327,7 @@ private:
                ResponseParser::appendToBody(&responseBuffer_, &response_);
 
             // start reading content
-            readSomeContent();
+            readSomeContentIfNecessary();
          }
          else
          {
@@ -346,16 +346,12 @@ private:
             // copy content
             ResponseParser::appendToBody(&responseBuffer_, &response_);
 
-            // continue reading content
-            readSomeContent();
+            // still more to read?
+            readSomeContentIfNecessary();
          }
-         else if (ec == boost::asio::error::eof ||
-                  isShutdownError(ec))
+         else if (ec == boost::asio::error::eof || isShutdownError(ec))
          {
-            close();
-
-            if (responseHandler_)
-               responseHandler_(response_);
+            closeAndRespond();
          }
          else
          {
@@ -384,6 +380,22 @@ private:
       boost::posix_time::ptime stopTryingTime;
       boost::asio::deadline_timer retryTimer;
    };
+
+   void readSomeContentIfNecessary()
+   {
+      if (response_.body().length() < response_.contentLength())
+         readSomeContent();
+      else
+         closeAndRespond();
+   }
+
+   void closeAndRespond()
+   {
+      close();
+
+      if (responseHandler_)
+         responseHandler_(response_);
+   }
 
 private:
    boost::asio::io_service& ioService_;

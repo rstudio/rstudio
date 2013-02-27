@@ -61,6 +61,7 @@ public:
    std::string contentType() const ;
    void setContentType(const std::string& contentType) ;
    
+   std::size_t contentLength() const;
    void setContentLength(int contentLength);
   
    bool containsHeader(const std::string& name) const ;

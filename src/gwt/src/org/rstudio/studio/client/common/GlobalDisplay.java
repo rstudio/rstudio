@@ -57,19 +57,8 @@ public abstract class GlobalDisplay extends MessageDisplay
          this.callback = callback;
       }
 
-      public boolean alwaysUseBrowser()
-      {
-         return alwaysUseBrowser_;
-      }
-
-      public void setAlwaysUseBrowser(boolean alwaysUseBrowser)
-      {
-         alwaysUseBrowser_ = alwaysUseBrowser;
-      }
-
       private String name = "_blank";
       private boolean focus = true;
-      private boolean alwaysUseBrowser_ = false;
       private OperationWithInput<WindowEx> callback;
    }
    

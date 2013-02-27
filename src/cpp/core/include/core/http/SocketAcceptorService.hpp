@@ -73,26 +73,11 @@ public:
    {
       return acceptor_;
    }
-    
-   Error accept(typename ProtocolType::socket& socket)
-   {
-      boost::system::error_code ec ;
-      acceptor_.accept(socket, ec);
-      if (ec)
-         return Error(ec, ERROR_LOCATION);
-      else
-         return Success();
-   }
-   
+
    void asyncAccept(typename ProtocolType::socket& socket, 
                     AcceptHandler acceptHandler) 
    {
       acceptor_.async_accept(socket, acceptHandler);
-   }
-   
-   void cancelPendingAccept(boost::system::error_code& ec) 
-   {
-      acceptor_.cancel(ec) ;
    }
    
    void closeAcceptor(boost::system::error_code& ec)

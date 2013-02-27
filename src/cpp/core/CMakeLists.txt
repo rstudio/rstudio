@@ -49,6 +49,7 @@ set (CORE_SOURCE_FILES
    StderrLogWriter.cpp
    StringUtils.cpp
    Thread.cpp
+   Trace.cpp
    WaitUtils.cpp
    gwt/GwtFileHandler.cpp
    gwt/GwtLogHandler.cpp
@@ -209,6 +210,7 @@ else()
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
       Win32StringUtils.cpp
+      http/NamedPipeProtocol.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
       system/Win32Environment.cpp

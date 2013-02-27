@@ -204,6 +204,23 @@ bool isWin64()
          || getenv("PROCESSOR_ARCHITECTURE") == "AMD64";
 }
 
+bool isVistaOrLater()
+{
+   OSVERSIONINFOA osVersion;
+   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
+   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+   if (::GetVersionExA(&osVersion))
+   {
+      return osVersion.dwMajorVersion >= 6;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return false;
+   }
+}
+
 std::string username()
 {
    return system::getenv("USERNAME");
@@ -649,6 +666,42 @@ Error terminateProcess(PidType pid)
       return systemError(::GetLastError(), ERROR_LOCATION);
    return Success();
 }
+
+
+Error closeHandle(HANDLE* pHandle, const ErrorLocation& location)
+{
+   if (*pHandle != NULL)
+   {
+      BOOL result = ::CloseHandle(*pHandle);
+      *pHandle = NULL;
+
+      if (!result)
+         return systemError(::GetLastError(), location);
+      else
+         return Success();
+   }
+   else
+   {
+      return Success();
+   }
+}
+
+CloseHandleOnExitScope::~CloseHandleOnExitScope()
+{
+   try
+   {
+      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE)
+         return;
+
+      Error error = closeHandle(pHandle_, location_);
+      if (error)
+         LOG_ERROR(error);
+   }
+   catch(...)
+   {
+   }
+}
+
 
 } // namespace system
 } // namespace core

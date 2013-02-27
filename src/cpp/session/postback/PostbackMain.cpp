@@ -33,8 +33,9 @@
 #include <core/http/Response.hpp>
 #if !defined(_WIN32)
 #include <core/http/LocalStreamBlockingClient.hpp>
+#else
+#include <core/http/NamedPipeBlockingClient.hpp>
 #endif
-#include <core/http/TcpIpBlockingClient.hpp>
 
 #include <session/SessionConstants.hpp>
 #if !defined(_WIN32)
@@ -54,23 +55,25 @@ int exitFailure(const Error& error)
 
 Error sendRequest(http::Request* pRequest, http::Response* pResponse)
 {
-   std::string portNum = core::system::getenv(kRSessionPortNumber);
-   if (!portNum.empty())
-   {
-      pRequest->setHeader("X-Shared-Secret",
-                          core::system::getenv("RS_SHARED_SECRET"));
-      return http::sendRequest("127.0.0.1", portNum, *pRequest, pResponse);
-   }
-   else
-   {
-#if !defined(_WIN32)
-      // determine stream path
-      std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
-      FilePath streamPath = session::local_streams::streamPath(userIdentity);
+#ifdef _WIN32
+   // get local peer
+   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+   pRequest->setHeader("X-Shared-Secret",
+                       core::system::getenv("RS_SHARED_SECRET"));
+   return http::sendRequest(pipeName,
+                            *pRequest,
+                            http::ConnectionRetryProfile(
+                                  boost::posix_time::seconds(10),
+                                  boost::posix_time::milliseconds(50)),
+                            pResponse);
+#else
+   // determine stream path
+   std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
+   FilePath streamPath = session::local_streams::streamPath(userIdentity);
 
-      return http::sendRequest(streamPath, *pRequest, pResponse);
+   return http::sendRequest(streamPath, *pRequest, pResponse);
 #endif
-   }
+
 }
 
 int main(int argc, char * const argv[]) 

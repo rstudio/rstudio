@@ -63,7 +63,6 @@ private:
 
    core::Error launchSession(const QStringList& argList,
                              QProcess** ppRSessionProcess);
-   core::Error waitForSession(const QString& host, const QString& port);
 
    void buildLaunchContext(QString* pHost,
                            QString* pPort,

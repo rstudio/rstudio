@@ -38,12 +38,9 @@
 
 #include <session/SessionHttpConnection.hpp>
 
-namespace session {
+#include "SessionHttpConnectionUtils.hpp"
 
-std::string rstudioRequestIdFromRequest(const core::http::Request& request)
-{
-   return request.headerValue("X-RS-RID");
-}
+namespace session {
 
 template <typename ProtocolType>
 class HttpConnectionImpl :
@@ -107,36 +104,6 @@ public:
          close();
       }
       CATCH_UNEXPECTED_EXCEPTION
-   }
-
-   virtual void sendJsonRpcError(const core::Error& error)
-   {
-      core::json::JsonRpcResponse jsonRpcResponse;
-      jsonRpcResponse.setError(error);
-      sendJsonRpcResponse(jsonRpcResponse);
-   }
-
-   virtual void sendJsonRpcResponse()
-   {
-      core::json::JsonRpcResponse jsonRpcResponse ;
-      sendJsonRpcResponse(jsonRpcResponse);
-   }
-
-   virtual void sendJsonRpcResponse(
-                        const core::json::JsonRpcResponse& jsonRpcResponse)
-   {
-      // setup response
-      core::http::Response response ;
-
-      // automagic gzip support
-      if (request().acceptsEncoding(core::http::kGzipEncoding))
-         response.setContentEncoding(core::http::kGzipEncoding);
-
-      // set response
-      core::json::setJsonRpcResponse(jsonRpcResponse, &response);
-
-      // send the response
-      sendResponse(response);
    }
 
    // close (occurs automatically after writeResponse, here in case it
@@ -217,7 +184,7 @@ private:
             else
             {
                // establish request id
-               requestId_ = rstudioRequestIdFromRequest(request_);
+               requestId_ = connection::rstudioRequestIdFromRequest(request_);
 
                // call handler
                handler_(HttpConnectionImpl<ProtocolType>::shared_from_this());

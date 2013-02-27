@@ -20,6 +20,7 @@
 #include <core/Error.hpp>
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"
 
@@ -82,6 +83,19 @@ QString Options::portNumber() const
       // instances of rdesktop-launched rsessions
       int base = std::abs(core::random::uniformRandomInteger<int>());
       portNumber_ = QString::number((base % 40000) + 8080);
+
+      // recalculate the local peer and set RS_LOCAL_PEER so that
+      // rsession and it's children can use it
+#ifdef _WIN32
+      QString localPeer = QString::fromAscii("\\\\.\\pipe\\") +
+                          portNumber_ + QString::fromAscii("-rsession");
+#else
+      QString localPeer = QDir(QDir::tempPath()).absolutePath() +
+                          QString::fromAscii("/") + portNumber_ +
+                          QString::fromAscii("-rsession");
+#endif
+      localPeer_ = localPeer.toUtf8().constData();
+      core::system::setenv("RS_LOCAL_PEER", localPeer_);
    }
 
    return portNumber_;
@@ -92,6 +106,12 @@ QString Options::newPortNumber()
    portNumber_.clear();
    return portNumber();
 }
+
+std::string Options::localPeer() const
+{
+   return localPeer_;
+}
+
 
 namespace {
 QString findFirstMatchingFont(const QStringList& fonts,
@@ -290,6 +310,10 @@ FilePath Options::wwwDocsPath() const
    FilePath wwwDocsPath = supportingFilePath.complete("www/docs");
    if (!wwwDocsPath.exists())
       wwwDocsPath = supportingFilePath.complete("../gwt/www/docs");
+#ifdef __APPLE__
+   if (!wwwDocsPath.exists())
+      wwwDocsPath = supportingFilePath.complete("../../../../../gwt/www/docs");
+#endif
    return wwwDocsPath;
 }
 

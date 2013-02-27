@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.SatelliteUtils;
+
+import com.google.gwt.core.client.GWT;
 
 public class DesktopWindowOpener extends WebWindowOpener
 {
@@ -26,7 +29,14 @@ public class DesktopWindowOpener extends WebWindowOpener
                           String url,
                           NewWindowOptions options)
    {
-      if (url.startsWith("file:") || options.alwaysUseBrowser())
+     
+      
+      // inspect the url
+      boolean hasProto = Pattern.create("^([a-zA-Z]+:)").match(url, 0) != null;
+      boolean isAppUrl = url.startsWith(GWT.getHostPageBaseURL());
+      
+      // open externally if we have a protocol and aren't an app url
+      if (hasProto && !isAppUrl)
       {
          Desktop.getFrame().browseUrl(url);
 
@@ -34,6 +44,15 @@ public class DesktopWindowOpener extends WebWindowOpener
       }
       else
       {
+         // if this is a relative url then prepend the host page base
+         // url (so Qt correctly navigates)
+         if (!hasProto)
+         {
+            if (url.startsWith("/"))
+               url = url.substring(1);
+            url = GWT.getHostPageBaseURL() + url;
+         }
+         
          super.openWindow(globalDisplay, 
                           url,
                           options);

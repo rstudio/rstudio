@@ -18,7 +18,6 @@
 #include <boost/test/minimal.hpp>
 
 #include <core/Error.hpp>
-#include <core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
@@ -28,8 +27,13 @@ int test_main(int argc, char * argv[])
 {
    try
    { 
-      // initialize log
-      initializeSystemLog("coredev", core::system::kLogLevelWarning);
+      // setup log
+      initializeStderrLog("coredev", core::system::kLogLevelWarning);
+
+      // ignore sigpipe
+      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      if (error)
+         LOG_ERROR(error);
 
 
 

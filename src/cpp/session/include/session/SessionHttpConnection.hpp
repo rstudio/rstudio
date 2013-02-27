@@ -58,10 +58,11 @@ public:
 
    virtual const core::http::Request& request() = 0;
    virtual void sendResponse(const core::http::Response& response) = 0;
-   virtual void sendJsonRpcError(const core::Error& error) = 0;
-   virtual void sendJsonRpcResponse() = 0;
-   virtual void sendJsonRpcResponse(
-                  const core::json::JsonRpcResponse& jsonRpcResponse) = 0;
+
+   void sendJsonRpcError(const core::Error& error);
+   void sendJsonRpcResponse();
+   void sendJsonRpcResponse(
+                  const core::json::JsonRpcResponse& jsonRpcResponse);
 
 
    // close (occurs automatically after writeResponse, here in case it

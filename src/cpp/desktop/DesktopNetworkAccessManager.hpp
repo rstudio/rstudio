@@ -26,6 +26,9 @@ public:
     explicit NetworkAccessManager(QString secret,
                                   QObject *parent = 0);
 
+private slots:
+   void pollForIO();
+
 protected:
     QNetworkReply* createRequest(Operation op,
                                  const QNetworkRequest& req,

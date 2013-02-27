@@ -21,25 +21,53 @@ options(help_type = "html")
    as.character(tools:::httpdPort)
 })
 
-.rs.addFunction("initHelp", function(port)
-{
-   # stop the help server if it was previously started e.g. by .Rprofile
-   if (tools:::httpdPort > 0)
-     suppressMessages(tools::startDynamicHelp(start=FALSE))
-
-   # set the help port directly
-   env <- environment(tools::startDynamicHelp)
-   unlockBinding("httpdPort", env)
-   assign("httpdPort", port, envir = env)
-   lockBinding("httpdPort", env)
-
-   # set helpr load hook
-   setHook(packageEvent("helpr", "onLoad"),
-      function(...)
+.rs.addFunction("initHelp", function(port, isDesktop)
+{ 
+   # function to set the help port directly
+   setHelpPort <- function() {
+      env <- environment(tools::startDynamicHelp)
+      unlockBinding("httpdPort", env)
+      assign("httpdPort", port, envir = env)
+      lockBinding("httpdPort", env)
+   }
+   
+   # for desktop mode see if R can successfully initialize the httpd
+   # server -- if it can't then perhaps localhost ports are blocked,
+   # in this case we take over help entirely
+   if (isDesktop) 
+   {
+      # start the help server if it hasn't previously been started
+      # (suppress warnings and messages because if there is a problem
+      # binding to a local port we are going to patch this up by 
+      # redirecting all traffic to our local peer)
+      if (tools:::httpdPort <= 0L)
+         suppressWarnings(suppressMessages(tools::startDynamicHelp()))
+      
+      # if couldn't start it then set the help port directly so that
+      # help requests still flow through our local peer connection
+      if (tools:::httpdPort <= 0L)
       {
-         helpr:::deactivate_internetz()
-         helpr:::set_router_custom_route(TRUE)
-      })
+         setHelpPort()
+         return (TRUE)
+      }
+      else
+      {
+         return (FALSE)
+      }
+   }
+   # always take over help in server mode
+   else 
+   { 
+      # stop the help server if it was previously started e.g. by .Rprofile
+      if (tools:::httpdPort > 0L)
+         suppressMessages(tools::startDynamicHelp(start=FALSE))
+      
+      # set the help port
+      setHelpPort()
+      
+      # indicate we should handle custom internally
+      return (TRUE)
+   }
 })
 
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
@@ -107,19 +135,6 @@ options(help_type = "html")
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
 });
 
-.rs.addFunction("helprIsActive", function()
-{
-   if ("helpr" %in% .packages())
-   {
-      return ( !identical(helpr:::router_url(), "") &&
-               helpr:::router_custom_route())
-   }
-   else
-   {
-      return (FALSE)
-   }
-})
-
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
    if (!is.null(package))
@@ -132,14 +147,7 @@ options(help_type = "html")
    exactMatch = help(query, help_type="html")
    if (length(exactMatch) == 1)
    {
-      if (.rs.helprIsActive())
-      {
-         helpr::print.help_files_with_topic(exactMatch)
-      }
-      else
-      {
-         print(exactMatch)
-      }
+      print(exactMatch)
       return ()
    }
    else
