@@ -70,6 +70,9 @@ const char * const kSessionLocation = "/session";
 // (only do this for 2.13 or higher)
 bool s_provideHeaders = false;
 
+// are we handling custom urls internally or allowing them to
+// show in an external browser
+bool s_handleCustom = false;
 
 std::string rLocalHelpPort()
 {
@@ -131,18 +134,32 @@ bool handleLocalHttpUrl(const std::string& url)
    std::string customPath;
    if (isLocalURL(url, "custom", &customPath))
    {
-      ClientEvent event = browseUrlEvent(customPath);
-      module_context::enqueClientEvent(event);
-      return true;
+      if (s_handleCustom)
+      {
+         ClientEvent event = browseUrlEvent(customPath);
+         module_context::enqueClientEvent(event);
+         return true;
+      }
+      else // leave alone (show in external browser)
+      {
+         return false;
+      }
    }
 
    // check for session
    std::string sessionPath;
    if (isLocalURL(url, "session", &sessionPath))
    {
-      ClientEvent event = browseUrlEvent(sessionPath);
-      module_context::enqueClientEvent(event);
-      return true;
+      if (s_handleCustom)
+      {
+         ClientEvent event = browseUrlEvent(sessionPath);
+         module_context::enqueClientEvent(event);
+         return true;
+      }
+      else // leave alone (show in external browser)
+      {
+         return false;
+      }
    }
 
    // otherwise look for help (which would be all other localhost urls)
@@ -787,18 +804,32 @@ Error initialize()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
       (bind(registerRBrowseFileHandler, handleRShowDocFile))
       (bind(registerUriHandler, kHelpLocation, handleHelpRequest))
-      (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
-      (bind(registerUriHandler, kSessionLocation, handleSessionRequest))
       (bind(sourceModuleRFile, "SessionHelp.R"));
    Error error = initBlock.execute();
    if (error)
       return error;
 
-   // complete initialization
+   // init help
+   bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
    int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
-   error = r::exec::RFunction(".rs.initHelp", port).call();
+   error = r::exec::RFunction(".rs.initHelp", port, isDesktop).call(
+                                                            &s_handleCustom);
    if (error)
       LOG_ERROR(error);
+
+   // handle /custom and /session urls internally if necessary (always in
+   // server mode, in desktop mode if the internal http server can't
+   // bind to a port)
+   if (s_handleCustom)
+   {
+      ExecBlock serverInitBlock;
+      serverInitBlock.addFunctions()
+         (bind(registerUriHandler, kCustomLocation, handleCustomRequest))
+         (bind(registerUriHandler, kSessionLocation, handleSessionRequest));
+      error = serverInitBlock.execute();
+      if (error)
+         return error;
+   }
 
    return Success();
 }

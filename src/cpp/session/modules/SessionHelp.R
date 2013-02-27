@@ -21,17 +21,50 @@ options(help_type = "html")
    as.character(tools:::httpdPort)
 })
 
-.rs.addFunction("initHelp", function(port)
-{
-   # stop the help server if it was previously started e.g. by .Rprofile
-   if (tools:::httpdPort > 0)
-     suppressMessages(tools::startDynamicHelp(start=FALSE))
-
-   # set the help port directly
-   env <- environment(tools::startDynamicHelp)
-   unlockBinding("httpdPort", env)
-   assign("httpdPort", port, envir = env)
-   lockBinding("httpdPort", env)
+.rs.addFunction("initHelp", function(port, isDesktop)
+{ 
+   # function to set the help port directly
+   setHelpPort <- function() {
+      env <- environment(tools::startDynamicHelp)
+      unlockBinding("httpdPort", env)
+      assign("httpdPort", port, envir = env)
+      lockBinding("httpdPort", env)
+   }
+   
+   # for desktop mode see if R can successfully initialize the httpd
+   # server -- if it can't then perhaps localhost ports are blocked,
+   # in this case we take over help entirely
+   if (isDesktop) 
+   {
+      # start the help server if it hasn't previously been started
+      if (tools:::httpdPort <= 0L)
+         suppressMessages(tools::startDynamicHelp())
+      
+      # if couldn't start it then set the help port directly so that
+      # help requests still flow through our local peer connection
+      if (tools:::httpdPort <= 0L)
+      {
+         setHelpPort()
+         return (TRUE)
+      }
+      else
+      {
+         return (FALSE)
+      }
+   }
+   # always take over help in server mode
+   else 
+   { 
+      # stop the help server if it was previously started e.g. by .Rprofile
+      if (tools:::httpdPort > 0L)
+         suppressMessages(tools::startDynamicHelp(start=FALSE))
+      
+      # set the help port
+      setHelpPort()
+      
+      # indicate we should handle custom internally
+      return (TRUE)
+   }
 })
 
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
