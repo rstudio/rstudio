@@ -60,11 +60,9 @@ extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
 
 using namespace core ;
 
+#define kReadBufferSize 4096
+
 namespace session {
-
-namespace {
-
-const int kReadBufferSize = 4096;
 
 class NamedPipeHttpConnection : public HttpConnection,
                                 boost::noncopyable
@@ -477,30 +475,5 @@ private:
    HttpConnectionQueue mainConnectionQueue_;
    HttpConnectionQueue eventsConnectionQueue_;
 };
-
-
-
-// pointer to global connection listener singleton
-HttpConnectionListener* s_pHttpConnectionListener = NULL ;
-
-}  // anonymouys namespace
-
-
-void initializeHttpConnectionListener()
-{
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
-   std::string secret = session::options().sharedSecret();
-   s_pHttpConnectionListener = new NamedPipeHttpConnectionListener(pipeName,
-                                                                   secret);
-   Error error = s_pHttpConnectionListener->start();
-   if (error)
-      LOG_ERROR(error);
-}
-
-HttpConnectionListener& httpConnectionListener()
-{
-   return *s_pHttpConnectionListener;
-}
-
 
 } // namespace session

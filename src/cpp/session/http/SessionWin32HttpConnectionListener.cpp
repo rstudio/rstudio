@@ -19,7 +19,10 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <core/system/System.hpp>
+
 #include "SessionTcpIpHttpConnectionListener.hpp"
+#include "SessionNamedPipeHttpConnectionListener.hpp"
 
 using namespace core ;
 
@@ -36,10 +39,18 @@ HttpConnectionListener* s_pHttpConnectionListener = NULL ;
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
+
+   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+   std::string secret = options.sharedSecret();
+   s_pHttpConnectionListener = new NamedPipeHttpConnectionListener(pipeName,
+                                                                   secret);
+
+   /*
    s_pHttpConnectionListener =
-         new TcpIpHttpConnectionListener("127.0.0.1",
-                                         options.wwwPort(),
-                                         options.sharedSecret());
+      new TcpIpHttpConnectionListener("127.0.0.1",
+                                      options.wwwPort(),
+                                      options.sharedSecret());
+   */
 }
 
 HttpConnectionListener& httpConnectionListener()

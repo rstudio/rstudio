@@ -113,7 +113,7 @@ if(UNIX)
    endif()
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
-      http/SessionNamedPipeHttpConnectionListener.cpp
+      http/SessionWin32HttpConnectionListener.cpp
    )
 endif()
 
