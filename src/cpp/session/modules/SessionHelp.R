@@ -37,8 +37,11 @@ options(help_type = "html")
    if (isDesktop) 
    {
       # start the help server if it hasn't previously been started
+      # (suppress warnings and messages because if there is a problem
+      # binding to a local port we are going to patch this up by 
+      # redirecting all traffic to our local peer)
       if (tools:::httpdPort <= 0L)
-         suppressMessages(tools::startDynamicHelp())
+         suppressWarnings(suppressMessages(tools::startDynamicHelp()))
       
       # if couldn't start it then set the help port directly so that
       # help requests still flow through our local peer connection
