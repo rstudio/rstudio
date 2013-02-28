@@ -29,9 +29,9 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
@@ -649,35 +649,6 @@ public class JUnitShell extends DevMode {
   }
 
   /**
-   * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
-   * creates the singleton {@link JUnitShell} and invokes its
-   * {@link #runTestImpl(GWTTestCase, TestResult)}.
-   * 
-   * @deprecated use {@link #runTest(GWTTestCase, TestResult)} instead
-   */
-  @Deprecated
-  public static void runTest(String moduleName, TestCase testCase,
-      TestResult testResult) throws UnableToCompleteException {
-    runTest(moduleName, testCase, testResult,
-        ((GWTTestCase) testCase).getStrategy());
-  }
-
-  /**
-   * @deprecated use {@link #runTest(GWTTestCase, TestResult)} instead
-   */
-  @Deprecated
-  public static void runTest(String moduleName, TestCase testCase,
-      TestResult testResult, Strategy strategy)
-      throws UnableToCompleteException {
-    GWTTestCase gwtTestCase = (GWTTestCase) testCase;
-    assert moduleName != null : "moduleName cannot be null";
-    assert strategy != null : "strategy cannot be null";
-    assert moduleName.equals(gwtTestCase.getModuleName()) : "moduleName does not match GWTTestCase#getModuleName()";
-    assert strategy.equals(gwtTestCase.getStrategy()) : "strategy does not match GWTTestCase#getStrategy()";
-    runTest(gwtTestCase, testResult);
-  }
-
-  /**
    * Retrieves the JUnitShell. This should only be invoked during TestRunner
    * execution of JUnit tests.
    */
@@ -1137,15 +1108,6 @@ public class JUnitShell extends DevMode {
     } else {
       compileForWebMode(module, userAgents);
     }
-  }
-
-  /**
-   * @deprecated TODO(fabbott) delete me
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  void setNumClients(int numClients) {
-    throw new UnsupportedOperationException("This method should be deleted.");
   }
 
   void setStandardsMode(boolean standardsMode) {
