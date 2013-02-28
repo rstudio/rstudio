@@ -145,7 +145,7 @@ public final class SpeedTracerLogger {
       this.children = Lists.create();
       this.devModeSession = session;
     }
-    
+
     /**
      * @param data key/value pairs to add to JSON object.
      */
@@ -395,19 +395,13 @@ public final class SpeedTracerLogger {
   private class ElapsedNormalizedTimeKeeper {
 
     private final long zeroTimeNanos;
-    private final long zeroTimeMillis;
 
     public ElapsedNormalizedTimeKeeper() {
       zeroTimeNanos = System.nanoTime();
-      zeroTimeMillis = (long) convertToMilliseconds(zeroTimeNanos);
     }
 
     public long normalizedTimeNanos() {
       return System.nanoTime() - zeroTimeNanos;
-    }
-    
-    public long zeroTimeMillis() {
-      return zeroTimeMillis;
     }
   }
   
@@ -419,8 +413,7 @@ public final class SpeedTracerLogger {
     private final OperatingSystemMXBean osMXBean;
     private final Method getProcessCpuTimeMethod;
     private final long zeroTimeNanos;
-    private final long zeroTimeMillis;
-    
+
     public ProcessNormalizedTimeKeeper() {
       try {
         osMXBean = ManagementFactory.getOperatingSystemMXBean();
@@ -433,7 +426,6 @@ public final class SpeedTracerLogger {
           osMXBean.getClass().getMethod("getProcessCpuTime");
         getProcessCpuTimeMethod.setAccessible(true);
         zeroTimeNanos = (Long) getProcessCpuTimeMethod.invoke(osMXBean);
-        zeroTimeMillis = (long) convertToMilliseconds(zeroTimeNanos);
       } catch (Exception ex) {
         throw new RuntimeException(ex);
       }
@@ -445,10 +437,6 @@ public final class SpeedTracerLogger {
       } catch (Exception ex) {
         throw new RuntimeException(ex);
       }
-    }
-
-    public long zeroTimeMillis() {
-      return zeroTimeMillis;
     }
   }
 
@@ -467,7 +455,6 @@ public final class SpeedTracerLogger {
     private final ThreadMXBean threadMXBean;
     private final ThreadLocal<Long> resettableTimeBase = new ThreadLocal<Long>();
     private final long zeroTimeNanos;
-    private final long zeroTimeMillis;
 
     public ThreadNormalizedTimeKeeper() {
       threadMXBean = ManagementFactory.getThreadMXBean();
@@ -475,7 +462,6 @@ public final class SpeedTracerLogger {
         throw new RuntimeException("Current thread cpu time not supported");
       }
       zeroTimeNanos = System.nanoTime();
-      zeroTimeMillis = (long) convertToMilliseconds(zeroTimeNanos);
     }
 
     public long normalizedTimeNanos() {
@@ -490,11 +476,7 @@ public final class SpeedTracerLogger {
       resettableTimeBase.set(System.nanoTime() 
           - zeroTimeNanos - threadMXBean.getCurrentThreadCpuTime());
     }
-    
-    public long zeroTimeMillis() {
-      return zeroTimeMillis;
-    }
-  } 
+  }
 
   /**
    * Initializes the singleton on demand.
@@ -714,6 +696,15 @@ public final class SpeedTracerLogger {
               (logThreadCpuTime) ? new ThreadNormalizedTimeKeeper() : null;
 
   /**
+   * Time in millis since the start of this process. To be used when merging timelines
+   * created by different processes.
+   *
+   * Do not use nanoTime since it is not related to any fixed moment in time and
+   * hence can not be used for merging timelines from different processes.
+   */
+  private final long baseTimeMillis = System.currentTimeMillis();
+
+  /**
    * Constructor intended for unit testing.
    * 
    * @param writer alternative {@link Writer} to send speed tracer output.
@@ -917,10 +908,7 @@ public final class SpeedTracerLogger {
     // Add a field to the top level event in order to  track the base time
     // so we can re-normalize the data
     if (threadPendingEvents.size() == 0) {
-      long baseTime = logProcessCpuTime ? processCpuTimeKeeper.zeroTimeMillis()
-          : (logThreadCpuTime ? threadCpuTimeKeeper.zeroTimeMillis()
-              : elapsedTimeKeeper.zeroTimeMillis());
-      newEvent.addData("baseTime", "" + baseTime);
+      newEvent.addData("baseTime", "" + baseTimeMillis);
     }
     threadPendingEvents.push(newEvent);
     return newEvent;
