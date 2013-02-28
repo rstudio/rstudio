@@ -195,7 +195,6 @@ public class GWTRunner implements EntryPoint {
    */
   private boolean serverless = false;
 
-  private String userAgentProperty;
   private TestAccessor testAccessor;
 
   // TODO(FINDBUGS): can this be a private constructor to avoid multiple
@@ -214,11 +213,10 @@ public class GWTRunner implements EntryPoint {
 
   public void onModuleLoad() {
     GWTRunnerProxy proxy = GWT.create(GWTRunnerProxy.class);
-    userAgentProperty = proxy.getUserAgentProperty();
     testAccessor = proxy.createTestAccessor();
 
     clientInfo = new ClientInfo(parseQueryParamInteger(
-        SESSIONID_QUERY_PARAM, -1), getUserAgentProperty());
+        SESSIONID_QUERY_PARAM, -1), proxy.getUserAgentProperty());
     maxRetryCount = parseQueryParamInteger(RETRYCOUNT_QUERY_PARAM, 3);
     currentBlock = checkForQueryParamTestToRun();
     if (currentBlock != null) {
@@ -287,13 +285,6 @@ public class GWTRunner implements EntryPoint {
   public void executeTestMethod(GWTTestCase testCase, String className, String methodName)
       throws Throwable {
     testAccessor.invoke(testCase, className, methodName);
-  }
-
-  /**
-   * Get the value of the user agent property.
-   */
-  protected String getUserAgentProperty() {
-    return userAgentProperty;
   }
 
   private TestBlock checkForQueryParamTestToRun() {

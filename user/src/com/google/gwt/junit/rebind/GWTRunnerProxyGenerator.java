@@ -15,8 +15,6 @@
  */
 package com.google.gwt.junit.rebind;
 
-import static com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator.isJUnitTestMethod;
-
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
@@ -276,11 +274,16 @@ public class GWTRunnerProxyGenerator extends Generator {
     List<JMethod> list = new ArrayList<JMethod>();
     for (JClassType cls = requestedClass; cls != null; cls = cls.getSuperclass()) {
       for (JMethod declMethod : cls.getMethods()) {
-        if (isJUnitTestMethod(declMethod, false)) {
+        if (isJUnitTestMethod(declMethod)) {
           list.add(declMethod);
         }
       }
     }
     return list;
+  }
+
+  private static boolean isJUnitTestMethod(JMethod m) {
+    return m.isPublic() && m.getName().startsWith("test") && m.getParameters().length == 0
+        && m.getReturnType().getQualifiedBinaryName().equals(Void.TYPE.getName());
   }
 }
