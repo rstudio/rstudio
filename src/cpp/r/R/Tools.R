@@ -235,6 +235,14 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
       normalizePath
 )
 
+# indirection for path.package function
+.rs.addFunction("pathPackage",
+   if(getRversion() < "2.13.0")
+      .path.package
+   else
+      path.package
+)
+
 # handle viewing a pdf differently on each platform:
 #  - windows: shell.exec
 #  - mac: Preview
