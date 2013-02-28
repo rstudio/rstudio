@@ -205,4 +205,52 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals("functionName",
         c.extractName("functionName@file.js:1"));
   }
+
+  private native JavaScriptObject createException(String stackString) /*-{
+    var e = {};
+    e.stack = stackString;
+    return e;
+  }-*/;
+
+  public void testIosStack() {
+    // Taken from:
+    // Mozilla/5.0 (iPad; CPU OS 6_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko)
+    // Version/6.0 Mobile/10B141 Safari/8536.25
+    String stackString =
+        "$third@http://www.example.com/test/ABCD.cache.js:300\n" +
+        "$second@http://www.example.com/test/ABCD.cache.js:200\n" +
+        "$first@http://www.example.com/test/ABCD.cache.js:100\n" +
+        "$entry0@http://www.example.com/test/ABCD.cache.js:50\n" +
+        "@http://www.example.com/test/ABCD.cache.js:10\n" +
+        "@http://www.example.com/test/ABCD.cache.js:5\n" +
+        "[native code]";
+    JavaScriptObject e = createException(stackString);
+
+    StackTraceCreator.CollectorChrome c = new StackTraceCreator.CollectorChrome();
+    JsArrayString stack = c.inferFrom(e);
+    assertEquals(7, stack.length());
+    assertEquals("$third", stack.get(0).split("@@")[0]);
+    assertEquals("$entry0", stack.get(3).split("@@")[0]);
+    assertEquals("anonymous", stack.get(5).split("@@")[0]);
+    assertEquals("anonymous@@", stack.get(6));
+  }
+
+  public void testChromeStack() {
+    // Taken from:
+    // Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko)
+    // Chrome/25.0.1364.97 Safari/537.22
+    String stackString =
+        "TypeError: Cannot read property 'length' of undefined\n" +
+        "    at $third (http://www.example.com/test/ABCD.cache.js:300:10)\n" +
+        "    at $second (http://www.example.com/test/ABCD.cache.js:200:10)\n" +
+        "    at $first (http://www.example.com/test/ABCD.cache.js:100:10)\n" +
+        "    at $entry0 (http://www.example.com/test/ABCD.cache.js:50:10)";
+    JavaScriptObject e = createException(stackString);
+
+    StackTraceCreator.CollectorChrome c = new StackTraceCreator.CollectorChrome();
+    JsArrayString stack = c.inferFrom(e);
+    assertEquals(4, stack.length());
+    assertEquals("$third", stack.get(0).split("@@")[0]);
+    assertEquals("$entry0", stack.get(3).split("@@")[0]);
+  }
 }
