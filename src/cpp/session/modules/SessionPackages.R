@@ -19,7 +19,7 @@
       function(pkgname, ...)
       {
          packageStatus = list(name=pkgname,
-                              path=.path.package(pkgname, quiet=TRUE),
+                              path=.rs.pathPackage(pkgname, quiet=TRUE),
                               loaded=status)
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
@@ -149,7 +149,7 @@
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
 {
    .rs.scalar( (packageName %in% .packages()) &&
-               identical(.path.package(packageName, quiet=TRUE),
+               identical(.rs.pathPackage(packageName, quiet=TRUE),
                          paste(libName, packageName, sep="/"))
              )
 })
@@ -208,7 +208,7 @@
                          pkgs.name, 
                          "html", 
                          "00Index.html")
-   loaded.pkgs <- .path.package()
+   loaded.pkgs <- .rs.pathPackage()
    pkgs.loaded <- !is.na(match(paste(pkgs.library,pkgs.name, sep="/"),
                                loaded.pkgs))
    
