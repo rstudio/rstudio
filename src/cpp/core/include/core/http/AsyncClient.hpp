@@ -97,6 +97,19 @@ public:
       connectAndWriteRequest();
    }
 
+   // if an embedder of this class calls close() on AsyncClient in it's
+   // destructor (for more rigorous cleanup) then it's possible that the
+   // onError handler will still be called as a result of the socket close.
+   // the callback might then be interacting with a C++ object that has
+   // already been deleted. for this case (which does occur in the
+   // desktop::NetworkReply class) we provide a method that disables
+   // any pending handlers
+   void disableHandlers()
+   {
+      responseHandler_ = ResponseHandler();
+      errorHandler_ = ErrorHandler();
+   }
+
    void close()
    {
       Error error = closeSocket(socket().lowest_layer());

@@ -158,6 +158,7 @@ NetworkReply::~NetworkReply()
 {
    try
    {
+      pImpl_->pClient->disableHandlers();
       pImpl_->pClient->close();
    }
    catch(...)
@@ -183,9 +184,6 @@ bool NetworkReply::isSequential() const
 
 void NetworkReply::abort()
 {
-   close();
-   setFinished(true);
-   QTimer::singleShot(0, this, SIGNAL(finished()));
 }
 
 qint64 NetworkReply::readData(char *data, qint64 maxSize)
@@ -246,15 +244,18 @@ void NetworkReply::onResponse(const http::Response& response)
    setFinished(true);
 }
 
-void NetworkReply::onError(const Error& error)
+void NetworkReply::onError(const Error& networkError)
 {
-   if (error.code() != boost::asio::error::operation_aborted &&
-       error.code() != boost::asio::error::broken_pipe)
+   if (networkError.code() != boost::asio::error::operation_aborted &&
+       networkError.code() != boost::asio::error::broken_pipe &&
+       networkError.code() != boost::asio::error::eof)
    {
-      LOG_ERROR(error);
+      LOG_ERROR(networkError);
    }
 
-   abort();
+   error(QNetworkReply::UnknownNetworkError);
+   finished();
 }
+
 
 } // namespace desktop
