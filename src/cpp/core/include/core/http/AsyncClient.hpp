@@ -317,6 +317,19 @@ private:
 
    void readSomeContent()
    {
+      // provide a hook for subclasses to force termination of
+      // content reads (this is needed for named pipes on windows,
+      // where the client disconnecting from the server is part
+      // of the normal pipe shutdown sequence). without this
+      // the subsequent call to handleReadContent will perform
+      // the close and respond when it gets a shutdown error (as
+      // a result of the server shutting down)
+      if (stopReadingAndRespond())
+      {
+         closeAndRespond();
+         return;
+      }
+
       boost::asio::async_read(
          socket(),
          responseBuffer_,
@@ -324,6 +337,11 @@ private:
          boost::bind(&AsyncClient<SocketService>::handleReadContent,
                      AsyncClient<SocketService>::shared_from_this(),
                      boost::asio::placeholders::error));
+   }
+
+   virtual bool stopReadingAndRespond()
+   {
+      return false;
    }
 
    void handleReadHeaders(const boost::system::error_code& ec)
@@ -365,10 +383,7 @@ private:
          else if (ec == boost::asio::error::eof ||
                   isShutdownError(ec))
          {
-            close();
-
-            if (responseHandler_)
-               responseHandler_(response_);
+            closeAndRespond();
          }
          else
          {
@@ -381,6 +396,14 @@ private:
    virtual bool isShutdownError(const boost::system::error_code& ec)
    {
       return false;
+   }
+
+   void closeAndRespond()
+   {
+      close();
+
+      if (responseHandler_)
+         responseHandler_(response_);
    }
 
 // struct and instance variable to track connection retry state
@@ -398,6 +421,9 @@ private:
       boost::asio::deadline_timer retryTimer;
    };
 
+protected:
+   http::Response response_;
+
 private:
    boost::asio::io_service& ioService_;
    ConnectionRetryContext connectionRetryContext_;
@@ -405,7 +431,6 @@ private:
    ErrorHandler errorHandler_;
    http::Request request_;
    boost::asio::streambuf responseBuffer_;
-   http::Response response_;
 };
    
 

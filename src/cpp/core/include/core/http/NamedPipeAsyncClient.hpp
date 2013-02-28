@@ -93,6 +93,13 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   // detect when we've got the whole response and force a
+   // response + close of the socket
+   virtual bool stopReadingAndRespond()
+   {
+      return response_.body().length() >= response_.contentLength();
+   }
+
    virtual bool isShutdownError(const boost::system::error_code& ec)
    {
       if (ec.category() == boost::system::get_system_category() &&
