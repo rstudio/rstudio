@@ -200,6 +200,14 @@ public abstract class Animation {
   }
 
   /**
+   * Returns true if the animation is running.
+   * Note that animation may be 'running' but no callbacks is executed yet.
+   */
+  public boolean isRunning() {
+    return isRunning;
+  }
+
+  /**
    * Interpolate the linear progress into a more natural easing function.
    * 
    * Depending on the {@link Animation}, the return value of this method can be

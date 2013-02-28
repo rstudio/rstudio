@@ -157,7 +157,9 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelAfterOnComplete() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -167,6 +169,7 @@ public class AnimationTest extends GWTTestCase {
     // Complete the animation.
     // TODO(cromwellian) remove this 4000 hack after the failure is found
     executeLastCallbackAt(curTime + DELAY_MULTIPLIER + 4000);
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
@@ -176,6 +179,7 @@ public class AnimationTest extends GWTTestCase {
 
     // Cancel the animation.
     anim.cancel(); // no-op.
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertProgress(-1);
@@ -187,9 +191,11 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelBeforeOnStart() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
 
     // Run the animation in the future.
     anim.run(DELAY_MULTIPLIER, curTime + 1000);
+    assertTrue(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -199,6 +205,7 @@ public class AnimationTest extends GWTTestCase {
 
     // Cancel the animation before it starts.
     anim.cancel();
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -211,15 +218,19 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelBetweenUpdates() {
     TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(10 * DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
     anim.assertCancelled(false);
     anim.reset();
 
+
     // Update the animation.
     executeLastCallbackAt(curTime + DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(true);
     anim.assertCompleted(false);
@@ -229,6 +240,7 @@ public class AnimationTest extends GWTTestCase {
     // Cancel the animation.
     assertEquals(1, callbacks.size());
     anim.cancel();
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -256,8 +268,11 @@ public class AnimationTest extends GWTTestCase {
       }
     };
 
+    assertFalse(anim.isRunning());
+
     // Run the animation.
     anim.run(DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -271,6 +286,7 @@ public class AnimationTest extends GWTTestCase {
     anim.assertCompleted(false);
     anim.assertCancelled(false);
     assertEquals(0, callbacks.size());
+    assertFalse(anim.isRunning());
   }
 
   /**
@@ -292,8 +308,11 @@ public class AnimationTest extends GWTTestCase {
       }
     };
 
+    assertFalse(anim.isRunning());
+
     // Run the animation.
     anim.run(DELAY_MULTIPLIER);
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCancelled(true);
@@ -320,8 +339,11 @@ public class AnimationTest extends GWTTestCase {
       }
     };
 
+    assertFalse(anim.isRunning());
+
     // Run the animation.
     anim.run(10 * DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -345,6 +367,7 @@ public class AnimationTest extends GWTTestCase {
   public void testDefaultAnimation() {
     // Verify initial state
     final DefaultAnimation anim = new DefaultAnimation();
+    assertFalse(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCancelled(false);
@@ -379,7 +402,9 @@ public class AnimationTest extends GWTTestCase {
     // onComplete
     anim.reset();
     anim.run(10 * DELAY_MULTIPLIER, curTime + DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.cancel();
+    assertFalse(anim.isRunning());
     anim.assertProgress(-1.0);
     anim.assertStarted(false);
     anim.assertCompleted(false);
@@ -406,8 +431,11 @@ public class AnimationTest extends GWTTestCase {
       }
     };
 
+    assertFalse(anim.isRunning());
+
     // Run the animation.
     anim.run(DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -428,7 +456,9 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testRunFuture() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(2 * DELAY_MULTIPLIER, curTime + 2 * DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -460,6 +490,7 @@ public class AnimationTest extends GWTTestCase {
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
+    assertFalse(anim.isRunning());
   }
 
   /**
@@ -467,7 +498,9 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testRunNow() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(2 * DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -485,6 +518,7 @@ public class AnimationTest extends GWTTestCase {
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
+    assertFalse(anim.isRunning());
   }
 
   /**
@@ -492,7 +526,9 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testRunPast() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(3 * DELAY_MULTIPLIER, curTime - DELAY_MULTIPLIER);
+    assertTrue(anim.isRunning());
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(false);
@@ -510,6 +546,7 @@ public class AnimationTest extends GWTTestCase {
     anim.assertStarted(false);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
+    assertFalse(anim.isRunning());
   }
 
   /**
@@ -517,10 +554,12 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testRunPaster() {
     final TestAnimation anim = new TestAnimation();
+    assertFalse(anim.isRunning());
     anim.run(DELAY_MULTIPLIER, curTime - 2 * DELAY_MULTIPLIER);
     anim.assertStarted(true);
     anim.assertUpdated(false);
     anim.assertCompleted(true);
+    assertFalse(anim.isRunning());
   }
 
   @Override
