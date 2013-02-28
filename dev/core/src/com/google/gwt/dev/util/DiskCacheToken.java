@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.util;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
@@ -64,30 +64,12 @@ public class DiskCacheToken implements Serializable {
     return diskCache.readObject(token, type);
   }
 
-  /**
-   * Read the underlying bytes as a String.
-   * 
-   * @return the String that was written
-   */
-  public String readString() {
-    return diskCache.readString(token);
-  }
-
-  /**
-   * Writes the underlying bytes into the specified output stream.
-   * 
-   * @param out the stream to write into
-   */
-  public synchronized void transferToStream(OutputStream out) {
-    diskCache.transferToStream(token, out);
-  }
-
-  private void readObject(ObjectInputStream inputStream) {
+  private void readObject(ObjectInputStream inputStream) throws IOException {
     diskCache = DiskCache.INSTANCE;
     token = diskCache.transferFromStream(inputStream);
   }
 
-  private void writeObject(ObjectOutputStream outputStream) {
+  private void writeObject(ObjectOutputStream outputStream) throws IOException {
     diskCache.transferToStream(token, outputStream);
   }
 }

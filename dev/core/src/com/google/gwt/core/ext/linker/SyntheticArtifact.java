@@ -63,7 +63,12 @@ public class SyntheticArtifact extends EmittedArtifact {
   @Override
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
-    diskCache.transferToStream(token, out);
+    try {
+      diskCache.transferToStream(token, out);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
+      throw new UnableToCompleteException();
+    }
   }
 
   private void readObject(ObjectInputStream stream) throws IOException,

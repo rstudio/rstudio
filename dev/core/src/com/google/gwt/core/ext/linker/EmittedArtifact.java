@@ -226,7 +226,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
       Util.copyNoClose(in, out);
       Utility.close(in);
     } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to read or write stream", e);
+      logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
       throw new UnableToCompleteException();
     }
   }

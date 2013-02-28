@@ -510,7 +510,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         artifactStream.close();
       } catch (IOException e) {
         artifactLogger.log(TreeLogger.ERROR,
-            "Fatal error emitting this artifact", e);
+            "Fatal error emitting artifact: " + artifact.getPartialPath(), e);
+        throw new UnableToCompleteException();
       }
     }
   }

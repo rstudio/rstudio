@@ -50,7 +50,6 @@ public class StandardGeneratedResource extends GeneratedResource {
     return new ByteArrayInputStream(diskCache.readByteArray(token));
   }
 
-  @Override
   public long getLastModified() {
     return lastModified;
   }
@@ -58,7 +57,12 @@ public class StandardGeneratedResource extends GeneratedResource {
   @Override
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
-    diskCache.transferToStream(token, out);
+    try {
+      diskCache.transferToStream(token, out);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
+      throw new UnableToCompleteException();
+    }
   }
 
   private void readObject(ObjectInputStream stream) throws IOException,

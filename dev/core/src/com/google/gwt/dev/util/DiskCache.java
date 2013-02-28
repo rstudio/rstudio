@@ -144,7 +144,7 @@ public class DiskCache {
    * 
    * @return a token to retrieve the data later
    */
-  public synchronized long transferFromStream(InputStream in) {
+  public synchronized long transferFromStream(InputStream in) throws IOException {
     assert in != null;
     byte[] buf = Util.takeThreadLocalBuf();
     try {
@@ -167,8 +167,6 @@ public class DiskCache {
       // Don't eagerly seek the end, the next operation might be a read.
       atEnd = false;
       return position;
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read from byte cache", e);
     } finally {
       Util.releaseThreadLocalBuf(buf);
     }
@@ -180,7 +178,7 @@ public class DiskCache {
    * @param token a previously returned token
    * @param out the stream to write into
    */
-  public synchronized void transferToStream(long token, OutputStream out) {
+  public synchronized void transferToStream(long token, OutputStream out) throws IOException {
     byte[] buf = Util.takeThreadLocalBuf();
     try {
       atEnd = false;
@@ -197,8 +195,6 @@ public class DiskCache {
         length -= read;
         out.write(buf, 0, read);
       }
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to read from byte cache", e);
     } finally {
       Util.releaseThreadLocalBuf(buf);
     }
