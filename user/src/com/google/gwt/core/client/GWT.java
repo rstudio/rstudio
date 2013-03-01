@@ -85,6 +85,10 @@ public final class GWT {
     return com.google.gwt.core.shared.GWT.<T>create(classLiteral);
   }
 
+  public static void exportUnloadModule() {
+      Impl.exportUnloadModule();
+  }
+
   /**
    * Gets the URL prefix of the hosting page, useful for prepending to relative
    * paths of resources which may be relative to the host page. Typically, you
@@ -291,4 +295,15 @@ public final class GWT {
   private static native String getVersion0() /*-{
     return $gwt_version;
   }-*/;
+
+  /**
+   * If enabled via &lt;set-property name="gwt.unloadEnabled" value="true"/> invoking this method causes the module
+   * to be removed from memory and all {@link com.google.gwt.core.client.impl.Disposable} instances to be
+   * cleaned up. This method is not typically called by the GWT module itself, but exported so that another module
+   * may call it. 
+   * @see com.google.gwt.core.client.GWT#exportUnloadModule() 
+   */
+  private static void unloadModule() {
+    Impl.unloadModule();
+  }
 }

@@ -15,11 +15,30 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Native implementation associated with
  * {@link com.google.gwt.user.client.Window}.
  */
 public class WindowImpl {
+  private JavaScriptObject oldOnResize;
+  private JavaScriptObject oldOnScroll;
+  private JavaScriptObject oldOnBeforeUnload;
+  private JavaScriptObject oldOnUnload;
+
+  public native void disposeWindowCloseHandlers() /*-{
+    $wnd.onbeforeunload = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnBeforeUnload;
+    $wnd.onunload = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnUnload;
+  }-*/;
+  
+  public native void disposeWindowResizeHandlers() /*-{
+     $wnd.onresize = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnResize;
+   }-*/;
+  
+  public native void disposeWindowScrollHandlers() /*-{
+     $wnd.onscroll = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnScroll;
+   }-*/;
 
   public native String getHash() /*-{
     return $wnd.location.hash;
@@ -30,8 +49,8 @@ public class WindowImpl {
   }-*/;
   
   public native void initWindowCloseHandler() /*-{
-    var oldOnBeforeUnload = $wnd.onbeforeunload;
-    var oldOnUnload = $wnd.onunload;
+    var oldOnBeforeUnload = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnBeforeUnload = $wnd.onbeforeunload;
+    var oldOnUnload =  this.@com.google.gwt.user.client.impl.WindowImpl::oldOnUnload = $wnd.onunload;
     
     // Old mozilla doesn't like $entry's explicit return statement and
     // will always pop up a confirmation dialog.  This is worked around by
@@ -69,7 +88,7 @@ public class WindowImpl {
   }-*/;
 
   public native void initWindowResizeHandler() /*-{
-    var oldOnResize = $wnd.onresize;
+    var oldOnResize = this.@com.google.gwt.user.client.impl.WindowImpl::oldOnResize = $wnd.onresize;
     $wnd.onresize = $entry(function(evt) {
       try {
         @com.google.gwt.user.client.Window::onResize()();
@@ -80,7 +99,7 @@ public class WindowImpl {
   }-*/;
 
   public native void initWindowScrollHandler() /*-{
-    var oldOnScroll = $wnd.onscroll;
+    var oldOnScroll =  this.@com.google.gwt.user.client.impl.WindowImpl::oldOnScroll = $wnd.onscroll;
     $wnd.onscroll = $entry(function(evt) {
       try {
         @com.google.gwt.user.client.Window::onScroll()();

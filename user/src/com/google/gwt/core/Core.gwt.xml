@@ -35,6 +35,15 @@
   <inherits name="com.google.gwt.core.XSLinker" />
   <inherits name="com.google.gwt.core.CrossSiteIframeLinker" />
 
+  <!-- When true, compiles in support for GWT.unloadModule(), otherwise it is a no-op. -->
+  <define-property name="gwt.unloadEnabled" values="false, true"/>
+  <set-property name="gwt.unloadEnabled" value="false"/>
+
+  <replace-with class="com.google.gwt.core.client.impl.UnloadSupportEnabled">
+      <when-property-is name="gwt.unloadEnabled" value="true"/>
+      <when-type-is class="com.google.gwt.core.client.impl.UnloadSupport"/>
+  </replace-with>
+
   <define-linker name="soycReport" class="com.google.gwt.core.linker.SoycReportLinker" />
   <define-linker name="symbolMaps" class="com.google.gwt.core.linker.SymbolMapsLinker" />
 
