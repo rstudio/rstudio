@@ -468,6 +468,21 @@ assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 })
 
 
+.rs.addFunction("parseQuitArguments", function(command) {
+  
+  # parse the command
+  expr <- parse(text=command)
+  if (length(expr) == 0)
+    stop("Not a fully formed command: ", command)
+  
+  # match args
+  call <- as.call(expr[[1]])
+  call <- match.call(quit, call)
+  
+  # return as list without the function name
+  as.list(call)[-1]
+})
+
 
 
 
