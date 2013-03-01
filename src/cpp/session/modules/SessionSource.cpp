@@ -24,8 +24,6 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
-#include <R_ext/rlocale.h>
-
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
 #include <core/Error.hpp>
@@ -47,6 +45,8 @@
 #include <r/RUtil.hpp>
 #include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
+
+extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionModuleContext.hpp>
