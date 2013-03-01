@@ -752,12 +752,6 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    pResponse->setCacheableFile(filePath, request);
 }
 
-SEXP capabilitiesX11Hook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   r::sexp::Protect rProtect;
-   return r::sexp::create(false, &rProtect);
-}
-
 void onUserSettingsChanged()
 {
    // sync underlying R save action
@@ -810,13 +804,6 @@ Error initialize()
       // register edit_completed waitForMethod handler
       s_waitForEditCompleted = module_context::registerWaitForMethod(
                                                          "edit_completed");
-
-      // ensure that capabilitiesX11 always returns false
-      error = r::function_hook::registerReplaceHook("capabilitiesX11",
-                                                    capabilitiesX11Hook,
-                                                    (CCODE*)NULL);
-      if (error)
-         return error;
    }
    
    // complete initialization

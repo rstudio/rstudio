@@ -24,7 +24,6 @@
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
-#include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
@@ -555,22 +554,6 @@ SEXP rs_activateGD()
 }
 
 
-CCODE s_originalDevSetFunction;
-SEXP devSetHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   r::function_hook::checkArity(op, args, call);
-
-   // dev.set(which = 1) is a special syntax for creating a new graphics device,
-   // so check for which = 1 and throw an error if this would result in the
-   // creation of a 2nd RStudio graphics device
-   int devNum = r::sexp::asInteger(CAR(args));
-   if (devNum == 1 && s_pGEDevDesc != NULL)
-      Rf_error("Only one RStudio graphics device is permitted");
-
-   // call original
-   return s_originalDevSetFunction(call, op, args, rho);
-}
-
 DisplaySize displaySize()
 {
    return DisplaySize(s_width, s_height);
@@ -719,13 +702,6 @@ Error initialize(
       activateGDMethodDef.fun = (DL_FUNC) rs_activateGD ;
       activateGDMethodDef.numArgs = 0;
       r::routines::addCallMethod(activateGDMethodDef);
-
-      // register dev.set hook to handle special dev.set(which = 1) case
-      // (tolerate error since this symbol isn't available for lookup
-      // in >= R 2.16)
-      function_hook::registerReplaceHook("dev.set",
-                                         devSetHook,
-                                         &s_originalDevSetFunction);
 
       // initialize
       return r::exec::RFunction(".rs.initGraphicsDevice").call();

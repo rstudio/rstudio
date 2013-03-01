@@ -343,9 +343,6 @@ const int kSerializationActionCompleted = 5;
 // forward declare quit hooks so we can register them
 #ifdef _WIN32
 SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
-#else
-CCODE s_originalPosixQuitFunction;
-SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
 #endif
 
 void restoreSession(const FilePath& suspendedSessionPath,
@@ -499,10 +496,6 @@ Error initialize()
    // do this so we can prompt for save changes
 #ifdef _WIN32
    error = r::function_hook::registerReplaceHook("quit", win32QuitHook, NULL);
-#else
-   error = r::function_hook::registerReplaceHook("quit",
-                                                 posixQuitHook,
-                                                 &s_originalPosixQuitFunction);
 #endif
    if (error)
       return error;
@@ -550,6 +543,29 @@ void rSuicide(const std::string& msg)
 void rSuicide(const Error& error)
 {
    rSuicide(core::log::errorAsLogEntry(error));
+}
+
+bool consoleInputHook(const std::string& input)
+{
+   // check for user quit invocation
+    boost::regex re("^\\s*q\\s*\\(.*$");
+    boost::smatch match;
+    if (boost::regex_match(input, match, re))
+   {
+      if (!s_callbacks.handleUnsavedChanges())
+      {
+         Rprintf("User cancelled quit operation\n");
+         return false;
+      }
+      else
+      {
+         return true;
+      }
+   }
+   else
+   {
+      return true;
+   }
 }
 
 int RReadConsole (const char *pmt,
@@ -637,6 +653,10 @@ int RReadConsole (const char *pmt,
             consoleActions().add(kConsoleActionInput, consoleInput.text);
             if (addToHistory)
                consoleHistory().add(consoleInput.text);
+
+            // call console input hook and interrupt if the hook tells us to
+            if (!consoleInputHook(consoleInput.text))
+               throw r::exec::InterruptException();
 
             // copy to buffer and add terminators
             rInput.copy( (char*)buf, maxLen);
@@ -1196,17 +1216,6 @@ SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
 
    // keep compiler happy
    return R_NilValue;
-}
-#else
-SEXP posixQuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-   if (s_quitIsInteractive)
-   {
-      if (!s_callbacks.handleUnsavedChanges())
-         r::exec::error("User cancelled quit operation");
-   }
-
-   return s_originalPosixQuitFunction(call, op, args, rho);
 }
 #endif
 
