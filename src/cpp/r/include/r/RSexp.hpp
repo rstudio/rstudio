@@ -157,6 +157,31 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
 }
 
+template <typename T>
+core::Error getNamedListElement(SEXP listSEXP,
+                                const std::string& name,
+                                T* pValue,
+                                const T& defaultValue)
+{
+  core:: Error error = getNamedListElement(listSEXP, name, pValue);
+  if (error)
+  {
+     if (error.code() == r::errc::ListElementNotFoundError)
+     {
+        *pValue = defaultValue;
+        return core::Success();
+     }
+     else
+     {
+        return error;
+     }
+   }
+   else
+   {
+      return core::Success();
+   }
+}
+
 
 // protect R expressions
 class Protect : boost::noncopyable

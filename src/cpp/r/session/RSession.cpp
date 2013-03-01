@@ -102,10 +102,6 @@ bool s_initialized = false;
 // are in the middle of servicing a suspend request?
 bool s_suspended = false;
 
-// is any quit we receive interactive (i.e. from the invocation of the
-// q() function by user)
-bool s_quitIsInteractive = true;
-
 // temporarily suppress output
 bool s_suppressOuput = false;
 
@@ -340,11 +336,6 @@ const int kSerializationActionSuspendSession = 3;
 const int kSerializationActionResumeSession = 4;
 const int kSerializationActionCompleted = 5;
 
-// forward declare quit hooks so we can register them
-#ifdef _WIN32
-SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho);
-#endif
-
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
@@ -490,16 +481,6 @@ Error initialize()
          return error;
    }
 
-   // hook the quit function if we are on win32 (used so we can
-   // call our RCleanUp function which otherwise couldn't be called on
-   // Windows where no cleanup hook is supported). on posix we do
-   // do this so we can prompt for save changes
-#ifdef _WIN32
-   error = r::function_hook::registerReplaceHook("quit", win32QuitHook, NULL);
-#endif
-   if (error)
-      return error;
-
    // complete embedded r initialization
    error = r::session::completeEmbeddedRInitialization(s_options.useInternet2);
    if (error)
@@ -545,22 +526,88 @@ void rSuicide(const Error& error)
    rSuicide(core::log::errorAsLogEntry(error));
 }
 
+// forward declare win32 quit handler and provide string based quit
+// handler that parses the quit command from the console
+#ifdef _WIN32
+bool win32Quit(const std::string& saveAction,
+               int status,
+               bool runLast,
+               std::string* pErrMsg);
+
+bool win32Quit(const std::string& command, std::string* pErrMsg)
+{
+   // default values
+   std::string saveAction = "default";
+   double status = 0;
+   bool runLast = true;
+
+   // parse quit arguments
+   SEXP argsSEXP;
+   r::sexp::Protect rProtect;
+   Error error = r::exec::RFunction(".rs.parseQuitArguments", command).call(
+                                                                     &argsSEXP,
+                                                                     &rProtect);
+   if (!error)
+   {
+      error = r::sexp::getNamedListElement(argsSEXP,
+                                           "save",
+                                           &saveAction,
+                                           saveAction);
+      if (error)
+         LOG_ERROR(error);
+
+      error = r::sexp::getNamedListElement(argsSEXP,
+                                           "status",
+                                           &status,
+                                           status);
+      if (error)
+         LOG_ERROR(error);
+
+      error = r::sexp::getNamedListElement(argsSEXP,
+                                           "runLast",
+                                           &runLast,
+                                           runLast);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      *pErrMsg = r::endUserErrorMessage(error);
+      return false;
+   }
+
+   return win32Quit(saveAction, static_cast<int>(status), runLast, pErrMsg);
+}
+
+#endif
+
 bool consoleInputHook(const std::string& input)
 {
    // check for user quit invocation
-    boost::regex re("^\\s*q\\s*\\(.*$");
+    boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
     boost::smatch match;
     if (boost::regex_match(input, match, re))
    {
       if (!s_callbacks.handleUnsavedChanges())
       {
-         Rprintf("User cancelled quit operation\n");
+         REprintf("User cancelled quit operation\n");
          return false;
       }
-      else
-      {
-         return true;
-      }
+
+      // on win32 we will actually assume responsibility for the
+      // quit function entirely (so we can call our internal cleanup
+      // handler code)
+#ifdef _WIN32
+      std::string quitErr;
+      bool didQuit = win32Quit(input, &quitErr);
+      if (!didQuit)
+         REprintf((quitErr + "\n").c_str());
+
+      // always return false (since we take over the command fully)
+      return false;
+#else
+      return true;
+#endif
    }
    else
    {
@@ -1170,52 +1217,47 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
 // should re-write the combination of this function and RCleanUp to
 // be fully "error-safe" (not doing this now due to regression risk)
 #ifdef _WIN32
-extern "C" Rboolean R_Interactive;
-SEXP win32QuitHook(SEXP call, SEXP op, SEXP args, SEXP rho)
+bool win32Quit(const std::string& saveAction,
+               int status,
+               bool runLast,
+               std::string* pErrMsg)
 {
-   try
+   if (r::session::browserContextActive())
    {
-      if (s_quitIsInteractive)
-      {
-         if (!s_callbacks.handleUnsavedChanges())
-            throw r::exec::RErrorException("User cancelled quit operation");
-      }
-
-      if (r::session::browserContextActive())
-      {
-         r::exec::warning("unable to quit when browser is active");
-         return R_NilValue;
-      }
-
-      // determine save action
-      SA_TYPE action = SA_DEFAULT;
-      std::string actionParam = r::sexp::asString(CAR(args));
-      if (actionParam == "ask")
-         action = SA_SAVEASK;
-      else if (actionParam == "no")
-         action = SA_NOSAVE;
-      else if (actionParam == "yes")
-         action = SA_SAVE;
-      else if (actionParam == "default")
-         action = SA_DEFAULT;
-      else
-         throw r::exec::RErrorException("Unknown save action: " + actionParam);
-
-      // clean up
-      RCleanUp(action,
-               r::sexp::asInteger(CADR(args)),
-               r::sexp::asLogical(CADDR(args)));
-
-      // not reached unless cleanup fails (not currently possible)
-      ::exit(0);
+      *pErrMsg = "unable to quit when browser is active";
+      return false;
    }
-   catch(const r::exec::RErrorException& e)
+
+   // determine save action
+   SA_TYPE action = SA_DEFAULT;
+   if (saveAction == "ask")
+      action = SA_SAVEASK;
+   else if (saveAction == "no")
+      action = SA_NOSAVE;
+   else if (saveAction == "yes")
+      action = SA_SAVE;
+   else if (saveAction == "default")
+      action = SA_DEFAULT;
+   else
    {
-      r::exec::errorCall(call, e.message());
+      *pErrMsg = "Unknown save action: " + saveAction;
+      return false;
    }
+
+   // clean up
+   Error error = r::exec::executeSafely(
+                  boost::bind(&RCleanUp, action, status, runLast));
+   if (error)
+   {
+      *pErrMsg = r::endUserErrorMessage(error);
+      return false;
+   }
+
+   // failsafe in case we don't actually quit as a result of cleanup
+   ::exit(0);
 
    // keep compiler happy
-   return R_NilValue;
+   return true;
 }
 #endif
 
@@ -1539,16 +1581,24 @@ bool browserContextActive()
    
 void quit(bool saveWorkspace)
 {
-   // denote this as a non-interactive quit (so we don't need to
-   // prompt for unsaved changes)
-   s_quitIsInteractive = false;
-   core::scope::SetOnExit<bool> resetOnExit(&s_quitIsInteractive, true);
-
    // invoke quit
    std::string save = saveWorkspace ? "yes" : "no";
+ #ifdef _WIN32
+   std::string quitErr;
+   bool didQuit = win32Quit(save, 0, true, &quitErr);
+   if (!didQuit)
+   {
+      REprintf((quitErr + "\n").c_str());
+      LOG_ERROR_MESSAGE(quitErr);
+   }
+ #else
    Error error = r::exec::RFunction("q", save, 0, true).call();
    if (error)
+   {
+      REprintf((r::endUserErrorMessage(error) + "\n").c_str());
       LOG_ERROR(error);
+   }
+ #endif
 }
    
 namespace utils {
