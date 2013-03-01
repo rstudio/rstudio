@@ -224,11 +224,11 @@ Error openDocument(const json::JsonRpcRequest& request,
       if (error)
          return error ;
 
-      r::exec::warning("Not all characters in " + documentPath.absolutePath() +
-                       " could be decoded using " + encoding + ". To try a "
-                       "different encoding, choose \"File | Reopen with "
-                       "Encoding...\" from the main menu.");
-      r::exec::printWarnings();
+      module_context::consoleWriteError(
+                 "Not all characters in " + documentPath.absolutePath() +
+                 " could be decoded using " + encoding + ". To try a "
+                 "different encoding, choose \"File | Reopen with "
+                 "Encoding...\" from the main menu.");
    }
 
    // recover durable properties if they are available
@@ -312,11 +312,12 @@ Error saveDocumentCore(const std::string& contents,
          if (error)
             return error;
 
-         r::exec::warning("Not all of the characters in " + path +
+
+         module_context::consoleWriteError(
+                          "Not all of the characters in " + path +
                           " could be encoded using " + pDoc->encoding() +
                           ". To save using a different encoding, choose \"File | "
                           "Save with Encoding...\" from the main menu.");
-         r::exec::printWarnings();
       }
 
       // note whether the file existed prior to writing
@@ -548,9 +549,9 @@ Error reopen(std::string id, std::string fileType, std::string encoding,
       if (error)
          return error ;
 
-      r::exec::warning("Not all characters in " + pDoc->path() +
+      module_context::consoleWriteError(
+                       "Not all characters in " + pDoc->path() +
                        " could be decoded using " + encoding + ".");
-      r::exec::printWarnings();
    }
    pDoc->setDirty(false);
 

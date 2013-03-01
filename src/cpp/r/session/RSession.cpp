@@ -1125,12 +1125,7 @@ void RCleanUp(SA_TYPE saveact, int status, int runLast)
 
          // clear display
          r::session::graphics::display().clear();
-         
-         // print warnings (do this here even though R does it within 
-         // RCleanUp because warnings which are enqued after the quit
-         // callback (just below) are never seen by the client
-         r::exec::printWarnings();
-         
+                
          // notify client that the session has been quit
          s_callbacks.quit();
       }

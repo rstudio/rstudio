@@ -114,11 +114,6 @@ void onClientInit()
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   // print warnings after all RPC and URI handlers (not required
-   // for REPL because R already does this for us)
-   if (source != module_context::ChangeSourceREPL)
-      r::exec::printWarnings();
-
    // check for working directory changed
    detectWorkingDirectoryChanged();
 }

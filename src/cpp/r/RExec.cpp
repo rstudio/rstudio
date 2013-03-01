@@ -33,8 +33,6 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 
-extern "C" void Rf_PrintWarnings();
-
 using namespace core ;
 
 namespace r {
@@ -415,19 +413,6 @@ std::string getErrorMessage()
 void warning(const std::string& warning)
 {
    Rf_warning(warning.c_str());
-}
-   
-   
-void printWarnings()
-{
-   // NOTE: within the R source code R_CollectWarnings is checked prior
-   // to calling PrintWarnings -- however, on Ubuntu we get a linker
-   // error when attempting an extern declaration  of R_CollectWarnings.
-   // We have observed that Rf_PrintWarnings actually returns immediately
-   // if R_CollectWarnings is 0 so calling this function without the 
-   // check should not pose a problem.
-
-   Rf_PrintWarnings();
 }
 
 

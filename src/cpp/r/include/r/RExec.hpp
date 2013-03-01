@@ -208,10 +208,7 @@ private:
    std::vector<Param> params_ ;
 };
 
-// print any pending warnings
 void warning(const std::string& warning);
-void printWarnings();
-
    
 // special exception type used to raise R errors. allows for correct
 // exiting from c++ context (with destructors called, etc.) while still
