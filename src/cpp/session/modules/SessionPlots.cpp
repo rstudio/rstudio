@@ -671,7 +671,7 @@ void onDetectChanges(module_context::ChangeSource source)
    detectChanges(activatePlots);
 }
 
-void onSysSleep()
+void onBackgroundProcessing(bool isIdle)
 {
    detectChanges(true);
 }
@@ -758,7 +758,7 @@ Error initialize()
    module_context::events().onClientInit.connect(bind(onClientInit));
    module_context::events().onDetectChanges.connect(bind(onDetectChanges, _1));
    module_context::events().onBeforeExecute.connect(bind(onBeforeExecute));
-   module_context::events().onSysSleep.connect(bind(onSysSleep));
+   module_context::events().onBackgroundProcessing.connect(onBackgroundProcessing);
 
    // connect to onShowManipulator
    using namespace r::session;
