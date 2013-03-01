@@ -205,8 +205,6 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
                      "opts_chunk$set(cache=TRUE, "
                                     "cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
-                                    "results='hide', "
-                                    "fig.keep='none', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
                                     "message=FALSE, "
