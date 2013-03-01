@@ -37,8 +37,6 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/FileMonitor.hpp>
 
-#include <R_ext/rlocale.h>
-
 #include <r/RExec.hpp>
 
 #include <session/SessionUserSettings.hpp>

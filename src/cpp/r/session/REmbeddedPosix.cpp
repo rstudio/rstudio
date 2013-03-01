@@ -26,7 +26,6 @@
 #include <r/RUtil.hpp>
 
 #include <R_ext/eventloop.h>
-#include <R_ext/rlocale.h>
 
 #include <Rembedded.h>
 

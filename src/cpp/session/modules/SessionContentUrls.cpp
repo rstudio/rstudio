@@ -17,8 +17,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <R_ext/rlocale.h>
-
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FilePath.hpp>
@@ -32,6 +30,8 @@
 #include <core/http/Request.hpp>
 
 #include <core/json/JsonRpc.hpp>
+
+extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 

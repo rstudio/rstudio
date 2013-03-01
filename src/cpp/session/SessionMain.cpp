@@ -69,7 +69,8 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
-#include <R_ext/rlocale.h>
+
+extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
