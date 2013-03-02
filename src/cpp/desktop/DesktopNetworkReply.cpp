@@ -30,6 +30,7 @@
 #endif
 
 #include <QTimer>
+#include <QUrl>
 
 #include "DesktopNetworkIOService.hpp"
 
@@ -75,7 +76,11 @@ NetworkReply::NetworkReply(const std::string& localPeer,
                            const QNetworkRequest& req,
                            QIODevice* outgoingData,
                            QObject *parent)
-   : QNetworkReply(parent), pImpl_(new Impl(localPeer))
+   : QNetworkReply(parent),
+     pImpl_(new Impl(localPeer)),
+     localPeer_(localPeer),
+     secret_(secret),
+     redirects_(0)
 {   
    // set our attributes
    setOperation(op);
@@ -146,6 +151,12 @@ NetworkReply::NetworkReply(const std::string& localPeer,
       request.setBody(std::string(postData.begin(), postData.end()));
    }
 
+   // execute
+   executeRequest(request);
+}
+
+void NetworkReply::executeRequest(const http::Request& request)
+{
    // set the request
    pImpl_->pClient->request().assign(request);
 
@@ -208,9 +219,50 @@ qint64 NetworkReply::readData(char *data, qint64 maxSize)
    return bytesToRead;
 }
 
+void NetworkReply::handleRedirect(QString location)
+{
+   // calculate the redirected url
+   QUrl newUrl = request().url().resolved(location);
+
+   // perform the redirect
+   http::Request request;
+   request.setMethod("GET");
+   request.setUri(newUrl.path().toStdString());
+   request.setHeader("X-Shared-Secret", secret_.toStdString());
+   request.setHost("127.0.0.1");
+
+   // reset the connection
+   pImpl_.reset(new Impl(localPeer_));
+
+   // execute the request
+   executeRequest(request);
+}
 
 void NetworkReply::onResponse(const http::Response& response)
 {
+   // check for a redirect
+   if (response.statusCode() == http::status::MovedTemporarily ||
+       response.statusCode() == http::status::MovedPermanently)
+   {
+      // check for max redirects
+      if (++redirects_ > 5)
+      {
+         http::Response tooManyRedirectsResponse;
+         tooManyRedirectsResponse.setError(http::status::TooManyRedirects,
+                                           "Too many redirects");
+         onResponse(tooManyRedirectsResponse);
+      }
+      // perform redirect
+      else
+      {
+         std::string location = response.headerValue("Location");
+         handleRedirect(QString::fromStdString(location));
+      }
+
+      // done
+      return;
+   }
+
    // call open on the QIODevice
    open(ReadOnly | Unbuffered);
 

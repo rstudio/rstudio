@@ -311,6 +311,7 @@ namespace Message {
    const char * const PartialContent = "Partial Content";
 	const char * const MovedPermanently = "Moved Permanently" ;
 	const char * const MovedTemporarily = "Moved Temporarily" ;
+   const char * const TooManyRedirects = "Too Many Redirects";
 	const char * const SeeOther = "See Other" ;
 	const char * const NotModified = "Not Modified" ;
 	const char * const BadRequest = "Bad Request" ;
@@ -355,6 +356,10 @@ void Response::ensureStatusMessage() const
 			case MovedTemporarily:
 				statusMessage_ = status::Message::MovedTemporarily ;
 				break;
+
+         case TooManyRedirects:
+            statusMessage_ = status::Message::TooManyRedirects ;
+            break;
 
 			case SeeOther:
 				statusMessage_ = status::Message::SeeOther ;
