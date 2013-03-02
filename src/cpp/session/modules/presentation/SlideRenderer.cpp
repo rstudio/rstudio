@@ -191,7 +191,7 @@ Error slideMarkdownToHtml(const Slide& slide,
 void validateTransitionType(const std::string& type)
 {
    bool isValid = boost::iequals(type, "none") ||
-                  boost::iequals(type, "rotate") ||
+                  boost::iequals(type, "default") ||
                   boost::iequals(type, "linear") ||
                   boost::iequals(type, "fade") ||
                   boost::iequals(type, "zoom") ||
