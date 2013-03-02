@@ -40,12 +40,12 @@ function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
 }
 
 function junitLaunchError(msg) {
-  junitError("launch", msg);
+  junitError("/launch", msg);
 }
 
 function junitError(type, msg) {
   var xmlHttpRequest = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-  xmlHttpRequest.open('POST', 'junithost/error/' + type, true);
+  xmlHttpRequest.open('POST', 'junithost/error' + type, true);
   xmlHttpRequest.setRequestHeader('Content-Type', 'text/x-gwt-rpc; charset=utf-8');
   xmlHttpRequest.send(msg);
   if (window.console && window.console.log) {

@@ -82,6 +82,7 @@ public class GWTRunner implements EntryPoint {
      */
     public void onFailure(Throwable caught) {
       if (maxRetryCount < 0 || curRetryCount < maxRetryCount) {
+        reportWarning("Retrying syncing back to junit backend. (Exception: " + caught + ")");
         // Try the call again
         curRetryCount++;
         new Timer() {
@@ -91,7 +92,7 @@ public class GWTRunner implements EntryPoint {
           }
         }.schedule(1000);
       } else {
-        reportFatalError("Cannot sync back to GWT junit backend: " + caught);
+        reportFatalError("Cannot sync back to junit backend: " + caught);
       }
     }
 
@@ -394,6 +395,10 @@ public class GWTRunner implements EntryPoint {
   }
 
   private static native void reportFatalError(String errorMsg)/*-{
-    $wnd.junitError("fatal", errorMsg);
+    $wnd.junitError("/fatal", errorMsg);
+  }-*/;
+
+  private static native void reportWarning(String errorMsg)/*-{
+    $wnd.junitError("", errorMsg);
   }-*/;
 }

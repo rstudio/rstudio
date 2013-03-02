@@ -127,7 +127,10 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
   protected void service(HttpServletRequest request,
       HttpServletResponse response) throws ServletException, IOException {
     String requestURI = request.getRequestURI();
-    if (requestURI.endsWith("/junithost/error/fatal")) {
+    if (requestURI.endsWith("/junithost/error")) {
+      String msg = RPCServletUtils.readContentAsGwtRpc(request);
+      System.err.println("Warning: " + msg);
+    } else if (requestURI.endsWith("/junithost/error/fatal")) {
       String msg = RPCServletUtils.readContentAsGwtRpc(request);
       System.err.println("Fatal error: " + msg);
       System.exit(1);
