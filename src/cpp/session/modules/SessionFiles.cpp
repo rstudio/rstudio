@@ -444,9 +444,12 @@ void handleFilesRequest(const http::Request& request,
       return;
    }
    
-   // get prefix and uri
+   // get prefix and uri (strip query string)
    std::string prefix = "/files/";
    std::string uri = request.uri();
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
    
    // validate the uri
    if (prefix.length() >= uri.length() ||    // prefix longer than uri

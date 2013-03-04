@@ -132,13 +132,48 @@ std::string remoteMathjax()
    return resourceFiles().get("presentation/mathjax.html");
 }
 
-
-std::string localMathjax()
+std::string alternateMathjax(const std::string& prefix)
 {
    return boost::algorithm::replace_first_copy(
         remoteMathjax(),
         "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
-        "mathjax");
+        prefix);
+}
+
+
+std::string localMathjax()
+{
+   return alternateMathjax("mathjax");
+}
+
+std::string copiedMathjax(const FilePath& targetFile)
+{
+   // determine target files dir and create it if necessary
+   std::string presFilesDir = targetFile.stem() + "_files";
+   FilePath filesTargetDir = targetFile.parent().complete(presFilesDir);
+   Error error = filesTargetDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return remoteMathjax();
+   }
+
+   // copy the mathjax directory
+   r::exec::RFunction fileCopy("file.copy");
+   fileCopy.addParam("from", string_utils::utf8ToSystem(
+                         session::options().mathjaxPath().absolutePath()));
+   fileCopy.addParam("to", string_utils::utf8ToSystem(
+                         filesTargetDir.absolutePath()));
+   fileCopy.addParam("recursive", true);
+   error = fileCopy.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return remoteMathjax();
+   }
+
+   // return fixed up html
+   return alternateMathjax(presFilesDir + "/mathjax");
 }
 
 std::string localWebFonts()
@@ -422,10 +457,12 @@ bool renderPresentation(
    return true;
 }
 
-typedef boost::function<void(const std::string&,
+typedef boost::function<void(const FilePath&,
+                             const std::string&,
                              std::map<std::string,std::string>*)> VarSource;
 
-void publishToRPubsVars(const std::string& slides,
+void publishToRPubsVars(const FilePath&,
+                        const std::string& slides,
                         std::map<std::string,std::string>* pVars)
 {
    std::map<std::string,std::string>& vars = *pVars;
@@ -436,6 +473,22 @@ void publishToRPubsVars(const std::string& slides,
    // mathjax w/ remote url
    if (markdown::isMathJaxRequired(slides))
       vars["mathjax"] = remoteMathjax();
+   else
+      vars["mathjax"] = "";
+}
+
+void saveAsStandaloneVars(const FilePath& targetFile,
+                          const std::string& slides,
+                          std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   // embedded web fonts
+   vars["google_webfonts"] = embeddedWebFonts();
+
+   // mathjax w/ remote url
+   if (markdown::isMathJaxRequired(slides))
+      vars["mathjax"] = copiedMathjax(targetFile);
    else
       vars["mathjax"] = "";
 }
@@ -469,7 +522,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
 
    // call var source hook function
-   varSource(slides, &vars);
+   varSource(targetFile, slides, &vars);
 
    // no IDE interaction
    vars["slide_commands"] = "";
@@ -812,7 +865,7 @@ SEXP rs_createStandalonePresentation()
    FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
 
    std::string errMsg;
-   if (!createStandalonePresentation(htmlPath, publishToRPubsVars, &errMsg))
+   if (!createStandalonePresentation(htmlPath, saveAsStandaloneVars, &errMsg))
    {
       module_context::consoleWriteError(errMsg + "\n");
    }
