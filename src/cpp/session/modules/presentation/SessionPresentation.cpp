@@ -40,6 +40,8 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
+SEXP rs_createStandalonePresentation();
+
 namespace {
 
 
@@ -186,6 +188,13 @@ Error initialize()
    methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
    methodDefShowHelpDoc.numArgs = 1;
    r::routines::addCallMethod(methodDefShowHelpDoc);
+
+   // register rs_createStandalonePresentation
+   R_CallMethodDef methodDefStandalone;
+   methodDefStandalone.name = "rs_createStandalonePresentation" ;
+   methodDefStandalone.fun = (DL_FUNC) rs_createStandalonePresentation;
+   methodDefStandalone.numArgs = 0;
+   r::routines::addCallMethod(methodDefStandalone);
 
    using boost::bind;
    using namespace session::module_context;

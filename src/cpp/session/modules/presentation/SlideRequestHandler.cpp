@@ -293,181 +293,230 @@ boost::iostreams::regex_filter linkFilter()
             fixupLink);
 }
 
-void handlePresentationRootRequest(const std::string& path,
-                                   http::Response* pResponse)
-{
-   // detect zoomed
-   bool zoomed = path == "zoom";
 
+bool readPresentation(SlideDeck* pSlideDeck,
+                      std::string* pSlides,
+                      std::string* pInitActions,
+                      std::string* pSlideActions,
+                      std::map<std::string,std::string>* pVars,
+                      std::string* pErrMsg)
+{
    // look for slides.Rmd and knit if we need to
    FilePath presDir = presentation::state::directory();
    FilePath rmdFile = presDir.complete("slides.Rmd");
    if (rmdFile.exists())
    {
-      std::string errMsg;
-      if (!performKnit(rmdFile, &errMsg))
-      {
-         pResponse->setError(http::status::InternalServerError,
-                             errMsg);
-         return;
-      }
+      if (!performKnit(rmdFile, pErrMsg))
+         return false;
    }
 
    // look for slides.md
    FilePath slidesFile = presDir.complete("slides.md");
    if (!slidesFile.exists())
    {
-      pResponse->setError(http::status::NotFound,
-                          "slides.md file not found in " +
-                          presentation::state::directory().absolutePath());
-      return;
+      *pErrMsg = "slides.md file not found in " +
+                 presentation::state::directory().absolutePath();
+      return false;
    }
 
    // parse the slides
-   presentation::SlideDeck slideDeck;
-   Error error = slideDeck.readSlides(slidesFile);
+   Error error = pSlideDeck->readSlides(slidesFile);
    if (error)
    {
       LOG_ERROR(error);
-      pResponse->setError(http::status::InternalServerError,
-                          error.summary());
-      return;
+      *pErrMsg = error.summary();
+      return false;
    }
 
    // render the slides
-   std::string slides, revealConfig, initCommands, slideCommands;
-   error = presentation::renderSlides(slideDeck,
-                                      &slides,
+   std::string revealConfig;
+   error = presentation::renderSlides(*pSlideDeck,
+                                      pSlides,
                                       &revealConfig,
-                                      &initCommands,
-                                      &slideCommands);
+                                      pInitActions,
+                                      pSlideActions);
    if (error)
    {
       LOG_ERROR(error);
-      pResponse->setError(http::status::InternalServerError,
-                          error.summary());
-      return;
+      *pErrMsg = error.summary();
+      return false;
    }
 
    // build template variables
-   std::map<std::string,std::string> vars;
-   vars["title"] = slideDeck.title();
-   vars["slides"] = slides;
+   std::map<std::string,std::string>& vars = *pVars;
+   vars["title"] = pSlideDeck->title();
+   vars["slides"] = *pSlides;
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
 
+
+   return true;
+}
+
+bool renderPresentation(
+                   const std::map<std::string,std::string>& vars,
+                   const std::vector<boost::iostreams::regex_filter>& filters,
+                   std::ostream& os,
+                   std::string* pErrMsg)
+{
+   std::string presentationTemplate =
+                           resourceFiles().get("presentation/slides.html");
+   std::istringstream templateStream(presentationTemplate);
+
    try
    {
-      // get base directory
-      FilePath dirPath = presentation::state::directory();
+      os.exceptions(std::istream::failbit | std::istream::badbit);
+      boost::iostreams::filtering_ostream filteredStream ;
 
-      // get template
-      std::string presentationTemplate =
-                           resourceFiles().get("presentation/slides.html");
+      // template filter
+      text::TemplateFilter templateFilter(vars);
+      filteredStream.push(templateFilter);
 
-       // generate standalone version
+      // custom filters
+      for (std::size_t i=0; i<filters.size(); i++)
+         filteredStream.push(filters[i]);
 
-      // embedded versions of reveal assets
-      const char * const kMediaPrint = "media=\"print\"";
-      vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
-                                                 kMediaPrint);
-      vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
-      vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
-      vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
-      vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+      // target stream
+      filteredStream.push(os);
 
-      // webfonts w/ remote url
-      setRemoteWebFonts(&vars);
-
-      // mathjax w/ remote url
-      vars["mathjax"] = mathjaxIfRequired(slides);
-
-      // no IDE interaction
-      vars["slide_commands"] = "";
-      vars["slides_js"] = "";
-      vars["init_commands"] = "";
-
-      // width and height (these are the reveal defaults)
-      vars["reveal_width"] = "960";
-      vars["reveal_height"] = "700";
-
-      // use transitions for standalone
-      vars["reveal_transition"] = slideDeck.transition();
-
-      std::istringstream templateStream(presentationTemplate);
-      html_utils::Base64ImageFilter imageFilter(dirPath);
-      FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
-      boost::shared_ptr<std::ostream> pOfs;
-      Error error = htmlPath.open_w(&pOfs);
-      if (error)
-      {
-         pResponse->setError(error);
-         return;
-      }
-      pOfs->exceptions(std::istream::failbit | std::istream::badbit);
-      boost::iostreams::filtering_ostream standaloneStream ;
-      text::TemplateFilter standaloneTemplateFilter(vars);
-      standaloneStream.push(standaloneTemplateFilter);
-      standaloneStream.push(imageFilter);
-      standaloneStream.push(*pOfs);
-      boost::iostreams::copy(templateStream, standaloneStream, 128);
-
-      // generate preview version
-
-      // set preload to none for media
-      vars["slides"] = boost::algorithm::replace_all_copy(
-                                             slides,
-                                             "controls preload=\"auto\"",
-                                             "controls preload=\"none\"");
-
-      // linked versions of reveal assets
-      vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
-      vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
-      vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
-      vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
-
-      // webfonts local
-      setLocalWebFonts(&vars);
-
-      // mathjax local
-      vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
-
-      // javascript supporting IDE interaction
-      vars["slide_commands"] = slideCommands;
-      vars["slides_js"] = resourceFiles().get("presentation/slides.js");
-      vars["init_commands"] = initCommands;
-
-      // width and height are dynamic
-      std::string zoomStr = zoomed ? "true" : "false";
-      vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
-      vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
-
-      // no transition in desktop mode (qtwebkit can't keep up)
-      bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-      vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
-
-      templateStream.seekg (0, std::ios::beg);
-      std::stringstream previewOutputStream;
-      boost::iostreams::filtering_ostream previewStream ;
-      text::TemplateFilter previewTemplateFilter(vars);
-      standaloneStream.push(previewTemplateFilter);
-      previewStream.push(previewTemplateFilter);
-      previewStream.push(linkFilter());
-      previewStream.push(previewOutputStream);
-      boost::iostreams::copy(templateStream, previewStream, 128);
-
-      // return the presentation
-      pResponse->setNoCacheHeaders();
-      pResponse->setBody(previewOutputStream);
+      boost::iostreams::copy(templateStream, filteredStream, 128);
    }
    catch(const std::exception& e)
    {
+      *pErrMsg = e.what();
+      return false;
+   }
+
+   return true;
+}
+
+/*
+void standalone()
+{
+   // generate standalone version
+
+  // embedded versions of reveal assets
+  const char * const kMediaPrint = "media=\"print\"";
+  vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
+                                             kMediaPrint);
+  vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
+  vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
+  vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
+  vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
+  // webfonts w/ remote url
+  setRemoteWebFonts(&vars);
+
+  // mathjax w/ remote url
+  vars["mathjax"] = mathjaxIfRequired(slides);
+
+  // no IDE interaction
+  vars["slide_commands"] = "";
+  vars["slides_js"] = "";
+  vars["init_commands"] = "";
+
+  // width and height (these are the reveal defaults)
+  vars["reveal_width"] = "960";
+  vars["reveal_height"] = "700";
+
+  // use transitions for standalone
+  vars["reveal_transition"] = slideDeck.transition();
+
+  std::istringstream templateStream(presentationTemplate);
+  html_utils::Base64ImageFilter imageFilter(dirPath);
+  FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
+  boost::shared_ptr<std::ostream> pOfs;
+  Error error = htmlPath.open_w(&pOfs);
+  if (error)
+  {
+     pResponse->setError(error);
+     return;
+  }
+  pOfs->exceptions(std::istream::failbit | std::istream::badbit);
+  boost::iostreams::filtering_ostream standaloneStream ;
+  text::TemplateFilter standaloneTemplateFilter(vars);
+  standaloneStream.push(standaloneTemplateFilter);
+  standaloneStream.push(imageFilter);
+  standaloneStream.push(*pOfs);
+  boost::iostreams::copy(templateStream, standaloneStream, 128);
+
+}
+*/
+
+
+void handlePresentationRootRequest(const std::string& path,
+                                   http::Response* pResponse)
+{   
+   // read presentation
+   presentation::SlideDeck slideDeck;
+   std::string slides, initCommands, slideCommands;
+   std::map<std::string,std::string> vars;
+   std::string errMsg;
+   if (!readPresentation(&slideDeck,
+                         &slides,
+                         &initCommands,
+                         &slideCommands,
+                         &vars,
+                         &errMsg))
+   {
       pResponse->setError(http::status::InternalServerError,
-                          e.what());
+                          errMsg);
       return;
    }
+
+   // set preload to none for media
+   vars["slides"] = boost::algorithm::replace_all_copy(
+                                          vars["slides"],
+                                          "controls preload=\"auto\"",
+                                          "controls preload=\"none\"");
+
+   // linked versions of reveal assets
+   vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
+   vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
+   vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
+   vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
+
+   // no print css for qtwebkit
+   vars["reveal_print_pdf_css"]  = "";
+
+   // webfonts local
+   setLocalWebFonts(&vars);
+
+   // mathjax local
+   vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
+
+   // javascript supporting IDE interaction
+   vars["slide_commands"] = slideCommands;
+   vars["slides_js"] = resourceFiles().get("presentation/slides.js");
+   vars["init_commands"] = initCommands;
+
+   // width and height are dynamic
+   std::string zoomStr = (path == "zoom") ? "true" : "false";
+   vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
+   vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+
+   // no transition in desktop mode (qtwebkit can't keep up)
+   bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
+   vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
+
+   // render to output stream
+   std::stringstream previewOutputStream;
+   std::vector<boost::iostreams::regex_filter> filters;
+   filters.push_back(linkFilter());
+   if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
+   {
+      pResponse->setNoCacheHeaders();
+      pResponse->setBody(previewOutputStream);
+   }
+   else
+   {
+      pResponse->setError(http::status::InternalServerError, errMsg);
+   }
 }
+
+
+
 
 void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
                                            const std::string& jsCallbacks,
@@ -691,6 +740,78 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       pResponse->setFile(s_presentationHelpDir.complete(path), request);
    }
 }
+
+
+SEXP rs_createStandalonePresentation()
+{
+   try
+   {
+      // read presentation
+      presentation::SlideDeck slideDeck;
+      std::string slides, initCommands, slideCommands;
+      std::map<std::string,std::string> vars;
+      std::string errMsg;
+      if (!readPresentation(&slideDeck,
+                            &slides,
+                            &initCommands,
+                            &slideCommands,
+                            &vars,
+                            &errMsg))
+      {
+         throw r::exec::RErrorException(errMsg);
+      }
+
+      // embedded versions of reveal assets
+      const char * const kMediaPrint = "media=\"print\"";
+      vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
+                                                 kMediaPrint);
+      vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
+      vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
+      vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
+      vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
+      // webfonts w/ remote url
+      setRemoteWebFonts(&vars);
+
+      // mathjax w/ remote url
+      vars["mathjax"] = mathjaxIfRequired(slides);
+
+      // no IDE interaction
+      vars["slide_commands"] = "";
+      vars["slides_js"] = "";
+      vars["init_commands"] = "";
+
+      // width and height (these are the reveal defaults)
+      vars["reveal_width"] = "960";
+      vars["reveal_height"] = "700";
+
+      // use transitions for standalone
+      vars["reveal_transition"] = slideDeck.transition();
+
+      // target file stream
+      FilePath dirPath = presentation::state::directory();
+      FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
+      boost::shared_ptr<std::ostream> pOfs;
+      Error error = htmlPath.open_w(&pOfs);
+      if (error)
+         throw r::exec::RErrorException(r::endUserErrorMessage(error));
+
+      // create image filter
+      std::vector<boost::iostreams::regex_filter> filters;
+      filters.push_back(html_utils::Base64ImageFilter(dirPath));
+
+      // render presentation
+      if (!renderPresentation(vars, filters, *pOfs, &errMsg))
+         throw r::exec::RErrorException(errMsg);
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+
+   return R_NilValue;
+}
+
 
 
 } // namespace presentation
