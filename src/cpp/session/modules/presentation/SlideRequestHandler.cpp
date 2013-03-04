@@ -493,6 +493,19 @@ void saveAsStandaloneVars(const FilePath& targetFile,
       vars["mathjax"] = "";
 }
 
+
+void viewInBrowserVars(const FilePath& targetFile,
+                       const std::string& slides,
+                       std::map<std::string,std::string>* pVars)
+{
+   // for server: use local web fonts and local mathjax
+   // (okay because we serve using special view_presentation url)
+
+   // may require a .. dereference
+
+}
+
+
 bool createStandalonePresentation(const FilePath& targetFile,
                                   const VarSource& varSource,
                                   std::string* pErrMsg)
@@ -858,11 +871,28 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
+namespace {
+
+FilePath webPreviewPath()
+{
+   static FilePath previewPath;
+   if (previewPath.empty())
+   {
+      previewPath = module_context::tempFile("view", "dir");
+      Error error = previewPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return previewPath;
+}
+
+} // anonymous namespace
 
 SEXP rs_createStandalonePresentation()
 {
-   FilePath dirPath = presentation::state::directory();
-   FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
+   FilePath previewPath = webPreviewPath();
+   FilePath htmlPath = previewPath.complete("presentation.html");
 
    std::string errMsg;
    if (!createStandalonePresentation(htmlPath, saveAsStandaloneVars, &errMsg))
@@ -870,7 +900,8 @@ SEXP rs_createStandalonePresentation()
       module_context::consoleWriteError(errMsg + "\n");
    }
 
-   return R_NilValue;
+   r::sexp::Protect rProtect;
+   return r::sexp::create(htmlPath.absolutePath(), &rProtect);
 }
 
 
