@@ -21,10 +21,13 @@
 namespace core {
 
 class Error;
+class FilePath;
 
 namespace base64 {
       
+
 Error encode(const std::string& input, std::string* pOutput);
+Error encode(const FilePath& inputFile, std::string* pOutput);
 
          
 } // namespace base64

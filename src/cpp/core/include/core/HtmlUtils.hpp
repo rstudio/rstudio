@@ -32,7 +32,7 @@ std::string defaultTitle(const std::string& htmlContent);
 class Base64ImageFilter : public boost::iostreams::regex_filter
 {
 public:
-   Base64ImageFilter(const FilePath& basePath);
+   explicit Base64ImageFilter(const FilePath& basePath);
 
 private:
    std::string toBase64Image(const boost::cmatch& match);
@@ -40,6 +40,20 @@ private:
 private:
    FilePath basePath_;
 };
+
+// convert fonts to base64
+class CssUrlFilter : public boost::iostreams::regex_filter
+{
+public:
+   explicit CssUrlFilter(const FilePath& basePath);
+
+private:
+   std::string toBase64Url(const boost::cmatch& match);
+
+private:
+   FilePath basePath_;
+};
+
 
 } // namespace regex_utils
 } // namespace core 

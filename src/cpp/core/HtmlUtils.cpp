@@ -15,6 +15,7 @@
 
 #include <core/HtmlUtils.hpp>
 
+#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Base64.hpp>
@@ -54,22 +55,13 @@ std::string Base64ImageFilter::toBase64Image(const boost::cmatch& match)
    FilePath imagePath = basePath_.childPath(imgRef);
    if (imagePath.exists() &&
        boost::algorithm::starts_with(imagePath.mimeContentType(), "image/"))
-   {
-      std::string imageContents;
-      Error error = core::readStringFromFile(imagePath, &imageContents);
+   {     
+      std::string imageBase64;
+      Error error = core::base64::encode(imagePath, &imageBase64);
       if (!error)
       {
-         std::string imageBase64;
-         Error error = core::base64::encode(imageContents, &imageBase64);
-         if (!error)
-         {
-            imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
-            imgRef.append(imageBase64);
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
+         imgRef = "data:" + imagePath.mimeContentType() + ";base64,";
+         imgRef.append(imageBase64);
       }
       else
       {
@@ -80,6 +72,46 @@ std::string Base64ImageFilter::toBase64Image(const boost::cmatch& match)
    // return the filtered result
    return match[1] + match[2] + imgRef + match[4];
 }
+
+// convert fonts to base64
+
+CssUrlFilter::CssUrlFilter(const FilePath& basePath)
+   : boost::iostreams::regex_filter(
+        boost::regex("url\\('([^'']+)'\\)"),
+        boost::bind(&CssUrlFilter::toBase64Url, this, _1)),
+     basePath_(basePath)
+{
+}
+
+std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
+{
+   // is this a local file?
+   std::string urlRef = match[1];
+   FilePath urlPath = basePath_.childPath(urlRef);
+   std::string ext = urlPath.extensionLowerCase();
+   if (urlPath.exists() && (ext == ".ttf" || ext == ".otf"))
+   {
+      std::string fontBase64;
+      Error error = core::base64::encode(urlPath, &fontBase64);
+      if (!error)
+      {
+         // return base64 encoded font
+         std::string type = (ext == ".ttf") ? "truetype" : "opentype";
+         boost::format fmt("url(data:font/%1%;base64,%2%)");
+         return boost::str(fmt % type % fontBase64);
+      }
+      else
+      {
+         LOG_ERROR(error);
+         return match[0];
+      }
+   }
+   else
+   {
+      return match[0];
+   }
+}
+
 
 } // namespace html_utils
 } // namespace core 

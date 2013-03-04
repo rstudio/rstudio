@@ -23,7 +23,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
-
+#include <core/FileSerializer.hpp>
 
 namespace core {
 namespace base64 {
@@ -56,6 +56,16 @@ Error encode(const std::string& input, std::string* pOutput)
 
    // keep compiler happy
    return Success();
+}
+
+Error encode(const FilePath& inputFile, std::string* pOutput)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(inputFile, &contents);
+   if (error)
+      return error;
+
+   return encode(contents, pOutput);
 }
 
 

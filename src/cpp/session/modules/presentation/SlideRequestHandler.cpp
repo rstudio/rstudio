@@ -153,6 +153,41 @@ std::string remoteWebFonts()
           "@import url('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic');";
 }
 
+std::string embeddedWebFonts()
+{
+   std::string fonts = "presentation/revealjs/fonts";
+   std::string css = resourceFiles().get(fonts + "/Lato.css") +
+                     resourceFiles().get(fonts + "/NewsCycle.css");
+
+   try
+   {
+      // input stream
+      std::istringstream cssStream(css);
+
+      // filtered output stream
+      boost::iostreams::filtering_ostream filteredStream;
+
+      // base64 encoder
+      FilePath fontPath = session::options().rResourcesPath().complete(fonts);
+      filteredStream.push(html_utils::CssUrlFilter(fontPath));
+
+      // target stream
+      std::ostringstream os;
+      os.exceptions(std::istream::failbit | std::istream::badbit);
+      filteredStream.push(os);
+
+      // copy and return
+      boost::iostreams::copy(cssStream, filteredStream, 128);
+      return os.str();
+   }
+   catch(const std::exception& e)
+   {
+      LOG_ERROR_MESSAGE(e.what());
+      return remoteWebFonts();
+   }
+
+}
+
 bool hasKnitrVersion1()
 {
    bool hasVersion = false;
