@@ -261,8 +261,16 @@ public class IntegerTest extends GWTTestCase {
   public void testValueOf() {
     assertEquals(new Integer(12345), Integer.valueOf("12345"));
     assertEquals(new Integer(1865), Integer.valueOf("12345", 6));
+  }
+
+  public void testParseInt() {
     assertEquals(12345, Integer.parseInt("12345"));
     assertEquals(1865, Integer.parseInt("12345", 6));
+    assertEquals(0, Integer.parseInt("0"));
+    assertEquals(Integer.MAX_VALUE,
+        Integer.parseInt(String.valueOf(Integer.MAX_VALUE)));
+    assertEquals(Integer.MIN_VALUE,
+        Integer.parseInt(String.valueOf(Integer.MIN_VALUE)));
   }
 
   public void testXValue() {

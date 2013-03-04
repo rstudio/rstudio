@@ -215,9 +215,12 @@ public abstract class Number implements Serializable {
     }
 
     int toReturn = __parseInt(s, radix);
+    // isTooLow is separated into its own variable to avoid a bug in BlackBerry OS 7. See
+    // https://code.google.com/p/google-web-toolkit/issues/detail?id=7291.
+    boolean isTooLow = toReturn < lowerBound;
     if (__isNaN(toReturn)) {
       throw NumberFormatException.forInputString(s);
-    } else if (toReturn < lowerBound || toReturn > upperBound) {
+    } else if (isTooLow || toReturn > upperBound) {
       throw NumberFormatException.forInputString(s);
     }
 
