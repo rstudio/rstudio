@@ -456,10 +456,13 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Call this whenever generators are known to not be running to clear out
    * uncommitted compilation units and to force committed compilation units to
    * be parsed and added to the type oracle.
-   * 
+   *
    * @return any newly generated artifacts since the last call
+   *
+   * @throw UnableToCompleteException if the compiler aborted (not
+   * a normal compile error).</p>
    */
-  public final ArtifactSet finish(TreeLogger logger) {
+  public final ArtifactSet finish(TreeLogger logger) throws UnableToCompleteException {
     abortUncommittedResources(logger);
 
     try {

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
@@ -33,9 +34,13 @@ public class TypeOracleTestingUtils {
 
   public static CompilationState buildCompilationState(TreeLogger logger, Set<Resource> resources,
       Set<GeneratedUnit> generatedUnits) {
-    CompilationState state = CompilationStateBuilder.buildFrom(logger, resources);
-    state.addGeneratedCompilationUnits(logger, generatedUnits);
-    return state;
+    try {
+      CompilationState state = CompilationStateBuilder.buildFrom(logger, resources);
+      state.addGeneratedCompilationUnits(logger, generatedUnits);
+      return state;
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static CompilationState buildStandardCompilationStateWith(TreeLogger logger,
@@ -91,10 +96,13 @@ public class TypeOracleTestingUtils {
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
-    CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        resources);
-    state.addGeneratedCompilationUnits(logger, generatedUnits);
-    return state.getTypeOracle();
+    try {
+      CompilationState state = CompilationStateBuilder.buildFrom(logger, resources);
+      state.addGeneratedCompilationUnits(logger, generatedUnits);
+      return state.getTypeOracle();
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationStateBuilder.CompileMoreLater;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -82,8 +83,13 @@ public class CompilationState {
     assimilateUnits(logger, units);
   }
 
+  /**
+   * Compiles the given source files (unless cached) and adds them to the
+   * CompilationState.
+   * If the the compiler aborts, logs the error and throws UnableToCompleteException.
+   */
   public void addGeneratedCompilationUnits(TreeLogger logger,
-      Collection<GeneratedUnit> generatedUnits) {
+      Collection<GeneratedUnit> generatedUnits) throws UnableToCompleteException {
     Event generatedUnitsAddEvent = SpeedTracerLogger.start(
         DevModeEventType.COMP_STATE_ADD_GENERATED_UNITS);
     try {

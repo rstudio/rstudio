@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.CompilationUnitBuilder.ResourceCompilationUnitBuilder;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
 
@@ -42,30 +42,30 @@ public class JdtCompilerTest extends TestCase {
     }
   }
 
-  public void testCompile() {
+  public void testCompile() throws Exception {
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     addAll(builders, JavaResourceBase.getStandardResources());
     addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    Collection<CompilationUnit> units = JdtCompiler.compile(builders);
+    Collection<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
     assertUnitsCompiled(units);
   }
 
-  public void testCompileError() {
+  public void testCompileError() throws Exception {
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     addAll(builders, JavaResourceBase.getStandardResources());
     addAll(builders, JavaResourceBase.BAR);
-    List<CompilationUnit> units = JdtCompiler.compile(builders);
+    List<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
     assertUnitsCompiled(units.subList(0, units.size() - 1));
     assertUnitHasErrors(units.get(units.size() - 1), 1);
   }
 
-  public void testCompileIncremental() {
+  public void testCompileIncremental() throws Exception {
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     addAll(builders, JavaResourceBase.getStandardResources());
-    Collection<CompilationUnit> units = JdtCompiler.compile(builders);
+    Collection<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
     assertUnitsCompiled(units);
     addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    JdtCompiler.compile(builders);
+    JdtCompiler.compile(TreeLogger.NULL, builders);
     assertUnitsCompiled(units);
   }
 

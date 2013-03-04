@@ -184,7 +184,7 @@ public final class ApiContainer {
       CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
       builders.add(builder);
     }
-    List<CompilationUnit> units = JdtCompiler.compile(builders);
+    List<CompilationUnit> units = JdtCompiler.compile(logger, builders);
     boolean anyError = false;
     TreeLogger branch = logger.branch(TreeLogger.TRACE, "Checking for compile errors");
     for (CompilationUnit unit : units) {

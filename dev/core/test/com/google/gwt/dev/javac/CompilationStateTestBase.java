@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
@@ -102,20 +103,30 @@ public abstract class CompilationStateTestBase extends TestCase {
    */
   protected final CompilationStateBuilder isolatedBuilder = new CompilationStateBuilder();
 
-  protected MockResourceOracle oracle = new MockResourceOracle(
-      JavaResourceBase.getStandardResources());
+  protected MockResourceOracle oracle;
 
-  protected CompilationState state = isolatedBuilder.doBuildFrom(
-      createTreeLogger(), oracle.getResources(), false);
+  protected CompilationState state;
+
+  protected CompilationStateTestBase() {
+    oracle = new MockResourceOracle(JavaResourceBase.getStandardResources());
+    rebuildCompilationState();
+  }
 
   protected void addGeneratedUnits(MockResource... sourceFiles) {
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        getGeneratedUnits(sourceFiles));
+    try {
+      state.addGeneratedCompilationUnits(createTreeLogger(),
+          getGeneratedUnits(sourceFiles));
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void rebuildCompilationState() {
-    state = isolatedBuilder.doBuildFrom(createTreeLogger(),
-        oracle.getResources(), false);
+    try {
+      state = isolatedBuilder.doBuildFrom(createTreeLogger(), oracle.getResources(), false);
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void validateCompilationState(String... generatedTypeNames) {

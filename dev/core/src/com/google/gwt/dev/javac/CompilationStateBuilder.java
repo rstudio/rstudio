@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -168,8 +169,13 @@ public class CompilationStateBuilder {
       this.suppressErrors = suppressErrors;
     }
 
+    /**
+     * Compiles generated source files (unless cached) and adds them to the
+     * CompilationState. If the compiler aborts, logs an error and throws
+     * UnableToCompleteException.
+     */
     public Collection<CompilationUnit> addGeneratedTypes(TreeLogger logger,
-        Collection<GeneratedUnit> generatedUnits) {
+        Collection<GeneratedUnit> generatedUnits) throws UnableToCompleteException {
       Event event = SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
       try {
         return doBuildGeneratedTypes(logger, generatedUnits, this, suppressErrors);
@@ -189,10 +195,32 @@ public class CompilationStateBuilder {
       }
     }
 
+    /**
+     * Compiles the source code in each supplied CompilationUnitBuilder into a CompilationUnit and
+     * reports errors.
+     *
+     * <p>A compilation unit is considered invalid if any of its dependencies (recursively) isn't
+     * being compiled and isn't in allValidClasses, or if it has a signature that doesn't match
+     * a dependency. Valid compilation units will be added to cachedUnits and the unit cache, and
+     * their types will be added to allValidClasses. Invalid compilation units will be removed.</p>
+     *
+     * <p>I/O: serializes the AST of each Java type to DiskCache. (This happens even if the
+     * compilation unit is later dropped.) If we're using the persistent unit cache, each valid
+     * unit will also be serialized to the gwt-unitcache file. (As a result, each AST will be
+     * copied there from the DiskCache.) A new persistent unit cache file will be created
+     * each time compile() is called (if there's at least one valid unit) and the entire cache
+     * will be rewritten to disk every {@link PersistentUnitCache#CACHE_FILE_THRESHOLD} files.</p>
+     *
+     * <p>This function won't report errors in invalid source files unless suppressErrors is false.
+     * Instead, a summary giving the number of invalid files will be logged.</p>
+     *
+     * <p>If the JDT compiler aborts, logs an error and throws UnableToCompleteException. (This
+     * doesn't happen for normal compile errors.)</p>
+     */
     Collection<CompilationUnit> compile(TreeLogger logger,
         Collection<CompilationUnitBuilder> builders,
         Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType,
-        boolean suppressErrors) {
+        boolean suppressErrors) throws UnableToCompleteException {
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
@@ -245,7 +273,7 @@ public class CompilationStateBuilder {
         Event jdtCompilerEvent = SpeedTracerLogger.start(eventType);
         long compilationStartNanos = System.nanoTime();
         try {
-          compiler.doCompile(builders);
+          compiler.doCompile(branch, builders);
         } finally {
           jdtCompilerEvent.end();
         }
@@ -372,17 +400,24 @@ public class CompilationStateBuilder {
     }
   }
 
-  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources) {
+  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources)
+      throws UnableToCompleteException {
     return buildFrom(logger, resources, null, false);
   }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate) {
+      AdditionalTypeProviderDelegate delegate) throws UnableToCompleteException {
     return buildFrom(logger, resources, delegate, false);
   }
 
+  /**
+   * Compiles the given source files and adds them to the CompilationState.
+   * See {@link CompileMoreLater#compile} for details.
+   * @throws UnableToCompleteException if the compiler aborts (not a normal compile error).
+   */
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {
+      AdditionalTypeProviderDelegate delegate, boolean suppressErrors)
+      throws UnableToCompleteException {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
       return instance.doBuildFrom(logger, resources, delegate, suppressErrors);
@@ -416,7 +451,8 @@ public class CompilationStateBuilder {
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate compilerDelegate, boolean suppressErrors) {
+      AdditionalTypeProviderDelegate compilerDelegate, boolean suppressErrors)
+    throws UnableToCompleteException {
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
@@ -467,7 +503,7 @@ public class CompilationStateBuilder {
   }
 
   public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      boolean suppressErrors) {
+      boolean suppressErrors) throws UnableToCompleteException {
     return doBuildFrom(logger, resources, null, suppressErrors);
   }
 
@@ -478,7 +514,7 @@ public class CompilationStateBuilder {
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
       Collection<GeneratedUnit> generatedUnits, CompileMoreLater compileMoreLater,
-      boolean suppressErrors) {
+      boolean suppressErrors) throws UnableToCompleteException {
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();

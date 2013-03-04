@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac.testing;
 
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -84,7 +85,12 @@ public class GeneratorContextBuilder {
   public GeneratorContext buildGeneratorContext() {
     // TODO: Add ability to add property values later and add them to this
     // context.
-    return new StandardGeneratorContext(buildCompilationState(), null, null, null, false);
+    try {
+      return new StandardGeneratorContext(buildCompilationState(), null, null, null, false);
+    } catch (UnableToCompleteException e) {
+      // TODO: change signature and fix callers (looks like it's just tests)
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -96,9 +102,9 @@ public class GeneratorContextBuilder {
     this.treeLogger = treeLogger;
   }
 
-  private CompilationState buildCompilationState() {
+  private CompilationState buildCompilationState() throws UnableToCompleteException {
     TreeLogger logger = treeLogger != null ? treeLogger : createLogger();
-    return new CompilationStateBuilder().doBuildFrom(logger, resources, null, false);
+      return new CompilationStateBuilder().doBuildFrom(logger, resources, null, false);
   }
 
   private TreeLogger createLogger() {

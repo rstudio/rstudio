@@ -91,7 +91,11 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     rtn.add(new RealJavaResource(Tokenizer3.class));
     rtn.add(new RealJavaResource(Tokenizer4.class));
     rtn.addAll(Arrays.asList(resources));
-    return CompilationStateBuilder.buildFrom(createCompileLogger(), rtn).getTypeOracle();
+    try {
+        return CompilationStateBuilder.buildFrom(createCompileLogger(), rtn).getTypeOracle();
+    } catch (UnableToCompleteException e) {
+        throw new RuntimeException(e);
+    }
   }
 
   public void testCreateNotAnInterface() throws UnableToCompleteException {

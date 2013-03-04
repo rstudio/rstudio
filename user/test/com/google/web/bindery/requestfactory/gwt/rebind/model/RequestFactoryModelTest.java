@@ -208,8 +208,12 @@ public class RequestFactoryModelTest extends TestCase {
       }
     });
 
-    CompilationState state = CompilationStateBuilder.buildFrom(logger,
-        javaResources);
+    CompilationState state;
+    try {
+        state = CompilationStateBuilder.buildFrom(logger, javaResources);
+    } catch (UnableToCompleteException e) {
+        throw new RuntimeException(e);
+    }
 
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);

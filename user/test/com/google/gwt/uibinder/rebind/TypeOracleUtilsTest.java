@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -214,7 +213,7 @@ public class TypeOracleUtilsTest extends TestCase {
   }
 
   @Override
-  protected void setUp() throws NotFoundException {
+  protected void setUp() throws Exception {
     Set<Resource> resources = new HashSet<Resource>();
     resources.addAll(Arrays.asList(JavaResourceBase.getStandardResources()));
     resources.add(FOO);

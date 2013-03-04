@@ -81,8 +81,7 @@ public class StandardGeneratorContextTest extends TestCase {
 
   private final ArtifactSet artifactSet = new ArtifactSet();
   private final StandardGeneratorContext genCtx;
-  private final CompilationState mockCompilationState = CompilationStateBuilder.buildFrom(
-      TreeLogger.NULL, Collections.<Resource> emptySet());
+  private final CompilationState mockCompilationState;
   private final TreeLogger mockLogger = TreeLogger.NULL;
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
   /**
@@ -92,6 +91,12 @@ public class StandardGeneratorContextTest extends TestCase {
   private final List<File> toDelete = new ArrayList<File>();
 
   public StandardGeneratorContextTest() {
+    try {
+      mockCompilationState =
+          CompilationStateBuilder.buildFrom(TreeLogger.NULL, Collections.<Resource>emptySet());
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(e);
+    }
     genCtx = new StandardGeneratorContext(mockCompilationState,
         new MockModuleDef(), null, artifactSet, false);
     genCtx.setPropertyOracle(mockPropOracle);
@@ -140,8 +145,7 @@ public class StandardGeneratorContextTest extends TestCase {
   /**
    * Tests that calling commit a second time on the same OutputStream throws an
    * exception. Note that this behavior should follow the same basic code path
-   * attempting to commit an unknown OutputStream, as in
-   * {@link #testTryCreateResource_commitWithUnknownStream()}.
+   * attempting to commit an unknown OutputStream.
    */
   public void testTryCreateResource_commitCalledTwice()
       throws UnableToCompleteException, IOException {

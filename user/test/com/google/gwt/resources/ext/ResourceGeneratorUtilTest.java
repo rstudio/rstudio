@@ -48,7 +48,7 @@ public class ResourceGeneratorUtilTest extends TestCase {
   JMethod voidMethod;
 
   @Override
-  public void setUp() {
+  public void setUp() throws Exception {
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
         System.err));
     logger.setMaxDetail(TreeLogger.ERROR);
