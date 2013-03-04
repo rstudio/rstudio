@@ -127,18 +127,16 @@ std::string revealLink(const std::string& path,
 }
 
 
-std::string mathjaxIfRequired(const std::string& contents)
+std::string mathjaxRemote()
 {
-   if (markdown::isMathJaxRequired(contents))
-      return resourceFiles().get("presentation/mathjax.html");
-   else
-      return std::string();
+   return resourceFiles().get("presentation/mathjax.html");
 }
 
-std::string mathjaxLocal(const std::string& mathjax)
+
+std::string mathjaxLocal()
 {
    return boost::algorithm::replace_first_copy(
-        mathjax,
+        mathjaxRemote(),
         "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
         "mathjax");
 }
@@ -391,58 +389,84 @@ bool renderPresentation(
    return true;
 }
 
-/*
-void standalone()
+typedef boost::function<void(const std::string&,
+                             std::map<std::string,std::string>*)> VarSource;
+
+void publishToRPubsVars(const std::string& slides,
+                        std::map<std::string,std::string>* pVars)
 {
-   // generate standalone version
+   // webfonts w/ remote url
+   setRemoteWebFonts(pVars);
 
-  // embedded versions of reveal assets
-  const char * const kMediaPrint = "media=\"print\"";
-  vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
-                                             kMediaPrint);
-  vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
-  vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
-  vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
-  vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
-
-  // webfonts w/ remote url
-  setRemoteWebFonts(&vars);
-
-  // mathjax w/ remote url
-  vars["mathjax"] = mathjaxIfRequired(slides);
-
-  // no IDE interaction
-  vars["slide_commands"] = "";
-  vars["slides_js"] = "";
-  vars["init_commands"] = "";
-
-  // width and height (these are the reveal defaults)
-  vars["reveal_width"] = "960";
-  vars["reveal_height"] = "700";
-
-  // use transitions for standalone
-  vars["reveal_transition"] = slideDeck.transition();
-
-  std::istringstream templateStream(presentationTemplate);
-  html_utils::Base64ImageFilter imageFilter(dirPath);
-  FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
-  boost::shared_ptr<std::ostream> pOfs;
-  Error error = htmlPath.open_w(&pOfs);
-  if (error)
-  {
-     pResponse->setError(error);
-     return;
-  }
-  pOfs->exceptions(std::istream::failbit | std::istream::badbit);
-  boost::iostreams::filtering_ostream standaloneStream ;
-  text::TemplateFilter standaloneTemplateFilter(vars);
-  standaloneStream.push(standaloneTemplateFilter);
-  standaloneStream.push(imageFilter);
-  standaloneStream.push(*pOfs);
-  boost::iostreams::copy(templateStream, standaloneStream, 128);
-
+   // mathjax w/ remote url
+   std::map<std::string,std::string>& vars = *pVars;
+   if (markdown::isMathJaxRequired(slides))
+      vars["mathjax"] = mathjaxRemote();
+   else
+      vars["mathjax"] = "";
 }
-*/
+
+bool createStandalonePresentation(const FilePath& targetFile,
+                                  const VarSource& varSource,
+                                  std::string* pErrMsg)
+{
+   // read presentation
+   presentation::SlideDeck slideDeck;
+   std::string slides, initCommands, slideCommands;
+   std::map<std::string,std::string> vars;
+   std::string errMsg;
+   if (!readPresentation(&slideDeck,
+                         &slides,
+                         &initCommands,
+                         &slideCommands,
+                         &vars,
+                         pErrMsg))
+   {
+      return false;
+   }
+
+   // embedded versions of reveal assets
+   const char * const kMediaPrint = "media=\"print\"";
+   vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
+                                              kMediaPrint);
+   vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
+   vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
+   vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
+   vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
+   // call var source hook function
+   varSource(slides, &vars);
+
+   // no IDE interaction
+   vars["slide_commands"] = "";
+   vars["slides_js"] = "";
+   vars["init_commands"] = "";
+
+   // width and height (these are the reveal defaults)
+   vars["reveal_width"] = "960";
+   vars["reveal_height"] = "700";
+
+   // use transitions for standalone
+   vars["reveal_transition"] = slideDeck.transition();
+
+   // target file stream
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = targetFile.open_w(&pOfs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      *pErrMsg = error.summary();
+      return false;
+   }
+
+   // create image filter
+   FilePath dirPath = presentation::state::directory();
+   std::vector<boost::iostreams::regex_filter> filters;
+   filters.push_back(html_utils::Base64ImageFilter(dirPath));
+
+   // render presentation
+   return renderPresentation(vars, filters, *pOfs, &errMsg);
+}
 
 
 void handlePresentationRootRequest(const std::string& path,
@@ -484,7 +508,10 @@ void handlePresentationRootRequest(const std::string& path,
    setLocalWebFonts(&vars);
 
    // mathjax local
-   vars["mathjax"] = mathjaxLocal(vars["mathjax"]);
+   if (markdown::isMathJaxRequired(slides))
+      vars["mathjax"] = mathjaxLocal();
+   else
+      vars["mathjax"] = "";
 
    // javascript supporting IDE interaction
    vars["slide_commands"] = slideCommands;
@@ -563,7 +590,10 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
    vars["title"] = html_utils::defaultTitle(helpDoc);
    vars["styles"] = resourceFiles().get("presentation/helpdoc.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
-   vars["mathjax"] = mathjaxIfRequired(helpDoc);
+   if (markdown::isMathJaxRequired(helpDoc))
+      vars["mathjax"] = mathjaxLocal();
+   else
+      vars["mathjax"] = "";
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
    pResponse->setNoCacheHeaders();
@@ -744,69 +774,13 @@ void handlePresentationHelpRequest(const core::http::Request& request,
 
 SEXP rs_createStandalonePresentation()
 {
-   try
+   FilePath dirPath = presentation::state::directory();
+   FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
+
+   std::string errMsg;
+   if (!createStandalonePresentation(htmlPath, publishToRPubsVars, &errMsg))
    {
-      // read presentation
-      presentation::SlideDeck slideDeck;
-      std::string slides, initCommands, slideCommands;
-      std::map<std::string,std::string> vars;
-      std::string errMsg;
-      if (!readPresentation(&slideDeck,
-                            &slides,
-                            &initCommands,
-                            &slideCommands,
-                            &vars,
-                            &errMsg))
-      {
-         throw r::exec::RErrorException(errMsg);
-      }
-
-      // embedded versions of reveal assets
-      const char * const kMediaPrint = "media=\"print\"";
-      vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
-                                                 kMediaPrint);
-      vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
-      vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
-      vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
-      vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
-
-      // webfonts w/ remote url
-      setRemoteWebFonts(&vars);
-
-      // mathjax w/ remote url
-      vars["mathjax"] = mathjaxIfRequired(slides);
-
-      // no IDE interaction
-      vars["slide_commands"] = "";
-      vars["slides_js"] = "";
-      vars["init_commands"] = "";
-
-      // width and height (these are the reveal defaults)
-      vars["reveal_width"] = "960";
-      vars["reveal_height"] = "700";
-
-      // use transitions for standalone
-      vars["reveal_transition"] = slideDeck.transition();
-
-      // target file stream
-      FilePath dirPath = presentation::state::directory();
-      FilePath htmlPath = dirPath.complete(dirPath.stem() + ".html");
-      boost::shared_ptr<std::ostream> pOfs;
-      Error error = htmlPath.open_w(&pOfs);
-      if (error)
-         throw r::exec::RErrorException(r::endUserErrorMessage(error));
-
-      // create image filter
-      std::vector<boost::iostreams::regex_filter> filters;
-      filters.push_back(html_utils::Base64ImageFilter(dirPath));
-
-      // render presentation
-      if (!renderPresentation(vars, filters, *pOfs, &errMsg))
-         throw r::exec::RErrorException(errMsg);
-   }
-   catch(r::exec::RErrorException& e)
-   {
-      r::exec::error(e.message());
+      module_context::consoleWriteError(errMsg + "\n");
    }
 
    return R_NilValue;

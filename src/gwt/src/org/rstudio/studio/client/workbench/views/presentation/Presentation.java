@@ -195,6 +195,24 @@ public class Presentation extends BasePresenter
    }
    
    @Handler
+   void onPresentationViewInBrowser()
+   {
+      
+   }
+   
+   @Handler
+   void onPresentationSaveAsStandalone()
+   {
+      
+   }
+   
+   @Handler
+   void onPresentationPublishToRpubs()
+   {
+      
+   }
+   
+   @Handler
    void onRefreshPresentation()
    {
       if (Event.getCurrentEvent().getShiftKey())

@@ -37,8 +37,11 @@ import org.rstudio.core.client.widget.FullscreenPopupPanel;
 import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 
 import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -65,8 +68,20 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       toolbar.addLeftSeparator();
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
       getSlideMenu().setDropDownVisible(false);
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
+     
+      // More
+      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
+      moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
+      moreMenu.addSeparator();
+      moreMenu.addItem(commands_.presentationPublishToRpubs().createMenuItem(false));
       
-      toolbar.addRightWidget(commands_.presentationFullscreen().createToolbarButton());
+      ToolbarButton moreButton = new ToolbarButton("More",
+                                                   StandardIcons.INSTANCE.more_actions(),
+                                                   moreMenu);
+      toolbar.addRightWidget(moreButton);
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
         

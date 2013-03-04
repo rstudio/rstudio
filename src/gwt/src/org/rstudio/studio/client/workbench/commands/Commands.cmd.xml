@@ -915,7 +915,16 @@ well as menu structures (for main menu and popup menus).
    <cmd id="presentationNext"
         desc="Go to the next slide"/>
    <cmd id="presentationPrev"
-        desc="Go to the previous slide"/>          
+        desc="Go to the previous slide"/>      
+   <cmd id="presentationViewInBrowser"
+        menuLabel="_View in Web Browser"
+        desc="View the presentation in an external web browser"/>
+   <cmd id="presentationSaveAsStandalone"
+        menuLabel="_Save As Standalone..."
+        desc="Save the presentation as a standalone html file"/>
+   <cmd id="presentationPublishToRpubs"
+        menuLabel="Publish to RPubs..."
+        desc="Publish the presentation to RPubs"/>         
      
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"
