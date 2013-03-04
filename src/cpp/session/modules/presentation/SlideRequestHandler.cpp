@@ -127,32 +127,30 @@ std::string revealLink(const std::string& path,
 }
 
 
-std::string mathjaxRemote()
+std::string remoteMathjax()
 {
    return resourceFiles().get("presentation/mathjax.html");
 }
 
 
-std::string mathjaxLocal()
+std::string localMathjax()
 {
    return boost::algorithm::replace_first_copy(
-        mathjaxRemote(),
+        remoteMathjax(),
         "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
         "mathjax");
 }
 
-void setLocalWebFonts(std::map<std::string,std::string>* pVars)
+std::string localWebFonts()
 {
-   (*pVars)["news_cycle_webfont_url"] = "revealjs/fonts/NewsCycle.css";
-   (*pVars)["lato_webfont_url"] = "revealjs/fonts/Lato.css";
+   return "@import url('revealjs/fonts/NewsCycle.css');\n"
+          "@import url('revealjs/fonts/Lato.css');";
 }
 
-void setRemoteWebFonts(std::map<std::string,std::string>* pVars)
+std::string remoteWebFonts()
 {
-   (*pVars)["news_cycle_webfont_url"] =
-     "https://fonts.googleapis.com/css?family=News+Cycle:400,700";
-   (*pVars)["lato_webfont_url"] =
-     "https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic";
+   return "@import url('https://fonts.googleapis.com/css?family=News+Cycle:400,700');\n"
+          "@import url('https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic');";
 }
 
 bool hasKnitrVersion1()
@@ -395,13 +393,14 @@ typedef boost::function<void(const std::string&,
 void publishToRPubsVars(const std::string& slides,
                         std::map<std::string,std::string>* pVars)
 {
+   std::map<std::string,std::string>& vars = *pVars;
+
    // webfonts w/ remote url
-   setRemoteWebFonts(pVars);
+   vars["google_webfonts"] = remoteWebFonts();
 
    // mathjax w/ remote url
-   std::map<std::string,std::string>& vars = *pVars;
    if (markdown::isMathJaxRequired(slides))
-      vars["mathjax"] = mathjaxRemote();
+      vars["mathjax"] = remoteMathjax();
    else
       vars["mathjax"] = "";
 }
@@ -505,11 +504,11 @@ void handlePresentationRootRequest(const std::string& path,
    vars["reveal_print_pdf_css"]  = "";
 
    // webfonts local
-   setLocalWebFonts(&vars);
+   vars["google_webfonts"] = localWebFonts();
 
    // mathjax local
    if (markdown::isMathJaxRequired(slides))
-      vars["mathjax"] = mathjaxLocal();
+      vars["mathjax"] = localMathjax();
    else
       vars["mathjax"] = "";
 
@@ -591,7 +590,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
    vars["styles"] = resourceFiles().get("presentation/helpdoc.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    if (markdown::isMathJaxRequired(helpDoc))
-      vars["mathjax"] = mathjaxLocal();
+      vars["mathjax"] = localMathjax();
    else
       vars["mathjax"] = "";
    vars["content"] = helpDoc;
