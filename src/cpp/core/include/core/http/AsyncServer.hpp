@@ -284,7 +284,7 @@ private:
          
          // convert to cannonical HttpConnection
          boost::shared_ptr<AsyncConnection> pAsyncConnection =
-             boost::shared_static_cast<AsyncConnection>(pConnection);
+             boost::static_pointer_cast<AsyncConnection>(pConnection);
 
          // call the appropriate handler to generate a response
          std::string uri = pRequest->uri();

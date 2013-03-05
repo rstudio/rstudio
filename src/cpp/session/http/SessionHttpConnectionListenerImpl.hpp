@@ -258,7 +258,7 @@ private:
    {
       // convert to cannonical HttpConnection
       boost::shared_ptr<HttpConnection> ptrHttpConnection =
-            boost::shared_static_cast<HttpConnection>(ptrConnection);
+            boost::static_pointer_cast<HttpConnection>(ptrConnection);
 
       if (!authenticate(ptrHttpConnection))
       {

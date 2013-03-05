@@ -119,7 +119,7 @@ private:
       boost::shared_ptr<AsyncClient<boost::asio::windows::stream_handle> >
                                     ptrShared = shared_from_this();
 
-      return boost::shared_static_cast<NamedPipeAsyncClient>(ptrShared);
+      return boost::static_pointer_cast<NamedPipeAsyncClient>(ptrShared);
    }
 
 private:
