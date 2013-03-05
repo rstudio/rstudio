@@ -244,6 +244,15 @@ public class Widget extends UIObject implements EventListener, HasAttachHandlers
     }
   }
 
+  @Override
+  public void unsinkEvents(int eventBitsToRemove) {
+    if (isOrWasAttached()) {
+      super.unsinkEvents(eventBitsToRemove);
+    } else {
+      eventsToSink &= ~eventBitsToRemove;
+    }
+  }
+
   /**
    * Creates the {@link HandlerManager} used by this Widget. You can override
    * this method to create a custom {@link HandlerManager}.

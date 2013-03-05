@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Event;
 
 /**
  * Tests the basic widget infrastructure.
@@ -189,5 +190,24 @@ public class WidgetTest extends GWTTestCase {
     }
     assertFalse(w.isAttached());
     assertNull(w.getParent());
+  }
+
+  public void testUnsinkEventsIfWidgetHasNotBeenAttachedYet() {
+    Button button = new Button();
+    button.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        fail("click event should not fire");
+      }
+    });
+
+    // unsink the event before attaching
+    button.unsinkEvents(Event.ONCLICK);
+    RootPanel.get().add(button);
+
+    button.click();
+    // tests share the DOM
+    // we need to clean up
+    button.removeFromParent();
   }
 }
