@@ -494,17 +494,48 @@ void saveAsStandaloneVars(const FilePath& targetFile,
 }
 
 
-void viewInBrowserVars(const FilePath& targetFile,
-                       const std::string& slides,
+void viewInBrowserVars(const std::string& slides,
                        std::map<std::string,std::string>* pVars)
 {
-   // for server: use local web fonts and local mathjax
-   // (okay because we serve using special view_presentation url)
+   std::map<std::string,std::string>& vars = *pVars;
 
-   // may require a .. dereference
+   vars["google_webfonts"] = localWebFonts();
 
+   // mathjax w/ local
+   if (markdown::isMathJaxRequired(slides))
+      vars["mathjax"] = localMathjax();
+   else
+      vars["mathjax"] = "";
 }
 
+
+void localRevealVars(std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
+   vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
+   vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
+   vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
+}
+
+void externalBrowserVars(const SlideDeck& slideDeck,
+                         std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   vars["slide_commands"] = "";
+   vars["slides_js"] = "";
+   vars["init_commands"] = "";
+
+   // width and height (these are the reveal defaults)
+   vars["reveal_width"] = "960";
+   vars["reveal_height"] = "700";
+
+   // use transitions for standalone
+   vars["reveal_transition"] = slideDeck.transition();
+
+}
 
 bool createStandalonePresentation(const FilePath& targetFile,
                                   const VarSource& varSource,
@@ -538,16 +569,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    varSource(targetFile, slides, &vars);
 
    // no IDE interaction
-   vars["slide_commands"] = "";
-   vars["slides_js"] = "";
-   vars["init_commands"] = "";
-
-   // width and height (these are the reveal defaults)
-   vars["reveal_width"] = "960";
-   vars["reveal_height"] = "700";
-
-   // use transitions for standalone
-   vars["reveal_transition"] = slideDeck.transition();
+   externalBrowserVars(slideDeck, &vars);
 
    // target file stream
    boost::shared_ptr<std::ostream> pOfs;
@@ -566,6 +588,20 @@ bool createStandalonePresentation(const FilePath& targetFile,
 
    // render presentation
    return renderPresentation(vars, filters, *pOfs, &errMsg);
+}
+
+FilePath viewInBrowserPath()
+{
+   static FilePath previewPath;
+   if (previewPath.empty())
+   {
+      previewPath = module_context::tempFile("view", "dir");
+      Error error = previewPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   return previewPath.complete("presentation.html");
 }
 
 
@@ -596,10 +632,7 @@ void handlePresentationRootRequest(const std::string& path,
                                           "controls preload=\"none\"");
 
    // linked versions of reveal assets
-   vars["reveal_css"] = revealLink("revealjs/css/reveal.css");
-   vars["reveal_theme_css"] = revealLink("revealjs/css/theme/simple.css");
-   vars["reveal_head_js"] = revealLink("revealjs/lib/js/head.min.js");
-   vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
+   localRevealVars(&vars);
 
    // no print css for qtwebkit
    vars["reveal_print_pdf_css"]  = "";
@@ -749,6 +782,55 @@ void handleRangeRequest(const FilePath& targetFile,
 
 }
 
+void handlePresentationViewInBrowserRequest(const http::Request& request,
+                                            http::Response* pResponse)
+{
+   // read presentation
+   presentation::SlideDeck slideDeck;
+   std::string slides, initCommands, slideCommands;
+   std::map<std::string,std::string> vars;
+   std::string errMsg;
+   if (!readPresentation(&slideDeck,
+                         &slides,
+                         &initCommands,
+                         &slideCommands,
+                         &vars,
+                         &errMsg))
+   {
+      pResponse->setError(http::status::InternalServerError,
+                          errMsg);
+      return;
+   }
+
+   // linked versions of reveal assets
+   localRevealVars(&vars);
+
+   // link to reveal print css
+   const char * const kMediaPrint = "media=\"print\"";
+   vars["reveal_print_pdf_css"] = revealLink("revealjs/css/print/pdf.css",
+                                              kMediaPrint);
+
+   // webfonts local
+   viewInBrowserVars(slides, &vars);
+
+   // external browser vars
+   externalBrowserVars(slideDeck, &vars);
+
+   // render to output stream
+   std::stringstream previewOutputStream;
+   std::vector<boost::iostreams::regex_filter> filters;
+   filters.push_back(linkFilter());
+   if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
+   {
+      pResponse->setNoCacheHeaders();
+      pResponse->setBody(previewOutputStream);
+   }
+   else
+   {
+      pResponse->setError(http::status::InternalServerError, errMsg);
+   }
+}
+
 } // anonymous namespace
 
 
@@ -769,6 +851,12 @@ void handlePresentationPaneRequest(const http::Request& request,
    if (path.empty() || (path == "zoom"))
    {
       handlePresentationRootRequest(path, pResponse);
+   }
+
+   // special handling for view in browser
+   else if (boost::algorithm::starts_with(path, "view"))
+   {
+      handlePresentationViewInBrowserRequest(request, pResponse);
    }
 
    // special handling for reveal.js assets
@@ -871,37 +959,18 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
-namespace {
-
-FilePath webPreviewPath()
-{
-   static FilePath previewPath;
-   if (previewPath.empty())
-   {
-      previewPath = module_context::tempFile("view", "dir");
-      Error error = previewPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return previewPath;
-}
-
-} // anonymous namespace
-
 SEXP rs_createStandalonePresentation()
 {
-   FilePath previewPath = webPreviewPath();
-   FilePath htmlPath = previewPath.complete("presentation.html");
-
    std::string errMsg;
-   if (!createStandalonePresentation(htmlPath, saveAsStandaloneVars, &errMsg))
+   if (!createStandalonePresentation(viewInBrowserPath(),
+                                     saveAsStandaloneVars,
+                                     &errMsg))
    {
       module_context::consoleWriteError(errMsg + "\n");
    }
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(htmlPath.absolutePath(), &rProtect);
+   return r::sexp::create(viewInBrowserPath().absolutePath(), &rProtect);
 }
 
 
