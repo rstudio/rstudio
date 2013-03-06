@@ -70,7 +70,7 @@ public class RPCSuite {
     GWTTestSuite suite = new GWTTestSuite(
         "Test for com.google.gwt.user.client.rpc");
 
-    // Non GWTTestCases: see RpcSuiteNoBrowser
+    // Non GWTTestCases: see RpcJreSuite
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);

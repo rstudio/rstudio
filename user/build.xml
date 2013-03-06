@@ -23,15 +23,15 @@
   <property name="test.timeout" value="5" />
   <property name="emma.merged.out" value="${junit.out}/emma-coverage" />
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}" />
-  <property name="gwt.junit.testcase.web.excludes" value="" />
+  <property name="gwt.junit.testcase.web.excludes" value="**/*JreSuite.class" />
 
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}" />
-  <property name="gwt.junit.testcase.dev.excludes" value="" />
+  <property name="gwt.junit.testcase.dev.excludes" value="**/*JreSuite.class" />
 
   <property name="gwt.tck.testcase.dev.includes" value="com/google/gwt/validation/tck/**/*GwtSuite.class" />
   <property name="gwt.tct.testcase.dev.excludes" value="" />
 
-  <property name="gwt.nongwt.testcase.includes" value="**/*SuiteNoBrowser.class" />
+  <property name="gwt.nongwt.testcase.includes" value="**/*JreSuite.class" />
   <property name="gwt.nongwt.testcase.excludes" value="" />
 
   <!--

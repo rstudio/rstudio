@@ -40,7 +40,7 @@ import junit.framework.TestSuite;
 /**
  * RPC tests that don't extend GWTTestCase.
  */
-public class RpcSuiteNoBrowser {
+public class RpcJreSuite {
 
   static {
     /*
