@@ -865,7 +865,7 @@ void handlePresentationPaneRequest(const http::Request& request,
       path = http::util::pathAfterPrefix(request, "/presentation/revealjs/");
       FilePath resPath = options().rResourcesPath().complete("presentation");
       FilePath filePath = resPath.complete("revealjs/" + path);
-      pResponse->setFile(filePath, request);
+      pResponse->setCacheableFile(filePath, request);
    }
 
    // special handling for mathjax assets
@@ -873,7 +873,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    {
       FilePath filePath =
             session::options().mathjaxPath().parent().childPath(path);
-      pResponse->setFile(filePath, request);
+      pResponse->setCacheableFile(filePath, request);
    }
 
 
@@ -891,7 +891,7 @@ void handlePresentationPaneRequest(const http::Request& request,
          pResponse->addHeader("Accept-Ranges", "bytes");
 
          // return the file
-         pResponse->setFile(targetFile, request);
+         pResponse->setCacheableFile(targetFile, request);
       }
    }
 }
@@ -934,7 +934,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // just a stock file
       else
       {
-         pResponse->setFile(filePath, request);
+         pResponse->setCacheableFile(filePath, request);
       }
    }
 
@@ -955,7 +955,8 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                                      "/help/presentation/");
 
       // serve the file back
-      pResponse->setFile(s_presentationHelpDir.complete(path), request);
+      pResponse->setCacheableFile(s_presentationHelpDir.complete(path),
+                                  request);
    }
 }
 
