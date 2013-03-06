@@ -788,9 +788,14 @@ public class JUnitShell extends DevMode {
   private boolean developmentMode = true;
 
   /**
-   * If true, no launches have yet been successful.
+   * Used to make sure we don't start the runStyle more than once.
    */
-  private boolean firstLaunch = true;
+  private boolean runStyleStarted;
+
+  /**
+   * If true, we haven't started all the clients yet. (Used for manual mode.)
+   */
+  private boolean waitingForClients = true;
 
   /**
    * If true, the last attempt to launch failed.
@@ -945,17 +950,18 @@ public class JUnitShell extends DevMode {
   protected boolean notDone() {
     int activeClients = messageQueue.getNumClientsRetrievedTest(currentTestInfo);
     int expectedClients = messageQueue.getNumClients();
-    if (firstLaunch && runStyle instanceof RunStyleManual) {
+    if (runStyle instanceof RunStyleManual && waitingForClients) {
       String[] newClients = messageQueue.getNewClients();
       int printIndex = activeClients - newClients.length + 1;
       for (String newClient : newClients) {
         System.out.println(printIndex + " - " + newClient);
         ++printIndex;
       }
-      if (activeClients != expectedClients) {
+      if (activeClients < expectedClients) {
         // Wait forever for first contact; user-driven.
         return true;
       }
+      waitingForClients = false;
     }
 
     // Limit permutations after all clients have connected.
@@ -983,7 +989,6 @@ public class JUnitShell extends DevMode {
             "Too many clients: expected " + expectedClients + ", found "
                 + activeClients);
       }
-      firstLaunch = false;
 
       /*
        * It's now safe to release any reference to the last module since all
@@ -1311,7 +1316,7 @@ public class JUnitShell extends DevMode {
     compileStrategy.maybeAddTestBlockForCurrentTest(testCase, batchingStrategy);
 
     try {
-      if (firstLaunch) {
+      if (!runStyleStarted) {
         runStyle.launchModule(currentModule.getName());
       }
     } catch (UnableToCompleteException e) {
@@ -1319,6 +1324,7 @@ public class JUnitShell extends DevMode {
       testResult.addError(testCase, new JUnitFatalLaunchException(e));
       return;
     }
+    runStyleStarted = true;
 
     boolean mustRetry = mustRetry(numTries);
     // Wait for test to complete
