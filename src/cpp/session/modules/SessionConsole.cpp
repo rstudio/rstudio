@@ -46,6 +46,7 @@ bool suppressOutput(const std::string& output)
    const char * const kSelectInterrupted = "select: Interrupted system call";
    const char * const kNotAGitRepo = "Not a git repository";
    const char * const kIsOutsideRepo = "is outside repository";
+   const char * const kCGContextError = "<Error>: CGContext";
 
    // check tokens
    if (boost::algorithm::contains(output, kGlibWarningToken) ||
@@ -53,7 +54,8 @@ bool suppressOutput(const std::string& output)
        boost::algorithm::contains(output, kAutoreleaseNoPool) ||
        boost::algorithm::contains(output, kSelectInterrupted) ||
        boost::algorithm::contains(output, kNotAGitRepo) ||
-       boost::algorithm::contains(output, kIsOutsideRepo))
+       boost::algorithm::contains(output, kIsOutsideRepo) ||
+       boost::algorithm::contains(output, kCGContextError))
    {
       return true;
    }
