@@ -19,6 +19,7 @@ import java.util.Iterator;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -26,26 +27,36 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
@@ -89,6 +100,8 @@ public class Presentation extends BasePresenter
    public Presentation(Display display, 
                        PresentationServerOperations server,
                        GlobalDisplay globalDisplay,
+                       FileDialogs fileDialogs,
+                       RemoteFileSystemContext fileSystemContext,
                        EventBus eventBus,
                        FileTypeRegistry fileTypeRegistry,
                        Session session,
@@ -99,6 +112,8 @@ public class Presentation extends BasePresenter
       view_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      fileDialogs_ = fileDialogs;
+      fileSystemContext_ = fileSystemContext;
       eventBus_ = eventBus;
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -139,6 +154,25 @@ public class Presentation extends BasePresenter
             }
          }
       });
+      
+      new StringStateValue(
+            MODULE_PRESENTATION,
+            KEY_SAVEAS_DIR,
+            ClientState.PERSISTENT,
+            session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(String value)
+         {
+            saveAsStandaloneDir_ = value;
+         }
+
+         @Override
+         protected String getValue()
+         {
+            return saveAsStandaloneDir_;
+         }
+      };
       
       initPresentationCallbacks();
    }
@@ -197,13 +231,91 @@ public class Presentation extends BasePresenter
    @Handler
    void onPresentationViewInBrowser()
    {
-      
+      if (Desktop.isDesktop())
+      {
+         saveAsStandalone(null, 
+                          new NullProgressIndicator(),
+                          new CommandWithArg<String>() {
+            @Override
+            public void execute(String arg)
+            {
+               Desktop.getFrame().showFile(arg);
+            }
+         });
+      }
+      else
+      {
+         globalDisplay_.openWindow(
+                           server_.getApplicationURL("presentation/view"));
+      }
    }
    
    @Handler
    void onPresentationSaveAsStandalone()
    {
-      
+      FileSystemItem defaultDir = saveAsStandaloneDir_ != null ?
+            FileSystemItem.createDir(saveAsStandaloneDir_) :
+            FileSystemItem.home();
+       
+      fileDialogs_.saveFile(
+         "Save Presentation As", 
+          fileSystemContext_, 
+          defaultDir, 
+          ".html",
+          false, 
+          new ProgressOperationWithInput<FileSystemItem>(){
+
+            @Override
+            public void execute(final FileSystemItem targetFile,
+                                ProgressIndicator indicator)
+            {
+               if (targetFile == null)
+               {
+                  indicator.onCompleted();
+                  return;
+               }
+               
+               indicator.onProgress("Saving Presentation...");
+   
+               saveAsStandalone(targetFile.getPath(), 
+                                indicator,
+                                new CommandWithArg<String>() {
+
+                  @Override
+                  public void execute(String arg)
+                  {
+                     saveAsStandaloneDir_ = targetFile.getParentPathString();
+                     session_.persistClientState();
+                  }         
+               });    
+            }
+      }); 
+   }
+   
+   private void saveAsStandalone(String targetFile, 
+                                 final ProgressIndicator indicator,
+                                 final CommandWithArg<String> onSuccess)
+   {
+      server_.createStandalonePresentation(
+            targetFile, new ServerRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String savedFile)
+               {
+                  indicator.onCompleted();
+                  onSuccess.execute(savedFile);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  String message = error.getUserMessage();
+                  JSONString userMessage = error.getClientInfo().isString();
+                  if (userMessage != null)
+                     message = userMessage.stringValue();
+
+                  indicator.onError(message);
+               }
+            });
    }
    
    @Handler
@@ -211,6 +323,8 @@ public class Presentation extends BasePresenter
    {
       
    }
+   
+   
    
    @Handler
    void onRefreshPresentation()
@@ -576,8 +690,14 @@ public class Presentation extends BasePresenter
    private final EventBus eventBus_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final FileDialogs fileDialogs_;
+   private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
    private PresentationState currentState_ = null;
    private JsArray<SlideNavigationItem> navigationItems_ = null;
    private boolean usingRmd_ = false;
+   
+   private String saveAsStandaloneDir_;
+   private static final String MODULE_PRESENTATION = "presentation";
+   private static final String KEY_SAVEAS_DIR = "saveAsStandaloneDir";
 }

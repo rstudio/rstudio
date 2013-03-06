@@ -956,18 +956,16 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
-SEXP rs_createStandalonePresentation()
+bool savePresentationAsStandalone(core::FilePath* pFilePath,
+                                  std::string* pErrMsg)
 {
-   std::string errMsg;
-   if (!createStandalonePresentation(viewInBrowserPath(),
-                                     saveAsStandaloneVars,
-                                     &errMsg))
-   {
-      module_context::consoleWriteError(errMsg + "\n");
-   }
+   // provide default if necessary
+   if (pFilePath->empty())
+      *pFilePath = viewInBrowserPath();
 
-   r::sexp::Protect rProtect;
-   return r::sexp::create(viewInBrowserPath().absolutePath(), &rProtect);
+   return createStandalonePresentation(*pFilePath,
+                                       saveAsStandaloneVars,
+                                       pErrMsg);
 }
 
 

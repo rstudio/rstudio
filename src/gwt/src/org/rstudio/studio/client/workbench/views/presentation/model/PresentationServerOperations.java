@@ -23,6 +23,10 @@ public interface PresentationServerOperations
    
    void showHelpTopic(String topic, String pkgName) ;
    
+   void createStandalonePresentation(
+                           String targetFile,
+                           ServerRequestCallback<String> requestCallback);
+   
    void setPresentationSlideIndex(int index, 
                               ServerRequestCallback<Void> requestCallback);
    

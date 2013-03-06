@@ -2534,6 +2534,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void createStandalonePresentation(
+                              String targetFile,
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  CREATE_STANDALONE_PRESENTATION, 
+                  StringUtil.notNull(targetFile), 
+                  requestCallback);
+   }
+   
+   @Override
    public void presentationExecuteCode(
                                  String code,
                                  ServerRequestCallback<Void> requestCallback)
@@ -2930,6 +2941,7 @@ public class RemoteServer implements Server
    private static final String RPUBS_UPLOAD = "rpubs_upload";
    private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
+   private static final String CREATE_STANDALONE_PRESENTATION = "create_standalone_presentation";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
    private static final String PRESENTATION_EXECUTE_CODE = "presentation_execute_code";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";

@@ -40,8 +40,6 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
-SEXP rs_createStandalonePresentation();
-
 namespace {
 
 
@@ -165,6 +163,33 @@ Error presentationExecuteCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error createStandalonePresentation(const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
+{
+   std::string pathParam;
+   Error error = json::readParam(request.params, 0, &pathParam);
+   if (error)
+      return error;
+
+   FilePath targetPath;
+   if (!pathParam.empty())
+      targetPath = module_context::resolveAliasedPath(pathParam);
+
+   std::string errMsg;
+   if (savePresentationAsStandalone(&targetPath, &errMsg))
+   {
+      pResponse->setResult(module_context::createAliasedPath(targetPath));
+   }
+   else
+   {
+      pResponse->setError(systemError(boost::system::errc::io_error,
+                                      ERROR_LOCATION),
+                          json::toJsonString(errMsg));
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -189,18 +214,12 @@ Error initialize()
    methodDefShowHelpDoc.numArgs = 1;
    r::routines::addCallMethod(methodDefShowHelpDoc);
 
-   // register rs_createStandalonePresentation
-   R_CallMethodDef methodDefStandalone;
-   methodDefStandalone.name = "rs_createStandalonePresentation" ;
-   methodDefStandalone.fun = (DL_FUNC) rs_createStandalonePresentation;
-   methodDefStandalone.numArgs = 0;
-   r::routines::addCallMethod(methodDefStandalone);
-
    using boost::bind;
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
+      (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))

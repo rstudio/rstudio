@@ -19,6 +19,8 @@
 #include <string>
 
 namespace core {
+   class Error;
+   class FilePath;
    namespace http {
       class Request;
       class Response;
@@ -36,6 +38,9 @@ void handlePresentationPaneRequest(const core::http::Request& request,
 void handlePresentationHelpRequest(const core::http::Request& request,
                                    const std::string& jsCallbacks,
                                    core::http::Response* pResponse);
+
+bool savePresentationAsStandalone(core::FilePath* pFilePath,
+                                  std::string* pErrMsg);
 
 } // namespace presentation
 } // namespace modules
