@@ -102,8 +102,8 @@ std::string revealResource(const std::string& path,
    {
       if (isCss)
       {
-         code = "<link rel=\"stylesheet\" href=\"" + path + "\" "
-                 + extraAttribs + " >";
+         code = "<link rel=\"stylesheet\" type=\"text/css\" href=\""
+                + path + "\" " + extraAttribs + " >";
       }
       else
       {
@@ -557,9 +557,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    }
 
    // embedded versions of reveal assets
-   const char * const kMediaPrint = "media=\"print\"";
-   vars["reveal_print_pdf_css"] = revealEmbed("revealjs/css/print/pdf.css",
-                                              kMediaPrint);
+   vars["reveal_print_css"] = "";
    vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
    vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
    vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
@@ -635,7 +633,7 @@ void handlePresentationRootRequest(const std::string& path,
    localRevealVars(&vars);
 
    // no print css for qtwebkit
-   vars["reveal_print_pdf_css"]  = "";
+   vars["reveal_print_css"]  = "";
 
    // webfonts local
    vars["google_webfonts"] = localWebFonts();
@@ -806,9 +804,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    localRevealVars(&vars);
 
    // link to reveal print css
-   const char * const kMediaPrint = "media=\"print\"";
-   vars["reveal_print_pdf_css"] = revealLink("revealjs/css/print/pdf.css",
-                                              kMediaPrint);
+   vars["reveal_print_css"] = "";
 
    // webfonts local
    viewInBrowserVars(slides, &vars);
