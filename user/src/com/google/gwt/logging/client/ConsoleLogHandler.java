@@ -21,8 +21,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
- * A Handler that prints logs to the window.console - this is used by things
- * like FirebugLite in IE, and Safari debug mode.
+ * A Handler that prints logs to the window.console.
+ * <p>
  * Note we are consciously using 'window' rather than '$wnd' to avoid issues
  * similar to http://code.google.com/p/fbug/issues/detail?id=2914
  */
@@ -49,18 +49,37 @@ public class ConsoleLogHandler extends Handler {
       return;
     }
     String msg = getFormatter().format(record);
-    log(msg);
+    int val = record.getLevel().intValue();
+    if (val >= Level.SEVERE.intValue()) {
+      error(msg);
+    } else if (val >= Level.WARNING.intValue()) {
+      warn(msg);
+    } else if (val >= Level.INFO.intValue()) {
+      info(msg);
+    } else {
+      log(msg);
+    }
   }
 
   private native boolean isSupported() /*-{
     return ((window.console != null) &&
-            (window.console.firebug == null) && 
-            (window.console.log != null) &&
-            (typeof(window.console.log) == 'function'));
+            // See note in FirebugLogHandler
+            (window.console.firebug == null));
+  }-*/;
+
+  private native void error(String message) /*-{
+    window.console.error(message);
+  }-*/;
+
+  private native void warn(String message) /*-{
+    window.console.warn(message);
+  }-*/;
+
+  private native void info(String message) /*-{
+    window.console.info(message);
   }-*/;
 
   private native void log(String message) /*-{
     window.console.log(message);
   }-*/;
-
 }

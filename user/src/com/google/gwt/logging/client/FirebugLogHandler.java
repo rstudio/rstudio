@@ -22,14 +22,30 @@ import java.util.logging.LogRecord;
 
 /**
  * A Handler that prints logs to window.console which is used by Firebug.
+ * <p>
  * Note we are consciously using 'window' rather than '$wnd' to avoid issues
  * similar to http://code.google.com/p/fbug/issues/detail?id=2914
+ * <p>
+ * Note this handler will only be used in old versions of Firebug which expose
+ * their versions in 'window.console.firebug'; newer versions will use the
+ * {@link ConsoleLogHandler} instead. See
+ * http://code.google.com/p/fbug/issues/detail?id=4772
+ * Because of this, this handle will log a warning when initialized.
+ *
+ * @deprecated use {@link ConsoleLogHandler} instead.
  */
+// TODO(t.broyer): make sure to remove the window.console.firebug test in
+// ConsoleLogHandler when we remove FirebugLogHandler. It's only there to
+// avoid double-logging.
+@Deprecated
 public class FirebugLogHandler extends Handler {
-  
+
   public FirebugLogHandler() {
+    if (isSupported()) {
+      warn("FirebugLogHandler is deprecated, use the ConsoleLogHandler instead.");
+    }
     setFormatter(new TextLogFormatter(true));
-    setLevel(Level.ALL);  
+    setLevel(Level.ALL);
   }
 
   @Override
@@ -59,7 +75,7 @@ public class FirebugLogHandler extends Handler {
       error(msg);
     }
   }
-  
+
   private native void debug(String message) /*-{
     window.console.debug(message);
   }-*/;
