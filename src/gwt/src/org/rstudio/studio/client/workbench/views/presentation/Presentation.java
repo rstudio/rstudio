@@ -43,9 +43,11 @@ import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
+import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -86,6 +88,8 @@ public class Presentation extends BasePresenter
       void pauseMedia();
       
       SlideMenu getSlideMenu();
+      
+      String getPresentationTitle();
    }
    
    public interface SlideMenu
@@ -321,7 +325,28 @@ public class Presentation extends BasePresenter
    @Handler
    void onPresentationPublishToRpubs()
    {
-      
+      saveAsStandalone(null, 
+            new NullProgressIndicator(),
+            new CommandWithArg<String>() {
+         @Override
+         public void execute(final String targetFile)
+         {
+            server_.rpubsIsPublished(targetFile, 
+                                     new SimpleRequestCallback<Boolean>() {
+               @Override
+               public void onResponseReceived(Boolean isPublished)
+               {
+                  RPubsUploadDialog dlg = new RPubsUploadDialog(
+                        "Presentation",
+                        view_.getPresentationTitle(),
+                        targetFile,
+                        isPublished);
+                  dlg.showModal();
+               }
+               
+            });
+         }
+      });
    }
    
    

@@ -214,6 +214,12 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       }
    };
    
+   @Override
+   public String getPresentationTitle()
+   {
+      return titleLabel_.getText();
+   }
+   
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationKeydown = $entry(function(e) {

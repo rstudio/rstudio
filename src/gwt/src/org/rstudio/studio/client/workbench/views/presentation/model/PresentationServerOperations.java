@@ -14,10 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.presentation.model;
 
+import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 
-public interface PresentationServerOperations
+public interface PresentationServerOperations extends RPubsServerOperations
 {
    String getApplicationURL(String url);
    
