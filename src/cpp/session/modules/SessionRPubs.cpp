@@ -89,11 +89,12 @@ class RPubsUpload : boost::noncopyable,
                     public boost::enable_shared_from_this<RPubsUpload>
 {
 public:
-   static boost::shared_ptr<RPubsUpload> create(const std::string& title,
+   static boost::shared_ptr<RPubsUpload> create(const std::string& contextId,
+                                                const std::string& title,
                                                 const FilePath& htmlFile,
                                                 bool allowUpdate)
    {
-      boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload());
+      boost::shared_ptr<RPubsUpload> pUpload(new RPubsUpload(contextId));
       pUpload->start(title, htmlFile, allowUpdate);
       return pUpload;
    }
@@ -110,8 +111,8 @@ public:
    }
 
 private:
-   RPubsUpload()
-      : terminationRequested_(false), isRunning_(false)
+   explicit RPubsUpload(const std::string& contextId)
+      : contextId_(contextId), terminationRequested_(false), isRunning_(false)
    {
    }
 
@@ -284,6 +285,7 @@ private:
          saveUploadId(htmlFile_, result.id);
 
       json::Object statusJson;
+      statusJson["contextId"] = contextId_;
       statusJson["id"] = result.id;
       statusJson["continueUrl"] = result.continueUrl;
       statusJson["error"] = result.error;
@@ -324,6 +326,7 @@ private:
    }
 
 private:
+   std::string contextId_;
    FilePath htmlFile_;
    bool terminationRequested_;
    bool isRunning_;
@@ -332,11 +335,12 @@ private:
    FilePath csvOutputFile_;
 };
 
-boost::shared_ptr<RPubsUpload> s_pCurrentUpload;
+std::map<std::string, boost::shared_ptr<RPubsUpload> > s_pCurrentUploads;
 
-bool isUploadRunning()
+bool isUploadRunning(const std::string& contextId)
 {
-   return s_pCurrentUpload && s_pCurrentUpload->isRunning();
+   boost::shared_ptr<RPubsUpload> pCurrentUpload = s_pCurrentUploads[contextId];
+   return pCurrentUpload && pCurrentUpload->isRunning();
 }
 
 Error rpubsIsPublished(const json::JsonRpcRequest& request,
@@ -357,20 +361,27 @@ Error rpubsIsPublished(const json::JsonRpcRequest& request,
 Error rpubsUpload(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   std::string title, htmlFile;
+   std::string contextId, title, htmlFile;
    bool isUpdate;
-   Error error = json::readParams(request.params, &title, &htmlFile, &isUpdate);
+   Error error = json::readParams(request.params,
+                                  &contextId,
+                                  &title,
+                                  &htmlFile,
+                                  &isUpdate);
    if (error)
       return error;
 
-   if (isUploadRunning())
+   if (isUploadRunning(contextId))
    {
       pResponse->setResult(false);
    }
    else
    {
       FilePath filePath = module_context::resolveAliasedPath(htmlFile);
-      s_pCurrentUpload = RPubsUpload::create(title, filePath, isUpdate);
+      s_pCurrentUploads[contextId] = RPubsUpload::create(contextId,
+                                                         title,
+                                                         filePath,
+                                                         isUpdate);
       pResponse->setResult(true);
    }
 
@@ -380,8 +391,14 @@ Error rpubsUpload(const json::JsonRpcRequest& request,
 Error terminateRpubsUpload(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
-   if (isUploadRunning())
-      s_pCurrentUpload->terminate();
+   std::string contextId;
+   Error error = json::readParam(request.params, 0, &contextId);
+   if (error)
+      return error;
+
+
+   if (isUploadRunning(contextId))
+      s_pCurrentUploads[contextId]->terminate();
 
    return Success();
 }

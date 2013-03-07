@@ -26,6 +26,10 @@ public class RPubsUploadStatusEvent extends GwtEvent<RPubsUploadStatusEvent.Hand
       {
       }
       
+      public final native String getContextId() /*-{
+         return this.contextId;
+      }-*/;
+      
       public final native String getId() /*-{
          return this.id;
       }-*/;

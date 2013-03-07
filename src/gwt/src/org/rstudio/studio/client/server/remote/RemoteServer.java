@@ -2508,21 +2508,27 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "rpubs_is_published", htmlFile, requestCallback);
    }
    
-   public void rpubsUpload(String title, 
+   public void rpubsUpload(String contextId,
+                           String title, 
                            String htmlFile,
                            boolean isUpdate,
                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(title));
-      params.set(1, new JSONString(htmlFile));
-      params.set(2, JSONBoolean.getInstance(isUpdate));
+      params.set(0, new JSONString(contextId));
+      params.set(1, new JSONString(title));
+      params.set(2, new JSONString(htmlFile));
+      params.set(3, JSONBoolean.getInstance(isUpdate));
       sendRequest(RPC_SCOPE, RPUBS_UPLOAD, params, requestCallback);
    }
 
-   public void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback)
+   public void rpubsTerminateUpload(String contextId,
+                                    ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, RPUBS_TERMINATE_UPLOAD, requestCallback);
+      sendRequest(RPC_SCOPE, 
+                  RPUBS_TERMINATE_UPLOAD, 
+                  contextId, 
+                  requestCallback);
    }
    
    @Override

@@ -223,7 +223,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
          public void onRPubsPublishStatus(
                RPubsUploadStatusEvent event)
          {
-            if (StringUtil.isNullOrEmpty(event.getStatus().getError())
+            // make sure it applies to our context
+            RPubsUploadStatusEvent.Status status = event.getStatus();
+            if (!status.getContextId().equals(getContextId()))
+               return;
+            
+            if (StringUtil.isNullOrEmpty(status.getError())
                 && !isPublished_)
             {
                isPublished_ = true;
@@ -355,6 +360,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    public void onShowHtmlPreviewLog()
    {
       view_.showLog(lastPreviewOutput_.toString());
+   }
+   
+   @Override
+   public String getContextId()
+   {
+      return "HTMLPreview";
    }
    
    @Override

@@ -53,13 +53,17 @@ import com.google.inject.Inject;
 
 public class RPubsUploadDialog extends ModalDialogBase
 {
-   public RPubsUploadDialog(String title, String htmlFile, boolean isPublished)
+   public RPubsUploadDialog(String title, 
+                            String htmlFile, 
+                            boolean isPublished,
+                            String contextId)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");
       title_ = title;
       htmlFile_ = htmlFile;
       isPublished_ = isPublished;
+      contextId_ = contextId;
    }
    
    @Inject
@@ -124,7 +128,8 @@ public class RPubsUploadDialog extends ModalDialogBase
             // if an upload is in progress then terminate it
             if (uploadInProgress_)
             {
-               server_.rpubsTerminateUpload(new VoidServerRequestCallback());
+               server_.rpubsTerminateUpload(contextId_,
+                                            new VoidServerRequestCallback());
                
                if (uploadProgressWindow_ != null)
                   uploadProgressWindow_.close();
@@ -228,11 +233,15 @@ public class RPubsUploadDialog extends ModalDialogBase
          @Override
          public void onRPubsPublishStatus(RPubsUploadStatusEvent event)
          {
+            // make sure it applies to our context
+            RPubsUploadStatusEvent.Status status = event.getStatus();
+            if (!status.getContextId().equals(contextId_))
+               return;
+            
             uploadInProgress_ = false;
             
             closeDialog();
 
-            RPubsUploadStatusEvent.Status status = event.getStatus();
             if (!StringUtil.isNullOrEmpty(status.getError()))
             {
                if (progressWindow != null)
@@ -259,6 +268,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       
       // initiate the upload
       server_.rpubsUpload(
+            contextId_,
             title_, 
             htmlFile_,
             modify,
@@ -337,6 +347,7 @@ public class RPubsUploadDialog extends ModalDialogBase
 
    private final String title_;
    private final String htmlFile_;
+   private final String contextId_;
    
    private boolean uploadInProgress_ = false;
    private WindowEx uploadProgressWindow_ = null;

@@ -22,10 +22,12 @@ public interface RPubsServerOperations
    void rpubsIsPublished(String htmlFile,
                          ServerRequestCallback<Boolean> requestCallback);
 
-   void rpubsUpload(String title, 
+   void rpubsUpload(String contextId,
+                    String title, 
                     String htmlFile,
                     boolean isUpdate,
                     ServerRequestCallback<Boolean> requestCallback);
    
-   void rpubsTerminateUpload(ServerRequestCallback<Void> requestCallback);
+   void rpubsTerminateUpload(String contextId,
+                             ServerRequestCallback<Void> requestCallback);
 }

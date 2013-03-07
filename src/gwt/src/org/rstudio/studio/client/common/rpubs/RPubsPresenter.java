@@ -31,6 +31,7 @@ public class RPubsPresenter
    
    public interface Context
    {
+      String getContextId();
       String getTitle();
       String getHtmlFile();
       boolean isPublished();
@@ -56,7 +57,8 @@ public class RPubsPresenter
    {
       RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getTitle(),
                                                     context_.getHtmlFile(),
-                                                    context_.isPublished());
+                                                    context_.isPublished(),
+                                                    context_.getContextId());
       dlg.showModal();
    }
 
