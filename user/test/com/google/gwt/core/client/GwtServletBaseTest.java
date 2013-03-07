@@ -132,6 +132,7 @@ public class GwtServletBaseTest extends GWTTestCase {
     }
     RequestBuilder cookieReq = new RequestBuilder(RequestBuilder.POST, GWT.getModuleBaseURL()
         + "servlet");
+    delayTestFinish(TIMEOUT_IN_MS);
     cookieReq.sendRequest(cookieLocale, new RequestCallback() {
       @Override
       public void onError(Request request, Throwable exception) {
