@@ -36,9 +36,6 @@ options(help_type = "html")
    # in this case we take over help entirely
    if (isDesktop) 
    {
-      setHelpPort()
-      return (TRUE)
-
       # start the help server if it hasn't previously been started
       # (suppress warnings and messages because if there is a problem
       # binding to a local port we are going to patch this up by 
