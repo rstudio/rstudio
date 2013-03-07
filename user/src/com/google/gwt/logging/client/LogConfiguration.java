@@ -40,8 +40,7 @@ public class LogConfiguration implements EntryPoint {
   /**
    * Implementation which does nothing and compiles out if logging is disabled.
    */
-  private static class LogConfigurationImplNull
-  implements LogConfigurationImpl {
+  private static class LogConfigurationImplNull implements LogConfigurationImpl {
     public void configureClientSideLogging() { }
 
     public boolean loggingIsEnabled() {
@@ -56,8 +55,7 @@ public class LogConfiguration implements EntryPoint {
   /**
    * Implementation which is used when logging is enabled.
    */
-  private static class LogConfigurationImplRegular
-  implements LogConfigurationImpl {
+  private static class LogConfigurationImplRegular implements LogConfigurationImpl {
     // Keep a reference to the root logger after we configure it because
     // if we don't, the JRE implementation of LogManager (which is used in
     // Dev Mode) will sometimes garbage collect it, since they only keep
@@ -65,6 +63,8 @@ public class LogConfiguration implements EntryPoint {
     private Logger root;
 
     public void configureClientSideLogging() {
+      assert GWT.isClient();
+
       root = Logger.getLogger("");
       // In DevMode, this root logger will have a parent and we do not want this
       // root logger to pass messages to it's parent, so we set
@@ -153,8 +153,7 @@ public class LogConfiguration implements EntryPoint {
   /**
    * Implementation which is used when logging.enabled is set to SEVERE.
    */
-  private static class LogConfigurationImplSevere
-  extends LogConfigurationImplRegular {
+  private static class LogConfigurationImplSevere extends LogConfigurationImplRegular {
     @Override
     public boolean loggingIsEnabled(Level level) {
       return level.intValue() >= 1000;
@@ -164,22 +163,28 @@ public class LogConfiguration implements EntryPoint {
   /**
    * Implementation which is used when logging.enabled is set to WARNING.
    */
-  private static class LogConfigurationImplWarning
-  extends LogConfigurationImplRegular {
+  private static class LogConfigurationImplWarning extends LogConfigurationImplRegular {
     @Override
     public boolean loggingIsEnabled(Level level) {
       return level.intValue() >= 900;
     }
   }
 
-  private static LogConfigurationImpl impl =
-    GWT.create(LogConfigurationImplNull.class);
+  private static LogConfigurationImpl impl = GWT.create(LogConfigurationImplNull.class);
 
   public static boolean loggingIsEnabled() {
+    if (impl == null) {
+      // case when GWTMockUtilities.disarm(); should be optimized out when compiled to JS
+      return true;
+    }
     return impl.loggingIsEnabled();
   }
 
   public static boolean loggingIsEnabled(Level level) {
+    if (impl == null) {
+      // case when GWTMockUtilities.disarm(); should be optimized out when compiled to JS
+      return true;
+    }
     return impl.loggingIsEnabled(level);
   }
 

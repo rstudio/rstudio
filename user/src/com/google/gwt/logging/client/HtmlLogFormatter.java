@@ -37,7 +37,7 @@ public class HtmlLogFormatter extends FormatterImpl {
   // TODO(unnurg): Handle the outputting of Throwables.
   @Override
   public String format(LogRecord event) {
-    StringBuilder html = new StringBuilder(getHtmlPrefix(event));
+    StringBuilder html = new StringBuilder();
     html.append(getHtmlPrefix(event));
     html.append(getRecordInfo(event, " "));
     html.append(getEscaped(event.getMessage()));
