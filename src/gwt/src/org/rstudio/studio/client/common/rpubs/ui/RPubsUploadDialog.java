@@ -53,10 +53,10 @@ import com.google.inject.Inject;
 
 public class RPubsUploadDialog extends ModalDialogBase
 {
-   public RPubsUploadDialog(String title, 
+   public RPubsUploadDialog(String contextId,
+                            String title, 
                             String htmlFile, 
-                            boolean isPublished,
-                            String contextId)
+                            boolean isPublished)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       setText("Publish to RPubs");

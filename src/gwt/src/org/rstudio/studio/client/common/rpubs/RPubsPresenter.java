@@ -55,10 +55,10 @@ public class RPubsPresenter
    @Handler
    public void onPublishHTML()
    {
-      RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getTitle(),
+      RPubsUploadDialog dlg = new RPubsUploadDialog(context_.getContextId(),
+                                                    context_.getTitle(),
                                                     context_.getHtmlFile(),
-                                                    context_.isPublished(),
-                                                    context_.getContextId());
+                                                    context_.isPublished());
       dlg.showModal();
    }
 
