@@ -15,26 +15,10 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import com.google.gwt.event.shared.UmbrellaException;
-
 /**
  * Remote Service for testing the serialization of GWT Exception classes.
  */
 @RemoteServiceRelativePath("exceptions")
 public interface ExceptionsTestService extends RemoteService {
-
-  /**
-   * Exception specific to testing of GWT exception serialization.
-   */
-  final class ExceptionsTestServiceException extends Exception {
-    public ExceptionsTestServiceException() {
-    }
-
-    public ExceptionsTestServiceException(String msg) {
-      super(msg);
-    }
-  }
-
-  UmbrellaException echo(UmbrellaException exception)
-      throws ExceptionsTestServiceException;
+  <T extends Throwable> T echo(T throwable);
 }

@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.event.shared.UmbrellaException;
 
 /**
@@ -26,21 +27,46 @@ public class ExceptionsTest extends RpcTestBase {
   private ExceptionsTestServiceAsync exceptionsTestService;
 
   public void testUmbrellaException() {
-    ExceptionsTestServiceAsync service = getServiceAsync();
-    delayTestFinishForRpc();
     final UmbrellaException expected = TestSetFactory.createUmbrellaException();
-    service.echo(expected,
-        new AsyncCallback<UmbrellaException>() {
-          public void onFailure(Throwable caught) {
-            TestSetValidator.rethrowException(caught);
-          }
+    checkException(expected, new AsyncCallback<UmbrellaException>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
 
-          public void onSuccess(UmbrellaException result) {
-            assertNotNull(result);
-            assertTrue(TestSetValidator.isValid(expected, result));
-            finishTest();
-          }
-        });
+      public void onSuccess(UmbrellaException result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.isValid(expected, result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testSerializableThrowable() {
+    SerializableThrowable expected = new SerializableThrowable(null, "msg");
+    expected.setDesignatedType("x", true);
+    expected.setStackTrace(new StackTraceElement[] {new StackTraceElement("c", "m", "f", 42)});
+    expected.initCause(new SerializableThrowable(null, "cause"));
+
+    checkException(expected, new AsyncCallback<SerializableThrowable>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(SerializableThrowable result) {
+        assertNotNull(result);
+        assertEquals("msg", result.getMessage());
+        assertEquals("x", result.getDesignatedType());
+        assertTrue(result.isExactDesignatedTypeKnown());
+        assertEquals("c.m(f:42)", result.getStackTrace()[0].toString());
+        assertEquals("cause", ((SerializableThrowable) result.getCause()).getMessage());
+        finishTest();
+      }
+    });
+  }
+
+  private <T extends Throwable> void checkException(T expected, AsyncCallback<T> callback) {
+    delayTestFinishForRpc();
+    getServiceAsync().echo(expected, callback);
   }
 
   private ExceptionsTestServiceAsync getServiceAsync() {

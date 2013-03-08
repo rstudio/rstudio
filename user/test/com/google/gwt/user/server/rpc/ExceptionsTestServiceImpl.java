@@ -15,10 +15,7 @@
  */
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.event.shared.UmbrellaException;
 import com.google.gwt.user.client.rpc.ExceptionsTestService;
-import com.google.gwt.user.client.rpc.TestSetFactory;
-import com.google.gwt.user.client.rpc.TestSetValidator;
 
 /**
  * Remote Service Implementation for Exception serialization tests.
@@ -26,14 +23,9 @@ import com.google.gwt.user.client.rpc.TestSetValidator;
 public class ExceptionsTestServiceImpl extends HybridServiceServlet implements
     ExceptionsTestService {
 
-  public UmbrellaException echo(UmbrellaException exception)
-      throws ExceptionsTestServiceException {
-    UmbrellaException expected = TestSetFactory.createUmbrellaException();
-    if (!TestSetValidator.isValid(expected, exception)) {
-      throw new ExceptionsTestServiceException();
-    }
-
-    return exception;
+  @Override
+  public <T extends Throwable> T echo(T throwable) {
+    return throwable;
   }
 
 }
