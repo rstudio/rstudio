@@ -338,6 +338,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionLibraryPath_);
+   resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePostbackPath(resourcePath, &rpostbackPath_);
 #ifdef _WIN32
    resolvePath(resourcePath, &consoleIoPath_);
