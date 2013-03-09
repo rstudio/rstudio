@@ -1216,6 +1216,36 @@ SEXP rs_addRToolsToPath()
     return R_NilValue;
 }
 
+SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
+{
+   // get R bin directory
+   FilePath rBinDir;
+   Error error = module_context::rBinDir(&rBinDir);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   // run command
+   RCommand installCommand(rBinDir);
+   installCommand << "INSTALL";
+   installCommand << "--library";
+   installCommand << r::sexp::asString(libPathSEXP);
+   installCommand << r::sexp::asString(pkgPathSEXP);
+   core::system::ProcessResult result;
+   error = core::system::runCommand(installCommand.commandString(),
+                                    core::system::ProcessOptions(),
+                                    &result);
+   if (error)
+      LOG_ERROR(error);
+   if (!result.stdErr.empty())
+      LOG_ERROR_MESSAGE("Error install package: " + result.stdErr);
+
+   return R_NilValue;
+}
+
+
 } // anonymous namespace
 
 json::Value buildStateAsJson()
@@ -1263,6 +1293,13 @@ Error initialize()
    restorePreviousPathMethodDef.fun = (DL_FUNC) rs_restorePreviousPath ;
    restorePreviousPathMethodDef.numArgs = 0;
    r::routines::addCallMethod(restorePreviousPathMethodDef);
+
+   R_CallMethodDef installPackageMethodDef ;
+   installPackageMethodDef.name = "rs_installPackage" ;
+   installPackageMethodDef.fun = (DL_FUNC) rs_installPackage;
+   installPackageMethodDef.numArgs = 2;
+   r::routines::addCallMethod(installPackageMethodDef);
+
 
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R

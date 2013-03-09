@@ -67,7 +67,6 @@ struct ROptions
    boost::function<core::FilePath()> rHistoryDir;
    boost::function<bool()> alwaysSaveHistory;
    core::FilePath rSourcePath;
-   core::FilePath rLibsExtra;
    std::string rLibsUser;
    std::string rCRANRepos;
    bool useInternet2;

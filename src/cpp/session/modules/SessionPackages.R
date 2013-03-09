@@ -154,9 +154,9 @@
              )
 })
 
-.rs.addFunction("isPackageInstalled", function(name)
+.rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {
-   name %in% .packages(all.available = TRUE)
+   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
 })
 
 .rs.addFunction("forceUnloadPackage", function(name)
@@ -189,6 +189,48 @@
       pkgs$Version
    else
       ""
+})
+
+.rs.addFunction( "initDefaultUserLibrary", function()
+{
+  userdir <- .rs.defaultUserLibraryPath()
+  dir.create(userdir, recursive = TRUE)
+  .libPaths(c(userdir, .libPaths()))
+})
+
+.rs.addFunction( "initializeRStudioPackages", function(libDir,
+                                                       pkgSrcDir,
+                                                       rsVersion) {
+  
+  if (getRversion() >= "3.0.0") {
+    
+    # make sure the default library is writeable
+    if (!.rs.defaultLibPathIsWriteable()) 
+      .rs.initDefaultUserLibrary()
+
+    # function to update a package if necessary
+    updateIfNecessary <- function(pkgName) {
+      isInstalled <- .rs.isPackageInstalled(pkgName, .rs.defaultLibraryPath())
+      if (!isInstalled || (.rs.getPackageVersion(pkgName) != rsVersion)) {
+        
+        # remove if necessary
+        if (isInstalled)
+          utils::remove.packages(pkgName, .rs.defaultLibraryPath())
+        
+        # call back into rstudio to install
+        .Call("rs_installPackage", 
+              file.path(pkgSrcDir, pkgName),
+              .rs.defaultLibraryPath())
+      }
+    }
+    
+    updateIfNecessary("rstudio")
+    updateIfNecessary("manipulate")
+    
+  } else {
+    .rs.libPathsAppend(libDir)
+  }
+  
 })
 
 .rs.addJsonRpcHandler( "list_packages", function()
@@ -292,9 +334,7 @@
 
 .rs.addJsonRpcHandler( "init_default_user_library", function()
 {
-   userdir <- .rs.defaultUserLibraryPath()
-   dir.create(userdir, recursive = TRUE)
-   .libPaths(c(userdir, .libPaths()))
+  .rs.initDefaultUserLibrary()
 })
 
 
