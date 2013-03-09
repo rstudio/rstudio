@@ -83,7 +83,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("suggest_topics", function(prefix)
 {
-   sort(utils:::matchAvailableTopics(prefix))
+   if (getRversion() >= "3.0.0")
+      sort(utils:::matchAvailableTopics("", prefix))
+   else
+      sort(utils:::matchAvailableTopics(prefix))
 });
 
 .rs.addJsonRpcHandler("get_help", function(topic, package, options)
