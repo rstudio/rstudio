@@ -42,6 +42,9 @@ void handlePresentationHelpRequest(const core::http::Request& request,
 bool savePresentationAsStandalone(core::FilePath* pFilePath,
                                   std::string* pErrMsg);
 
+bool savePresentationAsRpubsSource(const core::FilePath& filePath,
+                                   std::string* pErrMsg);
+
 } // namespace presentation
 } // namespace modules
 } // namesapce session

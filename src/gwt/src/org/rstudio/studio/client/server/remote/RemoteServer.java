@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallCo
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
@@ -2551,6 +2552,15 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void createPresentationRPubsSource(
+             ServerRequestCallback<PresentationRPubsSource> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  CREATE_PRESENTATION_RPUBS_SOURCE,
+                  requestCallback);
+   }
+   
+   @Override
    public void presentationExecuteCode(
                                  String code,
                                  ServerRequestCallback<Void> requestCallback)
@@ -2948,6 +2958,7 @@ public class RemoteServer implements Server
    private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
    private static final String CREATE_STANDALONE_PRESENTATION = "create_standalone_presentation";
+   private static final String CREATE_PRESENTATION_RPUBS_SOURCE = "create_presentation_rpubs_source";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
    private static final String PRESENTATION_EXECUTE_CODE = "presentation_execute_code";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";

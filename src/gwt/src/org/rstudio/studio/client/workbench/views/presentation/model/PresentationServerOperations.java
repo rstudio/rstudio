@@ -28,6 +28,9 @@ public interface PresentationServerOperations extends RPubsServerOperations
                            String targetFile,
                            ServerRequestCallback<String> requestCallback);
    
+   void createPresentationRPubsSource(
+               ServerRequestCallback<PresentationRPubsSource> requestCallback);
+   
    void setPresentationSlideIndex(int index, 
                               ServerRequestCallback<Void> requestCallback);
    

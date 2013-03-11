@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationCommand;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
@@ -312,12 +313,7 @@ public class Presentation extends BasePresenter
                @Override
                public void onError(ServerError error)
                {
-                  String message = error.getUserMessage();
-                  JSONString userMessage = error.getClientInfo().isString();
-                  if (userMessage != null)
-                     message = userMessage.stringValue();
-
-                  indicator.onError(message);
+                  indicator.onError(getErrorMessage(error));
                }
             });
    }
@@ -325,27 +321,26 @@ public class Presentation extends BasePresenter
    @Handler
    void onPresentationPublishToRpubs()
    {
-      saveAsStandalone(null, 
-            new NullProgressIndicator(),
-            new CommandWithArg<String>() {
-         @Override
-         public void execute(final String targetFile)
-         {
-            server_.rpubsIsPublished(targetFile, 
-                                     new SimpleRequestCallback<Boolean>() {
-               @Override
-               public void onResponseReceived(Boolean isPublished)
-               {
-                  RPubsUploadDialog dlg = new RPubsUploadDialog(
-                        "Presentation",
-                        view_.getPresentationTitle(),
-                        targetFile,
-                        isPublished);
-                  dlg.showModal();
-               }
-               
-            });
-         }
+      server_.createPresentationRPubsSource(
+         new SimpleRequestCallback<PresentationRPubsSource>() {
+            
+            @Override
+            public void onResponseReceived(PresentationRPubsSource source)
+            {
+               RPubsUploadDialog dlg = new RPubsUploadDialog(
+                     "Presentation",
+                     view_.getPresentationTitle(),
+                     source.getSourceFilePath(),
+                     source.isPublished());
+               dlg.showModal();
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               globalDisplay_.showErrorMessage("Error Saving Presentation",
+                                               getErrorMessage(error));
+            }
       });
    }
    
@@ -708,6 +703,16 @@ public class Presentation extends BasePresenter
       
       return -1;
    } 
+   
+   
+   private String getErrorMessage(ServerError error)
+   {
+      String message = error.getUserMessage();
+      JSONString userMessage = error.getClientInfo().isString();
+      if (userMessage != null)
+         message = userMessage.stringValue();
+      return message;
+   }
    
    private final Display view_ ; 
    private final PresentationServerOperations server_;

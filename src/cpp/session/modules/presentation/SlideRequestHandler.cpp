@@ -968,6 +968,13 @@ bool savePresentationAsStandalone(core::FilePath* pFilePath,
                                        pErrMsg);
 }
 
+bool savePresentationAsRpubsSource(const core::FilePath& filePath,
+                                   std::string* pErrMsg)
+{
+   return createStandalonePresentation(filePath, publishToRPubsVars, pErrMsg);
+}
+
+
 
 
 } // namespace presentation

@@ -30,6 +30,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "../SessionRPubs.hpp"
+
 #include "PresentationState.hpp"
 #include "SlideRequestHandler.hpp"
 
@@ -190,6 +192,35 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
+                                    json::JsonRpcResponse* pResponse)
+{
+   // use a stable location in the presentation directory for the Rpubs
+   // source file so that update works across sessions
+   FilePath filePath = presentation::state::directory().childPath(
+                                                      "slides-rpubs.html");
+
+   std::string errMsg;
+   if (savePresentationAsRpubsSource(filePath, &errMsg))
+   {
+      json::Object resultJson;
+      resultJson["published"] = !rpubs::previousUploadId(filePath).empty();
+      resultJson["source_file_path"] = module_context::createAliasedPath(
+                                                                     filePath);
+      pResponse->setResult(resultJson);
+   }
+   else
+   {
+      pResponse->setError(systemError(boost::system::errc::io_error,
+                                      ERROR_LOCATION),
+                          json::toJsonString(errMsg));
+   }
+
+   return Success();
+}
+
+
+
 } // anonymous namespace
 
 
@@ -220,6 +251,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
       (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
+      (bind(registerRpcMethod, "create_presentation_rpubs_source", createPresentationRpubsSource))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
