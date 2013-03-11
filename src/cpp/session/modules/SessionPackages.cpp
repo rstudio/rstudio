@@ -35,6 +35,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "config.h"
+
 using namespace core;
 
 namespace session {
@@ -189,11 +191,32 @@ SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
    return R_NilValue;
 }
 
+void initializeRStudioPackages(bool newSession)
+{
+   if (newSession)
+   {
+      std::string libDir = core::string_utils::utf8ToSystem(
+                              options().sessionLibraryPath().absolutePath());
+      std::string pkgSrcDir = core::string_utils::utf8ToSystem(
+                              options().sessionPackagesPath().absolutePath());
+      std::string rsVersion = RSTUDIO_VERSION;
+      Error error = r::exec::RFunction(".rs.initializeRStudioPackages",
+                                                                  libDir,
+                                                                  pkgSrcDir,
+                                                                  rsVersion)
+                                                                       .call();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
 
 } // anonymous namespace
 
 Error initialize()
 {
+   // register deferred init
+   module_context::events().onDeferredInit.connect(initializeRStudioPackages);
+
    // register routines
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_enqueLoadedPackageUpdates" ;

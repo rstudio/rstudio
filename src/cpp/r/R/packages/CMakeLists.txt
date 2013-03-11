@@ -52,13 +52,17 @@ add_custom_command(OUTPUT ${RSTUDIO_OUTPUT}
 add_custom_target(build_packages ALL
                   DEPENDS ${MANIPULATE_OUTPUT} ${RSTUDIO_OUTPUT})
 
-# install manipulate package
+# install manipulate package and it's source (for installing in R 3.0)
 install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/manipulate
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/library)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/manipulate
+        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
-# install rstudio package
+# install rstudio package and it's source (for installing in R 3.0)
 install(DIRECTORY ${PACKAGES_LIBRARY_DIR}/rstudio
         DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/library)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/rstudio
+        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
 
 
