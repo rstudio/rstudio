@@ -1239,7 +1239,7 @@ SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
                                     &result);
    if (error)
       LOG_ERROR(error);
-   if (!result.stdErr.empty())
+   if ((result.exitStatus != EXIT_SUCCESS) && !result.stdErr.empty())
       LOG_ERROR_MESSAGE("Error install package: " + result.stdErr);
 
    return R_NilValue;
