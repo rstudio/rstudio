@@ -17,3 +17,21 @@
    .rs.isPackageInstalled("knitr") && .rs.getPackageVersion("knitr") >= "1.0"
 })
 
+.rs.addFunction( "showPresentation", function(directory = ".") {
+
+   if (!is.character(directory))
+      stop("directory must be of type character")
+
+   invisible(.Call(getNativeSymbolInfo("rs_showPresentation", PACKAGE=""),
+                   .rs.normalizePath(path.expand(directory))))
+})
+
+.rs.addFunction( "showPresentationHelpDoc", function(doc) {
+
+  if (!is.character(doc))
+    stop("doc must be of type character")
+
+  invisible(.Call(getNativeSymbolInfo("rs_showPresentationHelpDoc", PACKAGE=""),
+                  doc))
+})
+
