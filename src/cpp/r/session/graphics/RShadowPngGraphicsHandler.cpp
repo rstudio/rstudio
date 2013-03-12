@@ -106,9 +106,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, "
-                        "bg = \"transparent\", "
-                        "pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, pointsize = 16)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     pDC->width %
