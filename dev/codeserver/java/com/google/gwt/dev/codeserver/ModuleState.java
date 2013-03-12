@@ -172,6 +172,16 @@ class ModuleState {
     return current.get().getWarDir();
   }
 
+  /**
+   * Returns a file out of the "extras" directory.
+   * @param path relative path of the file, not including the module name.
+   * @return The location of the file, which might not actually exist.
+   */
+  File getExtraFile(String path) {
+    File prefix = new File(current.get().getExtraDir(), getModuleName());
+    return new File(prefix, path);
+  }
+
   JsonObject getTemplateVariables() {
     JsonObject result = new JsonObject();
     result.put("moduleName", getModuleName());

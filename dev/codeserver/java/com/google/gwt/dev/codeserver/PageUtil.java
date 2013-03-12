@@ -157,6 +157,20 @@ class PageUtil {
   }
 
   /**
+   * Reads a text file into a String.
+   */
+  static String loadFile(File file) throws IOException {
+    BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
+    try {
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      copyStream(in, bytes);
+      return bytes.toString("UTF-8");
+    } finally {
+      in.close();
+    }
+  }
+
+  /**
    * Writes a String to a file.
    */
   static void writeFile(String path, String content) throws IOException {
@@ -164,5 +178,4 @@ class PageUtil {
     OutputStream out = new FileOutputStream(path);
     PageUtil.copyStream(in, out);
   }
-
 }

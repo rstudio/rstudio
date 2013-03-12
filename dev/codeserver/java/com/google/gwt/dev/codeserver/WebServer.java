@@ -221,6 +221,12 @@ public class WebServer {
       return;
     }
 
+    if (target.equals("/policies/")) {
+      setHandled(request);
+      sendPolicyIndex(response);
+      return;
+    }
+
     Matcher matcher = SAFE_MODULE_PATH.matcher(target);
     if (matcher.matches()) {
       setHandled(request);
@@ -240,6 +246,10 @@ public class WebServer {
       setHandled(request);
       if (handler.isSourceMapRequest(target)) {
         handler.handle(target, request, response);
+        return;
+      }
+      if (target.startsWith("/policies/")) {
+        sendPolicyFile(target, response);
         return;
       }
       sendOutputFile(target, request, response);
@@ -291,6 +301,90 @@ public class WebServer {
     PageUtil
         .sendJsonAndHtml("config", module.getTemplateVariables(), "modulepage.html", response,
             logger);
+  }
+
+  private void sendPolicyIndex(HttpServletResponse response) throws IOException {
+
+    response.setContentType("text/html");
+
+    HtmlWriter out = new HtmlWriter(response.getWriter());
+
+    out.startTag("html").nl();
+    out.startTag("head").nl();
+    out.startTag("title").text("Policy Files").endTag("title").nl();
+    out.endTag("head");
+    out.startTag("body");
+
+    out.startTag("h1").text("Policy Files").endTag("h1").nl();
+
+    for (String moduleName : modules) {
+      ModuleState module = modules.get(moduleName);
+      File manifest = module.getExtraFile("rpcPolicyManifest/manifest.txt");
+      if (manifest.isFile()) {
+        out.startTag("h2").text(moduleName).endTag("h2").nl();
+
+        out.startTag("table").nl();
+        String text = PageUtil.loadFile(manifest);
+        for (String line : text.split("\n")) {
+          line = line.trim();
+          if (line.isEmpty() || line.startsWith("#")) {
+            continue;
+          }
+          String[] fields = line.split(", ");
+          if (fields.length < 2) {
+            continue;
+          }
+
+          String serviceName = fields[0];
+          String policyFileName = fields[1];
+
+          String serviceUrl = SourceHandler.SOURCEMAP_PATH + moduleName + "/" +
+              serviceName.replace('.', '/') + ".java";
+          String policyUrl = "/policies/" + policyFileName;
+
+          out.startTag("tr");
+
+          out.startTag("td");
+          out.startTag("a", "href=", serviceUrl).text(serviceName).endTag("a");
+          out.endTag("td");
+
+          out.startTag("td");
+          out.startTag("a", "href=", policyUrl).text(policyFileName).endTag("a");
+          out.endTag("td");
+
+          out.endTag("tr").nl();
+        }
+        out.endTag("table").nl();
+      }
+    }
+
+    out.endTag("body").nl();
+    out.endTag("html").nl();
+  }
+
+  private void sendPolicyFile(String target, HttpServletResponse response) throws IOException {
+    int secondSlash = target.indexOf('/', 1);
+    if (secondSlash < 1) {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
+    String rest = target.substring(secondSlash + 1);
+    if (rest.contains("/") || !rest.endsWith(".gwt.rpc")) {
+      response.sendError(HttpServletResponse.SC_NOT_FOUND);
+      return;
+    }
+
+    for (String moduleName : modules) {
+      ModuleState module = modules.get(moduleName);
+      File policy = module.getOutputFile(moduleName + "/" + rest);
+      if (policy.isFile()) {
+        PageUtil.sendFile("text/plain", policy, response);
+        return;
+      }
+    }
+
+    logger.log(TreeLogger.Type.WARN, "policy file not found: " + rest);
+    response.sendError(HttpServletResponse.SC_NOT_FOUND);
   }
 
   private JsonObject makeConfig() {
