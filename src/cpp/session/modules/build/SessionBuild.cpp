@@ -1230,9 +1230,9 @@ SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
    // run command
    RCommand installCommand(rBinDir);
    installCommand << "INSTALL";
-   installCommand << "--library";
-   installCommand << r::sexp::asString(libPathSEXP);
-   installCommand << r::sexp::asString(pkgPathSEXP);
+   installCommand << "-l";
+   installCommand << "\"" + r::sexp::asString(libPathSEXP) + "\"";
+   installCommand << "\"" + r::sexp::asString(pkgPathSEXP) + "\"";
    core::system::ProcessResult result;
    error = core::system::runCommand(installCommand.commandString(),
                                     core::system::ProcessOptions(),
