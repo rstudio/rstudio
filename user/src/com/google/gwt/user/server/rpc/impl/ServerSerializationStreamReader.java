@@ -44,12 +44,21 @@ import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * For internal use only. Used for server call serialization. This class is
  * carefully matched with the client-side version.
  */
 public final class ServerSerializationStreamReader extends AbstractSerializationStreamReader {
+
+  /**
+   * A basic sanity check for strong names. Only allow certain characters to protect serialization
+   * policy providers that use it blindly to load files. (This is normally a hex string, but we
+   * allow a few more safe characters in case it's useful for testing.)
+   * @see com.google.gwt.dev.util.Util#computeStrongName
+   */
+  private static final Pattern ALLOWED_STRONG_NAME = Pattern.compile("[a-zA-Z0-9_]+");
 
   /**
    * Used to accumulate elements while deserializing array types. The generic
@@ -484,9 +493,13 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     // Read the type name table
     deserializeStringTable();
 
-    // Write the serialization policy info
+    // Load the serialization policy
     String moduleBaseURL = readString();
     String strongName = readString();
+    if (!ALLOWED_STRONG_NAME.matcher(strongName).matches()) {
+      throw new SerializationException(
+          "GWT-RPC request is invalid because the strong name contains invalid characters");
+    }
     if (serializationPolicyProvider != null) {
       serializationPolicy =
           serializationPolicyProvider.getSerializationPolicy(moduleBaseURL, strongName);
