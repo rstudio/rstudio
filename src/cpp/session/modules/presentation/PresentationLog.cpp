@@ -17,12 +17,16 @@
 #include "PresentationLog.hpp"
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Error.hpp>
 #include <core/DateTime.hpp>
 #include <core/StringUtils.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -59,6 +63,36 @@ Error Log::initialize()
    return Success();
 }
 
+void Log::onSlideDeckChanged(const SlideDeck& slideDeck)
+{
+   slideDeckInputCommands_.clear();
+
+   const std::vector<Slide>& slides = slideDeck.slides();
+   for (std::size_t i = 0; i<slides.size(); i++)
+   {
+      const std::vector<Command>& commands = slides[i].commands();
+      BOOST_FOREACH(const Command& command, commands)
+      {
+         if (command.name() == "console-input")
+         {
+            std::string params = boost::algorithm::trim_copy(command.params());
+            slideDeckInputCommands_[i].insert(params);
+         }
+      }
+
+      const std::vector<AtCommand>& atCommands = slides[i].atCommands();
+      BOOST_FOREACH(const AtCommand& atCommand, atCommands)
+      {
+         if (atCommand.command().name() == "console-input")
+         {
+            std::string params = boost::algorithm::trim_copy(
+                                             atCommand.command().params());
+            slideDeckInputCommands_[i].insert(params);
+         }
+      }
+   }
+}
+
 void Log::onSlideIndexChanged(int index)
 {
    currentSlideIndex_ = index;
@@ -77,14 +111,21 @@ void Log::onConsolePrompt(const std::string& prompt)
 
    if (!consoleInputBuffer_.empty())
    {
-      std::string input = boost::algorithm::join(consoleInputBuffer_, "\n");
-      std::string errors = boost::algorithm::join(errorOutputBuffer_, "\n");
+      std::string input = boost::algorithm::trim_copy(
+                            boost::algorithm::join(consoleInputBuffer_, "\n"));
+      std::string errors = boost::algorithm::trim_copy(
+                            boost::algorithm::join(errorOutputBuffer_, "\n"));
 
-      append(InputEntry,
-             presentation::state::directory(),
-             currentSlideIndex_,
-             input,
-             errors);
+      // check to see if this command was one of the ones instrumented
+      // by the current slide
+      if (slideDeckInputCommands_[currentSlideIndex_].count(input) == 0)
+      {
+         append(InputEntry,
+                presentation::state::directory(),
+                currentSlideIndex_,
+                input,
+                errors);
+      }
    }
 
    consoleInputBuffer_.clear();
@@ -99,6 +140,7 @@ void Log::onConsoleInput(const std::string& text)
 
    consoleInputBuffer_.push_back(text);
 
+   errorOutputBuffer_.clear();
 }
 
 
@@ -113,32 +155,65 @@ void Log::onConsoleOutput(module_context::ConsoleOutputType type,
 
 }
 
+namespace {
+
+std::string csvString(std::string str)
+{
+   boost::algorithm::replace_all(str, "\n", "\\n");
+   boost::algorithm::replace_all(str, "\"", "\\\"");
+   return "\"" + str + "\"";
+}
+
+} // anonymous namespace
+
 void Log::append(EntryType type,
                  const FilePath& presPath,
                  int slideIndex,
                  const std::string& input,
                  const std::string& errors)
 {
-   /*
-   FilePath logFilePath =  module_context::userScratchPath().childPath(
-                                                            "presentation.log");
-   std::string logFile = string_utils::utf8ToSystem(logFilePath.absolutePath());
+   // determine log file path and ensure it exists
+   using namespace module_context;
+   FilePath presDir =  userScratchPath().childPath("presentation");
+   Error error = presDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
-   r::exec::RFunction func(".rs.logPresentationEvent");
-   func.addParam("file", logFile);
-   func.addParam("type", (type == NavigationEntry) ? "Navigation" : "Input");
-   func.addParam("time", date_time::millisecondsSinceEpoch());
-   func.addParam("presentation", module_context::createAliasedPath(presPath));
-   func.addParam("slide", slideIndex);
-   func.addParam("input", input);
-   func.addParam("errors", errors);
+   FilePath logFilePath = presDir.childPath("presentation-log.csv");
+   if (!logFilePath.exists())
+   {
+      Error error = core::writeStringToFile(logFilePath,
+         "type, timestamp, presentation, slide, input, errors\n");
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
 
-   Error error = func.call();
+   // generate timestamp
+   using namespace boost::posix_time;
+   ptime time = microsec_clock::universal_time();
+   std::string dateTime = date_time::format(time, "%Y-%m-%dT%H:%M:%SZ");
+
+   // generate entry
+   std::vector<std::string> fields;
+   fields.push_back((type == NavigationEntry) ? "Navigation" : "Input");
+   fields.push_back(dateTime);
+   fields.push_back(csvString(module_context::createAliasedPath(presPath)));
+   fields.push_back(safe_convert::numberToString(slideIndex));
+   fields.push_back(csvString(input));
+   fields.push_back(csvString(errors));
+   std::string entry = boost::algorithm::join(fields, ",");
+
+   // append entry
+   error = core::appendToFile(logFilePath, entry + "\n");
    if (error)
       LOG_ERROR(error);
-   */
 }
-
 
 
 } // namespace presentation

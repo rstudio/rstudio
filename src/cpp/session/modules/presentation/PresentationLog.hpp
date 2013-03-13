@@ -17,11 +17,14 @@
 #define SESSION_PRESENTATION_LOG_HPP
 
 #include <string>
+#include <set>
 #include <vector>
 
 #include <boost/utility.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include "SlideParser.hpp"
 
 namespace core {
    class Error;
@@ -44,6 +47,7 @@ private:
 public:
    core::Error initialize();
 
+   void onSlideDeckChanged(const SlideDeck& slideDeck);
    void onSlideIndexChanged(int index);
 
 private:
@@ -63,8 +67,12 @@ private:
 
 private:
    int currentSlideIndex_;
+   std::map<int, std::set<std::string> > slideDeckInputCommands_;
+
    std::vector<std::string> consoleInputBuffer_;
    std::vector<std::string> errorOutputBuffer_;
+
+
 };
 
 } // namespace presentation

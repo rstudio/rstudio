@@ -38,6 +38,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "PresentationState.hpp"
+#include "PresentationLog.hpp"
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
@@ -622,6 +623,9 @@ void handlePresentationRootRequest(const std::string& path,
                           errMsg);
       return;
    }
+
+   // notify slide deck changed
+   log().onSlideDeckChanged(slideDeck);
 
    // set preload to none for media
    vars["slides"] = boost::algorithm::replace_all_copy(
