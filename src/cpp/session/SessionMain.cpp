@@ -1530,6 +1530,9 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    
    // allow modules to detect changes after execution of previous REPL
    detectChanges(module_context::ChangeSourceREPL);   
+
+   // call prompt hook
+   module_context::events().onConsolePrompt(prompt);
 }
 
 void reissueLastConsolePrompt()
@@ -1590,9 +1593,12 @@ bool rConsoleRead(const std::string& prompt,
       s_consoleInputBuffer.pop();
    }
 
-   // fire onBeforeExecute event if this isn't a cancel
+   // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
    if (!pConsoleInput->cancel)
+   {
       module_context::events().onBeforeExecute();
+      module_context::events().onConsoleInput(pConsoleInput->text);
+   }
 
    // we are about to return input to r so set the flag indicating that state
    s_rProcessingInput = true;

@@ -209,6 +209,8 @@ struct Events : boost::noncopyable
 {
    boost::signal<void ()>                    onClientInit;
    boost::signal<void ()>                    onBeforeExecute;
+   boost::signal<void(const std::string&)>   onConsolePrompt;
+   boost::signal<void(const std::string&)>   onConsoleInput;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;

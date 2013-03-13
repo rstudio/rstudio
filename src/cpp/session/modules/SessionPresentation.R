@@ -35,3 +35,28 @@
                   doc))
 })
 
+.rs.addFunction( "logPresentationEvent", function(file, 
+                                                  type, 
+                                                  time,
+                                                  presentation,
+                                                  slide,
+                                                  input,
+                                                  errors) {
+  
+  entry <- data.frame(type = type,
+                      time = time,
+                      presentation = presentation,
+                      slide = slide,
+                      input = input,
+                      errors = errors)
+  
+  exists <- file.exists(file)
+  write.table(entry, 
+              file, 
+              append=exists, 
+              sep = "\n",
+              row.names = FALSE,
+              col.names = !exists,
+              qmethod = "double")  
+})
+

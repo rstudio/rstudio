@@ -32,6 +32,7 @@
 
 #include "../SessionRPubs.hpp"
 
+#include "PresentationLog.hpp"
 #include "PresentationState.hpp"
 #include "SlideRequestHandler.hpp"
 
@@ -117,6 +118,8 @@ Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
       return error;
 
    presentation::state::setSlideIndex(index);
+
+   presentation::log().onSlideIndexChanged(index);
 
    return Success();
 }
@@ -219,8 +222,6 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
 } // anonymous namespace
 
 
@@ -244,6 +245,11 @@ Error initialize()
    methodDefShowHelpDoc.fun = (DL_FUNC) rs_showPresentationHelpDoc;
    methodDefShowHelpDoc.numArgs = 1;
    r::routines::addCallMethod(methodDefShowHelpDoc);
+
+   // initialize presentation log
+   Error error = log().initialize();
+   if (error)
+      return error;
 
    using boost::bind;
    using namespace session::module_context;
