@@ -743,10 +743,14 @@ public class JdtCompiler {
     try {
       compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     } catch (AbortCompilation e) {
-      String filename = new String(e.problem.getOriginatingFileName());
-      TreeLogger branch = logger.branch(TreeLogger.Type.ERROR,
-          "At " + filename + ": " + e.problem.getSourceLineNumber());
-      branch.log(TreeLogger.Type.ERROR, "JDT compiler aborted: " + e.problem.getMessage());
+      if (e.problem.getOriginatingFileName() != null) {
+        String filename = new String(e.problem.getOriginatingFileName());
+        TreeLogger branch = logger.branch(TreeLogger.Type.ERROR,
+            "At " + filename + ": " + e.problem.getSourceLineNumber());
+        branch.log(TreeLogger.Type.ERROR, "JDT compiler aborted: " + e.problem.getMessage());
+      } else {
+        logger.log(TreeLogger.Type.ERROR, "JDT compiler aborted: " + e.problem.getMessage());
+      }
       throw new UnableToCompleteException();
     } finally {
       compilerImpl = null;
