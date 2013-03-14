@@ -20,7 +20,7 @@
             classname="com.google.javascript.jscomp.ant.CompileTask"
             classpath="./tools/compiler/compiler.jar"/>
    <!-- Configure path to GWT SDK -->
-   <property name="gwt.sdk" value="lib/gwt/2.5.0.rc1"/>
+   <property name="gwt.sdk" value="lib/gwt/2.5.1"/>
 
    <property name="gwt.extra.args" value=""/>
    <property name="gwt.main.module" value="org.rstudio.studio.RStudio"/>

@@ -55,9 +55,9 @@ else
 fi
 
 # gwt sdk
-GWT_SDK_VER=2.5.0.rc1
+GWT_SDK_VER=2.5.1
 GWT_SDK=gwt-$GWT_SDK_VER
-GWT_SDK_ZIP=gwt-2.5.0.rc1.zip
+GWT_SDK_ZIP=gwt-2.5.1.zip
 if [ -d "$LIB_DIR/gwt/$GWT_SDK_VER" ]
 then
    echo "$GWT_SDK_ZIP already installed"

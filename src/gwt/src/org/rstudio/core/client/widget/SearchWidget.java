@@ -304,9 +304,9 @@ public class SearchWidget extends Composite implements SearchDisplay
       return (DefaultSuggestionDisplay) suggestBox_.getSuggestionDisplay();
    }
    
-   protected TextBoxBase getTextBox()
+   protected ValueBoxBase<String> getTextBox()
    {
-      return suggestBox_.getTextBox();
+      return suggestBox_.getValueBox();
    }
    
    private void updateLastValue(String value)

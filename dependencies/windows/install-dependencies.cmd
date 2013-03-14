@@ -11,7 +11,7 @@ set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set BOOST_FILE=boost-1.50-win.zip
 set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
-set GWT_FILE=gwt-2.5.0.rc1.zip
+set GWT_FILE=gwt-2.5.1.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
@@ -77,12 +77,12 @@ if not exist gin\1.5 (
   del "%GIN_FILE%"
 )
 
-if not exist gwt\2.5.0.rc1 (
+if not exist gwt\2.5.1 (
   wget %WGET_ARGS% "%BASEURL%%GWT_FILE%"
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.5.0.rc1 gwt\2.5.0.rc1
+  move gwt-2.5.1 gwt\2.5.1
   del "%GWT_FILE%"
 )
 
