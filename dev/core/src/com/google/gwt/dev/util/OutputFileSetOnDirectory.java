@@ -64,7 +64,7 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
    * A faster bulk version of {@link File#mkdirs()} that avoids recreating the
    * same directory multiple times.
    */
-  private void mkdirs(File dir) {
+  private void mkdirs(File dir) throws IOException {
     if (dir == null) {
       return;
     }
@@ -75,7 +75,9 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
     createdDirs.add(path);
     if (!dir.exists()) {
       mkdirs(dir.getParentFile());
-      dir.mkdir();
+      if (!dir.mkdir()) {
+        throw new IOException("unable to create directory: " + dir.getAbsolutePath());
+      }
     }
   }
 
