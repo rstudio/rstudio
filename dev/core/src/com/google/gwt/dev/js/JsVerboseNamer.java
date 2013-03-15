@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -27,12 +28,12 @@ import java.util.Iterator;
  */
 public class JsVerboseNamer extends JsNamer {
 
-  public static void exec(JsProgram program) {
-    new JsVerboseNamer(program).execImpl();
+  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
+    new JsVerboseNamer(program, propertyOracles).execImpl();
   }
 
-  public JsVerboseNamer(JsProgram program) {
-    super(program);
+  public JsVerboseNamer(JsProgram program, PropertyOracle[] propertyOracles) {
+    super(program, propertyOracles);
   }
 
   @Override
@@ -78,8 +79,7 @@ public class JsVerboseNamer extends JsNamer {
     }
   }
 
-  private boolean isLegal(String newIdent) {
-    // only keywords are forbidden
-    return !JsKeywords.isKeyword(newIdent);
+  protected boolean isLegal(String newIdent) {
+    return isAvailableIdent(newIdent);
   }
 }

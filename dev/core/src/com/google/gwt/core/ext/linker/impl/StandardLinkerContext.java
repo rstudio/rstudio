@@ -449,16 +449,16 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
          * function within the program.
          */
         TopFunctionStringInterner.exec(jsProgram);
-        JsObfuscateNamer.exec(jsProgram);
+        JsObfuscateNamer.exec(jsProgram, null);
         break;
       case PRETTY:
         // We don't intern strings in pretty mode to improve readability
-        JsPrettyNamer.exec(jsProgram);
+        JsPrettyNamer.exec(jsProgram, null);
         break;
       case DETAILED:
         // As above with OBFUSCATED
         TopFunctionStringInterner.exec(jsProgram);
-        JsVerboseNamer.exec(jsProgram);
+        JsVerboseNamer.exec(jsProgram, null);
         break;
       default:
         throw new InternalCompilerException("Unknown output mode");

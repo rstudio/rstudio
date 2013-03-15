@@ -88,4 +88,18 @@
   <define-property name="compiler.useSymbolMaps" values="true,false"/>
   <set-property name="compiler.useSymbolMaps" value="false"/>
 
+  <!--
+    Specifies an additional list of Javascript identifiers which are disallowed
+    as symbols in the module output.
+  -->
+  <define-configuration-property name="js.identifier.blacklist"
+                                 is-multi-valued="true"/>
+
+  <!--
+    Specifies an additional list of Javascript identifiers which are disallowed
+    as symbols in the module output if they end with one of the given
+    case insensitive suffixes.
+   -->
+  <define-configuration-property name="js.identifier.blacklist.suffixes"
+                                   is-multi-valued="true"/>
 </module>

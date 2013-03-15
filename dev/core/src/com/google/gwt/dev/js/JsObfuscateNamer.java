@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -38,7 +39,11 @@ public class JsObfuscateNamer extends JsNamer {
       '2', '3', '4', '5', '6', '7', '8', '9'};
 
   public static void exec(JsProgram program) {
-    new JsObfuscateNamer(program).execImpl();
+    new JsObfuscateNamer(program, null).execImpl();
+  }
+
+  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
+    new JsObfuscateNamer(program, propertyOracles).execImpl();
   }
 
   /**
@@ -51,8 +56,8 @@ public class JsObfuscateNamer extends JsNamer {
    */
   private final char[] sIdentBuf = new char[6];
 
-  public JsObfuscateNamer(JsProgram program) {
-    super(program);
+  public JsObfuscateNamer(JsProgram program, PropertyOracle[] propertyOracles) {
+    super(program, propertyOracles);
   }
 
   @Override
@@ -105,7 +110,7 @@ public class JsObfuscateNamer extends JsNamer {
   }
 
   private boolean isLegal(JsScope scope, String newIdent) {
-    if (JsKeywords.isKeyword(newIdent)) {
+    if (!isAvailableIdent(newIdent)) {
       return false;
     }
     /*

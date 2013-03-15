@@ -426,7 +426,7 @@ public class JavaToJavaScriptCompiler {
       switch (options.getOutput()) {
         case OBFUSCATED:
           obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
-          JsObfuscateNamer.exec(jsProgram);
+          JsObfuscateNamer.exec(jsProgram, propertyOracles);
           if (options.isAggressivelyOptimize()) {
             if (JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
               boolean changed = false;
@@ -437,18 +437,18 @@ public class JavaToJavaScriptCompiler {
               if (changed) {
                 JsUnusedFunctionRemover.exec(jsProgram);
                 // run again
-                JsObfuscateNamer.exec(jsProgram);
+                JsObfuscateNamer.exec(jsProgram, propertyOracles);
               }
             }
           }
           break;
         case PRETTY:
           // We don't intern strings in pretty mode to imprmakeSouove readability
-          JsPrettyNamer.exec(jsProgram);
+          JsPrettyNamer.exec(jsProgram, propertyOracles);
           break;
         case DETAILED:
           obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
-          JsVerboseNamer.exec(jsProgram);
+          JsVerboseNamer.exec(jsProgram, propertyOracles);
           break;
         default:
           throw new InternalCompilerException("Unknown output mode");

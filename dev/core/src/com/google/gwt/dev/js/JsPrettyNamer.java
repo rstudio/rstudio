@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -29,8 +30,8 @@ import java.util.Set;
  */
 public class JsPrettyNamer extends JsNamer {
 
-  public static void exec(JsProgram program) {
-    new JsPrettyNamer(program).execImpl();
+  public static void exec(JsProgram program, PropertyOracle[] propertyOracles) {
+    new JsPrettyNamer(program, propertyOracles).execImpl();
   }
 
   /**
@@ -38,8 +39,8 @@ public class JsPrettyNamer extends JsNamer {
    */
   private Set<String> childIdents = null;
 
-  public JsPrettyNamer(JsProgram program) {
-    super(program);
+  public JsPrettyNamer(JsProgram program, PropertyOracle[] propertyOracles) {
+    super(program, propertyOracles);
   }
 
   @Override
@@ -104,9 +105,10 @@ public class JsPrettyNamer extends JsNamer {
 
   private boolean isLegal(JsScope scope, Set<String> childIdents,
       String newIdent) {
-    if (JsKeywords.isKeyword(newIdent)) {
+    if (!isAvailableIdent(newIdent)) {
       return false;
     }
+
     if (childIdents.contains(newIdent)) {
       // one of my children already claimed this ident
       return false;
