@@ -14,6 +14,7 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +67,23 @@ public final class JsFunction extends JsLiteral implements HasName {
     String scopeName = (name == null) ? "<anonymous>" : name.getIdent();
     scopeName = "function " + scopeName;
     this.scope = new JsNormalScope(parent, scopeName);
+  }
+
+  /**
+   * Creates a dummy JsFunction (only used by createSentinel).
+   */
+  private JsFunction() {
+    super(SourceOrigin.UNKNOWN);
+    this.scope = null;
+  }
+
+  /**
+   * Creates a dummy JsFunction object to be used as a sentinel.
+   *
+   * @return a dummy JsFunction object.
+   */
+  public static JsFunction createSentinel() {
+    return new JsFunction();
   }
 
   public JsBlock getBody() {

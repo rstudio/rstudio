@@ -133,6 +133,7 @@ import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVars;
@@ -140,6 +141,7 @@ import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
+import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Lists;
@@ -332,9 +334,11 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
-      JavaToJavaScriptMap jjsmap =
+      Pair<? extends JavaToJavaScriptMap, Set<JsNode>> genAstResult =
           GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput(), symbolTable,
               propertyOracles);
+
+      JavaToJavaScriptMap jjsmap = genAstResult.getLeft();
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -354,7 +358,7 @@ public class JavaToJavaScriptCompiler {
 
       // (9) Optimize the JS AST.
       if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
-        optimizeJs(options, jsProgram);
+        optimizeJs(options, jsProgram, genAstResult.getRight());
 
         /*
          * Coalesce redundant labels in switch statements.
@@ -759,7 +763,8 @@ public class JavaToJavaScriptCompiler {
     draftOptimizeEvent.end();
   }
 
-  protected static void optimize(JJSOptions options, JProgram jprogram) throws InterruptedException {
+  protected static void optimize(JJSOptions options, JProgram jprogram)
+      throws InterruptedException {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE);
 
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
@@ -800,7 +805,8 @@ public class JavaToJavaScriptCompiler {
     optimizeEvent.end();
   }
 
-  protected static void optimizeJs(JJSOptions options, JsProgram jsProgram)
+  protected static void optimizeJs(JJSOptions options, JsProgram jsProgram,
+      Collection<JsNode> toInline)
       throws InterruptedException {
     List<OptimizerStats> allOptimizerStats = new ArrayList<OptimizerStats>();
     int counter = 0;
@@ -816,7 +822,7 @@ public class JavaToJavaScriptCompiler {
       // Remove unused functions, possible
       stats.add(JsStaticEval.exec(jsProgram));
       // Inline JavaScript function invocations
-      stats.add(JsInliner.exec(jsProgram));
+      stats.add(JsInliner.exec(jsProgram, toInline));
       // Remove unused functions, possible
       stats.add(JsUnusedFunctionRemover.exec(jsProgram));
 

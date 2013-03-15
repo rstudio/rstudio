@@ -216,7 +216,7 @@ public class CodeSplitter2Test extends JJSTestBase {
       new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
-            new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)});
+            new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
     CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null);    
   }
   
