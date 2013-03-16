@@ -138,7 +138,7 @@ public final class Float extends Number implements Comparable<Float> {
   }
 
   public static native boolean isInfinite(float x) /*-{
-    return !isFinite(x);
+    return !isFinite(x) && !isNaN(x);
   }-*/;
 
   public static native boolean isNaN(float x) /*-{

@@ -64,6 +64,8 @@ public class FloatTest extends GWTTestCase {
     // Math.getExponent(Float.MIN_NORMAL));
     // jdk1.6 assertEquals(Float.MAX_EXPONENT,
     // Math.getExponent(Float.MAX_VALUE));
+    // issue 8073 - used to fail in prod mode
+    assertFalse(Float.isInfinite(Float.NaN));
   }
 
   public void testParse() {

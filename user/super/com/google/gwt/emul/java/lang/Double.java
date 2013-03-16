@@ -192,7 +192,7 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   public static native boolean isInfinite(double x) /*-{
-    return !isFinite(x);
+    return !isFinite(x) && !isNaN(x);
   }-*/;
 
   public static native boolean isNaN(double x) /*-{
