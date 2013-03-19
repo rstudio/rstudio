@@ -65,7 +65,7 @@ public class CalendarUtil {
       int year = date.getYear();
 
       int resultMonthCount = year * 12 + month + months;
-      int resultYear = resultMonthCount / 12;
+      int resultYear = (int) Math.floor(resultMonthCount / 12.0);
       int resultMonth = resultMonthCount - resultYear * 12;
 
       date.setMonth(resultMonth);
@@ -178,4 +178,3 @@ public class CalendarUtil {
     date.setSeconds(0);
   }
 }
-
