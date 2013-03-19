@@ -32,8 +32,8 @@ public interface JAbstractMethod extends HasAnnotations, HasMetaData,
   JType[] getErasedParameterTypes();
 
   /**
-   * Returns a string contating a JSNI reference to the method.
-   * 
+   * Returns a string containing a JSNI reference to the method.
+   *
    * @return <code>@package.Class::method(Lpackage/Param;...)</code>
    */
   String getJsniSignature();

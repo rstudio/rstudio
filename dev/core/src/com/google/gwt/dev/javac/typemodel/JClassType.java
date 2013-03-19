@@ -560,6 +560,25 @@ public abstract class JClassType implements
 
   public abstract String getSimpleSourceName();
 
+  /**
+   * Returns all subtypes for this type.  This means various things:
+   * <ol>
+   *   <li>Array: subtypes are those array types with the same number of dimensions as this type,
+   *   and whose base element type is a subtype of this type's element type.</li>
+   *   <li>Wildcards: if ? extends X, subtypes are subtypes of X.  If ? super X: no subtypes.
+   *   <li>Named type parameter: subtypes are (1) those subtypes of the "base" type that are
+   *   assignable to this, plus (2) the first bound of the parameter, if the bound is both
+   *   assignable to this and not an interface.  The "base" is the type itself, except for
+   *   delegating types, where the base is the result of <code>getBaseType()</code>.</li>
+   *   <li>Real class: subtypes are those real classes that are subtypes of this class in the
+   *   class hierarchy.  Interfaces aren't subtypes of {@code Object}.</li>
+   *   <li>Parameterized type: subtypes are those subtypes of the generic type of this type which
+   *   can be parameterized with the right types so that they have this type as a supertype.
+   *   The subtypes are parameterized as described, with minimal parameterization.</li>
+   *   <li>Raw type: subtypes are the subtypes of the generic type of this type, as raw types if
+   *   they themselves are generic.</li>
+   * </ol>
+   */
   public abstract JClassType[] getSubtypes();
 
   public abstract JClassType getSuperclass();

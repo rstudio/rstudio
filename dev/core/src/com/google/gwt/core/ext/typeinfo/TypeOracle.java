@@ -167,6 +167,8 @@ public abstract class TypeOracle {
    * package object.
    *
    * @return the package object associated with the specified name
+   * @throws NotFoundException if <code>getOrCreatePackage</code> hasn't
+   *           been called for this package or any child packages
    */
   public abstract JPackage getPackage(String pkgName) throws NotFoundException;
 

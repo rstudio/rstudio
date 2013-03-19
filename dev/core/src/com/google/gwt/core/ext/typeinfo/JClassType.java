@@ -46,6 +46,9 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    */
   <T extends Annotation> T findAnnotationInTypeHierarchy(Class<T> annotationType);
 
+  /**
+   * Returns the constructor with parameters that have the given types, or null if not found.
+   */
   JConstructor findConstructor(JType[] paramTypes);
 
   JField findField(String name);
@@ -58,6 +61,9 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   JConstructor[] getConstructors();
 
+  /**
+   * Returns the enclosing type, or null if none.
+   */
   JClassType getEnclosingType();
 
   JClassType getErasedType();
@@ -93,12 +99,17 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   JMethod getMethod(String name, JType[] paramTypes) throws NotFoundException;
 
-  /*
+  /**
    * Returns the declared methods of this class (not any superclasses or
    * superinterfaces).
    */
   JMethod[] getMethods();
 
+  /**
+   * If an array, returns the name of this class without the package name or
+   * enclosing class name, followed by multiple pairs of square brackets;
+   * if not, returns the nested name of this type, without the package name.
+   */
   String getName();
 
   JClassType getNestedType(String typeName) throws NotFoundException;
@@ -107,6 +118,10 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   TypeOracle getOracle();
 
+  /**
+   * Returns the declared methods of this class with the given name
+   * (doesn't include any superclasses or superinterfaces).
+   */
   JMethod[] getOverloads(String name);
 
   /**
@@ -130,8 +145,14 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
 
   JPackage getPackage();
 
+  /**
+   * Returns all subtypes of this type, recursively, not including this type.
+   */
   JClassType[] getSubtypes();
 
+  /**
+   * Returns the superclass of this type, or {@code null} if none.
+   */
   JClassType getSuperclass();
 
   boolean isAbstract();

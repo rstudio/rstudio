@@ -28,9 +28,9 @@ public interface JType {
   JType getErasedType();
 
   /**
-   * Returns the turns the
+   * Returns the
    * <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#14152">
-   * field descriptor"</a> for a type as specified by the Java Virtual Machine Specification.
+   * "field descriptor"</a> for a type as specified by the Java Virtual Machine Specification.
    *
    * Examples:
    *
@@ -48,6 +48,13 @@ public interface JType {
    */
   JType getLeafType();
 
+  /**
+   * Returns a type name as it would be specified in Java source, with the
+   * package name included.  Includes the type parameters.  If called on a type parameter,
+   * does not include any bounds.  For example, a type Foo<T extends Bar> declared in
+   * com.example would be given as "com.example.Foo<T>", while the same type instantiated
+   * with Baz would be "com.example.Foo<com.example.Baz>".
+   */
   String getParameterizedQualifiedSourceName();
 
   /**
@@ -59,7 +66,8 @@ public interface JType {
 
   /**
    * Returns a type name as it would be specified in Java source, with the
-   * package name included.
+   * package name included.  Does not include the type parameters.  If called on
+   * a type parameter, includes any bounds.
    */
   String getQualifiedSourceName();
 
@@ -76,8 +84,16 @@ public interface JType {
 
   JArrayType isArray();
 
+  /**
+   * Returns this instance if the erased version of this type is a class (as opposed to a primitive,
+   * array, or interface) or <code>null</code> if it is not.
+   */
   JClassType isClass();
 
+  /**
+   * Returns this instance if the erased version of this type is a class or interface (as opposed to
+   * a primitive or array array) or <code>null</code> if it is not.
+   */
   JClassType isClassOrInterface();
 
   /**
@@ -86,10 +102,21 @@ public interface JType {
    */
   JEnumType isEnum();
 
+  /**
+   * Returns this instance if it is a real class that has type parameters or <code>null</code>
+   * if it is not.
+   */
   JGenericType isGenericType();
 
+  /**
+   * Returns this instance if it is an interface or <code>null</code> if it is not.
+   */
   JClassType isInterface();
 
+  /**
+   * Returns this instance as a {@link JParameterizedType} if it is a parameterized type
+   * or <code>null</code> if it is not.
+   */
   JParameterizedType isParameterized();
 
   JPrimitiveType isPrimitive();

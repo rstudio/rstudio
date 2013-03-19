@@ -20,6 +20,18 @@ package com.google.gwt.core.ext.typeinfo;
  */
 public interface JMethod extends JAbstractMethod {
 
+  /**
+   * Returns a {@code String} representing the source code declaration
+   * of this method, containing access modifiers, type parameters,
+   * return type, method name, parameter list, and throws.
+   * Doesn't include the method body or trailing semicolon.
+   *
+   * @param noAccess if true, print no access modifiers
+   * @param noNative if true, don't print the native modifier
+   * @param noStatic if true, don't print the static modifier
+   * @param noFinal if true, don't print the final modifier
+   * @param noAbstract if true, don't print the abstract modifier
+   */
   String getReadableDeclaration(boolean noAccess, boolean noNative,
       boolean noStatic, boolean noFinal, boolean noAbstract);
 
