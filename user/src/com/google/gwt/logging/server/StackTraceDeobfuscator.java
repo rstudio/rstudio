@@ -39,8 +39,7 @@ public class StackTraceDeobfuscator extends com.google.gwt.core.server.impl.Stac
    *                            directory separator character
    */
   public StackTraceDeobfuscator(String symbolMapsDirectory) {
-    super(symbolMapsDirectory);
-    setSymbolMapsDirectory(symbolMapsDirectory);
+    this(symbolMapsDirectory, false);
   }
 
   /**
@@ -54,7 +53,7 @@ public class StackTraceDeobfuscator extends com.google.gwt.core.server.impl.Stac
    *                 a large memory savings at the expense of occasional extra disk reads.
    */
   public StackTraceDeobfuscator(String symbolMapsDirectory, boolean lazyLoad) {
-    super(symbolMapsDirectory, lazyLoad);
+    setLazyLoad(lazyLoad);
     setSymbolMapsDirectory(symbolMapsDirectory);
   }
 
@@ -96,17 +95,7 @@ public class StackTraceDeobfuscator extends com.google.gwt.core.server.impl.Stac
     this.symbolMapsDirectory = new File(symbolMapsDirectory);
   }
 
-  protected InputStream getSourceMapInputStream(String permutationStrongName, int fragmentNumber)
-      throws IOException {
-    String filename = symbolMapsDirectory.getCanonicalPath()
-        + File.separatorChar + permutationStrongName + "_sourceMap" + fragmentNumber + ".json";
-    return new FileInputStream(filename);
-  }
-
-  protected InputStream getSymbolMapInputStream(String permutationStrongName)
-      throws IOException {
-    String filename = symbolMapsDirectory.getCanonicalPath()
-        + File.separatorChar + permutationStrongName + ".symbolMap";
-    return new FileInputStream(filename);
+  protected InputStream openInputStream(String fileName) throws IOException {
+    return new FileInputStream(new File(symbolMapsDirectory, fileName));
   }
 }
