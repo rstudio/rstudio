@@ -24,7 +24,24 @@
 })
 
 .rs.registerReplaceHook("View", "utils", function(original, x, title) {
+   
+   # generate title if necessary
    if (missing(title))
       title <- deparse(substitute(x))[1]
-   invisible(.Call("rs_viewData", as.data.frame(x), title))
+   
+   # make sure we are dealing with a data frame
+   if (!is.data.frame(x))
+      x <- as.data.frame(x)
+     
+   # call viewData (prepare columns so they are either double or character)   
+   invisible(.Call("rs_viewData", 
+                   lapply(x, function(col) {
+                      if (is.numeric(col)) {
+                         storage.mode(col) <- "double"
+                         col  
+                      }
+                      else 
+                         as.character(col)
+                   }), 
+                   title))
 })
