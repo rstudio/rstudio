@@ -76,7 +76,10 @@ namespace r {
 namespace session {
 
 namespace {
-   
+
+// is this R 3.0 or greator
+bool s_isR3 = false;
+
 // options
 ROptions s_options;
 
@@ -372,6 +375,11 @@ Error initialize()
    if (libError)
       LOG_ERROR(libError);
 
+   // check whether this is R 3.0 or greater
+   Error r3Error = r::exec::evaluateString("getRversion() >= '3.0.0'", &s_isR3);
+   if (r3Error)
+      LOG_ERROR(r3Error);
+
    // initialize console history capacity
    r::session::consoleHistory().setCapacityFromRHistsize();
 
@@ -387,7 +395,10 @@ Error initialize()
    FilePath graphicsPath;
    if (s_options.serverMode)
    {
-      graphicsPath = s_options.scopedScratchPath.complete(kGraphicsPath);
+      std::string path = kGraphicsPath;
+      if (utils::isR3())
+         path += "-r3";
+      graphicsPath = s_options.scopedScratchPath.complete(path);
    }
    else
    {
@@ -1578,6 +1589,11 @@ void quit(bool saveWorkspace)
    
 namespace utils {
    
+bool isR3()
+{
+   return s_isR3;
+}
+
 const FilePath& userHomePath()
 {
    return s_options.userHomePath;
