@@ -26,7 +26,10 @@ namespace core {
 namespace r {
 namespace session {
 namespace utils {
-      
+
+// check for R 3.0
+bool isR3();
+
 // user home path
 const core::FilePath& userHomePath();  
 
