@@ -56,6 +56,41 @@ FilePath presentationStatePath()
    return path.childPath("presentation-state");
 }
 
+std::string toPersistentPath(const FilePath& filePath)
+{
+   projects::ProjectContext& projectContext = projects::projectContext();
+
+   if (projectContext.hasProject() &&
+       filePath.isWithin(projectContext.directory()))
+   {
+      if (filePath == projectContext.directory())
+         return std::string();
+      else
+         return filePath.relativePath(projectContext.directory());
+   }
+   else
+   {
+      return filePath.absolutePath();
+   }
+}
+
+FilePath fromPersistentPath(const std::string& path)
+{
+   projects::ProjectContext& projectContext = projects::projectContext();
+   if (projectContext.hasProject())
+   {
+      if (path.empty())
+         return projectContext.directory();
+      else
+         return projectContext.directory().complete(path);
+   }
+   else
+   {
+      return FilePath(path);
+   }
+}
+
+
 void savePresentationState(const PresentationState& state)
 {
    // update write-through cache
@@ -72,8 +107,7 @@ void savePresentationState(const PresentationState& state)
    settings.beginUpdate();
    settings.set("active", state.active);
    settings.set("pane-caption", state.paneCaption);
-   settings.set("directory",
-                module_context::createAliasedPath(state.directory));
+   settings.set("dir", toPersistentPath(state.directory));
    settings.set("slide-index", state.slideIndex);
    settings.endUpdate();
 }
@@ -89,9 +123,8 @@ bool loadPresentationState()
          LOG_ERROR(error);
 
       s_presentationState.active = settings.getBool("active", false);
-      s_presentationState.paneCaption = settings.get("pane-caption", "Presentaiton");
-      s_presentationState.directory = module_context::resolveAliasedPath(
-                                                   settings.get("directory"));
+      s_presentationState.paneCaption = settings.get("pane-caption", "Presentation");
+      s_presentationState.directory = fromPersistentPath(settings.get("dir"));
       s_presentationState.slideIndex = settings.getInt("slide-index", 0);
    }
    else
