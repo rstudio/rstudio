@@ -30,6 +30,7 @@ import com.google.gwt.emultest.java.lang.StringBufferDefaultImplTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.lang.ThrowableTest;
 import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.RoundingModeTest;
 import com.google.gwt.emultest.java.security.MessageDigestTest;
@@ -84,6 +85,7 @@ public class EmulSuite {
     suite.addTestSuite(StringBufferDefaultImplTest.class);
     suite.addTestSuite(StringTest.class);
     suite.addTestSuite(SystemTest.class);
+    suite.addTestSuite(ThrowableTest.class);
 
     //-- java.math
     // BigDecimal is tested in {@link BigDecimalSuite}
