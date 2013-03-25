@@ -27,7 +27,7 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_File">
-         <menu label="_New">
+         <menu label="New _File">
             <cmd refid="newSourceDoc"/>
             <separator/>
             <cmd refid="newTextDoc"/>
@@ -38,8 +38,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newRHTMLDoc"/>
             <cmd refid="newRDocumentationDoc"/>
          </menu>
+         <cmd refid="newProject"/>
          <separator/>
          <cmd refid="openSourceDoc"/>
+         <cmd refid="reopenSourceDocWithEncoding"/>
          <menu label="_Recent Files">
             <cmd refid="mru0"/>
             <cmd refid="mru1"/>
@@ -54,7 +56,23 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="clearRecentFiles"/>
          </menu>
-         <cmd refid="reopenSourceDocWithEncoding"/>
+         <separator/>
+         <cmd refid="openProject"/>
+         <cmd refid="openProjectInNewWindow"/>
+         <menu label="Recent Pro_jects">
+            <cmd refid="projectMru0"/>
+            <cmd refid="projectMru1"/>
+            <cmd refid="projectMru2"/>
+            <cmd refid="projectMru3"/>
+            <cmd refid="projectMru4"/>
+            <cmd refid="projectMru5"/>
+            <cmd refid="projectMru6"/>
+            <cmd refid="projectMru7"/>
+            <cmd refid="projectMru8"/>
+            <cmd refid="projectMru9"/>
+            <separator/>
+            <cmd refid="clearRecentProjects"/>
+         </menu>
          <separator/>
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
@@ -70,6 +88,8 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="closeSourceDoc"/>
          <cmd refid="closeAllSourceDocs"/>
+         <separator/>
+         <cmd refid="closeProject"/>
          <separator/>
          <cmd refid="quitSession"/>
       </menu>
@@ -182,7 +202,7 @@ well as menu structures (for main menu and popup menus).
 
       <separator/>
       
-      <menu label="Pl_ots">
+      <menu label="_Plots">
          <cmd refid="nextPlot"/>
          <cmd refid="previousPlot"/>
          <separator/>
@@ -218,34 +238,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="clearWorkspace"/>
       </menu>
-      
-      <menu label="_Project">
-         <cmd refid="newProject"/>
-         <separator/>
-         <cmd refid="openProject"/>
-         <cmd refid="openProjectInNewWindow"/>
-         <menu label="_Recent Projects">
-            <cmd refid="projectMru0"/>
-            <cmd refid="projectMru1"/>
-            <cmd refid="projectMru2"/>
-            <cmd refid="projectMru3"/>
-            <cmd refid="projectMru4"/>
-            <cmd refid="projectMru5"/>
-            <cmd refid="projectMru6"/>
-            <cmd refid="projectMru7"/>
-            <cmd refid="projectMru8"/>
-            <cmd refid="projectMru9"/>
-            <separator/>
-            <cmd refid="clearRecentProjects"/>
-         </menu>
-         <separator/>
-         <cmd refid="closeProject"/>
-         <separator/>
-         <cmd refid="projectOptions"/>
-      </menu>
-         
-      <separator/>
-      
+        
       <menu label="_Build">
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
@@ -293,6 +286,8 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
+         <separator/>
+         <cmd refid="projectOptions"/>
          <separator/>
          <cmd refid="showOptions"/>
       </menu>
@@ -520,7 +515,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Save all open documents"/>
    <cmd id="saveSourceDocWithEncoding"
-        menuLabel="Save with Encoding..."
+        menuLabel="Save wit_h Encoding..."
         desc="Save the current file with a different encoding"/>
    <cmd id="closeSourceDoc"
         menuLabel="_Close"
@@ -538,7 +533,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Revert"
         desc="Revert changes to the file"/>
    <cmd id="printSourceDoc"
-        menuLabel="_Print..."
+        menuLabel="Pr_int..."
         buttonLabel=""
         desc="Print the current file"/>
    <cmd id="popoutDoc"
@@ -557,11 +552,11 @@ well as menu structures (for main menu and popup menus).
    <cmd id="clearRecentFiles" menuLabel="Clear List"/>
    
    <cmd id="newProject"
-        menuLabel="_Create Project..."
+        menuLabel="New _Project..."
         buttonLabel=""
         desc="Create a project"/>
    <cmd id="openProject"
-        menuLabel="_Open Project..."
+        menuLabel="Ope_n Project..."
         buttonLabel=""
         desc="Open a project"/>
      <cmd id="openProjectInNewWindow"
@@ -582,7 +577,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="clearRecentProjects" menuLabel="Clear List"/>     
 
    <cmd id="closeProject"
-        menuLabel="C_lose Project"
+        menuLabel="Close Projec_t"
         buttonLabel=""
         desc="Close the currently open project"/>
 
@@ -769,7 +764,7 @@ well as menu structures (for main menu and popup menus).
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
 
    <cmd id="compileNotebook"
-        menuLabel="Compile Notebook..."
+        menuLabel="Compile _Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
@@ -1018,7 +1013,7 @@ well as menu structures (for main menu and popup menus).
         desc="Refresh Workspace"/>
 
    <cmd id="installPackage"
-        menuLabel="Install _Packages..."
+        menuLabel="Install Pac_kages..."
         buttonLabel="Install Packages"
         desc="Install R packages" />
         
@@ -1054,7 +1049,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Preferences..."/>    
              
    <cmd id="showOptions"
-        menuLabel="_Options..."/>
+        menuLabel="_Global Options..."/>
 
    <cmd id="checkForUpdates"
         menuLabel="Check for _Updates"

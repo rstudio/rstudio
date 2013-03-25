@@ -42,8 +42,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
 {
    public NewDirectoryPage()
    {
-      super("New Project", 
-            "Start a project in a new directory",
+      super("New Directory", 
+            "Start a project in a brand new working directory",
             "Create New Project",
             NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
             NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());

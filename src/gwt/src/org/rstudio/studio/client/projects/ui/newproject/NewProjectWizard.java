@@ -29,7 +29,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          NewProjectInput input,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
-      super("Create Project", 
+      super("New Project", 
             "Create project from:", 
             input, 
             operation);
