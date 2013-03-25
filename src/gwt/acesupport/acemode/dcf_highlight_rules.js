@@ -26,7 +26,7 @@ var DcfHighlightRules = function() {
         
         "start" : [ {
             token : ["keyword", "text"],
-            regex : "^" +"(\\w+)" + "(\\:)"
+            regex : "^" +"([\\w-]+)" + "(\\:)"
         }, {
             token : "text",
             regex : ".+"
