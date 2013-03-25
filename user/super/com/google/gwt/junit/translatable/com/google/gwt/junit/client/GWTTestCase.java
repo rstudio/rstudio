@@ -17,6 +17,7 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.user.client.Timer;
@@ -59,35 +60,15 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * UncaughtExceptionHandler used to catch exceptions thrown out of Javascript
-   * event handlers.
+   * UncaughtExceptionHandler used to catch exceptions reported via
+   * {@link GWT#maybeReportUncaughtException}.
    */
-  private final class TestCaseUncaughtExceptionHandler implements
-      UncaughtExceptionHandler {
-
-    // Holds the first exception that's throws "synchronously", meaning "before
-    // the test method returns".
-    private Throwable synchronousException = null;
-
-    /**
-     * An uncaught exception escaped to the browser; what we should do depends
-     * on what state we're in.
-     */
-    public void onUncaughtException(Throwable ex) {
-      if (mainTestHasRun && timer != null) {
-        // Asynchronous mode; uncaught exceptions cause an immediate failure.
-        assert (!testIsFinished);
-        reportResultsAndRunNextMethod(ex);
-      } else {
-        // Synchronous mode: hang on to it for after the test method returns.
-        // We can't call reportResultsAndRunNextMethod() yet, as it will cause
-        // a race condition that often causes the same test to be run again.
-        if (synchronousException == null) {
-          synchronousException = ex;
-        }
-      }
+  private final class TestCaseUncaughtExceptionHandler implements UncaughtExceptionHandler {
+    @Override
+    public void onUncaughtException(Throwable e) {
+      reportUncaughtException(e);
     }
-  };
+  }
 
   /**
    * Tracks whether the main test body has run (for asynchronous mode).
@@ -104,11 +85,9 @@ public abstract class GWTTestCase extends TestCase {
    */
   private KillTimer timer;
 
-  /**
-   * The UncaughtExceptionHandler that will be used to catch exceptions thrown
-   * from event handlers. We will create a new one for each test method.
-   */
-  private TestCaseUncaughtExceptionHandler uncaughtHandler;
+  // Holds the first exception that's thrown "synchronously", meaning "before
+  // the test method returns".
+  private Throwable synchronousException = null;
 
   /**
    * Name of the test class.
@@ -125,19 +104,17 @@ public abstract class GWTTestCase extends TestCase {
    * Actually run the user's test. Called from {@link GWTRunner}.
    */
   public void __doRunTest() {
-    Throwable caught = null;
-
     if (shouldCatchExceptions()) {
-      // Make sure no exceptions escape
-      GWT.setUncaughtExceptionHandler(uncaughtHandler = new TestCaseUncaughtExceptionHandler());
       try {
         runBare();
       } catch (Throwable e) {
-        caught = e;
+        // If an exception was explicitly reported, it must have happened
+        // before the exception was thrown from the test method.
+        if (synchronousException == null) {
+          synchronousException = e;
+        }
       }
     } else {
-      // Special; make sure all exceptions escape to the browser (for debugging)
-      GWT.setUncaughtExceptionHandler(null);
       runBareTestCaseAvoidingExceptionDecl();
     }
 
@@ -145,22 +122,9 @@ public abstract class GWTTestCase extends TestCase {
     // timer != null we are in true asynchronous mode.
     mainTestHasRun = true;
 
-    // See if any synchronous exceptions got picked up by the UncaughtExceptionHandler.
-    if ((uncaughtHandler != null) && (uncaughtHandler.synchronousException != null)) {
-      // If an exception was caught in an event handler, it must have happened
-      // before the exception was thrown from the test method.
-      caught = uncaughtHandler.synchronousException;
-    }
-
-    if (caught != null) {
-      // Test failed; finish test no matter what state we're in.
-      reportResultsAndRunNextMethod(caught);
-    } else if (timer != null) {
-      // Test is still running; wait for asynchronous completion.
-    } else {
-      // Test is really done; report success.
-      reportResultsAndRunNextMethod(null);
-    }
+    if (synchronousException != null || timer == null) {
+      reportResultsAndRunNextMethod(synchronousException);
+    } // else Test is still running; wait for asynchronous completion.
   }
   // CHECKSTYLE_ON
 
@@ -240,21 +204,51 @@ public abstract class GWTTestCase extends TestCase {
 
   @Override
   protected final void setUp() throws Exception {
+    // Make sure all exceptions escape to the browser if shouldCatchExceptions returns false
+    setAllUncaughtExceptionHandlers(
+        shouldCatchExceptions() ? new TestCaseUncaughtExceptionHandler() : null);
     gwtSetUp();
+  }
+
+  @Override
+  protected final void tearDown() throws Exception {
+    try {
+      gwtTearDown();
+    } finally {
+      testIsFinished = true;
+      setAllUncaughtExceptionHandlers(null);
+      resetAsyncState();
+    }
+  }
+
+  protected void reportUncaughtException(Throwable ex) {
+    assertTestState();
+
+    if (mainTestHasRun && timer != null) {
+      // Asynchronous mode; uncaught exceptions cause an immediate failure.
+      reportResultsAndRunNextMethod(ex);
+    } else {
+      // Synchronous mode: hang on to it for after the test method returns.
+      // We can't call reportResultsAndRunNextMethod() yet, as it will cause
+      // a race condition that often causes the same test to be run again.
+      if (synchronousException == null) {
+        synchronousException = ex;
+      }
+    }
   }
 
   protected boolean supportsAsync() {
     return true;
   }
 
-  @Override
-  protected final void tearDown() throws Exception {
-    gwtTearDown();
+  private void assertTestState() {
+    // TODO(goktug): Add assertTestState to other calls (e.g. delayTestFinish)
+    // TODO(goktug): Report any problems via GWTRunner.
+    assert (!testIsFinished);
   }
 
   /**
-   * Cleans up any outstanding state, reports ex to the remote runner, and kicks
-   * off the next test.
+   * Cleans up any outstanding state, reports ex to the remote runner, and kicks off the next test.
    *
    * @param ex The results of this test.
    */
@@ -265,17 +259,11 @@ public abstract class GWTTestCase extends TestCase {
       // ignore any exceptions thrown from tearDown
     }
 
-    // Remove the UncaughtExceptionHandler we may have installed in __doRunTest.
-    GWT.setUncaughtExceptionHandler(null);
-    uncaughtHandler = null;
-
     JUnitResult myResult = new JUnitResult();
     if (ex != null) {
       myResult.setException(ex);
     }
 
-    testIsFinished = true;
-    resetAsyncState();
     GWTRunner.get().reportResultsAndGetNextMethod(myResult);
   }
 
@@ -312,5 +300,12 @@ public abstract class GWTTestCase extends TestCase {
     } catch (Throwable e) {
       return true;
     }
+  }
+
+  private static void setAllUncaughtExceptionHandlers(UncaughtExceptionHandler handler) {
+    Impl.setUncaughtExceptionHandlerForTest(handler);
+    // TODO(goktug) There is still code out there using GWT#getUncaughtExceptionHandler to report
+    // exceptions, so we need to keep setting the production exception handler for compatibility:
+    GWT.setUncaughtExceptionHandler(handler);
   }
 }

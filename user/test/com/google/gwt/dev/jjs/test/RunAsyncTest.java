@@ -16,8 +16,8 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -108,28 +108,26 @@ public class RunAsyncTest extends GWTTestCase {
     util.scheduleCallback();
   }
 
-  public void testUnhandledExceptions() {
-    // Create an exception that will be thrown from an onSuccess method
-    final RuntimeException toThrow =
-        new RuntimeException("Should be caught by the uncaught exception handler");
+  @Override
+  protected void reportUncaughtException(Throwable ex) {
+    if (!(ex.getMessage().equals("_expected_"))) {
+      super.reportUncaughtException(ex);
+    }
+  }
 
-    // save the original handler
-    final UncaughtExceptionHandler originalHandler = GWT.getUncaughtExceptionHandler();
+  public void testExceptionsThrownFromOnSuccessReported() {
+    // Create an exception that will be thrown from an onSuccess method
+    final RuntimeException toThrow = new RuntimeException("_expected_");
 
     // set a handler that looks for toThrow
-    GWT.UncaughtExceptionHandler myHandler = new GWT.UncaughtExceptionHandler() {
+    GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
       public void onUncaughtException(Throwable e) {
-        GWT.setUncaughtExceptionHandler(originalHandler);
         if (e == toThrow) {
           // expected
           finishTest();
-        } else {
-          // some other exception; pass it on
-          throw new RuntimeException(e);
         }
       }
-    };
-    GWT.setUncaughtExceptionHandler(myHandler);
+    });
     delayTestFinish(RUNASYNC_TIMEOUT);
 
     try {
@@ -142,8 +140,7 @@ public class RunAsyncTest extends GWTTestCase {
         }
       });
     } catch (Throwable e) {
-      // runAsync can either throw immediately, or throw uncaught.
-      myHandler.onUncaughtException(e);
+      GWT.maybeReportUncaughtException(e);
     }
   }
 }

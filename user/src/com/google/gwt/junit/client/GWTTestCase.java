@@ -345,6 +345,42 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
+   * Reports an exception that might have escaped to the browser.
+   * <p>
+   * This method is called by the test framework to report uncaught exceptions. The default
+   * implementation causes the test case to be reported as 'failed'. However in some rare situations
+   * where an uncaught exception is expected, a test case may choose to alter the behavior by
+   * overriding it:
+   * <pre>
+   * class SomeTestCase extends GWTTestCase {
+   *
+   *   class ExpectedTestException extends Exception {}
+   *
+   *   {@literal @}Override
+   *   protected void reportUncaughtException(Throwable t) {
+   *     // Ignore exceptions that are expected to be thrown by our test cases:
+   *     if (t instanceof ExpectedTestException) {
+   *       return;
+   *     }
+   *     super.reportUncaughtException(t);
+   *   }
+   *   ...
+   * }
+   * </pre>
+   *
+   * Note that this method will not cause the test case to fail immediately if the main test body is
+   * still executing. In that case, test will fail after the main body returns with the reported
+   * exception. If the test has already finished (fail or success) before this method is called,
+   * the reported exception is currently ignored, but this may result in an error in a future
+   * version of GWT.
+   *
+   * @see com.google.gwt.core.client.GWT#maybeReportUncaughtException
+   */
+  protected void reportUncaughtException(Throwable ex) {
+    // implemented in the translatable version of this class
+  }
+
+  /**
    * A replacement for JUnit's {@link #setUp()} method. This method runs once
    * per test method in your subclass, just before your each test method runs
    * and can be used to perform initialization. Override this method instead of

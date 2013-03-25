@@ -16,8 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -75,97 +73,49 @@ public class CommandExecutorTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  /**
-   * Test method for
-   * {@link com.google.gwt.user.client.CommandExecutor#doExecuteCommands(int)}.
-   * 
-   * Checks that we can recover after a cancellation
-   */
-  public void testDoExecuteCommands_CancellationRecovery() {
-    final CommandExecutor ce = new NonRestartingCommandExecutor();
+  private boolean recordUncaughtException;
+  private Throwable capturedException;
 
-    final Command c1 = new Command() {
-      public void execute() {
-      }
-    };
+  @Override
+  protected void gwtSetUp() throws Exception {
+    recordUncaughtException = false;
+    capturedException = null;
+  }
 
-    ce.setExecuting(true);
-    ce.submit(c1);
-    ce.setLast(0);
-
-    final UncaughtExceptionHandler originalUEH = GWT.getUncaughtExceptionHandler();
-
-    UncaughtExceptionHandler ueh1 = new UncaughtExceptionHandler() {
-      public void onUncaughtException(Throwable e) {
-        if (!(e instanceof CommandCanceledException)) {
-          originalUEH.onUncaughtException(e);
-          return;
-        }
-
-        CommandCanceledException cce = (CommandCanceledException) e;
-        if (cce.getCommand() != c1) {
-          fail("CommandCanceledException did not contain the correct failed command");
-        }
-
-        // Submit some more work and do another dispatch
-        ce.submit(new IncrementalCommand() {
-          public boolean execute() {
-            return false;
-          }
-        });
-
-        delayTestFinish(TEST_FINISH_DELAY_MILLIS);
-        ce.submit(new Command() {
-          public void execute() {
-            finishTest();
-          }
-        });
-
-        ce.doExecuteCommands(Duration.currentTimeMillis());
-      }
-    };
-
-    GWT.setUncaughtExceptionHandler(ueh1);
-    ce.doCommandCanceled();
+  @Override
+  protected void reportUncaughtException(Throwable ex) {
+    if (recordUncaughtException && capturedException == null) {
+      capturedException = ex;
+    } else {
+      super.reportUncaughtException(ex);
+    }
   }
 
   /**
    * Test method for
    * {@link com.google.gwt.user.client.CommandExecutor#doExecuteCommands(int)}.
    * 
-   * Checks Command cancellation detection
+   * Checks Command cancellation
    */
-  public void testDoExecuteCommands_CommandCancellation() {
+  public void testDoExecuteCommands_cancellation() {
     final CommandExecutor ce = new NonRestartingCommandExecutor();
 
-    final Command c1 = new Command() {
-      public void execute() {
-      }
-    };
+    final TestCommand c1 = new TestCommand();
 
-    // Setup the cancellation state
     ce.setExecuting(true);
     ce.submit(c1);
     ce.setLast(0);
+    recordUncaughtException = true;
 
-    final UncaughtExceptionHandler originalUEH = GWT.getUncaughtExceptionHandler();
-
-    UncaughtExceptionHandler ueh1 = new UncaughtExceptionHandler() {
-      public void onUncaughtException(Throwable e) {
-        if (!(e instanceof CommandCanceledException)) {
-          originalUEH.onUncaughtException(e);
-          return;
-        }
-
-        CommandCanceledException cce = (CommandCanceledException) e;
-        if (cce.getCommand() != c1) {
-          fail("CommandCanceledException did not contain the correct failed command");
-        }
-      }
-    };
-
-    GWT.setUncaughtExceptionHandler(ueh1);
     ce.doCommandCanceled();
+    assertSame(c1, ((CommandCanceledException) capturedException).getCommand());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
+    assertFalse(c1.didExecute());
+
+    // Submit some more work and do another dispatch to verify recovery after a cancellation
+    delayTestFinish(TEST_FINISH_DELAY_MILLIS);
+    ce.submit(createFinishTestCommand());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
   }
 
   /**
@@ -185,40 +135,28 @@ public class CommandExecutorTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.user.client.CommandExecutor#doExecuteCommands(int)}.
    * 
-   * Checks IncrementalCommand cancellation detection
+   * Checks IncrementalCommand cancellation
    */
   public void testDoExecuteCommands_IncrementalCommandCancellation() {
     final CommandExecutor ce = new NonRestartingCommandExecutor();
 
-    final IncrementalCommand ic = new IncrementalCommand() {
-      public boolean execute() {
-        return false;
-      }
-    };
+    final TestIncrementalCommand ic = new TestIncrementalCommand();
 
     // setup the cancellation state
     ce.setExecuting(true);
     ce.submit(ic);
     ce.setLast(0);
+    recordUncaughtException = true;
 
-    final UncaughtExceptionHandler originalUEH = GWT.getUncaughtExceptionHandler();
-
-    UncaughtExceptionHandler ueh1 = new UncaughtExceptionHandler() {
-      public void onUncaughtException(Throwable e) {
-        if (!(e instanceof IncrementalCommandCanceledException)) {
-          originalUEH.onUncaughtException(e);
-          return;
-        }
-
-        IncrementalCommandCanceledException icce = (IncrementalCommandCanceledException) e;
-        if (icce.getCommand() != ic) {
-          fail("IncrementalCommandCanceledException did not contain the correct failed command");
-        }
-      }
-    };
-
-    GWT.setUncaughtExceptionHandler(ueh1);
     ce.doCommandCanceled();
+    assertSame(ic, ((IncrementalCommandCanceledException) capturedException).getCommand());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
+    assertEquals(0, ic.getExecuteCount());
+
+    // Submit some more work and do another dispatch to verify recovery after a cancellation
+    delayTestFinish(TEST_FINISH_DELAY_MILLIS);
+    ce.submit(createFinishTestCommand());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
   }
 
   /**
@@ -300,11 +238,7 @@ public class CommandExecutorTest extends GWTTestCase {
 
     delayTestFinish(TEST_FINISH_DELAY_MILLIS);
 
-    ce.submit(new Command() {
-      public void execute() {
-        finishTest();
-      }
-    });
+    ce.submit(createFinishTestCommand());
   }
 
   /**
@@ -339,5 +273,13 @@ public class CommandExecutorTest extends GWTTestCase {
         return executionCount < 10;
       }
     });
+  }
+
+  private Command createFinishTestCommand() {
+    return new Command() {
+      public void execute() {
+        finishTest();
+      }
+    };
   }
 }

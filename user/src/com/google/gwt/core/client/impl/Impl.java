@@ -206,7 +206,7 @@ public final class Impl {
     if (uncaughtExceptionHandlerForTest != null) {
       uncaughtExceptionHandlerForTest.onUncaughtException(t);
     }
-    if (handler != null) {
+    if (handler != null && handler != uncaughtExceptionHandlerForTest) {
       handler.onUncaughtException(t);
     }
   }

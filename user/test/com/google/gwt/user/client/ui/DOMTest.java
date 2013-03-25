@@ -78,6 +78,13 @@ public class DOMTest extends GWTTestCase {
     assertEquals("", cssClass);
   }
 
+  @Override
+  protected void reportUncaughtException(Throwable ex) {
+    if (!ex.getMessage().contains("_expected_")) {
+      super.reportUncaughtException(ex);
+    }
+  }
+
   /**
    * Tests that {@link DOM#eventGetCurrentEvent()} returns the event to the
    * {@link UncaughtExceptionHandler}.
@@ -87,7 +94,7 @@ public class DOMTest extends GWTTestCase {
       @Override
       public void onClick(ClickEvent event) {
         // Intentionally trigger an error
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("_expected_");
       }
     });
     RootPanel.get().add(button);
@@ -116,7 +123,6 @@ public class DOMTest extends GWTTestCase {
     assertEquals(1, ret.size());
     assertEquals("Success", ret.get(0));
     RootPanel.get().remove(button);
-    GWT.setUncaughtExceptionHandler(null);
   }
 
   /**

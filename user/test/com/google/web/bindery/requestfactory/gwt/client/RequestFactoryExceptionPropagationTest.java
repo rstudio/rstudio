@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.UmbrellaException;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
@@ -23,6 +22,8 @@ import com.google.web.bindery.requestfactory.shared.ServerFailure;
 import com.google.web.bindery.requestfactory.shared.SimpleFooProxy;
 import com.google.web.bindery.requestfactory.shared.SimpleFooRequest;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -99,20 +100,33 @@ public class RequestFactoryExceptionPropagationTest extends
     }
   }
 
-  private static final int DELAY_TEST_FINISH = 10 * 1000;
+  /** An abstraction to verify an uncaught exception */
+  public interface ExceptionVerifier {
+    void verify(Throwable ex);
+  }
 
-  GWT.UncaughtExceptionHandler defaultUncaughtExceptionHandler;
+  private static final int DELAY_TEST_FINISH = 10 * 1000;
 
   @Override
   public String getModuleName() {
     return "com.google.web.bindery.requestfactory.gwt.RequestFactorySuite";
   }
 
-  @Override
-  public void gwtSetUp() {
-    super.gwtSetUp();
+  private ExceptionVerifier exceptionVerifier;
 
-    defaultUncaughtExceptionHandler = GWT.getUncaughtExceptionHandler();
+  @Override
+  protected void gwtTearDown() throws Exception {
+    super.gwtTearDown();
+    exceptionVerifier = null;
+  }
+
+  @Override
+  protected void reportUncaughtException(Throwable ex) {
+    try {
+      exceptionVerifier.verify(ex);
+    } catch (Throwable e) {
+      super.reportUncaughtException(ex);
+    }
   }
 
   /**
@@ -133,23 +147,14 @@ public class RequestFactoryExceptionPropagationTest extends
     context.returnNullString().to(new ThrowingReceiver<String>(exception1));
     context.returnNullString().to(count);
 
-    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2),
-        new GWT.UncaughtExceptionHandler() {
-          public void onUncaughtException(Throwable e) {
-            if (e instanceof UmbrellaException) {
-              count.assertCounts(1, 1, 0);
-
-              Set<Throwable> causes = ((UmbrellaException) e).getCauses();
-              assertEquals(2, causes.size());
-              assertTrue(causes.contains(exception1));
-              assertTrue(causes.contains(exception2));
-
-              finishTestAndReset();
-            } else {
-              defaultUncaughtExceptionHandler.onUncaughtException(e);
-            }
-          }
-        });
+    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2), new ExceptionVerifier() {
+      @Override
+      public void verify(Throwable e) {
+        assertUmbrellaException(e, exception1, exception2);
+        count.assertCounts(1, 1, 0);
+        finishTestAndReset();
+      }
+    });
   }
 
   /**
@@ -169,23 +174,14 @@ public class RequestFactoryExceptionPropagationTest extends
     context.pleaseCrash(42).to(new ThrowingReceiver<Void>(exception1));
     context.returnNullString().to(count);
 
-    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2),
-        new GWT.UncaughtExceptionHandler() {
-          public void onUncaughtException(Throwable e) {
-            if (e instanceof UmbrellaException) {
-              count.assertCounts(0, 2, 0);
-
-              Set<Throwable> causes = ((UmbrellaException) e).getCauses();
-              assertEquals(2, causes.size());
-              assertTrue(causes.contains(exception1));
-              assertTrue(causes.contains(exception2));
-
-              finishTestAndReset();
-            } else {
-              defaultUncaughtExceptionHandler.onUncaughtException(e);
-            }
-          }
-        });
+    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2), new ExceptionVerifier() {
+      @Override
+      public void verify(Throwable e) {
+        assertUmbrellaException(e, exception1, exception2);
+        count.assertCounts(0, 2, 0);
+        finishTestAndReset();
+      }
+    });
   }
 
   /**
@@ -210,23 +206,14 @@ public class RequestFactoryExceptionPropagationTest extends
     // 42 is the crash causing magic number for a runtime exception
     mutableFoo.setPleaseCrash(42);
 
-    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2),
-        new GWT.UncaughtExceptionHandler() {
-          public void onUncaughtException(Throwable e) {
-            if (e instanceof UmbrellaException) {
-              count.assertCounts(2, 0, 0);
-
-              Set<Throwable> causes = ((UmbrellaException) e).getCauses();
-              assertEquals(2, causes.size());
-              assertTrue(causes.contains(exception1));
-              assertTrue(causes.contains(exception2));
-
-              finishTestAndReset();
-            } else {
-              defaultUncaughtExceptionHandler.onUncaughtException(e);
-            }
-          }
-        });
+    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2), new ExceptionVerifier() {
+      @Override
+      public void verify(Throwable e) {
+        assertUmbrellaException(e, exception1, exception2);
+        count.assertCounts(2, 0, 0);
+        finishTestAndReset();
+      }
+    });
   }
 
   /**
@@ -245,23 +232,14 @@ public class RequestFactoryExceptionPropagationTest extends
     context.returnNullString().to(new ThrowingReceiver<String>(exception1));
     context.returnNullString().to(count);
 
-    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2),
-        new GWT.UncaughtExceptionHandler() {
-          public void onUncaughtException(Throwable e) {
-            if (e instanceof UmbrellaException) {
-              count.assertCounts(0, 2, 0);
-
-              Set<Throwable> causes = ((UmbrellaException) e).getCauses();
-              assertEquals(2, causes.size());
-              assertTrue(causes.contains(exception1));
-              assertTrue(causes.contains(exception2));
-
-              finishTestAndReset();
-            } else {
-              defaultUncaughtExceptionHandler.onUncaughtException(e);
-            }
-          }
-        });
+    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2), new ExceptionVerifier() {
+      @Override
+      public void verify(Throwable e) {
+        assertUmbrellaException(e, exception1, exception2);
+        count.assertCounts(0, 2, 0);
+        finishTestAndReset();
+      }
+    });
   }
 
   /**
@@ -283,29 +261,19 @@ public class RequestFactoryExceptionPropagationTest extends
     context.persist().using(newFoo).to(new ThrowingReceiver<Void>(exception1));
     context.returnNullString().to(count);
 
-    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2),
-        new GWT.UncaughtExceptionHandler() {
-          public void onUncaughtException(Throwable e) {
-            if (e instanceof UmbrellaException) {
-              count.assertCounts(0, 0, 2);
-
-              Set<Throwable> causes = ((UmbrellaException) e).getCauses();
-              assertEquals(2, causes.size());
-              assertTrue(causes.contains(exception1));
-              assertTrue(causes.contains(exception2));
-
-              finishTestAndReset();
-            } else {
-              defaultUncaughtExceptionHandler.onUncaughtException(e);
-            }
-          }
-        });
+    fireContextAndCatch(context, new ThrowingReceiver<Void>(exception2), new ExceptionVerifier() {
+      @Override
+      public void verify(Throwable e) {
+        assertUmbrellaException(e, exception1, exception2);
+        count.assertCounts(0, 0, 2);
+        finishTestAndReset();
+      }
+    });
   }
 
   protected void fireContextAndCatch(RequestContext context,
-      Receiver<Void> receiver, GWT.UncaughtExceptionHandler exceptionHandler) {
-    GWT.setUncaughtExceptionHandler(exceptionHandler);
-
+      Receiver<Void> receiver, ExceptionVerifier exceptionVerifier) {
+    this.exceptionVerifier = exceptionVerifier;
     if (receiver == null) {
       context.fire();
     } else {
@@ -313,8 +281,9 @@ public class RequestFactoryExceptionPropagationTest extends
     }
   }
 
-  @Override
-  protected void gwtTearDown() {
-    GWT.setUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
+  private static void assertUmbrellaException(Throwable e, Throwable... expectedCauses) {
+    assertTrue(e instanceof UmbrellaException);
+    Set<Throwable> causes = new HashSet<Throwable>(Arrays.asList(expectedCauses));
+    assertEquals(causes, ((UmbrellaException) e).getCauses());
   }
 }
