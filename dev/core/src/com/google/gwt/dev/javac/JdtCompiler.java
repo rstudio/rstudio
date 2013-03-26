@@ -28,12 +28,14 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ClassFile;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
 import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.Block;
 import org.eclipse.jdt.internal.compiler.ast.Clinit;
@@ -43,6 +45,7 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -62,8 +65,10 @@ import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
+import org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
+import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -225,6 +230,146 @@ public class JdtCompiler {
     }
   }
 
+  /**
+   * ParserImpl intercepts parsing of the source to get rid of methods, fields and classes
+   * annotated with a *.GwtIncompatible annotation.
+   */
+  private static class ParserImpl extends Parser {
+    public ParserImpl(ProblemReporter problemReporter, boolean optimizeStringLiterals) {
+      super(problemReporter, optimizeStringLiterals);
+    }
+
+    /**
+     * Checks whether GwtIncompatible is in the array of {@code Annotation}.
+     *
+     * @param annotations an (possible null) array of {@code Annotation}
+     * @return {@code true} if there is an annotation of class {@code *.GwtIncompatible} in
+     *         array. {@code false} otherwise.
+     */
+    private static boolean hasGwtIncompatibleAnnotation(Annotation[] annotations) {
+      if (annotations == null) {
+        return false;
+      }
+      for (Annotation ann : annotations) {
+        String typeName = new String(ann.type.getLastToken());
+        if (typeName.equals("GwtIncompatible")) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Modifies the methods array of type {@code tyDecl} to remove any GwtIncompatible methods.
+     */
+    private static void stripGwtIncompatibleMethods(TypeDeclaration tyDecl) {
+      if (tyDecl.methods == null) {
+        return;
+      }
+
+      List<AbstractMethodDeclaration> newMethods = new ArrayList<AbstractMethodDeclaration>();
+      for (AbstractMethodDeclaration methodDecl : tyDecl.methods) {
+         if (!hasGwtIncompatibleAnnotation(methodDecl.annotations)) {
+          newMethods.add(methodDecl);
+         }
+      }
+
+      if (newMethods.size() != tyDecl.methods.length) {
+        tyDecl.methods = newMethods.toArray(new AbstractMethodDeclaration[newMethods.size()]);
+      }
+    }
+
+    /**
+     * Modifies the fields array of type {@code tyDecl} to remove any GwtIncompatible fields.
+     */
+    private static void stripGwtIncompatibleFields(TypeDeclaration tyDecl) {
+      if (tyDecl.fields == null) {
+        return;
+      }
+
+      List<FieldDeclaration> newFields = new ArrayList<FieldDeclaration>();
+      for (FieldDeclaration fieldDecl : tyDecl.fields) {
+        if (!hasGwtIncompatibleAnnotation(fieldDecl.annotations)) {
+          newFields.add(fieldDecl);
+        }
+      }
+
+      if (newFields.size() != tyDecl.fields.length) {
+        tyDecl.fields = newFields.toArray(new FieldDeclaration[newFields.size()]);
+      }
+    }
+
+    /**
+     * Removes inner classes, methods and fields that are @GwtIncompatible from an anonymous
+     * inner class.
+     *
+     * @return The set of types with every element that was annotated by {@code GwtIncompatible}
+     *         removed.
+     */
+    private static void stripGwtIncompatibleAnonymousInnerClasses(
+        CompilationUnitDeclaration cud) {
+      ASTVisitor visitor = new ASTVisitor() {
+        @Override
+        public void endVisit(QualifiedAllocationExpression qualifiedAllocationExpression,
+            BlockScope scope) {
+          if (qualifiedAllocationExpression.anonymousType != null) {
+            stripGwtIncompatible(
+                new TypeDeclaration[]{qualifiedAllocationExpression.anonymousType});
+          }
+        }
+      };
+      cud.traverse(visitor, cud.scope);
+    }
+
+
+      /**
+      * Removes classes, inner classes, methods and fields that are @GwtIncompatible.
+      *
+      * @return The set of types with every element that was annotated by {@code GwtIncompatible}
+      *         removed.
+      */
+    private static TypeDeclaration[] stripGwtIncompatible(TypeDeclaration[] types) {
+      if (types == null) {
+        return types;
+      }
+
+      List<TypeDeclaration> newTypeDecls = new ArrayList<TypeDeclaration>();
+      for (TypeDeclaration tyDecl : types) {
+        if (!hasGwtIncompatibleAnnotation(tyDecl.annotations)) {
+          newTypeDecls.add(tyDecl);
+          tyDecl.memberTypes = stripGwtIncompatible(tyDecl.memberTypes);
+          stripGwtIncompatibleMethods(tyDecl);
+          stripGwtIncompatibleFields(tyDecl);
+        }
+      }
+
+      if (newTypeDecls.size() != types.length) {
+        return newTypeDecls.toArray(new TypeDeclaration[newTypeDecls.size()]);
+      } else {
+        return types;
+      }
+    }
+
+    /**
+     * Overrides the main parsing entry point to filter out elements annotated with
+     * {@code GwtIncompatible}.
+     */
+    @Override
+    public CompilationUnitDeclaration parse(ICompilationUnit sourceUnit,
+        CompilationResult compilationResult) {
+      // Never dietParse(), otherwise GwtIncompatible annotations in anonymoous inner classes
+      // would be ignored.
+      boolean saveDiet = this.diet;
+      this.diet = false;
+      CompilationUnitDeclaration decl = super.parse(sourceUnit, compilationResult);
+      this.diet = saveDiet;
+      decl.types = stripGwtIncompatible(decl.types);
+      // Fix anonymous inner classes
+      stripGwtIncompatibleAnonymousInnerClasses(decl);
+      return decl;
+    }
+  }
+
   private class CompilerImpl extends Compiler {
     private TreeLogger logger;
     private int abortCount = 0;
@@ -247,6 +392,16 @@ public class JdtCompiler {
       // compiled. This makes sense when an Eclipse user hits cancel, but in GWT, it will result
       // in confusing errors later if we don't catch and handle it.
       throw abortException;
+    }
+
+    /**
+     * Overrides the creation of the parser to use one that filters out elements annotated with
+     * {@code GwtIncompatible}.
+     */
+    @Override
+    public void initializeParser() {
+      this.parser = new ParserImpl(this.problemReporter,
+          this.options.parseLiteralExpressionsAsConstants);
     }
 
     @Override
@@ -378,10 +533,10 @@ public class JdtCompiler {
        * TODO(zundel): When cached CompiledClass instances are used, 'packages'
        * does not contain all packages in the compile and this test fails the
        * test on some packages.
-       * 
+       *
        * This is supposed to work via the call chain:
-       * 
-       * CSB.doBuildFrom -> CompileMoreLater.addValidUnit 
+       *
+       * CSB.doBuildFrom -> CompileMoreLater.addValidUnit
        *    -> JdtCompiler.addCompiledUnit
        *    -> addPackages()
        */
