@@ -2027,8 +2027,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   }
 
   /**
-   * Throws an {@link UnsupportedOperationException}.
-   * 
    * @deprecated as of GWT 2.5, use a {@link CellTableBuilder} to customize the
    *             table structure instead
    * @see #renderRowValuesLegacy(SafeHtmlBuilder, List, int, SelectionModel)
@@ -2038,7 +2036,6 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
   protected void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
       SelectionModel<? super T> selectionModel) {
     legacyRenderRowValues = false;
-    throw new UnsupportedOperationException();
   }
 
   /**
@@ -2150,11 +2147,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     refreshHeadersAndColumnsImpl();
 
     /*
-     * If html is not null, then the user overrode renderRowValues() and
-     * rendered directly into a SafeHtmlBuilder. The legacy method is deprecated
-     * but still supported.
+     * If html is not null and legacyRenderRowValues is true, then the user
+     * overrode renderRowValues() and rendered directly into a SafeHtmlBuilder.
+     * The legacy method is deprecated but still supported.
      */
-    if (html == null) {
+    if (html == null || legacyRenderRowValues == false) {
       html = buildRowValues(values, getPageStart(), true);
     }
 
@@ -2168,11 +2165,11 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     refreshHeadersAndColumnsImpl();
 
     /*
-     * If html is not null, then the user override renderRowValues() and
-     * rendered directly into a SafeHtmlBuilder. The legacy method is deprecated
-     * but still supported.
+     * If html is not null and legacyRenderRowValues is true, then the user
+     * override renderRowValues() and rendered directly into a SafeHtmlBuilder.
+     * The legacy method is deprecated but still supported.
      */
-    if (html == null) {
+    if (html == null || legacyRenderRowValues == false) {
       html = buildRowValues(values, getPageStart() + start, false);
     }
 
