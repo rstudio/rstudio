@@ -160,7 +160,7 @@ namespace {
 std::string csvString(std::string str)
 {
    boost::algorithm::replace_all(str, "\n", "\\n");
-   boost::algorithm::replace_all(str, "\"", "\\\"");
+   boost::algorithm::replace_all(str, "\"", "\"\"");
    return "\"" + str + "\"";
 }
 
