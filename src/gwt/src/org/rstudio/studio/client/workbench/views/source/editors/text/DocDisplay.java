@@ -68,6 +68,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
    void focus();
+   boolean isFocused();
    void print();
    void codeCompletion();
    void goToHelp();

@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -1689,9 +1690,15 @@ public class TextEditingTarget implements EditingTarget
 
    @Handler
    void onExecuteCode()
-   {
-      docDisplay_.focus();
-
+   {  
+      // allow console a chance to execute code if we aren't focused
+      if (!docDisplay_.isFocused())
+      {
+         events_.fireEvent(new ConsoleExecutePendingInputEvent());
+         return;
+      }
+      
+      
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)

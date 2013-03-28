@@ -78,6 +78,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void focus() /*-{
       this.focus();
    }-*/;
+   
+   public native final boolean isFocused() /*-{
+      return this.isFocused();
+   }-*/;
 
    public native final void blur() /*-{
       this.blur();

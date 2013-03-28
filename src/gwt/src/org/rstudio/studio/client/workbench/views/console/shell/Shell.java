@@ -62,6 +62,7 @@ public class Shell implements ConsoleInputHandler,
                               ConsolePromptHandler,
                               ConsoleResetHistoryHandler,
                               ConsoleRestartRCompletedEvent.Handler,
+                              ConsoleExecutePendingInputEvent.Handler,
                               SendToConsoleHandler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
@@ -116,6 +117,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsolePromptEvent.TYPE, this);
       eventBus.addHandler(ConsoleResetHistoryEvent.TYPE, this);
       eventBus.addHandler(ConsoleRestartRCompletedEvent.TYPE, this);
+      eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       
       final CompletionManager completionManager
@@ -328,6 +330,13 @@ public class Shell implements ConsoleInputHandler,
       {
          inputAnimator_.enque(event.getCode(), finishSendToConsole);
       }
+   }
+   
+   @Override
+   public void onExecutePendingInput(ConsoleExecutePendingInputEvent event)
+   {
+      if (view_.getInputEditorDisplay().isFocused())
+         processCommandEntry();  
    }
 
    private final class InputKeyDownHandler implements KeyDownHandler,

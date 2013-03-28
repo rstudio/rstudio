@@ -32,6 +32,7 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    Rectangle getPositionBounds(InputEditorPosition position);
    Rectangle getBounds() ;
    void setFocus(boolean focused) ;
+   boolean isFocused();
    /**
     * @param value New value
     * @return Original value

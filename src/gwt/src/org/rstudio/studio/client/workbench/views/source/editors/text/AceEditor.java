@@ -634,6 +634,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().focus();
    }
    
+   public boolean isFocused()
+   {
+      return widget_.getEditor().isFocused();
+   }
+   
    
    public void codeCompletion()
    {
