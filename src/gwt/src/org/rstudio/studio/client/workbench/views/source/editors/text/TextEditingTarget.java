@@ -1703,19 +1703,8 @@ public class TextEditingTarget implements EditingTarget
 
       executeRange(selectionRange);
       
-      // if the end of the selection is at column 0 then just collapse
-      // the selection to it (because if we advance we'd be skipping
-      // a line of code)
-      if (!selectionRange.isEmpty() &&
-          (selectionRange.getEnd().getColumn() == 0))
-      {
-         docDisplay_.collapseSelection(false);
-         
-         // if we are on a blank line then move to the next line
-         if (docDisplay_.getLength(selectionRange.getEnd().getRow()) == 0)
-            docDisplay_.moveSelectionToNextLine(true);        
-      }
-      else
+      // advance if there is no current selection
+      if (selectionRange.isEmpty())
       {
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
