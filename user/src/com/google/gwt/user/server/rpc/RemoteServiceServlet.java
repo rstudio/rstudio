@@ -206,6 +206,14 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
     serializationPolicy = doGetSerializationPolicy(getThreadLocalRequest(),
         moduleBaseURL, strongName);
 
+    // Try SuperDevMode, if configured.
+    if (serializationPolicy == null) {
+      String url = getCodeServerPolicyUrl(strongName);
+      if (url != null) {
+        serializationPolicy = loadPolicyFromCodeServer(url);
+      }
+    }
+
     if (serializationPolicy == null) {
       // Failed to get the requested serialization policy; use the default
       log(
@@ -329,10 +337,8 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    * will only be called once for each combination of moduleBaseURL and strongName.</p>
    *
    * <p>The default implementation loads serialization policies stored as servlet resources
-   * in the same ServletContext as this servlet. If no policy is found or there's an error,
-   * it then attempts to load the policy from the URL returned by
-   * {@link #getCodeServerPolicyUrl}.
-   * 
+   * in the same ServletContext as this servlet.
+   *
    * <p>Override this method to load the {@link SerializationPolicy} using an
    * alternative approach.
    * 
@@ -343,19 +349,7 @@ public class RemoteServiceServlet extends AbstractRemoteServiceServlet
    */
   protected SerializationPolicy doGetSerializationPolicy(
       HttpServletRequest request, String moduleBaseURL, String strongName) {
-
-    SerializationPolicy policy =
-        RemoteServiceServlet.loadSerializationPolicy(this, request, moduleBaseURL, strongName);
-    if (policy != null) {
-      return policy;
-    }
-
-    String url = getCodeServerPolicyUrl(strongName);
-    if (url != null) {
-      return loadPolicyFromCodeServer(url);
-    }
-
-    return null;
+    return RemoteServiceServlet.loadSerializationPolicy(this, request, moduleBaseURL, strongName);
   }
 
   /**
