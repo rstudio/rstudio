@@ -301,6 +301,13 @@ public class TextEditingTarget implements EditingTarget
                event.stopPropagation();
                jumpToNextFunction();
             }
+            else if ((ne.getKeyCode() == KeyCodes.KEY_ESCAPE) &&
+                     !prefs_.useVimMode().getValue())
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.interruptR().execute();
+            }
          }
       });
       
