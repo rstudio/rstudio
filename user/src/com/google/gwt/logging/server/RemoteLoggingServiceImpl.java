@@ -16,6 +16,7 @@
 
 package com.google.gwt.logging.server;
 
+import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
 import com.google.gwt.logging.shared.RemoteLoggingService;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -27,16 +28,14 @@ import java.util.logging.Logger;
 /**
  * Server side code for the remote log handler.
  */
-public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
-    RemoteLoggingService {
-  // No deobfuscator by default
-  private static StackTraceDeobfuscator deobfuscator = null;
+public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements RemoteLoggingService {
 
-  private static Logger logger =
-    Logger.getLogger(RemoteServiceServlet.class.getName());
-  
-  private static String loggerNameOverride = null;
-  
+  private static Logger logger = Logger.getLogger(RemoteServiceServlet.class.getName());
+
+  // No deobfuscator by default
+  private StackTraceDeobfuscator deobfuscator = null;
+  private String loggerNameOverride = null;
+
   /**
    * Logs a Log Record which has been serialized using GWT RPC on the server.
    * @return either an error message, or null if logging is successful.
@@ -67,13 +66,8 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements
    * By default, this service does not do any deobfuscation. In order to do
    * server side deobfuscation, you must copy the symbolMaps files to a
    * directory visible to the server and set the directory using this method.
-   * @param symbolMapsDir
    */
   public void setSymbolMapsDirectory(String symbolMapsDir) {
-    if (deobfuscator == null) {
-      deobfuscator = new StackTraceDeobfuscator(symbolMapsDir);
-    } else {
-      deobfuscator.setSymbolMapsDirectory(symbolMapsDir);
-    }
+    deobfuscator = StackTraceDeobfuscator.fromFileSystem(symbolMapsDir);
   }
 }

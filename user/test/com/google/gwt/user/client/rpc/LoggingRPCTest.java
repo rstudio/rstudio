@@ -17,8 +17,8 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.core.client.impl.SourceMapProperty;
+import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -123,7 +123,6 @@ public class LoggingRPCTest extends GWTTestCase {
     service.echoLogRecord(expectedLogRecord, new AsyncCallback<LogRecord>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
-        fail(caught.getMessage());
       }
 
       public void onSuccess(LogRecord result) {
@@ -151,7 +150,6 @@ public class LoggingRPCTest extends GWTTestCase {
           service.deobfuscateLogRecord(createLogRealRecord(e), new AsyncCallback<LogRecord>() {
 
             public void onFailure(Throwable caught) {
-              assertTrue(false);
               TestSetValidator.rethrowException(caught);
             }
 

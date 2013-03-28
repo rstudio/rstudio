@@ -16,17 +16,14 @@
 
 package com.google.gwt.user.server.rpc;
 
-import static com.google.gwt.user.client.rpc.RpcRequestBuilder.MODULE_BASE_HEADER;
-
+import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
 import com.google.gwt.junit.linker.JUnitSymbolMapsLinker;
-import com.google.gwt.logging.server.StackTraceDeobfuscator;
+import com.google.gwt.logging.server.RemoteLoggingServiceUtil;
 import com.google.gwt.user.client.rpc.LoggingRPCTest;
 import com.google.gwt.user.client.rpc.LoggingRPCTestService;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.LogRecord;
@@ -41,43 +38,13 @@ public class LoggingRPCTestServiceImpl extends HybridServiceServlet implements
     LoggingRPCTestService {
 
   @Override
-  public LogRecord deobfuscateLogRecord(LogRecord value)
-      throws LoggingRPCTestServiceException {
+  public LogRecord deobfuscateLogRecord(LogRecord value) {
     // don't deobfuscate DevMode, there's no symbol map
     if ("HostedMode".equals(getPermutationStrongName())) {
       return value;
     }
 
-    StackTraceDeobfuscator deobf = new StackTraceDeobfuscator(getSymbolMapsDir()) {
-      @Override
-      protected InputStream getSourceMapInputStream(String permutationStrongName,
-          int fragmentNumber)
-          throws IOException {
-        if (symbolMapsDirectory.exists()) {
-          return super.getSourceMapInputStream(permutationStrongName,
-              fragmentNumber);
-        } else {
-          return getServletContext().getResourceAsStream(
-              getModule() + File.separatorChar + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR
-                  + permutationStrongName
-                  + "_sourceMap" + fragmentNumber + ".json");
-        }
-      }
-
-      @Override
-      protected InputStream getSymbolMapInputStream(String permutationStrongName)
-          throws IOException {
-        if (symbolMapsDirectory.exists()) {
-          return super.getSymbolMapInputStream(permutationStrongName);
-        } else {
-          String name =
-              getModule() + File.separatorChar + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR
-                  + permutationStrongName
-                  + ".symbolMap";
-          return getServletContext().getResourceAsStream(name);
-        }
-      }
-    };
+    StackTraceDeobfuscator deobf = StackTraceDeobfuscator.fromUrl(getSymbolMapUrl());
 
     HttpServletRequest threadLocalRequest = getThreadLocalRequest();
     String strongName = null;
@@ -85,9 +52,19 @@ public class LoggingRPCTestServiceImpl extends HybridServiceServlet implements
       // can be null during tests
       strongName = threadLocalRequest.getHeader(RpcRequestBuilder.STRONG_NAME_HEADER);
     }
-    LogRecord newRecord = deobf.deobfuscateLogRecord(value, strongName);
+    LogRecord newRecord = RemoteLoggingServiceUtil.deobfuscateLogRecord(deobf, value, strongName);
     Logger.getLogger(value.getLoggerName()).log(newRecord);
     return newRecord;
+  }
+
+  private URL getSymbolMapUrl() {
+    File symbolMapsDirectory = new File("war/" + getJunitSymbolMapsPath());
+    try {
+      return symbolMapsDirectory.exists() ? symbolMapsDirectory.toURI().toURL()
+          : getServletContext().getResource(getJunitSymbolMapsPath());
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public LogRecord echoLogRecord(LogRecord value) throws LoggingRPCTestServiceException {
@@ -104,33 +81,7 @@ public class LoggingRPCTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
-  private String getModule() {
-    try {
-      String header = getThreadLocalRequest().getHeader(MODULE_BASE_HEADER);
-      if (header == null) {
-        return null;
-      }
-      String path = new URL(header).getPath();
-      String contextPath = getThreadLocalRequest().getContextPath();
-      if (!path.startsWith(contextPath)) {
-        return null;
-      }
-      path = path.substring(contextPath.length());
-      if (path.endsWith("/")) {
-        path = path.substring(0, path.length() - 1);
-      }
-      return path;
-    } catch (MalformedURLException e) {
-      return null;
-    }
-  }
-
-  private String getSymbolMapsDir() {
-    String path = getModule();
-    if (path == null) {
-      return null;
-    }
-    return "war" + File.separatorChar + getModule() + File.separatorChar
-        + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR;
+  private String getJunitSymbolMapsPath() {
+    return getRequestModuleBasePath() + "/" + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR;
   }
 }

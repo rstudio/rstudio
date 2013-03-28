@@ -16,6 +16,8 @@
 
 package com.google.gwt.logging.server;
 
+import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
+
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -53,7 +55,7 @@ public class RemoteLoggingServiceUtil {
       StackTraceDeobfuscator deobfuscator, String loggerNameOverride) throws
       RemoteLoggingException {
     if (deobfuscator != null) {
-      lr = deobfuscator.deobfuscateLogRecord(lr, strongName);
+      lr = deobfuscateLogRecord(deobfuscator, lr, strongName);
     }
     String loggerName = loggerNameOverride == null ? lr.getLoggerName() :
       loggerNameOverride;
@@ -61,13 +63,19 @@ public class RemoteLoggingServiceUtil {
     logger.log(lr);
   }
 
+  public static LogRecord deobfuscateLogRecord(
+      StackTraceDeobfuscator deobfuscator, LogRecord lr, String strongName) {
+    if (lr.getThrown() != null && strongName != null) {
+      deobfuscator.deobfuscateStackTrace(lr.getThrown(), strongName);
+    }
+    return lr;
+  }
+
   public static void logOnServer(String serializedLogRecordJson,
       String strongName, StackTraceDeobfuscator deobfuscator,
       String loggerNameOverride) throws RemoteLoggingException {
-    LogRecord lr;
     try {
-      lr = JsonLogRecordServerUtil.logRecordFromJson(
-          serializedLogRecordJson);
+      LogRecord lr = JsonLogRecordServerUtil.logRecordFromJson(serializedLogRecordJson);
       logOnServer(lr, strongName, deobfuscator, loggerNameOverride);
     } catch (Exception e) {
       // We don't want to import the JsonException, which will require the json

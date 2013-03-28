@@ -16,9 +16,9 @@
 
 package com.google.web.bindery.requestfactory.server;
 
+import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil;
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
-import com.google.gwt.logging.server.StackTraceDeobfuscator;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 public class Logging {
 
-  private static StackTraceDeobfuscator deobfuscator = new StackTraceDeobfuscator("");
+  private static StackTraceDeobfuscator deobfuscator;
 
   /**
    * Logs a message.
@@ -60,7 +60,7 @@ public class Logging {
    * @param dir a directory, specified as a String
    */
   public static void setSymbolMapsDirectory(String dir) {
-    deobfuscator.setSymbolMapsDirectory(dir);
+    deobfuscator = StackTraceDeobfuscator.fromFileSystem(dir);
   }
 
   private String id = "";
