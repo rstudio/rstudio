@@ -1693,7 +1693,8 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_.focus();
 
       Range selectionRange = docDisplay_.getSelectionRange();
-      if (selectionRange.isEmpty())
+      boolean noSelection = selectionRange.isEmpty();
+      if (noSelection)
       {
          int row = docDisplay_.getSelectionStart().getRow();
          selectionRange = Range.fromPoints(
@@ -1704,7 +1705,7 @@ public class TextEditingTarget implements EditingTarget
       executeRange(selectionRange);
       
       // advance if there is no current selection
-      if (selectionRange.isEmpty())
+      if (noSelection)
       {
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
