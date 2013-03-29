@@ -144,8 +144,8 @@ class InProcessRequestContext extends AbstractRequestContext {
       }
 
       // Create the request, just filling in the RequestData details
-      final AbstractRequest<Object> req =
-          new AbstractRequest<Object>(InProcessRequestContext.this) {
+      final AbstractRequest<BaseProxy, Object> req =
+          new AbstractRequest<BaseProxy, Object>(InProcessRequestContext.this) {
             @Override
             protected RequestData makeRequestData() {
               data.setPropertyRefs(propertyRefs);

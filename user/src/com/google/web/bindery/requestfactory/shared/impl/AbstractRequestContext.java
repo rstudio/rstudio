@@ -108,7 +108,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
      * When {@code true} the {@link AbstractRequestContext#fire()} method will be a no-op.
      */
     public boolean fireDisabled;
-    public final List<AbstractRequest<?>> invocations = new ArrayList<AbstractRequest<?>>();
+    public final List<AbstractRequest<?, ?>> invocations = new ArrayList<AbstractRequest<?, ?>>();
 
     public boolean locked;
     /**
@@ -175,7 +175,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   interface DialectImpl {
 
-    void addInvocation(AbstractRequest<?> request);
+    void addInvocation(AbstractRequest<?, ?> request);
 
     String makePayload();
 
@@ -186,7 +186,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     /**
      * Called by generated subclasses to enqueue a method invocation.
      */
-    public void addInvocation(AbstractRequest<?> request) {
+    public void addInvocation(AbstractRequest<?, ?> request) {
       /*
        * TODO(bobv): Support for multiple invocations per request needs to be ironed out. Once this
        * is done, addInvocation() can be removed from the DialectImpl interface and restored to to
@@ -312,7 +312,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     /**
      * Called by generated subclasses to enqueue a method invocation.
      */
-    public void addInvocation(AbstractRequest<?> request) {
+    public void addInvocation(AbstractRequest<?, ?> request) {
       state.invocations.add(request);
       for (Object arg : request.getRequestData().getOrderedParameters()) {
         retainArg(arg);
@@ -557,7 +557,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   @Override
   public <P extends EntityProxy> Request<P> find(final EntityProxyId<P> proxyId) {
-    return new AbstractRequest<P>(this) {
+    return new AbstractRequest<BaseProxy, P>(this) {
       {
         requestContext.addInvocation(this);
       }
@@ -578,7 +578,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
    */
   public void fire() {
     boolean needsReceiver = true;
-    for (AbstractRequest<?> request : state.invocations) {
+    for (AbstractRequest<?, ?> request : state.invocations) {
       if (request.hasReceiver()) {
         needsReceiver = false;
         break;
@@ -693,7 +693,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   /**
    * Called by generated subclasses to enqueue a method invocation.
    */
-  protected void addInvocation(AbstractRequest<?> request) {
+  protected void addInvocation(AbstractRequest<?, ?> request) {
     state.dialect.addInvocation(request);
   };
 
@@ -736,7 +736,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     reuse();
     failure.setRequestContext(this);
     Set<Throwable> causes = null;
-    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(state.invocations)) {
+    for (AbstractRequest<?, ?> request : new ArrayList<AbstractRequest<?, ?>>(state.invocations)) {
       try {
         request.onFail(failure);
       } catch (Throwable t) {
@@ -774,7 +774,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   protected void violation(final Receiver<Void> receiver, Set<ConstraintViolation<?>> errors) {
     reuse();
     Set<Throwable> causes = null;
-    for (AbstractRequest<?> request : new ArrayList<AbstractRequest<?>>(state.invocations)) {
+    for (AbstractRequest<?, ?> request : new ArrayList<AbstractRequest<?, ?>>(state.invocations)) {
       try {
         request.onViolation(errors);
       } catch (Throwable t) {
@@ -1180,7 +1180,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
     MessageFactory f = MessageFactoryHolder.FACTORY;
 
     List<InvocationMessage> invocationMessages = new ArrayList<InvocationMessage>();
-    for (AbstractRequest<?> invocation : state.invocations) {
+    for (AbstractRequest<?, ?> invocation : state.invocations) {
       // RequestData is produced by the generated subclass
       RequestData data = invocation.getRequestData();
       InvocationMessage message = f.invocation().as();

@@ -33,10 +33,12 @@ import javax.validation.ConstraintViolation;
 /**
  * Abstract implementation of {@link Request}. Each request stores a
  * {@link DeltaValueStoreJsonImpl}.
- * 
+ *
+ * @param <P> proxy type
  * @param <T> return type
  */
-public abstract class AbstractRequest<T> implements Request<T>, InstanceRequest<BaseProxy, T> {
+public abstract class AbstractRequest<P extends BaseProxy, T> implements
+    Request<T>, InstanceRequest<P, T> {
 
   /**
    * Used by generated subtypes.
@@ -84,10 +86,10 @@ public abstract class AbstractRequest<T> implements Request<T>, InstanceRequest<
   }
 
   /**
-   * This method comes from the {@link InstanceRequest} interface. Instance
-   * methods place the instance in the first parameter slot.
+   * This method comes from the {@link InstanceRequest}
+   * interface. Instance methods place the instance in the first parameter slot.
    */
-  public Request<T> using(BaseProxy instanceObject) {
+  public Request<T> using(P instanceObject) {
     getRequestData().getOrderedParameters()[0] = instanceObject;
     /*
      * Instance methods enqueue themselves when their using() method is called.

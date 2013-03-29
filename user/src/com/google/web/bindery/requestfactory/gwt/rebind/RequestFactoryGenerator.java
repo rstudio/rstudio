@@ -47,6 +47,7 @@ import com.google.web.bindery.requestfactory.gwt.rebind.model.HasExtraTypes;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.ModelVisitor;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestFactoryModel;
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestMethod;
+import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.JsonRpcContent;
 import com.google.web.bindery.requestfactory.shared.impl.AbstractRequest;
@@ -375,10 +376,14 @@ public class RequestFactoryGenerator extends Generator {
         sw.println("public %s %s %s(%s) {", typeParameterDeclaration, jmethod.getReturnType()
             .getParameterizedQualifiedSourceName(), jmethod.getName(), parameterDeclaration);
         sw.indent();
+
         // The implements clause covers InstanceRequest
-        // class X extends AbstractRequest<Return> implements Request<Return> {
-        sw.println("class X extends %s<%s> implements %s {", AbstractRequest.class
-            .getCanonicalName(), request.getDataType().getParameterizedQualifiedSourceName(),
+        // class X extends AbstractRequest<FooProxy, Return> implements Request<Return> {
+        sw.println("class X extends %s<%s, %s> implements %s {",
+            AbstractRequest.class.getCanonicalName(),
+            request.getInstanceType() == null ? BaseProxy.class.getCanonicalName() :
+                request.getInstanceType().getQualifiedSourceName(),
+            request.getDataType().getParameterizedQualifiedSourceName(),
             jmethod.getReturnType().getParameterizedQualifiedSourceName());
         sw.indent();
 
