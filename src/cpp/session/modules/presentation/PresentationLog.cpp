@@ -30,6 +30,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include "PresentationState.hpp"
 
@@ -107,6 +108,10 @@ void Log::onSlideIndexChanged(int index)
 void Log::onConsolePrompt(const std::string& prompt)
 {
    if (!presentation::state::isActive())
+      return;
+
+   // ignore if this isn't the default prompt
+   if (!r::session::utils::isDefaultPrompt(prompt))
       return;
 
    if (!consoleInputBuffer_.empty())

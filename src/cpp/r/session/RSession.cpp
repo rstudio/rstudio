@@ -1594,6 +1594,11 @@ bool isR3()
    return s_isR3;
 }
 
+bool isDefaultPrompt(const std::string& prompt)
+{
+   return prompt == r::options::getOption<std::string>("prompt");
+}
+
 const FilePath& userHomePath()
 {
    return s_options.userHomePath;
