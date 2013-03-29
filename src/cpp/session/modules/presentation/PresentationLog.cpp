@@ -185,7 +185,7 @@ void Log::append(EntryType type,
       return;
    }
 
-   FilePath logFilePath = presDir.childPath("presentation-log.csv");
+   FilePath logFilePath = presDir.childPath("presentation-log-v1.csv");
    if (!logFilePath.exists())
    {
       Error error = core::writeStringToFile(logFilePath,
