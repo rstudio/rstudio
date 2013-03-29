@@ -384,7 +384,11 @@ private:
       // format the command to send to R
       boost::format cmdFmt(
          "capture.output(suppressPackageStartupMessages("
-              "{library(roxygen2); %1%;}"
+               "{oldLC <- Sys.getenv('LC_COLLATE', unset=NA); "
+               " Sys.setenv(LC_COLLATE = 'C'); "
+               " library(roxygen2); "
+               " %1%; "
+               " if (!is.na(oldLC)) Sys.setenv(LC_COLLATE = oldLC); }"
           "))");
       std::string cmd = boost::str(cmdFmt % roxygenizeCall);
 
