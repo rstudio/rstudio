@@ -16,7 +16,7 @@
 
 package com.google.gwt.user.client.rpc.core.java.util.logging;
 
-import com.google.gwt.core.client.impl.SerializableThrowable;
+import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -28,43 +28,37 @@ import java.util.logging.LogRecord;
  * Custom serializer for LogRecord.
  */
 public class LogRecord_CustomFieldSerializer {
-  public static void deserialize(SerializationStreamReader reader,
-      LogRecord instance) throws SerializationException {
+
+  public static void deserialize(SerializationStreamReader reader, LogRecord instance)
+      throws SerializationException {
     String loggerName = reader.readString();
     Long millis = reader.readLong();
-    Object throwable = reader.readObject();
+    SerializableThrowable thrown = (SerializableThrowable) reader.readObject();
 
     instance.setLoggerName(loggerName);
     instance.setMillis(millis);
-    if (throwable != null && throwable instanceof SerializableThrowable) {
-      instance.setThrown(((SerializableThrowable) throwable).getThrowable());
-    }
+    instance.setThrown(thrown);
   }
 
   public static LogRecord instantiate(SerializationStreamReader reader)
-  throws SerializationException {
-    // Note: Fields should be read in the same order that they were written.
+      throws SerializationException {
     String levelString = reader.readString();
     String msg = reader.readString();
-    
+
     Level level = Level.parse(levelString);
     LogRecord toReturn = new LogRecord(level, msg);
     return toReturn;
   }
 
-  public static void serialize(SerializationStreamWriter writer,
-      LogRecord lr) throws SerializationException {
-    // Although Level is serializable, the Level in LogRecord is actually a
-    // LevelWithExposedConstructor, which serialization does not like, so we
+  public static void serialize(SerializationStreamWriter writer, LogRecord lr)
+      throws SerializationException {
+    // Although Level is serializable, the Level in LogRecord is actually
+    // extending Level, which serialization does not like, so we
     // manually just serialize the name.
     writer.writeString(lr.getLevel().getName());
     writer.writeString(lr.getMessage());
     writer.writeString(lr.getLoggerName());
     writer.writeLong(lr.getMillis());
-    if (lr.getThrown() != null) {
-      writer.writeObject(new SerializableThrowable(lr.getThrown()));
-    } else {
-      writer.writeObject(null);
-    }
+    writer.writeObject(SerializableThrowable.fromThrowable(lr.getThrown()));
   }
 }

@@ -74,11 +74,6 @@ public class Level implements Serializable {
     @Override public int intValue() { return Integer.MAX_VALUE; }
   }
 
-  private static class LevelNull extends Level {
-    @Override public String getName() { return null; }
-    @Override public int intValue() { return -1; }
-  }
-  
   private static class LevelSevere extends Level {
     @Override public String getName() { return "SEVERE"; }
     @Override public int intValue() { return 1000; }

@@ -119,7 +119,7 @@ public class Throwable implements Serializable {
       }
       out.println(t);
       for (StackTraceElement element : t.getStackTrace()) {
-        out.println("\tat" + element);
+        out.println("\tat " + element);
       }
     }
   }

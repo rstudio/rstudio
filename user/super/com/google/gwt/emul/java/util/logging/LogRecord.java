@@ -16,25 +16,22 @@
 
 package java.util.logging;
 
-import com.google.gwt.core.client.impl.SerializableThrowable;
+import com.google.gwt.core.shared.SerializableThrowable;
 
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- *  An emulation of the java.util.logging.LogRecord class. See 
- *  <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/logging/LogRecord.html"> 
+ *  An emulation of the java.util.logging.LogRecord class. See
+ *  <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/logging/LogRecord.html">
  *  The Java API doc for details</a>
  */
 public class LogRecord implements Serializable {
   private Level level;
   private String loggerName = "";
   private String msg;
-  private Throwable thrown = null;
+  private SerializableThrowable thrown = null;
   private long millis;
-  
-  // DUMMY - Used to trigger serialization
-  private SerializableThrowable dummy = null;
   
   public LogRecord(Level level, String msg) {
     this.level = level;
@@ -83,7 +80,7 @@ public class LogRecord implements Serializable {
   }
 
   public void setThrown(Throwable newThrown) {
-    thrown = newThrown;
+    thrown = SerializableThrowable.fromThrowable(newThrown);
   }
 
   /* Not Implemented */

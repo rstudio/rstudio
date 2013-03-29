@@ -16,10 +16,8 @@
 
 package com.google.gwt.logging.impl;
 
-import com.google.gwt.core.client.impl.SerializableThrowable;
-
+import java.io.PrintStream;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -45,43 +43,29 @@ public abstract class FormatterImpl extends Formatter {
     s.append(": ");
     return s.toString();
   }
-  
-  // This method is borrowed from AbstractTreeLogger. 
-  // TODO(unnurg): once there is a clear place where code used by gwt-dev and
-  // gwt-user can live, move this function there.
-  protected String getStackTraceAsString(Throwable e, String newline,
-      String indent) {
+
+  /**
+   * @deprecated Use {@link Throwable#printStackTrace(PrintStream)} with
+   *             {@link StackTracePrintStream} instead.
+   */
+  @Deprecated
+  protected String getStackTraceAsString(Throwable e, final String newline, final String indent) {
     if (e == null) {
       return "";
     }
-    // For each cause, print the requested number of entries of its stack
-    // trace, being careful to avoid getting stuck in an infinite loop.
-    //
-    StringBuffer s = new StringBuffer(newline);
-    Throwable currentCause = e;
-    String causedBy = "";
-    HashSet<Throwable> seenCauses = new HashSet<Throwable>();
-    while (currentCause != null && !seenCauses.contains(currentCause)) {
-      seenCauses.add(currentCause);
-      s.append(causedBy);
-      causedBy = newline + "Caused by: "; // after 1st, all say "caused by"
-      if (currentCause instanceof SerializableThrowable.ThrowableWithClassName) {
-        s.append(((SerializableThrowable.ThrowableWithClassName) currentCause).getExceptionClass());
-      } else {
-        s.append(currentCause.getClass().getName());
-      }
-      s.append(": " + currentCause.getMessage());
-      StackTraceElement[] stackElems = currentCause.getStackTrace();
-      if (stackElems != null) {
-        for (int i = 0; i < stackElems.length; ++i) {
-          s.append(newline + indent + "at ");
-          s.append(stackElems[i].toString());
-        }
+    final StringBuilder builder = new StringBuilder();
+    PrintStream stream = new StackTracePrintStream(builder) {
+      @Override
+      public void append(String str) {
+        builder.append(str.replaceAll("\t", indent));
       }
 
-      currentCause = currentCause.getCause();
-    }
-    return s.toString();
+      @Override
+      public void newLine() {
+        builder.append(newline);
+      }
+    };
+    e.printStackTrace(stream);
+    return builder.toString();
   }
-
 }

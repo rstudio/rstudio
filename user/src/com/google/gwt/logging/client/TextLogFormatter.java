@@ -17,6 +17,7 @@
 package com.google.gwt.logging.client;
 
 import com.google.gwt.logging.impl.FormatterImpl;
+import com.google.gwt.logging.impl.StackTracePrintStream;
 
 import java.util.logging.LogRecord;
 
@@ -35,8 +36,8 @@ public class TextLogFormatter extends FormatterImpl {
     StringBuilder message = new StringBuilder();
     message.append(getRecordInfo(event, "\n"));
     message.append(event.getMessage());
-    if (showStackTraces) {
-      message.append(getStackTraceAsString(event.getThrown(), "\n", "\t"));
+    if (showStackTraces && event.getThrown() != null) {
+      event.getThrown().printStackTrace(new StackTracePrintStream(message));
     }
     return message.toString();
   }

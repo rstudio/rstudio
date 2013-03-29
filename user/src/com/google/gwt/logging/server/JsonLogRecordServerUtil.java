@@ -16,15 +16,12 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.core.client.impl.SerializableThrowable;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
 /**
  * A set of functions to convert standard JSON strings into
@@ -35,17 +32,14 @@ import java.util.logging.Logger;
  * JsonLogRecordClientUtil.
  */
 public class JsonLogRecordServerUtil {
-  private static Logger logger =
-    Logger.getLogger(JsonLogRecordServerUtil.class.getName());
-  public static LogRecord logRecordFromJson(String jsonString)
-  throws JSONException {
+
+  public static LogRecord logRecordFromJson(String jsonString) throws JSONException {
     JSONObject lro = new JSONObject(jsonString);
     String level = lro.getString("level");
     String loggerName = lro.getString("loggerName");
     String msg = lro.getString("msg");
     long timestamp = Long.parseLong(lro.getString("timestamp"));
-    Throwable thrown =
-      throwableFromJson(lro.getString("thrown"));
+    Throwable thrown = JsonLogRecordThrowable.fromJsonString(lro.getString("thrown"));
     LogRecord lr = new LogRecord(Level.parse(level), msg);
     lr.setLoggerName(loggerName);
     lr.setThrown(thrown);
@@ -53,41 +47,48 @@ public class JsonLogRecordServerUtil {
     return lr;
   }
 
-  private static StackTraceElement stackTraceElementFromJson(
-      String jsonString) throws JSONException {
-    JSONObject ste = new JSONObject(jsonString);
-    String className = ste.getString("className");
-    String fileName = ste.getString("fileName");
-    String methodName = ste.getString("methodName");
-    int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
-    return new StackTraceElement(className, methodName, fileName, lineNumber);
-  }
+  private static class JsonLogRecordThrowable extends Throwable {
 
-  private static Throwable throwableFromJson(String jsonString)
-  throws JSONException {
-    if (jsonString.equals("{}")) {
-      return null;
-    }
-    JSONObject t = new JSONObject(jsonString);
-    String message = t.getString("message");
-    Throwable cause =
-      throwableFromJson(t.getString("cause"));
-    StackTraceElement[] stackTrace = null;
-    if (t.has("stackTrace")) {
-      JSONArray st = t.getJSONArray("stackTrace");
-      if (st.length() > 0) {
-        stackTrace = new StackTraceElement[st.length()];
-        for (int i = 0; i < st.length(); i++) {
-          stackTrace[i] = stackTraceElementFromJson(st.getString(i));
-        }
+    private static Throwable fromJsonString(String jsonString) throws JSONException {
+      if (jsonString.equals("{}")) {
+        return null;
       }
-    } else {
-      stackTrace = new StackTraceElement[0];
+      return new JsonLogRecordThrowable(new JSONObject(jsonString));
     }
-    String exceptionClass = t.getString("type");
-    SerializableThrowable.ThrowableWithClassName thrown = 
-        new SerializableThrowable.ThrowableWithClassName(message, cause, exceptionClass);
-    thrown.setStackTrace(stackTrace);
-    return thrown;
+
+    private String type;
+    private String msg;
+
+    public JsonLogRecordThrowable(JSONObject t) throws JSONException {
+      type = t.getString("type");
+      msg = t.getString("message");
+      setStackTrace(stackTraceFromJson(t.optJSONArray("stackTrace")));
+      initCause(JsonLogRecordThrowable.fromJsonString(t.getString("cause")));
+    }
+
+    private StackTraceElement[] stackTraceFromJson(JSONArray st) throws JSONException {
+      if (st == null || st.length() <= 0) {
+        return new StackTraceElement[0];
+      }
+      StackTraceElement[] stackTrace = new StackTraceElement[st.length()];
+      for (int i = 0; i < st.length(); i++) {
+        stackTrace[i] = stackTraceElementFromJson(st.getString(i));
+      }
+      return stackTrace;
+    }
+
+    private StackTraceElement stackTraceElementFromJson(String jsonString) throws JSONException {
+      JSONObject ste = new JSONObject(jsonString);
+      String className = ste.getString("className");
+      String fileName = ste.getString("fileName");
+      String methodName = ste.getString("methodName");
+      int lineNumber = Integer.parseInt(ste.getString("lineNumber"));
+      return new StackTraceElement(className, methodName, fileName, lineNumber);
+    }
+
+    @Override
+    public String toString() {
+      return msg != null ? type + ": " + msg : type;
+    }
   }
 }

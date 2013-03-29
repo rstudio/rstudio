@@ -17,6 +17,7 @@
 package com.google.gwt.logging.client;
 
 import com.google.gwt.logging.impl.FormatterImpl;
+import com.google.gwt.logging.impl.StackTracePrintStream;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -27,28 +28,35 @@ import java.util.logging.LogRecord;
  * is properly escaped.
  */
 public class HtmlLogFormatter extends FormatterImpl {
-  private static String newline = "__GWT_LOG_FORMATTER_BR__";
   private boolean showStackTraces;
-  
+
   public HtmlLogFormatter(boolean showStackTraces) {
     this.showStackTraces = showStackTraces;
   }
 
-  // TODO(unnurg): Handle the outputting of Throwables.
   @Override
   public String format(LogRecord event) {
-    StringBuilder html = new StringBuilder();
+    final StringBuilder html = new StringBuilder();
     html.append(getHtmlPrefix(event));
     html.append(getRecordInfo(event, " "));
     html.append(getEscaped(event.getMessage()));
-    if (showStackTraces) {
-      html.append(getEscaped(getStackTraceAsString(
-          event.getThrown(), newline, "&nbsp;&nbsp;&nbsp;")));
+    if (showStackTraces && event.getThrown() != null) {
+      event.getThrown().printStackTrace(new StackTracePrintStream(html) {
+        @Override
+        public void append(String str) {
+          html.append(getEscaped(str));
+        }
+
+        @Override
+        public void newLine() {
+          html.append("<br>");
+        }
+      });
     }
     html.append(getHtmlSuffix(event));
     return html.toString();
   }
-  
+
   protected String getHtmlPrefix(LogRecord event) {
     StringBuilder prefix = new StringBuilder();
     prefix.append("<span style='color:");
@@ -57,14 +65,11 @@ public class HtmlLogFormatter extends FormatterImpl {
     prefix.append("<code>");
     return prefix.toString();
   }
-  
-  /**
-   * @param event
-   */
+
   protected String getHtmlSuffix(LogRecord event) {
     return "</code></span>";
   }
-  
+
   private String getColor(int logLevel) {
     if (logLevel == Level.OFF.intValue()) {
       return "#000"; // black
@@ -96,8 +101,7 @@ public class HtmlLogFormatter extends FormatterImpl {
   private String getEscaped(String text) {
     text = text.replaceAll("<", "&lt;");
     text = text.replaceAll(">", "&gt;");
-    // but allow the line breaks that we put in ourselves
-    text = text.replaceAll(newline, "<br>");
+    text = text.replaceAll("\t", "&nbsp;&nbsp;&nbsp;");
     return text;
   }
 
