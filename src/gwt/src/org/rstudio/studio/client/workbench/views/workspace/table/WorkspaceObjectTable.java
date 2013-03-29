@@ -363,7 +363,7 @@ public class WorkspaceObjectTable
 
    private boolean isData(String type)
    {
-      return "data.frame".equals(type) || "matrix".equals(type);
+      return "data.frame".equals(type) || "matrix".equals(type) || "data.table".equals(type) || "cast_df".equals(type);
    }
 
    private RowManager rowManager_ ;
