@@ -139,8 +139,6 @@ void Log::onConsoleInput(const std::string& text)
       return;
 
    consoleInputBuffer_.push_back(text);
-
-   errorOutputBuffer_.clear();
 }
 
 
