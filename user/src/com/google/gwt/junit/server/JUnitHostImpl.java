@@ -15,8 +15,7 @@
  */
 package com.google.gwt.junit.server;
 
-import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.StringKey;
+import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
 import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitMessageQueue.ClientInfoExt;
@@ -24,16 +23,13 @@ import com.google.gwt.junit.JUnitShell;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.junit.linker.JUnitSymbolMapsLinker;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.server.rpc.HybridServiceServlet;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
@@ -46,18 +42,6 @@ import javax.servlet.http.HttpServletResponse;
  * test process.
  */
 public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
-
-  private static class StrongName extends StringKey {
-    protected StrongName(String value) {
-      super(value);
-    }
-  }
-
-  private static class SymbolName extends StringKey {
-    protected SymbolName(String value) {
-      super(value);
-    }
-  }
 
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.
@@ -91,7 +75,7 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
     return sHost;
   }
 
-  private Map<StrongName, Map<SymbolName, String>> symbolMaps = new HashMap<StrongName, Map<SymbolName, String>>();
+  private StackTraceDeobfuscator deobfuscator;
 
   public InitialResponse getTestBlock(int blockIndex, ClientInfo clientInfo)
       throws TimeoutException {
@@ -113,7 +97,6 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
       ClientInfo clientInfo) throws TimeoutException {
     for (JUnitResult result : results.values()) {
       initResult(getThreadLocalRequest(), result);
-      resymbolize(result.getException());
     }
     JUnitMessageQueue host = getHost();
     ClientInfoExt clientInfoExt = createClientInfo(clientInfo,
@@ -172,83 +155,28 @@ public class JUnitHostImpl extends HybridServiceServlet implements JUnitHost {
   }
 
   private void initResult(HttpServletRequest request, JUnitResult result) {
-    String agent = request.getHeader("User-Agent");
-    result.setAgent(agent);
-    String machine = request.getRemoteHost();
-    result.setHost(machine);
+    result.setAgent(request.getHeader("User-Agent"));
+    result.setHost(request.getRemoteHost());
+    Throwable throwable = result.getException();
+    if (throwable != null) {
+      deobfuscateStackTrace(throwable);
+    }
   }
 
-  private synchronized Map<SymbolName, String> loadSymbolMap(
-      StrongName strongName) {
-    Map<SymbolName, String> toReturn = symbolMaps.get(strongName);
-    if (toReturn != null) {
-      return toReturn;
-    }
-    toReturn = new HashMap<SymbolName, String>();
-
-    /*
-     * Collaborate with SymbolMapsLinker for the location of the symbol data
-     * because the -aux directory isn't accessible via the servlet context.
-     */
-    String path = getRequestModuleBasePath() + "/.junit_symbolMaps/"
-        + strongName.get() + ".symbolMap";
-    InputStream in = getServletContext().getResourceAsStream(path);
-    if (in == null) {
-      symbolMaps.put(strongName, null);
-      return null;
-    }
-
-    BufferedReader bin = new BufferedReader(new InputStreamReader(in));
-    String line;
+  private void deobfuscateStackTrace(Throwable throwable) {
     try {
-      try {
-        while ((line = bin.readLine()) != null) {
-          if (line.charAt(0) == '#') {
-            continue;
-          }
-          int idx = line.indexOf(',');
-          toReturn.put(new SymbolName(line.substring(0, idx)),
-                       line.substring(idx + 1));
-        }
-      } finally {
-        bin.close();
-      }
+      getDeobfuscator().deobfuscateStackTrace(throwable, getPermutationStrongName());
     } catch (IOException e) {
-      toReturn = null;
+      System.err.println("Unable to deobfuscate a stack trace due to an error:");
+      e.printStackTrace();
     }
-
-    symbolMaps.put(strongName, toReturn);
-    return toReturn;
   }
 
-  /**
-   * Resymbolizes a trace from obfuscated symbols to Java names.
-   */
-  private void resymbolize(Throwable exception) {
-    if (exception == null) {
-      return;
+  private StackTraceDeobfuscator getDeobfuscator() throws IOException {
+    if (deobfuscator == null) {
+      String path = getRequestModuleBasePath() + "/" + JUnitSymbolMapsLinker.SYMBOL_MAP_DIR;
+      deobfuscator = StackTraceDeobfuscator.fromUrl(getServletContext().getResource(path));
     }
-    StackTraceElement[] stackTrace = exception.getStackTrace();
-    StrongName strongName = new StrongName(getPermutationStrongName());
-    Map<SymbolName, String> map = loadSymbolMap(strongName);
-    if (map == null) {
-      return;
-    }
-    for (int i = 0; i < stackTrace.length; ++i) {
-      StackTraceElement ste = stackTrace[i];
-      String symbolData = map.get(new SymbolName(ste.getMethodName()));
-      if (symbolData != null) {
-        // jsniIdent, className, memberName, sourceUri, sourceLine
-        String[] parts = symbolData.split(",");
-        assert parts.length == 6 : "Expected 6, have " + parts.length;
-
-        JsniRef ref = JsniRef.parse(parts[0].substring(0,
-            parts[0].lastIndexOf(')') + 1));
-        stackTrace[i] = new StackTraceElement(ref.className(),
-            ref.memberName(), ste.getFileName(), ste.getLineNumber());
-      }
-    }
-    exception.setStackTrace(stackTrace);
-    resymbolize(exception.getCause());
+    return deobfuscator;
   }
 }

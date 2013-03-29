@@ -37,6 +37,7 @@ class TestSuiteWithOrder extends TestSuite {
    */
 
   public TestSuiteWithOrder(Class<? extends TestCase> clazz) {
+    super(clazz.getName());
     for (Class<?> c = clazz; Test.class.isAssignableFrom(c); c = c.getSuperclass()) {
       for (Method each : getDeclaredMethods(c)) {
         if (isTestMethod(each)) {

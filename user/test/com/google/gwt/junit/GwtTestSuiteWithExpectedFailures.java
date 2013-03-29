@@ -20,7 +20,8 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import junit.framework.TestResult;
 
 /**
- * A {@link GWTTestSuite} that can interpret {@link ExpectedFailure} on test methods.
+ * A {@link GWTTestSuite} that can interpret {@link com.google.gwt.junit.client.ExpectedFailure} on
+ * test methods.
  */
 class GwtTestSuiteWithExpectedFailures extends GWTTestSuite {
 

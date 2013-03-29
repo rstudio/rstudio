@@ -28,9 +28,6 @@ import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.SerializationStreamFactory;
-import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import java.util.HashMap;
@@ -243,8 +240,6 @@ public class GWTRunner implements EntryPoint {
     if (failureMessage != null) {
       RuntimeException ex = new RuntimeException(failureMessage);
       result.setException(ex);
-    } else if (result.exceptionWrapper != null) {
-      ensureSerializable(result.exceptionWrapper);
     }
     TestInfo currentTest = getCurrentTest();
     currentResults.put(currentTest, result);
@@ -258,25 +253,6 @@ public class GWTRunner implements EntryPoint {
       });
     } else {
       syncToServer();
-    }
-  }
-
-  /**
-   * Convert unserializable exceptions into generic serializable ones.
-   */
-  private void ensureSerializable(ExceptionWrapper wrapper) {
-    if (wrapper == null) {
-      return;
-    }
-
-    ensureSerializable(wrapper.causeWrapper);
-    try {
-      SerializationStreamFactory fac = (SerializationStreamFactory) junitHost;
-      SerializationStreamWriter dummyWriter = fac.createStreamWriter();
-      dummyWriter.writeObject(wrapper.exception);
-    } catch (SerializationException e) {
-      wrapper.exception = new Exception(wrapper.exception.toString() +
-          " (unserializable exception)");
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.junit.client;
 
-import com.google.gwt.junit.ExpectedFailure;
 import com.google.gwt.user.client.Timer;
 
 /**

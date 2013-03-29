@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.DevMode;
@@ -1224,39 +1225,26 @@ public class JUnitShell extends DevMode {
         + " != " + messageQueue.getNumClients();
 
     for (Entry<ClientStatus, JUnitResult> entry : results.entrySet()) {
-      ClientStatus client = entry.getKey();
       JUnitResult result = entry.getValue();
       assert (result != null);
-      Throwable exception = result.getException();
 
-      // Let the user know the browser in which the failure happened.
-      if (exception != null) {
-        String msg = "Remote test failed at " + client.getDesc();
-        if (exception instanceof AssertionFailedError) {
-          String oldMessage = exception.getMessage();
-          if (oldMessage != null) {
-            msg += "\n" + exception.getMessage();
-          }
-          AssertionFailedError newException = new AssertionFailedError(msg);
-          newException.setStackTrace(exception.getStackTrace());
-          newException.initCause(exception.getCause());
-          exception = newException;
+      if (result.isAnyException()) {
+        if (result.isExceptionOf(AssertionFailedError.class)) {
+          testResult.addFailure(testCase, toAssertionFailedError(result.getException()));
         } else {
-          exception = new RuntimeException(msg, exception);
+          testResult.addError(testCase, result.getException());
         }
-      }
-
-      // A "successful" failure.
-      if (exception instanceof AssertionFailedError) {
-        testResult.addFailure(testCase, (AssertionFailedError) exception);
-      } else if (exception != null) {
-        // A real failure
-        if (exception instanceof JUnitFatalLaunchException) {
-          lastLaunchFailed = true;
-        }
-        testResult.addError(testCase, exception);
       }
     }
+  }
+
+  private AssertionFailedError toAssertionFailedError(SerializableThrowable thrown) {
+    AssertionFailedError error = new AssertionFailedError(thrown.getMessage());
+    error.setStackTrace(thrown.getStackTrace());
+    if (thrown.getCause() != null) {
+      error.initCause(thrown.getCause());
+    }
+    return error;
   }
 
   private void runTestImpl(GWTTestCase testCase, TestResult testResult)

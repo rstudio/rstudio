@@ -19,7 +19,6 @@ import static com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest.SetUpTear
 import static com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest.SetUpTearDownState.TEARDOWN;
 import static com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest.SetUpTearDownState.TESTCASE;
 
-import com.google.gwt.junit.ExpectedFailure;
 import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
@@ -31,16 +30,12 @@ import java.util.List;
  *
  * Note: This test requires some test methods to be executed in a specific order.
  */
-public class GWTTestCaseSetupTearDownTest extends GWTTestCase {
-
-  public String getModuleName() {
-    return "com.google.gwt.junit.JUnit";
-  }
+public class GWTTestCaseSetupTearDownTest extends GWTTestCaseTestBase {
 
   /**
    * Tracks setup, teardown and testcase runs.
    */
-  protected enum SetUpTearDownState {
+  enum SetUpTearDownState {
     SETUP, TEARDOWN, TESTCASE
   }
 

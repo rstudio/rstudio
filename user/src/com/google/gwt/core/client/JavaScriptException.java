@@ -128,7 +128,7 @@ public final class JavaScriptException extends RuntimeException {
       StackTraceCreator.createStackTrace(this);
     }
   }
-  
+
   public JavaScriptException(String name, String description) {
     this.message = "JavaScript " + name + " exception: " + description;
     this.name = name;
@@ -137,10 +137,8 @@ public final class JavaScriptException extends RuntimeException {
   }
 
   /**
-   * Used for server-side instantiation during JUnit runs. Exceptions are
-   * manually marshaled through
-   * <code>com.google.gwt.junit.client.impl.ExceptionWrapper</code> objects.
-   * 
+   * Used for testing instantiations.
+   *
    * @param message the detail message
    */
   protected JavaScriptException(String message) {

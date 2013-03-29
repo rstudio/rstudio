@@ -15,6 +15,8 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.junit.client.ExpectedFailure;
+
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -42,19 +44,21 @@ class TestResultWithExpectedFailures extends ForwardingTestResult {
   @Override
   public void addFailure(Test test, AssertionFailedError t) {
     failed = true;
-    if (isAnExpectedException(test, t)) {
-      return; // This is a good kind of failure, do not report it.
+    if (isTestExpectedToFail(test)) {
+      processException(test, t);
+    } else {
+      super.addFailure(test, t);
     }
-    super.addFailure(test, t);
   }
 
   @Override
   public void addError(Test test, Throwable t) {
     failed = true;
-    if (isAnExpectedException(test, t)) {
-      return; // This is a good kind of failure, do not report it.
+    if (isTestExpectedToFail(test)) {
+      processException(test, t);
+    } else {
+      super.addError(test, t);
     }
-    super.addError(test, t);
   }
 
   @Override
@@ -71,27 +75,20 @@ class TestResultWithExpectedFailures extends ForwardingTestResult {
     return getExpectedFailureAnnotation(test) != null;
   }
 
-  private boolean isAnExpectedException(Test test, Throwable t) {
+  private void processException(Test test, Throwable t) {
     ExpectedFailure annotation = getExpectedFailureAnnotation(test);
-    if (annotation != null) {
-      t = normalizeGwtTestException(t);
-      return annotation.withType().isAssignableFrom(t.getClass())
-          && getExceptionMessage(t).contains(annotation.withMessage());
+    try {
+      annotation.withAsserter().newInstance().assertException(annotation, t);
+    } catch (AssertionFailedError e) {
+      String msg = "Assertion failed for thrown exception: " + e.getMessage()
+          + "\n(Actual thrown exception is reported below via 'caused by')";
+      AssertionFailedError errorToReport = new AssertionFailedError(msg);
+      errorToReport.initCause(t);
+      errorToReport.setStackTrace(e.getStackTrace());
+      super.addFailure(test, errorToReport);
+    } catch (Exception e) {
+      super.addError(test, e);
     }
-    return false;
-  }
-
-  /**
-   * Extracts the real exception from the {@code RuntimeException} thrown by GwtTestCase.
-   */
-  private Throwable normalizeGwtTestException(Throwable t) {
-    // GWTTestCase replaces AssertionFailedError with RuntimeException and for all other exceptions
-    // it puts them into 'cause' property.
-    return t.getCause() == null ? new AssertionFailedError(t.getMessage()) : t.getCause();
-  }
-
-  private String getExceptionMessage(Throwable t) {
-    return t.getMessage() == null ? "" : t.getMessage();
   }
 
   private ExpectedFailure getExpectedFailureAnnotation(Test test) {

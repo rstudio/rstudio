@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Google Inc.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,22 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit;
+package com.google.gwt.junit.client;
 
-import junit.framework.AssertionFailedError;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.google.gwt.core.shared.GwtIncompatible;
 
 /**
- * An annotation to mark test cases where the expected result is a failure.
+ * An abstraction to define assertion of exceptions to be used with {@link ExpectedFailure}.
+ * Note: Exception asserters are only executed in JRE so they don't need to be GWT compatible.
  */
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ExpectedFailure {
-  String withMessage() default "";
-
-  Class<? extends Throwable> withType() default AssertionFailedError.class;
+public interface ExceptionAsserter {
+  @GwtIncompatible
+  void assertException(ExpectedFailure annotation, Throwable actual);
 }

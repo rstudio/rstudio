@@ -17,7 +17,6 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.junit.ExpectedFailure;
 
 import junit.framework.AssertionFailedError;
 

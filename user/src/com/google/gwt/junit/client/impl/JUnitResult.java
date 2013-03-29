@@ -15,6 +15,12 @@
  */
 package com.google.gwt.junit.client.impl;
 
+import com.google.gwt.core.shared.GwtIncompatible;
+import com.google.gwt.core.shared.SerializableThrowable;
+import com.google.gwt.junit.client.TimeoutException;
+
+import junit.framework.AssertionFailedError;
+
 import java.io.Serializable;
 
 /**
@@ -33,7 +39,7 @@ public class JUnitResult implements Serializable {
   /**
    * If non-null, an exception that occurred during the run.
    */
-  ExceptionWrapper exceptionWrapper;
+  SerializableThrowable thrown;
 
   // Computed at the server, via HTTP header.
   private transient String agent;
@@ -45,8 +51,22 @@ public class JUnitResult implements Serializable {
     return agent;
   }
 
-  public Throwable getException() {
-    return (exceptionWrapper == null) ? null : exceptionWrapper.getException();
+  public SerializableThrowable getException() {
+    return thrown;
+  }
+
+  public boolean isAnyException() {
+    return thrown != null;
+  }
+
+  @GwtIncompatible
+  public boolean isExceptionOf(Class<?> expectedException) {
+    try {
+      return thrown == null ? false
+          : expectedException.isAssignableFrom(Class.forName(thrown.getDesignatedType()));
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public String getHost() {
@@ -58,7 +78,11 @@ public class JUnitResult implements Serializable {
   }
 
   public void setException(Throwable exception) {
-    this.exceptionWrapper = new ExceptionWrapper(exception);
+    thrown = SerializableThrowable.fromThrowable(exception);
+    // Try to improve exception message if there is no class metadata available
+    if (!thrown.isExactDesignatedTypeKnown()) {
+      improveDesignatedType(thrown, exception);
+    }
   }
 
   public void setHost(String host) {
@@ -67,11 +91,19 @@ public class JUnitResult implements Serializable {
 
   @Override
   public String toString() {
-    return "TestResult {" + toStringInner() + "}";
+    return "TestResult {thrown: " + thrown + ", agent: " + agent + ", host: " + host + "}";
   }
 
-  protected String toStringInner() {
-    return "exceptionWrapper: " + exceptionWrapper + ", agent: " + agent
-        + ", host: " + host;
+  /**
+   * Returns best effort type info by checking against some common exceptions for unit tests.
+   */
+  private static void improveDesignatedType(SerializableThrowable t, Throwable designatedType) {
+    if (designatedType instanceof AssertionFailedError) {
+      String className = "junit.framework.AssertionFailedError";
+      t.setDesignatedType(className, AssertionFailedError.class == designatedType.getClass());
+    } else if (designatedType instanceof TimeoutException) {
+      String className = "com.google.gwt.junit.client.TimeoutException";
+      t.setDesignatedType(className, TimeoutException.class == designatedType.getClass());
+    }
   }
 }

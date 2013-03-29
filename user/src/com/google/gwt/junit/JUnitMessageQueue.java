@@ -16,10 +16,10 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.junit.client.impl.JUnitResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,8 +27,8 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and
@@ -93,15 +93,6 @@ public class JUnitMessageQueue {
     public void updateClientInfo(ClientInfoExt clientInfo) {
       this.clientInfo = clientInfo;
     }
-  }
-
-  private static final Set<Class<? extends Throwable>> THROWABLES_NOT_RETRIED = createThrowablesNotRetried();
-
-  private static Set<Class<? extends Throwable>> createThrowablesNotRetried() {
-    Set<Class<? extends Throwable>> throwableSet = new HashSet<Class<? extends Throwable>>();
-    throwableSet.add(com.google.gwt.junit.JUnitFatalLaunchException.class);
-    throwableSet.add(java.lang.Error.class);
-    return throwableSet;
   }
 
   /**
@@ -463,12 +454,18 @@ public class JUnitMessageQueue {
       if (result == null) {
         return true;
       }
-      Throwable exception = result.getException();
-      if (exception != null && !isMember(exception, THROWABLES_NOT_RETRIED)) {
+
+      if (isNonFatalFailure(result)) {
         return true;
       }
     }
     return false;
+  }
+
+  private boolean isNonFatalFailure(JUnitResult result) {
+    return result.isAnyException()
+        && !result.isExceptionOf(Error.class)
+        && !result.isExceptionOf(JUnitFatalLaunchException.class);
   }
 
   void removeResults(TestInfo testInfo) {
@@ -519,15 +516,5 @@ public class JUnitMessageQueue {
       testResults.put(testInfo, results);
     }
     return results;
-  }
-
-  private boolean isMember(Throwable exception,
-      Set<Class<? extends Throwable>> throwableSet) {
-    for (Class<? extends Throwable> throwable : throwableSet) {
-      if (throwable.isInstance(exception)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

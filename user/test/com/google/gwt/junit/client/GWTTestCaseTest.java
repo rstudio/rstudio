@@ -23,7 +23,6 @@ package com.google.gwt.junit.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.ExpectedFailure;
 import com.google.gwt.junit.Platform;
 
 import junit.framework.AssertionFailedError;
@@ -78,9 +77,30 @@ public class GWTTestCaseTest extends GWTTestCaseTestBase {
     throw new Exception();
   }
 
-  @ExpectedFailure(withType = Exception.class)
-  public void testThrowsNonSerializableException() {
+  @ExpectedFailure(withType = JavaScriptException.class)
+  public void testThrowsJavaScriptException() {
     throw new JavaScriptException("name", "desc");
+  }
+
+  @ExpectedFailure(withType = NullPointerException.class)
+  public void testThrowsNullPointerException() {
+    throw new NullPointerException();
+  }
+
+  static class SomeNonSerializableException extends RuntimeException {
+    public SomeNonSerializableException(String msg) {
+      super(msg);
+    }
+    // no default constructor
+    // public SomeNonSerializableException() {}
+  }
+
+  // We lose some type information if class meta data is not available, setting expected failure
+  // to RuntimeException will ensure this test case passes for no metadata.
+  @ExpectedFailure(withType = RuntimeException.class,
+      withMessage = "testThrowsNonSerializableException")
+  public void testThrowsNonSerializableException() {
+    throw new SomeNonSerializableException("testThrowsNonSerializableException");
   }
 
   public void testAssertEqualsDouble() {
