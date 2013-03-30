@@ -50,6 +50,9 @@ namespace presentation {
 
 namespace {
 
+const char * const kDefaultRevealFont = "\"Lato\"";
+const char * const kDefaultRevealHeadingFont = "\"News Cycle\"";
+
 class ResourceFiles : boost::noncopyable
 {
 private:
@@ -509,6 +512,40 @@ void viewInBrowserVars(const std::string& slides,
       vars["mathjax"] = "";
 }
 
+void fontVars(const SlideDeck& slideDeck,
+              std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   // font imports
+   vars["user_font_imports"] = std::string();
+   if (slideDeck.slides().size() > 0)
+   {
+      std::ostringstream ostr;
+      std::vector<std::string> fontImports =
+            slideDeck.slides().at(0).fieldValues("font-import");
+
+      BOOST_FOREACH(const std::string& fontImport, fontImports)
+      {
+         ostr << "@import url('" << fontImport << "');" << std::endl;
+      }
+
+      vars["user_font_imports"] = ostr.str();
+   }
+
+   // fonts
+   if (!slideDeck.fontFamily().empty())
+   {
+      vars["reveal_font"] = slideDeck.fontFamily();
+      vars["reveal_heading_font"] = slideDeck.fontFamily();
+   }
+   else
+   {
+      vars["reveal_font"] = kDefaultRevealFont;
+      vars["reveal_heading_font"] = kDefaultRevealHeadingFont;
+   }
+}
+
 
 void localRevealVars(std::map<std::string,std::string>* pVars)
 {
@@ -563,6 +600,9 @@ bool createStandalonePresentation(const FilePath& targetFile,
    vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
    vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
    vars["reveal_js"] = revealEmbed("revealjs/js/reveal.min.js");
+
+   // font vars
+   fontVars(slideDeck, &vars);
 
    // call var source hook function
    varSource(targetFile, slides, &vars);
@@ -635,6 +675,9 @@ void handlePresentationRootRequest(const std::string& path,
 
    // linked versions of reveal assets
    localRevealVars(&vars);
+
+   // font vars
+   fontVars(slideDeck, &vars);
 
    // no print css for qtwebkit
    vars["reveal_print_css"]  = "";
@@ -806,6 +849,9 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
 
    // linked versions of reveal assets
    localRevealVars(&vars);
+
+   // font vars
+   fontVars(slideDeck, &vars);
 
    // link to reveal print css
    vars["reveal_print_css"] = "";

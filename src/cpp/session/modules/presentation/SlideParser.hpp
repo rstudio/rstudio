@@ -77,20 +77,24 @@ public:
    {
    }
 
+public:
+   // title
    std::string title() const { return title_; }
    bool showTitle() const;
 
-   // title slide fields
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string fontFamily() const { return fieldValue("font-family"); }
    std::string transition() const;
    std::string navigation() const { return fieldValue("navigation", "slides"); }
+
+public:
+   // global/local fields
    std::string incremental() const { return fieldValue("incremental"); }
 
+   // local fields
    std::string id() const { return fieldValue("id"); }
-
    std::string type() const { return fieldValue("type"); }
-
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
 
@@ -121,6 +125,8 @@ public:
    core::Error readSlides(const core::FilePath& filePath);
 
    std::string title() const;
+
+   std::string fontFamily() const;
 
    std::string transition() const;
    std::string navigation() const;

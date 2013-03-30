@@ -74,6 +74,8 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
           boost::iequals(name, "transition") ||
+          boost::iequals(name, "font-family") ||
+          boost::iequals(name, "font-import") ||
           boost::iequals(name, "navigation") ||
           boost::iequals(name, "incremental") ||
           boost::iequals(name, "id") ||
@@ -221,6 +223,14 @@ std::string SlideDeck::title() const
 {
    if (!slides_.empty())
       return slides_[0].title();
+   else
+      return std::string();
+}
+
+std::string SlideDeck::fontFamily() const
+{
+   if (!slides_.empty())
+      return slides_[0].fontFamily();
    else
       return std::string();
 }
