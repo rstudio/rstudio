@@ -64,32 +64,46 @@ Error Log::initialize()
    return Success();
 }
 
+void Log::recordCommand(int slideIndex, const Command& command)
+{
+   if (command.name() == "console-input")
+   {
+      std::string params = boost::algorithm::trim_copy(command.params());
+      slideDeckInputCommands_[slideIndex].insert(params);
+   }
+   else if (command.name() == "help-topic")
+   {
+      slideHelpTopics_[slideIndex] = command.params();
+   }
+   else if (command.name() == "help-doc")
+   {
+      slideHelpDocs_[slideIndex] = command.params();
+   }
+}
+
 void Log::onSlideDeckChanged(const SlideDeck& slideDeck)
 {
    slideDeckInputCommands_.clear();
+   slideTypes_.clear();
+
+   slideHelpTopics_ = std::vector<std::string>(slideDeck.slides().size());
+   slideHelpDocs_ = std::vector<std::string>(slideDeck.slides().size());
 
    const std::vector<Slide>& slides = slideDeck.slides();
    for (std::size_t i = 0; i<slides.size(); i++)
    {
+      slideTypes_.push_back(slides[i].type());
+
       const std::vector<Command>& commands = slides[i].commands();
       BOOST_FOREACH(const Command& command, commands)
       {
-         if (command.name() == "console-input")
-         {
-            std::string params = boost::algorithm::trim_copy(command.params());
-            slideDeckInputCommands_[i].insert(params);
-         }
+         recordCommand(i, command);
       }
 
       const std::vector<AtCommand>& atCommands = slides[i].atCommands();
       BOOST_FOREACH(const AtCommand& atCommand, atCommands)
       {
-         if (atCommand.command().name() == "console-input")
-         {
-            std::string params = boost::algorithm::trim_copy(
-                                             atCommand.command().params());
-            slideDeckInputCommands_[i].insert(params);
-         }
+         recordCommand(i, atCommand.command());
       }
    }
 }
@@ -101,6 +115,9 @@ void Log::onSlideIndexChanged(int index)
    append(NavigationEntry,
           presentation::state::directory(),
           currentSlideIndex_,
+          currentSlideType(),
+          currentSlideHelpTopic(),
+          currentSlideHelpDoc(),
           "",
           "");
 }
@@ -128,6 +145,9 @@ void Log::onConsolePrompt(const std::string& prompt)
          append(InputEntry,
                 presentation::state::directory(),
                 currentSlideIndex_,
+                currentSlideType(),
+                currentSlideHelpTopic(),
+                currentSlideHelpDoc(),
                 input,
                 errors);
       }
@@ -169,9 +189,36 @@ std::string csvString(std::string str)
 
 } // anonymous namespace
 
+std::string Log::currentSlideType() const
+{
+   if (currentSlideIndex_ < slideTypes_.size())
+      return slideTypes_[currentSlideIndex_];
+   else
+      return "";
+}
+
+std::string Log::currentSlideHelpTopic() const
+{
+   if (currentSlideIndex_ < slideHelpTopics_.size())
+      return slideHelpTopics_[currentSlideIndex_];
+   else
+      return "";
+}
+
+std::string Log::currentSlideHelpDoc() const
+{
+   if (currentSlideIndex_ < slideHelpDocs_.size())
+      return slideHelpDocs_[currentSlideIndex_];
+   else
+      return "";
+}
+
 void Log::append(EntryType type,
                  const FilePath& presPath,
                  int slideIndex,
+                 const std::string& slideType,
+                 const std::string& helpTopic,
+                 const std::string& helpDoc,
                  const std::string& input,
                  const std::string& errors)
 {
@@ -189,7 +236,8 @@ void Log::append(EntryType type,
    if (!logFilePath.exists())
    {
       Error error = core::writeStringToFile(logFilePath,
-         "type, timestamp, presentation, slide, input, errors\n");
+         "type, timestamp, presentation, slide, slide-type, help-topic, "
+         "help-doc, input, errors\n");
       if (error)
       {
          LOG_ERROR(error);
@@ -208,6 +256,9 @@ void Log::append(EntryType type,
    fields.push_back(dateTime);
    fields.push_back(csvString(module_context::createAliasedPath(presPath)));
    fields.push_back(safe_convert::numberToString(slideIndex));
+   fields.push_back(slideType);
+   fields.push_back(csvString(helpTopic));
+   fields.push_back(csvString(helpDoc));
    fields.push_back(csvString(input));
    fields.push_back(csvString(errors));
    std::string entry = boost::algorithm::join(fields, ",");

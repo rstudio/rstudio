@@ -61,16 +61,32 @@ private:
    static void append(EntryType type,
                       const core::FilePath& presPath,
                       int slideIndex,
+                      const std::string& slideType,
+                      const std::string& helpTopic,
+                      const std::string& helpDoc,
                       const std::string& input,
                       const std::string& errors);
 
+   std::string currentSlideType() const;
+   std::string currentSlideHelpTopic() const;
+   std::string currentSlideHelpDoc() const;
+
+   void recordCommand(int slideIndex, const Command& command);
 
 private:
    int currentSlideIndex_;
+   SlideDeck currentSlideDeck_;
+
    std::map<int, std::set<std::string> > slideDeckInputCommands_;
+
+   std::vector<std::string> slideHelpTopics_;
+   std::vector<std::string> slideHelpDocs_;
+
+   std::vector<std::string> slideTypes_;
 
    std::vector<std::string> consoleInputBuffer_;
    std::vector<std::string> errorOutputBuffer_;
+
 
 
 };
