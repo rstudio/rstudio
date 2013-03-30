@@ -194,7 +194,7 @@ std::string Log::currentSlideType() const
    if (currentSlideIndex_ < slideTypes_.size())
       return slideTypes_[currentSlideIndex_];
    else
-      return "";
+      return "default";
 }
 
 std::string Log::currentSlideHelpTopic() const
