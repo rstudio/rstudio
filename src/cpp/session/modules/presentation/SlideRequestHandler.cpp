@@ -419,7 +419,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
-
+   vars["preamble"] = pSlideDeck->preamble();
 
    return true;
 }
