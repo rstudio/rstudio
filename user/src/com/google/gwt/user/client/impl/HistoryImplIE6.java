@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Window.Location;
 
 /**
@@ -33,9 +33,9 @@ class HistoryImplIE6 extends HistoryImpl {
    * @return sanitized string
    */
   private static String escapeHtml(String maybeHtml) {
-    final Element div = DOM.createDiv();
-    DOM.setInnerText(div, maybeHtml);
-    return DOM.getInnerHTML(div);
+    final Element div = Document.get().createDivElement();
+    div.setInnerText(maybeHtml);
+    return div.getInnerHTML();
   }
 
   private static native Element findHistoryFrame() /*-{
