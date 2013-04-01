@@ -384,11 +384,11 @@ private:
       // format the command to send to R
       boost::format cmdFmt(
          "capture.output(suppressPackageStartupMessages("
-               "{oldLC <- Sys.getenv('LC_COLLATE', unset=NA); "
-               " Sys.setenv(LC_COLLATE = 'C'); "
-               " library(roxygen2); "
-               " %1%; "
-               " if (!is.na(oldLC)) Sys.setenv(LC_COLLATE = oldLC); }"
+            "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
+            " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
+            " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
+            " library(roxygen2); "
+            " %1%; }"
           "))");
       std::string cmd = boost::str(cmdFmt % roxygenizeCall);
 
