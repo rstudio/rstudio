@@ -113,7 +113,7 @@ void Log::onSlideIndexChanged(int index)
    currentSlideIndex_ = index;
 
    append(NavigationEntry,
-          presentation::state::directory(),
+          presentation::state::filePath(),
           currentSlideIndex_,
           currentSlideType(),
           currentSlideHelpTopic(),
@@ -143,7 +143,7 @@ void Log::onConsolePrompt(const std::string& prompt)
       if (slideDeckInputCommands_[currentSlideIndex_].count(input) == 0)
       {
          append(InputEntry,
-                presentation::state::directory(),
+                presentation::state::filePath(),
                 currentSlideIndex_,
                 currentSlideType(),
                 currentSlideHelpTopic(),

@@ -30,8 +30,8 @@ public class PresentationState extends JavaScriptObject
       return this.pane_caption;
    }-*/;
  
-   public final native String getDirectory() /*-{
-      return this.directory;
+   public final native String getFilePath() /*-{
+      return this.file_path;
    }-*/;
    
    public final native void setSlideIndex(int index) /*-{

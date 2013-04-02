@@ -29,14 +29,15 @@ namespace presentation {
 namespace state {
 
 
-void init(const core::FilePath& directory);
+void init(const core::FilePath& filePath);
 void setSlideIndex(int index);
 
 
 bool isActive();
+
+core::FilePath filePath();
+
 core::FilePath directory();
-
-
 
 
 void clear();

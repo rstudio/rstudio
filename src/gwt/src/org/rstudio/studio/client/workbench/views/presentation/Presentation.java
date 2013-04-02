@@ -1,5 +1,6 @@
 /*
  * Presentation.java
+
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -135,24 +136,12 @@ public class Presentation extends BasePresenter
             if (currentState_ != null)
             {
                FileSystemItem file = event.getSourceFile();
-               String mimeType = file.mimeType();
-               String dir = currentState_.getDirectory();
-               if (file.getPath().startsWith(dir) &&
-                   (mimeType.equals("text/x-markdown") ||
-                    mimeType.equals("text/x-r-markdown") ||
-                    mimeType.equals("text/css") ||
-                    mimeType.equals("text/html")))
-               {
-                  // if this is a slides file then find the slide index
-                  // the user was editing
-                  boolean editingSlides = isSlidesFile(event.getSourceFile());
-                  if (editingSlides)
-                  {
-                     int index = detectSlideIndex(event.getContents(),
-                                                  event.getCursorPos().getRow());
-                     if (index != -1)
-                        currentState_.setSlideIndex(index);
-                  }
+               if (file.getPath().equals(currentState_.getFilePath()))
+               {    
+                  int index = detectSlideIndex(event.getContents(),
+                                               event.getCursorPos().getRow());
+                  if (index != -1)
+                     currentState_.setSlideIndex(index);
                   
                   view_.load(buildPresentationUrl());
                }
@@ -666,15 +655,9 @@ public class Presentation extends BasePresenter
    
    private String getPresentationPath(String file)
    {
-      FileSystemItem presentationDir = FileSystemItem.createDir(
-                                                currentState_.getDirectory());
-      return presentationDir.completePath(file);   
-   }
-   
-   private static boolean isSlidesFile(FileSystemItem fsi)
-   {
-      String filename = fsi.getName();
-      return "slides.md".equals(filename) || "slides.Rmd".equals(filename);
+      FileSystemItem presentationFile = FileSystemItem.createFile(
+                                                currentState_.getFilePath());
+      return presentationFile.getParentPath().completePath(file);
    }
    
    private static int detectSlideIndex(String contents, int cursorLine)

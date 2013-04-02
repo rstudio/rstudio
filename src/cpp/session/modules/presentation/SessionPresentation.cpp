@@ -46,18 +46,18 @@ namespace presentation {
 namespace {
 
 
-SEXP rs_showPresentation(SEXP directorySEXP)
+SEXP rs_showPresentation(SEXP fileSEXP)
 {
    try
    {
       // validate path
-      FilePath dir(r::sexp::asString(directorySEXP));
-      if (!dir.exists())
-         throw r::exec::RErrorException("Directory " + dir.absolutePath() +
+      FilePath filePath(r::sexp::asString(fileSEXP));
+      if (!filePath.exists())
+         throw r::exec::RErrorException("File path " + filePath.absolutePath() +
                                         " does not exist.");
 
       // initialize state
-      presentation::state::init(dir);
+      presentation::state::init(filePath);
 
       // notify the client
       ClientEvent event(client_events::kShowPresentationPane,
@@ -200,8 +200,9 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
 {
    // use a stable location in the presentation directory for the Rpubs
    // source file so that update works across sessions
+   std::string stem = presentation::state::filePath().stem();
    FilePath filePath = presentation::state::directory().childPath(
-                                                      "slides-rpubs.html");
+                                                      stem + "-rpubs.html");
 
    std::string errMsg;
    if (savePresentationAsRpubsSource(filePath, &errMsg))

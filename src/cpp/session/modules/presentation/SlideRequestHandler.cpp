@@ -371,21 +371,20 @@ bool readPresentation(SlideDeck* pSlideDeck,
                       std::map<std::string,std::string>* pVars,
                       std::string* pErrMsg)
 {
-   // look for slides.Rmd and knit if we need to
-   FilePath presDir = presentation::state::directory();
-   FilePath rmdFile = presDir.complete("slides.Rmd");
-   if (rmdFile.exists())
+   // look for slides and knit if we need to
+   FilePath rmdFile = presentation::state::filePath();
+   std::string ext = rmdFile.extensionLowerCase();
+   if (rmdFile.exists() && (ext == ".rmd" || ext == ".rpres"))
    {
       if (!performKnit(rmdFile, pErrMsg))
          return false;
    }
 
-   // look for slides.md
-   FilePath slidesFile = presDir.complete("slides.md");
+   // look for slides markdown
+   FilePath slidesFile = rmdFile.parent().childPath(rmdFile.stem() + ".md");
    if (!slidesFile.exists())
    {
-      *pErrMsg = "slides.md file not found in " +
-                 presentation::state::directory().absolutePath();
+      *pErrMsg = slidesFile.absolutePath() + " not found";
       return false;
    }
 

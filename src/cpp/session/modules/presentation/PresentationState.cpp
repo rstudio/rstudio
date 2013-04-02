@@ -40,7 +40,7 @@ struct PresentationState
 
    bool active;
    std::string paneCaption;
-   FilePath directory;
+   FilePath filePath;
    int slideIndex;
 };
 
@@ -53,7 +53,7 @@ FilePath presentationStatePath()
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   return path.childPath("presentation-state");
+   return path.childPath("presentation-state-v2");
 }
 
 std::string toPersistentPath(const FilePath& filePath)
@@ -63,10 +63,7 @@ std::string toPersistentPath(const FilePath& filePath)
    if (projectContext.hasProject() &&
        filePath.isWithin(projectContext.directory()))
    {
-      if (filePath == projectContext.directory())
-         return std::string();
-      else
-         return filePath.relativePath(projectContext.directory());
+      return filePath.relativePath(projectContext.directory());
    }
    else
    {
@@ -79,10 +76,7 @@ FilePath fromPersistentPath(const std::string& path)
    projects::ProjectContext& projectContext = projects::projectContext();
    if (projectContext.hasProject())
    {
-      if (path.empty())
-         return projectContext.directory();
-      else
-         return projectContext.directory().complete(path);
+      return projectContext.directory().complete(path);
    }
    else
    {
@@ -107,7 +101,7 @@ void savePresentationState(const PresentationState& state)
    settings.beginUpdate();
    settings.set("active", state.active);
    settings.set("pane-caption", state.paneCaption);
-   settings.set("dir", toPersistentPath(state.directory));
+   settings.set("file-path", toPersistentPath(state.filePath));
    settings.set("slide-index", state.slideIndex);
    settings.endUpdate();
 }
@@ -124,7 +118,7 @@ bool loadPresentationState()
 
       s_presentationState.active = settings.getBool("active", false);
       s_presentationState.paneCaption = settings.get("pane-caption", "Presentation");
-      s_presentationState.directory = fromPersistentPath(settings.get("dir"));
+      s_presentationState.filePath = fromPersistentPath(settings.get("file-path"));
       s_presentationState.slideIndex = settings.getInt("slide-index", 0);
    }
    else
@@ -138,12 +132,12 @@ bool loadPresentationState()
 } // anonymous namespace
 
 
-void init(const FilePath& directory)
+void init(const FilePath& filePath)
 {
    PresentationState state;
    state.active = true;
    state.paneCaption = "Presentation";
-   state.directory = directory;
+   state.filePath = filePath;
    state.slideIndex = 0;
    savePresentationState(state);
 }
@@ -159,9 +153,14 @@ bool isActive()
    return s_presentationState.active;
 }
 
+FilePath filePath()
+{
+   return s_presentationState.filePath;
+}
+
 FilePath directory()
 {
-   return s_presentationState.directory;
+   return s_presentationState.filePath.parent();
 }
 
 void clear()
@@ -174,8 +173,8 @@ json::Value asJson()
    json::Object stateJson;
    stateJson["active"] = s_presentationState.active;
    stateJson["pane_caption"] = s_presentationState.paneCaption;
-   stateJson["directory"] = module_context::createAliasedPath(
-                                                s_presentationState.directory);
+   stateJson["file_path"] = module_context::createAliasedPath(
+                                                s_presentationState.filePath);
    stateJson["slide_index"] = s_presentationState.slideIndex;
    return stateJson;
 }
