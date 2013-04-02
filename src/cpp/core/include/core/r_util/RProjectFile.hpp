@@ -63,8 +63,7 @@ struct RProjectConfig
         packageCheckArgs(),
         packageRoxygenize(),
         makefilePath(),
-        customScriptPath(),
-        showPresentation(false)
+        customScriptPath()
    {
    }
 
@@ -88,7 +87,6 @@ struct RProjectConfig
    std::string packageRoxygenize;
    std::string makefilePath;
    std::string customScriptPath;
-   bool showPresentation;
 };
 
 
