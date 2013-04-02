@@ -177,4 +177,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    void createNotebook(
          CompileNotebookOptions options,
          ServerRequestCallback<CompileNotebookResult> requestCallback);
+   
+   void showPresentationPane(String filePath,
+                             ServerRequestCallback<Void> requestCallback);
 }

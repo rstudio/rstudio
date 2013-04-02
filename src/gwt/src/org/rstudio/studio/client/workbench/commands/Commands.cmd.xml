@@ -623,6 +623,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Vcs"/>
    <cmd id="activateBuild"
         menuLabel="Show _Build"/>
+   <cmd id="activatePresentation"  
+        menuLabel="Show Presentation"/>
    <cmd id="jumpTo"
         menuLabel="_Jump To..."/>
    <cmd id="switchToTab"
@@ -750,7 +752,7 @@ well as menu structures (for main menu and popup menus).
  
    <cmd id="previewHTML"
         buttonLabel="Preview"
-        menuLabel="Preview HTML"
+        menuLabel="Preview"
         desc="Show a preview of the current document as HTML"/>
         
    <cmd id="publishHTML"
@@ -919,8 +921,8 @@ well as menu structures (for main menu and popup menus).
         desc="Save the presentation as a standalone web page"/>
    <cmd id="presentationPublishToRpubs"
         menuLabel="Publish to RPubs..."
-        desc="Publish the presentation to RPubs"/>         
-     
+        desc="Publish the presentation to RPubs"/>   
+       
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"
         buttonLabel="To Source"

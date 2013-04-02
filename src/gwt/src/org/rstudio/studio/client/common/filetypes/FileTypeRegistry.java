@@ -85,6 +85,10 @@ public class FileTypeRegistry
          new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
                               ".Rmd", ICONS.iconRmarkdown(), true);
    
+   public static final RWebContentFileType RPRESENTATION =
+      new RWebContentFileType("r_presentation", "R Presentation", EditorLanguage.LANG_RMARKDOWN,
+                           ".Rpres", ICONS.iconRpresentation(), true, false);
+
    public static final WebContentFileType MARKDOWN =
       new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
                            ".md", ICONS.iconMarkdown(), true);
@@ -171,6 +175,7 @@ public class FileTypeRegistry
       register("*.js", JS, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
+      register("*.rpres", RPRESENTATION, icons.iconRpresentation());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());
       register("*.markdown", MARKDOWN, icons.iconMarkdown());

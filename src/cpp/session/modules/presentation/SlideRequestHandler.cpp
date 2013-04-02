@@ -279,11 +279,14 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
                                     "warning=FALSE, "
                                     "message=FALSE, "
                                     "comment=NA); "
-                     "knit('%2%', encoding='%3%');");
+                     "render_markdown(); "
+                     "knit('%2%', output = '%3%', encoding='%4%');");
    std::string encoding = projects::projectContext().defaultEncoding();
-   std::string cmd = boost::str(fmt % rmdPath.stem()
-                                    % rmdPath.filename()
-                                    % encoding);
+   std::string cmd = boost::str(
+      fmt % string_utils::utf8ToSystem(rmdPath.stem())
+          % string_utils::utf8ToSystem(rmdPath.filename())
+          % string_utils::utf8ToSystem(mdPath.filename())
+          % encoding);
    args.push_back(cmd);
 
    // options

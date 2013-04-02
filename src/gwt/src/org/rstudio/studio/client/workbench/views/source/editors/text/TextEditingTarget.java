@@ -74,6 +74,7 @@ import org.rstudio.studio.client.pdfviewer.events.ShowPDFViewerEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -91,6 +92,7 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
@@ -919,6 +921,15 @@ public class TextEditingTarget implements EditingTarget
          closeCommand.execute();
 
       return false;
+   }
+   
+   public void save()
+   {
+      save(new Command() {
+         @Override
+         public void execute()
+         {   
+         }});
    }
    
    public void save(Command onCompleted)
@@ -2164,8 +2175,36 @@ public class TextEditingTarget implements EditingTarget
    {
       if (fileType_.isRd())
          previewRd();
+      else if (fileType_.isRpres())
+         previewRpresentation();
       else
          previewHTML();
+   }
+   
+   void previewRpresentation()
+   {
+      PresentationState state = session_.getSessionInfo().getPresentationState();
+      
+      // if this presentation is already showing then just activate 
+      if (state.isActive() && 
+          state.getFilePath().equals(docUpdateSentinel_.getPath()))
+      {
+         commands_.activatePresentation().execute();
+         save();
+      }
+      // otherwise reload
+      else
+      {
+         saveThenExecute(null, new Command() {
+               @Override
+               public void execute()
+               {
+                  server_.showPresentationPane(docUpdateSentinel_.getPath(), 
+                                               new VoidServerRequestCallback());
+               }
+               
+            });
+         } 
    }
    
    

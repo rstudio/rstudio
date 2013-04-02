@@ -19,7 +19,6 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 
 public class TextEditingTargetPreviewHtmlHelper
 {
@@ -48,12 +47,19 @@ public class TextEditingTargetPreviewHtmlHelper
          feature = fileType.getLabel();
       
       // if this file requires knitr then validate pre-reqs
-      if (fileType.requiresKnit())
+      boolean haveRMarkdown = 
+         fileTypeCommands_.getHTMLCapabiliites().isRMarkdownSupported();
+      if (!haveRMarkdown)
       {
-         HTMLCapabilities htmlCaps = fileTypeCommands_.getHTMLCapabiliites();
-         if (!htmlCaps.isRMarkdownSupported())
+         if (fileType.isRpres())
          {
-            showKnitrPreviewWarning(display, feature, "0.5");
+            showKnitrPreviewWarning(display, "R Presentations", "1.0");
+            return false;
+         }
+         else if (fileType.requiresKnit())
+         {
+   
+            showKnitrPreviewWarning(display, feature, "1.0");
             return false;
          }
       }

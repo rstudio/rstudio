@@ -309,6 +309,8 @@ public class WorkbenchScreen extends Composite
    void onActivateVcs() { paneManager_.activateTab(Tab.VCS); }
    @Handler
    void onActivateBuild() { paneManager_.activateTab(Tab.Build); }
+   @Handler
+   void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation);}
 
    @Handler
    void onMacPreferences()

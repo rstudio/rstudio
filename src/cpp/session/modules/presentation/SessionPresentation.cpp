@@ -13,6 +13,11 @@
  *
  */
 
+// TODO: feature flag
+// TODO: new file / status bar
+// TODO: icons & file associations
+// TOOD: save as dialog + template (w/ force extension)
+
 
 #include "SessionPresentation.hpp"
 
@@ -46,6 +51,17 @@ namespace presentation {
 namespace {
 
 
+void showPresentation(const FilePath& filePath)
+{
+   // initialize state
+   presentation::state::init(filePath);
+
+   // notify the client
+   ClientEvent event(client_events::kShowPresentationPane,
+                     presentation::state::asJson());
+   module_context::enqueClientEvent(event);
+}
+
 SEXP rs_showPresentation(SEXP fileSEXP)
 {
    try
@@ -56,13 +72,7 @@ SEXP rs_showPresentation(SEXP fileSEXP)
          throw r::exec::RErrorException("File path " + filePath.absolutePath() +
                                         " does not exist.");
 
-      // initialize state
-      presentation::state::init(filePath);
-
-      // notify the client
-      ClientEvent event(client_events::kShowPresentationPane,
-                        presentation::state::asJson());
-      module_context::enqueClientEvent(event);
+      showPresentation(filePath);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -120,6 +130,23 @@ Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
    presentation::state::setSlideIndex(index);
 
    presentation::log().onSlideIndexChanged(index);
+
+   return Success();
+}
+
+Error showPresentationPane(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   Error error = json::readParam(request.params, 0, &file);
+   if (error)
+      return error;
+
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   if (!filePath.exists())
+      return core::fileNotFoundError(filePath, ERROR_LOCATION);
+
+   showPresentation(filePath);
 
    return Success();
 }
@@ -260,6 +287,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
       (bind(registerRpcMethod, "create_presentation_rpubs_source", createPresentationRpubsSource))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
+      (bind(registerRpcMethod, "show_presentation_pane", showPresentationPane))
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
       (bind(presentation::state::initialize))

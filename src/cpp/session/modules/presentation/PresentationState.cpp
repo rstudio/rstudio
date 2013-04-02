@@ -20,6 +20,7 @@
 #include <core/Settings.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core;
 

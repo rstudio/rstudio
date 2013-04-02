@@ -31,6 +31,17 @@ public class RWebContentFileType extends TextFileType
                        ImageResource icon,
                        boolean isMarkdown)
    {
+      this(id, label, editorLanguage, defaultExtension, icon, isMarkdown, true);
+   }
+   
+   RWebContentFileType(String id,
+                       String label,
+                       EditorLanguage editorLanguage,
+                       String defaultExtension,
+                       ImageResource icon,
+                       boolean isMarkdown,
+                       boolean previewIsKnit)
+   {
       super(id, 
             label, 
             editorLanguage, 
@@ -41,8 +52,8 @@ public class RWebContentFileType extends TextFileType
             true, 
             true, 
             false,
-            false,    // preview-html
-            true,     // knit-html
+            !previewIsKnit,    // preview-html
+            previewIsKnit,     // knit-html
             false, 
             true,
             false,

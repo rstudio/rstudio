@@ -166,6 +166,7 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand presentationPublishToRpubs();
+   public abstract AppCommand activatePresentation();
    
    // View
    public abstract AppCommand showToolbar();

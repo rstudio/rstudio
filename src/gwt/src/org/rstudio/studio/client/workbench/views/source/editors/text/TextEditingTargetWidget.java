@@ -287,7 +287,7 @@ public class TextEditingTargetWidget
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
-      previewHTMLButton_.setText(width < 450 ? "" : "Preview HTML");
+      previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
       
       if (editor_.getFileType().isRd())
