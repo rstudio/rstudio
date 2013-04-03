@@ -464,7 +464,7 @@ public class Presentation extends BasePresenter
          }
       }
          
-      // execute commands if we stay on the slide for > 750ms
+      // execute commands if we stay on the slide for > 500ms
       new Timer() {
          @Override
          public void run()
@@ -477,7 +477,7 @@ public class Presentation extends BasePresenter
                   dispatchCommand(cmds.get(i));  
             }
          }   
-      }.schedule(750);  
+      }.schedule(500);  
    }
    
    private void initPresentationNavigator(JavaScriptObject jsNavigator)
