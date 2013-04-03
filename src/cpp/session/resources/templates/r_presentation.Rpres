@@ -3,11 +3,26 @@
 author: 
 date: 
 
-First Slide
+author:  
+date: 
+
+Slide With Bullets
 ========================================================
 
-Overview
+- Bullet 1
+- Bullet 2
+- Bullet 3
 
-- Bullet1
-- Bullet2
-- Bullet3
+Slide With Code
+========================================================
+
+```{r}
+summary(cars)
+```
+
+Slide With Plot
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```
