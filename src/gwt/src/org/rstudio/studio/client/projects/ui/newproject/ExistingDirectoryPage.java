@@ -73,11 +73,18 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
          
          return false;
       }
+      else {
+      if(input.canWrite()){
+         return true;
+         }
+      }
       else
       {
-         return true;
+         globalDisplay_.showMessage(
+               MessageDialog.WARNING,
+               "Error",
+               "You must have write access.");
       }
-      
    }
 
    @Override
