@@ -21,10 +21,6 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name="com.google.gwt.xhr.XMLHttpRequest"/>
 
-	<!-- Inheriting User module for Window and Timer. These should be factored
-	     out of User soon. -->
-	<inherits name="com.google.gwt.user.User"/>
-
 	<replace-with class="com.google.gwt.http.client.Request.RequestImplIE6To9">
 		<when-type-is class="com.google.gwt.http.client.Request.RequestImpl" />
 		<any>

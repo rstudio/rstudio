@@ -1,6 +1,7 @@
 <module>
   <inherits name="com.google.gwt.core.Core" />
-  <inherits name="com.google.gwt.user.RemoteService" />
+  <!-- Inherits standard RPC, c.g.g.user.RemoteService is not standalone. -->
+  <inherits name="com.google.gwt.user.User" />
 
   <source path="client" />
   <super-source path="super" />
