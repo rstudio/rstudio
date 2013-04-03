@@ -157,6 +157,8 @@ public:
    bool viewDirAfterRCmdCheck() const;
    void setViewDirAfterRCmdCheck(bool viewDir);
 
+   bool presEnabled() const;
+
 private:
 
    void onSettingsFileChanged(

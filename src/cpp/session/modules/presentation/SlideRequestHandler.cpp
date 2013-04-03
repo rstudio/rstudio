@@ -377,7 +377,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    // look for slides and knit if we need to
    FilePath rmdFile = presentation::state::filePath();
    std::string ext = rmdFile.extensionLowerCase();
-   if (rmdFile.exists() && (ext == ".rmd" || ext == ".rpres"))
+   if (rmdFile.exists() && (ext != ".md"))
    {
       if (!performKnit(rmdFile, pErrMsg))
          return false;

@@ -49,12 +49,14 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newTextDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
       newMenu_.addItem(commands.newCppDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
-      newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
+      
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;

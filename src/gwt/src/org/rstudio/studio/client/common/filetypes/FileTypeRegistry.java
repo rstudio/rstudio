@@ -48,7 +48,7 @@ public class FileTypeRegistry
                        ICONS.iconRdoc());
 
    public static final TextFileType RD =
-      new TextFileType("r_doc", "R Doc", EditorLanguage.LANG_RDOC, ".Rd",
+      new TextFileType("r_doc", "Rd File", EditorLanguage.LANG_RDOC, ".Rd",
                        ICONS.iconRd(),
                        true, // word-wrap
                        true, // source on save aka preview on save

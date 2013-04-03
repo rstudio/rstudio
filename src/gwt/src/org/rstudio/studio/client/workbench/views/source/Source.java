@@ -604,6 +604,12 @@ public class Source implements InsertSourceHandler,
           }).showModal();
    }
    
+   @Handler
+   public void onNewRPresentationDoc()
+   {
+      
+   }
+   
    private void newSourceDocWithTemplate(final TextFileType fileType, 
                                          String name,
                                          String template)
@@ -615,6 +621,16 @@ public class Source implements InsertSourceHandler,
                                          String name,
                                          String template,
                                          final Position cursorPosition)
+   {
+      newSourceDocWithTemplate(fileType, name, template, cursorPosition, null);
+   }
+   
+   private void newSourceDocWithTemplate(
+                       final TextFileType fileType, 
+                       String name,
+                       String template,
+                       final Position cursorPosition,
+                       final CommandWithArg<EditingTarget> onSuccess)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
             globalDisplay_, 500, "Creating new document...").getIndicator();
@@ -635,6 +651,9 @@ public class Source implements InsertSourceHandler,
                {
                   if (cursorPosition != null)
                      target.setCursorPosition(cursorPosition);
+                  
+                  if (onSuccess != null)
+                     onSuccess.execute(target);
                }
             });
          }
