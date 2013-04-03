@@ -607,7 +607,20 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRPresentationDoc()
    {
-      
+      newSourceDocWithTemplate(
+            FileTypeRegistry.RPRESENTATION, 
+            "Untitled Presentation", 
+            "r_presentation.Rpres",
+            null,
+            new CommandWithArg<EditingTarget>() {
+
+            @Override
+            public void execute(EditingTarget arg)
+            {
+                 
+                  
+            }
+      });
    }
    
    private void newSourceDocWithTemplate(final TextFileType fileType, 

@@ -2183,7 +2183,19 @@ public class TextEditingTarget implements EditingTarget
    
    void previewRpresentation()
    {
-      PresentationState state = session_.getSessionInfo().getPresentationState();
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      if (!sessionInfo.getHTMLCapabilities().isRMarkdownSupported())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               "Unable to Preview",
+               "R Presentations require the knitr package " +
+               "(version 1.0 or higher)");
+         return;
+      }
+      
+      
+      PresentationState state = sessionInfo.getPresentationState();
       
       // if this presentation is already showing then just activate 
       if (state.isActive() && 
