@@ -28,12 +28,16 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.BarrierReleasedEvent;
+import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -50,12 +54,14 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -181,7 +187,8 @@ public class Presentation extends BasePresenter
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
    {
-      eventBus_.fireEvent(new ReloadEvent());
+      globalDisplay_.showProgress("Opening Presentation...");
+      reloadWorkbench();
    }
    
    @Handler
@@ -363,19 +370,50 @@ public class Presentation extends BasePresenter
    
    public void confirmClose(Command onConfirmed)
    {
-      ProgressIndicator progress = new GlobalProgressDelayer(
+      final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
-            200,
+            0,
             "Closing Presentation...").getIndicator();
       
-      server_.closePresentationPane(new VoidServerRequestCallback(progress) {
+      server_.closePresentationPane(new ServerRequestCallback<Void>(){
          @Override
-         public void onSuccess()
+         public void onResponseReceived(Void resp)
+         {
+            reloadWorkbench();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            progress.onError(error.getUserMessage());
+            
+         }
+      });
+   }
+   
+   private void reloadWorkbench()
+   { 
+      Barrier barrier = new Barrier();
+      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler() {
+
+         @Override
+         public void onBarrierReleased(BarrierReleasedEvent event)
          {
             eventBus_.fireEvent(new ReloadEvent());
          }
       });
+      
+      Token token = barrier.acquire();
+      try
+      {
+         eventBus_.fireEvent(new LastChanceSaveEvent(barrier));
+      }
+      finally
+      {
+         token.release();
+      }  
    }
+   
    
    private void init(PresentationState state)
    {

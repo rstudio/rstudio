@@ -2569,6 +2569,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void createNewPresentation(
+                        String filePath,
+                        ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CREATE_NEW_PRESENTATION, filePath, requestCallback);
+   }
+   
+   @Override
    public void showPresentationPane(String filePath,
                                     ServerRequestCallback<Void> requestCallback)
    {
@@ -2968,6 +2976,7 @@ public class RemoteServer implements Server
    private static final String CREATE_PRESENTATION_RPUBS_SOURCE = "create_presentation_rpubs_source";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
    private static final String PRESENTATION_EXECUTE_CODE = "presentation_execute_code";
+   private static final String CREATE_NEW_PRESENTATION = "create_new_presentation";
    private static final String SHOW_PRESENTATION_PANE = "show_presentation_pane";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    

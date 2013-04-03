@@ -25,6 +25,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
 import java.util.HashMap;
@@ -40,7 +41,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 CodeSearchServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
-                                                BuildServerOperations
+                                                BuildServerOperations,
+                                                PresentationServerOperations
  
 {
    /**
@@ -177,7 +179,4 @@ public interface SourceServerOperations extends FilesServerOperations,
    void createNotebook(
          CompileNotebookOptions options,
          ServerRequestCallback<CompileNotebookResult> requestCallback);
-   
-   void showPresentationPane(String filePath,
-                             ServerRequestCallback<Void> requestCallback);
 }

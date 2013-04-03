@@ -37,8 +37,11 @@ public interface PresentationServerOperations extends RPubsServerOperations
    void presentationExecuteCode(String code,
                                 ServerRequestCallback<Void> requestCallback);
    
+   void createNewPresentation(String filePath,
+                              ServerRequestCallback<Void> requestCallback);
+   
    void showPresentationPane(String filePath,
-                             ServerRequestCallback<Void> requestCallaback);
+                             ServerRequestCallback<Void> requestCallback);
    
    void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
 }

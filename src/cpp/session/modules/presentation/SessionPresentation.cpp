@@ -13,11 +13,7 @@
  *
  */
 
-// TODO: feature flag
-// TODO: new file / status bar
 // TODO: icons & file associations
-// TOOD: save as dialog + template (w/ force extension)
-
 
 #include "SessionPresentation.hpp"
 
@@ -26,7 +22,8 @@
 
 #include <core/Exec.hpp>
 #include <core/http/Util.hpp>
-
+#include <core/FileSerializer.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -132,6 +129,36 @@ Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
    presentation::log().onSlideIndexChanged(index);
 
    return Success();
+}
+
+Error createNewPresentation(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   // get file path
+   std::string file;
+   Error error = json::readParam(request.params, 0, &file);
+   if (error)
+      return error;
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   // process template
+   std::map<std::string,std::string> vars;
+   vars["name"] = filePath.stem();
+   core::text::TemplateFilter filter(vars);
+
+   // read file with template filter
+   FilePath templatePath = session::options().rResourcesPath().complete(
+                                             "templates/r_presentation.Rpres");
+   std::string presContents;
+   error = core::readStringFromFile(templatePath, filter, &presContents);
+   if (error)
+      return error;
+
+
+   // write file
+   return core::writeStringToFile(filePath,
+                                  presContents,
+                                  string_utils::LineEndingNative);
 }
 
 Error showPresentationPane(const json::JsonRpcRequest& request,
@@ -287,6 +314,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
       (bind(registerRpcMethod, "create_presentation_rpubs_source", createPresentationRpubsSource))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
+      (bind(registerRpcMethod, "create_new_presentation", createNewPresentation))
       (bind(registerRpcMethod, "show_presentation_pane", showPresentationPane))
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))

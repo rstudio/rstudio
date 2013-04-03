@@ -607,19 +607,51 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRPresentationDoc()
    {
-      newSourceDocWithTemplate(
-            FileTypeRegistry.RPRESENTATION, 
-            "Untitled Presentation", 
-            "r_presentation.Rpres",
-            null,
-            new CommandWithArg<EditingTarget>() {
+      fileDialogs_.saveFile(
+         "New R Presentation", 
+         fileContext_,
+         workbenchContext_.getDefaultFileDialogDir(), 
+         ".Rpres", 
+         true, 
+         new ProgressOperationWithInput<FileSystemItem>() {
 
             @Override
-            public void execute(EditingTarget arg)
+            public void execute(final FileSystemItem input,
+                                final ProgressIndicator indicator)
             {
-                 
-                  
+               if (input == null)
+               {
+                  indicator.onCompleted();
+                  return;
+               }
+               
+               indicator.onProgress("Creating Presentation...");
+               
+               server_.createNewPresentation(
+                 input.getPath(),
+                 new VoidServerRequestCallback(indicator) {
+                    @Override
+                    public void onSuccess()
+                    { 
+                       openFile(input, 
+                          FileTypeRegistry.RPRESENTATION,
+                          new CommandWithArg<EditingTarget>() {
+
+                           @Override
+                           public void execute(EditingTarget arg)
+                           {
+                              server_.showPresentationPane(
+                                          input.getPath(),
+                                          new VoidServerRequestCallback());
+                              
+                           }
+                          
+                       });
+                    }
+                 });
+               
             }
+      
       });
    }
    
