@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.presentation.PresentationDispatcher;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
@@ -82,6 +83,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CodeFilesList codeFilesList);
    void injectMembers(ProjectPopupMenu projectPopupMenu);
    void injectMembers(ClearAllDialog clearAllDialog);
+   void injectMembers(PresentationDispatcher dispatcher);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
