@@ -61,6 +61,8 @@ public abstract class
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();
    public abstract AppCommand markdownHelp();
+   public abstract AppCommand usingRMarkdownHelp();
+   public abstract AppCommand authoringRPresentationsHelp();
    public abstract AppCommand knitToHTML();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();

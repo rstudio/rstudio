@@ -119,7 +119,16 @@ public class TextEditingTargetWidget
       
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
-      toolbar.addLeftWidget(commands_.markdownHelp().createToolbarButton());
+      
+      ToolbarPopupMenu helpMenu = new ToolbarPopupMenu();
+      helpMenu.addItem(commands_.usingRMarkdownHelp().createMenuItem(false));
+      helpMenu.addItem(commands_.authoringRPresentationsHelp().createMenuItem(false));
+      helpMenu.addSeparator();
+      helpMenu.addItem(commands_.markdownHelp().createMenuItem(false));
+      helpMenuButton_ = new ToolbarButton(null, 
+                                          StandardIcons.INSTANCE.help(), 
+                                          helpMenu);
+      toolbar.addLeftWidget(helpMenuButton_);
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
@@ -238,6 +247,8 @@ public class TextEditingTargetWidget
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
+      boolean isMarkdown = fileType.isMarkdown();
+      boolean isRPresentation = fileType.isRpres();
       
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
@@ -256,6 +267,8 @@ public class TextEditingTargetWidget
       texToolbarButton_.setVisible(canCompilePdf);
       compilePdfButton_.setVisible(canCompilePdf);
       chunksButton_.setVisible(canExecuteChunks);
+      
+      helpMenuButton_.setVisible(isMarkdown || isRPresentation);
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -440,6 +453,7 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
+   private ToolbarButton helpMenuButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

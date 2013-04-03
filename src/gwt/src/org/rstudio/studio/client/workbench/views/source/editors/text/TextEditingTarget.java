@@ -2163,6 +2163,18 @@ public class TextEditingTarget implements EditingTarget
    {
       events_.fireEvent(new ShowHelpEvent("help/doc/markdown_help.html")) ;
    }
+   
+   @Handler
+   void onUsingRMarkdownHelp()
+   {
+      globalDisplay_.openRStudioLink("using_markdown");
+   }
+   
+   @Handler
+   void onAuthoringRPresentationsHelp()
+   {
+      globalDisplay_.openRStudioLink("authoring_presentations");
+   }
      
    @Handler
    void onKnitToHTML()

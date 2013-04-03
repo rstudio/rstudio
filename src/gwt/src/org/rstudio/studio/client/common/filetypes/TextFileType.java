@@ -257,6 +257,7 @@ public class TextFileType extends EditableFileType
       if (canKnitToHTML())
       {
          results.add(commands.knitToHTML());
+         results.add(commands.usingRMarkdownHelp());
       }
       if (canPreviewHTML())
       {
