@@ -279,9 +279,4 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isCairoPdfAvailable() /*-{
       return this.have_cairo_pdf;
    }-*/;
-   
-   public final native boolean getPresEnabled() /*-{
-      return this.pres_enabled;
-   }-*/;
-   
 }
