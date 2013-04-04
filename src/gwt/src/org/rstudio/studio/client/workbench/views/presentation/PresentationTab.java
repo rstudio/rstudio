@@ -61,6 +61,10 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
                               session_.getSessionInfo().getPresentationState();
             if (state.isActive())
                shim.initialize(state);       
+            
+            // disable new presentation command if necessary
+            if (!session_.getSessionInfo().getPresEnabled())
+               commands.newRPresentationDoc().remove();
          }
       });
       

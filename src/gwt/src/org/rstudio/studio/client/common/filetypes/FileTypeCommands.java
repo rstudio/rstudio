@@ -82,7 +82,8 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.SWEAVE);
       types.add(FileTypeRegistry.RMARKDOWN);
       types.add(FileTypeRegistry.RHTML);
-      types.add(FileTypeRegistry.RPRESENTATION);
+      if (session_.getSessionInfo().getPresEnabled())
+         types.add(FileTypeRegistry.RPRESENTATION);
       types.add(FileTypeRegistry.RD);
       types.add(FileTypeRegistry.TEXT);
       types.add(FileTypeRegistry.DCF);
