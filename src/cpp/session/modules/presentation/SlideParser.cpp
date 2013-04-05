@@ -295,8 +295,11 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    preamble_.clear();
    if (!headerLines.empty())
    {
-      for (std::size_t i = 0; i<(headerLines[0]-1); i++)
-         preamble_.append(lines[i]);
+      if (headerLines[0] > 1)
+      {
+         for (std::size_t i = 0; i<(headerLines[0] - 1); i++)
+            preamble_.append(lines[i]);
+      }
    }
 
    // loop through the header lines to capture the slides
