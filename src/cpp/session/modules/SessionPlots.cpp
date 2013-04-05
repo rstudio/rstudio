@@ -671,9 +671,25 @@ void onDetectChanges(module_context::ChangeSource source)
    detectChanges(activatePlots);
 }
 
-void onBackgroundProcessing(bool isIdle)
+void onBackgroundProcessing(bool)
 {
-   detectChanges(true);
+   using namespace r::session;
+   if (graphics::display().hasChanges())
+   {
+      // verify that the last change is more than 50ms old. the reason
+      // we check for changes in the background is so we can respect
+      // plot animations (typically implemented using Sys.sleep). however,
+      // we don't want this to spill over inot incrementally rendering all
+      // plots as this will slow down overall plotting performance
+      // considerably.
+      using namespace boost::posix_time;
+      const int kChangeWindowMs = 50;
+      if ((graphics::display().lastChange() + milliseconds(kChangeWindowMs)) <
+           boost::posix_time::microsec_clock::universal_time())
+      {
+         detectChanges(true);
+      }
+   }
 }
 
 void onBeforeExecute()

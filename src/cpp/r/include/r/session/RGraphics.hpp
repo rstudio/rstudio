@@ -17,6 +17,7 @@
 #define R_SESSION_GRAPHICS_HPP
 
 #include <boost/system/error_code.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 namespace r {
 namespace session {
@@ -130,6 +131,7 @@ public:
    // display
    virtual bool hasOutput() const = 0 ;
    virtual bool hasChanges() const = 0 ;
+   virtual boost::posix_time::ptime lastChange() const = 0;
    virtual void render(boost::function<void(DisplayState)> outputFunction)=0;
    virtual std::string imageFilename() const = 0 ;
    virtual void refresh() = 0;
