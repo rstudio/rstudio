@@ -11,7 +11,7 @@ src/gwt/www/js/json2.min.js
 src/gwt/tools/ace/
 src/gwt/tools/pdfjs/
 /src/gwt/.gwt/.gwt-log
-rstudio.Rproj
+rstudio*.Rproj
 .Rproj.user
 .Rhistory
 .RData
