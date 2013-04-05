@@ -32,6 +32,14 @@
    # make sure we are dealing with a data frame
    if (!is.data.frame(x))
       x <- as.data.frame(x)
+
+   # add a column for custom row names if necessary
+   rowNames <- row.names(x)
+   if (!identical(rowNames,as.character(1:length(rowNames)))) {
+      colNames <- names(x)
+      x$row.names <- rowNames
+      x <- x[c("row.names", colNames, recursive=TRUE)]
+   }
      
    # call viewData (prepare columns so they are either double or character)   
    invisible(.Call("rs_viewData", 
