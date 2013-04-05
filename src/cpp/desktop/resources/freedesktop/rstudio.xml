@@ -38,6 +38,13 @@
     <glob pattern="*.rhtml"/>
   </mime-type>
 
+  <mime-type type="text/x-r-presentation">
+    <sub-class-of type="text/plain"/>
+    <comment>R Presentation File</comment>
+    <glob pattern="*.Rpres"/>
+    <glob pattern="*.rpres"/>
+  </mime-type>
+
   <mime-type type="application/x-r-data">
     <comment>R Data File</comment>
     <glob pattern="*.RData"/>

@@ -124,6 +124,21 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
+             <string>Rpres</string>
+             <string>rpres</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RPresentation.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Presentation File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
              <string>tex</string>
          </array>
          <key>CFBundleTypeIconFile</key>

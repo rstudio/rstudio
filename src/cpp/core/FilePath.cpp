@@ -414,6 +414,7 @@ MimeType s_mimeTypes[] =
    { "Rnw",   "text/x-r-sweave"},
    { "Rmd",   "text/x-r-markdown"},
    { "Rhtml", "text/x-r-html"},
+   { "Rpres", "text/x-r-presentation"},
    { "Rout",  "text/plain" },
    { "po",    "text/plain" },
    { "pot",   "text/plain"},
