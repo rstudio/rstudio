@@ -582,8 +582,13 @@ bool win32Quit(const std::string& command, std::string* pErrMsg)
 
 #endif
 
-bool consoleInputHook(const std::string& input)
+bool consoleInputHook(const std::string& prompt,
+                      const std::string& input)
 {
+   // only check for quit when we're at the default prompt
+   if (!r::session::utils::isDefaultPrompt(prompt))
+      return true;
+
    // check for user quit invocation
     boost::regex re("^\\s*(q|quit)\\s*\\(.*$");
     boost::smatch match;
@@ -703,7 +708,7 @@ int RReadConsole (const char *pmt,
                consoleHistory().add(consoleInput.text);
 
             // call console input hook and interrupt if the hook tells us to
-            if (!consoleInputHook(consoleInput.text))
+            if (!consoleInputHook(prompt, consoleInput.text))
                throw r::exec::InterruptException();
 
             // copy to buffer and add terminators
