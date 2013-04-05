@@ -1,5 +1,5 @@
 /*
- * PresentationDispatcher.java
+ * RStudioGinModuleOverlay.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client;
 
-package org.rstudio.studio.client.workbench.views.presentation;
-
-import com.google.gwt.core.client.JavaScriptObject;
-
-public class PresentationDispatcher
+public class RStudioGinModuleOverlay extends RStudioGinModule
 {
-   public interface Context
+   @Override
+   protected void configure()
    {
-      void pauseMedia();
-      String getPresentationFilePath();
-   }
+      super.configure();
 
-   public PresentationDispatcher()
-   {
-   }
-   
-   public void setContext(Context context)
-   {
-   }
-   
-   public void dispatchCommand(JavaScriptObject jsCommand)
-   {
+      
    }
 }

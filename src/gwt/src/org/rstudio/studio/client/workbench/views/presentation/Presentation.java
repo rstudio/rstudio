@@ -111,7 +111,8 @@ public class Presentation extends BasePresenter
                        FileTypeRegistry fileTypeRegistry,
                        Session session,
                        Binder binder,
-                       Commands commands)
+                       Commands commands,
+                       PresentationDispatcher dispatcher)
    {
       super(display);
       view_ = display;
@@ -123,8 +124,8 @@ public class Presentation extends BasePresenter
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
       session_ = session;
-      dispatcher_ = new PresentationDispatcher(
-                                       new PresentationDispatcher.Context()
+      dispatcher_ = dispatcher;
+      dispatcher_.setContext(new PresentationDispatcher.Context() 
       {
          @Override
          public void pauseMedia()

@@ -16,107 +16,11 @@
 
 #include "SlideMediaRenderer.hpp"
 
-#include <iostream>
-#include <sstream>
-
-#include <boost/foreach.hpp>
-#include <boost/format.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-
-#include <core/json/Json.hpp>
-
-#include <session/SessionModuleContext.hpp>
-
 using namespace core;
 
 namespace session {
 namespace modules { 
 namespace presentation {
-
-namespace {
-
-class MediaSource
-{
-public:
-   MediaSource(const std::string& src, const std::string& type)
-      : src_(src), type_(type)
-   {
-   }
-
-   std::string asTag() const
-   {
-      boost::format fmt("<source src=\"%1%\" type=\"%2%\" />");
-      return boost::str(fmt % src_ % type_);
-   }
-
-private:
-   std::string src_;
-   std::string type_;
-};
-
-std::vector<MediaSource> discoverMediaSources(
-                              const std::string& type,
-                              const FilePath& baseDir,
-                              const std::string& filename)
-{
-   // build list of formats based on type
-   std::vector<std::string> formats;
-   if (type == "video")
-   {
-      formats.push_back("mp4");
-      formats.push_back("webm");
-      formats.push_back("ogv");
-   }
-   else if (type == "audio")
-   {
-      formats.push_back("mp3");
-      formats.push_back("wav");
-      formats.push_back("oga");
-      formats.push_back("ogg");
-   }
-
-   std::vector<MediaSource> sources;
-   FilePath mediaFile = baseDir.complete(filename);
-   if (mediaFile.exists())
-   {
-      // get the filename without extension
-      std::string stem = mediaFile.stem();
-      BOOST_FOREACH(std::string fmt, formats)
-      {
-         FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
-         if (targetPath.exists())
-         {
-            std::string file = targetPath.relativePath(baseDir);
-            if (boost::algorithm::starts_with(fmt, "og"))
-               fmt = "ogg";
-            sources.push_back(MediaSource(file, type + "/" + fmt));
-         }
-      }
-   }
-   else
-   {
-      module_context::consoleWriteError("Media file " +
-                                        mediaFile.absolutePath() +
-                                        " does not exist");
-   }
-
-   return sources;
-}
-
-std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
-{
-   json::Array cmdsArray;
-   BOOST_FOREACH(const AtCommand atCmd, atCommands)
-   {
-      cmdsArray.push_back(atCmd.asJson());
-   }
-
-   std::ostringstream ostr;
-   json::write(cmdsArray, ostr);
-   return ostr.str();
-}
-
-} // anonymous namespace
 
 void renderMedia(const std::string& type,
                  int slideNumber,
@@ -127,41 +31,7 @@ void renderMedia(const std::string& type,
                  std::vector<std::string>* pInitActions,
                  std::vector<std::string>* pSlideActions)
 {
-   // discover media sources
-   std::vector<MediaSource> mediaSources = discoverMediaSources(type,
-                                                                baseDir,
-                                                                fileName);
-   std::string sources;
-   BOOST_FOREACH(const MediaSource& source, mediaSources)
-   {
-      sources += (source.asTag() + "\n");
-   }
-
-
-   boost::format fmt("slide%1%%2%");
-   std::string mediaId = boost::str(fmt % slideNumber % type);
-   fmt = boost::format(
-         "<%1% id=\"%2%\" controls preload=\"auto\">\n"
-         "  %3%"
-         "  The &lt;%1%&gt; tag is not supported in this context"
-         " (however the %1% will still play correctly when the presentation"
-         " is shown within a browser that supports the %1% tag).\n"
-         "</%1%>\n");
-
-   os << boost::str(fmt % type % mediaId % sources);
-
-   // define manager during initialization
-   std::string atCmds = atCommandsAsJsonArray(atCommands);
-   fmt = boost::format("%1%Manager");
-   std::string managerId = boost::str(fmt % mediaId);
-   fmt = boost::format("%1% = mediaManager(%2%, %3%)");
-   pInitActions->push_back(boost::str(fmt % managerId % mediaId % atCmds));
-
-   // add video autoplay action
-   fmt = boost::format("%1%.play()");
-   pSlideActions->push_back(boost::str(fmt % managerId));
 }
-
 
 
 } // namespace presentation
