@@ -497,7 +497,7 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
     String moduleBaseURL = readString();
     String strongName = readString();
     if (serializationPolicyProvider != null) {
-      if (!ALLOWED_STRONG_NAME.matcher(strongName).matches()) {
+      if (strongName != null && !ALLOWED_STRONG_NAME.matcher(strongName).matches()) {
         throw new SerializationException(
             "GWT-RPC request is invalid because the strong name contains invalid characters");
       }
