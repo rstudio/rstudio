@@ -79,7 +79,7 @@ function revealDetectWidth(zoomed) {
     if (zoomed)
       return window.innerWidth;
     else
-      return window.innerWidth * 2.0;
+      return window.innerWidth * 2.3;
   }
   else
   {
@@ -93,7 +93,7 @@ function revealDetectHeight(zoomed) {
     if (zoomed)
       return window.innerHeight;
     else
-      return window.innerHeight * 2.0;
+      return window.innerHeight * 2.3;
   }
   else
   {
