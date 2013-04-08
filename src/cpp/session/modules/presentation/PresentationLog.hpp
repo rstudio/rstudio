@@ -74,7 +74,7 @@ private:
    void recordCommand(int slideIndex, const Command& command);
 
 private:
-   int currentSlideIndex_;
+   std::size_t currentSlideIndex_;
    SlideDeck currentSlideDeck_;
 
    std::map<int, std::set<std::string> > slideDeckInputCommands_;
