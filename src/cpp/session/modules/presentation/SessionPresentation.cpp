@@ -119,7 +119,7 @@ SEXP rs_showPresentationHelpDoc(SEXP helpDocSEXP)
 Error setPresentationSlideIndex(const json::JsonRpcRequest& request,
                                 json::JsonRpcResponse*)
 {
-   int index;
+   int index = 0;
    Error error = json::readParam(request.params, 0, &index);
    if (error)
       return error;
