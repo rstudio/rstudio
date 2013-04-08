@@ -54,7 +54,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
 endif()
 
 # overlay
-include(CMakeOverlay.txt)
+if(EXISTS CMakeOverlay.txt)
+   include(CMakeOverlay.txt)
+endif()
 
 # main src
 add_subdirectory(src)

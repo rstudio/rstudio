@@ -34,7 +34,9 @@ endif()
 
 add_subdirectory(cpp)
 
-include(CMakeOverlay.txt)
+if(EXISTS CMakeOverlay.txt)
+   include(CMakeOverlay.txt)
+endif()
 
 
 

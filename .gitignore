@@ -19,3 +19,4 @@ rstudio*.Rproj
 /src/gwt/bin.test/
 /src/gwt/gwt-unitCache/
 NEWS.html
+CMakeLists.txt.user
