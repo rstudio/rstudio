@@ -11,6 +11,15 @@
 #
 #
 
+# set minimum version
+cmake_minimum_required(VERSION 2.8)
+
+# use clang on osx
+if(APPLE)
+  set(CMAKE_C_COMPILER /usr/bin/cc)
+  set(CMAKE_CXX_COMPILER /usr/bin/c++)
+endif()
+
 # include globals. normally these are included at the root but we also
 # include them here to support configuring at the src level (i.e. for
 # development-configurations)
@@ -18,8 +27,8 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../CMakeGlobals.txt")
 
 # don't add gwt for special 64-bit binary builds on windows (since
 # we've already got it from the 32-bit build) or for development mode 
-(since we'll want to build it incrementally using superdevmode)
-if (NOT RSTUDIO_SESSION_WIN64) AND (NOT RSTUDIO_DEVELOPMENT)
+# (since we'll want to build it incrementally using superdevmode)
+if ( (NOT RSTUDIO_SESSION_WIN64) AND (NOT RSTUDIO_DEVELOPMENT) )
    add_subdirectory(gwt)
 endif()
 
