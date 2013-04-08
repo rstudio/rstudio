@@ -54,7 +54,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
 endif()
 
 # overlay
-if(EXISTS CMakeOverlay.txt)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
 
