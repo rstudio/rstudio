@@ -41,15 +41,16 @@ if(NOT RSTUDIO_TARGET)
    if(WIN32)
       set(RSTUDIO_TARGET "Desktop")
    else()
-      set(RSTUDIO_TARGET "All")
+      set(RSTUDIO_TARGET "Development")
+      set(RSTUDIO_DEVELOPMENT TRUE)
    endif()
 endif()
 
 # set desktop and server build flags
-if( ${RSTUDIO_TARGET} STREQUAL "All" OR ${RSTUDIO_TARGET} STREQUAL "Server")
+if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Server")
    set(RSTUDIO_SERVER TRUE)
 endif()
-if( ${RSTUDIO_TARGET} STREQUAL "All" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
+if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
    set(RSTUDIO_DESKTOP TRUE)
 endif()
 
@@ -148,7 +149,7 @@ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 #   http://snipurl.com/apple_environment
 #
 if(NOT RSTUDIO_ADDINS_PATH)
-   if(${RSTUDIO_TARGET} STREQUAL "All" AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+   if(${RSTUDIO_TARGET} STREQUAL "Development" AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
       set(RSTUDIO_ADDINS_PATH $ENV{RSTUDIO_ADDINS_PATH})
    endif()
 endif()
