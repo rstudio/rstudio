@@ -22,10 +22,6 @@ endif()
 cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_CPP)
 
-# include globals (normally these are included at the root but we also
-# include them here to support cpp only configurations for development)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
-
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
