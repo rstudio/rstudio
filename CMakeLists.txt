@@ -53,6 +53,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
 endif()
 
+# overlay
+include(CMakeOverlay.txt)
+
 # main src
 add_subdirectory(src)
 
