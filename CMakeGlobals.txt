@@ -153,15 +153,3 @@ if(NOT RSTUDIO_ADDINS_PATH)
       set(RSTUDIO_ADDINS_PATH $ENV{RSTUDIO_ADDINS_PATH})
    endif()
 endif()
-
-# configure GWT for emulated stack frames (or not). do this here rather than
-# within src/gwt/CMakeLists.txt so that even in src/cpp only configs (i.e.
-# development mode) we get the RStudio.gwt.xml.in file configured
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-   set(GWT_EMULATED_STACK "true")
-else()
-   set(GWT_EMULATED_STACK "false")
-endif()
-configure_file(${ROOT_SRC_DIR}/src/gwt/src/org/rstudio/studio/RStudio.gwt.xml.in
-               ${ROOT_SRC_DIR}/src/gwt/src/org/rstudio/studio/RStudio.gwt.xml)
-

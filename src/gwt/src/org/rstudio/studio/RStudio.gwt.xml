@@ -113,10 +113,6 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
-
-   <set-property name="compiler.emulatedStack" value="${GWT_EMULATED_STACK}"/>
-   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true"/>
-   <set-configuration-property name="compiler.emulatedStack.recordFileNames" value="true"/>
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 </module>
