@@ -47,13 +47,8 @@ sudo apt-get -y install ant
 # common
 sudo apt-get -y install unzip
 cd ../common
-./install-gwt
-./install-dictionaries
-./install-mathjax
+./install-common
 cd ../linux
-
-# boost
-./install-boost
 
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]

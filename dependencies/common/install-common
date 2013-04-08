@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-dependencies-osx
+# install-common
 #
 # Copyright (C) 2009-12 by RStudio, Inc.
 #
@@ -17,9 +17,12 @@
 
 set -e
 
-cd ../common
-./install-common
-cd ../osx
+./install-gwt
+./install-dictionaries
+./install-mathjax
+./install-boost
 
-# enable PAM
-sudo cp /etc/pam.d/ftpd /etc/pam.d/rstudio
+if [ -e install-overlay ]
+then
+  ./install-overlay
+fi

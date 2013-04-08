@@ -44,13 +44,8 @@ sudo yum install -y xml-commons-apis
 
 # common
 cd ../common
-./install-gwt
-./install-dictionaries
-./install-mathjax
+./install-common
 cd ../linux
-
-# boost
-./install-boost
 
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
