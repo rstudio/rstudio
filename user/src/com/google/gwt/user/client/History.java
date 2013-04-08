@@ -18,7 +18,9 @@ package com.google.gwt.user.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.impl.Disposable;
 import com.google.gwt.core.client.impl.Impl;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.impl.HistoryImpl;
 
@@ -58,6 +60,26 @@ import com.google.gwt.user.client.impl.HistoryImpl;
  */
 public class History {
 
+  private static class WrapHistory extends BaseListenerWrapper<HistoryListener>
+      implements ValueChangeHandler<String> {
+    @Deprecated
+    public static void add(HistoryListener listener) {
+      addValueChangeHandler(new WrapHistory(listener));
+    }
+
+    public static void remove(HandlerManager manager, HistoryListener listener) {
+      baseRemove(manager, listener, ValueChangeEvent.getType());
+    }
+
+    private WrapHistory(HistoryListener listener) {
+      super(listener);
+    }
+
+    public void onValueChange(ValueChangeEvent<String> event) {
+      listener.onHistoryChanged(event.getValue());
+    }
+  }
+
   private static HistoryImpl impl;
 
   static {
@@ -91,7 +113,7 @@ public class History {
   @Deprecated
   public static void addHistoryListener(HistoryListener listener) {
     if (impl != null) {
-      BaseListenerWrapper.WrapHistory.add(listener);
+      WrapHistory.add(listener);
     }
   }
 
@@ -215,7 +237,7 @@ public class History {
   @Deprecated
   public static void removeHistoryListener(HistoryListener listener) {
     if (impl != null) {
-      BaseListenerWrapper.WrapHistory.remove(impl.getHandlers(), listener);
+      WrapHistory.remove(impl.getHandlers(), listener);
     }
   }
 }

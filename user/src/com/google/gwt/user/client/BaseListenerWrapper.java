@@ -20,14 +20,9 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Legacy listener support hierarchy root.
@@ -39,56 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
  * code in one place, for easy deletion when Listener methods are deleted.
  * 
  * @param <T> listener type to be wrapped
- * @deprecated will be removed in GWT 2.0 with the handler listeners themselves
+ * @deprecated will be removed in GWT 2.7 with the handler listeners themselves
  */
 @Deprecated
 public abstract class BaseListenerWrapper<T> implements EventHandler {
-
-  static class NativePreview extends BaseListenerWrapper<EventPreview>
-      implements Event.NativePreviewHandler {
-    @Deprecated
-    public static void add(EventPreview listener) {
-      Event.addNativePreviewHandler(new NativePreview(listener));
-    }
-
-    public static void remove(EventPreview listener) {
-      baseRemove(Event.handlers, listener, NativePreviewEvent.getType());
-    }
-
-    private NativePreview(EventPreview listener) {
-      super(listener);
-    }
-
-    public void onPreviewNativeEvent(NativePreviewEvent event) {
-      // The legacy EventHandler should only fire if it is on the top of the
-      // stack (ie. the last one added).
-      if (event.isFirstHandler()) {
-        if (!listener.onEventPreview(Event.as(event.getNativeEvent()))) {
-          event.cancel();
-        }
-      }
-    }
-  }
-
-  static class WrapHistory extends BaseListenerWrapper<HistoryListener>
-      implements ValueChangeHandler<String> {
-    @Deprecated
-    public static void add(HistoryListener listener) {
-      History.addValueChangeHandler(new WrapHistory(listener));
-    }
-
-    public static void remove(HandlerManager manager, HistoryListener listener) {
-      baseRemove(manager, listener, ValueChangeEvent.getType());
-    }
-
-    private WrapHistory(HistoryListener listener) {
-      super(listener);
-    }
-
-    public void onValueChange(ValueChangeEvent<String> event) {
-      listener.onHistoryChanged(event.getValue());
-    }
-  }
 
   static class WrapWindowClose extends BaseListenerWrapper<WindowCloseListener>
       implements Window.ClosingHandler, CloseHandler<Window> {
@@ -196,8 +145,6 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
    */
   final T listener;
 
-  private Widget source;
-
   /**
    * Creates a new listener wrapper.
    * 
@@ -208,36 +155,11 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
   }
 
   /**
-   * Sets the widget source to pass to the listeners. Source defaults to
-   * event.getSource() if this method is not used.
-   * 
-   * @param source the source to provide as the listener's source
-   */
-  public void setSource(Widget source) {
-    this.source = source;
-  }
-
-  /**
    * Gets the listener being wrapped.
    * 
    * @return the wrapped listener
    */
   protected T getListener() {
     return listener;
-  }
-
-  /**
-   * Gets the widget source to pass to the listeners. Source defaults to
-   * event.getSource() if not specified by {@link #setSource(Widget)}.
-   * 
-   * @param event the event
-   * @return source the source to provide as the listener's source
-   */
-  protected Widget getSource(GwtEvent<?> event) {
-    if (source == null) {
-      return (Widget) event.getSource();
-    } else {
-      return source;
-    }
   }
 }

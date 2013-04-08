@@ -77,6 +77,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.BaseListenerWrapper;
@@ -91,7 +92,7 @@ import java.util.EventListener;
  * 
  * 
  * @param <T> listener type
- * @deprecated will be removed in GWT 2.0 with the handler listeners themselves
+ * @deprecated will be removed in GWT 2.7 with the handler listeners themselves
  */
 @Deprecated
 public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
@@ -811,8 +812,34 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
     }
   }
 
+  private Widget source;
+
   protected ListenerWrapper(T listener) {
     super(listener);
   }
 
+  /**
+   * Sets the widget source to pass to the listeners. Source defaults to
+   * event.getSource() if this method is not used.
+   *
+   * @param source the source to provide as the listener's source
+   */
+  public void setSource(Widget source) {
+    this.source = source;
+  }
+
+  /**
+   * Gets the widget source to pass to the listeners. Source defaults to
+   * event.getSource() if not specified by {@link #setSource(Widget)}.
+   *
+   * @param event the event
+   * @return source the source to provide as the listener's source
+   */
+  protected Widget getSource(GwtEvent<?> event) {
+    if (source == null) {
+      return (Widget) event.getSource();
+    } else {
+      return source;
+    }
+  }
 }

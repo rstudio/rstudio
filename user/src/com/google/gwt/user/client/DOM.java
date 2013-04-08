@@ -20,6 +20,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.impl.DOMImpl;
 import com.google.gwt.user.client.ui.PotentialElement;
 
@@ -30,6 +31,33 @@ import com.google.gwt.user.client.ui.PotentialElement;
  * {@link com.google.gwt.user.client.Event events}.
  */
 public class DOM {
+
+  private static class NativePreview extends BaseListenerWrapper<EventPreview>
+      implements Event.NativePreviewHandler {
+    @Deprecated
+    public static void add(EventPreview listener) {
+      Event.addNativePreviewHandler(new NativePreview(listener));
+    }
+
+    public static void remove(EventPreview listener) {
+      baseRemove(Event.handlers, listener, NativePreviewEvent.getType());
+    }
+
+    private NativePreview(EventPreview listener) {
+      super(listener);
+    }
+
+    public void onPreviewNativeEvent(NativePreviewEvent event) {
+      // The legacy EventHandler should only fire if it is on the top of the
+      // stack (ie. the last one added).
+      if (event.isFirstHandler()) {
+        if (!listener.onEventPreview(Event.as(event.getNativeEvent()))) {
+          event.cancel();
+        }
+      }
+    }
+  }
+
   // The current event being fired
   private static Event currentEvent = null;
   static final DOMImpl impl = GWT.create(DOMImpl.class);
@@ -48,7 +76,7 @@ public class DOM {
    */
   @Deprecated
   public static void addEventPreview(EventPreview preview) {
-    BaseListenerWrapper.NativePreview.add(preview);
+    NativePreview.add(preview);
   }
 
   /**
@@ -1044,7 +1072,7 @@ public class DOM {
    */
   @Deprecated
   public static void removeEventPreview(EventPreview preview) {
-    BaseListenerWrapper.NativePreview.remove(preview);
+    NativePreview.remove(preview);
   }
 
   /**
