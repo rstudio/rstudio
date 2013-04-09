@@ -141,15 +141,3 @@ endif()
 
 # make sure the CMAKE_INSTALL_PREFIX uses a cmake style path
 file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
-
-# if there isn't an addin path defined and this is a development build
-# (detected by target=all and build-type=debug) then look for an addins
-# environment variable.
-# NOTE: to set environment variables for GUI apps on OSX see:
-#   http://snipurl.com/apple_environment
-#
-if(NOT RSTUDIO_ADDINS_PATH)
-   if(${RSTUDIO_TARGET} STREQUAL "Development" AND ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-      set(RSTUDIO_ADDINS_PATH $ENV{RSTUDIO_ADDINS_PATH})
-   endif()
-endif()

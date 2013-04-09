@@ -136,6 +136,16 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+
+# automatically build addins found in the addins subdirectory
+# (if another path wasn't already specified)
+if(NOT RSTUDIO_ADDINS_PATH)
+   set(RSTUDIO_DEFAULT_ADDINS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/addins")
+   if(EXISTS RSTUDIO_DEFAULT_ADDINS_PATH)
+      set(RSTUDIO_ADDINS_PATH RSTUDIO_DEFAULT_ADDINS_PATH)
+   endif()
+endif()
+
 # core library
 add_subdirectory(core)
 
