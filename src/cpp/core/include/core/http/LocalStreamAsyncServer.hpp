@@ -17,7 +17,7 @@
 #define CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 
 #include <core/http/LocalStreamSocketUtils.hpp>
-#include <core/http/AsyncServer.hpp>
+#include <core/http/AsyncServerImpl.hpp>
 
 #include <core/system/PosixUser.hpp>
 
@@ -25,12 +25,12 @@ namespace core {
 namespace http {
 
 class LocalStreamAsyncServer
-   : public AsyncServer<boost::asio::local::stream_protocol>
+   : public AsyncServerImpl<boost::asio::local::stream_protocol>
 {
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri = std::string())
-      : AsyncServer<boost::asio::local::stream_protocol>(serverName, baseUri)
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri)
    {
    }
    

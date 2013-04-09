@@ -18,18 +18,18 @@
    
 #include <boost/asio/ip/tcp.hpp>
 
-#include <core/http/AsyncServer.hpp>
+#include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 
 namespace core {
 namespace http {
 
-class TcpIpAsyncServer : public AsyncServer<boost::asio::ip::tcp>
+class TcpIpAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
 {
 public:
    TcpIpAsyncServer(const std::string& serverName,
                     const std::string& baseUri = std::string())
-      : AsyncServer<boost::asio::ip::tcp>(serverName, baseUri)
+      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri)
    {
    }
    

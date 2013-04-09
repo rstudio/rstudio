@@ -48,6 +48,7 @@
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
+#include "ServerInit.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
@@ -106,19 +107,17 @@ auth::SecureAsyncUriHandlerFunction secureAsyncFileHandler()
 }
 
 // http server
-boost::scoped_ptr<http::TcpIpAsyncServer> s_pHttpServer;
+boost::scoped_ptr<http::AsyncServer> s_pHttpServer;
 
 Error httpServerInit()
 {
-   // create http server
-   s_pHttpServer.reset(new http::TcpIpAsyncServer("RStudio"));
+   s_pHttpServer.reset(server::httpServerCreate());
 
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
 
-   // initialize the http server
-   Options& options = server::options();
-   return s_pHttpServer->init(options.wwwAddress(), options.wwwPort());
+   // initialize
+   return server::httpServerInit(s_pHttpServer.get());
 }
 
 void httpServerAddHandlers()
