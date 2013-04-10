@@ -23,8 +23,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   owner @{HOME}/** rw,
   owner /tmp/** rw,
   /tmp/rsession/streams/** rw,
+  /tmp/rstudio-rserver.socket rw,
 
-  ${CMAKE_INSTALL_PREFIX}/bin/rserver-pam Ux,
+  ${CMAKE_INSTALL_PREFIX}/bin/rserver-* Ux,
      
   ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
   ${CMAKE_INSTALL_PREFIX}/www/** r,
@@ -96,9 +97,10 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      owner @{HOME}/** rw,
      owner /tmp/** rw,
      /tmp/rsession/streams/** rw,
+     /tmp/rstudio-rserver.socket rw,
 
-     ${CMAKE_INSTALL_PREFIX}/bin/rserver-pam Ux,
-     
+     ${CMAKE_INSTALL_PREFIX}/bin/rserver-* Ux,
+
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
      ${CMAKE_INSTALL_PREFIX}/www/** r,
   }   
