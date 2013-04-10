@@ -9,6 +9,9 @@ sudo useradd -r rstudio-server
 # create softlink to admin script in /usr/sbin
 sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
+# create config directory
+sudo mkdir -p /etc/rstudio
+
 # create var directories
 sudo mkdir -p /var/run/rstudio-server
 sudo mkdir -p /var/lock/rstudio-server
