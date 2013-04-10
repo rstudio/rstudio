@@ -34,6 +34,7 @@ LSB_RELEASE=`lsb_release --id --short`
 if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/
 then
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
+   sudo apparmor_parser -r /etc/apparmor.d/rstudio-server 2>/dev/null
 fi
 
 # add upstart profile or init.d script and start the server
