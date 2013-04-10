@@ -73,14 +73,14 @@ case "$1" in
         ;;
 
     offline)
-        mkdir -p /etc/rstudio
-        touch /etc/rstudio/offline
+        mkdir -p /var/lib/rstudio-server
+        touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
         ;;
 
     online)
-        mkdir -p /etc/rstudio
-        rm -f /etc/rstudio/offline
+        mkdir -p /var/lib/rstudio-server
+        rm -f /var/lib/rstudio-server/offline
         daemonCmd "restart"
         ;;
 

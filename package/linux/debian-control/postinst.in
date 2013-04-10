@@ -9,10 +9,19 @@ sudo useradd -r rstudio-server
 # create softlink to admin script in /usr/sbin
 sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
+# create var directories
+sudo mkdir -p /var/run/rstudio-server
+sudo mkdir -p /var/lock/rstudio-server
+sudo mkdir -p /var/log/rstudio-server
+sudo mkdir -p /var/lib/rstudio-server
+sudo mkdir -p /var/lib/rstudio-server/conf
+sudo mkdir -p /var/lib/rstudio-server/body
+sudo mkdir -p /var/lib/rstudio-server/proxy
+
 # write installed indicator then force suspend active sessions
 # (so that the new client is never paired against the old server)
 sudo mkdir -p /etc/rstudio
-sudo sh -c "echo `date +%s` > /etc/rstudio/installed"
+sudo sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 sudo rstudio-server force-suspend-all
 
 # check lsb release
@@ -23,15 +32,6 @@ if test $LSB_RELEASE = "Ubuntu" && test -d /etc/apparmor.d/
 then
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
 fi
-
-# create var directories
-sudo mkdir -p /var/run/rstudio-server
-sudo mkdir -p /var/lock/rstudio-server
-sudo mkdir -p /var/log/rstudio-server
-sudo mkdir -p /var/lib/rstudio-server
-sudo mkdir -p /var/lib/rstudio-server/conf
-sudo mkdir -p /var/lib/rstudio-server/body
-sudo mkdir -p /var/lib/rstudio-server/proxy
 
 # add upstart profile or init.d script and start the server
 if test $LSB_RELEASE = "Ubuntu" && test -d /etc/init/

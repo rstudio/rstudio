@@ -148,8 +148,14 @@ d) Create a soft link in /usr/sbin to the server administrative script
   
    Additional commands include stop, restart, offline, online, and others
 
+e) Create /var directories required for RStudio to run. This can be done with:
 
-e) If your system supports AppArmor you may wish to add an AppArmor profile
+   mkdir -p /var/run/rstudio-server
+   mkdir -p /var/lock/rstudio-server
+   mkdir -p /var/log/rstudio-server
+   mkdir -p /var/lib/rstudio-server
+
+f) If your system supports AppArmor you may wish to add an AppArmor profile
    for RStudio Server. You can find one which is compatible with the
    Ubuntu implementation of AppArmor here:
 

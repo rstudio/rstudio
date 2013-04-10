@@ -42,8 +42,10 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
   # configuration
   /etc/rstudio/*.conf r,
-  /etc/rstudio/offline r,
-  /etc/rstudio/secure-cookie-key rw,
+
+  # state
+  /var/lib/rstudio-server/offline r,
+  /var/lib/rstudio-server/secure-cookie-key rw,
 
 
   # -----------------------------------------------------------------

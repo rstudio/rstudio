@@ -227,7 +227,7 @@ double installedVersion()
       return 0;
 
    // read installation time (as string) from file (return 0 if not found)
-   FilePath installedPath("/etc/rstudio/installed");
+   FilePath installedPath("/var/lib/rstudio-server/installed");
    if (!installedPath.exists())
       return 0;
    
@@ -243,7 +243,7 @@ double installedVersion()
    // empty string means 0
    if (installedStr.empty())
    {
-      LOG_ERROR_MESSAGE("No value within /etc/rstudio/installed");
+      LOG_ERROR_MESSAGE("No value within /var/lib/rstudio-server/installed");
       return 0;
    }
    

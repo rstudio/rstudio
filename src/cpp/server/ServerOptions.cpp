@@ -69,7 +69,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
 
    // special program offline option (based on file existence at 
    // startup for easy bash script enable/disable of offline state)
-   serverOffline_ = FilePath("/etc/rstudio/offline").exists();
+   serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
 
    // program - name and execution
    options_description server("server");
