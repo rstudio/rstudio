@@ -24,6 +24,15 @@ then
    sudo cp ${CMAKE_INSTALL_PREFIX}/extras/apparmor/rstudio-server /etc/apparmor.d/
 fi
 
+# create var directories
+sudo mkdir -p /var/run/rstudio-server
+sudo mkdir -p /var/lock/rstudio-server
+sudo mkdir -p /var/log/rstudio-server
+sudo mkdir -p /var/lib/rstudio-server
+sudo mkdir -p /var/lib/rstudio-server/conf
+sudo mkdir -p /var/lib/rstudio-server/body
+sudo mkdir -p /var/lib/rstudio-server/proxy
+
 # add upstart profile or init.d script and start the server
 if test $LSB_RELEASE = "Ubuntu" && test -d /etc/init/
 then

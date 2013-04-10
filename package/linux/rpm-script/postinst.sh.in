@@ -15,6 +15,15 @@ mkdir -p /etc/rstudio
 sh -c "echo `date +%s` > /etc/rstudio/installed"
 rstudio-server force-suspend-all
 
+# create var directories
+mkdir -p /var/run/rstudio-server
+mkdir -p /var/lock/rstudio-server
+mkdir -p /var/log/rstudio-server
+mkdir -p /var/lib/rstudio-server
+mkdir -p /var/lib/rstudio-server/conf
+mkdir -p /var/lib/rstudio-server/body
+mkdir -p /var/lib/rstudio-server/proxy
+
 # add and register init.d script and (re) start the server
 cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
 chmod +x /etc/init.d/rstudio-server
