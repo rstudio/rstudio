@@ -6,5 +6,9 @@ set +e
 # remove softlink to admin script 
 sudo rm -f /usr/sbin/rstudio-server
 
+# remove temporary streams
+sudo rm -rf /tmp/rsession
+sudo rm -f /tmp/rstudio-rserver.socket
+
 # clear error termination state
 set -e
