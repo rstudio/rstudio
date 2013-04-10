@@ -181,27 +181,4 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_UPSTART_PROFILE}
            DESTINATION ${RSERVER_UPSTART_DIR})
 
-   # install empty /var/ subdirectories (need to create and copy them)
-   set(RSTUDIO_SCOPE rstudio-server)
-   set(INSTALL_DIRS ${CMAKE_CURRENT_BINARY_DIR}/install-dirs)
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/run/${RSTUDIO_SCOPE})
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/lock/${RSTUDIO_SCOPE})
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/log/${RSTUDIO_SCOPE})
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/lib/${RSTUDIO_SCOPE})
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/lib/${RSTUDIO_SCOPE}/conf)
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/lib/${RSTUDIO_SCOPE}/body)
-   file(MAKE_DIRECTORY ${INSTALL_DIRS}/lib/${RSTUDIO_SCOPE}/proxy)
-
-   install(DIRECTORY ${INSTALL_DIRS}/run/${RSTUDIO_SCOPE}
-           DESTINATION /var/run)
-
-   install(DIRECTORY ${INSTALL_DIRS}/lock/${RSTUDIO_SCOPE}
-           DESTINATION /var/lock)
-
-   install(DIRECTORY ${INSTALL_DIRS}/log/${RSTUDIO_SCOPE}
-           DESTINATION /var/log)
-
-   install(DIRECTORY ${INSTALL_DIRS}/lib/${RSTUDIO_SCOPE}
-           DESTINATION /var/lib)
-
 endif()
