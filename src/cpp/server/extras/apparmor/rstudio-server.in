@@ -43,6 +43,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
   # configuration
   /etc/rstudio/*.conf r,
+  ${CMAKE_INSTALL_PREFIX}/conf/* r,
 
   # state
   /var/lib/rstudio-server/offline r,
