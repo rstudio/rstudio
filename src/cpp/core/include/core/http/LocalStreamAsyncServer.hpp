@@ -61,6 +61,11 @@ public:
       if (error)
          return error ;
       
+      // initialize stream dir
+      error = initializeStreamDir(localStreamPath_.parent());
+      if (error)
+         return error;
+
       // initialize acceptor
       return initLocalStreamAcceptor(acceptorService(),
                                      localStreamPath_,
