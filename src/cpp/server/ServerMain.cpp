@@ -58,6 +58,16 @@
 using namespace core ;
 using namespace server;
 
+// forward-declare overlay methods
+namespace server {
+namespace overlay {
+
+Error startup();
+void shutdown();
+
+} // namespace overlay
+} // namespace server
+
 namespace {
    
 bool mainPageFilter(const core::http::Request& request,
@@ -226,6 +236,9 @@ Error waitForSignals()
          // Here is where we can perform server cleanup e.g.
          // closing pam sessions
          //
+
+         // call overlay shutdown
+         overlay::shutdown();
 
          // clear the signal mask
          Error error = core::system::clearSignalMask();
@@ -429,6 +442,11 @@ int main(int argc, char * const argv[])
 
          return EXIT_SUCCESS;
       }
+
+      // call overlay startup
+      error = overlay::startup();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
 
       // run http server
       error = s_pHttpServer->run(options.wwwThreadPoolSize());

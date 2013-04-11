@@ -26,6 +26,7 @@ set(SERVER_SOURCE_FILES
    ServerBrowser.cpp
    ServerInit.cpp
    ServerMain.cpp
+   ServerMainOverlay.cpp
    ServerOffline.cpp
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
