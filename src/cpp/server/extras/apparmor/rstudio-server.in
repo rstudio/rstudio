@@ -73,8 +73,6 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   /usr/bin/** rix,
   /usr/local/bin/** rix,
    
-  /lib/*.so* mr,
-  /usr/lib{,32,64}/** mrix,
   /usr/local/lib{,32,64}/** mrix,
   
   /etc/** r,
