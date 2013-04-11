@@ -7,8 +7,9 @@ set +e
 rm -f /usr/sbin/rstudio-server
 
 # remove temporary streams
-rm -rf /tmp/rsession
-rm -f /tmp/rstudio-rserver.socket
+# remove temporary streams
+sudo rm -rf /tmp/rstudio-rsession
+sudo rm -rf /tmp/rstudio-rserver
 
 # clear error termination state
 set -e

@@ -34,13 +34,9 @@ inline Error initializeStreamDir(const FilePath& streamDir)
    if (error)
       return error;
       
-   error = changeFileMode(streamDir.parent(),
-                          system::EveryoneReadWriteExecuteMode);
-   if (error)
-      return error;
-      
    return changeFileMode(streamDir,
-                         system::EveryoneReadWriteExecuteMode);
+                         system::EveryoneReadWriteExecuteMode,
+                         true);
 }
    
 inline Error initLocalStreamAcceptor(

@@ -24,7 +24,7 @@
 
 #include <core/http/LocalStreamSocketUtils.hpp>
 
-#define kSessionLocalStreamsDir "/tmp/rsession/streams"
+#define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
 
 namespace session {
 namespace local_streams {

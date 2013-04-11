@@ -37,7 +37,9 @@ enum FileMode
    EveryoneReadWriteExecuteMode
 };
 
-inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)
+inline Error changeFileMode(const FilePath& filePath,
+                            FileMode fileMode,
+                            bool stickyBit)
 {
    mode_t mode ;
    switch(fileMode)
@@ -62,6 +64,10 @@ inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)
          return systemError(ENOTSUP, ERROR_LOCATION);
    }
 
+   // check for sticky bit
+   if (stickyBit)
+      mode |= S_ISVTX;
+
    // change the mode
    errno = 0;
    if (::chmod(filePath.absolutePath().c_str(), mode) < 0)
@@ -70,6 +76,10 @@ inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)
       return Success();
 }
 
+inline Error changeFileMode(const FilePath& filePath, FileMode fileMode)
+{
+   return changeFileMode(filePath, fileMode, false);
+}
 
 
 

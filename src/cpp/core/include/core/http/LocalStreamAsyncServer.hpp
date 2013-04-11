@@ -29,8 +29,10 @@ class LocalStreamAsyncServer
 {
 public:
    LocalStreamAsyncServer(const std::string& serverName,
-                          const std::string& baseUri = std::string())
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri)
+                          const std::string& baseUri,
+                          core::system::FileMode fileMode)
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri),
+        fileMode_(fileMode)
    {
    }
    
@@ -62,7 +64,7 @@ public:
       // initialize acceptor
       return initLocalStreamAcceptor(acceptorService(),
                                      localStreamPath_,
-                                     core::system::EveryoneReadWriteMode);
+                                     fileMode_);
    }
    
 private:
@@ -98,6 +100,7 @@ private:
    }
    
 private:
+   core::system::FileMode fileMode_;
    core::FilePath localStreamPath_;
 
 };
