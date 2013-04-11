@@ -28,6 +28,7 @@ set(SERVER_SOURCE_FILES
    ServerMain.cpp
    ServerOffline.cpp
    ServerOptions.cpp
+   ServerOptionsOverlay.cpp
    ServerPAMAuth.cpp
    ServerREnvironment.cpp
    ServerSessionProxy.cpp

@@ -17,10 +17,12 @@
 #define SERVER_SERVER_OPTIONS_HPP
 
 #include <string>
+#include <map>
 
 #include <boost/utility.hpp>
 
-#include <core/http/Request.hpp>
+#include <core/FilePath.hpp>
+#include <core/ProgramOptions.hpp>
 
 namespace core {
    class ProgramStatus;
@@ -145,7 +147,24 @@ public:
       return rsessionUserProcessLimit_;
    }
 
+   std::string getOverlayOption(const std::string& name)
+   {
+      return overlayOptions_[name];
+   }
+
 private:
+
+   void resolvePath(std::string* pPath) const;
+
+   void addOverlayOptions(boost::program_options::options_description* pServer,
+                          boost::program_options::options_description* pWWW,
+                          boost::program_options::options_description* pRSession,
+                          boost::program_options::options_description* pAuth);
+
+   void resolveOverlayOptions();
+
+private:
+   core::FilePath installPath_;
    bool verifyInstallation_;
    std::string serverWorkingDir_;
    std::string serverUser_;
@@ -167,6 +186,7 @@ private:
    int rsessionMemoryLimitMb_;
    int rsessionStackLimitMb_;
    int rsessionUserProcessLimit_;
+   std::map<std::string,std::string> overlayOptions_;
 };
       
 } // namespace server

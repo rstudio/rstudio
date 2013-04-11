@@ -32,12 +32,6 @@ namespace {
 
 const char * const kDefaultProgramUser = "rstudio-server";
 
-void resolvePath(const FilePath& installPath, std::string* pPath)
-{
-   if (!pPath->empty())
-      *pPath = installPath.complete(*pPath).absolutePath();
-}
-
 
 } // anonymous namespace
 
@@ -47,13 +41,13 @@ Options& options()
    return instance ;
 }
 
+
 ProgramStatus Options::read(int argc, char * const argv[])
 {
    using namespace boost::program_options ;
 
    // compute install path
-   FilePath installPath;
-   Error error = core::system::installPath("..", argc, argv, &installPath);
+   Error error = core::system::installPath("..", argc, argv, &installPath_);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
@@ -153,6 +147,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
    std::string configFile = defaultConfigPath.exists() ?
                                  defaultConfigPath.absolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
+
+   // overlay hook
+   addOverlayOptions(&server, &www, &rsession, &auth);
+
    optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
  
@@ -199,14 +197,23 @@ ProgramStatus Options::read(int argc, char * const argv[])
 
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)
-   resolvePath(installPath, &wwwLocalPath_);
-   resolvePath(installPath, &authPamHelperPath_);
-   resolvePath(installPath, &rsessionPath_);
-   resolvePath(installPath, &rldpathPath_);
-   resolvePath(installPath, &rsessionConfigFile_);
+   resolvePath(&wwwLocalPath_);
+   resolvePath(&authPamHelperPath_);
+   resolvePath(&rsessionPath_);
+   resolvePath(&rldpathPath_);
+   resolvePath(&rsessionConfigFile_);
+
+   // overlay hook
+   resolveOverlayOptions();
 
    // return status
    return status;
+}
+
+void Options::resolvePath(std::string* pPath) const
+{
+   if (!pPath->empty())
+      *pPath = installPath_.complete(*pPath).absolutePath();
 }
 
 } // namespace server
