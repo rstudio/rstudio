@@ -135,31 +135,34 @@ class ClassSourceFileComposer implements SourceWriter {
   }
 
   public void print(String s) {
-    // If we just printed a newline, print an indent.
-    //
-    if (atStart) {
-      for (int j = 0; j < indent; ++j) {
-        printWriter.print("  ");
+    int pos = 0;
+    for (;;) {
+      // If we just printed a newline, print an indent.
+      if (atStart) {
+        for (int j = 0; j < indent; ++j) {
+          printWriter.print("  ");
+        }
+        if (inComment) {
+          printWriter.print(commentIndicator);
+        }
+        atStart = false;
       }
-      if (inComment) {
-        printWriter.print(commentIndicator);
+
+      // Now find the next newline.
+      int nl = s.indexOf('\n', pos);
+
+      // If there's no newline or it's at the end of the string, just write
+      // the rest of the string, and we're done.
+      if (nl == -1 || nl == s.length() - 1) {
+        printWriter.write(s, pos, s.length() - pos);
+        return;
       }
-      atStart = false;
-    }
-    // Now print up to the end of the string or the next newline.
-    //
-    String rest = null;
-    int i = s.indexOf("\n");
-    if (i > -1 && i < s.length() - 1) {
-      rest = s.substring(i + 1);
-      s = s.substring(0, i + 1);
-    }
-    printWriter.print(s);
-    // If rest is non-null, then s ended with a newline and we recurse.
-    //
-    if (rest != null) {
+
+      // Otherwise, write up to and including the newline, note that we just
+      // printed a newline, and loop on the rest of the string.
+      printWriter.write(s, pos, nl + 1 - pos);
       atStart = true;
-      print(rest);
+      pos = nl + 1;
     }
   }
 
