@@ -318,14 +318,13 @@ function loadIframe(url) {
 }
 
 function pluginConnectionError(codeServer) {
+  __gwt_displayGlassMessage(
+      "Plugin failed to connect to Development Mode server at " + simpleEscape(codeServer),
+      "Follow the troubleshooting instructions at "
+      + "<a href='http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM'>"
+      + "http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM</a>");
   if ($errFn) {
     $errFn($moduleName);
-  } else {
-    __gwt_displayGlassMessage(
-        "Plugin failed to connect to Development Mode server at " + simpleEscape(codeServer),
-        "Follow the troubleshooting instructions at "
-        + "<a href='http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM'>"
-        + "http://code.google.com/p/google-web-toolkit/wiki/TroubleshootingOOPHM</a>");
   }
 }
 
