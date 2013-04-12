@@ -62,6 +62,7 @@ using namespace server;
 namespace server {
 namespace overlay {
 
+Error initialize();
 Error startup();
 void shutdown();
 
@@ -385,6 +386,11 @@ int main(int argc, char * const argv[])
 
       // initialize http server
       error = httpServerInit();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // call overlay initialize
+      error = overlay::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

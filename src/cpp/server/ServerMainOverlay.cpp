@@ -20,6 +20,11 @@ using namespace core ;
 namespace server {
 namespace overlay {
 
+Error initialize()
+{
+   return Success();
+}
+
 Error startup()
 {
    return Success();
