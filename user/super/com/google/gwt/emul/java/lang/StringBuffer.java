@@ -231,6 +231,11 @@ public class StringBuffer implements CharSequence, Appendable {
     return this;
   }
 
+  public StringBuffer reverse() {
+    impl.reverse(data);
+    return this;
+  }
+
   /**
    * Warning! This method is <b>much</b> slower than the JRE implementation. If
    * you need to do character level manipulation, you are strongly advised to

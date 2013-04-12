@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.client.impl;
 
+
 /**
  * <p>
  * The interface to defer bound implementations of {@link StringBuilder} and
@@ -29,9 +30,35 @@ package com.google.gwt.core.client.impl;
  */
 public abstract class StringBufferImpl {
 
+  public static String reverseString(String s) {
+    int length = s.length();
+
+    if (length <= 1) {
+      return s;
+    }
+
+    char[] buffer = new char[length];
+
+    buffer[0] = s.charAt(length - 1);
+
+    for (int i = 1; i < length; i++) {
+      buffer[i] = s.charAt(length - 1 - i);
+      if (Character.isSurrogatePair(buffer[i], buffer[i - 1])) {
+        swap(buffer, i - 1, i);
+      }
+    }
+
+    return new String(buffer);
+  }
+
+  private static void swap(char[] buffer, int f, int s) {
+    char tmp = buffer[f];
+    buffer[f] = buffer[s];
+    buffer[s] = tmp;
+  }
+
   /**
-   * Append for primitive; the value can be stored and only later converted to a
-   * string.
+   * Append for primitive; the value can be stored and only later converted to a string.
    */
   public abstract void append(Object data, boolean x);
 
@@ -84,6 +111,11 @@ public abstract class StringBufferImpl {
    * Replaces a segment of the string buffer.
    */
   public abstract void replace(Object data, int start, int end, String toInsert);
+
+  /**
+   * Reverses the whole StringBuffer/Builder
+   */
+  public abstract void reverse(Object data);
 
   /**
    * Returns the string buffer as a String.

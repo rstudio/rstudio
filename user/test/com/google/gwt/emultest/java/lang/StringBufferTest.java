@@ -21,6 +21,11 @@ import com.google.gwt.junit.client.GWTTestCase;
  * This class tests classes StringBuffer and StringBuilder.
  */
 public class StringBufferTest extends GWTTestCase {
+
+  private static void assertEqualsReverse(String expected, String input) {
+    assertEquals(expected, new StringBuffer(input).reverse().toString());
+  }
+
   /**
    * This method gets the module name.
    * 
@@ -268,6 +273,35 @@ public class StringBufferTest extends GWTTestCase {
     StringBuffer x = new StringBuffer("xxyyxx");
     x.replace(2, 4, "YY");
     assertEquals("xxYYxx", x.toString());
+  }
+
+  public void testReverse() {
+    assertEqualsReverse("", "");
+    assertEqualsReverse(" ", " ");
+
+    assertEqualsReverse("gwt", "twg");
+    assertEqualsReverse("gwt is great", "taerg si twg");
+
+    // Java uses UTF-16
+    // char values between 0x0000 - 0xD7FF and 0xE000 - 0xFFFF
+    // are considered to be one char
+    // if the value is between 0xD800 - 0xDBFF the char is considered
+    // to be the lead surrogate (first) of a surrogate pair
+    // if the value is between 0xDC00 - 0xDFFFF the char is considered
+    // to be the trail surrogate (second) of a surrogate pair
+    //
+    // single appearances of surrogates are invalid in a String!
+
+    // surrogate pair test (first one)
+    assertEqualsReverse("\uD800\uDC00", "\uD800\uDC00");
+    // surrogate pair test (last one)
+    assertEqualsReverse("\uDBFF\uDFFF", "\uDBFF\uDFFF");
+    // last one before surrogates start
+    assertEqualsReverse("\uD7FF\uD7FE", "\uD7FE\uD7FF");
+    // first none surrogate
+    assertEqualsReverse("\uE000\uE001", "\uE001\uE000");
+    // more than one surrogate pair
+    assertEqualsReverse("\uD801\uDC00_123_\uD802\uDC01", "\uD802\uDC01_321_\uD801\uDC00");
   }
 
   /**

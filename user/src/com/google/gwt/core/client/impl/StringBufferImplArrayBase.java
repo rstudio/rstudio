@@ -76,6 +76,13 @@ public abstract class StringBufferImplArrayBase extends StringBufferImpl {
   }
 
   @Override
+  public void reverse(Object a) {
+    String s = takeString(a);
+    s = reverseString(s);
+    appendNonNull(a, s);
+  }
+
+  @Override
   public final String toString(Object a) {
     String s = takeString(a);
     appendNonNull(a, s);
@@ -87,4 +94,5 @@ public abstract class StringBufferImplArrayBase extends StringBufferImpl {
     a.length = a.explicitLength = 0;
     return s;
   }-*/;
+
 }

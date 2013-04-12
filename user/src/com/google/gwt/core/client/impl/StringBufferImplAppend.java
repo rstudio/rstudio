@@ -73,7 +73,13 @@ public class StringBufferImplAppend extends StringBufferImpl {
   }
 
   @Override
+  public void reverse(Object data) {
+    string = reverseString(string);
+  }
+
+  @Override
   public String toString(Object data) {
     return string;
   }
+
 }
