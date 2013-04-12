@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * TODO: document me.
@@ -96,5 +97,69 @@ public class WidgetCollectionTest extends GWTTestCase {
     assertEquals(it.next(), l1);
     assertEquals(it.next(), l2);
     assertFalse(it.hasNext());
+  }
+
+  public void testExceptionInIteratorNextOnEmpty() {
+    // empty collection - next
+    try {
+      new Container().collection.iterator().next();
+      fail("expected NoSuchElementException");
+    } catch (NoSuchElementException expected) {
+    }
+  }
+
+  public void testExceptionInIteratorRemoveOnEmpty() {
+    // empty collection - remove
+    try {
+      new Container().collection.iterator().remove();
+      fail("expected IllegalStateException");
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  public void testExceptionInIteratorNextOnCollection() {
+    WidgetCollection wc = new Container().collection;
+
+    wc.add(new Button("a"));
+    wc.add(new Button("b"));
+
+    Iterator<Widget> iter = wc.iterator();
+    iter.next();
+    iter.next();
+    try {
+      iter.next();
+      fail("expected NoSuchElementException");
+    } catch (NoSuchElementException expected) {
+    }
+  }
+
+  public void testExceptionInIteratorOnRemoveBeforeNext() {
+    // test remove before next
+    WidgetCollection wc = new Container().collection;
+    wc.add(new Button("a"));
+    wc.add(new Button("b"));
+
+    Iterator<Widget> iter = wc.iterator();
+    try {
+      iter.remove();
+      fail("expected IllegalStateException");
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  public void testExceptionInIteratorOnDoubleRemove() {
+    // test remove two times
+    WidgetCollection wc = new Container().collection;
+    wc.add(new Button("a"));
+    wc.add(new Button("b"));
+
+    Iterator<Widget> iter = wc.iterator();
+    iter.next();
+    iter.remove();
+    try {
+      iter.remove();
+      fail("expected IllegalStateException");
+    } catch (IllegalStateException expected) {
+    }
   }
 }

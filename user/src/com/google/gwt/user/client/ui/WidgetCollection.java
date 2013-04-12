@@ -35,24 +35,32 @@ public class WidgetCollection implements Iterable<Widget> {
 
   private class WidgetIterator implements Iterator<Widget> {
 
-    private int index = -1;
+    private int index = 0;
+    private Widget currentWidget;
 
+    @Override
     public boolean hasNext() {
-      return index < (size - 1);
+      return index < size;
     }
 
+    @Override
     public Widget next() {
       if (index >= size) {
         throw new NoSuchElementException();
       }
-      return array[++index];
+      currentWidget = array[index];
+      index++;
+      return currentWidget;
     }
 
+    @Override
     public void remove() {
-      if ((index < 0) || (index >= size)) {
+      if (currentWidget == null) {
         throw new IllegalStateException();
       }
-      parent.remove(array[index--]);
+      parent.remove(currentWidget);
+      index--;
+      currentWidget = null;
     }
   }
 
