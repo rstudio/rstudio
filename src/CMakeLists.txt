@@ -20,11 +20,6 @@ if(APPLE)
   set(CMAKE_CXX_COMPILER /usr/bin/c++)
 endif()
 
-# include globals. normally these are included at the root but we also
-# include them here to support configuring at the src level (i.e. for
-# development-configurations)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../CMakeGlobals.txt")
-
 # don't add gwt for special 64-bit binary builds on windows (since
 # we've already got it from the 32-bit build) or for development mode 
 # (since we'll want to build it incrementally using superdevmode)
@@ -36,6 +31,12 @@ add_subdirectory(cpp)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
+endif()
+
+# configure dev scripts
+if (RSTUDIO_SERVER)
+   configure_file(dev/rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/../rserver-dev)
+   configure_file(dev/rclient-dev.in ${CMAKE_CURRENT_BINARY_DIR}/../rclient-dev)
 endif()
 
 
