@@ -15,8 +15,8 @@
 
 # use clang on osx
 if(APPLE)
-  set(CMAKE_C_COMPILER /usr/bin/clang)
-  set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+  set(CMAKE_C_COMPILER /usr/bin/cc)
+  set(CMAKE_CXX_COMPILER /usr/bin/c++)
 endif()
 
 cmake_minimum_required(VERSION 2.6)
