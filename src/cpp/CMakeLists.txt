@@ -190,9 +190,6 @@ else()
    if(RSTUDIO_DESKTOP)
       add_subdirectory(diagnostics)
       add_subdirectory(desktop)
-      configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
-      configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
-
    endif()
 
    # add this after desktop so it is not included in fixup_bundle
