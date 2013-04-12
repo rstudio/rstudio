@@ -96,6 +96,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     includeJs(ss, logger, getJsRunAsync(context), "__RUN_ASYNC__");
     includeJs(ss, logger, getJsDevModeRedirectHook(context), "__DEV_MODE_REDIRECT_HOOK__");
+    includeJs(ss, logger, getJsDevModeRedirectHookPermitted(context),
+        "__DEV_MODE_REDIRECT_HOOK_PERMITTED__"); // must be after DEV_MODE_REDIRECT_HOOK
 
     // This Linker does not support <script> tags in the gwt.xml
     SortedSet<ScriptReference> scripts = artifacts.find(ScriptReference.class);
@@ -223,7 +225,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   /**
-   * Returns a code fragment to check for the new development mode.
+   * Returns a JavaScript fragment that starts Super Dev Mode, if enabled.
+   * (May return either the JavaScript itself or the name of a Java resource ending with ".js".)
    */
   protected String getJsDevModeRedirectHook(LinkerContext context) {
     // Enable Super Dev Mode for this app if the devModeRedirectEnabled config property is true.
@@ -233,6 +236,24 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     } else {
       return "";
     }
+  }
+
+  /**
+   * Returns a JavaScript expression that determines whether Super Dev Mode may be turned on
+   * for the current page. (May return either the JavaScript itself or the name of a Java resource
+   * ending with ".js".)
+   *
+   * <p>The default implementation allows Super Dev Mode only on http: and file: pages. It could be
+   * overridden to implement a blacklist or whitelist of hostnames where Super Dev Mode may run.
+   * As a safety precaution, it's recommended to return false for https and for the hostnames in
+   * URL's visited by end users.
+   *
+   * <p>If you override this method to allow https, it probably won't work anyway because
+   * browsers often disallow loading JavaScript from http URL's into https pages. To make it work,
+   * you will also have to find a way to run the code server using https.
+   */
+  protected String getJsDevModeRedirectHookPermitted(LinkerContext context) {
+    return "$wnd.location.protocol == \"http:\" || $wnd.location.protocol == \"file:\"";
   }
 
   /**

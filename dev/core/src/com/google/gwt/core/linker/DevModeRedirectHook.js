@@ -14,35 +14,38 @@
  * the License.
  */
 
-// A snippet of code that loads a different script if dev mode is enabled.
-
-// Declare our existence.
-// (This assumes that properties.js has already set up the map.)
+// A snippet of code that loads a different script if Super Dev Mode is enabled.
 if ($wnd) {
-  $wnd.__gwt_activeModules["__MODULE_NAME__"].canRedirect = true;
-}
+  var devModePermitted = !!(__DEV_MODE_REDIRECT_HOOK_PERMITTED__);
 
-// We use a different key for each module so that we can turn on dev mode
-// independently for each.
-var devModeKey = '__gwtDevModeHook:__MODULE_NAME__';
+  // Declare our existence.
+  // (This assumes that properties.js has already set up the map.)
+  $wnd.__gwt_activeModules["__MODULE_NAME__"].canRedirect = devModePermitted;
 
-// If dev mode is on, the Bookmarklet previously saved the code server's URL
-// to session storage.
-var devModeUrl = $wnd.sessionStorage[devModeKey];
+  if (devModePermitted) {
+    // We use a different key for each module so that we can turn on dev mode
+    // independently for each.
+    var devModeKey = '__gwtDevModeHook:__MODULE_NAME__';
 
-if (devModeUrl && !$wnd[devModeKey]) {
-  $wnd[devModeKey] = true; // Don't try to redirect more than once,
-  var script = $doc.createElement('script');
+    // If dev mode is on, the bookmarklet previously saved the code server's URL
+    // to session storage.
+    var devModeUrl = $wnd.sessionStorage[devModeKey];
 
-  // save original module base
-  $wnd[devModeKey + ':moduleBase'] = computeScriptBase();
+    if (devModeUrl && !$wnd[devModeKey]) {
+      $wnd[devModeKey] = true; // Don't try to redirect more than once,
 
-  script.src = devModeUrl;
-  var head = $doc.getElementsByTagName('head')[0];
+      // Save the original module base. (Returned by GWT.getModuleBaseURL.)
+      $wnd[devModeKey + ':moduleBase'] = computeScriptBase();
 
-  // The new script tag must come before the previous one so that
-  // computeScriptBase will see it.
-  head.insertBefore(script, head.firstElementChild || head.children[0]);
+      var devModeScript = $doc.createElement('script');
+      devModeScript.src = devModeUrl;
 
-  return false; // Skip the regular bootstrap.
+      // The new script tag must come before the previous one so that
+      // computeScriptBase will see it.
+      var head = $doc.getElementsByTagName('head')[0];
+      head.insertBefore(devModeScript, head.firstElementChild || head.children[0]);
+
+      return false; // Skip the regular bootstrap.
+    }
+  }
 }
