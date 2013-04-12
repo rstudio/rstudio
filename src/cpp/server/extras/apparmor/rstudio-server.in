@@ -8,6 +8,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   # #################################################################
 
   # Allow everything during startup 
+  capability setgid,
+  capability setuid,
+  capability sys_resource,
   /** rwixmkl,
 
 
