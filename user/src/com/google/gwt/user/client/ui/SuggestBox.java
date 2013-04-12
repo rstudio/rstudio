@@ -680,6 +680,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   };
   private final SuggestionCallback suggestionCallback = new SuggestionCallback() {
     public void onSuggestionSelected(Suggestion suggestion) {
+      box.setFocus(true);
       setNewSelection(suggestion);
     }
   };
