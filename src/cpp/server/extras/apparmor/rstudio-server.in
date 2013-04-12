@@ -8,6 +8,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   # #################################################################
 
   # Allow everything during startup 
+  #include <abstractions/nameservice>
   capability setgid,
   capability setuid,
   capability sys_resource,
