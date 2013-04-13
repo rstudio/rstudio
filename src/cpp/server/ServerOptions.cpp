@@ -162,7 +162,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // if specified, confirm that the program user exists. however, if the
    // program user is the default and it doesn't exist then allow that to pass,
    // this just means that the user did a simple make install and hasn't setup
-   // an rserver user yet. in this case the program will run as nobody
+   // an rserver user yet. in this case the program will run as root
    if (!serverUser_.empty())
    {
       // if we aren't running as root then forget the programUser
@@ -176,8 +176,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
          if (serverUser_ == kDefaultProgramUser)
          {
             // administrator hasn't created an rserver system account yet
-            // so run as nobody
-            serverUser_ = "nobody";
+            // so we'll end up running as root
+            serverUser_ = "";
          }
          else
          {
