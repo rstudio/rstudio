@@ -111,11 +111,11 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
       {
          int modifiers = (BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                                    KeyboardShortcut.CTRL) |
-                         KeyboardShortcut.SHIFT;
+                         KeyboardShortcut.ALT;
              
          AppCommand closeSourceDoc = commands.closeSourceDoc();
-         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'Z'));
-         ShortcutManager.INSTANCE.register(modifiers, 'Z', closeSourceDoc);
+         closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'W'));
+         ShortcutManager.INSTANCE.register(modifiers, 'W', closeSourceDoc);
       }
       
       // main menu
