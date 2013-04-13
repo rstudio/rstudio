@@ -7,76 +7,12 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   # startup mode
   # #################################################################
 
-  # -----------------------------------------------------------------
-  # Start with identical entries as "restricted" mode below
-  # (in case we can't change hat this still allows the server
-  # to run with an appropirate warning)
-  # -----------------------------------------------------------------
-
-  #include <abstractions/base>
+  # Allow everything during startup 
   #include <abstractions/nameservice>
-  
   capability setgid,
   capability setuid,
   capability sys_resource,
-
-  owner @{HOME}/** rw,
-  owner /tmp/** rw,
-  /tmp/rsession/streams/** rw,
-
-  ${CMAKE_INSTALL_PREFIX}/bin/rserver-pam Ux,
-     
-  ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
-  ${CMAKE_INSTALL_PREFIX}/www/** r,
-
-
-  # -----------------------------------------------------------------
-  # The following entries are the additonal privilleges needed by 
-  # RStudio for its startup phase
-  # -----------------------------------------------------------------
-
-  # LD_LIBRARY_PATH discovery
-  ${CMAKE_INSTALL_PREFIX}/bin/r-ldpath rix, 
-  /etc/R/ldpaths rix,
-  /dev/tty rw, 
-
-  # configuration
-  /etc/rstudio/*.conf r,
-  /etc/rstudio/offline r,
-  /etc/rstudio/secure-cookie-key rw,
-
-
-  # -----------------------------------------------------------------
-  # The following entries allow us to run R to determine the 
-  # locations of its directories (note this might be otherwise 
-  # covered by the section below however these entries allow us
-  # to run R even if it is installed in a non standard location)
-  # -----------------------------------------------------------------
-
-  ${LIBR_EXECUTABLE} rix, 
-  ${LIBR_HOME}/ r,
-  ${LIBR_HOME}/** rmix,
-
-
-  # -----------------------------------------------------------------
-  # The following entries support the two sections above and are 
-  # intended to allow for very liberal system-wide read and execute
-  # permission so that we can run our r-ldpath script and run R to 
-  # determine the locations of its directories. 
-  # -----------------------------------------------------------------
-
-  /bin/** rix,
-  /usr/bin/** rix,
-  /usr/local/bin/** rix,
-   
-  /lib/*.so* mr,
-  /usr/lib{,32,64}/** mrix,
-  /usr/local/lib{,32,64}/** mrix,
-  
-  /etc/** r,
-
-  /usr/share/** r,
-
+  /** rwixmkl,
 
   # #################################################################
   # restricted mode (transitioned into at the end of startup)  
