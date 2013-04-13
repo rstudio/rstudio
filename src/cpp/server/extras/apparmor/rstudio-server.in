@@ -12,6 +12,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability setgid,
   capability setuid,
   capability sys_resource,
+  capability kill,
   /** rwixmkl,
 
 
@@ -27,6 +28,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      capability setgid,
      capability setuid,
      capability sys_resource,
+     capability kill,
     
      owner @{HOME}/** rw,
      owner /tmp/** rw,
