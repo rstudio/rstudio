@@ -91,6 +91,7 @@ public:
    // display
    virtual bool hasOutput() const;
    virtual bool hasChanges() const;
+   virtual boost::posix_time::ptime lastChange() const;
    virtual void render(boost::function<void(DisplayState)> outputFunction); 
    virtual std::string imageFilename() const ;
    virtual void refresh() ;
@@ -133,6 +134,9 @@ private:
    bool isValidPlotIndex(int index) const;
    bool hasPlot() const;
    
+   // set change flag
+   void setDisplayHasChanges(bool hasChanges);
+
    // invalidate the active plot
    void invalidateActivePlot();
 
@@ -176,6 +180,7 @@ private:
    
    // state
    bool displayHasChanges_;
+   boost::posix_time::ptime lastChange_;
    bool suppressDeviceEvents_;
    
    int activePlot_;

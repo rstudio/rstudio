@@ -74,6 +74,7 @@ PlotManager& plotManager()
    
 PlotManager::PlotManager()
    :  displayHasChanges_(false), 
+      lastChange_(boost::posix_time::not_a_date_time),
       suppressDeviceEvents_(false),
       activePlot_(-1),
       plotInfoRegex_("([A-Za-z0-9\\-]+):([0-9]+),([0-9]+)")
@@ -160,7 +161,7 @@ Error PlotManager::setActivePlot(int index)
       renderActivePlotToDisplay();
 
       // trip changes flag 
-      displayHasChanges_ = true; 
+      setDisplayHasChanges(true);
    }
    
    // return success
@@ -188,7 +189,7 @@ Error PlotManager::removePlot(int index)
    
    // trip changes flag (removing a plot will affect the number of plots
    // and the active plot index so we need a new changed event)
-   displayHasChanges_ = true;
+   setDisplayHasChanges(true);
 
    // fixup active plot as necessary
    
@@ -408,6 +409,11 @@ bool PlotManager::hasChanges() const
 {
    return displayHasChanges_ ;
 }
+
+boost::posix_time::ptime PlotManager::lastChange() const
+{
+   return lastChange_;
+}
    
 void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
 {
@@ -422,7 +428,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    }
    
    // clear changes flag
-   displayHasChanges_ = false;
+   setDisplayHasChanges(false);
    
    // optional manipulator structure
    json::Value plotManipulatorJson;
@@ -779,7 +785,7 @@ void PlotManager::onDeviceClosed()
    plots_.clear();
    
    // trip changes flag to ensure repaint
-   displayHasChanges_ = true;
+   setDisplayHasChanges(true);
    
    // remove all files
    Error error = plotsStateFile_.removeIfExists();
@@ -804,12 +810,22 @@ bool PlotManager::isValidPlotIndex(int index) const
 bool PlotManager::hasPlot() const
 {
    return activePlot_ >= 0;
-}  
+}
+
+void PlotManager::setDisplayHasChanges(bool hasChanges)
+{
+   displayHasChanges_ = hasChanges;
+
+   if (hasChanges)
+      lastChange_ = boost::posix_time::microsec_clock::universal_time();
+   else
+      lastChange_ = boost::posix_time::not_a_date_time;
+}
 
    
 void PlotManager::invalidateActivePlot()
 {
-   displayHasChanges_ = true;
+   setDisplayHasChanges(true);
    
    if (hasPlot())
       activePlot().invalidate();
