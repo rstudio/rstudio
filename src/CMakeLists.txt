@@ -27,12 +27,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
 
-# configure dev scripts
-if (RSTUDIO_SERVER)
-   configure_file(dev/rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/../rserver-dev)
-   configure_file(dev/rclient-dev.in ${CMAKE_CURRENT_BINARY_DIR}/../rclient-dev)
-endif()
-
 
 
 
