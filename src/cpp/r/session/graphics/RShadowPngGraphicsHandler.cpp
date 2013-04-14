@@ -22,6 +22,7 @@
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #undef TRUE
 #undef FALSE
@@ -190,11 +191,16 @@ void shadowDevSync(DeviceContext* pDC)
    selectDevice(ndevNumber(dev));
 
    // copy display list (ignore R errors because they can happen in the normal
-   // course of things for invalid graphics states)
-   error = r::exec::executeSafely(boost::bind(GEcopyDisplayList,
-                                              rsDeviceNumber));
-   if (error && !r::isCodeExecutionError(error))
-      LOG_ERROR(error);
+   // course of things for invalid graphics states). also suppress output
+   // in scope because R 3.0 seems to sneak out error messages from within
+   // the invalid name warning in checkValidSymbolId in dotcode.c
+   {
+      r::session::utils::SuppressOutputInScope scope;
+      error = r::exec::executeSafely(boost::bind(GEcopyDisplayList,
+                                                    rsDeviceNumber));
+      if (error && !r::isCodeExecutionError(error))
+         LOG_ERROR(error);
+   }
 }
 
 } // anonymous namespace
