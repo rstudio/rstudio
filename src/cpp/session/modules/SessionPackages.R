@@ -194,7 +194,7 @@
 .rs.addFunction( "initDefaultUserLibrary", function()
 {
   userdir <- .rs.defaultUserLibraryPath()
-  dir.create(userdir, recursive = TRUE)
+  dir.create(userdir, showWarnings = FALSE, recursive = TRUE)
   .libPaths(c(userdir, .libPaths()))
 })
 
