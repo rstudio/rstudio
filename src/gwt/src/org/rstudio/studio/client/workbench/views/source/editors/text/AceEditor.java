@@ -436,23 +436,11 @@ public class AceEditor implements DocDisplay,
    
    private void syncWrapLimit()
    {
-      // bail if there is no filetype yet
-      if (fileType_ == null)
-         return;
-      
-      // We noted that large word-wrapped documents were freezing Chrome
-      // on Linux (eventually running of of memory). Running the profiler
-      // indicated that the time was being spent inside wrap width 
-      // calculations in Ace. Looking at the Ace bug database there were
-      // other wrapping problems that were solvable by chaning the wrap
-      // mode from "free" to a specific range. So, for Chrome on Linux
-      // we sync the wrap limit to the user-specified margin width.
-      if (fileType_.getWordWrap() && BrowseCap.isChromeLinux()) 
-      {
-         int margin = RStudioGinjector.INSTANCE.getUIPrefs()
-                                             .printMarginColumn().getValue();
-         getSession().setWrapLimitRange(margin, margin);
-      }
+      // we don't need to do this anymore, see:
+      // https://github.com/rstudio/rstudio/commit/1631be584268926db728c7e5445050758153d2a4
+      //
+      // note that this behavior lives on in master (but excludes Chrome for 
+      // Linux because in v0.98 we added a user option to enable it explicitly
    }
    
    private void updateKeyboardHandlers()
