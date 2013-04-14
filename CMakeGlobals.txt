@@ -38,16 +38,12 @@ endif()
 
 # platform specific default for targets
 if(NOT RSTUDIO_TARGET)
-   if(WIN32)
-      set(RSTUDIO_TARGET "Desktop")
-   else()
-      set(RSTUDIO_TARGET "Development")
-      set(RSTUDIO_DEVELOPMENT TRUE)
-   endif()
+   set(RSTUDIO_TARGET "Development")
+   set(RSTUDIO_DEVELOPMENT TRUE)
 endif()
 
 # set desktop and server build flags
-if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Server")
+if( NOT WIN32 AND (${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Server") )
    set(RSTUDIO_SERVER TRUE)
 endif()
 if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )
