@@ -231,6 +231,18 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     OptimizerStats result = DeadCodeElimination.exec(program, method);
     if (result.didChange()) {
       // Make sure we converge in one pass.
+      //
+      // TODO(rluble): It does not appear to be true in general unless we iterate until a
+      // fixpoint in exec().
+      //
+      // Example:
+      //
+      //     Constructor( ) { deadcode }
+      //     m( new Constructor(); }
+      //
+      // If m is processed first, it will see the constructor as having side effects.
+      // Then the constructor will become empty enabling m() become empty in the next round.
+      //
       assertFalse(DeadCodeElimination.exec(program, method).didChange());
     }
     return result.didChange();

@@ -42,6 +42,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -76,7 +77,7 @@ public class MethodInliner {
    * Method inlining visitor.
    */
   private class InliningVisitor extends JModVisitor {
-    protected final Set<JMethod> modifiedMethods = new HashSet<JMethod>();
+    protected final Set<JMethod> modifiedMethods = new LinkedHashSet<JMethod>();
 
     /**
      * Resets with each new visitor, which is good since things that couldn't be
