@@ -50,7 +50,10 @@ public:
    void setCapacity(int capacity);
 
    void add(int type, const std::string& data);
+   void notifyInterrupt();
    
+   std::vector<std::string> pendingInput() const { return pendingInput_; }
+
    // reset to all but the last prompt
    void reset();
    
@@ -67,6 +70,7 @@ private:
    mutable boost::mutex mutex_;
    boost::circular_buffer<core::json::Value> actionsType_;
    boost::circular_buffer<core::json::Value> actionsData_;
+   std::vector<std::string> pendingInput_;
 };
 
    

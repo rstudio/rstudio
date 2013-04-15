@@ -681,6 +681,9 @@ int RReadConsole (const char *pmt,
 
          if (consoleInput.cancel)
          {
+            // notify of interrupt
+            consoleActions().notifyInterrupt();
+
             // escape out using exception so that we can allow normal
             // c++ stack unwinding to occur before jumping
             throw r::exec::InterruptException();

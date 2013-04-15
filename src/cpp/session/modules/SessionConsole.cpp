@@ -25,6 +25,7 @@
 #include <core/system/OutputCapture.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -128,6 +129,13 @@ Error resetConsoleActions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_getPendingInput()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(r::session::consoleActions().pendingInput(),
+                          &rProtect);
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -139,6 +147,14 @@ Error initialize()
       if (error)
          return error;
    }
+
+   // register routines
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_getPendingInput" ;
+   methodDef.fun = (DL_FUNC) rs_getPendingInput ;
+   methodDef.numArgs = 0;
+   r::routines::addCallMethod(methodDef);
+
    
    // subscribe to events
    using boost::bind;

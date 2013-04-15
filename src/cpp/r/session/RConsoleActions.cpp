@@ -17,11 +17,15 @@
 
 #include <algorithm>
 
+#include <boost/algorithm/string/split.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Thread.hpp>
+
+#include <r/ROptions.hpp>
 
 using namespace core ;
 
@@ -70,6 +74,22 @@ void ConsoleActions::add(int type, const std::string& data)
 {
    LOCK_MUTEX(mutex_)
    {
+      // manage pending input buffer
+      if (type == kConsoleActionPrompt &&
+          data == r::options::getOption<std::string>("prompt"))
+      {
+         pendingInput_.clear();
+      }
+      else if (type == kConsoleActionInput)
+      {
+         std::vector<std::string> input;
+         boost::algorithm::split(input,
+                                 data,
+                                 boost::algorithm::is_any_of("\n"));
+         pendingInput_.insert(pendingInput_.end(), input.begin(), input.end());
+      }
+
+
       // automatically combine consecutive output actions (up to 512 bytes)
       // we enforce a limit so that the limit defined for our circular buffer
       // (see setCapacity above) implies a content size limit as well (if we
@@ -87,6 +107,15 @@ void ConsoleActions::add(int type, const std::string& data)
          actionsType_.push_back(type);
          actionsData_.push_back(data);
       }
+   }
+   END_LOCK_MUTEX
+}
+
+void ConsoleActions::notifyInterrupt()
+{
+   LOCK_MUTEX(mutex_)
+   {
+      pendingInput_.clear();
    }
    END_LOCK_MUTEX
 }

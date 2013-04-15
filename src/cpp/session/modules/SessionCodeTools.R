@@ -196,6 +196,11 @@
         fguess=c())
 })
 
+.rs.addFunction("getPendingInput", function()
+{
+   .Call("rs_getPendingInput")
+})
+
 utils:::rc.settings(files=T)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
