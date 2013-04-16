@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 /**
  * Tests {@link RootPanel}.
@@ -28,6 +29,56 @@ public class RootPanelTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  public void testClearRootPanelAndDOM() {
+
+    RootPanel rootPanel = createDOM("testClearRootPanelAndDOM");
+
+    rootPanel.add(new Button("a"));
+    rootPanel.add(new Button("b"));
+
+    com.google.gwt.user.client.Element newDiv = DOM.createDiv();
+    newDiv.setInnerText("c");
+    rootPanel.getElement().appendChild(newDiv);
+
+    assertEquals(3, rootPanel.getElement().getChildCount());
+
+    rootPanel.clear(true);
+    assertEquals(0, rootPanel.getElement().getChildCount());
+  }
+
+  public void testClearRootPanel() {
+
+    RootPanel rootPanel = createDOM("testClearRootPanel");
+
+    rootPanel.add(new Button("a"));
+    rootPanel.add(new Button("b"));
+
+    com.google.gwt.user.client.Element newDiv = DOM.createDiv();
+    newDiv.setInnerText("c");
+    rootPanel.getElement().appendChild(newDiv);
+
+    assertEquals(3, rootPanel.getElement().getChildCount());
+
+    rootPanel.clear(false);
+    assertEquals(1, rootPanel.getElement().getChildCount());
+
+    // clean up
+    rootPanel.clear(true);
+    assertEquals(0, rootPanel.getElement().getChildCount());
+  }
+
+  public void testClearRootPanelContainingTextNodes() {
+
+    RootPanel rootPanel = createDOM("testClearRootPanelAndDOM");
+
+    rootPanel.getElement().setInnerHTML("Some <i>mixed</i> content");
+
+    assertEquals(3, rootPanel.getElement().getChildCount());
+
+    rootPanel.clear(true);
+    assertEquals(0, rootPanel.getElement().getChildCount());
   }
 
   public void testDetachNowWithErrorOnDetach() {
@@ -130,5 +181,19 @@ public class RootPanelTest extends GWTTestCase {
     DivElement elem = Document.get().createDivElement();
     RootPanel.getBodyElement().appendChild(elem);
     return elem;
+  }
+
+  private RootPanel createDOM(String id) {
+    // create our own part in the document
+    com.google.gwt.user.client.Element div = DOM.createDiv();
+    div.setId(id);
+    Document.get().getBody().appendChild(div);
+
+    // get it via RootPanel
+    RootPanel rootPanel = RootPanel.get(id);
+
+    // no elements in the DOM prior to test
+    assertEquals(0, rootPanel.getElement().getChildCount());
+    return rootPanel;
   }
 }

@@ -300,4 +300,27 @@ public class RootPanel extends AbsolutePanel {
     super(elem.<com.google.gwt.user.client.Element> cast());
     onAttach();
   }
+
+  /**
+   * Clears the rootPanel. If clearDom is true, then also remove any DOM
+   * elements that are not widgets.
+   *
+   * <p>By default {@link #clear()} will only remove children that are GWT widgets.
+   * This method also provides the option to remove all children including the
+   * non-widget DOM elements that are directly added (e.g. elements added via
+   * {@code getElement().appendChild(...)}.
+   *
+   * @param clearDom if {@code true} this method will also remove any DOM
+   *  elements that are not widgets.
+   */
+  public void clear(boolean clearDom) {
+    clear();
+
+    if (clearDom) {
+      com.google.gwt.user.client.Element containerElement = getElement();
+      while (containerElement.hasChildNodes()) {
+        containerElement.removeChild(containerElement.getFirstChild());
+      }
+    }
+  }
 }
