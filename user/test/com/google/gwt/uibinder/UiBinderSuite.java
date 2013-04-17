@@ -22,6 +22,7 @@ import com.google.gwt.uibinder.test.client.ParameterizedWidgetsTest;
 import com.google.gwt.uibinder.test.client.SafeUriIntegrationTest;
 import com.google.gwt.uibinder.test.client.UiBinderTest;
 import com.google.gwt.uibinder.test.client.UiChildTest;
+import com.google.gwt.uibinder.test.client.UiHandlerTest;
 
 import junit.framework.Test;
 
@@ -39,7 +40,8 @@ public class UiBinderSuite {
     suite.addTestSuite(UiBinderTest.class);
     suite.addTestSuite(UiBinderUtilTest.class);
     suite.addTestSuite(UiChildTest.class);
-    
+    suite.addTestSuite(UiHandlerTest.class);
+
     return suite;
   }
 

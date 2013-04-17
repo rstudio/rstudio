@@ -200,13 +200,20 @@ class HandlerEvaluator {
     }
 
     writer.newline();
-    writer.write("final %1$s %2$s = new %1$s() {",
-        handlerType.getParameterizedQualifiedSourceName(), handlerVarName);
+    // Create the anonymous class extending the raw type to avoid errors under the new JDT
+    // if the type has a wildcard.
+    writer.write("final %1$s %2$s = (%1$s) new %3$s() {",
+        handlerType.getParameterizedQualifiedSourceName(), handlerVarName,
+        handlerType.getQualifiedSourceName());
     writer.indent();
     writer.write("public void %1$s(%2$s event) {", methods[0].getName(),
-        eventType.getParameterizedQualifiedSourceName());
+        // Use the event raw type to match the signature as we are using implementing the raw type
+        // interface.
+        eventType.getQualifiedSourceName());
     writer.indent();
-    writer.write("%1$s.%2$s(event);", uiOwner, boundMethod);
+    // Cast the event to the parameterized type to avoid warnings..
+    writer.write("%1$s.%2$s((%3$s) event);", uiOwner, boundMethod,
+        eventType.getParameterizedQualifiedSourceName());
     writer.outdent();
     writer.write("}");
     writer.outdent();

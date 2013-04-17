@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.OListElement;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -36,12 +37,14 @@ import com.google.gwt.text.shared.Renderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DateLabel;
 import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.DoubleBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -63,6 +66,8 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.ValueLabel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.List;
+
 /**
  * Sample use of a {@code UiBinder} with the com.google.gwt.user Widget set, and
  * custom widgets.
@@ -76,7 +81,7 @@ public class WidgetBasedUi extends Composite {
   public interface Style extends CssResource {
     String menuBar();
   }
-  
+
   interface Binder extends UiBinder<Widget, WidgetBasedUi> {
   }
   static class FakeBundle2 extends FakeBundle {
@@ -85,10 +90,10 @@ public class WidgetBasedUi extends Composite {
   static class FakeBundle3 extends FakeBundle {
   }
   private static final Binder binder = GWT.create(Binder.class);
-  
+
   @UiField(provided = true)
   final WidgetBasedUiExternalResources external = GWT.create(WidgetBasedUiExternalResources.class);
-  
+
   public static final DateTimeFormat MY_DATE_FORMAT = DateTimeFormat.getFormat(PredefinedFormat.DATE_FULL);
   public static final NumberFormat MY_NUMBER_FORMAT = NumberFormat.getDecimalFormat();
 
@@ -195,10 +200,35 @@ public class WidgetBasedUi extends Composite {
   @UiField(provided = true) @SuppressWarnings("rawtypes")
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
+  @UiField DoubleBox myDoubleBox;
+  @UiField(provided = true)
+  WildcardValueChangeWidget myWildcardValueChangeWidgetString =
+      new WildcardValueChangeWidget<String>();
+  @UiField(provided = true)
+  WildcardValueChangeWidget myWildcardValueChangeWidgetList =
+      new WildcardValueChangeWidget<List<?>>();
   @UiField ImageElement myImage;
   @UiField HTML htmlWithComputedSafeHtml;
   @UiField HTML htmlWithComputedText;
   @UiField Label labelWithComputedText;
+
+  public ValueChangeEvent<Double> valueChangeEvent;
+  @UiHandler("myDoubleBox")
+  void onValueChange(ValueChangeEvent<Double> event) {
+    this.valueChangeEvent = event;
+  }
+
+  public ValueChangeEvent<?> wildcardValueChangeEventString;
+  @UiHandler("myWildcardValueChangeWidgetString")
+  void onWildcaredValueChangeString(ValueChangeEvent<?> event) {
+    this.wildcardValueChangeEventString = event;
+  }
+
+  public ValueChangeEvent<List<?>> wildcardValueChangeEventList;
+  @UiHandler("myWildcardValueChangeWidgetList")
+  void onWildcaredValueChangeList(ValueChangeEvent<List<?>> event) {
+    this.wildcardValueChangeEventList = event;
+  }
 
   public WidgetBasedUi() {
     external.style().ensureInjected();
