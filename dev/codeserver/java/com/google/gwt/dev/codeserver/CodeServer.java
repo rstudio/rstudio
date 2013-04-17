@@ -46,6 +46,13 @@ public class CodeServer {
       System.exit(1);
     }
 
+    main(options);
+  }
+
+  /**
+   * Starts the code server with the given options. Shuts down the JVM if startup fails.
+   */
+  public static void main(Options options) {
     if (options.isCompileTest()) {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.Type.INFO);
@@ -110,7 +117,8 @@ public class CodeServer {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
       Recompiler recompiler = new Recompiler(appSpace, moduleName,
-          options.getSourcePath(), options.getPreferredHost() + ":" + options.getPort(), logger);
+          options.getSourcePath(), options.getPreferredHost() + ":" + options.getPort(),
+          options.getRecompileListener(), options.isCompileTest(), logger);
       modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
     }
     return modules;

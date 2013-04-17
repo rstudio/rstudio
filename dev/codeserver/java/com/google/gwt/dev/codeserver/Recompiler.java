@@ -50,6 +50,8 @@ class Recompiler {
   private final AppSpace appSpace;
   private final String originalModuleName;
   private final List<File> sourcePath;
+  private final RecompileListener listener;
+  private final boolean failIfListenerFails;
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
@@ -62,10 +64,13 @@ class Recompiler {
       new AtomicReference<ResourceLoader>();
 
   Recompiler(AppSpace appSpace, String moduleName, List<File> sourcePath,
-             String serverPrefix, TreeLogger logger) {
+      String serverPrefix, RecompileListener listener, boolean failIfListenerFails,
+      TreeLogger logger) {
     this.appSpace = appSpace;
     this.originalModuleName = moduleName;
     this.sourcePath = sourcePath;
+    this.listener = listener;
+    this.failIfListenerFails = failIfListenerFails;
     this.logger = logger;
     this.serverPrefix = serverPrefix;
   }
@@ -82,18 +87,40 @@ class Recompiler {
     }
 
     long startTime = System.currentTimeMillis();
-    CompileDir compileDir = makeCompileDir(++compilesDone);
+    int compileId = ++compilesDone;
+    CompileDir compileDir = makeCompileDir(compileId);
     TreeLogger compileLogger = makeCompileLogger(compileDir);
 
-    ModuleDef module = loadModule(compileLogger, bindingProperties);
-    String newModuleName = module.getName(); // includes any rename
-    moduleName.set(newModuleName);
+    boolean listenerFailed = false;
+    try {
+      listener.startedCompile(originalModuleName, compileId, compileDir);
+    } catch (Exception e) {
+      compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
+      listenerFailed = true;
+    }
+
+    boolean success = false;
+    try {
+
+      ModuleDef module = loadModule(compileLogger, bindingProperties);
+      String newModuleName = module.getName(); // includes any rename
+      moduleName.set(newModuleName);
 
 
-    CompilerOptions options = new CompilerOptionsImpl(compileDir, newModuleName);
+      CompilerOptions options = new CompilerOptionsImpl(compileDir, newModuleName);
 
-    boolean success = new Compiler(options).run(compileLogger, module);
-    lastBuild.set(compileDir);
+      success = new Compiler(options).run(compileLogger, module);
+      lastBuild.set(compileDir); // makes compile log available over HTTP
+
+    } finally {
+      try {
+        listener.finishedCompile(originalModuleName, compileId, success);
+      } catch (Exception e) {
+        compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
+        listenerFailed = true;
+      }
+    }
+
     if (!success) {
       compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned " + success);
       throw new UnableToCompleteException();
@@ -101,6 +128,11 @@ class Recompiler {
 
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Compile completed in " + elapsedTime + " ms");
+
+    if (failIfListenerFails && listenerFailed) {
+      throw new UnableToCompleteException();
+    }
+
     return compileDir;
   }
 

@@ -45,6 +45,7 @@ public class Options {
   private String bindAddress = "127.0.0.1";
   private String preferredHost = "localhost";
   private int port = 9876;
+  private RecompileListener recompileListener = RecompileListener.NONE;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -68,6 +69,18 @@ public class Options {
     }
 
     return true;
+  }
+
+  /**
+   * A Java application that embeds Super Dev Mode can use this hook to find out
+   * when compiles start and end.
+   */
+  public void setRecompileListener(RecompileListener recompileListener) {
+    this.recompileListener = recompileListener;
+  }
+
+  RecompileListener getRecompileListener() {
+    return recompileListener;
   }
 
   /**

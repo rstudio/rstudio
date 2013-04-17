@@ -26,20 +26,32 @@ import java.io.File;
  * the app, we will create a new, empty CompileDir. This way, a failed compile doesn't
  * modify the last good compile.
  *
- * The CompileDir gets created within the appropriate {@link AppSpace} for the app
+ * <p>The CompileDir gets created within the appropriate {@link AppSpace} for the app
  * being compiled.
  */
-class CompileDir {
+public class CompileDir {
   private final File dir;
 
   /**
    * @see #create
    */
-  private CompileDir(File dir) {
+  public CompileDir(File dir) {
     this.dir = dir;
   }
 
-  File getWarDir() {
+  /**
+   * Top-level directory, containing the others.
+   */
+  public File getRoot() {
+    return dir;
+  }
+
+  /**
+   * The directory tree where the compiler saves output files that should be available
+   * via HTTP. It will be in a subdirectory based on the module name, possibly after
+   * renaming. Files will be accessible via HTTP until a new compile finishes successfully.
+   */
+  public File getWarDir() {
     return new File(dir, "war");
   }
 
@@ -47,11 +59,18 @@ class CompileDir {
     return new File(getWarDir(), "WEB-INF/deploy");
   }
 
-  File getExtraDir() {
+  /**
+   * The directory where the compiler saves auxiliary files that shouldn't be available via HTTP.
+   */
+  public File getExtraDir() {
     return new File(dir, "extras");
   }
 
-  File getGenDir() {
+  /**
+   * The directory tree where the compiler saves source code created by GWT generators.
+   * The source is also accessible via HTTP, for use by browser debuggers.
+   */
+  public File getGenDir() {
     return new File(dir, "gen");
   }
 
@@ -59,7 +78,11 @@ class CompileDir {
     return new File(dir, "work");
   }
 
-  File getLogFile() {
+  /**
+   * The file where the GWT compiler writes compile errors and warnings.
+   * Also accessible via HTTP.
+   */
+  public File getLogFile() {
     return new File(dir, "compile.log");
   }
 
