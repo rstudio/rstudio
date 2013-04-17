@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -43,7 +44,8 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
-      add(checkboxPref("Soft-wrap to margin column", prefs_.softWrapToMarginColumn()));
+      if (Desktop.isDesktop())
+         add(checkboxPref("Soft-wrap to margin column", prefs_.softWrapToMarginColumn()));
       add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));

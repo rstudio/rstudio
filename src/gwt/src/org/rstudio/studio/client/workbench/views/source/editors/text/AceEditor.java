@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -48,6 +47,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -465,12 +465,13 @@ public class AceEditor implements DocDisplay,
       //     the wrap mode behavior we added from Chrome (under the
       //     assumption that the issue has been fixed in Chrome)
       //
-      // (2) We added another check for Chrome Linux to prevent the 
+      // (2) We added another check for desktop mode (since we saw
+      //     the problem in both Chrome and Safari) to prevent the 
       //     application of the problematic wrap mode setting. 
       //
       // Perhaps there is an ace issue here as well, so the next time
       // we sync to Ace tip we should see if we can bring back the
-      // wrapping option for Chrome on Linux (note the repro for this
+      // wrapping option for Chrome (note the repro for this
       // is having a soft-wrapping source document in the editor that
       // exceed the horizontal threshold)
       
@@ -478,7 +479,7 @@ public class AceEditor implements DocDisplay,
       {
          UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
          if (uiPrefs.softWrapToMarginColumn().getValue() &&
-             !BrowseCap.isChromeLinux()) 
+             Desktop.isDesktop()) 
          {
             int margin = uiPrefs.printMarginColumn().getValue();
             getSession().setWrapLimitRange(margin, margin);
