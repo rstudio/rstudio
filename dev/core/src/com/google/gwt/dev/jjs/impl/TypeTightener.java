@@ -59,12 +59,12 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The purpose of this pass is to record "type flow" information and then use
@@ -309,15 +309,15 @@ public class TypeTightener {
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
          */
-        Set<JMethod> overrides = program.typeOracle.getAllOverrides(x);
+        Collection<JMethod> overrides = program.typeOracle.getAllOverrides(x);
         if (overrides.isEmpty()) {
           return true;
         }
         for (int j = 0, c = x.getParams().size(); j < c; ++j) {
           JParameter param = x.getParams().get(j);
-          Set<JParameter> set = paramUpRefs.get(param);
+          Collection<JParameter> set = paramUpRefs.get(param);
           if (set == null) {
-            set = new HashSet<JParameter>();
+            set = new LinkedHashSet<JParameter>();
             paramUpRefs.put(param, set);
           }
           for (JMethod baseMethod : overrides) {
@@ -549,13 +549,13 @@ public class TypeTightener {
       // tighten based on both returned types and possible overrides
       List<JReferenceType> typeList = new ArrayList<JReferenceType>();
 
-      Set<JExpression> myReturns = returns.get(x);
+      Collection<JExpression> myReturns = returns.get(x);
       if (myReturns != null) {
         for (JExpression expr : myReturns) {
           typeList.add((JReferenceType) expr.getType());
         }
       }
-      Set<JMethod> myOverriders = overriders.get(x);
+      Collection<JMethod> myOverriders = overriders.get(x);
       if (myOverriders != null) {
         for (JMethod method : myOverriders) {
           typeList.add((JReferenceType) method.getType());
@@ -603,7 +603,7 @@ public class TypeTightener {
         JExpression instance = x.getInstance();
         assert (instance != null);
         JReferenceType instanceType = (JReferenceType) instance.getType();
-        Set<JMethod> myOverriders = overriders.get(target);
+        Collection<JMethod> myOverriders = overriders.get(target);
         if (myOverriders != null) {
           for (JMethod override : myOverriders) {
             JReferenceType overrideType = override.getEnclosingType();
@@ -741,7 +741,7 @@ public class TypeTightener {
         typeList.add(typeNull);
       }
 
-      Set<JExpression> myAssignments = assignments.get(x);
+      Collection<JExpression> myAssignments = assignments.get(x);
       if (myAssignments != null) {
         for (JExpression expr : myAssignments) {
           JType type = expr.getType();
@@ -753,7 +753,7 @@ public class TypeTightener {
       }
 
       if (x instanceof JParameter) {
-        Set<JParameter> myParams = paramUpRefs.get(x);
+        Collection<JParameter> myParams = paramUpRefs.get(x);
         if (myParams != null) {
           for (JParameter param : myParams) {
             typeList.add((JReferenceType) param.getType());
@@ -793,29 +793,30 @@ public class TypeTightener {
     return stats;
   }
 
-  private static <T, V> void add(T target, V value, Map<T, Set<V>> map) {
-    Set<V> set = map.get(target);
-    if (set == null) {
-      set = new HashSet<V>();
-      map.put(target, set);
+  private static <T, V> void add(T target, V value, Map<T, Collection<V>> map) {
+    Collection<V> list = map.get(target);
+    if (list == null) {
+      list = new LinkedHashSet<V>();
+      map.put(target, list);
     }
-    set.add(value);
+    list.add(value);
   }
 
   /**
    * Find exactly one concrete element for a key in a Map of Sets. If there are
    * none or more than one concrete element, return <code>null</code>.
    */
-  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x, Map<? super B, Set<T>> map) {
+  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x,
+      Map<? super B, ? extends Collection<T>> map) {
 
-    Set<T> set = map.get(x);
-    // No set, then no concrete version
-    if (set == null) {
+    Collection<T> collection = map.get(x);
+    // No collection, then no concrete version
+    if (collection == null) {
       return null;
     }
 
     T toReturn = null;
-    for (T elt : set) {
+    for (T elt : collection) {
       if (elt.isAbstract()) {
         continue;
       }
@@ -831,17 +832,36 @@ public class TypeTightener {
     return toReturn;
   }
 
-  private final Map<JVariable, Set<JExpression>> assignments =
-      new IdentityHashMap<JVariable, Set<JExpression>>();
-  private final Map<JReferenceType, Set<JClassType>> implementors =
-      new IdentityHashMap<JReferenceType, Set<JClassType>>();
-  private final Map<JMethod, Set<JMethod>> overriders =
-      new IdentityHashMap<JMethod, Set<JMethod>>();
-  private final Map<JParameter, Set<JParameter>> paramUpRefs =
-      new IdentityHashMap<JParameter, Set<JParameter>>();
+  /**
+   * For each program Variable (includes fields, locals and parameters) tracks the set
+   * of expressions that are assigned to them. Assignments include parameter instantiations.
+   *
+   */
+  private final Map<JVariable, Collection<JExpression>> assignments =
+      new IdentityHashMap<JVariable, Collection<JExpression>>();
+  /**
+   * For each type tracks all classes the extend or implement it.
+   */
+  private final Map<JReferenceType, Collection<JClassType>> implementors =
+      new IdentityHashMap<JReferenceType, Collection<JClassType>>();
+  /**
+   * For each method tracks of all the methods that override it.
+   */
+  private final Map<JMethod, Collection<JMethod>> overriders =
+      new IdentityHashMap<JMethod, Collection<JMethod>>();
+  /**
+   * For each parameter P (in method M) tracks the set of parameters that share its position in all
+   * the methods that are overridden by M.
+   */
+  private final Map<JParameter, Collection<JParameter>> paramUpRefs =
+      new IdentityHashMap<JParameter, Collection<JParameter>>();
+  /**
+   * For each method tracks the set of all expressions that are returned.
+   */
+  private final Map<JMethod, Collection<JExpression>> returns =
+      new IdentityHashMap<JMethod, Collection<JExpression>>();
+
   private final JProgram program;
-  private final Map<JMethod, Set<JExpression>> returns =
-      new IdentityHashMap<JMethod, Set<JExpression>>();
   private final JNullType typeNull;
 
   private TypeTightener(JProgram program) {
