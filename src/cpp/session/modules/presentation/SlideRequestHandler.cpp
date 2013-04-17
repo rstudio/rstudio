@@ -714,6 +714,7 @@ void handlePresentationRootRequest(const std::string& path,
    if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
    {
       pResponse->setNoCacheHeaders();
+      pResponse->setContentType("text/html");
       pResponse->setBody(previewOutputStream);
    }
    else
@@ -777,6 +778,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
    vars["content"] = helpDoc;
    vars["js_callbacks"] = jsCallbacks;
    pResponse->setNoCacheHeaders();
+   pResponse->setContentType("text/html");
    pResponse->setBody(resourceFiles().get("presentation/helpdoc.html"),
                       text::TemplateFilter(vars));
 }
@@ -871,6 +873,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
    {
       pResponse->setNoCacheHeaders();
+      pResponse->setContentType("text/html");
       pResponse->setBody(previewOutputStream);
    }
    else
