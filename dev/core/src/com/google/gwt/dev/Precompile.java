@@ -277,7 +277,7 @@ public class Precompile {
               ? new PrecompilationMetricsArtifact(permutationBase) : null;
       UnifiedAst unifiedAst =
           getCompiler(module).precompile(logger, module, rpo, declEntryPts, null, jjsOptions,
-              rpo.getPermuationCount() == 1, precompilationMetrics);
+              rpo.getPermutationCount() == 1, precompilationMetrics);
 
       if (jjsOptions.isCompilerMetricsEnabled()) {
         ModuleMetricsArtifact moduleMetrics = new ModuleMetricsArtifact();
@@ -317,7 +317,7 @@ public class Precompile {
         for (int i = 0; i < allPermutations.size(); i++) {
           ids[i] = permutationBase + i;
         }
-        precompilationMetrics.setPermuationIds(ids);
+        precompilationMetrics.setPermutationIds(ids);
         // TODO(zundel): Right now this double counts module load and
         // precompile time. It correctly counts the amount of time spent
         // in this process. The elapsed time in ModuleMetricsArtifact

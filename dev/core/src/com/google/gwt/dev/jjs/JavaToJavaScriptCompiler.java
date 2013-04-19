@@ -280,9 +280,9 @@ public class JavaToJavaScriptCompiler {
     long permStart = System.currentTimeMillis();
     try {
       if (JProgram.isTracingEnabled()) {
-        System.out.println("------------------------------------------------------------");
-        System.out.println("|                     (new permuation)                     |");
-        System.out.println("------------------------------------------------------------");
+        System.out.println("-------------------------------------------------------------");
+        System.out.println("|                     (new permutation)                     |");
+        System.out.println("-------------------------------------------------------------");
         System.out.println("Properties: " + permutation.prettyPrint());
       }
 
@@ -443,7 +443,7 @@ public class JavaToJavaScriptCompiler {
           }
           break;
         case PRETTY:
-          // We don't intern strings in pretty mode to imprmakeSouove readability
+          // We don't intern strings in pretty mode to improve readability
           JsPrettyNamer.exec(jsProgram, propertyOracles);
           break;
         case DETAILED:
@@ -1252,7 +1252,7 @@ public class JavaToJavaScriptCompiler {
       dashboard.generateForOnePermutation();
       if (moduleMetricsArtifact != null && precompilationMetricsArtifact != null
           && compilationMetrics != null) {
-        dashboard.generateCompilerMetricsForOnePermuation(moduleMetricsArtifact,
+        dashboard.generateCompilerMetricsForOnePermutation(moduleMetricsArtifact,
             precompilationMetricsArtifact, compilationMetrics);
       }
       soycArtifacts.addAll(outDir.getArtifacts());
@@ -1335,17 +1335,17 @@ public class JavaToJavaScriptCompiler {
         @Override
         public void endVisit(JsLabel x, JsContext ctx) {
           nameUsed.add(x.getName().getIdent());
-        };
+        }
 
         @Override
         public void endVisit(JsParameter x, JsContext ctx) {
           nameUsed.add(x.getName().getIdent());
-        };
+        }
 
         @Override
         public void endVisit(JsVars.JsVar x, JsContext ctx) {
           nameUsed.add(x.getName().getIdent());
-        };
+        }
 
       }.accept(jsProgram.getFragmentBlock(i));
     }

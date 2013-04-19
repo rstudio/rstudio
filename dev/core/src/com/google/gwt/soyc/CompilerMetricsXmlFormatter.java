@@ -116,7 +116,7 @@ public class CompilerMetricsXmlFormatter {
     
     private static void writeCompilationMetricsAsXml(
         CompilationMetricsArtifact metrics, PrintWriter pw) {
-      pw.append("  <compilation  id=\"" + metrics.getPermuationId() + "\" ");
+      pw.append("  <compilation  id=\"" + metrics.getPermutationId() + "\" ");
       pw.append("elapsed=\"" + metrics.getCompileElapsedMilliseconds() + "\" ");
       pw.append("totalElapsed=\"" + metrics.getElapsedMilliseconds() + "\" ");
       // TODO(zundel): Print out captured GC and heap memory analysis if it is
@@ -182,7 +182,7 @@ public class CompilerMetricsXmlFormatter {
         ModuleMetricsArtifact moduleMetrics,
         PrecompilationMetricsArtifact metrics, PrintWriter pw) {
       pw.append("  <precompilation ");
-      pw.append("base=\"" + metrics.getPermuationBase() + "\" ");
+      pw.append("base=\"" + metrics.getPermutationBase() + "\" ");
       int[] permutationIds = metrics.getPermutationIds();
       if (permutationIds != null) {
         StringBuilder builder = new StringBuilder();

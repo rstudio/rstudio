@@ -312,7 +312,7 @@ public class SoycDashboard {
     this.outDir = outDir;
   }
 
-  public void generateCompilerMetricsForOnePermuation(
+  public void generateCompilerMetricsForOnePermutation(
       ModuleMetricsArtifact moduleMetrics,
       PrecompilationMetricsArtifact precompilationMetrics,
       CompilationMetricsArtifact compilationMetrics)  throws IOException {

@@ -67,7 +67,7 @@ public class PrecompilationMetricsArtifact extends Artifact<PrecompilationMetric
   /**
    * @return the first permutation Id associated with compiling this permutation.
    */
-  public int getPermuationBase() {
+  public int getPermutationBase() {
     return permutationBase;
   }
   
@@ -112,7 +112,7 @@ public class PrecompilationMetricsArtifact extends Artifact<PrecompilationMetric
   /**
    * @param ids the permutation ids associated with this precompilation. 
    */
-  public PrecompilationMetricsArtifact setPermuationIds(int[] ids) {
+  public PrecompilationMetricsArtifact setPermutationIds(int[] ids) {
     this.permutationIds = ids;
     return this;
   }    

@@ -87,7 +87,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
 
     Set<String> answers = new HashSet<String>();
     Event getAllRebindsEvent = SpeedTracerLogger.start(CompilerEventType.GET_ALL_REBINDS);
-    for (int i = 0; i < getPermuationCount(); ++i) {
+    for (int i = 0; i < getPermutationCount(); ++i) {
       String resultTypeName = rebindOracles[i].rebind(logger, requestTypeName);
       answers.add(resultTypeName);
       // Record the correct answer into each permutation.
@@ -106,7 +106,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
     return generatorContext;
   }
 
-  public int getPermuationCount() {
+  public int getPermutationCount() {
     return rebindOracles.length;
   }
 

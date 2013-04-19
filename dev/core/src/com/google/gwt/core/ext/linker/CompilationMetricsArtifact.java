@@ -66,7 +66,7 @@ public class CompilationMetricsArtifact extends Artifact<CompilationMetricsArtif
   /**
    * @return the permutation id associated with compiling this permutation.
    */
-  public int getPermuationId() {
+  public int getPermutationId() {
     return permutationId;
   }
 

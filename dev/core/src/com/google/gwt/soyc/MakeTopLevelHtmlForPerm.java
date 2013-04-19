@@ -810,10 +810,10 @@ public class MakeTopLevelHtmlForPerm {
       PrecompilationMetricsArtifact precompilationMetrics,
       CompilationMetricsArtifact compilationMetrics) throws IOException {
     String outFileName = "CompilerMetrics-"
-        + precompilationMetrics.getPermuationBase() + "-index.html";
+        + precompilationMetrics.getPermutationBase() + "-index.html";
     PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
     String title = "Compiler Metrics for Permutation "
-        + compilationMetrics.getPermuationId();
+        + compilationMetrics.getPermutationId();
     addStandardHtmlProlog(outFile, title, title, "Build Time Metrics");
     
     NumberFormat elapsedFormatter = NumberFormat.getInstance();
@@ -822,7 +822,7 @@ public class MakeTopLevelHtmlForPerm {
     elapsedFormatter.setMaximumFractionDigits(3);
     
     outFile.println("<div id=\"bd\">");
-    int permutationId = compilationMetrics.getPermuationId();
+    int permutationId = compilationMetrics.getPermutationId();
 
     // Build Time Metrics
     outFile.println("<table class=\"soyc-table\">");
