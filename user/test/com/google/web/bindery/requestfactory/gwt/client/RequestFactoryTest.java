@@ -1272,10 +1272,13 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   /**
    * Ensures that a service method can respond with a null value.
+   * <p>
+   * Also tests that using a with() works as expected; see
+   * https://code.google.com/p/google-web-toolkit/issues/detail?id=8104
    */
   public void testNullEntityProxyResult() {
     delayTestFinish(DELAY_TEST_FINISH);
-    simpleFooRequest().returnNullSimpleFoo().fire(new NullReceiver());
+    simpleFooRequest().returnNullSimpleFoo().with("fooField").fire(new NullReceiver());
   }
 
   public void testNullEntityFieldResult() {

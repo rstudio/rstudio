@@ -586,7 +586,7 @@ class Resolver {
    */
   private Resolution resolveClientValue(Object domainValue, Type clientType) {
     if (domainValue == null) {
-      return new Resolution(null);
+      return null;
     }
 
     boolean anyType = clientType == null;
@@ -634,7 +634,8 @@ class Resolver {
 
       Type elementType = TypeUtils.getSingleParameterization(Collection.class, clientType);
       for (Object o : (Collection<?>) domainValue) {
-        accumulator.add(resolveClientValue(o, elementType).getClientObject());
+        Resolution resolution = resolveClientValue(o, elementType);
+        accumulator.add(resolution == null ? null : resolution.getClientObject());
       }
       return makeResolution(accumulator);
     }
