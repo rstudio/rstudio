@@ -354,6 +354,10 @@ public class Files
       if  (selectedFiles.size() == 0)
          return ;
 
+      // validation -- not prohibited move of public folder
+      if (!validateNotRestrictedFolder(selectedFiles, "moved"))
+         return ;
+      
       view_.showFolderPicker(
                         "Choose Folder", 
                         fileSystemContext_,
@@ -422,6 +426,10 @@ public class Files
          return ;
       }
       
+      // validation -- not prohibited move of public folder
+      if (!validateNotRestrictedFolder(selectedFiles, "renamed"))
+         return ;
+      
       // prompt for new file name then execute the rename
       final FileSystemItem file = selectedFiles.get(0);
       globalDisplay_.promptForText("Rename File",
@@ -475,6 +483,10 @@ public class Files
       if  (selectedFiles.size() == 0)
          return ;
       
+      // validation -- not prohibited move of public folder
+      if (!validateNotRestrictedFolder(selectedFiles, "deleted"))
+         return ;
+      
       // confirm delete then execute it
       globalDisplay_.showYesNoMessage(
                         GlobalDisplay.MSG_QUESTION,
@@ -493,6 +505,26 @@ public class Files
                            }
                         },
                        true);
+   }
+   
+   private boolean validateNotRestrictedFolder(ArrayList<FileSystemItem> files,
+                                               String verb)
+   {
+      if (!session_.getSessionInfo().getAllowRemovePublicFolder())
+      {
+         for (FileSystemItem file : files)
+         {
+            if (file.isPublicFolder())
+            {
+               globalDisplay_.showErrorMessage(
+                     "Error", 
+                     "The Public folder cannot be " + verb + ".");
+               return false;
+            }
+         }
+      }
+
+      return true;
    }
 
    void onGoToWorkingDir()

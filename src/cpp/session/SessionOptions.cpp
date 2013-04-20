@@ -157,6 +157,31 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
           value<bool>(&rProfileOnResumeDefault_)->default_value(false),
           "default user setting for running Rprofile on resume");
 
+   // allow options
+   options_description allow("allow");
+   allow.add_options()
+      ("allow-vcs-executable-edit",
+         value<bool>(&allowVcsExecutableEdit_)->default_value(true),
+         "allow editing of vcs executables")
+      ("allow-r-cran-repos-edit",
+         value<bool>(&allowCRANReposEdit_)->default_value(true),
+         "Allow editing of CRAN repository")
+      ("allow-vcs",
+         value<bool>(&allowVcs_)->default_value(true),
+         "allow use of version control features")
+      ("allow-package-installation",
+         value<bool>(&allowPackageInstallation_)->default_value(true),
+         "allow installation of packages from the packages pane")
+      ("allow-shell",
+         value<bool>(&allowShell_)->default_value(true),
+         "allow access to shell dialog")
+      ("allow-file-downloads",
+         value<bool>(&allowFileDownloads_)->default_value(true),
+         "allow file downloads from the files pane")
+      ("allow-remove-public-folder",
+         value<bool>(&allowRemovePublicFolder_)->default_value(true),
+         "allow removal of the user public folder");
+
    // r options
    bool rShellEscape; // no longer works but don't want to break any
                       // config files which formerly used it
@@ -262,6 +287,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.commandLine.add(docs);
    optionsDesc.commandLine.add(www);
    optionsDesc.commandLine.add(session);
+   optionsDesc.commandLine.add(allow);
    optionsDesc.commandLine.add(r);
    optionsDesc.commandLine.add(limits);
    optionsDesc.commandLine.add(external);
@@ -273,6 +299,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.configFile.add(docs);
    optionsDesc.configFile.add(www);
    optionsDesc.configFile.add(session);
+   optionsDesc.configFile.add(allow);
    optionsDesc.configFile.add(r);
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);

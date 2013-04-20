@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SourceControlPrefs;
 
@@ -80,8 +81,10 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                   null,
                                                   null);
       gitExePathLabel_ = new Label("Git executable:");
-      addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
-      
+      SessionInfo sessionInfo = session.getSessionInfo();
+      if (sessionInfo.getAllowVcsExeEdit())
+         addTextBoxChooser(gitExePathLabel_, null, null, gitExePathChooser_);
+ 
       // use git bash
       chkUseGitBash_ = new CheckBox("Use Git Bash as shell for Git projects");
       if (haveGitBashPref())
@@ -97,8 +100,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
                                                   "(Not Found)",
                                                   null,
                                                   null);
-      addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
-      
+      if (sessionInfo.getAllowVcsExeEdit())
+         addTextBoxChooser(svnExePathLabel_, null, null, svnExePathChooser_);
       
       // terminal path
       terminalPathLabel_ = new Label("Terminal executable:");

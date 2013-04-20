@@ -24,10 +24,12 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import java.util.HashMap;
@@ -132,11 +134,15 @@ public class FileTypeRegistry
    @Inject
    public FileTypeRegistry(EventBus eventBus,
                            Satellite satellite,
+                           Session session,
+                           GlobalDisplay globalDisplay,
                            FilesServerOperations server)
    {
       eventBus_ = eventBus;
       satellite_ = satellite;
       server_ = server;
+      session_ = session;
+      globalDisplay_ = globalDisplay;
       
       if (!satellite_.isCurrentWindowSatellite())
          exportEditFileCallback();
@@ -231,7 +237,19 @@ public class FileTypeRegistry
             public void execute()
             {   
                if (canUseBrowser)
-                  BROWSER.openFile(file, eventBus_);
+               {
+                  if (session_.getSessionInfo().getAllowFileDownloads())
+                  {
+                     BROWSER.openFile(file, eventBus_);
+                  }
+                  else
+                  {
+                     globalDisplay_.showErrorMessage(
+                       "File Download Error",
+                       "Unable to show file because file downloads are " +
+                       "restricted on this server.\n");
+                  }
+               }
             }
          };
          
@@ -436,5 +454,7 @@ public class FileTypeRegistry
          new HashMap<String, ImageResource>();
    private final EventBus eventBus_;
    private final Satellite satellite_;
+   private final Session session_;
+   private final GlobalDisplay globalDisplay_;
    private final FilesServerOperations server_;
 }
