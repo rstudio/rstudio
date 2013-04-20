@@ -166,6 +166,8 @@ public class FileTypeRegistry
       register("*.sty", TEX, icons.iconTex());
       register("*.cls", TEX, icons.iconTex());
       register("*.bbl", TEX, icons.iconTex());
+      register("*.dtx", TEX, icons.iconTex());
+      register("*.ins", TEX, icons.iconTex());
       register("*.rhtml", RHTML, icons.iconRhtml());
       register("*.htm", HTML, icons.iconHTML());
       register("*.html", HTML, icons.iconHTML());
