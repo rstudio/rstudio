@@ -38,6 +38,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       
       addPage(new NewDirectoryPage());
       addPage(new ExistingDirectoryPage());
-      addPage(new VersionControlNavigationPage(sessionInfo));
+      if (sessionInfo.getAllowVcs())
+         addPage(new VersionControlNavigationPage(sessionInfo));
    }
 }

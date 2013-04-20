@@ -1113,9 +1113,19 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
    else if (session::options().programMode() == kSessionProgramModeServer)
    {
-      std::string url = createFileUrl(filePath);
-      ClientEvent event = browseUrlEvent(url);
-      module_context::enqueClientEvent(event);
+      if (session::options().allowFileDownloads())
+      {
+         std::string url = createFileUrl(filePath);
+         ClientEvent event = browseUrlEvent(url);
+         module_context::enqueClientEvent(event);
+      }
+      else
+      {
+         module_context::showErrorMessage(
+            "File Download Error",
+            "Unable to show file because file downloads are restricted "
+            "on this server.\n");
+      }
    }
 }
 

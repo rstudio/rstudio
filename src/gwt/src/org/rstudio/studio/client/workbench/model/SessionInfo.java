@@ -265,4 +265,33 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean isCairoPdfAvailable() /*-{
       return this.have_cairo_pdf;
    }-*/;
+    
+   public final native boolean getAllowVcsExeEdit() /*-{
+      return this.allow_vcs_exe_edit;
+   }-*/;
+   
+   public final native boolean getAllowCRANReposEdit() /*-{
+      return this.allow_cran_repos_edit;
+   }-*/;
+   
+   public final native boolean getAllowVcs() /*-{
+      return this.allow_vcs;
+   }-*/;
+   
+   public final native boolean getAllowPackageInstallation() /*-{
+      return this.allow_pkg_install;
+   }-*/;
+   
+   public final native boolean getAllowShell() /*-{
+      return this.allow_shell;
+   }-*/;
+   
+   public final native boolean getAllowFileDownloads() /*-{
+      return this.allow_file_download;
+   }-*/;
+   
+   public final native boolean getAllowRemovePublicFolder() /*-{
+      return this.allow_remove_public_folder;
+   }-*/;
+   
 }

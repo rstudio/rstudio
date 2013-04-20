@@ -504,6 +504,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_history_capacity"] =
                               r::session::consoleHistory().capacity();
 
+   sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
+   sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
+   sessionInfo["allow_vcs"] = options.allowVcs();
+   sessionInfo["allow_pkg_install"] = options.allowPackageInstallation();
+   sessionInfo["allow_shell"] = options.allowShell();
+   sessionInfo["allow_file_download"] = options.allowFileDownloads();
+   sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

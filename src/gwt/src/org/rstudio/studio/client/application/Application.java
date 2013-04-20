@@ -528,6 +528,26 @@ public class Application implements ApplicationEventHandlers
       Workbench wb = workbench_.get();
       eventBusProvider_.get().fireEvent(new SessionInitEvent()) ;
 
+      // disable commands
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      if (!sessionInfo.getAllowShell())
+      {
+         commands_.showShellDialog().remove();
+      }
+      if (!sessionInfo.getAllowPackageInstallation())
+      {
+         commands_.installPackage().remove();
+         commands_.updatePackages().remove();
+      }
+      if (!sessionInfo.getAllowVcs())
+      {
+         commands_.versionControlProjectSetup().remove();
+      }
+      if (!sessionInfo.getAllowFileDownloads())
+      {
+         commands_.exportFiles().remove();
+      }
+      
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);

@@ -56,6 +56,9 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
 
       session_ = session;
       server_ = server;
+      
+      if (!session.getSessionInfo().getAllowVcs())
+         hidePane(7);
    }
    
 

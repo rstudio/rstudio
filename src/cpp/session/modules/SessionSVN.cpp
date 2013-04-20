@@ -391,7 +391,8 @@ FilePath whichSvnExe()
 void initSvnBin()
 {
    // get the svn exe from user settings if it is there
-   s_svnExePath = userSettings().svnExePath().absolutePath();
+   if (session::options().allowVcsExecutableEdit())
+      s_svnExePath = userSettings().svnExePath().absolutePath();
 
    // if it wasn't provided in settings try to detect it
    if (s_svnExePath.empty())

@@ -2442,7 +2442,7 @@ std::string nonPathGitBinDir()
 void onUserSettingsChanged()
 {
    FilePath gitExePath = userSettings().gitExePath();
-   if (!gitExePath.empty())
+   if (session::options().allowVcsExecutableEdit() && !gitExePath.empty())
    {
       // if there is an explicit value then set it
       s_gitExePath = gitExePath.absolutePath();
@@ -2488,7 +2488,8 @@ bool initGitBin()
    Error error;
 
    // get the git bin dir from settings if it is there
-   s_gitExePath = userSettings().gitExePath().absolutePath();
+   if (session::options().allowVcsExecutableEdit())
+      s_gitExePath = userSettings().gitExePath().absolutePath();
 
    // if it wasn't provided in settings then make sure we can detect it
    if (s_gitExePath.empty())

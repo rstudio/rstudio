@@ -55,6 +55,9 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
            
       server_ = server;
       pUIPrefs_ = pUIPrefs;  
+      
+      if (!session.getSessionInfo().getAllowVcs())
+         hidePane(4);
    }
    
    @Override

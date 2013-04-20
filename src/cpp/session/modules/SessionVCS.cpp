@@ -220,7 +220,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!userSettings().vcsEnabled() || workingDir.empty())
+   if (!session::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
       return Success();
 
 

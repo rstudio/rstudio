@@ -225,6 +225,41 @@ public:
       return core::FilePath(mathjaxPath_.c_str());
    }
 
+   bool allowFileDownloads() const
+   {
+      return allowFileDownloads_;
+   }
+
+   bool allowShell() const
+   {
+      return allowShell_;
+   }
+
+   bool allowPackageInstallation() const
+   {
+      return allowPackageInstallation_;
+   }
+
+   bool allowVcs() const
+   {
+      return allowVcs_;
+   }
+
+   bool allowCRANReposEdit() const
+   {
+      return allowCRANReposEdit_;
+   }
+
+   bool allowVcsExecutableEdit() const
+   {
+      return allowVcsExecutableEdit_;
+   }
+
+   bool allowRemovePublicFolder() const
+   {
+      return allowRemovePublicFolder_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -346,6 +381,14 @@ private:
    std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+
+   bool allowFileDownloads_;
+   bool allowShell_;
+   bool allowPackageInstallation_;
+   bool allowVcs_;
+   bool allowCRANReposEdit_;
+   bool allowVcsExecutableEdit_;
+   bool allowRemovePublicFolder_;
 
    // user info
    std::string userIdentity_;

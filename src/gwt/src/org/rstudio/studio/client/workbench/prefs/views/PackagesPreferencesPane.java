@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.PackagesPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -46,6 +47,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    public PackagesPreferencesPane(PreferencesDialogResources res,
                                   GlobalDisplay globalDisplay,
                                   UIPrefs uiPrefs,
+                                  Session session,
                                   final DefaultCRANMirror defaultCRANMirror)
    {
       res_ = res;
@@ -55,7 +57,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       Label installationLabel = new Label("Package installation");
       installationLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(installationLabel);
-      add(installationLabel);
+      if (session.getSessionInfo().getAllowCRANReposEdit())
+         add(installationLabel);
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
@@ -78,7 +81,8 @@ public class PackagesPreferencesPane extends PreferencesPane
       nudgeRight(cranMirrorTextBox_);
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
-      add(cranMirrorTextBox_);
+      if (session.getSessionInfo().getAllowCRANReposEdit())
+         add(cranMirrorTextBox_);
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
