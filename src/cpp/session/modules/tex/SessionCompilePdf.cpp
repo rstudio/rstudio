@@ -621,7 +621,7 @@ private:
       }
       else
       {
-         runLatexCompiler();
+         runLatexCompiler(false);
       }
 
    }
@@ -631,14 +631,15 @@ private:
    void onWeaveCompleted(const rnw_weave::Result& result)
    {
       if (result.succeeded)
-         runLatexCompiler(result.concordances);
+         runLatexCompiler(true, result.concordances);
       else if (!result.errorLogEntries.empty())
          terminateWithErrorLogEntries(result.errorLogEntries);
       else
          terminateWithError(result.errorMessage);
    }
 
-   void runLatexCompiler(const rnw_concordance::Concordances& concordances =
+   void runLatexCompiler(bool targetWeaved,
+                         const rnw_concordance::Concordances& concordances =
                                             rnw_concordance::Concordances())
    {
       // configure pdflatex options
@@ -663,9 +664,16 @@ private:
          options.versionInfo = result.stdOut;
 
       // compute tex file path
-      FilePath texFilePath = targetFilePath_.parent().complete(
-                                                targetFilePath_.stem() +
-                                                ".tex");
+      FilePath texFilePath;
+      if (targetWeaved)
+      {
+         texFilePath = targetFilePath_.parent().complete(
+                                          targetFilePath_.stem() + ".tex");
+      }
+      else
+      {
+         texFilePath = targetFilePath_;
+      }
 
       // remove log files if they exist (avoids confusion created by parsing
       // old log files for errors)
