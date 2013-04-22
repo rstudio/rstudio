@@ -1498,7 +1498,7 @@ public class NumberFormat {
             isCurrencyFormat = true;
             if ((pos + 1) < len && pattern.charAt(pos + 1) == CURRENCY_SIGN) {
               ++pos;
-              if (pos < len - 3 && pattern.charAt(pos + 1) == CURRENCY_SIGN
+              if (pos < len - 2 && pattern.charAt(pos + 1) == CURRENCY_SIGN
                   && pattern.charAt(pos + 2) == CURRENCY_SIGN) {
                 pos += 2;
                 affix.append(currencyData.getSimpleCurrencySymbol());

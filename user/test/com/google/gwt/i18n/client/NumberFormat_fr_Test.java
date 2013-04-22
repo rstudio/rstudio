@@ -69,6 +69,9 @@ public class NumberFormat_fr_Test extends GWTTestCase {
     assertEquals("BRL 1\u00A0234,56", str);
     str = formatter.format(-1234.56);
     assertEquals("(BRL 1\u00A0234,56)", str);
+
+    str = NumberFormat.getSimpleCurrencyFormat("EUR").format(123.45);
+    assertEquals("123,45\u00A0€", str);
   }
 
   public void testExponential() {
