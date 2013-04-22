@@ -47,13 +47,11 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -475,16 +473,8 @@ public class AceEditor implements DocDisplay,
       // is having a soft-wrapping source document in the editor that
       // exceed the horizontal threshold)
       
-      if (fileType_.getWordWrap())     
-      {
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-         if (uiPrefs.softWrapToMarginColumn().getValue() &&
-             Desktop.isDesktop()) 
-         {
-            int margin = uiPrefs.printMarginColumn().getValue();
-            getSession().setWrapLimitRange(margin, margin);
-         }
-      }
+      // NOTE: we no longer do this at all since we observed the 
+      // scollbar problem on desktop as well
    }
    
    private void updateKeyboardHandlers()
