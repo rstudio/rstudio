@@ -29,7 +29,7 @@ using namespace core;
 namespace server {
 namespace auth {
 
-bool validateUser(const std::string& username)
+bool validateUser(const std::string& username, const std::string& requiredGroup)
 {
    // short circuit if we aren't validating users
    if (!server::options().authValidateUsers())
@@ -49,10 +49,9 @@ bool validateUser(const std::string& username)
    }
 
    // validate user if necessary
-   std::string requiredGroup = server::options().authRequiredUserGroup();
    if (!requiredGroup.empty())
    {    
-      // see if they are a member of the "rstudio_users" group
+      // see if they are a member of the required group
       bool belongsToGroup ;
       error = core::system::userBelongsToGroup(username,
                                                requiredGroup,

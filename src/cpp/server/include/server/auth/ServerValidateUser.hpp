@@ -18,10 +18,14 @@
 
 #include <string>
 
+#include <server/ServerOptions.hpp>
+
 namespace server {
 namespace auth {
    
-bool validateUser(const std::string& username);
+bool validateUser(
+  const std::string& username,
+  const std::string& requiredGroup = server::options().authRequiredUserGroup());
 
 } // namespace auth
 } // namespace server
