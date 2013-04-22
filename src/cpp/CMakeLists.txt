@@ -210,5 +210,10 @@ else()
 
    endif()
 
+   # add overlay if it exists
+   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+      include(CMakeOverlay.txt)
+   endif()
+
 endif()
 
