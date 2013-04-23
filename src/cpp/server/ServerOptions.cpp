@@ -206,6 +206,14 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // overlay hook
    resolveOverlayOptions();
 
+   // overlay validation
+   std::string errMsg;
+   if (!validateOverlayOptions(&errMsg))
+   {
+      LOG_ERROR_MESSAGE(errMsg);
+      return ProgramStatus::exitFailure();
+   }
+
    // return status
    return status;
 }

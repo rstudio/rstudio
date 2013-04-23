@@ -27,6 +27,11 @@ void Options::addOverlayOptions(
 {
 }
 
+bool Options::validateOverlayOptions(std::string* pErrMsg)
+{
+   return true;
+}
+
 void Options::resolveOverlayOptions()
 {
 }

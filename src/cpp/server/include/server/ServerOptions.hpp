@@ -171,6 +171,8 @@ private:
                           boost::program_options::options_description* pRSession,
                           boost::program_options::options_description* pAuth);
 
+   bool validateOverlayOptions(std::string* pErrMsg);
+
    void resolveOverlayOptions();
 
 private:
