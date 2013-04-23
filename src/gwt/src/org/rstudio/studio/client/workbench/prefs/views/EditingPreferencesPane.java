@@ -19,7 +19,6 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.NumericValueWidget;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
