@@ -88,7 +88,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&wwwAddress_)->default_value("0.0.0.0"),
          "server address")
       ("www-port",
-         value<std::string>(&wwwPort_)->default_value("8787"),
+         value<std::string>(&wwwPort_)->default_value(""),
          "port to listen on")
       ("www-local-path",
          value<std::string>(&wwwLocalPath_)->default_value("www"),

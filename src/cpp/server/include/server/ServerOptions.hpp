@@ -75,9 +75,19 @@ public:
       return std::string(wwwAddress_.c_str()) ; 
    }
    
-   std::string wwwPort() const
+   std::string wwwPort(bool secure = false) const
    { 
-      return std::string(wwwPort_.c_str()); 
+      if (!wwwPort_.empty())
+      {
+         return std::string(wwwPort_.c_str());
+      }
+      else
+      {
+         if (secure)
+            return std::string("443");
+         else
+            return std::string("8787");
+      }
    }
    
    std::string wwwLocalPath() const
