@@ -71,7 +71,11 @@ inline Error changeFileMode(const FilePath& filePath,
    // change the mode
    errno = 0;
    if (::chmod(filePath.absolutePath().c_str(), mode) < 0)
-      return systemError(errno, ERROR_LOCATION);
+   {
+      Error error = systemError(errno, ERROR_LOCATION);
+      error.addProperty("path", filePath);
+      return error;
+   }
    else
       return Success();
 }
