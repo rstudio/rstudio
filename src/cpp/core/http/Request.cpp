@@ -38,7 +38,12 @@ Request::~Request()
 
 std::string Request::absoluteUri() const
 {
-   return "http://" + host() + uri();
+   std::string scheme = "http";
+   std::string forwardedScheme = headerValue("X-Forwarded-Proto");
+   if (!forwardedScheme.empty())
+      scheme = forwardedScheme;
+
+   return scheme + "://" + host() + uri();
 }
    
 bool Request::acceptsContentType(const std::string& contentType) const
