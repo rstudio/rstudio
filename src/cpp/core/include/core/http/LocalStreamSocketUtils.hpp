@@ -30,13 +30,20 @@ namespace http {
 
 inline Error initializeStreamDir(const FilePath& streamDir)
 {
-   Error error = streamDir.ensureDirectory();
-   if (error)
-      return error;
+   if (!streamDir.exists())
+   {
+      Error error = streamDir.ensureDirectory();
+      if (error)
+         return error;
       
-   return changeFileMode(streamDir,
-                         system::EveryoneReadWriteExecuteMode,
-                         true);
+      return changeFileMode(streamDir,
+                            system::EveryoneReadWriteExecuteMode,
+                            true);
+   }
+   else
+   {
+      return Success();
+   }
 }
    
 inline Error initLocalStreamAcceptor(
