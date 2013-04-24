@@ -73,6 +73,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       restoreWorkspace_.setSelectedValue(config.getRestoreWorkspace());
       saveWorkspace_.setSelectedValue(config.getSaveWorkspace());
       alwaysSaveHistory_.setSelectedValue(config.getAlwaysSaveHistory());
+      tutorialPath_ = config.getTutorialPath();
    }
 
    @Override
@@ -82,7 +83,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
       config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
       config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
-
+      config.setTutorialPath(tutorialPath_);
       return false;
    }
    
@@ -122,5 +123,5 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    private YesNoAskDefault saveWorkspace_;
    private YesNoAskDefault alwaysSaveHistory_;
    
-   
+   private String tutorialPath_;
 }

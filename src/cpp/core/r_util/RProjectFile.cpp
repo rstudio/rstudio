@@ -494,6 +494,17 @@ Error readProjectFile(const FilePath& projectFilePath,
          *pProvidedDefaults = true;
    }
 
+   // extract tutorial
+   it = dcfFields.find("Tutorial");
+   if (it != dcfFields.end())
+   {
+      pConfig->tutorialPath = it->second;
+   }
+   else
+   {
+      pConfig->tutorialPath = "";
+   }
+
    return Success();
 }
 
@@ -608,6 +619,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
          // add to contents
          contents.append(build);
       }
+   }
+
+   // add Tutorial if it's present
+   if (!config.tutorialPath.empty())
+   {
+      boost::format tutorialFmt("\nTutorial: %1%\n");
+      contents.append(boost::str(tutorialFmt % config.tutorialPath));
    }
 
    // write it

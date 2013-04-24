@@ -251,4 +251,11 @@ public class RProjectConfig extends JavaScriptObject
       this.custom_script_path = customScriptPath;
    }-*/;
    
+   public native final String getTutorialPath() /*-{
+      return this.tutorial_path;
+   }-*/;
+   
+   public native final void setTutorialPath(String tutorialPath) /*-{
+      this.tutorial_path = tutorialPath;
+   }-*/;
 }

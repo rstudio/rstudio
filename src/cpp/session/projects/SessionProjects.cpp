@@ -225,6 +225,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["package_roxygenize"] = config.packageRoxygenize;
    configJson["makefile_path"] = config.makefilePath;
    configJson["custom_script_path"] = config.customScriptPath;
+   configJson["tutorial_path"] = config.tutorialPath;
    return configJson;
 }
 
@@ -381,7 +382,8 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_check_args", &(config.packageCheckArgs),
                     "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
-                    "custom_script_path", &(config.customScriptPath));
+                    "custom_script_path", &(config.customScriptPath),
+                    "tutorial_path", &(config.tutorialPath));
    if (error)
       return error;
 

@@ -179,7 +179,28 @@ json::Value asJson()
 
 Error initialize()
 {
-   loadPresentationState();
+   // check for a project level tutorial
+   const projects::ProjectContext& context = projects::projectContext();
+   if (context.hasProject() && !context.config().tutorialPath.empty())
+   {
+      FilePath tutorialPath = context.directory().complete(
+                                          context.config().tutorialPath);
+      if (tutorialPath.exists())
+      {
+         init(tutorialPath);
+      }
+      else
+      {
+         LOG_WARNING_MESSAGE("Specified tutorial path does not exist: " +
+                             tutorialPath.absolutePath());
+      }
+
+   }
+
+   // if we didn't have a tutorial field then just load as normal
+   if (!isActive())
+      loadPresentationState();
+
    return Success();
 }
 

@@ -553,6 +553,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.defaultLatexProgram = userSettings().defaultLatexProgram();
    defaultConfig.rootDocument = std::string();
    defaultConfig.buildType = std::string();
+   defaultConfig.tutorialPath = std::string();
    return defaultConfig;
 }
 
