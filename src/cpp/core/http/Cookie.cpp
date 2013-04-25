@@ -50,7 +50,11 @@ Cookie::Cookie(const Request& request,
 
    if (addDomain)
    {
+      // get host
       std::string host = request.host();
+
+      // strip port
+      host = host.substr(0, host.find(':'));
 
       // turn localhost into rfc compliant domain
       // see: http://www.ietf.org/rfc/rfc2965.txt
