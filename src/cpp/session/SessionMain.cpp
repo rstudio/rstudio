@@ -1387,6 +1387,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
       // source database
       (source_database::initialize)
+
+      // overlay R
+      (bind(sourceModuleRFile, "SessionOverlay.R"))
    
       // modules with c++ implementations
       (modules::spelling::initialize)
