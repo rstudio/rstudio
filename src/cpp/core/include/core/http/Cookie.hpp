@@ -31,7 +31,8 @@ public:
           const std::string& name,
           const std::string& value, 
           const std::string& path,
-          bool httpOnly = false) ;
+          bool addDomain,
+          bool httpOnly) ;
    virtual ~Cookie();
 
    // COPYING: via compiler (copyable members)

@@ -109,6 +109,7 @@ http::Cookie createSecureCookie(
                        name,
                        signedCookieValue,
                        path,
+                       true,
                        true);
 }
 
@@ -215,7 +216,7 @@ void remove(const http::Request& request,
             core::http::Response* pResponse)
 {
    // create vanilla cookie (no need for secure cookie since we are removing)
-   http::Cookie cookie(request, name, std::string(), path);
+   http::Cookie cookie(request, name, std::string(), path, true, false);
 
    // expire delete
    cookie.setExpiresDelete();
