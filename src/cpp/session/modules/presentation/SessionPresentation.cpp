@@ -202,10 +202,19 @@ Error presentationExecuteCode(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // execute within the context of the presentation directory
+   // execute within the context of either the tutorial project directory
+   // or presentation directory
    RestoreCurrentPathScope restorePathScope(
-                                    module_context::safeCurrentPath());
-   error = presentation::state::directory().makeCurrentPath();
+                                          module_context::safeCurrentPath());
+   if (presentation::state::isTutorial() &&
+       projects::projectContext().hasProject())
+   {
+      error = projects::projectContext().directory().makeCurrentPath();
+   }
+   else
+   {
+      error = presentation::state::directory().makeCurrentPath();
+   }
    if (error)
       return error;
 
