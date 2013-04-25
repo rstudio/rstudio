@@ -161,6 +161,7 @@ public class FileTypeRegistry
       register(".rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconText());
+      register("TUTORIAL", DCF, icons.iconText());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
