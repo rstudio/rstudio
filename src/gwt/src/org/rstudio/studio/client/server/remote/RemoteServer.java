@@ -2541,6 +2541,16 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void setWorkingDirectory(String path,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  SET_WORKING_DIRECTORY,
+                  path,
+                  requestCallback);
+   }
+   
+   @Override
    public void createStandalonePresentation(
                               String targetFile,
                               ServerRequestCallback<String> requestCallback)
@@ -2972,6 +2982,7 @@ public class RemoteServer implements Server
    private static final String RPUBS_UPLOAD = "rpubs_upload";
    private static final String RPUBS_TERMINATE_UPLOAD = "terminate_rpubs_upload";
    
+   private static final String SET_WORKING_DIRECTORY = "set_working_directory";
    private static final String CREATE_STANDALONE_PRESENTATION = "create_standalone_presentation";
    private static final String CREATE_PRESENTATION_RPUBS_SOURCE = "create_presentation_rpubs_source";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";

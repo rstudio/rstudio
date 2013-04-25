@@ -24,6 +24,9 @@ public interface PresentationServerOperations extends RPubsServerOperations
    
    void showHelpTopic(String topic, String pkgName) ;
    
+   void setWorkingDirectory(String path,
+                            ServerRequestCallback<Void> requestCallback);
+   
    void createStandalonePresentation(
                            String targetFile,
                            ServerRequestCallback<String> requestCallback);

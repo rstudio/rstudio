@@ -231,6 +231,20 @@ Error presentationExecuteCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error setWorkingDirectory(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse*)
+{
+   // get the path
+   std::string path;
+   Error error = json::readParam(request.params, 0, &path);
+   if (error)
+      return error;
+
+   // set current path
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   return filePath.makeCurrentPath();
+}
+
 Error createStandalonePresentation(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
 {
@@ -327,6 +341,7 @@ Error initialize()
       (bind(registerRpcMethod, "show_presentation_pane", showPresentationPane))
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
+      (bind(registerRpcMethod, "set_working_directory", setWorkingDirectory))
       (bind(presentation::state::initialize))
       (bind(sourceModuleRFile, "SessionPresentation.R"));
 
