@@ -22,7 +22,8 @@ import com.google.gwt.util.tools.ToolBase;
  */
 public abstract class ArgProcessorBase extends ToolBase {
   /*
-   * Overridden to make public.
+   * Configures contained options by parsing the given args. Multiple args can
+   * set a value for the same option and the last setting wins.
    */
   @Override
   public final boolean processArgs(String... args) {
