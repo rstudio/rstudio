@@ -28,7 +28,6 @@ Cookie::Cookie(const Request& request,
                const std::string& name,
                const std::string& value, 
                const std::string& path,
-               bool addDomain,
                bool httpOnly) 
    :  name_(name), 
       value_(value), 
@@ -46,21 +45,6 @@ Cookie::Cookie(const Request& request,
       // value.
       LOG_WARNING_MESSAGE("Implicit path used with non-root URL (" +
                           request.uri() + ")");
-   }
-
-   if (addDomain)
-   {
-      // get host
-      std::string host = request.host();
-
-      // strip port
-      host = host.substr(0, host.find(':'));
-
-      // turn localhost into rfc compliant domain
-      // see: http://www.ietf.org/rfc/rfc2965.txt
-      boost::algorithm::replace_first(host, "localhost", ".local");
-
-      setDomain(host);
    }
 }
    
