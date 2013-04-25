@@ -2204,10 +2204,20 @@ public class TextEditingTarget implements EditingTarget
                "R Presentations require the knitr package " +
                "(version 1.0 or higher)");
          return;
-      }
-      
+      } 
       
       PresentationState state = sessionInfo.getPresentationState();
+      
+      // if we are showing a tutorial then don't allow preview
+      if (state.isTutorial())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               "Unable to Preview",
+               "R Presentations cannot be previewed when a Tutorial " +
+               "is active");
+         return;
+      }
       
       // if this presentation is already showing then just activate 
       if (state.isActive() && 

@@ -30,6 +30,10 @@ public class PresentationState extends JavaScriptObject
       return this.pane_caption;
    }-*/;
  
+   public final native boolean isTutorial() /*-{
+      return this.is_tutorial;
+   }-*/;
+   
    public final native String getFilePath() /*-{
       return this.file_path;
    }-*/;

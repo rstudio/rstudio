@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.Barrier.Token;
@@ -188,7 +189,7 @@ public class Presentation extends BasePresenter
    
    public void initialize(PresentationState state)
    {
-      if (state.getSlideIndex() == 0)
+      if ((state.getSlideIndex() == 0) || state.isTutorial())
          view_.bringToFront();
       
       init(state);
@@ -379,6 +380,16 @@ public class Presentation extends BasePresenter
    
    public void confirmClose(Command onConfirmed)
    {
+      // don't allow close if this is a tutorial
+      if (currentState_.isTutorial())
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_WARNING,
+               "Unable to Close",
+               "Tutorials cannot be closed");
+         return;
+      }
+      
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             0,

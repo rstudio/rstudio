@@ -1,5 +1,5 @@
 /*
- * PresentationState.hpp
+ * PresentationStateOverlay.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,51 +13,25 @@
  *
  */
 
-#ifndef SESSION_PRESENTATION_STATE_HPP
-#define SESSION_PRESENTATION_STATE_HPP
 
-#include <core/json/Json.hpp>
+#include "PresentationState.hpp"
 
-namespace core {
-   class Error;
-   class FilePath;
-}
- 
+#include <core/Error.hpp>
+
+using namespace core;
+
 namespace session {
 namespace modules { 
 namespace presentation {
 namespace state {
 
-
-void init(const core::FilePath& filePath,
-          const std::string& caption = "Presentation",
-          bool isTutorial = false);
-void setSlideIndex(int index);
-
-
-bool isActive();
-
-bool isTutorial();
-
-core::FilePath filePath();
-
-core::FilePath directory();
-
-
-void clear();
-
-
-core::json::Value asJson();
-
-
-
-core::Error initialize();
-core::Error initializeOverlay();
-
+Error initializeOverlay()
+{
+   return Success();
+}
 
 } // namespace state
 } // namespace presentation
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_PRESENTATION_STATE_HPP

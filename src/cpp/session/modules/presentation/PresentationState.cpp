@@ -34,12 +34,13 @@ namespace {
 struct PresentationState
 {
    PresentationState()
-      : active(false), slideIndex(0)
+      : active(false), isTutorial(false), slideIndex(0)
    {
    }
 
    bool active;
    std::string paneCaption;
+   bool isTutorial;
    FilePath filePath;
    int slideIndex;
 };
@@ -101,6 +102,7 @@ void savePresentationState(const PresentationState& state)
    settings.beginUpdate();
    settings.set("active", state.active);
    settings.set("pane-caption", state.paneCaption);
+   settings.set("is-tutorial", state.isTutorial);
    settings.set("file-path", toPersistentPath(state.filePath));
    settings.set("slide-index", state.slideIndex);
    settings.endUpdate();
@@ -118,6 +120,7 @@ void loadPresentationState()
 
       s_presentationState.active = settings.getBool("active", false);
       s_presentationState.paneCaption = settings.get("pane-caption", "Presentation");
+      s_presentationState.isTutorial = settings.getBool("is-tutorial");
       s_presentationState.filePath = fromPersistentPath(settings.get("file-path"));
       s_presentationState.slideIndex = settings.getInt("slide-index", 0);
    }
@@ -130,11 +133,14 @@ void loadPresentationState()
 } // anonymous namespace
 
 
-void init(const FilePath& filePath)
+void init(const FilePath& filePath,
+          const std::string& caption,
+          bool isTutorial)
 {
    PresentationState state;
    state.active = true;
-   state.paneCaption = "Presentation";
+   state.paneCaption = caption;
+   state.isTutorial = isTutorial;
    state.filePath = filePath;
    state.slideIndex = 0;
    savePresentationState(state);
@@ -149,6 +155,11 @@ void setSlideIndex(int index)
 bool isActive()
 {
    return s_presentationState.active;
+}
+
+bool isTutorial()
+{
+   return s_presentationState.isTutorial;
 }
 
 FilePath filePath()
@@ -171,6 +182,7 @@ json::Value asJson()
    json::Object stateJson;
    stateJson["active"] = s_presentationState.active;
    stateJson["pane_caption"] = s_presentationState.paneCaption;
+   stateJson["is_tutorial"] = s_presentationState.isTutorial;
    stateJson["file_path"] = module_context::createAliasedPath(
                                                 s_presentationState.filePath);
    stateJson["slide_index"] = s_presentationState.slideIndex;
@@ -179,29 +191,11 @@ json::Value asJson()
 
 Error initialize()
 {
-   // check for a project level tutorial
-   const projects::ProjectContext& context = projects::projectContext();
-   if (context.hasProject() && !context.config().tutorialPath.empty())
-   {
-      FilePath tutorialPath = context.directory().complete(
-                                          context.config().tutorialPath);
-      if (tutorialPath.exists())
-      {
-         init(tutorialPath);
-      }
-      else
-      {
-         LOG_WARNING_MESSAGE("Specified tutorial path does not exist: " +
-                             tutorialPath.absolutePath());
-      }
+   // attempt to load any cached state
+   loadPresentationState();
 
-   }
-
-   // if we didn't have a tutorial field then just load as normal
-   if (!isActive())
-      loadPresentationState();
-
-   return Success();
+   // call overlay hook
+   return initializeOverlay();
 }
 
 } // namespace state

@@ -54,6 +54,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    {
       super("Presentation");
       commands_ = commands;
+      session_ = session;
       ensureWidget();
       
       initPresentationCallbacks();
@@ -72,17 +73,21 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      
       // More
-      ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-      moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
-      moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
-      moreMenu.addSeparator();
-      moreMenu.addItem(commands_.presentationPublishToRpubs().createMenuItem(false));
+      if (!session_.getSessionInfo().getPresentationState().isTutorial())
+      {
+         ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+         moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
+         moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
+         moreMenu.addSeparator();
+         moreMenu.addItem(commands_.presentationPublishToRpubs().createMenuItem(false));
+         
+         ToolbarButton moreButton = new ToolbarButton("More",
+                                                      StandardIcons.INSTANCE.more_actions(),
+                                                      moreMenu);
+         toolbar.addRightWidget(moreButton);
+         toolbar.addRightSeparator();
+      }
       
-      ToolbarButton moreButton = new ToolbarButton("More",
-                                                   StandardIcons.INSTANCE.more_actions(),
-                                                   moreMenu);
-      toolbar.addRightWidget(moreButton);
-      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
         
       return toolbar;
@@ -278,6 +283,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    private Widget menuWidget_;
    private PresentationFrame frame_ ;
    private final Commands commands_;
+   private final Session session_;
    
    private FullscreenPopupPanel activeZoomPanel_ = null;
 }
