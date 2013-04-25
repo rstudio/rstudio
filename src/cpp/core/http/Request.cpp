@@ -17,6 +17,7 @@
 
 #include <boost/tokenizer.hpp>
 #include <boost/asio/buffer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -229,7 +230,7 @@ void Request::ensureFormFieldsParsed() const
 void Request::scanHeaderForCookie(const std::string& name, 
                                   const std::string& value) const
 {
-   if ( name == "Cookie" )
+   if (boost::iequals(name, "cookie"))
       util::parseFields(value, ";, ", "= ", &cookies_, util::FieldDecodeNone) ;
 }
 
