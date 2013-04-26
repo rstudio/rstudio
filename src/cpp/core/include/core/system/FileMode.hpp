@@ -33,6 +33,7 @@ enum FileMode
 {
    UserReadWriteMode,
    UserReadWriteGroupReadMode,
+   EveryoneReadMode,
    EveryoneReadWriteMode,
    EveryoneReadWriteExecuteMode
 };
@@ -51,6 +52,9 @@ inline Error changeFileMode(const FilePath& filePath,
       case UserReadWriteGroupReadMode:
          mode = S_IRUSR | S_IWUSR | S_IRGRP ;
          break;
+
+      case EveryoneReadMode:
+         mode = S_IRUSR | S_IRGRP | S_IROTH;
 
       case EveryoneReadWriteMode:
          mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
