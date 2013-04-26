@@ -946,13 +946,11 @@ public class CfgBuilder {
         // then the try statement completes abruptly for the same reason.
         for (List<Exit> exits : catchExits) {
           for (Exit e : exits) {
-            // If the catch block completes normally, then the finally block is
+            // If the catch block completes normally or abruptly, then the finally block is
             // executed.
-            if (e.isNormal()) {
-              addEdge(e, finallyNode);
-            } else {
-              // If the catch block completes abruptly for reason R, then the
-              // finally block is executed. Then there is a choice:
+            addEdge(e, finallyNode);
+            if (!e.isNormal()) {
+              // If the catch block completes abruptly for reason R there is a choice:
               for (Exit finallyExit : finallyExits) {
                 if (finallyExit.isNormal()) {
                   // If the finally block completes normally, then the try

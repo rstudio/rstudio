@@ -758,7 +758,44 @@ public class CfgBuilderTest extends JJSTestBase {
         );
   }
 
-  public void testCatchThrowUncatchedException() throws Exception {
+  /**
+   * Test case for issue 8115 (http://code.google.com/p/google-web-toolkit/issues/detail?id=8115)
+   * @throws Exception
+   */
+  public void testCatchThrowExceptionFinally() throws Exception {
+    assertCfg("void",
+        "try {",
+        "  if (b) throw uncheckedException2;",
+        "  k++;",
+        "} catch (UncheckedException1 e) {",
+        "  throw e;",
+        "} finally {",
+        "  j++;",
+        "}").is(
+        "BLOCK -> [*]",
+        "TRY -> [*]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(b) -> [*]",
+        "COND (EntryPoint.b) -> [THEN=*, ELSE=1]",
+        "STMT -> [*]",
+        "READ(uncheckedException2) -> [*]",
+        "THROW -> [2]",
+        "1: STMT -> [*]",
+        "READWRITE(k, null) -> [2]",
+        "BLOCK -> [*]",
+        "STMT -> [*]",
+        "READ(e) -> [*]",
+        "THROW -> [*]",
+        "2: BLOCK -> [*]",
+        "STMT -> [*]",
+        "READWRITE(j, null) -> [*, *, *]",
+        "END"
+    );
+  }
+
+
+  public void testCatchThrowUncaughtException() throws Exception {
     assertCfg("void", 
         "try {",
         "  if (b) throw uncheckedException2;",

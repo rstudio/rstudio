@@ -55,6 +55,39 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "int i; int j; foo(1);");
   }
 
+  /**
+   * Test case for issue 8115 (http://code.google.com/p/google-web-toolkit/issues/detail?id=8115)
+   * @throws Exception
+   */
+  public void testCatchThrowExceptionFinally() throws Exception {
+    addSnippetClassDecl("static boolean b;");
+    addSnippetClassDecl("static int i;");
+    addSnippetClassDecl("static int j;");
+
+    optimize("void", ""
+        + "Object o = null;"
+        + "try {"
+        + "  if (b) throw new UncheckedException1();"
+        + "} catch (UncheckedException1 e) {"
+        + "  o = e;"
+        + "  throw e;"
+        + "} finally {"
+        + "  if (o == null)"
+        + "    j++;"
+        + "}").into(""
+
+        + "Object o = null;"
+        + "try {"
+        + "  if (b) throw new UncheckedException1();"
+        + "} catch (UncheckedException1 e) {"
+        + "  o = e;"
+        + "  throw e;"
+        + "} finally {"
+        + "  if (o == null)"   // the bug would cause this if to be optimized away as always true.
+        + "    j++;"
+        + "}");
+  }
+
   public void testDeadIfBranch1() throws Exception {
     optimize("void",
         "int i = 1; if (i == 1) { int j = 2; } else { int j = 3; }").into(
