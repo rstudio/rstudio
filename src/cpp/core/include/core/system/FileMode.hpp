@@ -55,6 +55,7 @@ inline Error changeFileMode(const FilePath& filePath,
 
       case EveryoneReadMode:
          mode = S_IRUSR | S_IRGRP | S_IROTH;
+         break;
 
       case EveryoneReadWriteMode:
          mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
