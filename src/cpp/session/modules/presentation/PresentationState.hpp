@@ -33,6 +33,7 @@ void init(const core::FilePath& filePath,
           const std::string& caption = "Presentation",
           bool isTutorial = false);
 void setSlideIndex(int index);
+void setCaption(const std::string& caption);
 
 
 bool isActive();

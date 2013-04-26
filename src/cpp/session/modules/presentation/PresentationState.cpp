@@ -152,6 +152,12 @@ void setSlideIndex(int index)
    savePresentationState(s_presentationState);
 }
 
+void setCaption(const std::string& caption)
+{
+   s_presentationState.paneCaption = caption;
+   savePresentationState(s_presentationState);
+}
+
 bool isActive()
 {
    return s_presentationState.active;
