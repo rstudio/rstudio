@@ -207,15 +207,72 @@ public class TextEditingTarget implements EditingTarget
             executeOnSuccess_.execute();
       }
 
-      public void onError(String message)
+      public void onError(final String message)
       {
          // in case the error occured saving a document that wasn't 
          // in the foreground
          view_.ensureVisible();
          
-         globalDisplay_.showErrorMessage(
-               "Error Saving File",
-               message);
+         // command to show the error
+         final Command showErrorCommand = new Command() {
+            @Override
+            public void execute()
+            {
+               globalDisplay_.showErrorMessage("Error Saving File",
+                                               message);
+            }
+         };
+         
+         // check whether the file exists and isn't writeable
+         if (file_ != null)
+         {
+            server_.isReadOnlyFile(file_.getPath(), 
+                                   new ServerRequestCallback<Boolean>() {
+   
+               @Override
+               public void onResponseReceived(Boolean isReadOnly)
+               {
+                  if (isReadOnly)
+                  {
+                     String message = "This source file is read-only " +
+                                      "so changes cannot be saved";
+                     view_.showWarningBar(message);
+                     
+                     String saveAsPath = file_.getParentPath().completePath(
+                           file_.getStem() + "-copy" + file_.getExtension());
+                     saveNewFile(
+                           saveAsPath, 
+                           null, 
+                           CommandUtil.join(postSaveCommand(), new Command() {
+
+                              @Override
+                              public void execute()
+                              {
+                                 view_.hideWarningBar();
+                              }
+                           }));
+                           
+                  }
+                  else
+                  {
+                     showErrorCommand.execute();
+                  }
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  showErrorCommand.execute();
+               }
+            });
+         }
+         else
+         {
+            showErrorCommand.execute();
+         }
+         
+       
       }
 
       private final FileSystemItem file_;

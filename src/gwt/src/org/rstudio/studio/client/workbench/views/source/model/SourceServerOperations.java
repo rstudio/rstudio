@@ -179,4 +179,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    void createNotebook(
          CompileNotebookOptions options,
          ServerRequestCallback<CompileNotebookResult> requestCallback);
+   
+   void isReadOnlyFile(String path, 
+                       ServerRequestCallback<Boolean> requestCallback);
 }

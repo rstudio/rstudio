@@ -378,6 +378,12 @@ bool isHiddenFile(const FileInfo& fileInfo)
    return isHiddenFile(fileInfo.absolutePath());
 }
 
+bool isReadOnly(const FilePath& filePath)
+{
+   // TODO: readonly detection for windows
+   return false;
+}
+
 Error makeFileHidden(const FilePath& path)
 {
    std::wstring filePath = path.absolutePathW();

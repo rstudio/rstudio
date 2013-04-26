@@ -231,6 +231,7 @@ void log(LogLevel level, const std::string& message) ;
 // filesystem
 bool isHiddenFile(const FilePath& filePath) ;
 bool isHiddenFile(const FileInfo& fileInfo) ;
+bool isReadOnly(const FilePath& filePath);
    
 // terminals
 bool stderrIsTerminal();

@@ -539,6 +539,28 @@ bool isHiddenFile(const FileInfo& fileInfo)
 {
    return isHiddenFile(FilePath(fileInfo.absolutePath()));
 }
+
+bool isReadOnly(const FilePath& filePath)
+{
+   if (::access(filePath.absolutePath().c_str(), W_OK) == -1)
+   {
+      if (errno == EACCES)
+      {
+         return true;
+      }
+      else
+      {
+         Error error = systemError(errno, ERROR_LOCATION);
+         error.addProperty("path", filePath);
+         LOG_ERROR(error);
+         return false;
+      }
+   }
+   else
+   {
+      return false;
+   }
+}
    
 bool stderrIsTerminal()
 {

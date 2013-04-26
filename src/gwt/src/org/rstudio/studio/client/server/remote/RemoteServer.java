@@ -1250,6 +1250,13 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, "create_notebook", options, requestCallback);
    }
+   
+   @Override
+   public void isReadOnlyFile(String path, 
+                              ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "is_read_only_file", path, requestCallback);
+   }
 
    public void getRecentHistory(
          long maxItems,

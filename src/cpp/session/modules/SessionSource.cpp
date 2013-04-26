@@ -828,6 +828,20 @@ Error createRdShell(const json::JsonRpcRequest& request,
    }
 }
 
+Error isReadOnlyFile(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   // params
+   std::string path;
+   Error error = json::readParam(request.params, 0, &path);
+   if (error)
+      return error ;
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   pResponse->setResult(filePath.exists() &&
+                        core::system::isReadOnly(filePath));
+}
+
 void enqueFileEditEvent(const std::string& file)
 {
    // ignore if no file passed
@@ -1008,6 +1022,7 @@ Error initialize()
       (bind(registerRpcMethod, "close_all_documents", closeAllDocuments))
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
+      (bind(registerRpcMethod, "is_read_only_file", isReadOnlyFile))
       (bind(sourceModuleRFile, "SessionSource.R"));
    Error error = initBlock.execute();
    if (error)
