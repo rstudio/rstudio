@@ -840,6 +840,8 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
 
    pResponse->setResult(filePath.exists() &&
                         core::system::isReadOnly(filePath));
+
+   return Success();
 }
 
 void enqueFileEditEvent(const std::string& file)
