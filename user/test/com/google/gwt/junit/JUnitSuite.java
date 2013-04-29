@@ -60,6 +60,8 @@ public class JUnitSuite {
     suite.addTestSuite(PropertyDefiningStrategyTest.class);
     suite.addTestSuite(PropertyDefiningGWTTest.class);
 
+    suite.addTestSuite(JUnitShellTest.class);
+
     return suite;
   }
 }
