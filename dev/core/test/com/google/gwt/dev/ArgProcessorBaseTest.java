@@ -15,44 +15,17 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionOptimize;
 
 /**
  * Test for {@link ArgProcessorBase}.
  */
 public class ArgProcessorBaseTest extends ArgProcessorTestBase {
 
-  private static class OptimizationOptions implements OptionOptimize, OptionAggressivelyOptimize {
-
-    private boolean aggressivelyOptimize;
-    private int level;
-
-    @Override
-    public int getOptimizationLevel() {
-      return level;
-    }
-
-    @Override
-    public boolean isAggressivelyOptimize() {
-      return aggressivelyOptimize;
-    }
-
-    @Override
-    public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-      this.aggressivelyOptimize = aggressivelyOptimize;
-    }
-
-    @Override
-    public void setOptimizationLevel(int level) {
-      this.level = level;
-    }
-  }
-
   private static class OptimizeArgProcessor extends ArgProcessorBase {
-    public OptimizeArgProcessor(OptimizationOptions option) {
+    public OptimizeArgProcessor(JJSOptionsImpl option) {
       registerHandler(new ArgHandlerDraftCompile(option));
       registerHandler(new ArgHandlerOptimize(option));
     }
@@ -64,7 +37,7 @@ public class ArgProcessorBaseTest extends ArgProcessorTestBase {
   }
 
   private final OptimizeArgProcessor argProcessor;
-  private final OptimizationOptions options = new OptimizationOptions();
+  private final JJSOptionsImpl options = new JJSOptionsImpl();
 
   public ArgProcessorBaseTest() {
     argProcessor = new OptimizeArgProcessor(options);
@@ -72,7 +45,7 @@ public class ArgProcessorBaseTest extends ArgProcessorTestBase {
 
   public void testOptionOrderIsPrecedenceArgs() {
     assertProcessSuccess(argProcessor);
-    assertEquals(0, options.getOptimizationLevel());
+    assertEquals(9, options.getOptimizationLevel());
 
     assertProcessSuccess(argProcessor, "-optimize", "5");
     assertEquals(5, options.getOptimizationLevel());

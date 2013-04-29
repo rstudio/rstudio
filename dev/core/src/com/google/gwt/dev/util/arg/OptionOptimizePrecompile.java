@@ -21,7 +21,15 @@ package com.google.gwt.dev.util.arg;
  * clients to specify whether or not to optimize early.
  */
 public interface OptionOptimizePrecompile {
+
+  /**
+   * Returns true if the compiler should lightly optimize the raw AST before any permutation work.
+   */
   boolean isOptimizePrecompile();
 
-  void setOptimizePrecompile(boolean optimize);
+  /**
+   * Sets whether or not the compiler should lightly optimize the raw AST before any permutation
+   * work.
+   */
+  void setOptimizePrecompile(boolean enabled);
 }

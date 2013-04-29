@@ -19,11 +19,15 @@ package com.google.gwt.dev.util.arg;
  * Option to choose the maximum number of permutations to compile at once.
  */
 public interface OptionMaxPermsPerPrecompile {
+
   /**
    * Get the maximum number of permutations per precompile. Returns a negative
    * number if there is no limit.
    */
   int getMaxPermsPerPrecompile();
 
+  /**
+   * Sets the maximum number of permutations to compile at once.
+   */
   void setMaxPermsPerPrecompile(int maxPerms);
 }

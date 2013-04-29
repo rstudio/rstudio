@@ -25,21 +25,26 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
+  private boolean closureCompilerEnabled;
+  private boolean clusterSimilarFunctions = true;
   private boolean compilerMetricsEnabled = false;
   private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean enableAssertions;
+  private int fragmentCount = -1;
+  private int fragmentsMerge = -1;
+  private boolean inlineLiteralParameters = true;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
+  private boolean optimizeDataflow = true;
   private boolean optimizePrecompile = false;
+  private boolean ordinalizeEnums = true;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
+  private boolean removeDuplicateFunctions = true;
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private boolean closureCompilerEnabled;
-  private int fragmentCount = -1;
-  private int fragmentsMerge = -1;
 
   public JJSOptionsImpl() {
   }
@@ -52,30 +57,35 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
+    setClosureCompilerEnabled(other.isClosureCompilerEnabled());
+    setClusterSimilarFunctions(other.shouldClusterSimilarFunctions());
     setCompilerMetricsEnabled(other.isCompilerMetricsEnabled());
     setEnableAssertions(other.isEnableAssertions());
+    setFragmentCount(other.getFragmentCount());
+    setFragmentsMerge(other.getFragmentsMerge());
+    setInlineLiteralParameters(other.shouldInlineLiteralParameters());
     setOptimizationLevel(other.getOptimizationLevel());
+    setOptimizeDataflow(other.shouldOptimizeDataflow());
+    setOrdinalizeEnums(other.shouldOrdinalizeEnums());
     setOutput(other.getOutput());
+    setRemoveDuplicateFunctions(other.shouldRemoveDuplicateFunctions());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
     setSoycExtra(other.isSoycExtra());
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
-    setClosureCompilerEnabled(other.isClosureCompilerEnabled());
-    setFragmentsMerge(other.getFragmentsMerge());
-    setFragmentCount(other.getFragmentCount());
   }
-  
+
   @Override
   public int getFragmentCount() {
     return fragmentCount;
   }
-  
+
   @Override
   public int getFragmentsMerge() {
     return fragmentsMerge;
   }
-  
+
   @Override
   public int getOptimizationLevel() {
     return optimizationLevel;
@@ -87,6 +97,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  @Deprecated
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;
   }
@@ -103,7 +114,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   @Override
   public boolean isClosureCompilerEnabled() {
-    return this.closureCompilerEnabled;
+    return closureCompilerEnabled;
   }
 
   @Override
@@ -151,8 +162,9 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-    this.aggressivelyOptimize = aggressivelyOptimize;
+  @Deprecated
+  public void setAggressivelyOptimize(boolean enabled) {
+    aggressivelyOptimize = enabled;
   }
 
   @Override
@@ -167,19 +179,24 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   @Override
   public void setClosureCompilerEnabled(boolean enabled) {
-    this.closureCompilerEnabled = enabled;
+    closureCompilerEnabled = enabled;
+  }
+
+  @Override
+  public void setClusterSimilarFunctions(boolean enabled) {
+    clusterSimilarFunctions = enabled;
   }
 
   @Override
   public void setCompilerMetricsEnabled(boolean enabled) {
-    this.compilerMetricsEnabled = enabled;
+    compilerMetricsEnabled = enabled;
   }
 
   @Override
-  public void setEnableAssertions(boolean enableAssertions) {
-    this.enableAssertions = enableAssertions;
+  public void setEnableAssertions(boolean enabled) {
+    enableAssertions = enabled;
   }
-  
+
   @Override
   public void setFragmentCount(int numFragments) {
     this.fragmentCount = numFragments;
@@ -191,8 +208,18 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public void setInlineLiteralParameters(boolean enabled) {
+    inlineLiteralParameters = enabled;
+  }
+
+  @Override
   public void setOptimizationLevel(int level) {
     optimizationLevel = level;
+  }
+
+  @Override
+  public void setOptimizeDataflow(boolean enabled) {
+    optimizeDataflow = enabled;
   }
 
   @Override
@@ -201,8 +228,18 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public void setOrdinalizeEnums(boolean enabled) {
+    ordinalizeEnums = enabled;
+  }
+
+  @Override
   public void setOutput(JsOutputOption output) {
     this.output = output;
+  }
+
+  @Override
+  public void setRemoveDuplicateFunctions(boolean enabled) {
+    removeDuplicateFunctions = enabled;
   }
 
   @Override
@@ -226,8 +263,32 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public void setStrict(boolean strict) {
-    this.strict = strict;
+  public void setStrict(boolean enabled) {
+    strict = enabled;
   }
 
+  @Override
+  public boolean shouldClusterSimilarFunctions() {
+    return clusterSimilarFunctions;
+  }
+
+  @Override
+  public boolean shouldInlineLiteralParameters() {
+    return inlineLiteralParameters;
+  }
+
+  @Override
+  public boolean shouldOptimizeDataflow() {
+    return optimizeDataflow;
+  }
+
+  @Override
+  public boolean shouldOrdinalizeEnums() {
+    return ordinalizeEnums;
+  }
+
+  @Override
+  public boolean shouldRemoveDuplicateFunctions() {
+    return removeDuplicateFunctions;
+  }
 }

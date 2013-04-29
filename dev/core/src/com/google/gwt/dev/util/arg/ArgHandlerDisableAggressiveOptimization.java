@@ -18,15 +18,32 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableAggressiveOptimization command line flag.
+ * Handles the -XdisableAggressiveOptimization command line flag.<br />
+ *
+ * Has been deprecated but preserved for backwards compatibility. The impact it has now is via its
+ * cascaded modification of five more specific options (each of which is also modifiable via flag).
  */
-public final class ArgHandlerDisableAggressiveOptimization extends
-    ArgHandlerFlag {
-  private final OptionAggressivelyOptimize option;
+@Deprecated
+public final class ArgHandlerDisableAggressiveOptimization extends ArgHandlerFlag {
 
-  public ArgHandlerDisableAggressiveOptimization(
-      OptionAggressivelyOptimize option) {
-    this.option = option;
+  private final OptionAggressivelyOptimize aggressivelyOptimizeOption;
+  private final OptionClusterSimilarFunctions clusterSimilarFunctionsOption;
+  private final OptionInlineLiteralParameters inlineLiteralParametersOption;
+  private final OptionOptimizeDataflow optimizeDataflowOption;
+  private final OptionOrdinalizeEnums ordinalizeEnumsOption;
+  private final OptionRemoveDuplicateFunctions removeDuplicateFunctionsOption;
+
+  public <
+      T extends OptionAggressivelyOptimize & OptionClusterSimilarFunctions &
+          OptionInlineLiteralParameters & OptionOptimizeDataflow &
+          OptionOrdinalizeEnums & OptionRemoveDuplicateFunctions>
+          ArgHandlerDisableAggressiveOptimization(T option) {
+    this.aggressivelyOptimizeOption = option;
+    this.clusterSimilarFunctionsOption = option;
+    this.inlineLiteralParametersOption = option;
+    this.optimizeDataflowOption = option;
+    this.ordinalizeEnumsOption = option;
+    this.removeDuplicateFunctionsOption = option;
   }
 
   @Override
@@ -47,7 +64,12 @@ public final class ArgHandlerDisableAggressiveOptimization extends
 
   @Override
   public boolean setFlag() {
-    option.setAggressivelyOptimize(false);
+    aggressivelyOptimizeOption.setAggressivelyOptimize(false);
+    clusterSimilarFunctionsOption.setClusterSimilarFunctions(false);
+    inlineLiteralParametersOption.setInlineLiteralParameters(false);
+    optimizeDataflowOption.setOptimizeDataflow(false);
+    ordinalizeEnumsOption.setOrdinalizeEnums(false);
+    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(false);
     return true;
   }
 }

@@ -20,10 +20,17 @@ package com.google.gwt.dev.util.arg;
  * faster compile time.
  */
 public interface OptionOptimize {
+
   int OPTIMIZE_LEVEL_DRAFT = 0;
   int OPTIMIZE_LEVEL_MAX = 9;
 
+  /**
+   * Returns the compiler's requested optimization level.
+   */
   int getOptimizationLevel();
 
+  /**
+   * Sets the compiler's requested optimization level.
+   */
   void setOptimizationLevel(int level);
 }

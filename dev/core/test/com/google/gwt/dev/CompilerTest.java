@@ -50,7 +50,11 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(TreeLogger.DEBUG, options.getLogLevel());
     assertEquals(JsOutputOption.PRETTY, options.getOutput());
     assertTrue(options.isEnableAssertions());
-    assertFalse(options.isAggressivelyOptimize());
+    assertFalse(options.shouldClusterSimilarFunctions());
+    assertFalse(options.shouldInlineLiteralParameters());
+    assertFalse(options.shouldOptimizeDataflow());
+    assertFalse(options.shouldOrdinalizeEnums());
+    assertFalse(options.shouldRemoveDuplicateFunctions());
 
     assertEquals(2, options.getModuleNames().size());
     assertEquals("c.g.g.h.H", options.getModuleNames().get(0));
@@ -69,7 +73,11 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(TreeLogger.INFO, options.getLogLevel());
     assertEquals(JsOutputOption.OBFUSCATED, options.getOutput());
     assertFalse(options.isEnableAssertions());
-    assertTrue(options.isAggressivelyOptimize());
+    assertTrue(options.shouldClusterSimilarFunctions());
+    assertTrue(options.shouldInlineLiteralParameters());
+    assertTrue(options.shouldOptimizeDataflow());
+    assertTrue(options.shouldOrdinalizeEnums());
+    assertTrue(options.shouldRemoveDuplicateFunctions());
 
     assertEquals(1, options.getLocalWorkers());
 

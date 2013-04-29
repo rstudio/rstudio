@@ -19,6 +19,7 @@ package com.google.gwt.dev.util.arg;
  * Handles options for which permutation to compile.
  */
 public interface OptionPerm {
+
   /**
    * Gets the permutation to compile. Returns -1 if no permutation was
    * specified.

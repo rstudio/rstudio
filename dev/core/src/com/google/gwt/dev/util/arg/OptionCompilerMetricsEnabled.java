@@ -19,7 +19,14 @@ package com.google.gwt.dev.util.arg;
  * Option for enabling Compiler Metrics.
  */
 public interface OptionCompilerMetricsEnabled {
+
+  /**
+   * Returns true if the compiler should output compilation metrics.
+   */
   boolean isCompilerMetricsEnabled();
 
+  /**
+   * Sets whether or not the compiler should output compilation metrics.
+   */
   void setCompilerMetricsEnabled(boolean enabled);
 }

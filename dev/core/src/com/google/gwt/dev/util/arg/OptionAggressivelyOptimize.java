@@ -18,6 +18,7 @@ package com.google.gwt.dev.util.arg;
 /**
  * Option to determine whether the compiler should aggressively optimize.
  */
+@Deprecated
 public interface OptionAggressivelyOptimize {
 
   /**
@@ -28,5 +29,5 @@ public interface OptionAggressivelyOptimize {
   /**
    * Sets whether or not the compiler should aggressively optimize.
    */
-  void setAggressivelyOptimize(boolean aggressivelyOptimize);
+  void setAggressivelyOptimize(boolean enabled);
 }

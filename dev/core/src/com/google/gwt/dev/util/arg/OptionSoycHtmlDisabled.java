@@ -20,7 +20,6 @@ package com.google.gwt.dev.util.arg;
  */
 public interface OptionSoycHtmlDisabled extends OptionCompilerMetricsEnabled {
 
-  
   /**
    * Returns false if the compiler should produce HTML SOYC compile reports in
    * addition to XML reports.
@@ -38,5 +37,4 @@ public interface OptionSoycHtmlDisabled extends OptionCompilerMetricsEnabled {
    * addition to SOYC XML output.
    */
   void setSoycHtmlDisabled(boolean disabled);
-
 }

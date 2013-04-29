@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2013 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,17 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * An option to control whether or not runAsync code-splitting will be employed
- * by the compilation.
+ * Option to determine whether the compiler should remove duplicate functions.
  */
-public interface OptionRunAsyncEnabled {
+public interface OptionRemoveDuplicateFunctions {
 
   /**
-   * Returns true if the compiler should code-split at runAsync boundaries.
+   * Returns true if the compiler should remove duplicate functions.
    */
-  boolean isRunAsyncEnabled();
+  boolean shouldRemoveDuplicateFunctions();
 
   /**
-   * Sets whether or not the compiler should code-split at runAsync boundaries.
+   * Sets whether or not the compiler should remove duplicate functions.
    */
-  void setRunAsyncEnabled(boolean enabled);
+  void setRemoveDuplicateFunctions(boolean enabled);
 }

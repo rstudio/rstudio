@@ -20,9 +20,9 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 /**
  * An ArgHandler that enables detailed Story Of Your Compile data collection,
  * but disables HTML report generation, leaving only XML output.
- *
  */
 public class ArgHandlerDisableSoycHtml extends ArgHandlerFlag {
+
   private final OptionSoycHtmlDisabled options;
 
   public ArgHandlerDisableSoycHtml(OptionSoycHtmlDisabled options) {

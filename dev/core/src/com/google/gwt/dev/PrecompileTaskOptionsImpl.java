@@ -79,6 +79,7 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  @Deprecated
   public boolean isAggressivelyOptimize() {
     return jjsOptions.isAggressivelyOptimize();
   }
@@ -158,6 +159,7 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  @Deprecated
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
   }
@@ -175,6 +177,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setClosureCompilerEnabled(boolean enabled) {
     jjsOptions.setClosureCompilerEnabled(enabled);
+  }
+
+  @Override
+  public void setClusterSimilarFunctions(boolean enabled) {
+    jjsOptions.setClusterSimilarFunctions(enabled);
   }
 
   @Override
@@ -201,7 +208,7 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   public void setFragmentCount(int numFragments) {
     jjsOptions.setFragmentCount(numFragments);
   }
-  
+
   @Override
   public void setFragmentsMerge(int numFragments) {
     jjsOptions.setFragmentsMerge(numFragments);
@@ -210,6 +217,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setGenDir(File genDir) {
     this.genDir = genDir;
+  }
+
+  @Override
+  public void setInlineLiteralParameters(boolean enabled) {
+    jjsOptions.setInlineLiteralParameters(enabled);
   }
 
   @Override
@@ -223,13 +235,28 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  public void setOptimizeDataflow(boolean enabled) {
+    jjsOptions.setOptimizeDataflow(enabled);
+  }
+
+  @Override
   public void setOptimizePrecompile(boolean optimize) {
     jjsOptions.setOptimizePrecompile(optimize);
   }
 
   @Override
+  public void setOrdinalizeEnums(boolean enabled) {
+    jjsOptions.setOrdinalizeEnums(enabled);
+  }
+
+  @Override
   public void setOutput(JsOutputOption output) {
     jjsOptions.setOutput(output);
+  }
+
+  @Override
+  public void setRemoveDuplicateFunctions(boolean enabled) {
+    jjsOptions.setRemoveDuplicateFunctions(enabled);
   }
 
   @Override
@@ -260,5 +287,30 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setValidateOnly(boolean validateOnly) {
     this.validateOnly = validateOnly;
+  }
+
+  @Override
+  public boolean shouldClusterSimilarFunctions() {
+    return jjsOptions.shouldClusterSimilarFunctions();
+  }
+
+  @Override
+  public boolean shouldInlineLiteralParameters() {
+    return jjsOptions.shouldInlineLiteralParameters();
+  }
+
+  @Override
+  public boolean shouldOptimizeDataflow() {
+    return jjsOptions.shouldOptimizeDataflow();
+  }
+
+  @Override
+  public boolean shouldOrdinalizeEnums() {
+    return jjsOptions.shouldOrdinalizeEnums();
+  }
+
+  @Override
+  public boolean shouldRemoveDuplicateFunctions() {
+    return jjsOptions.shouldRemoveDuplicateFunctions();
   }
 }

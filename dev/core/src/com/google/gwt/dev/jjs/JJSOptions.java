@@ -16,14 +16,19 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
 import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
 import com.google.gwt.dev.util.arg.OptionEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.OptionFragmentCount;
 import com.google.gwt.dev.util.arg.OptionFragmentsMerge;
+import com.google.gwt.dev.util.arg.OptionInlineLiteralParameters;
 import com.google.gwt.dev.util.arg.OptionOptimize;
+import com.google.gwt.dev.util.arg.OptionOptimizeDataflow;
 import com.google.gwt.dev.util.arg.OptionOptimizePrecompile;
+import com.google.gwt.dev.util.arg.OptionOrdinalizeEnums;
+import com.google.gwt.dev.util.arg.OptionRemoveDuplicateFunctions;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
 import com.google.gwt.dev.util.arg.OptionSoycDetailed;
@@ -35,9 +40,10 @@ import com.google.gwt.dev.util.arg.OptionStrict;
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
-    OptionDisableClassMetadata, OptionDisableCastChecking, OptionEnableAssertions,
+    OptionClusterSimilarFunctions, OptionDisableClassMetadata, OptionDisableCastChecking,
+    OptionEnableAssertions, OptionInlineLiteralParameters, OptionOptimizeDataflow,
     OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
-    OptionOptimizePrecompile, OptionStrict, OptionSoycHtmlDisabled,
-    OptionEnableClosureCompiler, OptionFragmentsMerge, OptionFragmentCount {
+    OptionOptimizePrecompile, OptionOrdinalizeEnums, OptionRemoveDuplicateFunctions, OptionStrict,
+    OptionSoycHtmlDisabled, OptionEnableClosureCompiler, OptionFragmentsMerge, OptionFragmentCount {
 
 }

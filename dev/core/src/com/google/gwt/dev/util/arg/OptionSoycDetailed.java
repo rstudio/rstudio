@@ -35,5 +35,5 @@ public interface OptionSoycDetailed {
    * Sets whether or not the compiler should record and emit extra Compile Report
    * information.
    */
-  void setSoycExtra(boolean soycExtra);
+  void setSoycExtra(boolean enabled);
 }

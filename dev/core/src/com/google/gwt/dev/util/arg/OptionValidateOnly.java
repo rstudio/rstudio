@@ -28,5 +28,5 @@ public interface OptionValidateOnly {
   /**
    * Sets whether or not the compiler should only validate.
    */
-  void setValidateOnly(boolean validateOnly);
+  void setValidateOnly(boolean enabled);
 }

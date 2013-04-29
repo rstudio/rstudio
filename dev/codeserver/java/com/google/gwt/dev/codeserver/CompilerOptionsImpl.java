@@ -111,6 +111,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  @Deprecated
   public boolean isAggressivelyOptimize() {
     return false;
   }
@@ -190,4 +191,28 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     return false;
   }
 
+  @Override
+  public boolean shouldClusterSimilarFunctions() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldInlineLiteralParameters() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldOptimizeDataflow() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldOrdinalizeEnums() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldRemoveDuplicateFunctions() {
+    return false;
+  }
 }

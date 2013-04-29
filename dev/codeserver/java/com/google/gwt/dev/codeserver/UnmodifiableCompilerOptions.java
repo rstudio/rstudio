@@ -36,6 +36,7 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  @Deprecated
   public final void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     throw new UnsupportedOperationException();
   }
@@ -52,6 +53,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public void setClosureCompilerEnabled(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setClusterSimilarFunctions(boolean enabled) {
     throw new UnsupportedOperationException();
   }
 
@@ -101,6 +107,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setInlineLiteralParameters(boolean inlineLiteralParameters) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setLocalWorkers(int localWorkers) {
     throw new UnsupportedOperationException();
   }
@@ -126,7 +137,17 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setOptimizeDataflow(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setOptimizePrecompile(boolean optimize) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setOrdinalizeEnums(boolean enabled) {
     throw new UnsupportedOperationException();
   }
 
@@ -135,8 +156,14 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
     throw new UnsupportedOperationException();
   }
 
+
   @Override
   public final void setOutput(JsOutputOption obfuscated) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setRemoveDuplicateFunctions(boolean enabled) {
     throw new UnsupportedOperationException();
   }
 
@@ -154,7 +181,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   public final void setSoycExtra(boolean soycExtra) {
     throw new UnsupportedOperationException();
   }
-
 
   @Override
   public final void setSoycHtmlDisabled(boolean disabled) {

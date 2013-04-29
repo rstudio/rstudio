@@ -19,6 +19,7 @@ package com.google.gwt.dev.util.arg;
  * Controls the number of local PermutationWorkers to be used.
  */
 public interface OptionLocalWorkers {
+
   /**
    * Returns the number of workers to run on this machine.
    */

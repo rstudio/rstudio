@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Google Inc.
+ * Copyright 2013 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,30 +18,24 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An undocumented option to disable running generators on CompilePerms shards.
- * This is present as a safety valve, in case something is new with the newer
- * staging. Note that the old staging is used, regardless of this option's
- * setting, if any linker is seen that has been updated. Thus, this option is
- * useful only when all linkers have been updated but nonetheless there is a
- * problem.
+ * Handles the -XdisableRemoveDuplicateFunctions command line flag.
  */
-public class ArgHandlerDisableGeneratingOnShards extends ArgHandlerFlag {
+public final class ArgHandlerDisableRemoveDuplicateFunctions extends ArgHandlerFlag {
 
-  private OptionEnableGeneratingOnShards options;
+  private final OptionRemoveDuplicateFunctions option;
 
-  public ArgHandlerDisableGeneratingOnShards(
-      OptionEnableGeneratingOnShards options) {
-    this.options = options;
+  public ArgHandlerDisableRemoveDuplicateFunctions(OptionRemoveDuplicateFunctions option) {
+    this.option = option;
   }
 
   @Override
   public String getPurpose() {
-    return "Disables running generators on CompilePerms shards, even when it would be a likely speedup";
+    return "Troubleshooting: Prevent the compiler from removing duplicate functions.";
   }
 
   @Override
   public String getTag() {
-    return "-XdisableGeneratingOnShards";
+    return "-XdisableRemoveDuplicateFunctions";
   }
 
   @Override
@@ -51,7 +45,7 @@ public class ArgHandlerDisableGeneratingOnShards extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag() {
-    options.setEnabledGeneratingOnShards(false);
+    option.setRemoveDuplicateFunctions(false);
     return true;
   }
 }

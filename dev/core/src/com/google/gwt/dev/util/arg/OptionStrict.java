@@ -21,7 +21,15 @@ package com.google.gwt.dev.util.arg;
  * compile if any of the input files have errors.
  */
 public interface OptionStrict {
+
+  /**
+   * Returns true if the compiler should strictly fail when any input file has compilation errors.
+   */
   boolean isStrict();
 
-  void setStrict(boolean strict);
+  /**
+   * Sets whether or not the compiler should strictly fail when any input file has compilation
+   * errors.
+   */
+  void setStrict(boolean enabled);
 }

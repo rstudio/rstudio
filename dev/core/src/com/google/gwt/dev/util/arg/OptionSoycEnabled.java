@@ -19,7 +19,14 @@ package com.google.gwt.dev.util.arg;
  * Option for enabling Story Of Your Compile data-collection.
  */
 public interface OptionSoycEnabled extends OptionCompilerMetricsEnabled {
+
+  /**
+   * Returns true if the compiler should gather Story Of Your Compile data.
+   */
   boolean isSoycEnabled();
 
+  /**
+   * Sets whether or not the compiler should gather Story Of Your Compile data.
+   */
   void setSoycEnabled(boolean enabled);
 }

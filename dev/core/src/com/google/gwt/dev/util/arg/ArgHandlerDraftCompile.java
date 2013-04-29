@@ -24,10 +24,25 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
   private final OptionAggressivelyOptimize aggressivelyOptimizeOption;
   private final OptionOptimize optimizeOption;
+  private final OptionClusterSimilarFunctions clusterSimilarFunctionsOption;
+  private final OptionInlineLiteralParameters inlineLiteralParametersOption;
+  private final OptionOptimizeDataflow optimizeDataflowOption;
+  private final OptionOrdinalizeEnums ordinalizeEnumsOption;
+  private final OptionRemoveDuplicateFunctions removeDuplicateFunctionsOption;
 
-  public <T extends OptionOptimize & OptionAggressivelyOptimize> ArgHandlerDraftCompile(T option) {
+  public <
+      T extends OptionOptimize & OptionClusterSimilarFunctions &
+          OptionInlineLiteralParameters & OptionOptimizeDataflow &
+          OptionAggressivelyOptimize & OptionOrdinalizeEnums &
+          OptionRemoveDuplicateFunctions>
+          ArgHandlerDraftCompile(T option) {
     this.optimizeOption = option;
     this.aggressivelyOptimizeOption = option;
+    this.clusterSimilarFunctionsOption = option;
+    this.inlineLiteralParametersOption = option;
+    this.optimizeDataflowOption = option;
+    this.ordinalizeEnumsOption = option;
+    this.removeDuplicateFunctionsOption = option;
   }
 
   @Override
@@ -44,6 +59,11 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
   public boolean setFlag() {
     optimizeOption.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
     aggressivelyOptimizeOption.setAggressivelyOptimize(false);
+    clusterSimilarFunctionsOption.setClusterSimilarFunctions(false);
+    inlineLiteralParametersOption.setInlineLiteralParameters(false);
+    optimizeDataflowOption.setOptimizeDataflow(false);
+    ordinalizeEnumsOption.setOrdinalizeEnums(false);
+    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(false);
     return true;
   }
 }

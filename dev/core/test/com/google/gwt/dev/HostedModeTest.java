@@ -125,7 +125,11 @@ public class HostedModeTest extends ArgProcessorTestBase {
     assertEquals(TreeLogger.INFO, options.getLogLevel());
     assertEquals(JsOutputOption.OBFUSCATED, options.getOutput());
     assertFalse(options.isEnableAssertions());
-    assertTrue(options.isAggressivelyOptimize());
+    assertTrue(options.shouldClusterSimilarFunctions());
+    assertTrue(options.shouldInlineLiteralParameters());
+    assertTrue(options.shouldOptimizeDataflow());
+    assertTrue(options.shouldOrdinalizeEnums());
+    assertTrue(options.shouldRemoveDuplicateFunctions());
 
     assertEquals(8888, options.getPort());
     assertFalse(options.isNoServer());
