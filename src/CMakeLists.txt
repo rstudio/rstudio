@@ -12,12 +12,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 2.8)
-
-# include globals. normally these are included at the root but we also
-# include them here to support configuring at the src level (i.e. for
-# development-configurations)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../CMakeGlobals.txt")
+cmake_minimum_required(VERSION 2.6)
 
 # don't add gwt for special 64-bit binary builds on windows (since
 # we've already got it from the 32-bit build) or for development mode 
