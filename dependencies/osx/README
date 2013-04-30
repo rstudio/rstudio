@@ -7,7 +7,7 @@ Building RStudio requires installations of a number of applications
 
 - R:         http://www.r-project.org/
 - XCode:     http://developer.apple.com/technologies/xcode.html
-- Qt 4.8:    http://download.qt-project.org/official_releases/qt/4.8/4.8.4/qt-mac-opensource-4.8.4.dmg
+- Qt 4.8:    http://download.qt-project.org/official_releases/qt/4.8/4.8.0/qt-mac-opensource-4.8.0.dmg
 - CMake:     http://www.cmake.org/
 
 Note that after installing XCode you should also be sure to install the XCode

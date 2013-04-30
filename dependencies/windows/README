@@ -7,7 +7,7 @@ Building RStudio requires installations of a number of applications
 
 R:         http://www.r-project.org/ 
 CMake:     http://www.cmake.org/ (choose "Add to system path" during install)
-QtForWin:  http://qt.nokia.com/downloads/sdk-windows-cpp
+QtForWin:  https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
 Java:      http://www.oracle.com/technetwork/java/javase/downloads
 Ant:       http://code.google.com/p/winant
 NSIS:      http://nsis.sourceforge.net
@@ -22,7 +22,7 @@ via the CMake installer if the "Add to system path" option was chosen during
 installation). For Qt and MinGW you should ensure that the following 
 additional directories are available on the path:
 
-C:\QtSDK\Desktop\Qt\4.8.0\mingw\bin
+C:\QtSDK\Desktop\Qt\4.8.1\mingw\bin
 C:\QtSDK\mingw\bin
 
 Finally, you should also ensure that your R installation's bin directory is
