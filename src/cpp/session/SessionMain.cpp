@@ -1294,19 +1294,26 @@ void registerGwtHandlers()
 
 Error registerSignalHandlers()
 {
+   using boost::bind;
+   using namespace core::system;
+
+   // USR1 and USR2: perform suspend in server mode
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      using boost::bind;
-      using namespace core::system;
       ExecBlock registerBlock ;
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, handleUSR1))
          (bind(handleSignal, SigUsr2, handleUSR2));
       return registerBlock.execute();
    }
+   // USR1 and USR2: ignore in desktop mode
    else
    {
-      return Success();
+      ExecBlock registerBlock ;
+      registerBlock.addFunctions()
+         (bind(ignoreSignal, SigUsr1))
+         (bind(ignoreSignal, SigUsr2));
+      return registerBlock.execute();
    }
 }
 
