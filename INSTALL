@@ -35,7 +35,7 @@ a) From the root of the RStudio tree create a build directory and then
 
 b) Configure the build using cmake as appopriate, e.g.
 
-   cmake .. -DRSTUDIO_TARGET=Desktop -DCMAKE_BUILD_TYPE=Release
+   cmake .. -DRSTUDIO_TARGET=Server -DCMAKE_BUILD_TYPE=Release
    
    Variables that control configuration include:
 
