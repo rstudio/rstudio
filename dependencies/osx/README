@@ -7,15 +7,16 @@ Building RStudio requires installations of a number of applications
 
 - R:         http://www.r-project.org/
 - XCode:     http://developer.apple.com/technologies/xcode.html
-- QtForMac:  http://qt.nokia.com/downloads/sdk-mac-os-cpp
+- Qt 4.8:    http://download.qt-project.org/official_releases/qt/4.8/4.8.4/qt-mac-opensource-4.8.4.dmg
 - CMake:     http://www.cmake.org/
 
+Note that after installing XCode you should also be sure to install the XCode
+Command Line Tools (which can be done via Preferences -> Downloads)
 
 Satisfy Additional Dependencies
 =============================================================================
 
-Additional dependencies (boost and gwt) can be satisfied by running the
-following script:
+Additional dependencies can be satisfied by running the following script:
 
 ./install-dependencies-osx
 

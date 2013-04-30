@@ -68,34 +68,21 @@ do the following to make sure you have fulfilled all dependencies:
 1) Using the install-dependencies-* scripts referenced above as a guide,
 ensure that all of the referenced libraries are available on your system.
 
-2) Install the Google Web Toolkit (GWT) dependency using the following script:
+2) Run the install-common script (which will install Goolge Web Toolkit,
+Hunspell dictionaries, MathJax, and Boost 1.50):
 
    dependencies
       common
-         install-gwt
+         install-common
 
-3) Install Hunspell dictionaries using the following script:
-
-   dependencies
-      common
-         install-dictionaries
-
-4) Install Mathjax using the following script:
-
-   dependencies
-      common
-        install-mathjax
-
-5) If your system doesn't meet the minimum version requirements for 
-Boost (1.50) and/or Qt (4.8) then you can install them using the scripts
-provided here:
+3) Optionally install the Qt SDK. You should do this if you are building the
+Desktop version and don't have Qt 4.8 installed on the system:
 
    dependencies
       linux
-         install-boost
          install-qt-sdk
-         
-6) If your system doesn't meet the minimum version requirements for CMake (2.8)
+
+4) If your system doesn't meet the minimum version requirements for CMake (2.8)
 you can download a Linux binary of the latest version of CMake here:
 
   - http://www.cmake.org/cmake/resources/software.html
