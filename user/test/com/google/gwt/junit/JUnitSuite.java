@@ -45,9 +45,14 @@ public class JUnitSuite {
     suite.addTestSuite(BatchingStrategyTest.class);
     suite.addTestSuite(CompileStrategyTest.class);
 
+    // TODO(rluble): Make Selenium tests work or deprecate. They are missing the Selenium
+    // dependency.
+
+    // suite.addTestSuite(RunStyleSeleniumTest.class);
+
+    suite.addTestSuite(FakeCssMakerTest.class);
     suite.addTestSuite(FakeMessagesMakerTest.class);
     suite.addTestSuite(GWTMockUtilitiesTest.class);
-    suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
 
     // Intended only to be run manually. See class comments
@@ -60,6 +65,7 @@ public class JUnitSuite {
     suite.addTestSuite(PropertyDefiningStrategyTest.class);
     suite.addTestSuite(PropertyDefiningGWTTest.class);
 
+    suite.addTestSuite(JUnitMessageQueueTest.class);
     suite.addTestSuite(JUnitShellTest.class);
 
     return suite;
