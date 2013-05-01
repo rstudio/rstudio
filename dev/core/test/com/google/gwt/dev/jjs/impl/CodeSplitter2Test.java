@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import java.util.Map;
-import java.util.TreeMap;
-
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
@@ -38,6 +35,9 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitor;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Unit test for {@link CodeSplitter2}.
@@ -104,7 +104,63 @@ public class CodeSplitter2Test extends JJSTestBase {
     // functionC must be in the initial fragment.
     assertInFragment("functionC", 0);
   }
-  
+
+  public void testMergeLeftOvers() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("package test;\n");
+    code.append("import com.google.gwt.core.client.GWT;\n");
+    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+    code.append("public class EntryPoint {\n");
+    code.append(functionA);
+    code.append(functionB);
+    code.append(functionC);
+    code.append("  public static void onModuleLoad() {\n");
+    // Fragment #1
+    code.append(createRunAsync("functionA();"));
+    // Fragment #2
+    code.append(createRunAsync("functionB();"));
+    // Fragment #3
+    code.append(createRunAsync("functionC();"));
+    code.append("  }\n");
+    code.append("}\n");
+    compileSnippetWithLeftoverMerge(code.toString(),
+        10 * 1024 /* 10k minumum */);
+
+    // init + leftover.
+    assertFragmentCount(2);
+    assertInFragment("functionA", 1);
+    assertInFragment("functionB", 1);
+    assertInFragment("functionC", 1);
+  }
+
+  public void testDontMergeLeftOvers() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("package test;\n");
+    code.append("import com.google.gwt.core.client.GWT;\n");
+    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+    code.append("public class EntryPoint {\n");
+    code.append(functionA);
+    code.append(functionB);
+    code.append(functionC);
+    code.append("  public static void onModuleLoad() {\n");
+    // Fragment #1
+    code.append(createRunAsync("functionA();"));
+    // Fragment #2
+    code.append(createRunAsync("functionB();"));
+    // Fragment #3
+    code.append(createRunAsync("functionC();"));
+    code.append("  }\n");
+    code.append("}\n");
+    // we want don't want them to be merged
+    compileSnippetWithLeftoverMerge(code.toString(), 10);
+
+    // init + leftover.
+    assertFragmentCount(5);
+    assertNotInFragment("functionA", 4);
+    assertNotInFragment("functionB", 4);
+    assertNotInFragment("functionC", 4);
+  }
+
   public void testNoMergeMoreThanTwo() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
     code.append("package test;\n");
@@ -217,8 +273,41 @@ public class CodeSplitter2Test extends JJSTestBase {
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
             new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null);    
+    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null, 0);
   }
+
+  /**
+   * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it
+   * with leftover merge enabled.
+   */
+  protected void compileSnippetWithLeftoverMerge(final String code,
+      int mergeLimit) throws UnableToCompleteException {
+    addMockIntrinsic();
+    sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
+      @Override
+      public CharSequence getContent() {
+        return code;
+      }
+    });
+    addBuiltinClasses(sourceOracle);
+    CompilationState state =
+        CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
+            getAdditionalTypeProviderDelegate());
+    jProgram =
+        JavaAstConstructor.construct(logger, state, "test.EntryPoint",
+            "com.google.gwt.lang.Exceptions");
+    jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
+    CastNormalizer.exec(jProgram, false);
+    ArrayNormalizer.exec(jProgram);
+    Map<StandardSymbolData, JsName> symbolTable =
+        new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
+    JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
+        jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
+        new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
+    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, null,
+        mergeLimit);
+  }
+
   
   private static String createRunAsync(String body) {
     return "GWT.runAsync(new RunAsyncCallback() {" +

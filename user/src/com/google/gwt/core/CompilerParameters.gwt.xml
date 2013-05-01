@@ -23,6 +23,13 @@
     is-multi-valued='true' />
 
   <!--
+   A user-specified limit in bytes where fragments smaller than the limit are
+   rolled into the leftovers fragment.
+   -->
+  <define-configuration-property name='compiler.splitpoint.leftovermerge.size'
+                                   is-multi-valued='false' />
+
+  <!--
     Whether or not the compiler should predeclare variables that are defined
     outside the initial download and are referenced from a different code
     fragment than the one defining them. This is usually determined by which

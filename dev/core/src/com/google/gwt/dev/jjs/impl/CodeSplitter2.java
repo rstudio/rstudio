@@ -43,6 +43,7 @@ import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.CfaLivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.LivenessPredicate;
 import com.google.gwt.dev.jjs.impl.FragmentExtractor.NothingAlivePredicate;
+import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -50,6 +51,7 @@ import com.google.gwt.dev.js.ast.JsNumericEntry;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -277,7 +279,10 @@ public class CodeSplitter2 {
    * The property key for a list of initially loaded split points.
    */
   private static final String PROP_INITIAL_SEQUENCE = "compiler.splitpoint.initial.sequence";
-  
+
+  public static final String LEFTOVERMERGE_SIZE =
+      "compiler.splitpoint.leftovermerge.size";
+
   public static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram) {
     return computeInitiallyLive(jprogram, CodeSplitter.NULL_RECORDER);
   }
@@ -295,16 +300,19 @@ public class CodeSplitter2 {
     return cfa;
   }
 
-  public static void exec(TreeLogger logger, JProgram jprogram, JsProgram jsprogram,
+  public static void exec(TreeLogger logger, JProgram jprogram,
+      JsProgram jsprogram,
       JavaToJavaScriptMap map, int fragmentsToMerge,
-      MultipleDependencyGraphRecorder dependencyRecorder) {
+      MultipleDependencyGraphRecorder dependencyRecorder,
+      int leftOverMergeLimit) {
     if (jprogram.getRunAsyncs().size() == 0) {
       // Don't do anything if there is no call to runAsync
       return;
     }
     Event codeSplitterEvent = SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER);
     new CodeSplitter2(
-        logger, jprogram, jsprogram, map, fragmentsToMerge, dependencyRecorder).execImpl();
+        logger, jprogram, jsprogram, map, fragmentsToMerge,
+        dependencyRecorder, leftOverMergeLimit).execImpl();
     codeSplitterEvent.end();
   }
   
@@ -648,7 +656,8 @@ public class CodeSplitter2 {
    * Number of split points to merge.
    */
   private final int splitPointsMerge;
-  
+  private int leftOverMergeLimit;
+
   /**
    * Maps the split point index X to Y where where that split point X would
    * appear in the Y.cache.js
@@ -665,12 +674,15 @@ public class CodeSplitter2 {
    */
   private final int[] splitPointToFragmentMap;
 
-  private CodeSplitter2(TreeLogger logger, JProgram jprogram, JsProgram jsprogram,
+  private CodeSplitter2(TreeLogger logger, JProgram jprogram,
+      JsProgram jsprogram,
       JavaToJavaScriptMap map, int splitPointsMerge,
-      MultipleDependencyGraphRecorder dependencyRecorder) {
+      MultipleDependencyGraphRecorder dependencyRecorder,
+      int leftOverMergeLimit) {
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.splitPointsMerge = splitPointsMerge;
+    this.leftOverMergeLimit = leftOverMergeLimit;
     this.fragmentExtractor = new FragmentExtractor(jprogram, jsprogram, map);
     this.initialLoadSequence = new LinkedHashSet<Integer>(jprogram.getSplitPointInitialSequence());
     
@@ -713,7 +725,100 @@ public class CodeSplitter2 {
     stats.addAll(stmtsToAppend);
     fragmentStats.put(splitPoint, stats);
   }
-  
+
+  private boolean fragmentSizeBelowMergeLimit(List<JsStatement> stats,
+      final int leftOverMergeLimit) {
+    int sizeInBytes = 0;
+    TextOutput out = new TextOutput() {
+      int count = 0;
+
+      @Override
+      public int getColumn() {
+        return 0;
+      }
+
+      @Override
+      public int getLine() {
+        return 0;
+      }
+
+      @Override
+      public int getPosition() {
+        return count;
+      }
+
+      @Override
+      public void indentIn() {
+      }
+
+      @Override
+      public void indentOut() {
+      }
+
+      @Override
+      public void newline() {
+        inc(1);
+      }
+
+      @Override
+      public void newlineOpt() {
+      }
+
+      @Override
+      public void print(char c) {
+        inc(1);
+      }
+
+      @Override
+      public void print(char[] s) {
+        inc(s.length);
+      }
+
+      @Override
+      public void print(String s) {
+        inc(s.length());
+      }
+
+      private void inc(int length) {
+        count += length;
+        if (count >= leftOverMergeLimit) {
+          // yucky, but necessary, early exit
+          throw new MergeLimitExceededException();
+        }
+      }
+
+      @Override
+      public void printOpt(char c) {
+      }
+
+      @Override
+      public void printOpt(char[] s) {
+      }
+
+      @Override
+      public void printOpt(String s) {
+      }
+    };
+
+    try {
+      JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(out);
+      for (JsStatement stat : stats) {
+        v.accept(stat);
+      }
+      sizeInBytes += out.getPosition();
+    } catch (InternalCompilerException me) {
+      if (me.getCause().getClass() == MergeLimitExceededException.class) {
+        return false;
+      } else {
+        throw me;
+      }
+    }
+    return sizeInBytes < leftOverMergeLimit;
+  }
+
+  private static class MergeLimitExceededException extends RuntimeException {
+  }
+
   private ControlFlowAnalyzer computeAllButNCfas(
       ControlFlowAnalyzer liveAfterInitialSequence, List<Integer> sp) {
     List<ControlFlowAnalyzer> allButOnes = new ArrayList<ControlFlowAnalyzer>();
@@ -867,7 +972,8 @@ public class CodeSplitter2 {
       }
     }
     allFields.addAll(everything.getFieldsWritten());
-    
+    ArrayList<JsStatement> leftOverMergeStats = new ArrayList<JsStatement>();
+
     // Search for all the atoms that are exclusively needed in each split point.
     for (int i = 1; i < splitPointToFragmentMap.length; i++) {
       
@@ -925,9 +1031,25 @@ public class CodeSplitter2 {
 
       LivenessPredicate alreadyLoaded = new ExclusivityMapLivenessPredicate(fragmentMap, 0);
       LivenessPredicate liveNow = new ExclusivityMapLivenessPredicate(fragmentMap, i);
-      List<JsStatement> statsToAppend = fragmentExtractor.createOnLoadedCall(cacheIndex);
-      addFragment(i, alreadyLoaded, liveNow, statsToAppend, fragmentStats);
+      List<JsStatement> exclusiveStats = fragmentExtractor.extractStatements(liveNow, alreadyLoaded);
+      if (fragmentSizeBelowMergeLimit(exclusiveStats, leftOverMergeLimit)) {
+        leftOverMergeStats.addAll(exclusiveStats);
+        // merged to leftovers
+        splitPointToFragmentMap[i] = -1;
+        continue;
+      } else {
+        List<JsStatement> statsToAppend = fragmentExtractor.createOnLoadedCall(cacheIndex);
+        addFragment(i, alreadyLoaded, liveNow, statsToAppend, fragmentStats);
+      }
       cacheIndex++;
+    }
+
+
+    for (int i = 0; i < splitPointToFragmentMap.length; i++) {
+      if (splitPointToFragmentMap[i] == -1) {
+        // set fragment number -1 to be leftovers fragment number
+        splitPointToFragmentMap[i] = splitPointToFragmentMap.length;
+      }
     }
 
     /*
@@ -937,7 +1059,8 @@ public class CodeSplitter2 {
       LivenessPredicate alreadyLoaded = new CfaLivenessPredicate(liveAfterInitialSequence);
       LivenessPredicate liveNow = new ExclusivityMapLivenessPredicate(fragmentMap, 0);
       List<JsStatement> statsToAppend = fragmentExtractor.createOnLoadedCall(cacheIndex);
-      addFragment(splitPointToFragmentMap.length, alreadyLoaded, liveNow, statsToAppend, fragmentStats);
+      leftOverMergeStats.addAll(statsToAppend);
+      addFragment(splitPointToFragmentMap.length, alreadyLoaded, liveNow, leftOverMergeStats, fragmentStats);
     }
     
     // now install the new statements in the program fragments

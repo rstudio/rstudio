@@ -418,7 +418,9 @@ public class JavaToJavaScriptCompiler {
         // merging.
         if (fragmentsMerge > 0) {
           CodeSplitter2.exec(logger, jprogram, jsProgram, jjsmap, fragmentsMerge,
-              chooseDependencyRecorder(options.isSoycEnabled(), baos));
+              chooseDependencyRecorder(options.isSoycEnabled(), baos),
+              findIntegerConfigurationProperty(propertyOracles, logger,
+                  CodeSplitter2.LEFTOVERMERGE_SIZE, 0));
         } else {
           CodeSplitter.exec(logger, jprogram, jsProgram, jjsmap, chooseDependencyRecorder(options
               .isSoycEnabled(), baos));
@@ -586,6 +588,25 @@ public class JavaToJavaScriptCompiler {
     }
     return toReturn;
   }
+
+  /**
+   * Look for a configuration property in all property oracles.
+   */
+  public static int findIntegerConfigurationProperty(
+      PropertyOracle[] propertyOracles, TreeLogger logger,
+      String name, int def) {
+    int toReturn = def;
+    for (PropertyOracle oracle : propertyOracles) {
+      try {
+        com.google.gwt.core.ext.ConfigurationProperty property = oracle.getConfigurationProperty(name);
+        toReturn = Integer.parseInt(property.getValues().get(0));
+      } catch (Exception e) {
+        break;
+      }
+    }
+    return toReturn;
+  }
+
 
   public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
       RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,

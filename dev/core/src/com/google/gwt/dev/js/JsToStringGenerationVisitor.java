@@ -59,6 +59,7 @@ import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
@@ -892,6 +893,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       _space();
       accept(expr);
     }
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsSeedIdOf x, JsContext ctx) {
+    p.print(String.valueOf(x.getSeedId()));
     return false;
   }
 
