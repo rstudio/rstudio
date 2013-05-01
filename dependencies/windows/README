@@ -7,10 +7,31 @@ Building RStudio requires installations of a number of applications
 
 R:         http://www.r-project.org/ 
 CMake:     http://www.cmake.org/ (choose "Add to system path" during install)
-QtForWin:  https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
 Java:      http://www.oracle.com/technetwork/java/javase/downloads
 Ant:       http://code.google.com/p/winant
 NSIS:      http://nsis.sourceforge.net
+
+Installing QT
+=============================================================================
+
+Qt installation involves both the Qt SDK and MinGW compiler
+as well as version Qt 4.8.3 of the Qt Framework. First, install
+the QtSDK from this URL:
+
+https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
+
+Note that Mingw 4.4 and the MinGW version of Qt are not installed
+by default so you need to perform a custom installation and 
+modify the following defaults:
+
+- Under Development Tools, select the MinGW variant of the Qt
+framework (the last of the variants listed)
+- Under Miscellaneous, specify that Mingw4.4 be installed
+
+RStudio is built against version 4.8.3 of the Qt Framework, so you should
+install it from here:
+
+http://download.qt-project.org/official_releases/qt/4.8/4.8.3/qt-win-opensource-4.8.3-mingw.exe
 
 
 Update System Path
@@ -22,11 +43,13 @@ via the CMake installer if the "Add to system path" option was chosen during
 installation). For Qt and MinGW you should ensure that the following 
 additional directories are available on the path:
 
-C:\QtSDK\Desktop\Qt\4.8.1\mingw\bin
+C:\Qt\4.8.3\bin
 C:\QtSDK\mingw\bin
 
-Finally, you should also ensure that your R installation's bin directory is
-on the system path.
+Finally, you should also ensure that your R installation's bin
+directory is on the system path. For example:
+
+C:\Program Files\R\R-2.15.1\bin\i386
 
 
 Satisfy Additional Dependencies
