@@ -13,11 +13,8 @@
 #
 #
 
-# use clang on osx
-if(APPLE)
-  set(CMAKE_C_COMPILER /usr/bin/cc)
-  set(CMAKE_CXX_COMPILER /usr/bin/c++)
-endif()
+# set compiler
+include(CMakeCompiler.txt)
 
 cmake_minimum_required(VERSION 2.6)
 project (RStudio)
