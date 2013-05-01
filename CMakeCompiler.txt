@@ -18,3 +18,17 @@ if(APPLE)
   set(CMAKE_C_COMPILER /usr/bin/cc)
   set(CMAKE_CXX_COMPILER /usr/bin/c++)
 endif()
+
+# use our version of gcc on windows
+if(WIN32)
+  get_filename_component(ROOT_RSTUDIO_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+  set(MINGW64_DIR "${ROOT_RSTUDIO_DIR}/dependencies/windows/mingw64-4.7.2")
+  if("${RSTUDIO_TARGET}" STREQUAL "SessionWin64")
+    set(MINGW64_BIN_DIR "${MINGW64_DIR}/x64/bin")
+  else()
+    set(MINGW64_BIN_DIR "${MINGW64_DIR}/x32/bin")
+  endif()
+  set(CMAKE_C_COMPILER "${MINGW64_BIN_DIR}/gcc.exe")
+  set(CMAKE_CXX_COMPILER "${MINGW64_BIN_DIR}/g++.exe")
+endif()
+

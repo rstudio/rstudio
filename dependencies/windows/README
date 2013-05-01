@@ -16,14 +16,14 @@ NSIS:      http://nsis.sourceforge.net
 Update System Path
 =============================================================================
 
-Building RStudio requires that the CMake, Qt, and MingGW executables be 
+Building RStudio requires that the CMake, Qt, and MinGW executables be 
 accessible via the system path (note that CMake should already be accessible
 via the CMake installer if the "Add to system path" option was chosen during
-installation). For Qt and MinGW you should ensure that the following 
-additional directories are available on the path:
+installation). For Qt and MinGW you should ensure that the following additional 
+directories are available on the path:
 
-C:\QtSDK\Desktop\Qt\4.8.1\mingw\bin
-C:\QtSDK\mingw\bin
+C:\Qt\4.8.3\bin
+C:\Qt\Qt5.0.2\Tools\MinGW\bin
 
 Finally, you should also ensure that your R installation's bin directory is
 on the system path.

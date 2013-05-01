@@ -1,3 +1,4 @@
 client.extras
 qtcreator-build*/
+cpp-build*/
 CMakeLists.txt.user

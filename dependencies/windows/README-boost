@@ -1,13 +1,13 @@
 
-Boost 1.50
+NOTE: How to upgrade boost-1.50-win-gcc47.zip
 =============================================================================
 
 The install-dependencies.cmd script installs a prebuilt version of Boost 
 1.50. This document describes the steps required to update to a more recent
 version of Boost.
 
-boost-1.50-win.zip is a prepackaged set of boost 1.50 windows headers and
-binaries (32 and 64 bit) built for MinGW 4.4. To upgrade to either a new
+boost-1.50-win-gcc47.zip is a prepackaged set of boost 1.50 windows headers and
+binaries (32 and 64 bit) built for MinGW 4.7. To upgrade to either a new
 boost or MinGW version you should download the appropriate boost windows
 source archive, boostrap the boost build system (note that this
 requires MSFT Visual C++) then follow the instructions below 
@@ -37,7 +37,7 @@ After this you can create a new boost-win.zip archive using the contents
 of the C:\boost32 and C:\boost64 directories.
 
 
-NOTE: Getting boost to work with mingw w64
+NOTE: Getting boost to work with mingw64
 =============================================================================
 
 See the following article for general approach/guidelines:
