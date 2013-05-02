@@ -42,10 +42,6 @@ public class EnvironmentPresenter extends BasePresenter
       
    }
    
-   
-   @SuppressWarnings("unused")
    private final Display view_;
-   
-   @SuppressWarnings("unused")
    private final EnvironmentServerOperations server_;
 }
