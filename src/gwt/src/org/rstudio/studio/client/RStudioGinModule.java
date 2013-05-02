@@ -97,6 +97,9 @@ import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations
 import org.rstudio.studio.client.workbench.views.edit.Edit;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditView;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPresenter;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentTab;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
@@ -218,6 +221,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SVNPresenter.Display.class).to(SVNPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
+      bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
@@ -232,6 +236,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
       bindTab("Build", BuildTab.class);
       bindTab("Presentation", PresentationTab.class);
+      bindTab("Environment", EnvironmentTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);

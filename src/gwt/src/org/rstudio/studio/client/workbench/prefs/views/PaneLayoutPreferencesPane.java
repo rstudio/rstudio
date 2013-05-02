@@ -98,6 +98,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             panel.add(checkBox);
             if (module.equals("Presentation"))
                checkBox.setVisible(false);
+            if (module.equals("Environment"))
+               checkBox.setVisible(false);
          }
          initWidget(panel);
       }

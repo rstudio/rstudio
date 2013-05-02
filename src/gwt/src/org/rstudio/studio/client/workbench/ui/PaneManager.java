@@ -62,7 +62,8 @@ public class PaneManager
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
    
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help, VCS, Build, Presentation
+      Workspace, History, Files, Plots, Packages, Help, VCS, Build, 
+      Presentation, Environment
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -109,6 +110,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
+                      @Named("Environment") final WorkbenchTab environmentTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
@@ -128,6 +130,7 @@ public class PaneManager
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
       presentationTab_ = presentationTab;
+      environmentTab_ = environmentTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
@@ -267,6 +270,8 @@ public class PaneManager
             return buildTab_;
          case Presentation:
             return presentationTab_;
+         case Environment:
+            return environmentTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -275,7 +280,8 @@ public class PaneManager
    {
       return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, buildTab_, presentationTab_};
+                                  vcsTab_, buildTab_, presentationTab_,
+                                  environmentTab_};
    }
 
    public void activateTab(Tab tab)
@@ -433,6 +439,8 @@ public class PaneManager
             return "Build";
          case Presentation:
             return getTab(tab).getTitle();
+         case Environment:
+            return "Environment";
       }
       return "??";
    }
@@ -457,6 +465,8 @@ public class PaneManager
          return Tab.Build;
       if (name.equalsIgnoreCase("presentation"))
          return Tab.Presentation;
+      if (name.equalsIgnoreCase("environment"))
+         return Tab.Environment;
       
       return null;
    }
@@ -479,6 +489,7 @@ public class PaneManager
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
    private final WorkbenchTab presentationTab_;
+   private final WorkbenchTab environmentTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

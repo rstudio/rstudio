@@ -533,6 +533,11 @@ void UserSettings::setViewDirAfterRCmdCheck(bool viewDir)
    settings_.set("viewDirAfterRCmdCheck", viewDir);
 }
 
+bool UserSettings::showEnvironmentTab() const
+{
+   return settings_.getBool("showEnvironmentTab", false);
+}
+
 bool UserSettings::hideObjectFiles() const
 {
    return settings_.getBool("hideObjectFiles", true);

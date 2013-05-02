@@ -111,6 +111,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionLists.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/data/SessionData.hpp"
+#include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -490,6 +491,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
+
+   sessionInfo["show_environment_tab"] = userSettings().showEnvironmentTab();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
@@ -1415,6 +1418,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 #endif
       (modules::files::initialize)
       (modules::find::initialize)
+      (modules::environment::initialize)
       (modules::workspace::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)
