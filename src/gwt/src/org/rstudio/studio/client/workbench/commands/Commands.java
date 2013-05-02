@@ -281,6 +281,9 @@ public abstract class
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
    
+   // Environment
+   public abstract AppCommand refreshEnvironment();
+   
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

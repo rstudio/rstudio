@@ -43,6 +43,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
       
+      toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
       
       return toolbar;
    }
