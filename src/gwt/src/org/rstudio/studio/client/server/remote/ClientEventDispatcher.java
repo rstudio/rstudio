@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -437,6 +438,10 @@ public class ClientEventDispatcher
          {
             PresentationState state = event.getData();
             eventBus_.fireEvent(new ShowPresentationPaneEvent(state));
+         }
+         else if (type.equals(ClientEvent.EnvironmentRefresh))
+         {
+            eventBus_.fireEvent(new EnvironmentRefreshEvent());
          }
          else if (type.equals(ClientEvent.ListChanged))
          {

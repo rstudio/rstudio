@@ -87,6 +87,7 @@ class ClientEvent extends JavaScriptObject
    public static final String LoadedPackageUpdates = "loaded_package_updates";
    public static final String ActivatePane = "activate_pane";
    public static final String ShowPresentationPane = "show_presentation_pane";
+   public static final String EnvironmentRefresh = "environment_refresh";
    
 
    protected ClientEvent()

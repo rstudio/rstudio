@@ -98,6 +98,7 @@ const int kSourceCppCompleted = 70;
 const int kLoadedPackageUpdates = 71;
 const int kActivatePane = 72;
 const int kShowPresentationPane = 73;
+const int kEnvironmentRefresh = 74;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -253,6 +254,8 @@ std::string ClientEvent::typeName() const
          return "activate_pane";
       case client_events::kShowPresentationPane:
          return "show_presentation_pane";
+      case client_events::kEnvironmentRefresh:
+         return "environment_refresh";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

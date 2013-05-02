@@ -62,6 +62,12 @@ Error listEnvironment(const json::JsonRpcRequest&,
    return Success();
 }
 
+void enqueRefreshEvent()
+{
+   ClientEvent event(client_events::kEnvironmentRefresh);
+   module_context::enqueClientEvent(event);
+}
+
 void onDetectChanges(module_context::ChangeSource source)
 {
 

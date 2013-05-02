@@ -23,6 +23,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -56,6 +57,16 @@ public class EnvironmentPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       
       refreshView();
+      
+      eventBus.addHandler(EnvironmentRefreshEvent.TYPE, 
+                          new EnvironmentRefreshEvent.Handler()
+      {
+         @Override
+         public void onEnvironmentRefresh(EnvironmentRefreshEvent event)
+         {
+            refreshView();
+         }
+      });
    }
    
    @Handler
