@@ -25,10 +25,23 @@ namespace session {
 namespace modules { 
 namespace environment {
 
+namespace {
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+
+}
+
+} // anonymous namespace
+
 Error initialize()
 {
+   // subscribe to events
    using boost::bind;
    using namespace session::module_context;
+   events().onDetectChanges.connect(bind(onDetectChanges, _1));
+
+   // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
