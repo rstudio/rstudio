@@ -41,9 +41,12 @@ public class EnvironmentPresenter extends BasePresenter
    @Inject
    public EnvironmentPresenter(Display view,
                                EnvironmentServerOperations server,
+                               Binder binder,
+                               Commands commands,
                                GlobalDisplay globalDisplay)
    {
       super(view);
+      binder.bind(commands, this);
       
       view_ = view;
       server_ = server;
