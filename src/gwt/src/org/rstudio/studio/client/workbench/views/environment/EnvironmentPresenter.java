@@ -12,6 +12,23 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+/* Some examples:
+ * 
+ * Adding an RPC method
+ * https://github.com/rstudio/rstudio/commit/6815944da3e140aa1064a0c9866db7a70731c9d0
+ * 
+ * Presenter -> Model/View 
+ * https://github.com/rstudio/rstudio/commit/0b7ef94ec6d9ad8c0a9385d2d1a8b43edf280f52
+ * 
+ * Adding a Command
+ * https://github.com/rstudio/rstudio/commit/a5eee4b211dc09eac2221a9f825cfcfc3221f144
+ * 
+ * Raising Events from the Server
+ * https://github.com/rstudio/rstudio/commit/6178166bf1c97a338986a85e5694f7278c0bc940
+ * 
+ */
+
 package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.command.CommandBinder;
