@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -33,15 +34,18 @@ public class EnvironmentPresenter extends BasePresenter
    
    @Inject
    public EnvironmentPresenter(Display view,
-                               EnvironmentServerOperations server)
+                               EnvironmentServerOperations server,
+                               GlobalDisplay globalDisplay)
    {
       super(view);
       
       view_ = view;
       server_ = server;
+      globalDisplay_ = globalDisplay;
       
    }
    
    private final Display view_;
    private final EnvironmentServerOperations server_;
+   private final GlobalDisplay globalDisplay_;
 }
