@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -28,9 +29,11 @@ public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display
 {
    @Inject
-   public EnvironmentPane()
+   public EnvironmentPane(Commands commands)
    {
       super("Environment");
+      
+      commands_ = commands;
       
       ensureWidget();
    }
@@ -71,4 +74,6 @@ public class EnvironmentPane extends WorkbenchPane
    }
    
    private ListBox objectList_;
+   
+   private Commands commands_;
 }
