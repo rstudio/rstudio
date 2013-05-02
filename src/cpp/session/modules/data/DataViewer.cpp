@@ -1,5 +1,5 @@
 /*
- * SessionData.cpp
+ * DataViewer.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionData.hpp"
+#include "DataViewer.hpp"
 
 #include <string>
 #include <vector>
@@ -39,13 +39,13 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionContentUrls.hpp"
+#include <session/SessionContentUrls.hpp>
 
 using namespace core;
 
 namespace session {
 namespace modules { 
-namespace data {
+namespace data_viewer {
 
 namespace {   
      
@@ -262,13 +262,13 @@ Error initialize()
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionData.R"));
+      (bind(sourceModuleRFile, "SessionDataViewer.R"));
    
    return initBlock.execute();
 }
 
 
-} // namespace data
+} // namespace data_viewer
 } // namespace modules
 } // namesapce session
 

@@ -62,7 +62,8 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-#include "modules/SessionContentUrls.hpp"
+#include <session/SessionContentUrls.hpp>
+
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
@@ -1151,7 +1152,7 @@ std::string createFileUrl(const core::FilePath& filePath)
 void showContent(const std::string& title, const core::FilePath& filePath)
 {
    // first provision a content url
-   std::string contentUrl = modules::content_urls::provision(title, filePath);
+   std::string contentUrl = content_urls::provision(title, filePath);
 
    // fire event
    json::Object contentItem;

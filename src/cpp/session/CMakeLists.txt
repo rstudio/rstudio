@@ -34,6 +34,7 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
+   SessionContentUrls.cpp
    SessionSSH.cpp
    SessionMain.cpp
    SessionModuleContext.cpp
@@ -52,8 +53,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp
-   modules/SessionContentUrls.cpp
-   modules/SessionData.cpp
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
@@ -79,6 +78,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/data/DataViewer.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp

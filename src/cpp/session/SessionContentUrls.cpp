@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionContentUrls.hpp"
+#include <session/SessionContentUrls.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -38,7 +38,6 @@ extern "C" const char *locale2charset(const char *);
 using namespace core ;
 
 namespace session {
-namespace modules { 
 namespace content_urls {
 
 namespace {
@@ -217,6 +216,5 @@ Error initialize()
    
    
 } // namespace content_urls
-} // namespace modules
 } // namesapce session
 

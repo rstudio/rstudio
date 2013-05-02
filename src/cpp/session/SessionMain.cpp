@@ -77,6 +77,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionContentUrls.hpp>
 
 #include "SessionAddins.hpp"
 
@@ -97,7 +98,6 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionFind.hpp"
 #include "modules/SessionWorkspace.hpp"
 #include "modules/SessionWorkbench.hpp"
-#include "modules/SessionData.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
@@ -109,8 +109,8 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
-#include "modules/SessionContentUrls.hpp"
 #include "modules/build/SessionBuild.hpp"
+#include "modules/data/DataViewer.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -1395,6 +1395,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // source database
       (source_database::initialize)
 
+      // content urls
+      (content_urls::initialize)
+
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))
    
@@ -1402,7 +1405,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
-      (modules::content_urls::initialize)
       (modules::limits::initialize)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
@@ -1415,7 +1417,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::find::initialize)
       (modules::workspace::initialize)
       (modules::workbench::initialize)
-      (modules::data::initialize)
+      (modules::data_viewer::initialize)
       (modules::help::initialize)
       (modules::presentation::initialize)
       (modules::plots::initialize)

@@ -23,8 +23,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
-namespace modules {      
+namespace session {    
 namespace content_urls {
 
 std::string provision(const std::string& title, const core::FilePath& filePath);
@@ -36,7 +35,6 @@ std::string provision(const std::string& title,
 core::Error initialize();
    
 } // namespace content_urls
-} // namepace handlers
 } // namesapce session
 
 #endif // SESSION_SESSION_CONTENT_URLS_HPP
