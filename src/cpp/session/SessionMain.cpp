@@ -110,7 +110,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/build/SessionBuild.hpp"
-#include "modules/data/DataViewer.hpp"
+#include "modules/data/SessionData.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -1417,7 +1417,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::find::initialize)
       (modules::workspace::initialize)
       (modules::workbench::initialize)
-      (modules::data_viewer::initialize)
+      (modules::data::initialize)
       (modules::help::initialize)
       (modules::presentation::initialize)
       (modules::plots::initialize)

@@ -1,5 +1,5 @@
 /*
- * DataViewer.hpp
+ * SessionData.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,33 @@
  *
  */
 
-#ifndef SESSION_DATA_VIEWER_HPP
-#define SESSION_DATA_VIEWER_HPP
+#include "SessionData.hpp"
 
-namespace core {
-   class Error;
-}
- 
+#include <core/Exec.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+#include "DataViewer.hpp"
+
+using namespace core ;
+
 namespace session {
 namespace modules { 
 namespace data {
-namespace viewer {
+
+Error initialize()
+{
+   using boost::bind;
+   using namespace session::module_context;
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (data::viewer::initialize)
+      (bind(sourceModuleRFile, "SessionDataImport.R"));
+
+   return initBlock.execute();
+}
    
-core::Error initialize();
-                       
-} // namespace viewer
 } // namespace data
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_DATA_VIEWER_HPP

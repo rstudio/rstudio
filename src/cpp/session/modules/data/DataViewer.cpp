@@ -44,8 +44,9 @@
 using namespace core;
 
 namespace session {
-namespace modules { 
-namespace data_viewer {
+namespace modules {
+namespace data {
+namespace viewer {
 
 namespace {   
      
@@ -263,12 +264,13 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"));
-   
+
    return initBlock.execute();
 }
 
 
-} // namespace data_viewer
+} // namespace viewer
+} // namespace data
 } // namespace modules
 } // namesapce session
 

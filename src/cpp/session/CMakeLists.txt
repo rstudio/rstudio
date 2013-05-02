@@ -78,6 +78,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionBuildUtils.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp

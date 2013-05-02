@@ -1,5 +1,5 @@
 /*
- * DataViewer.hpp
+ * SessionData.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,23 @@
  *
  */
 
-#ifndef SESSION_DATA_VIEWER_HPP
-#define SESSION_DATA_VIEWER_HPP
+#ifndef SESSION_SESSION_DATA_HPP
+#define SESSION_SESSION_DATA_HPP
+
+#include <string>
 
 namespace core {
    class Error;
 }
  
 namespace session {
-namespace modules { 
+namespace modules {      
 namespace data {
-namespace viewer {
-   
+
 core::Error initialize();
-                       
-} // namespace viewer
+   
 } // namespace data
-} // namespace modules
+} // namepace handlers
 } // namesapce session
 
-#endif // SESSION_DATA_VIEWER_HPP
+#endif // SESSION_SESSION_DATA_HPP
