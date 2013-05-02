@@ -100,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditView;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPresenter;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentTab;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;
@@ -290,6 +291,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);
+      bind(EnvironmentServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

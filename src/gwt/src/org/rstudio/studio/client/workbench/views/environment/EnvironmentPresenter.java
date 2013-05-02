@@ -14,21 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.views.environment;
 
+import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+
 
 import com.google.inject.Inject;
 
 public class EnvironmentPresenter extends BasePresenter
 {
+   public interface Binder extends CommandBinder<Commands, EnvironmentPresenter> {}
+   
    public interface Display extends WorkbenchView
    {
    }
    
    @Inject
-   public EnvironmentPresenter(Display view)
+   public EnvironmentPresenter(Display view,
+                               EnvironmentServerOperations server)
    {
       super(view);
       
+      view_ = view;
+      server_ = server;
+      
    }
+   
+   
+   @SuppressWarnings("unused")
+   private final Display view_;
+   
+   @SuppressWarnings("unused")
+   private final EnvironmentServerOperations server_;
 }

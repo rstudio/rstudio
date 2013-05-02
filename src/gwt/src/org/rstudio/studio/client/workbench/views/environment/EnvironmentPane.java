@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.user.client.ui.Label;
@@ -33,8 +34,17 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+      
+      
+      return toolbar;
+   }
+   
+   @Override
    protected Widget createMainWidget()
    {
-      return new Label("Environment");
+      return new Label();
    }
 }

@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperatio
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FilesServerOperations,
@@ -69,7 +70,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FindInFilesServerOperations,
                                                    SynctexServerOperations,
                                                    BuildServerOperations,
-                                                   PresentationServerOperations
+                                                   PresentationServerOperations,
+                                                   EnvironmentServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();
