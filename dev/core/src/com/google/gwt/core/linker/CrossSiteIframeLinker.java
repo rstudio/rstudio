@@ -191,7 +191,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
 
    protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
       int fragment) {
-    return "\n//@ sourceURL=" + fragment + ".js\n";
+    return "\n//@ sourceURL=" + context.getModuleName() + "-" + fragment + ".js\n";
   }
 
   @Override
@@ -440,7 +440,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     // Magic comment serves several purposes:
     // 1. renames strongName to a stable name in browser debugger
     // 2. provides name to scripts installed via eval()
-    out.print("\n//@ sourceURL=0.js \n");
+    out.print("\n//@ sourceURL=" + context.getModuleName() + "-0.js\n");
     return out.toString();
   }
 
