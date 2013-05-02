@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -44,7 +45,8 @@ public class EnvironmentPresenter extends BasePresenter
                                EnvironmentServerOperations server,
                                Binder binder,
                                Commands commands,
-                               GlobalDisplay globalDisplay)
+                               GlobalDisplay globalDisplay,
+                               EventBus eventBus)
    {
       super(view);
       binder.bind(commands, this);
