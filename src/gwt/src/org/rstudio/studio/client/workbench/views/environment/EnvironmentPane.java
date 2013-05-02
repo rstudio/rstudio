@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -45,6 +47,28 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      return new Label();
+      objectList_ = new ListBox();
+      objectList_.setVisibleItemCount(2);
+      objectList_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
+      objectList_.setHeight("100%");
+      
+      return objectList_;
    }
+
+   @Override
+   public void addObject(RObject object)
+   {
+      String itemText = object.getName() + " - " +
+                        object.getType() + 
+                        " [" + object.getLength() + "]";
+      objectList_.addItem(itemText, object.getName());
+   }
+
+   @Override
+   public void clearObjects()
+   {
+      objectList_.clear();
+   }
+   
+   private ListBox objectList_;
 }

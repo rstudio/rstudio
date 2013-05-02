@@ -16,12 +16,16 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 
 public class EnvironmentPresenter extends BasePresenter
@@ -30,6 +34,8 @@ public class EnvironmentPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
+      void addObject(RObject object);
+      void clearObjects();
    }
    
    @Inject
@@ -43,6 +49,29 @@ public class EnvironmentPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       
+      refreshView();
+   }
+   
+   private void refreshView()
+   {
+      view_.clearObjects();
+      
+      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>() {
+
+         @Override
+         public void onResponseReceived(JsArray<RObject> objects)
+         {
+            for (int i = 0; i<objects.length(); i++)
+               view_.addObject(objects.get(i));
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error Listing Objects", 
+                                            error.getUserMessage());
+         }
+      });
    }
    
    private final Display view_;
