@@ -15,7 +15,11 @@
 
 #include "SessionEnvironment.hpp"
 
+#include <algorithm>
+
 #include <core/Exec.hpp>
+
+#include <r/RSexp.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -26,6 +30,37 @@ namespace modules {
 namespace environment {
 
 namespace {
+
+json::Object varToJson(const r::sexp::Variable& var)
+{
+   json::Object varJson;
+   varJson["name"] = var.first;
+   SEXP varSEXP = var.second;
+   varJson["type"] = r::sexp::typeAsString(varSEXP);
+   varJson["len"] = r::sexp::length(varSEXP);
+   return varJson;
+}
+
+Error listEnvironment(const json::JsonRpcRequest&,
+                      json::JsonRpcResponse* pResponse)
+{
+   // list all of the variables in the global environment
+   using namespace r::sexp;
+   Protect rProtect;
+   std::vector<Variable> vars;
+   listEnvironment(R_GlobalEnv, true, &rProtect, &vars);
+
+   // get object details and transform to json
+   json::Array listJson;
+   std::transform(vars.begin(),
+                  vars.end(),
+                  std::back_inserter(listJson),
+                  varToJson);
+
+   // return list
+   pResponse->setResult(listJson);
+   return Success();
+}
 
 void onDetectChanges(module_context::ChangeSource source)
 {
@@ -44,6 +79,7 @@ Error initialize()
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "list_environment", listEnvironment))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

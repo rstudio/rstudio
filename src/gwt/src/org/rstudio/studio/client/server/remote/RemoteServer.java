@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
@@ -2780,6 +2781,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, DEVTOOLS_LOAD_ALL_PATH, requestCallback);
    }
    
+   @Override
+   public void listEnvironment(ServerRequestCallback<JsArray<RObject>> callback)
+   {
+      sendRequest(RPC_SCOPE, LIST_ENVIRONMENT, callback);
+   }
+   
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3022,6 +3029,8 @@ public class RemoteServer implements Server
    private static final String TERMINATE_BUILD = "terminate_build";
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";
 
+   private static final String LIST_ENVIRONMENT = "list_environment";
+   
    private static final String LOG = "log";
 
   

@@ -20,4 +20,5 @@ import com.google.gwt.core.client.JsArray;
 
 public interface EnvironmentServerOperations
 {
+   void listEnvironment(ServerRequestCallback<JsArray<RObject> > callback);
 }
