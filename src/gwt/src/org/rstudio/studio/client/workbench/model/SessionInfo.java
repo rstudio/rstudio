@@ -311,6 +311,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getShowEnvironmentTab() /*-{
       return this.show_environment_tab;
    }-*/;
+   
+   public final native String getSwitchToProject() /*-{
+      return this.switch_to_project;
+   }-*/;
 
    
 }
