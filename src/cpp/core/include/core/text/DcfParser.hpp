@@ -29,6 +29,8 @@ class FilePath;
 
 namespace text {
 
+extern const char * const kDcfFieldRegex;
+
 typedef boost::function<void(const std::pair<std::string,std::string>&)>
                                                            DcfFieldRecorder;
 

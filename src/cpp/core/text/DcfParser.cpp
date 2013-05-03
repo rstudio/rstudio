@@ -37,6 +37,8 @@
 namespace core {
 namespace text {
 
+const char * const kDcfFieldRegex = "([^\\s]+?)\\s*\\:\\s*(.*)$";
+
 Error parseDcfFile(const std::string& dcfFileContents,
                    bool preserveKeyCase,
                    DcfFieldRecorder recordField,
@@ -67,7 +69,7 @@ Error parseDcfFile(const std::string& dcfFileContents,
          continue;
 
       // define regexes
-      boost::regex keyValueRegx("([^\\s]+?)\\s*\\:\\s*(.*)$");
+      boost::regex keyValueRegx(kDcfFieldRegex);
       boost::regex continuationRegex("[\t\\s](.*)");
 
        // look for a key-value pair line

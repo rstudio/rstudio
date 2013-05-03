@@ -303,6 +303,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    }
 
    // loop through the header lines to capture the slides
+   boost::regex dcfFieldRegex(core::text::kDcfFieldRegex);
    for (std::size_t i = 0; i<headerLines.size(); i++)
    {
       // line index
@@ -328,11 +329,15 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       {
          if (inFields)
          {
-            std::string line = boost::algorithm::trim_copy(lines[l]);
-            if (!line.empty())
-               fields += line + "\n";
+            if (boost::regex_match(lines[l], dcfFieldRegex))
+            {
+               fields += lines[l] + "\n";
+            }
             else
+            {
+               content += lines[l] + "\n";
                inFields = false;
+            }
          }
          else
          {
