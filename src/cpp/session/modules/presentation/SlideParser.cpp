@@ -201,6 +201,10 @@ std::vector<std::string> Slide::fieldValues(const std::string& name) const
    return values;
 }
 
+std::vector<std::string> Slide::invalidFields() const
+{
+   return invalidFields_;
+}
 
 namespace {
 
@@ -363,17 +367,18 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       }
 
       // validate all of the fields
+      std::vector<std::string> invalidFields;
       BOOST_FOREACH(const Slide::Field& field, slideFields)
       {
          if (!isValidField(field.first))
-         {
-            module_context::consoleWriteError("Unrecognized field '" +
-                                              field.first + "'\n");
-         }
+            invalidFields.push_back(field.first);
       }
 
       // create the slide
-      slides_.push_back(Slide(title, slideFields, content));
+      slides_.push_back(Slide(title,
+                              slideFields,
+                              invalidFields,
+                              content));
    }
 
    // if the deck is empty then insert a placeholder first slide
@@ -381,6 +386,7 @@ Error SlideDeck::readSlides(const FilePath& filePath)
    {
       slides_.push_back(Slide(filePath.parent().filename(),
                               std::vector<Slide::Field>(),
+                              std::vector<std::string>(),
                               std::string()));
    }
 

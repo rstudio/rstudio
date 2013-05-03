@@ -47,6 +47,14 @@
    border: none;
 }
 
+.reveal section .fieldError {
+  margin-bottom: 25px;
+}
+
+.reveal section .fieldError span {
+  color: red;
+}
+
 .prompt .reveal .state-background {
    background: #C6D7DC;
 }

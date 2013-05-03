@@ -127,15 +127,31 @@ void addFragmentClass(const std::string& fragmentClass,
                                    bqWithClass + "\n<p>");
 }
 
-Error slideMarkdownToHtml(const Slide& slide,
-                          const std::string& extraContent,
-                          const std::string& incremental,
-                          std::string* pHTML)
+Error slideToHtml(const Slide& slide,
+                  const std::string& extraContent,
+                  const std::string& incremental,
+                  std::string* pHTML)
 {
+   // invalid fields
+   if (slide.invalidFields().size() > 0)
+   {
+      std::ostringstream ostr;
+      ostr << "<div class=\"fieldError\">";
+      BOOST_FOREACH(const std::string& field, slide.invalidFields())
+      {
+         ostr << "<span>Unrecognized slide field:</span> "
+              << "<code>" << field << "</code><br/>";
+      }
+      ostr << "</div>";
+      pHTML->append(ostr.str());
+   }
+
    // render the markdown
-   Error error = renderMarkdown(slide.content(), pHTML);
+   std::string markdownHTML;
+   Error error = renderMarkdown(slide.content(), &markdownHTML);
    if (error)
       return error;
+   pHTML->append(markdownHTML);
 
    // add the extra content
    pHTML->append(extraContent);
@@ -384,10 +400,10 @@ Error renderSlides(const SlideDeck& slideDeck,
 
       // render markdown
       std::string htmlContent;
-      Error error = slideMarkdownToHtml(slide,
-                                        ostrMedia.str(),
-                                        incremental,
-                                        &htmlContent);
+      Error error = slideToHtml(slide,
+                                ostrMedia.str(),
+                                incremental,
+                                &htmlContent);
       if (error)
          return error;
       ostr << htmlContent << "\n";

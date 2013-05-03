@@ -72,8 +72,12 @@ public:
 public:
    Slide(const std::string& title,
          const std::vector<Field>& fields,
+         const std::vector<std::string>& invalidFields,
          const std::string& content)
-      : title_(title), fields_(fields), content_(content)
+      : title_(title),
+        fields_(fields),
+        invalidFields_(invalidFields),
+        content_(content)
    {
    }
 
@@ -107,11 +111,14 @@ public:
                           const std::string& defaultValue="") const;
    std::vector<std::string> fieldValues(const std::string& name) const;
 
+   std::vector<std::string> invalidFields() const;
+
    const std::string& content() const { return content_; }
 
 private:
    std::string title_;
    std::vector<Field> fields_;
+   std::vector<std::string> invalidFields_;
    std::string content_;
 };
 
