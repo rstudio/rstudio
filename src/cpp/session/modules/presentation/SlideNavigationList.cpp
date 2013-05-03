@@ -112,7 +112,10 @@ std::string SlideNavigationList::asCall() const
 {
    std::ostringstream ostr;
    ostr << "window.parent.initPresentationNavigator(";
-   json::write(slides_, ostr);
+   json::Object slideNavigationJson;
+   slideNavigationJson["total_slides"] = index_;
+   slideNavigationJson["items"] = slides_;
+   json::write(slideNavigationJson, ostr);
    ostr << ");";
    return ostr.str();
 }

@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileS
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
 
 public class Presentation extends BasePresenter 
@@ -471,14 +472,19 @@ public class Presentation extends BasePresenter
       
       
       // find the first navigation item that is <= to the index
-      if (navigationItems_ != null)
+      if (slideNavigation_ != null)
       {
-         for (int i=(navigationItems_.length()-1); i>=0; i--)
+         JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
+         for (int i=(items.length()-1); i>=0; i--)
          {
-            if (navigationItems_.get(i).getIndex() <= index)
+            if (items.get(i).getIndex() <= index)
             {
-               view_.getSlideMenu().setCaption(
-                                 navigationItems_.get(i).getTitle());
+               String caption = items.get(i).getTitle();
+               caption += " (" + (index+1) + "/" + 
+                          slideNavigation_.getTotalSlides() + ")";
+               
+               
+               view_.getSlideMenu().setCaption(caption);
                break;
             }
          }
@@ -508,15 +514,16 @@ public class Presentation extends BasePresenter
    private void initPresentationNavigator(JavaScriptObject jsNavigator)
    {
       // record current slides
-      navigationItems_ = jsNavigator.cast();
+      slideNavigation_ = jsNavigator.cast();
+      JsArray<SlideNavigationItem> items = slideNavigation_.getItems();
       
       // reset the slides menu
       SlideMenu slideMenu = view_.getSlideMenu();
       slideMenu.clear(); 
-      for (int i=0; i<navigationItems_.length(); i++)
+      for (int i=0; i<items.length(); i++)
       {
          // get slide
-         final SlideNavigationItem item = navigationItems_.get(i);
+         final SlideNavigationItem item = items.get(i);
           
          // build html
          SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
@@ -535,7 +542,7 @@ public class Presentation extends BasePresenter
          })); 
       }  
       
-      slideMenu.setDropDownVisible(navigationItems_.length() > 1);
+      slideMenu.setDropDownVisible(slideNavigation_.getItems().length() > 1);
    }
    
    private final native void initPresentationCallbacks() /*-{
@@ -627,7 +634,7 @@ public class Presentation extends BasePresenter
    private final Session session_;
    private final PresentationDispatcher dispatcher_;
    private PresentationState currentState_ = null;
-   private JsArray<SlideNavigationItem> navigationItems_ = null;
+   private SlideNavigation slideNavigation_ = null;
    private boolean usingRmd_ = false;
   
    
