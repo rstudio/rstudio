@@ -52,6 +52,7 @@ namespace {
 
 const char * const kDefaultRevealFont = "\"Lato\"";
 const char * const kDefaultRevealHeadingFont = "\"News Cycle\"";
+const char * const kMediaPrint = "media=\"print\"";
 
 class ResourceFiles : boost::noncopyable
 {
@@ -597,7 +598,8 @@ bool createStandalonePresentation(const FilePath& targetFile,
    }
 
    // embedded versions of reveal assets
-   vars["reveal_print_css"] = "";
+   vars["reveal_print_css"] = revealEmbed("revealjs/css/print/pdf.css",
+                                          kMediaPrint);
    vars["reveal_css"] = revealEmbed("revealjs/css/reveal.min.css");
    vars["reveal_theme_css"] = revealEmbed("revealjs/css/theme/simple.css");
    vars["reveal_head_js"] = revealEmbed("revealjs/lib/js/head.min.js");
@@ -858,7 +860,8 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    fontVars(slideDeck, &vars);
 
    // link to reveal print css
-   vars["reveal_print_css"] = "";
+   vars["reveal_print_css"] = revealLink("revealjs/css/print/pdf.css",
+                                         kMediaPrint);
 
    // webfonts local
    viewInBrowserVars(slides, &vars);
