@@ -92,6 +92,11 @@ oop.inherits(Mode, MarkdownMode);
       return state.match(/^r-cpp-(?!r-)/);
    }
 
+   this.inMarkdownLanguageMode = function(state)
+   {
+      return !state.match(/^r-/);
+   }
+
    this.getNextLineIndent = function(state, line, tab, tabSize, row)
    {
       if (!this.inCppLanguageMode(state))
@@ -163,6 +168,14 @@ oop.inherits(Mode, MarkdownMode);
                 if (match && editor.getSelectionRange().start.column >= match[1].length) {
                     return {text: "R\n\n*/\n",
                             selection: [1,0,1,0]};
+                }
+            }
+
+            else if ((text === "=") && this.inMarkdownLanguageMode(state)) {
+                var pos = editor.getSelectionRange().start;
+                var match = /^(={2,})/.exec(session.doc.getLine(pos.row));
+                if (match && editor.getSelectionRange().start.column >= match[1].length) {
+                    return {text: Array(54).join("=") + "\n"};
                 }
             }
         }
