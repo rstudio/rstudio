@@ -51,6 +51,9 @@ then
    cd $BOOST_BUILD_DIR
    sudo tar --bzip2 -xf ../$BOOST_TAR
 
+   # change to boost version folder
+   cd $BOOST_VERSION
+
    # bootstrap boost
    sudo ./bootstrap.sh  
    
