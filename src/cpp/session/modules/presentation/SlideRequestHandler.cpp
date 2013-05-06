@@ -318,6 +318,22 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
    }
 }
 
+std::string presentationCommandClickHandler(const std::string& name,
+                                            const std::string& params)
+{
+   using namespace boost::algorithm;
+   std::ostringstream ostr;
+   ostr << "onclick='";
+   ostr << "window.parent.dispatchPresentationCommand(";
+   json::Object cmdObj;
+   using namespace boost::algorithm;
+   cmdObj["name"] = name;
+   cmdObj["params"] = params;
+   json::write(cmdObj, ostr);
+   ostr << "); return false;'";
+   return ostr.str();
+}
+
 std::string fixupLink(const boost::cmatch& match)
 {
    std::string href = http::util::urlDecode(match[1]);
@@ -340,16 +356,41 @@ std::string fixupLink(const boost::cmatch& match)
       std::size_t colonLoc = href.find_first_of(':');
       if (href.size() > colonLoc+2)
       {
-         std::ostringstream ostr;
-         ostr << "onclick='";
-         ostr << "window.parent.dispatchPresentationCommand(";
-         json::Object cmdObj;
          using namespace boost::algorithm;
-         cmdObj["name"] = trim_copy(href.substr(0, colonLoc));
-         cmdObj["params"] = trim_copy(href.substr(colonLoc+1));
-         json::write(cmdObj, ostr);
-         ostr << "); return false;'";
-         onClick = ostr.str();
+         std::string name =  trim_copy(href.substr(0, colonLoc));
+         std::string params = trim_copy(href.substr(colonLoc+1));
+         onClick = presentationCommandClickHandler(name, params);
+      }
+
+      return match[0] + " " + onClick;
+   }
+   else if (boost::algorithm::starts_with(href, "tutorial:"))
+   {
+      // paths are relative to the parent dir of the presenentation dir
+      using namespace boost::algorithm;
+      std::size_t colonLoc = href.find_first_of(':');
+      std::string path = trim_copy(href.substr(colonLoc+1));
+      path = core::http::util::urlDecode(path);
+      if (boost::algorithm::starts_with(path, "~/"))
+         path = module_context::resolveAliasedPath(path).absolutePath();
+      FilePath filePath = presentation::state::directory()
+                                                   .parent().complete(path);
+
+      Error error = core::system::realPath(filePath, &filePath);
+      if (error)
+      {
+         if (!core::isPathNotFoundError(error))
+            LOG_ERROR(error);
+         return match[0];
+      }
+
+      // bulid the call
+      std::string onClick;
+      if (href.size() > colonLoc+2)
+      {
+         std::string name = "tutorial";
+         std::string params = module_context::createAliasedPath(filePath);
+         onClick = presentationCommandClickHandler(name, params);
       }
 
       return match[0] + " " + onClick;
