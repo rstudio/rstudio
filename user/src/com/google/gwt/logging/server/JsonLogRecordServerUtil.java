@@ -57,11 +57,10 @@ public class JsonLogRecordServerUtil {
     }
 
     private String type;
-    private String msg;
 
     public JsonLogRecordThrowable(JSONObject t) throws JSONException {
+      super(t.getString("message"));
       type = t.getString("type");
-      msg = t.getString("message");
       setStackTrace(stackTraceFromJson(t.optJSONArray("stackTrace")));
       initCause(JsonLogRecordThrowable.fromJsonString(t.getString("cause")));
     }
@@ -88,7 +87,7 @@ public class JsonLogRecordServerUtil {
 
     @Override
     public String toString() {
-      return msg != null ? type + ": " + msg : type;
+      return getMessage() != null ? type + ": " + getMessage() : type;
     }
   }
 }
