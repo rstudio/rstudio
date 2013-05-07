@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.GWTTestCase.TestModuleInfo;
 import com.google.gwt.junit.client.impl.GWTRunnerProxy;
@@ -38,9 +39,7 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -246,16 +245,23 @@ public class GWTRunnerProxyGenerator extends Generator {
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
-  private static List<JMethod> getTestMethods(JClassType requestedClass) {
-    List<JMethod> list = new ArrayList<JMethod>();
+  // This is compatible with how junit3 identifies test methods
+  private static Iterable<JMethod> getTestMethods(JClassType requestedClass) {
+    Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
     for (JClassType cls = requestedClass; cls != null; cls = cls.getSuperclass()) {
       for (JMethod declMethod : cls.getMethods()) {
         if (isJUnitTestMethod(declMethod)) {
-          list.add(declMethod);
+          putIfAbsent(methodMap, declMethod);
         }
       }
     }
-    return list;
+    return methodMap.values();
+  }
+
+  private static void putIfAbsent(Map<String, JMethod> methodMap, JMethod declMethod) {
+    if (!methodMap.containsKey(declMethod.getName())) {
+      methodMap.put(declMethod.getName(), declMethod);
+    }
   }
 
   private static boolean isJUnitTestMethod(JMethod m) {

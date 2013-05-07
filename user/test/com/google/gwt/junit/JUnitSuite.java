@@ -17,6 +17,7 @@ package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.DevModeOnCompiledScriptTest;
 import com.google.gwt.junit.client.GWTTestCaseAsyncTest;
+import com.google.gwt.junit.client.GWTTestCaseInheritanceTest;
 import com.google.gwt.junit.client.GWTTestCaseSetupTearDownTest;
 import com.google.gwt.junit.client.GWTTestCaseStackTraceTest;
 import com.google.gwt.junit.client.GWTTestCaseTest;
@@ -36,8 +37,9 @@ public class JUnitSuite {
     suite.addTestSuite(GWTTestCaseTest.class);
     suite.addTestSuite(GWTTestCaseStackTraceTest.class);
     suite.addTestSuite(GWTTestCaseUncaughtExceptionHandlerTest.class);
-    suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));
     suite.addTest(new TestSuiteWithOrder(GWTTestCaseSetupTearDownTest.class));
+    suite.addTest(new TestSuiteWithOrder(GWTTestCaseInheritanceTest.class));
+    suite.addTest(new TestSuiteWithOrder(GWTTestCaseAsyncTest.class));
 
     suite.addTestSuite(DevModeOnCompiledScriptTest.class);
 

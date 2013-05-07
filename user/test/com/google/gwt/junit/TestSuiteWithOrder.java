@@ -20,9 +20,12 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Add {@link TestSuite} that runs test cases in alphabetical order.
@@ -35,27 +38,22 @@ class TestSuiteWithOrder extends TestSuite {
    * instantiated. The implementation of this class should guarantee the order not only by sorting
    * TestCases but also creating them in order.
    */
-
   public TestSuiteWithOrder(Class<? extends TestCase> clazz) {
     super(clazz.getName());
+    Map<String, Method> testMethodMap = new HashMap<String, Method>();
     for (Class<?> c = clazz; Test.class.isAssignableFrom(c); c = c.getSuperclass()) {
-      for (Method each : getDeclaredMethods(c)) {
-        if (isTestMethod(each)) {
-          addTestMethod(each, clazz);
+      for (Method method : c.getDeclaredMethods()) {
+        if (isTestMethod(method) && !testMethodMap.containsKey(method.getName())) {
+          testMethodMap.put(method.getName(), method);
         }
       }
+    }
+    for (Method m : getSortedTestMethods(testMethodMap)) {
+      addTest(createTest(clazz, m.getName()));
     }
     if (countTestCases() == 0) {
       addTest(warning("No tests found in " + clazz.getName()));
     }
-  }
-
-  private void addTestMethod(Method m, Class<?> theClass) {
-    if (!Modifier.isPublic(m.getModifiers())) {
-      addTest(warning("Test method isn't public: " + m.getName() + "(" + theClass.getName() + ")"));
-      return;
-    }
-    addTest(createTest(theClass, m.getName()));
   }
 
   private boolean isTestMethod(Method m) {
@@ -64,12 +62,12 @@ class TestSuiteWithOrder extends TestSuite {
         && m.getReturnType().equals(Void.TYPE);
   }
 
-  private Method[] getDeclaredMethods(Class<?> clazz) {
-    Method[] methods = clazz.getDeclaredMethods();
-    Arrays.sort(methods, new Comparator<Method>() {
+  private List<Method> getSortedTestMethods(Map<String, Method> methodNames) {
+    List<Method> methods = new ArrayList<Method>(methodNames.values());
+    Collections.sort(methods, new Comparator<Method>() {
       @Override
       public int compare(Method m1, Method m2) {
-        return m1.toString().compareTo(m2.toString());
+        return m1.getName().toString().compareTo(m2.getName().toString());
       }
     });
     return methods;
