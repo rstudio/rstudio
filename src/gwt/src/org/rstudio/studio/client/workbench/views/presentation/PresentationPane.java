@@ -85,9 +85,14 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
                                                       StandardIcons.INSTANCE.more_actions(),
                                                       moreMenu);
          toolbar.addRightWidget(moreButton);
-         toolbar.addRightSeparator();
+         
+      }
+      else
+      {
+         toolbar.addRightWidget(commands_.tutorialFeedback().createToolbarButton());
       }
       
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
         
       return toolbar;

@@ -170,6 +170,7 @@ public abstract class
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand presentationPublishToRpubs();
    public abstract AppCommand activatePresentation();
+   public abstract AppCommand tutorialFeedback();
    
    // View
    public abstract AppCommand showToolbar();

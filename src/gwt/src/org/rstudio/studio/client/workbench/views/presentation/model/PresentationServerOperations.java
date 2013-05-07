@@ -47,4 +47,7 @@ public interface PresentationServerOperations extends RPubsServerOperations
                              ServerRequestCallback<Void> requestCallback);
    
    void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
+   
+   void tutorialFeedback(String feedback, 
+                         ServerRequestCallback<Void> requestCallback);
 }

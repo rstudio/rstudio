@@ -32,15 +32,34 @@ public class EditDialog extends ModalDialogBase
                      boolean lineWrapping,
                      final ProgressOperationWithInput<String> operation)
    {
+      this("Edit", 
+           "Save",
+           text, 
+           isRCode, 
+           lineWrapping, 
+           new Size(0,0), 
+           operation);
+   }
+   
+   public EditDialog(String caption,
+                     String saveCaption,
+                     String text,
+                     boolean isRCode,
+                     boolean lineWrapping,
+                     Size minimumSize,
+                     final ProgressOperationWithInput<String> operation)
+   {
       editor_ = new AceEditor();
-      setText("Edit");
+      setText(caption);
       sourceText_ = text;
       isRCode_ = isRCode;
       lineWrapping_ = lineWrapping;
+      minimumSize_ = minimumSize;
 
       final ProgressIndicator progressIndicator = addProgressIndicator();
 
-      ThemedButton saveButton = new ThemedButton("Save", new ClickHandler() {
+      ThemedButton saveButton = new ThemedButton(saveCaption, 
+                                                 new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             operation.execute(editor_.getCode(), progressIndicator);
@@ -65,6 +84,11 @@ public class EditDialog extends ModalDialogBase
       // create widget and set size
       Widget editWidget = editor_.getWidget();
       Size size = DomMetrics.adjustedCodeElementSize(sourceText_, 25, 100);
+      if (!minimumSize_.isEmpty())
+      {
+         size = new Size(Math.max(size.width, minimumSize_.width),
+                         Math.max(size.height, minimumSize_.height));
+      }
       editWidget.setSize(size.width + "px", size.height + "px");
 
       editor_.setCode(sourceText_, false);
@@ -101,4 +125,5 @@ public class EditDialog extends ModalDialogBase
    private final boolean isRCode_;
    private final boolean lineWrapping_;
    private final AceEditor editor_ ;
+   private Size minimumSize_;
 }

@@ -30,6 +30,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.Barrier.Token;
@@ -64,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
@@ -361,6 +363,38 @@ public class Presentation extends BasePresenter
       
       view_.load(buildPresentationUrl());
    }
+   
+   @Handler
+   void onTutorialFeedback()
+   {
+      EditDialog editDialog = new EditDialog("Provide Feedback",
+                                             "Submit", 
+                                             "",
+                                             false, 
+                                             true,
+                                             new Size(450,300),
+                     new ProgressOperationWithInput<String>() {
+         @Override
+         public void execute(String input, ProgressIndicator indicator)
+         {
+            if (input == null)
+            {
+               indicator.onCompleted();
+               return;
+            }
+            
+            indicator.onProgress("Saving feedback...");
+            
+            server_.tutorialFeedback(input, 
+                                     new VoidServerRequestCallback(indicator));
+            
+         }
+      });
+      
+      editDialog.showModal();
+      
+   }
+   
    
    @Override
    public void onSelected()

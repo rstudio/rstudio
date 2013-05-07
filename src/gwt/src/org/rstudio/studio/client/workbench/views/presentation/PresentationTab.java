@@ -68,6 +68,10 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
                commands.presentationSaveAsStandalone().remove();
                commands.presentationPublishToRpubs().remove();
             }
+            else
+            {
+               commands.tutorialFeedback().remove();
+            }
          }
       });
       

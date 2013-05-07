@@ -50,6 +50,8 @@ public:
    void onSlideDeckChanged(const SlideDeck& slideDeck);
    void onSlideIndexChanged(int index);
 
+   void recordFeedback(const std::string& feedback);
+
 private:
    void onConsolePrompt(const std::string& prompt);
    void onConsoleInput(const std::string& text);
