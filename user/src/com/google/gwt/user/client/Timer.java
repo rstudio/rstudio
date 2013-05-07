@@ -57,15 +57,15 @@ public abstract class Timer {
     @com.google.gwt.core.client.impl.Impl::clearTimeout(I)(id);
   }-*/;
 
-  private static native int createInterval(Timer timer, int period) /*-{
+  private static native int createInterval(Timer timer, int period, int cancelCounter) /*-{
     return @com.google.gwt.core.client.impl.Impl::setInterval(Lcom/google/gwt/core/client/JavaScriptObject;I)(
-        $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
+        $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); }),
       period);
   }-*/;
 
-  private static native int createTimeout(Timer timer, int delay) /*-{
+  private static native int createTimeout(Timer timer, int delay, int cancelCounter) /*-{
     return @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(
-      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire()(); }),
+      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); }),
       delay);
   }-*/;
 
@@ -86,9 +86,16 @@ public abstract class Timer {
   private int timerId;
 
   /**
+   * Workaround for broken clearTimeout in IE. Keeps track of whether cancel has been called since
+   * schedule was called. See https://code.google.com/p/google-web-toolkit/issues/detail?id=8101
+   */
+  private int cancelCounter = 0;
+
+  /**
    * Cancels this timer.
    */
   public void cancel() {
+    cancelCounter++;
     if (isRepeating) {
       clearInterval(timerId);
     } else {
@@ -115,7 +122,7 @@ public abstract class Timer {
     }
     cancel();
     isRepeating = false;
-    timerId = createTimeout(this, delayMillis);
+    timerId = createTimeout(this, delayMillis, cancelCounter);
     timers.add(this);
   }
 
@@ -131,14 +138,20 @@ public abstract class Timer {
     }
     cancel();
     isRepeating = true;
-    timerId = createInterval(this, periodMillis);
+    timerId = createInterval(this, periodMillis, cancelCounter);
     timers.add(this);
   }
 
   /*
    * Called by native code when this timer fires.
+   *
+   * Only call run() if cancelCounter has not changed since the timer was scheduled.
    */
-  final void fire() {
+  final void fire(int scheduleCancelCounter) {
+    if (scheduleCancelCounter != cancelCounter) {
+      return;
+    }
+
     // If this is a one-shot timer, remove it from the timer list. This will
     // allow it to be garbage collected.
     if (!isRepeating) {

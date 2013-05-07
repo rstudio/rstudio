@@ -25,6 +25,7 @@ import com.google.gwt.user.client.DragAndDropEventsSinkTest;
 import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.GestureEventSinkTest;
 import com.google.gwt.user.client.HistoryDisabledTest;
+import com.google.gwt.user.client.TimerCancelTest;
 import com.google.gwt.user.client.TouchEventSinkTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.datepicker.client.CalendarUtilTest;
@@ -53,6 +54,7 @@ public class MiscSuite {
     suite.addTestSuite(HistoryDisabledTest.class);
     suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(LayoutTest.class);
+    suite.addTestSuite(TimerCancelTest.class);
     suite.addTestSuite(TouchEventSinkTest.class);
     suite.addTestSuite(WindowTest.class);
     suite.addTestSuite(XMLTest.class);
