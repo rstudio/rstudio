@@ -56,7 +56,8 @@
         <fileset dir="${gwt.tools.lib}">
           <include name="apache/tapestry-util-text-4.0.2.jar" />
           <include name="apache/ant-1.6.5.jar" />
-          <include name="eclipse/jdt-3.4.2_r894.jar" />
+          <include name="eclipse/org.eclipse.jdt.core_3.8.3.v20130121-145325.jar" />
+          <include name="eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar" />
           <include name="guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <include name="jscomp/r1649/compiler-rebased.jar" />
           <include name="jetty/jetty-6.1.11.jar" />
@@ -105,7 +106,8 @@
         <gwt.jar destfile="${alldeps.jar}">
           <zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
           <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.4.2_r894.jar" />
+          <zipfileset src="${gwt.tools.lib}/eclipse/org.eclipse.jdt.core_3.8.3.v20130121-145325.jar" />
+          <zipfileset src="${gwt.tools.lib}/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/r1649/compiler-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
@@ -180,7 +182,8 @@
       <include name="org/eclipse/jdt/**"/>
       <classpath>
           <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
-          <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.4.2_r894.jar" />
+          <pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.jdt.core_3.8.3.v20130121-145325.jar" />
+          <pathelement location="${gwt.tools.lib}/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar" />
           <pathelement location="${gwt.tools.lib}/apache/commons/commons-collections-3.2.1.jar" />
           <pathelement location="${gwt.tools.lib}/guava/guava-10.0.1/guava-10.0.1-rebased.jar" />
           <pathelement location="${gwt.tools.lib}/jscomp/r1649/compiler-rebased.jar" />

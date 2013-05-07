@@ -64,6 +64,10 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
       return null;
     }
 
+    public char[] getEnclosingMethod() {
+      return null;
+    }
+
     public char[] getEnclosingTypeName() {
       return null;
     }

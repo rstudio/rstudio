@@ -167,6 +167,10 @@ public class JdtBehaviorTest extends TestCase {
       return Shared.getShortName(Shared.getTypeName(sourceFile)).toCharArray();
     }
 
+    public boolean ignoreOptionalProblems() {
+      return false;
+    }
+
     public char[][] getPackageName() {
       return CharOperation.splitOn('.', Shared.getPackageName(
           Shared.getTypeName(sourceFile)).toCharArray());

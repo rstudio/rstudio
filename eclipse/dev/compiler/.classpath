@@ -4,7 +4,8 @@
 	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2_r894.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2_r894-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.8.3.v20130121-145325.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.8.3.v20130121-145325.jar"/>
+        <classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar" sourcepath="/GWT_TOOLS/lib/tomcat/commons-collections-3.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-10.0.1/guava-10.0.1-rebased.jar"/>

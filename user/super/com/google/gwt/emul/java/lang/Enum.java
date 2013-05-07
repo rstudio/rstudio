@@ -85,7 +85,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     // if (this.getDeclaringClass() != other.getDeclaringClass()) {
     // throw new ClassCastException();
     // }
-    return this.ordinal - other.ordinal;
+    return this.ordinal - ((Enum) other).ordinal;
   }
 
   @Override

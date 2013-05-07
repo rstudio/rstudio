@@ -544,9 +544,6 @@ public class GwtAstBuilder {
         SourceInfo info = makeSourceInfo(x);
         JType type = typeMap.get(x.resolvedType);
         JExpression expression = pop(x.expression);
-        if (x.type instanceof NameReference) {
-          pop(x.type);
-        }
         push(new JCastOperation(info, type, expression));
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -3073,14 +3070,7 @@ public class GwtAstBuilder {
 
       if (x.fields != null) {
         for (FieldDeclaration field : x.fields) {
-          if (x.binding.isLocalType() && field.isStatic()) {
-            /*
-             * Source compatibility with genJavaAst; static fields in local
-             * types don't get visited.
-             */
-          } else {
-            createField(field);
-          }
+          createField(field);
         }
       }
 

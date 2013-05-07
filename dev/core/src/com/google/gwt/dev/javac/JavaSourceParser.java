@@ -178,10 +178,11 @@ public class JavaSourceParser {
    * @return a CompilationUnitDeclaration or null if parsing failed
    */
   private static CompilationUnitDeclaration parseJava(String javaSource) {
-    CodeSnippetParsingUtil parsingUtil = new CodeSnippetParsingUtil();
+    CodeSnippetParsingUtil parsingUtil = new CodeSnippetParsingUtil(true);
     CompilerOptions options = new CompilerOptions();
-    options.complianceLevel = ClassFileConstants.JDK1_5;
-    options.sourceLevel = ClassFileConstants.JDK1_5;
+    options.complianceLevel = ClassFileConstants.JDK1_6;
+    options.originalSourceLevel = ClassFileConstants.JDK1_6;
+    options.sourceLevel = ClassFileConstants.JDK1_6;
     CompilationUnitDeclaration unit = parsingUtil.parseCompilationUnit(
         javaSource.toString().toCharArray(), options.getMap(), true);
     if (unit.compilationResult().hasProblems()) {
