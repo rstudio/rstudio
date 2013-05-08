@@ -40,8 +40,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.environment.events.BrowseModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 
@@ -56,6 +58,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       void addObject(RObject object);
       void clearObjects();
+      void setBrowseMode(boolean browseMode);
    }
    
    @Inject
@@ -84,12 +87,35 @@ public class EnvironmentPresenter extends BasePresenter
             refreshView();
          }
       });
+      
+      eventBus.addHandler(BrowseModeChangedEvent.TYPE, 
+                          new BrowseModeChangedEvent.Handler()
+      {
+         @Override
+         public void onBrowseModeChanged(BrowseModeChangedEvent event)
+         {
+            inBrowseMode_ = !inBrowseMode_;
+            view_.setBrowseMode(inBrowseMode_);
+         }
+      });
    }
    
    @Handler
    void onRefreshEnvironment()
    {
       refreshView();
+   }
+   
+   public void initialize(EnvironmentState environmentState)
+   {
+      environmentState_ = environmentState;
+      setBrowseMode(environmentState_.inBrowseMode());
+   }
+   
+   public void setBrowseMode(boolean browseMode)
+   {
+      inBrowseMode_ = browseMode;
+      view_.setBrowseMode(inBrowseMode_);
    }
    
    private void refreshView()
@@ -117,4 +143,6 @@ public class EnvironmentPresenter extends BasePresenter
    private final Display view_;
    private final EnvironmentServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private EnvironmentState environmentState_;
+   private boolean inBrowseMode_;
 }

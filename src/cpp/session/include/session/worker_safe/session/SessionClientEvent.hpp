@@ -97,6 +97,7 @@ extern const int kLoadedPackageUpdates;
 extern const int kActivatePane;
 extern const int kShowPresentationPane;
 extern const int kEnvironmentRefresh;
+extern const int kBrowseModeChanged;
 }
    
 class ClientEvent

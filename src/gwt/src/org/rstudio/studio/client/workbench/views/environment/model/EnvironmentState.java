@@ -1,7 +1,7 @@
 /*
- * SessionEnvironment.hpp
+ * EnvironmentState.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-13 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,25 +13,17 @@
  *
  */
 
-#ifndef SESSION_SESSION_ENVIRONMENT_HPP
-#define SESSION_SESSION_ENVIRONMENT_HPP
+package org.rstudio.studio.client.workbench.views.environment.model;
 
-#include <core/json/Json.hpp>
+import com.google.gwt.core.client.JavaScriptObject;
 
-namespace core {
-   class Error;
-}
- 
-namespace session {
-namespace modules {      
-namespace environment {
-
-core::json::Value environmentStateAsJson();
-
-core::Error initialize();
+public class EnvironmentState extends JavaScriptObject
+{
+   protected EnvironmentState()
+   {
+   }
    
-} // namespace environment
-} // namepace modules
-} // namesapce session
-
-#endif // SESSION_SESSION_ENVIRONMENT_HPP
+   public final native boolean inBrowseMode() /*-{
+      return this.browse_mode;
+   }-*/;   
+}

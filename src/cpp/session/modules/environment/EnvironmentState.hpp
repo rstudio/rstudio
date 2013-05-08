@@ -1,5 +1,5 @@
 /*
- * SessionEnvironment.hpp
+ * EnvironmentState.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,25 +13,29 @@
  *
  */
 
-#ifndef SESSION_SESSION_ENVIRONMENT_HPP
-#define SESSION_SESSION_ENVIRONMENT_HPP
+#ifndef ENVIRONMENTSTATE_HPP
+#define ENVIRONMENTSTATE_HPP
 
 #include <core/json/Json.hpp>
 
 namespace core {
    class Error;
 }
- 
-namespace session {
-namespace modules {      
-namespace environment {
 
-core::json::Value environmentStateAsJson();
+namespace session {
+namespace modules {
+namespace environment {
+namespace state {
+
+void init(bool inBrowseMode = false);
 
 core::Error initialize();
-   
-} // namespace environment
-} // namepace modules
+
+core::json::Value asJson();
+
+} // namespace state
+} // namespace presentation
+} // namespace modules
 } // namesapce session
 
-#endif // SESSION_SESSION_ENVIRONMENT_HPP
+#endif // ENVIRONMENTSTATE_HPP

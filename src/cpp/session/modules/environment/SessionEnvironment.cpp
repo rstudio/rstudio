@@ -14,12 +14,14 @@
  */
 
 #include "SessionEnvironment.hpp"
+#include "EnvironmentState.hpp"
 
 #include <algorithm>
 
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
+#include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -42,7 +44,8 @@ json::Object varToJson(const r::sexp::Variable& var)
 }
 
 Error listEnvironment(const json::JsonRpcRequest&,
-                      json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse* pResponse,
+                      boost::shared_ptr<bool> pInBrowse)
 {
    // list all of the variables in the global environment
    using namespace r::sexp;
@@ -68,19 +71,41 @@ void onDetectChanges(module_context::ChangeSource source)
 
 }
 
+void onConsolePrompt(boost::shared_ptr<bool> pInBrowse)
+{
+    bool browserContextActive = r::session::browserContextActive();
+    if (*pInBrowse != browserContextActive)
+    {
+        *pInBrowse = browserContextActive;
+        ClientEvent event (client_events::kBrowseModeChanged);
+        module_context::enqueClientEvent(event);
+    }
+}
+
 } // anonymous namespace
+
+json::Value environmentStateAsJson()
+{
+   return environment::state::asJson();
+}
 
 Error initialize()
 {
+   boost::shared_ptr<bool> pInBrowse = boost::make_shared<bool>(false);
+
    // subscribe to events
    using boost::bind;
    using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   events().onConsolePrompt.connect(bind(onConsolePrompt, pInBrowse));
+
+   json::JsonRpcFunction listEnv = boost::bind(listEnvironment, _1, _2, pInBrowse);
 
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "list_environment", listEnvironment))
+      (bind(environment::state::initialize))
+      (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

@@ -19,9 +19,8 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -51,12 +50,8 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      objectList_ = new ListBox();
-      objectList_.setVisibleItemCount(2);
-      objectList_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      objectList_.setHeight("100%");
-      
-      return objectList_;
+      objects_ = new EnvironmentObjects();
+      return objects_;
    }
 
    @Override
@@ -65,16 +60,21 @@ public class EnvironmentPane extends WorkbenchPane
       String itemText = object.getName() + " - " +
                         object.getType() + 
                         " [" + object.getLength() + "]";
-      objectList_.addItem(itemText, object.getName());
+      objects_.addObject(itemText);
+   }
+   
+   @Override
+   public void setBrowseMode(boolean browseMode)
+   {
+      objects_.setBrowseMode(browseMode);
    }
 
    @Override
    public void clearObjects()
    {
-      objectList_.clear();
+      objects_.clearObjects();
    }
    
-   private ListBox objectList_;
-   
+   private EnvironmentObjects objects_;
    private Commands commands_;
 }

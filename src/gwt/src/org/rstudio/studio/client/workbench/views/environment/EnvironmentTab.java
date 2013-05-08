@@ -18,10 +18,12 @@ package org.rstudio.studio.client.workbench.views.environment;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import com.google.inject.Inject;
 
 public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
@@ -31,11 +33,11 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
    public abstract static class Shim
          extends DelayLoadTabShim<EnvironmentPresenter, EnvironmentTab>
    {
-     
+      abstract void initialize(EnvironmentState environmentState);
    }
 
    @Inject
-   public EnvironmentTab(Shim shim,
+   public EnvironmentTab(final Shim shim,
                          Binder binder,
                          EventBus events,
                          Commands commands,
@@ -43,9 +45,18 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
    {
       super("Environment", shim);
       binder.bind(commands, shim);
-      
+    
       session_ = session;
-     
+      
+      events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+         
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            EnvironmentState environmentState = 
+                  session_.getSessionInfo().getEnvironmentState();
+            shim.initialize(environmentState);
+         }
+      });
    }
    
    @Override
