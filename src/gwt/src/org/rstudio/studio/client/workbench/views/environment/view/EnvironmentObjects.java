@@ -19,8 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class EnvironmentObjects extends Composite
@@ -41,7 +41,9 @@ public class EnvironmentObjects extends Composite
    
    public void addObject(String obj)
    {
-      this.objectList.addItem(obj);
+      Label objectLabel = new Label();
+      objectLabel.setText(obj);
+      this.objectList.add(objectLabel);
    }
    
    public void clearObjects()
@@ -54,6 +56,6 @@ public class EnvironmentObjects extends Composite
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
    }
    
-   @UiField ListBox objectList;
+   @UiField HTMLPanel objectList;
    @UiField Label browseMode; 
 }

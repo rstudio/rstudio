@@ -6,6 +6,6 @@
 	</ui:style>
 	<g:HTMLPanel>
 	  <g:Label ui:field="browseMode"></g:Label>
-	  <g:ListBox ui:field="objectList"></g:ListBox>
+	  <g:HTMLPanel ui:field="objectList"></g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder>

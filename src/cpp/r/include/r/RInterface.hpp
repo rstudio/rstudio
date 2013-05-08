@@ -17,6 +17,7 @@
 #define R_INTERFACE_HPP
 
 #include <string>
+#include <setjmp.h>
 
 #ifdef _WIN32
 
@@ -34,6 +35,7 @@ extern "C" void R_FlushConsole();
 extern "C" int R_SignalHandlers;
 extern "C" void run_Rmainloop();
 extern "C" void Rf_mainloop(void);
+extern "C" void* R_GlobalContext;
 
 typedef struct SEXPREC *SEXP;
 
@@ -43,6 +45,48 @@ typedef struct SEXPREC *SEXP;
 #include <Rinterface.h>
 
 #endif
+
+typedef struct RCNTXT {
+    struct RCNTXT *nextcontext;
+    int callflag;
+    sigjmp_buf cjmpbuf;
+    int cstacktop;
+    int evaldepth;
+    SEXP promargs;
+    SEXP callfun;
+    SEXP sysparent;
+    SEXP call;
+    SEXP cloenv;
+    SEXP conexit;
+    void (*cend)(void *);
+    void *cenddata;
+    void *vmax;
+    int intsusp;
+    SEXP handlerstack;
+    SEXP restartstack;
+    struct RPRSTACK *prstack;
+    SEXP *nodestack;
+#ifdef BC_INT_STACK
+    IStackval *intstack;
+#endif
+    SEXP srcref;
+} RCNTXT, *context;
+
+enum {
+    CTXT_TOPLEVEL = 0,
+    CTXT_NEXT	  = 1,
+    CTXT_BREAK	  = 2,
+    CTXT_LOOP	  = 3,
+    CTXT_FUNCTION = 4,
+    CTXT_CCODE	  = 8,
+    CTXT_RETURN	  = 12,
+    CTXT_BROWSER  = 16,
+    CTXT_GENERIC  = 20,
+    CTXT_RESTART  = 32,
+    CTXT_BUILTIN  = 64
+};
+
+inline RCNTXT* R_getGlobalContext() { return static_cast<RCNTXT*>(R_GlobalContext); }
 
 #endif // R_INTERFACE_HPP
 

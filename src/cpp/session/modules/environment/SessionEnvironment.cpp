@@ -22,7 +22,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/session/RSession.hpp>
-
+#include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace core ;
@@ -47,11 +47,20 @@ Error listEnvironment(const json::JsonRpcRequest&,
                       json::JsonRpcResponse* pResponse,
                       boost::shared_ptr<bool> pInBrowse)
 {
-   // list all of the variables in the global environment
    using namespace r::sexp;
    Protect rProtect;
    std::vector<Variable> vars;
-   listEnvironment(R_GlobalEnv, true, &rProtect, &vars);
+   RCNTXT* pRContext = R_getGlobalContext();
+   SEXP* pEnv = &R_GlobalEnv;
+   if (pRContext->evaldepth > 0)
+   {
+       while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
+       {
+           pRContext = pRContext->nextcontext;
+       }
+       pEnv = &(pRContext->cloenv);
+   }
+   listEnvironment(*pEnv, true, &rProtect, &vars);
 
    // get object details and transform to json
    json::Array listJson;
