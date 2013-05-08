@@ -432,12 +432,9 @@ public class GenerateJavaScriptAST {
     @Override
     public boolean visit(JTryStatement x, Context ctx) {
       accept(x.getTryBlock());
-
-      List<JLocalRef> catchArgs = x.getCatchArgs();
-      List<JBlock> catchBlocks = x.getCatchBlocks();
-      for (int i = 0, c = catchArgs.size(); i < c; ++i) {
-        JLocalRef arg = catchArgs.get(i);
-        JBlock catchBlock = catchBlocks.get(i);
+      for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
+        JLocalRef arg = clause.getArg();
+        JBlock catchBlock = clause.getBlock();
         JsCatch jsCatch = new JsCatch(x.getSourceInfo(), peek(), arg.getTarget().getName());
         JsParameter jsParam = jsCatch.getParameter();
         names.put(arg.getTarget(), jsParam.getName());
@@ -1466,12 +1463,12 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      int size = x.getCatchArgs().size();
-      assert (size < 2 && size == x.getCatchBlocks().size());
+      int size = x.getCatchClauses().size();
+      assert (size < 2);
       if (size == 1) {
         JsBlock catchBlock = (JsBlock) pop(); // catchBlocks
         pop(); // catchArgs
-        JsCatch jsCatch = catchMap.get(x.getCatchBlocks().get(0));
+        JsCatch jsCatch = catchMap.get(x.getCatchClauses().get(0).getBlock());
         jsCatch.setBody(catchBlock);
         jsTry.getCatches().add(jsCatch);
       }

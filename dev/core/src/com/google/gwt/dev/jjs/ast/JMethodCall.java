@@ -100,7 +100,8 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JType overrideReturnType) {
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
+      JType overrideReturnType) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic());

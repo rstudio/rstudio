@@ -37,30 +37,73 @@ public class Throwable implements Serializable {
    * to ensure that only the detailMessage field is serialized. Changing the
    * field modifiers below may necessitate a change to the server's
    * SerializabilityUtil.fieldQualifiesForSerialization(Field) method.
+   *
+   * TODO(rluble): Add remaining functionality for suppressed Exceptions (e.g.
+   * printing). Also review the class for missing Java 7 compatibility.
    */
   private transient Throwable cause;
   private String detailMessage;
+  private transient Throwable[] suppressedExceptions;
   private transient StackTraceElement[] stackTrace;
-
-  {
-    fillInStackTrace();
-  }
+  private transient boolean disableSuppression;
 
   public Throwable() {
+    fillInStackTrace();
   }
 
   public Throwable(String message) {
     this.detailMessage = message;
+    fillInStackTrace();
   }
 
   public Throwable(String message, Throwable cause) {
     this.cause = cause;
     this.detailMessage = message;
+    fillInStackTrace();
   }
 
   public Throwable(Throwable cause) {
     this.detailMessage = (cause == null) ? null : cause.toString();
     this.cause = cause;
+    fillInStackTrace();
+  }
+
+  /**
+   * Constructor that allows subclasses disabling exception suppression and stack traces.
+   * Those features should only be disabled in very specific cases.
+   */
+  protected Throwable(String message, Throwable cause, boolean enableSuppression,
+      boolean writetableStackTrace) {
+    if (writetableStackTrace) {
+      fillInStackTrace();
+    }
+    this.cause = cause;
+    this.detailMessage = message;
+    this.disableSuppression = !enableSuppression;
+  }
+
+  /**
+   * Call to add an exception that was suppressed. Used by try-with-resources.
+   */
+  public final void addSuppressed(Throwable exception) {
+    if (exception == null) {
+      throw new NullPointerException("Cannot suppress a null exception.");
+    }
+    if (exception == this) {
+      throw new IllegalArgumentException("Exception can not suppress itself.");
+    }
+
+    if (disableSuppression) {
+      return;
+    }
+
+    if (suppressedExceptions == null) {
+      suppressedExceptions = new Throwable[] { exception };
+    } else {
+      // TRICK: This is not correct Java (would give an OOBE, but it works in JS and
+      // this code will only be executed in JS.
+      suppressedExceptions[suppressedExceptions.length] = exception;
+    }
   }
 
   /**
@@ -95,6 +138,17 @@ public class Throwable implements Serializable {
       return new StackTraceElement[0];
     }
     return stackTrace;
+  }
+
+  /**
+   * Returns the array of Exception that this one suppressedExceptions.
+   */
+  public final Throwable[] getSuppressed() {
+    if (suppressedExceptions == null) {
+      suppressedExceptions = new Throwable[0];
+    }
+
+    return suppressedExceptions;
   }
 
   public Throwable initCause(Throwable cause) {

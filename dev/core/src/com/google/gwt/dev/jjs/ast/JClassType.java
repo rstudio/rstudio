@@ -50,7 +50,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
   /**
    * Construct a bare-bones deserialized external class.
    */
-  private JClassType(String name) {
+  JClassType(String name) {
     super(SourceOrigin.UNKNOWN, name);
     isAbstract = false;
     setExternal(true);

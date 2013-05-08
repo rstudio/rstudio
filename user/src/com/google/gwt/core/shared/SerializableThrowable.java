@@ -22,6 +22,7 @@ import com.google.gwt.core.shared.impl.ThrowableTypeResolver;
  * A serializable copy of a {@link Throwable}, including its causes and stack trace. It overrides
  * {@code #toString} to mimic original {@link Throwable#toString()} so that {@link #printStackTrace}
  * will work as if it is coming from the original exception.
+ *
  * <p>
  * This class is especially useful for logging and testing as the emulated Throwable class does not
  * serialize recursively and does not serialize the stack trace. This class, as an alternative, can
@@ -30,6 +31,8 @@ import com.google.gwt.core.shared.impl.ThrowableTypeResolver;
  * <p>
  * Please note that, to get more useful stack traces from client side, this class needs to be used
  * in conjunction with {@link com.google.gwt.core.server.StackTraceDeobfuscator}.
+ * <p>
+ * NOTE: Does not serialize suppressed exceptions to remain compatible with Java 6 and below.
  */
 public final class SerializableThrowable extends Throwable {
 

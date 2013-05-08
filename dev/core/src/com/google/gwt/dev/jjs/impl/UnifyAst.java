@@ -61,6 +61,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
@@ -315,6 +316,20 @@ public class UnifyAst {
     @Override
     public void endVisit(JThisRef x, Context ctx) {
       assert !x.getType().isExternal();
+    }
+
+    @Override
+    public void endVisit(JTryStatement x, Context ctx) {
+      // Needs to resolve the Exceptions Types explicitly they are multiple in Java 7 and
+      // potentially different from the one in the exception variable.
+      for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
+        List<JType> types = clause.getTypes();
+        for (int i = 0; i <  types.size(); i++) {
+          JReferenceType resolvedType = translate((JReferenceType) types.get(i));
+          assert resolvedType.replaces(types.get(i));
+          types.set(i, resolvedType);
+        }
+      }
     }
 
     @Override

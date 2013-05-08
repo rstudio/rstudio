@@ -34,7 +34,6 @@ import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -291,8 +290,8 @@ public class TypeTightener {
     public void endVisit(JTryStatement x, Context ctx) {
       // Never tighten args to catch blocks
       // Fake an assignment-to-self to prevent tightening
-      for (JLocalRef arg : x.getCatchArgs()) {
-        addAssignment(arg.getTarget(), arg);
+      for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
+        addAssignment(clause.getArg().getTarget(), clause.getArg());
       }
     }
 

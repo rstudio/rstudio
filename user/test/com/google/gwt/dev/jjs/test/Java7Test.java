@@ -49,4 +49,22 @@ public class Java7Test extends GWTTestCase {
 
   public void testSwitchOnString() {
   }
+
+  public void testResource() throws Exception {
+  }
+
+  public void test3Resources() throws Exception {
+  }
+
+  public void testResourcesWithExceptions() throws Exception {
+  }
+
+  public void testResourcesWithSuppressedExceptions() throws Exception {
+  }
+
+  public void testMultiExceptions() {
+  }
+
+  public void testAddSuppressedExceptions() {
+  }
 }

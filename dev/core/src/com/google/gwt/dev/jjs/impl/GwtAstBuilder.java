@@ -177,7 +177,9 @@ import org.eclipse.jdt.internal.compiler.ast.ThrowStatement;
 import org.eclipse.jdt.internal.compiler.ast.TrueLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TryStatement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.ast.UnaryExpression;
+import org.eclipse.jdt.internal.compiler.ast.UnionTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.WhileStatement;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
@@ -286,7 +288,8 @@ public class GwtAstBuilder {
         }
       }
 
-      private void processClassLiteral(JsNameRef nameRef, SourceInfo info, JType type, JsContext ctx) {
+      private void processClassLiteral(JsNameRef nameRef, SourceInfo info, JType type,
+          JsContext ctx) {
         assert !ctx.isLvalue();
         JsniClassLiteral classLiteral = new JsniClassLiteral(info, nameRef.getIdent(), type);
         nativeMethodBody.addClassRef(classLiteral);
@@ -1423,17 +1426,160 @@ public class GwtAstBuilder {
         List<JBlock> catchBlocks = pop(x.catchBlocks);
         JBlock tryBlock = pop(x.tryBlock);
 
-        List<JLocalRef> catchArgs = new ArrayList<JLocalRef>();
+        if (x.resources.length > 0) {
+          tryBlock = normalizeTryWithResources(info, x, tryBlock, scope);
+        }
+        List<JTryStatement.CatchClause> catchClauses =
+            new ArrayList<JTryStatement.CatchClause>();
         if (x.catchBlocks != null) {
-          for (Argument argument : x.catchArguments) {
+          for (int i = 0; i < x.catchArguments.length; i++) {
+            Argument argument = x.catchArguments[i];
             JLocal local = (JLocal) curMethod.locals.get(argument.binding);
-            catchArgs.add(new JLocalRef(info, local));
+
+            List<JType> catchTypes = new ArrayList<JType>();
+            if (argument.type instanceof UnionTypeReference) {
+              // This is a multiexception
+              for (TypeReference type : ((UnionTypeReference) argument.type).typeReferences) {
+                catchTypes.add(typeMap.get(type.resolvedType));
+              }
+            } else {
+              // Regular exception
+              catchTypes.add(local.getType());
+            }
+            catchClauses.add(new JTryStatement.CatchClause(catchTypes, new JLocalRef(info, local),
+                catchBlocks.get(i)));
           }
         }
-        push(new JTryStatement(info, tryBlock, catchArgs, catchBlocks, finallyBlock));
+        push(new JTryStatement(info, tryBlock, catchClauses, finallyBlock));
       } catch (Throwable e) {
         throw translateException(x, e);
       }
+    }
+
+    private JBlock normalizeTryWithResources(SourceInfo info, TryStatement x, JBlock tryBlock,
+        BlockScope scope) {
+      /**
+       * Apply the following source transformation:
+       *
+       * try (A1 a1 = new A1(); ... ; An an = new An()) {
+       *   ... tryBlock...
+       *  } ...catch/finally blocks
+       *
+       *  to
+       *
+       * try {
+       *   A1 a1 = new A1();... ; An an = new An();
+       *   Throwable $exception = null;
+       *   try {
+       *     ... tryBlock...
+       *   } catch (Throwable t) {
+       *     $exception = t;
+       *     throw t;
+       *   } finally {
+       *    $exception = Exceptions.safeClose(an, $exception);
+       *    ...
+       *    $exception = Exceptions.safeClose(a1, $exception);
+       *  if ($exception != null) {
+       *    throw $exception;
+       *  }
+       * } ...catch/finally blocks
+       *
+       */
+
+      JBlock innerBlock = new JBlock(info);
+      // add resource variables
+      List<JLocal> resourceVariables = new ArrayList<JLocal>();
+      for (int i = x.resources.length - 1; i >= 0; i--) {
+        // Needs to iterate back to front to be inline with the contents of the stack.
+
+        JDeclarationStatement resourceDecl = pop(x.resources[i]);
+
+        JLocal resourceVar = (JLocal) curMethod.locals.get(x.resources[i].binding);
+        resourceVariables.add(0, resourceVar);
+        innerBlock.addStmt(0, resourceDecl);
+      }
+
+      // add exception variable
+      JLocal exceptionVar =
+          createTempLocal(info, "$primary_ex", javaLangThrowable, false, curMethod.body);
+
+      innerBlock.addStmt(makeDeclaration(info, exceptionVar, JNullLiteral.INSTANCE));
+
+      // create catch block
+      List<JTryStatement.CatchClause> catchClauses = new ArrayList<JTryStatement.CatchClause>(1);
+
+      List<JType> clauseTypes = new ArrayList<JType>(1);
+      clauseTypes.add(javaLangThrowable);
+
+      //     add catch exception variable.
+      JLocal catchVar =
+          createTempLocal(info, "$caught_ex", javaLangThrowable, false, curMethod.body);
+
+      JBlock catchBlock = new JBlock(info);
+      catchBlock.addStmt(createAssignment(info, javaLangThrowable, exceptionVar, catchVar));
+      catchBlock.addStmt(new JThrowStatement(info, new JLocalRef(info, exceptionVar)));
+
+      catchClauses.add(new JTryStatement.CatchClause(clauseTypes, new JLocalRef(info, catchVar),
+          catchBlock));
+
+      // create finally block
+      JBlock finallyBlock = new JBlock(info);
+      for (int i = x.resources.length - 1; i >= 0; i--) {
+        finallyBlock.addStmt(createCloseBlockFor(info, x.resources[i],
+            resourceVariables.get(i), exceptionVar, scope));
+      }
+
+      // if (exception != null) throw exception
+      JExpression exceptionNotNull = new JBinaryOperation(info, JPrimitiveType.BOOLEAN,
+          JBinaryOperator.NEQ, new JLocalRef(info, exceptionVar), JNullLiteral.INSTANCE);
+      finallyBlock.addStmt(new JIfStatement(info, exceptionNotNull,
+          new JThrowStatement(info, new JLocalRef(info, exceptionVar)), null));
+
+      // Stitch all together into a inner try block
+      innerBlock.addStmt(new JTryStatement(info, tryBlock, catchClauses,
+            finallyBlock));
+      return innerBlock;
+    }
+
+    private JLocal createTempLocal(SourceInfo info, String prefix, JType type, boolean isFinal,
+        JMethodBody enclosingMethodBody) {
+      int index = curMethod.body.getLocals().size() + 1;
+      return JProgram.createLocal(info, prefix + "_" + index,
+            javaLangThrowable, false, curMethod.body);
+    }
+
+    private JStatement createCloseBlockFor(final SourceInfo info, final LocalDeclaration resource,
+        JLocal resourceVar, JLocal exceptionVar, BlockScope scope) {
+      /**
+       * Create the following code:
+       *
+       * $ex = Exceptions.safeClose(resource, $ex);
+       *
+       * which is equivalent to
+       *
+       * if (resource != null) {
+       *   try {
+       *     resource.close();
+       *   } catch (Throwable t) {
+       *     if ($ex == null) {
+       *       $ex = t;
+       *     } else {
+       *      $ex.addSuppressed(t);
+       *     }
+       *   }
+       */
+
+      JMethodCall safeCloseCall = new JMethodCall(info, null, SAFE_CLOSE_METHOD);
+      safeCloseCall.addArg(0, new JLocalRef(info, resourceVar));
+      safeCloseCall.addArg(1, new JLocalRef(info, exceptionVar));
+
+      return new JBinaryOperation(info, javaLangThrowable, JBinaryOperator.ASG, new JLocalRef(info,
+          exceptionVar), safeCloseCall).makeStatement();
+    }
+
+    private JStatement createAssignment(SourceInfo info, JType type, JLocal lhs, JLocal rhs) {
+      return new JBinaryOperation(info, type, JBinaryOperator.ASG, new JLocalRef(info, lhs),
+          new JLocalRef(info, rhs)).makeStatement();
     }
 
     @Override
@@ -2784,6 +2930,8 @@ public class GwtAstBuilder {
   private static final char[] VALUE = "Value".toCharArray();
   private static final char[] VALUE_OF = "valueOf".toCharArray();
   private static final char[] VALUES = "values".toCharArray();
+  private static final char[] CLOSE = "close".toCharArray();
+  private static final char[] ADDSUPRESSED = "addSuppressed".toCharArray();
 
   static {
     InternalCompilerException.preload();
@@ -2896,6 +3044,8 @@ public class GwtAstBuilder {
 
   JClassType javaLangString = null;
 
+  JClassType javaLangThrowable = null;
+
   Map<MethodDeclaration, JsniMethod> jsniMethods;
 
   Map<String, Binding> jsniRefs;
@@ -2907,6 +3057,16 @@ public class GwtAstBuilder {
   private List<JDeclaredType> newTypes;
 
   private String sourceMapPath;
+
+  /**
+   * Externalized class and method form for Exceptions.safeClose() to provide support
+   * for try-with-resources.
+   *
+   * The externalized form will be resolved during AST stitching.
+   */
+  static JMethod SAFE_CLOSE_METHOD = JMethod.getExternalizedMethod("com.google.gwt.lang.Exceptions",
+      "safeClose(Ljava/lang/AutoCloseable;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
+
 
   /**
    * Builds all the GWT AST nodes that correspond to one Java source file.
@@ -2939,6 +3099,7 @@ public class GwtAstBuilder {
     javaLangObject = (JClassType) typeMap.get(cud.scope.getJavaLangObject());
     javaLangString = (JClassType) typeMap.get(cud.scope.getJavaLangString());
     javaLangClass = (JClassType) typeMap.get(cud.scope.getJavaLangClass());
+    javaLangThrowable = (JClassType) typeMap.get(cud.scope.getJavaLangThrowable());
 
     for (TypeDeclaration typeDecl : cud.types) {
       // Resolve super type / interface relationships.
@@ -2964,7 +3125,7 @@ public class GwtAstBuilder {
     javaLangObject = null;
     javaLangString = null;
     javaLangClass = null;
-
+    javaLangThrowable = null;
     return result;
   }
 

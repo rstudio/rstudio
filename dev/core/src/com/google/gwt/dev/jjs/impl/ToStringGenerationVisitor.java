@@ -132,6 +132,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_NATIVE = "native ".toCharArray();
   protected static final char[] CHARS_NEW = "new ".toCharArray();
   protected static final char[] CHARS_NULL = "null".toCharArray();
+  protected static final char[] CHARS_PIPE = " | ".toCharArray();
   protected static final char[] CHARS_PRIVATE = "private ".toCharArray();
   protected static final char[] CHARS_PROTECTED = "protected ".toCharArray();
   protected static final char[] CHARS_PUBLIC = "public ".toCharArray();
@@ -887,15 +888,22 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   public boolean visit(JTryStatement x, Context ctx) {
     print(CHARS_TRY);
     accept(x.getTryBlock());
-    for (int i = 0, c = x.getCatchArgs().size(); i < c; ++i) {
+    for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
       print(CHARS_CATCH);
       lparen();
-      JLocalRef localRef = x.getCatchArgs().get(i);
-      accept(localRef.getTarget());
+
+      Iterator<JType> it = clause.getTypes().iterator();
+      printTypeName(it.next());
+      while (it.hasNext()) {
+        print(CHARS_PIPE);
+        printTypeName(it.next());
+      }
+      space();
+
+      printName(clause.getArg().getTarget());
       rparen();
       space();
-      JBlock block = x.getCatchBlocks().get(i);
-      accept(block);
+      accept(clause.getBlock());
     }
     if (x.getFinallyBlock() != null) {
       print(CHARS_FINALLY);
@@ -1150,11 +1158,15 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   protected void visitCollectionWithCommas(Iterator<? extends JNode> iter) {
+    visitCollectionWith(CHARS_COMMA, iter);
+  }
+
+  protected void visitCollectionWith(char[] ch, Iterator<? extends JNode> iter) {
     if (iter.hasNext()) {
       accept(iter.next());
     }
     while (iter.hasNext()) {
-      print(CHARS_COMMA);
+      print(ch);
       accept(iter.next());
     }
   }

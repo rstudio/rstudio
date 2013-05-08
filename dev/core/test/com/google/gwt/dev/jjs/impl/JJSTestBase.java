@@ -255,12 +255,29 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
 
+    sourceOracle.addOrReplace(new MockJavaResource("java.lang.AutoCloseable") {
+      @Override
+      public CharSequence getContent() {
+        return ""
+            + "package java.lang;"
+            + "public interface AutoCloseable { "
+            + "  void close() throws Exception;"
+            + "}";
+      }
+    });
+
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Exceptions") {
       @Override
       public CharSequence getContent() {
-        return "package com.google.gwt.lang;" +
-          "public class Exceptions { static boolean throwAssertionError() { throw new RuntimeException(); } }";
-      }
+        return ""
+            + "package com.google.gwt.lang;"
+            + "public class Exceptions { "
+            + "  static boolean throwAssertionError() { throw new RuntimeException(); }"
+            + "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {"
+            + "    return mainException;"
+            + "  } "
+            + "}";
+        }
     });
 
     sourceOracle.addOrReplace(new MockJavaResource("java.lang.String") {

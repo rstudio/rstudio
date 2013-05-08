@@ -65,5 +65,29 @@ final class Exceptions {
   static boolean throwAssertionError_Object(Object message) {
     throw new AssertionError(message);
   }
+
+  /**
+   * Use by the try-with-resources construct. Look at
+   * {@link com.google.gwt.dev.jjs.impl.GwtAstBuilder.createCloseBlockFor}.
+   *
+   * @param resource a resource implementing the AutoCloseable interface.
+   * @param mainException  an exception being propagated.
+   * @return an exception to propagate or {@code null} if none.
+   */
+  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {
+    if (resource == null) {
+      return mainException;
+    }
+
+    try {
+      resource.close();
+    } catch (Throwable e) {
+      if (mainException == null) {
+        return e;
+      }
+      mainException.addSuppressed(e);
+    }
+    return mainException;
+  }
   // CHECKSTYLE_ON
 }

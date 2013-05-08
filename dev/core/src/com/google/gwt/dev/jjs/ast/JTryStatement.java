@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -24,27 +25,58 @@ import java.util.List;
  */
 public class JTryStatement extends JStatement {
 
-  private final List<JLocalRef> catchArgs;
-  private final List<JBlock> catchBlocks;
+  /**
+   * Represents the catch clause parts of the try statement.
+   */
+  public static class CatchClause implements Serializable {
+    private final List<JType> catchTypes;
+    private final JLocalRef arg;
+    private final JBlock block;
+
+    public CatchClause(List<JType> catchTypes, JLocalRef arg, JBlock block) {
+      this.catchTypes = catchTypes;
+      this.arg = arg;
+      this.block = block;
+    }
+
+    public List<JType> getTypes() {
+      return catchTypes;
+    }
+
+    public JLocalRef getArg() {
+      return arg;
+    }
+
+    public JBlock getBlock() {
+      return block;
+    }
+  }
+
+  private final List<CatchClause> catchClauses;
   private final JBlock finallyBlock;
   private final JBlock tryBlock;
 
-  public JTryStatement(SourceInfo info, JBlock tryBlock, List<JLocalRef> catchArgs,
-      List<JBlock> catchBlocks, JBlock finallyBlock) {
+  /**
+   * Construct a Java try statement.
+   *
+   * Parameters catchTypes, catchArgs and catchBlocks must agree on size. Each element of each
+   * of these lists corresponds to a catch statement.
+   *
+   * @param info the source information.
+   * @param tryBlock the statement block inside the try construct.
+   * @param catchClauses  each element of this list contains a catch clause.
+   * @param finallyBlock the statement block corresponding to the finally construct.
+   */
+  public JTryStatement(SourceInfo info, JBlock tryBlock, List<CatchClause> catchClauses,
+      JBlock finallyBlock) {
     super(info);
-    assert (catchArgs.size() == catchBlocks.size());
     this.tryBlock = tryBlock;
-    this.catchArgs = catchArgs;
-    this.catchBlocks = catchBlocks;
+    this.catchClauses = catchClauses;
     this.finallyBlock = finallyBlock;
   }
 
-  public List<JLocalRef> getCatchArgs() {
-    return catchArgs;
-  }
-
-  public List<JBlock> getCatchBlocks() {
-    return catchBlocks;
+  public List<CatchClause> getCatchClauses() {
+    return catchClauses;
   }
 
   public JBlock getFinallyBlock() {
@@ -58,8 +90,11 @@ public class JTryStatement extends JStatement {
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(tryBlock);
-      visitor.accept(catchArgs);
-      visitor.accept(catchBlocks);
+
+      for (CatchClause clause : catchClauses) {
+        visitor.accept(clause.getArg());
+        visitor.accept(clause.getBlock());
+      }
       // TODO: normalize this so it's never null?
       if (finallyBlock != null) {
         visitor.accept(finallyBlock);

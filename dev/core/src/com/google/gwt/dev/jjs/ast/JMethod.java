@@ -47,7 +47,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
     }
 
     private Object readResolve() {
-      return new JMethod(signature, enclosingType);
+      return new JMethod(signature, enclosingType, false);
     }
   }
 
@@ -141,15 +141,30 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   }
 
   /**
+   * Creates an externalized representation for a method that needs to be resolved.
+   * Useful to refer to methods of magic classes during GwtAstBuilder execution.
+   *
+   * @param fullClassName the class where the method is defined.
+   * @param signature the signature of the method (including its name).
+   *
+   */
+  public static JMethod getExternalizedMethod(String fullClassName, String signature,
+      boolean isStatic) {
+
+    JClassType cls = new JClassType(fullClassName);
+    return new JMethod(signature, cls, isStatic);
+  }
+
+  /**
    * Construct a bare-bones deserialized external method.
    */
-  private JMethod(String signature, JDeclaredType enclosingType) {
+  private JMethod(String signature, JDeclaredType enclosingType, boolean isStatic) {
     super(SourceOrigin.UNKNOWN);
     this.name = signature.substring(0, signature.indexOf('('));
     this.enclosingType = enclosingType;
     this.signature = signature;
     this.isAbstract = false;
-    this.isStatic = false;
+    this.isStatic = isStatic;
     this.access = AccessModifier.PUBLIC.ordinal();
   }
 

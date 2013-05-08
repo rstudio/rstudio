@@ -32,10 +32,14 @@ import com.google.gwt.dev.util.arg.SourceLevel;
  */
 public class Java7AstTest extends JJSTestBase {
 
+  // TODO(rluble): add similar tests to ensure that the AST construction is correct for all types
+  // of nodes.
   @Override
   public void setUp() {
     sourceLevel = SourceLevel.JAVA7;
-    addAll(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T);
+    addAll(Java7MockResources.LIST_T, Java7MockResources.ARRAYLIST_T,
+        JavaResourceBase.AUTOCLOSEABLE, Java7MockResources.TEST_RESOURCE,
+        Java7MockResources.EXCEPTION1, Java7MockResources.EXCEPTION2);
   }
 
   public void testCompileNewStyleLiterals() throws Exception {
@@ -115,5 +119,4 @@ public class Java7AstTest extends JJSTestBase {
     JMethodBody body = (JMethodBody) mainMethod.getBody();
     return body.getBlock();
   }
-
 }

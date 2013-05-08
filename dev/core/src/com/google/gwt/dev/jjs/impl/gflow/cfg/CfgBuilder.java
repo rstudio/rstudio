@@ -763,7 +763,8 @@ public class CfgBuilder {
       List<Integer> catchBlockPos = new ArrayList<Integer>();
       List<List<Exit>> catchExits = new ArrayList<List<Exit>>();
 
-      for (JBlock b : x.getCatchBlocks()) {
+      for (JTryStatement.CatchClause clause : x.getCatchClauses()) {
+        JBlock b = clause.getBlock();
         catchBlockPos.add(nodes.size());
         accept(b);
         catchExits.add(removeCurrentExits());
@@ -790,12 +791,16 @@ public class CfgBuilder {
           if (e.isThrow()) {
             // If execution of the try block completes abruptly because of a
             // throw of a value V, then there is a choice:
-            nextCatchBlock : for (int i = 0; i < x.getCatchArgs().size(); ++i) {
+            nextCatchBlock : for (int i = 0; i < x.getCatchClauses().size(); ++i) {
               // If the run-time type of V is assignable (�5.2) to the
               // Parameter of any catch clause of the try statement, then
               // the first (leftmost) such catch clause is selected.
-              JClassType catchType = 
-                (JClassType) x.getCatchArgs().get(i).getType();
+
+              // TODO(rluble): we are safely overapproximating the exception
+              // caught in this block by the type of the exception variable.
+              // We could do better in multiexceptions.
+              JClassType catchType =
+                (JClassType) x.getCatchClauses().get(i).getArg().getType();
               JType exceptionType = e.getExceptionType();
 
               boolean canCatch = false;
@@ -806,7 +811,12 @@ public class CfgBuilder {
                 // Catch clause fully covers exception type. We'll land
                 // here for sure.
                 canCatch = true;
-                fullCatch = true;
+                // Safe approximation. If it is a multi exception with only one
+                // exception declared in the clause then the variable is of the
+                // the same type as the exception declared  and the approximation
+                // is exact hence and this is a full catch. 
+                fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
+                    x.getCatchClauses().get(i).getTypes().get(0) == catchType;
               } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
                 // We can land here if we throw some subclass of
                 // exceptionType
@@ -864,12 +874,16 @@ public class CfgBuilder {
             // If execution of the try block completes abruptly because of a
             // throw of a value V, then there is a choice:
 
-            nextCatchBlock : for (int i = 0; i < x.getCatchArgs().size(); ++i) {
+            nextCatchBlock : for (int i = 0; i < x.getCatchClauses().size(); ++i) {
               // If the run-time type of V is assignable to the parameter of any
               // catch clause of the try statement, then the first
               // (leftmost) such catch clause is selected.
-              JClassType catchType = 
-                (JClassType) x.getCatchArgs().get(i).getType();
+
+              // TODO(rluble): we are safely overapproximating the exception
+              // caught in this block by the type of the exception variable.
+              // We could do better in multiexceptions.
+              JClassType catchType =
+                (JClassType) x.getCatchClauses().get(i).getArg().getType();
               JType exceptionType = e.getExceptionType();
 
               boolean canCatch = false;
@@ -880,7 +894,12 @@ public class CfgBuilder {
                 // Catch clause fully covers exception type. We'll land
                 // here for sure.
                 canCatch = true;
-                fullCatch = true;
+                // Safe approximation. If it is a multi exception with only one
+                // exception declared in the clause then the variable is of the
+                // the same type as the exception declared  and the approximation
+                // is exact hence and this is a full catch. 
+                fullCatch = x.getCatchClauses().get(i).getTypes().size() == 1 &&
+                    x.getCatchClauses().get(i).getTypes().get(0) == catchType;
               } else if (typeOracle.canTriviallyCast(catchType, exceptionType)) {
                 // We can land here if we throw some subclass of
                 // exceptionType
