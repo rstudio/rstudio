@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler to enable draft compiles.
+ * Compiles quickly with minimal optimizations.
  */
 public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
@@ -46,24 +46,34 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
   }
 
   @Override
-  public String getPurpose() {
-    return "Enable faster, but less-optimized, compilations";
+  public String getPurposeSnippet() {
+    return "Compile quickly with minimal optimizations.";
   }
 
   @Override
-  public String getTag() {
-    return "-draftCompile";
+  public String getLabel() {
+    return "draftCompile";
   }
 
   @Override
-  public boolean setFlag() {
-    optimizeOption.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
-    aggressivelyOptimizeOption.setAggressivelyOptimize(false);
-    clusterSimilarFunctionsOption.setClusterSimilarFunctions(false);
-    inlineLiteralParametersOption.setInlineLiteralParameters(false);
-    optimizeDataflowOption.setOptimizeDataflow(false);
-    ordinalizeEnumsOption.setOrdinalizeEnums(false);
-    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(false);
+  public boolean setFlag(boolean value) {
+    int optimizeLevel =
+        value ? OptionOptimize.OPTIMIZE_LEVEL_DRAFT : OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
+    optimizeOption.setOptimizationLevel(optimizeLevel);
+
+    aggressivelyOptimizeOption.setAggressivelyOptimize(!value);
+    clusterSimilarFunctionsOption.setClusterSimilarFunctions(!value);
+    inlineLiteralParametersOption.setInlineLiteralParameters(!value);
+    optimizeDataflowOption.setOptimizeDataflow(!value);
+    ordinalizeEnumsOption.setOrdinalizeEnums(!value);
+    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(!value);
+
     return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return optimizeOption.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_DRAFT
+        && !aggressivelyOptimizeOption.isAggressivelyOptimize();
   }
 }

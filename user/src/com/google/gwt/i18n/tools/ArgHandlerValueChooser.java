@@ -48,33 +48,38 @@ class ArgHandlerValueChooser {
   }
 
   /**
-   * Retrieve the argument handler for -createConstantsWithLookup.
-   *
+   * Creates scripts for a ConstantsWithLookup interface rather than a Constants one.
+   * 
    * @return a flag argument handler
    */
-   ArgHandler getConstantsWithLookupArgHandler() {
+  ArgHandler getConstantsWithLookupArgHandler() {
     if (cwlArgHandler == null) {
       cwlArgHandler = new ArgHandlerFlag() {
 
         @Override
-        public String getPurpose() {
+        public String getPurposeSnippet() {
           return "Create scripts for a ConstantsWithLookup interface "
-              + "rather than a Constants one";
+              + "rather than a Constants one.";
         }
 
         @Override
-        public String getTag() {
-          return "-createConstantsWithLookup";
+        public String getLabel() {
+          return "createConstantsWithLookup";
         }
 
         @Override
-        public boolean setFlag() {
-          if (argValue == Messages.class) {
+        public boolean setFlag(boolean value) {
+          if (value && argValue == Messages.class) {
             System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
             return false;
           }
-          argValue = ConstantsWithLookup.class;
+          argValue = value ? ConstantsWithLookup.class : Constants.class;
           return true;
+        }
+
+        @Override
+        public boolean getDefaultValue() {
+          return argValue == ConstantsWithLookup.class;
         }
       };
     }
@@ -82,8 +87,8 @@ class ArgHandlerValueChooser {
   }
 
   /**
-   * Retrieves the -createMessages argument handler.
-   *
+   * Creates scripts for a Messages interface rather than a Constants one.
+   * 
    * @return a flag argument handler
    */
   ArgHandler getMessagesArgHandler() {
@@ -91,24 +96,28 @@ class ArgHandlerValueChooser {
       messagesArgHandler = new ArgHandlerFlag() {
 
         @Override
-        public String getPurpose() {
-          return "Create scripts for a Messages interface "
-              + "rather than a Constants one";
+        public String getPurposeSnippet() {
+          return "Create scripts for a Messages interface rather than a Constants one.";
         }
 
         @Override
-        public String getTag() {
-          return "-createMessages";
+        public String getLabel() {
+          return "createMessages";
         }
 
         @Override
-        public boolean setFlag() {
-          if (argValue == ConstantsWithLookup.class) {
+        public boolean setFlag(boolean value) {
+          if (value && argValue == ConstantsWithLookup.class) {
             System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
             return false;
           }
-          argValue = Messages.class;
+          argValue = value ? Messages.class : Constants.class;
           return true;
+        }
+
+        @Override
+        public boolean getDefaultValue() {
+          return argValue == Messages.class;
         }
       };
     }

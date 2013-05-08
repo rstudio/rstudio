@@ -68,11 +68,11 @@ public final class WebAppCreator {
       registerHandler(new ArgHandlerTemplates());
       registerHandler(new ArgHandlerModuleName());
       registerHandler(new ArgHandlerOutDirExtension());
-      registerHandler(new ArgHandlerNoEclipse());
-      registerHandler(new ArgHandlerOnlyEclipse());
+      registerHandler(new ArgHandlerCreateEclipseProject());
+      registerHandler(new ArgHandlerCreateEclipseProjectOnly());
       registerHandler(new ArgHandlerJUnitPath());
-      registerHandler(new ArgHandlerMaven());
-      registerHandler(new ArgHandlerNoAnt());
+      registerHandler(new ArgHandlerCreateMavenProject());
+      registerHandler(new ArgHandlerCreateAntFile());
     }
 
     @Override
@@ -82,14 +82,20 @@ public final class WebAppCreator {
   }
 
   private final class ArgHandlerIgnoreExtension extends ArgHandlerIgnore {
+
     @Override
-    public boolean setFlag() {
-      if (overwrite) {
+    public boolean setFlag(boolean value) {
+      if (value && overwrite) {
         System.err.println("-ignore cannot be used with -overwrite");
         return false;
       }
-      ignore = true;
+      ignore = value;
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return ignore;
     }
   }
 
@@ -132,28 +138,36 @@ public final class WebAppCreator {
     }
   }
 
-  private final class ArgHandlerMaven extends ArgHandlerFlag {
+  private final class ArgHandlerCreateMavenProject extends ArgHandlerFlag {
+
     @Override
-    public String getPurpose() {
-      return "Deprecated. Create a maven2 project structure and pom file (default disabled). "
+    public String getPurposeSnippet() {
+      return "DEPRECATED: Create a maven2 project structure and pom file (default disabled). "
           + "Equivalent to specifying 'maven' in the list of templates.";
     }
 
     @Override
-    public String getTag() {
-      return "-maven";
+    public String getLabel() {
+      return "maven";
     }
 
     @Override
-    public boolean setFlag() {
-      if (onlyEclipse) {
+    public boolean setFlag(boolean value) {
+      if (value && onlyEclipse) {
         System.err.println("-maven and -XonlyEclipse cannot be used at the same time.");
         return false;
       }
-      if (!templates.contains("maven")) {
+      if (value) {
         templates.add("maven");
+      } else {
+        templates.remove("maven");
       }
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return templates.contains("maven");
     }
   }
 
@@ -192,46 +206,64 @@ public final class WebAppCreator {
     }
   }
 
-  private final class ArgHandlerNoAnt extends ArgHandlerFlag {
+  private final class ArgHandlerCreateAntFile extends ArgHandlerFlag {
+
     @Override
-    public String getPurpose() {
-      return "Deprecated. Do not create an ant configuration file. "
-          + "Equivalent to not specifying 'ant' in the list of templates.";
+    public String getPurposeSnippet() {
+      return "DEPRECATED: Create an ant configuration file. "
+          + "Equivalent to specifying 'ant' in the list of templates.";
     }
 
     @Override
-    public String getTag() {
-      return "-noant";
+    public String getLabel() {
+      return "ant";
     }
 
     @Override
-    public boolean setFlag() {
+    public boolean setFlag(final boolean value) {
       argProcessingToDos.add(new Procrastinator() {
         @Override
         public void stopProcratinating() {
-          if (templates.contains("maven")) {
-            System.err.println("-maven and -noant are redundant. Continuing.");
-          }
-          if (templates.contains("ant")) {
-            System.err.println("Removing ant template from generated output.");
-            templates.remove("ant");
+          if (!value) {
+            if (templates.contains("maven")) {
+              System.err.println("-maven and -noant are redundant. Continuing.");
+            }
+            if (templates.contains("ant")) {
+              System.err.println("Removing ant template from generated output.");
+              templates.remove("ant");
+            }
+          } else {
+            if (!templates.contains("ant")) {
+              System.err.println("Adding ant template to generated output.");
+              templates.add("ant");
+            }
           }
         }
       });
       return true;
     }
+
+    @Override
+    public boolean getDefaultValue() {
+      return templates.contains("ant");
+    }
   }
 
-  private final class ArgHandlerNoEclipse extends ArgHandlerFlag {
-    @Override
-    public String getPurpose() {
-      return "Deprecated. Do not generate eclipse files. "
-          + "Equivalent to not specifying 'eclipse' in the list of templates";
+  private final class ArgHandlerCreateEclipseProject extends ArgHandlerFlag {
+
+    public ArgHandlerCreateEclipseProject() {
+      addTagValue("-XnoEclipse", false);
     }
 
     @Override
-    public String getTag() {
-      return "-XnoEclipse";
+    public String getPurposeSnippet() {
+      return "DEPRECATED: Generate eclipse files. Equivalent to specifying "
+          + "'eclipse' in the list of templates.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "createEclipseProject";
     }
 
     @Override
@@ -240,38 +272,57 @@ public final class WebAppCreator {
     }
 
     @Override
-    public boolean setFlag() {
-      if (onlyEclipse) {
-        System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
-        return false;
-      }
-      if (!templates.contains("maven")) {
-        System.err.println("-maven and -XnoEclipse are redundant. Continuing.");
-      }
-      noEclipse = true;
-      argProcessingToDos.add(new Procrastinator() {
-        @Override
-        public void stopProcratinating() {
-          if (templates.contains("eclipse")) {
-            System.err.println("Removing eclipse template from generated output.");
-            templates.remove("eclipse");
-          }
+    public boolean setFlag(boolean value) {
+      if (!value) {
+        if (onlyEclipse) {
+          System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
+          return false;
         }
-      });
+        if (!templates.contains("maven")) {
+          System.err.println("-maven and -XnoEclipse are redundant. Continuing.");
+        }
+        noEclipse = true;
+        argProcessingToDos.add(new Procrastinator() {
+          @Override
+          public void stopProcratinating() {
+            if (noEclipse && templates.contains("eclipse")) {
+              System.err.println("Removing eclipse template from generated output.");
+              templates.remove("eclipse");
+            }
+          }
+        });
+      } else {
+        noEclipse = false;
+      }
       return true;
+    }
+
+    @Override
+    public boolean isExperimental() {
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return !noEclipse;
     }
   }
 
-  private final class ArgHandlerOnlyEclipse extends ArgHandlerFlag {
+  private final class ArgHandlerCreateEclipseProjectOnly extends ArgHandlerFlag {
+
+    public ArgHandlerCreateEclipseProjectOnly() {
+      addTagValue("-XonlyEclipse", true);
+    }
+
     @Override
-    public String getPurpose() {
-      return "Deprecated. Generate only eclipse files. "
+    public String getPurposeSnippet() {
+      return "DEPRECATED: Generate only eclipse files. "
           + "Equivalent to only specifying 'eclipse' in the list of templates.";
     }
 
     @Override
-    public String getTag() {
-      return "-XonlyEclipse";
+    public String getLabel() {
+      return "createEclipseProjectOnly";
     }
 
     @Override
@@ -280,37 +331,59 @@ public final class WebAppCreator {
     }
 
     @Override
-    public boolean setFlag() {
-      if (noEclipse) {
-        System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
-        return false;
-      }
-      if (templates.contains("maven")) {
-        System.err.println("-maven and -XonlyEclipse cannot be used at the same time.");
-        return false;
-      }
-      onlyEclipse = true;
-      argProcessingToDos.add(new Procrastinator() {
-        @Override
-        public void stopProcratinating() {
-          System.err.println("Removing all templates but 'eclipse' from generated output.");
-          templates.clear();
-          templates.add("eclipse");
+    public boolean setFlag(boolean value) {
+      if (value) {
+        if (noEclipse) {
+          System.err.println("-XonlyEclipse and -XnoEclipse cannot be used at the same time.");
+          return false;
         }
-      });
+        if (templates.contains("maven")) {
+          System.err.println("-maven and -XonlyEclipse cannot be used at the same time.");
+          return false;
+        }
+        onlyEclipse = true;
+        argProcessingToDos.add(new Procrastinator() {
+          @Override
+          public void stopProcratinating() {
+            if (onlyEclipse) {
+              System.err.println("Removing all templates but 'eclipse' from generated output.");
+              templates.clear();
+              templates.add("eclipse");
+            }
+          }
+        });
+      } else {
+        onlyEclipse = false;
+      }
       return true;
+    }
+    
+    @Override
+    public boolean isExperimental() {
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return onlyEclipse;
     }
   }
 
   private final class ArgHandlerOverwriteExtension extends ArgHandlerOverwrite {
+
     @Override
-    public boolean setFlag() {
-      if (ignore) {
+    public boolean setFlag(boolean value) {
+      if (value && ignore) {
         System.err.println("-overwrite cannot be used with -ignore");
         return false;
       }
-      overwrite = true;
+      overwrite = value;
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return overwrite;
     }
   }
 

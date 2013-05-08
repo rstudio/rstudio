@@ -19,20 +19,20 @@ import com.google.gwt.util.tools.ArgHandlerInt;
 
 /**
  * Set the optimization level from the command line.  For now, level 1 is the same
- * as draft compile, and level 9 is the same as the default (maximium optimization).
+ * as draft compile, and level 9 is the same as the default (maximum optimization).
  * 
  * TODO(zundel): In theory, a level 0 should be possible, where all optimizers 
  * are eliminated for the fastest possible compile.  In practice, code generation 
  * depends on some optimizers being run.
  */
 public class ArgHandlerOptimize extends ArgHandlerInt {
-  
+
   private final OptionOptimize options;
 
   public ArgHandlerOptimize(OptionOptimize options) {
     this.options = options;
   }
-  
+
   @Override
   public String getPurpose() {
     return "Sets the optimization level used by the compiler.  0=none 9=maximum.";
@@ -50,10 +50,9 @@ public class ArgHandlerOptimize extends ArgHandlerInt {
 
   @Override
   public void setInt(int level) {
-    if (level <= OptionOptimize.OPTIMIZE_LEVEL_MAX) {
-      options.setOptimizationLevel(Math.max(level, OptionOptimize.OPTIMIZE_LEVEL_DRAFT));  
-    } else {
-      options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_MAX);
-    }
+    level = Math.max(level, OptionOptimize.OPTIMIZE_LEVEL_DRAFT);
+    level = Math.min(level, OptionOptimize.OPTIMIZE_LEVEL_MAX);
+
+    options.setOptimizationLevel(level);
   }
 }

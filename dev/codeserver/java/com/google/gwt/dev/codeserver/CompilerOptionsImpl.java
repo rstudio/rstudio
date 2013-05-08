@@ -182,11 +182,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean isUseGuiLogger() {
-    return false;
-  }
-
-  @Override
   public boolean isValidateOnly() {
     return false;
   }

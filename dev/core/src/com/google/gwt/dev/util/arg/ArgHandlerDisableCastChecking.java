@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler to provide the -disableCastChecking flag.
+ * Enables run-time cast checking.
  */
 public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
 
@@ -26,21 +26,33 @@ public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
 
   public ArgHandlerDisableCastChecking(OptionDisableCastChecking option) {
     this.option = option;
+
+    addTagValue("-XdisableCastChecking", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "EXPERIMENTAL: Disables run-time checking of cast operations";
+  public String getPurposeSnippet() {
+    return "Insert run-time checking of cast operations.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableCastChecking";
+  public String getLabel() {
+    return "checkCasts";
   }
 
   @Override
-  public boolean setFlag() {
-    option.setCastCheckingDisabled(true);
+  public boolean setFlag(boolean value) {
+    option.setCastCheckingDisabled(!value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return !option.isCastCheckingDisabled();
   }
 }

@@ -18,17 +18,21 @@ package com.google.gwt.user.tools.util;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Arg handler for "ignore" option.
+ * Ignores any existing files and does not overwrite them.
  */
 public abstract class ArgHandlerIgnore extends ArgHandlerFlag {
 
+  public ArgHandlerIgnore() {
+    addTagValue("-ignore", true);
+  }
+  
   @Override
-  public String getPurpose() {
-    return "Ignore any existing files; do not overwrite";
+  public String getPurposeSnippet() {
+    return "Ignore any existing files; do not overwrite.";
   }
 
   @Override
-  public String getTag() {
-    return "-ignore";
+  public String getLabel() {
+    return "ignoreExistingFiles";
   }
 }

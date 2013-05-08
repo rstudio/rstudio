@@ -29,6 +29,21 @@ public abstract class ArgHandler {
   public abstract String getTag();
 
   /**
+   * The set of tags matched by this argument handler. By default includes just the one primary tag
+   * mentioned in getTag() but can be overridden to provide broader matching.
+   */
+  public String[] getTags() {
+    return new String[] {getTag()};
+  }
+
+  /**
+   * The tag to display in help messages.
+   */
+  public String getHelpTag() {
+    return getTag();
+  }
+
+  /**
    * A list of words representing the arguments in help text.
    */
   public abstract String[] getTagArgs();
@@ -54,4 +69,7 @@ public abstract class ArgHandler {
     return false;
   }
 
+  public boolean isExperimental() {
+    return false;
+  }
 }

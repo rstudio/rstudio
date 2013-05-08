@@ -16,18 +16,23 @@
 package com.google.gwt.user.tools.util;
 
 import com.google.gwt.util.tools.ArgHandlerFlag;
+
 /**
- *  Arg handler for "overwrite" option.
+ * Overwrites any existing files.
  */
 public abstract class ArgHandlerOverwrite extends ArgHandlerFlag {
 
+  public ArgHandlerOverwrite() {
+    addTagValue("-overwrite", true);
+  }
+  
   @Override
-  public String getPurpose() {
-    return "Overwrite any existing files";
+  public String getPurposeSnippet() {
+    return "Overwrite any existing files.";
   }
 
   @Override
-  public String getTag() {
-    return "-overwrite";
+  public String getLabel() {
+    return "overwriteFiles";
   }
 }

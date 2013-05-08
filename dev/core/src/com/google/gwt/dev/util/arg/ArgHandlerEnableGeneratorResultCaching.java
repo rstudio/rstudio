@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler to provide the -XenableGeneratorResultCaching flag.
+ * Caches results of generators with stable output.
  * 
  * Note: This is no longer needed since generator result caching is now enabled by default.
  * It's left here for an interim period, so that uses of the flag can be removed.
@@ -27,25 +27,36 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 public class ArgHandlerEnableGeneratorResultCaching extends ArgHandlerFlag {
 
   public ArgHandlerEnableGeneratorResultCaching() {
+    addTagValue("-XenableGeneratorResultCaching", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "Enables generator result caching, for those generators that implement it";
+  public String getPurposeSnippet() {
+    return "Cache results of generators with stable output.";
   }
 
   @Override
-  public String getTag() {
-    return "-XenableGeneratorResultCaching";
+  public String getLabel() {
+    return "cacheGeneratorResults";
   }
-  
+
   @Override
   public boolean isUndocumented() {
     return true;
   }
- 
+
   @Override
-  public boolean setFlag() {
+  public boolean setFlag(boolean value) {
+    return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
     return true;
   }
 }

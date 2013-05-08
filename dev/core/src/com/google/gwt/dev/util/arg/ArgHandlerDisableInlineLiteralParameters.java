@@ -18,7 +18,8 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableInlineLiteralParameters command line flag.
+ * Inlines literal parameters to shrink function declarations and provide more deadcode elimination
+ * possibilities.
  */
 public final class ArgHandlerDisableInlineLiteralParameters extends ArgHandlerFlag {
 
@@ -26,16 +27,19 @@ public final class ArgHandlerDisableInlineLiteralParameters extends ArgHandlerFl
 
   public ArgHandlerDisableInlineLiteralParameters(OptionInlineLiteralParameters option) {
     this.option = option;
+
+    addTagValue("-XdisableInlineLiteralParameters", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the compiler from inlining literal parameters.";
+  public String getPurposeSnippet() {
+    return "Inline literal parameters to shrink function declarations and "
+        + "provide more deadcode elimination possibilities.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableInlineLiteralParameters";
+  public String getLabel() {
+    return "inlineLiteralParameters";
   }
 
   @Override
@@ -44,8 +48,18 @@ public final class ArgHandlerDisableInlineLiteralParameters extends ArgHandlerFl
   }
 
   @Override
-  public boolean setFlag() {
-    option.setInlineLiteralParameters(false);
+  public boolean setFlag(boolean value) {
+    option.setInlineLiteralParameters(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.shouldInlineLiteralParameters();
   }
 }

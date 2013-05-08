@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableUpdateCheck command line flag.
+ * Checks to see if an updated version of GWT is available.
  */
 public final class ArgHandlerDisableUpdateCheck extends ArgHandlerFlag {
 
@@ -26,16 +26,18 @@ public final class ArgHandlerDisableUpdateCheck extends ArgHandlerFlag {
 
   public ArgHandlerDisableUpdateCheck(OptionDisableUpdateCheck option) {
     this.option = option;
+    
+    addTagValue("-XdisableUpdateCheck", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Disable the check to see if an update version of GWT is available";
+  public String getPurposeSnippet() {
+    return "Check to see if an updated version of GWT is available.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableUpdateCheck";
+  public String getLabel() {
+    return "checkForUpdates";
   }
 
   @Override
@@ -44,8 +46,18 @@ public final class ArgHandlerDisableUpdateCheck extends ArgHandlerFlag {
   }
   
   @Override
-  public boolean setFlag() {
-    option.setDisableUpdateCheck(true);
+  public boolean setFlag(boolean value) {
+    option.setDisableUpdateCheck(!value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return !option.isUpdateCheckDisabled();
   }
 }

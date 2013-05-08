@@ -27,12 +27,6 @@ public interface OptionSoycHtmlDisabled extends OptionCompilerMetricsEnabled {
   boolean isSoycHtmlDisabled();
 
   /**
-   * Sets whether or not the compiler should record and emit Compile Report
-   * information and build the dashboard.
-   */
-  void setSoycEnabled(boolean enabled);
-
-  /**
    * Sets whether or not the compiler should produce HTML compile reports in
    * addition to SOYC XML output.
    */

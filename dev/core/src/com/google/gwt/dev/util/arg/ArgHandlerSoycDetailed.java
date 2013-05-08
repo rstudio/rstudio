@@ -18,23 +18,30 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler that enables detailed Story Of Your Compile data collection.
+ * Emits extra, detailed compile-report information in the "Story Of Your Compile".
  */
 public class ArgHandlerSoycDetailed extends ArgHandlerFlag {
-  private final OptionSoycDetailed options;
 
-  public ArgHandlerSoycDetailed(OptionSoycDetailed options) {
-    this.options = options;
+  private final OptionSoycDetailed optionSoycDetailed;
+  private final OptionSoycEnabled optionSoycEnabled;
+
+  public <T extends OptionSoycDetailed & OptionSoycEnabled> ArgHandlerSoycDetailed(
+      T options) {
+    optionSoycDetailed = options;
+    optionSoycEnabled = options;
+
+    addTagValue("-XsoycDetailed", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "Emit extra, detailed compile-report information at the expense of compile time";
+  public String getPurposeSnippet() {
+    return "Emit extra, detailed compile-report information in the \"Story Of Your Compile\" "
+        + "at the expense of compile time.";
   }
 
   @Override
-  public String getTag() {
-    return "-XsoycDetailed";
+  public String getLabel() {
+    return "detailedSoyc";
   }
 
   @Override
@@ -43,9 +50,19 @@ public class ArgHandlerSoycDetailed extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    options.setSoycExtra(true);
-    options.setSoycEnabled(true);
+  public boolean setFlag(boolean value) {
+    optionSoycDetailed.setSoycExtra(value);
+    optionSoycEnabled.setSoycEnabled(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return optionSoycDetailed.isSoycExtra() && optionSoycEnabled.isSoycEnabled();
   }
 }

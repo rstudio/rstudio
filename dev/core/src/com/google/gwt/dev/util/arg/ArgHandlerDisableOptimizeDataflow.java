@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableOptimizeDataflow command line flag.
+ * Analyzes and optimizes dataflow.
  */
 public final class ArgHandlerDisableOptimizeDataflow extends ArgHandlerFlag {
 
@@ -26,16 +26,18 @@ public final class ArgHandlerDisableOptimizeDataflow extends ArgHandlerFlag {
 
   public ArgHandlerDisableOptimizeDataflow(OptionOptimizeDataflow option) {
     this.option = option;
+
+    addTagValue("-XdisableOptimizeDataflow", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the compiler from optimizing dataflow.";
+  public String getPurposeSnippet() {
+    return "Analyze and optimize dataflow.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableOptimizeDataflow";
+  public String getLabel() {
+    return "optimizeDataflow";
   }
 
   @Override
@@ -44,8 +46,18 @@ public final class ArgHandlerDisableOptimizeDataflow extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    option.setOptimizeDataflow(false);
+  public boolean setFlag(boolean value) {
+    option.setOptimizeDataflow(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.shouldOptimizeDataflow();
   }
 }

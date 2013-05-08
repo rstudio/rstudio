@@ -35,6 +35,29 @@ import java.net.URL;
  */
 public class Minify extends ToolBase {
 
+  private class ArgHandlerOutputReadable extends ArgHandlerFlag {
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Output human readable CSS.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "pretty";
+    }
+
+    @Override
+    public boolean setFlag(boolean enabled) {
+      return pretty = enabled;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return pretty;
+    }
+  }
+
   /**
    * See {@link #printHelp()} for usage.
    */
@@ -90,22 +113,7 @@ public class Minify extends ToolBase {
       }
     });
 
-    registerHandler(new ArgHandlerFlag() {
-      @Override
-      public String getPurpose() {
-        return "Enable human-parsable output";
-      }
-
-      @Override
-      public String getTag() {
-        return "-pretty";
-      }
-
-      @Override
-      public boolean setFlag() {
-        return pretty = true;
-      }
-    });
+    registerHandler(new ArgHandlerOutputReadable());
 
     if (!processArgs(args)) {
       return false;

@@ -26,12 +26,6 @@ public interface OptionSoycDetailed {
   boolean isSoycExtra();
 
   /**
-   * Sets whether or not the compiler should record and emit Compile Report information
-   * and build the dashboard.
-   */
-  void setSoycEnabled(boolean enabled);
-
-  /**
    * Sets whether or not the compiler should record and emit extra Compile Report
    * information.
    */

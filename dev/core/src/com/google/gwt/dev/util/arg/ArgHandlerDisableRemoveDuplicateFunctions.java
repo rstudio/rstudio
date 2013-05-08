@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableRemoveDuplicateFunctions command line flag.
+ * Removes duplicate functions to shrink output.
  */
 public final class ArgHandlerDisableRemoveDuplicateFunctions extends ArgHandlerFlag {
 
@@ -26,16 +26,19 @@ public final class ArgHandlerDisableRemoveDuplicateFunctions extends ArgHandlerF
 
   public ArgHandlerDisableRemoveDuplicateFunctions(OptionRemoveDuplicateFunctions option) {
     this.option = option;
+
+    addTagValue("-XdisableRemoveDuplicateFunctions", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the compiler from removing duplicate functions.";
+  public String getPurposeSnippet() {
+    return "Removing duplicate functions. Will interfere with stacktrace "
+        + "deobfuscation and so is only honored when compiler.stackMode is set to strip.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableRemoveDuplicateFunctions";
+  public String getLabel() {
+    return "removeDuplicateFunctions";
   }
 
   @Override
@@ -44,8 +47,18 @@ public final class ArgHandlerDisableRemoveDuplicateFunctions extends ArgHandlerF
   }
 
   @Override
-  public boolean setFlag() {
-    option.setRemoveDuplicateFunctions(false);
+  public boolean setFlag(boolean value) {
+    option.setRemoveDuplicateFunctions(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.shouldRemoveDuplicateFunctions();
   }
 }

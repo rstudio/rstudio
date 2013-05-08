@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableOrdinalizeEnums command line flag.
+ * Ordinalizes enums to reduce some large strings.
  */
 public final class ArgHandlerDisableOrdinalizeEnums extends ArgHandlerFlag {
 
@@ -26,16 +26,18 @@ public final class ArgHandlerDisableOrdinalizeEnums extends ArgHandlerFlag {
 
   public ArgHandlerDisableOrdinalizeEnums(OptionOrdinalizeEnums option) {
     this.option = option;
+    
+    addTagValue("-XdisableOrdinalizeEnums", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the compiler from ordinalizing enums.";
+  public String getPurposeSnippet() {
+    return "Ordinalize enums to reduce some large strings.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableOrdinalizeEnums";
+  public String getLabel() {
+    return "ordinalizeEnums";
   }
 
   @Override
@@ -44,8 +46,18 @@ public final class ArgHandlerDisableOrdinalizeEnums extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    option.setOrdinalizeEnums(false);
+  public boolean setFlag(boolean value) {
+    option.setOrdinalizeEnums(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.shouldOrdinalizeEnums();
   }
 }

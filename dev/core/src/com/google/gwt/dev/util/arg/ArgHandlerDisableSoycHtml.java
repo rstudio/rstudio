@@ -18,25 +18,29 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler that enables detailed Story Of Your Compile data collection,
- * but disables HTML report generation, leaving only XML output.
+ * Collects SOYC metrics and output in xml but not html format.
  */
 public class ArgHandlerDisableSoycHtml extends ArgHandlerFlag {
 
-  private final OptionSoycHtmlDisabled options;
+  private final OptionSoycHtmlDisabled optionSoycHtmlDisabled;
+  private final OptionSoycEnabled optionSoycEnabled;
 
-  public ArgHandlerDisableSoycHtml(OptionSoycHtmlDisabled options) {
-    this.options = options;
+  public <T extends OptionSoycHtmlDisabled & OptionSoycEnabled> ArgHandlerDisableSoycHtml(
+      T options) {
+    optionSoycHtmlDisabled = options;
+    optionSoycEnabled = options;
+
+    addTagValue("-XdisableSoycHtml", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Enable SOYC reporting without HTML report generation.";
+  public String getPurposeSnippet() {
+    return "Collect SOYC metrics and output in xml but not html format.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableSoycHtml";
+  public String getLabel() {
+    return "soycHtmlOnly";
   }
 
   @Override
@@ -45,9 +49,19 @@ public class ArgHandlerDisableSoycHtml extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    options.setSoycHtmlDisabled(true);
-    options.setSoycEnabled(true);
+  public boolean setFlag(boolean value) {
+    optionSoycHtmlDisabled.setSoycHtmlDisabled(!value);
+    optionSoycEnabled.setSoycEnabled(!value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return !optionSoycHtmlDisabled.isSoycHtmlDisabled() && !optionSoycEnabled.isSoycEnabled();
   }
 }

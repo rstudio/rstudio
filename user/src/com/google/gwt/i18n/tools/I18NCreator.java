@@ -252,10 +252,6 @@ public final class I18NCreator extends ToolBase {
   protected I18NCreator() {
 
     registerHandler(new ArgHandlerEclipse() {
-      @Override
-      public String getPurpose() {
-        return "Creates a i18n update launch config for the named eclipse project";
-      }
 
       @Override
       public boolean setString(String str) {
@@ -275,13 +271,18 @@ public final class I18NCreator extends ToolBase {
     registerHandler(new ArgHandlerOverwrite() {
 
       @Override
-      public boolean setFlag() {
-        if (ignore) {
+      public boolean setFlag(boolean value) {
+        if (value && ignore) {
           System.err.println("-overwrite cannot be used with -ignore.");
           return false;
         }
-        overwrite = true;
+        overwrite = value;
         return true;
+      }
+
+      @Override
+      public boolean getDefaultValue() {
+        return overwrite;
       }
     });
     chooser = new ArgHandlerValueChooser();
@@ -291,13 +292,18 @@ public final class I18NCreator extends ToolBase {
     registerHandler(new ArgHandlerIgnore() {
 
       @Override
-      public boolean setFlag() {
-        if (overwrite) {
+      public boolean setFlag(boolean value) {
+        if (value && overwrite) {
           System.err.println("-ignore cannot be used with -overwrite.");
           return false;
         }
-        ignore = true;
+        ignore = value;
         return true;
+      }
+
+      @Override
+      public boolean getDefaultValue() {
+        return ignore;
       }
     });
 

@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableAggressiveOptimization command line flag.<br />
+ * Enables several aggressive optimization options.<br />
  *
  * Has been deprecated but preserved for backwards compatibility. The impact it has now is via its
  * cascaded modification of five more specific options (each of which is also modifiable via flag).
@@ -44,17 +44,19 @@ public final class ArgHandlerDisableAggressiveOptimization extends ArgHandlerFla
     this.optimizeDataflowOption = option;
     this.ordinalizeEnumsOption = option;
     this.removeDuplicateFunctionsOption = option;
+
+    addTagValue("-XdisableAggressiveOptimization", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the Production Mode compiler from "
-        + "performing aggressive optimizations.";
+  public String getPurposeSnippet() {
+    return "DEPRECATED: Tells the Production Mode compiler to perform "
+        + "aggressive optimizations.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableAggressiveOptimization";
+  public String getLabel() {
+    return "aggressiveOptimizations";
   }
 
   @Override
@@ -63,13 +65,24 @@ public final class ArgHandlerDisableAggressiveOptimization extends ArgHandlerFla
   }
 
   @Override
-  public boolean setFlag() {
-    aggressivelyOptimizeOption.setAggressivelyOptimize(false);
-    clusterSimilarFunctionsOption.setClusterSimilarFunctions(false);
-    inlineLiteralParametersOption.setInlineLiteralParameters(false);
-    optimizeDataflowOption.setOptimizeDataflow(false);
-    ordinalizeEnumsOption.setOrdinalizeEnums(false);
-    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(false);
+  public boolean setFlag(boolean value) {
+    aggressivelyOptimizeOption.setAggressivelyOptimize(value);
+    clusterSimilarFunctionsOption.setClusterSimilarFunctions(value);
+    inlineLiteralParametersOption.setInlineLiteralParameters(value);
+    optimizeDataflowOption.setOptimizeDataflow(value);
+    ordinalizeEnumsOption.setOrdinalizeEnums(value);
+    removeDuplicateFunctionsOption.setRemoveDuplicateFunctions(value);
+
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return aggressivelyOptimizeOption.isAggressivelyOptimize();
   }
 }

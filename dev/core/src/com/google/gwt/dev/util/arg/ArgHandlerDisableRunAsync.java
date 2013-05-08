@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler than can be used to disable runAsync code-splitting.
+ * Splits code on runAsync boundaries.
  */
 public class ArgHandlerDisableRunAsync extends ArgHandlerFlag {
 
@@ -26,16 +26,18 @@ public class ArgHandlerDisableRunAsync extends ArgHandlerFlag {
 
   public ArgHandlerDisableRunAsync(OptionRunAsyncEnabled option) {
     this.option = option;
+
+    addTagValue("-XdisableRunAsync", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Disable runAsync code-splitting";
+  public String getPurposeSnippet() {
+    return "Split code on runAsync boundaries.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableRunAsync";
+  public String getLabel() {
+    return "codeSplitting";
   }
 
   @Override
@@ -44,8 +46,18 @@ public class ArgHandlerDisableRunAsync extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    option.setRunAsyncEnabled(false);
+  public boolean setFlag(boolean value) {
+    option.setRunAsyncEnabled(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.isRunAsyncEnabled();
   }
 }

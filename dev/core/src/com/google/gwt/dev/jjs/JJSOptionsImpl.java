@@ -34,7 +34,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private int fragmentCount = -1;
   private int fragmentsMerge = -1;
   private boolean inlineLiteralParameters = true;
-  private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_MAX;
+  private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
   private boolean optimizeDataflow = true;
   private boolean optimizePrecompile = false;
   private boolean ordinalizeEnums = true;

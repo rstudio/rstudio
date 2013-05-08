@@ -19,6 +19,7 @@ import com.google.gwt.dev.About;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -85,16 +86,18 @@ public abstract class ToolBase {
   protected void printHelp() {
     System.err.println(About.getGwtVersion());
 
+    Set<ArgHandler> uniqueArgHandlers = new LinkedHashSet<ArgHandler>(argHandlers.values());
+
     ArgHandler nullHandler = null;
     int widest = 0;
-    for (ArgHandler handler : argHandlers.values()) {
+    for (ArgHandler handler : uniqueArgHandlers) {
       if (handler.isUndocumented()) {
         continue;
       }
-      String tag = handler.getTag();
-      if (tag != null) {
-        if (tag.length() > widest) {
-          widest = tag.length();
+      String helpTag = handler.getHelpTag();
+      if (helpTag != null) {
+        if (helpTag.length() > widest) {
+          widest = helpTag.length();
         }
       } else {
         nullHandler = handler;
@@ -116,14 +119,14 @@ public abstract class ToolBase {
 
     // Print the command-line template.
     //
-    for (ArgHandler handler : argHandlers.values()) {
+    for (ArgHandler handler : uniqueArgHandlers) {
       if (handler.isUndocumented()) {
         continue;
       }
-      String tag = handler.getTag();
-      if (tag != null) {
+      String helpTag = handler.getHelpTag();
+      if (helpTag != null) {
         System.err.print(handler.isRequired() ? " " : " [");
-        System.err.print(tag);
+        System.err.print(helpTag);
         String[] tagArgs = handler.getTagArgs();
         for (String tagArg : tagArgs) {
           System.err.print(" " + tagArg);
@@ -155,15 +158,15 @@ public abstract class ToolBase {
 
     // Print the details.
     //
-    for (ArgHandler handler : argHandlers.values()) {
+    for (ArgHandler handler : uniqueArgHandlers) {
       if (handler.isUndocumented()) {
         continue;
       }
-      String tag = handler.getTag();
-      if (tag != null) {
-        int len = tag.length();
+      String helpTag = handler.getHelpTag();
+      if (helpTag != null) {
+        int len = helpTag.length();
         System.err.print("  ");
-        System.err.print(tag);
+        System.err.print(helpTag);
         for (i = len; i < widest; ++i) {
           System.err.print(' ');
         }
@@ -296,7 +299,9 @@ public abstract class ToolBase {
   }
 
   protected void registerHandler(ArgHandler handler) {
-    String tag = handler.getTag();
-    argHandlers.put(tag != null ? tag : "", handler);
+    for (String tag : handler.getTags()) {
+      tag = tag != null ? tag : "";
+      argHandlers.put(tag, handler);
+    }
   }
 }

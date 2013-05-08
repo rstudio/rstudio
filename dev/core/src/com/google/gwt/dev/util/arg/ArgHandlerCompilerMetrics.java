@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler that enables Compiler Metrics.
+ * Enables Compiler Metrics.
  */
 public class ArgHandlerCompilerMetrics extends ArgHandlerFlag {
 
@@ -29,13 +29,13 @@ public class ArgHandlerCompilerMetrics extends ArgHandlerFlag {
   }
 
   @Override
-  public String getPurpose() {
-    return "Enable CompilerMetrics";
+  public String getPurposeSnippet() {
+    return "Gather compiler metrics.";
   }
 
   @Override
-  public String getTag() {
-    return "-XcompilerMetrics";
+  public String getLabel() {
+    return "compilerMetrics";
   }
 
   @Override
@@ -44,8 +44,18 @@ public class ArgHandlerCompilerMetrics extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    options.setCompilerMetricsEnabled(true);
+  public boolean setFlag(boolean value) {
+    options.setCompilerMetricsEnabled(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return options.isCompilerMetricsEnabled();
   }
 }

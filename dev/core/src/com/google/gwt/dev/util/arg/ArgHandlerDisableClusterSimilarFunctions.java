@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -XdisableClusterSimilarFunctions command line flag.
+ * Clusters similar functions in the output to improve compression.
  */
 public final class ArgHandlerDisableClusterSimilarFunctions extends ArgHandlerFlag {
 
@@ -26,17 +26,18 @@ public final class ArgHandlerDisableClusterSimilarFunctions extends ArgHandlerFl
 
   public ArgHandlerDisableClusterSimilarFunctions(OptionClusterSimilarFunctions option) {
     this.option = option;
+
+    addTagValue("-XdisableClusterSimilarFunctions", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the compiler from clustering similar "
-        + "functions in the output.";
+  public String getPurposeSnippet() {
+    return "Cluster similar functions in the output to improve compression.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableClusterSimilarFunctions";
+  public String getLabel() {
+    return "clusterFunctions";
   }
 
   @Override
@@ -45,8 +46,18 @@ public final class ArgHandlerDisableClusterSimilarFunctions extends ArgHandlerFl
   }
 
   @Override
-  public boolean setFlag() {
-    option.setClusterSimilarFunctions(false);
+  public boolean setFlag(boolean value) {
+    option.setClusterSimilarFunctions(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.shouldClusterSimilarFunctions();
   }
 }

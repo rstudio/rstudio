@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler that enables Story Of Your Compile data-collection.
+ * Generates the "Story Of Your Compile".
  */
 public class ArgHandlerSoyc extends ArgHandlerFlag {
 
@@ -26,16 +26,18 @@ public class ArgHandlerSoyc extends ArgHandlerFlag {
 
   public ArgHandlerSoyc(OptionSoycEnabled options) {
     this.options = options;
+
+    addTagValue("-soyc", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "Enable Story Of Your Compile";
+  public String getPurposeSnippet() {
+    return "Generate the \"Story Of Your Compile\".";
   }
 
   @Override
-  public String getTag() {
-    return "-soyc";
+  public String getLabel() {
+    return "soycReport";
   }
 
   @Override
@@ -44,8 +46,13 @@ public class ArgHandlerSoyc extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    options.setSoycEnabled(true);
+  public boolean setFlag(boolean value) {
+    options.setSoycEnabled(value);
     return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return options.isSoycEnabled();
   }
 }

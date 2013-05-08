@@ -130,6 +130,104 @@ public class JUnitShell extends DevMode {
     void processModule(ModuleDef module);
   }
 
+  private static class ArgHandlerRunCompiledJavascript extends ArgHandlerFlag {
+
+    private JUnitShell shell;
+
+    public ArgHandlerRunCompiledJavascript(JUnitShell shell) {
+      this.shell = shell;
+
+      addTagValue("-web", false);
+      addTagValue("-prod", false);
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Runs tests in Development Mode, using the Java virtual machine.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "devMode";
+    }
+
+    @Override
+    public boolean setFlag(boolean enabled) {
+      shell.developmentMode = enabled;
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return shell.developmentMode;
+    }
+  }
+
+  private static class ArgHandlerShowWindows extends ArgHandlerFlag {
+
+    private JUnitShell shell;
+
+    public ArgHandlerShowWindows(JUnitShell shell) {
+      this.shell = shell;
+
+      addTagValue("-notHeadless", true);
+    }
+    
+    @Override
+    public String getPurposeSnippet() {
+      return "Causes the log window and browser windows to be displayed; useful for debugging.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "showUi";
+    }
+
+    @Override
+    public boolean setFlag(boolean enabled) {
+      shell.setHeadless(!enabled);
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return !shell.isHeadless();
+    }
+  }
+
+  private static class ArgHandlerRunInStandardsMode extends ArgHandlerFlag {
+
+    private JUnitShell shell;
+
+    public ArgHandlerRunInStandardsMode(JUnitShell shell) {
+      this.shell = shell;
+
+      addTagValue("-standardsMode", true);
+      addTagValue("-quirksMode", false);
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Run each test using an HTML document in standards mode (rather than quirks mode).";
+    }
+
+    @Override
+    public String getLabel() {
+      return "runStandardsMode";
+    }
+
+    @Override
+    public boolean setFlag(boolean enabled) {
+      shell.setStandardsMode(enabled);
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return shell.standardsMode;
+    }
+  }
+
   static class ArgProcessor extends ArgProcessorBase {
 
     @SuppressWarnings("deprecation")
@@ -215,48 +313,10 @@ public class JUnitShell extends DevMode {
         }
       });
 
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Synonym for -prod (deprecated)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-web";
-        }
-
-        @Override
-        public boolean isUndocumented() {
-          return true;
-        }
-
-        @Override
-        public boolean setFlag() {
-          shell.developmentMode = false;
-          return true;
-        }
-      });
-
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Causes your test to run in production (compiled) mode (defaults to development mode)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-prod";
-        }
-
-        @Override
-        public boolean setFlag() {
-          shell.developmentMode = false;
-          return true;
-        }
-      });
+      registerHandler(new ArgHandlerRunCompiledJavascript(shell));
 
       registerHandler(new ArgHandlerInt() {
+
         @Override
         public String[] getDefaultArgs() {
           return new String[]{getTag(), "5"};
@@ -389,25 +449,10 @@ public class JUnitShell extends DevMode {
         }
       });
 
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Causes the log window and browser windows to be displayed; useful for debugging";
-        }
-
-        @Override
-        public String getTag() {
-          return "-notHeadless";
-        }
-
-        @Override
-        public boolean setFlag() {
-          shell.setHeadless(false);
-          return true;
-        }
-      });
+      registerHandler(new ArgHandlerShowWindows(shell));
 
       registerHandler(new ArgHandlerString() {
+
         @Override
         public String getPurpose() {
           return "Precompile modules as tests are running (speeds up remote tests but requires more memory)";
@@ -443,43 +488,10 @@ public class JUnitShell extends DevMode {
         }
       });
 
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Run each test using an HTML document in standards mode (rather than quirks mode)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-standardsMode";
-        }
-
-        @Override
-        public boolean setFlag() {
-          shell.setStandardsMode(true);
-          return true;
-        }
-      });
-
-      registerHandler(new ArgHandlerFlag() {
-        @Override
-        public String getPurpose() {
-          return "Run each test using an HTML document in quirks mode (rather than standards mode)";
-        }
-
-        @Override
-        public String getTag() {
-          return "-quirksMode";
-        }
-
-        @Override
-        public boolean setFlag() {
-          shell.setStandardsMode(false);
-          return true;
-        }
-      });
+      registerHandler(new ArgHandlerRunInStandardsMode(shell));
 
       registerHandler(new ArgHandlerInt() {
+
         @Override
         public String getPurpose() {
           return "EXPERIMENTAL: Sets the maximum number of attempts for running each test method";
@@ -509,9 +521,15 @@ public class JUnitShell extends DevMode {
         public void setInt(int value) {
           shell.tries = value;
         }
+
+        @Override
+        public boolean isExperimental() {
+          return true;
+        }
       });
 
       registerHandler(new ArgHandlerString() {
+
         @Override
         public String getPurpose() {
           return "Specify the user agents to reduce the number of permutations for remote browser tests;"

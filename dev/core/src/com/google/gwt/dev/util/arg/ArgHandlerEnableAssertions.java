@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -ea command line flag.
+ * Includes assert statements in compiled output.
  */
 public final class ArgHandlerEnableAssertions extends ArgHandlerFlag {
 
@@ -26,21 +26,28 @@ public final class ArgHandlerEnableAssertions extends ArgHandlerFlag {
 
   public ArgHandlerEnableAssertions(OptionEnableAssertions option) {
     this.option = option;
+
+    addTagValue("-ea", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "Debugging: causes the compiled output to check assert statements";
+  public String getPurposeSnippet() {
+    return "Include assert statements in compiled output.";
   }
 
   @Override
-  public String getTag() {
-    return "-ea";
+  public String getLabel() {
+    return "checkAssertions";
   }
 
   @Override
-  public boolean setFlag() {
-    option.setEnableAssertions(true);
+  public boolean setFlag(boolean value) {
+    option.setEnableAssertions(value);
     return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.isEnableAssertions();
   }
 }

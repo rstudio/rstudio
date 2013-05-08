@@ -22,6 +22,8 @@ package com.google.gwt.dev.util.arg;
 public interface OptionOptimize {
 
   int OPTIMIZE_LEVEL_DRAFT = 0;
+  // TODO(stalcup): change the default to 8 to balance time and shrinkage.
+  int OPTIMIZE_LEVEL_DEFAULT = 9;
   int OPTIMIZE_LEVEL_MAX = 9;
 
   /**

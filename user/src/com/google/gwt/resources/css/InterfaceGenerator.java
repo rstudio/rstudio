@@ -60,29 +60,38 @@ public class InterfaceGenerator extends ToolBase {
   private TreeLogger logger;
   private boolean standaloneFile;
 
+  private class ArgHandlerAddPackageHeader extends ArgHandlerFlag {
+
+    public ArgHandlerAddPackageHeader() {
+      addTagValue("-standalone", true);
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Add package and import statements to generated interface so that "
+          + "they are still functional when they stand alone.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "addPackageHeader";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      standaloneFile = value;
+      logger.log(TreeLogger.DEBUG, value ? "Not creating" : "Creating" + " a standalone file");
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return standaloneFile;
+    }
+  }
+
   private InterfaceGenerator() {
-    // -standalone
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "Add package and import statements to generated interface";
-      }
-
-      @Override
-      public String getTag() {
-        return "-standalone";
-      }
-
-      @Override
-      public boolean setFlag() {
-        standaloneFile = true;
-        logger.log(TreeLogger.DEBUG, "Creating standalone file");
-        return true;
-      }
-    });
-
-    // -typeName some.package.MyCssResource
+    registerHandler(new ArgHandlerAddPackageHeader());
     registerHandler(new ArgHandlerString() {
 
       @Override

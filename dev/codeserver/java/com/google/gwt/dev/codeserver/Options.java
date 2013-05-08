@@ -98,6 +98,13 @@ public class Options {
   }
 
   /**
+   * Whether the codeServer should allow missing source directories.
+   */
+  boolean shouldAllowMissingSourceDir() {
+    return allowMissingSourceDir;
+  }
+
+  /**
    * Whether the codeServer should start without precompiling modules.
    */
   boolean getNoPrecompile() {
@@ -159,38 +166,48 @@ public class Options {
   private class NoPrecompileFlag extends ArgHandlerFlag {
 
     @Override
-    public String getTag() {
-      return "-noprecompile";
+    public String getLabel() {
+      return "precompile";
     }
 
     @Override
-    public String getPurpose() {
-      return "Disables pre-compilation of modules.";
+    public String getPurposeSnippet() {
+      return "Precompile modules.";
     }
 
     @Override
-    public boolean setFlag() {
-      noPrecompile = true;
+    public boolean setFlag(boolean value) {
+      noPrecompile = !value;
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return !noPrecompile;
     }
   }
 
   private class CompileTestFlag extends ArgHandlerFlag {
 
     @Override
-    public String getTag() {
-      return "-compileTest";
+    public String getLabel() {
+      return "compileTest";
     }
 
     @Override
-    public String getPurpose() {
-      return "Just compile the modules and exit.";
+    public String getPurposeSnippet() {
+      return "Exits after compiling the modules. The exit code will be 0 if the compile succeeded.";
     }
 
     @Override
-    public boolean setFlag() {
-      isCompileTest = true;
+    public boolean setFlag(boolean value) {
+      isCompileTest = value;
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return isCompileTest;
     }
   }
 
@@ -278,19 +295,24 @@ public class Options {
   private class AllowMissingSourceDirFlag extends ArgHandlerFlag {
 
     @Override
-    public String getTag() {
-      return "-allowMissingSrc";
+    public String getLabel() {
+      return "allowMissingSrc";
     }
 
     @Override
-    public String getPurpose() {
-      return "Disables the directory existence check for -src flags.";
+    public String getPurposeSnippet() {
+      return "Allows -src flags to reference missing directories.";
     }
 
     @Override
-    public boolean setFlag() {
-      allowMissingSourceDir = true;
+    public boolean setFlag(boolean value) {
+      allowMissingSourceDir = value;
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return allowMissingSourceDir;
     }
   }
 

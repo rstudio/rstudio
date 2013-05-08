@@ -19,28 +19,36 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Argument handler for {@link OptionStrict}.
+ * Fails compilation if any input file contains an error.
  */
 public class ArgHandlerStrict extends ArgHandlerFlag {
+
   private final OptionStrict options;
 
   public ArgHandlerStrict(OptionStrict options) {
     this.options = options;
+
+    addTagValue("-strict", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "Only succeed if no input files have errors";
+  public String getPurposeSnippet() {
+    return "Fail compilation if any input file contains an error.";
   }
 
   @Override
-  public String getTag() {
-    return "-strict";
+  public String getLabel() {
+    return "failOnError";
   }
 
   @Override
-  public boolean setFlag() {
-    options.setStrict(true);
+  public boolean setFlag(boolean value) {
+    options.setStrict(value);
     return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return options.isStrict();
   }
 }

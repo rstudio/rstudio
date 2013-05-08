@@ -762,21 +762,25 @@ public class ApiCompatibilityChecker extends ToolBase {
     registerHandler(new ArgHandlerFlag() {
 
       @Override
-      public String getPurpose() {
-        return "Prints all api";
+      public String getPurposeSnippet() {
+        return "Prints all api.";
       }
 
       @Override
-      public String getTag() {
-        return "-printAllApi";
+      public String getLabel() {
+        return "printAllApi";
       }
 
       @Override
-      public boolean setFlag() {
-        printAllApi = true;
+      public boolean setFlag(boolean enabled) {
+        printAllApi = enabled;
         return true;
       }
 
+      @Override
+      public boolean getDefaultValue() {
+        return printAllApi;
+      }
     });
 
     // handler for configFile

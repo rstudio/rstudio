@@ -287,29 +287,37 @@ public abstract class DevModeBase implements DoneCallback {
   }
 
   /**
-   * Handles the -noserver command line flag.
+   * Runs a convenient embedded web server.
    */
   protected static class ArgHandlerNoServerFlag extends ArgHandlerFlag {
+
     private final OptionNoServer options;
 
     public ArgHandlerNoServerFlag(OptionNoServer options) {
       this.options = options;
+
+      addTagValue("-noserver", false);
     }
 
     @Override
-    public String getPurpose() {
-      return "Prevents the embedded web server from running";
+    public String getPurposeSnippet() {
+      return "Starts a servlet container serving the directory specified by the -war flag.";
     }
 
     @Override
-    public String getTag() {
-      return "-noserver";
+    public String getLabel() {
+      return "startServer";
     }
 
     @Override
-    public boolean setFlag() {
-      options.setNoServer(true);
+    public boolean setFlag(boolean value) {
+      options.setNoServer(!value);
       return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return !options.isNoServer();
     }
   }
 

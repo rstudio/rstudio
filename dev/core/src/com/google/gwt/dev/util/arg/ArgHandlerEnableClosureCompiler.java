@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler to provide the -enableClosureCompiler flag.
+ * Compiles output Javascript with the Closure compiler for even further optimizations.
  */
 public class ArgHandlerEnableClosureCompiler extends ArgHandlerFlag {
 
@@ -26,21 +26,33 @@ public class ArgHandlerEnableClosureCompiler extends ArgHandlerFlag {
 
   public ArgHandlerEnableClosureCompiler(OptionEnableClosureCompiler option) {
     this.option = option;
+
+    addTagValue("-XenableClosureCompiler", true);
   }
 
   @Override
-  public String getPurpose() {
-    return "EXPERIMENTAL: Enables Closure Compiler optimizations";
+  public String getPurposeSnippet() {
+    return "Compile output Javascript with the Closure compiler for even further optimizations.";
   }
 
   @Override
-  public String getTag() {
-    return "-XenableClosureCompiler";
+  public String getLabel() {
+    return "closureCompiler";
   }
 
   @Override
-  public boolean setFlag() {
-    option.setClosureCompilerEnabled(true);
+  public boolean setFlag(boolean value) {
+    option.setClosureCompilerEnabled(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.isClosureCompilerEnabled();
   }
 }

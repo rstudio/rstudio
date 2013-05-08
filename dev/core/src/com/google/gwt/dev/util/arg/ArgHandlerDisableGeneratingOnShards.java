@@ -32,16 +32,18 @@ public class ArgHandlerDisableGeneratingOnShards extends ArgHandlerFlag {
   public ArgHandlerDisableGeneratingOnShards(
       OptionEnableGeneratingOnShards options) {
     this.options = options;
+
+    addTagValue("-XdisableGeneratingOnShards", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "Disables running generators on CompilePerms shards, even when it would be a likely speedup";
+  public String getPurposeSnippet() {
+    return "Run generators on CompilePerms shards for a likely speedup.";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableGeneratingOnShards";
+  public String getLabel() {
+    return "generateOnShards";
   }
 
   @Override
@@ -50,8 +52,18 @@ public class ArgHandlerDisableGeneratingOnShards extends ArgHandlerFlag {
   }
 
   @Override
-  public boolean setFlag() {
-    options.setEnabledGeneratingOnShards(false);
+  public boolean setFlag(boolean value) {
+    options.setEnabledGeneratingOnShards(value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return options.isEnabledGeneratingOnShards();
   }
 }

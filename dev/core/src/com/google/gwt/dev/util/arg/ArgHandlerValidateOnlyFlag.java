@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Handles the -validateOnly command line flag.
+ * Validates all source code, but does not compile it.
  */
 public final class ArgHandlerValidateOnlyFlag extends ArgHandlerFlag {
 
@@ -29,18 +29,23 @@ public final class ArgHandlerValidateOnlyFlag extends ArgHandlerFlag {
   }
 
   @Override
-  public String getPurpose() {
-    return "Validate all source code, but do not compile";
+  public String getPurposeSnippet() {
+    return "Validate all source code, but do not compile.";
   }
 
   @Override
-  public String getTag() {
-    return "-validateOnly";
+  public String getLabel() {
+    return "validateOnly";
   }
 
   @Override
-  public boolean setFlag() {
-    option.setValidateOnly(true);
+  public boolean setFlag(boolean value) {
+    option.setValidateOnly(value);
     return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return option.isValidateOnly();
   }
 }

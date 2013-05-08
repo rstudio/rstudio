@@ -193,11 +193,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public final void setUseGuiLogger(boolean useGuiLogger) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void setValidateOnly(boolean validateOnly) {
     throw new UnsupportedOperationException();
   }

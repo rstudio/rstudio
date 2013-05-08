@@ -28,7 +28,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
 
   private Type logLevel;
   private final List<String> moduleNames = new ArrayList<String>();
-  private boolean useGuiLogger;
   private File workDir;
 
   public CompileTaskOptionsImpl() {
@@ -45,7 +44,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   public void copyFrom(CompileTaskOptions other) {
     setLogLevel(other.getLogLevel());
     setModuleNames(other.getModuleNames());
-    setUseGuiLogger(other.isUseGuiLogger());
     setWorkDir(other.getWorkDir());
   }
 
@@ -65,10 +63,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     return workDir;
   }
 
-  public boolean isUseGuiLogger() {
-    return useGuiLogger;
-  }
-
   public void setLogLevel(Type logLevel) {
     this.logLevel = logLevel;
   }
@@ -76,10 +70,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   public void setModuleNames(List<String> moduleNames) {
     this.moduleNames.clear();
     this.moduleNames.addAll(moduleNames);
-  }
-
-  public void setUseGuiLogger(boolean useGuiLogger) {
-    this.useGuiLogger = useGuiLogger;
   }
 
   public void setWorkDir(File workDir) {

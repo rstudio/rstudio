@@ -73,14 +73,47 @@ class BrowserManagerServerLauncher extends ToolBase {
   }
 
   /**
+   * Queues up requests to a single server so that only a single test runs at a time.
+   */
+  private class ArgHandlerSerializeRequests extends ArgHandlerFlag {
+
+    public ArgHandlerSerializeRequests() {
+      addTagValue("-serialize", true);
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Queue up requests to a single server so that only a single "
+          + "test runs at a time. Useful for a simple Firefox setup.";
+    }
+
+    @Override
+    public String getLabel() {
+      return "serializeRequests";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      serializeArg = value;
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return serializeArg;
+    }
+  }
+
+  /**
    * Handles the list of registration ids / machine names passed on the command
    * line.
    */
   private class ArgHandlerRegistration extends ArgHandler {
+
     @Override
     public String getPurpose() {
       return "Specify two arguments: a registration id used for the "
-          + "RMI call and the browser launch command";
+          + "RMI call and the browser launch command.";
     }
 
     @Override
@@ -142,26 +175,7 @@ class BrowserManagerServerLauncher extends ToolBase {
   BrowserManagerServerLauncher() {
     registerHandler(new ArgHandlerPort());
     registerHandler(new ArgHandlerRegistration());
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "Queue up requests to a single server so that only a single "
-            + "test runs at a time (Usefule for a simple Firefox setup.)\n";
-      }
-
-      @Override
-      public String getTag() {
-        return "-serialize";
-      }
-
-      @Override
-      public boolean setFlag() {
-        serializeArg = true;
-        return true;
-      }
-
-    });
+    registerHandler(new ArgHandlerSerializeRequests());
   }
 
   public boolean doProcessArgs(String[] args) {

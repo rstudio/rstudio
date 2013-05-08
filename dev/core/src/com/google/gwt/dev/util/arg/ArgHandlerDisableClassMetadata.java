@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * An ArgHandler to provide the -disableClassMetadata flag.
+ * Includes metadata for class name methods.
  */
 public class ArgHandlerDisableClassMetadata extends ArgHandlerFlag {
 
@@ -26,21 +26,33 @@ public class ArgHandlerDisableClassMetadata extends ArgHandlerFlag {
 
   public ArgHandlerDisableClassMetadata(OptionDisableClassMetadata option) {
     this.option = option;
+
+    addTagValue("-XdisableClassMetadata", false);
   }
 
   @Override
-  public String getPurpose() {
-    return "EXPERIMENTAL: Disables some java.lang.Class methods (e.g. getName())";
+  public String getPurposeSnippet() {
+    return "Include metadata for some java.lang.Class methods (e.g. getName()).";
   }
 
   @Override
-  public String getTag() {
-    return "-XdisableClassMetadata";
+  public String getLabel() {
+    return "classMetadata";
   }
 
   @Override
-  public boolean setFlag() {
-    option.setClassMetadataDisabled(true);
+  public boolean setFlag(boolean value) {
+    option.setClassMetadataDisabled(!value);
     return true;
+  }
+
+  @Override
+  public boolean isExperimental() {
+    return true;
+  }
+
+  @Override
+  public boolean getDefaultValue() {
+    return !option.isClassMetadataDisabled();
   }
 }
