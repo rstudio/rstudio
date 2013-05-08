@@ -19,6 +19,7 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
 import java.util.Arrays;
@@ -31,10 +32,12 @@ import java.util.List;
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
   private final String moduleName;
+  private final SourceLevel sourceLevel;
 
-  CompilerOptionsImpl(CompileDir compileDir, String moduleName) {
+  CompilerOptionsImpl(CompileDir compileDir, String moduleName, SourceLevel sourceLevel) {
     this.compileDir = compileDir;
     this.moduleName = moduleName;
+    this.sourceLevel = sourceLevel;
   }
 
   @Override
@@ -51,7 +54,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   public int getFragmentCount() {
     return -1;
   }
-  
+
   @Override
   public int getFragmentsMerge() {
     return -1;
@@ -98,6 +101,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public JsOutputOption getOutput() {
     return JsOutputOption.PRETTY;
+  }
+
+  @Override
+  public SourceLevel getSourceLevel() {
+    return sourceLevel;
   }
 
   @Override

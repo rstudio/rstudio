@@ -155,7 +155,7 @@ public class Precompile {
     Event validateEvent = SpeedTracerLogger.start(CompilerEventType.VALIDATE);
     try {
       CompilationState compilationState =
-          module.getCompilationState(logger, !jjsOptions.isStrict());
+          module.getCompilationState(logger, !jjsOptions.isStrict(), jjsOptions.getSourceLevel());
       if (jjsOptions.isStrict() && compilationState.hasErrors()) {
         abortDueToStrictMode(logger);
       }
@@ -244,7 +244,7 @@ public class Precompile {
 
     try {
       CompilationState compilationState =
-          module.getCompilationState(logger, !jjsOptions.isStrict());
+          module.getCompilationState(logger, !jjsOptions.isStrict(), jjsOptions.getSourceLevel());
       if (jjsOptions.isStrict() && compilationState.hasErrors()) {
         abortDueToStrictMode(logger);
       }

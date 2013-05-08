@@ -25,6 +25,8 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -154,7 +156,7 @@ public class CompilationStateBuilder {
     /**
      * The JDT compiler.
      */
-    private final JdtCompiler compiler = new JdtCompiler(new UnitProcessorImpl());
+    private final JdtCompiler compiler;
 
     /**
      * Continuation state for JSNI checking.
@@ -164,7 +166,9 @@ public class CompilationStateBuilder {
 
     private final boolean suppressErrors;
 
-    public CompileMoreLater(AdditionalTypeProviderDelegate delegate, boolean suppressErrors) {
+    public CompileMoreLater(AdditionalTypeProviderDelegate delegate, boolean suppressErrors,
+        SourceLevel sourceLevel) {
+      this.compiler = new JdtCompiler(new UnitProcessorImpl(), sourceLevel);
       compiler.setAdditionalTypeProviderDelegate(delegate);
       this.suppressErrors = suppressErrors;
     }
@@ -402,12 +406,13 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources)
       throws UnableToCompleteException {
-    return buildFrom(logger, resources, null, false);
+    return buildFrom(logger, resources, null, false, OptionSource.DEFAULT_SOURCE_LEVEL);
   }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate) throws UnableToCompleteException {
-    return buildFrom(logger, resources, delegate, false);
+      AdditionalTypeProviderDelegate delegate, SourceLevel sourceLevel)
+      throws UnableToCompleteException {
+    return buildFrom(logger, resources, delegate, false, sourceLevel);
   }
 
   /**
@@ -416,11 +421,12 @@ public class CompilationStateBuilder {
    * @throws UnableToCompleteException if the compiler aborts (not a normal compile error).
    */
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate, boolean suppressErrors)
+      AdditionalTypeProviderDelegate delegate, boolean suppressErrors,
+      SourceLevel sourceLevel)
       throws UnableToCompleteException {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
-      return instance.doBuildFrom(logger, resources, delegate, suppressErrors);
+      return instance.doBuildFrom(logger, resources, delegate, suppressErrors, sourceLevel);
     } finally {
       event.end();
     }
@@ -451,7 +457,8 @@ public class CompilationStateBuilder {
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate compilerDelegate, boolean suppressErrors)
+      AdditionalTypeProviderDelegate compilerDelegate, boolean suppressErrors,
+      SourceLevel sourceLevel)
     throws UnableToCompleteException {
 
     // Units we definitely want to build.
@@ -461,7 +468,8 @@ public class CompilationStateBuilder {
     Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
         new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
 
-    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate, suppressErrors);
+    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate, suppressErrors,
+        sourceLevel);
 
     // For each incoming Java source file...
     for (Resource resource : resources) {
@@ -503,8 +511,9 @@ public class CompilationStateBuilder {
   }
 
   public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      boolean suppressErrors) throws UnableToCompleteException {
-    return doBuildFrom(logger, resources, null, suppressErrors);
+      boolean suppressErrors, SourceLevel sourceLevel)
+      throws UnableToCompleteException {
+    return doBuildFrom(logger, resources, null, suppressErrors, sourceLevel);
   }
 
   /**

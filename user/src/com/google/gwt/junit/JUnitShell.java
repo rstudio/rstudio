@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
+import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.DevMode;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -55,6 +56,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerSource;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.junit.JUnitMessageQueue.ClientStatus;
@@ -279,6 +281,8 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
+      registerHandler(new ArgHandlerSource(options));
+
       // DISABLE: ArgHandlerModuleName
 
       /*
@@ -643,6 +647,18 @@ public class JUnitShell extends DevMode {
       return null;
     }
     return unitTestShell.remoteUserAgents;
+  }
+
+  /**
+   * Get the compiler options
+   *
+   * @return the the compiler options that have been set.
+   */
+  public static CompilerOptions getCompilerOptions() {
+    if (unitTestShell == null) {
+      return null;
+    }
+    return unitTestShell.options;
   }
 
   /**
@@ -1312,7 +1328,8 @@ public class JUnitShell extends DevMode {
     if (!sameTest) {
       currentModule = compileStrategy.maybeCompileModule(moduleName,
           syntheticModuleName, strategy, batchingStrategy, getTopLogger());
-      currentCompilationState = currentModule.getCompilationState(getTopLogger(), true);
+      currentCompilationState = currentModule.getCompilationState(getTopLogger(), true,
+          options.getSourceLevel());
     }
     assert (currentModule != null);
 

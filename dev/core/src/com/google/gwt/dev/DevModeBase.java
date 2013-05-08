@@ -106,7 +106,7 @@ public abstract class DevModeBase implements DoneCallback {
         ArchivePreloader.preloadArchives(logger, moduleDef);
         
         CompilationState compilationState =
-            moduleDef.getCompilationState(logger, !options.isStrict());
+            moduleDef.getCompilationState(logger, !options.isStrict(), options.getSourceLevel());
         ShellModuleSpaceHost host =
             doCreateShellModuleSpaceHost(logger, compilationState, moduleDef);
         return host;

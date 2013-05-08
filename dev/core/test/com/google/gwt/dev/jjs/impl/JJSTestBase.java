@@ -31,6 +31,8 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.Strings;
+import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -237,7 +239,7 @@ public abstract class JJSTestBase extends TestCase {
     addBuiltinClasses(sourceOracle);
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
-            getAdditionalTypeProviderDelegate());
+            getAdditionalTypeProviderDelegate(), sourceLevel);
     JProgram program =
         JavaAstConstructor.construct(logger, state, "test.EntryPoint",
             "com.google.gwt.lang.Exceptions");
@@ -282,4 +284,9 @@ public abstract class JJSTestBase extends TestCase {
   protected AdditionalTypeProviderDelegate getAdditionalTypeProviderDelegate() {
     return null;
   }
+
+  /**
+   * Java source level compatibility option.
+   */
+  protected SourceLevel sourceLevel = OptionSource.DEFAULT_SOURCE_LEVEL;
 }

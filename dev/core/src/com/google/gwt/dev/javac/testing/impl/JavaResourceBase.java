@@ -19,395 +19,300 @@ package com.google.gwt.dev.javac.testing.impl;
  * Contains standard Java source files for testing.
  */
 public class JavaResourceBase {
+  public static final MockJavaResource AUTOCLOSEABLE =
+      createMockJavaResource("java.lang.AutoCloseable",
+          "package java.lang;",
+          "import java.lang.Exception;",
+          "public interface AutoCloseable {",
+          "  void close() throws Exception; ",
+          "}");
 
-  public static final MockJavaResource ANNOTATION = new MockJavaResource(
-      "java.lang.annotation.Annotation") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang.annotation;\n");
-      code.append("public interface Annotation {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource BAR = new MockJavaResource("test.Bar") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package test;\n");
-      code.append("public class Bar extends Foo {\n");
-      code.append("  public String value() { return \"Bar\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource BOOLEAN = new MockJavaResource("java.lang.Boolean") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Boolean {\n");
-      code.append("  private boolean value;\n");
-      code.append("  public Boolean(boolean value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Boolean valueOf(boolean b) { return new Boolean(b); }\n");
-      code.append("  public boolean booleanValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource BYTE = new MockJavaResource("java.lang.Byte") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Byte extends Number {\n");
-      code.append("  private byte value;\n");
-      code.append("  public Byte(byte value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Byte valueOf(byte b) { return new Byte(b); }\n");
-      code.append("  public byte byteValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource CHARACTER = new MockJavaResource("java.lang.Character") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Character {\n");
-      code.append("  private char value;\n");
-      code.append("  public Character(char value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Character valueOf(char c) { return new Character(c); }\n");
-      code.append("  public char charValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource CLASS = new MockJavaResource("java.lang.Class") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Class<T> {\n");
-      code.append("  public String getName() { return null; }\n");
-      code.append("  public String getSimpleName() { return null; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource CLASS_NOT_FOUND_EXCEPTION = new MockJavaResource(
-      "java.lang.ClassNotFoundException") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class ClassNotFoundException extends Exception {\n");
-      code.append("  public ClassNotFoundException() {}\n");
-      code.append("  public ClassNotFoundException(String msg) {}\n");
-      code.append("  public ClassNotFoundException(String msg, Throwable t) {}\n");
-      code.append("  public Throwable getCause() { return null; }\n");
-      code.append("  public Throwable getException() { return null; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource COLLECTION = new MockJavaResource("java.util.Collection") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.util;\n");
-      code.append("public interface Collection<E> {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource DOUBLE = new MockJavaResource("java.lang.Double") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Double extends Number {\n");
-      code.append("  private double value;\n");
-      code.append("  public Double(double value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static boolean isNaN(double d) { return false; }\n");
-      code.append("  public static Double valueOf(double d) { return new Double(d); }\n");
-      code.append("  public double doubleValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource ENUM = new MockJavaResource("java.lang.Enum") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("import java.io.Serializable;\n");
-      code.append("public abstract class Enum<E extends Enum<E>> implements Serializable {\n");
-      code.append("  protected Enum(String name, int ordinal) {}\n");
-      code.append("  protected static Object createValueOfMap(Enum[] constants) { return null; }\n");
-      code.append("  protected static Enum valueOf(Object map, String name) { return null; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource ERROR = new MockJavaResource("java.lang.Error") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Error extends Throwable {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource EXCEPTION = new MockJavaResource("java.lang.Exception") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Exception extends Throwable {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource FLOAT = new MockJavaResource("java.lang.Float") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Float extends Number {\n");
-      code.append("  private float value;\n");
-      code.append("  public Float(float value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Float valueOf(float f) { return new Float(f); }\n");
-      code.append("  public float floatValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource FOO = new MockJavaResource("test.Foo") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package test;\n");
-      code.append("public class Foo {\n");
-      code.append("  public String value() { return \"Foo\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource INTEGER = new MockJavaResource("java.lang.Integer") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Integer extends Number {\n");
-      code.append("  private int value;\n");
-      code.append("  public Integer(int value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Integer valueOf(int i) { return new Integer(i); }\n");
-      code.append("  public int intValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource IS_SERIALIZABLE = new MockJavaResource(
-      "com.google.gwt.user.client.rpc.IsSerializable") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt.user.client.rpc;\n");
-      code.append("public interface IsSerializable {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource JAVASCRIPTOBJECT = new MockJavaResource(
-      "com.google.gwt.core.client.JavaScriptObject") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package com.google.gwt.core.client;\n");
-      code.append("public class JavaScriptObject {\n");
-      code.append("  public static native JavaScriptObject createObject() /*-{ return {}; }-*/;\n");
-      code.append("  protected JavaScriptObject() { }\n");
-      code.append("  public final String toString() { return \"JavaScriptObject\"; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource LONG = new MockJavaResource("java.lang.Long") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Long extends Number {\n");
-      code.append("  private long value;\n");
-      code.append("  public Long(long value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Long valueOf(long l) { return new Long(l); }\n");
-      code.append("  public long longValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource MAP = new MockJavaResource("java.util.Map") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.util;\n");
-      code.append("public interface Map<K,V> { }\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource NO_CLASS_DEF_FOUND_ERROR = new MockJavaResource(
-      "java.lang.NoClassDefFoundError") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class NoClassDefFoundError extends Error {\n");
-      code.append("  public NoClassDefFoundError() {}\n");
-      code.append("  public NoClassDefFoundError(String msg) {}\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource NUMBER = new MockJavaResource("java.lang.Number") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Number implements java.io.Serializable {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource ANNOTATION =
+      createMockJavaResource("java.lang.annotation.Annotation",
+          "package java.lang.annotation;",
+          "public interface Annotation {",
+          "}");
 
-  public static final MockJavaResource OBJECT = new MockJavaResource("java.lang.Object") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Object {\n");
-      code.append("  private Class<?> ___clazz;");
-      code.append("  public boolean equals(Object that){return this == that;}");
-      code.append("  public int hashCode() { return 0; }\n");
-      code.append("  public String toString() { return \"Object\"; }\n");
-      code.append("  public Object clone() { return this; } ");
-      code.append("  public Class<?> getClass() { return ___clazz; } ");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource SERIALIZABLE = new MockJavaResource("java.io.Serializable") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.io;\n");
-      code.append("public interface Serializable { }\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource SHORT = new MockJavaResource("java.lang.Short") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Short extends Number {\n");
-      code.append("  private short value;\n");
-      code.append("  public Short(short value) {\n");
-      code.append("    this.value = value;\n");
-      code.append("  }\n");
-      code.append("  public static Short valueOf(short s) { return new Short(s); }\n");
-      code.append("  public short shortValue() { return value; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource STRING = new MockJavaResource("java.lang.String") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("import java.io.Serializable;\n");
-      code.append("public final class String implements Serializable {\n");
-      code.append("  public String() { }\n");
-      code.append("  public String(char c) { }\n");
-      code.append("  public String(String s) { }\n");
-      code.append("  public static String _String() { return \"\"; }\n");
-      code.append("  public static String _String(char c) { return \"\" + c; }\n");
-      code.append("  public static String _String(String s) { return s; }\n");
-      code.append("  private static final long serialVersionUID = 0L;\n");
-      code.append("  public char charAt(int index) { return 'a'; }\n");
-      code.append("  public boolean equals(Object obj) { return false; }\n");
-      code.append("  public boolean equalsIgnoreCase(String str) { return false; }\n");
-      code.append("  public int length() { return 0; }\n");
-      code.append("  public static String valueOf(int i) { return \"\" + i; }\n");
-      code.append("  public static String valueOf(char c) { return \"\" + c; }\n");
-      code.append("  public static String valueOf(long l) { return \"\" + l; }\n");
-      code.append("  public int hashCode() { return 0; }\n");
-      code.append("  public String replace(char c1, char c2) { return null; }\n");
-      code.append("  public boolean startsWith(String str) { return false; }\n");
-      code.append("  public String toLowerCase() { return null; }\n");
-      code.append("  public static String valueOf(boolean b) { return null; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource STRING_BUILDER = new MockJavaResource(
-      "java.lang.StringBuilder") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public final class StringBuilder {\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource SUPPRESS_WARNINGS = new MockJavaResource(
-      "java.lang.SuppressWarnings") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public @interface SuppressWarnings {\n");
-      code.append("  String[] value();\n");
-      code.append("}\n");
-      return code;
-    }
-  };
-  public static final MockJavaResource THROWABLE = new MockJavaResource("java.lang.Throwable") {
-    @Override
-    public CharSequence getContent() {
-      StringBuilder code = new StringBuilder();
-      code.append("package java.lang;\n");
-      code.append("public class Throwable {\n");
-      code.append("  public String getMessage() { return \"\"; }\n");
-      code.append("  public Throwable getCause() { return null; }\n");
-      code.append("}\n");
-      return code;
-    }
-  };
+  public static final MockJavaResource BAR =
+      createMockJavaResource("test.Bar",
+          "package test;",
+          "public class Bar extends Foo {",
+          "  public String value() { return \"Bar\"; }",
+          "}");
+
+  public static final MockJavaResource BOOLEAN =
+      createMockJavaResource("java.lang.Boolean",
+          "package java.lang;",
+          "public class Boolean {",
+          "  private boolean value;",
+          "  public Boolean(boolean value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Boolean valueOf(boolean b) { return new Boolean(b); }",
+          "  public boolean booleanValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource BYTE =
+      createMockJavaResource("java.lang.Byte",
+          "package java.lang;",
+          "public class Byte extends Number {",
+          "  private byte value;",
+          "  public Byte(byte value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Byte valueOf(byte b) { return new Byte(b); }",
+          "  public byte byteValue() { return value; }",
+          "}\n");
+
+  public static final MockJavaResource CHARACTER =
+      createMockJavaResource("java.lang.Character",
+          "package java.lang;",
+          "public class Character {",
+          "  private char value;",
+          "  public Character(char value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Character valueOf(char c) { return new Character(c); }",
+          "  public char charValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource CLASS =
+      createMockJavaResource("java.lang.Class",
+          "package java.lang;",
+          "public class Class<T> {",
+          "  public String getName() { return null; }",
+          "  public String getSimpleName() { return null; }",
+          "}");
+
+  public static final MockJavaResource CLASS_NOT_FOUND_EXCEPTION =
+      createMockJavaResource("java.lang.ClassNotFoundException",
+          "package java.lang;",
+          "public class ClassNotFoundException extends Exception {",
+          "  public ClassNotFoundException() {}",
+          "  public ClassNotFoundException(String msg) {}",
+          "  public ClassNotFoundException(String msg, Throwable t) {}",
+          "  public Throwable getCause() { return null; }",
+          "  public Throwable getException() { return null; }",
+          "}");
+
+  public static final MockJavaResource COLLECTION =
+      createMockJavaResource("java.util.Collection",
+          "package java.util;",
+          "public interface Collection<E> {",
+          "}");
+
+  public static final MockJavaResource DOUBLE =
+      createMockJavaResource("java.lang.Double",
+          "package java.lang;",
+          "public class Double extends Number {",
+          "  private double value;",
+          "  public Double(double value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static boolean isNaN(double d) { return false; }",
+          "  public static Double valueOf(double d) { return new Double(d); }",
+          "  public double doubleValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource ENUM =
+      createMockJavaResource("java.lang.Enum",
+          "package java.lang;",
+          "import java.io.Serializable;",
+          "public abstract class Enum<E extends Enum<E>> implements Serializable {",
+          "  protected Enum(String name, int ordinal) {}",
+          "  protected static Object createValueOfMap(Enum[] constants) { return null; }",
+          "  protected static Enum valueOf(Object map, String name) { return null; }",
+          "}");
+
+  public static final MockJavaResource ERROR =
+      createMockJavaResource("java.lang.Error",
+          "package java.lang;",
+          "public class Error extends Throwable {",
+          "}");
+
+  public static final MockJavaResource EXCEPTION =
+      createMockJavaResource("java.lang.Exception",
+          "package java.lang;",
+          "public class Exception extends Throwable {",
+          "}");
+
+  public static final MockJavaResource FLOAT =
+      createMockJavaResource("java.lang.Float",
+          "package java.lang;",
+          "public class Float extends Number {",
+          "  private float value;",
+          "  public Float(float value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Float valueOf(float f) { return new Float(f); }",
+          "  public float floatValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource FOO =
+      createMockJavaResource("test.Foo",
+          "package test;",
+          "public class Foo {",
+          "  public String value() { return \"Foo\"; }",
+          "}");
+
+  public static final MockJavaResource INTEGER =
+      createMockJavaResource("java.lang.Integer",
+          "package java.lang;",
+          "public class Integer extends Number {",
+          "  private int value;",
+          "  public Integer(int value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Integer valueOf(int i) { return new Integer(i); }",
+          "  public int intValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource IS_SERIALIZABLE =
+      createMockJavaResource(
+      "com.google.gwt.user.client.rpc.IsSerializable",
+      "package com.google.gwt.user.client.rpc;",
+          "public interface IsSerializable {",
+          "}");
+
+  public static final MockJavaResource JAVASCRIPTOBJECT =
+      createMockJavaResource("com.google.gwt.core.client.JavaScriptObject",
+          "package com.google.gwt.core.client;",
+          "public class JavaScriptObject {",
+          "  public static native JavaScriptObject createObject() /*-{ return {}; }-*/;",
+          "  protected JavaScriptObject() { }",
+          "  public final String toString() { return \"JavaScriptObject\"; }",
+          "}");
+
+  public static final MockJavaResource LONG =
+      createMockJavaResource("java.lang.Long",
+          "package java.lang;",
+          "public class Long extends Number {",
+          "  private long value;",
+          "  public Long(long value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Long valueOf(long l) { return new Long(l); }",
+          "  public long longValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource MAP =
+      createMockJavaResource("java.util.Map",
+          "package java.util;",
+          "public interface Map<K,V> { }");
+
+  public static final MockJavaResource NO_CLASS_DEF_FOUND_ERROR =
+      createMockJavaResource("java.lang.NoClassDefFoundError",
+          "package java.lang;",
+          "public class NoClassDefFoundError extends Error {",
+          "  public NoClassDefFoundError() {}",
+          "  public NoClassDefFoundError(String msg) {}",
+          "}");
+
+  public static final MockJavaResource NUMBER =
+      createMockJavaResource("java.lang.Number",
+          "package java.lang;",
+          "public class Number implements java.io.Serializable {",
+          "}");
+
+  public static final MockJavaResource OBJECT =
+      createMockJavaResource("java.lang.Object",
+          "package java.lang;",
+          "public class Object {",
+          "  private Class<?> ___clazz;",
+          "  public boolean equals(Object that){return this == that;}",
+          "  public int hashCode() { return 0; }",
+          "  public String toString() { return \"Object\"; }",
+          "  public Object clone() { return this; }",
+          "  public Class<?> getClass() { return ___clazz; }",
+          "}");
+
+  public static final MockJavaResource SERIALIZABLE =
+      createMockJavaResource("java.io.Serializable",
+          "package java.io;",
+          "public interface Serializable { }");
+
+  public static final MockJavaResource SHORT =
+      createMockJavaResource("java.lang.Short",
+          "package java.lang;",
+          "public class Short extends Number {",
+          "  private short value;",
+          "  public Short(short value) {",
+          "    this.value = value;",
+          "  }",
+          "  public static Short valueOf(short s) { return new Short(s); }",
+          "  public short shortValue() { return value; }",
+          "}");
+
+  public static final MockJavaResource STRING =
+      createMockJavaResource("java.lang.String",
+          "package java.lang;",
+          "import java.io.Serializable;",
+          "public final class String implements Serializable {",
+          "  public String() { }",
+          "  public String(char c) { }",
+          "  public String(String s) { }",
+          "  public static String _String() { return \"\"; }",
+          "  public static String _String(char c) { return \"\" + c; }",
+          "  public static String _String(String s) { return s; }",
+          "  private static final long serialVersionUID = 0L;",
+          "  public char charAt(int index) { return 'a'; }",
+          "  public boolean equals(Object obj) { return false; }",
+          "  public boolean equalsIgnoreCase(String str) { return false; }",
+          "  public int length() { return 0; }",
+          "  public static String valueOf(int i) { return \"\" + i; }",
+          "  public static String valueOf(char c) { return \"\" + c; }",
+          "  public static String valueOf(long l) { return \"\" + l; }",
+          "  public int hashCode() { return 0; }",
+          "  public String replace(char c1, char c2) { return null; }",
+          "  public boolean startsWith(String str) { return false; }",
+          "  public String toLowerCase() { return null; }",
+          "  public static String valueOf(boolean b) { return null; }",
+          "}");
+
+  public static final MockJavaResource STRING_BUILDER =
+      createMockJavaResource("java.lang.StringBuilder",
+          "package java.lang;",
+          "public final class StringBuilder {",
+          "}");
+
+  public static final MockJavaResource SUPPRESS_WARNINGS =
+      createMockJavaResource("java.lang.SuppressWarnings",
+          "package java.lang;",
+          "public @interface SuppressWarnings {",
+          "  String[] value();",
+          "}");
+
+  public static final MockJavaResource THROWABLE =
+      createMockJavaResource("java.lang.Throwable",
+          "package java.lang;",
+          "public class Throwable {",
+          "  public String getMessage() { return \"\"; }",
+          "  public Throwable getCause() { return null; }",
+          "  public void addSuppressed(Throwable ex) { }",
+          "}");
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
-        ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION, COLLECTION, DOUBLE,
-        ENUM, EXCEPTION, ERROR, FLOAT, INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP,
-        NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER,
-        SUPPRESS_WARNINGS, THROWABLE};
+        AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
+        COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER, IS_SERIALIZABLE,
+        JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, SERIALIZABLE, SHORT,
+        STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
+  }
+
+  /**
+   * Creates a new MockJavaResource.
+   */
+  public static MockJavaResource createMockJavaResource(String resourceName,
+      final String... lines) {
+    return new MockJavaResource(resourceName) {
+      @Override
+      public CharSequence getContent() {
+        StringBuilder code = new StringBuilder();
+        for (String line : lines) {
+          code.append(line + "\n");
+        }
+        return code;
+      }
+    };
   }
 }

@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
 
@@ -37,7 +38,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertProcessSuccess(argProcessor, "-logLevel", "DEBUG", "-style",
         "PRETTY", "-ea", "-XdisableAggressiveOptimization", "-gen", "myGen",
         "-war", "myWar", "-workDir", "myWork", "-extra", "myExtra",
-        "-localWorkers", "2", "c.g.g.h.H", "my.Module");
+        "-localWorkers", "2", "-sourceLevel", "1.7", "c.g.g.h.H", "my.Module");
 
     assertEquals(new File("myGen").getAbsoluteFile(),
         options.getGenDir().getAbsoluteFile());
@@ -55,6 +56,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertFalse(options.shouldOptimizeDataflow());
     assertFalse(options.shouldOrdinalizeEnums());
     assertFalse(options.shouldRemoveDuplicateFunctions());
+
+    assertEquals(SourceLevel.JAVA7, options.getSourceLevel());
 
     assertEquals(2, options.getModuleNames().size());
     assertEquals("c.g.g.h.H", options.getModuleNames().get(0));
@@ -87,5 +90,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testForbiddenArgs() {
     assertProcessFailure(argProcessor, "-out", "www");
+    assertProcessFailure(argProcessor, "-sourceLevel", "ssss");
+    assertProcessFailure(argProcessor, "-sourceLevel", "1.5");
   }
 }

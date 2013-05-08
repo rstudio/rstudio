@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.test.InitialLoadSequenceTest;
 import com.google.gwt.dev.jjs.test.InnerClassTest;
 import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
 import com.google.gwt.dev.jjs.test.JStaticEvalTest;
+import com.google.gwt.dev.jjs.test.Java7Test;
 import com.google.gwt.dev.jjs.test.JavaAccessFromJavaScriptTest;
 import com.google.gwt.dev.jjs.test.JsStaticEvalTest;
 import com.google.gwt.dev.jjs.test.JsniConstructorTest;
@@ -81,6 +82,7 @@ public class CompilerSuite {
     suite.addTestSuite(InitialLoadSequenceTest.class);
     suite.addTestSuite(InnerClassTest.class);
     suite.addTestSuite(InnerOuterSuperTest.class);
+    suite.addTestSuite(Java7Test.class);
     suite.addTestSuite(JavaAccessFromJavaScriptTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
     suite.addTestSuite(JsoTest.class);

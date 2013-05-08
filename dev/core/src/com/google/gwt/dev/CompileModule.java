@@ -275,7 +275,8 @@ public class CompileModule {
 
       CompilationState compilationState;
       try {
-        compilationState = module.getCompilationState(logger, !options.isStrict());
+        compilationState = module.getCompilationState(logger, !options.isStrict(),
+            options.getSourceLevel());
       } catch (Throwable e) {
         CompilationProblemReporter.logAndTranslateException(logger, e);
         return false;

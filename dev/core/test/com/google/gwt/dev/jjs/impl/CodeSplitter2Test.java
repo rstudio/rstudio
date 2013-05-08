@@ -261,7 +261,7 @@ public class CodeSplitter2Test extends JJSTestBase {
     addBuiltinClasses(sourceOracle);
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
-            getAdditionalTypeProviderDelegate());
+            getAdditionalTypeProviderDelegate(), sourceLevel);
     jProgram =
         JavaAstConstructor.construct(logger, state, "test.EntryPoint",
             "com.google.gwt.lang.Exceptions");
@@ -292,7 +292,7 @@ public class CodeSplitter2Test extends JJSTestBase {
     addBuiltinClasses(sourceOracle);
     CompilationState state =
         CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
-            getAdditionalTypeProviderDelegate());
+            getAdditionalTypeProviderDelegate(), sourceLevel);
     jProgram =
         JavaAstConstructor.construct(logger, state, "test.EntryPoint",
             "com.google.gwt.lang.Exceptions");

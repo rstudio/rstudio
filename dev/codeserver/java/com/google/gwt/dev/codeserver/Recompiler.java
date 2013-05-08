@@ -33,6 +33,7 @@ import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -55,6 +56,7 @@ class Recompiler {
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
+  private SourceLevel sourceLevel;
 
   // after renaming
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
@@ -65,7 +67,7 @@ class Recompiler {
 
   Recompiler(AppSpace appSpace, String moduleName, List<File> sourcePath,
       String serverPrefix, RecompileListener listener, boolean failIfListenerFails,
-      TreeLogger logger) {
+      SourceLevel sourceLevel, TreeLogger logger) {
     this.appSpace = appSpace;
     this.originalModuleName = moduleName;
     this.sourcePath = sourcePath;
@@ -73,6 +75,7 @@ class Recompiler {
     this.failIfListenerFails = failIfListenerFails;
     this.logger = logger;
     this.serverPrefix = serverPrefix;
+    this.sourceLevel = sourceLevel;
   }
 
   synchronized CompileDir compile(Map<String, String> bindingProperties)
@@ -101,13 +104,12 @@ class Recompiler {
 
     boolean success = false;
     try {
-
       ModuleDef module = loadModule(compileLogger, bindingProperties);
       String newModuleName = module.getName(); // includes any rename
       moduleName.set(newModuleName);
 
 
-      CompilerOptions options = new CompilerOptionsImpl(compileDir, newModuleName);
+      CompilerOptions options = new CompilerOptionsImpl(compileDir, newModuleName, sourceLevel);
 
       success = new Compiler(options).run(compileLogger, module);
       lastBuild.set(compileDir); // makes compile log available over HTTP

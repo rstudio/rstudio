@@ -21,10 +21,13 @@ import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Name.BinaryName;
+import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -385,9 +388,9 @@ public class JdtCompiler {
     private TreeLogger logger;
     private int abortCount = 0;
 
-    public CompilerImpl(TreeLogger logger) {
+    public CompilerImpl(TreeLogger logger, CompilerOptions compilerOptions) {
       super(new INameEnvironmentImpl(), DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          getCompilerOptions(), new ICompilerRequestorImpl(), new DefaultProblemFactory(
+          compilerOptions, new ICompilerRequestorImpl(), new DefaultProblemFactory(
               Locale.getDefault()));
       this.logger = logger;
     }
@@ -594,11 +597,17 @@ public class JdtCompiler {
   public static List<CompilationUnit> compile(TreeLogger logger,
       Collection<CompilationUnitBuilder> builders)
       throws UnableToCompleteException {
+    return compile(logger, builders, OptionSource.DEFAULT_SOURCE_LEVEL);
+  }
+
+  public static List<CompilationUnit> compile(TreeLogger logger,
+      Collection<CompilationUnitBuilder> builders, SourceLevel sourceLevel)
+      throws UnableToCompleteException {
     Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
 
     try {
       DefaultUnitProcessor processor = new DefaultUnitProcessor();
-      JdtCompiler compiler = new JdtCompiler(processor);
+      JdtCompiler compiler = new JdtCompiler(processor, sourceLevel);
       compiler.doCompile(logger, builders);
       return processor.getResults();
     } finally {
@@ -606,14 +615,20 @@ public class JdtCompiler {
     }
   }
 
-  public static CompilerOptions getCompilerOptions() {
+
+  public static CompilerOptions getStandardCompilerOptions() {
     CompilerOptions options = new CompilerOptions() {
       {
         warningThreshold.clearAll();
       }
     };
-    options.originalSourceLevel = options.complianceLevel = options.sourceLevel =
-        options.targetJDK = ClassFileConstants.JDK1_6;
+
+    long jdtSourceLevel = jdtLevelByGwtLevel.get(OptionSource.DEFAULT_SOURCE_LEVEL);
+
+    options.originalSourceLevel = jdtSourceLevel;
+    options.complianceLevel = jdtSourceLevel;
+    options.sourceLevel = jdtSourceLevel;
+    options.targetJDK = jdtSourceLevel;
 
     // Generate debug info for debugging the output.
     options.produceDebugAttributes =
@@ -628,6 +643,17 @@ public class JdtCompiler {
     options.reportUnusedDeclaredThrownExceptionIncludeDocCommentReference = false;
     options.reportUnusedDeclaredThrownExceptionExemptExceptionAndThrowable = false;
     options.inlineJsrBytecode = true;
+    return options;
+  }
+
+  public CompilerOptions getCompilerOptions() {
+    CompilerOptions options = getStandardCompilerOptions();
+    long jdtSourceLevel = jdtLevelByGwtLevel.get(sourceLevel);
+
+    options.originalSourceLevel = jdtSourceLevel;
+    options.complianceLevel = jdtSourceLevel;
+    options.sourceLevel = jdtSourceLevel;
+    options.targetJDK = jdtSourceLevel;
     return options;
   }
 
@@ -723,8 +749,23 @@ public class JdtCompiler {
 
   private final UnitProcessor processor;
 
-  public JdtCompiler(UnitProcessor processor) {
+  /**
+   * Java source level compatibility.
+   */
+  private final SourceLevel sourceLevel;
+
+  /**
+   * Maps from SourceLevel, the GWT compiler Java source compatibility levels, to JDT
+   * Java source compatibility levels.
+   */
+  private static final Map<SourceLevel, Long> jdtLevelByGwtLevel =
+      ImmutableMap.<SourceLevel, Long>of(
+          SourceLevel.JAVA6, ClassFileConstants.JDK1_6,
+          SourceLevel.JAVA7, ClassFileConstants.JDK1_7);
+
+  public JdtCompiler(UnitProcessor processor, SourceLevel sourceLevel) {
     this.processor = processor;
+    this.sourceLevel = sourceLevel;
   }
 
   public void addCompiledUnit(CompilationUnit unit) {
@@ -936,7 +977,7 @@ public class JdtCompiler {
       icus.add(new Adapter(builder));
     }
 
-    compilerImpl = new CompilerImpl(logger);
+    compilerImpl = new CompilerImpl(logger, getCompilerOptions());
     try {
       compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     } catch (AbortCompilation e) {
