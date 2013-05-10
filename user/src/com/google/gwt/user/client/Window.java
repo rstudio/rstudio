@@ -220,18 +220,11 @@ public class Window {
     }
 
     /**
-<<<<<<< HEAD
-     * Returns a Map of the URL query parameters for the host page; since
-     * changing the map would not change the window's location, the map returned
-     * is immutable.
-     *
-=======
      * Returns an immutable Map of the URL query parameters for the host page
      * at the time this method was called.
      * Any changes to the window's location will be reflected in the result
      * of subsequent calls.
      * 
->>>>>>> 7c80e9495a6c632e391e6131ae487ff0a16635a7
      * @return a map from URL query parameter names to a list of values
      */
     public static Map<String, List<String>> getParameterMap() {
