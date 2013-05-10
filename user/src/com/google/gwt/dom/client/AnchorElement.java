@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * The anchor element.
  * 
@@ -117,6 +119,15 @@ public class AnchorElement extends Element {
   public final native void setHref(String href) /*-{
     this.href = href;
   }-*/;
+
+  /**
+   * The absolute URI of the linked resource.
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
+   */
+  public final void setSafeHref(SafeUri href) {
+    setHref(href.asString());
+  }
 
   /**
    * Language code of the linked resource.
