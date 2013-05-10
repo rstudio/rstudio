@@ -88,7 +88,9 @@ class ClientEvent extends JavaScriptObject
    public static final String ActivatePane = "activate_pane";
    public static final String ShowPresentationPane = "show_presentation_pane";
    public static final String EnvironmentRefresh = "environment_refresh";
-   public static final String BrowseModeChanged = "browse_mode_changed";
+   public static final String ContextDepthChanged = "context_depth_changed";
+   public static final String EnvironmentAssigned = "environment_assigned";
+   public static final String EnvironmentRemoved = "environment_removed";
 
    protected ClientEvent()
    {

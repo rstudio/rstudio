@@ -5,7 +5,7 @@
 		
 	</ui:style>
 	<g:HTMLPanel>
-	  <g:Label ui:field="browseMode"></g:Label>
+	  <g:Label ui:field="contextDepth"></g:Label>
 	  <g:HTMLPanel ui:field="objectList"></g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder>

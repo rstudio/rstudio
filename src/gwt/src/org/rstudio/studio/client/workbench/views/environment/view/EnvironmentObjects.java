@@ -26,19 +26,17 @@ import com.google.gwt.user.client.ui.Widget;
 public class EnvironmentObjects extends Composite
 {
 
-   interface Binder extends
-         UiBinder<Widget, EnvironmentObjects>
+   interface Binder extends UiBinder<Widget, EnvironmentObjects>
    {
-      
+
    }
-   
-   public void setBrowseMode(boolean browseMode)
+
+   public void setContextDepth(int contextDepth)
    {
-      this.browseMode.setText(browseMode ? 
-            "Browse mode on" : 
-            "Browse mode off");
+      this.contextDepth
+            .setText("Context depth is " + contextDepth);
    }
-   
+
    public void addObject(String obj)
    {
       Label objectLabel = new Label();
@@ -53,9 +51,11 @@ public class EnvironmentObjects extends Composite
 
    public EnvironmentObjects()
    {
-      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
    }
-   
-   @UiField HTMLPanel objectList;
-   @UiField Label browseMode; 
+
+   @UiField
+   HTMLPanel objectList;
+   @UiField
+   Label contextDepth;
 }

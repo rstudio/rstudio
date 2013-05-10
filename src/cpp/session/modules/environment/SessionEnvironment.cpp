@@ -14,7 +14,7 @@
  */
 
 #include "SessionEnvironment.hpp"
-#include "EnvironmentState.hpp"
+#include "EnvironmentMonitor.hpp"
 
 #include <algorithm>
 
@@ -25,95 +25,112 @@
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "EnvironmentUtils.hpp"
+
 using namespace core ;
 
 namespace session {
 namespace modules { 
 namespace environment {
 
+EnvironmentMonitor s_environmentMonitor;
+
 namespace {
 
-json::Object varToJson(const r::sexp::Variable& var)
+SEXP getTopFunctionEnvironment()
 {
-   json::Object varJson;
-   varJson["name"] = var.first;
-   SEXP varSEXP = var.second;
-   varJson["type"] = r::sexp::typeAsString(varSEXP);
-   varJson["len"] = r::sexp::length(varSEXP);
-   return varJson;
-}
-
-Error listEnvironment(const json::JsonRpcRequest&,
-                      json::JsonRpcResponse* pResponse,
-                      boost::shared_ptr<bool> pInBrowse)
-{
-   using namespace r::sexp;
-   Protect rProtect;
-   std::vector<Variable> vars;
-   RCNTXT* pRContext = R_getGlobalContext();
-   SEXP* pEnv = &R_GlobalEnv;
+   RCNTXT* pRContext = r::getGlobalContext();
+   SEXP pEnv = R_GlobalEnv;
    if (pRContext->evaldepth > 0)
    {
        while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
        {
            pRContext = pRContext->nextcontext;
        }
-       pEnv = &(pRContext->cloenv);
+       pEnv = pRContext->cloenv;
    }
-   listEnvironment(*pEnv, true, &rProtect, &vars);
+   return pEnv;
+}
 
-   // get object details and transform to json
-   json::Array listJson;
-   std::transform(vars.begin(),
-                  vars.end(),
-                  std::back_inserter(listJson),
-                  varToJson);
+json::Array environmentListAsJson()
+{
+    using namespace r::sexp;
+    Protect rProtect;
+    std::vector<Variable> vars;
+    listEnvironment(getTopFunctionEnvironment(), true, &rProtect, &vars);
 
+    // get object details and transform to json
+    json::Array listJson;
+    std::transform(vars.begin(),
+                   vars.end(),
+                   std::back_inserter(listJson),
+                   varToJson);
+    return listJson;
+}
+
+Error listEnvironment(const json::JsonRpcRequest&,
+                      json::JsonRpcResponse* pResponse)
+{
    // return list
-   pResponse->setResult(listJson);
+   pResponse->setResult(environmentListAsJson());
    return Success();
 }
 
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-
+   s_environmentMonitor.checkForChanges();
 }
 
-void onConsolePrompt(boost::shared_ptr<bool> pInBrowse)
+void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
-    bool browserContextActive = r::session::browserContextActive();
-    if (*pInBrowse != browserContextActive)
-    {
-        *pInBrowse = browserContextActive;
-        ClientEvent event (client_events::kBrowseModeChanged);
-        module_context::enqueClientEvent(event);
-    }
+   int contextDepth = r::getGlobalContext()->evaldepth;
+
+   // we entered (or left) a call frame
+   if (*pContextDepth != contextDepth)
+   {
+      *pContextDepth = contextDepth;
+      json::Object varJson;
+
+      // start monitoring the enviroment at the new depth
+      s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
+
+      // emit an event to the client indicating the new call frame and the
+      // current state of the environment
+      varJson["context_depth"] = contextDepth;
+      varJson["environment_list"] = environmentListAsJson();
+      ClientEvent event (client_events::kContextDepthChanged, varJson);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
 {
-   return environment::state::asJson();
+   json::Object stateJson;
+   stateJson["context_depth"] = r::getGlobalContext()->evaldepth;
+   return stateJson;
 }
 
 Error initialize()
 {
-   boost::shared_ptr<bool> pInBrowse = boost::make_shared<bool>(false);
+   boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
+
+   // begin monitoring the global environment
+   s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
 
    // subscribe to events
    using boost::bind;
    using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   events().onConsolePrompt.connect(bind(onConsolePrompt, pInBrowse));
+   events().onConsolePrompt.connect(bind(onConsolePrompt, pContextDepth));
 
-   json::JsonRpcFunction listEnv = boost::bind(listEnvironment, _1, _2, pInBrowse);
+   json::JsonRpcFunction listEnv = boost::bind(listEnvironment, _1, _2);
 
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(environment::state::initialize))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 

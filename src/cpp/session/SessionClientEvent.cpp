@@ -99,7 +99,9 @@ const int kLoadedPackageUpdates = 71;
 const int kActivatePane = 72;
 const int kShowPresentationPane = 73;
 const int kEnvironmentRefresh = 74;
-const int kBrowseModeChanged = 75;
+const int kContextDepthChanged = 75;
+const int kEnvironmentAssigned = 76;
+const int kEnvironmentRemoved = 77;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -257,8 +259,12 @@ std::string ClientEvent::typeName() const
          return "show_presentation_pane";
       case client_events::kEnvironmentRefresh:
          return "environment_refresh";   
-      case client_events::kBrowseModeChanged:
-         return "browse_mode_changed";
+      case client_events::kContextDepthChanged:
+         return "context_depth_changed";
+      case client_events::kEnvironmentAssigned:
+         return "environment_assigned";
+      case client_events::kEnvironmentRemoved:
+         return "environment_removed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

@@ -1,5 +1,5 @@
 /*
- * EnvironmentState.hpp
+ * EnvironmentUtils.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,29 +13,15 @@
  *
  */
 
-#ifndef ENVIRONMENTSTATE_HPP
-#define ENVIRONMENTSTATE_HPP
-
 #include <core/json/Json.hpp>
-
-namespace core {
-   class Error;
-}
+#include <r/RSexp.hpp>
 
 namespace session {
 namespace modules {
 namespace environment {
-namespace state {
 
-void init(bool inBrowseMode = false);
+core::json::Object varToJson(const r::sexp::Variable& var);
 
-core::Error initialize();
-
-core::json::Value asJson();
-
-} // namespace state
-} // namespace presentation
+} // namespace environment
 } // namespace modules
-} // namesapce session
-
-#endif // ENVIRONMENTSTATE_HPP
+} // namespace session

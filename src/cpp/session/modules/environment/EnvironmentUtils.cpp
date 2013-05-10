@@ -1,7 +1,7 @@
 /*
- * EnvironmentState.java
+ * EnvironmentUtils.cpp
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,17 +13,24 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.environment.model;
+#include "EnvironmentUtils.hpp"
 
-import com.google.gwt.core.client.JavaScriptObject;
+using namespace core;
 
-public class EnvironmentState extends JavaScriptObject
+namespace session {
+namespace modules {
+namespace environment {
+
+json::Object varToJson(const r::sexp::Variable& var)
 {
-   protected EnvironmentState()
-   {
-   }
-   
-   public final native int contextDepth() /*-{
-      return this.context_depth;
-   }-*/;   
+   json::Object varJson;
+   varJson["name"] = var.first;
+   SEXP varSEXP = var.second;
+   varJson["type"] = r::sexp::typeAsString(varSEXP);
+   varJson["len"] = r::sexp::length(varSEXP);
+   return varJson;
 }
+
+} // namespace environment
+} // namespace modules
+} // namespace session

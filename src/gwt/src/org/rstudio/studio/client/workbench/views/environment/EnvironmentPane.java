@@ -64,9 +64,16 @@ public class EnvironmentPane extends WorkbenchPane
    }
    
    @Override
-   public void setBrowseMode(boolean browseMode)
+   public void removeObject(String objectName)
    {
-      objects_.setBrowseMode(browseMode);
+      String itemText = "- " + objectName;
+      objects_.addObject(itemText);
+   }
+   
+   @Override
+   public void setContextDepth(int contextDepth)
+   {
+      objects_.setContextDepth(contextDepth);
    }
 
    @Override

@@ -86,7 +86,14 @@ enum {
     CTXT_BUILTIN  = 64
 };
 
-inline RCNTXT* R_getGlobalContext() { return static_cast<RCNTXT*>(R_GlobalContext); }
+namespace r {
+
+inline RCNTXT* getGlobalContext()
+{
+   return static_cast<RCNTXT*>(R_GlobalContext);
+}
+
+} // namespace r
 
 #endif // R_INTERFACE_HPP
 

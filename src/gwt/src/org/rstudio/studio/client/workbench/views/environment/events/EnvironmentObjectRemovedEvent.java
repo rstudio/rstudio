@@ -1,5 +1,5 @@
 /*
- * EnvironmentRefreshEvent.java
+ * WorkspaceObjectRemovedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,28 +17,38 @@ package org.rstudio.studio.client.workbench.views.environment.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BrowseModeChangedEvent extends GwtEvent<BrowseModeChangedEvent.Handler>
+public class EnvironmentObjectRemovedEvent 
+                              extends GwtEvent<EnvironmentObjectRemovedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onBrowseModeChanged(BrowseModeChangedEvent event);
+      void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event);
    }
 
-   public BrowseModeChangedEvent()
+   public static final GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler> TYPE =
+      new GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler>();
+   
+   public EnvironmentObjectRemovedEvent(String objectName)
    {
+      objectName_ = objectName;
+   }
+   
+   public String getObjectName()
+   {
+      return objectName_;
+   }
+   
+   @Override
+   protected void dispatch(EnvironmentObjectRemovedEvent.Handler handler)
+   {
+      handler.onEnvironmentObjectRemoved(this);
    }
 
    @Override
-   public Type<Handler> getAssociatedType()
+   public GwtEvent.Type<EnvironmentObjectRemovedEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
-
-   @Override
-   protected void dispatch(Handler handler)
-   {
-      handler.onBrowseModeChanged(this);
-   }
-
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   private final String objectName_;
 }

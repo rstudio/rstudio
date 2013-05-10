@@ -62,8 +62,11 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
-import org.rstudio.studio.client.workbench.views.environment.events.BrowseModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -453,8 +456,9 @@ public class ClientEventDispatcher
             UiPrefsChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new UiPrefsChangedEvent(data));
          }
-         else if (type.equals(ClientEvent.BrowseModeChanged)) {
-            eventBus_.fireEvent(new BrowseModeChangedEvent());
+         else if (type.equals(ClientEvent.ContextDepthChanged)) {
+            ContextDepthChangedEvent.ContextData data = event.getData();
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {
@@ -478,6 +482,16 @@ public class ClientEventDispatcher
          {
             SaveAction action = event.getData();
             eventBus_.fireEvent(new SaveActionChangedEvent(action));
+         }
+         else if (type.equals(ClientEvent.EnvironmentAssigned))
+         {
+            RObject objectInfo = event.getData();
+            eventBus_.fireEvent(new EnvironmentObjectAssignedEvent(objectInfo));
+         }
+         else if (type.equals(ClientEvent.EnvironmentRemoved))
+         {
+            String objectName = event.getData();
+            eventBus_.fireEvent(new EnvironmentObjectRemovedEvent(objectName));
          }
          else
          {

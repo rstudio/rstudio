@@ -80,8 +80,9 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionSourceCpp.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
+   modules/environment/EnvironmentMonitor.cpp
+   modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
-   modules/environment/EnvironmentState.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp

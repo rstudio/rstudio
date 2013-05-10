@@ -40,7 +40,9 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.environment.events.BrowseModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
@@ -58,7 +60,8 @@ public class EnvironmentPresenter extends BasePresenter
    {
       void addObject(RObject object);
       void clearObjects();
-      void setBrowseMode(boolean browseMode);
+      void setContextDepth(int contextDepth);
+      void removeObject(String object);
    }
    
    @Inject
@@ -88,14 +91,35 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
       
-      eventBus.addHandler(BrowseModeChangedEvent.TYPE, 
-                          new BrowseModeChangedEvent.Handler()
+      eventBus.addHandler(ContextDepthChangedEvent.TYPE, 
+                          new ContextDepthChangedEvent.Handler()
       {
          @Override
-         public void onBrowseModeChanged(BrowseModeChangedEvent event)
+         public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
-            inBrowseMode_ = !inBrowseMode_;
-            view_.setBrowseMode(inBrowseMode_);
+            contextDepth_ = event.getContextDepth();
+            view_.setContextDepth(contextDepth_);
+            setViewFromEnvironmentList(event.getEnvironmentList());
+         }
+      });
+      
+      eventBus.addHandler(EnvironmentObjectAssignedEvent.TYPE,
+                          new EnvironmentObjectAssignedEvent.Handler() 
+      {
+         @Override
+         public void onEnvironmentObjectAssigned(EnvironmentObjectAssignedEvent event)
+         {
+            view_.addObject(event.getObjectInfo());
+         }
+      });
+
+      eventBus.addHandler(EnvironmentObjectRemovedEvent.TYPE,
+            new EnvironmentObjectRemovedEvent.Handler() 
+      {
+         @Override
+         public void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event)
+         {
+            view_.removeObject(event.getObjectName());
          }
       });
    }
@@ -109,26 +133,30 @@ public class EnvironmentPresenter extends BasePresenter
    public void initialize(EnvironmentState environmentState)
    {
       environmentState_ = environmentState;
-      setBrowseMode(environmentState_.inBrowseMode());
+      setContextDepth(environmentState_.contextDepth());
    }
    
-   public void setBrowseMode(boolean browseMode)
+   public void setContextDepth(int contextDepth)
    {
-      inBrowseMode_ = browseMode;
-      view_.setBrowseMode(inBrowseMode_);
+      contextDepth_ = contextDepth;
+      view_.setContextDepth(contextDepth_);
    }
    
-   private void refreshView()
+   private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
       view_.clearObjects();
-      
+      for (int i = 0; i<objects.length(); i++)
+         view_.addObject(objects.get(i));
+   }
+    
+   private void refreshView()
+   {
       server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>() {
 
          @Override
          public void onResponseReceived(JsArray<RObject> objects)
          {
-            for (int i = 0; i<objects.length(); i++)
-               view_.addObject(objects.get(i));
+            setViewFromEnvironmentList(objects);
          }
          
          @Override
@@ -144,5 +172,5 @@ public class EnvironmentPresenter extends BasePresenter
    private final EnvironmentServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private EnvironmentState environmentState_;
-   private boolean inBrowseMode_;
+   private int contextDepth_;
 }
