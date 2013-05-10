@@ -37,19 +37,23 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
-SEXP getTopFunctionEnvironment()
+RCNTXT* getTopFunctionContext()
 {
    RCNTXT* pRContext = r::getGlobalContext();
-   SEXP pEnv = R_GlobalEnv;
-   if (pRContext->evaldepth > 0)
+   while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
    {
-       while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
-       {
-           pRContext = pRContext->nextcontext;
-       }
-       pEnv = pRContext->cloenv;
+      pRContext = pRContext->nextcontext;
    }
-   return pEnv;
+   return pRContext;
+}
+
+SEXP getTopFunctionEnvironment()
+{
+   // if we're in an eval tree (i.e. browser), return the environment of the
+   // fuction on top of the stack; otherwise, return the global environment
+   return r::getGlobalContext()->evaldepth > 0 ?
+            getTopFunctionContext()->cloenv :
+            R_GlobalEnv;
 }
 
 json::Array environmentListAsJson()
@@ -84,7 +88,7 @@ void onDetectChanges(module_context::ChangeSource source)
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
-   int contextDepth = r::getGlobalContext()->evaldepth;
+   int contextDepth = getTopFunctionContext()->evaldepth;
 
    // we entered (or left) a call frame
    if (*pContextDepth != contextDepth)
@@ -109,7 +113,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 json::Value environmentStateAsJson()
 {
    json::Object stateJson;
-   stateJson["context_depth"] = r::getGlobalContext()->evaldepth;
+   stateJson["context_depth"] = getTopFunctionContext()->evaldepth;
    return stateJson;
 }
 
