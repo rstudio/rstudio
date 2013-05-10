@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * HTML-based implementation of {@link FormBuilder}.
  */
@@ -27,6 +29,11 @@ public class HtmlFormBuilder extends HtmlElementBuilderBase<FormBuilder> impleme
   @Override
   public FormBuilder acceptCharset(String acceptCharset) {
     return trustedAttribute("acceptCharset", acceptCharset);
+  }
+
+  @Override
+  public FormBuilder action(SafeUri action) {
+    return action(action.asString());
   }
 
   @Override

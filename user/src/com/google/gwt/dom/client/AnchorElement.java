@@ -113,21 +113,21 @@ public class AnchorElement extends Element {
 
   /**
    * The absolute URI of the linked resource.
-   * 
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
-  public final native void setHref(String href) /*-{
-    this.href = href;
-  }-*/;
+  public final void setHref(SafeUri href) {
+    setHref(href.asString());
+  }
 
   /**
    * The absolute URI of the linked resource.
    *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
-  public final void setSafeHref(SafeUri href) {
-    setHref(href.asString());
-  }
+  public final native void setHref(String href) /*-{
+    this.href = href;
+  }-*/;
 
   /**
    * Language code of the linked resource.

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * HTML-based implementation of {@link FrameBuilder}.
  */
@@ -27,6 +29,11 @@ public class HtmlFrameBuilder extends HtmlElementBuilderBase<FrameBuilder> imple
   @Override
   public FrameBuilder frameBorder(int frameBorder) {
     return trustedAttribute("frameBorder", frameBorder);
+  }
+
+  @Override
+  public FrameBuilder longDesc(SafeUri longDesc) {
+    return longDesc(longDesc.asString());
   }
 
   @Override
@@ -57,6 +64,11 @@ public class HtmlFrameBuilder extends HtmlElementBuilderBase<FrameBuilder> imple
   @Override
   public FrameBuilder scrolling(String scrolling) {
     return trustedAttribute("scrolling", scrolling);
+  }
+
+  @Override
+  public FrameBuilder src(SafeUri src) {
+    return src(src.asString());
   }
 
   @Override

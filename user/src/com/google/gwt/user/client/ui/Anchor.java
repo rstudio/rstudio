@@ -24,6 +24,7 @@ import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * A widget that represents a simple &lt;a&gt; element.
@@ -224,6 +225,16 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   }
 
   /**
+   * Creates an anchor with its html and href (target URL) specified.
+   *
+   * @param html the anchor's html
+   * @param href the url to which it will link
+   */
+  public Anchor(SafeHtml html, SafeUri href) {
+    this(html.asString(), true, href.asString());
+  }
+
+  /**
    *  Creates an anchor with its html and href (target URL) specified.
    *
    * @param html the anchor's html
@@ -238,6 +249,17 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    *  Creates an anchor with its html and href (target URL) specified.
    *
    * @param html the anchor's html
+   * @param dir the html's direction
+   * @param href the url to which it will link
+   */
+  public Anchor(SafeHtml html, Direction dir, SafeUri href) {
+    this(html.asString(), true, dir, href.asString());
+  }
+
+  /**
+   *  Creates an anchor with its html and href (target URL) specified.
+   *
+   * @param html the anchor's html
    * @param directionEstimator A DirectionEstimator object used for automatic
    *          direction adjustment. For convenience,
    *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
@@ -246,6 +268,20 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
   public Anchor(SafeHtml html, DirectionEstimator directionEstimator,
       String href) {
     this(html.asString(), true, directionEstimator, href);
+  }
+
+  /**
+   *  Creates an anchor with its html and href (target URL) specified.
+   *
+   * @param html the anchor's html
+   * @param directionEstimator A DirectionEstimator object used for automatic
+   *          direction adjustment. For convenience,
+   *          {@link #DEFAULT_DIRECTION_ESTIMATOR} can be used.
+   * @param href the url to which it will link
+   */
+  public Anchor(SafeHtml html, DirectionEstimator directionEstimator,
+      SafeUri href) {
+    this(html.asString(), true, directionEstimator, href.asString());
   }
 
   /**
@@ -308,6 +344,20 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
    */
   public Anchor(SafeHtml html, String href, String target) {
     this(html.asString(), true, href, target);
+  }
+
+  /**
+   * Creates a source anchor (link to URI).
+   *
+   * That is, an anchor with an href attribute specifying the destination URI.
+   *
+   * @param html the anchor's html
+   * @param href the url to which it will link
+   * @param target the target frame (e.g. "_blank" to open the link in a new
+   *          window)
+   */
+  public Anchor(SafeHtml html, SafeUri href, String target) {
+    this(html.asString(), true, href.asString(), target);
   }
 
   /**
@@ -503,7 +553,16 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
 
   /**
    * Sets the anchor's href (the url to which it links).
-   * 
+   *
+   * @param href the anchor's href
+   */
+  public void setHref(SafeUri href) {
+    getAnchorElement().setHref(href);
+  }
+
+  /**
+   * Sets the anchor's href (the url to which it links).
+   *
    * @param href the anchor's href
    */
   public void setHref(String href) {

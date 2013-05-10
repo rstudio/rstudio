@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * Notice of modification to part of a document.
  * 
@@ -60,7 +62,16 @@ public class ModElement extends Element {
 
   /**
    * A URI designating a document that describes the reason for the change.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
+   */
+  public final void setCite(SafeUri cite) {
+    setCite(cite.asString());
+  }
+
+  /**
+   * A URI designating a document that describes the reason for the change.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
    */
   public final native void setCite(String cite) /*-{

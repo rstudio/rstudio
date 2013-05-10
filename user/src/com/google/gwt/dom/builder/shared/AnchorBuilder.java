@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * Builds an anchor element.
  */
@@ -31,7 +33,16 @@ public interface AnchorBuilder extends ElementBuilderBase<AnchorBuilder> {
 
   /**
    * The absolute URI of the linked resource.
-   * 
+   *
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C
+   *      HTML Specification</a>
+   */
+  AnchorBuilder href(SafeUri href);
+
+  /**
+   * The absolute URI of the linked resource.
+   *
    * @see <a
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C
    *      HTML Specification</a>

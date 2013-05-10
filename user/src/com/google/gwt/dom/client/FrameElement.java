@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * Create a frame.
  * 
@@ -129,7 +131,16 @@ public class FrameElement extends Element {
 
   /**
    * URI designating a long description of this image or frame.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME">W3C HTML Specification</a>
+   */
+  public final void setLongDesc(SafeUri longDesc) {
+    setLongDesc(longDesc.asString());
+  }
+
+  /**
+   * URI designating a long description of this image or frame.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME">W3C HTML Specification</a>
    */
   public final native void setLongDesc(String longDesc) /*-{
@@ -183,7 +194,16 @@ public class FrameElement extends Element {
 
   /**
    * A URI designating the initial frame contents.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
+   */
+  public final void setSrc(SafeUri src) {
+    setSrc(src.asString());
+  }
+
+  /**
+   * A URI designating the initial frame contents.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
    */
   public final native void setSrc(String src) /*-{

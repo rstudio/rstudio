@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.FrameBuilder;
 import com.google.gwt.dom.client.FrameElement;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * DOM-based implementation of {@link FrameBuilder}.
@@ -31,6 +32,12 @@ public class DomFrameBuilder extends DomElementBuilderBase<FrameBuilder, FrameEl
   @Override
   public FrameBuilder frameBorder(int frameBorder) {
     assertCanAddAttribute().setFrameBorder(frameBorder);
+    return this;
+  }
+
+  @Override
+  public FrameBuilder longDesc(SafeUri longDesc) {
+    assertCanAddAttribute().setLongDesc(longDesc);
     return this;
   }
 
@@ -67,6 +74,12 @@ public class DomFrameBuilder extends DomElementBuilderBase<FrameBuilder, FrameEl
   @Override
   public FrameBuilder scrolling(String scrolling) {
     assertCanAddAttribute().setScrolling(scrolling);
+    return this;
+  }
+
+  @Override
+  public FrameBuilder src(SafeUri src) {
+    assertCanAddAttribute().setSrc(src);
     return this;
   }
 

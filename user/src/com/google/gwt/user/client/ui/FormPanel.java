@@ -528,7 +528,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
    * @param url the form's action
    */
   public void setAction(SafeUri url) {
-    setAction(url.asString());
+    getFormElement().setAction(url);
   }
 
   /**

@@ -132,7 +132,7 @@ public class Frame extends Widget implements HasLoadHandlers {
    * @param url the frame's new URL
    */
   public void setUrl(SafeUri url) {
-    setUrl(url.asString());
+    getFrameElement().setSrc(url);
   }
 
   private FrameElement getFrameElement() {

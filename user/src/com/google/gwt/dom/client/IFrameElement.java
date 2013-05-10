@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * Inline subwindows.
  * 
@@ -165,7 +167,16 @@ public class IFrameElement extends Element {
 
   /**
    * A URI designating the initial frame contents.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
+   */
+  public final void setSrc(SafeUri src) {
+    setSrc(src.asString());
+  }
+
+  /**
+   * A URI designating the initial frame contents.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
    */
   public final native void setSrc(String src) /*-{

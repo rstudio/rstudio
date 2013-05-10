@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * Builds an form element.
  */
@@ -31,7 +33,16 @@ public interface FormBuilder extends ElementBuilderBase<FormBuilder> {
 
   /**
    * Server-side form handler.
-   * 
+   *
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C
+   *      HTML Specification</a>
+   */
+  FormBuilder action(SafeUri action);
+
+  /**
+   * Server-side form handler.
+   *
    * @see <a
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C
    *      HTML Specification</a>

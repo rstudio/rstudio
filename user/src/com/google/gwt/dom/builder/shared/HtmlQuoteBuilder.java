@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.builder.shared;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * HTML-based implementation of {@link QuoteBuilder}.
  */
@@ -22,6 +24,11 @@ public class HtmlQuoteBuilder extends HtmlElementBuilderBase<QuoteBuilder> imple
 
   HtmlQuoteBuilder(HtmlBuilderImpl delegate) {
     super(delegate);
+  }
+
+  @Override
+  public QuoteBuilder cite(SafeUri cite) {
+    return cite(cite.asString());
   }
 
   @Override

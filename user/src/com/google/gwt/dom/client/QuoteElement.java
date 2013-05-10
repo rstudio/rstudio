@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * For the Q and BLOCKQUOTE elements.
  * 
@@ -50,7 +52,16 @@ public class QuoteElement extends Element {
 
   /**
    * A URI designating a source document or message.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q">W3C HTML Specification</a>
+   */
+  public final void setCite(SafeUri cite) {
+    setCite(cite.asString());
+  }
+
+  /**
+   * A URI designating a source document or message.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q">W3C HTML Specification</a>
    */
   public final native void setCite(String cite) /*-{

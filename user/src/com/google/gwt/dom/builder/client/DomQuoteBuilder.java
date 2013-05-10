@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.QuoteBuilder;
 import com.google.gwt.dom.client.QuoteElement;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * DOM-based implementation of {@link QuoteBuilder}.
@@ -26,6 +27,12 @@ public class DomQuoteBuilder extends DomElementBuilderBase<QuoteBuilder, QuoteEl
 
   DomQuoteBuilder(DomBuilderImpl delegate) {
     super(delegate);
+  }
+
+  @Override
+  public QuoteBuilder cite(SafeUri cite) {
+    assertCanAddAttribute().setCite(cite);
+    return this;
   }
 
   @Override

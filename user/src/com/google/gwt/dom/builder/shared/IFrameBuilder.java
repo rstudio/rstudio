@@ -16,6 +16,7 @@
 package com.google.gwt.dom.builder.shared;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * Builds an iframe element.
@@ -92,7 +93,16 @@ public interface IFrameBuilder extends ElementBuilderBase<IFrameBuilder> {
 
   /**
    * A URI designating the initial frame contents.
-   * 
+   *
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C
+   *      HTML Specification</a>
+   */
+  IFrameBuilder src(SafeUri src);
+
+  /**
+   * A URI designating the initial frame contents.
+   *
    * @see <a
    *      href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C
    *      HTML Specification</a>

@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.AnchorBuilder;
 import com.google.gwt.dom.client.AnchorElement;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * DOM-based implementation of {@link AnchorBuilder}.
@@ -31,6 +32,12 @@ public class DomAnchorBuilder extends DomElementBuilderBase<AnchorBuilder, Ancho
   @Override
   public AnchorBuilder accessKey(String accessKey) {
     assertCanAddAttribute().setAccessKey(accessKey);
+    return this;
+  }
+
+  @Override
+  public AnchorBuilder href(SafeUri href) {
+    assertCanAddAttribute().setHref(href);
     return this;
   }
 

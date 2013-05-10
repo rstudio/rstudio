@@ -17,6 +17,7 @@ package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.dom.builder.shared.FormBuilder;
 import com.google.gwt.dom.client.FormElement;
+import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
  * DOM-based implementation of {@link FormBuilder}.
@@ -31,6 +32,12 @@ public class DomFormBuilder extends DomElementBuilderBase<FormBuilder, FormEleme
   @Override
   public FormBuilder acceptCharset(String acceptCharset) {
     assertCanAddAttribute().setAcceptCharset(acceptCharset);
+    return this;
+  }
+
+  @Override
+  public FormBuilder action(SafeUri action) {
+    assertCanAddAttribute().setAction(action);
     return this;
   }
 

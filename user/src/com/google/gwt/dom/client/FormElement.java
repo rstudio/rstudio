@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.safehtml.shared.SafeUri;
+
 /**
  * The FORM element encompasses behavior similar to a collection and an element.
  * It provides direct access to the contained form controls as well as the
@@ -122,7 +124,16 @@ public class FormElement extends Element {
 
   /**
    * Server-side form handler.
-   * 
+   *
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C HTML Specification</a>
+   */
+  public final void setAction(SafeUri action) {
+    setAction(action.asString());
+  }
+
+  /**
+   * Server-side form handler.
+   *
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C HTML Specification</a>
    */
   public final native void setAction(String action) /*-{
