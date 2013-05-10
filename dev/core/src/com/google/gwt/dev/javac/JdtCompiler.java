@@ -375,6 +375,12 @@ public class JdtCompiler {
     }
   }
 
+  /**
+   * Maximum number of JDT compiler errors or abort requests before it actually returns
+   * a fatal error to the user.
+   */
+  private static final double ABORT_COUNT_MAX = 100;
+
   private class CompilerImpl extends Compiler {
     private TreeLogger logger;
     private int abortCount = 0;
@@ -418,11 +424,19 @@ public class JdtCompiler {
         String filename = new String(cud.getFileName());
         logger.log(TreeLogger.Type.ERROR,
             "JDT aborted: " + filename + ": " + e.problem.getMessage());
+        if (abortCount >= ABORT_COUNT_MAX) {
+          throw e;
+        }
         return; // continue without it; it might be a server-side class.
       } catch (RuntimeException e) {
+        abortCount++;
+        String filename = new String(cud.getFileName());
         logger.log(TreeLogger.Type.ERROR,
-            "JDT died after " + abortCount + " previous errors", e);
-        throw new AbortCompilation(cud.compilationResult, e);
+            "JDT threw an exception: " + filename + ": " + e);
+        if (abortCount >= ABORT_COUNT_MAX) {
+          throw new AbortCompilation(cud.compilationResult, e);
+        }
+        return; // continue without it; it might be a server-side class.
       }
       ClassFile[] classFiles = cud.compilationResult().getClassFiles();
       Map<ClassFile, CompiledClass> results = new LinkedHashMap<ClassFile, CompiledClass>();
@@ -458,6 +472,10 @@ public class JdtCompiler {
           new CompiledClass(classFile.getBytes(), enclosingClass, isLocalType(classFile),
               internalName);
       results.put(classFile, result);
+    }
+
+    int getAbortCount() {
+      return abortCount;
     }
   }
 
@@ -922,15 +940,17 @@ public class JdtCompiler {
     try {
       compilerImpl.compile(icus.toArray(new ICompilationUnit[icus.size()]));
     } catch (AbortCompilation e) {
+      final String compilerAborted = String.format("JDT compiler aborted after %d errors",
+          compilerImpl.getAbortCount());
       if (e.problem == null) {
-        logger.log(TreeLogger.Type.ERROR, "JDT compiler aborted");
+        logger.log(TreeLogger.Type.ERROR, compilerAborted + ".");
       } else if (e.problem.getOriginatingFileName() == null) {
-        logger.log(TreeLogger.Type.ERROR, "JDT compiler aborted: " + e.problem.getMessage());
+        logger.log(TreeLogger.Type.ERROR, compilerAborted + ": " + e.problem.getMessage());
       } else {
         String filename = new String(e.problem.getOriginatingFileName());
         TreeLogger branch = logger.branch(TreeLogger.Type.ERROR,
             "At " + filename + ": " + e.problem.getSourceLineNumber());
-        branch.log(TreeLogger.Type.ERROR, "JDT compiler aborted: " + e.problem.getMessage());
+        branch.log(TreeLogger.Type.ERROR, compilerAborted + ": " + e.problem.getMessage());
       }
       throw new UnableToCompleteException();
     } finally {
