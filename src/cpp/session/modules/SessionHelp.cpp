@@ -477,6 +477,9 @@ SEXP headersBuffer(const http::Request& request, r::sexp::Protect* pProtect)
       headers.append("\n");
    }
 
+   // append Request-Method
+   headers.append("Request-Method: " + request.method() + "\n");
+
    // allocate RAWSXP and copy headers to it
    SEXP headersSEXP = Rf_allocVector(RAWSXP, headers.length());
    pProtect->add(headersSEXP);
