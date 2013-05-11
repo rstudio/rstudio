@@ -59,7 +59,8 @@ public class EnvironmentPane extends WorkbenchPane
    {
       String itemText = object.getName() + " - " +
                         object.getType() + 
-                        " [" + object.getLength() + "]";
+                        " [" + object.getLength() + "]: " +
+                        object.getValue();
       objects_.addObject(itemText);
    }
    

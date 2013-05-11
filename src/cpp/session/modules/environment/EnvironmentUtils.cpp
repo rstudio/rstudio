@@ -15,11 +15,32 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include <r/RExec.hpp>
+
 using namespace core;
 
 namespace session {
 namespace modules {
 namespace environment {
+namespace {
+
+json::Value valueOfVar(SEXP var)
+{
+   std::string value;
+   Error error = r::exec::RFunction(".rs.valueAsStr",
+                                    var).call(&value);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value(); // return null
+   }
+   else
+   {
+      return value;
+   }
+}
+
+} // anonymous namespace
 
 json::Object varToJson(const r::sexp::Variable& var)
 {
@@ -28,6 +49,7 @@ json::Object varToJson(const r::sexp::Variable& var)
    SEXP varSEXP = var.second;
    varJson["type"] = r::sexp::typeAsString(varSEXP);
    varJson["len"] = r::sexp::length(varSEXP);
+   varJson["value"] = valueOfVar(varSEXP);
    return varJson;
 }
 

@@ -12,5 +12,42 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+.rs.addFunction("valueAsStr", function(val)
+{
+   tryCatch(
+   {
+      is.scalarOrVector <- function (x) {
+         if (is.null(attributes(x)))
+         {
+            !is.na(c(NULL=TRUE,
+                     logical=TRUE,
+                     double=TRUE,
+                     integer=TRUE,
+                     complex=TRUE,
+                     character=TRUE)[typeof(x)])
+         }
+         else
+         {
+            FALSE
+         }
+      }
 
+      if (is.scalarOrVector(val))
+      {
+         if (length(val) == 1 && nchar(val) < 100)
+            return (deparse(val))
+         else if (length(val) > 1)
+            return (capture.output(str(val)))
+         else
+            return ("NO_VALUE")
+      }
+      else if (.rs.isFunction(val))
+         return (.rs.getSignature(val))
+      else
+         return ("NO_VALUE")
+   },
+   error = function(e) print(e))
+
+   return ("NO_VALUE")
+})
 
