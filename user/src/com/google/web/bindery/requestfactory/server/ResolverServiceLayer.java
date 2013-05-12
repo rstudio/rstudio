@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.dev.asm.Type;
 import com.google.web.bindery.autobean.vm.impl.TypeUtils;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
@@ -28,6 +27,7 @@ import com.google.web.bindery.requestfactory.vm.impl.Deobfuscator;
 import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -213,41 +213,48 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
   }
 
   private Class<?>[] getArgumentTypes(String descriptor) {
-    Type[] types = Type.getArgumentTypes(descriptor);
-    Class<?>[] params = new Class<?>[types.length];
-    for (int i = 0, j = types.length; i < j; i++) {
-      params[i] = getClass(types[i]);
+    assert descriptor.startsWith("(") && descriptor.endsWith(")V");
+    ArrayList<Class<?>> params = new ArrayList<Class<?>>();
+    for (int i = 1; i < descriptor.length() - 2; i++) {
+      switch (descriptor.charAt(i)) {
+        case 'Z':
+          params.add(boolean.class);
+          break;
+        case 'B':
+          params.add(byte.class);
+          break;
+        case 'C':
+          params.add(char.class);
+          break;
+        case 'D':
+          params.add(double.class);
+          break;
+        case 'F':
+          params.add(float.class);
+          break;
+        case 'I':
+          params.add(int.class);
+          break;
+        case 'J':
+          params.add(long.class);
+          break;
+        case 'S':
+          params.add(short.class);
+          break;
+        case 'V':
+          params.add(void.class);
+          break;
+        case 'L':
+          int end = descriptor.indexOf(';', i);
+          params.add(forName(descriptor.substring(i + 1, end).replace('/', '.')));
+          i = end;
+          break;
+        case '[':
+          return die(null, "Unsupported Type (array) used in operation descriptor: %s", descriptor);
+        default:
+          return die(null, "Invalid operation descriptor: %s", descriptor);
+      }
     }
-    return params;
-  }
-
-  private Class<?> getClass(Type type) {
-    switch (type.getSort()) {
-      case Type.BOOLEAN:
-        return boolean.class;
-      case Type.BYTE:
-        return byte.class;
-      case Type.CHAR:
-        return char.class;
-      case Type.DOUBLE:
-        return double.class;
-      case Type.FLOAT:
-        return float.class;
-      case Type.INT:
-        return int.class;
-      case Type.LONG:
-        return long.class;
-      case Type.OBJECT:
-        return forName(type.getClassName());
-      case Type.SHORT:
-        return short.class;
-      case Type.VOID:
-        return void.class;
-      case Type.ARRAY:
-        return die(null, "Unsupported Type used in operation descriptor %s", type.getDescriptor());
-      default:
-        // Error in this switch statement
-        return die(null, "Unhandled Type: %s", type.getDescriptor());
-    }
+    return params.toArray(new Class<?>[params.size()]);
   }
 }

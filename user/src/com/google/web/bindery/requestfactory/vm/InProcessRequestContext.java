@@ -100,7 +100,7 @@ class InProcessRequestContext extends AbstractRequestContext {
       if (dialect.equals(Dialect.STANDARD)) {
         StringBuilder descriptor = new StringBuilder("(");
         for (Class<?> param : method.getParameterTypes()) {
-          descriptor.append(com.google.gwt.dev.asm.Type.getDescriptor(param));
+          appendDescriptor(descriptor, param);
         }
         // Don't care about the return type
         descriptor.append(")V");
@@ -178,6 +178,40 @@ class InProcessRequestContext extends AbstractRequestContext {
             });
       } else {
         throw new RuntimeException("Should not reach here");
+      }
+    }
+
+    private void appendDescriptor(StringBuilder descriptor, Class<?> param) {
+      // Arrays aren't actually used anywhere in RequestFactory, but it's trivial to
+      // implement and might be useful later on.
+      while (param.isArray()) {
+        descriptor.append('[');
+        param = param.getComponentType();
+      }
+
+      if (param.isPrimitive()) {
+        if (param == Boolean.TYPE) {
+          descriptor.append('Z');
+        } else if (param == Byte.TYPE) {
+          descriptor.append('B');
+        } else if (param == Character.TYPE) {
+          descriptor.append('C');
+        } else if (param == Double.TYPE) {
+          descriptor.append('D');
+        } else if (param == Float.TYPE) {
+          descriptor.append('F');
+        } else if (param == Integer.TYPE) {
+          descriptor.append('I');
+        } else if (param == Long.TYPE) {
+          descriptor.append('J');
+        } else if (param == Short.TYPE) {
+          descriptor.append('S');
+        } else {
+          assert param == Void.TYPE;
+          descriptor.append('V');
+        }
+      } else {
+        descriptor.append('L').append(param.getName().replace('.', '/')).append(';');
       }
     }
   }
