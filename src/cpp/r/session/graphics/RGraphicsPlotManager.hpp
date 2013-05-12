@@ -91,6 +91,7 @@ public:
    // display
    virtual bool hasOutput() const;
    virtual bool hasChanges() const;
+   virtual bool isActiveDevice() const;
    virtual boost::posix_time::ptime lastChange() const;
    virtual void render(boost::function<void(DisplayState)> outputFunction); 
    virtual std::string imageFilename() const ;

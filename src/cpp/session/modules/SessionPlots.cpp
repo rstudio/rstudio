@@ -674,7 +674,7 @@ void onDetectChanges(module_context::ChangeSource source)
 void onBackgroundProcessing(bool)
 {
    using namespace r::session;
-   if (graphics::display().hasChanges())
+   if (graphics::display().isActiveDevice() && graphics::display().hasChanges())
    {
       // verify that the last change is more than 50ms old. the reason
       // we check for changes in the background is so we can respect

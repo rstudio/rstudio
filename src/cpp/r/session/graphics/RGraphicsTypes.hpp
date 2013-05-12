@@ -60,6 +60,7 @@ struct UnitConversionFunctions
 
 struct GraphicsDeviceFunctions
 {
+   boost::function<bool()> isActive;
    boost::function<DisplaySize()> displaySize;
    UnitConversionFunctions convert;
    boost::function<core::Error(const core::FilePath&,

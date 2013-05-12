@@ -409,6 +409,11 @@ bool PlotManager::hasChanges() const
    return displayHasChanges_ ;
 }
 
+bool PlotManager::isActiveDevice() const
+{
+   return graphicsDevice_.isActive();
+}
+
 boost::posix_time::ptime PlotManager::lastChange() const
 {
    return lastChange_;
