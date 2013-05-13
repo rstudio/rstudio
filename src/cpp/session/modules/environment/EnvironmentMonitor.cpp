@@ -44,7 +44,6 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
 {
    // get object info
    json::Value objInfo = varToJson(variable);
-   std::cerr << "Tracked assignment to " << variable.first << std::endl;
 
    // enque event
    ClientEvent assignedEvent(client_events::kEnvironmentAssigned, objInfo);
@@ -56,8 +55,6 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
 
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 {
-   std::cerr << "Creating monitor for environment "
-             << environment_.get() << std::endl;
    environment_.set(pEnvironment);
    initialized_ = false;
 }
@@ -65,7 +62,6 @@ void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-   std::cerr << "Listing environment " << environment_.get() << std::endl;
    r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
 }
 
@@ -74,8 +70,6 @@ void EnvironmentMonitor::checkForChanges()
    // get the current environment
    std::vector<r::sexp::Variable> currentEnv ;
    listEnv(&currentEnv);
-
-   std::cerr << "Checking for changes to environment " << environment_.get() << std::endl;
 
    if (!initialized_)
    {

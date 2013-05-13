@@ -34,8 +34,13 @@
 
       if (is.scalarOrVector(val))
       {
-         if (length(val) == 1 && nchar(val) < 100)
-            return (deparse(val))
+         if (length(val) == 1)
+         {
+            if (nchar(val) < 100)
+                return (deparse(val))
+            else
+                return (paste(substr(val, 1, 100), " ..."))
+         }
          else if (length(val) > 1)
             return (capture.output(str(val)))
          else
