@@ -929,6 +929,17 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    }
 }
 
+void handlePresentationFileRequest(const http::Request& request,
+                                  const std::string& dir,
+                                  http::Response* pResponse)
+{
+   std::string path = http::util::pathAfterPrefix(request,
+                                                  "/presentation/" + dir + "/");
+   FilePath resPath = options().rResourcesPath().complete("presentation");
+   FilePath filePath = resPath.complete(dir + "/" + path);
+   pResponse->setCacheableFile(filePath, request);
+}
+
 } // anonymous namespace
 
 
@@ -960,10 +971,13 @@ void handlePresentationPaneRequest(const http::Request& request,
    // special handling for reveal.js assets
    else if (boost::algorithm::starts_with(path, "revealjs/"))
    {
-      path = http::util::pathAfterPrefix(request, "/presentation/revealjs/");
-      FilePath resPath = options().rResourcesPath().complete("presentation");
-      FilePath filePath = resPath.complete("revealjs/" + path);
-      pResponse->setCacheableFile(filePath, request);
+      handlePresentationFileRequest(request, "revealjs", pResponse);
+   }
+
+   // special handling for images
+   else if (boost::algorithm::starts_with(path, "images/"))
+   {
+      handlePresentationFileRequest(request, "images", pResponse);
    }
 
    // special handling for mathjax assets

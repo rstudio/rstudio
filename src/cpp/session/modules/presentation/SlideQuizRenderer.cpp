@@ -93,10 +93,10 @@ void renderQuiz(int slideIndex,
    std::string cssAttribs = "class=\"quizFeedback\" style=\"display:none\"";
    boost::format fmtFeedback(
       "<div id=\"%1%_correct\" %2%>\n"
-      "Correct!\n"
+      "<img src=\"images/correct.png\"/>Correct!\n"
       "</div>\n"
       "<div id=\"%1%_incorrect\" %2%>\n"
-      "Incorrect!\n"
+      "<img src=\"images/incorrect.png\"/>Incorrect!\n"
       "</div>\n");
    std::string feedbackHTML = boost::str(fmtFeedback % formId % cssAttribs);
 
