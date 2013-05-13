@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,6 +82,16 @@ public class TypeSerializerCreator {
   private static final String GWT_CREATEMETHODMAP_SHARD_SIZE = "gwt.typecreator.shard.size";
 
   private static int shardSize = -1;
+
+  /**
+   * The maximum number of bytes that should be used in the source code of a method body.
+   * The absolute maximum limit is 64k (or it will fail to compile) however 8k is the limit
+   * for the JIT compiler (HotSpot) and methods over this limit will run slower. We will leave a 1k
+   * buffer and set the limit at 7k.
+   */
+  private static final int MAX_BYTES_PER_METHOD = 7168;
+  private static final String LOAD_METHODS_JAVA_HELPER_PREFIX  = "populateLoadMethodsJavaMap";
+  private static final String LOAD_SIGNATURES_JAVA_HELPER_PREFIX = "populateLoadSignaturesJavaMap";
 
   private static void computeShardSize(TreeLogger logger) throws UnableToCompleteException {
     String shardSizeProperty =
@@ -422,25 +433,20 @@ public class TypeSerializerCreator {
 
   /**
    * Writes a method to produce a map of type string -> class name of
-   * {@link TypeHandler} for Java.
+   * {@link TypeHandler} for Java. We are forced to use repeated helper methods to populate the map
+   * because of the limit on Java method size.
    * 
    * <pre>
    * private static Map&lt;String, String&gt; loadMethodsJava() {
    *   Map&lt;String, String&gt; result = new HashMap&lt;String, String&gt;();
-   *   result.put(
-   *       &quot;java.lang.String/2004016611&quot;,
-   *       &quot;com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer&quot;
+   *   populateLoadMethodsJavaMap0(result);
+   *   populateLoadMethodsJavaMap1(result);
    *   ...
    *   return result;
    * }
    * </pre>
    */
   private void writeLoadMethodsJava() {
-    srcWriter.println("@SuppressWarnings(\"deprecation\")");
-    srcWriter.println("private static Map<String, String> loadMethodsJava() {");
-    srcWriter.indent();
-    srcWriter.println("Map<String, String> result = new HashMap<String, String>();");
-
     List<JType> filteredTypes = new ArrayList<JType>();
     JType[] types = getSerializableTypes();
     int n = types.length;
@@ -452,14 +458,62 @@ public class TypeSerializerCreator {
       }
     }
 
-    for (JType type : filteredTypes) {
-      String typeString = typeStrings.get(type);
-      assert typeString != null : "Missing type signature for " + type.getQualifiedSourceName();
-      srcWriter.println("result.put(\"" + typeString + "\", \""
-          + SerializationUtils.getStandardSerializerName((JClassType) type) + "\");");
+    // Write out as many helper methods as necessary.
+    Iterator<JType> filteredTypesIter = filteredTypes.iterator();
+    int numHelpers = 0;
+    while (filteredTypesIter.hasNext()) {
+      writeLoadMethodsJavaHelper(filteredTypesIter, Integer.toString(numHelpers));
+      numHelpers++;
+    }
+
+    srcWriter.println("@SuppressWarnings(\"deprecation\")");
+    srcWriter.println("private static Map<String, String> loadMethodsJava() {");
+    srcWriter.indent();
+    srcWriter.println("Map<String, String> result = new HashMap<String, String>();");
+
+    // Call all the helper methods to populate the map.
+    for (int helperNum = 0; helperNum < numHelpers; helperNum++) {
+      srcWriter.println(LOAD_METHODS_JAVA_HELPER_PREFIX + Integer.toString(helperNum) +
+          "(result);");
     }
 
     srcWriter.println("return result;");
+    srcWriter.outdent();
+    srcWriter.println("}");
+    srcWriter.println();
+  }
+
+  /**
+   * Writes a helper method to add the type signatures for the specified types to the result map.
+   * Adds as many of the types as possible by destructively modifying the iterator but may
+   * finish with elements still left.
+   *
+   * <pre>
+   * private static void populateLoadMethodsJavaMap#(Map&lt;String, String&gt; result) {
+   *   result.put(
+   *       &quot;java.lang.String/2004016611&quot;,
+   *       &quot;com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer&quot);
+   *   ...
+   * }
+   * </pre>
+   */
+  private void writeLoadMethodsJavaHelper(Iterator<JType> iter, String methodSuffix) {
+    srcWriter.println("private static void " + LOAD_METHODS_JAVA_HELPER_PREFIX + methodSuffix);
+    srcWriter.println("(Map<String, String> result) {");
+    srcWriter.indent();
+
+    int totalBytesEstimate = 0;
+    while (iter.hasNext() && totalBytesEstimate < MAX_BYTES_PER_METHOD) {
+      JType type = iter.next();
+      String typeString = typeStrings.get(type);
+      assert typeString != null : "Missing type signature for " + type.getQualifiedSourceName();
+
+      String line = "result.put(\"" + typeString + "\", \""
+          + SerializationUtils.getStandardSerializerName((JClassType) type) + "\");";
+      totalBytesEstimate += line.getBytes().length;
+      srcWriter.println(line);
+    }
+
     srcWriter.outdent();
     srcWriter.println("}");
     srcWriter.println();
@@ -536,25 +590,69 @@ public class TypeSerializerCreator {
 
   /**
    * Writes a method to produce a map of class name to type string for Java.
-   * 
+   *
    * <pre>
    * private static Map&lt;String&lt;?&gt;, String&gt; loadSignaturesJava() {
    *   Map&lt;String&lt;?&gt;, String&gt; result = new HashMap&lt;String&lt;?&gt;, String&gt;();
-   *   result.put(
-   *       com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.concreteType(),
-   *       &quot;java.lang.String/2004016611&quot;);
+   *   populateLoadSignaturesJavaMap0(result);
+   *   populateLoadSignaturesJavaMap1(result);
    *   ...
    *   return result;
    * }
    * </pre>
    */
   private void writeLoadSignaturesJava() {
+
+    List<JType> allTypes = Arrays.asList(getSerializableTypes());
+    Iterator<JType> allTypesIter = allTypes.iterator();
+
+    // Write out as many helper methods as necessary.
+    int numHelpers = 0;
+    while (allTypesIter.hasNext()) {
+      writeLoadSignaturesJavaHelper(allTypesIter, Integer.toString(numHelpers));
+      numHelpers++;
+    }
+
     srcWriter.println("@SuppressWarnings(\"deprecation\")");
     srcWriter.println("private static Map<String, String> loadSignaturesJava() {");
     srcWriter.indent();
     srcWriter.println("Map<String, String> result = new HashMap<String, String>();");
 
-    for (JType type : getSerializableTypes()) {
+    // Call all the helper methods to populate the map.
+    for (int helperNum = 0; helperNum < numHelpers; helperNum++) {
+      srcWriter.println(LOAD_SIGNATURES_JAVA_HELPER_PREFIX +
+          Integer.toString(helperNum) + "(result);");
+    }
+
+    srcWriter.println("return result;");
+    srcWriter.outdent();
+    srcWriter.println("}");
+    srcWriter.println();
+  }
+
+  /**
+   * Writes a helper method to produce a map of class name to type string for Java. Adds as many of
+   * the signatures as possible by destructively modifying the iterator but may finish with elements
+   * still left.
+   *
+   * <pre>
+   * private static void populateLoadSignaturesJavaMap#(Map&lt;String&lt;?&gt;, String&gt; result) {
+   *   result.put(
+   *       com.google.gwt.user.client.rpc.core.java.lang.String_FieldSerializer.concreteType(),
+   *       &quot;java.lang.String/2004016611&quot;);
+   *   ...
+   * }
+   * </pre>
+   */
+  private void writeLoadSignaturesJavaHelper(Iterator<JType> iter, String methodSuffix) {
+    srcWriter.println("private static void " + LOAD_SIGNATURES_JAVA_HELPER_PREFIX +
+        methodSuffix);
+    srcWriter.println("(Map<String, String> result) {");
+    srcWriter.indent();
+
+    int totalBytesEstimate = 0;
+    while (iter.hasNext() && totalBytesEstimate < MAX_BYTES_PER_METHOD) {
+      JType type = iter.next();
       String typeString = typeStrings.get(type);
 
       if (!serializationOracle.maybeInstantiated(type)
@@ -572,10 +670,11 @@ public class TypeSerializerCreator {
         typeRef = '"' + SerializationUtils.getRpcTypeName(type) + '"';
       }
 
-      srcWriter.println("result.put(" + typeRef + ", \"" + typeString + "\");");
+      String line = "result.put(" + typeRef + ", \"" + typeString + "\");";
+      totalBytesEstimate += line.getBytes().length;
+      srcWriter.println(line);
     }
 
-    srcWriter.println("return result;");
     srcWriter.outdent();
     srcWriter.println("}");
     srcWriter.println();
@@ -755,3 +854,4 @@ public class TypeSerializerCreator {
     srcWriter.outdent();
   }
 }
+
