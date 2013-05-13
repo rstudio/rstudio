@@ -133,10 +133,9 @@ void Log::onConsolePrompt(const std::string& prompt)
 
    if (!consoleInputBuffer_.empty())
    {
-      std::string input = boost::algorithm::trim_copy(
-                            boost::algorithm::join(consoleInputBuffer_, "\n"));
-      std::string errors = boost::algorithm::trim_copy(
-                            boost::algorithm::join(errorOutputBuffer_, "\n"));
+      using namespace boost::algorithm;
+      std::string input = trim_copy(join(consoleInputBuffer_, "\n"));
+      std::string errors = trim_copy(join(errorOutputBuffer_, "\n"));
 
       // check to see if this command was one of the ones instrumented
       // by the current slide
