@@ -258,9 +258,9 @@ void Log::append(EntryType type,
    // ensure target file
    FilePath logFilePath;
    Error error = ensureTargetFile(
-            "presentation-log-v1.csv",
-            "type, timestamp, presentation, slide, slide-type, help-topic, "
-            "help-doc, input, errors\n",
+            "presentation-log-v2.csv",
+            "type, timestamp, username, presentation, slide, slide-type, "
+            "help-topic, help-doc, input, errors\n",
             &logFilePath);
    if (error)
    {
@@ -272,6 +272,7 @@ void Log::append(EntryType type,
    std::vector<std::string> fields;
    fields.push_back((type == NavigationEntry) ? "Navigation" : "Input");
    fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(slideIndex));
    fields.push_back(slideType);
@@ -291,8 +292,9 @@ void Log::recordFeedback(const std::string& feedback)
 {
    // ensure target file
    FilePath feedbackFilePath;
-   Error error = ensureTargetFile("feedback-v1.csv",
-                                  "timestamp, presentation, slide, feedback\n",
+   Error error = ensureTargetFile("feedback-v2.csv",
+                                  "timestamp, username, presentation, "
+                                  "slide, feedback\n",
                                   &feedbackFilePath);
    if (error)
    {
@@ -303,6 +305,7 @@ void Log::recordFeedback(const std::string& feedback)
    // generate entry
    std::vector<std::string> fields;
    fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(currentSlideIndex_));
    fields.push_back(csvString(feedback));
@@ -319,8 +322,9 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
    // ensure target file
    FilePath quizResponseFilePath;
    Error error = ensureTargetFile(
-                      "quiz-responses-v1.csv",
-                      "timestamp, presentation, slide, answer, correct",
+                      "quiz-responses-v2.csv",
+                      "timestamp, username, presentation, slide, "
+                      "answer, correct",
                        &quizResponseFilePath);
    if (error)
    {
@@ -331,6 +335,7 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
    // generate entry
    std::vector<std::string> fields;
    fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(index));
    fields.push_back(safe_convert::numberToString(answer));
