@@ -108,7 +108,7 @@ void renderQuiz(int slideIndex,
 
    // create input elements
    int itemIndex = 0;
-   boost::iostreams::regex_filter filter(boost::regex("<li>([^<]+)<\\/li>"),
+   boost::iostreams::regex_filter filter(boost::regex("<li>(.+?)<\\/li>"),
                                          boost::bind(asFormInput,
                                                       _1, formId, &itemIndex));
 
