@@ -50,4 +50,7 @@ public interface PresentationServerOperations extends RPubsServerOperations
    
    void tutorialFeedback(String feedback, 
                          ServerRequestCallback<Void> requestCallback);
+   
+   void tutorialQuizResponse(int slideIndex, int answer, boolean correct,
+                             ServerRequestCallback<Void> requestCallback);
 }

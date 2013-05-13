@@ -59,6 +59,14 @@
    background: #C6D7DC;
 }
 
+.quiz .reveal .state-background {
+  background: pink;
+}
+
+.quiz .reveal ul {
+  list-style-type: none;
+}
+
 .section .reveal .state-background {
    background: #96A2B6;
 }

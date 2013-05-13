@@ -33,6 +33,7 @@
 #include "SlideParser.hpp"
 #include "SlideMediaRenderer.hpp"
 #include "SlideNavigationList.hpp"
+#include "SlideQuizRenderer.hpp"
 
 using namespace core;
 
@@ -128,8 +129,10 @@ void addFragmentClass(const std::string& fragmentClass,
 }
 
 Error slideToHtml(const Slide& slide,
+                  int slideNumber,
                   const std::string& extraContent,
                   const std::string& incremental,
+                  std::string* pHead,
                   std::string* pHTML)
 {
    // invalid fields
@@ -151,6 +154,16 @@ Error slideToHtml(const Slide& slide,
    Error error = renderMarkdown(slide.content(), &markdownHTML);
    if (error)
       return error;
+
+   // see if we need to render a quiz
+   if (slide.type() == "quiz")
+   {
+      std::string head;
+      renderQuiz(slideNumber, slide.correct(), &head, &markdownHTML);
+      pHead->append(head);
+   }
+
+   // append the html
    pHTML->append(markdownHTML);
 
    // add the extra content
@@ -256,6 +269,7 @@ void validateSlideDeckFields(const SlideDeck& slideDeck)
 
 
 Error renderSlides(const SlideDeck& slideDeck,
+                   std::string* pSlidesHead,
                    std::string* pSlides,
                    std::string* pRevealConfig,
                    std::string* pInitActions,
@@ -399,13 +413,20 @@ Error renderSlides(const SlideDeck& slideDeck,
 
 
       // render markdown
-      std::string htmlContent;
+      std::string headContent, htmlContent;
       Error error = slideToHtml(slide,
+                                slideNumber,
                                 ostrMedia.str(),
                                 incremental,
+                                &headContent,
                                 &htmlContent);
       if (error)
          return error;
+
+      // record head
+      pSlidesHead->append(headContent);
+
+      // record html
       ostr << htmlContent << "\n";
 
       // render end section

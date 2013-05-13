@@ -113,7 +113,6 @@ void Log::onSlideIndexChanged(int index)
    currentSlideIndex_ = index;
 
    append(NavigationEntry,
-          presentation::state::filePath(),
           currentSlideIndex_,
           currentSlideType(),
           currentSlideHelpTopic(),
@@ -142,7 +141,6 @@ void Log::onConsolePrompt(const std::string& prompt)
       if (slideDeckInputCommands_[currentSlideIndex_].count(input) == 0)
       {
          append(InputEntry,
-                presentation::state::filePath(),
                 currentSlideIndex_,
                 currentSlideType(),
                 currentSlideHelpTopic(),
@@ -195,6 +193,12 @@ std::string timestamp()
    return dateTime;
 }
 
+std::string csvPresentationPath()
+{
+   return csvString(module_context::createAliasedPath(
+                                         presentation::state::filePath()));
+}
+
 Error ensureTargetFile(const std::string& filename,
                        const std::string& header,
                        FilePath* pTargetFile)
@@ -244,7 +248,6 @@ std::string Log::currentSlideHelpDoc() const
 }
 
 void Log::append(EntryType type,
-                 const FilePath& presPath,
                  int slideIndex,
                  const std::string& slideType,
                  const std::string& helpTopic,
@@ -269,7 +272,7 @@ void Log::append(EntryType type,
    std::vector<std::string> fields;
    fields.push_back((type == NavigationEntry) ? "Navigation" : "Input");
    fields.push_back(timestamp());
-   fields.push_back(csvString(module_context::createAliasedPath(presPath)));
+   fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(slideIndex));
    fields.push_back(slideType);
    fields.push_back(csvString(helpTopic));
@@ -300,8 +303,7 @@ void Log::recordFeedback(const std::string& feedback)
    // generate entry
    std::vector<std::string> fields;
    fields.push_back(timestamp());
-   fields.push_back(csvString(module_context::createAliasedPath(
-                                          presentation::state::filePath())));
+   fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(currentSlideIndex_));
    fields.push_back(csvString(feedback));
    std::string entry = boost::algorithm::join(fields, ",");
@@ -311,6 +313,36 @@ void Log::recordFeedback(const std::string& feedback)
    if (error)
       LOG_ERROR(error);
 }
+
+void Log::recordQuizResponse(int index, int answer, bool correct)
+{
+   // ensure target file
+   FilePath quizResponseFilePath;
+   Error error = ensureTargetFile(
+                      "quiz-responses-v1.csv",
+                      "timestamp, presentation, slide, answer, correct",
+                       &quizResponseFilePath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // generate entry
+   std::vector<std::string> fields;
+   fields.push_back(timestamp());
+   fields.push_back(csvPresentationPath());
+   fields.push_back(safe_convert::numberToString(index));
+   fields.push_back(safe_convert::numberToString(answer));
+   fields.push_back(safe_convert::numberToString(correct));
+   std::string entry = boost::algorithm::join(fields, ",");
+
+   // append entry
+   error = core::appendToFile(quizResponseFilePath, entry + "\n");
+   if (error)
+      LOG_ERROR(error);
+}
+
 
 
 

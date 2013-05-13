@@ -51,6 +51,7 @@ public:
    void onSlideIndexChanged(int index);
 
    void recordFeedback(const std::string& feedback);
+   void recordQuizResponse(int index, int answer, bool correct);
 
 private:
    void onConsolePrompt(const std::string& prompt);
@@ -61,7 +62,6 @@ private:
    enum EntryType { NavigationEntry, InputEntry };
 
    static void append(EntryType type,
-                      const core::FilePath& presPath,
                       int slideIndex,
                       const std::string& slideType,
                       const std::string& helpTopic,

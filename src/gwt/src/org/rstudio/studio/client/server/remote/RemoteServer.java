@@ -2614,6 +2614,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, TUTORIAL_FEEDBACK, feedback, requestCallback);
    }
    
+   @Override
+   public void tutorialQuizResponse(
+                           int slideIndex, int answer, boolean correct,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(slideIndex));
+      params.set(1, new JSONNumber(answer));
+      params.set(2, JSONBoolean.getInstance(correct));
+      sendRequest(RPC_SCOPE, TUTORIAL_QUIZ_RESPONSE, params, requestCallback);
+   }
+   
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           String encoding,
@@ -3013,6 +3026,7 @@ public class RemoteServer implements Server
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
    
    private static final String TUTORIAL_FEEDBACK = "tutorial_feedback";
+   private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

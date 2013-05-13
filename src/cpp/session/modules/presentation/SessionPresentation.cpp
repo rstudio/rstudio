@@ -267,6 +267,33 @@ Error tutorialFeedback(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error tutorialQuizResponse(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // get the params
+   int slideIndex, answer;
+   bool correct;
+   Error error = json::readParams(request.params,
+                                  &slideIndex,
+                                  &answer,
+                                  &correct);
+   if (error)
+      return error;
+
+   // confirm we are active
+   if (!presentation::state::isActive())
+   {
+      pResponse->setError(json::errc::MethodUnexpected);
+      return Success();
+   }
+
+   // record the feedback
+   presentation::log().recordQuizResponse(slideIndex, answer, correct);
+
+   return Success();
+}
+
+
 
 Error createStandalonePresentation(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
@@ -366,6 +393,7 @@ Error initialize()
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
       (bind(registerRpcMethod, "set_working_directory", setWorkingDirectory))
       (bind(registerRpcMethod, "tutorial_feedback", tutorialFeedback))
+      (bind(registerRpcMethod, "tutorial_quiz_response", tutorialQuizResponse))
       (bind(presentation::state::initialize))
       (bind(sourceModuleRFile, "SessionPresentation.R"));
 

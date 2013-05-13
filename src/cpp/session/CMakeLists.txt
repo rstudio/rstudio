@@ -88,6 +88,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideMediaRenderer.cpp
    modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp
+   modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/tex/SessionCompilePdf.cpp

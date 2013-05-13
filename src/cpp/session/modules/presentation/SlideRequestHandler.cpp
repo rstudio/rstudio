@@ -443,8 +443,10 @@ bool readPresentation(SlideDeck* pSlideDeck,
    }
 
    // render the slides
+   std::string slidesHead;
    std::string revealConfig;
    error = presentation::renderSlides(*pSlideDeck,
+                                      &slidesHead,
                                       pSlides,
                                       &revealConfig,
                                       pInitActions,
@@ -459,6 +461,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    // build template variables
    std::map<std::string,std::string>& vars = *pVars;
    vars["title"] = pSlideDeck->title();
+   vars["slides_head"] = slidesHead;
    vars["slides"] = *pSlides;
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");

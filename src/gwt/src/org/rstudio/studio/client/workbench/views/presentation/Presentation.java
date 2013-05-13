@@ -579,6 +579,16 @@ public class Presentation extends BasePresenter
       slideMenu.setDropDownVisible(slideNavigation_.getItems().length() > 1);
    }
    
+   private void recordPresentationQuizAnswer(int slideIndex, 
+                                             int answer, 
+                                             boolean correct)
+   {
+      server_.tutorialQuizResponse(slideIndex, 
+                                   answer, 
+                                   correct, 
+                                   new VoidServerRequestCallback());
+   }
+   
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationSlideChanged = $entry(function(index, cmds) {
@@ -589,6 +599,9 @@ public class Presentation extends BasePresenter
       });
       $wnd.initPresentationNavigator = $entry(function(slides) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationNavigator(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
+      });
+      $wnd.recordPresentationQuizAnswer = $entry(function(index, answer, correct) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::recordPresentationQuizAnswer(IIZ)(index, answer, correct);
       });
    }-*/;   
    
