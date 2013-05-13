@@ -65,6 +65,16 @@
 
 .quiz .reveal ul {
   list-style-type: none;
+  margin-bottom: 40px;
+}
+
+.quiz .reveal li {
+  margin-top: 20px;
+}
+
+.quiz .reveal .quizFeedback {
+  margin-bottom: 40px;
+  margin-left: 1.5em;
 }
 
 .section .reveal .state-background {
