@@ -7,3 +7,19 @@
    font-family: fixedWidthFont;
 }
 
+.nameCol
+{
+   width: 25%;
+}
+
+.expandCol
+{
+   width: 20px;
+}
+
+.valueCol
+{
+   white-space: nowrap;
+   text-overflow: ellipsis;
+   overflow-x: hidden;
+}

@@ -19,6 +19,8 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
@@ -35,25 +37,50 @@ import java.util.List;
 
 public class EnvironmentObjects extends Composite
 {
-   private class ObjectTableBuilder extends AbstractCellTableBuilder<RObject>
+   // provide access to styles defined in associated CSS file
+   interface Style extends CssResource
+   {
+      String expandCol();
+      String nameCol();
+      String valueCol();
+   }
+
+   private class ObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
    {
       public ObjectTableBuilder()
       {
          super(objectList);
       }
 
-      public void buildRowImpl(RObject rowValue, int absRowIndex)
+      public void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
       {
          TableRowBuilder row = startRow();
 
+         // build the column containing the expand/collapse command
+         TableCellBuilder expandCol = row.startTD();
+         expandCol.className(style.expandCol());
+         if (rowValue.canExpand)
+         {
+            ImageResource expandImage = rowValue.expanded ?
+               EnvironmentResources.INSTANCE.collapseIcon() :
+               EnvironmentResources.INSTANCE.expandIcon();
+
+            expandCol.startImage().src(expandImage.getSafeUri().asString());
+            expandCol.endImage();
+         }
+         expandCol.endTD();
+
          // build the column containing the name of the object
          TableCellBuilder nameCol = row.startTD();
-         nameCol.text(rowValue.getName());
+         nameCol.className(style.nameCol());
+         nameCol.text(rowValue.rObject.getName());
          nameCol.endTD();
 
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
-         descCol.text(rowValue.getValue());
+         nameCol.className(style.valueCol());
+         descCol.text(rowValue.rObject.getValue());
+
          descCol.endTD();
 
          row.endTR();
@@ -76,11 +103,11 @@ public class EnvironmentObjects extends Composite
       // if the object is already in the environment, just update the value
       if (idx >= 0)
       {
-         objectDataProvider_.getList().set(idx, obj);
+         objectDataProvider_.getList().set(idx, new RObjectEntry(obj));
       }
       else
       {
-         objectDataProvider_.getList().add(obj);
+         objectDataProvider_.getList().add(new RObjectEntry(obj));
       }
    }
 
@@ -100,20 +127,20 @@ public class EnvironmentObjects extends Composite
 
    public EnvironmentObjects()
    {
-      objectList = new DataGrid<RObject>(RObject.KEY_PROVIDER);
-      objectDataProvider_ = new ListDataProvider<RObject>();
+      objectList = new DataGrid<RObjectEntry>(RObjectEntry.KEY_PROVIDER);
+      objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectDataProvider_.addDataDisplay(objectList);
-      objectNameColumn_ = new Column<RObject, String>(new TextCell()) {
+      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
          @Override
-         public String getValue(RObject object) {
-            return object.getName();
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getName();
          }
       };
 
-      objectDescriptionColumn_ = new Column<RObject, String>(new TextCell()) {
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
          @Override
-         public String getValue(RObject object) {
-            return object.getValue();
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getValue();
          }
       };
       objectList.addColumn(objectNameColumn_);
@@ -129,14 +156,14 @@ public class EnvironmentObjects extends Composite
 
    private int indexOfObject(String objectName)
    {
-      List<RObject> objects = objectDataProvider_.getList();
+      List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // find the position of the object in the list
       int index;
       boolean foundObject = false;
       for (index = 0; index < objects.size(); index++)
       {
-         if (objects.get(index).getName() == objectName)
+         if (objects.get(index).rObject.getName() == objectName)
          {
             foundObject = true;
             break;
@@ -147,12 +174,12 @@ public class EnvironmentObjects extends Composite
    }
    
 
-   @UiField
-   HTMLPanel environmentContents;
+   @UiField HTMLPanel environmentContents;
+   @UiField Style style;
 
-   DataGrid<RObject> objectList;
+   DataGrid<RObjectEntry> objectList;
 
-   private Column<RObject, String> objectNameColumn_;
-   private Column<RObject, String> objectDescriptionColumn_;
-   private ListDataProvider<RObject> objectDataProvider_;
+   private Column<RObjectEntry, String> objectNameColumn_;
+   private Column<RObjectEntry, String> objectDescriptionColumn_;
+   private ListDataProvider<RObjectEntry> objectDataProvider_;
 }

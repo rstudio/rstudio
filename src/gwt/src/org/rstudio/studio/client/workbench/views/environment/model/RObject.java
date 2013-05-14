@@ -20,13 +20,6 @@ import com.google.gwt.view.client.ProvidesKey;
 
 public class RObject extends JavaScriptObject
 {
-   public static final ProvidesKey<RObject> KEY_PROVIDER =
-           new ProvidesKey<RObject>() {
-      public Object getKey(RObject item) {
-         return item.getName();
-      }
-   };
-
    protected RObject()
    {
    }
