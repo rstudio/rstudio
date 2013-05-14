@@ -31,6 +31,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
+import java.util.List;
+
 public class EnvironmentObjects extends Composite
 {
    private class ObjectTableBuilder extends AbstractCellTableBuilder<RObject>

@@ -57,16 +57,13 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void addObject(RObject object)
    {
-      String itemText = object.getName() + " - " +
-                        object.getType() + 
-                        " [" + object.getLength() + "]: " +
-                        object.getValue();
       objects_.addObject(object);
    }
    
    @Override
    public void removeObject(String objectName)
    {
+      objects_.removeObject(objectName);
    }
    
    @Override
