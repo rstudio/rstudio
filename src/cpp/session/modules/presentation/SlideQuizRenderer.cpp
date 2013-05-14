@@ -64,6 +64,9 @@ void renderQuiz(int slideIndex,
                 std::string* pHead,
                 std::string* pHTML)
 {      
+   // tweak the radio button size
+   pHead->append("<style>.quiz .reveal input { zoom: 2.5; }</style>\n");
+
    // build form id
    std::string suffix = safe_convert::numberToString<int>(slideIndex);
    std::string formId = "quizForm" + suffix;
@@ -83,11 +86,11 @@ void renderQuiz(int slideIndex,
             "%4%, answer, correct);\n "
       "}\n"
       "</script>\n\n");
-   *pHead = boost::str(fmtScript
-                         % handleClickFunction(formId)
-                         % correctItemIndex
-                         % formId
-                         % slideIndex);
+   pHead->append(boost::str(fmtScript
+                              % handleClickFunction(formId)
+                              % correctItemIndex
+                              % formId
+                              % slideIndex));
 
    // correct and incorrect divs
    std::string cssAttribs = "class=\"quizFeedback\" style=\"display:none\"";
