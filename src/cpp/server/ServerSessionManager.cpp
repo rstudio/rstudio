@@ -49,7 +49,8 @@ SessionManager& sessionManager()
    return instance;
 }
 
-Error SessionManager::launchSession(const std::string& username)
+Error SessionManager::launchSession(const std::string& username,
+                                    const std::string& password)
 {
    using namespace boost::posix_time;
 
@@ -84,7 +85,7 @@ Error SessionManager::launchSession(const std::string& username)
 
    // launch the session
    PidType pid = 0;
-   Error error = server::launchSession(username, &pid);
+   Error error = server::launchSession(username, password, &pid);
    if (error)
    {
       removePendingLaunch(username);
@@ -211,8 +212,13 @@ std::vector<PidType> SessionManager::activePids()
    return std::vector<PidType>();
 }
 
+// custom session launch function
+namespace {
+SessionLaunchFunction s_sessionLaunchFunction;
+}
 
 Error launchSession(const std::string& username,
+                    const std::string& password,
                     const core::system::Options& extraArgs,
                     PidType* pPid)
 {
@@ -272,15 +278,34 @@ Error launchSession(const std::string& username,
                                options.rsessionStackLimitMb() * 1024L * 1024L);
    config.userProcessesLimit = static_cast<RLimitType>(
                                options.rsessionUserProcessLimit());
-   return core::system::launchChildProcess(options.rsessionPath(),
-                                           runAsUser,
-                                           config,
-                                           pPid) ;
+
+   if (s_sessionLaunchFunction)
+   {
+      return s_sessionLaunchFunction(options.rsessionPath(),
+                                     runAsUser,
+                                     password,
+                                     config,
+                                     pPid);
+   }
+   else
+   {
+      return core::system::launchChildProcess(options.rsessionPath(),
+                                              runAsUser,
+                                              config,
+                                              pPid);
+   }
 }
 
-Error launchSession(const std::string& username, PidType* pPid)
+Error launchSession(const std::string& username,
+                    const std::string& password,
+                    PidType* pPid)
 {
-   return launchSession(username, core::system::Options(), pPid);
+   return launchSession(username, password, core::system::Options(), pPid);
+}
+
+void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction)
+{
+   s_sessionLaunchFunction = launchFunction;
 }
 
 

@@ -48,7 +48,8 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const std::string& username);
+   core::Error launchSession(const std::string& username,
+                             const std::string& password);
    void removePendingLaunch(const std::string& username);
 
    // notificatio that a SIGCHLD was received
@@ -73,11 +74,24 @@ private:
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
 //
-core::Error launchSession(const std::string& username, PidType* pPid);
+core::Error launchSession(const std::string& username,
+                          const std::string& password,
+                          PidType* pPid);
 
 core::Error launchSession(const std::string& username,
+                          const std::string& password,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
+
+
+// allow a custom session launch function
+typedef boost::function<core::Error(std::string,
+                                    std::string,
+                                    std::string,
+                                    core::system::ProcessConfig,
+                                    PidType*)> SessionLaunchFunction;
+
+void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
 } // namespace server
 

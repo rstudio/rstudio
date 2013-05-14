@@ -36,6 +36,8 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
+#include "ServerSessionProxy.hpp"
+
 namespace server {
 namespace pam_auth {
 
@@ -265,6 +267,9 @@ void doSignIn(const http::Request& request,
    if ( pamLogin(username, password) &&
         server::auth::validateUser(username))
    {
+      // allow the session launcher access to the password
+      server::session_proxy::setSessionLaunchPassword(username, password);
+
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 
@@ -296,8 +301,7 @@ void doSignIn(const http::Request& request,
    }
 }
 
-void signOut(const std::string&,
-             const http::Request& request,
+void signOut(const http::Request& request,
              http::Response* pResponse)
 {
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
