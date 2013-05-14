@@ -71,7 +71,26 @@ public class EnvironmentObjects extends Composite
 
    public void addObject(RObject obj)
    {
-      objectDataProvider_.getList().add(obj);
+      int idx = indexOfObject(obj.getName());
+
+      // if the object is already in the environment, just update the value
+      if (idx >= 0)
+      {
+         objectDataProvider_.getList().set(idx, obj);
+      }
+      else
+      {
+         objectDataProvider_.getList().add(obj);
+      }
+   }
+
+   public void removeObject(String objName)
+   {
+      int idx = indexOfObject(objName);
+      if (idx >= 0)
+      {
+         objectDataProvider_.getList().remove(idx);
+      }
    }
    
    public void clearObjects()
@@ -107,10 +126,30 @@ public class EnvironmentObjects extends Composite
 
       environmentContents.add(objectList);
    }
+
+   private int indexOfObject(String objectName)
+   {
+      List<RObject> objects = objectDataProvider_.getList();
+
+      // find the position of the object in the list
+      int index;
+      boolean foundObject = false;
+      for (index = 0; index < objects.size(); index++)
+      {
+         if (objects.get(index).getName() == objectName)
+         {
+            foundObject = true;
+            break;
+         }
+      }
+
+      return foundObject ? index : -1;
+   }
    
 
    @UiField
    HTMLPanel environmentContents;
+
    DataGrid<RObject> objectList;
 
    private Column<RObject, String> objectNameColumn_;
