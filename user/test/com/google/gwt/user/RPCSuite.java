@@ -103,15 +103,19 @@ public class RPCSuite {
     suite.addTestSuite(UnicodeEscapingTestWithTypeObfuscation.class);
 
     // Client-side test cases for deRPC system
-    suite.addTestSuite(RpcValueTypesTest.class);
-    suite.addTestSuite(RpcEnumsTest.class);
-    suite.addTestSuite(RpcInheritanceTest.class);
-    suite.addTestSuite(RpcCollectionsTest.class);
-    suite.addTestSuite(RpcCustomFieldSerializerTest.class);
-    suite.addTestSuite(RpcObjectGraphTest.class);
-    suite.addTestSuite(RpcRemoteServiceServletTest.class);
-    suite.addTestSuite(RpcUnicodeEscapingTest.class);
-    suite.addTestSuite(RpcRunTimeSerializationErrorsTest.class);
+    if (false) {
+      // Disabled due to https://code.google.com/p/google-web-toolkit/issues/detail?id=8136
+      suite.addTestSuite(RpcValueTypesTest.class);
+      suite.addTestSuite(RpcEnumsTest.class);
+      suite.addTestSuite(RpcInheritanceTest.class);
+      suite.addTestSuite(RpcCollectionsTest.class);
+      suite.addTestSuite(RpcCustomFieldSerializerTest.class);
+      suite.addTestSuite(RpcObjectGraphTest.class);
+      suite.addTestSuite(RpcRemoteServiceServletTest.class);
+      suite.addTestSuite(RpcUnicodeEscapingTest.class);
+      suite.addTestSuite(RpcRunTimeSerializationErrorsTest.class);
+    }
+
     return suite;
   }
 }
