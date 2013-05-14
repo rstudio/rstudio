@@ -49,6 +49,10 @@ public class JSONNull extends JSONValue {
    */
   @Override
   public JSONNull isNull() {
+    // Workaround for https://code.google.com/p/google-web-toolkit/issues/detail?id=8139
+    if (this != instance) {
+      return null;
+    }
     return this;
   }
 
