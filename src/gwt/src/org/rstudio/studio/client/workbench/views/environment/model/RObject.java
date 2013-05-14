@@ -16,9 +16,17 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.view.client.ProvidesKey;
 
 public class RObject extends JavaScriptObject
 {
+   public static final ProvidesKey<RObject> KEY_PROVIDER =
+           new ProvidesKey<RObject>() {
+      public Object getKey(RObject item) {
+         return item.getName();
+      }
+   };
+
    protected RObject()
    {
    }
@@ -35,7 +43,7 @@ public class RObject extends JavaScriptObject
       return this.len;
    }-*/;
 
-   public final native int getValue() /*-{
+   public final native String getValue() /*-{
       return this.value;
    }-*/;
 }

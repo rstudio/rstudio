@@ -61,14 +61,12 @@ public class EnvironmentPane extends WorkbenchPane
                         object.getType() + 
                         " [" + object.getLength() + "]: " +
                         object.getValue();
-      objects_.addObject(itemText);
+      objects_.addObject(object);
    }
    
    @Override
    public void removeObject(String objectName)
    {
-      String itemText = "- " + objectName;
-      objects_.addObject(itemText);
    }
    
    @Override

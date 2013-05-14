@@ -15,16 +15,48 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.builder.shared.TableCellBuilder;
+import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.ListDataProvider;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 public class EnvironmentObjects extends Composite
 {
+   private class ObjectTableBuilder extends AbstractCellTableBuilder<RObject>
+   {
+      public ObjectTableBuilder()
+      {
+         super(objectList);
+      }
+
+      public void buildRowImpl(RObject rowValue, int absRowIndex)
+      {
+         TableRowBuilder row = startRow();
+
+         // build the column containing the name of the object
+         TableCellBuilder nameCol = row.startTD();
+         nameCol.text(rowValue.getName());
+         nameCol.endTD();
+
+         // build the column containing the description of the object
+         TableCellBuilder descCol = row.startTD();
+         descCol.text(rowValue.getValue());
+         descCol.endTD();
+
+         row.endTR();
+      }
+   }
 
    interface Binder extends UiBinder<Widget, EnvironmentObjects>
    {
@@ -33,29 +65,53 @@ public class EnvironmentObjects extends Composite
 
    public void setContextDepth(int contextDepth)
    {
-      this.contextDepth
-            .setText("Context depth is " + contextDepth);
    }
 
-   public void addObject(String obj)
+   public void addObject(RObject obj)
    {
-      Label objectLabel = new Label();
-      objectLabel.setText(obj);
-      this.objectList.add(objectLabel);
+      objectDataProvider_.getList().add(obj);
    }
    
    public void clearObjects()
    {
-      this.objectList.clear();
+      objectDataProvider_.getList().clear();
    }
 
    public EnvironmentObjects()
    {
-      initWidget(GWT.<Binder> create(Binder.class).createAndBindUi(this));
+      objectList = new DataGrid<RObject>(RObject.KEY_PROVIDER);
+      objectDataProvider_ = new ListDataProvider<RObject>();
+      objectDataProvider_.addDataDisplay(objectList);
+      objectNameColumn_ = new Column<RObject, String>(new TextCell()) {
+         @Override
+         public String getValue(RObject object) {
+            return object.getName();
+         }
+      };
+
+      objectDescriptionColumn_ = new Column<RObject, String>(new TextCell()) {
+         @Override
+         public String getValue(RObject object) {
+            return object.getValue();
+         }
+      };
+      objectList.addColumn(objectNameColumn_);
+      objectList.addColumn(objectDescriptionColumn_);
+      objectList.setWidth("100%");
+      objectList.setHeight("100%");
+      objectList.setTableBuilder(new ObjectTableBuilder());
+      objectList.setEmptyTableWidget(new Label("No data."));
+      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+
+      environmentContents.add(objectList);
    }
+   
 
    @UiField
-   HTMLPanel objectList;
-   @UiField
-   Label contextDepth;
+   HTMLPanel environmentContents;
+   DataGrid<RObject> objectList;
+
+   private Column<RObject, String> objectNameColumn_;
+   private Column<RObject, String> objectDescriptionColumn_;
+   private ListDataProvider<RObject> objectDataProvider_;
 }
