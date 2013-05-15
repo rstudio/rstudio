@@ -7,13 +7,24 @@
    font-family: fixedWidthFont;
 }
 
-.nameCol
+.objectGrid table,
+.objectGrid td
 {
-   width: 25%;
+   border-collapse: collapse;
+   border: 1px solid #f0f0f0;
 }
 
-.expandCol
+td.nameCol
 {
+   width: 25%;
+   text-overflow: ellipsis;
+   overflow-x: hidden;
+   border-left: none;
+}
+
+td.expandCol
+{
+   border-right: none;
    width: 20px;
 }
 
@@ -22,4 +33,9 @@
    white-space: nowrap;
    text-overflow: ellipsis;
    overflow-x: hidden;
+}
+
+.detailRow
+{
+   background-color: #f0f0f0;
 }

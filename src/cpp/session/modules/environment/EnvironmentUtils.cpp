@@ -24,6 +24,22 @@ namespace modules {
 namespace environment {
 namespace {
 
+json::Value classOfVar(SEXP var)
+{
+   std::string value;
+   Error error = r::exec::RFunction(".rs.getSingleClass",
+                                    var).call(&value);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value(); // return null
+   }
+   else
+   {
+      return value;
+   }
+}
+
 json::Value valueOfVar(SEXP var)
 {
    std::string value;
@@ -47,7 +63,7 @@ json::Object varToJson(const r::sexp::Variable& var)
    json::Object varJson;
    varJson["name"] = var.first;
    SEXP varSEXP = var.second;
-   varJson["type"] = r::sexp::typeAsString(varSEXP);
+   varJson["type"] = classOfVar(varSEXP);
    varJson["len"] = r::sexp::length(varSEXP);
    varJson["value"] = valueOfVar(varSEXP);
    return varJson;

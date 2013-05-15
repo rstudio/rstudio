@@ -36,10 +36,10 @@
       {
          if (length(val) == 1)
          {
-            if (nchar(val) < 100)
+            if (nchar(val) < 1024)
                 return (deparse(val))
             else
-                return (paste(substr(val, 1, 100), " ..."))
+                return (paste(substr(val, 1, 1024), " ..."))
          }
          else if (length(val) > 1)
             return (capture.output(str(val)))

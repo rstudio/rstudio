@@ -32,7 +32,7 @@ public class RObjectEntry
    {
       rObject = obj;
       expanded = false;
-      canExpand = true;
+      canExpand = rObject.getType() == "character";
    }
 
    RObject rObject;

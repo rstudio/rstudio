@@ -15,12 +15,18 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
+import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
@@ -28,7 +34,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -43,6 +48,7 @@ public class EnvironmentObjects extends Composite
       String expandCol();
       String nameCol();
       String valueCol();
+      String detailRow();
    }
 
    private class ObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
@@ -59,31 +65,41 @@ public class EnvironmentObjects extends Composite
          // build the column containing the expand/collapse command
          TableCellBuilder expandCol = row.startTD();
          expandCol.className(style.expandCol());
-         if (rowValue.canExpand)
-         {
-            ImageResource expandImage = rowValue.expanded ?
-               EnvironmentResources.INSTANCE.collapseIcon() :
-               EnvironmentResources.INSTANCE.expandIcon();
-
-            expandCol.startImage().src(expandImage.getSafeUri().asString());
-            expandCol.endImage();
-         }
+         renderCell(expandCol, createContext(0), objectExpandColumn_, rowValue);
          expandCol.endTD();
 
          // build the column containing the name of the object
          TableCellBuilder nameCol = row.startTD();
          nameCol.className(style.nameCol());
-         nameCol.text(rowValue.rObject.getName());
+         nameCol.title(rowValue.rObject.getName());
+         renderCell(nameCol, createContext(0), objectNameColumn_, rowValue);
          nameCol.endTD();
 
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
-         nameCol.className(style.valueCol());
-         descCol.text(rowValue.rObject.getValue());
-
+         descCol.title(rowValue.rObject.getValue());
+         descCol.className(style.valueCol());
+         if (!rowValue.expanded)
+         {
+            renderCell(descCol,
+                       createContext(1),
+                       objectDescriptionColumn_,
+                       rowValue);
+         }
          descCol.endTD();
 
          row.endTR();
+
+         if (rowValue.expanded)
+         {
+            TableRowBuilder detail = startRow().className(style.detailRow());
+            detail.startTD().endTD();
+            TableCellBuilder objectDetail = detail.startTD();
+            objectDetail.colSpan(2)
+                    .text(rowValue.rObject.getValue())
+                    .endTD();
+            detail.endTR();
+         }
       }
    }
 
@@ -98,7 +114,7 @@ public class EnvironmentObjects extends Composite
 
    public void addObject(RObject obj)
    {
-      int idx = indexOfObject(obj.getName());
+      int idx = indexOfExistingObject(obj.getName());
 
       // if the object is already in the environment, just update the value
       if (idx >= 0)
@@ -107,13 +123,13 @@ public class EnvironmentObjects extends Composite
       }
       else
       {
-         objectDataProvider_.getList().add(new RObjectEntry(obj));
+         objectDataProvider_.getList().add(indexOfNewObject(obj), new RObjectEntry(obj));
       }
    }
 
    public void removeObject(String objName)
    {
-      int idx = indexOfObject(objName);
+      int idx = indexOfExistingObject(objName);
       if (idx >= 0)
       {
          objectDataProvider_.getList().remove(idx);
@@ -127,34 +143,29 @@ public class EnvironmentObjects extends Composite
 
    public EnvironmentObjects()
    {
+      // initialize the data grid and hook it up to the list of R objects in
+      // the environment pane
       objectList = new DataGrid<RObjectEntry>(RObjectEntry.KEY_PROVIDER);
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectDataProvider_.addDataDisplay(objectList);
-      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getName();
-         }
-      };
-
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getValue();
-         }
-      };
+      createColumns();
+      objectList.addColumn(objectExpandColumn_);
       objectList.addColumn(objectNameColumn_);
       objectList.addColumn(objectDescriptionColumn_);
+      objectList.setTableBuilder(new ObjectTableBuilder());
+      objectList.setSkipRowHoverCheck(true);
+
+      // make the grid fill the pane
       objectList.setWidth("100%");
       objectList.setHeight("100%");
-      objectList.setTableBuilder(new ObjectTableBuilder());
-      objectList.setEmptyTableWidget(new Label("No data."));
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
+      // add the grid to the pane--needs to be done after initWidget since the
+      // pane doesn't exist until UIBinder has done its thing
       environmentContents.add(objectList);
    }
 
-   private int indexOfObject(String objectName)
+   private int indexOfExistingObject(String objectName)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
@@ -172,6 +183,104 @@ public class EnvironmentObjects extends Composite
 
       return foundObject ? index : -1;
    }
+
+
+   private native int localeCompare(String first, String second) /*-{
+       return first.localeCompare(second);
+   }-*/;
+
+   private int compareRObjectsForSort(RObject first, RObject second)
+   {
+      int result = localeCompare(first.getType(), second.getType());
+      if (result != 0)
+      {
+         result = localeCompare(first.getName(), second.getName());
+      }
+      return result;
+   }
+
+   private int indexOfNewObject(RObject obj)
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+      int numObjects = objects.size();
+      for (int idx = 0; idx < numObjects; idx++)
+      {
+         if (compareRObjectsForSort(obj, objects.get(idx).rObject) > 0)
+         {
+            return idx;
+         }
+      }
+      return 0;
+   }
+
+   private void createColumns()
+   {
+      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getName();
+         }
+      };
+
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getValue();
+         }
+      };
+
+      SafeHtmlRenderer<String> expanderRenderer = new AbstractSafeHtmlRenderer<String>()
+      {
+         @Override
+         public SafeHtml render(String object)
+         {
+            SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            if (object != "")
+            {
+               sb.appendHtmlConstant("<input type=\"image\" src=\"")
+                       .appendEscaped(object)
+                       .appendHtmlConstant("\" />");
+            }
+            else
+            {
+               sb.appendHtmlConstant("&nbsp;");
+            }
+            return sb.toSafeHtml();
+         }
+      };
+
+      objectExpandColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell(expanderRenderer))
+      {
+         @Override
+         public String getValue(RObjectEntry object)
+         {
+            if (object.canExpand)
+            {
+               ImageResource expandImage = object.expanded ?
+                                           EnvironmentResources.INSTANCE.collapseIcon() :
+                                           EnvironmentResources.INSTANCE.expandIcon();
+
+               return expandImage.getSafeUri().asString();
+            }
+            else
+            {
+               return "";
+            }
+         }
+      };
+      objectExpandColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            if (object.canExpand)
+            {
+               object.expanded = !object.expanded;
+               objectList.redrawRow(index);
+            }
+         }
+      });
+   }
    
 
    @UiField HTMLPanel environmentContents;
@@ -179,6 +288,7 @@ public class EnvironmentObjects extends Composite
 
    DataGrid<RObjectEntry> objectList;
 
+   private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;
    private Column<RObjectEntry, String> objectDescriptionColumn_;
    private ListDataProvider<RObjectEntry> objectDataProvider_;
