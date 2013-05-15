@@ -170,6 +170,7 @@ if (UNIX)
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
       SyslogLogWriter.cpp
+      system/Pam.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp

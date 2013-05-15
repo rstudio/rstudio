@@ -13,7 +13,7 @@
  *
  */
 
-#include "Pam.hpp"
+#include <core/system/Pam.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
@@ -21,10 +21,8 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-using namespace core ;
-
-namespace server {
-namespace pam {
+namespace core {
+namespace system {
 
 namespace {
 
@@ -195,5 +193,5 @@ int PAM::login(const std::string& username,
    return PAM_SUCCESS;
 }
 
-} // namespace pam
-} // namespace server
+} // namespace system
+} // namespace core

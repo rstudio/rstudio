@@ -23,7 +23,6 @@ find_package(PAM REQUIRED)
 
 # source files
 set(PAM_SOURCE_FILES
-   Pam.cpp
    PamMain.cpp
 )
 
