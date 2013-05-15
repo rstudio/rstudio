@@ -34,10 +34,10 @@ struct SessionLaunchProfile
    core::system::ProcessConfig config;
 };
 
-json::Value sessionLaunchProfileToJson(const SessionLaunchProfile& profile);
+json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile);
 
 SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Value& jsonProfile);
+                                           const json::Object& jsonProfile);
 
 } // namespace r_util
 } // namespace core 

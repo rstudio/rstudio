@@ -15,19 +15,103 @@
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
 
+#include <boost/foreach.hpp>
+
+#include <core/json/JsonRpc.hpp>
 
 namespace core {
 namespace r_util {
 
-json::Value sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
+namespace {
+
+json::Object optionsAsJson(const core::system::Options& options)
 {
-   return json::Value();
+   json::Object optionsJson;
+   BOOST_FOREACH(const core::system::Option& option, options)
+   {
+      optionsJson[option.first] = option.second;
+   }
+   return optionsJson;
+}
+
+core::system::Options optionsFromJson(const json::Object& optionsJson)
+{
+   core::system::Options options;
+   BOOST_FOREACH(const json::Member& member, optionsJson)
+   {
+      std::string name = member.first;
+      json::Value value = member.second;
+      if (value.type() == json::StringType)
+         options.push_back(std::make_pair(name, value.get_str()));
+   }
+   return options;
+}
+
+} // anonymous namespace
+
+
+json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
+{
+   json::Object profileJson;
+   profileJson["username"] = profile.username;
+   profileJson["password"] = profile.password;
+   profileJson["executablePath"] = profile.executablePath;
+   profileJson["runAsUser"] = profile.runAsUser;
+   json::Object configJson;
+   configJson["args"] = optionsAsJson(profile.config.args);
+   configJson["environment"] = optionsAsJson(profile.config.environment);
+   configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
+   configJson["memoryLimitBytes"] = profile.config.memoryLimitBytes;
+   configJson["stackLimitBytes"] = profile.config.stackLimitBytes;
+   configJson["userProcessesLimit"] = profile.config.userProcessesLimit;
+   profileJson["config"] = configJson;
+   return profileJson;
 }
 
 SessionLaunchProfile sessionLaunchProfileFromJson(
-                                           const json::Value& jsonProfile)
+                                           const json::Object& jsonProfile)
 {
-   return SessionLaunchProfile();
+   SessionLaunchProfile profile;
+
+   // read top level fields
+   json::Object configJson;
+   Error error = json::readObject(jsonProfile,
+                                  "username", &profile.username,
+                                  "password", &profile.password,
+                                  "executablePath", &profile.executablePath,
+                                  "runAsUser", &profile.runAsUser,
+                                  "config", &configJson);
+   if (error)
+      LOG_ERROR(error);
+
+
+   // read config object
+   json::Object argsJson, envJson;
+   int stdStreamBehavior = 0,
+       memoryLimitBytes = -1,
+       stackLimitBytes = -1,
+       userProcessesLimit = -1;
+   error = json::readObject(configJson,
+                           "args", &argsJson,
+                           "environment", &envJson,
+                           "stdStreamBehavior", &stdStreamBehavior,
+                           "memoryLimitBytes", &memoryLimitBytes,
+                           "stackLimitBytes", &stackLimitBytes,
+                           "userProcessesLimit", &userProcessesLimit);
+   if (error)
+      LOG_ERROR(error);
+
+   // populate config
+   profile.config.args = optionsFromJson(argsJson);
+   profile.config.environment = optionsFromJson(envJson);
+   profile.config.stdStreamBehavior =
+            static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
+   profile.config.memoryLimitBytes = memoryLimitBytes;
+   profile.config.stackLimitBytes = stackLimitBytes;
+   profile.config.userProcessesLimit = userProcessesLimit;
+
+   // return profile
+   return profile;
 }
 
 
