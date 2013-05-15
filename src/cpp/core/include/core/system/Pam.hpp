@@ -40,6 +40,8 @@ public:
 
    std::pair<int, const std::string> lastError();
 
+   int status() const { return status_; }
+
    virtual int login(const std::string& username,
                      const std::string& password);
 
