@@ -43,6 +43,8 @@ public:
    virtual int login(const std::string& username,
                      const std::string& password);
 
+   virtual void close();
+
 protected:
     int defaultFlags_;
     pam_handle_t* pamh_;

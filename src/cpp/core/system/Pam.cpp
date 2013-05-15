@@ -146,9 +146,12 @@ PAM::PAM(bool silent) :
 
 PAM::~PAM()
 {
-   if (pamh_)
+   try
    {
-      ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
+      close();
+   }
+   catch(...)
+   {
    }
 }
 
@@ -191,6 +194,15 @@ int PAM::login(const std::string& username,
    }
 
    return PAM_SUCCESS;
+}
+
+void PAM::close()
+{
+   if (pamh_)
+   {
+      ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
+      pamh_ = NULL;
+   }
 }
 
 } // namespace system
