@@ -106,7 +106,7 @@ SessionManager::SessionManager()
 {
    // set default session launcher
    sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
-                                        this, _1, _2, _3, _4, _5);
+                                           this, _1);
 }
 
 Error SessionManager::launchSession(const std::string& username,
@@ -154,16 +154,15 @@ Error SessionManager::launchSession(const std::string& username,
    END_LOCK_MUTEX
 
    // determine launch options
-   std::string rsessionPath = server::options().rsessionPath();
-   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
-   core::system::ProcessConfig config = sessionProcessConfig(username);
+   r_util::SessionLaunchProfile profile;
+   profile.username = username;
+   profile.password = password;
+   profile.executablePath = server::options().rsessionPath();
+   profile.runAsUser =  core::system::realUserIsRoot() ? username : "";
+   profile.config = sessionProcessConfig(username);
 
    // launch the session
-   Error error = sessionLaunchFunction_(username,
-                                        password,
-                                        rsessionPath,
-                                        runAsUser,
-                                        config);
+   Error error = sessionLaunchFunction_(profile);
    if (error)
    {
       removePendingLaunch(username);
@@ -176,17 +175,13 @@ Error SessionManager::launchSession(const std::string& username,
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
-                                    const std::string&,
-                                    const std::string&,
-                                    const std::string& exePath,
-                                    const std::string& runAsUser,
-                                    const core::system::ProcessConfig& config)
+                           const core::r_util::SessionLaunchProfile& profile)
 {
    // launch the session
    PidType pid = 0;
-   Error error = core::system::launchChildProcess(exePath,
-                                                  runAsUser,
-                                                  config,
+   Error error = core::system::launchChildProcess(profile.executablePath,
+                                                  profile.runAsUser,
+                                                  profile.config,
                                                   &pid);
    if (error)
       return error;

@@ -23,8 +23,11 @@
 #include <boost/signals.hpp>
 
 #include <core/Thread.hpp>
+
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixChildProcessTracker.hpp>
+
+#include <core/r_util/RSessionLaunchProfile.hpp>
 
 namespace core {
    class Error;
@@ -54,11 +57,8 @@ public:
    void removePendingLaunch(const std::string& username);
 
    // set a custom session launcher
-   typedef boost::function<core::Error(const std::string&, // username
-                                       const std::string&, // password
-                                       const std::string&, // exe path,
-                                       const std::string&, // run as user,
-                                       const core::system::ProcessConfig&)>
+   typedef boost::function<core::Error(
+                           const core::r_util::SessionLaunchProfile&)>
                                                   SessionLaunchFunction;
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
@@ -68,11 +68,8 @@ public:
 private:
    // default session launcher -- runs the process then uses the
    // ChildProcessTracker to track it's pid for later reaping
-   core::Error launchAndTrackSession(const std::string& username,
-                                     const std::string& password,
-                                     const std::string& exePath,
-                                     const std::string& runAsUser,
-                                     const core::system::ProcessConfig& config);
+   core::Error launchAndTrackSession(
+                        const core::r_util::SessionLaunchProfile& profile);
 
 private:
    // pending launches

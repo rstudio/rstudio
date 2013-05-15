@@ -168,6 +168,7 @@ if (UNIX)
       ${DIRECTORY_MONITOR_CPP}
       PosixStringUtils.cpp
       r_util/REnvironmentPosix.cpp
+      r_util/RSessionLaunchProfile.cpp
       SyslogLogWriter.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
