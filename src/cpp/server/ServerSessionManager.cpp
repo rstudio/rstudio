@@ -41,131 +41,11 @@ using namespace core;
 
 namespace server {
 
-SessionManager& sessionManager()
-{
-   static SessionManager instance;
-   return instance;
-}
-
-Error SessionManager::launchSession(const std::string& username,
-                                    const std::string& password)
-{
-   using namespace boost::posix_time;
-
-   LOCK_MUTEX(launchesMutex_)
-   {
-      // check whether we already have a launch pending
-      LaunchMap::const_iterator pos = pendingLaunches_.find(username);
-      if (pos != pendingLaunches_.end())
-      {
-         // if the launch is less than one minute old then return success
-         if ( (pos->second + boost::posix_time::minutes(1))
-               > microsec_clock::universal_time() )
-         {
-            return Success();
-         }
-         // otherwise erase it from pending launches and then
-         // re-launch (immediately below)
-         else
-         {
-            // very unexpected condition
-            LOG_WARNING_MESSAGE("Very long session launch delay for "
-                                "user " + username + " (aborting wait)");
-
-            pendingLaunches_.erase(username);
-         }
-      }
-
-      // record the launch
-      pendingLaunches_[username] =  microsec_clock::universal_time();
-   }
-   END_LOCK_MUTEX
-
-   // launch the session
-   PidType pid = 0;
-   Error error = server::launchSession(username, password, &pid);
-   if (error)
-   {
-      removePendingLaunch(username);
-      return error;
-   }
-   else
-   {
-      // track it for subsequent reaping
-      processTracker_.addProcess(pid);
-
-      // return success
-      return Success();
-   }
-}
-
-void SessionManager::removePendingLaunch(const std::string& username)
-{
-   LOCK_MUTEX(launchesMutex_)
-   {
-      pendingLaunches_.erase(username);
-   }
-   END_LOCK_MUTEX
-}
-
-void SessionManager::notifySIGCHLD()
-{
-   processTracker_.notifySIGCHILD();
-}
-
-// custom session launch function
 namespace {
-SessionLaunchFunction s_sessionLaunchFunction;
-}
-
-Error launchSession(const std::string& username,
-                    const std::string& password,
-                    const core::system::Options& extraArgs,
-                    PidType* pPid)
-{
-   // last ditch user validation -- an invalid user should very rarely
-   // get to this point since we pre-emptively validate on client_init
-   if (!server::auth::validateUser(username))
-   {
-      Error error = systemError(boost::system::errc::permission_denied,
-                                ERROR_LOCATION);
-      error.addProperty("username", username);
-      return error;
-   }
-
-   // launch the session
-   std::string rsessionPath = server::options().rsessionPath();
-   *pPid = -1;
-   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
-   core::system::ProcessConfig config = sessionProcessConfig(username,
-                                                             extraArgs);
-   if (s_sessionLaunchFunction)
-   {
-      return s_sessionLaunchFunction(rsessionPath,
-                                     runAsUser,
-                                     password,
-                                     config,
-                                     pPid);
-   }
-   else
-   {
-      return core::system::launchChildProcess(rsessionPath,
-                                              runAsUser,
-                                              config,
-                                              pPid);
-   }
-}
-
-Error launchSession(const std::string& username,
-                    const std::string& password,
-                    PidType* pPid)
-{
-   return launchSession(username, password, core::system::Options(), pPid);
-}
 
 core::system::ProcessConfig sessionProcessConfig(
-                                       const std::string& username,
-                                       const core::system::Options& extraArgs)
+         const std::string& username,
+         const core::system::Options& extraArgs = core::system::Options())
 {
    // prepare command line arguments
    server::Options& options = server::options();
@@ -214,11 +94,148 @@ core::system::ProcessConfig sessionProcessConfig(
    return config;
 }
 
-void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction)
+} // anonymous namespace
+
+SessionManager& sessionManager()
 {
-   s_sessionLaunchFunction = launchFunction;
+   static SessionManager instance;
+   return instance;
 }
 
+SessionManager::SessionManager()
+{
+   // set default session launcher
+   sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
+                                        this, _1, _2, _3, _4, _5);
+}
+
+Error SessionManager::launchSession(const std::string& username,
+                                    const std::string& password)
+{
+   using namespace boost::posix_time;
+
+   // last ditch user validation -- an invalid user should very rarely
+   // get to this point since we pre-emptively validate on client_init
+   if (!server::auth::validateUser(username))
+   {
+      Error error = systemError(boost::system::errc::permission_denied,
+                                ERROR_LOCATION);
+      error.addProperty("username", username);
+      return error;
+   }
+
+   LOCK_MUTEX(launchesMutex_)
+   {
+      // check whether we already have a launch pending
+      LaunchMap::const_iterator pos = pendingLaunches_.find(username);
+      if (pos != pendingLaunches_.end())
+      {
+         // if the launch is less than one minute old then return success
+         if ( (pos->second + boost::posix_time::minutes(1))
+               > microsec_clock::universal_time() )
+         {
+            return Success();
+         }
+         // otherwise erase it from pending launches and then
+         // re-launch (immediately below)
+         else
+         {
+            // very unexpected condition
+            LOG_WARNING_MESSAGE("Very long session launch delay for "
+                                "user " + username + " (aborting wait)");
+
+            pendingLaunches_.erase(username);
+         }
+      }
+
+      // record the launch
+      pendingLaunches_[username] =  microsec_clock::universal_time();
+   }
+   END_LOCK_MUTEX
+
+   // determine launch options
+   std::string rsessionPath = server::options().rsessionPath();
+   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
+   core::system::ProcessConfig config = sessionProcessConfig(username);
+
+   // launch the session
+   Error error = sessionLaunchFunction_(username,
+                                        password,
+                                        rsessionPath,
+                                        runAsUser,
+                                        config);
+   if (error)
+   {
+      removePendingLaunch(username);
+      return error;
+   }
+
+   return Success();
+}
+
+// default session launcher -- does the launch then tracks the pid
+// for later reaping
+Error SessionManager::launchAndTrackSession(
+                                    const std::string&,
+                                    const std::string&,
+                                    const std::string& exePath,
+                                    const std::string& runAsUser,
+                                    const core::system::ProcessConfig& config)
+{
+   // launch the session
+   PidType pid = 0;
+   Error error = core::system::launchChildProcess(exePath,
+                                                  runAsUser,
+                                                  config,
+                                                  &pid);
+   if (error)
+      return error;
+
+   // track it for subsequent reaping
+   processTracker_.addProcess(pid);
+
+   // return success
+   return Success();
+}
+
+void SessionManager::setSessionLaunchFunction(
+                           const SessionLaunchFunction& launchFunction)
+{
+   sessionLaunchFunction_ = launchFunction;
+}
+
+void SessionManager::removePendingLaunch(const std::string& username)
+{
+   LOCK_MUTEX(launchesMutex_)
+   {
+      pendingLaunches_.erase(username);
+   }
+   END_LOCK_MUTEX
+}
+
+void SessionManager::notifySIGCHLD()
+{
+   processTracker_.notifySIGCHILD();
+}
+
+// helper function for verify-installation
+Error launchSession(const std::string& username,
+                    const std::string&,
+                    const core::system::Options& extraArgs,
+                    PidType* pPid)
+{
+   // launch the session
+   std::string rsessionPath = server::options().rsessionPath();
+   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
+   core::system::ProcessConfig config = sessionProcessConfig(username,
+                                                             extraArgs);
+
+   *pPid = -1;
+   return core::system::launchChildProcess(rsessionPath,
+                                           runAsUser,
+                                           config,
+                                           pPid);
+}
 
 
 } // namespace server

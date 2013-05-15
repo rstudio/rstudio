@@ -44,7 +44,7 @@ class SessionManager
 {
 private:
    // singleton
-   SessionManager() {}
+   SessionManager();
    friend SessionManager& sessionManager();
 
 public:
@@ -53,8 +53,26 @@ public:
                              const std::string& password);
    void removePendingLaunch(const std::string& username);
 
+   // set a custom session launcher
+   typedef boost::function<core::Error(const std::string&, // username
+                                       const std::string&, // password
+                                       const std::string&, // exe path,
+                                       const std::string&, // run as user,
+                                       const core::system::ProcessConfig&)>
+                                                  SessionLaunchFunction;
+   void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
+
    // notification that a SIGCHLD was received
    void notifySIGCHLD();
+
+private:
+   // default session launcher -- runs the process then uses the
+   // ChildProcessTracker to track it's pid for later reaping
+   core::Error launchAndTrackSession(const std::string& username,
+                                     const std::string& password,
+                                     const std::string& exePath,
+                                     const std::string& runAsUser,
+                                     const core::system::ProcessConfig& config);
 
 private:
    // pending launches
@@ -62,36 +80,20 @@ private:
    typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
+   // session launch function
+   SessionLaunchFunction sessionLaunchFunction_;
+
    // child process tracker
    core::system::ChildProcessTracker processTracker_;
 };
 
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
-//
-core::Error launchSession(const std::string& username,
-                          const std::string& password,
-                          PidType* pPid);
-
 core::Error launchSession(const std::string& username,
                           const std::string& password,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
 
-
-// utility function to create a process config for a given user
-core::system::ProcessConfig sessionProcessConfig(
-                                    const std::string& username,
-                                    const core::system::Options& extraArgs);
-
-// allow a custom session launch function
-typedef boost::function<core::Error(std::string,
-                                    std::string,
-                                    std::string,
-                                    core::system::ProcessConfig,
-                                    PidType*)> SessionLaunchFunction;
-
-void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
 } // namespace server
 
