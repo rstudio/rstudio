@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -40,10 +41,12 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
+      environmentName_ = new Label("Global");
       Toolbar toolbar = new Toolbar();
-      
+
+      toolbar.addRightWidget(environmentName_);
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
-      
       return toolbar;
    }
    
@@ -77,7 +80,14 @@ public class EnvironmentPane extends WorkbenchPane
    {
       objects_.clearObjects();
    }
-   
+
+   @Override
+   public void setEnvironmentName(String environmentName)
+   {
+      environmentName_.setText(environmentName);
+   }
+
+   private Label environmentName_;
    private EnvironmentObjects objects_;
    private Commands commands_;
 }

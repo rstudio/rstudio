@@ -56,6 +56,22 @@ json::Value valueOfVar(SEXP var)
    }
 }
 
+json::Value descriptionOfVar(SEXP var)
+{
+   std::string value;
+   Error error = r::exec::RFunction(".rs.valueDescription",
+                                    var).call(&value);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Value(); // return null
+   }
+   else
+   {
+      return value;
+   }
+}
+
 } // anonymous namespace
 
 json::Object varToJson(const r::sexp::Variable& var)
@@ -66,6 +82,7 @@ json::Object varToJson(const r::sexp::Variable& var)
    varJson["type"] = classOfVar(varSEXP);
    varJson["len"] = r::sexp::length(varSEXP);
    varJson["value"] = valueOfVar(varSEXP);
+   varJson["description"] = descriptionOfVar(varSEXP);
    return varJson;
 }
 

@@ -36,7 +36,11 @@ public class ContextDepthChangedEvent extends
       
       public final native JsArray<RObject> getEnvironmentList () /*-{
          return this.environment_list;
-      }-*/;      
+      }-*/;
+
+      public final native String getFunctionName() /*-{
+         return this.function_name;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -57,6 +61,13 @@ public class ContextDepthChangedEvent extends
    public JsArray<RObject> getEnvironmentList()
    {
       return contextData_.getEnvironmentList();
+   }
+
+   public String getFunctionName()
+   {
+      String functionName = contextData_.getFunctionName();
+      return functionName.length() > 0 && functionName != "NA" ?
+             contextData_.getFunctionName() : "Global";
    }
 
    @Override

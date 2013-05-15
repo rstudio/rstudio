@@ -21,6 +21,7 @@
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
+#include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -103,6 +104,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // current state of the environment
       varJson["context_depth"] = contextDepth;
       varJson["environment_list"] = environmentListAsJson();
+      varJson["function_name"] =
+            r::sexp::asString(CAR(getTopFunctionContext()->call));
+
       ClientEvent event (client_events::kContextDepthChanged, varJson);
       module_context::enqueClientEvent(event);
    }
@@ -114,6 +118,8 @@ json::Value environmentStateAsJson()
 {
    json::Object stateJson;
    stateJson["context_depth"] = getTopFunctionContext()->evaldepth;
+   stateJson["function_name"] =
+         r::sexp::asString(CAR(getTopFunctionContext()->call));
    return stateJson;
 }
 

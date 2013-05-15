@@ -62,6 +62,7 @@ public class EnvironmentPresenter extends BasePresenter
       void clearObjects();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
+      void setEnvironmentName(String name);
    }
    
    @Inject
@@ -99,6 +100,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             contextDepth_ = event.getContextDepth();
             view_.setContextDepth(contextDepth_);
+            view_.setEnvironmentName(event.getFunctionName());
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });

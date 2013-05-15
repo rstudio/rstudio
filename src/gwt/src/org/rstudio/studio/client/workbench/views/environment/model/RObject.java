@@ -39,5 +39,9 @@ public class RObject extends JavaScriptObject
    public final native String getValue() /*-{
       return this.value;
    }-*/;
+
+   public final native String getDescription() /*-{
+       return this.description;
+   }-*/;
 }
 

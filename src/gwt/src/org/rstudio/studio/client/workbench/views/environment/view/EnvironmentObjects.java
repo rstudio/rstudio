@@ -71,7 +71,9 @@ public class EnvironmentObjects extends Composite
          // build the column containing the name of the object
          TableCellBuilder nameCol = row.startTD();
          nameCol.className(style.nameCol());
-         nameCol.title(rowValue.rObject.getName());
+         nameCol.title(
+                 rowValue.rObject.getName() +
+                 " (" + rowValue.rObject.getType() + ")");
          renderCell(nameCol, createContext(0), objectNameColumn_, rowValue);
          nameCol.endTD();
 
@@ -192,7 +194,7 @@ public class EnvironmentObjects extends Composite
    private int compareRObjectsForSort(RObject first, RObject second)
    {
       int result = localeCompare(first.getType(), second.getType());
-      if (result != 0)
+      if (result == 0)
       {
          result = localeCompare(first.getName(), second.getName());
       }
@@ -203,14 +205,15 @@ public class EnvironmentObjects extends Composite
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
       int numObjects = objects.size();
-      for (int idx = 0; idx < numObjects; idx++)
+      int idx;
+      for (idx = 0; idx < numObjects; idx++)
       {
-         if (compareRObjectsForSort(obj, objects.get(idx).rObject) > 0)
+         if (compareRObjectsForSort(obj, objects.get(idx).rObject) < 0)
          {
-            return idx;
+            break;
          }
       }
-      return 0;
+      return idx;
    }
 
    private void createColumns()
@@ -225,7 +228,8 @@ public class EnvironmentObjects extends Composite
       objectDescriptionColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
          @Override
          public String getValue(RObjectEntry object) {
-            return object.rObject.getValue();
+            String val = object.rObject.getValue();
+            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
          }
       };
 
