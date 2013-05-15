@@ -133,6 +133,40 @@ Error launchSession(const std::string& username,
       return error;
    }
 
+   // launch the session
+   std::string rsessionPath = server::options().rsessionPath();
+   *pPid = -1;
+   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
+   core::system::ProcessConfig config = sessionProcessConfig(username,
+                                                             extraArgs);
+   if (s_sessionLaunchFunction)
+   {
+      return s_sessionLaunchFunction(rsessionPath,
+                                     runAsUser,
+                                     password,
+                                     config,
+                                     pPid);
+   }
+   else
+   {
+      return core::system::launchChildProcess(rsessionPath,
+                                              runAsUser,
+                                              config,
+                                              pPid);
+   }
+}
+
+Error launchSession(const std::string& username,
+                    const std::string& password,
+                    PidType* pPid)
+{
+   return launchSession(username, password, core::system::Options(), pPid);
+}
+
+core::system::ProcessConfig sessionProcessConfig(
+                                       const std::string& username,
+                                       const core::system::Options& extraArgs)
+{
    // prepare command line arguments
    server::Options& options = server::options();
    core::system::Options args ;
@@ -166,9 +200,7 @@ Error launchSession(const std::string& username,
    core::system::Options rEnvVars = r_environment::variables();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
 
-   // launch the session
-   *pPid = -1;
-   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
+   // build the config object and return it
    core::system::ProcessConfig config;
    config.args = args;
    config.environment = environment;
@@ -179,29 +211,7 @@ Error launchSession(const std::string& username,
                                options.rsessionStackLimitMb() * 1024L * 1024L);
    config.userProcessesLimit = static_cast<RLimitType>(
                                options.rsessionUserProcessLimit());
-
-   if (s_sessionLaunchFunction)
-   {
-      return s_sessionLaunchFunction(options.rsessionPath(),
-                                     runAsUser,
-                                     password,
-                                     config,
-                                     pPid);
-   }
-   else
-   {
-      return core::system::launchChildProcess(options.rsessionPath(),
-                                              runAsUser,
-                                              config,
-                                              pPid);
-   }
-}
-
-Error launchSession(const std::string& username,
-                    const std::string& password,
-                    PidType* pPid)
-{
-   return launchSession(username, password, core::system::Options(), pPid);
+   return config;
 }
 
 void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction)

@@ -79,6 +79,11 @@ core::Error launchSession(const std::string& username,
                           PidType* pPid);
 
 
+// utility function to create a process config for a given user
+core::system::ProcessConfig sessionProcessConfig(
+                                    const std::string& username,
+                                    const core::system::Options& extraArgs);
+
 // allow a custom session launch function
 typedef boost::function<core::Error(std::string,
                                     std::string,
