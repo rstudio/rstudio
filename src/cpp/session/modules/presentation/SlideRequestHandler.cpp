@@ -975,9 +975,9 @@ void handlePresentationPaneRequest(const http::Request& request,
    }
 
    // special handling for images
-   else if (boost::algorithm::starts_with(path, "images/"))
+   else if (boost::algorithm::starts_with(path, "slides-images/"))
    {
-      handlePresentationFileRequest(request, "images", pResponse);
+      handlePresentationFileRequest(request, "slides-images", pResponse);
    }
 
    // special handling for mathjax assets
