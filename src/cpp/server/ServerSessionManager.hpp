@@ -24,6 +24,7 @@
 
 #include <core/Thread.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixChildProcessTracker.hpp>
 
 namespace core {
    class Error;
@@ -52,13 +53,8 @@ public:
                              const std::string& password);
    void removePendingLaunch(const std::string& username);
 
-   // notificatio that a SIGCHLD was received
+   // notification that a SIGCHLD was received
    void notifySIGCHLD();
-
-private:
-   void addActivePid(PidType pid);
-   void removeActivePid(PidType pid);
-   std::vector<PidType> activePids();
 
 private:
    // pending launches
@@ -66,9 +62,8 @@ private:
    typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
-   // pids we have launched
-   boost::mutex pidsMutex_;
-   std::vector<PidType> activePids_;
+   // child process tracker
+   core::system::ChildProcessTracker processTracker_;
 };
 
 // Lower-level global functions for launching sessions. These are used

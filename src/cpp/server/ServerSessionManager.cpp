@@ -15,8 +15,6 @@
 
 #include "ServerSessionManager.hpp"
 
-#include <sys/wait.h>
-
 #include <vector>
 
 #include <boost/foreach.hpp>
@@ -93,8 +91,8 @@ Error SessionManager::launchSession(const std::string& username,
    }
    else
    {
-      // add it to our active pids
-      addActivePid(pid);
+      // track it for subsequent reaping
+      processTracker_.addProcess(pid);
 
       // return success
       return Success();
@@ -110,106 +108,9 @@ void SessionManager::removePendingLaunch(const std::string& username)
    END_LOCK_MUTEX
 }
 
-namespace {
-
-// wraper for waitPid which tries again for EINTR
-int waitPid(PidType pid, int* pStatus)
-{
-   for (;;)
-   {
-      int result = ::waitpid(pid, pStatus, WNOHANG);
-      if (result == -1 && errno == EINTR)
-         continue;
-      return result;
-   }
-}
-
-} // anonymous namespace
-
 void SessionManager::notifySIGCHLD()
 {
-   // We make a copy of hte active pids so that we can do the reaping
-   // outside of the pidsMutex_. This is an extra conservative precaution
-   // in case there is ever an issue with waitpid blocking.
-   std::vector<PidType> pids = activePids();
-
-   // reap all that we can
-   BOOST_FOREACH(PidType pid, pids)
-   {
-      // non-blocking wait for the child
-      int status;
-      int result = waitPid(pid, &status);
-
-      // reaped the child
-      if (result == pid)
-      {
-         // confirm this was a real exit
-         bool exited = false;
-         if (WIFEXITED(status))
-         {
-            exited = true;
-            status = WEXITSTATUS(status);
-         }
-         else if (WIFSIGNALED(status))
-         {
-            exited = true;
-         }
-
-         // if it was a real exit (as opposed to a SIGSTOP or SIGCONT)
-         // then remove the pid from our table and fire the event
-         if (exited)
-         {
-            // all done with this pid
-            removeActivePid(pid);
-         }
-         else
-         {
-            boost::format fmt("Received SIGCHLD when child did not "
-                              "actually exit (pid=%1%, status=%2%");
-            LOG_WARNING_MESSAGE(boost::str(fmt % pid % status));
-         }
-      }
-      // error occured
-      else if (result == -1)
-      {
-         Error error = systemError(errno, ERROR_LOCATION);
-         error.addProperty("pid", pid);
-         LOG_ERROR(error);
-      }
-   }
-}
-
-void SessionManager::addActivePid(PidType pid)
-{
-   LOCK_MUTEX(pidsMutex_)
-   {
-      activePids_.push_back(pid);
-   }
-   END_LOCK_MUTEX
-}
-
-void SessionManager::removeActivePid(PidType pid)
-{
-   LOCK_MUTEX(pidsMutex_)
-   {
-      activePids_.erase(std::remove(activePids_.begin(),
-                                    activePids_.end(),
-                                    pid),
-                        activePids_.end());
-   }
-   END_LOCK_MUTEX
-}
-
-std::vector<PidType> SessionManager::activePids()
-{
-   LOCK_MUTEX(pidsMutex_)
-   {
-      return activePids_;
-   }
-   END_LOCK_MUTEX
-
-   // keep compiler happy
-   return std::vector<PidType>();
+   processTracker_.notifySIGCHILD();
 }
 
 // custom session launch function
