@@ -35,7 +35,7 @@ namespace system {
 class PAM : boost::noncopyable
 {
 public:
-   explicit PAM(bool silent);
+   PAM(const std::string& service, bool silent);
    virtual ~PAM();
 
    std::pair<int, const std::string> lastError();
@@ -48,6 +48,7 @@ public:
    virtual void close();
 
 protected:
+    std::string service_;
     int defaultFlags_;
     pam_handle_t* pamh_;
     int status_;

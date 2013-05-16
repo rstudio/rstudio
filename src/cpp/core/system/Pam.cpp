@@ -137,7 +137,8 @@ int conv(int num_msg,
 } // anonymous namespace
 
 
-PAM::PAM(bool silent) :
+PAM::PAM(const std::string& service, bool silent) :
+      service_(service),
       defaultFlags_(silent ? PAM_SILENT : 0),
       pamh_(NULL),
       status_(PAM_SUCCESS)
@@ -163,12 +164,12 @@ std::pair<int, const std::string> PAM::lastError()
 }
 
 int PAM::login(const std::string& username,
-                   const std::string& password)
+               const std::string& password)
 {
    struct pam_conv myConv;
    myConv.conv = conv;
    myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
-   status_ = ::pam_start("rstudio",
+   status_ = ::pam_start(service_.c_str(),
                          username.c_str(),
                          &myConv,
                          &pamh_);
