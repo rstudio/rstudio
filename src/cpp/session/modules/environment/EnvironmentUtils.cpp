@@ -94,12 +94,16 @@ json::Object varToJson(const r::sexp::Variable& var)
    json::Object varJson;
    varJson["name"] = var.first;
    SEXP varSEXP = var.second;
-   varJson["type"] = classOfVar(varSEXP);
+   json::Value varClass = classOfVar(varSEXP);
+   varJson["type"] = varClass;
    varJson["len"] = r::sexp::length(varSEXP);
    varJson["value"] = valueOfVar(varSEXP);
    varJson["description"] = descriptionOfVar(varSEXP);  
-   if (varJson["type"] == "data.frame"
-       || varJson ["type"] == "list")
+   if (varClass == "data.frame"
+       || varClass == "data.table"
+       || varClass == "list"
+       || varClass == "matrix"
+       || varClass == "cast_df")
    {
       varJson["contents"] = contentsOfVar(varSEXP);
    }

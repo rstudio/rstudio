@@ -16,12 +16,15 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 
@@ -29,14 +32,17 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class EnvironmentPane extends WorkbenchPane 
-                             implements EnvironmentPresenter.Display
+                             implements EnvironmentPresenter.Display,
+                                        EnvironmentObjects.Observer
 {
    @Inject
-   public EnvironmentPane(Commands commands)
+   public EnvironmentPane(Commands commands,
+                          EventBus eventBus)
    {
       super("Environment");
       
       commands_ = commands;
+      eventBus_ = eventBus;
       
       ensureWidget();
    }
@@ -74,6 +80,7 @@ public class EnvironmentPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       objects_ = new EnvironmentObjects();
+      objects_.setObserver(this);
       return objects_;
    }
 
@@ -117,8 +124,27 @@ public class EnvironmentPane extends WorkbenchPane
       environmentName_.setText(environmentName);
    }
 
+   public void editObject(String objectName)
+   {
+      executeFunctionForObject("fix", objectName);
+   }
+
+   public void viewObject(String objectName)
+   {
+      executeFunctionForObject("View", objectName);
+   }
+
+   private void executeFunctionForObject(String function, String objectName)
+   {
+      String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
+      SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
+      eventBus_.fireEvent(event);
+   }
+
+
    private ToolbarButton dataImportButton_;
    private Label environmentName_;
    private EnvironmentObjects objects_;
    private Commands commands_;
+   private EventBus eventBus_;
 }

@@ -133,8 +133,8 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             contextDepth_ = event.getContextDepth();
-            view_.setContextDepth(contextDepth_);
             view_.setEnvironmentName(event.getFunctionName());
+            view_.setContextDepth(contextDepth_);
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });
@@ -261,6 +261,30 @@ public class EnvironmentPresenter extends BasePresenter
               });
    }
 
+   public void onOpenDataFile(OpenDataFileEvent event)
+   {
+      final String dataFilePath = event.getFile().getPath();
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+           "Confirm Load Workspace",
+
+           "Do you want to load the R data file \"" + dataFilePath + "\" " +
+           "into your workspace?",
+
+           new ProgressOperation() {
+              public void execute(ProgressIndicator indicator)
+              {
+                 consoleDispatcher_.executeCommand(
+                         "load",
+                         FileSystemItem.createFile(dataFilePath));
+
+                 indicator.onCompleted();
+              }
+           },
+
+           true);
+}
+
+
 
    public void initialize(EnvironmentState environmentState)
    {
@@ -273,7 +297,7 @@ public class EnvironmentPresenter extends BasePresenter
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
    }
-   
+
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
       view_.clearObjects();
@@ -370,30 +394,6 @@ public class EnvironmentPresenter extends BasePresenter
       code.append(")");
 
       return code.toString();
-   }
-
-   public void onOpenDataFile(OpenDataFileEvent event)
-   {
-      final String dataFilePath = event.getFile().getPath();
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-
-              "Confirm Load Workspace",
-
-              "Do you want to load the R data file \"" + dataFilePath + "\" " +
-              "into your workspace?",
-
-              new ProgressOperation() {
-                 public void execute(ProgressIndicator indicator)
-                 {
-                    consoleDispatcher_.executeCommand(
-                            "load",
-                            FileSystemItem.createFile(dataFilePath));
-
-                    indicator.onCompleted();
-                 }
-              },
-
-              true);
    }
 
    private final Display view_;

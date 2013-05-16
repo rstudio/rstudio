@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import java.util.List;
@@ -52,6 +53,12 @@ public class EnvironmentObjects extends Composite
       String valueCol();
       String detailRow();
       String categoryHeaderRow();
+   }
+
+   public interface Observer
+   {
+      void editObject(String objectName);
+      void viewObject(String objectName);
    }
 
    // builds individual rows of the object table
@@ -70,6 +77,11 @@ public class EnvironmentObjects extends Composite
          buildRowHeader(rowValue, absRowIndex);
 
          TableRowBuilder row = startRow();
+
+         if (rowValue.getCategory() == RObjectEntry.Categories.Data)
+         {
+            row.className(ThemeStyles.INSTANCE.workspaceDataFrameRow());
+         }
 
          // build the column containing the expand/collapse command
          TableCellBuilder expandCol = row.startTD();
@@ -90,6 +102,7 @@ public class EnvironmentObjects extends Composite
          TableCellBuilder descCol = row.startTD();
          descCol.title(rowValue.rObject.getValue());
          descCol.className(style.valueCol());
+
          if (!rowValue.expanded)
          {
             renderCell(descCol,
@@ -98,6 +111,7 @@ public class EnvironmentObjects extends Composite
                        rowValue);
          }
          descCol.endTD();
+
          row.endTR();
 
          // if the row is expanded, draw its content
@@ -156,6 +170,7 @@ public class EnvironmentObjects extends Composite
             detail.startTD().endTD();
             TableCellBuilder objectDetail = detail.startTD();
             objectDetail.colSpan(2)
+                    .title(contents.get(i))
                     .text(contents.get(i))
                     .endTD();
             detail.endTR();
@@ -206,6 +221,10 @@ public class EnvironmentObjects extends Composite
       objectDataProvider_.getList().clear();
    }
 
+   public void setObserver(Observer observer)
+   {
+      observer_ = observer;
+   }
 
    public EnvironmentObjects()
    {
@@ -293,13 +312,28 @@ public class EnvironmentObjects extends Composite
          }
       };
 
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
          @Override
          public String getValue(RObjectEntry object) {
             String val = object.rObject.getValue();
             return val == "NO_VALUE" ? object.rObject.getDescription() : val;
          }
       };
+      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            if (object.getCategory() == RObjectEntry.Categories.Data)
+            {
+               observer_.viewObject(object.rObject.getName());
+            }
+            else
+            {
+               observer_.editObject(object.rObject.getName());
+            }
+         }
+      });
 
       SafeHtmlRenderer<String> expanderRenderer = new AbstractSafeHtmlRenderer<String>()
       {
@@ -329,8 +363,8 @@ public class EnvironmentObjects extends Composite
             if (object.canExpand)
             {
                ImageResource expandImage = object.expanded ?
-                                           EnvironmentResources.INSTANCE.collapseIcon() :
-                                           EnvironmentResources.INSTANCE.expandIcon();
+                         EnvironmentResources.INSTANCE.collapseIcon() :
+                         EnvironmentResources.INSTANCE.expandIcon();
 
                return expandImage.getSafeUri().asString();
             }
@@ -396,4 +430,6 @@ public class EnvironmentObjects extends Composite
    private Column<RObjectEntry, String> objectNameColumn_;
    private Column<RObjectEntry, String> objectDescriptionColumn_;
    private ListDataProvider<RObjectEntry> objectDataProvider_;
+
+   private Observer observer_;
 }

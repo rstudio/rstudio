@@ -981,7 +981,7 @@ body.ubuntu_mono .searchBox {
    line-height: 1.4;
 }
 
-@sprite .workspace tr.workspaceDataFrameRow td+td {
+@sprite tr.workspaceDataFrameRow td+td {
    gwt-image: 'zoomDataset';
    background-position: right center; 
 }

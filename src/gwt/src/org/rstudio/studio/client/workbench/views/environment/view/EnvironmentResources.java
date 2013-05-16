@@ -30,3 +30,4 @@ public interface EnvironmentResources extends ClientBundle
    @Source("CollapseIcon.png")
    ImageResource collapseIcon();
 }
+

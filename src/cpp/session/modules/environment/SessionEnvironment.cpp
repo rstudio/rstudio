@@ -87,6 +87,11 @@ void onDetectChanges(module_context::ChangeSource source)
    s_environmentMonitor.checkForChanges();
 }
 
+std::string getTopFunctionName()
+{
+   return r::sexp::asString(PRINTNAME(CAR(getTopFunctionContext()->call)));
+}
+
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
    int contextDepth = getTopFunctionContext()->evaldepth;
@@ -104,8 +109,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // current state of the environment
       varJson["context_depth"] = contextDepth;
       varJson["environment_list"] = environmentListAsJson();
-      varJson["function_name"] =
-            r::sexp::asString(CAR(getTopFunctionContext()->call));
+      varJson["function_name"] = getTopFunctionName();
 
       ClientEvent event (client_events::kContextDepthChanged, varJson);
       module_context::enqueClientEvent(event);
@@ -118,8 +122,7 @@ json::Value environmentStateAsJson()
 {
    json::Object stateJson;
    stateJson["context_depth"] = getTopFunctionContext()->evaldepth;
-   stateJson["function_name"] =
-         r::sexp::asString(CAR(getTopFunctionContext()->call));
+   stateJson["function_name"] = getTopFunctionName();
    return stateJson;
 }
 

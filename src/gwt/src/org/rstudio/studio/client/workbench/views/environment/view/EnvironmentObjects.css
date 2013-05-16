@@ -14,12 +14,13 @@
    border: 1px solid #f0f0f0;
 }
 
-td.nameCol
+.objectGrid td.nameCol
 {
    width: 25%;
    text-overflow: ellipsis;
    overflow-x: hidden;
    border-left: none;
+   background: none;
 }
 
 td.expandCol
@@ -33,6 +34,7 @@ td.expandCol
    white-space: nowrap;
    text-overflow: ellipsis;
    overflow-x: hidden;
+   cursor: pointer;
 }
 
 .detailRow
@@ -52,4 +54,7 @@ td.expandCol
 {
    border-left: none;
    border-right: none;
+   white-space: nowrap;
+   overflow-x: hidden;
+   text-overflow: ellipsis;
 }
