@@ -109,8 +109,7 @@ SessionManager::SessionManager()
                                            this, _1);
 }
 
-Error SessionManager::launchSession(const std::string& username,
-                                    const std::string& password)
+Error SessionManager::launchSession(const std::string& username)
 {
    using namespace boost::posix_time;
 
@@ -156,7 +155,6 @@ Error SessionManager::launchSession(const std::string& username,
    // determine launch options
    r_util::SessionLaunchProfile profile;
    profile.username = username;
-   profile.password = password;
    profile.executablePath = server::options().rsessionPath();
    profile.runAsUser =  core::system::realUserIsRoot() ? username : "";
    profile.config = sessionProcessConfig(username);
@@ -215,7 +213,6 @@ void SessionManager::notifySIGCHLD()
 
 // helper function for verify-installation
 Error launchSession(const std::string& username,
-                    const std::string&,
                     const core::system::Options& extraArgs,
                     PidType* pPid)
 {

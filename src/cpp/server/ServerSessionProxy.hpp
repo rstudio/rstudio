@@ -29,10 +29,6 @@ namespace session_proxy {
 
 core::Error initialize();
 
-void setSessionLaunchRequiresAuth(bool requiresAuth);
-void setSessionLaunchPassword(const std::string& username,
-                              const std::string& password);
-
 core::Error runVerifyInstallationSession();
    
 void proxyContentRequest(

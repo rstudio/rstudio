@@ -264,12 +264,8 @@ void doSignIn(const http::Request& request,
    std::string username = plainText.substr(0, splitAt);
    std::string password = plainText.substr(splitAt + 1, plainText.size());
 
-   if ( pamLogin(username, password) &&
-        server::auth::validateUser(username))
+   if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
-      // allow the session launcher access to the password
-      server::session_proxy::setSessionLaunchPassword(username, password);
-
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 

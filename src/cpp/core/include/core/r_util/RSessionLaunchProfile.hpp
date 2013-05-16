@@ -28,7 +28,6 @@ namespace r_util {
 struct SessionLaunchProfile
 {
    std::string username;
-   std::string password;
    std::string executablePath;
    std::string runAsUser;
    core::system::ProcessConfig config;

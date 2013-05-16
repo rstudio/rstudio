@@ -60,75 +60,20 @@ namespace session_proxy {
    
 namespace {
 
-
-class LaunchAuthContext : boost::noncopyable
+void launchSessionRecovery(const std::string& username)
 {
-private:
-   LaunchAuthContext() : launchRequiresAuth_(false) {}
-   friend LaunchAuthContext& launchAuthContext();
-
-public:
-   void setLaunchRequiresAuth(bool requiresAuth)
-   {
-      launchRequiresAuth_.set(requiresAuth);
-   }
-
-   bool launchRequiresAuth()
-   {
-      return launchRequiresAuth_.get();
-   }
-
-   void setLaunchPassword(const std::string& username,
-                          const std::string& password)
-   {
-      launchPasswords_.set(username, password);
-   }
-
-   std::string collectLaunchPassword(const std::string& username)
-   {
-      return launchPasswords_.collect(username);
-   }
-
-private:
-   core::thread::ThreadsafeValue<bool> launchRequiresAuth_;
-   core::thread::ThreadsafeMap<std::string, std::string> launchPasswords_;
-};
-
-LaunchAuthContext& launchAuthContext()
-{
-   static LaunchAuthContext instance;
-   return instance;
-}
-
-void launchSessionRecovery(const std::string& username,
-                           const std::string& password)
-{
-   Error error = sessionManager().launchSession(username, password);
+   Error error = sessionManager().launchSession(username);
    if (error)
       LOG_ERROR(error);
 }
 
-
 http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
 {
-   // collect any pending password
-   std::string password = launchAuthContext().collectLaunchPassword(username);
-
-   // if we require auth and there is no password then return an empty profile
-   // to indicate no retry should be attempted
-   if (launchAuthContext().launchRequiresAuth() && password.empty())
-   {
-      return http::ConnectionRetryProfile();
-   }
-   else
-   {
-      http::ConnectionRetryProfile retryProfile;
-      retryProfile.retryInterval = boost::posix_time::milliseconds(25);
-      retryProfile.maxWait = boost::posix_time::seconds(10);
-      retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                                      username, password);
-      return retryProfile;
-   }
+   http::ConnectionRetryProfile retryProfile;
+   retryProfile.retryInterval = boost::posix_time::milliseconds(25);
+   retryProfile.maxWait = boost::posix_time::seconds(10);
+   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, username);
+   return retryProfile;
 }
 
 
@@ -171,17 +116,9 @@ void handleContentError(
    // require authentication, otherwise just return service unavailable
    if (http::isConnectionUnavailableError(error))
    {
-      if (launchAuthContext().launchRequiresAuth())
-      {
-         server::auth::handler::signOut(ptrConnection->request(),
-                                        &(ptrConnection->response()));
-      }
-      else
-      {
-         // write service unavailable
-         http::Response& response = ptrConnection->response();
-         response.setStatusCode(http::status::ServiceUnavailable);
-      }
+      // write service unavailable
+      http::Response& response = ptrConnection->response();
+      response.setStatusCode(http::status::ServiceUnavailable);
 
       ptrConnection->writeResponse();
    }
@@ -206,16 +143,8 @@ void handleRpcError(
    // distinguish between connection and other error types
    if (http::isConnectionUnavailableError(error))
    {
-      if (launchAuthContext().launchRequiresAuth())
-      {
-         json::setJsonRpcError(json::errc::Unauthorized,
-                               &(ptrConnection->response()));
-      }
-      else
-      {
-         json::setJsonRpcError(json::errc::ConnectionError,
-                              &(ptrConnection->response())) ;
-      }
+      json::setJsonRpcError(json::errc::ConnectionError,
+                            &(ptrConnection->response()));
    }
    else
    {
@@ -317,18 +246,6 @@ Error initialize()
    return session::local_streams::createStreamsDir();
 }
 
-void setSessionLaunchRequiresAuth(bool requiresAuth)
-{
-   launchAuthContext().setLaunchRequiresAuth(requiresAuth);
-}
-
-void setSessionLaunchPassword(const std::string& username,
-                              const std::string& password)
-{
-   if (launchAuthContext().launchRequiresAuth())
-      launchAuthContext().setLaunchPassword(username, password);
-}
-
 Error runVerifyInstallationSession()
 {
    // get current user
@@ -341,7 +258,7 @@ Error runVerifyInstallationSession()
    core::system::Options args;
    args.push_back(core::system::Option("--" kVerifyInstallationSessionOption, "1"));
    PidType sessionPid;
-   error = server::launchSession(user.username, "", args, &sessionPid);
+   error = server::launchSession(user.username, args, &sessionPid);
    if (error)
       return error;
 

@@ -52,8 +52,7 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const std::string& username,
-                             const std::string& password);
+   core::Error launchSession(const std::string& username);
    void removePendingLaunch(const std::string& username);
 
    // set a custom session launcher
@@ -87,7 +86,6 @@ private:
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
 core::Error launchSession(const std::string& username,
-                          const std::string& password,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
 
