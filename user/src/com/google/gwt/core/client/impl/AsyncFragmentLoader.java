@@ -18,6 +18,8 @@ package com.google.gwt.core.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 /**
  * <p>
@@ -587,7 +589,7 @@ public class AsyncFragmentLoader {
   private void runAsyncImpl(final int fragment, RunAsyncCallback callback) {
     if (isLoaded[fragment]) {
       assert allCallbacks[fragment] == null;
-      callback.onSuccess();
+      executeOnSuccessAsynchronously(callback);
       return;
     }
 
@@ -613,6 +615,28 @@ public class AsyncFragmentLoader {
         }
       });
     }
+  }
+
+  /**
+   * Executes onSuccess asynchronously.
+   */
+  private void executeOnSuccessAsynchronously(final RunAsyncCallback callback) {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override public void execute() {
+        executeOnSuccess(callback);
+      }
+    });
+  }
+
+  private void executeOnSuccess(RunAsyncCallback callback) {
+    /*
+     * Calls on {@link RunAsyncCallback#onSuccess} from {@link AsyncFragmentLoader} is special
+     * treated (See RescueVisitor in ControlFlowAnalyzer) so that code splitter will not follow them
+     * on fragment analysis. That is, if don't call onSuccess from here and instead call it directly
+     * from the scheduled command, then it will make the code splitter put the split point code in
+     * the initial fragment.
+     */
+    callback.onSuccess();
   }
 
   private void startLoadingFragment(int fragment) {

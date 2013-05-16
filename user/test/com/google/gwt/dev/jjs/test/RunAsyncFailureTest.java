@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.impl.LoadingStrategyBase;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
@@ -82,6 +84,8 @@ public class RunAsyncFailureTest extends GWTTestCase {
 
   private static final int RUNASYNC_TIMEOUT = 30000;
   
+  private static int staticWrittenByAsync;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.RunAsyncFailure";
@@ -165,6 +169,19 @@ public class RunAsyncFailureTest extends GWTTestCase {
       }
     });
   }
+
+  private void runAsync5() {
+    GWT.runAsync(new RunAsyncCallback() {
+      public void onFailure(Throwable caught) {
+        staticWrittenByAsync++;
+      }
+      public void onSuccess() {
+        // Use the string "INSTALL_FAILURE_TEST" so we can identify this
+        // fragment on the server.  In the fail message is good enough.
+        fail("INSTALL_FAILURE_TEST_2 - Code should have failed to install!");
+      }
+    });
+  }
   
   /**
    * Test the basic functionality of retrying runAsync until is succeeds.
@@ -200,5 +217,34 @@ public class RunAsyncFailureTest extends GWTTestCase {
     delayTestFinish(RUNASYNC_TIMEOUT);
     LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 3;
     runAsync4();
+  }
+
+  public void testDownloadSuccessButInstallFailureStillRunsAsync() {
+    delayTestFinish(RUNASYNC_TIMEOUT);
+    LoadingStrategyBase.MAX_AUTO_RETRY_COUNT = 3;
+    staticWrittenByAsync = 0;
+
+    assertRunAsyncIsAsync();
+
+    // Give it little bit more time to loaded and try runAsync again
+    Scheduler.get().scheduleFixedPeriod(new RepeatingCommand() {
+      @Override public boolean execute() {
+        if (staticWrittenByAsync == 0) {
+          return true;
+        }
+
+        // Code is loaded, let's assert it still runs async
+        assertRunAsyncIsAsync();
+
+        finishTest();
+        return false;
+      }
+    }, 100);
+  }
+
+  private void assertRunAsyncIsAsync() {
+    final int lastValue = staticWrittenByAsync;
+    runAsync5();
+    assertEquals(lastValue, staticWrittenByAsync);
   }
 }

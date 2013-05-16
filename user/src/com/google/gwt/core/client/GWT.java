@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.core.client.impl.Impl;
 
 /**
@@ -258,14 +259,18 @@ public final class GWT {
    */
   @SuppressWarnings("unused") // parameter will be used following replacement
   public static void runAsync(Class<?> name, RunAsyncCallback callback) {
-    callback.onSuccess();
+    runAsync(callback);
   }
 
   /**
    * Run the specified callback once the necessary code for it has been loaded.
    */
-  public static void runAsync(RunAsyncCallback callback) {
-    callback.onSuccess();
+  public static void runAsync(final RunAsyncCallback callback) {
+    Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override public void execute() {
+        callback.onSuccess();
+      }
+    });
   }
 
   /**

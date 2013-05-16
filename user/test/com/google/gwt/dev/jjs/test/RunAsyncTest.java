@@ -18,6 +18,8 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -29,6 +31,8 @@ public class RunAsyncTest extends GWTTestCase {
   private static final int RUNASYNC_TIMEOUT = 10000;
 
   private static String staticWrittenInBaseButReadLater;
+
+  private static int staticWrittenByAsync;
 
   @Override
   public String getModuleName() {
@@ -70,6 +74,44 @@ public class RunAsyncTest extends GWTTestCase {
         finishTest();
       }
     });
+  }
+
+  /**
+   * Test runAsync always runs async.
+   */
+  public void testAsyncIsAlwaysAsync() {
+    delayTestFinish(RUNASYNC_TIMEOUT);
+    staticWrittenByAsync = 0;
+
+    assertRunAsyncIsAsync();
+
+    // Give it little bit more time to loaded and try runAsync again
+    Scheduler.get().scheduleFixedPeriod(new RepeatingCommand() {
+      @Override public boolean execute() {
+        if (staticWrittenByAsync == 0) {
+          return true;
+        }
+
+        // Code is loaded, let's assert it still runs async
+        assertRunAsyncIsAsync();
+
+        finishTest();
+        return false;
+      }
+    }, 100);
+  }
+
+  private void assertRunAsyncIsAsync() {
+    final int lastValue = staticWrittenByAsync;
+    GWT.runAsync(RunAsyncTest.class, new RunAsyncCallback() {
+      public void onFailure(Throwable caught) {
+        throw new RuntimeException(caught);
+      }
+      public void onSuccess() {
+        staticWrittenByAsync++;
+      }
+    });
+    assertEquals(lastValue, staticWrittenByAsync);
   }
 
   /**
@@ -130,17 +172,13 @@ public class RunAsyncTest extends GWTTestCase {
     });
     delayTestFinish(RUNASYNC_TIMEOUT);
 
-    try {
-      GWT.runAsync(new RunAsyncCallback() {
-        public void onFailure(Throwable caught) {
-        }
+    GWT.runAsync(new RunAsyncCallback() {
+      public void onFailure(Throwable caught) {
+      }
 
-        public void onSuccess() {
-          throw toThrow;
-        }
-      });
-    } catch (Throwable e) {
-      GWT.maybeReportUncaughtException(e);
-    }
+      public void onSuccess() {
+        throw toThrow;
+      }
+    });
   }
 }
