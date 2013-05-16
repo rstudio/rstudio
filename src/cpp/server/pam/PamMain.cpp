@@ -93,8 +93,8 @@ int main(int argc, char * const argv[])
       }
 
       // verify password
-      if (system::PAM("rstudio", false).login(username,
-                                              password) == PAM_SUCCESS)
+      if (core::system::PAM("rstudio", false).login(username,
+                                                    password) == PAM_SUCCESS)
          return EXIT_SUCCESS;
       else
          return EXIT_FAILURE;
