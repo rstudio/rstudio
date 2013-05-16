@@ -840,12 +840,12 @@ Error setProcessLimits(RLimitType memoryLimitBytes,
 }
 
 void copyEnvironmentVar(const std::string& name,
-                        std::vector<std::string>* pVars,
+                        core::system::Options* pVars,
                         bool evenIfEmpty = false)
 {
    std::string value = core::system::getenv(name);
    if (!value.empty() || evenIfEmpty)
-      pVars->push_back(name + "=" + value);
+      core::system::setenv(pVars, name, value);
 }
 
 }
@@ -1002,27 +1002,37 @@ Error launchChildProcess(std::string path,
       }
 
       // setup environment
-      std::vector<std::string> env;
+      core::system::Options env;
       copyEnvironmentVar("PATH", &env);
       copyEnvironmentVar("MANPATH", &env);
       copyEnvironmentVar("LANG", &env);
-      env.push_back("USER=" + user.username);
-      env.push_back("LOGNAME=" + user.username);
-      env.push_back("HOME=" + user.homeDirectory);
+      core::system::setenv(&env, "USER", user.username);
+      core::system::setenv(&env, "LOGNAME", user.username);
+      core::system::setenv(&env, "HOME", user.homeDirectory);
       copyEnvironmentVar("SHELL", &env);
 
-      // add custom environment vars
+      // add custom environment vars (overriding as necessary)
       for (core::system::Options::const_iterator it = config.environment.begin();
            it != config.environment.end();
            ++it)
       {
-         env.push_back(it->first + "=" + it->second);
+         core::system::setenv(&env, it->first, it->second);
+      }
+
+      // format as ProcessArgs expects
+      boost::format fmt("%1%=%2%");
+      std::vector<std::string> envVars;
+      for(core::system::Options::const_iterator it = env.begin();
+           it != env.end();
+           ++it)
+      {
+         envVars.push_back(boost::str(fmt % it->first % it->second));
       }
 
       // create environment args  (allocate on heap so memory stays around
       // after we exec (some systems including OSX seem to require this)
       core::system::ProcessArgs* pEnvironment = new core::system::ProcessArgs(
-                                                                         env);
+                                                                       envVars);
 
       // build process args
       std::vector<std::string> argVector;
