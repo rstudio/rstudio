@@ -17,6 +17,9 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -45,11 +48,28 @@ public class EnvironmentPane extends WorkbenchPane
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
       toolbar.addRightWidget(environmentName_);
       toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
+
       return toolbar;
    }
-   
+
+   private Widget createImportMenu()
+   {
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      dataImportButton_ = new ToolbarButton("Import Dataset",
+                                             StandardIcons.INSTANCE.import_dataset(),
+                                             menu);
+      return dataImportButton_;
+
+   }
+
    @Override
    protected Widget createMainWidget()
    {
@@ -73,6 +93,16 @@ public class EnvironmentPane extends WorkbenchPane
    public void setContextDepth(int contextDepth)
    {
       objects_.setContextDepth(contextDepth);
+
+      // if the environment we're about to show is nested, turn off the toolbar
+      // commands that act on the global environment
+      Boolean commandsEnabled = contextDepth == 0;
+      commands_.loadWorkspace().setEnabled(commandsEnabled);
+      commands_.saveWorkspace().setEnabled(commandsEnabled);
+      commands_.clearWorkspace().setEnabled(commandsEnabled);
+      commands_.importDatasetFromFile().setEnabled(commandsEnabled);
+      commands_.importDatasetFromURL().setEnabled(commandsEnabled);
+      dataImportButton_.setEnabled(commandsEnabled);
    }
 
    @Override
@@ -87,6 +117,7 @@ public class EnvironmentPane extends WorkbenchPane
       environmentName_.setText(environmentName);
    }
 
+   private ToolbarButton dataImportButton_;
    private Label environmentName_;
    private EnvironmentObjects objects_;
    private Commands commands_;

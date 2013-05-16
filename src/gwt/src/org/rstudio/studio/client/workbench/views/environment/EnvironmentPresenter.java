@@ -31,15 +31,29 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.ConsoleDispatcher;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
@@ -51,8 +65,17 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.workspace.ClearAllDialog;
+import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettings;
+import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
+
+import java.util.HashMap;
 
 public class EnvironmentPresenter extends BasePresenter
+        implements OpenDataFileHandler
+
 {
    public interface Binder extends CommandBinder<Commands, EnvironmentPresenter> {}
    
@@ -68,10 +91,15 @@ public class EnvironmentPresenter extends BasePresenter
    @Inject
    public EnvironmentPresenter(Display view,
                                EnvironmentServerOperations server,
+                               WorkspaceServerOperations workspaceServer,
                                Binder binder,
                                Commands commands,
                                GlobalDisplay globalDisplay,
-                               EventBus eventBus)
+                               EventBus eventBus,
+                               FileDialogs fileDialogs,
+                               WorkbenchContext workbenchContext,
+                               ConsoleDispatcher consoleDispatcher,
+                               RemoteFileSystemContext fsContext)
    {
       super(view);
       binder.bind(commands, this);
@@ -79,6 +107,12 @@ public class EnvironmentPresenter extends BasePresenter
       view_ = view;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      consoleDispatcher_ = consoleDispatcher;
+      fsContext_ = fsContext;
+      fileDialogs_ = fileDialogs;
+      workbenchContext_ = workbenchContext;
+      eventBus_ = eventBus;
+      workspaceServer_ = workspaceServer;
       
       refreshView();
       
@@ -131,7 +165,103 @@ public class EnvironmentPresenter extends BasePresenter
    {
       refreshView();
    }
-   
+
+   @Handler
+   void onClearWorkspace()
+   {
+      view_.bringToFront();
+
+      new ClearAllDialog(new ProgressOperationWithInput<Boolean>() {
+
+         @Override
+         public void execute(Boolean includeHidden, ProgressIndicator indicator)
+         {
+            indicator.onProgress("Removing objects...");
+            workspaceServer_.removeAllObjects(
+                    includeHidden,
+                    new VoidServerRequestCallback(indicator));
+         }
+      }).showModal();
+   }
+
+   @Handler
+   void onSaveWorkspace()
+   {
+      view_.bringToFront();
+
+      consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
+                                                      ".RData",
+                                                      true,
+                                                      "save.image");
+   }
+
+   @Handler
+   void onLoadWorkspace()
+   {
+      view_.bringToFront();
+      consoleDispatcher_.chooseFileThenExecuteCommand("Load Workspace", "load");
+   }
+
+   @Handler
+   void onImportDatasetFromFile()
+   {
+      view_.bringToFront();
+      fileDialogs_.openFile(
+              "Select File to Import",
+              fsContext_,
+              workbenchContext_.getCurrentWorkingDir(),
+              new ProgressOperationWithInput<FileSystemItem>()
+              {
+                 public void execute(
+                         FileSystemItem input,
+                         ProgressIndicator indicator)
+                 {
+                    if (input == null)
+                       return;
+
+                    indicator.onCompleted();
+
+                    showImportFileDialog(input, null);
+                 }
+              });
+   }
+
+   @Handler
+   void onImportDatasetFromURL()
+   {
+      view_.bringToFront();
+      globalDisplay_.promptForText(
+              "Import from Web URL" ,
+              "Please enter the URL to import data from:",
+              "",
+              new ProgressOperationWithInput<String>(){
+                 public void execute(String input, final ProgressIndicator indicator)
+                 {
+                    indicator.onProgress("Downloading data...");
+                    workspaceServer_.downloadDataFile(input.trim(),
+                        new ServerRequestCallback<DownloadInfo>(){
+
+                           @Override
+                           public void onResponseReceived(DownloadInfo downloadInfo)
+                           {
+                              indicator.onCompleted();
+                              showImportFileDialog(
+                                FileSystemItem.createFile(downloadInfo.getPath()),
+                                downloadInfo.getVarname());
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              indicator.onError(error.getUserMessage());
+                           }
+
+                        });
+                 }
+              });
+   }
+
+
    public void initialize(EnvironmentState environmentState)
    {
       environmentState_ = environmentState;
@@ -169,10 +299,112 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
    }
-   
+
+   private void showImportFileDialog(FileSystemItem input, String varname)
+   {
+      ImportFileSettingsDialog dialog = new ImportFileSettingsDialog(
+              workspaceServer_,
+              input,
+              varname,
+              "Import Dataset",
+              new OperationWithInput<ImportFileSettings>()
+              {
+                 public void execute(
+                         ImportFileSettings input)
+                 {
+                    String var = StringUtil.toRSymbolName(input.getVarname());
+                    String code =
+                            var +
+                            " <- " +
+                            makeCommand(input) +
+                            "\n  View(" + var + ")";
+                    eventBus_.fireEvent(new SendToConsoleEvent(code, true));
+                 }
+              },
+              globalDisplay_);
+      dialog.showModal();
+   }
+
+   private String makeCommand(ImportFileSettings input)
+   {
+      HashMap<String, ImportFileSettings> commandDefaults_ =
+              new HashMap<String, ImportFileSettings>();
+
+      commandDefaults_.put("read.table", new ImportFileSettings(
+              null, null, false, "", ".", "\"'"));
+      commandDefaults_.put("read.csv", new ImportFileSettings(
+              null, null, true, ",", ".", "\""));
+      commandDefaults_.put("read.delim", new ImportFileSettings(
+              null, null, true, "\t", ".", "\""));
+      commandDefaults_.put("read.csv2", new ImportFileSettings(
+              null, null, true, ";", ",", "\""));
+      commandDefaults_.put("read.delim2", new ImportFileSettings(
+              null, null, true, "\t", ",", "\""));
+
+      String command = "read.table";
+      ImportFileSettings settings = commandDefaults_.get("read.table");
+      int score = settings.calculateSimilarity(input);
+      for (String cmd : new String[] {"read.csv", "read.delim"})
+      {
+         ImportFileSettings theseSettings = commandDefaults_.get(cmd);
+         int thisScore = theseSettings.calculateSimilarity(input);
+         if (thisScore > score)
+         {
+            score = thisScore;
+            command = cmd;
+            settings = theseSettings;
+         }
+      }
+
+      StringBuilder code = new StringBuilder(command);
+      code.append("(");
+      code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
+      if (input.isHeader() != settings.isHeader())
+         code.append(", header=" + (input.isHeader() ? "T" : "F"));
+      if (!input.getSep().equals(settings.getSep()))
+         code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
+      if (!input.getDec().equals(settings.getDec()))
+         code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
+      if (!input.getQuote().equals(settings.getQuote()))
+         code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
+      code.append(")");
+
+      return code.toString();
+   }
+
+   public void onOpenDataFile(OpenDataFileEvent event)
+   {
+      final String dataFilePath = event.getFile().getPath();
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+
+              "Confirm Load Workspace",
+
+              "Do you want to load the R data file \"" + dataFilePath + "\" " +
+              "into your workspace?",
+
+              new ProgressOperation() {
+                 public void execute(ProgressIndicator indicator)
+                 {
+                    consoleDispatcher_.executeCommand(
+                            "load",
+                            FileSystemItem.createFile(dataFilePath));
+
+                    indicator.onCompleted();
+                 }
+              },
+
+              true);
+   }
+
    private final Display view_;
    private final EnvironmentServerOperations server_;
+   private final WorkspaceServerOperations workspaceServer_;
    private final GlobalDisplay globalDisplay_;
+   private final ConsoleDispatcher consoleDispatcher_;
+   private final RemoteFileSystemContext fsContext_;
+   private final WorkbenchContext workbenchContext_;
+   private final FileDialogs fileDialogs_;
+   private final EventBus eventBus_;
    private EnvironmentState environmentState_;
    private int contextDepth_;
 }

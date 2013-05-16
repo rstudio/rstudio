@@ -57,29 +57,10 @@ public class WorkspacePane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
-      toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(createImportMenu());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-      
-      toolbar.addRightWidget(commands_.refreshWorkspace().createToolbarButton());
-      
+
       return toolbar;
    }
    
-   private Widget createImportMenu()
-   {
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      return new ToolbarButton("Import Dataset", 
-                               StandardIcons.INSTANCE.import_dataset(),
-                               menu);
-      
-   }
-
    private final WorkspaceObjectTable objectsTable_;
    private final Commands commands_;
 }
