@@ -37,5 +37,12 @@ td.expandCol
 
 .detailRow
 {
+   background-color: #f5f5f5;
+   font-size: 90%;
+}
+
+.categoryHeaderRow
+{
    background-color: #f0f0f0;
+   font-family: proportionalFont;
 }

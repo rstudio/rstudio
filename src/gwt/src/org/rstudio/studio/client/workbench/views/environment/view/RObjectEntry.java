@@ -28,14 +28,43 @@ public class RObjectEntry
               }
            };
 
+   // the classification of data in the pane
+   public class Categories
+   {
+      public static final int Data = 0;
+      public static final int Value = 1;
+      public static final int Function = 2;
+   }
+
+   // make a new entry in the pane from an R object
    RObjectEntry(RObject obj)
    {
       rObject = obj;
       expanded = false;
-      canExpand = rObject.getType() == "character";
+      isCategoryLeader = false;
+      canExpand = rObject.getContents().length() > 0;
+   }
+
+   public int getCategory()
+   {
+      String type = rObject.getType();
+      if (type.equals("data.frame")
+         || type.equals("matrix")
+         || type.equals("data.table")
+         || type.equals("cast_df"))
+      {
+         return Categories.Data;
+      }
+      else if (type.equals("function"))
+      {
+         return Categories.Function;
+      }
+
+      return Categories.Value;
    }
 
    RObject rObject;
    boolean expanded;
    boolean canExpand;
+   boolean isCategoryLeader;
 }

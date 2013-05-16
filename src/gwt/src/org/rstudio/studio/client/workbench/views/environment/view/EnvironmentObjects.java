@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.resources.client.CssResource;
@@ -36,6 +37,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
+import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import java.util.List;
@@ -49,8 +51,10 @@ public class EnvironmentObjects extends Composite
       String nameCol();
       String valueCol();
       String detailRow();
+      String categoryHeaderRow();
    }
 
+   // builds individual rows of the object table
    private class ObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
    {
       public ObjectTableBuilder()
@@ -58,8 +62,45 @@ public class EnvironmentObjects extends Composite
          super(objectList);
       }
 
+      // (re)build the given row
       public void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
       {
+         // if building the first row, we need to add a dummy row to the top.
+         // since the grid uses a fixed table layout, the first row sets the
+         // column widths, so we can't let the first row be a spanning header.
+         if (absRowIndex == 0)
+         {
+            TableRowBuilder widthSettingRow = startRow();
+            widthSettingRow.startTD().className(style.expandCol()).endTD();
+            widthSettingRow.startTD().className(style.nameCol()).endTD();
+            widthSettingRow.startTD().className(style.valueCol()).endTD();
+            widthSettingRow.endTR();
+         }
+
+         // if this row is the first of its category, draw the category header
+         if (rowValue.isCategoryLeader)
+         {
+            String categoryTitle;
+            switch (rowValue.getCategory())
+            {
+               case RObjectEntry.Categories.Data:
+                  categoryTitle = "Data";
+                  break;
+               case RObjectEntry.Categories.Function:
+                  categoryTitle = "Functions";
+                  break;
+               default:
+                  categoryTitle = "Values";
+                  break;
+            }
+            TableRowBuilder leaderRow = startRow().className(style.categoryHeaderRow());
+            TableCellBuilder objectHeader = leaderRow.startTD();
+            objectHeader.colSpan(3)
+                    .text(categoryTitle)
+                    .endTD();
+            leaderRow.endTR();
+         }
+
          TableRowBuilder row = startRow();
 
          // build the column containing the expand/collapse command
@@ -89,16 +130,26 @@ public class EnvironmentObjects extends Composite
                        rowValue);
          }
          descCol.endTD();
-
          row.endTR();
 
+         // if the row is expanded, draw its content
          if (rowValue.expanded)
+         {
+            buildExpandedContentRow(rowValue);
+         }
+      }
+
+      // draw additional rows when the row has been expanded
+      private void buildExpandedContentRow(RObjectEntry rowValue)
+      {
+         JsArrayString contents = rowValue.rObject.getContents();
+         for (int i = 0; i < contents.length(); i++)
          {
             TableRowBuilder detail = startRow().className(style.detailRow());
             detail.startTD().endTD();
             TableCellBuilder objectDetail = detail.startTD();
             objectDetail.colSpan(2)
-                    .text(rowValue.rObject.getValue())
+                    .text(contents.get(i))
                     .endTD();
             detail.endTR();
          }
@@ -107,11 +158,11 @@ public class EnvironmentObjects extends Composite
 
    interface Binder extends UiBinder<Widget, EnvironmentObjects>
    {
-
    }
 
    public void setContextDepth(int contextDepth)
    {
+      // this is where we'll set UI to debug mode it contextDepth is > 0
    }
 
    public void addObject(RObject obj)
@@ -125,8 +176,11 @@ public class EnvironmentObjects extends Composite
       }
       else
       {
-         objectDataProvider_.getList().add(indexOfNewObject(obj), new RObjectEntry(obj));
+         RObjectEntry entry = new RObjectEntry(obj);
+         objectDataProvider_.getList().add(indexOfNewObject(entry), entry);
       }
+
+      updateCategoryLeaders();
    }
 
    public void removeObject(String objName)
@@ -142,6 +196,7 @@ public class EnvironmentObjects extends Composite
    {
       objectDataProvider_.getList().clear();
    }
+
 
    public EnvironmentObjects()
    {
@@ -160,6 +215,7 @@ public class EnvironmentObjects extends Composite
       // make the grid fill the pane
       objectList.setWidth("100%");
       objectList.setHeight("100%");
+      objectList.setSelectionModel(new NoSelectionModel<RObjectEntry>(RObjectEntry.KEY_PROVIDER));
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       // add the grid to the pane--needs to be done after initWidget since the
@@ -186,29 +242,29 @@ public class EnvironmentObjects extends Composite
       return foundObject ? index : -1;
    }
 
-
    private native int localeCompare(String first, String second) /*-{
        return first.localeCompare(second);
    }-*/;
 
-   private int compareRObjectsForSort(RObject first, RObject second)
+   private int compareRObjectEntriesForSort(RObjectEntry first,
+                                            RObjectEntry second)
    {
-      int result = localeCompare(first.getType(), second.getType());
+      int result = first.getCategory() - second.getCategory();
       if (result == 0)
       {
-         result = localeCompare(first.getName(), second.getName());
+         result = localeCompare(first.rObject.getName(), second.rObject.getName());
       }
       return result;
    }
 
-   private int indexOfNewObject(RObject obj)
+   private int indexOfNewObject(RObjectEntry obj)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
       int numObjects = objects.size();
       int idx;
       for (idx = 0; idx < numObjects; idx++)
       {
-         if (compareRObjectsForSort(obj, objects.get(idx).rObject) < 0)
+         if (compareRObjectEntriesForSort(obj, objects.get(idx)) < 0)
          {
             break;
          }
@@ -284,6 +340,31 @@ public class EnvironmentObjects extends Composite
             }
          }
       });
+   }
+
+   private void updateCategoryLeaders()
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+      Boolean[] leaders = { false, false, false };
+
+      for (int i = 0; i < objects.size(); i++)
+      {
+         RObjectEntry entry = objects.get(i);
+         int category = entry.getCategory();
+         Boolean leader = entry.isCategoryLeader;
+         if (!leaders[category])
+         {
+            leaders[category] = true;
+            if (!leader)
+            {
+               entry.isCategoryLeader = true;
+            }
+         }
+         else if (leader)
+         {
+            entry.isCategoryLeader = false;
+         }
+      }
    }
    
 

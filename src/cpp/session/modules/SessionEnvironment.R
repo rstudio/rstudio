@@ -56,3 +56,13 @@
    return ("NO_VALUE")
 })
 
+.rs.addFunction("valueContents", function(val)
+{
+   tryCatch(
+   {
+      return (capture.output(str(val)))
+   },
+   error = function(e) print(e))
+
+   return ("NO_VALUE")
+})
