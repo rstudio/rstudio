@@ -148,17 +148,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
                                  defaultConfigPath.absolutePath() : "";
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
-   // overlay hooks
+   // overlay hook
    addOverlayOptions(&server, &www, &rsession, &auth);
-   resolveOverlayOptions();
-
-   // overlay validation
-   std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
-   {
-      LOG_ERROR_MESSAGE(errMsg);
-      return ProgramStatus::exitFailure();
-   }
 
    optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
@@ -211,6 +202,17 @@ ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(&rsessionPath_);
    resolvePath(&rldpathPath_);
    resolvePath(&rsessionConfigFile_);
+
+   // overlay hook
+   resolveOverlayOptions();
+
+   // overlay validation
+   std::string errMsg;
+   if (!validateOverlayOptions(&errMsg))
+   {
+      LOG_ERROR_MESSAGE(errMsg);
+      return ProgramStatus::exitFailure();
+   }
 
    // return status
    return status;
