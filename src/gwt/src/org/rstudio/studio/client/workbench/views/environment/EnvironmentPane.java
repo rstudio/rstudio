@@ -43,9 +43,9 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = new Label("Global");
       Toolbar toolbar = new Toolbar();
-
+      toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addRightWidget(environmentName_);
-      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
       return toolbar;
    }

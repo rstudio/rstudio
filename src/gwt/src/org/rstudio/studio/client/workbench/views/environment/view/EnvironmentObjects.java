@@ -65,41 +65,9 @@ public class EnvironmentObjects extends Composite
       // (re)build the given row
       public void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
       {
-         // if building the first row, we need to add a dummy row to the top.
-         // since the grid uses a fixed table layout, the first row sets the
-         // column widths, so we can't let the first row be a spanning header.
-         if (absRowIndex == 0)
-         {
-            TableRowBuilder widthSettingRow = startRow();
-            widthSettingRow.startTD().className(style.expandCol()).endTD();
-            widthSettingRow.startTD().className(style.nameCol()).endTD();
-            widthSettingRow.startTD().className(style.valueCol()).endTD();
-            widthSettingRow.endTR();
-         }
 
-         // if this row is the first of its category, draw the category header
-         if (rowValue.isCategoryLeader)
-         {
-            String categoryTitle;
-            switch (rowValue.getCategory())
-            {
-               case RObjectEntry.Categories.Data:
-                  categoryTitle = "Data";
-                  break;
-               case RObjectEntry.Categories.Function:
-                  categoryTitle = "Functions";
-                  break;
-               default:
-                  categoryTitle = "Values";
-                  break;
-            }
-            TableRowBuilder leaderRow = startRow().className(style.categoryHeaderRow());
-            TableCellBuilder objectHeader = leaderRow.startTD();
-            objectHeader.colSpan(3)
-                    .text(categoryTitle)
-                    .endTD();
-            leaderRow.endTR();
-         }
+         // build the header for the row (if any)
+         buildRowHeader(rowValue, absRowIndex);
 
          TableRowBuilder row = startRow();
 
@@ -136,6 +104,45 @@ public class EnvironmentObjects extends Composite
          if (rowValue.expanded)
          {
             buildExpandedContentRow(rowValue);
+         }
+      }
+
+      private void buildRowHeader(RObjectEntry rowValue, int absRowIndex)
+      {
+         // if building the first row, we need to add a dummy row to the top.
+         // since the grid uses a fixed table layout, the first row sets the
+         // column widths, so we can't let the first row be a spanning header.
+         if (absRowIndex == 0)
+         {
+            TableRowBuilder widthSettingRow = startRow();
+            widthSettingRow.startTD().className(style.expandCol()).endTD();
+            widthSettingRow.startTD().className(style.nameCol()).endTD();
+            widthSettingRow.startTD().className(style.valueCol()).endTD();
+            widthSettingRow.endTR();
+         }
+
+         // if this row is the first of its category, draw the category header
+         if (rowValue.isCategoryLeader)
+         {
+            String categoryTitle;
+            switch (rowValue.getCategory())
+            {
+               case RObjectEntry.Categories.Data:
+                  categoryTitle = "Data";
+                  break;
+               case RObjectEntry.Categories.Function:
+                  categoryTitle = "Functions";
+                  break;
+               default:
+                  categoryTitle = "Values";
+                  break;
+            }
+            TableRowBuilder leaderRow = startRow().className(style.categoryHeaderRow());
+            TableCellBuilder objectHeader = leaderRow.startTD();
+            objectHeader.colSpan(3)
+                    .text(categoryTitle)
+                    .endTD();
+            leaderRow.endTR();
          }
       }
 
@@ -190,6 +197,8 @@ public class EnvironmentObjects extends Composite
       {
          objectDataProvider_.getList().remove(idx);
       }
+
+      updateCategoryLeaders();
    }
    
    public void clearObjects()
@@ -257,11 +266,13 @@ public class EnvironmentObjects extends Composite
       return result;
    }
 
+   // returns the position a new object entry should occupy in the table
    private int indexOfNewObject(RObjectEntry obj)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
       int numObjects = objects.size();
       int idx;
+      // consider: can we use binary search here?
       for (idx = 0; idx < numObjects; idx++)
       {
          if (compareRObjectEntriesForSort(obj, objects.get(idx)) < 0)
@@ -272,6 +283,7 @@ public class EnvironmentObjects extends Composite
       return idx;
    }
 
+   // create each column for the data grid
    private void createColumns()
    {
       objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
@@ -342,9 +354,12 @@ public class EnvironmentObjects extends Composite
       });
    }
 
+   // after adds or removes, we need to tag the new category-leading objects
    private void updateCategoryLeaders()
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
+
+      // whether or not we've found a leader for each category
       Boolean[] leaders = { false, false, false };
 
       for (int i = 0; i < objects.size(); i++)
@@ -352,6 +367,8 @@ public class EnvironmentObjects extends Composite
          RObjectEntry entry = objects.get(i);
          int category = entry.getCategory();
          Boolean leader = entry.isCategoryLeader;
+         // if we haven't found a leader for this category yet, make this object
+         // the leader if it isn't already
          if (!leaders[category])
          {
             leaders[category] = true;
@@ -360,6 +377,8 @@ public class EnvironmentObjects extends Composite
                entry.isCategoryLeader = true;
             }
          }
+         // if this object is marked as the leader but we've already found a
+         // leader, unmark it
          else if (leader)
          {
             entry.isCategoryLeader = false;
