@@ -71,6 +71,11 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       localizedByImageResource = Maps.create();
     }
 
+    @Override
+    public boolean isStandalone() {
+      return false;
+    }
+
     public LocalizedImage addImage(TreeLogger logger, ResourceContext context,
         ImageResourceDeclaration image) throws UnableToCompleteException,
         CannotBundleImageException {
@@ -192,6 +197,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       if (isExternal) {
         return "External: " + image.get();
       }
+      // test mirrored in prepare(), make sure to keep them in sync
       if (image.isPreventInlining() || image.getRepeatStyle() == RepeatStyle.Both) {
         return "Unbundled: " + image.get();
       }
@@ -253,6 +259,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     protected String normalContentsFieldName;
     protected String rtlContentsFieldName;
 
+    public abstract boolean isStandalone();
+
     public abstract ImageRect getImageRect(ImageResourceDeclaration image);
 
     /**
@@ -293,6 +301,11 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       this.image = image;
       this.localized = localized;
       this.rect = rect;
+    }
+
+    @Override
+    public boolean isStandalone() {
+      return true;
     }
 
     @Override
@@ -487,7 +500,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
           + urlExpressions[1] + " : " + urlExpressions[0] + "),");
     }
     sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth() + ", "
-        + rect.getHeight() + ", " + rect.isAnimated() + ", " + rect.isLossy());
+        + rect.getHeight() + ", " + rect.isAnimated() + ", " + rect.isLossy() + ", "
+        + bundle.isStandalone());
 
     sw.outdent();
     sw.print(")");
@@ -543,7 +557,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       localizedImage = bundledImage.addImage(logger, context, image);
       rect = bundledImage.getImageRect(image);
       displayed = bundledImage;
-      if (image.isPreventInlining()) {
+      // mirrors the "unbundled" case in BundleKey.
+      if (image.isPreventInlining() || image.getRepeatStyle() == RepeatStyle.Both) {
         cannotBundle = true;
       }
     } catch (CannotBundleImageException e) {

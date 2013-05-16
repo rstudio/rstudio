@@ -202,10 +202,12 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
     @Override
     public void setUrl(Image image, SafeUri url) {
-      image.changeState(new UnclippedState(image));
-      // Need to make sure we change the state before an onload event can fire,
-      // or handlers will be fired while we are in the old state.
-      image.setUrl(url);
+      image.changeState(new UnclippedState(image, url));
+    }
+
+    @Override
+    public void setUrl(Image image, SafeUri url, int width, int height) {
+      image.changeState(new UnclippedState(image, url, width, height));
     }
 
     @Override
@@ -299,6 +301,8 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
     public abstract void setUrl(Image image, SafeUri url);
 
+    public abstract void setUrl(Image image, SafeUri url, int width, int height);
+
     public abstract void setUrlAndVisibleRect(Image image, SafeUri url, int left, int top,
         int width, int height);
 
@@ -380,6 +384,12 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
       setUrl(image, url);
     }
 
+    UnclippedState(Image image, SafeUri url, int width, int height) {
+      this(image, url);
+      getImageElement(image).setWidth(width);
+      getImageElement(image).setHeight(height);
+    }
+
     @Override
     public int getHeight(Image image) {
       return getImageElement(image).getHeight();
@@ -414,6 +424,13 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
     public void setUrl(Image image, SafeUri url) {
       image.clearUnhandledEvent();
       getImageElement(image).setSrc(url.asString());
+    }
+
+    @Override
+    public void setUrl(Image image, SafeUri url, int width, int height) {
+      setUrl(image, url);
+      getImageElement(image).setWidth(width);
+      getImageElement(image).setHeight(height);
     }
 
     @Override
@@ -499,8 +516,14 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to be displayed
    */
   public Image(ImageResource resource) {
-    this(resource.getURL(), resource.getLeft(), resource.getTop(), resource.getWidth(),
-        resource.getHeight());
+    if (resource.isStandalone()) {
+      changeState(new UnclippedState(this, resource.getSafeUri(), resource.getWidth(),
+          resource.getHeight()));
+    } else {
+      changeState(new ClippedState(this, resource.getSafeUri(), resource.getLeft(),
+          resource.getTop(), resource.getWidth(), resource.getHeight()));
+    }
+    setStyleName("gwt-Image");
   }
 
   /**
@@ -849,8 +872,12 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to display
    */
   public void setResource(ImageResource resource) {
-    setUrlAndVisibleRect(resource.getSafeUri(), resource.getLeft(), resource.getTop(),
-        resource.getWidth(), resource.getHeight());
+    if (resource.isStandalone()) {
+      state.setUrl(this, resource.getSafeUri(), resource.getWidth(), resource.getHeight());
+    } else {
+      state.setUrlAndVisibleRect(this, resource.getSafeUri(), resource.getLeft(),
+          resource.getTop(), resource.getWidth(), resource.getHeight());
+    }
   }
 
   /**

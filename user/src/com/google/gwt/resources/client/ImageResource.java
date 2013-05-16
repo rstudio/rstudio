@@ -147,4 +147,10 @@ public interface ImageResource extends ResourcePrototype {
    * Return <code>true</code> if the image contains multiple frames.
    */
   boolean isAnimated();
+
+  /**
+   * Returns <code>true</code> if the image is standalone, <code>false</code>
+   * if it's a region of a composite image.
+   */
+  boolean isStandalone();
 }

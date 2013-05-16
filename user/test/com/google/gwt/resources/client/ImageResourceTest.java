@@ -38,7 +38,15 @@ public class ImageResourceTest extends GWTTestCase {
 
     @ImageOptions(preventInlining = true)
     @Source("32x32.png")
-    ImageResource i32x32();    
+    ImageResource i32x32();
+
+    @ImageOptions(repeatStyle = RepeatStyle.Both)
+    @Source("16x16.png")
+    ImageResource i16x16RepeatBoth();
+
+    @ImageOptions(repeatStyle = RepeatStyle.Both)
+    @Source("32x32.png")
+    ImageResource i32x32RepeatBoth();
   }
 
   interface Resources extends ClientBundle {
@@ -163,6 +171,7 @@ public class ImageResourceTest extends GWTTestCase {
     // Make sure that the large, lossy image isn't bundled with the rest
     assertTrue(((ImageResourcePrototype) lossy).isLossy());
     assertTrue(!i64.getSafeUri().equals(lossy.getSafeUri()));
+    assertTrue(lossy.isStandalone());
 
     assertEquals(16, r.i16x16Vertical().getWidth());
     assertEquals(16, r.i16x16Vertical().getHeight());
@@ -191,10 +200,32 @@ public class ImageResourceTest extends GWTTestCase {
     // No image packing
     assertEquals(0, a.getTop());
     assertEquals(0, a.getLeft());
+    assertTrue(a.isStandalone());
     assertEquals(0, b.getTop());
     assertEquals(0, b.getLeft());
+    assertTrue(b.isStandalone());
   }
-  
+
+  /**
+   * Tests that RepeatStyle.Both creates standalone images.
+   */
+  public void testRepeatStyleBoth() {
+    ExternalResources r = GWT.create(ExternalResources.class);
+    ImageResource a = r.i16x16RepeatBoth();
+    ImageResource b = r.i32x32RepeatBoth();
+
+    // Should be fetched from different URLs
+    assertFalse(a.getURL().equals(b.getURL()));
+
+    // No image packing
+    assertEquals(0, a.getTop());
+    assertEquals(0, a.getLeft());
+    assertTrue(a.isStandalone());
+    assertEquals(0, b.getTop());
+    assertEquals(0, b.getLeft());
+    assertTrue(b.isStandalone());
+  }
+
   @SuppressWarnings("deprecation")
   public void testSafeUri() {
     Resources r = GWT.create(Resources.class);

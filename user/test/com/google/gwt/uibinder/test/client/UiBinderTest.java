@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource.NotStrict;
@@ -544,6 +546,12 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals("funny characters \\ \" ' ' & < > > { }", t);
   }
 
+  /**
+   * Fails in all modes due to an HtmlUnit bug: offsetWidth always returns 1256.
+   * TODO(t.broyer): file a new HtmlUnit bug.
+   * Similar to http://sourceforge.net/p/htmlunit/bugs/1447/
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testCustomImageClass() {
     ImageResource resource = widgetUi.prettyImage;
     Image widget = widgetUi.fooImage;
@@ -553,6 +561,12 @@ public class UiBinderTest extends GWTTestCase {
     assertEquals(resource.getLeft(), widget.getOriginLeft());
   }
 
+  /**
+   * Fails in all modes due to an HtmlUnit bug: offsetWidth always returns 1256.
+   * TODO(t.broyer): file a new HtmlUnit bug.
+   * Similar to http://sourceforge.net/p/htmlunit/bugs/1447/
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testImageResourceInImageWidget() {
     ImageResource resource = widgetUi.prettyImage;
     Image widget = widgetUi.babyWidget;

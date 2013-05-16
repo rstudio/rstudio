@@ -71,6 +71,8 @@ public abstract class AbstractImagePrototype {
    *         ImageResource
    */
   public static AbstractImagePrototype create(ImageResource resource) {
+    // for backwards compatilibity, and to keep things simple, we treat standalone resources the
+    // same as composite ones (which means using a clear gif with the image as the CSS background)
     return new ClippedImagePrototype(resource.getSafeUri(), resource.getLeft(), resource.getTop(),
         resource.getWidth(), resource.getHeight());
   }

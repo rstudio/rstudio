@@ -15,16 +15,31 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
 
 /**
- * Given an {@link ImageResource}, renders a span element to show it.
+ * Given an {@link ImageResource}, renders an element to show it.
  */
 public class ImageResourceRenderer extends AbstractSafeHtmlRenderer<ImageResource> {
+
+  interface Template extends SafeHtmlTemplates {
+    @SafeHtmlTemplates.Template("<img src='{0}' border='0' width='{1}' height='{2}'>")
+    SafeHtml image(SafeUri imageUri, int width, int height);
+  }
+
+  private static final Template TEMPLATE = GWT.create(Template.class);
+
   @Override
   public SafeHtml render(ImageResource image) {
-    return AbstractImagePrototype.create(image).getSafeHtml();
+    if (image.isStandalone()) {
+      return TEMPLATE.image(image.getSafeUri(), image.getWidth(), image.getHeight());
+    } else {
+      return AbstractImagePrototype.create(image).getSafeHtml();
+    }
   }
 }

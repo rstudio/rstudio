@@ -26,8 +26,11 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.WithProperties;
+import com.google.gwt.junit.client.WithProperties.Property;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.client.Timer;
 
 /**
@@ -37,6 +40,10 @@ import com.google.gwt.user.client.Timer;
 public class ImageTest extends GWTTestCase {
   interface Bundle extends ClientBundle {
     ImageResource prettyPiccy();
+
+    @Source("prettyPiccy.png")
+    @ImageOptions(preventInlining = true)
+    ImageResource prettyPiccyStandalone();
   }
 
   private static class TestErrorHandler implements ErrorHandler {
@@ -609,17 +616,48 @@ public class ImageTest extends GWTTestCase {
     }.schedule(LOAD_EVENT_TIMEOUT);
    }
 
+  @WithProperties({
+    @Property(name = "ClientBundle.enableInlining", value = "false")
+  })
   public void testResourceConstructor() {
     Bundle b = GWT.create(Bundle.class);
     Image image = new Image(b.prettyPiccy());
     assertResourceWorked(image, b.prettyPiccy());
+
+    assertFalse(b.prettyPiccy().isStandalone());
+    assertEquals("clipped", getCurrentImageStateName(image));
   }
 
+  @WithProperties({
+    @Property(name = "ClientBundle.enableInlining", value = "false")
+  })
   public void testSetResource() {
     Bundle b = GWT.create(Bundle.class);
     Image image = new Image();
     image.setResource(b.prettyPiccy());
     assertResourceWorked(image, b.prettyPiccy());
+
+    assertFalse(b.prettyPiccy().isStandalone());
+    assertEquals("clipped", getCurrentImageStateName(image));
+  }
+
+  public void testStandaloneResourceConstructor() {
+    Bundle b = GWT.create(Bundle.class);
+    Image image = new Image(b.prettyPiccyStandalone());
+    assertResourceWorked(image, b.prettyPiccyStandalone());
+
+    assertTrue(b.prettyPiccyStandalone().isStandalone());
+    assertEquals("unclipped", getCurrentImageStateName(image));
+  }
+
+  public void testStandaloneSetResource() {
+    Bundle b = GWT.create(Bundle.class);
+    Image image = new Image();
+    image.setResource(b.prettyPiccyStandalone());
+    assertResourceWorked(image, b.prettyPiccyStandalone());
+
+    assertTrue(b.prettyPiccyStandalone().isStandalone());
+    assertEquals("unclipped", getCurrentImageStateName(image));
   }
 
   /**
