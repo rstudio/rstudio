@@ -58,3 +58,21 @@ td.expandCol
    overflow-x: hidden;
    text-overflow: ellipsis;
 }
+
+.emptyEnvironmentPanel
+{
+   font-family: proportionalFont;
+   text-align: center;
+   margin-top: 30%;
+}
+
+.emptyEnvironmentName
+{
+   font-size: 110%;
+}
+
+.emptyEnvironmentMessage
+{
+   font-size: 90%;
+   color: #909090;
+}

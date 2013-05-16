@@ -122,6 +122,7 @@ public class EnvironmentPane extends WorkbenchPane
    public void setEnvironmentName(String environmentName)
    {
       environmentName_.setText(environmentName);
+      objects_.setEnvironmentName(environmentName);
    }
 
    public void editObject(String objectName)

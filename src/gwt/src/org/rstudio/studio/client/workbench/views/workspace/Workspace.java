@@ -137,27 +137,7 @@ public class Workspace
       refreshView();
    }
 
-   void onClearWorkspace()
-   {
-   }
-
-   void onSaveWorkspace()
-   {
-   }
-
-   void onLoadWorkspace()
-   {
-   }
-
    public void onOpenDataFile(OpenDataFileEvent event)
-   {
-   }
-
-   void onImportDatasetFromFile()
-   {
-   }
-
-   void onImportDatasetFromURL()
    {
    }
 

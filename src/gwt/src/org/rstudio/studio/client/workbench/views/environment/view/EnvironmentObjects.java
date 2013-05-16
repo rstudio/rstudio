@@ -35,6 +35,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
@@ -53,8 +54,12 @@ public class EnvironmentObjects extends Composite
       String valueCol();
       String detailRow();
       String categoryHeaderRow();
+      String emptyEnvironmentPanel();
+      String emptyEnvironmentName();
+      String emptyEnvironmentMessage();
    }
 
+   // methods implemented by the owning presenter to edit and view objects
    public interface Observer
    {
       void editObject(String objectName);
@@ -226,6 +231,11 @@ public class EnvironmentObjects extends Composite
       observer_ = observer;
    }
 
+   public void setEnvironmentName(String environmentName)
+   {
+      environmentName_.setText(environmentName);
+   }
+
    public EnvironmentObjects()
    {
       // initialize the data grid and hook it up to the list of R objects in
@@ -246,8 +256,9 @@ public class EnvironmentObjects extends Composite
       objectList.setSelectionModel(new NoSelectionModel<RObjectEntry>(RObjectEntry.KEY_PROVIDER));
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
-      // add the grid to the pane--needs to be done after initWidget since the
-      // pane doesn't exist until UIBinder has done its thing
+      // these need to be done post-initWidget since they reference objects
+      // created by initWidget
+      objectList.setEmptyTableWidget(BuildEmptyGridMessage());
       environmentContents.add(objectList);
    }
 
@@ -341,7 +352,7 @@ public class EnvironmentObjects extends Composite
          public SafeHtml render(String object)
          {
             SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            if (object != "")
+            if (!object.equals(""))
             {
                sb.appendHtmlConstant("<input type=\"image\" src=\"")
                        .appendEscaped(object)
@@ -419,12 +430,26 @@ public class EnvironmentObjects extends Composite
          }
       }
    }
+
+   private Widget BuildEmptyGridMessage()
+   {
+      HTMLPanel messagePanel = new HTMLPanel("");
+      messagePanel.setStyleName(style.emptyEnvironmentPanel());
+      environmentName_ = new Label("Global");
+      environmentName_.setStyleName(style.emptyEnvironmentName());
+      Label emptyMessage = new Label("Environment is empty");
+      emptyMessage.setStyleName(style.emptyEnvironmentMessage());
+      messagePanel.add(environmentName_);
+      messagePanel.add(emptyMessage);
+      return messagePanel;
+   }
    
 
    @UiField HTMLPanel environmentContents;
    @UiField Style style;
 
    DataGrid<RObjectEntry> objectList;
+   Label environmentName_;
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;

@@ -33,18 +33,7 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
 
    public abstract static class Shim extends
          DelayLoadTabShim<Workspace, WorkspaceTab>
-         implements OpenDataFileHandler
    {
-      @Handler
-      public abstract void onLoadWorkspace();
-      @Handler
-      public abstract void onSaveWorkspace();
-      @Handler
-      public abstract void onImportDatasetFromFile();
-      @Handler
-      public abstract void onImportDatasetFromURL();
-      @Handler
-      public abstract void onClearWorkspace();
    }
 
    @Inject
@@ -55,6 +44,5 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
    {
       super("Workspace", shim);
       binder.bind(commands, shim);
-      eventBus.addHandler(OpenDataFileEvent.TYPE, shim);
    }
 }
