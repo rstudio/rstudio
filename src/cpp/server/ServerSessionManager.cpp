@@ -156,7 +156,6 @@ Error SessionManager::launchSession(const std::string& username)
    r_util::SessionLaunchProfile profile;
    profile.username = username;
    profile.executablePath = server::options().rsessionPath();
-   profile.runAsUser =  core::system::realUserIsRoot() ? username : "";
    profile.config = sessionProcessConfig(username);
 
    // launch the session
@@ -175,12 +174,16 @@ Error SessionManager::launchSession(const std::string& username)
 Error SessionManager::launchAndTrackSession(
                            const core::r_util::SessionLaunchProfile& profile)
 {
+   // if we are root then assume the identity of the user
+   using namespace core::system;
+   std::string runAsUser = realUserIsRoot() ? profile.username : "";
+
    // launch the session
    PidType pid = 0;
-   Error error = core::system::launchChildProcess(profile.executablePath,
-                                                  profile.runAsUser,
-                                                  profile.config,
-                                                  &pid);
+   Error error = launchChildProcess(profile.executablePath,
+                                    runAsUser,
+                                    profile.config,
+                                    &pid);
    if (error)
       return error;
 

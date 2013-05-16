@@ -29,7 +29,6 @@ struct SessionLaunchProfile
 {
    std::string username;
    std::string executablePath;
-   std::string runAsUser;
    core::system::ProcessConfig config;
 };
 
