@@ -407,7 +407,7 @@ public class JsoTest extends GWTTestCase {
     assertFalse(o instanceof String[][]);
     try {
       String[][] s = (String[][]) o;
-      s.toString();
+      s.getClass();
       fail("Expected ClassCastException");
     } catch (ClassCastException expected) {
     }
