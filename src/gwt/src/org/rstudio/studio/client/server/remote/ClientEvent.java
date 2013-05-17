@@ -27,9 +27,6 @@ class ClientEvent extends JavaScriptObject
    public static final String ShowErrorMessage = "show_error_message";
    public static final String ShowHelp = "show_help" ;
    public static final String BrowseUrl = "browse_url";
-   public static final String WorkspaceRefresh = "workspace_refresh";
-   public static final String WorkspaceAssign = "workspace_assign";
-   public static final String WorkspaceRemove = "workspace_remove";
    public static final String ShowEditor = "show_editor";
    public static final String ChooseFile = "choose_file";
    public static final String AbendWarning = "abend_warning";

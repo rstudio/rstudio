@@ -20,24 +20,12 @@ import org.rstudio.studio.client.server.Void;
 
 public interface WorkspaceServerOperations
 {
-   // list all objects in the global namespace
-   void listObjects(
-         ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> requestCallback);
-   
    void removeAllObjects(boolean includeHidden,
                          ServerRequestCallback<Void> requestCallback);
-      
-   // set the value of an object in the global namespace
-   void setObjectValue(String objectName,
-                       String value,
-                       ServerRequestCallback<Void> requestCallback);
-
-   void getObjectValue(String objectName,
-                  ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> serverRequestCallback);
 
    void downloadDataFile(String dataFileURL,
                          ServerRequestCallback<DownloadInfo> requestCallback);
-   
+
    void getDataPreview(
          String dataFilePath,
          ServerRequestCallback<DataPreviewResult> requestCallback);

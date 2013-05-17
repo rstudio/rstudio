@@ -43,7 +43,7 @@ json::Value classOfVar(SEXP var)
 json::Value valueOfVar(SEXP var)
 {
    std::string value;
-   Error error = r::exec::RFunction(".rs.valueAsStr",
+   Error error = r::exec::RFunction(".rs.valueAsString",
                                     var).call(&value);
    if (error)
    {
@@ -94,23 +94,53 @@ json::Object varToJson(const r::sexp::Variable& var)
    json::Object varJson;
    varJson["name"] = var.first;
    SEXP varSEXP = var.second;
-   json::Value varClass = classOfVar(varSEXP);
-   varJson["type"] = varClass;
-   varJson["len"] = r::sexp::length(varSEXP);
-   varJson["value"] = valueOfVar(varSEXP);
-   varJson["description"] = descriptionOfVar(varSEXP);  
-   if (varClass == "data.frame"
-       || varClass == "data.table"
-       || varClass == "list"
-       || varClass == "matrix"
-       || varClass == "cast_df")
+
+   // get R alias to object and get its type and lengt
+   //
+   // NOTE: check for isLanguage is a temporary fix for error messages
+   // that were printed at the console for a <- bquote(test()) -- this
+   // was the result of errors being thrown from the .rs.valueDescription, etc.
+   // calls above used to probe for object info. interestingly when these
+   // same calls are made from .rs.rpc.list_objects no errors are thrown.
+   // the practical impact of this workaround is that immediately after
+   // assignment language expressions show up as "(unknown)" but then are
+   // correctly displayed in refreshed listings of the workspace.
+
+   if ((varSEXP != R_UnboundValue) && !r::sexp::isLanguage(varSEXP))
    {
-      varJson["contents"] = contentsOfVar(varSEXP);
+      json::Value varClass = classOfVar(varSEXP);
+      varJson["type"] = varClass;
+      varJson["len"] = r::sexp::length(varSEXP);
+      varJson["value"] = valueOfVar(varSEXP);
+      varJson["description"] = descriptionOfVar(varSEXP);
+      if (varClass == "data.frame"
+          || varClass == "data.table"
+          || varClass == "list"
+          || varClass == "matrix"
+          || varClass == "cast_df")
+      {
+         varJson["contents"] = contentsOfVar(varSEXP);
+      }
+      else
+      {
+         varJson["contents"] = json::Array();
+      }
    }
    else
    {
+      varJson["len"] = 0;
+      if (r::sexp::isLanguage((varSEXP)))
+      {
+         varJson["type"] = std::string("language");
+      }
+      else
+      {
+         varJson["type"] = std::string("unknown");
+      }
+      varJson["value"] = std::string("<unknown>");
+      varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
-   }
+      }
    return varJson;
 }
 

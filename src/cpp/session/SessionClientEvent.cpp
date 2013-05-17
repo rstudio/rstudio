@@ -37,9 +37,6 @@ const int kConsoleWriteError = 4;
 const int kShowErrorMessage = 5;
 const int kShowHelp = 6;
 const int kBrowseUrl = 7;
-const int kWorkspaceRefresh = 8;
-const int kWorkspaceAssign = 9;
-const int kWorkspaceRemove = 10;   
 const int kShowEditor = 11;
 const int kChooseFile = 13;
 const int kAbendWarning = 14;
@@ -137,12 +134,6 @@ std::string ClientEvent::typeName() const
          return "show_help";
       case client_events::kBrowseUrl: 
          return "browse_url";
-      case client_events::kWorkspaceRefresh:
-         return "workspace_refresh";
-      case client_events::kWorkspaceAssign: 
-         return "workspace_assign";
-      case client_events::kWorkspaceRemove: 
-         return "workspace_remove";   
       case client_events::kShowEditor: 
          return "show_editor";
       case client_events::kChooseFile: 
