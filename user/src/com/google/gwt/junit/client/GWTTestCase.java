@@ -435,14 +435,6 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * Returns true if this test case supports asynchronous mode. By default, this
-   * is set to true.
-   */
-  protected boolean supportsAsync() {
-    return true;
-  }
-
-  /**
    * This method has been made final to prevent you from accidentally running
    * client code outside of the GWT environment. Please override
    * {@link #gwtTearDown()} instead.

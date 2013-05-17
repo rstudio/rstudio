@@ -156,43 +156,33 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   protected final void delayTestFinish(int timeoutMillis) {
-    if (supportsAsync()) {
-      if (timer != null) {
-        // Cancel the pending timer
-        timer.cancel();
-      }
-
-      // Set a new timer for the specified new timeout
-      timer = new KillTimer(timeoutMillis);
-    } else {
-      throw new UnsupportedOperationException(
-          "This test case does not support asynchronous mode.");
+    if (timer != null) {
+      // Cancel the pending timer
+      timer.cancel();
     }
+
+    // Set a new timer for the specified new timeout
+    timer = new KillTimer(timeoutMillis);
   }
 
   protected final void finishTest() {
-    if (supportsAsync()) {
-      if (testIsFinished) {
-        // This test is totally done already, just ignore the call.
-        return;
-      }
+    if (testIsFinished) {
+      // This test is totally done already, just ignore the call.
+      return;
+    }
 
-      if (timer == null) {
-        throw new IllegalStateException(
-            "This test is not in asynchronous mode; call delayTestFinish() first");
-      }
+    if (timer == null) {
+      throw new IllegalStateException(
+          "This test is not in asynchronous mode; call delayTestFinish() first");
+    }
 
-      if (mainTestHasRun) {
-        // This is a correct, successful async finish.
-        reportResultsAndRunNextMethod(null);
-      } else {
-        // The user tried to finish the test before the main body returned!
-        // Just let the test continue running normally.
-        resetAsyncState();
-      }
+    if (mainTestHasRun) {
+      // This is a correct, successful async finish.
+      reportResultsAndRunNextMethod(null);
     } else {
-      throw new UnsupportedOperationException(
-          "This test case does not support asynchronous mode.");
+      // The user tried to finish the test before the main body returned!
+      // Just let the test continue running normally.
+      resetAsyncState();
     }
   }
 
@@ -235,10 +225,6 @@ public abstract class GWTTestCase extends TestCase {
         synchronousException = ex;
       }
     }
-  }
-
-  protected boolean supportsAsync() {
-    return true;
   }
 
   private void assertTestState() {
