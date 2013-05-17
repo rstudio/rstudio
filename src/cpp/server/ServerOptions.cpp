@@ -155,7 +155,28 @@ ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
  
    // read options
-   ProgramStatus status = core::program_options::read(optionsDesc, argc, argv);
+   bool help = false;
+   ProgramStatus status = core::program_options::read(optionsDesc,
+                                                      argc,
+                                                      argv,
+                                                      &help);
+
+   // terminate if this was a help request
+   if (help)
+      return ProgramStatus::exitSuccess();
+
+   // call overlay hooks
+   resolveOverlayOptions();
+   std::string errMsg;
+   if (!validateOverlayOptions(&errMsg))
+   {
+      program_options::reportError(errMsg, ERROR_LOCATION);
+      return ProgramStatus::exitFailure();
+   }
+
+   // exit if the call to read indicated we should -- note we don't do this
+   // immediately so that we can allow overlay validation to occur (otherwise
+   // a --test-config wouldn't test overlay options)
    if (status.exit())
       return status;
     
@@ -202,17 +223,6 @@ ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(&rsessionPath_);
    resolvePath(&rldpathPath_);
    resolvePath(&rsessionConfigFile_);
-
-   // overlay hook
-   resolveOverlayOptions();
-
-   // overlay validation
-   std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
-   {
-      LOG_ERROR_MESSAGE(errMsg);
-      return ProgramStatus::exitFailure();
-   }
 
    // return status
    return status;

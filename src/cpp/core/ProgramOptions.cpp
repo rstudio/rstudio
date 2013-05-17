@@ -68,8 +68,9 @@ void reportError(const std::string& errorMessage, const ErrorLocation& location)
 
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
-                   int argc, 
-                   char * const argv[])
+                   int argc,
+                   char * const argv[],
+                   bool* pHelp)
 {
    std::string configFile;
    try
@@ -77,7 +78,9 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // general options
       options_description general("general") ;
       general.add_options()
-         ("help", "print help message")
+         ("help",
+          value<bool>(pHelp)->default_value(false),
+          "print help message")
          ("test-config", "test to ensure the config file is valid")
          ("config-file",
            value<std::string>(&configFile)->default_value(
