@@ -59,9 +59,6 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
    configJson["args"] = optionsAsJson(profile.config.args);
    configJson["environment"] = optionsAsJson(profile.config.environment);
    configJson["stdStreamBehavior"] = profile.config.stdStreamBehavior;
-   configJson["memoryLimitBytes"] = profile.config.memoryLimitBytes;
-   configJson["stackLimitBytes"] = profile.config.stackLimitBytes;
-   configJson["userProcessesLimit"] = profile.config.userProcessesLimit;
    profileJson["config"] = configJson;
    return profileJson;
 }
@@ -83,17 +80,11 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
 
    // read config object
    json::Object argsJson, envJson;
-   int stdStreamBehavior = 0,
-       memoryLimitBytes = -1,
-       stackLimitBytes = -1,
-       userProcessesLimit = -1;
+   int stdStreamBehavior = 0;
    error = json::readObject(configJson,
                            "args", &argsJson,
                            "environment", &envJson,
-                           "stdStreamBehavior", &stdStreamBehavior,
-                           "memoryLimitBytes", &memoryLimitBytes,
-                           "stackLimitBytes", &stackLimitBytes,
-                           "userProcessesLimit", &userProcessesLimit);
+                           "stdStreamBehavior", &stdStreamBehavior);
    if (error)
       LOG_ERROR(error);
 
@@ -102,9 +93,6 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    profile.config.environment = optionsFromJson(envJson);
    profile.config.stdStreamBehavior =
             static_cast<core::system::StdStreamBehavior>(stdStreamBehavior);
-   profile.config.memoryLimitBytes = memoryLimitBytes;
-   profile.config.stackLimitBytes = stackLimitBytes;
-   profile.config.userProcessesLimit = userProcessesLimit;
 
    // return profile
    return profile;

@@ -85,12 +85,6 @@ core::system::ProcessConfig sessionProcessConfig(
    config.args = args;
    config.environment = environment;
    config.stdStreamBehavior = core::system::StdStreamInherit;
-   config.memoryLimitBytes = static_cast<RLimitType>(
-                               options.rsessionMemoryLimitMb() * 1024L * 1024L);
-   config.stackLimitBytes = static_cast<RLimitType>(
-                               options.rsessionStackLimitMb() * 1024L * 1024L);
-   config.userProcessesLimit = static_cast<RLimitType>(
-                               options.rsessionUserProcessLimit());
    return config;
 }
 

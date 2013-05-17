@@ -32,6 +32,45 @@ namespace {
 
 const char * const kDefaultProgramUser = "rstudio-server";
 
+struct Deprecated
+{
+   Deprecated()
+      : memoryLimitMb(0),
+        stackLimitMb(0),
+        userProcessLimit(0),
+        authPamRequiresPriv(true)
+   {
+   }
+
+   int memoryLimitMb;
+   int stackLimitMb;
+   int userProcessLimit;
+   bool authPamRequiresPriv;
+};
+
+void printDeprecationWarning(const std::string& option)
+{
+   program_options::reportWarning("The option '" + option + "' is deprecated "
+                                  "and will be discarded.",
+                                  ERROR_LOCATION);
+}
+
+void printDeprecationWarnings(const Deprecated& userOptions)
+{
+   Deprecated defaultOptions;
+
+   if (userOptions.memoryLimitMb != defaultOptions.memoryLimitMb)
+      printDeprecationWarning("rsession-memory-limit-mb");
+
+   if (userOptions.stackLimitMb != defaultOptions.stackLimitMb)
+      printDeprecationWarning("rsession-stack-limit-mb");
+
+   if (userOptions.userProcessLimit != defaultOptions.userProcessLimit)
+      printDeprecationWarning("rsession-process-limit");
+
+   if (userOptions.authPamRequiresPriv != defaultOptions.authPamRequiresPriv)
+      printDeprecationWarning("auth-pam-requires-priv");
+}
 
 } // anonymous namespace
 
@@ -98,6 +137,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
          "thread pool size");
 
    // rsession
+   Deprecated dep;
    options_description rsession("rsession");
    rsession.add_options()
       ("rsession-which-r",
@@ -116,17 +156,16 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&rsessionConfigFile_)->default_value(""),
          "path to rsession config file")
       ("rsession-memory-limit-mb",
-         value<int>(&rsessionMemoryLimitMb_)->default_value(0),
-         "rsession memory limit (mb)")
+         value<int>(&dep.memoryLimitMb)->default_value(dep.memoryLimitMb),
+         "rsession memory limit (mb) - DEPRECATED")
       ("rsession-stack-limit-mb",
-         value<int>(&rsessionStackLimitMb_)->default_value(0),
-         "rsession stack limit (mb)")
+         value<int>(&dep.stackLimitMb)->default_value(dep.stackLimitMb),
+         "rsession stack limit (mb) - DEPRECATED")
       ("rsession-process-limit",
-         value<int>(&rsessionUserProcessLimit_)->default_value(0),
-         "rsession user process limit");
+         value<int>(&dep.userProcessLimit)->default_value(dep.userProcessLimit),
+         "rsession user process limit - DEPRECATED");
    
    // still read depracated options (so we don't break config files)
-   bool deprecatedAuthPamRequiresPriv;
    options_description auth("auth");
    auth.add_options()
       ("auth-validate-users",
@@ -139,7 +178,8 @@ ProgramStatus Options::read(int argc, char * const argv[])
         value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
        "path to PAM helper binary")
       ("auth-pam-requires-priv",
-        value<bool>(&deprecatedAuthPamRequiresPriv)->default_value(true),
+        value<bool>(&dep.authPamRequiresPriv)->default_value(
+                                                   dep.authPamRequiresPriv),
         "deprecated: will always be true");
 
    // define program options
@@ -164,6 +204,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // terminate if this was a help request
    if (help)
       return ProgramStatus::exitSuccess();
+
+   // print deprecation warnings
+   printDeprecationWarnings(dep);
 
    // call overlay hooks
    resolveOverlayOptions();

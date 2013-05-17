@@ -143,21 +143,6 @@ public:
       return std::string(rsessionConfigFile_.c_str()); 
    }
    
-   int rsessionMemoryLimitMb() const
-   {
-      return rsessionMemoryLimitMb_;
-   }
-   
-   int rsessionStackLimitMb() const
-   {
-      return rsessionStackLimitMb_;
-   }
-
-   int rsessionUserProcessLimit() const
-   {
-      return rsessionUserProcessLimit_;
-   }
-
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -212,9 +197,6 @@ private:
    std::string rldpathPath_;
    std::string rsessionConfigFile_;
    std::string rsessionLdLibraryPath_;
-   int rsessionMemoryLimitMb_;
-   int rsessionStackLimitMb_;
-   int rsessionUserProcessLimit_;
    std::map<std::string,std::string> overlayOptions_;
 };
       
