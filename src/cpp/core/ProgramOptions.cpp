@@ -72,15 +72,14 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
                    char * const argv[],
                    bool* pHelp)
 {
+   *pHelp = false;
    std::string configFile;
    try
    {        
       // general options
       options_description general("general") ;
       general.add_options()
-         ("help",
-          value<bool>(pHelp)->default_value(false),
-          "print help message")
+         ("help", "print help message")
          ("test-config", "test to ensure the config file is valid")
          ("config-file",
            value<std::string>(&configFile)->default_value(
@@ -136,6 +135,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // show help if requested
       if (vm.count("help"))
       {
+         *pHelp = true;
          std::cout << commandLineOptions ;
          return ProgramStatus::exitSuccess() ;
       }
