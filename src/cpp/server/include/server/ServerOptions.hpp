@@ -23,6 +23,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/ProgramOptions.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace core {
    class ProgramStatus;
@@ -174,6 +175,22 @@ private:
    bool validateOverlayOptions(std::string* pErrMsg);
 
    void resolveOverlayOptions();
+
+   void setOverlayOption(const std::string& name, const std::string& value)
+   {
+      overlayOptions_[name] = value;
+   }
+
+   void setOverlayOption(const std::string& name, bool value)
+   {
+      setOverlayOption(name, value ? "1" : "0");
+   }
+
+   void setOverlayOption(const std::string& name, int value)
+   {
+      setOverlayOption(name, core::safe_convert::numberToString(value));
+   }
+
 
 private:
    core::FilePath installPath_;
