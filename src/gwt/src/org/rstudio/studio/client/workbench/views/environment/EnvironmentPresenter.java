@@ -160,14 +160,13 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
    }
-   
+
    @Handler
    void onRefreshEnvironment()
    {
       refreshView();
    }
 
-   @Handler
    void onClearWorkspace()
    {
       view_.bringToFront();
@@ -185,7 +184,6 @@ public class EnvironmentPresenter extends BasePresenter
       }).showModal();
    }
 
-   @Handler
    void onSaveWorkspace()
    {
       view_.bringToFront();
@@ -196,14 +194,12 @@ public class EnvironmentPresenter extends BasePresenter
                                                       "save.image");
    }
 
-   @Handler
    void onLoadWorkspace()
    {
       view_.bringToFront();
       consoleDispatcher_.chooseFileThenExecuteCommand("Load Workspace", "load");
    }
 
-   @Handler
    void onImportDatasetFromFile()
    {
       view_.bringToFront();
@@ -227,7 +223,6 @@ public class EnvironmentPresenter extends BasePresenter
               });
    }
 
-   @Handler
    void onImportDatasetFromURL()
    {
       view_.bringToFront();

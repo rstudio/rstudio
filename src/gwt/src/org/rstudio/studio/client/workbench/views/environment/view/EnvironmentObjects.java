@@ -58,6 +58,8 @@ public class EnvironmentObjects extends Composite
       String emptyEnvironmentPanel();
       String emptyEnvironmentName();
       String emptyEnvironmentMessage();
+      String wrappingDetailText();
+      String expandIcon();
    }
 
    // methods implemented by the owning presenter to edit and view objects
@@ -113,7 +115,10 @@ public class EnvironmentObjects extends Composite
          }
          descCol.className(style.valueCol());
 
-         if (!rowValue.expanded)
+         // if the row is expanded but doesn't have contents, that means the
+         // value is being show in the detail row--don't duplicate it here
+         if (!(rowValue.expanded &&
+               rowValue.rObject.getContents().length() == 0))
          {
             renderCell(descCol,
                        createContext(1),
@@ -174,16 +179,48 @@ public class EnvironmentObjects extends Composite
       private void buildExpandedContentRow(RObjectEntry rowValue)
       {
          JsArrayString contents = rowValue.rObject.getContents();
-         for (int i = 0; i < contents.length(); i++)
+
+         // if the contents are empty, assume we want to expand the value,
+         // and don't wrap it.
+         if (contents.length() == 0)
          {
-            TableRowBuilder detail = startRow().className(style.detailRow());
-            detail.startTD().endTD();
-            TableCellBuilder objectDetail = detail.startTD();
-            objectDetail.colSpan(2)
-                    .title(contents.get(i))
-                    .text(contents.get(i))
-                    .endTD();
-            detail.endTR();
+            TableRowBuilder valueRow = startRow().className(style.detailRow());
+            valueRow.startTD().endTD();
+            valueRow.startTD()
+                       .colSpan(2)
+                       .className(style.wrappingDetailText())
+                       .text(rowValue.rObject.getValue())
+                       .endTD();
+            valueRow.endTR();
+         }
+
+         // contents are not empty; render a row for each entry
+         else
+         {
+            String objectType = rowValue.rObject.getType();
+            Boolean isListOrFrame = objectType.equals("list")
+                                    || objectType.equals("data.frame");
+
+            // ignore the first line of output for lists and data frames
+            // (it's the same size information we're already showing in the grid)
+            for (int idx = isListOrFrame ? 1 : 0; idx < contents.length(); idx++)
+            {
+               TableRowBuilder detail = startRow().className(style.detailRow());
+               detail.startTD().endTD();
+               TableCellBuilder objectDetail = detail.startTD();
+               String content = contents.get(idx);
+               // ignore the first two characters of output for lists and frames
+               // ("$ value:" becomes "value:")
+               if (isListOrFrame)
+               {
+                  content = content.substring(2, content.length()).trim();
+               }
+               objectDetail.colSpan(2)
+                       .title(content)
+                       .text(content)
+                       .endTD();
+               detail.endTR();
+            }
          }
       }
    }
@@ -200,19 +237,33 @@ public class EnvironmentObjects extends Composite
    public void addObject(RObject obj)
    {
       int idx = indexOfExistingObject(obj.getName());
+      RObjectEntry newEntry = new RObjectEntry(obj);
+      boolean added = false;
 
       // if the object is already in the environment, just update the value
       if (idx >= 0)
       {
-         objectDataProvider_.getList().set(idx, new RObjectEntry(obj));
+         RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
+
+         if (oldEntry.rObject.getType().equals(obj.getType()))
+         {
+            // type did not change; update in-place and preserve expansion flag
+            newEntry.expanded = oldEntry.expanded;
+            objectDataProvider_.getList().set(idx, newEntry);
+            added = true;
+         }
+         else
+         {
+            // types did change, do a full add/remove
+            objectDataProvider_.getList().remove(idx);
+         }
       }
-      else
+      if (!added)
       {
          RObjectEntry entry = new RObjectEntry(obj);
          objectDataProvider_.getList().add(indexOfNewObject(entry), entry);
       }
-
-      updateCategoryLeaders();
+      updateCategoryLeaders(true);
    }
 
    // bulk add for objects--used on init or environment switch
@@ -229,7 +280,7 @@ public class EnvironmentObjects extends Composite
 
       // push the list into the UI and update category leaders
       objectDataProvider_.getList().addAll(objectEntryList);
-      updateCategoryLeaders();
+      updateCategoryLeaders(false);
    }
 
    public void removeObject(String objName)
@@ -240,7 +291,7 @@ public class EnvironmentObjects extends Composite
          objectDataProvider_.getList().remove(idx);
       }
 
-      updateCategoryLeaders();
+      updateCategoryLeaders(true);
    }
    
    public void clearObjects()
@@ -365,6 +416,8 @@ public class EnvironmentObjects extends Composite
             {
                sb.appendHtmlConstant("<input type=\"image\" src=\"")
                        .appendEscaped(object)
+                       .appendHtmlConstant("\" class=\"")
+                       .appendEscaped(style.expandIcon())
                        .appendHtmlConstant("\" />");
             }
             else
@@ -380,7 +433,7 @@ public class EnvironmentObjects extends Composite
          @Override
          public String getValue(RObjectEntry object)
          {
-            if (object.canExpand)
+            if (object.canExpand())
             {
                ImageResource expandImage = object.expanded ?
                          EnvironmentResources.INSTANCE.collapseIcon() :
@@ -399,7 +452,7 @@ public class EnvironmentObjects extends Composite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            if (object.canExpand)
+            if (object.canExpand())
             {
                object.expanded = !object.expanded;
                objectList.redrawRow(index);
@@ -409,7 +462,7 @@ public class EnvironmentObjects extends Composite
    }
 
    // after adds or removes, we need to tag the new category-leading objects
-   private void updateCategoryLeaders()
+   private void updateCategoryLeaders(boolean redrawUpdatedRows)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
@@ -436,6 +489,13 @@ public class EnvironmentObjects extends Composite
          else if (leader)
          {
             entry.isCategoryLeader = false;
+         }
+
+         // if we changed the leader flag, redraw the row
+         if (leader != entry.isCategoryLeader
+             && redrawUpdatedRows)
+         {
+            objectList.redrawRow(i);
          }
       }
    }

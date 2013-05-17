@@ -81,6 +81,10 @@
                       " matrix",
                       sep=""))
       }
+      else if (is.list(obj))
+      {
+         return(paste("List of ", length(obj)))
+      }
       else
          return("")
    },

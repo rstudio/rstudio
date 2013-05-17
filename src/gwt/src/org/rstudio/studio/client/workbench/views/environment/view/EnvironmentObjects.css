@@ -67,6 +67,11 @@ td.valueCol
    text-overflow: ellipsis;
 }
 
+.detailRow td.wrappingDetailText
+{
+   white-space: normal;
+}
+
 .emptyEnvironmentPanel
 {
    font-family: proportionalFont;
@@ -83,4 +88,9 @@ td.valueCol
 {
    font-size: 90%;
    color: #909090;
+}
+
+.expandIcon
+{
+   margin-top: 2px;
 }

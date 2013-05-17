@@ -42,7 +42,15 @@ public class RObjectEntry
       rObject = obj;
       expanded = false;
       isCategoryLeader = false;
-      canExpand = rObject.getContents().length() > 0;
+   }
+
+   public boolean canExpand()
+   {
+      // objects with detail from the server can be expanded; so can long
+      // string values
+      return rObject.getContents().length() > 0
+            || (rObject.getType().equals("character") &&
+                rObject.getValue().length() > 128);
    }
 
    public int getCategory()
@@ -65,6 +73,5 @@ public class RObjectEntry
 
    RObject rObject;
    boolean expanded;
-   boolean canExpand;
    boolean isCategoryLeader;
 }
