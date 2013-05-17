@@ -126,7 +126,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          catch(const std::exception& e)
          {
             reportError(
-              "IO error reading " + configFile + ": " + std::string(e.what()),
+              "Error reading " + configFile + ": " + std::string(e.what()),
               ERROR_LOCATION);
 
             return ProgramStatus::exitFailure();
