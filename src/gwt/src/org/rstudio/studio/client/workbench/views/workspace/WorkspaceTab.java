@@ -39,8 +39,7 @@ public class WorkspaceTab extends DelayLoadWorkbenchTab<Workspace>
    @Inject
    public WorkspaceTab(Shim shim, 
                        Binder binder, 
-                       Commands commands,
-                       EventBus eventBus)
+                       Commands commands)
    {
       super("Workspace", shim);
       binder.bind(commands, shim);

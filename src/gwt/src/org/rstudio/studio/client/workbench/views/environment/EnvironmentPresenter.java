@@ -134,8 +134,8 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             contextDepth_ = event.getContextDepth();
-            view_.setEnvironmentName(event.getFunctionName());
             view_.setContextDepth(contextDepth_);
+            view_.setEnvironmentName(event.getFunctionName());
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });

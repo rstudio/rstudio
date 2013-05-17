@@ -231,7 +231,7 @@ public class EnvironmentObjects extends Composite
 
    public void setContextDepth(int contextDepth)
    {
-      // this is where we'll set UI to debug mode it contextDepth is > 0
+      contextDepth_ = contextDepth;
    }
 
    public void addObject(RObject obj)
@@ -306,7 +306,10 @@ public class EnvironmentObjects extends Composite
 
    public void setEnvironmentName(String environmentName)
    {
-      environmentName_.setText(environmentName);
+      environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
+      environmentEmptyMessage_.setText(contextDepth_ > 0 ?
+         emptyFunctionEnvironmentMessage :
+         emptyGlobalEnvironmentMessage);
    }
 
    public EnvironmentObjects()
@@ -504,12 +507,12 @@ public class EnvironmentObjects extends Composite
    {
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
-      environmentName_ = new Label("Global");
+      environmentName_ = new Label("");
       environmentName_.setStyleName(style.emptyEnvironmentName());
-      Label emptyMessage = new Label("Environment is empty");
-      emptyMessage.setStyleName(style.emptyEnvironmentMessage());
+      environmentEmptyMessage_ = new Label(emptyGlobalEnvironmentMessage);
+      environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
       messagePanel.add(environmentName_);
-      messagePanel.add(emptyMessage);
+      messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
 
@@ -530,11 +533,16 @@ public class EnvironmentObjects extends Composite
       }-*/;
    }
 
+   private final static String emptyGlobalEnvironmentMessage =
+           "Global environment is empty";
+   private final static String emptyFunctionEnvironmentMessage =
+           "Function environment is empty";
    @UiField HTMLPanel environmentContents;
    @UiField Style style;
 
    DataGrid<RObjectEntry> objectList;
    Label environmentName_;
+   Label environmentEmptyMessage_;
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;
@@ -542,4 +550,5 @@ public class EnvironmentObjects extends Composite
    private ListDataProvider<RObjectEntry> objectDataProvider_;
 
    private Observer observer_;
+   private int contextDepth_;
 }

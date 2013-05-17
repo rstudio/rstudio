@@ -14,43 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.views.workspace;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.workspace.table.WorkspaceObjectTable;
 
 public class WorkspacePane extends WorkbenchPane
                            implements Workspace.Display
 {
    @Inject
-   public WorkspacePane(WorkspaceObjectTable objectsTable, Commands commands)
+   public WorkspacePane()
    {
       super("Workspace");
-      objectsTable_ = objectsTable;
-      commands_ = commands;
-
-      ensureWidget();
    }
 
-
-   public WorkspaceObjectTable getWorkspaceObjectTable()
-   {
-      return objectsTable_;
-   }
 
    @Override
    protected Widget createMainWidget()
    {
-      Widget objectsTableView = (Widget) objectsTable_.getView();
-      objectsTableView.setSize("100%", "100%");
-      objectsTableView.getElement().getStyle().setProperty("overflowX",
-                                                           "hidden");
-      return objectsTableView;
+      return new Label();
    }
    
    @Override
@@ -61,6 +44,4 @@ public class WorkspacePane extends WorkbenchPane
       return toolbar;
    }
    
-   private final WorkspaceObjectTable objectsTable_;
-   private final Commands commands_;
 }

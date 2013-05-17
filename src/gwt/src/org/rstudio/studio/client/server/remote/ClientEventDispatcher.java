@@ -96,10 +96,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
 import java.util.ArrayList;
 
@@ -188,20 +184,6 @@ public class ClientEventDispatcher
          {
             String path = event.getData();
             eventBus_.fireEvent(new WorkingDirChangedEvent(path));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRefresh))
-         {
-            eventBus_.fireEvent(new WorkspaceRefreshEvent());
-         }
-         else if (type.equals(ClientEvent.WorkspaceAssign))
-         {
-            WorkspaceObjectInfo objectInfo = event.getData();
-            eventBus_.fireEvent(new WorkspaceObjectAssignedEvent(objectInfo));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRemove))
-         {
-            String objectName = event.getData();
-            eventBus_.fireEvent(new WorkspaceObjectRemovedEvent(objectName));
          }
          else if (type.equals(ClientEvent.ShowHelp))
          {

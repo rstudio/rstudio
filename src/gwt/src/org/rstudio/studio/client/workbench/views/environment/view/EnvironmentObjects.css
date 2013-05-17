@@ -74,7 +74,6 @@ td.valueCol
 
 .emptyEnvironmentPanel
 {
-   font-family: proportionalFont;
    text-align: center;
    margin-top: 30%;
 }
@@ -86,6 +85,7 @@ td.valueCol
 
 .emptyEnvironmentMessage
 {
+   font-family: proportionalFont;
    font-size: 90%;
    color: #909090;
 }
