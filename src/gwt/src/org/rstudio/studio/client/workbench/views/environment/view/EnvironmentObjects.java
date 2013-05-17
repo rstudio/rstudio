@@ -19,6 +19,7 @@ import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -42,7 +43,7 @@ import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
-import java.util.List;
+import java.util.*;
 
 public class EnvironmentObjects extends Composite
 {
@@ -105,7 +106,11 @@ public class EnvironmentObjects extends Composite
 
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
-         descCol.title(rowValue.rObject.getValue());
+         String title = rowValue.rObject.getValue();
+         if (!title.equals("NO_VALUE"))
+         {
+            descCol.title(rowValue.rObject.getValue());
+         }
          descCol.className(style.valueCol());
 
          if (!rowValue.expanded)
@@ -210,6 +215,23 @@ public class EnvironmentObjects extends Composite
       updateCategoryLeaders();
    }
 
+   // bulk add for objects--used on init or environment switch
+   public void addObjects(JsArray<RObject> objects)
+   {
+      // create an entry for each object and sort the array
+      int numObjects = objects.length();
+      ArrayList<RObjectEntry> objectEntryList = new ArrayList<RObjectEntry>();
+      for (int i = 0; i < numObjects; i++)
+      {
+         objectEntryList.add(new RObjectEntry(objects.get(i)));
+      }
+      Collections.sort(objectEntryList, new RObjectEntrySort());
+
+      // push the list into the UI and update category leaders
+      objectDataProvider_.getList().addAll(objectEntryList);
+      updateCategoryLeaders();
+   }
+
    public void removeObject(String objName)
    {
       int idx = indexOfExistingObject(objName);
@@ -281,31 +303,18 @@ public class EnvironmentObjects extends Composite
       return foundObject ? index : -1;
    }
 
-   private native int localeCompare(String first, String second) /*-{
-       return first.localeCompare(second);
-   }-*/;
-
-   private int compareRObjectEntriesForSort(RObjectEntry first,
-                                            RObjectEntry second)
-   {
-      int result = first.getCategory() - second.getCategory();
-      if (result == 0)
-      {
-         result = localeCompare(first.rObject.getName(), second.rObject.getName());
-      }
-      return result;
-   }
 
    // returns the position a new object entry should occupy in the table
    private int indexOfNewObject(RObjectEntry obj)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
+      RObjectEntrySort sort = new RObjectEntrySort();
       int numObjects = objects.size();
       int idx;
       // consider: can we use binary search here?
       for (idx = 0; idx < numObjects; idx++)
       {
-         if (compareRObjectEntriesForSort(obj, objects.get(idx)) < 0)
+         if (sort.compare(obj, objects.get(idx)) < 0)
          {
             break;
          }
@@ -443,7 +452,23 @@ public class EnvironmentObjects extends Composite
       messagePanel.add(emptyMessage);
       return messagePanel;
    }
-   
+
+   private class RObjectEntrySort implements Comparator<RObjectEntry>
+   {
+      public int compare(RObjectEntry first, RObjectEntry second)
+      {
+         int result = first.getCategory() - second.getCategory();
+         if (result == 0)
+         {
+            result = localeCompare(first.rObject.getName(), second.rObject.getName());
+         }
+         return result;
+      }
+
+      private native int localeCompare(String first, String second) /*-{
+          return first.localeCompare(second);
+      }-*/;
+   }
 
    @UiField HTMLPanel environmentContents;
    @UiField Style style;

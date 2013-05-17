@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
@@ -88,6 +89,12 @@ public class EnvironmentPane extends WorkbenchPane
    public void addObject(RObject object)
    {
       objects_.addObject(object);
+   }
+
+   @Override
+   public void addObjects(JsArray<RObject> objects)
+   {
+      objects_.addObjects(objects);
    }
    
    @Override

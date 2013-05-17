@@ -11,7 +11,11 @@
 .objectGrid td
 {
    border-collapse: collapse;
-   border: 1px solid #f0f0f0;
+}
+
+.objectGrid td:focus
+{
+   outline: none;
 }
 
 .objectGrid td.nameCol
@@ -19,18 +23,21 @@
    width: 25%;
    text-overflow: ellipsis;
    overflow-x: hidden;
+   border: 1px solid #f0f0f0;
    border-left: none;
    background: none;
 }
 
 td.expandCol
 {
+   border: 1px solid #f0f0f0;
    border-right: none;
    width: 20px;
 }
 
-.valueCol
+td.valueCol
 {
+   border: 1px solid #f0f0f0;
    white-space: nowrap;
    text-overflow: ellipsis;
    overflow-x: hidden;
@@ -39,6 +46,7 @@ td.expandCol
 
 .detailRow
 {
+   border: 1px solid #f0f0f0;
    background-color: #f5f5f5;
    font-size: 90%;
 }

@@ -82,6 +82,7 @@ public class EnvironmentPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void addObject(RObject object);
+      void addObjects(JsArray<RObject> objects);
       void clearObjects();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
@@ -301,8 +302,7 @@ public class EnvironmentPresenter extends BasePresenter
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
       view_.clearObjects();
-      for (int i = 0; i<objects.length(); i++)
-         view_.addObject(objects.get(i));
+      view_.addObjects(objects);
    }
     
    private void refreshView()
