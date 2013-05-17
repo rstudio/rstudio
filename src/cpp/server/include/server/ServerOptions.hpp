@@ -183,7 +183,7 @@ private:
 
    void setOverlayOption(const std::string& name, bool value)
    {
-      setOverlayOption(name, value ? "1" : "0");
+      setOverlayOption(name, value ? std::string("1") : std::string("0"));
    }
 
    void setOverlayOption(const std::string& name, int value)
