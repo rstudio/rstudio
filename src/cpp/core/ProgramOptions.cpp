@@ -66,6 +66,15 @@ void reportError(const std::string& errorMessage, const ErrorLocation& location)
       core::log::logErrorMessage(errorMessage, location);
 }
 
+void reportWarning(const std::string& warningMessage,
+                   const ErrorLocation& location)
+{
+   if (core::system::stderrIsTerminal())
+      std::cerr << "WARNING: " << warningMessage << std::endl;
+   else
+      core::log::logWarningMessage(warningMessage, location);
+}
+
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,

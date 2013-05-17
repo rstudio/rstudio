@@ -65,6 +65,9 @@ inline ProgramStatus read(const OptionsDescription& optionsDescription,
 
 void reportError(const std::string& errorMessage,
                  const ErrorLocation& location);
+
+void reportWarning(const std::string& warningMessage,
+                   const ErrorLocation& location);
    
 } // namespace program_options
 } // namespace core 
