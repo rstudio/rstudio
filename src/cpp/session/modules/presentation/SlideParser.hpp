@@ -102,10 +102,6 @@ public:
    std::string type() const { return fieldValue("type"); }
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
-   int answer() const
-   {
-      return core::safe_convert::stringTo<int>(fieldValue("answer"), -1);
-   }
 
    std::vector<Command> commands() const;
 

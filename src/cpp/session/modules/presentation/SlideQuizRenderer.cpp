@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
@@ -43,15 +44,46 @@ std::string asFormInput(const boost::cmatch& match,
 {
    *pItemIndex = *pItemIndex + 1;
 
+   // parse out any answer/feedback content
+   bool isAnswer = false;
+   std::string feedback;
+   boost::smatch m;
+   std::string itemText = match[1];
+   boost::regex re("\\[(.*?)\\]");
+   if (boost::regex_search(itemText, m, re))
+   {
+      // trim the content
+      feedback = m[1];
+      boost::algorithm::trim(feedback);
+
+      // is this the answer?
+      std::size_t ansLoc = feedback.find('*');
+      if (ansLoc == 0)
+      {
+         isAnswer = true;
+         feedback = feedback.substr(ansLoc + 1);
+         boost::algorithm::trim(feedback);
+      }
+
+      // extract item text
+      itemText = itemText.substr(0, itemText.find_first_of('['));
+   }
+
+   // if there is no feedback then create defaults
+   if (feedback.empty())
+      feedback = isAnswer ? "Correct!" : "Incorrect";
+
    boost::format fmt("<li>"
                      "<input type=\"radio\" name=\"%1%\" value=\"%2%\""
-                     " onclick=\"%4%(this);\"/>%3%"
+                     " onclick=\"%3%(this.value,%4%,'%5%');\"/>%6%"
                      "</li>");
 
    std::string input =  boost::str(fmt % (formId + "_input")
                                        % *pItemIndex
-                                       % match[1]
-                                       % handleClickFunction(formId));
+                                       % handleClickFunction(formId)
+                                       % (isAnswer ? "true" : "false")
+                                       % feedback
+                                       % itemText);
 
    return input;
 }
@@ -59,10 +91,7 @@ std::string asFormInput(const boost::cmatch& match,
 
 } // anonymous namespace
 
-void renderQuiz(int slideIndex,
-                int correctItemIndex,
-                std::string* pHead,
-                std::string* pHTML)
+void renderQuiz(int slideIndex, std::string* pHead, std::string* pHTML)
 {      
    // tweak the radio button size
    pHead->append(
@@ -75,21 +104,20 @@ void renderQuiz(int slideIndex,
    // build validation script
    boost::format fmtScript(
       "<script>\n"
-      "function %1%(clickedBtn) {\n"
-      "  var answer = parseInt(clickedBtn.value);\n"
-      "  var correct = answer == %2%;\n"
-      "  document.getElementById('%3%_correct').style.display ="
+      "function %1%(answer, correct, feedback) {\n"
+      "  document.getElementById('%2%_correctFeedback').innerText = feedback;\n"
+      "  document.getElementById('%2%_incorrectFeedback').innerText = feedback;\n"
+      "  document.getElementById('%2%_correct').style.display ="
             " correct ? \"block\" : \"none\";\n"
-      "  document.getElementById('%3%_incorrect').style.display ="
+      "  document.getElementById('%2%_incorrect').style.display ="
             " correct ? \"none\" : \"block\";\n"
       "  if (window.parent.recordPresentationQuizAnswer)\n"
       "    window.parent.recordPresentationQuizAnswer("
-            "%4%, answer, correct);\n "
+            "%3%, answer, correct);\n "
       "}\n"
       "</script>\n\n");
    pHead->append(boost::str(fmtScript
                               % handleClickFunction(formId)
-                              % correctItemIndex
                               % formId
                               % slideIndex));
 
@@ -97,10 +125,12 @@ void renderQuiz(int slideIndex,
    std::string cssAttribs = "class=\"quizFeedback\" style=\"display:none\"";
    boost::format fmtFeedback(
       "<div id=\"%1%_correct\" %2%>\n"
-      "<img src=\"slides-images/correct.png\"/><span>Correct!</span>\n"
+      "<img src=\"slides-images/correct.png\"/>"
+      "<span id=\"%1%_correctFeedback\">Correct!</span>\n"
       "</div>\n"
       "<div id=\"%1%_incorrect\" %2%>\n"
-      "<img src=\"slides-images/incorrect.png\"/><span>Incorrect!</span>\n"
+      "<img src=\"slides-images/incorrect.png\"/>"
+      "<span id=\"%1%_incorrectFeedback\">Incorrect</span>\n"
       "</div>\n");
    std::string feedbackHTML = boost::str(fmtFeedback % formId % cssAttribs);
 

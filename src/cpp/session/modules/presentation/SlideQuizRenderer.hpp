@@ -22,10 +22,7 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
-void renderQuiz(int slideIndex,
-                int correctItemIndex,
-                std::string* pHead,
-                std::string* pHTML);
+void renderQuiz(int slideIndex, std::string* pHead, std::string* pHTML);
 
 } // namespace presentation
 } // namespace modules

@@ -159,7 +159,7 @@ Error slideToHtml(const Slide& slide,
    if (slide.type() == "quiz-multichoice")
    {
       std::string head;
-      renderQuiz(slideNumber, slide.answer(), &head, &markdownHTML);
+      renderQuiz(slideNumber, &head, &markdownHTML);
       pHead->append(head);
    }
 
