@@ -156,7 +156,7 @@ Error slideToHtml(const Slide& slide,
       return error;
 
    // see if we need to render a quiz
-   if (slide.type() == "quiz")
+   if (slide.type() == "quiz-multichoice")
    {
       std::string head;
       renderQuiz(slideNumber, slide.answer(), &head, &markdownHTML);

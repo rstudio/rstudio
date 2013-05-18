@@ -65,7 +65,8 @@ void renderQuiz(int slideIndex,
                 std::string* pHTML)
 {      
    // tweak the radio button size
-   pHead->append("<style>.quiz .reveal input { zoom: 2.5; }</style>\n");
+   pHead->append(
+      "<style>.quiz-multichoice .reveal input { zoom: 2.5; }</style>\n");
 
    // build form id
    std::string suffix = safe_convert::numberToString<int>(slideIndex);

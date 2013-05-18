@@ -59,24 +59,24 @@
    background: #C6D7DC;
 }
 
-.quiz .reveal .state-background {
+.quiz-multichoice .reveal .state-background {
   background: rgba(254,220,179,1);
 }
 
-.quiz .reveal ul {
+.quiz-multichoice .reveal ul {
   list-style-type: none;
   margin-bottom: 30px;
 }
 
-.quiz .reveal li {
+.quiz-multichoice .reveal li {
   margin-top: 15px;
 }
 
-.quiz .reveal .quizFeedback {
+.quiz-multichoice .reveal .quizFeedback {
   margin-bottom: 30px;
 }
 
-.quiz .reveal .quizFeedback img {
+.quiz-multichoice .reveal .quizFeedback img {
   border: none;
   box-shadow: none;
   background: transparent;
@@ -84,7 +84,7 @@
   margin-top: -15px;
 }
 
-.quiz .reveal .quizFeedback span {
+.quiz-multichoice .reveal .quizFeedback span {
   font-size: 1.4em; 
   margin-left: 12px;
 }
