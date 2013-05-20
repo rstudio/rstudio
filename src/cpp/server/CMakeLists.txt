@@ -184,3 +184,8 @@ if (UNIX AND NOT APPLE)
            DESTINATION ${RSERVER_UPSTART_DIR})
 
 endif()
+
+# add overlay if it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+   include(CMakeOverlay.txt)
+endif()
