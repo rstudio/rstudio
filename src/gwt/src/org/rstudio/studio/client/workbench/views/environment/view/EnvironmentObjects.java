@@ -35,10 +35,7 @@ import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -47,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import java.util.*;
 
 public class EnvironmentObjects extends Composite
+   implements RequiresResize
 {
    // provide access to styles defined in associated CSS file
    interface Style extends CssResource
@@ -56,6 +54,7 @@ public class EnvironmentObjects extends Composite
       String valueCol();
       String detailRow();
       String categoryHeaderRow();
+      String categoryHeaderText();
       String emptyEnvironmentPanel();
       String emptyEnvironmentName();
       String emptyEnvironmentMessage();
@@ -170,6 +169,7 @@ public class EnvironmentObjects extends Composite
             TableRowBuilder leaderRow = startRow().className(style.categoryHeaderRow());
             TableCellBuilder objectHeader = leaderRow.startTD();
             objectHeader.colSpan(3)
+                    .className(style.categoryHeaderText())
                     .text(categoryTitle)
                     .endTD();
             leaderRow.endTR();
@@ -311,6 +311,11 @@ public class EnvironmentObjects extends Composite
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
          emptyFunctionEnvironmentMessage :
          emptyGlobalEnvironmentMessage);
+   }
+
+   public void onResize()
+   {
+      objectList.onResize();
    }
 
    public EnvironmentObjects()

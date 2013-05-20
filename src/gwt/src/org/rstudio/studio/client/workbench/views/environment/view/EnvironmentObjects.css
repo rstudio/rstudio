@@ -58,6 +58,11 @@
    font-weight: bold;
 }
 
+.objectGrid .categoryHeaderText
+{
+   padding-left: 5px;
+}
+
 .objectGrid .detailRow td
 {
    border-left: none;

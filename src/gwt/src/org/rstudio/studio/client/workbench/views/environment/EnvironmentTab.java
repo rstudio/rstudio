@@ -73,11 +73,5 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
       });
    }
    
-   @Override
-   public boolean isSuppressed()
-   {
-      return !session_.getSessionInfo().getShowEnvironmentTab();
-   }
-   
    private final Session session_;
 }

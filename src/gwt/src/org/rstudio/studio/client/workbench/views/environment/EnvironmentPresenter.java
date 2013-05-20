@@ -278,9 +278,14 @@ public class EnvironmentPresenter extends BasePresenter
            },
 
            true);
-}
+   }
 
-
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      refreshView();
+   }
 
    public void initialize(EnvironmentState environmentState)
    {

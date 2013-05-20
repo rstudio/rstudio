@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.workspace.model;
 
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 

@@ -309,10 +309,6 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
-   public final native boolean getShowEnvironmentTab() /*-{
-      return this.show_environment_tab;
-   }-*/;
-   
    public final native String getSwitchToProject() /*-{
       return this.switch_to_project;
    }-*/;

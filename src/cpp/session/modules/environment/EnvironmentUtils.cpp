@@ -109,7 +109,6 @@ json::Object varToJson(const r::sexp::Variable& var)
    {
       json::Value varClass = classOfVar(varSEXP);
       varJson["type"] = varClass;
-      varJson["len"] = r::sexp::length(varSEXP);
       varJson["value"] = valueOfVar(varSEXP);
       varJson["description"] = descriptionOfVar(varSEXP);
       if (varClass == "data.frame"
@@ -126,7 +125,6 @@ json::Object varToJson(const r::sexp::Variable& var)
    }
    else
    {
-      varJson["len"] = 0;
       if (r::sexp::isLanguage((varSEXP)))
       {
          varJson["type"] = std::string("language");
