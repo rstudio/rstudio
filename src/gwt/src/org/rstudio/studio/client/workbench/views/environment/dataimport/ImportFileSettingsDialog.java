@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.workspace.dataimport;
+package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -37,8 +37,8 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.workspace.model.DataPreviewResult;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
 public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
 {
@@ -63,7 +63,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    interface MyBinder extends UiBinder<Widget, ImportFileSettingsDialog> {}
 
    public ImportFileSettingsDialog(
-         WorkspaceServerOperations server,
+         EnvironmentServerOperations server,
          FileSystemItem dataFile,
          String varname,
          String caption,
@@ -352,7 +352,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettings>
    TextBox varname_;
 
    private final Widget widget_;
-   private final WorkspaceServerOperations server_;
+   private final EnvironmentServerOperations server_;
    private final FileSystemItem dataFile_;
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progress_;

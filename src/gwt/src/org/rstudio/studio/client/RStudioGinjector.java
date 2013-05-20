@@ -54,7 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPreviewHtmlHelper;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
-import org.rstudio.studio.client.workbench.views.workspace.ClearAllDialog;
+import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 
 @GinModules(RStudioGinModuleOverlay.class)
 public interface RStudioGinjector extends Ginjector

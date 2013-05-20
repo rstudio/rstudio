@@ -160,7 +160,6 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPane;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresenter;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 
 public class RStudioGinModule extends AbstractGinModule
 {
@@ -264,7 +263,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DataServerOperations.class).to(RemoteServer.class);
       bind(FilesServerOperations.class).to(RemoteServer.class) ;
       bind(HistoryServerOperations.class).to(RemoteServer.class) ;
-      bind(WorkspaceServerOperations.class).to(RemoteServer.class) ;
       bind(PlotsServerOperations.class).to(RemoteServer.class) ;
       bind(PackagesServerOperations.class).to(RemoteServer.class) ;
       bind(HelpServerOperations.class).to(RemoteServer.class) ;

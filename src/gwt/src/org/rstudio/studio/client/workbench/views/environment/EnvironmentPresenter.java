@@ -65,11 +65,9 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.views.workspace.ClearAllDialog;
-import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettings;
-import org.rstudio.studio.client.workbench.views.workspace.dataimport.ImportFileSettingsDialog;
-import org.rstudio.studio.client.workbench.views.workspace.model.DownloadInfo;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 
 import java.util.HashMap;
 
@@ -92,7 +90,6 @@ public class EnvironmentPresenter extends BasePresenter
    @Inject
    public EnvironmentPresenter(Display view,
                                EnvironmentServerOperations server,
-                               WorkspaceServerOperations workspaceServer,
                                Binder binder,
                                Commands commands,
                                GlobalDisplay globalDisplay,
@@ -113,8 +110,7 @@ public class EnvironmentPresenter extends BasePresenter
       fileDialogs_ = fileDialogs;
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
-      workspaceServer_ = workspaceServer;
-      
+
       refreshView();
       
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE, 
@@ -177,7 +173,7 @@ public class EnvironmentPresenter extends BasePresenter
          public void execute(Boolean includeHidden, ProgressIndicator indicator)
          {
             indicator.onProgress("Removing objects...");
-            workspaceServer_.removeAllObjects(
+            server_.removeAllObjects(
                     includeHidden,
                     new VoidServerRequestCallback(indicator));
          }
@@ -234,7 +230,7 @@ public class EnvironmentPresenter extends BasePresenter
                  public void execute(String input, final ProgressIndicator indicator)
                  {
                     indicator.onProgress("Downloading data...");
-                    workspaceServer_.downloadDataFile(input.trim(),
+                    server_.downloadDataFile(input.trim(),
                         new ServerRequestCallback<DownloadInfo>(){
 
                            @Override
@@ -307,18 +303,19 @@ public class EnvironmentPresenter extends BasePresenter
     
    private void refreshView()
    {
-      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>() {
+      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
+      {
 
          @Override
          public void onResponseReceived(JsArray<RObject> objects)
          {
             setViewFromEnvironmentList(objects);
          }
-         
+
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Listing Objects", 
+            globalDisplay_.showErrorMessage("Error Listing Objects",
                                             error.getUserMessage());
          }
       });
@@ -327,7 +324,7 @@ public class EnvironmentPresenter extends BasePresenter
    private void showImportFileDialog(FileSystemItem input, String varname)
    {
       ImportFileSettingsDialog dialog = new ImportFileSettingsDialog(
-              workspaceServer_,
+              server_,
               input,
               varname,
               "Import Dataset",
@@ -398,7 +395,6 @@ public class EnvironmentPresenter extends BasePresenter
 
    private final Display view_;
    private final EnvironmentServerOperations server_;
-   private final WorkspaceServerOperations workspaceServer_;
    private final GlobalDisplay globalDisplay_;
    private final ConsoleDispatcher consoleDispatcher_;
    private final RemoteFileSystemContext fsContext_;

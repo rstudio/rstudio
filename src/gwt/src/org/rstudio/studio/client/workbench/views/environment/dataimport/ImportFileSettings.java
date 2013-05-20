@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.workspace.dataimport;
+package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.files.FileSystemItem;
 
