@@ -34,6 +34,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -88,7 +89,7 @@ public class EnvironmentObjects extends Composite
 
          if (rowValue.getCategory() == RObjectEntry.Categories.Data)
          {
-            row.className(ThemeStyles.INSTANCE.workspaceDataFrameRow());
+            row.className(ThemeStyles.INSTANCE.environmentDataFrameRow());
          }
 
          // build the column containing the expand/collapse command
@@ -316,7 +317,7 @@ public class EnvironmentObjects extends Composite
    {
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
-      objectList = new DataGrid<RObjectEntry>(RObjectEntry.KEY_PROVIDER);
+      objectList = new DataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectDataProvider_.addDataDisplay(objectList);
       createColumns();
@@ -329,7 +330,14 @@ public class EnvironmentObjects extends Composite
       // make the grid fill the pane
       objectList.setWidth("100%");
       objectList.setHeight("100%");
-      objectList.setSelectionModel(new NoSelectionModel<RObjectEntry>(RObjectEntry.KEY_PROVIDER));
+
+      // disable persistent and transient row selection (currently necessary
+      // because we emit more than one row per object and the DataGrid selection
+      // behaviors aren't designed to work that way)
+      objectList.setSelectionModel(new NoSelectionModel<RObjectEntry>(
+              RObjectEntry.KEY_PROVIDER));
+      objectList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       // these need to be done post-initWidget since they reference objects

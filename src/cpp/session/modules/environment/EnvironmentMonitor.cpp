@@ -56,7 +56,10 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 {
    environment_.set(pEnvironment);
+
+   // init the environment by doing an initial check for changes
    initialized_ = false;
+   checkForChanges();
 }
 
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)

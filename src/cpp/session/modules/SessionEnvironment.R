@@ -90,13 +90,7 @@
       }
       else if (is.matrix(obj))
       {
-         return(paste(nrow(obj),
-                      "x",
-                      ncol(obj),
-                      " ",
-                      typeof(obj),
-                      " matrix",
-                      sep=""))
+         return(capture.output(str(obj)))
       }
       else if (is.list(obj))
       {
@@ -177,40 +171,3 @@
    return (className)
 })
 
-.rs.addJsonRpcHandler("list_objects", function()
-{
-   globals = ls(envir=globalenv())
-   globalValues = lapply(globals, function (name) {
-                            get(name, envir=globalenv(), inherits=FALSE)
-                         })
-   types = sapply(globalValues, .rs.getSingleClass, USE.NAMES=FALSE)
-   lengths = sapply(globalValues, length, USE.NAMES=FALSE)
-   values = sapply(globalValues, .rs.valueAsString, USE.NAMES=FALSE)
-   extra = sapply(globalValues, .rs.valueDescription, USE.NAMES=FALSE)
-
-   result = list(name=globals,
-                       type=types,
-                       len=lengths,
-                       value=values,
-                       extra=extra)
-   #print(result)
-   result
-})
-
-.rs.addJsonRpcHandler("get_object_value", function(name)
-{
-   value = get(name, envir=globalenv(), inherits=FALSE)
-   strval = paste(deparse(value), collapse="\n")
-
-   list(name=name,
-        type=.rs.getSingleClass(value),
-        len=length(value),
-        value=strval,
-        extra=.rs.valueDescription(value))
-})
-
-.rs.addJsonRpcHandler("set_object_value", function(name, value)
-{
-   assign(name, eval(parse(text=value), envir=globalenv()), envir=globalenv(), inherits=FALSE)
-   NULL
-})

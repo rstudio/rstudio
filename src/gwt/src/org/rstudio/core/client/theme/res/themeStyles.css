@@ -963,46 +963,9 @@ body.ubuntu_mono .searchBox {
    cursor: pointer;
 }
 
-
-/** Help Search box **/
-.workspace {
-   border-collapse: collapse;
-}
-.workspace td {
-   font-family: fixedWidthFont;
-   border: 1px solid #eeeff2;
-}
-
-.workspace tr.workspaceDataRow {
-   cursor: pointer;
-}
-
-.workspace tr.workspaceDataRow td {
-   line-height: 1.4;
-}
-
-@sprite tr.workspaceDataFrameRow td+td {
+@sprite tr.environmentDataFrameRow td+td {
    gwt-image: 'zoomDataset';
    background-position: right center; 
-}
-
-.workspaceSectionHead {
-   font-size: 11px;
-   height: 18px;
-   background: WORKSPACESECTIONHEADERTILE top repeat-x;
-}
-.workspaceSectionHead td {
-   font-family: proportionalFont;
-   font-weight: bold;
-}
-.scalarEdit {
-	cursor: text;
-}
-.editing {
-   background-color: white;
-}
-.editPending {
-   color: gray;
 }
 
 .odd {

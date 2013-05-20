@@ -100,8 +100,7 @@ json::Object varToJson(const r::sexp::Variable& var)
    // NOTE: check for isLanguage is a temporary fix for error messages
    // that were printed at the console for a <- bquote(test()) -- this
    // was the result of errors being thrown from the .rs.valueDescription, etc.
-   // calls above used to probe for object info. interestingly when these
-   // same calls are made from .rs.rpc.list_objects no errors are thrown.
+   // calls above used to probe for object info.
    // the practical impact of this workaround is that immediately after
    // assignment language expressions show up as "(unknown)" but then are
    // correctly displayed in refreshed listings of the workspace.
@@ -116,7 +115,6 @@ json::Object varToJson(const r::sexp::Variable& var)
       if (varClass == "data.frame"
           || varClass == "data.table"
           || varClass == "list"
-          || varClass == "matrix"
           || varClass == "cast_df")
       {
          varJson["contents"] = contentsOfVar(varSEXP);
