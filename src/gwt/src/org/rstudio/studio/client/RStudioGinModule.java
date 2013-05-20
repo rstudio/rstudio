@@ -160,9 +160,6 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPane;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresenter;
-import org.rstudio.studio.client.workbench.views.workspace.Workspace;
-import org.rstudio.studio.client.workbench.views.workspace.WorkspacePane;
-import org.rstudio.studio.client.workbench.views.workspace.WorkspaceTab;
 import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 
 public class RStudioGinModule extends AbstractGinModule
@@ -212,7 +209,6 @@ public class RStudioGinModule extends AbstractGinModule
       bindPane("Console", ConsolePane.class); // eager loaded
       bind(Source.Display.class).to(SourcePane.class);
       bind(History.Display.class).to(HistoryPane.class);
-      bind(Workspace.Display.class).to(WorkspacePane.class);
       bind(Data.Display.class).to(DataPane.class);
       bind(Files.Display.class).to(FilesPane.class);
       bind(Plots.Display.class).to(PlotsPane.class);
@@ -228,7 +224,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
-      bindTab("Workspace", WorkspaceTab.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);

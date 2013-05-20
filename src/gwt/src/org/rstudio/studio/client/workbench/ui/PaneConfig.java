@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.js.JsUtil;
 
 import java.util.*;
@@ -28,7 +29,6 @@ public class PaneConfig extends JavaScriptObject
       return { panes: panes, tabSet1: tabSet1, tabSet2: tabSet2 };
    }-*/;
 
-
    public static PaneConfig createDefault()
    {
       JsArrayString panes = createArray().cast();
@@ -38,12 +38,11 @@ public class PaneConfig extends JavaScriptObject
       panes.push("TabSet2");
 
       JsArrayString tabSet1 = createArray().cast();
-      tabSet1.push("Workspace");
+      tabSet1.push("Environment");
       tabSet1.push("History");
       tabSet1.push("Build");
       tabSet1.push("VCS");
       tabSet1.push("Presentation");
-      tabSet1.push("Environment");
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
@@ -61,26 +60,66 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getAllTabs()
    {
-      return new String[] {"Workspace", "History", "Files", "Plots",
-                           "Packages", "Help", "Build", "VCS", "Presentation",
-                           "Environment"};
+      return new String[] {"Environment", "History", "Files", "Plots",
+                           "Packages", "Help", "Build", "VCS", "Presentation"};
    }
 
    public static String[] getAlwaysVisibleTabs()
    {
-      return new String[] {"Workspace", "History", "Files", "Plots",
+      return new String[] {"Environment", "History", "Files", "Plots",
                            "Packages", "Help"};
    }
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Environment"};
+      return new String[] {"Build", "VCS", "Presentation" };
    }
 
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Environment"};
+      return new String[] {"Build", "VCS", "Presentation" };
+   }
+
+   // Tabs that have been replaced by newer versions/replaceable supersets
+   public static String[] getReplacedTabs()
+   {
+      return new String[] {"Workspace"};
+   }
+
+   // The tabs that replace those in getReplacedTabs(), order-matched
+   public static String[] getReplacementTabs()
+   {
+      return new String[] {"Environment"};
+   }
+
+   // Given the name of a tab, return the index of the tab that it should
+   // replace it, or -1 if the tab doesn't have a replacement
+   public static int indexOfReplacedTab(String tab)
+   {
+      String[] replacedTabs = getReplacedTabs();
+      int idx;
+      for (idx = 0; idx < replacedTabs.length; idx++)
+      {
+         if (tab.equals(replacedTabs[idx]))
+         {
+            return idx;
+         }
+      }
+      return -1;
+   }
+
+   // Given an array of tabs, replace any obsolete entries with their
+   // replacements
+   public static void replaceObsoleteTabs(JsArrayString tabs)
+   {
+      for (int idx = 0; idx < tabs.length(); idx++)
+      {
+         if (indexOfReplacedTab(tabs.get(idx)) >= 0)
+         {
+            tabs.set(idx, getReplacementTabs()[idx]);
+         }
+      }
    }
 
    protected PaneConfig()
@@ -124,8 +163,13 @@ public class PaneConfig extends JavaScriptObject
       if (ts1.length() == 0 || ts2.length() == 0)
          return false;
 
+      // Replace any obsoleted tabs in the config
+      replaceObsoleteTabs(ts1);
+      replaceObsoleteTabs(ts2);
+
       // If any of these tabs are missing, then they can be added
       Set<String> addableTabs = makeSet(getAddableTabs());
+
       // If any of these tabs are missing, then the whole config is invalid
       Set<String> baseTabs = makeSet(getAllTabs());
       baseTabs.removeAll(addableTabs);
