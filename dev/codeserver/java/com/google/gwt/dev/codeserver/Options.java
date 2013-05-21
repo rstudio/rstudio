@@ -50,7 +50,7 @@ public class Options {
   private int port = 9876;
   private RecompileListener recompileListener = RecompileListener.NONE;
   // Use the same default as the GWT compiler.
-  private SourceLevel sourceLevel = OptionSource.DEFAULT_SOURCE_LEVEL;
+  private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.

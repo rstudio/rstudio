@@ -21,7 +21,6 @@ import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.arg.OptionSource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -597,7 +596,7 @@ public class JdtCompiler {
   public static List<CompilationUnit> compile(TreeLogger logger,
       Collection<CompilationUnitBuilder> builders)
       throws UnableToCompleteException {
-    return compile(logger, builders, OptionSource.DEFAULT_SOURCE_LEVEL);
+    return compile(logger, builders, SourceLevel.DEFAULT_SOURCE_LEVEL);
   }
 
   public static List<CompilationUnit> compile(TreeLogger logger,
@@ -623,7 +622,7 @@ public class JdtCompiler {
       }
     };
 
-    long jdtSourceLevel = jdtLevelByGwtLevel.get(OptionSource.DEFAULT_SOURCE_LEVEL);
+    long jdtSourceLevel = jdtLevelByGwtLevel.get(SourceLevel.DEFAULT_SOURCE_LEVEL);
 
     options.originalSourceLevel = jdtSourceLevel;
     options.complianceLevel = jdtSourceLevel;

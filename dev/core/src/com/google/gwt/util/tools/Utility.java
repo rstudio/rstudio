@@ -36,6 +36,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A smattering of useful functions.
@@ -44,6 +46,15 @@ public final class Utility {
 
 
   private static String sInstallPath = null;
+  /**
+   * A pattern that expresses version strings. It has two groups the prefix (a dotted integer
+   * sequence) and a suffix (a regular string)
+   *
+   * Examples: 1.6.7, 1.2_b10
+   *
+   */
+  private static Pattern versionPattern =
+      Pattern.compile("([0-9]+(?:\\.[0-9]+)*)((?:_[a-zA-Z0-9]+)?)");
 
   /**
    * Helper that ignores exceptions during close, because what are you going to
@@ -375,4 +386,45 @@ public final class Utility {
     }
   }
 
+  /**
+   * Handles comparison between version numbers (the right way(TM)).
+   *
+   * Examples of version strings: 1.6.7, 1.2_b10
+   *
+   * @param v1 the first version to compare.
+   * @param v2 the second version to compare.
+   * @return a negative integer, zero, or a positive integer as the first argument is less than,
+   *         equal to, or greater than the second.
+   * @throws IllegalArgumentException if the version number are not proper (i.e. the do not comply
+   *                                  with the following regular expression
+   *                                  [0-9]+(.[0-9]+)*(_[a-zA-Z0-9]+)?
+   */
+  public static int versionCompare(String v1, String v2) {
+    Matcher v1Matcher = versionPattern.matcher(v1);
+    Matcher v2Matcher = versionPattern.matcher(v2);
+    if (!v1Matcher.matches() || !v2Matcher.matches()) {
+      throw new IllegalArgumentException(v1Matcher.matches() ? v2 : v1 + " is not a proper version"
+          + " string");
+    }
+
+    String[] v1Prefix = v1Matcher.group(1).split("\\.");
+    String[] v2Prefix = v2Matcher.group(1).split("\\.");
+    for (int i = 0; i < v1Prefix.length; i++) {
+      if (v2Prefix.length <= i) {
+        return 1; // v1 > v2
+      }
+      int compare = Integer.parseInt(v1Prefix[i]) - Integer.parseInt(v2Prefix[i]);
+      if (compare != 0) {
+        return compare;
+      }
+    }
+    // So far they are equal (or v2 is longer than v1)
+    if (v2Prefix.length == v1Prefix.length) {
+      // then it is up to the suffixes
+      return v1Matcher.group(2).compareTo(v2Matcher.group(2));
+    }
+
+    // v2 is greater than v1,
+    return -1;
+  }
 }

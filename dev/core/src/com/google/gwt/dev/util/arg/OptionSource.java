@@ -20,8 +20,6 @@ package com.google.gwt.dev.util.arg;
  */
 public interface OptionSource {
 
-  static final SourceLevel DEFAULT_SOURCE_LEVEL = SourceLevel.JAVA6;
-
   SourceLevel getSourceLevel();
 
   void setSourceLevel(SourceLevel level);

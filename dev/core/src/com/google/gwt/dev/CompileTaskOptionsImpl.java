@@ -16,7 +16,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.util.arg.OptionSource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
@@ -31,7 +30,7 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   private Type logLevel;
   private final List<String> moduleNames = new ArrayList<String>();
   private File workDir;
-  private SourceLevel sourceLevel = OptionSource.DEFAULT_SOURCE_LEVEL;
+  private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 
   public CompileTaskOptionsImpl() {
   }

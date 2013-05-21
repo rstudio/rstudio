@@ -16,26 +16,12 @@
 package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.util.tools.ArgHandlerString;
-
-import java.util.Map;
 
 /**
  * Set the Java source level compatibility.
  */
 public class ArgHandlerSource extends ArgHandlerString {
-  private static final Map<String, SourceLevel> sourceLevelsByString;
-
-  static {
-    ImmutableMap.Builder<String, SourceLevel> builder = ImmutableMap.<String, SourceLevel>builder();
-    for (SourceLevel sourceLevel : SourceLevel.values()) {
-      builder.put(sourceLevel.getStringValue(), sourceLevel);
-      builder.put(sourceLevel.getAltStringValue(), sourceLevel);
-    }
-    sourceLevelsByString = builder.build();
-  }
-
   private final OptionSource options;
 
   public ArgHandlerSource(OptionSource options) {
@@ -44,12 +30,12 @@ public class ArgHandlerSource extends ArgHandlerString {
 
   @Override
   public String[] getDefaultArgs() {
-    return new String[]{getTag(), OptionSource.DEFAULT_SOURCE_LEVEL.getStringValue()};
+    return new String[]{getTag(), SourceLevel.DEFAULT_SOURCE_LEVEL.getStringValue()};
   }
 
   @Override
   public String getPurpose() {
-    return "Specifies Java source level (defaults to " + OptionSource.DEFAULT_SOURCE_LEVEL + ")";
+    return "Specifies Java source level (defaults to " + SourceLevel.DEFAULT_SOURCE_LEVEL + ")";
   }
 
   @Override
@@ -64,7 +50,7 @@ public class ArgHandlerSource extends ArgHandlerString {
 
   @Override
   public boolean setString(String value) {
-    SourceLevel level = sourceLevelsByString.get(value);
+    SourceLevel level = SourceLevel.fromString(value);
     if (value == null) {
       System.err.println("Source level must be one of [" +
           Joiner.on(",").join(SourceLevel.values()) + "].");

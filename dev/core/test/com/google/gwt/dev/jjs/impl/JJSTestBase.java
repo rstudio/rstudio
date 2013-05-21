@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.Strings;
-import com.google.gwt.dev.util.arg.OptionSource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -305,5 +304,5 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Java source level compatibility option.
    */
-  protected SourceLevel sourceLevel = OptionSource.DEFAULT_SOURCE_LEVEL;
+  protected SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 }

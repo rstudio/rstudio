@@ -22,7 +22,7 @@ import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -125,7 +125,7 @@ public abstract class CompilationStateTestBase extends TestCase {
   protected void rebuildCompilationState() {
     try {
       state = isolatedBuilder.doBuildFrom(createTreeLogger(), oracle.getResources(), false,
-          OptionSource.DEFAULT_SOURCE_LEVEL);
+          SourceLevel.DEFAULT_SOURCE_LEVEL);
     } catch (UnableToCompleteException e) {
       throw new RuntimeException(e);
     }

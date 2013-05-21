@@ -24,7 +24,7 @@ import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -106,7 +106,7 @@ public class GeneratorContextBuilder {
   private CompilationState buildCompilationState() throws UnableToCompleteException {
     TreeLogger logger = treeLogger != null ? treeLogger : createLogger();
       return new CompilationStateBuilder().doBuildFrom(logger, resources, null, false,
-          OptionSource.DEFAULT_SOURCE_LEVEL);
+          SourceLevel.DEFAULT_SOURCE_LEVEL);
   }
 
   private TreeLogger createLogger() {

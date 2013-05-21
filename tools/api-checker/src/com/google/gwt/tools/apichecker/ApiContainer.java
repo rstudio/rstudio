@@ -28,6 +28,7 @@ import com.google.gwt.dev.javac.CompilationUnitBuilder;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.TypeOracleMediatorFromSource;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,8 +51,23 @@ public final class ApiContainer {
   private final Set<String> excludedPackages;
   private final TreeLogger logger;
   private final String name;
-
+  private final SourceLevel sourceLevel;
   private final TypeOracle typeOracle;
+
+
+  /**
+   * A public constructor used for programmatic invocation and testing.
+   *
+   * @param name Api name
+   * @param resources a set of Resources
+   * @param excludedPackages a set of excludedPackages
+   * @param logger TreeLogger for logging messages
+   * @throws UnableToCompleteException if there is a TypeOracle exception
+   */
+  ApiContainer(String name, Set<Resource> resources, Set<String> excludedPackages, TreeLogger logger)
+      throws UnableToCompleteException {
+    this(name, resources, excludedPackages, logger, null);
+  }
 
   /**
    * A public constructor used for programmatic invocation and testing.
@@ -60,16 +76,19 @@ public final class ApiContainer {
    * @param resources a set of Resources
    * @param excludedPackages a set of excludedPackages
    * @param logger TreeLogger for logging messages
-   * @throws IllegalArgumentException if one of the arguments is illegal
+   * @param sourceLevel Java source compatibility level
    * @throws UnableToCompleteException if there is a TypeOracle exception
    */
-  ApiContainer(String name, Set<Resource> resources, Set<String> excludedPackages, TreeLogger logger)
+  ApiContainer(String name, Set<Resource> resources, Set<String> excludedPackages, TreeLogger logger,
+      SourceLevel sourceLevel)
       throws UnableToCompleteException {
     this.name = name;
     this.logger = logger;
     logger.log(TreeLogger.INFO, "name = " + name + ", builders.size = " + resources.size(), null);
-    this.typeOracle = createTypeOracle(resources);
+    this.sourceLevel = sourceLevel == null ? SourceLevel.DEFAULT_SOURCE_LEVEL : sourceLevel;
+    this.typeOracle = createTypeOracle(resources, this.sourceLevel);
     this.excludedPackages = excludedPackages;
+
     initializeApiPackages();
   }
 
@@ -178,13 +197,14 @@ public final class ApiContainer {
     return false;
   }
 
-  private TypeOracle createTypeOracle(Set<Resource> resources) throws UnableToCompleteException {
+  private TypeOracle createTypeOracle(Set<Resource> resources, SourceLevel sourceLevel)
+      throws UnableToCompleteException {
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
     for (Resource resource : resources) {
       CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
       builders.add(builder);
     }
-    List<CompilationUnit> units = JdtCompiler.compile(logger, builders);
+    List<CompilationUnit> units = JdtCompiler.compile(logger, builders, sourceLevel);
     boolean anyError = false;
     TreeLogger branch = logger.branch(TreeLogger.TRACE, "Checking for compile errors");
     for (CompilationUnit unit : units) {

@@ -25,7 +25,6 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.arg.OptionSource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -406,7 +405,7 @@ public class CompilationStateBuilder {
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources)
       throws UnableToCompleteException {
-    return buildFrom(logger, resources, null, false, OptionSource.DEFAULT_SOURCE_LEVEL);
+    return buildFrom(logger, resources, null, false, SourceLevel.DEFAULT_SOURCE_LEVEL);
   }
 
   public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,

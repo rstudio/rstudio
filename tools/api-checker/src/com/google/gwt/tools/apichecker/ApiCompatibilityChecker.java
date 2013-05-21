@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.javac.Shared;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerFlag;
@@ -526,9 +527,11 @@ public class ApiCompatibilityChecker extends ToolBase {
             .getConfigPropertyAsSet("excludedFiles_new"), logger).getResources());
         resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
+        SourceLevel newSourceLevel =
+            SourceLevel.fromString(checker.configProperties.getProperty("sourceLevel_new"));
         newApi =
             new ApiContainer(checker.configProperties.getProperty("name_new"), resources,
-                excludedPackages, logger);
+                excludedPackages, logger, newSourceLevel);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, newApi.getApiAsString());
         }
@@ -546,9 +549,11 @@ public class ApiCompatibilityChecker extends ToolBase {
         }
         resources.addAll(checker.getJavaxValidationCompilationUnits(logger));
         resources.addAll(checker.getGwtCompilationUnits(logger));
+        SourceLevel oldSourceLevel =
+            SourceLevel.fromString(checker.configProperties.getProperty("sourceLevel_old"));
         existingApi =
             new ApiContainer(checker.configProperties.getProperty("name_old"), resources,
-                excludedPackages, logger);
+                excludedPackages, logger, oldSourceLevel);
         if (checker.printAllApi) {
           logger.log(TreeLogger.INFO, existingApi.getApiAsString());
         }
@@ -858,6 +863,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     sb.append("dirRoot          optional argument that specifies the base directory of all other file/directory names\n");
     sb.append("sourceFiles      a colon-separated list of files/directories that specify the roots of the the filesystem trees to be included.\n");
     sb.append("excludeFiles     a colon-separated lists of ant patterns to exclude");
+    sb.append("sourceLevel      Java source level compatibility");
 
     sb.append("\n\n");
     sb.append("Example api.conf file:\n");

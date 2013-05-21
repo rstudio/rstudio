@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionOptimize;
-import com.google.gwt.dev.util.arg.OptionSource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.Serializable;
@@ -47,7 +46,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private SourceLevel sourceLevel = OptionSource.DEFAULT_SOURCE_LEVEL;
+  private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 
   public JJSOptionsImpl() {
   }

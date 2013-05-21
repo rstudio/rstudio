@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.util.tools.Utility;
+
 /**
  * Java source level compatibility constants.
  * Java versions range from 1.0 to 1.7.
@@ -23,8 +25,13 @@ package com.google.gwt.dev.util.arg;
  * Both names can be used indistinctly.
  */
 public enum SourceLevel {
+  // Source levels must appear in ascending order in order.
   JAVA6("1.6", "6"),
   JAVA7("1.7", "7");
+  /**
+   * The default GWT source level is the one that matches best that of the runtime environment.
+   */
+  public static final SourceLevel DEFAULT_SOURCE_LEVEL;
 
   private final String stringValue;
   private final String altStringValue;
@@ -52,4 +59,37 @@ public enum SourceLevel {
   public String toString() {
     return stringValue;
   }
+
+  static {
+    SourceLevel result = SourceLevel.values()[0];
+    String javaSpecLevel = System.getProperty("java.specification.version");
+    try {
+      for (SourceLevel sourceLevel : SourceLevel.values()) {
+        if (Utility.versionCompare(javaSpecLevel, sourceLevel.stringValue) >= 0) {
+          result = sourceLevel;
+        }
+      }
+    } catch (IllegalArgumentException e) {
+    }
+
+    DEFAULT_SOURCE_LEVEL = result;
+  }
+
+  /**
+   * Returns the SourceLevel given the string or alternate string representation;
+   * returns {@code null} if none is found.
+   */
+  public static SourceLevel fromString(String sourceLevelString) {
+    if (sourceLevelString == null) {
+      return null;
+    }
+    for (SourceLevel sourceLevel : SourceLevel.values()) {
+      if (sourceLevel.stringValue.equals(sourceLevelString) ||
+          sourceLevel.altStringValue.equals(sourceLevelString)) {
+        return sourceLevel;
+      }
+    }
+    return null;
+  }
+
 }
