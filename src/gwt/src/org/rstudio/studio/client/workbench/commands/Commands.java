@@ -206,7 +206,9 @@ public abstract class
    public abstract AppCommand loadWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
-   public abstract AppCommand activateWorkspace();
+
+   // Environment
+   public abstract AppCommand activateEnvironment();
   
    // Plots
    public abstract AppCommand nextPlot();

@@ -175,7 +175,13 @@ public class EnvironmentPresenter extends BasePresenter
             indicator.onProgress("Removing objects...");
             server_.removeAllObjects(
                     includeHidden,
-                    new VoidServerRequestCallback(indicator));
+                    new VoidServerRequestCallback(indicator) {
+                        @Override
+                        public void onSuccess()
+                        {
+                           view_.clearObjects();
+                        }
+                    });
          }
       }).showModal();
    }
@@ -303,6 +309,7 @@ public class EnvironmentPresenter extends BasePresenter
     
    private void refreshView()
    {
+      view_.setProgress(true);
       server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
       {
 
@@ -310,6 +317,7 @@ public class EnvironmentPresenter extends BasePresenter
          public void onResponseReceived(JsArray<RObject> objects)
          {
             setViewFromEnvironmentList(objects);
+            view_.setProgress(false);
          }
 
          @Override
@@ -317,6 +325,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             globalDisplay_.showErrorMessage("Error Listing Objects",
                                             error.getUserMessage());
+            view_.setProgress(false);
          }
       });
    }

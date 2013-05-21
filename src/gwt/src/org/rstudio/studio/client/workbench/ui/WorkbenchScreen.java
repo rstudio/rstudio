@@ -290,7 +290,7 @@ public class WorkbenchScreen extends Composite
    }
 
    @Handler
-   void onActivateWorkspace() { paneManager_.activateTab(Tab.Environment); }
+   void onActivateEnvironment() { paneManager_.activateTab(Tab.Environment); }
    @Handler
    void onActivateHistory() { paneManager_.activateTab(Tab.History); }
    @Handler
