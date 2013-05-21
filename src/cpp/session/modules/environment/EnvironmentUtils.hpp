@@ -21,6 +21,7 @@ namespace modules {
 namespace environment {
 
 core::json::Object varToJson(const r::sexp::Variable& var);
+bool isUnevaluatedPromise (SEXP var);
 
 } // namespace environment
 } // namespace modules

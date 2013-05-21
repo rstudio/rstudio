@@ -67,6 +67,7 @@ public class EnvironmentObjects extends Composite
    {
       void editObject(String objectName);
       void viewObject(String objectName);
+      void forceEvalObject(String objectName);
    }
 
    // builds individual rows of the object table
@@ -156,6 +157,9 @@ public class EnvironmentObjects extends Composite
             String categoryTitle;
             switch (rowValue.getCategory())
             {
+               case RObjectEntry.Categories.Unevaluated:
+                  categoryTitle = "Unevaluated";
+                  break;
                case RObjectEntry.Categories.Data:
                   categoryTitle = "Data";
                   break;
@@ -411,7 +415,12 @@ public class EnvironmentObjects extends Composite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            if (object.getCategory() == RObjectEntry.Categories.Data)
+            // if the object doesn't yet have a known type
+            if (object.getCategory() == RObjectEntry.Categories.Unevaluated)
+            {
+               observer_.forceEvalObject(object.rObject.getName());
+            }
+            else if (object.getCategory() == RObjectEntry.Categories.Data)
             {
                observer_.viewObject(object.rObject.getName());
             }
@@ -483,7 +492,7 @@ public class EnvironmentObjects extends Composite
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
-      Boolean[] leaders = { false, false, false };
+      Boolean[] leaders = { false, false, false, false };
 
       for (int i = 0; i < objects.size(); i++)
       {

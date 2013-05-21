@@ -72,6 +72,11 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
+.rs.addFunction("promiseDescription", function(obj)
+{
+   capture.output(substitute(obj))
+})
+
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(

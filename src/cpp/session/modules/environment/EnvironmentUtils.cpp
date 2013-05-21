@@ -22,6 +22,9 @@ using namespace core;
 namespace session {
 namespace modules {
 namespace environment {
+
+
+
 namespace {
 
 json::Value classOfVar(SEXP var)
@@ -59,8 +62,11 @@ json::Value valueOfVar(SEXP var)
 json::Value descriptionOfVar(SEXP var)
 {
    std::string value;
-   Error error = r::exec::RFunction(".rs.valueDescription",
-                                    var).call(&value);
+   Error error = r::exec::RFunction(
+            isUnevaluatedPromise(var) ?
+                  ".rs.promiseDescription" :
+                  ".rs.valueDescription",
+               var).call(&value);
    if (error)
    {
       LOG_ERROR(error);
@@ -89,6 +95,11 @@ json::Array contentsOfVar(SEXP var)
 
 } // anonymous namespace
 
+bool isUnevaluatedPromise (SEXP var)
+{
+   return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
+}
+
 json::Object varToJson(const r::sexp::Variable& var)
 {
    json::Object varJson;
@@ -105,7 +116,9 @@ json::Object varToJson(const r::sexp::Variable& var)
    // assignment language expressions show up as "(unknown)" but then are
    // correctly displayed in refreshed listings of the workspace.
 
-   if ((varSEXP != R_UnboundValue) && !r::sexp::isLanguage(varSEXP))
+   if ((varSEXP != R_UnboundValue)
+       && !r::sexp::isLanguage(varSEXP)
+       && !isUnevaluatedPromise(varSEXP))
    {
       json::Value varClass = classOfVar(varSEXP);
       varJson["type"] = varClass;
@@ -129,11 +142,17 @@ json::Object varToJson(const r::sexp::Variable& var)
       {
          varJson["type"] = std::string("language");
       }
+      else if (isUnevaluatedPromise(varSEXP))
+      {
+         varJson["type"] = std::string("promise");
+      }
       else
       {
          varJson["type"] = std::string("unknown");
       }
-      varJson["value"] = std::string("<unknown>");
+      varJson["value"] = isUnevaluatedPromise(varSEXP) ?
+               descriptionOfVar(varSEXP) :
+               std::string("<unknown>");
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
       }

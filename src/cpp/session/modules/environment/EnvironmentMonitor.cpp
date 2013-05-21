@@ -50,6 +50,29 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
    module_context::enqueClientEvent(assignedEvent);
 }
 
+// if the given variable is an unevaluated promise, add it to the given
+// list of variables
+void addUnevaledPromise(std::vector<r::sexp::Variable>* pEnv,
+                        const r::sexp::Variable& var)
+{
+   if (isUnevaluatedPromise(var.second))
+   {
+      pEnv->push_back(var);
+   }
+}
+
+// if the given variable exists in the given list, remove it
+void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
+                       const r::sexp::Variable& var)
+{
+   std::vector<r::sexp::Variable>::iterator iter =
+         std::find(pEnv->begin(), pEnv->end(), var);
+   if (iter != pEnv->end())
+   {
+      pEnv->erase(iter);
+   }
+}
+
 } // anonymous namespace
 
 
@@ -65,18 +88,26 @@ void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
+      r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()
 {
-   // get the current environment
+   // information about the current environment
    std::vector<r::sexp::Variable> currentEnv ;
-   listEnv(&currentEnv);
+   std::vector<r::sexp::Variable> currentPromises;
 
+   // list of assigns (includes both value changes and promise evaluations)
+   std::vector<r::sexp::Variable> addedVars;
+
+   // get the set of variables and promises in the current environment
+   listEnv(&currentEnv);
+   std::for_each(currentEnv.begin(), currentEnv.end(),
+                 boost::bind(addUnevaledPromise, &currentPromises, _1));
    if (!initialized_)
    {
       lastEnv_ = currentEnv;
+      unevaledPromises_ = currentPromises;
       initialized_ = true;
       return;
    }
@@ -84,7 +115,7 @@ void EnvironmentMonitor::checkForChanges()
    // if there are changes
    if (currentEnv != lastEnv_)
    {
-      std::vector<r::sexp::Variable> removedVars ;
+      std::vector<r::sexp::Variable> removedVars;
       std::set_difference(lastEnv_.begin(), lastEnv_.end(),
                           currentEnv.begin(), currentEnv.end(),
                           std::back_inserter(removedVars),
@@ -95,19 +126,37 @@ void EnvironmentMonitor::checkForChanges()
                     removedVars.end(),
                     enqueRemovedEvent);
 
+      // remove deleted objects from the list of uneval'ed promises
+      // so we'll stop monitoring them for evaluation
+      std::for_each(removedVars.begin(),
+                    removedVars.end(),
+                    boost::bind(removeVarFromList, &unevaledPromises_, _1));
+
       // find adds & assigns (all variable name/value combinations in the
       // current environment but NOT in the previous environment)
-      std::vector<r::sexp::Variable> addedVars;
       std::set_difference(currentEnv.begin(), currentEnv.end(),
                           lastEnv_.begin(), lastEnv_.end(),
                           std::back_inserter(addedVars));
 
-      // fire assigned event for adds & assigns
-      std::for_each(addedVars.begin(),
-                    addedVars.end(),
-                    enqueAssignedEvent);
    }
 
+   // have any promises been evaluated since we last checked?
+   if (currentPromises != unevaledPromises_)
+   {
+      // for each promise that is in the set of promises we are monitoring
+      // for evaluation but not in the set of currently tracked promises,
+      // we assume this to be an eval--process as an assign
+      std::set_difference(unevaledPromises_.begin(), unevaledPromises_.end(),
+                          currentPromises.begin(), currentPromises.end(),
+                          std::back_inserter(addedVars));
+   }
+
+   // fire assigned event for adds, assigns, and promise evaluations
+   std::for_each(addedVars.begin(),
+                 addedVars.end(),
+                 enqueAssignedEvent);
+
+   unevaledPromises_ = currentPromises;
    lastEnv_ = currentEnv;
 }
 

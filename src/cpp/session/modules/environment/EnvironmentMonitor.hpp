@@ -31,6 +31,7 @@ private:
    void listEnv(std::vector<r::sexp::Variable>* pEnvironment);
 
    std::vector<r::sexp::Variable> lastEnv_;
+   std::vector<r::sexp::Variable> unevaledPromises_;
    r::sexp::PreservedSEXP environment_;
    bool initialized_;
 };

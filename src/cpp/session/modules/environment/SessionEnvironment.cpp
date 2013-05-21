@@ -62,7 +62,7 @@ json::Array environmentListAsJson()
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    listEnvironment(getTopFunctionEnvironment(), true, &rProtect, &vars);
+    listEnvironment(getTopFunctionEnvironment(), false, &rProtect, &vars);
 
     // get object details and transform to json
     json::Array listJson;

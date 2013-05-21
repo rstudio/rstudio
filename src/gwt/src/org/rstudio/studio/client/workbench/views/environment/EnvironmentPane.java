@@ -142,6 +142,11 @@ public class EnvironmentPane extends WorkbenchPane
       executeFunctionForObject("View", objectName);
    }
 
+   public void forceEvalObject(String objectName)
+   {
+      executeFunctionForObject("force", objectName);
+   }
+
    private void executeFunctionForObject(String function, String objectName)
    {
       String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
