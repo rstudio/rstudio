@@ -15,10 +15,6 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-
-import java.util.ArrayList;
 
 /**
  * A simplified, browser-safe timer class. This class serves the same purpose as
@@ -43,12 +39,6 @@ import java.util.ArrayList;
  */
 public abstract class Timer {
 
-  private static ArrayList<Timer> timers = new ArrayList<Timer>();
-
-  static {
-    hookWindowClosing();
-  }
-
   private static native void clearInterval(int id) /*-{
     @com.google.gwt.core.client.impl.Impl::clearInterval(I)(id);
   }-*/;
@@ -68,18 +58,6 @@ public abstract class Timer {
       $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); }),
       delay);
   }-*/;
-
-  private static void hookWindowClosing() {
-    // Catch the window closing event.
-    Window.addCloseHandler(new CloseHandler<Window>() {
-
-      public void onClose(CloseEvent<Window> event) {
-        while (timers.size() > 0) {
-          timers.get(0).cancel();
-        }
-      }
-    });
-  }
 
   private boolean isRepeating;
 
@@ -101,7 +79,6 @@ public abstract class Timer {
     } else {
       clearTimeout(timerId);
     }
-    timers.remove(this);
   }
 
   /**
@@ -123,7 +100,6 @@ public abstract class Timer {
     cancel();
     isRepeating = false;
     timerId = createTimeout(this, delayMillis, cancelCounter);
-    timers.add(this);
   }
 
   /**
@@ -139,7 +115,6 @@ public abstract class Timer {
     cancel();
     isRepeating = true;
     timerId = createInterval(this, periodMillis, cancelCounter);
-    timers.add(this);
   }
 
   /*
@@ -150,12 +125,6 @@ public abstract class Timer {
   final void fire(int scheduleCancelCounter) {
     if (scheduleCancelCounter != cancelCounter) {
       return;
-    }
-
-    // If this is a one-shot timer, remove it from the timer list. This will
-    // allow it to be garbage collected.
-    if (!isRepeating) {
-      timers.remove(this);
     }
 
     // Run the timer's code.
