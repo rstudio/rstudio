@@ -465,11 +465,11 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
       if (idx == 0) {
         throw new IncompatibleRemoteServiceException(
             "Malformed or old RPC message received - expecting version between "
-                + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION);
+                + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_MAX_VERSION);
       } else {
         int version = Integer.valueOf(encodedTokens.substring(0, idx));
         throw new IncompatibleRemoteServiceException("Expecting version between "
-            + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION
+            + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_MAX_VERSION
             + " from client, got " + version + ".");
       }
     }
@@ -478,9 +478,9 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
 
     // Check the RPC version number sent by the client
     if (getVersion() < SERIALIZATION_STREAM_MIN_VERSION
-        || getVersion() > SERIALIZATION_STREAM_VERSION) {
+        || getVersion() > SERIALIZATION_STREAM_MAX_VERSION) {
       throw new IncompatibleRemoteServiceException("Expecting version between "
-          + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_VERSION
+          + SERIALIZATION_STREAM_MIN_VERSION + " and " + SERIALIZATION_STREAM_MAX_VERSION
           + " from client, got " + getVersion() + ".");
     }
 

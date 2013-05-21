@@ -325,12 +325,13 @@ public final class ClientSerializationStreamReader extends
     index = decoder.getValues().size();
     super.prepareToRead(encoded);
 
-    if (getVersion() != SERIALIZATION_STREAM_VERSION) {
-      throw new IncompatibleRemoteServiceException("Expecting version "
-          + SERIALIZATION_STREAM_VERSION + " from server, got " + getVersion()
-          + ".");
+    if (getVersion() < SERIALIZATION_STREAM_MIN_VERSION
+        || getVersion() > SERIALIZATION_STREAM_MAX_VERSION) {
+      throw new IncompatibleRemoteServiceException("Got version " + getVersion()
+          + ", expected version between " + SERIALIZATION_STREAM_MIN_VERSION + " and "
+          + SERIALIZATION_STREAM_MAX_VERSION);
     }
-    
+
     if (!areFlagsValid()) {
       throw new IncompatibleRemoteServiceException("Got an unknown flag from "
           + "server: " + getFlags());
@@ -357,14 +358,21 @@ public final class ClientSerializationStreamReader extends
   
   @Override
   public double readDouble() {    
-    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
-    return literal.getValue();
+    JsValueLiteral valueLiteral = decoder.getValues().get(--index);
+    if (valueLiteral instanceof JsNumberLiteral) {
+      JsNumberLiteral literal = (JsNumberLiteral) valueLiteral;
+      return literal.getValue();
+    } else if (valueLiteral instanceof JsStringLiteral) {
+      JsStringLiteral literal = (JsStringLiteral) valueLiteral;
+      return Double.parseDouble(literal.getValue());
+    } else {
+      throw new RuntimeException("Can't read double from " + valueLiteral.getKind() + " literal");
+    }
   }
   
   @Override
   public float readFloat() {    
-    JsNumberLiteral literal = (JsNumberLiteral) decoder.getValues().get(--index);
-    return (float) literal.getValue();
+    return (float) readDouble();
   }
   
   @Override

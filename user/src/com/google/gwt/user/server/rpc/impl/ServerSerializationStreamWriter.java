@@ -56,6 +56,7 @@ public final class ServerSerializationStreamWriter extends
     private int count = 0;
     private boolean needsComma = false;
     private int total = 0;
+    private boolean javascript = false;
 
     public LengthConstrainedArray() {
       buffer = new StringBuffer();
@@ -70,6 +71,7 @@ public final class ServerSerializationStreamWriter extends
       if (count++ == MAXIMUM_ARRAY_LENGTH) {
         if (total == MAXIMUM_ARRAY_LENGTH + 1) {
           buffer.append(PRELUDE);
+          javascript = true;
         } else {
           buffer.append("],[");
         }
@@ -86,8 +88,20 @@ public final class ServerSerializationStreamWriter extends
       buffer.append(token);
     }
 
+    public void addEscapedToken(String token) {
+      addToken(escapeString(token, true, this));
+    }
+
     public void addToken(int i) {
       addToken(String.valueOf(i));
+    }
+
+    public boolean isJavaScript() {
+      return javascript;
+    }
+
+    public void setJavaScript(boolean javascript) {
+      this.javascript = javascript;
     }
 
     @Override
@@ -377,7 +391,7 @@ public final class ServerSerializationStreamWriter extends
    * than 1.3 that supports unicode strings.
    */
   public static String escapeString(String toEscape) {
-    return escapeString(toEscape, false);
+    return escapeString(toEscape, false, null);
   }
 
   /**
@@ -393,10 +407,11 @@ public final class ServerSerializationStreamWriter extends
    * than 1.3 that supports unicode strings.
    */
   public static String escapeStringSplitNodes(String toEscape) {
-    return escapeString(toEscape, true);
+    return escapeString(toEscape, true, null);
   }
 
-  private static String escapeString(String toEscape, boolean splitNodes) {
+  private static String escapeString(String toEscape, boolean splitNodes,
+      LengthConstrainedArray array) {
     // Since escaped characters will increase the output size, allocate extra room to start.
     int length = toEscape.length();
     int capacityIncrement = Math.max(length, 16);
@@ -427,6 +442,9 @@ public final class ServerSerializationStreamWriter extends
         charVector.add(JS_QUOTE_CHAR);
         charVector.add('+');
         charVector.add(JS_QUOTE_CHAR);
+        if (array != null) {
+          array.setJavaScript(true);
+        }
       }
     }
 
@@ -547,10 +565,6 @@ public final class ServerSerializationStreamWriter extends
     charVector.add(JS_ESCAPE_CHAR);
     if (ch < NUMBER_OF_JS_ESCAPED_CHARS && JS_CHARS_ESCAPED[ch] != 0) {
       charVector.add(JS_CHARS_ESCAPED[ch]);
-    } else if (ch < 256) {
-      charVector.add('x');
-      charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 4) & 0x0F]);
-      charVector.add(NIBBLE_TO_HEX_CHAR[ch & 0x0F]);
     } else {
       charVector.add('u');
       charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 12) & 0x0F]);
@@ -568,6 +582,11 @@ public final class ServerSerializationStreamWriter extends
 
   public ServerSerializationStreamWriter(SerializationPolicy serializationPolicy) {
     this.serializationPolicy = serializationPolicy;
+  }
+
+  public ServerSerializationStreamWriter(SerializationPolicy serializationPolicy, int version) {
+    this(serializationPolicy);
+    setVersion(version);
   }
 
   @Override
@@ -619,10 +638,20 @@ public final class ServerSerializationStreamWriter extends
       writeDouble(parts[1]);
     } else {
       StringBuilder sb = new StringBuilder();
-      sb.append('\'');
+      sb.append('"');
       sb.append(Base64Utils.toBase64(value));
-      sb.append('\'');
+      sb.append('"');
       append(sb.toString());
+    }
+  }
+
+  @Override
+  public void writeDouble(double fieldValue) {
+    if (getVersion() >= SERIALIZATION_STREAM_JSON_VERSION
+        && (Double.isNaN(fieldValue) || Double.isInfinite(fieldValue))) {
+      append('"' + String.valueOf(fieldValue) + '"');
+    } else {
+      super.writeDouble(fieldValue);
     }
   }
 
@@ -834,7 +863,12 @@ public final class ServerSerializationStreamWriter extends
    */
   private void writeHeader(LengthConstrainedArray stream) {
     stream.addToken(getFlags());
-    stream.addToken(getVersion());
+    if (stream.isJavaScript() && getVersion() >= SERIALIZATION_STREAM_JSON_VERSION) {
+      // Ensure we are not using the JSON supported version if stream is Javascript instead of JSON
+      stream.addToken(SERIALIZATION_STREAM_JSON_VERSION - 1);
+    } else {
+      stream.addToken(getVersion());
+    }
   }
 
   private void writePayload(LengthConstrainedArray stream) {
@@ -847,8 +881,9 @@ public final class ServerSerializationStreamWriter extends
   private void writeStringTable(LengthConstrainedArray stream) {
     LengthConstrainedArray tableStream = new LengthConstrainedArray();
     for (String s : getStringTable()) {
-      tableStream.addToken(escapeStringSplitNodes(s));
+      tableStream.addEscapedToken(s);
     }
     stream.addToken(tableStream.toString());
+    stream.setJavaScript(stream.isJavaScript() || tableStream.isJavaScript());
   }
 }

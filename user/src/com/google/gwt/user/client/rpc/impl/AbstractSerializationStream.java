@@ -40,8 +40,12 @@ public abstract class AbstractSerializationStream {
   public static final char RPC_SEPARATOR_CHAR = '|';
 
   /**
-   * The current RPC protocol version. This version differs from the previous
-   * one in that it supports {@links RpcToken}s.
+   * The newest supported RPC protocol version.
+   */
+  public static final int SERIALIZATION_STREAM_MAX_VERSION = 8;
+
+  /**
+   * The current RPC protocol version.
    */
   public static final int SERIALIZATION_STREAM_VERSION = 7;
   
@@ -49,6 +53,11 @@ public abstract class AbstractSerializationStream {
    * The oldest supported RPC protocol version.
    */
   public static final int SERIALIZATION_STREAM_MIN_VERSION = 5;
+
+  /**
+   * First version to support valid JSON formatted payload responses
+   */
+  public static final int SERIALIZATION_STREAM_JSON_VERSION = 8;
 
   /**
    * Indicates that obfuscated type names should be used in the RPC payload.

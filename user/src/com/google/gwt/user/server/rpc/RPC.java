@@ -608,6 +608,19 @@ public final class RPC {
     return responsePayload;
   }
 
+  private static int getRpcVersion() throws SerializationException {
+    int version =
+        Integer.getInteger("gwt.rpc.version",
+            AbstractSerializationStream.SERIALIZATION_STREAM_VERSION);
+    if (version < AbstractSerializationStream.SERIALIZATION_STREAM_MIN_VERSION
+        || version > AbstractSerializationStream.SERIALIZATION_STREAM_MAX_VERSION) {
+      throw new SerializationException("The RPC version " + version + " is not between "
+          + AbstractSerializationStream.SERIALIZATION_STREAM_MIN_VERSION + " and "
+          + AbstractSerializationStream.SERIALIZATION_STREAM_MAX_VERSION);
+    }
+    return version;
+  }
+
   /**
    * Returns a string that encodes the results of an RPC call. Private overload
    * that takes a flag signaling the preamble of the response payload.
@@ -623,7 +636,7 @@ public final class RPC {
       int flags, SerializationPolicy serializationPolicy) throws SerializationException {
 
     ServerSerializationStreamWriter stream =
-        new ServerSerializationStreamWriter(serializationPolicy);
+        new ServerSerializationStreamWriter(serializationPolicy, getRpcVersion());
     stream.setFlags(flags);
 
     stream.prepareToWrite();
