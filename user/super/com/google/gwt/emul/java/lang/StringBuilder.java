@@ -231,7 +231,7 @@ public class StringBuilder implements CharSequence, Appendable {
     return this;
   }
 
-  public StringBuilder reserve() {
+  public StringBuilder reverse() {
     impl.reverse(data);
     return this;
   }
