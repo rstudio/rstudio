@@ -15,7 +15,8 @@
  */
 package com.google.gwt.core.shared;
 
-import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.shared.impl.ThrowableTypeResolver;
+
 
 /**
  * A serializable copy of a {@link Throwable}, including its causes and stack trace. It overrides
@@ -64,6 +65,7 @@ public final class SerializableThrowable extends Throwable {
   @Override
   public Throwable fillInStackTrace() {
     // This is a no-op for optimization as we don't need stack traces to be auto-filled.
+    // TODO(goktug): Java 7 let's you disable this by constructor flag
     return this;
   }
 
@@ -121,48 +123,7 @@ public final class SerializableThrowable extends Throwable {
     SerializableThrowable throwable = new SerializableThrowable(null, t.getMessage());
     throwable.setStackTrace(t.getStackTrace());
     throwable.initCause(t.getCause());
-    if (isClassMetadataAvailable()) {
-      throwable.setDesignatedType(t.getClass().getName(), true);
-    } else {
-      resolveDesignatedType(throwable, t);
-    }
+    ThrowableTypeResolver.resolveDesignatedType(throwable, t);
     return throwable;
-  }
-
-  // TODO(goktug): Replace when availability of class metadata can be checked in compile-time so
-  // that #resolveDesignatedType will be compiled out.
-  private static boolean isClassMetadataAvailable() {
-    return !GWT.isScript()
-        || SerializableThrowable.class.getName().endsWith(".SerializableThrowable");
-  }
-
-  /**
-   * Resolves best effort class name by checking against some common exception types.
-   */
-  private static void resolveDesignatedType(SerializableThrowable t, Throwable designatedType) {
-    String resolvedName;
-    Class<?> resolvedType;
-    try {
-      throw designatedType;
-    } catch (NullPointerException e) {
-      resolvedName = "java.lang.NullPointerException";
-      resolvedType = NullPointerException.class;
-    } catch (JavaScriptException e) {
-      resolvedName = "com.google.gwt.core.client.JavaScriptException";
-      resolvedType = JavaScriptException.class;
-    } catch (RuntimeException e) {
-      resolvedName = "java.lang.RuntimeException";
-      resolvedType = RuntimeException.class;
-    } catch (Exception e) {
-      resolvedName = "java.lang.Exception";
-      resolvedType = Exception.class;
-    } catch (Error e) {
-      resolvedName = "java.lang.Error";
-      resolvedType = Error.class;
-    } catch (Throwable e) {
-      resolvedName = "java.lang.Throwable";
-      resolvedType = Throwable.class;
-    }
-    t.setDesignatedType(resolvedName, resolvedType == designatedType.getClass());
   }
 }

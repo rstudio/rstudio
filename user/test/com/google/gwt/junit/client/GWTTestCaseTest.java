@@ -22,6 +22,7 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
@@ -96,12 +97,25 @@ public class GWTTestCaseTest extends GWTTestCaseTestBase {
   }
 
   // We lose some type information if class meta data is not available, setting expected failure
-  // to RuntimeException will ensure this test case passes for no metadata.
+  // to RuntimeException will ensure this test case passes for no metadata. Also see the next test.
   @ExpectedFailure(withType = RuntimeException.class,
       withMessage = "testThrowsNonSerializableException")
   public void testThrowsNonSerializableException() {
     throw new SomeNonSerializableException("testThrowsNonSerializableException");
   }
+
+  @ExpectedFailure(withType = SomeNonSerializableException.class)
+  public void testThrowsNonSerializableException_hasMetaData() throws Throwable {
+    if (!Object.class.getName().equals("java.lang.Object")) {
+      // If there is no metadata lets make the test case happy
+      SerializableThrowable throwable = SerializableThrowable.fromThrowable(new Exception());
+      throwable.setDesignatedType(
+          "com.google.gwt.junit.client.GWTTestCaseTest$SomeNonSerializableException", true);
+      throw throwable;
+    }
+    testThrowsNonSerializableException();
+  }
+
 
   public void testAssertEqualsDouble() {
     assertEquals(0.0, 0.0, 0.0);

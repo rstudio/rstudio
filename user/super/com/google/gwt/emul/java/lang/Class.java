@@ -119,7 +119,7 @@ public final class Class<T> {
      return func;
    }-*/;
 
-  static boolean isClassMetadataEnabled() {
+  public static boolean isClassMetadataEnabled() {
     // This body may be replaced by the compiler
     return true;
   }
