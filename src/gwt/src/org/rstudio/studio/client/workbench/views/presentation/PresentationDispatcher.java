@@ -128,7 +128,7 @@ public class PresentationDispatcher
       eventBus_.fireEvent(event);
    }
        
-   private String getPresentationPath(String file)
+   protected String getPresentationPath(String file)
    {
       FileSystemItem presentationFile = FileSystemItem.createFile(
                                          context_.getPresentationFilePath());
