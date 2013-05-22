@@ -32,6 +32,8 @@
 
   <property name="gwt.apicheck.config" 
     location="tools/api-checker/config/gwt25_26userApi.conf"/>
+  <property name="gwt.apicheck.referencelibs"
+    value="${gwt.tools}/api-checker-reference/2.5.1/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.5.1/gwt-user-modified.jar"/>
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
@@ -206,7 +208,7 @@
         <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
       </classpath>
       <arg value="-refJar"/>
-      <arg path="${gwt.root}/tools/api-checker/reference/gwt-dev-modified.jar:${gwt.root}/tools/api-checker/reference/gwt-user-modified.jar"/>
+      <arg path="${gwt.apicheck.referencelibs}"/>
       <arg value="-configFile"/>
       <arg file="${gwt.apicheck.config}"/>
       <arg value="-logLevel"/>
