@@ -2388,6 +2388,11 @@ Error registerRpcMethod(const std::string& name,
    return Success();
 }
 
+bool rSessionResumed()
+{
+   return s_rSessionResumed;
+}
+
 namespace {
 
 bool continueChildProcess(core::system::ProcessOperations&)

@@ -386,6 +386,8 @@ private:
    
 void addSuspendHandler(const SuspendHandler& handler);
 
+bool rSessionResumed();
+
 } // namespace module_context
 } // namespace session
 
