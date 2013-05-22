@@ -90,6 +90,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name);
+      int getScrollPosition();
    }
    
    @Inject

@@ -132,6 +132,12 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.setEnvironmentName(environmentName);
    }
 
+   @Override
+   public int getScrollPosition()
+   {
+      return objects_.getScrollPosition();
+   }
+
    public void editObject(String objectName)
    {
       executeFunctionForObject("fix", objectName);
@@ -153,7 +159,6 @@ public class EnvironmentPane extends WorkbenchPane
       SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
       eventBus_.fireEvent(event);
    }
-
 
    private ToolbarButton dataImportButton_;
    private Label environmentName_;

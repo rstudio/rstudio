@@ -33,7 +33,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
@@ -324,11 +323,16 @@ public class EnvironmentObjects extends Composite
       objectList.onResize();
    }
 
+   public int getScrollPosition()
+   {
+      return objectList.getScrollPanel().getVerticalScrollPosition();
+   }
+
    public EnvironmentObjects()
    {
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
-      objectList = new DataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
+      objectList = new ScrollingDataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectDataProvider_.addDataDisplay(objectList);
       createColumns();
@@ -565,7 +569,7 @@ public class EnvironmentObjects extends Composite
    @UiField HTMLPanel environmentContents;
    @UiField Style style;
 
-   DataGrid<RObjectEntry> objectList;
+   ScrollingDataGrid<RObjectEntry> objectList;
    Label environmentName_;
    Label environmentEmptyMessage_;
 
