@@ -59,7 +59,6 @@ public class EnvironmentObjects extends Composite
       String emptyEnvironmentPanel();
       String emptyEnvironmentName();
       String emptyEnvironmentMessage();
-      String wrappingDetailText();
       String expandIcon();
       String unevaluatedPromise();
    }
@@ -114,7 +113,11 @@ public class EnvironmentObjects extends Composite
          String title = rowValue.rObject.getValue();
          if (!title.equals("NO_VALUE"))
          {
-            descCol.title(rowValue.rObject.getValue());
+            if (rowValue.isPromise())
+            {
+               title += " (unevaluated promise)";
+            }
+            descCol.title(title);
          }
          String descriptionStyle = style.valueCol();
          if (rowValue.isPromise())
@@ -189,47 +192,29 @@ public class EnvironmentObjects extends Composite
       {
          JsArrayString contents = rowValue.rObject.getContents();
 
-         // if the contents are empty, assume we want to expand the value,
-         // and don't wrap it.
-         if (contents.length() == 0)
-         {
-            TableRowBuilder valueRow = startRow().className(style.detailRow());
-            valueRow.startTD().endTD();
-            valueRow.startTD()
-                       .colSpan(2)
-                       .className(style.wrappingDetailText())
-                       .text(rowValue.rObject.getValue())
-                       .endTD();
-            valueRow.endTR();
-         }
+         String objectType = rowValue.rObject.getType();
+         Boolean isListOrFrame = objectType.equals("list")
+                                 || objectType.equals("data.frame");
 
-         // contents are not empty; render a row for each entry
-         else
+         // ignore the first line of output for lists and data frames
+         // (it's the same size information we're already showing in the grid)
+         for (int idx = isListOrFrame ? 1 : 0; idx < contents.length(); idx++)
          {
-            String objectType = rowValue.rObject.getType();
-            Boolean isListOrFrame = objectType.equals("list")
-                                    || objectType.equals("data.frame");
-
-            // ignore the first line of output for lists and data frames
-            // (it's the same size information we're already showing in the grid)
-            for (int idx = isListOrFrame ? 1 : 0; idx < contents.length(); idx++)
+            TableRowBuilder detail = startRow().className(style.detailRow());
+            detail.startTD().endTD();
+            TableCellBuilder objectDetail = detail.startTD();
+            String content = contents.get(idx);
+            // ignore the first two characters of output for lists and frames
+            // ("$ value:" becomes "value:")
+            if (isListOrFrame)
             {
-               TableRowBuilder detail = startRow().className(style.detailRow());
-               detail.startTD().endTD();
-               TableCellBuilder objectDetail = detail.startTD();
-               String content = contents.get(idx);
-               // ignore the first two characters of output for lists and frames
-               // ("$ value:" becomes "value:")
-               if (isListOrFrame)
-               {
-                  content = content.substring(2, content.length()).trim();
-               }
-               objectDetail.colSpan(2)
-                       .title(content)
-                       .text(content)
-                       .endTD();
-               detail.endTR();
+               content = content.substring(2, content.length()).trim();
             }
+            objectDetail.colSpan(2)
+                    .title(content)
+                    .text(content)
+                    .endTD();
+            detail.endTR();
          }
       }
    }
@@ -241,10 +226,6 @@ public class EnvironmentObjects extends Composite
    public void setContextDepth(int contextDepth)
    {
       contextDepth_ = contextDepth;
-
-      // when changing context depths, forget about our scroll position
-      // (we're working with a different object set now)
-      scrollPosition_ = invalidScrollPosition;
    }
 
    public void addObject(RObject obj)

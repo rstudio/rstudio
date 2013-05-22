@@ -25,5 +25,9 @@ public class EnvironmentState extends JavaScriptObject
    
    public final native int contextDepth() /*-{
       return this.context_depth;
-   }-*/;   
+   }-*/;
+
+   public final native String functionName() /*-{
+      return this.function_name;
+   }-*/;
 }

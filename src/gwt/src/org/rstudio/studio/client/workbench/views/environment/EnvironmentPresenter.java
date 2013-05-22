@@ -323,6 +323,10 @@ public class EnvironmentPresenter extends BasePresenter
    {
       environmentState_ = environmentState;
       setContextDepth(environmentState_.contextDepth());
+      if (environmentState_.contextDepth() > 0)
+      {
+         view_.setEnvironmentName(environmentState_.functionName());
+      }
    }
    
    public void setContextDepth(int contextDepth)

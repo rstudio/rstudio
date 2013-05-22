@@ -1,5 +1,5 @@
 /*
- * SessionWorkspace.cpp
+ * SessionDirty.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionWorkspace.hpp"
+#include "SessionDirty.hpp"
 
 #include <algorithm>
 
@@ -42,7 +42,7 @@ using namespace r::exec;
 
 namespace session {
 namespace modules {
-namespace workspace {
+namespace dirty {
 
 namespace {
 
@@ -143,7 +143,7 @@ Error initialize()
 }
    
 
-} // namepsace workspace
+} // namepsace dirty
 } // namespace modules
 } // namesapce session
 

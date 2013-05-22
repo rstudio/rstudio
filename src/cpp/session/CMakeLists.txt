@@ -53,6 +53,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp
+   modules/SessionDirty.cpp
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
@@ -72,7 +73,6 @@ set (SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
-   modules/SessionWorkspace.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp

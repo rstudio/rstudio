@@ -72,11 +72,6 @@
    text-overflow: ellipsis;
 }
 
-.objectGrid .detailRow td.wrappingDetailText
-{
-   white-space: normal;
-}
-
 .emptyEnvironmentPanel
 {
    text-align: center;

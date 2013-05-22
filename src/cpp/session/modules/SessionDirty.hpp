@@ -1,5 +1,5 @@
 /*
- * SessionWorkspace.hpp
+ * SessionDirty.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_SESSION_WORKSPACE_HPP
-#define SESSION_SESSION_WORKSPACE_HPP
+#ifndef SESSION_SESSION_DIRTY_HPP
+#define SESSION_SESSION_DIRTY_HPP
 
 namespace core {
    class Error ;
@@ -22,12 +22,12 @@ namespace core {
 
 namespace session {
 namespace modules { 
-namespace workspace {
+namespace dirty {
 
 core::Error initialize();
 
-} // namespace workspace
+} // namespace dirty
 } // namespace modules
 } // namesapce session
 
-#endif // SESSION_SESSION_WORKSPACE_HPP
+#endif // SESSION_SESSION_DIRTY_HPP
