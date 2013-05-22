@@ -31,10 +31,9 @@ public class RObjectEntry
    // the classification of data in the pane
    public class Categories
    {
-      public static final int Unevaluated = 0;
-      public static final int Data = 1;
-      public static final int Value = 2;
-      public static final int Function = 3;
+      public static final int Data = 0;
+      public static final int Value = 1;
+      public static final int Function = 2;
    }
 
    // make a new entry in the pane from an R object
@@ -57,11 +56,7 @@ public class RObjectEntry
    public int getCategory()
    {
       String type = rObject.getType();
-      if (type.equals("promise"))
-      {
-         return Categories.Unevaluated;
-      }
-      else if (type.equals("data.frame")
+      if (type.equals("data.frame")
          || type.equals("matrix")
          || type.equals("data.table")
          || type.equals("cast_df"))
@@ -74,6 +69,11 @@ public class RObjectEntry
       }
 
       return Categories.Value;
+   }
+
+   public boolean isPromise()
+   {
+      return rObject.getType() == "promise";
    }
 
    RObject rObject;

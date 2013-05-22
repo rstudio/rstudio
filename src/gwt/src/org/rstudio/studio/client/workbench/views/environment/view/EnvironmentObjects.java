@@ -61,6 +61,7 @@ public class EnvironmentObjects extends Composite
       String emptyEnvironmentMessage();
       String wrappingDetailText();
       String expandIcon();
+      String unevaluatedPromise();
    }
 
    // methods implemented by the owning presenter to edit and view objects
@@ -115,7 +116,12 @@ public class EnvironmentObjects extends Composite
          {
             descCol.title(rowValue.rObject.getValue());
          }
-         descCol.className(style.valueCol());
+         String descriptionStyle = style.valueCol();
+         if (rowValue.isPromise())
+         {
+            descriptionStyle += (" " + style.unevaluatedPromise());
+         }
+         descCol.className(descriptionStyle);
 
          // if the row is expanded but doesn't have contents, that means the
          // value is being show in the detail row--don't duplicate it here
@@ -158,9 +164,6 @@ public class EnvironmentObjects extends Composite
             String categoryTitle;
             switch (rowValue.getCategory())
             {
-               case RObjectEntry.Categories.Unevaluated:
-                  categoryTitle = "Unevaluated";
-                  break;
                case RObjectEntry.Categories.Data:
                   categoryTitle = "Data";
                   break;
@@ -439,8 +442,9 @@ public class EnvironmentObjects extends Composite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            // if the object doesn't yet have a known type
-            if (object.getCategory() == RObjectEntry.Categories.Unevaluated)
+            // initial click on a promise forces eval, at which point it gets a
+            // value we can interact with
+            if (object.isPromise())
             {
                observer_.forceEvalObject(object.rObject.getName());
             }
@@ -517,7 +521,7 @@ public class EnvironmentObjects extends Composite
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
-      Boolean[] leaders = { false, false, false, false };
+      Boolean[] leaders = { false, false, false };
 
       for (int i = 0; i < objects.size(); i++)
       {

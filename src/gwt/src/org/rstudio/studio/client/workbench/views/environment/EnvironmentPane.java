@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
@@ -58,6 +59,10 @@ public class EnvironmentPane extends WorkbenchPane
             EnvironmentPaneResources.INSTANCE
                     .environmentPaneStyle()
                     .environmentNameLabel());
+      functionIndicator_ = new Image(
+            EnvironmentPaneResources.INSTANCE.functionIndicator());
+      functionIndicator_.setVisible(false);
+
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
@@ -65,6 +70,7 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(createImportMenu());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      toolbar.addRightWidget(functionIndicator_);
       toolbar.addRightWidget(environmentName_);
       toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
 
@@ -123,6 +129,8 @@ public class EnvironmentPane extends WorkbenchPane
       commands_.importDatasetFromFile().setEnabled(commandsEnabled);
       commands_.importDatasetFromURL().setEnabled(commandsEnabled);
       dataImportButton_.setEnabled(commandsEnabled);
+
+      functionIndicator_.setVisible(contextDepth > 0);
    }
 
    @Override
@@ -176,6 +184,7 @@ public class EnvironmentPane extends WorkbenchPane
 
    private ToolbarButton dataImportButton_;
    private Label environmentName_;
+   private Image functionIndicator_;
    private EnvironmentObjects objects_;
    private Commands commands_;
    private EventBus eventBus_;
