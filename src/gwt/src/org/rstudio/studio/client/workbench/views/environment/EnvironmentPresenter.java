@@ -31,6 +31,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -91,6 +92,7 @@ public class EnvironmentPresenter extends BasePresenter
       void removeObject(String object);
       void setEnvironmentName(String name);
       int getScrollPosition();
+      void setScrollPosition(int scrollPosition);
    }
    
    @Inject
@@ -170,31 +172,19 @@ public class EnvironmentPresenter extends BasePresenter
          protected void onInit(JsObject value)
          {
             if (value != null)
-               clientState_ = value.cast();
-            lastKnownState_ = clientState_;
+            {
+               EnvironmentClientState clientState = value.cast();
+               view_.setScrollPosition(clientState.getScrollPosition());
+            }
          }
 
          @Override
          protected JsObject getValue()
          {
+            clientState_ = EnvironmentClientState.create(view_.getScrollPosition());
             return clientState_.cast();
          }
-
-         @Override
-         protected boolean hasChanged()
-         {
-            if (!EnvironmentClientState.areEqual(lastKnownState_, clientState_))
-            {
-               lastKnownState_ = clientState_;
-               return true;
-            }
-
-            return false;
-         }
-
-         private EnvironmentClientState lastKnownState_;
       };
-
    }
 
    @Handler

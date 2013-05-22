@@ -21,6 +21,8 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.resources.client.CssResource;
@@ -37,6 +39,7 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -287,6 +290,14 @@ public class EnvironmentObjects extends Composite
       // push the list into the UI and update category leaders
       objectDataProvider_.getList().addAll(objectEntryList);
       updateCategoryLeaders(false);
+
+      // now that we have a list of objects, make a deferred update to the
+      // scroll position if one has been applied
+      if (scrollPosition_ != INVALID_SCROLL_POSITION)
+      {
+         setDeferredScrollPosition(scrollPosition_);
+         scrollPosition_ = INVALID_SCROLL_POSITION;
+      }
    }
 
    public void removeObject(String objName)
@@ -326,6 +337,11 @@ public class EnvironmentObjects extends Composite
    public int getScrollPosition()
    {
       return objectList.getScrollPanel().getVerticalScrollPosition();
+   }
+
+   public void setScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
    }
 
    public EnvironmentObjects()
@@ -545,6 +561,18 @@ public class EnvironmentObjects extends Composite
       return messagePanel;
    }
 
+   private void setDeferredScrollPosition(final int scrollPosition)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            objectList.getScrollPanel().setVerticalScrollPosition(scrollPosition);
+         }
+      });
+   }
+
    private class RObjectEntrySort implements Comparator<RObjectEntry>
    {
       public int compare(RObjectEntry first, RObjectEntry second)
@@ -566,6 +594,8 @@ public class EnvironmentObjects extends Composite
            "Global environment is empty";
    private final static String emptyFunctionEnvironmentMessage =
            "Function environment is empty";
+   private final static int INVALID_SCROLL_POSITION = -1;
+
    @UiField HTMLPanel environmentContents;
    @UiField Style style;
 
@@ -580,4 +610,5 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
+   private int scrollPosition_ = INVALID_SCROLL_POSITION;
 }

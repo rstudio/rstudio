@@ -44,7 +44,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       commands_ = commands;
       eventBus_ = eventBus;
-      
+
       ensureWidget();
    }
 
@@ -136,6 +136,12 @@ public class EnvironmentPane extends WorkbenchPane
    public int getScrollPosition()
    {
       return objects_.getScrollPosition();
+   }
+
+   @Override
+   public void setScrollPosition(int scrollPosition)
+   {
+      objects_.setScrollPosition(scrollPosition);
    }
 
    public void editObject(String objectName)
