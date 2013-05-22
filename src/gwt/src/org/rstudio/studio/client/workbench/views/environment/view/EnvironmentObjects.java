@@ -39,7 +39,6 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -239,6 +238,10 @@ public class EnvironmentObjects extends Composite
    public void setContextDepth(int contextDepth)
    {
       contextDepth_ = contextDepth;
+
+      // when changing context depths, forget about our scroll position
+      // (we're working with a different object set now)
+      scrollPosition_ = invalidScrollPosition;
    }
 
    public void addObject(RObject obj)
@@ -293,10 +296,9 @@ public class EnvironmentObjects extends Composite
 
       // now that we have a list of objects, make a deferred update to the
       // scroll position if one has been applied
-      if (scrollPosition_ != INVALID_SCROLL_POSITION)
+      if (scrollPosition_ != invalidScrollPosition)
       {
          setDeferredScrollPosition(scrollPosition_);
-         scrollPosition_ = INVALID_SCROLL_POSITION;
       }
    }
 
@@ -594,7 +596,7 @@ public class EnvironmentObjects extends Composite
            "Global environment is empty";
    private final static String emptyFunctionEnvironmentMessage =
            "Function environment is empty";
-   private final static int INVALID_SCROLL_POSITION = -1;
+   private final static int invalidScrollPosition = -1;
 
    @UiField HTMLPanel environmentContents;
    @UiField Style style;
@@ -610,5 +612,5 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
-   private int scrollPosition_ = INVALID_SCROLL_POSITION;
+   private int scrollPosition_ = invalidScrollPosition;
 }

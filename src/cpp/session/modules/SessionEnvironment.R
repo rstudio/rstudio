@@ -97,10 +97,6 @@
                       "variables",
                       sep=" "))
       }
-      else if (is.matrix(obj))
-      {
-         return(capture.output(str(obj)))
-      }
       else if (is.environment(obj))
       {
          return(paste("Environment with ", length(obj), " object(s) "))
@@ -108,6 +104,12 @@
       else if (is.list(obj))
       {
          return(paste("List of ", length(obj)))
+      }
+      else if (is.matrix(obj)
+              || is.numeric(obj)
+              || is.factor(obj))
+      {
+         return(capture.output(str(obj)))
       }
       else
          return("")

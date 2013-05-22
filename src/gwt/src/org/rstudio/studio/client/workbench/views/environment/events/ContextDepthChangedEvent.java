@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.events;
 
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -67,7 +68,7 @@ public class ContextDepthChangedEvent extends
    {
       String functionName = contextData_.getFunctionName();
       return functionName.length() > 0 && functionName != "NA" ?
-             contextData_.getFunctionName() : "Global";
+             contextData_.getFunctionName() : EnvironmentPane.globalEnvironmentName;
    }
 
    @Override

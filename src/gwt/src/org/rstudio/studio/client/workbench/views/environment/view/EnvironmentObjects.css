@@ -42,6 +42,7 @@
    text-overflow: ellipsis;
    overflow-x: hidden;
    cursor: pointer;
+   padding-right: 20px;
 }
 
 .objectGrid .detailRow

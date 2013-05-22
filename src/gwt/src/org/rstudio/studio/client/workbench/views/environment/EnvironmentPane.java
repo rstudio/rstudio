@@ -45,13 +45,19 @@ public class EnvironmentPane extends WorkbenchPane
       commands_ = commands;
       eventBus_ = eventBus;
 
+      EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+
       ensureWidget();
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      environmentName_ = new Label("Global");
+      environmentName_ = new Label(globalEnvironmentName);
+      environmentName_.setStyleName(
+            EnvironmentPaneResources.INSTANCE
+                    .environmentPaneStyle()
+                    .environmentNameLabel());
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
@@ -165,6 +171,8 @@ public class EnvironmentPane extends WorkbenchPane
       SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
       eventBus_.fireEvent(event);
    }
+
+   public final static String globalEnvironmentName = "Global Environment";
 
    private ToolbarButton dataImportButton_;
    private Label environmentName_;
