@@ -255,6 +255,10 @@ void Log::append(EntryType type,
                  const std::string& input,
                  const std::string& errors)
 {
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
    // ensure target file
    FilePath logFilePath;
    Error error = ensureTargetFile(
@@ -290,6 +294,10 @@ void Log::append(EntryType type,
 
 void Log::recordFeedback(const std::string& feedback)
 {
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
    // ensure target file
    FilePath feedbackFilePath;
    Error error = ensureTargetFile("feedback-v2.csv",
@@ -319,6 +327,10 @@ void Log::recordFeedback(const std::string& feedback)
 
 void Log::recordQuizResponse(int index, int answer, bool correct)
 {
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
    // ensure target file
    FilePath quizResponseFilePath;
    Error error = ensureTargetFile(
