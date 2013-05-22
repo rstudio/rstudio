@@ -436,9 +436,10 @@ public:
       resumeSignal_.connect(group, handler.resume());
    }
    
-   void suspend(Settings* pSettings)
+   void suspend(const r::session::RSuspendOptions& options,
+                Settings* pSettings)
    {
-      suspendSignal_(pSettings);
+      suspendSignal_(options, pSettings);
    }
    
    void resume(const Settings& settings)
@@ -454,7 +455,7 @@ private:
    
    int nextGroup_; 
    
-   boost::signal<void(Settings*), 
+   boost::signal<void(const r::session::RSuspendOptions&,Settings*),
                  boost::last_value<void>,
                  int,
                  std::less<int> > suspendSignal_;
@@ -475,10 +476,11 @@ void addSuspendHandler(const SuspendHandler& handler)
    s_suspendHandlers.add(handler);
 }
    
-void onSuspended(Settings* pPersistentState)
+void onSuspended(const r::session::RSuspendOptions& options,
+                 Settings* pPersistentState)
 {
    pPersistentState->beginUpdate();
-   s_suspendHandlers.suspend(pPersistentState);
+   s_suspendHandlers.suspend(options, pPersistentState);
    pPersistentState->endUpdate();
    
 }

@@ -871,7 +871,7 @@ Error initialize()
 {
    // register suspend handler
    using namespace module_context;
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    return Success();
 }

@@ -345,7 +345,7 @@ Error initialize()
 {         
    // add suspend handler
    using namespace session::module_context;
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    // subscribe to events
    using boost::bind;

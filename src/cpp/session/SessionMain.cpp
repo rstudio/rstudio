@@ -1946,9 +1946,9 @@ void rShowMessage(const std::string& message)
    session::clientEventQueue().add(event);
 }
    
-void rSuspended()
+void rSuspended(const r::session::RSuspendOptions& options)
 {
-   module_context::onSuspended(&(persistentState().settings()));
+   module_context::onSuspended(options, &(persistentState().settings()));
 }
    
 void rResumed()

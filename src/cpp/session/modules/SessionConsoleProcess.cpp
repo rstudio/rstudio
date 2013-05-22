@@ -747,7 +747,7 @@ Error initialize()
    using namespace module_context;
 
    // add suspend/resume handler
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    // install rpc methods
    ExecBlock initBlock ;

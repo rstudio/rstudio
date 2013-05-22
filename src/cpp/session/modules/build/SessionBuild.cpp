@@ -1314,7 +1314,8 @@ Error initialize()
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
 
    // add suspend handler
-   addSuspendHandler(module_context::SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(module_context::SuspendHandler(boost::bind(onSuspend, _2),
+                                                    onResume));
 
    // install rpc methods
    using boost::bind;
