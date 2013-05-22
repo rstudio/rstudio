@@ -85,6 +85,10 @@
       {
          return(paste(ncol(obj),"columns"))
       }
+      else if (is(obj, "externalptr"))
+      {
+         return("External pointer")
+      }
       else if (is.data.frame(obj))
       {
          return(paste(dim(obj)[1],
@@ -96,6 +100,10 @@
       else if (is.matrix(obj))
       {
          return(capture.output(str(obj)))
+      }
+      else if (is.environment(obj))
+      {
+         return(paste("Environment with ", length(obj), " object(s) "))
       }
       else if (is.list(obj))
       {

@@ -266,9 +266,11 @@ public class EnvironmentObjects extends Composite
       if (!added)
       {
          RObjectEntry entry = new RObjectEntry(obj);
-         objectDataProvider_.getList().add(indexOfNewObject(entry), entry);
+         idx = indexOfNewObject(entry);
+         objectDataProvider_.getList().add(idx, entry);
       }
       updateCategoryLeaders(true);
+      objectList.getRowElement(idx).scrollIntoView();
    }
 
    // bulk add for objects--used on init or environment switch
@@ -481,6 +483,7 @@ public class EnvironmentObjects extends Composite
             {
                object.expanded = !object.expanded;
                objectList.redrawRow(index);
+               objectList.getRowElement(index).scrollIntoView();
             }
          }
       });

@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
@@ -51,7 +52,10 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
@@ -68,6 +72,7 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 
 import java.util.HashMap;
 
@@ -97,7 +102,8 @@ public class EnvironmentPresenter extends BasePresenter
                                FileDialogs fileDialogs,
                                WorkbenchContext workbenchContext,
                                ConsoleDispatcher consoleDispatcher,
-                               RemoteFileSystemContext fsContext)
+                               RemoteFileSystemContext fsContext,
+                               Session session)
    {
       super(view);
       binder.bind(commands, this);
@@ -155,6 +161,39 @@ public class EnvironmentPresenter extends BasePresenter
             view_.removeObject(event.getObjectName());
          }
       });
+
+      new JSObjectStateValue("environment-pane", "environmentClientState", ClientState.TEMPORARY,
+                             session.getSessionInfo().getClientState(), false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value != null)
+               clientState_ = value.cast();
+            lastKnownState_ = clientState_;
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            return clientState_.cast();
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            if (!EnvironmentClientState.areEqual(lastKnownState_, clientState_))
+            {
+               lastKnownState_ = clientState_;
+               return true;
+            }
+
+            return false;
+         }
+
+         private EnvironmentClientState lastKnownState_;
+      };
+
    }
 
    @Handler
@@ -412,4 +451,6 @@ public class EnvironmentPresenter extends BasePresenter
    private final EventBus eventBus_;
    private EnvironmentState environmentState_;
    private int contextDepth_;
+   private EnvironmentClientState clientState_ =
+           EnvironmentClientState.create(0);
 }

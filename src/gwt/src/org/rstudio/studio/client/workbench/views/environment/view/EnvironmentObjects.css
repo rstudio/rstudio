@@ -47,7 +47,6 @@
 .objectGrid .detailRow
 {
    border: 1px solid #f0f0f0;
-   background-color: #f5f5f5;
    font-size: 90%;
 }
 
@@ -65,8 +64,8 @@
 
 .objectGrid .detailRow td
 {
-   border-left: none;
-   border-right: none;
+   padding-left: 10px;
+   border: none;
    white-space: nowrap;
    overflow-x: hidden;
    text-overflow: ellipsis;
