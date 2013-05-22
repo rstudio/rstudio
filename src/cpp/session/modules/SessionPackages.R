@@ -154,11 +154,6 @@
              )
 })
 
-.rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
-{
-   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
-})
-
 .rs.addFunction("forceUnloadPackage", function(name)
 {
   if (name %in% .packages())
