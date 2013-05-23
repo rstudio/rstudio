@@ -4,6 +4,7 @@
 .objectGrid
 {
    height: 100%;
+   width: 100%;
    font-family: fixedWidthFont;
 }
 
@@ -101,3 +102,20 @@
 {
    color: #a0a0a0;
 }
+
+.widthSettingRow
+{
+   margin: 0px;
+   padding: 0px;
+}
+
+.widthSettingRow td.expandCol,
+.widthSettingRow td.nameCol,
+.widthSettingRow td.valueCol
+{
+   margin: 0px;
+   padding: 0px;
+   height: 0px;
+   border: none;
+}
+

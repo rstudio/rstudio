@@ -72,10 +72,6 @@ public class EnvironmentObjects extends Composite
       objectList_.setTableBuilder(new ObjectTableBuilder());
       objectList_.setSkipRowHoverCheck(true);
 
-      // make the grid fill the pane
-      objectList_.setWidth("100%");
-      objectList_.setHeight("100%");
-
       // disable persistent and transient row selection (currently necessary
       // because we emit more than one row per object and the DataGrid selection
       // behaviors aren't designed to work that way)
@@ -88,6 +84,7 @@ public class EnvironmentObjects extends Composite
       // these need to be done post-initWidget since they reference objects
       // created by initWidget
       objectList_.setEmptyTableWidget(buildEmptyGridMessage());
+      objectList_.setStyleName(style.objectGrid());
       environmentContents.add(objectList_);
    }
 
@@ -483,7 +480,7 @@ public class EnvironmentObjects extends Composite
          // column widths, so we can't let the first row be a spanning header.
          if (absRowIndex == 0)
          {
-            TableRowBuilder widthSettingRow = startRow();
+            TableRowBuilder widthSettingRow = startRow().className(style.widthSettingRow());
             widthSettingRow.startTD().className(style.expandCol()).endTD();
             widthSettingRow.startTD().className(style.nameCol()).endTD();
             widthSettingRow.startTD().className(style.valueCol()).endTD();
