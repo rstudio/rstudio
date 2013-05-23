@@ -12,12 +12,20 @@
    margin-bottom: .6em;    
 }
 
-.reveal p {
+.reveal p,
+.reveal table {
    margin-bottom: 1em; 
 }
 
 .reveal li {
    margin-bottom: .4em;
+}
+
+.reveal ul ul,
+.reveal ul ol,
+.reveal ol ol,
+.reveal ol ul {
+	margin-top: .4em;
 }
 
 .reveal .slides {
