@@ -1457,6 +1457,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))
    
+      // addins
+      (addins::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
@@ -1490,9 +1493,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
       // workers
       (workers::web_request::initialize)
-
-      // addins
-      (addins::initialize)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
