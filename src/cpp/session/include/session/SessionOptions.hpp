@@ -328,6 +328,13 @@ public:
       return core::string_utils::LineEndingNative;
    }
 
+   std::string getOverlayOption(const std::string& name)
+   {
+      return overlayOptions_[name];
+   }
+
+   bool getBoolOverlayOption(const std::string& name);
+
 private:
    void resolvePath(const core::FilePath& resourcePath,
                     std::string* pPath);
@@ -413,6 +420,9 @@ private:
 
    // initial project
    std::string initialProjectPath_;
+
+   // overlay options
+   std::map<std::string,std::string> overlayOptions_;
 };
   
 } // namespace session

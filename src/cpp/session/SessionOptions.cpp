@@ -16,6 +16,7 @@
 #include <session/SessionOptions.hpp>
 
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/ProgramStatus.hpp>
@@ -380,6 +381,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // return status
    return status;
+}
+
+bool Options::getBoolOverlayOption(const std::string& name)
+{
+   std::string optionValue = getOverlayOption(name);
+   return boost::algorithm::trim_copy(optionValue) == "1";
 }
 
 void Options::resolvePath(const FilePath& resourcePath,
