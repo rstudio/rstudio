@@ -50,7 +50,7 @@ var MarkdownHighlightRules = function() {
             regex : "^#{1,6}(?:[^ #].*| +.*(?:[^ #].*|[^ ]+.* +#+ *))$"
         }, { // dcffield
             token : ["comment.doc.tag", "text"],
-            regex : "^" +"([\\w-]+\\:)" + "(.+)" + "$"
+            regex : "^" +"([\\w-]+\\:)" + "(\\s+[^\\s]+.+)" + "$"
         }, 
         { // Github style block
             token : "support.function",
