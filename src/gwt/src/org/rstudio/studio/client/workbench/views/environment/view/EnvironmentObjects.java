@@ -25,7 +25,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -47,20 +46,8 @@ import java.util.*;
 public class EnvironmentObjects extends Composite
    implements RequiresResize
 {
-   // provide access to styles defined in associated CSS file
-   interface Style extends CssResource
+   public interface Binder extends UiBinder<Widget, EnvironmentObjects>
    {
-      String expandCol();
-      String nameCol();
-      String valueCol();
-      String detailRow();
-      String categoryHeaderRow();
-      String categoryHeaderText();
-      String emptyEnvironmentPanel();
-      String emptyEnvironmentName();
-      String emptyEnvironmentMessage();
-      String expandIcon();
-      String unevaluatedPromise();
    }
 
    // methods implemented by the owning presenter to edit and view objects
@@ -71,12 +58,354 @@ public class EnvironmentObjects extends Composite
       void forceEvalObject(String objectName);
    }
 
+   public EnvironmentObjects()
+   {
+      // initialize the data grid and hook it up to the list of R objects in
+      // the environment pane
+      objectList_ = new ScrollingDataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
+      objectDataProvider_ = new ListDataProvider<RObjectEntry>();
+      objectDataProvider_.addDataDisplay(objectList_);
+      createColumns();
+      objectList_.addColumn(objectExpandColumn_);
+      objectList_.addColumn(objectNameColumn_);
+      objectList_.addColumn(objectDescriptionColumn_);
+      objectList_.setTableBuilder(new ObjectTableBuilder());
+      objectList_.setSkipRowHoverCheck(true);
+
+      // make the grid fill the pane
+      objectList_.setWidth("100%");
+      objectList_.setHeight("100%");
+
+      // disable persistent and transient row selection (currently necessary
+      // because we emit more than one row per object and the DataGrid selection
+      // behaviors aren't designed to work that way)
+      objectList_.setSelectionModel(new NoSelectionModel<RObjectEntry>(
+              RObjectEntry.KEY_PROVIDER));
+      objectList_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
+      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+
+      // these need to be done post-initWidget since they reference objects
+      // created by initWidget
+      objectList_.setEmptyTableWidget(buildEmptyGridMessage());
+      environmentContents.add(objectList_);
+   }
+
+   public void setContextDepth(int contextDepth)
+   {
+      contextDepth_ = contextDepth;
+   }
+
+   public void addObject(RObject obj)
+   {
+      int idx = indexOfExistingObject(obj.getName());
+      RObjectEntry newEntry = new RObjectEntry(obj);
+      boolean added = false;
+
+      // if the object is already in the environment, just update the value
+      if (idx >= 0)
+      {
+         RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
+
+         if (oldEntry.rObject.getType().equals(obj.getType()))
+         {
+            // type did not change; update in-place and preserve expansion flag
+            newEntry.expanded = oldEntry.expanded;
+            objectDataProvider_.getList().set(idx, newEntry);
+            added = true;
+         }
+         else
+         {
+            // types did change, do a full add/remove
+            objectDataProvider_.getList().remove(idx);
+         }
+      }
+      if (!added)
+      {
+         RObjectEntry entry = new RObjectEntry(obj);
+         idx = indexOfNewObject(entry);
+         objectDataProvider_.getList().add(idx, entry);
+      }
+      updateCategoryLeaders(true);
+      objectList_.getRowElement(idx).scrollIntoView();
+   }
+
+   public void removeObject(String objName)
+   {
+      int idx = indexOfExistingObject(objName);
+      if (idx >= 0)
+      {
+         objectDataProvider_.getList().remove(idx);
+      }
+
+      updateCategoryLeaders(true);
+   }
+   
+   public void clearObjects()
+   {
+      objectDataProvider_.getList().clear();
+   }
+
+   // bulk add for objects--used on init or environment switch
+   public void addObjects(JsArray<RObject> objects)
+   {
+      // create an entry for each object and sort the array
+      int numObjects = objects.length();
+      ArrayList<RObjectEntry> objectEntryList = new ArrayList<RObjectEntry>();
+      for (int i = 0; i < numObjects; i++)
+      {
+         objectEntryList.add(new RObjectEntry(objects.get(i)));
+      }
+      Collections.sort(objectEntryList, new RObjectEntrySort());
+
+      // push the list into the UI and update category leaders
+      objectDataProvider_.getList().addAll(objectEntryList);
+      updateCategoryLeaders(false);
+
+      // now that we have a list of objects, make a deferred update to the
+      // scroll position if one has been applied
+      if (scrollPosition_ != invalidScrollPosition)
+      {
+         setDeferredScrollPosition(scrollPosition_);
+      }
+   }
+
+   public void setObserver(Observer observer)
+   {
+      observer_ = observer;
+   }
+
+   public void setEnvironmentName(String environmentName)
+   {
+      environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
+      environmentEmptyMessage_.setText(contextDepth_ > 0 ?
+                                       emptyFunctionEnvironmentMessage :
+                                       emptyGlobalEnvironmentMessage);
+   }
+
+   public void onResize()
+   {
+      objectList_.onResize();
+   }
+
+   public int getScrollPosition()
+   {
+      return objectList_.getScrollPanel().getVerticalScrollPosition();
+   }
+
+   public void setScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+   }
+
+   private int indexOfExistingObject(String objectName)
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+
+      // find the position of the object in the list
+      int index;
+      boolean foundObject = false;
+      for (index = 0; index < objects.size(); index++)
+      {
+         if (objects.get(index).rObject.getName() == objectName)
+         {
+            foundObject = true;
+            break;
+         }
+      }
+
+      return foundObject ? index : -1;
+   }
+
+
+   // returns the position a new object entry should occupy in the table
+   private int indexOfNewObject(RObjectEntry obj)
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+      RObjectEntrySort sort = new RObjectEntrySort();
+      int numObjects = objects.size();
+      int idx;
+      // consider: can we use binary search here?
+      for (idx = 0; idx < numObjects; idx++)
+      {
+         if (sort.compare(obj, objects.get(idx)) < 0)
+         {
+            break;
+         }
+      }
+      return idx;
+   }
+
+   // create each column for the data grid
+   private void createColumns()
+   {
+      // the column containing the expand command; available only on objects
+      // with contents (such as lists and data frames).
+      SafeHtmlRenderer<String> expanderRenderer = new AbstractSafeHtmlRenderer<String>()
+      {
+         @Override
+         public SafeHtml render(String object)
+         {
+            SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            if (!object.equals(""))
+            {
+               sb.appendHtmlConstant("<input type=\"image\" src=\"")
+                       .appendEscaped(object)
+                       .appendHtmlConstant("\" class=\"")
+                       .appendEscaped(style.expandIcon())
+                       .appendHtmlConstant("\" />");
+            }
+            else
+            {
+               sb.appendHtmlConstant("&nbsp;");
+            }
+            return sb.toSafeHtml();
+         }
+      };
+      objectExpandColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell(expanderRenderer))
+      {
+         @Override
+         public String getValue(RObjectEntry object)
+         {
+            if (object.canExpand())
+            {
+               ImageResource expandImage = object.expanded ?
+                                           EnvironmentResources.INSTANCE.collapseIcon() :
+                                           EnvironmentResources.INSTANCE.expandIcon();
+
+               return expandImage.getSafeUri().asString();
+            }
+            else
+            {
+               return "";
+            }
+         }
+      };
+      objectExpandColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            if (object.canExpand())
+            {
+               object.expanded = !object.expanded;
+               objectList_.redrawRow(index);
+               objectList_.getRowElement(index).scrollIntoView();
+            }
+         }
+      });
+
+      // the name of the object (simple text column)
+      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getName();
+         }
+      };
+
+      // the description *or* value of the object; when clicked, we'll view
+      // or edit the data inside the object.
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            String val = object.rObject.getValue();
+            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
+         }
+      };
+      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            // initial click on a promise forces eval, at which point it gets a
+            // value we can interact with
+            if (object.isPromise())
+            {
+               observer_.forceEvalObject(object.rObject.getName());
+            }
+            else if (object.getCategory() == RObjectEntry.Categories.Data)
+            {
+               observer_.viewObject(object.rObject.getName());
+            }
+            else
+            {
+               observer_.editObject(object.rObject.getName());
+            }
+         }
+      });
+
+   }
+
+   // after adds or removes, we need to tag the new category-leading objects
+   private void updateCategoryLeaders(boolean redrawUpdatedRows)
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+
+      // whether or not we've found a leader for each category
+      Boolean[] leaders = { false, false, false };
+
+      for (int i = 0; i < objects.size(); i++)
+      {
+         RObjectEntry entry = objects.get(i);
+         int category = entry.getCategory();
+         Boolean leader = entry.isCategoryLeader;
+         // if we haven't found a leader for this category yet, make this object
+         // the leader if it isn't already
+         if (!leaders[category])
+         {
+            leaders[category] = true;
+            if (!leader)
+            {
+               entry.isCategoryLeader = true;
+            }
+         }
+         // if this object is marked as the leader but we've already found a
+         // leader, unmark it
+         else if (leader)
+         {
+            entry.isCategoryLeader = false;
+         }
+
+         // if we changed the leader flag, redraw the row
+         if (leader != entry.isCategoryLeader
+             && redrawUpdatedRows)
+         {
+            objectList_.redrawRow(i);
+         }
+      }
+   }
+
+   private Widget buildEmptyGridMessage()
+   {
+      HTMLPanel messagePanel = new HTMLPanel("");
+      messagePanel.setStyleName(style.emptyEnvironmentPanel());
+      environmentName_ = new Label("");
+      environmentName_.setStyleName(style.emptyEnvironmentName());
+      environmentEmptyMessage_ = new Label(emptyGlobalEnvironmentMessage);
+      environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
+      messagePanel.add(environmentName_);
+      messagePanel.add(environmentEmptyMessage_);
+      return messagePanel;
+   }
+
+   private void setDeferredScrollPosition(final int scrollPosition)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            objectList_.getScrollPanel().setVerticalScrollPosition(scrollPosition);
+         }
+      });
+   }
+
    // builds individual rows of the object table
    private class ObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
    {
       public ObjectTableBuilder()
       {
-         super(objectList);
+         super(objectList_);
       }
 
       // (re)build the given row
@@ -219,364 +548,6 @@ public class EnvironmentObjects extends Composite
       }
    }
 
-   interface Binder extends UiBinder<Widget, EnvironmentObjects>
-   {
-   }
-
-   public void setContextDepth(int contextDepth)
-   {
-      contextDepth_ = contextDepth;
-   }
-
-   public void addObject(RObject obj)
-   {
-      int idx = indexOfExistingObject(obj.getName());
-      RObjectEntry newEntry = new RObjectEntry(obj);
-      boolean added = false;
-
-      // if the object is already in the environment, just update the value
-      if (idx >= 0)
-      {
-         RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
-
-         if (oldEntry.rObject.getType().equals(obj.getType()))
-         {
-            // type did not change; update in-place and preserve expansion flag
-            newEntry.expanded = oldEntry.expanded;
-            objectDataProvider_.getList().set(idx, newEntry);
-            added = true;
-         }
-         else
-         {
-            // types did change, do a full add/remove
-            objectDataProvider_.getList().remove(idx);
-         }
-      }
-      if (!added)
-      {
-         RObjectEntry entry = new RObjectEntry(obj);
-         idx = indexOfNewObject(entry);
-         objectDataProvider_.getList().add(idx, entry);
-      }
-      updateCategoryLeaders(true);
-      objectList.getRowElement(idx).scrollIntoView();
-   }
-
-   // bulk add for objects--used on init or environment switch
-   public void addObjects(JsArray<RObject> objects)
-   {
-      // create an entry for each object and sort the array
-      int numObjects = objects.length();
-      ArrayList<RObjectEntry> objectEntryList = new ArrayList<RObjectEntry>();
-      for (int i = 0; i < numObjects; i++)
-      {
-         objectEntryList.add(new RObjectEntry(objects.get(i)));
-      }
-      Collections.sort(objectEntryList, new RObjectEntrySort());
-
-      // push the list into the UI and update category leaders
-      objectDataProvider_.getList().addAll(objectEntryList);
-      updateCategoryLeaders(false);
-
-      // now that we have a list of objects, make a deferred update to the
-      // scroll position if one has been applied
-      if (scrollPosition_ != invalidScrollPosition)
-      {
-         setDeferredScrollPosition(scrollPosition_);
-      }
-   }
-
-   public void removeObject(String objName)
-   {
-      int idx = indexOfExistingObject(objName);
-      if (idx >= 0)
-      {
-         objectDataProvider_.getList().remove(idx);
-      }
-
-      updateCategoryLeaders(true);
-   }
-   
-   public void clearObjects()
-   {
-      objectDataProvider_.getList().clear();
-   }
-
-   public void setObserver(Observer observer)
-   {
-      observer_ = observer;
-   }
-
-   public void setEnvironmentName(String environmentName)
-   {
-      environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
-      environmentEmptyMessage_.setText(contextDepth_ > 0 ?
-         emptyFunctionEnvironmentMessage :
-         emptyGlobalEnvironmentMessage);
-   }
-
-   public void onResize()
-   {
-      objectList.onResize();
-   }
-
-   public int getScrollPosition()
-   {
-      return objectList.getScrollPanel().getVerticalScrollPosition();
-   }
-
-   public void setScrollPosition(int scrollPosition)
-   {
-      scrollPosition_ = scrollPosition;
-   }
-
-   public EnvironmentObjects()
-   {
-      // initialize the data grid and hook it up to the list of R objects in
-      // the environment pane
-      objectList = new ScrollingDataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
-      objectDataProvider_ = new ListDataProvider<RObjectEntry>();
-      objectDataProvider_.addDataDisplay(objectList);
-      createColumns();
-      objectList.addColumn(objectExpandColumn_);
-      objectList.addColumn(objectNameColumn_);
-      objectList.addColumn(objectDescriptionColumn_);
-      objectList.setTableBuilder(new ObjectTableBuilder());
-      objectList.setSkipRowHoverCheck(true);
-
-      // make the grid fill the pane
-      objectList.setWidth("100%");
-      objectList.setHeight("100%");
-
-      // disable persistent and transient row selection (currently necessary
-      // because we emit more than one row per object and the DataGrid selection
-      // behaviors aren't designed to work that way)
-      objectList.setSelectionModel(new NoSelectionModel<RObjectEntry>(
-              RObjectEntry.KEY_PROVIDER));
-      objectList.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-
-      initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-
-      // these need to be done post-initWidget since they reference objects
-      // created by initWidget
-      objectList.setEmptyTableWidget(BuildEmptyGridMessage());
-      environmentContents.add(objectList);
-   }
-
-   private int indexOfExistingObject(String objectName)
-   {
-      List<RObjectEntry> objects = objectDataProvider_.getList();
-
-      // find the position of the object in the list
-      int index;
-      boolean foundObject = false;
-      for (index = 0; index < objects.size(); index++)
-      {
-         if (objects.get(index).rObject.getName() == objectName)
-         {
-            foundObject = true;
-            break;
-         }
-      }
-
-      return foundObject ? index : -1;
-   }
-
-
-   // returns the position a new object entry should occupy in the table
-   private int indexOfNewObject(RObjectEntry obj)
-   {
-      List<RObjectEntry> objects = objectDataProvider_.getList();
-      RObjectEntrySort sort = new RObjectEntrySort();
-      int numObjects = objects.size();
-      int idx;
-      // consider: can we use binary search here?
-      for (idx = 0; idx < numObjects; idx++)
-      {
-         if (sort.compare(obj, objects.get(idx)) < 0)
-         {
-            break;
-         }
-      }
-      return idx;
-   }
-
-   // create each column for the data grid
-   private void createColumns()
-   {
-      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getName();
-         }
-      };
-
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            String val = object.rObject.getValue();
-            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
-         }
-      };
-      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            // initial click on a promise forces eval, at which point it gets a
-            // value we can interact with
-            if (object.isPromise())
-            {
-               observer_.forceEvalObject(object.rObject.getName());
-            }
-            else if (object.getCategory() == RObjectEntry.Categories.Data)
-            {
-               observer_.viewObject(object.rObject.getName());
-            }
-            else
-            {
-               observer_.editObject(object.rObject.getName());
-            }
-         }
-      });
-
-      SafeHtmlRenderer<String> expanderRenderer = new AbstractSafeHtmlRenderer<String>()
-      {
-         @Override
-         public SafeHtml render(String object)
-         {
-            SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            if (!object.equals(""))
-            {
-               sb.appendHtmlConstant("<input type=\"image\" src=\"")
-                       .appendEscaped(object)
-                       .appendHtmlConstant("\" class=\"")
-                       .appendEscaped(style.expandIcon())
-                       .appendHtmlConstant("\" />");
-            }
-            else
-            {
-               sb.appendHtmlConstant("&nbsp;");
-            }
-            return sb.toSafeHtml();
-         }
-      };
-
-      objectExpandColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell(expanderRenderer))
-      {
-         @Override
-         public String getValue(RObjectEntry object)
-         {
-            if (object.canExpand())
-            {
-               ImageResource expandImage = object.expanded ?
-                         EnvironmentResources.INSTANCE.collapseIcon() :
-                         EnvironmentResources.INSTANCE.expandIcon();
-
-               return expandImage.getSafeUri().asString();
-            }
-            else
-            {
-               return "";
-            }
-         }
-      };
-      objectExpandColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            if (object.canExpand())
-            {
-               object.expanded = !object.expanded;
-               objectList.redrawRow(index);
-               objectList.getRowElement(index).scrollIntoView();
-            }
-         }
-      });
-   }
-
-   // after adds or removes, we need to tag the new category-leading objects
-   private void updateCategoryLeaders(boolean redrawUpdatedRows)
-   {
-      List<RObjectEntry> objects = objectDataProvider_.getList();
-
-      // whether or not we've found a leader for each category
-      Boolean[] leaders = { false, false, false };
-
-      for (int i = 0; i < objects.size(); i++)
-      {
-         RObjectEntry entry = objects.get(i);
-         int category = entry.getCategory();
-         Boolean leader = entry.isCategoryLeader;
-         // if we haven't found a leader for this category yet, make this object
-         // the leader if it isn't already
-         if (!leaders[category])
-         {
-            leaders[category] = true;
-            if (!leader)
-            {
-               entry.isCategoryLeader = true;
-            }
-         }
-         // if this object is marked as the leader but we've already found a
-         // leader, unmark it
-         else if (leader)
-         {
-            entry.isCategoryLeader = false;
-         }
-
-         // if we changed the leader flag, redraw the row
-         if (leader != entry.isCategoryLeader
-             && redrawUpdatedRows)
-         {
-            objectList.redrawRow(i);
-         }
-      }
-   }
-
-   private Widget BuildEmptyGridMessage()
-   {
-      HTMLPanel messagePanel = new HTMLPanel("");
-      messagePanel.setStyleName(style.emptyEnvironmentPanel());
-      environmentName_ = new Label("");
-      environmentName_.setStyleName(style.emptyEnvironmentName());
-      environmentEmptyMessage_ = new Label(emptyGlobalEnvironmentMessage);
-      environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
-      messagePanel.add(environmentName_);
-      messagePanel.add(environmentEmptyMessage_);
-      return messagePanel;
-   }
-
-   private void setDeferredScrollPosition(final int scrollPosition)
-   {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            objectList.getScrollPanel().setVerticalScrollPosition(scrollPosition);
-         }
-      });
-   }
-
-   private class RObjectEntrySort implements Comparator<RObjectEntry>
-   {
-      public int compare(RObjectEntry first, RObjectEntry second)
-      {
-         int result = first.getCategory() - second.getCategory();
-         if (result == 0)
-         {
-            result = localeCompare(first.rObject.getName(), second.rObject.getName());
-         }
-         return result;
-      }
-
-      private native int localeCompare(String first, String second) /*-{
-          return first.localeCompare(second);
-      }-*/;
-   }
-
    private final static String emptyGlobalEnvironmentMessage =
            "Global environment is empty";
    private final static String emptyFunctionEnvironmentMessage =
@@ -584,9 +555,9 @@ public class EnvironmentObjects extends Composite
    private final static int invalidScrollPosition = -1;
 
    @UiField HTMLPanel environmentContents;
-   @UiField Style style;
+   @UiField EnvironmentStyle style;
 
-   ScrollingDataGrid<RObjectEntry> objectList;
+   ScrollingDataGrid<RObjectEntry> objectList_;
    Label environmentName_;
    Label environmentEmptyMessage_;
 

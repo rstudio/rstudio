@@ -22,9 +22,6 @@ using namespace core;
 namespace session {
 namespace modules {
 namespace environment {
-
-
-
 namespace {
 
 json::Value classOfVar(SEXP var)
@@ -95,6 +92,7 @@ json::Array contentsOfVar(SEXP var)
 
 } // anonymous namespace
 
+// a variable is an unevaluated promise if its promise value is still unbound
 bool isUnevaluatedPromise (SEXP var)
 {
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
@@ -106,16 +104,8 @@ json::Object varToJson(const r::sexp::Variable& var)
    varJson["name"] = var.first;
    SEXP varSEXP = var.second;
 
-   // get R alias to object and get its type and lengt
-   //
-   // NOTE: check for isLanguage is a temporary fix for error messages
-   // that were printed at the console for a <- bquote(test()) -- this
-   // was the result of errors being thrown from the .rs.valueDescription, etc.
-   // calls above used to probe for object info.
-   // the practical impact of this workaround is that immediately after
-   // assignment language expressions show up as "(unknown)" but then are
-   // correctly displayed in refreshed listings of the workspace.
-
+   // is this a type of object for which we can get something that looks like
+   // a value? if so, get the value appropriate to the object's class.
    if ((varSEXP != R_UnboundValue)
        && !r::sexp::isLanguage(varSEXP)
        && !isUnevaluatedPromise(varSEXP))
@@ -136,6 +126,8 @@ json::Object varToJson(const r::sexp::Variable& var)
          varJson["contents"] = json::Array();
       }
    }
+   // this is not a type of object for which we can get a value; describe
+   // what we can and stub out the rest.
    else
    {
       if (r::sexp::isLanguage((varSEXP)))

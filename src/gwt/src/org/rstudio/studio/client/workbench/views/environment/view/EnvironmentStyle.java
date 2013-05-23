@@ -1,5 +1,5 @@
 /*
- * EnvironmentUtils.hpp
+ * EnvironmentStyle.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,16 +13,22 @@
  *
  */
 
-#include <core/json/Json.hpp>
-#include <r/RSexp.hpp>
+package org.rstudio.studio.client.workbench.views.environment.view;
 
-namespace session {
-namespace modules {
-namespace environment {
+import com.google.gwt.resources.client.CssResource;
 
-core::json::Object varToJson(const r::sexp::Variable& var);
-bool isUnevaluatedPromise(SEXP var);
+interface EnvironmentStyle extends CssResource
+{
+   String expandCol();
+   String nameCol();
+   String valueCol();
+   String detailRow();
+   String categoryHeaderRow();
+   String categoryHeaderText();
+   String emptyEnvironmentPanel();
+   String emptyEnvironmentName();
+   String emptyEnvironmentMessage();
+   String expandIcon();
+   String unevaluatedPromise();
+}
 
-} // namespace environment
-} // namespace modules
-} // namespace session

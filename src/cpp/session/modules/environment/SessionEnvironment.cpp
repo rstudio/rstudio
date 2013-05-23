@@ -38,6 +38,7 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
+// return the context for the topmost function on the callstack
 RCNTXT* getTopFunctionContext()
 {
    RCNTXT* pRContext = r::getGlobalContext();
