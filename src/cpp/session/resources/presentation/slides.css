@@ -8,8 +8,16 @@
 .reveal h3,
 .reveal h4,
 .reveal h5,
-.reveal h6 {
+.reveal h6 { 
    margin-bottom: .6em;    
+}
+
+.reveal p {
+   margin-bottom: 1em; 
+}
+
+.reveal li {
+   margin-bottom: .4em;
 }
 
 .reveal .slides {
@@ -25,6 +33,7 @@
   max-width: 95%;
   border: 1px solid #ccc;
   white-space: pre-wrap;
+  margin-bottom: 1em; 
 }
 
 .reveal pre code {
