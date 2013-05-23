@@ -50,12 +50,9 @@ public abstract class DOMImpl {
     for (int i = 0; i < allElements.getLength(); i++) {
       com.google.gwt.dom.client.Element elem = allElements.getItem(i);
       Element userElem = (Element) elem;
-      if (dom.getEventsSunk(userElem) != 0) {
-        dom.sinkEvents(userElem, 0);
-      }
       EventListener listener = dom.getEventListener(userElem);
-      // nulls out event listener if and only if it was assigned from our module
-      if (GWT.isScript() && listener != null && isMyListener(listener)) {
+      if (GWT.isScript() && listener != null) {
+        dom.sinkEvents(userElem, 0);
         dom.setEventListener(userElem, null);
       }
       // cleans up DOM-style addEventListener registered handlers
@@ -154,7 +151,9 @@ public abstract class DOMImpl {
   public abstract int getChildIndex(Element parent, Element child);
 
   public native EventListener getEventListener(Element elem) /*-{
-    return elem.__listener;
+    // Return elem.__listener if and only if it was assigned from our module
+    var maybeListener = elem.__listener;
+    return @com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(maybeListener) ? maybeListener : null;
   }-*/;
 
   public native int getEventsSunk(Element elem) /*-{
