@@ -39,6 +39,7 @@ set (SESSION_SOURCE_FILES
    SessionMain.cpp
    SessionModuleContext.cpp
    SessionOptions.cpp
+   SessionOptionsOverlay.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionSourceDatabase.cpp

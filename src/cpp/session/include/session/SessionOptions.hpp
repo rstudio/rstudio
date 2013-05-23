@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/StringUtils.hpp>
+#include <core/ProgramOptions.hpp>
 
 #include <R_ext/RStartup.h>
 
@@ -326,6 +327,17 @@ public:
    {
       return core::string_utils::LineEndingNative;
    }
+
+private:
+   void resolvePath(const core::FilePath& resourcePath,
+                    std::string* pPath);
+   void resolvePostbackPath(const core::FilePath& resourcePath,
+                            std::string* pPath);
+
+
+   void addOverlayOptions(boost::program_options::options_description* pOpt);
+   bool validateOverlayOptions(std::string* pErrMsg);
+   void resolveOverlayOptions();
 
 private:
    // verify

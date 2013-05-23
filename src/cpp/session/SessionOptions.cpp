@@ -19,7 +19,6 @@
 
 #include <core/FilePath.hpp>
 #include <core/ProgramStatus.hpp>
-#include <core/ProgramOptions.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -34,43 +33,8 @@ using namespace core ;
 namespace session {  
 
 namespace {
-
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
-
-void resolvePath(const FilePath& resourcePath, std::string* pPath)
-{
-   if (!pPath->empty())
-      *pPath = resourcePath.complete(*pPath).absolutePath();
-}
-
-#ifdef __APPLE__
-
-void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
-{
-   // On OSX we keep the postback scripts over in the MacOS directory
-   // rather than in the Resources directory -- make this adjustment
-   // when the default postback path has been passed
-   if (*pPath == kDefaultPostbackPath)
-   {
-      FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
-      *pPath = path.absolutePath();
-   }
-   else
-   {
-      resolvePath(resourcePath, pPath);
-   }
-}
-
-#else
-
-void resolvePostbackPath(const FilePath& resourcePath, std::string* pPath)
-{
-   resolvePath(resourcePath, pPath);
-}
-
-#endif
-
-}
+} // anonymous namespace
 
 Options& options()
 {
@@ -273,7 +237,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
        value<std::string>(&userIdentity_)->default_value(currentUsername),
        "user identity" );
-   
+
+   // overlay options
+   options_description overlay("overlay");
+
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
@@ -304,6 +271,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);
    optionsDesc.configFile.add(user);
+   optionsDesc.configFile.add(overlay);
 
    // read configuration
    ProgramStatus status = core::program_options::read(optionsDesc, argc,argv);
@@ -413,5 +381,41 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // return status
    return status;
 }
+
+void Options::resolvePath(const FilePath& resourcePath,
+                          std::string* pPath)
+{
+   if (!pPath->empty())
+      *pPath = resourcePath.complete(*pPath).absolutePath();
+}
+
+#ifdef __APPLE__
+
+void Options::resolvePostbackPath(const FilePath& resourcePath,
+                                  std::string* pPath)
+{
+   // On OSX we keep the postback scripts over in the MacOS directory
+   // rather than in the Resources directory -- make this adjustment
+   // when the default postback path has been passed
+   if (*pPath == kDefaultPostbackPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/postback/rpostback");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
+#else
+
+void Options::resolvePostbackPath(const FilePath& resourcePath,
+                                  std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+#endif
    
 } // namespace session
