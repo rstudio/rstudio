@@ -241,6 +241,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // overlay options
    options_description overlay("overlay");
+   addOverlayOptions(&overlay);
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rsession.conf");
@@ -284,6 +285,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        programMode_ != kSessionProgramModeServer)
    {
       LOG_ERROR_MESSAGE("invalid program mode: " + programMode_);
+      return ProgramStatus::exitFailure();
+   }
+
+   // call overlay hooks
+   resolveOverlayOptions();
+   std::string errMsg;
+   if (!validateOverlayOptions(&errMsg))
+   {
+      program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();
    }
 
