@@ -34,7 +34,16 @@
   background-color: white;
 }
 
-.reveal code.r, code.cpp {
+.reveal code {
+  overflow: visible;
+  max-height: none;
+}
+
+.reveal code.r {
+  background-color: #F8F8F8;
+}
+
+.reveal code.cpp {
   background-color: #F8F8F8;
 }
 
