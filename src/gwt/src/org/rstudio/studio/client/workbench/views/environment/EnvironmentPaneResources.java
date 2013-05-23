@@ -28,8 +28,5 @@ public interface EnvironmentPaneResources extends ClientBundle
 
    @Source("EnvironmentPane.css")
    EnvironmentPaneStyle environmentPaneStyle();
-
-   @Source("function.png")
-   ImageResource functionIndicator();
 }
 

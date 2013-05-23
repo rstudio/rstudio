@@ -60,7 +60,7 @@ public class EnvironmentPane extends WorkbenchPane
                     .environmentPaneStyle()
                     .environmentNameLabel());
       functionIndicator_ = new Image(
-            EnvironmentPaneResources.INSTANCE.functionIndicator());
+            StandardIcons.INSTANCE.function());
       functionIndicator_.setVisible(false);
 
       Toolbar toolbar = new Toolbar();
