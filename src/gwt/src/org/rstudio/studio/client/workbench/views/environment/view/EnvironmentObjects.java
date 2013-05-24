@@ -74,7 +74,7 @@ public class EnvironmentObjects extends Composite
       objectList_.addColumn(objectExpandColumn_);
       objectList_.addColumn(objectNameColumn_);
       objectList_.addColumn(objectDescriptionColumn_);
-      objectList_.setTableBuilder(new ObjectTableBuilder());
+      objectList_.setTableBuilder(new EnvironmentObjectTableBuilder());
       objectList_.setSkipRowHoverCheck(true);
 
       // disable persistent and transient row selection (currently necessary
@@ -214,7 +214,9 @@ public class EnvironmentObjects extends Composite
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
-      // find the position of the object in the list
+      // find the position of the object in the list--we can't use binary
+      // search here since we're matching on names and the list isn't sorted
+      // by name (it's sorted by type, then name)
       int index;
       boolean foundObject = false;
       for (index = 0; index < objects.size(); index++)
@@ -228,7 +230,6 @@ public class EnvironmentObjects extends Composite
 
       return foundObject ? index : -1;
    }
-
 
    // returns the position a new object entry should occupy in the table
    private int indexOfNewObject(RObjectEntry obj)
@@ -250,6 +251,58 @@ public class EnvironmentObjects extends Composite
 
    // create each column for the data grid
    private void createColumns()
+   {
+      createExpandColumn();
+      createNameColumn();
+      createDescriptionColumn();
+   }
+
+   private void createNameColumn()
+   {
+      // the name of the object (simple text column)
+      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            return object.rObject.getName();
+         }
+      };
+   }
+
+   private void createDescriptionColumn()
+   {
+      // the description *or* value of the object; when clicked, we'll view
+      // or edit the data inside the object.
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
+         @Override
+         public String getValue(RObjectEntry object) {
+            String val = object.rObject.getValue();
+            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
+         }
+      };
+      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            // initial click on a promise forces eval, at which point it gets a
+            // value we can interact with
+            if (object.isPromise())
+            {
+               observer_.forceEvalObject(object.rObject.getName());
+            }
+            else if (object.getCategory() == RObjectEntry.Categories.Data)
+            {
+               observer_.viewObject(object.rObject.getName());
+            }
+            else
+            {
+               observer_.editObject(object.rObject.getName());
+            }
+         }
+      });
+   }
+
+   private void createExpandColumn()
    {
       // the column containing the expand command; available only on objects
       // with contents (such as lists and data frames).
@@ -311,50 +364,9 @@ public class EnvironmentObjects extends Composite
                   observer_.setObjectCollapsed(object.rObject.getName());
                }
                objectList_.redrawRow(index);
-               objectList_.getRowElement(index).scrollIntoView();
             }
          }
       });
-
-      // the name of the object (simple text column)
-      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getName();
-         }
-      };
-
-      // the description *or* value of the object; when clicked, we'll view
-      // or edit the data inside the object.
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            String val = object.rObject.getValue();
-            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
-         }
-      };
-      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            // initial click on a promise forces eval, at which point it gets a
-            // value we can interact with
-            if (object.isPromise())
-            {
-               observer_.forceEvalObject(object.rObject.getName());
-            }
-            else if (object.getCategory() == RObjectEntry.Categories.Data)
-            {
-               observer_.viewObject(object.rObject.getName());
-            }
-            else
-            {
-               observer_.editObject(object.rObject.getName());
-            }
-         }
-      });
-
    }
 
    // after adds or removes, we need to tag the new category-leading objects
@@ -416,10 +428,6 @@ public class EnvironmentObjects extends Composite
          @Override
          public void execute()
          {
-            // set the cached scroll position
-            objectList_.getScrollPanel().setVerticalScrollPosition(
-                    deferredScrollPosition_);
-
             // loop through the objects in the list and check to see if each
             // is marked expanded in the persisted list of expanded objects
             List<RObjectEntry> objects = objectDataProvider_.getList();
@@ -437,14 +445,19 @@ public class EnvironmentObjects extends Composite
                   }
                }
             }
+
+            // set the cached scroll position
+            objectList_.getScrollPanel().setVerticalScrollPosition(
+                    deferredScrollPosition_);
+
          }
       });
    }
 
    // builds individual rows of the object table
-   private class ObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
+   private class EnvironmentObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
    {
-      public ObjectTableBuilder()
+      public EnvironmentObjectTableBuilder()
       {
          super(objectList_);
       }
@@ -463,21 +476,42 @@ public class EnvironmentObjects extends Composite
             row.className(ThemeStyles.INSTANCE.environmentDataFrameRow());
          }
 
-         // build the column containing the expand/collapse command
+         // build the columns
+         buildExpandColumn(rowValue, row);
+         buildNameColumn(rowValue, row);
+         buildDescriptionColumn(rowValue, row);
+
+         row.endTR();
+
+         // if the row is expanded, draw its content
+         if (rowValue.expanded)
+         {
+            buildExpandedContentRow(rowValue);
+         }
+      }
+
+      private void buildExpandColumn(RObjectEntry rowValue, TableRowBuilder row)
+      {
          TableCellBuilder expandCol = row.startTD();
          expandCol.className(style.expandCol());
          renderCell(expandCol, createContext(0), objectExpandColumn_, rowValue);
          expandCol.endTD();
+      }
 
-         // build the column containing the name of the object
+      private void buildNameColumn(RObjectEntry rowValue, TableRowBuilder row)
+      {
          TableCellBuilder nameCol = row.startTD();
          nameCol.className(style.nameCol());
          nameCol.title(
                  rowValue.rObject.getName() +
                  " (" + rowValue.rObject.getType() + ")");
-         renderCell(nameCol, createContext(0), objectNameColumn_, rowValue);
+         renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
+      }
 
+      private void buildDescriptionColumn(RObjectEntry rowValue,
+                                          TableRowBuilder row)
+      {
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
@@ -499,26 +533,8 @@ public class EnvironmentObjects extends Composite
             descriptionStyle += (" " + style.dataFrameValueCol());
          }
          descCol.className(descriptionStyle);
-
-         // if the row is expanded but doesn't have contents, that means the
-         // value is being show in the detail row--don't duplicate it here
-         if (!(rowValue.expanded &&
-               rowValue.rObject.getContents().length() == 0))
-         {
-            renderCell(descCol,
-                       createContext(1),
-                       objectDescriptionColumn_,
-                       rowValue);
-         }
+         renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
          descCol.endTD();
-
-         row.endTR();
-
-         // if the row is expanded, draw its content
-         if (rowValue.expanded)
-         {
-            buildExpandedContentRow(rowValue);
-         }
       }
 
       private void buildRowHeader(RObjectEntry rowValue, int absRowIndex)

@@ -18,6 +18,8 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -31,7 +33,7 @@ namespace {
 bool compareVarName(const r::sexp::Variable& var1,
                     const r::sexp::Variable& var2)
 {
-   return var1.first < var2.first ;
+   return var1.first < var2.first;
 }
 
 void enqueRemovedEvent(const r::sexp::Variable& variable)
@@ -97,11 +99,20 @@ void EnvironmentMonitor::checkForChanges()
    std::vector<r::sexp::Variable> currentEnv ;
    std::vector<r::sexp::Variable> currentPromises;
 
-   // list of assigns (includes both value changes and promise evaluations)
+   // list of assigns/removes (includes both value changes and promise
+   // evaluations)
    std::vector<r::sexp::Variable> addedVars;
+   std::vector<r::sexp::Variable> removedVars;
 
    // get the set of variables and promises in the current environment
    listEnv(&currentEnv);
+
+   // R returns an environment list sorted in dictionary order. Since the
+   // set difference algorithms below use simple string comparisons to
+   // establish order, we need to re-sort the list into canonical order
+   // to avoid the algorithms detecting superfluous insertions.
+   std::sort(currentEnv.begin(), currentEnv.end(), compareVarName);
+
    std::for_each(currentEnv.begin(), currentEnv.end(),
                  boost::bind(addUnevaledPromise, &currentPromises, _1));
    if (!initialized_)
@@ -115,7 +126,6 @@ void EnvironmentMonitor::checkForChanges()
    // if there are changes
    if (currentEnv != lastEnv_)
    {
-      std::vector<r::sexp::Variable> removedVars;
       std::set_difference(lastEnv_.begin(), lastEnv_.end(),
                           currentEnv.begin(), currentEnv.end(),
                           std::back_inserter(removedVars),
@@ -137,6 +147,7 @@ void EnvironmentMonitor::checkForChanges()
       std::set_difference(currentEnv.begin(), currentEnv.end(),
                           lastEnv_.begin(), lastEnv_.end(),
                           std::back_inserter(addedVars));
+
 
    }
 
