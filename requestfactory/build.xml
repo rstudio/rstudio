@@ -117,6 +117,7 @@
         <fileset dir="${gwt.build.lib}" includes="requestfactory-test.jar" />
       </classpath>
       <arg path="${gwt.build.lib}/requestfactory-test-validated.jar" />
+      <arg value="com.google.web.bindery.requestfactory.gwt.client.ProxyForInterfacesTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryChainedContextTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryPolymorphicTest.Factory" />
       <arg value="com.google.web.bindery.requestfactory.gwt.client.RequestFactoryGenericsTest.Factory" />

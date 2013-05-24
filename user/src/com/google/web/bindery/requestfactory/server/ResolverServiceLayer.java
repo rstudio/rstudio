@@ -78,23 +78,12 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     if (TypeUtils.isValueType(domainClass)) {
       return domainClass.asSubclass(clientClass);
     }
-    Class<?> toSearch = domainClass;
-    while (toSearch != null) {
-      List<String> clientTypes = deobfuscator.getClientProxies(toSearch.getName());
-      if (clientTypes != null) {
-        for (String clientType : clientTypes) {
-          Class<?> proxy = forName(clientType);
-          if (clientClass.isAssignableFrom(proxy)) {
-            return proxy.asSubclass(clientClass);
-          }
-        }
-      }
-      toSearch = toSearch.getSuperclass();
-    }
-    if (required) {
+
+    Class<? extends T> ret = resolveClientType(domainClass, clientClass);
+    if (ret == null && required) {
       die(null, "The domain type %s cannot be sent to the client", domainClass.getCanonicalName());
     }
-    return null;
+    return ret;
   }
 
   @Override
@@ -262,5 +251,30 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       }
     }
     return params.toArray(new Class<?>[params.size()]);
+  }
+
+  private <T> Class<? extends T> resolveClientType(Class<?> domainClass, Class<T> clientClass) {
+    if (domainClass == null) {
+      return null;
+    }
+
+    List<String> clientTypes = deobfuscator.getClientProxies(domainClass.getName());
+    if (clientTypes != null) {
+      for (String clientType : clientTypes) {
+        Class<?> proxy = forName(clientType);
+        if (clientClass.isAssignableFrom(proxy)) {
+          return proxy.asSubclass(clientClass);
+        }
+      }
+    }
+
+    for (Class<?> toSearch : domainClass.getInterfaces()) {
+      Class<? extends T> ret = resolveClientType(toSearch, clientClass);
+      if (ret != null) {
+        return ret;
+      }
+    }
+
+    return resolveClientType(domainClass.getSuperclass(), clientClass);
   }
 }

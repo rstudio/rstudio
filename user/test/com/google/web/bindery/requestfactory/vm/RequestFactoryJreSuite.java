@@ -23,6 +23,7 @@ import com.google.web.bindery.requestfactory.server.JsonRpcRequestFactoryJreTest
 import com.google.web.bindery.requestfactory.server.LocatorJreTest;
 import com.google.web.bindery.requestfactory.server.MethodProvidedByServiceLayerJreTest;
 import com.google.web.bindery.requestfactory.server.MultipleFactoriesJreTest;
+import com.google.web.bindery.requestfactory.server.ProxyForInterfacesJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryChainedContextJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryExceptionPropagationJreTest;
 import com.google.web.bindery.requestfactory.server.RequestFactoryGenericsJreTest;
@@ -54,6 +55,7 @@ public class RequestFactoryJreSuite {
     suite.addTestSuite(LocatorJreTest.class);
     suite.addTestSuite(MethodProvidedByServiceLayerJreTest.class);
     suite.addTestSuite(MultipleFactoriesJreTest.class);
+    suite.addTestSuite(ProxyForInterfacesJreTest.class);
     suite.addTestSuite(RequestFactoryChainedContextJreTest.class);
     suite.addTestSuite(RequestFactoryExceptionPropagationJreTest.class);
     suite.addTestSuite(RequestFactoryGenericsJreTest.class);
