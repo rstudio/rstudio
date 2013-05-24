@@ -389,8 +389,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    clientEventService().setClientId(clientId, clearEvents);
 
    // set RSTUDIO_HTTP_REFERER environment variable based on Referer
-   std::string referer = ptrConnection->request().headerValue("referer");
-   core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+   if (options.programMode() == kSessionProgramModeServer)
+   {
+      std::string referer = ptrConnection->request().headerValue("referer");
+      core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+   }
 
    // prepare session info 
    json::Object sessionInfo ;
