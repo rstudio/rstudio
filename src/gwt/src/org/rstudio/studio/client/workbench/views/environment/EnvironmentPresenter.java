@@ -32,7 +32,6 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -187,6 +186,8 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          protected JsObject getValue()
          {
+            // the state object we're about to create will be persisted, so
+            // our state is clean until the user makes more changes.
             view_.setClientStateClean();
             return EnvironmentClientState.create(view_.getScrollPosition(),
                                                  view_.getExpandedObjects())

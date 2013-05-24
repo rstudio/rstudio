@@ -58,6 +58,8 @@ public class EnvironmentPane extends WorkbenchPane
       ensureWidget();
    }
 
+   // WorkbenchPane overrides -------------------------------------------------
+
    @Override
    protected Toolbar createMainToolbar()
    {
@@ -84,18 +86,6 @@ public class EnvironmentPane extends WorkbenchPane
       return toolbar;
    }
 
-   private Widget createImportMenu()
-   {
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      dataImportButton_ = new ToolbarButton("Import Dataset",
-                                             StandardIcons.INSTANCE.import_dataset(),
-                                             menu);
-      return dataImportButton_;
-
-   }
-
    @Override
    protected Widget createMainWidget()
    {
@@ -103,6 +93,8 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.setObserver(this);
       return objects_;
    }
+
+   // EnviromentPresenter.Display implementation ------------------------------
 
    @Override
    public void addObject(RObject object)
@@ -185,6 +177,36 @@ public class EnvironmentPane extends WorkbenchPane
       return expandedObjects_.toArray(new String[0]);
    }
 
+   public boolean clientStateDirty()
+   {
+      return isClientStateDirty_;
+   }
+
+   public void setClientStateClean()
+   {
+      isClientStateDirty_ = false;
+   }
+
+   // EnviromentObjects.Observer implementation -------------------------------
+
+   public void setPersistedScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+      isClientStateDirty_ = true;
+   }
+
+   public void setObjectExpanded(String objectName)
+   {
+      expandedObjects_.add(objectName);
+      isClientStateDirty_ = true;
+   }
+
+   public void setObjectCollapsed(String objectName)
+   {
+      expandedObjects_.remove(objectName);
+      isClientStateDirty_ = true;
+   }
+
    public void editObject(String objectName)
    {
       executeFunctionForObject("fix", objectName);
@@ -200,39 +222,25 @@ public class EnvironmentPane extends WorkbenchPane
       executeFunctionForObject("force", objectName);
    }
 
-   public void setObjectExpanded(String objectName)
-   {
-      expandedObjects_.add(objectName);
-      isClientStateDirty_ = true;
-   }
-
-   public void setObjectCollapsed(String objectName)
-   {
-      expandedObjects_.remove(objectName);
-      isClientStateDirty_ = true;
-   }
-
-   public void setPersistedScrollPosition(int scrollPosition)
-   {
-      scrollPosition_ = scrollPosition;
-      isClientStateDirty_ = true;
-   }
-
-   public boolean clientStateDirty()
-   {
-      return isClientStateDirty_;
-   }
-
-   public void setClientStateClean()
-   {
-      isClientStateDirty_ = false;
-   }
+   // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)
    {
       String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
       SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
       eventBus_.fireEvent(event);
+   }
+
+   private Widget createImportMenu()
+   {
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      dataImportButton_ = new ToolbarButton("Import Dataset",
+                                            StandardIcons.INSTANCE.import_dataset(),
+                                            menu);
+      return dataImportButton_;
+
    }
 
    public final static String globalEnvironmentName = "Global Environment";

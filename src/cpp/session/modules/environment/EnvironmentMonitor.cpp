@@ -18,8 +18,6 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string/predicate.hpp>
 
 #include "EnvironmentUtils.hpp"
 

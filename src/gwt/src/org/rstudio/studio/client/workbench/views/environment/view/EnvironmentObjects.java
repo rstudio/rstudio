@@ -48,11 +48,12 @@ import java.util.*;
 public class EnvironmentObjects extends Composite
    implements RequiresResize
 {
+   // Public interfaces -------------------------------------------------------
+
    public interface Binder extends UiBinder<Widget, EnvironmentObjects>
    {
    }
 
-   // methods implemented by the owning presenter to edit and view objects
    public interface Observer
    {
       void editObject(String objectName);
@@ -62,6 +63,8 @@ public class EnvironmentObjects extends Composite
       void setObjectCollapsed(String objectName);
       void setPersistedScrollPosition(int scrollPosition);
    }
+
+   // Constructor -------------------------------------------------------------
 
    public EnvironmentObjects()
    {
@@ -104,6 +107,8 @@ public class EnvironmentObjects extends Composite
       objectList_.setStyleName(style.objectGrid());
       environmentContents.add(objectList_);
    }
+
+   // Public methods ----------------------------------------------------------
 
    public void setContextDepth(int contextDepth)
    {
@@ -195,11 +200,6 @@ public class EnvironmentObjects extends Composite
                                        emptyGlobalEnvironmentMessage);
    }
 
-   public void onResize()
-   {
-      objectList_.onResize();
-   }
-
    public int getScrollPosition()
    {
       return objectList_.getScrollPanel().getVerticalScrollPosition();
@@ -214,6 +214,15 @@ public class EnvironmentObjects extends Composite
    {
       deferredExpandedObjects_ = objects;
    }
+
+   // RequiresResize implementation -------------------------------------------
+
+   public void onResize()
+   {
+      objectList_.onResize();
+   }
+
+   // Private methods: object management --------------------------------------
 
    private int indexOfExistingObject(String objectName)
    {
@@ -253,6 +262,47 @@ public class EnvironmentObjects extends Composite
       }
       return idx;
    }
+
+   // after adds or removes, we need to tag the new category-leading objects
+   private void updateCategoryLeaders(boolean redrawUpdatedRows)
+   {
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+
+      // whether or not we've found a leader for each category
+      Boolean[] leaders = { false, false, false };
+
+      for (int i = 0; i < objects.size(); i++)
+      {
+         RObjectEntry entry = objects.get(i);
+         int category = entry.getCategory();
+         Boolean leader = entry.isCategoryLeader;
+         // if we haven't found a leader for this category yet, make this object
+         // the leader if it isn't already
+         if (!leaders[category])
+         {
+            leaders[category] = true;
+            if (!leader)
+            {
+               entry.isCategoryLeader = true;
+            }
+         }
+         // if this object is marked as the leader but we've already found a
+         // leader, unmark it
+         else if (leader)
+         {
+            entry.isCategoryLeader = false;
+         }
+
+         // if we changed the leader flag, redraw the row
+         if (leader != entry.isCategoryLeader
+             && redrawUpdatedRows)
+         {
+            objectList_.redrawRow(i);
+         }
+      }
+   }
+
+   // Private methods: DataGrid setup -----------------------------------------
 
    // create each column for the data grid
    private void createColumns()
@@ -377,45 +427,6 @@ public class EnvironmentObjects extends Composite
       });
    }
 
-   // after adds or removes, we need to tag the new category-leading objects
-   private void updateCategoryLeaders(boolean redrawUpdatedRows)
-   {
-      List<RObjectEntry> objects = objectDataProvider_.getList();
-
-      // whether or not we've found a leader for each category
-      Boolean[] leaders = { false, false, false };
-
-      for (int i = 0; i < objects.size(); i++)
-      {
-         RObjectEntry entry = objects.get(i);
-         int category = entry.getCategory();
-         Boolean leader = entry.isCategoryLeader;
-         // if we haven't found a leader for this category yet, make this object
-         // the leader if it isn't already
-         if (!leaders[category])
-         {
-            leaders[category] = true;
-            if (!leader)
-            {
-               entry.isCategoryLeader = true;
-            }
-         }
-         // if this object is marked as the leader but we've already found a
-         // leader, unmark it
-         else if (leader)
-         {
-            entry.isCategoryLeader = false;
-         }
-
-         // if we changed the leader flag, redraw the row
-         if (leader != entry.isCategoryLeader
-             && redrawUpdatedRows)
-         {
-            objectList_.redrawRow(i);
-         }
-      }
-   }
-
    private Widget buildEmptyGridMessage()
    {
       HTMLPanel messagePanel = new HTMLPanel("");
@@ -428,6 +439,8 @@ public class EnvironmentObjects extends Composite
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
+
+   // Private methods: state persistence --------------------------------------
 
    private void setDeferredState()
    {
@@ -468,6 +481,8 @@ public class EnvironmentObjects extends Composite
    {
       return contextDepth_ == 0;
    }
+
+   // Private nested classes --------------------------------------------------
 
    // builds individual rows of the object table
    private class EnvironmentObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
