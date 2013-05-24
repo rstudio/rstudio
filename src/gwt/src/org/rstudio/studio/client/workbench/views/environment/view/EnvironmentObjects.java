@@ -88,7 +88,11 @@ public class EnvironmentObjects extends Composite
          @Override
          public void onScroll(ScrollEvent event)
          {
-            observer_.setPersistedScrollPosition(getScrollPosition());
+            if (useStatePersistence())
+            {
+               deferredScrollPosition_ = getScrollPosition();
+               observer_.setPersistedScrollPosition(deferredScrollPosition_);
+            }
          }
       });
 
@@ -172,9 +176,10 @@ public class EnvironmentObjects extends Composite
       objectDataProvider_.getList().addAll(objectEntryList);
       updateCategoryLeaders(false);
 
-      // now that we have a list of objects, make a deferred update to the
-      // state using data set earlier
-      setDeferredState();
+      if (useStatePersistence())
+      {
+         setDeferredState();
+      }
    }
 
    public void setObserver(Observer observer)
@@ -355,13 +360,16 @@ public class EnvironmentObjects extends Composite
             {
                object.expanded = !object.expanded;
                // tell the observer this happened, so it can persist the state
-               if (object.expanded)
+               if (useStatePersistence())
                {
-                  observer_.setObjectExpanded(object.rObject.getName());
-               }
-               else
-               {
-                  observer_.setObjectCollapsed(object.rObject.getName());
+                  if (object.expanded)
+                  {
+                     observer_.setObjectExpanded(object.rObject.getName());
+                  }
+                  else
+                  {
+                     observer_.setObjectCollapsed(object.rObject.getName());
+                  }
                }
                objectList_.redrawRow(index);
             }
@@ -452,6 +460,13 @@ public class EnvironmentObjects extends Composite
 
          }
       });
+   }
+
+   // we currently only set and/or get persisted state at the root context
+   // level.
+   private boolean useStatePersistence()
+   {
+      return contextDepth_ == 0;
    }
 
    // builds individual rows of the object table
@@ -613,7 +628,6 @@ public class EnvironmentObjects extends Composite
            "Global environment is empty";
    private final static String emptyFunctionEnvironmentMessage =
            "Function environment is empty";
-   private final static int invalidScrollPosition = -1;
 
    @UiField HTMLPanel environmentContents;
    @UiField EnvironmentStyle style;
@@ -629,6 +643,8 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
-   private int deferredScrollPosition_ = invalidScrollPosition;
+
+   // deferred settings--set on load but not applied until we have data.
+   private int deferredScrollPosition_;
    private JsArrayString deferredExpandedObjects_;
 }

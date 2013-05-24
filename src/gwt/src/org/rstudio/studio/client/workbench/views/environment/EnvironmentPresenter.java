@@ -76,7 +76,6 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class EnvironmentPresenter extends BasePresenter
@@ -126,6 +125,7 @@ public class EnvironmentPresenter extends BasePresenter
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       refreshingView_ = false;
+      initialized_ = false;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -330,7 +330,13 @@ public class EnvironmentPresenter extends BasePresenter
    public void onBeforeSelected()
    {
       super.onBeforeSelected();
-      refreshView();
+
+      // if the view isn't yet initialized, refresh it to get the initial list
+      // of objects in the environment
+      if (!initialized_)
+      {
+         refreshView();
+      }
    }
 
    public void initialize(EnvironmentState environmentState)
@@ -375,6 +381,7 @@ public class EnvironmentPresenter extends BasePresenter
             setViewFromEnvironmentList(objects);
             view_.setProgress(false);
             refreshingView_ = false;
+            initialized_ = true;
          }
 
          @Override
@@ -470,4 +477,5 @@ public class EnvironmentPresenter extends BasePresenter
    private final EventBus eventBus_;
    private int contextDepth_;
    private boolean refreshingView_;
+   private boolean initialized_;
 }
