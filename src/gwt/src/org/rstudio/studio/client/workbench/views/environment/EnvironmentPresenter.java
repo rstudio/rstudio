@@ -125,10 +125,9 @@ public class EnvironmentPresenter extends BasePresenter
       fileDialogs_ = fileDialogs;
       workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
+      refreshingView_ = false;
 
-      refreshView();
-      
-      eventBus.addHandler(EnvironmentRefreshEvent.TYPE, 
+      eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
       {
          @Override
@@ -358,7 +357,15 @@ public class EnvironmentPresenter extends BasePresenter
     
    private void refreshView()
    {
+      // if we're currently waiting for a view refresh to come back, don't
+      // queue another server request
+      if (refreshingView_)
+      {
+         return;
+      }
+      // start showing the progress spinner and initiate the request
       view_.setProgress(true);
+      refreshingView_ = true;
       server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
       {
 
@@ -367,6 +374,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             setViewFromEnvironmentList(objects);
             view_.setProgress(false);
+            refreshingView_ = false;
          }
 
          @Override
@@ -375,6 +383,7 @@ public class EnvironmentPresenter extends BasePresenter
             globalDisplay_.showErrorMessage("Error Listing Objects",
                                             error.getUserMessage());
             view_.setProgress(false);
+            refreshingView_ = false;
          }
       });
    }
@@ -460,4 +469,5 @@ public class EnvironmentPresenter extends BasePresenter
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
    private int contextDepth_;
+   private boolean refreshingView_;
 }

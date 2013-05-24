@@ -494,6 +494,10 @@ public class EnvironmentObjects extends Composite
          {
             descriptionStyle += (" " + style.unevaluatedPromise());
          }
+         else if (rowValue.getCategory() == RObjectEntry.Categories.Data)
+         {
+            descriptionStyle += (" " + style.dataFrameValueCol());
+         }
          descCol.className(descriptionStyle);
 
          // if the row is expanded but doesn't have contents, that means the

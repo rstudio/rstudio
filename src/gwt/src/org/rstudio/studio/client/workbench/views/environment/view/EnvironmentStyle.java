@@ -32,5 +32,6 @@ interface EnvironmentStyle extends CssResource
    String unevaluatedPromise();
    String objectGrid();
    String widthSettingRow();
+   String dataFrameValueCol();
 }
 

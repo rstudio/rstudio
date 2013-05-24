@@ -60,7 +60,10 @@
 {
    tryCatch(
    {
-      return (capture.output(str(val)))
+      # only return the first 100 lines of detail (generally columns)--any more
+      # won't be very presentable in the environment pane
+      output <- capture.output(str(val))
+      return (output[1:min(length(output),100)])
    },
    error = function(e) print(e))
 
