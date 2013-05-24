@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.StringUtil;
@@ -33,6 +34,8 @@ import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObj
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjects.Observer
@@ -45,6 +48,10 @@ public class EnvironmentPane extends WorkbenchPane
       
       commands_ = commands;
       eventBus_ = eventBus;
+
+      expandedObjects_ = new ArrayList<String>();
+      scrollPosition_ = 0;
+      isClientStateDirty_ = false;
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
 
@@ -137,6 +144,9 @@ public class EnvironmentPane extends WorkbenchPane
    public void clearObjects()
    {
       objects_.clearObjects();
+      expandedObjects_.clear();
+      scrollPosition_ = 0;
+      isClientStateDirty_ = true;
    }
 
    @Override
@@ -149,13 +159,30 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public int getScrollPosition()
    {
-      return objects_.getScrollPosition();
+      return scrollPosition_;
    }
 
    @Override
    public void setScrollPosition(int scrollPosition)
    {
       objects_.setScrollPosition(scrollPosition);
+   }
+
+   @Override
+   public void setExpandedObjects(JsArrayString objects)
+   {
+      objects_.setExpandedObjects(objects);
+      expandedObjects_.clear();
+      for (int idx = 0; idx < objects.length(); idx++)
+      {
+         expandedObjects_.add(objects.get(idx));
+      }
+   }
+
+   @Override
+   public String[] getExpandedObjects()
+   {
+      return expandedObjects_.toArray(new String[0]);
    }
 
    public void editObject(String objectName)
@@ -173,6 +200,34 @@ public class EnvironmentPane extends WorkbenchPane
       executeFunctionForObject("force", objectName);
    }
 
+   public void setObjectExpanded(String objectName)
+   {
+      expandedObjects_.add(objectName);
+      isClientStateDirty_ = true;
+   }
+
+   public void setObjectCollapsed(String objectName)
+   {
+      expandedObjects_.remove(objectName);
+      isClientStateDirty_ = true;
+   }
+
+   public void setPersistedScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+      isClientStateDirty_ = true;
+   }
+
+   public boolean clientStateDirty()
+   {
+      return isClientStateDirty_;
+   }
+
+   public void setClientStateClean()
+   {
+      isClientStateDirty_ = false;
+   }
+
    private void executeFunctionForObject(String function, String objectName)
    {
       String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
@@ -188,4 +243,7 @@ public class EnvironmentPane extends WorkbenchPane
    private EnvironmentObjects objects_;
    private Commands commands_;
    private EventBus eventBus_;
+   private ArrayList<String> expandedObjects_;
+   private int scrollPosition_;
+   private boolean isClientStateDirty_;
 }

@@ -25,6 +25,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -56,6 +58,9 @@ public class EnvironmentObjects extends Composite
       void editObject(String objectName);
       void viewObject(String objectName);
       void forceEvalObject(String objectName);
+      void setObjectExpanded(String objectName);
+      void setObjectCollapsed(String objectName);
+      void setPersistedScrollPosition(int scrollPosition);
    }
 
    public EnvironmentObjects()
@@ -78,6 +83,14 @@ public class EnvironmentObjects extends Composite
       objectList_.setSelectionModel(new NoSelectionModel<RObjectEntry>(
               RObjectEntry.KEY_PROVIDER));
       objectList_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+      objectList_.getScrollPanel().addScrollHandler(new ScrollHandler()
+      {
+         @Override
+         public void onScroll(ScrollEvent event)
+         {
+            observer_.setPersistedScrollPosition(getScrollPosition());
+         }
+      });
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -160,11 +173,8 @@ public class EnvironmentObjects extends Composite
       updateCategoryLeaders(false);
 
       // now that we have a list of objects, make a deferred update to the
-      // scroll position if one has been applied
-      if (scrollPosition_ != invalidScrollPosition)
-      {
-         setDeferredScrollPosition(scrollPosition_);
-      }
+      // state using data set earlier
+      setDeferredState();
    }
 
    public void setObserver(Observer observer)
@@ -192,7 +202,12 @@ public class EnvironmentObjects extends Composite
 
    public void setScrollPosition(int scrollPosition)
    {
-      scrollPosition_ = scrollPosition;
+      deferredScrollPosition_ = scrollPosition;
+   }
+
+   public void setExpandedObjects(JsArrayString objects)
+   {
+      deferredExpandedObjects_ = objects;
    }
 
    private int indexOfExistingObject(String objectName)
@@ -286,6 +301,15 @@ public class EnvironmentObjects extends Composite
             if (object.canExpand())
             {
                object.expanded = !object.expanded;
+               // tell the observer this happened, so it can persist the state
+               if (object.expanded)
+               {
+                  observer_.setObjectExpanded(object.rObject.getName());
+               }
+               else
+               {
+                  observer_.setObjectCollapsed(object.rObject.getName());
+               }
                objectList_.redrawRow(index);
                objectList_.getRowElement(index).scrollIntoView();
             }
@@ -385,14 +409,34 @@ public class EnvironmentObjects extends Composite
       return messagePanel;
    }
 
-   private void setDeferredScrollPosition(final int scrollPosition)
+   private void setDeferredState()
    {
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
          {
-            objectList_.getScrollPanel().setVerticalScrollPosition(scrollPosition);
+            // set the cached scroll position
+            objectList_.getScrollPanel().setVerticalScrollPosition(
+                    deferredScrollPosition_);
+
+            // loop through the objects in the list and check to see if each
+            // is marked expanded in the persisted list of expanded objects
+            List<RObjectEntry> objects = objectDataProvider_.getList();
+            for (int idxObj = 0; idxObj < objects.size(); idxObj++)
+            {
+               for (int idxExpanded = 0;
+                    idxExpanded < deferredExpandedObjects_.length();
+                    idxExpanded++)
+               {
+                  if (objects.get(idxObj).rObject.getName() ==
+                      deferredExpandedObjects_.get(idxExpanded))
+                  {
+                     objects.get(idxObj).expanded = true;
+                     objectList_.redrawRow(idxObj);
+                  }
+               }
+            }
          }
       });
    }
@@ -565,5 +609,6 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
-   private int scrollPosition_ = invalidScrollPosition;
+   private int deferredScrollPosition_ = invalidScrollPosition;
+   private JsArrayString deferredExpandedObjects_;
 }

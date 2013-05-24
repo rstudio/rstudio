@@ -31,6 +31,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -75,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class EnvironmentPresenter extends BasePresenter
@@ -93,6 +95,10 @@ public class EnvironmentPresenter extends BasePresenter
       void setEnvironmentName(String name);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
+      void setExpandedObjects(JsArrayString objects);
+      String[] getExpandedObjects();
+      boolean clientStateDirty();
+      void setClientStateClean();
    }
    
    @Inject
@@ -175,14 +181,23 @@ public class EnvironmentPresenter extends BasePresenter
             {
                EnvironmentClientState clientState = value.cast();
                view_.setScrollPosition(clientState.getScrollPosition());
+               view_.setExpandedObjects(clientState.getExpandedObjects());
             }
          }
 
          @Override
          protected JsObject getValue()
          {
-            clientState_ = EnvironmentClientState.create(view_.getScrollPosition());
-            return clientState_.cast();
+            view_.setClientStateClean();
+            return EnvironmentClientState.create(view_.getScrollPosition(),
+                                                 view_.getExpandedObjects())
+                                         .cast();
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            return view_.clientStateDirty();
          }
       };
    }
@@ -321,11 +336,11 @@ public class EnvironmentPresenter extends BasePresenter
 
    public void initialize(EnvironmentState environmentState)
    {
-      environmentState_ = environmentState;
-      setContextDepth(environmentState_.contextDepth());
-      if (environmentState_.contextDepth() > 0)
+      EnvironmentState state = environmentState;
+      setContextDepth(state.contextDepth());
+      if (state.contextDepth() > 0)
       {
-         view_.setEnvironmentName(environmentState_.functionName());
+         view_.setEnvironmentName(state.functionName());
       }
    }
    
@@ -444,8 +459,5 @@ public class EnvironmentPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
-   private EnvironmentState environmentState_;
    private int contextDepth_;
-   private EnvironmentClientState clientState_ =
-           EnvironmentClientState.create(0);
 }
