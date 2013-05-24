@@ -52,14 +52,10 @@
       <when-type-assignable
         class="com.google.gwt.resources.client.ClientBundle" />
 
-      <!-- Only some browsers support RFC 2397 data: URLs -->
-      <any>
-        <when-property-is name="user.agent" value="safari" />
-        <when-property-is name="user.agent" value="opera" />
-        <when-property-is name="user.agent" value="gecko1_8" />
-        <when-property-is name="user.agent" value="ie8" />
-        <when-property-is name="user.agent" value="ie9" />
-      </any>
+      <!-- Ancient browsers support RFC 2397 data: URLs -->
+      <none>
+        <when-property-is name="user.agent" value="ie6" />
+      </none>
     </all>
   </generate-with>
 

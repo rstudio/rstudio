@@ -35,7 +35,10 @@
 
   <replace-with class="com.google.gwt.dom.client.DOMImplIE9">
     <when-type-is class="com.google.gwt.dom.client.DOMImpl"/>
-    <when-property-is name="user.agent" value="ie9"/>
+    <any>
+      <when-property-is name="user.agent" value="ie9"/>
+      <when-property-is name="user.agent" value="ie10"/>
+    </any>
   </replace-with>
 
   <replace-with class="com.google.gwt.dom.client.DOMImplIE8">
@@ -59,6 +62,7 @@
       <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
       <when-property-is name="user.agent" value="ie9"/>
+      <when-property-is name="user.agent" value="ie10"/>
     </any>
   </replace-with>
 </module>

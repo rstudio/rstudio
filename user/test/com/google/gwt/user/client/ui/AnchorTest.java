@@ -183,7 +183,7 @@ public class AnchorTest extends GWTTestCase {
 
     assertEquals(0, testListener.getClicks());
     assertEquals(0, handler.getClicks());
-    triggerEvent(anchor.getElement(), "click", false, "MouseEvents");
+    triggerClickOnElement(anchor.getElement());
     assertEquals(1, testListener.getClicks());
     assertEquals(1, handler.getClicks());
     assertEquals(anchor, testListener.getLastSender());
@@ -350,28 +350,10 @@ public class AnchorTest extends GWTTestCase {
   }
 
   /**
-   * Triggers events in a cross-browser way.
-   * 
-   * TODO: Refactor this and other utility methods into a Utility class or
-   * common base.
-   * 
-   * @param element the element on which to trigger the event
-   * @param eventType the type of event to trigger
-   * @param canBubble true if the event can bubble
-   * @param eventClass the class of event
+   * Triggers a click event on the given element.
    */
-  public native void triggerEvent(Element element, String eventType,
-      boolean canBubble, String eventClass) /*-{
-    // TODO: This is convenient for now, but could be a lot simpler if we added
-    // a GWTtier API for event triggering.
-    canBubble = (typeof(canBubble) == undefined) ? true : canBubble;
-    if (element.fireEvent) {
-      var evt = element.ownerDocument.createEventObject();
-      element.fireEvent('on' + eventType, evt);
-    } else {
-      var evt = document.createEvent(eventClass);
-      evt.initEvent(eventType, canBubble, true);
-      element.dispatchEvent(evt);
-    }
-  }-*/;
+  private void triggerClickOnElement(Element element) {
+    element.dispatchEvent(element.getOwnerDocument().createClickEvent(
+        0, 0, 0, 0, 0, false, false, false, false));
+  }
 }

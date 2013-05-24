@@ -28,6 +28,8 @@
       <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
       <when-property-is name="user.agent" value="ie9"/>
+      <!--  Not actually tested whether this is still needed -->
+      <when-property-is name="user.agent" value="ie10"/>
     </any>
   </replace-with>
 

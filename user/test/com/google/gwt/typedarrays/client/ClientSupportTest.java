@@ -33,8 +33,13 @@ public class ClientSupportTest extends GWTTestCase {
     boolean isSupported = TypedArrays.isSupported();
     String ua = getUserAgent();
     if (ua.contains("msie")) {
-      assertEquals("IE10+ should support typed arrays",
-          getIeDocumentMode() >= 10, isSupported);
+      if (getIeDocumentMode() <= 9) {
+        assertFalse("IE9 and below do not support typed array", isSupported);
+      } else {
+        // TODO(dankurka) change this once we get type array support in for ie10
+        assertFalse("IE10 does support typed array, but GWT still uses old implementation",
+            isSupported);
+      }
       return;
     }
     if (ua.contains("firefox/")) {

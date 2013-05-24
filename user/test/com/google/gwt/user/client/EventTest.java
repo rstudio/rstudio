@@ -180,7 +180,7 @@ public class EventTest extends GWTTestCase {
     label.getElement().dispatchEvent(dblclickEvent);
 
     // Verify the results
-    if (isInternetExplorer()) {
+    if (isIE8OrOlder()) {
       // IE is expected to simulate exactly 1 click event
       assertEquals(2, clickInfo.fireCount);
     } else {
@@ -561,9 +561,9 @@ public class EventTest extends GWTTestCase {
     reg1.removeHandler();
   }
 
-  private native boolean isInternetExplorer() /*-{
-    // rely on IE9 behavior being closer to Standard/Chrome/Safari
+  private native boolean isIE8OrOlder() /*-{
+    // rely on IE9 & 10 behavior being closer to Standard/Chrome/Safari
     return navigator.userAgent.toLowerCase().indexOf("msie") != -1 &&
-      document.documentMode != 9;
+      document.documentMode < 9;
   }-*/;
 }

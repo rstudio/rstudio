@@ -32,7 +32,10 @@
   <!-- Override IE9 fallback. -->
   <replace-with class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl">
     <when-type-is class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl" />
-    <when-property-is name="user.agent" value="ie9" />
+    <any>
+      <when-property-is name="user.agent" value="ie9" />
+      <when-property-is name="user.agent" value="ie10" />
+    </any>
   </replace-with>
 
   <source path="shared"/>

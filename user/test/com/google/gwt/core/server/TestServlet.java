@@ -96,6 +96,7 @@ public class TestServlet extends GwtServletBase {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws IOException {
+    disableCache(resp);
     resp.setContentType("text/plain");
     Test t = GWT.create(Test.class);
     PrintWriter writer = resp.getWriter();
@@ -107,6 +108,7 @@ public class TestServlet extends GwtServletBase {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
       IOException {
+    disableCache(resp);
     BufferedReader reader = req.getReader();
     String locale = reader.readLine();
     reader.close();
@@ -114,5 +116,16 @@ public class TestServlet extends GwtServletBase {
     resp.setContentType("text/plain");
     PrintWriter writer = resp.getWriter();
     writer.close();
+  }
+
+  private void disableCache(HttpServletResponse resp) {
+    // disable caching since IE10 caches the GET otherwise...
+    resp.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+    // Set standard HTTP/1.1 no-cache headers.
+    resp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
+    resp.addHeader("Cache-Control", "post-check=0, pre-check=0");
+    // Set standard HTTP/1.0 no-cache header.
+    resp.setHeader("Pragma", "no-cache");
   }
 }

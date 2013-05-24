@@ -338,7 +338,7 @@ public abstract class MediaTest extends GWTTestCase {
 
   private void assertAfterLoad(final RepeatingCommand command) {
     // the media resource needs time to load
-    delayTestFinish(5 * 1000);
+    delayTestFinish(10 * 1000);
 
     getMedia().addLoadedMetadataHandler(new LoadedMetadataHandler() {
 
