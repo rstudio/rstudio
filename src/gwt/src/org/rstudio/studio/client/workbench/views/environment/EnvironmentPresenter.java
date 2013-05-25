@@ -358,7 +358,10 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
-      view_.clearObjects();
+      if (initialized_)
+      {
+         view_.clearObjects();
+      }
       view_.addObjects(objects);
    }
     

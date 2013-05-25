@@ -43,14 +43,4 @@ public class EnvironmentClientState extends JavaScriptObject
    public final native JsArrayString getExpandedObjects() /*-{
        return this.expandedObjects;
    }-*/;
-
-   public static native boolean areEqual(EnvironmentClientState a,
-                                         EnvironmentClientState b) /*-{
-       if (a === null ^ b === null)
-           return false;
-       if (a === null)
-           return true;
-       return (a.scrollPosition === b.scrollPosition
-               && a.expandedObjects.toString() === b.expandedObjects.toString());
-   }-*/;
 }
