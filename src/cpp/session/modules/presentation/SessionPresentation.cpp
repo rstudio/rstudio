@@ -28,6 +28,8 @@
 // TODO: custom code navigator for presentations
 // TODO: run all chunks doesn't work for Rpres
 
+// TODO: depends should be a feature of presentations
+// TODO: auto-prompt for installation of pres packages
 
 #include "SessionPresentation.hpp"
 
