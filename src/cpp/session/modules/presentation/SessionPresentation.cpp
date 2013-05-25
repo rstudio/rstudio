@@ -13,7 +13,21 @@
  *
  */
 
-// TODO: icons & file associations
+
+// TODO: transition's don't work
+// TODO: italic's don't work
+
+// TODO: more generous default width
+// TODO: align scaling with default width
+
+// TODO: stable path for view in browser
+// TODO: external css
+// TODO: presentation Depends when possible
+
+// TODO: keyword highlight only after ===
+// TODO: custom code navigator for presentations
+// TODO: run all chunks doesn't work for Rpres
+
 
 #include "SessionPresentation.hpp"
 
