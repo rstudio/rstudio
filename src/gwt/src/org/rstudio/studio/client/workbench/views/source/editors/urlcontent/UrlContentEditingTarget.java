@@ -136,6 +136,12 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public Position search(Position startPos, String regex)
+   {
+      return null;
+   }
+   
+   @Override
    public void forceLineHighlighting()
    {
    }

@@ -19,9 +19,9 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
+// TODO: clip slide title text
 // TODO: keyword highlight only after ===
 // TODO: custom code navigator for presentations
-// TODO: sync presentation edit to current slide
 
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference

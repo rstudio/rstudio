@@ -2597,12 +2597,18 @@ public class TextEditingTarget implements EditingTarget
    @Override
    public Position search(String regex)
    {
+      return search(Position.create(0, 0), regex);
+   }
+   
+   @Override
+   public Position search(Position startPos, String regex)
+   {
       InputEditorSelection sel = docDisplay_.search(regex, 
                                                     false, 
                                                     false, 
                                                     false,
                                                     false,
-                                                    Position.create(0, 0),
+                                                    startPos,
                                                     null, 
                                                     true);
       if (sel != null)
@@ -2610,6 +2616,7 @@ public class TextEditingTarget implements EditingTarget
       else
          return null;
    }
+   
    
    @Handler
    void onFold()

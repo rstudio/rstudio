@@ -1174,17 +1174,47 @@ public class Source implements InsertSourceHandler,
       
    }
    
-   public void onEditPresentationSource(EditPresentationSourceEvent event)
+   public void onEditPresentationSource(final EditPresentationSourceEvent event)
    { 
       openFile(
             event.getSourceFile(), 
             FileTypeRegistry.RPRESENTATION,
             new CommandWithArg<EditingTarget>() {
                @Override
-               public void execute(EditingTarget arg)
-               {
-               
-                
+               public void execute(final EditingTarget editor)
+               {   
+                  // scan for the specified slide
+                  int currentSlide = 0;
+                  Position navPos = null;
+                  Position pos = Position.create(0, 0);
+                  while ((pos = editor.search(pos, "^\\={3,}\\s*$")) != null)
+                  { 
+                     if (currentSlide++ == event.getSlideIndex())
+                     {
+                        navPos = Position.create(pos.getRow() - 1, 0);
+                        break;
+                     }
+                     
+                     pos = Position.create(pos.getRow() + 1, 0);
+                  }
+                  
+                  // navigate to the slide
+                  if (navPos != null)
+                  {
+                     final Position navPosAlias = navPos;
+                     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                        @Override
+                        public void execute()
+                        {
+                           editor.navigateToPosition(
+                             SourcePosition.create(navPosAlias.getRow(), 0), 
+                             false);
+                           
+                        }
+                     });
+                  }
+                  
                }
          });
    }
