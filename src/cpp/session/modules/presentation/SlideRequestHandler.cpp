@@ -48,6 +48,8 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
+void onSlideDeckChangedOverlay(const SlideDeck& slideDeck);
+
 namespace {
 
 const char * const kDefaultRevealFont = "\"Lato\"";

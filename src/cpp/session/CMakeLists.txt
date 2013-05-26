@@ -85,7 +85,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
-   modules/presentation/PresentationStateOverlay.cpp
+   modules/presentation/PresentationOverlay.cpp
    modules/presentation/SlideMediaRenderer.cpp
    modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp

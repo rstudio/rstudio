@@ -1,5 +1,5 @@
 /*
- * PresentationStateOverlay.cpp
+ * PresentationOverlay.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,11 +18,18 @@
 
 #include <core/Error.hpp>
 
+#include "SlideParser.hpp"
+
 using namespace core;
 
 namespace session {
 namespace modules { 
 namespace presentation {
+
+void onSlideDeckChangedOverlay(const SlideDeck& slideDeck)
+{
+}
+
 namespace state {
 
 Error initializeOverlay()
