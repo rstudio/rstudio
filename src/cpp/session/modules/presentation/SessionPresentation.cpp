@@ -14,6 +14,8 @@
  */
 
 
+// TODO: consider updating to reveal 2.4
+
 // TODO: more generous default width
 // TODO: align scaling with default width
 
@@ -28,6 +30,7 @@
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference
 // TODO: (docs) custom css mechanisms
+// TODO: (docs) depends for presentations
 
 #include "SessionPresentation.hpp"
 
