@@ -24,9 +24,6 @@
 // TODO: run all chunks doesn't work for Rpres
 // TODO: add "edit" button to pres preview mode
 
-// TODO: depends should be a feature of presentations
-// TODO: auto-prompt for installation of pres packages
-
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference
 // TODO: (docs) custom css mechanisms
