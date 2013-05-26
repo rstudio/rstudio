@@ -73,6 +73,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "depends") ||
           boost::iequals(name, "transition") ||
           boost::iequals(name, "font-family") ||
           boost::iequals(name, "font-import") ||
@@ -83,7 +84,6 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||
           boost::iequals(name, "type") ||
-          boost::iequals(name, "answer") ||
           boost::iequals(name, "at");
 }
 
@@ -272,6 +272,14 @@ std::string SlideDeck::incremental() const
       return val;
    else
       return "false";
+}
+
+std::string SlideDeck::depends() const
+{
+   if (!slides_.empty())
+      return slides_[0].depends();
+   else
+      return "slides";
 }
 
 

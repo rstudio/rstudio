@@ -89,6 +89,7 @@ public:
 
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
    std::string css() const { return fieldValue("css"); }
    std::string transition() const;
@@ -142,6 +143,8 @@ public:
    std::string transition() const;
    std::string navigation() const;
    std::string incremental() const;
+
+   std::string depends() const;
 
    std::string preamble() const { return preamble_; }
 
