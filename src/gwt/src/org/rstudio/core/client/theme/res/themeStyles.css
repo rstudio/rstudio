@@ -1110,3 +1110,10 @@ body.ubuntu_mono .searchBox {
   cursor: default;
 }
 
+.presentationNavigatorLabel {
+  max-width: 200px;
+  white-space: nowrap;  
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+

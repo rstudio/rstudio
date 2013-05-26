@@ -67,6 +67,9 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
+      
+      titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
+                                                .presentationNavigatorLabel());
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
       getSlideMenu().setDropDownVisible(false);
       toolbar.addLeftSeparator();
