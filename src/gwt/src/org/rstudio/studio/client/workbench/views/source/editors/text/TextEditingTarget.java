@@ -2126,7 +2126,9 @@ public class TextEditingTarget implements EditingTarget
             code = code + "\n";
 
          boolean sweave = 
-                     fileType_.canCompilePDF() || fileType_.canKnitToHTML();
+            fileType_.canCompilePDF() || 
+            fileType_.canKnitToHTML() ||
+            fileType_.isRpres();
 
          RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
          final boolean forceEcho = sweave && (rnwWeave != null) ? rnwWeave.forceEchoOnExec() : false;
