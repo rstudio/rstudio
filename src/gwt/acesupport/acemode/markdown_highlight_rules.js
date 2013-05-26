@@ -37,6 +37,10 @@ var MarkdownHighlightRules = function() {
         }, { // code block
             token : "support.function",
             regex : "^[ ]{4}.+"
+        }, { // h1 with equals
+            token: "markup.heading.1",
+            regex: "^\\={3,}\\s*$",
+            next: "fieldblock"
         }, { // h1
             token: "markup.heading.1",
             regex: "^=+(?=\\s*$)"
@@ -48,11 +52,7 @@ var MarkdownHighlightRules = function() {
                 return "markup.heading." + value.search(/[^#]/);
             },
             regex : "^#{1,6}(?:[^ #].*| +.*(?:[^ #].*|[^ ]+.* +#+ *))$"
-        }, { // dcffield
-            token : ["comment.doc.tag", "text"],
-            regex : "^" +"([\\w-]+\\:)" + "(\\s+[^\\s]+.+)" + "$"
-        }, 
-        { // Github style block
+        },  { // Github style block
             token : "support.function",
             regex : "^```[a-zA-Z]+\\s*$",
             next  : "githubblock"
@@ -142,6 +142,15 @@ var MarkdownHighlightRules = function() {
         }, {
             token : "support.function",
             regex : ".+"
+        } ],
+        
+        "fieldblock" : [ {
+            token : ["comment.doc.tag", "text"],
+            regex : "^" +"([\\w-]+\\:)" + "(.*)" + "$"
+        }, {
+            token : "text",
+            regex : "(?=.+)",
+            next  : "start"
         } ],
 
         "mathjaxdisplay" : [ {

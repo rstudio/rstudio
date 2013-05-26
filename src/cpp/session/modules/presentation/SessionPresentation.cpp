@@ -19,7 +19,8 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
-// TODO: keyword highlight only after ===
+// TODO: add class field to slides
+
 // TODO: custom code navigator for presentations
 
 // TODO: (docs) expand current documentation into multiple pages
