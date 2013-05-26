@@ -21,8 +21,7 @@
 
 // TODO: keyword highlight only after ===
 // TODO: custom code navigator for presentations
-// TODO: run all chunks doesn't work for Rpres
-// TODO: add "edit" button to pres preview mode
+// TODO: sync presentation edit to current slide
 
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference

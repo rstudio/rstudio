@@ -1174,6 +1174,21 @@ public class Source implements InsertSourceHandler,
       
    }
    
+   public void onEditPresentationSource(EditPresentationSourceEvent event)
+   { 
+      openFile(
+            event.getSourceFile(), 
+            FileTypeRegistry.RPRESENTATION,
+            new CommandWithArg<EditingTarget>() {
+               @Override
+               public void execute(EditingTarget arg)
+               {
+               
+                
+               }
+         });
+   }
+   
    
    private void doOpenSourceFile(final FileSystemItem file,
                                  final TextFileType fileType,

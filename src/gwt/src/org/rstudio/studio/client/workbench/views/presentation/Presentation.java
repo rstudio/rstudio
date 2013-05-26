@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
+import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 
 public class Presentation extends BasePresenter 
 {
@@ -224,6 +225,14 @@ public class Presentation extends BasePresenter
    void onPresentationPrev()
    {
       view_.prev();
+   }
+   
+   @Handler
+   void onPresentationEdit()
+   {
+      eventBus_.fireEvent(new EditPresentationSourceEvent(
+            FileSystemItem.createFile(currentState_.getFilePath()),
+            currentState_.getSlideIndex()));
    }
    
    @Handler
