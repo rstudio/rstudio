@@ -677,20 +677,6 @@ bool createStandalonePresentation(const FilePath& targetFile,
    return renderPresentation(vars, filters, *pOfs, &errMsg);
 }
 
-FilePath viewInBrowserPath()
-{
-   static FilePath previewPath;
-   if (previewPath.empty())
-   {
-      previewPath = module_context::tempFile("view", "dir");
-      Error error = previewPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   return previewPath.complete("presentation.html");
-}
-
 
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
@@ -759,9 +745,20 @@ void handlePresentationRootRequest(const std::string& path,
    filters.push_back(linkFilter());
    if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
    {
+      // set response
       pResponse->setNoCacheHeaders();
       pResponse->setContentType("text/html");
       pResponse->setBody(previewOutputStream);
+
+      // also save a view in browser version if that path already exists
+      // (allows the user to do a simple browser refresh to see changes)
+      FilePath viewInBrowserPath = presentation::state::viewInBrowserPath();
+      if (viewInBrowserPath.exists())
+      {
+         std::string errMsg;
+         if (!savePresentationAsStandalone(viewInBrowserPath, &errMsg))
+            LOG_ERROR_MESSAGE(errMsg);
+      }
    }
    else
    {
@@ -1072,14 +1069,10 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
-bool savePresentationAsStandalone(core::FilePath* pFilePath,
+bool savePresentationAsStandalone(const core::FilePath& filePath,
                                   std::string* pErrMsg)
 {
-   // provide default if necessary
-   if (pFilePath->empty())
-      *pFilePath = viewInBrowserPath();
-
-   return createStandalonePresentation(*pFilePath,
+   return createStandalonePresentation(filePath,
                                        saveAsStandaloneVars,
                                        pErrMsg);
 }

@@ -14,19 +14,15 @@
  */
 
 
-// TODO: transition's don't work
-// TODO: italic's don't work
-
 // TODO: more generous default width
 // TODO: align scaling with default width
 
-// TODO: stable path for view in browser
 // TODO: external css
-// TODO: presentation Depends when possible
 
 // TODO: keyword highlight only after ===
 // TODO: custom code navigator for presentations
 // TODO: run all chunks doesn't work for Rpres
+// TODO: add "edit" button to pres preview mode
 
 // TODO: depends should be a feature of presentations
 // TODO: auto-prompt for installation of pres packages
@@ -319,12 +315,29 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   FilePath targetPath;
-   if (!pathParam.empty())
-      targetPath = module_context::resolveAliasedPath(pathParam);
+   FilePath targetPath = module_context::resolveAliasedPath(pathParam);
+   if (!targetPath.exists())
+      return core::fileNotFoundError(targetPath, ERROR_LOCATION);
 
    std::string errMsg;
-   if (savePresentationAsStandalone(&targetPath, &errMsg))
+   if (!savePresentationAsStandalone(targetPath, &errMsg))
+   {
+      pResponse->setError(systemError(boost::system::errc::io_error,
+                                      ERROR_LOCATION),
+                          json::toJsonString(errMsg));
+   }
+
+   return Success();
+}
+
+Error createDesktopViewInBrowserPresentation(
+                                   const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
+{
+   // save to view in browser path
+   FilePath targetPath = presentation::state::viewInBrowserPath();
+   std::string errMsg;
+   if (savePresentationAsStandalone(targetPath, &errMsg))
    {
       pResponse->setResult(module_context::createAliasedPath(targetPath));
    }
@@ -401,6 +414,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
       (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
+      (bind(registerRpcMethod, "create_desktop_view_in_browser_presentation",
+                                createDesktopViewInBrowserPresentation))
       (bind(registerRpcMethod, "create_presentation_rpubs_source", createPresentationRpubsSource))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
       (bind(registerRpcMethod, "create_new_presentation", createNewPresentation))

@@ -39,7 +39,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                    const std::string& jsCallbacks,
                                    core::http::Response* pResponse);
 
-bool savePresentationAsStandalone(core::FilePath* pFilePath,
+bool savePresentationAsStandalone(const core::FilePath& filePath,
                                   std::string* pErrMsg);
 
 bool savePresentationAsRpubsSource(const core::FilePath& filePath,

@@ -2561,13 +2561,23 @@ public class RemoteServer implements Server
    @Override
    public void createStandalonePresentation(
                               String targetFile,
-                              ServerRequestCallback<String> requestCallback)
+                              ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, 
                   CREATE_STANDALONE_PRESENTATION, 
                   StringUtil.notNull(targetFile), 
                   requestCallback);
    }
+   
+   @Override
+   public void createDesktopViewInBrowserPresentation(
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  CREATE_DESKTOP_VIEW_IN_BROWSER_PRESENTATION, 
+                  requestCallback);
+   }
+
    
    @Override
    public void createPresentationRPubsSource(
@@ -3018,6 +3028,7 @@ public class RemoteServer implements Server
    
    private static final String SET_WORKING_DIRECTORY = "set_working_directory";
    private static final String CREATE_STANDALONE_PRESENTATION = "create_standalone_presentation";
+   private static final String CREATE_DESKTOP_VIEW_IN_BROWSER_PRESENTATION = "create_desktop_view_in_browser_presentation";
    private static final String CREATE_PRESENTATION_RPUBS_SOURCE = "create_presentation_rpubs_source";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
    private static final String PRESENTATION_EXECUTE_CODE = "presentation_execute_code";

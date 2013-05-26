@@ -29,6 +29,9 @@ public interface PresentationServerOperations extends RPubsServerOperations
    
    void createStandalonePresentation(
                            String targetFile,
+                           ServerRequestCallback<Void> requestCallback);
+   
+   void createDesktopViewInBrowserPresentation(
                            ServerRequestCallback<String> requestCallback);
    
    void createPresentationRPubsSource(

@@ -44,6 +44,7 @@ core::FilePath filePath();
 
 core::FilePath directory();
 
+core::FilePath viewInBrowserPath();
 
 void clear();
 

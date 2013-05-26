@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Barrier;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -39,7 +38,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -247,15 +245,14 @@ public class Presentation extends BasePresenter
    {
       if (Desktop.isDesktop())
       {
-         saveAsStandalone(null, 
-                          new NullProgressIndicator(),
-                          new CommandWithArg<String>() {
-            @Override
-            public void execute(String arg)
-            {
-               Desktop.getFrame().showFile(arg);
-            }
-         });
+         server_.createDesktopViewInBrowserPresentation(
+            new SimpleRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String path)
+               {
+                  Desktop.getFrame().showFile(path);
+               }
+            });
       }
       else
       {
@@ -291,38 +288,30 @@ public class Presentation extends BasePresenter
                
                indicator.onProgress("Saving Presentation...");
    
-               saveAsStandalone(targetFile.getPath(), 
-                                indicator,
-                                new CommandWithArg<String>() {
-
-                  @Override
-                  public void execute(String arg)
-                  {
-                     saveAsStandaloneDir_ = targetFile.getParentPathString();
-                     session_.persistClientState();
-                  }         
-               });    
+               server_.createStandalonePresentation(
+                  targetFile.getPath(), 
+                  new VoidServerRequestCallback(indicator) {
+                     @Override
+                     public void onSuccess()
+                     {
+                        saveAsStandaloneDir_ = targetFile.getParentPathString();
+                        session_.persistClientState();
+                     }
+                  });
             }
       }); 
    }
    
    private void saveAsStandalone(String targetFile, 
                                  final ProgressIndicator indicator,
-                                 final CommandWithArg<String> onSuccess)
+                                 final Command onSuccess)
    {
       server_.createStandalonePresentation(
-            targetFile, new ServerRequestCallback<String>() {
+            targetFile, new VoidServerRequestCallback(indicator) {
                @Override
-               public void onResponseReceived(String savedFile)
+               public void onSuccess()
                {
-                  indicator.onCompleted();
-                  onSuccess.execute(savedFile);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  indicator.onError(getErrorMessage(error));
+                  onSuccess.execute();
                }
             });
    }
