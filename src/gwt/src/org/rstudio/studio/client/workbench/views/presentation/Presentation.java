@@ -162,6 +162,12 @@ public class Presentation extends BasePresenter
                   
                   view_.load(buildPresentationUrl());
                }
+               else if (file.getParentPathString().equals(getCurrentPresDir()) 
+                          &&
+                        file.getExtension().toLowerCase().equals(".css"))
+               {
+                  view_.load(buildPresentationUrl());
+               }
             }
          }
       });
@@ -484,6 +490,16 @@ public class Presentation extends BasePresenter
       return (currentState_ != null) && 
              (currentState_.isActive())&& 
              view_.hasSlides();
+   }
+   
+   private String getCurrentPresDir()
+   {
+      if (currentState_ == null)
+         return "";
+      
+      FileSystemItem presFilePath = FileSystemItem.createFile(
+                                               currentState_.getFilePath());
+      return presFilePath.getParentPathString();
    }
    
    private void onPresentationSlideChanged(final int index, 

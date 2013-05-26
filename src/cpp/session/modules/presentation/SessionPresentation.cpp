@@ -17,8 +17,6 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
-// TODO: external css
-
 // TODO: keyword highlight only after ===
 // TODO: custom code navigator for presentations
 // TODO: run all chunks doesn't work for Rpres
@@ -26,6 +24,10 @@
 
 // TODO: depends should be a feature of presentations
 // TODO: auto-prompt for installation of pres packages
+
+// TODO: (docs) expand current documentation into multiple pages
+// TODO: (docs) presentations quick reference
+// TODO: (docs) custom css mechanisms
 
 #include "SessionPresentation.hpp"
 

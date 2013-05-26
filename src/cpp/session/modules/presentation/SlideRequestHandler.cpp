@@ -408,6 +408,29 @@ boost::iostreams::regex_filter linkFilter()
             fixupLink);
 }
 
+std::string userSlidesCss(const SlideDeck& slideDeck)
+{
+   // first determine the path to the css file -- check for a css field
+   // first and if that doesn't exist form one from the basename of
+   // the presentation
+   std::string cssFile = slideDeck.css();
+   if (cssFile.empty())
+      cssFile = presentation::state::filePath().stem() + ".css";
+   FilePath cssPath = presentation::state::directory().complete(cssFile);
+
+   // read user css if it exists
+   std::string userSlidesCss;
+   if (cssPath.exists())
+   {
+      Error error = core::readStringFromFile(cssPath, &userSlidesCss);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // return it
+   return userSlidesCss;
+}
+
 
 bool readPresentation(SlideDeck* pSlideDeck,
                       std::string* pSlides,
@@ -464,6 +487,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    vars["slides_head"] = slidesHead;
    vars["slides"] = *pSlides;
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
+   vars["user_slides_css"] = userSlidesCss(*pSlideDeck);
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();

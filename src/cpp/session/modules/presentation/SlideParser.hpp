@@ -90,6 +90,7 @@ public:
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
+   std::string css() const { return fieldValue("css"); }
    std::string transition() const;
    std::string navigation() const { return fieldValue("navigation", "slides"); }
 
@@ -135,6 +136,8 @@ public:
    std::string title() const;
 
    std::string fontFamily() const;
+
+   std::string css() const;
 
    std::string transition() const;
    std::string navigation() const;
