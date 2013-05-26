@@ -53,21 +53,20 @@ public class GitPane extends WorkbenchPane implements Display
    protected Toolbar createMainToolbar()
    {
       ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+      moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.vcsPull().createMenuItem(false));
       moreMenu.addItem(commands_.vcsPush().createMenuItem(false));
-      moreMenu.addSeparator();
-      moreMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.vcsRevert().createToolbarButton());
-      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.vcsShowHistory().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(new ToolbarButton(
             "More",
