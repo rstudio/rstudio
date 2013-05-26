@@ -14,14 +14,15 @@
  */
 
 
-// TODO: consider updating to reveal 2.4
-
 // TODO: more generous default width
 // TODO: align scaling with default width
 
-// TODO: one more shot at printing
-
 // TODO: add class field to slides
+
+// TODO: consider per-slide transition and
+//       transition speed settings
+
+// TODO: investigate why pdf doesn't work
 
 // TODO: custom code navigator for presentations
 

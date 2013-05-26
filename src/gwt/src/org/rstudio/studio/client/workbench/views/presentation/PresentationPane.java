@@ -63,6 +63,9 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
+      boolean isTutorial =
+                 session_.getSessionInfo().getPresentationState().isTutorial();
+      
       Toolbar toolbar = new Toolbar();
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
@@ -73,14 +76,18 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
       getSlideMenu().setDropDownVisible(false);
       toolbar.addLeftSeparator();
+      
+      if (!isTutorial)
+      {
+         toolbar.addLeftWidget(commands_.presentationEdit().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+      
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      
       // More
-      if (!session_.getSessionInfo().getPresentationState().isTutorial())
-      {
-         toolbar.addLeftSeparator();
-         toolbar.addLeftWidget(commands_.presentationEdit().createToolbarButton());
-         
+      if (!isTutorial)
+      { 
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
          moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
