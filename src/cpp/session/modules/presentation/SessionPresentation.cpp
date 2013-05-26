@@ -19,6 +19,8 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
+// TODO: one more shot at printing
+
 // TODO: add class field to slides
 
 // TODO: custom code navigator for presentations
