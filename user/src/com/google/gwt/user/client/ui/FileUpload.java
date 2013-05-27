@@ -130,10 +130,8 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
    * Constructs a new file upload widget.
    */
   public FileUpload() {
-    setElement(Document.get().createFileInputElement());
+    this(Document.get().createFileInputElement());
     setStyleName("gwt-FileUpload");
-    impl = GWT.create(FileUploadImpl.class);
-    impl.init(this);
   }
 
   /**
@@ -146,6 +144,8 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
   protected FileUpload(Element element) {
     assert InputElement.as(element).getType().equalsIgnoreCase("file");
     setElement(element);
+    impl = GWT.create(FileUploadImpl.class);
+    impl.init(this);
   }
 
   public HandlerRegistration addChangeHandler(ChangeHandler handler) {
