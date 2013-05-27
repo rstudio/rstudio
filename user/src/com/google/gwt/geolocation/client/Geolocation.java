@@ -55,7 +55,7 @@ import com.google.gwt.dom.client.PartialSupport;
  * </p>
  * 
  * @see <a href="http://www.w3.org/TR/geolocation-API/">W3C Geolocation API</a>
- * @see <a href="http://diveintohtml5.org/geolocation.html">Dive Into HTML5 -
+ * @see <a href="http://diveintohtml5.info/geolocation.html">Dive Into HTML5 -
  *      Geolocation</a>
  */
 @PartialSupport
