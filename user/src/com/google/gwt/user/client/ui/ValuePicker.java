@@ -64,7 +64,7 @@ public class ValuePicker<T> extends Composite
     cellList.setSelectionModel(smodel);
     smodel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
       public void onSelectionChange(SelectionChangeEvent event) {
-        setValue(smodel.getSelectedObject());
+        setValue(smodel.getSelectedObject(), true);
       }
     });
   }
@@ -112,7 +112,7 @@ public class ValuePicker<T> extends Composite
   }
 
   public void setValue(T value) {
-    setValue(value, true);
+    setValue(value, false);
   }
 
   public void setValue(T value, boolean fireEvents) {
