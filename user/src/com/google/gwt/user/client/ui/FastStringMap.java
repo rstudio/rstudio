@@ -268,7 +268,7 @@ class FastStringMap<T> extends AbstractMap<String, T> {
   }-*/;
 
   private native void init() /*-{
-    this.@com.google.gwt.user.client.ui.FastStringMap::map = [];
+    this.@com.google.gwt.user.client.ui.FastStringMap::map = {};
   }-*/;
 
   private String keyMustBeString(Object key) {
