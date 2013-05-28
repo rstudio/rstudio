@@ -59,12 +59,18 @@ public class PresentationFrame extends AnchorableFrame
          public void onLoad(LoadEvent event)
          {
             // set title
-            String title = StringUtil.notNull(
+            title_ = StringUtil.notNull(
                                 getWindow().getDocument().getTitle());
+            
             if (titleWidget != null)
-               titleWidget.setText(title);
+               titleWidget.setText(title_);
          }
       }); 
+   }
+   
+   public String getFrameTitle()
+   {
+      return title_;
    }
    
    public void clear()
@@ -119,5 +125,7 @@ public class PresentationFrame extends AnchorableFrame
       }-*/;
    }
    
+   
+   private String title_ = "";
 
 }

@@ -240,7 +240,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    public String getPresentationTitle()
    {
-      return titleLabel_.getText();
+      return frame_.getFrameTitle();
    }
    
    private final native void initPresentationCallbacks() /*-{
