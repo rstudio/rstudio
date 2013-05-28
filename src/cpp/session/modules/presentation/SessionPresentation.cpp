@@ -17,15 +17,15 @@
 
 // TODO: custom code navigator for presentations
 
-// TODO: more generous default width
-// TODO: align scaling with default width
+// TODO: consider 's'
+// TODO: consider some controls for overview, search
 
-// TODO: (docs) expand current documentation into multiple pages
-// TODO: (docs) presentations quick reference
 // TODO: (docs) custom css mechanisms
 // TODO: (docs) depends for presentations
-// TODO: (docs) per-slide transitions
-// TODO: (docs) remove overview note
+// TODO: (docs) per-slide transitions / transition speed
+// TODO: (docs) document rtl
+// TODO: (docs) columns left and right widths
+// TOOD: (docs) use 'o' for overview
 
 #include "SessionPresentation.hpp"
 

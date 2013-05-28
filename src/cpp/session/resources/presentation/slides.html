@@ -116,8 +116,19 @@ function commandsForSlide(indexh) {
       if (window.MathJax)
         window.MathJax.Hub.Rerender(event.currentSlide);  
     });
+    
+    // forward command key events to the rstudio frame
+   window.onkeydown = function(e) {
 
+      // allow 'o' to toggle overview mode
+      switch( e.keyCode ) {
+         case 79: case 42: window.Reveal.toggleOverview(); break;  
+      }
    
+      if (window.parent.presentationKeydown)
+         window.parent.presentationKeydown(e);   
+   }
+
 #!init_commands#   
    
   </script>

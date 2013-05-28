@@ -1,7 +1,4 @@
 
-// forward command key events to the rstudio frame
-if (window.parent.presentationKeydown)
-  window.onkeydown = function(e) {window.parent.presentationKeydown(e);}
 
 // manage media playback, atCommands, etc.
 function mediaManager(media, atCommands) {
