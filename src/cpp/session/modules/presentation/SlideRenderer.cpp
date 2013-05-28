@@ -128,6 +128,68 @@ void addFragmentClass(const std::string& fragmentClass,
                                    bqWithClass + "\n<p>");
 }
 
+void validateTransitionType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "none") ||
+                  boost::iequals(type, "default") ||
+                  boost::iequals(type, "linear") ||
+                  boost::iequals(type, "fade") ||
+                  boost::iequals(type, "zoom") ||
+                  boost::iequals(type, "concave");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for transition field: "
+                                        + type + "\n");
+   }
+}
+
+void validateTransitionSpeedType(const std::string& speed)
+{
+   bool isValid = speed.empty() ||
+                  boost::iequals(speed, "default") ||
+                  boost::iequals(speed, "fast") ||
+                  boost::iequals(speed, "slow");
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for transition-speed "
+                                        "field: " + speed + "\n");
+   }
+}
+
+void validateNavigationType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "slides") ||
+                  boost::iequals(type, "sections") ||
+                  boost::iequals(type, "none");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for navigation field: "
+                                        + type + "\n");
+   }
+}
+
+void validateIncrementalType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "false") ||
+                  boost::iequals(type, "true");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for incremental field: "
+                                        + type + "\n");
+   }
+}
+
+void validateSlideDeckFields(const SlideDeck& slideDeck)
+{
+   validateTransitionType(slideDeck.transition());
+   validateTransitionSpeedType(slideDeck.transitionSpeed());
+   validateNavigationType(slideDeck.navigation());
+   validateIncrementalType(slideDeck.incremental());
+}
+
 Error slideToHtml(const Slide& slide,
                   int slideNumber,
                   const std::string& extraContent,
@@ -219,54 +281,6 @@ Error slideToHtml(const Slide& slide,
    return Success();
 }
 
-void validateTransitionType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "none") ||
-                  boost::iequals(type, "default") ||
-                  boost::iequals(type, "linear") ||
-                  boost::iequals(type, "fade") ||
-                  boost::iequals(type, "zoom") ||
-                  boost::iequals(type, "concave");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for transition field: "
-                                        + type + "\n");
-   }
-}
-
-void validateNavigationType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "slides") ||
-                  boost::iequals(type, "sections") ||
-                  boost::iequals(type, "none");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for navigation field: "
-                                        + type + "\n");
-   }
-}
-
-void validateIncrementalType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "false") ||
-                  boost::iequals(type, "true");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for incremental field: "
-                                        + type + "\n");
-   }
-}
-
-void validateSlideDeckFields(const SlideDeck& slideDeck)
-{
-   validateTransitionType(slideDeck.transition());
-   validateNavigationType(slideDeck.navigation());
-   validateIncrementalType(slideDeck.incremental());
-}
-
 } // anonymous namespace
 
 
@@ -310,6 +324,32 @@ Error renderSlides(const SlideDeck& slideDeck,
       // add the state if there is a type
       if (!type.empty())
          ostr << " data-state=\"" << type <<  "\"";
+
+      // add the transition
+      std::string transition;
+      if (!slide.transition().empty())
+      {
+         validateTransitionType(slide.transition());
+         transition = slide.transition();
+      }
+      else
+      {
+         transition = slideDeck.transition();
+      }
+      ostr << " data-transition=\"" << transition << "\"";
+
+      // add the transition speed
+      std::string transitionSpeed;
+      if (!slide.transitionSpeed().empty())
+      {
+         validateTransitionSpeedType(slide.transitionSpeed());
+         transitionSpeed = slide.transitionSpeed();
+      }
+      else
+      {
+         transitionSpeed = slideDeck.transitionSpeed();
+      }
+      ostr << " data-transition-speed=\"" << transitionSpeed << "\"";
 
       // end section tag
       ostr << ">\n";

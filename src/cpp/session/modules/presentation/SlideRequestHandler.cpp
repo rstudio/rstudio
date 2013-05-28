@@ -645,7 +645,7 @@ void externalBrowserVars(const SlideDeck& slideDeck,
 
    // use transitions for standalone
    vars["reveal_transition"] = slideDeck.transition();
-
+   vars["reveal_transition_speed"] = slideDeck.transitionSpeed();
 }
 
 bool createStandalonePresentation(const FilePath& targetFile,
@@ -765,6 +765,8 @@ void handlePresentationRootRequest(const std::string& path,
    // no transition in desktop mode (qtwebkit can't keep up)
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
    vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
+   vars["reveal_transition_speed"] = isDesktop ? "default" :
+                                                 slideDeck.transitionSpeed();
 
    // render to output stream
    std::stringstream previewOutputStream;

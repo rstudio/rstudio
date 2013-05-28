@@ -94,6 +94,10 @@ public:
    std::string css() const { return fieldValue("css"); }
    std::string cssClass() const { return fieldValue("class"); }
    std::string transition() const;
+   std::string transitionSpeed() const
+   {
+      return fieldValue("transition-speed");
+   }
    std::string navigation() const { return fieldValue("navigation", "slides"); }
 
 public:
@@ -142,6 +146,7 @@ public:
    std::string css() const;
 
    std::string transition() const;
+   std::string transitionSpeed() const;
    std::string navigation() const;
    std::string incremental() const;
 

@@ -75,6 +75,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "date") ||
           boost::iequals(name, "depends") ||
           boost::iequals(name, "transition") ||
+          boost::iequals(name, "transition-speed") ||
           boost::iequals(name, "font-family") ||
           boost::iequals(name, "font-import") ||
           boost::iequals(name, "css") ||
@@ -220,7 +221,7 @@ void insertField(std::vector<Slide::Field>* pFields, const Slide::Field& field)
 
 std::string Slide::transition() const
 {
-   std::string value = fieldValue("transition", "linear");
+   std::string value = fieldValue("transition");
    if (value == "rotate")
       value = "default";
    return value;
@@ -252,10 +253,26 @@ std::string SlideDeck::css() const
 
 std::string SlideDeck::transition() const
 {
+   std::string transition;
    if (!slides_.empty())
-      return slides_[0].transition();
+      transition = slides_[0].transition();
+
+   if (transition.empty())
+      transition = "linear";
+
+   return transition;
+}
+
+std::string SlideDeck::transitionSpeed() const
+{
+   std::string speed;
+   if (!slides_.empty())
+      speed = slides_[0].transitionSpeed();
+
+   if (!speed.empty())
+      return speed;
    else
-      return "linear";
+      return "default";
 }
 
 std::string SlideDeck::navigation() const
