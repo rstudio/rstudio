@@ -20,9 +20,15 @@
 define("mode/markdown_highlight_rules", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var lang = require("ace/lib/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var MarkdownHighlightRules = function() {
+
+    var slideFields = lang.arrayToMap(
+        ("title|author|date|rtl|depends|transition|transition-speed|font-family|css|class|navigation|incremental|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
+              .split("|")
+        );
 
     // regexp must not have capturing parentheses
     // regexps are ordered -> the first match is used
@@ -145,12 +151,28 @@ var MarkdownHighlightRules = function() {
         } ],
         
         "fieldblock" : [ {
-            token : ["comment.doc.tag", "text"],
-            regex : "^" +"([\\w-]+\\:)" + "(.*)" + "$"
+            token : function(value) {
+                var field = value.slice(0,-1);
+                if (slideFields[field])
+                    return "comment.doc.tag";
+                else
+                    return "text";
+            },
+            regex : "^" +"[\\w-]+\\:",
+            next  : "fieldblockvalue"
         }, {
             token : "text",
             regex : "(?=.+)",
             next  : "start"
+        } ],
+
+        "fieldblockvalue" : [ {
+            token : "text",
+            regex : "$",
+            next  : "fieldblock"
+        }, {
+            token : "text",
+            regex : ".+"
         } ],
 
         "mathjaxdisplay" : [ {

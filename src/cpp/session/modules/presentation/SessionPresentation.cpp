@@ -18,14 +18,15 @@
 // TODO: align scaling with default width
 
 // TODO: investigate why pdf doesn't work
-// TODO: investigate why overview doesn't work
+
+// TODO: investigate why overview doesn't work properly
+// TODO: consider 'o' for overview mode
 
 // TODO: consider left and right fields for columns
 // TODO: consider search plugin
-// TODO: consider 'o' for overview mode
+
 
 // TODO: custom code navigator for presentations
-// TODO: highlight only fields that match
 
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference
