@@ -4,7 +4,6 @@
 
    <ui:image field='statusBarTile' src='statusBarTile.png' repeatStyle='Horizontal'/>
    <ui:data field='statusBarSeparator' src='statusBarSeparator.png'/>
-   <ui:image field='function' src='function.png'/>
 
    <ui:style>
       @url SEPARATOR statusBarSeparator;
@@ -57,7 +56,6 @@
                                  styleName="{style.element} {style.pos}"
                                  showArrows="false"/>
       <g:Image ui:field="scopeIcon_"
-               resource='{function}'
                styleName="{style.scopeIcon}"/>
       <sb:StatusBarElementWidget ui:field="scope_"
                                  styleName="{style.element}"

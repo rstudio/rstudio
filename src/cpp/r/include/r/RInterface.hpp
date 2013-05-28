@@ -49,7 +49,11 @@ typedef struct SEXPREC *SEXP;
 typedef struct RCNTXT {
     struct RCNTXT *nextcontext;
     int callflag;
+#ifdef _WIN32
+    jmp_buf cmpbuf;
+#else
     sigjmp_buf cjmpbuf;
+#endif
     int cstacktop;
     int evaldepth;
     SEXP promargs;
