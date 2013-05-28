@@ -128,7 +128,7 @@ public class Timestamp extends java.util.Date {
   }
 
   public boolean equals(Timestamp ts) {
-    return (getTime() == ts.getTime() && getNanos() == ts.getNanos());
+    return ts != null && getTime() == ts.getTime() && getNanos() == ts.getNanos();
   }
 
   public int getNanos() {
