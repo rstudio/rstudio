@@ -306,9 +306,9 @@ public final class String implements Comparable<String>, CharSequence,
    */
   static String _String(byte[] bytes, int ofs, int len, String charset)
       throws UnsupportedEncodingException {
-    if (CHARSET_UTF8.equals(charset)) {
+    if (CHARSET_UTF8.equalsIgnoreCase(charset)) {
       return utf8ToString(bytes, ofs, len);
-    } else if (CHARSET_8859_1.equals(charset) || CHARSET_LATIN1.equals(charset)) {
+    } else if (CHARSET_8859_1.equalsIgnoreCase(charset) || CHARSET_LATIN1.equalsIgnoreCase(charset)) {
       return latin1ToString(bytes, ofs, len);
     } else {
       throw new UnsupportedEncodingException("Charset " + charset
@@ -691,10 +691,10 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public byte[] getBytes(String charSet) throws UnsupportedEncodingException {
-    if (CHARSET_UTF8.equals(charSet)) {
+    if (CHARSET_UTF8.equalsIgnoreCase(charSet)) {
       return getBytesUtf8(this);
     }
-    if (CHARSET_8859_1.equals(charSet) || CHARSET_LATIN1.equals(charSet)) {
+    if (CHARSET_8859_1.equalsIgnoreCase(charSet) || CHARSET_LATIN1.equalsIgnoreCase(charSet)) {
       return getBytesLatin1(this);
     }
     throw new UnsupportedEncodingException(charSet + " is not supported");

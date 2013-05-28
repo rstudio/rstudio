@@ -174,51 +174,61 @@ public class StringTest extends GWTTestCase {
   }
 
   public void testConstructorLatin1() throws UnsupportedEncodingException {
+    internalTestConstructorLatin1("ISO-8859-1");
+    internalTestConstructorLatin1("iso-8859-1");
+  }
+
+  private void internalTestConstructorLatin1(String encoding) throws UnsupportedEncodingException {
     byte bytes[] = new byte[] {
         (byte) 0xE0, (byte) 0xDF, (byte) 0xE7, (byte) 0xD0, (byte) 0xE9, 'f'
     };
-    String str = new String(bytes, "ISO-8859-1");
+    String str = new String(bytes, encoding);
     assertEquals("àßçÐéf", str);
-    str = new String(bytes, 1, 3, "ISO-8859-1");
+    str = new String(bytes, 1, 3, encoding);
     assertEquals("ßçÐ", str);
     try {
-      new String(bytes, 1, 6, "ISO-8859-1");
+      new String(bytes, 1, 6, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
-      new String(bytes, -1, 2, "ISO-8859-1");
+      new String(bytes, -1, 2, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
-      new String(bytes, 6, 2, "ISO-8859-1");
+      new String(bytes, 6, 2, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
   }
 
   public void testConstructorUtf8() throws UnsupportedEncodingException {
+    internalTestConstructorUtf8("UTF-8");
+    internalTestConstructorUtf8("utf-8");
+  }
+
+  private void internalTestConstructorUtf8(String encoding) throws UnsupportedEncodingException {
     byte bytes[] = new byte[] {
         (byte) 0xC3, (byte) 0xA0, (byte) 0xC3, (byte) 0x9F, (byte) 0xC3,
         (byte) 0xA7, (byte) 0xC3, (byte) 0x90, (byte) 0xC3, (byte) 0xA9, 'f'
     };
-    String str = new String(bytes, "UTF-8");
+    String str = new String(bytes, encoding);
     assertEquals("àßçÐéf", str);
-    str = new String(bytes, 2, 6, "UTF-8");
+    str = new String(bytes, 2, 6, encoding);
     assertEquals("ßçÐ", str);
     try {
-      new String(bytes, 2, 12, "UTF-8");
+      new String(bytes, 2, 12, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
-      new String(bytes, -1, 2, "UTF-8");
+      new String(bytes, -1, 2, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
     try {
-      new String(bytes, 12, 2, "UTF-8");
+      new String(bytes, 12, 2, encoding);
       assertTrue("Should have thrown IOOB in Development Mode", GWT.isScript());
     } catch (IndexOutOfBoundsException expected) {
     }
@@ -293,9 +303,14 @@ public class StringTest extends GWTTestCase {
   }
 
   public void testGetBytesLatin1() throws UnsupportedEncodingException {
+    internalTestGetBytesLatin1("ISO-8859-1");
+    internalTestGetBytesLatin1("iso-8859-1");
+  }
+
+  private void internalTestGetBytesLatin1(String encoding) throws UnsupportedEncodingException {
     // Contains only ISO-Latin-1 characters.
     String str = "Îñtérñåtîöñålîzåtîöñ";
-    byte[] bytes = str.getBytes("ISO-8859-1");
+    byte[] bytes = str.getBytes(encoding);
     assertEquals(str.length(), bytes.length);
     for (int i = 0; i < str.length(); ++i) {
       assertEquals("latin1 byte " + i + " differs", (byte) str.charAt(i),
@@ -304,13 +319,18 @@ public class StringTest extends GWTTestCase {
   }
 
   public void testGetBytesUtf8() throws UnsupportedEncodingException {
+    internalTestGetBytesUtf8("UTF-8");
+    internalTestGetBytesUtf8("utf-8");
+  }
+
+  private void internalTestGetBytesUtf8(String encoding) throws UnsupportedEncodingException {
     // Test a range of characters getting encoded to UTF8 in 1-2 bytes.
     char[] chars = new char[384];
     for (int i = 0; i < chars.length; ++i) {
       chars[i] = (char) i;
     }
     String str = String.copyValueOf(chars);
-    byte[] bytes = str.getBytes("UTF-8");
+    byte[] bytes = str.getBytes(encoding);
     assertEquals(640, bytes.length);
     for (int i = 0; i < 128; ++i) {
       assertEquals("Position " + i, i, bytes[i]);
@@ -330,7 +350,7 @@ public class StringTest extends GWTTestCase {
       Character.toChars(firstCodePoint + i, chars, 2 * i);
     }
     str = String.copyValueOf(chars);
-    bytes = str.getBytes("UTF-8");
+    bytes = str.getBytes(encoding);
     assertEquals(4 * numChars, bytes.length);
     for (int i = 0; i < numChars; ++i) {
       assertEquals("1st byte of " + i, (byte) 0xF4, bytes[4 * i]);
