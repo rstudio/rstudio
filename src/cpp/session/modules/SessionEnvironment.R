@@ -61,9 +61,10 @@
    tryCatch(
    {
       # only return the first 100 lines of detail (generally columns)--any more
-      # won't be very presentable in the environment pane
+      # won't be very presentable in the environment pane. the first line
+      # generally contains descriptive text, so don't return that.
       output <- capture.output(str(val))
-      return (output[1:min(length(output),100)])
+      return (output[min(length(output), 2):min(length(output),100)])
    },
    error = function(e) print(e))
 
@@ -103,6 +104,10 @@
       else if (is.environment(obj))
       {
          return(paste("Environment with ", length(obj), " object(s) "))
+      }
+      else if (isS4(obj))
+      {
+         return(paste("Formal class ", is(obj)))
       }
       else if (is.list(obj))
       {

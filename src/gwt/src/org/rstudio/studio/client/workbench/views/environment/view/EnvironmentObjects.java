@@ -612,24 +612,15 @@ public class EnvironmentObjects extends Composite
       {
          JsArrayString contents = rowValue.rObject.getContents();
 
-         String objectType = rowValue.rObject.getType();
-         Boolean isListOrFrame = objectType.equals("list")
-                                 || objectType.equals("data.frame");
-
-         // ignore the first line of output for lists and data frames
-         // (it's the same size information we're already showing in the grid)
-         for (int idx = isListOrFrame ? 1 : 0; idx < contents.length(); idx++)
+         for (int idx = 0; idx < contents.length(); idx++)
          {
             TableRowBuilder detail = startRow().className(style.detailRow());
             detail.startTD().endTD();
             TableCellBuilder objectDetail = detail.startTD();
             String content = contents.get(idx);
-            // ignore the first two characters of output for lists and frames
+            // ignore the first two characters of output
             // ("$ value:" becomes "value:")
-            if (isListOrFrame)
-            {
-               content = content.substring(2, content.length()).trim();
-            }
+            content = content.substring(2, content.length()).trim();
             objectDetail.colSpan(2)
                     .title(content)
                     .text(content)
