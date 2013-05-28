@@ -173,6 +173,8 @@ Error slideToHtml(const Slide& slide,
    std::string slideClasses = "slideContent";
    if (!slide.showTitle())
       slideClasses += " noTitle";
+   if (!slide.cssClass().empty())
+      slideClasses += " " + slide.cssClass();
 
    // look for an <hr/> splitting the html into columns
    const std::string kHRTag = "<hr/>";

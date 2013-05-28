@@ -92,6 +92,7 @@ public:
    std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
    std::string css() const { return fieldValue("css"); }
+   std::string cssClass() const { return fieldValue("class"); }
    std::string transition() const;
    std::string navigation() const { return fieldValue("navigation", "slides"); }
 

@@ -17,8 +17,6 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
-// TODO: add class field to slides
-
 // TODO: consider per-slide transition and
 //       transition speed settings (change
 //       name of field to transition)

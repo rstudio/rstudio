@@ -78,6 +78,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "font-family") ||
           boost::iequals(name, "font-import") ||
           boost::iequals(name, "css") ||
+          boost::iequals(name, "class") ||
           boost::iequals(name, "navigation") ||
           boost::iequals(name, "incremental") ||
           boost::iequals(name, "id") ||
