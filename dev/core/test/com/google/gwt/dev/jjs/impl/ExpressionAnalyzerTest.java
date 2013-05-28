@@ -168,6 +168,10 @@ public class ExpressionAnalyzerTest extends JJSTestBase {
     analyzeExpression("boolean", "FOO = false").accessesFieldNonFinal().hasAssignmentToField().check();
   }
 
+  public void testNewArray() throws Exception {
+    analyzeExpression("float[]", "new float[3]").createsObject().check();
+  }
+
   private Result analyzeExpression(String type, String expression)
       throws UnableToCompleteException {
     JProgram program = compileSnippet(type, "return " + expression + ";");

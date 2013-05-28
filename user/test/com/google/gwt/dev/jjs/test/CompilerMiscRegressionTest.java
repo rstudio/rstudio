@@ -52,4 +52,26 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     assertEquals(12.0, addAndConvert(10, "2"));
     assertEquals(-10.0, minusAndDecrement(11));
   }
+  private static float[] copy(float[] src, float[] dest) {
+    System.arraycopy(src, 0, dest, 0, Math.min(src.length, dest.length));
+    return dest;
+  }
+
+  /**
+   * Test for issue 6638.
+   */
+  public void testNewArrayInlining() {
+    float[] src = new float[]{1,1,1};
+    float[] dest = copy(src, new float[3]);
+
+    assertEqualContents(src, dest);
+  }
+
+  private static void assertEqualContents(float[] expected, float[] actual) {
+
+    assertEquals("Array length mismatch", expected.length, actual.length);
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals("Array mismatch at element " + i , expected[i], actual[i]);
+    }
+  }
 }

@@ -177,6 +177,7 @@ public class ExpressionAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JNewArray x, Context ctx) {
+    createsObject = true;
     /*
      * If no array bounds, the new array is being automatically initialized. If
      * there are side-effects, they'll show up when we visit the initializers.
