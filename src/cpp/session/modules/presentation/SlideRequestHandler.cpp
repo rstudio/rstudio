@@ -760,10 +760,9 @@ void handlePresentationRootRequest(const std::string& path,
    vars["slides_js"] = resourceFiles().get("presentation/slides.js");
    vars["init_commands"] = initCommands;
 
-   // width and height are dynamic
-   std::string zoomStr = (path == "zoom") ? "true" : "false";
-   vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
-   vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+   // width and height
+   vars["reveal_width"] = "960";
+   vars["reveal_height"] = "700";
 
    // no transition in desktop mode (qtwebkit can't keep up)
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
