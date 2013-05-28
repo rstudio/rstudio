@@ -323,10 +323,7 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &pathParam);
    if (error)
       return error;
-
    FilePath targetPath = module_context::resolveAliasedPath(pathParam);
-   if (!targetPath.exists())
-      return core::fileNotFoundError(targetPath, ERROR_LOCATION);
 
    std::string errMsg;
    if (!savePresentationAsStandalone(targetPath, &errMsg))
