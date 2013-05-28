@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -1340,7 +1340,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   /**
    * Decide whether, if <code>op</code> is printed followed by <code>arg</code>,
    * there needs to be a space between the operator and expression.
-   * 
+   *
    * @return <code>true</code> if a space needs to be printed
    */
   private boolean _spaceCalc(JsOperator op, JsExpression arg) {
@@ -1362,7 +1362,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       JsOperator op2 = ((JsPrefixOperation) arg).getOperator();
       return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
           && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG)
-          || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
+          || (op == JsBinaryOperator.ADD || op == JsUnaryOperator.POS)
+          && (op2 == JsUnaryOperator.INC || op2 == JsUnaryOperator.POS);
     }
     if (arg instanceof JsNumberLiteral) {
       JsNumberLiteral literal = (JsNumberLiteral) arg;

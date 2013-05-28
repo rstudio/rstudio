@@ -140,6 +140,12 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("var x = +y", "var x = +y");
     // + prefix stripped when operand is literal number
     doTest("var x = +42", "var x = 42");
+    // + prefix not stripped when operand is not literal number
+    doTest("var x = +y", "var x = +y");
+    // + prefix stripped when operand is literal number
+    doTest("var x = +42","var x = 42");
+    // + <blank> + should not become ++
+    doTest("var x = 10+ +\"2\"", "var x = 10+ +\"2\"");
   }
 
   public void testEscapes() {
