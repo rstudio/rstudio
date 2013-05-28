@@ -73,6 +73,9 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "autosize") ||
+          boost::iequals(name, "width") ||
+          boost::iequals(name, "height") ||
           boost::iequals(name, "rtl") ||
           boost::iequals(name, "depends") ||
           boost::iequals(name, "transition") ||
@@ -239,6 +242,12 @@ std::string Slide::rtl() const
       return "false";
 }
 
+bool Slide::autosize() const
+{
+   std::string value = fieldValue("autosize");
+   return value == "true";
+}
+
 std::string SlideDeck::title() const
 {
    if (!slides_.empty())
@@ -255,6 +264,32 @@ std::string SlideDeck::rtl() const
       return "false";
 }
 
+bool SlideDeck::autosize() const
+{
+   if (!slides_.empty())
+      return slides_[0].autosize();
+   else
+      return false;
+}
+
+int SlideDeck::width() const
+{
+   const int kDefaultWidth = 960;
+   if (!slides_.empty() && !slides_[0].width().empty())
+      return safe_convert::stringTo<int>(slides_[0].width(), kDefaultWidth);
+   else
+      return kDefaultWidth;
+}
+
+
+int SlideDeck::height() const
+{
+   const int kDefaultHeight = 700;
+   if (!slides_.empty() && !slides_[0].height().empty())
+      return safe_convert::stringTo<int>(slides_[0].height(), kDefaultHeight);
+   else
+      return kDefaultHeight;
+}
 
 std::string SlideDeck::fontFamily() const
 {

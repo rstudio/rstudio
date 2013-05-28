@@ -26,7 +26,7 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var MarkdownHighlightRules = function() {
 
     var slideFields = lang.arrayToMap(
-        ("title|author|date|rtl|depends|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
+        ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
               .split("|")
         );
 

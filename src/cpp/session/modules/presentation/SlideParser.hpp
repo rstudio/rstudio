@@ -90,6 +90,9 @@ public:
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
    std::string rtl() const;
+   bool autosize() const;
+   std::string width() const { return fieldValue("width"); }
+   std::string height() const { return fieldValue("height"); }
    std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
    std::string css() const { return fieldValue("css"); }
@@ -144,6 +147,9 @@ public:
 
    std::string title() const;
    std::string rtl() const;
+   bool autosize() const;
+   int width() const;
+   int height() const;
 
    std::string fontFamily() const;
 

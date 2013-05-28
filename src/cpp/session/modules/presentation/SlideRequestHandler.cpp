@@ -630,6 +630,29 @@ void localRevealVars(std::map<std::string,std::string>* pVars)
    vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
 }
 
+
+void revealSizeVars(const SlideDeck& slideDeck,
+                    bool zoom,
+                    bool allowAutosize,
+                    std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   bool autosize = allowAutosize && slideDeck.autosize();
+   vars["reveal_autosize"] = autosize ? "true" : "false";
+   if (autosize)
+   {
+      std::string zoomStr = zoom ? "true" : "false";
+      vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
+      vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+   }
+   else
+   {
+      vars["reveal_width"] = safe_convert::numberToString(slideDeck.width());
+      vars["reveal_height"] = safe_convert::numberToString(slideDeck.height());
+   }
+}
+
 void externalBrowserVars(const SlideDeck& slideDeck,
                          std::map<std::string,std::string>* pVars)
 {
@@ -639,9 +662,8 @@ void externalBrowserVars(const SlideDeck& slideDeck,
    vars["slides_js"] = "";
    vars["init_commands"] = "";
 
-   // width and height (these are the reveal defaults)
-   vars["reveal_width"] = "960";
-   vars["reveal_height"] = "700";
+   // width and height
+   revealSizeVars(slideDeck, false, false, pVars);
 
    // use transitions for standalone
    vars["reveal_transition"] = slideDeck.transition();
@@ -761,8 +783,8 @@ void handlePresentationRootRequest(const std::string& path,
    vars["init_commands"] = initCommands;
 
    // width and height
-   vars["reveal_width"] = "960";
-   vars["reveal_height"] = "700";
+   bool zoom = path == "zoom";
+   revealSizeVars(slideDeck, zoom, true, &vars);
 
    // no transition in desktop mode (qtwebkit can't keep up)
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;

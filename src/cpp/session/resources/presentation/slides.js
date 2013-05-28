@@ -70,4 +70,30 @@ function notifySlideChanged(indexh) {
   }
 }
 
+function revealDetectWidth(zoomed) {
+  if (window.innerWidth > 0)
+  {
+    if (zoomed)
+      return window.innerWidth;
+    else
+      return window.innerWidth * 2.3;
+  }
+  else
+  {
+    return 960;
+  }
+}
 
+function revealDetectHeight(zoomed) {
+  if (window.innerHeight > 0)
+  {
+    if (zoomed)
+      return window.innerHeight;
+    else
+      return window.innerHeight * 2.3;
+  }
+  else
+  {
+    return 700;
+  }
+}
