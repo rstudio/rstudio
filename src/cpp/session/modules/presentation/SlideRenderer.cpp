@@ -69,10 +69,22 @@ Error renderMarkdown(const std::string& content, std::string* pHTML)
 }
 
 
-std::string divWrap(const std::string& classNames, const std::string& contents)
+std::string divWrap(const std::string& classNames,
+                    const std::string& width,
+                    const std::string& contents)
 {
-   boost::format fmt("\n<div class=\"%1%\">\n%2%\n</div>\n");
-   return boost::str(fmt % classNames % contents);
+   std::string styleAttribute;
+   if (!width.empty())
+      styleAttribute = "style=\"width: " + width + ";\" ";
+
+   boost::format fmt("\n<div class=\"%1%\" %2%>\n%3%\n</div>\n");
+   return boost::str(fmt % classNames % styleAttribute % contents);
+}
+
+std::string divWrap(const std::string& classNames,
+                    const std::string& contents)
+{
+   return divWrap(classNames, "", contents);
 }
 
 std::string mediaClass(const std::string& html)
@@ -190,6 +202,28 @@ void validateSlideDeckFields(const SlideDeck& slideDeck)
    validateIncrementalType(slideDeck.incremental());
 }
 
+void computeColumnWidths(const std::string& width,
+                         std::string* pSpecifiedWidth,
+                         std::string* pOtherWidth)
+{
+   int w = core::safe_convert::stringTo<int>(width, 50);
+   *pSpecifiedWidth = safe_convert::numberToString(w - 2) + "%";
+   *pOtherWidth = safe_convert::numberToString(100 - w - 2) + "%";
+}
+
+void computeColumnWidths(const Slide& slide,
+                         std::string* pLeftWidth,
+                         std::string* pRightWidth)
+{
+   boost::regex re("([0-9]+)%?");
+   boost::smatch match;
+
+   if (boost::regex_match(slide.left(), match, re))
+      computeColumnWidths(match[1], pLeftWidth, pRightWidth);
+   else if (boost::regex_match(slide.right(), match, re))
+      computeColumnWidths(match[1], pRightWidth, pLeftWidth);
+}
+
 Error slideToHtml(const Slide& slide,
                   int slideNumber,
                   const std::string& extraContent,
@@ -249,11 +283,16 @@ Error slideToHtml(const Slide& slide,
       if (pHTML->length() > (column1.length() + kHRTag.length()))
          column2 = pHTML->substr(hrLoc + kHRTag.length());
 
+      // compute the column widths
+      std::string leftWidth;
+      std::string rightWidth;
+      computeColumnWidths(slide, &leftWidth, &rightWidth);
+
       // now render two divs with the columns
       pHTML->clear();
       std::ostringstream ostr;
-      ostr << divWrap("column column1 " + slideClasses, column1);
-      ostr << divWrap("column column2 " + slideClasses, column2);
+      ostr << divWrap("column column1 " + slideClasses, leftWidth, column1);
+      ostr << divWrap("column column2 " + slideClasses, rightWidth, column2);
       *pHTML = ostr.str();
    }
 

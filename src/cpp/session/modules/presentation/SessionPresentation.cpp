@@ -17,14 +17,16 @@
 // TODO: more generous default width
 // TODO: align scaling with default width
 
+// TODO: test on ipad
+
 // TODO: investigate why pdf doesn't work
 
 // TODO: investigate why overview doesn't work properly
 // TODO: consider 'o' for overview mode
 
-// TODO: consider left and right fields for columns
 // TODO: consider search plugin
 
+// TODO: larger knitr default image size
 
 // TODO: custom code navigator for presentations
 

@@ -93,7 +93,6 @@ public:
    std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
    std::string css() const { return fieldValue("css"); }
-   std::string cssClass() const { return fieldValue("class"); }
    std::string transition() const;
    std::string transitionSpeed() const
    {
@@ -110,6 +109,9 @@ public:
    std::string type() const { return fieldValue("type"); }
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
+   std::string cssClass() const { return fieldValue("class"); }
+   std::string left() const { return fieldValue("left"); }
+   std::string right() const { return fieldValue("right"); }
 
    std::vector<Command> commands() const;
 
