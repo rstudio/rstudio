@@ -429,6 +429,12 @@ public class ElementTest extends GWTTestCase {
 
     // Element.is(null) is allowed and should return false.
     assertFalse(Element.is(null));
+    
+    // Element sub-classes like DivElement have is(...) and as(...) too
+    assertFalse(DivElement.is(Document.get()));
+    assertTrue(DivElement.is(div));
+    assertEquals("div", DivElement.as(div).getTagName().toLowerCase());
+    assertFalse(DivElement.is(null));
   }
 
   /**

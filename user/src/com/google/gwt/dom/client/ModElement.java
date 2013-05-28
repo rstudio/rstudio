@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.safehtml.shared.SafeUri;
 
 /**
@@ -34,9 +35,43 @@ public class ModElement extends Element {
    * automatically typecast it.
    */
   public static ModElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase(TAG_INS)
-        || elem.getTagName().equalsIgnoreCase(TAG_DEL);
+    assert is(elem);
     return (ModElement) elem;
+  }
+  
+  /**
+   * Determines whether the given {@link JavaScriptObject} can be cast to
+   * this class. A <code>null</code> object will cause this method to
+   * return <code>false</code>.
+   */
+  public static boolean is(JavaScriptObject o) {
+    if (Element.is(o)) {
+      return is((Element) o);
+    }
+    return false;
+  }
+
+  /**
+   * Determine whether the given {@link Node} can be cast to this class.
+   * A <code>null</code> node will cause this method to return
+   * <code>false</code>.
+   */
+  public static boolean is(Node node) {
+    if (Element.is(node)) {
+      return is((Element) node);
+    }
+    return false;
+  }
+  
+  /**
+   * Determine whether the given {@link Element} can be cast to this class.
+   * A <code>null</code> node will cause this method to return
+   * <code>false</code>.
+   */
+  public static boolean is(Element elem) {
+    return elem != null &&
+        ( elem.getTagName().equalsIgnoreCase(TAG_INS) ||
+          elem.getTagName().equalsIgnoreCase(TAG_DEL) );
   }
 
   protected ModElement() {

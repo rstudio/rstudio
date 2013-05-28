@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * For the H1 to H6 elements.
  * 
@@ -43,16 +45,63 @@ public class HeadingElement extends Element {
    */
   public static HeadingElement as(Element elem) {
     if (HeadingElement.class.desiredAssertionStatus()) {
-      // Assert that this element's tag name is one of [h1 .. h6].
-      String tag = elem.getTagName().toLowerCase();
-      assert tag.length() == 2;
-      assert tag.charAt(0) == 'h';
-
-      int n = Integer.parseInt(tag.substring(1, 2));
-      assert (n >= 1) && (n <= 6);
+      assert is(elem);
     }
 
     return (HeadingElement) elem;
+  }
+  
+  /**
+   * Determines whether the given {@link JavaScriptObject} can be cast to
+   * this class. A <code>null</code> object will cause this method to
+   * return <code>false</code>.
+   */
+  public static boolean is(JavaScriptObject o) {
+    if (Element.is(o)) {
+      return is((Element) o);
+    }
+    return false;
+  }
+
+  /**
+   * Determine whether the given {@link Node} can be cast to this class.
+   * A <code>null</code> node will cause this method to return
+   * <code>false</code>.
+   */
+  public static boolean is(Node node) {
+    if (Element.is(node)) {
+      return is((Element) node);
+    }
+    return false;
+  }
+  
+  /**
+   * Determine whether the given {@link Element} can be cast to this class.
+   * A <code>null</code> node will cause this method to return
+   * <code>false</code>.
+   */
+  public static boolean is(Element elem) {
+    
+    if (elem == null) {
+      return false;
+    }
+    
+    String tag = elem.getTagName().toLowerCase();
+    
+    if (tag.length() != 2) {
+      return false;
+    }
+    
+    if (tag.charAt(0) != 'h') {
+      return false;
+    }
+
+    int n = Integer.parseInt(tag.substring(1, 2));
+    if (n < 1 || n > 6) {
+      return false;
+    }
+    
+    return true;
   }
 
   protected HeadingElement() {
