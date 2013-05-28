@@ -787,6 +787,14 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(1, x);
   }
 
+  /** Ensure that only final fields are initializers when cstrs run, see issue 380. */
+  public void testFieldInitializationOrder() {
+    ArrayList<String> seenValues = new ArrayList<String>();
+    new FieldInitOrderChild(seenValues);
+    assertEquals("i1=1,i2=0,i3=null,i4=null,i5=1,i6=1,i7=1", seenValues.get(0));
+    assertEquals("i1=1,i2=1,i3=1,i4=2,i5=1,i6=2,i7=2", seenValues.get(1));
+  }
+
   public void testForStatement() {
     {
       int i;

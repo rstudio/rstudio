@@ -857,10 +857,13 @@ public class GenerateJavaScriptAST {
       JsNameRef localRef = (JsNameRef) pop(); // localRef
 
       JVariable target = x.getVariableRef().getTarget();
-      if (target instanceof JField && ((JField) target).getLiteralInitializer() != null) {
-        // Will initialize at top scope; no need to double-initialize.
-        push(null);
-        return;
+      if (target instanceof JField) {
+        JField field = (JField) target;
+        if (field.getLiteralInitializer() != null && (field.isStatic() || field.isFinal())) {
+          // Will initialize at top scope; no need to double-initialize.
+          push(null);
+          return;
+        }
       }
 
       JsBinaryOperation binOp =
@@ -890,15 +893,15 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JField x, Context ctx) {
       // if we need an initial value, create an assignment
-      if (x.getLiteralInitializer() != null) {
+      if (x.getLiteralInitializer() != null && (x.isFinal() || x.isStatic())) {
         // setup the constant value
         accept(x.getLiteralInitializer());
-      } else if (!x.hasInitializer() && x.getEnclosingType() != program.getTypeJavaLangObject()) {
-        // setup a default value
-        accept(x.getType().getDefaultValue());
-      } else {
-        // the variable is setup during clinit, no need to initialize here
+      } else if (x.getEnclosingType() == program.getTypeJavaLangObject()) {
+        // Special fields whose initialization is done somewhere else.
         push(null);
+      } else {
+        // setup the default value, see Issue 380
+        accept(x.getType().getDefaultValue());
       }
       JsExpression rhs = (JsExpression) pop();
       JsName name = names.get(x);
