@@ -356,6 +356,18 @@ public class ElementTest extends GWTTestCase {
     assertFalse(div.hasAttribute(null));
   }
 
+  public void testHasTagName() {
+    DivElement div = Document.get().createDivElement();
+
+    // hasTagName is case-insensitive
+    assertTrue(div.hasTagName("div"));
+    assertTrue(div.hasTagName("DIV"));
+    assertTrue(div.hasTagName(DivElement.TAG));
+    assertTrue(div.hasTagName(div.getTagName()));
+
+    assertFalse(div.hasTagName("dove"));
+  }
+
   /**
    * Tests HeadingElement.as() (it has slightly more complex assertion logic
    * than most).
