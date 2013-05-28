@@ -646,6 +646,9 @@ void externalBrowserVars(const SlideDeck& slideDeck,
    // use transitions for standalone
    vars["reveal_transition"] = slideDeck.transition();
    vars["reveal_transition_speed"] = slideDeck.transitionSpeed();
+
+   // rtl
+   vars["reveal_rtl"] = slideDeck.rtl();
 }
 
 bool createStandalonePresentation(const FilePath& targetFile,
@@ -767,6 +770,9 @@ void handlePresentationRootRequest(const std::string& path,
    vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
    vars["reveal_transition_speed"] = isDesktop ? "default" :
                                                  slideDeck.transitionSpeed();
+
+   // rtl
+   vars["reveal_rtl"] = slideDeck.rtl();
 
    // render to output stream
    std::stringstream previewOutputStream;

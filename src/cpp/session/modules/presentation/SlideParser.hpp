@@ -89,6 +89,7 @@ public:
 
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string rtl() const;
    std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
    std::string css() const { return fieldValue("css"); }
@@ -140,6 +141,7 @@ public:
    core::Error readSlides(const core::FilePath& filePath);
 
    std::string title() const;
+   std::string rtl() const;
 
    std::string fontFamily() const;
 

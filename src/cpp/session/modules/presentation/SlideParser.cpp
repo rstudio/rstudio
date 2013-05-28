@@ -73,6 +73,7 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "rtl") ||
           boost::iequals(name, "depends") ||
           boost::iequals(name, "transition") ||
           boost::iequals(name, "transition-speed") ||
@@ -227,6 +228,15 @@ std::string Slide::transition() const
    return value;
 }
 
+std::string Slide::rtl() const
+{
+   std::string value = fieldValue("rtl");
+   if (value == "true")
+      return value;
+   else
+      return "false";
+}
+
 std::string SlideDeck::title() const
 {
    if (!slides_.empty())
@@ -234,6 +244,15 @@ std::string SlideDeck::title() const
    else
       return std::string();
 }
+
+std::string SlideDeck::rtl() const
+{
+   if (!slides_.empty())
+      return slides_[0].rtl();
+   else
+      return "false";
+}
+
 
 std::string SlideDeck::fontFamily() const
 {

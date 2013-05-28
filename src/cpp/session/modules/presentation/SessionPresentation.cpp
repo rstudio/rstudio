@@ -21,11 +21,11 @@
 // TODO: investigate why overview doesn't work
 
 // TODO: consider left and right fields for columns
-// TODO: consider adding rtl support
 // TODO: consider search plugin
 // TODO: consider 'o' for overview mode
 
 // TODO: custom code navigator for presentations
+// TODO: highlight only fields that match
 
 // TODO: (docs) expand current documentation into multiple pages
 // TODO: (docs) presentations quick reference
