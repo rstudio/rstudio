@@ -215,7 +215,7 @@ void computeColumnWidths(const Slide& slide,
                          std::string* pLeftWidth,
                          std::string* pRightWidth)
 {
-   boost::regex re("([0-9]+)%?");
+   boost::regex re("([0-9]+)\\s*%?");
    boost::smatch match;
 
    if (boost::regex_match(slide.left(), match, re))
