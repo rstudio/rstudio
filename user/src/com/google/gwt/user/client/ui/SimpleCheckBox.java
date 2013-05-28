@@ -21,7 +21,11 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
-import com.google.gwt.user.client.TakesValue;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * A simple checkbox widget, with no label.
@@ -33,7 +37,7 @@ import com.google.gwt.user.client.TakesValue;
  * </ul>
  */
 public class SimpleCheckBox extends FocusWidget implements HasName,
-    TakesValue<Boolean>, IsEditor<LeafValueEditor<Boolean>> {
+    HasValue<Boolean>, IsEditor<LeafValueEditor<Boolean>> {
 
   /**
    * Creates a SimpleCheckBox widget that wraps an existing &lt;input
@@ -59,6 +63,7 @@ public class SimpleCheckBox extends FocusWidget implements HasName,
   }
 
   private LeafValueEditor<Boolean> editor;
+  private boolean valueChangeHandlerInitialized;
 
   /**
    * Creates a new simple checkbox.
@@ -84,6 +89,17 @@ public class SimpleCheckBox extends FocusWidget implements HasName,
     if (styleName != null) {
       setStyleName(styleName);
     }
+  }
+
+  @Override
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<Boolean> handler) {
+    // Is this the first value change handler? If so, time to add handlers
+    if (!valueChangeHandlerInitialized) {
+      ensureDomEventHandlers();
+      valueChangeHandlerInitialized = true;
+    }
+    return addHandler(handler, ValueChangeEvent.getType());
   }
 
   public LeafValueEditor<Boolean> asEditor() {
@@ -187,12 +203,42 @@ public class SimpleCheckBox extends FocusWidget implements HasName,
    * @param value true to check, false to uncheck; null value implies false
    */
   public void setValue(Boolean value) {
+    setValue(value, false);
+  }
+
+  /**
+   * Checks or unchecks the check box, firing {@link ValueChangeEvent} if
+   * appropriate.
+   * <p>
+   * Note that this <em>does not</em> set the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #setFormValue(String)}
+   * 
+   * @param value true to check, false to uncheck; null value implies false
+   * @param fireEvents If true, and value has changed, fire a
+   *          {@link ValueChangeEvent}
+   */
+  @Override
+  public void setValue(Boolean value, boolean fireEvents) {
     if (value == null) {
       value = Boolean.FALSE;
     }
 
+    Boolean oldValue = getValue();
     getInputElement().setChecked(value);
     getInputElement().setDefaultChecked(value);
+    if (fireEvents) {
+      ValueChangeEvent.fireIfNotEqual(this, oldValue, value);
+    }
+  }
+
+  protected void ensureDomEventHandlers() {
+    addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        ValueChangeEvent.fire(SimpleCheckBox.this, getValue());
+      }
+    });
   }
 
   /**
