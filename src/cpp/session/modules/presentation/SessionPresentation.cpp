@@ -16,13 +16,6 @@
 
 // TODO: custom code navigator for presentations
 
-// TODO: (docs) custom css mechanisms
-// TODO: (docs) per-slide transitions / transition speed
-// TODO: (docs) document rtl
-// TODO: (docs) columns left and right widths
-// TODO: (docs) use 'o' for overview
-// TODO: (docs) new autosize and width/height options
-
 #include "SessionPresentation.hpp"
 
 
