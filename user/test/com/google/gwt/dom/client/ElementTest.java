@@ -34,7 +34,7 @@ public class ElementTest extends GWTTestCase {
     return "com.google.gwt.dom.DOMTest";
   }
 
-  public void testAddRemoveReplaceClassName() {
+  public void testAddRemoveReplaceHasClassName() {
     DivElement div = Document.get().createDivElement();
 
     div.setClassName("foo");
@@ -64,6 +64,13 @@ public class ElementTest extends GWTTestCase {
 
     assertTrue(div.removeClassName("foo"));
     assertEquals("", div.getClassName());
+
+    div.setClassName("foo bar");
+    assertTrue(div.hasClassName("bar"));
+    assertTrue(div.hasClassName("foo"));
+    div.removeClassName("foo");
+    assertFalse(div.hasClassName("foo"));
+    assertTrue(div.hasClassName("bar"));
   }
 
   public void testIndexOfName() {
