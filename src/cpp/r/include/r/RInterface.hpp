@@ -50,7 +50,10 @@ typedef struct RCNTXT {
     struct RCNTXT *nextcontext;
     int callflag;
 #ifdef _WIN32
-    jmp_buf cmpbuf;
+    // on Windows, the size of the buffer used by R is larger than the one
+    // declared in setjmp.h; we need to match this size exactly so the rest of
+    // the structure layout in memory is valid.
+    _JBTYPE cjmpbuf[_JBLEN + 2];
 #else
     sigjmp_buf cjmpbuf;
 #endif
