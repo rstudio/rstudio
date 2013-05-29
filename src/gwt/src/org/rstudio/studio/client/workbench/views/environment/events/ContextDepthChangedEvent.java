@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.environment.events;
 
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,12 +36,16 @@ public class ContextDepthChangedEvent extends
          return this.context_depth;
       }-*/;
       
-      public final native JsArray<RObject> getEnvironmentList () /*-{
+      public final native JsArray<RObject> getEnvironmentList() /*-{
          return this.environment_list;
       }-*/;
 
       public final native String getFunctionName() /*-{
          return this.function_name;
+      }-*/;
+
+      public final native JsArray<CallFrame> getCallFrames() /*-{
+         return this.call_frames;
       }-*/;
    }
 
@@ -62,6 +67,11 @@ public class ContextDepthChangedEvent extends
    public JsArray<RObject> getEnvironmentList()
    {
       return contextData_.getEnvironmentList();
+   }
+
+   public JsArray<CallFrame> getCallFrames()
+   {
+      return contextData_.getCallFrames();
    }
 
    public String getFunctionName()

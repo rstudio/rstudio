@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import java.util.*;
@@ -190,6 +191,14 @@ public class EnvironmentObjects extends Composite
    public void setObserver(Observer observer)
    {
       observer_ = observer;
+   }
+
+   public void setCallFrames(JsArray<CallFrame> frameList)
+   {
+      for (int idx = 0; idx < frameList.length(); idx++)
+      {
+         callFrameList.addItem(frameList.get(idx).getFunctionName());
+      }
    }
 
    public void setEnvironmentName(String environmentName)
@@ -635,12 +644,14 @@ public class EnvironmentObjects extends Composite
    private final static String emptyFunctionEnvironmentMessage =
            "Function environment is empty";
 
-   @UiField HTMLPanel environmentContents;
+   @UiField VerticalPanel environmentContents;
    @UiField EnvironmentStyle style;
+   @UiField ListBox callFrameList;
 
    ScrollingDataGrid<RObjectEntry> objectList_;
    Label environmentName_;
    Label environmentEmptyMessage_;
+
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;

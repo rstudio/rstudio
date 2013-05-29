@@ -58,6 +58,25 @@ SEXP getTopFunctionEnvironment()
             R_GlobalEnv;
 }
 
+json::Array callFramesAsJson()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   json::Array listFrames;
+   while (pRContext->callflag)
+   {
+      if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         json::Object varFrame;
+         varFrame["eval_depth"] = pRContext->evaldepth;
+         varFrame["function_name"] =
+               r::sexp::asString(PRINTNAME(CAR(pRContext->call)));
+         listFrames.push_back(varFrame);
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return listFrames;
+}
+
 json::Array environmentListAsJson()
 {
     using namespace r::sexp;
@@ -110,6 +129,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // current state of the environment
       varJson["context_depth"] = contextDepth;
       varJson["environment_list"] = environmentListAsJson();
+      varJson["call_frames"] = callFramesAsJson();
       varJson["function_name"] = getTopFunctionName();
 
       ClientEvent event (client_events::kContextDepthChanged, varJson);

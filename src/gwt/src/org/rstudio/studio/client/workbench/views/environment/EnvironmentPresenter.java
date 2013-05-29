@@ -63,16 +63,13 @@ import org.rstudio.studio.client.workbench.views.environment.events.ContextDepth
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
-import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.model.*;
 
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
-import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 
 import java.util.HashMap;
@@ -91,6 +88,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name);
+      void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
       void setExpandedObjects(JsArrayString objects);
@@ -145,6 +143,7 @@ public class EnvironmentPresenter extends BasePresenter
             contextDepth_ = event.getContextDepth();
             view_.setContextDepth(contextDepth_);
             view_.setEnvironmentName(event.getFunctionName());
+            view_.setCallFrames(event.getCallFrames());
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 
@@ -65,9 +66,9 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = new Label(globalEnvironmentName);
       environmentName_.setStyleName(
-            EnvironmentPaneResources.INSTANCE
-                    .environmentPaneStyle()
-                    .environmentNameLabel());
+              EnvironmentPaneResources.INSTANCE
+                      .environmentPaneStyle()
+                      .environmentNameLabel());
       functionIndicator_ = new Image(
             StandardIcons.INSTANCE.function());
       functionIndicator_.setVisible(false);
@@ -146,6 +147,12 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_.setText(environmentName);
       objects_.setEnvironmentName(environmentName);
+   }
+
+   @Override
+   public void setCallFrames(JsArray<CallFrame> frameList)
+   {
+      objects_.setCallFrames(frameList);
    }
 
    @Override
