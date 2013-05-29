@@ -336,7 +336,7 @@ std::string SlideDeck::navigation() const
    if (!slides_.empty())
       return slides_[0].navigation();
    else
-      return "slides";
+      return "slide";
 }
 
 std::string SlideDeck::incremental() const
@@ -353,7 +353,7 @@ std::string SlideDeck::depends() const
    if (!slides_.empty())
       return slides_[0].depends();
    else
-      return "slides";
+      return "slide";
 }
 
 

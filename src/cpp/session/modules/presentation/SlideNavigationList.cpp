@@ -35,12 +35,12 @@ SlideNavigationList::SlideNavigationList(const std::string& type)
         inSubSection_(false),
         hasSections_(false)
 {
-   if (type == "slides")
+   if (type == "slide")
    {
       allowNavigation_ = true;
       allowSlideNavigation_ = true;
    }
-   else if (type == "sections")
+   else if (type == "section")
    {
       allowNavigation_ = true;
       allowSlideNavigation_ = false;

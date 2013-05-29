@@ -101,7 +101,7 @@ public:
    {
       return fieldValue("transition-speed");
    }
-   std::string navigation() const { return fieldValue("navigation", "slides"); }
+   std::string navigation() const { return fieldValue("navigation", "slide"); }
 
 public:
    // global/local fields

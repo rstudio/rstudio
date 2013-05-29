@@ -171,8 +171,8 @@ void validateTransitionSpeedType(const std::string& speed)
 
 void validateNavigationType(const std::string& type)
 {
-   bool isValid = boost::iequals(type, "slides") ||
-                  boost::iequals(type, "sections") ||
+   bool isValid = boost::iequals(type, "slide") ||
+                  boost::iequals(type, "section") ||
                   boost::iequals(type, "none");
 
    if (!isValid)
