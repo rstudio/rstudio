@@ -1488,6 +1488,43 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
   }
 
   /**
+   * Test EntityProxyId is passed and nothing else.
+   */
+  public void testEntityProxyIdRequest() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    req.simpleFooRequest().findSimpleFooById(1L).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy foo) {
+            Request<SimpleFooProxy> fooReq = req.simpleFooRequest().receiveEntityProxyId(foo.stableId());
+            fooReq.fire(new Receiver<SimpleFooProxy>() {
+              @Override
+              public void onSuccess(SimpleFooProxy v) {
+                assertEquals("receiveEntityProxyId", v.getUserName());
+                finishTestAndReset();
+              }
+            });
+          }
+        });
+  }
+
+  /**
+   * Test null EntityProxyId is passed correctly.
+   */
+  public void testNullEntityProxyIdRequest() {
+    delayTestFinish(DELAY_TEST_FINISH);
+
+    req.simpleFooRequest().receiveNullEntityProxyId(null).fire(
+        new Receiver<Void>() {
+          @Override
+          public void onSuccess(Void foo) {
+            finishTestAndReset();
+          }
+        });
+  }
+
+  /**
    * Test that a proxy only referenced via a parameterization is available.
    */
   public void testOnlyUsedInList() {

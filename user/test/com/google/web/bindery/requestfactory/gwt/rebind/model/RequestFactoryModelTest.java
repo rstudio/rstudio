@@ -28,6 +28,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.web.bindery.requestfactory.server.TestContextImpl;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.Locator;
 import com.google.web.bindery.requestfactory.shared.ProxyFor;
@@ -126,6 +127,11 @@ public class RequestFactoryModelTest extends TestCase {
     logger = createCompileLogger();
   }
 
+  public void testEntityProxyIdNotParameterized() {
+      testModelWithMethodDecl("Request<String> okMethod(EntityProxyId p);",
+          "EntityProxyId must be parameterized");
+  }
+
   public void testBadCollectionType() {
     testModelWithMethodDecl(
         "Request<SortedSet<Integer>> badReturnType();",
@@ -188,6 +194,7 @@ public class RequestFactoryModelTest extends TestCase {
       public CharSequence getContent() {
         StringBuilder code = new StringBuilder();
         code.append("package t;\n");
+        code.append("import " + EntityProxyId.class.getName() + ";\n");
         code.append("import " + Request.class.getName() + ";\n");
         code.append("import " + InstanceRequest.class.getName() + ";\n");
 
@@ -300,6 +307,7 @@ public class RequestFactoryModelTest extends TestCase {
     toReturn.addAll(Arrays.asList(new Resource[] {
         new EmptyMockJavaResource(Iterable.class),
         new EmptyMockJavaResource(EntityProxy.class),
+        new EmptyMockJavaResource(EntityProxyId.class),
         new EmptyMockJavaResource(InstanceRequest.class),
         new EmptyMockJavaResource(Locator.class),
         new EmptyMockJavaResource(RequestFactory.class),

@@ -470,6 +470,21 @@ public class SimpleFoo {
     return 0;
   }
 
+  public static SimpleFoo receiveEntityProxyId(SimpleFoo value) {
+    if (!"GWT".equals(value.getUserName())) {
+      throw new IllegalArgumentException("Expected the userName to be unchanged");
+    }
+    value.setUserName("receiveEntityProxyId");
+    return value;
+  }
+
+  public static void receiveNullEntityProxyId(SimpleFoo value) {
+    if (value != null) {
+      throw new IllegalArgumentException("Expected value to be null. Actual value: \"" + value + "\"");
+    }
+  }
+
+
   Integer version = 1;
 
   private Long id = 1L;

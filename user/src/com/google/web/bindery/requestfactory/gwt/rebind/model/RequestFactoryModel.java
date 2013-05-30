@@ -30,6 +30,7 @@ import com.google.web.bindery.requestfactory.gwt.rebind.model.EntityProxyModel.T
 import com.google.web.bindery.requestfactory.gwt.rebind.model.RequestMethod.CollectionType;
 import com.google.web.bindery.requestfactory.shared.BaseProxy;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
+import com.google.web.bindery.requestfactory.shared.EntityProxyId;
 import com.google.web.bindery.requestfactory.shared.ExtraTypes;
 import com.google.web.bindery.requestfactory.shared.InstanceRequest;
 import com.google.web.bindery.requestfactory.shared.JsonRpcProxy;
@@ -74,6 +75,7 @@ public class RequestFactoryModel implements AcceptsModelVisitor, HasExtraTypes {
 
   private final JClassType collectionInterface;
   private final List<ContextMethod> contextMethods = new ArrayList<ContextMethod>();
+  private final JClassType entityProxyIdInterface;
   private final JClassType entityProxyInterface;
   private final List<EntityProxyModel> extraTypes;
   private final JClassType factoryType;
@@ -107,6 +109,7 @@ public class RequestFactoryModel implements AcceptsModelVisitor, HasExtraTypes {
     this.factoryType = factoryType;
     this.oracle = factoryType.getOracle();
     collectionInterface = oracle.findType(Collection.class.getCanonicalName());
+    entityProxyIdInterface = oracle.findType(EntityProxyId.class.getCanonicalName());
     entityProxyInterface = oracle.findType(EntityProxy.class.getCanonicalName());
     instanceRequestInterface = oracle.findType(InstanceRequest.class.getCanonicalName());
     listInterface = oracle.findType(List.class.getCanonicalName());
@@ -461,6 +464,16 @@ public class RequestFactoryModel implements AcceptsModelVisitor, HasExtraTypes {
         || valueProxyInterface.isAssignableFrom(transportedClass)) {
       // EntityProxy and ValueProxy return types
       methodBuilder.setEntityType(getEntityProxyType(transportedClass));
+    } else if (entityProxyIdInterface.isAssignableFrom(transportedClass)) {
+      JParameterizedType parameterized = transportedClass.isParameterized();
+      if (parameterized == null) {
+        poison("EntityProxyId must be parameterized");
+        return false;
+      }
+      // Also check that the EntityProxy type can be transported
+      JClassType entityType =
+          ModelUtils.findParameterizationOf(entityProxyIdInterface, transportedClass)[0];
+      methodBuilder.setEntityType(getEntityProxyType(entityType));
     } else if (collectionInterface.isAssignableFrom(transportedClass)) {
       // Only allow certain collections for now
       JParameterizedType parameterized = transportedClass.isParameterized();
