@@ -167,7 +167,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
    int depth = 0;
    RCNTXT* pContextTop = getFunctionContext(TOP_FUNCTION, &depth);
-   std::cerr << "checking env -- currently " << s_environmentMonitor.getMonitoredEnvironment() << std::endl;
 
    // we entered (or left) a call frame
    if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment())
@@ -175,7 +174,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // start monitoring the enviroment at the new depth
       s_environmentMonitor.setMonitoredEnvironment(pContextTop->cloenv);
       *pContextDepth = depth;
-      std::cerr << "tracked change to depth; new environment is " << pContextTop->cloenv << std::endl;
       enqueContextDepthChangedEvent(depth);
    }
 }

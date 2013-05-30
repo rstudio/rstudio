@@ -7,9 +7,16 @@
             <g:VerticalPanel styleName="{style.objectGrid}" ui:field="environmentContents"></g:VerticalPanel>
         </g:center>
         <g:south size="200">
-            <g:ScrollPanel>
-                <g:VerticalPanel ui:field="callFramePanel"></g:VerticalPanel>
-            </g:ScrollPanel>
+            <g:HeaderPanel>
+                <g:FlowPanel styleName="{style.categoryHeaderRow}">
+                    <g:Label styleName="{style.categoryHeaderText}" text="Traceback"></g:Label>
+                </g:FlowPanel>
+                <g:ResizeLayoutPanel styleName="{style.fillHeight}">
+                    <g:ScrollPanel styleName="{style.fillHeight}">
+                        <g:VerticalPanel ui:field="callFramePanel"></g:VerticalPanel>
+                    </g:ScrollPanel>
+                </g:ResizeLayoutPanel>
+            </g:HeaderPanel>
         </g:south>
     </g:SplitLayoutPanel>
 </ui:UiBinder>

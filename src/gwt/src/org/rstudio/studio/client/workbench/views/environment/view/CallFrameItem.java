@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
 public class CallFrameItem extends Composite
    implements ClickHandler
@@ -39,11 +40,13 @@ public class CallFrameItem extends Composite
       String callFrame();
    }
 
-   public CallFrameItem(CallFrame frame)
+   public CallFrameItem(CallFrame frame, Observer observer)
    {
       isActive_ = false;
+      observer_ = observer;
+      frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      functionName.setText(frame.getContextDepth() + ": " + frame.getFunctionName());
+      functionName.setText(frame.getFunctionName());
       functionName.addClickHandler(this);
    }
 
@@ -55,11 +58,13 @@ public class CallFrameItem extends Composite
 
    public void onClick(ClickEvent event)
    {
-      setActive();
+      observer_.changeContextDepth(frame_.getContextDepth());
    }
 
    @UiField Label functionName;
    @UiField Style style;
 
+   Observer observer_;
+   CallFrame frame_;
    boolean isActive_;
 }

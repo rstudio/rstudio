@@ -63,6 +63,7 @@ public class EnvironmentObjects extends Composite
       void setObjectExpanded(String objectName);
       void setObjectCollapsed(String objectName);
       void setPersistedScrollPosition(int scrollPosition);
+      void changeContextDepth(int newDepth);
    }
 
    // Constructor -------------------------------------------------------------
@@ -199,7 +200,7 @@ public class EnvironmentObjects extends Composite
       for (int idx = 0; idx < frameList.length(); idx++)
       {
          CallFrame frame = frameList.get(idx);
-         CallFrameItem item = new CallFrameItem(frame);
+         CallFrameItem item = new CallFrameItem(frame, observer_);
          if (contextDepth_ == frame.getContextDepth())
          {
             item.setActive();

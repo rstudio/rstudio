@@ -61,18 +61,6 @@
    font-size: 90%;
 }
 
-.objectGrid .categoryHeaderRow
-{
-   background-color: #f0f0f0;
-   font-family: proportionalFont;
-   font-weight: bold;
-}
-
-.objectGrid .categoryHeaderText
-{
-   padding-left: 5px;
-}
-
 .objectGrid .detailRow td
 {
    padding-left: 10px;
@@ -81,6 +69,18 @@
    white-space: nowrap;
    overflow-x: hidden;
    text-overflow: ellipsis;
+}
+
+.categoryHeaderRow
+{
+   background-color: #f0f0f0;
+   font-family: proportionalFont;
+   font-weight: bold;
+}
+
+.categoryHeaderText
+{
+   padding-left: 5px;
 }
 
 .emptyEnvironmentPanel
@@ -129,3 +129,7 @@
    border: none;
 }
 
+.fillHeight
+{
+   height: 100%;
+}
