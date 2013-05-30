@@ -38,7 +38,6 @@ import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
-import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -47,8 +46,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import java.util.*;
 
-public class EnvironmentObjects extends Composite
-   implements RequiresResize
+public class EnvironmentObjects extends ResizeComposite
 {
    // Public interfaces -------------------------------------------------------
 
@@ -69,8 +67,12 @@ public class EnvironmentObjects extends Composite
 
    // Constructor -------------------------------------------------------------
 
-   public EnvironmentObjects()
+   public EnvironmentObjects(Observer observer)
    {
+      splitPosition_ = 150;
+      observer_ = observer;
+      contextDepth_ = 0;
+
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
       objectList_ = new ScrollingDataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
@@ -102,36 +104,35 @@ public class EnvironmentObjects extends Composite
          }
       });
 
+      // set up the call frame panel
+      callFramePanel_ = new CallFramePanel(observer_);
+
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       // these need to be done post-initWidget since they reference objects
       // created by initWidget
       objectList_.setEmptyTableWidget(buildEmptyGridMessage());
       objectList_.setStyleName(style.objectGrid());
-      environmentContents.add(objectList_);
+
+      splitPanel.addSouth(callFramePanel_, splitPosition_);
+      splitPanel.add(objectList_);
    }
 
    // Public methods ----------------------------------------------------------
 
    public void setContextDepth(int contextDepth)
    {
-      contextDepth_ = contextDepth;
-      // GWT's split layout panel can't handle in-place insertion of widgets
-      // once the center widget is in place, so when moving between debugging
-      // and non-debugging states, we need to clear out the panel entirely and
-      // re-add all the relevant sub-panels.
-      if (contextDepth_ > 0)
+      if (contextDepth > 0)
       {
-         splitPanel.clear();
-         splitPanel.insert(callFramePanel_, Direction.SOUTH, 200, null);
-         splitPanel.add(objectList_);
+         splitPanel.setWidgetHidden(callFramePanel_, false);
+         splitPanel.onResize();
       }
-      else
+      else if (contextDepth == 0)
       {
          callFramePanel_.clearCallFrames();
-         splitPanel.clear();
-         splitPanel.add(objectList_);
+         splitPanel.setWidgetHidden(callFramePanel_, true);
       }
+      contextDepth_ = contextDepth;
    }
 
    public void addObject(RObject obj)
@@ -206,12 +207,6 @@ public class EnvironmentObjects extends Composite
       }
    }
 
-   public void setObserver(Observer observer)
-   {
-      observer_ = observer;
-      callFramePanel_ = new CallFramePanel(observer_);
-   }
-
    public void setCallFrames(JsArray<CallFrame> frameList)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
@@ -238,13 +233,6 @@ public class EnvironmentObjects extends Composite
    public void setExpandedObjects(JsArrayString objects)
    {
       deferredExpandedObjects_ = objects;
-   }
-
-   // RequiresResize implementation -------------------------------------------
-
-   public void onResize()
-   {
-      objectList_.onResize();
    }
 
    // Private methods: object management --------------------------------------
@@ -660,7 +648,6 @@ public class EnvironmentObjects extends Composite
    private final static String emptyFunctionEnvironmentMessage =
            "Function environment is empty";
 
-   @UiField VerticalPanel environmentContents;
    @UiField EnvironmentStyle style;
    @UiField SplitLayoutPanel splitPanel;
 
@@ -676,6 +663,7 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
+   private int splitPosition_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_;

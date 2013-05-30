@@ -2,9 +2,5 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" />
-    <g:SplitLayoutPanel ui:field="splitPanel" styleName="{style.environmentPane}">
-        <g:center>
-            <g:VerticalPanel styleName="{style.objectGrid}" ui:field="environmentContents"></g:VerticalPanel>
-        </g:center>
-    </g:SplitLayoutPanel>
+    <g:SplitLayoutPanel ui:field="splitPanel" styleName="{style.environmentPane}"></g:SplitLayoutPanel>
 </ui:UiBinder>

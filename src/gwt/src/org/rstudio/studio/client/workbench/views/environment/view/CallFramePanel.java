@@ -19,13 +19,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
-public class CallFramePanel extends Composite
+public class CallFramePanel extends ResizeComposite
 {
    public interface Binder extends UiBinder<Widget, CallFramePanel>
    {

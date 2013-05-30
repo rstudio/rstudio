@@ -97,8 +97,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      objects_ = new EnvironmentObjects();
-      objects_.setObserver(this);
+      objects_ = new EnvironmentObjects(this);
       return objects_;
    }
 
