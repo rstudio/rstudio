@@ -28,6 +28,8 @@
 
 #include "EnvironmentUtils.hpp"
 
+#define TOP_FUNCTION 1
+
 using namespace core ;
 
 namespace session {
@@ -38,38 +40,57 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
-// return the context for the topmost function on the callstack
-RCNTXT* getTopFunctionContext()
+// return the function context at the given depth
+RCNTXT* getFunctionContext(const int depth, int* pFoundDepth = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
-   while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
+   int currentDepth = 0;
+   while (pRContext->callflag)
    {
+      if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         if (++currentDepth == depth)
+         {
+            break;
+         }
+      }
       pRContext = pRContext->nextcontext;
+   }
+   if (pFoundDepth)
+   {
+      *pFoundDepth = currentDepth;
    }
    return pRContext;
 }
 
-SEXP getTopFunctionEnvironment()
+SEXP getEnvironment(const int depth)
 {
-   // if we're in an eval tree (i.e. browser), return the environment of the
-   // fuction on top of the stack; otherwise, return the global environment
-   return r::getGlobalContext()->evaldepth > 0 ?
-            getTopFunctionContext()->cloenv :
-            R_GlobalEnv;
+   return depth == 0 ? R_GlobalEnv : getFunctionContext(depth)->cloenv;
+}
+
+std::string functionNameFromContext(RCNTXT* pContext)
+{
+   return r::sexp::asString(PRINTNAME(CAR(pContext->call)));
+}
+
+std::string getFunctionName(int depth)
+{
+   return functionNameFromContext(getFunctionContext(depth));
 }
 
 json::Array callFramesAsJson()
 {
    RCNTXT* pRContext = r::getGlobalContext();
    json::Array listFrames;
+   int contextDepth = 0;
+
    while (pRContext->callflag)
    {
       if (pRContext->callflag & CTXT_FUNCTION)
       {
          json::Object varFrame;
-         varFrame["eval_depth"] = pRContext->evaldepth;
-         varFrame["function_name"] =
-               r::sexp::asString(PRINTNAME(CAR(pRContext->call)));
+         varFrame["context_depth"] = ++contextDepth;
+         varFrame["function_name"] = functionNameFromContext(pRContext);
          listFrames.push_back(varFrame);
       }
       pRContext = pRContext->nextcontext;
@@ -77,12 +98,12 @@ json::Array callFramesAsJson()
    return listFrames;
 }
 
-json::Array environmentListAsJson()
+json::Array environmentListAsJson(int depth)
 {
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    listEnvironment(getTopFunctionEnvironment(), false, &rProtect, &vars);
+    listEnvironment(getEnvironment(depth), false, &rProtect, &vars);
 
     // get object details and transform to json
     json::Array listJson;
@@ -93,11 +114,46 @@ json::Array environmentListAsJson()
     return listJson;
 }
 
-Error listEnvironment(const json::JsonRpcRequest&,
+Error listEnvironment(boost::shared_ptr<int> pContextDepth,
+                      const json::JsonRpcRequest&,
                       json::JsonRpcResponse* pResponse)
 {
    // return list
-   pResponse->setResult(environmentListAsJson());
+   pResponse->setResult(environmentListAsJson(*pContextDepth));
+   return Success();
+}
+
+void enqueContextDepthChangedEvent(int depth)
+{
+   json::Object varJson;
+
+   // emit an event to the client indicating the new call frame and the
+   // current state of the environment
+   varJson["context_depth"] = depth;
+   varJson["environment_list"] = environmentListAsJson(depth);
+   varJson["call_frames"] = callFramesAsJson();
+   varJson["function_name"] = getFunctionName(depth);
+
+   ClientEvent event (client_events::kContextDepthChanged, varJson);
+   module_context::enqueClientEvent(event);
+}
+
+Error setContextDepth(boost::shared_ptr<int> pContextDepth,
+                      const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   // get the requested depth
+   int requestedDepth;
+   Error error = json::readParam(request.params, 0, &requestedDepth);
+   if (error)
+      return error;
+
+   // set state for the new depth
+   *pContextDepth = requestedDepth;
+
+   // populate the new state on the client
+   enqueContextDepthChangedEvent(*pContextDepth);
+
    return Success();
 }
 
@@ -107,43 +163,34 @@ void onDetectChanges(module_context::ChangeSource source)
    s_environmentMonitor.checkForChanges();
 }
 
-std::string getTopFunctionName()
-{
-   return r::sexp::asString(PRINTNAME(CAR(getTopFunctionContext()->call)));
-}
-
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
-   int contextDepth = getTopFunctionContext()->evaldepth;
+   int depth = 0;
+   RCNTXT* pContextTop = getFunctionContext(TOP_FUNCTION, &depth);
+   std::cerr << "checking env -- currently " << s_environmentMonitor.getMonitoredEnvironment() << std::endl;
 
    // we entered (or left) a call frame
-   if (*pContextDepth != contextDepth)
+   if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment())
    {
-      *pContextDepth = contextDepth;
-      json::Object varJson;
-
       // start monitoring the enviroment at the new depth
-      s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
-
-      // emit an event to the client indicating the new call frame and the
-      // current state of the environment
-      varJson["context_depth"] = contextDepth;
-      varJson["environment_list"] = environmentListAsJson();
-      varJson["call_frames"] = callFramesAsJson();
-      varJson["function_name"] = getTopFunctionName();
-
-      ClientEvent event (client_events::kContextDepthChanged, varJson);
-      module_context::enqueClientEvent(event);
+      s_environmentMonitor.setMonitoredEnvironment(pContextTop->cloenv);
+      *pContextDepth = depth;
+      std::cerr << "tracked change to depth; new environment is " << pContextTop->cloenv << std::endl;
+      enqueContextDepthChangedEvent(depth);
    }
 }
+
 
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
 {
    json::Object stateJson;
-   stateJson["context_depth"] = getTopFunctionContext()->evaldepth;
-   stateJson["function_name"] = getTopFunctionName();
+   int contextDepth;
+   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, &contextDepth);
+   stateJson["context_depth"] = contextDepth;
+   stateJson["function_name"] = functionNameFromContext(pContext);
+   stateJson["call_frames"] = callFramesAsJson();
    return stateJson;
 }
 
@@ -151,8 +198,9 @@ Error initialize()
 {
    boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
 
-   // begin monitoring the global environment
-   s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
+   // begin monitoring the top-level environment
+   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, pContextDepth.get());
+   s_environmentMonitor.setMonitoredEnvironment(pContext->cloenv);
 
    // subscribe to events
    using boost::bind;
@@ -160,12 +208,16 @@ Error initialize()
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onConsolePrompt.connect(bind(onConsolePrompt, pContextDepth));
 
-   json::JsonRpcFunction listEnv = boost::bind(listEnvironment, _1, _2);
+   json::JsonRpcFunction listEnv =
+         boost::bind(listEnvironment, pContextDepth, _1, _2);
+   json::JsonRpcFunction setCtxDepth =
+         boost::bind(setContextDepth, pContextDepth, _1, _2);
 
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "list_environment", listEnv))
+      (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

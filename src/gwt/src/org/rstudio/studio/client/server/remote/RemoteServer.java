@@ -2757,7 +2757,16 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, LIST_ENVIRONMENT, callback);
    }
-   
+
+   @Override
+   public void setContextDepth(int newContextDepth,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  SET_CONTEXT_DEPTH,
+                  newContextDepth,
+                  requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -2998,6 +3007,7 @@ public class RemoteServer implements Server
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";
 
    private static final String LIST_ENVIRONMENT = "list_environment";
+   private static final String SET_CONTEXT_DEPTH = "set_context_depth";
    
    private static final String LOG = "log";
 

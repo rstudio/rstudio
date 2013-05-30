@@ -30,8 +30,8 @@ public class CallFrame extends JavaScriptObject
        return this.function_name;
    }-*/;
 
-   public final native String getEvalDepth() /*-{
-       return this.eval_depth;
+   public final native int getContextDepth() /*-{
+       return this.context_depth;
    }-*/;
 }
 

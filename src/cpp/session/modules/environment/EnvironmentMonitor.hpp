@@ -26,6 +26,7 @@ class EnvironmentMonitor : boost::noncopyable
 {
 public:
    void setMonitoredEnvironment(SEXP pEnvironment);
+   SEXP getMonitoredEnvironment();
    void checkForChanges();
 private:
    void listEnv(std::vector<r::sexp::Variable>* pEnvironment);

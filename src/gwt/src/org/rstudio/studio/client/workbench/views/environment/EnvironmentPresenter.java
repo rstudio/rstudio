@@ -346,6 +346,7 @@ public class EnvironmentPresenter extends BasePresenter
       if (state.contextDepth() > 0)
       {
          view_.setEnvironmentName(state.functionName());
+         view_.setCallFrames(state.callFrames());
       }
    }
    

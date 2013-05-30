@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class EnvironmentState extends JavaScriptObject
 {
@@ -29,5 +30,9 @@ public class EnvironmentState extends JavaScriptObject
 
    public final native String functionName() /*-{
       return this.function_name;
+   }-*/;
+
+   public final native JsArray<CallFrame> callFrames() /*-{
+      return this.call_frames;
    }-*/;
 }

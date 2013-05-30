@@ -200,7 +200,7 @@ public class EnvironmentObjects extends Composite
       {
          CallFrame frame = frameList.get(idx);
          CallFrameItem item = new CallFrameItem(frame);
-         if (idx == 0)
+         if (contextDepth_ == frame.getContextDepth())
          {
             item.setActive();
          }

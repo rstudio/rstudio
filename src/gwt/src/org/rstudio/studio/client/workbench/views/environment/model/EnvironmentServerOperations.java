@@ -40,4 +40,6 @@ public interface EnvironmentServerOperations
            String quote,
            ServerRequestCallback<DataPreviewResult> requestCallback);
 
+   void setContextDepth(int newContextDepth,
+                        ServerRequestCallback<org.rstudio.studio.client.server.Void> requestCallback);
 }

@@ -85,10 +85,15 @@ void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
    checkForChanges();
 }
 
+SEXP EnvironmentMonitor::getMonitoredEnvironment()
+{
+   return environment_.get();
+}
+
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-      r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
+   r::sexp::listEnvironment(getMonitoredEnvironment(), false, &rProtect, pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()

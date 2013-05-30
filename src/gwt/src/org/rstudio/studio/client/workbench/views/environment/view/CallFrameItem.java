@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -25,6 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 public class CallFrameItem extends Composite
+   implements ClickHandler
 {
    public interface Binder extends UiBinder<Widget, CallFrameItem>
    {
@@ -38,15 +41,25 @@ public class CallFrameItem extends Composite
 
    public CallFrameItem(CallFrame frame)
    {
+      isActive_ = false;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      functionName.setText(frame.getFunctionName());
+      functionName.setText(frame.getContextDepth() + ": " + frame.getFunctionName());
+      functionName.addClickHandler(this);
    }
 
    public void setActive()
    {
       functionName.addStyleName(style.activeFrame());
+      isActive_ = true;
+   }
+
+   public void onClick(ClickEvent event)
+   {
+      setActive();
    }
 
    @UiField Label functionName;
    @UiField Style style;
+
+   boolean isActive_;
 }
