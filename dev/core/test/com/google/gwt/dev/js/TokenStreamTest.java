@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -55,6 +55,7 @@ public class TokenStreamTest extends TestCase {
     assertGoodJsni("@org.group.Foo::bar(I)");
     assertGoodJsni("@org.group.Foo::bar(IJ)");
     assertGoodJsni("@org.group.Foo::bar(Lorg/group/Foo;)");
+    assertGoodJsni("@org.group.Foo::bar(Lorg/group/Foo;Lorg/group/Bar;)");
     assertGoodJsni("@org.group.Foo::bar([I)");
     // The following is currently tolerated
     // assertBadJsni("@org.group.Foo::bar(Lorg/group/Foo)");
@@ -64,6 +65,18 @@ public class TokenStreamTest extends TestCase {
     // Method refs with * as the parameter list
     assertGoodJsni("@org.group.Foo::bar(*)");
     assertBadJsni("@org.group.Foo::bar(*");
+
+    // Refs that span lines
+    assertGoodJsni("@org.group.Foo::bar(\nLorg/group/Foo;)");
+    assertGoodJsni("@org.group.Foo::bar(\nLorg/group/Foo;\n)");
+    assertGoodJsni("@org.group.Foo::bar(\n[I\n)");
+    assertGoodJsni("@org.group.Foo::bar(\nZ\nZ\n)");
+    assertGoodJsni("@org.group.Foo::bar(\nLorg/group/Foo;\nZ)");
+    assertGoodJsni("@org.group.Foo::\nbar()");
+
+
+    assertBadJsni("@org.group.Foo::bar(\nLorg/group/Foo;,\nZ)");
+    assertBadJsni("@org.group.Foo::bar(\nLorg/group/Foo,\nZ)");
 
     // bad references
     assertBadJsni("@");
@@ -85,6 +98,7 @@ public class TokenStreamTest extends TestCase {
   private void assertGoodJsni(String jsniRef) throws IOException {
     Token token = scanToken(jsniRef);
     assertEquals(TokenStream.NAME, token.type);
-    assertEquals(jsniRef, token.text);
+    // The token.text won't have any whitespace included.
+    assertEquals(jsniRef.replaceAll("\\s", ""), token.text);
   }
 }

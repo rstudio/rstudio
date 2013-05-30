@@ -1343,6 +1343,15 @@ public class TokenStream {
         }
     }
 
+    private void skipWhitespace() throws IOException {
+      int tmp;
+      do {
+        tmp = in.read();
+      } while (isJSSpace(tmp) || tmp == '\n');
+      // Reposition back to first non whitespace char.
+      in.unread();
+    }
+
     private int jsniMatchReference() throws IOException {
 
       // First, read the type name whose member is being accessed. 
@@ -1359,9 +1368,11 @@ public class TokenStream {
           return ERROR;
       }
       addToString(c);
-      
+
+      // Skip whitespace starting after ::.
+      skipWhitespace();
+
       // Finish by reading the field or method signature.
-      //
       if (!jsniMatchMethodSignatureOrFieldName()) {
         return ERROR;
       }
@@ -1373,7 +1384,9 @@ public class TokenStream {
     private boolean jsniMatchParamListSignature() throws IOException {
       // Assume the opening '(' has already been read.
       // Read param type signatures until we see a closing ')'.
-      //
+
+      skipWhitespace();
+
       // First check for the special case of * as the parameter list, indicating
       // a wildcard
       if (in.peek() == '*') {
@@ -1384,20 +1397,24 @@ public class TokenStream {
         addToString(in.read());
         return true;
       }
-      
+
       // Otherwise, loop through reading one param type at a time
       do {
+        // Skip whitespace between parameters.
+        skipWhitespace();
+
         int c = in.read();
+
         if (c == ')') {
           // Finished successfully.
           //
           addToString(c);
           return true;
         }
-        
+
         in.unread();
       } while (jsniMatchParamTypeSignature());
-      
+
       // If we made it here, we can assume that there was an invalid type
       // signature that was already reported and that the offending char
       // was already unread.
@@ -1443,7 +1460,8 @@ public class TokenStream {
 
     private boolean jsniMatchMethodSignatureOrFieldName() throws IOException {
       int c = in.read();
-      
+
+
       // We must see an ident start here.
       //
       if (!Character.isJavaIdentifierStart((char)c)) {
