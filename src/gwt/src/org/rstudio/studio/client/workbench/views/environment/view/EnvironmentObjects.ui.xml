@@ -2,14 +2,14 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" />
-    <g:SplitLayoutPanel>
+    <g:SplitLayoutPanel styleName="{style.environmentPane}">
         <g:center>
             <g:VerticalPanel styleName="{style.objectGrid}" ui:field="environmentContents"></g:VerticalPanel>
         </g:center>
         <g:south size="200">
-            <g:VerticalPanel>
-                <g:ListBox ui:field="callFrameList" visibleItemCount="10"></g:ListBox>
-            </g:VerticalPanel>
+            <g:ScrollPanel>
+                <g:VerticalPanel ui:field="callFramePanel"></g:VerticalPanel>
+            </g:ScrollPanel>
         </g:south>
     </g:SplitLayoutPanel>
 </ui:UiBinder>

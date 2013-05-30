@@ -114,6 +114,7 @@ public class EnvironmentObjects extends Composite
    public void setContextDepth(int contextDepth)
    {
       contextDepth_ = contextDepth;
+      callFramePanel.clear();
    }
 
    public void addObject(RObject obj)
@@ -197,7 +198,13 @@ public class EnvironmentObjects extends Composite
    {
       for (int idx = 0; idx < frameList.length(); idx++)
       {
-         callFrameList.addItem(frameList.get(idx).getFunctionName());
+         CallFrame frame = frameList.get(idx);
+         CallFrameItem item = new CallFrameItem(frame);
+         if (idx == 0)
+         {
+            item.setActive();
+         }
+         callFramePanel.add(item);
       }
    }
 
@@ -646,12 +653,11 @@ public class EnvironmentObjects extends Composite
 
    @UiField VerticalPanel environmentContents;
    @UiField EnvironmentStyle style;
-   @UiField ListBox callFrameList;
+   @UiField VerticalPanel callFramePanel;
 
    ScrollingDataGrid<RObjectEntry> objectList_;
    Label environmentName_;
    Label environmentEmptyMessage_;
-
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;

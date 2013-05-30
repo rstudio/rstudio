@@ -1,11 +1,15 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+.environmentPane
+{
+   font-family: fixedWidthFont;
+}
+
 .objectGrid
 {
    height: 100%;
    width: 100%;
-   font-family: fixedWidthFont;
 }
 
 .objectGrid table,
