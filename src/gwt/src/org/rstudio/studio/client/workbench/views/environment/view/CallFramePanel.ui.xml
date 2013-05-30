@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" />
+    <g:HeaderPanel>
+        <g:FlowPanel styleName="{style.categoryHeaderRow}">
+            <g:Label styleName="{style.categoryHeaderText}" text="Traceback"></g:Label>
+        </g:FlowPanel>
+        <g:ResizeLayoutPanel styleName="{style.fillHeight}">
+            <g:ScrollPanel styleName="{style.fillHeight}">
+                <g:VerticalPanel ui:field="callFramePanel"></g:VerticalPanel>
+            </g:ScrollPanel>
+        </g:ResizeLayoutPanel>
+    </g:HeaderPanel>
+</ui:UiBinder>

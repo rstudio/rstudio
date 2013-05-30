@@ -38,6 +38,7 @@ import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -115,7 +116,22 @@ public class EnvironmentObjects extends Composite
    public void setContextDepth(int contextDepth)
    {
       contextDepth_ = contextDepth;
-      callFramePanel.clear();
+      // GWT's split layout panel can't handle in-place insertion of widgets
+      // once the center widget is in place, so when moving between debugging
+      // and non-debugging states, we need to clear out the panel entirely and
+      // re-add all the relevant sub-panels.
+      if (contextDepth_ > 0)
+      {
+         splitPanel.clear();
+         splitPanel.insert(callFramePanel_, Direction.SOUTH, 200, null);
+         splitPanel.add(objectList_);
+      }
+      else
+      {
+         callFramePanel_.clearCallFrames();
+         splitPanel.clear();
+         splitPanel.add(objectList_);
+      }
    }
 
    public void addObject(RObject obj)
@@ -193,20 +209,12 @@ public class EnvironmentObjects extends Composite
    public void setObserver(Observer observer)
    {
       observer_ = observer;
+      callFramePanel_ = new CallFramePanel(observer_);
    }
 
    public void setCallFrames(JsArray<CallFrame> frameList)
    {
-      for (int idx = 0; idx < frameList.length(); idx++)
-      {
-         CallFrame frame = frameList.get(idx);
-         CallFrameItem item = new CallFrameItem(frame, observer_);
-         if (contextDepth_ == frame.getContextDepth())
-         {
-            item.setActive();
-         }
-         callFramePanel.add(item);
-      }
+      callFramePanel_.setCallFrames(frameList, contextDepth_);
    }
 
    public void setEnvironmentName(String environmentName)
@@ -654,9 +662,10 @@ public class EnvironmentObjects extends Composite
 
    @UiField VerticalPanel environmentContents;
    @UiField EnvironmentStyle style;
-   @UiField VerticalPanel callFramePanel;
+   @UiField SplitLayoutPanel splitPanel;
 
    ScrollingDataGrid<RObjectEntry> objectList_;
+   CallFramePanel callFramePanel_;
    Label environmentName_;
    Label environmentEmptyMessage_;
 
