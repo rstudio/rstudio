@@ -22,6 +22,7 @@ interface EnvironmentStyle extends CssResource
    String expandCol();
    String nameCol();
    String valueCol();
+   String clickableCol();
    String detailRow();
    String categoryHeaderRow();
    String categoryHeaderText();

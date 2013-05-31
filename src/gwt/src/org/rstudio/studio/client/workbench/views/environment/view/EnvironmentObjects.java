@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -336,6 +335,13 @@ public class EnvironmentObjects extends ResizeComposite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
+            // don't do any invocation if we're not viewing the top level of
+            // the callstack.
+            if (!enableClickableObjects())
+            {
+               return;
+            }
+
             // initial click on a promise forces eval, at which point it gets a
             // value we can interact with
             if (object.isPromise())
@@ -475,6 +481,11 @@ public class EnvironmentObjects extends ResizeComposite
       return messagePanel;
    }
 
+   private boolean enableClickableObjects()
+   {
+      return contextDepth_ < 2;
+   }
+
    // Private methods: state persistence --------------------------------------
 
    private void setDeferredState()
@@ -567,7 +578,12 @@ public class EnvironmentObjects extends ResizeComposite
       private void buildNameColumn(RObjectEntry rowValue, TableRowBuilder row)
       {
          TableCellBuilder nameCol = row.startTD();
-         nameCol.className(style.nameCol());
+         String styleName = style.nameCol();
+         if (enableClickableObjects())
+         {
+            styleName += (" " + style.clickableCol());
+         }
+         nameCol.className(styleName);
          nameCol.title(
                  rowValue.rObject.getName() +
                  " (" + rowValue.rObject.getType() + ")");
@@ -597,6 +613,10 @@ public class EnvironmentObjects extends ResizeComposite
          else if (rowValue.getCategory() == RObjectEntry.Categories.Data)
          {
             descriptionStyle += (" " + style.dataFrameValueCol());
+         }
+         if (enableClickableObjects())
+         {
+            descriptionStyle += (" " + style.clickableCol());
          }
          descCol.className(descriptionStyle);
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
