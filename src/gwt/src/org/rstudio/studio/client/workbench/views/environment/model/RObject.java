@@ -16,9 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.view.client.ProvidesKey;
 
 public class RObject extends JavaScriptObject
 {
@@ -44,6 +42,10 @@ public class RObject extends JavaScriptObject
 
    public final native JsArrayString getContents() /*-{
       return this.contents;
+   }-*/;
+
+   public final native int getLength() /*-{
+      return this.length;
    }-*/;
 }
 

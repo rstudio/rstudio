@@ -75,6 +75,9 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 
 } // anonymous namespace
 
+EnvironmentMonitor::EnvironmentMonitor() :
+   initialized_(false)
+{}
 
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 {

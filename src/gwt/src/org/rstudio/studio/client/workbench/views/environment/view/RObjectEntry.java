@@ -47,16 +47,17 @@ public class RObjectEntry
    // show expander for objects that have contents
    public boolean canExpand()
    {
-      return rObject.getContents().length() > 0;
+      return rObject.getLength() > 0 &&
+             rObject.getContents().length() > 0;
    }
 
    public int getCategory()
    {
       String type = rObject.getType();
-      if (type.equals("data.frame")
-         || type.equals("matrix")
-         || type.equals("data.table")
-         || type.equals("cast_df"))
+      if (type.equals("data.frame") ||
+          type.equals("matrix") ||
+          type.equals("data.table") ||
+          type.equals("cast_df"))
       {
          return Categories.Data;
       }

@@ -71,7 +71,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      environmentName_ = new Label(globalEnvironmentName);
+      environmentName_ = new Label(GLOBAL_ENVIRONMENT_NAME);
       environmentName_.setStyleName(
               EnvironmentPaneResources.INSTANCE
                       .environmentPaneStyle()
@@ -252,7 +252,8 @@ public class EnvironmentPane extends WorkbenchPane
 
    private void executeFunctionForObject(String function, String objectName)
    {
-      String editCode = function + "(" + StringUtil.toRSymbolName(objectName) + ")";
+      String editCode =
+              function + "(" + StringUtil.toRSymbolName(objectName) + ")";
       SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
       eventBus_.fireEvent(event);
    }
@@ -262,14 +263,15 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      dataImportButton_ = new ToolbarButton("Import Dataset",
-                                            StandardIcons.INSTANCE.import_dataset(),
-                                            menu);
+      dataImportButton_ = new ToolbarButton(
+              "Import Dataset",
+              StandardIcons.INSTANCE.import_dataset(),
+              menu);
       return dataImportButton_;
 
    }
 
-   public final static String globalEnvironmentName = "Global Environment";
+   public final static String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private ToolbarButton dataImportButton_;
    private Label environmentName_;

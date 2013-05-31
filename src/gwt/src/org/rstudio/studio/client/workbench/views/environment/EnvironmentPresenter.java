@@ -78,7 +78,8 @@ public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileHandler
 
 {
-   public interface Binder extends CommandBinder<Commands, EnvironmentPresenter> {}
+   public interface Binder
+           extends CommandBinder<Commands, EnvironmentPresenter> {}
    
    public interface Display extends WorkbenchView
    {
@@ -168,8 +169,12 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
 
-      new JSObjectStateValue("environment-pane", "environmentClientState", ClientState.TEMPORARY,
-                             session.getSessionInfo().getClientState(), false)
+      new JSObjectStateValue(
+              "environment-pane",
+              "environmentPaneState",
+              ClientState.TEMPORARY,
+              session.getSessionInfo().getClientState(),
+              false)
       {
          @Override
          protected void onInit(JsObject value)

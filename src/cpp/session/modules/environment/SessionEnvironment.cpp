@@ -41,6 +41,19 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
+bool handleRBrowseEnv(const core::FilePath& filePath)
+{
+   if (filePath.filename() == "wsbrowser.html")
+   {
+      module_context::showContent("R objects", filePath);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth, int* pFoundDepth = NULL)
 {
@@ -67,6 +80,22 @@ RCNTXT* getFunctionContext(const int depth, int* pFoundDepth = NULL)
 SEXP getEnvironment(const int depth)
 {
    return depth == 0 ? R_GlobalEnv : getFunctionContext(depth)->cloenv;
+}
+
+// return whether the context stack contains a pure (interactive) browser
+bool inBrowseContext()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (pRContext->callflag)
+   {
+      if ((pRContext->callflag & CTXT_BROWSER) &&
+          !(pRContext->callflag & CTXT_FUNCTION))
+      {
+         return true;
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return false;
 }
 
 std::string functionNameFromContext(RCNTXT* pContext)
@@ -196,6 +225,18 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
    // we entered (or left) a call frame
    if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment())
    {
+      json::Object varJson;
+
+      // if we appear to be switching into debug mode, make sure there's a
+      // browser call somewhere on the stack. if there isn't, then we're
+      // probably just waiting for user input inside a function (e.g. scan());
+      // assume the user isn't interested in seeing the function's internals.
+      if (*pContextDepth == 0 &&
+          !inBrowseContext())
+      {
+         return;
+      }
+
       // start monitoring the enviroment at the new depth
       s_environmentMonitor.setMonitoredEnvironment(pContextTop->cloenv);
       *pContextDepth = depth;
@@ -239,6 +280,7 @@ Error initialize()
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));

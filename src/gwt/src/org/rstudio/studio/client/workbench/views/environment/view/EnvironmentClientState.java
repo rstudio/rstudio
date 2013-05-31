@@ -18,8 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-import java.util.ArrayList;
-
 public class EnvironmentClientState extends JavaScriptObject
 {
    protected EnvironmentClientState()
@@ -30,17 +28,17 @@ public class EnvironmentClientState extends JavaScriptObject
            int scrollPosition,
            String[] expandedObjects) /*-{
        var options = new Object();
-       options.scrollPosition = scrollPosition;
-       options.expandedObjects = expandedObjects;
+       options.scroll_position = scrollPosition;
+       options.expanded_objects = expandedObjects;
        return options ;
    }-*/;
 
 
    public final native int getScrollPosition() /*-{
-       return this.scrollPosition;
+       return this.scroll_position;
    }-*/;
 
    public final native JsArrayString getExpandedObjects() /*-{
-       return this.expandedObjects;
+       return this.expanded_objects;
    }-*/;
 }

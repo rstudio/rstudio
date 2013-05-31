@@ -101,7 +101,6 @@ import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPresenter;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentTab;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
 import org.rstudio.studio.client.workbench.views.files.FilesTab;

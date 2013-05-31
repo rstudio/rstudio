@@ -40,6 +40,7 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -75,7 +76,9 @@ public class EnvironmentObjects extends ResizeComposite
 
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
-      objectList_ = new ScrollingDataGrid<RObjectEntry>(1024, RObjectEntry.KEY_PROVIDER);
+      objectList_ = new ScrollingDataGrid<RObjectEntry>(
+              1024,
+              RObjectEntry.KEY_PROVIDER);
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectDataProvider_.addDataDisplay(objectList_);
       createColumns();
@@ -216,8 +219,8 @@ public class EnvironmentObjects extends ResizeComposite
    {
       environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
-                                       emptyFunctionEnvironmentMessage :
-                                       emptyGlobalEnvironmentMessage);
+                                       EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
+                                       EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
    }
 
    public int getScrollPosition()
@@ -325,29 +328,10 @@ public class EnvironmentObjects extends ResizeComposite
       createDescriptionColumn();
    }
 
-   private void createNameColumn()
+   // attaches a handler to a column that invokes the associated object
+   private void attachClickToInvoke(Column<RObjectEntry, String> column)
    {
-      // the name of the object (simple text column)
-      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getName();
-         }
-      };
-   }
-
-   private void createDescriptionColumn()
-   {
-      // the description *or* value of the object; when clicked, we'll view
-      // or edit the data inside the object.
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            String val = object.rObject.getValue();
-            return val == "NO_VALUE" ? object.rObject.getDescription() : val;
-         }
-      };
-      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      column.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
       {
          @Override
          public void update(int index, RObjectEntry object, String value)
@@ -370,74 +354,112 @@ public class EnvironmentObjects extends ResizeComposite
       });
    }
 
+   private void createNameColumn()
+   {
+      // the name of the object (simple text column)
+      objectNameColumn_ = new Column<RObjectEntry, String>(
+              new ClickableTextCell())
+              {
+                  @Override
+                  public String getValue(RObjectEntry object)
+                  {
+                     return object.rObject.getName();
+                  }
+              };
+      attachClickToInvoke(objectNameColumn_);
+   }
+
+   private void createDescriptionColumn()
+   {
+      // the description *or* value of the object; when clicked, we'll view
+      // or edit the data inside the object.
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(
+              new ClickableTextCell())
+              {
+                  @Override
+                  public String getValue(RObjectEntry object)
+                  {
+                     String val = object.rObject.getValue();
+                     return val == "NO_VALUE" ?
+                            object.rObject.getDescription() :
+                            val;
+                  }
+              };
+      attachClickToInvoke(objectDescriptionColumn_);
+   }
+
    private void createExpandColumn()
    {
       // the column containing the expand command; available only on objects
       // with contents (such as lists and data frames).
-      SafeHtmlRenderer<String> expanderRenderer = new AbstractSafeHtmlRenderer<String>()
-      {
-         @Override
-         public SafeHtml render(String object)
+      SafeHtmlRenderer<String> expanderRenderer =
+         new AbstractSafeHtmlRenderer<String>()
          {
-            SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            if (!object.equals(""))
+            @Override
+            public SafeHtml render(String object)
             {
-               sb.appendHtmlConstant("<input type=\"image\" src=\"")
-                       .appendEscaped(object)
-                       .appendHtmlConstant("\" class=\"")
-                       .appendEscaped(style.expandIcon())
-                       .appendHtmlConstant("\" />");
-            }
-            else
-            {
-               sb.appendHtmlConstant("&nbsp;");
-            }
-            return sb.toSafeHtml();
-         }
-      };
-      objectExpandColumn_ = new Column<RObjectEntry, String>(new ClickableTextCell(expanderRenderer))
-      {
-         @Override
-         public String getValue(RObjectEntry object)
-         {
-            if (object.canExpand())
-            {
-               ImageResource expandImage = object.expanded ?
-                                           EnvironmentResources.INSTANCE.collapseIcon() :
-                                           EnvironmentResources.INSTANCE.expandIcon();
-
-               return expandImage.getSafeUri().asString();
-            }
-            else
-            {
-               return "";
-            }
-         }
-      };
-      objectExpandColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            if (object.canExpand())
-            {
-               object.expanded = !object.expanded;
-               // tell the observer this happened, so it can persist the state
-               if (useStatePersistence())
+               SafeHtmlBuilder sb = new SafeHtmlBuilder();
+               if (!object.equals(""))
                {
-                  if (object.expanded)
-                  {
-                     observer_.setObjectExpanded(object.rObject.getName());
-                  }
-                  else
-                  {
-                     observer_.setObjectCollapsed(object.rObject.getName());
-                  }
+                  sb.appendHtmlConstant("<input type=\"image\" src=\"")
+                          .appendEscaped(object)
+                          .appendHtmlConstant("\" class=\"")
+                          .appendEscaped(style.expandIcon())
+                          .appendHtmlConstant("\" />");
                }
-               objectList_.redrawRow(index);
+               else
+               {
+                  sb.appendHtmlConstant("&nbsp;");
+               }
+               return sb.toSafeHtml();
             }
-         }
-      });
+         };
+      objectExpandColumn_ = new Column<RObjectEntry, String>(
+         new ClickableTextCell(expanderRenderer))
+         {
+            @Override
+            public String getValue(RObjectEntry object)
+            {
+               if (object.canExpand())
+               {
+                  ImageResource expandImage = object.expanded ?
+                      EnvironmentResources.INSTANCE.collapseIcon() :
+                      EnvironmentResources.INSTANCE.expandIcon();
+
+                  return expandImage.getSafeUri().asString();
+               }
+               else
+               {
+                  return "";
+               }
+            }
+         };
+      objectExpandColumn_.setFieldUpdater(
+         new FieldUpdater<RObjectEntry, String>()
+         {
+            @Override
+            public void update(int index, RObjectEntry object, String value)
+            {
+               if (object.canExpand())
+               {
+                  object.expanded = !object.expanded;
+                  // tell the observer this happened, so it can persist
+                  // the state
+                  if (useStatePersistence())
+                  {
+                     if (object.expanded)
+                     {
+                        observer_.setObjectExpanded(object.rObject.getName());
+                     }
+                     else
+                     {
+                        observer_.setObjectCollapsed(object.rObject.getName());
+                     }
+                  }
+                  objectList_.redrawRow(index);
+               }
+            }
+         });
    }
 
    private Widget buildEmptyGridMessage()
@@ -446,7 +468,7 @@ public class EnvironmentObjects extends ResizeComposite
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
       environmentName_ = new Label("");
       environmentName_.setStyleName(style.emptyEnvironmentName());
-      environmentEmptyMessage_ = new Label(emptyGlobalEnvironmentMessage);
+      environmentEmptyMessage_ = new Label(EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
       messagePanel.add(environmentName_);
       messagePanel.add(environmentEmptyMessage_);
@@ -498,7 +520,8 @@ public class EnvironmentObjects extends ResizeComposite
    // Private nested classes --------------------------------------------------
 
    // builds individual rows of the object table
-   private class EnvironmentObjectTableBuilder extends AbstractCellTableBuilder<RObjectEntry>
+   private class EnvironmentObjectTableBuilder
+           extends AbstractCellTableBuilder<RObjectEntry>
    {
       public EnvironmentObjectTableBuilder()
       {
@@ -587,7 +610,8 @@ public class EnvironmentObjects extends ResizeComposite
          // column widths, so we can't let the first row be a spanning header.
          if (absRowIndex == 0)
          {
-            TableRowBuilder widthSettingRow = startRow().className(style.widthSettingRow());
+            TableRowBuilder widthSettingRow = startRow().className(
+                    style.widthSettingRow());
             widthSettingRow.startTD().className(style.expandCol()).endTD();
             widthSettingRow.startTD().className(style.nameCol()).endTD();
             widthSettingRow.startTD().className(style.valueCol()).endTD();
@@ -610,7 +634,8 @@ public class EnvironmentObjects extends ResizeComposite
                   categoryTitle = "Values";
                   break;
             }
-            TableRowBuilder leaderRow = startRow().className(style.categoryHeaderRow());
+            TableRowBuilder leaderRow = startRow().className(
+                    style.categoryHeaderRow());
             TableCellBuilder objectHeader = leaderRow.startTD();
             objectHeader.colSpan(3)
                     .className(style.categoryHeaderText())
@@ -643,9 +668,9 @@ public class EnvironmentObjects extends ResizeComposite
       }
    }
 
-   private final static String emptyGlobalEnvironmentMessage =
+   private final static String EMPTY_GLOBAL_ENVIRONMENT_MESSAGE =
            "Global environment is empty";
-   private final static String emptyFunctionEnvironmentMessage =
+   private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
            "Function environment is empty";
 
    @UiField EnvironmentStyle style;
