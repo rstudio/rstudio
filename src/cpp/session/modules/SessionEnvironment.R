@@ -78,7 +78,16 @@
 
 .rs.addFunction("promiseDescription", function(obj)
 {
-   capture.output(substitute(obj))
+   # by default, the description should be the expression associated with the
+   # promise
+   description <- capture.output(substitute(obj))
+
+   # create a more friendly description for delay-loaded data
+   if (substr(description, 1, 16) == "lazyLoadDBfetch(")
+   {
+      description <- "Data (not yet loaded)"
+   }
+   return (description)
 })
 
 .rs.addFunction("valueDescription", function(obj)

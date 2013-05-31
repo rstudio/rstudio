@@ -315,30 +315,10 @@ public class EnvironmentObjects extends Composite
       createDescriptionColumn();
    }
 
-   private void createNameColumn()
+   // attaches a handler to a column that invokes the associated object
+   private void attachClickToInvoke(Column<RObjectEntry, String> column)
    {
-      // the name of the object (simple text column)
-      objectNameColumn_ = new Column<RObjectEntry, String>(new TextCell()) {
-         @Override
-         public String getValue(RObjectEntry object) {
-            return object.rObject.getName();
-         }
-      };
-   }
-
-   private void createDescriptionColumn()
-   {
-      // the description *or* value of the object; when clicked, we'll view
-      // or edit the data inside the object.
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(
-              new ClickableTextCell()) {
-                  @Override
-                  public String getValue(RObjectEntry object) {
-                     String val = object.rObject.getValue();
-                     return val == "NO_VALUE" ? object.rObject.getDescription() : val;
-                  }
-      };
-      objectDescriptionColumn_.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      column.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
       {
          @Override
          public void update(int index, RObjectEntry object, String value)
@@ -359,6 +339,40 @@ public class EnvironmentObjects extends Composite
             }
          }
       });
+   }
+
+   private void createNameColumn()
+   {
+      // the name of the object (simple text column)
+      objectNameColumn_ = new Column<RObjectEntry, String>(
+              new ClickableTextCell())
+              {
+                  @Override
+                  public String getValue(RObjectEntry object)
+                  {
+                     return object.rObject.getName();
+                  }
+              };
+      attachClickToInvoke(objectNameColumn_);
+   }
+
+   private void createDescriptionColumn()
+   {
+      // the description *or* value of the object; when clicked, we'll view
+      // or edit the data inside the object.
+      objectDescriptionColumn_ = new Column<RObjectEntry, String>(
+              new ClickableTextCell())
+              {
+                  @Override
+                  public String getValue(RObjectEntry object)
+                  {
+                     String val = object.rObject.getValue();
+                     return val == "NO_VALUE" ?
+                            object.rObject.getDescription() :
+                            val;
+                  }
+              };
+      attachClickToInvoke(objectDescriptionColumn_);
    }
 
    private void createExpandColumn()

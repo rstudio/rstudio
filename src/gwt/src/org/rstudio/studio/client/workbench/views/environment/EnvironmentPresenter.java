@@ -172,7 +172,7 @@ public class EnvironmentPresenter extends BasePresenter
 
       new JSObjectStateValue(
               "environment-pane",
-              "environmentClientState",
+              "environmentPaneState",
               ClientState.TEMPORARY,
               session.getSessionInfo().getClientState(),
               false)
