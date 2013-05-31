@@ -46,19 +46,6 @@ namespace dirty {
 
 namespace {
 
-bool handleRBrowseEnv(const core::FilePath& filePath)
-{
-   if (filePath.filename() == "wsbrowser.html")
-   {
-      module_context::showContent("R objects", filePath);
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
 // last save action.
 // NOTE: we don't persist this (or the workspace dirty state) during suspends in
 // server mode. this means that if you are ever suspended then you will always
@@ -134,12 +121,8 @@ Error initialize()
    using boost::bind;
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   
-   // register handlers
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (bind(registerRBrowseFileHandler, handleRBrowseEnv));
-   return initBlock.execute();
+
+   return Success();
 }
    
 

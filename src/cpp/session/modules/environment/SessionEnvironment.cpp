@@ -38,6 +38,19 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
+bool handleRBrowseEnv(const core::FilePath& filePath)
+{
+   if (filePath.filename() == "wsbrowser.html")
+   {
+      module_context::showContent("R objects", filePath);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 // return the context for the topmost function on the callstack
 RCNTXT* getTopFunctionContext()
 {
@@ -145,6 +158,7 @@ Error initialize()
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 

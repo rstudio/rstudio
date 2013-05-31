@@ -30,17 +30,17 @@ public class EnvironmentClientState extends JavaScriptObject
            int scrollPosition,
            String[] expandedObjects) /*-{
        var options = new Object();
-       options.scrollPosition = scrollPosition;
-       options.expandedObjects = expandedObjects;
+       options.scroll_position = scrollPosition;
+       options.expanded_objects = expandedObjects;
        return options ;
    }-*/;
 
 
    public final native int getScrollPosition() /*-{
-       return this.scrollPosition;
+       return this.scroll_position ? this.scroll_position : 0;
    }-*/;
 
    public final native JsArrayString getExpandedObjects() /*-{
-       return this.expandedObjects;
+       return this.expanded_objects ? this.expanded_objects : "";
    }-*/;
 }

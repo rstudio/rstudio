@@ -68,7 +68,7 @@ public class ContextDepthChangedEvent extends
    {
       String functionName = contextData_.getFunctionName();
       return functionName.length() > 0 && functionName != "NA" ?
-             contextData_.getFunctionName() : EnvironmentPane.globalEnvironmentName;
+             contextData_.getFunctionName() : EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
    }
 
    @Override

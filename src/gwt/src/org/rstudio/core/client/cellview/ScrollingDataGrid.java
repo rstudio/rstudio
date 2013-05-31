@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.environment.view;
+package org.rstudio.core.client.cellview;
 
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.HeaderPanel;

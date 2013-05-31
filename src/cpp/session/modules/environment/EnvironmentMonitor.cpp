@@ -75,6 +75,9 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 
 } // anonymous namespace
 
+EnvironmentMonitor::EnvironmentMonitor() :
+   initialized_(false)
+{}
 
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 {
@@ -88,7 +91,7 @@ void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-      r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
+   r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()

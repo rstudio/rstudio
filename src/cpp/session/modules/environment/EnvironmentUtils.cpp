@@ -106,20 +106,20 @@ json::Object varToJson(const r::sexp::Variable& var)
 
    // is this a type of object for which we can get something that looks like
    // a value? if so, get the value appropriate to the object's class.
-   if ((varSEXP != R_UnboundValue)
-       && !r::sexp::isLanguage(varSEXP)
-       && !isUnevaluatedPromise(varSEXP))
+   if ((varSEXP != R_UnboundValue) &&
+       !r::sexp::isLanguage(varSEXP) &&
+       !isUnevaluatedPromise(varSEXP))
    {
       json::Value varClass = classOfVar(varSEXP);
       varJson["type"] = varClass;
       varJson["value"] = valueOfVar(varSEXP);
       varJson["description"] = descriptionOfVar(varSEXP);
       varJson["length"] = r::sexp::length(varSEXP);
-      if (varClass == "data.frame"
-          || varClass == "data.table"
-          || varClass == "list"
-          || varClass == "cast_df"
-          || Rf_isS4(varSEXP))
+      if (varClass == "data.frame" ||
+          varClass == "data.table" ||
+          varClass == "list" ||
+          varClass == "cast_df" ||
+          Rf_isS4(varSEXP))
       {
          varJson["contents"] = contentsOfVar(varSEXP);
       }

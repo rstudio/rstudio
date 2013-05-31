@@ -25,6 +25,7 @@ namespace environment {
 class EnvironmentMonitor : boost::noncopyable
 {
 public:
+   EnvironmentMonitor();
    void setMonitoredEnvironment(SEXP pEnvironment);
    void checkForChanges();
 private:
