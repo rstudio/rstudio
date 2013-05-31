@@ -112,7 +112,7 @@ public class EnvironmentObjects extends ResizeComposite
       // these need to be done post-initWidget since they reference objects
       // created by initWidget
       objectList_.setEmptyTableWidget(buildEmptyGridMessage());
-      objectList_.setStyleName(style.objectGrid());
+      objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
 
       splitPanel.addSouth(callFramePanel_, splitPosition_);
       splitPanel.add(objectList_);

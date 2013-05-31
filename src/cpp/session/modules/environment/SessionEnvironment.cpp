@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 
+#define INTERNAL_R_FUNCTIONS
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -78,6 +79,21 @@ std::string getFunctionName(int depth)
    return functionNameFromContext(getFunctionContext(depth));
 }
 
+/* TODO(jmcphers) - extract source refs
+void getSourceRefFromContext(const RCNTXT* pContext,
+                             std::string* pFileName,
+                             int* pLineNumber)
+{
+   r::sexp::Protect rProtect;
+   *pLineNumber = r::sexp::asInteger(CAR(pContext->srcref));
+   SEXP filename = r::sexp::getAttrib(
+            pContext->srcref,
+            "srcfile");
+   *pFileName = r::sexp::asString(filename);
+   return;
+}
+*/
+
 json::Array callFramesAsJson()
 {
    RCNTXT* pRContext = r::getGlobalContext();
@@ -91,6 +107,15 @@ json::Array callFramesAsJson()
          json::Object varFrame;
          varFrame["context_depth"] = ++contextDepth;
          varFrame["function_name"] = functionNameFromContext(pRContext);
+
+         /* TODO(jmcphers) - extract source refs
+         std::string filename;
+         int lineNumber = 0;
+         getSourceRefFromContext(pRContext, &filename, &lineNumber);
+         varFrame["file_name"] = filename;
+         varFrame["line_number"] = lineNumber;
+         */
+
          listFrames.push_back(varFrame);
       }
       pRContext = pRContext->nextcontext;

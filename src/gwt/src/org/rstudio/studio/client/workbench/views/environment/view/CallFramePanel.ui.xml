@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" />
-    <g:HeaderPanel>
+    <g:HeaderPanel styleName="{style.environmentPanel}">
         <g:FlowPanel styleName="{style.categoryHeaderRow}">
             <g:Label styleName="{style.categoryHeaderText}" text="Traceback"></g:Label>
         </g:FlowPanel>

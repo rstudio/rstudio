@@ -4,6 +4,12 @@
 .environmentPane
 {
    font-family: fixedWidthFont;
+   background-color: #e0e0e0;
+}
+
+.environmentPanel
+{
+   background-color: #ffffff;
 }
 
 .objectGrid
@@ -133,4 +139,6 @@
 {
    height: 100%;
 }
+
+
 

@@ -33,5 +33,13 @@ public class CallFrame extends JavaScriptObject
    public final native int getContextDepth() /*-{
        return this.context_depth;
    }-*/;
+
+   public final native String getFileName() /*-{
+       return this.file_name;
+   }-*/;
+
+   public final native String getLineNumber() /*-{
+       return this.line_number;
+   }-*/;
 }
 
