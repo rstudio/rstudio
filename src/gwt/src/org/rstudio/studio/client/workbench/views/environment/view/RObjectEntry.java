@@ -47,7 +47,8 @@ public class RObjectEntry
    // show expander for objects that have contents
    public boolean canExpand()
    {
-      return rObject.getContents().length() > 0;
+      return rObject.getLength() > 0 &&
+             rObject.getContents().length() > 0;
    }
 
    public int getCategory()

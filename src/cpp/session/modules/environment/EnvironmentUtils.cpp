@@ -114,6 +114,7 @@ json::Object varToJson(const r::sexp::Variable& var)
       varJson["type"] = varClass;
       varJson["value"] = valueOfVar(varSEXP);
       varJson["description"] = descriptionOfVar(varSEXP);
+      varJson["length"] = r::sexp::length(varSEXP);
       if (varClass == "data.frame"
           || varClass == "data.table"
           || varClass == "list"
@@ -148,7 +149,8 @@ json::Object varToJson(const r::sexp::Variable& var)
                std::string("<unknown>");
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
-      }
+      varJson["length"] = 0;
+   }
    return varJson;
 }
 
