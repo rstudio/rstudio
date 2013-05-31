@@ -103,6 +103,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -316,6 +317,8 @@ public class TextEditingTarget implements EditingTarget
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
       cppHelper_ = new TextEditingTargetCppHelper(server);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(
+                                                                  docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
@@ -663,23 +666,55 @@ public class TextEditingTarget implements EditingTarget
             // needs its menu built on demand
             JsArray<Scope> tree = docDisplay_.getScopeTree();
             final StatusBarPopupMenu menu = new StatusBarPopupMenu();
-            MenuItem defaultItem = addFunctionsToMenu(
-                  menu, tree, "", docDisplay_.getCurrentScope(), true);
-            if (defaultItem != null)
+            MenuItem defaultItem = null;
+            if (fileType_.isRpres())
             {
-               menu.selectItem(defaultItem);
-               Scheduler.get().scheduleFinally(new RepeatingCommand()
+               String path = docUpdateSentinel_.getPath();
+               if (path != null)
                {
-                  public boolean execute()
-                  {
-                     menu.ensureSelectedIsVisible();
-                     return false;
-                  }
-               });
+                  presentationHelper_.buildSlideMenu(
+                     docUpdateSentinel_.getPath(),
+                     dirtyState_.getValue(),
+                     TextEditingTarget.this,
+                     new CommandWithArg<StatusBarPopupRequest>() {
+         
+                        @Override
+                        public void execute(StatusBarPopupRequest request)
+                        {
+                           showStatusBarPopupMenu(request);
+                        }   
+                     });
+               }
             }
-            menu.showRelativeToUpward((UIObject) statusBar_.getScope());
+            else
+            {
+               defaultItem = addFunctionsToMenu(
+                  menu, tree, "", docDisplay_.getCurrentScope(), true);
+               
+               showStatusBarPopupMenu(new StatusBarPopupRequest(menu, 
+                                                                defaultItem));
+            }
          }
       });
+   }
+   
+   private void showStatusBarPopupMenu(StatusBarPopupRequest popupRequest)
+   {
+      final StatusBarPopupMenu menu = popupRequest.getMenu();
+      MenuItem defaultItem = popupRequest.getDefaultMenuItem();
+      if (defaultItem != null)
+      {
+         menu.selectItem(defaultItem);
+         Scheduler.get().scheduleFinally(new RepeatingCommand()
+         {
+            public boolean execute()
+            {
+               menu.ensureSelectedIsVisible();
+               return false;
+            }
+         });
+      }
+      menu.showRelativeToUpward((UIObject) statusBar_.getScope());
    }
    
    private MenuItem createMenuItemForType(final TextFileType type)
@@ -802,23 +837,36 @@ public class TextEditingTarget implements EditingTarget
             {
                public void execute()
                {
-                  Scope function = docDisplay_.getCurrentScope();
-                  String label = function != null
-                                ? function.getLabel()
-                                : null;
-                  statusBar_.getScope().setValue(label);
-                  
-                  if (function != null)
+                  // special handing for presentations since we extract
+                  // the slide structure in a differerent manner than 
+                  // the editor scope trees
+                  if (fileType_.isRpres())
                   {
-                     boolean useChunk = 
-                                  function.isChunk() || 
-                                  (fileType_.isRnw() && function.isTopLevel());
-                     if (useChunk)
-                        statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                     else if (function.isSection())
-                        statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                     else
-                        statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                     statusBar_.getScope().setValue(
+                                       presentationHelper_.getCurrentSlide());
+                     statusBar_.setScopeType(StatusBar.SCOPE_SLIDE);
+                     
+                  }
+                  else
+                  {
+                     Scope function = docDisplay_.getCurrentScope();
+                     String label = function != null
+                                   ? function.getLabel()
+                                   : null;
+                     statusBar_.getScope().setValue(label);
+                     
+                     if (function != null)
+                     {
+                        boolean useChunk = 
+                                 function.isChunk() || 
+                                 (fileType_.isRnw() && function.isTopLevel());
+                        if (useChunk)
+                           statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
+                        else if (function.isSection())
+                           statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
+                        else
+                           statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                     }
                   }
                }
             });
@@ -3189,6 +3237,7 @@ public class TextEditingTarget implements EditingTarget
    private final TextEditingTargetCompilePdfHelper compilePdfHelper_;
    private final TextEditingTargetPreviewHtmlHelper previewHtmlHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
+   private final TextEditingTargetPresentationHelper presentationHelper_;
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;

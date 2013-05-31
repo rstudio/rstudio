@@ -38,6 +38,7 @@
 #include "PresentationLog.hpp"
 #include "PresentationState.hpp"
 #include "SlideRequestHandler.hpp"
+#include "SlideNavigationList.hpp"
 
 
 using namespace core;
@@ -295,6 +296,74 @@ Error tutorialQuizResponse(const json::JsonRpcRequest& request,
 }
 
 
+Error getSlideNavigation(const std::string& code,
+                         const FilePath& baseDir,
+                         json::Object* pSlideNavigationJson)
+{
+   SlideDeck slideDeck;
+   Error error = slideDeck.readSlides(code, baseDir);
+   if (error)
+      return error;
+
+   SlideNavigationList navigationList("slide");
+   BOOST_FOREACH(const Slide& slide, slideDeck.slides())
+   {
+      navigationList.add(slide);
+   }
+
+   *pSlideNavigationJson = navigationList.asJson();
+
+   return Success();
+}
+
+Error getSlideNavigationForFile(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // get param
+   std::string file;
+   Error error = json::readParam(request.params, 0, &file);
+   if (error)
+      return error;
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   // read code
+   std::string code;
+   error = core::readStringFromFile(filePath,
+                                    &code,
+                                    string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   // get slide navigation
+   json::Object slideNavigationJson;
+   error = getSlideNavigation(code, filePath.parent(), &slideNavigationJson);
+   if (error)
+      return error;
+   pResponse->setResult(slideNavigationJson);
+
+   return Success();
+}
+
+Error getSlideNavigationForCode(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string code, parentDir;
+   Error error = json::readParams(request.params, &code, &parentDir);
+   if (error)
+      return error;
+   FilePath parentDirPath = module_context::resolveAliasedPath(parentDir);
+
+   // get slide navigation
+   json::Object slideNavigationJson;
+   error = getSlideNavigation(code, parentDirPath, &slideNavigationJson);
+   if (error)
+      return error;
+   pResponse->setResult(slideNavigationJson);
+
+   return Success();
+}
+
 
 Error createStandalonePresentation(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
@@ -411,6 +480,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_working_directory", setWorkingDirectory))
       (bind(registerRpcMethod, "tutorial_feedback", tutorialFeedback))
       (bind(registerRpcMethod, "tutorial_quiz_response", tutorialQuizResponse))
+      (bind(registerRpcMethod, "get_slide_navigation_for_file", getSlideNavigationForFile))
+      (bind(registerRpcMethod, "get_slide_navigation_for_code", getSlideNavigationForCode))
       (bind(presentation::state::initialize))
       (bind(sourceModuleRFile, "SessionPresentation.R"));
 

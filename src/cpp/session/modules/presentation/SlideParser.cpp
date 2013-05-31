@@ -359,12 +359,6 @@ std::string SlideDeck::depends() const
 
 Error SlideDeck::readSlides(const FilePath& filePath)
 {
-   // clear existing
-   slides_.clear();
-
-   // capture base dir
-   baseDir_ = filePath.parent();
-
    // read the file
    std::string slides;
    Error error = readStringFromFile(filePath,
@@ -372,6 +366,19 @@ Error SlideDeck::readSlides(const FilePath& filePath)
                                     string_utils::LineEndingPosix);
    if (error)
       return error;
+
+
+   // read the slides
+   return readSlides(slides, filePath.parent());
+}
+
+Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
+{
+   // clear existing
+   slides_.clear();
+
+   // capture base dir
+   baseDir_ = baseDir;
 
    // split into lines
    std::vector<std::string> lines;
@@ -407,6 +414,9 @@ Error SlideDeck::readSlides(const FilePath& filePath)
 
       // title is the line before (if there is one)
       std::string title = lineIndex > 0 ? lines[lineIndex-1] : "";
+
+      // line of code the slide is on
+      int line = !title.empty() ? lineIndex - 1 : lineIndex;
 
       // find the begin index (line after)
       std::size_t beginIndex = lineIndex + 1;
@@ -470,16 +480,18 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       slides_.push_back(Slide(title,
                               slideFields,
                               invalidFields,
-                              content));
+                              content,
+                              line));
    }
 
    // if the deck is empty then insert a placeholder first slide
    if (slides_.empty())
    {
-      slides_.push_back(Slide(filePath.parent().filename(),
+      slides_.push_back(Slide(baseDir.filename(),
                               std::vector<Slide::Field>(),
                               std::vector<std::string>(),
-                              std::string()));
+                              std::string(),
+                              0));
    }
 
    return Success();

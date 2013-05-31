@@ -37,9 +37,10 @@ public:
 
    std::string asCall() const;
 
+   core::json::Object asJson() const;
 
 private:
-   void addSlide(const std::string& title, int indent, int index);
+   void addSlide(const std::string& title, int indent, int index, int line);
    core::json::Array slides_;
    bool allowNavigation_;
    bool allowSlideNavigation_;

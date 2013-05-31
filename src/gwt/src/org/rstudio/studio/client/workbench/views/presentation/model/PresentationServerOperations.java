@@ -56,4 +56,14 @@ public interface PresentationServerOperations extends RPubsServerOperations
    
    void tutorialQuizResponse(int slideIndex, int answer, boolean correct,
                              ServerRequestCallback<Void> requestCallback);
+   
+   void getSlideNavigationForFile(
+                     String filePath,
+                     ServerRequestCallback<SlideNavigation> requestCallback);
+   
+   void getSlideNavigationForCode(
+                     String code,
+                     String baseDir,
+                     ServerRequestCallback<SlideNavigation> requestCallback);
+   
 }

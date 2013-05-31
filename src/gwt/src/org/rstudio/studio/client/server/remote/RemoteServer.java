@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
@@ -2637,6 +2638,32 @@ public class RemoteServer implements Server
    }
    
    
+   @Override
+   public void getSlideNavigationForFile(
+                     String filePath,
+                     ServerRequestCallback<SlideNavigation> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  GET_SLIDE_NAVIGATION_FOR_FILE, 
+                  filePath,
+                  requestCallback);
+   }
+
+   @Override
+   public void getSlideNavigationForCode(
+                     String code,
+                     String baseDir,
+                     ServerRequestCallback<SlideNavigation> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(code));
+      params.set(1, new JSONString(baseDir));
+      sendRequest(RPC_SCOPE, 
+                  GET_SLIDE_NAVIGATION_FOR_CODE, 
+                  params,
+                  requestCallback);
+   }
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           String encoding,
@@ -3038,6 +3065,9 @@ public class RemoteServer implements Server
    
    private static final String TUTORIAL_FEEDBACK = "tutorial_feedback";
    private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
+   
+   private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
+   private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

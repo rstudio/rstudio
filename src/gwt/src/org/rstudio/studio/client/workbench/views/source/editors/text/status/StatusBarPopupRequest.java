@@ -1,5 +1,5 @@
 /*
- * StatusBar.java
+ * StatusBarPopupRequest.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,16 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
-public interface StatusBar
+import com.google.gwt.user.client.ui.MenuItem;
+
+public class StatusBarPopupRequest
 {
-   public static final int SCOPE_SLIDE = 4;
-   public static final int SCOPE_SECTION = 3;
-   public static final int SCOPE_CHUNK = 2;
-   public static final int SCOPE_FUNCTION = 1;
+   public StatusBarPopupRequest(StatusBarPopupMenu menu, 
+                                MenuItem defaultMenuItem)
+   {
+      menu_ = menu;
+      defaultMenuItem_ = defaultMenuItem;
+   }
    
-   StatusBarElement getPosition();
-   StatusBarElement getScope();
-   StatusBarElement getLanguage();
-   void setScopeVisible(boolean visible);
-   void setScopeType(int type);
+   public StatusBarPopupMenu getMenu()
+   {
+      return menu_;
+   }
+   
+   public MenuItem getDefaultMenuItem()
+   {
+      return defaultMenuItem_;
+   }
+   
+   private final StatusBarPopupMenu menu_;
+   private final MenuItem defaultMenuItem_;
 }

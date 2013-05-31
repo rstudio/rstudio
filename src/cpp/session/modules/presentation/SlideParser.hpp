@@ -74,11 +74,13 @@ public:
    Slide(const std::string& title,
          const std::vector<Field>& fields,
          const std::vector<std::string>& invalidFields,
-         const std::string& content)
+         const std::string& content,
+         std::size_t line)
       : title_(title),
         fields_(fields),
         invalidFields_(invalidFields),
-        content_(content)
+        content_(content),
+        line_(line)
    {
    }
 
@@ -86,6 +88,9 @@ public:
    // title
    std::string title() const { return title_; }
    bool showTitle() const;
+
+   // line
+   int line() const { return line_; }
 
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
@@ -134,6 +139,7 @@ private:
    std::vector<Field> fields_;
    std::vector<std::string> invalidFields_;
    std::string content_;
+   int line_;
 };
 
 class SlideDeck
@@ -144,6 +150,8 @@ public:
    }
 
    core::Error readSlides(const core::FilePath& filePath);
+   core::Error readSlides(const std::string& slides, const core::
+                          FilePath& baseDir);
 
    std::string title() const;
    std::string rtl() const;
@@ -173,12 +181,6 @@ private:
    std::string preamble_;
    std::vector<Slide> slides_;
 };
-
-
-core::Error readSlides(const core::FilePath& filePath,
-                       std::vector<Slide>* pSlides,
-                       std::string* pUserErrMsg);
-
 
 } // namespace presentation
 } // namespace modules

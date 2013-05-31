@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
@@ -1183,38 +1184,9 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(final EditingTarget editor)
                {   
-                  // scan for the specified slide
-                  int currentSlide = 0;
-                  Position navPos = null;
-                  Position pos = Position.create(0, 0);
-                  while ((pos = editor.search(pos, "^\\={3,}\\s*$")) != null)
-                  { 
-                     if (currentSlide++ == event.getSlideIndex())
-                     {
-                        navPos = Position.create(pos.getRow() - 1, 0);
-                        break;
-                     }
-                     
-                     pos = Position.create(pos.getRow() + 1, 0);
-                  }
-                  
-                  // navigate to the slide
-                  if (navPos != null)
-                  {
-                     final Position navPosAlias = navPos;
-                     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-                        @Override
-                        public void execute()
-                        {
-                           editor.navigateToPosition(
-                             SourcePosition.create(navPosAlias.getRow(), 0), 
-                             false);
-                           
-                        }
-                     });
-                  }
-                  
+                  TextEditingTargetPresentationHelper.navigateToSlide(
+                                                         editor, 
+                                                         event.getSlideIndex());
                }
          });
    }
