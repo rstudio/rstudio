@@ -62,6 +62,22 @@ RCNTXT* getTopFunctionContext()
    return pRContext;
 }
 
+// return whether the context stack contains a pure (interactive) browser
+bool inBrowseContext()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (pRContext->callflag)
+   {
+      if ((pRContext->callflag & CTXT_BROWSER) &&
+          !(pRContext->callflag & CTXT_FUNCTION))
+      {
+         return true;
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return false;
+}
+
 SEXP getTopFunctionEnvironment()
 {
    // if we're in an eval tree (i.e. browser), return the environment of the
@@ -113,8 +129,20 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
    // we entered (or left) a call frame
    if (*pContextDepth != contextDepth)
    {
-      *pContextDepth = contextDepth;
       json::Object varJson;
+
+      // if we appear to be switching into debug mode, make sure there's a
+      // browser call somewhere on the stack. if there isn't, then we're
+      // probably just waiting for user input inside a function (e.g. scan());
+      // assume the user isn't interested in seeing the function's internals.
+      if (*pContextDepth == 0 &&
+          contextDepth > 0 &&
+          !inBrowseContext())
+      {
+         return;
+      }
+
+      *pContextDepth = contextDepth;
 
       // start monitoring the enviroment at the new depth
       s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
