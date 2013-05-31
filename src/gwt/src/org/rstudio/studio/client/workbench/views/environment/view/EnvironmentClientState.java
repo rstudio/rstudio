@@ -18,8 +18,6 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-import java.util.ArrayList;
-
 public class EnvironmentClientState extends JavaScriptObject
 {
    protected EnvironmentClientState()
