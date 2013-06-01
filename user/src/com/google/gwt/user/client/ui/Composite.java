@@ -184,11 +184,6 @@ public abstract class Composite extends Widget implements IsRenderable {
       widget.onDetach();
     }
   }
-  
-  @Override
-  protected void onEnsureDebugId(String baseID) {
-    widget.onEnsureDebugId(baseID);
-  }
 
   @Override
   protected Element resolvePotentialElement() {
