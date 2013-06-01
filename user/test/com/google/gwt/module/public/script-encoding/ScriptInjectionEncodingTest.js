@@ -1,0 +1,3 @@
+function scriptEncoding() {
+  return "à";
+}

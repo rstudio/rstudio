@@ -336,6 +336,39 @@ public class ScriptInjectorTest extends GWTTestCase {
     assertNotNull(injectedElement);
   }
 
+  /**
+   * Tests encoding of the injected script (UTF-8)
+   */
+  public void testInjectUrlUtf8() {
+    delayTestFinish(TEST_DELAY);
+    final String scriptUrl = "script_injector_test_utf8.js";
+    assertEquals("", nativeGetTestUtf8Var());
+    JavaScriptObject injectedElement = ScriptInjector.fromUrl(scriptUrl).setRemoveTag(false)
+        .setWindow(ScriptInjector.TOP_WINDOW).setCallback(
+            new Callback<Void, Exception>() {
+
+              @Override
+              public void onFailure(Exception reason) {
+                assertNotNull(reason);
+                fail("Injection failed: " + reason.toString());
+              }
+
+              @Override
+              public void onSuccess(Void result) {
+                String testVar = nativeGetTestUtf8Var();
+                JavaScriptObject scriptElement = findScriptUrlInTopWindow(scriptUrl);
+                if (!isIE()) {
+                  cleanupTopWindow("__ti_utf8_var__", scriptElement);
+                  assertEquals("cleanup failed", "", nativeGetTestUtf8Var());
+                }
+                assertEquals("__ti_utf8_var not set in top window", "à", testVar);
+                assertNotNull("script element not found", scriptElement);
+                finishTest();
+              }
+            }).inject();
+    assertNotNull(injectedElement);
+  }
+
   private void cleanupThisWindow(String property, JavaScriptObject scriptElement) {
     cleanupWindow(nativeThisWindow(), property, scriptElement);
   }
@@ -425,6 +458,10 @@ public class ScriptInjectorTest extends GWTTestCase {
 
   private native boolean nativeTest7Worked() /*-{
     return !!$wnd["__ti7_var__"] && $wnd["__ti7_var__"] == 7;
+  }-*/;
+
+  private native String nativeGetTestUtf8Var() /*-{
+    return $wnd["__ti_utf8_var__"] || "";
   }-*/;
 
   private native JavaScriptObject nativeThisWindow() /*-{

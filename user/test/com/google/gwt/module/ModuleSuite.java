@@ -19,6 +19,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.module.client.ConfigurationPropertiesTest;
 import com.google.gwt.module.client.DoubleScriptInjectionTest;
 import com.google.gwt.module.client.NoDeployTest;
+import com.google.gwt.module.client.ScriptInjectionEncodingTest;
 import com.google.gwt.module.client.SingleScriptInjectionTest;
 
 import junit.framework.Test;
@@ -33,6 +34,7 @@ public class ModuleSuite {
     suite.addTestSuite(ConfigurationPropertiesTest.class);
     suite.addTestSuite(SingleScriptInjectionTest.class);
     suite.addTestSuite(DoubleScriptInjectionTest.class);
+    suite.addTestSuite(ScriptInjectionEncodingTest.class);
     suite.addTestSuite(NoDeployTest.class);
 
     return suite;
