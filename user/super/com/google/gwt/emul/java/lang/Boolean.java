@@ -33,6 +33,10 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   public static final Class<Boolean> TYPE = boolean.class;
 
+  public static int compare(boolean x, boolean y) {
+    return (x == y) ? 0 : (x ? 1 : -1);
+  }
+
   public static boolean parseBoolean(String s) {
     return "true".equalsIgnoreCase(s);
   }
@@ -63,8 +67,8 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
     return value;
   }
 
-  public int compareTo(Boolean other) {
-    return (this.value == other.value) ? 0 : (this.value ? 1 : -1);
+  public int compareTo(Boolean b) {
+    return compare(value, b.value);
   }
 
   @Override
