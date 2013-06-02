@@ -21,6 +21,7 @@
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/regex.hpp>
@@ -729,6 +730,29 @@ bool createStandalonePresentation(const FilePath& targetFile,
 }
 
 
+void loadSlideDeckDependencies(const SlideDeck& slideDeck)
+{
+   // see if there is a depends field
+   std::string dependsField = slideDeck.depends();
+   std::vector<std::string> depends;
+   boost::algorithm::split(depends,
+                           dependsField,
+                           boost::algorithm::is_any_of(","));
+
+   // load any dependencies
+   BOOST_FOREACH(std::string pkg, depends)
+   {
+      boost::algorithm::trim(pkg);
+
+      if (module_context::isPackageInstalled(pkg))
+      {
+         Error error = r::exec::RFunction(".rs.loadPackage", pkg, "").call();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
 {   
@@ -748,6 +772,9 @@ void handlePresentationRootRequest(const std::string& path,
                           errMsg);
       return;
    }
+
+   // load any dependencies
+   loadSlideDeckDependencies(slideDeck);
 
    // notify slide deck changed
    log().onSlideDeckChanged(slideDeck);
