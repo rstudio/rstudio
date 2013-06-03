@@ -16,6 +16,8 @@
 #ifndef CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 #define CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 
+#include <boost/asio/io_service.hpp>
+
 #include <core/http/LocalStreamSocketUtils.hpp>
 #include <core/http/AsyncServerImpl.hpp>
 
@@ -36,6 +38,17 @@ public:
    {
    }
    
+   LocalStreamAsyncServer(const std::string& serverName,
+                          const std::string& baseUri,
+                          boost::asio::io_service& ioService,
+                          core::system::FileMode fileMode)
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName,
+                                                             ioService,
+                                                             baseUri),
+        fileMode_(fileMode)
+   {
+   }
+
    virtual ~LocalStreamAsyncServer()
    {
       try

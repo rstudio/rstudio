@@ -53,14 +53,20 @@ class AsyncServerImpl : public AsyncServer, boost::noncopyable
 {
 public:
    AsyncServerImpl(const std::string& serverName,
-               const std::string& baseUri = std::string())
-      : abortOnResourceError_(false),
-        serverName_(serverName),
-        baseUri_(baseUri),
-        acceptorService_(),
-        scheduledCommandTimer_(acceptorService_.ioService()),
-        running_(false)
+                   const std::string& baseUri = std::string())
+      : acceptorService_(),
+        scheduledCommandTimer_(acceptorService_.ioService())
    {
+      commonInit(serverName, baseUri);
+   }
+
+   AsyncServerImpl(const std::string& serverName,
+                   boost::asio::io_service& ioService,
+                   const std::string& baseUri = std::string())
+      : acceptorService_(ioService),
+        scheduledCommandTimer_(acceptorService_.ioService())
+   {
+      commonInit(serverName, baseUri);
    }
    
    virtual ~AsyncServerImpl()
@@ -100,6 +106,13 @@ public:
       setDefaultHandler(boost::bind(handleAsyncConnectionSynchronously,
                                     handler,
                                     _1));
+   }
+
+   virtual void setScheduledCommandInterval(
+                                   boost::posix_time::time_duration interval)
+   {
+      BOOST_ASSERT(!running_);
+      scheduledCommandInterval_ = interval;
    }
 
    virtual void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd)
@@ -193,6 +206,15 @@ public:
    
    
 private:
+
+   void commonInit(const std::string& serverName, const std::string& baseUri)
+   {
+      abortOnResourceError_ = false;
+      serverName_ = serverName;
+      baseUri_ = baseUri;
+      running_ = false;
+      scheduledCommandInterval_ = boost::posix_time::seconds(3);
+   }
 
    void runServiceThread()
    {
@@ -332,8 +354,7 @@ private:
    {
       // set expiration time for 3 seconds from now
       boost::system::error_code ec;
-      scheduledCommandTimer_.expires_from_now(boost::posix_time::seconds(3),
-                                              ec);
+      scheduledCommandTimer_.expires_from_now(scheduledCommandInterval_, ec);
 
       // attempt to schedule timer (should always succeed but
       // include error check to be paranoid/robust)
@@ -444,6 +465,7 @@ private:
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
    SocketAcceptorService<ProtocolType> acceptorService_;
+   boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
    bool running_;

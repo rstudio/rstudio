@@ -19,8 +19,8 @@
 #include <string>
 
 #include <boost/function.hpp>
-
 #include <boost/utility.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <boost/asio/io_service.hpp>
 
@@ -39,10 +39,18 @@ class SocketAcceptorService : boost::noncopyable
 {
 public:
    SocketAcceptorService()
-      : acceptor_(ioService_)
+      : pInternalIOService_(new boost::asio::io_service()),
+        ioService_(*pInternalIOService_),
+        acceptor_(ioService_)
    {
    }
    
+   explicit SocketAcceptorService(boost::asio::io_service& ioService)
+      : ioService_(ioService),
+        acceptor_(ioService_)
+   {
+   }
+
    virtual ~SocketAcceptorService()
    {
       try
@@ -86,7 +94,8 @@ public:
    }
    
 private:
-   boost::asio::io_service ioService_;
+   boost::scoped_ptr<boost::asio::io_service> pInternalIOService_;
+   boost::asio::io_service& ioService_;
    typename ProtocolType::acceptor acceptor_;
 };
 

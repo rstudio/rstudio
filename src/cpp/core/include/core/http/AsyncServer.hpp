@@ -19,6 +19,7 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 #include <core/ScheduledCommand.hpp>
 
@@ -50,6 +51,8 @@ public:
 
    virtual void setBlockingDefaultHandler(const UriHandlerFunction& handler) = 0;
 
+   virtual void setScheduledCommandInterval(
+                           boost::posix_time::time_duration interval) = 0;
    virtual void addScheduledCommand(boost::shared_ptr<ScheduledCommand> pCmd) = 0;
 
    virtual Error runSingleThreaded() = 0;
