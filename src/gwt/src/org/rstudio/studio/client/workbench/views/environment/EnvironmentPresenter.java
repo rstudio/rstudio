@@ -96,6 +96,7 @@ public class EnvironmentPresenter extends BasePresenter
       String[] getExpandedObjects();
       boolean clientStateDirty();
       void setClientStateClean();
+      void resize();
    }
    
    @Inject
@@ -341,6 +342,19 @@ public class EnvironmentPresenter extends BasePresenter
       if (!initialized_)
       {
          refreshView();
+      }
+   }
+
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+
+      // GWT sometimes gets a 0-height layout cached on tab switch; resize the
+      // tab after selection to ensure it's filling its space.
+      if (initialized_)
+      {
+         view_.resize();
       }
    }
 

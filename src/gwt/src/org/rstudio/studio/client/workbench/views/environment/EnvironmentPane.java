@@ -213,6 +213,12 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = false;
    }
 
+   @Override
+   public void resize()
+   {
+      objects_.onResize();
+   }
+
    // EnviromentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
