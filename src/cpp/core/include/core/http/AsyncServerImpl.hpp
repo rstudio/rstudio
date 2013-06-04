@@ -53,20 +53,15 @@ class AsyncServerImpl : public AsyncServer, boost::noncopyable
 {
 public:
    AsyncServerImpl(const std::string& serverName,
-                   const std::string& baseUri = std::string())
-      : acceptorService_(),
-        scheduledCommandTimer_(acceptorService_.ioService())
+               const std::string& baseUri = std::string())
+      : abortOnResourceError_(false),
+        serverName_(serverName),
+        baseUri_(baseUri),
+        acceptorService_(),
+        scheduledCommandInterval_(boost::posix_time::seconds(3)),
+        scheduledCommandTimer_(acceptorService_.ioService()),
+        running_(false)
    {
-      commonInit(serverName, baseUri);
-   }
-
-   AsyncServerImpl(const std::string& serverName,
-                   boost::asio::io_service& ioService,
-                   const std::string& baseUri = std::string())
-      : acceptorService_(ioService),
-        scheduledCommandTimer_(acceptorService_.ioService())
-   {
-      commonInit(serverName, baseUri);
    }
    
    virtual ~AsyncServerImpl()
@@ -206,15 +201,6 @@ public:
    
    
 private:
-
-   void commonInit(const std::string& serverName, const std::string& baseUri)
-   {
-      abortOnResourceError_ = false;
-      serverName_ = serverName;
-      baseUri_ = baseUri;
-      running_ = false;
-      scheduledCommandInterval_ = boost::posix_time::seconds(3);
-   }
 
    void runServiceThread()
    {
