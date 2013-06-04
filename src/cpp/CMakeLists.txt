@@ -194,6 +194,11 @@ else()
    # r library
    add_subdirectory(r)
 
+   # add overlay if it exists
+   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+      include(CMakeOverlay.txt)
+   endif()
+
    # initialize subdirectories
    file(MAKE_DIRECTORY conf)
 
@@ -210,7 +215,6 @@ else()
    # processing which we do in desktop
    add_subdirectory(session)
 
-
    # add server subprojects if we aren't building in desktop only mode
    if(RSTUDIO_SERVER)
 
@@ -219,11 +223,6 @@ else()
       configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
       configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
 
-   endif()
-
-   # add overlay if it exists
-   if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
-      include(CMakeOverlay.txt)
    endif()
 
 endif()
