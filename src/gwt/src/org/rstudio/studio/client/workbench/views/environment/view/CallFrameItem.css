@@ -1,8 +1,4 @@
 
-.activeFrame
-{
-   background-color: #D0D0FF;
-}
 
 .callFrame
 {
@@ -12,3 +8,8 @@
    cursor: pointer;
 }
 
+.activeFrame
+{
+   background-color: #D0D0FF;
+   cursor: default;
+}

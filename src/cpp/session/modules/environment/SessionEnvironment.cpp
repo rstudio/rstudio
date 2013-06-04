@@ -108,24 +108,29 @@ std::string getFunctionName(int depth)
    return functionNameFromContext(getFunctionContext(depth));
 }
 
-/* TODO(jmcphers) - extract source refs
 void getSourceRefFromContext(const RCNTXT* pContext,
                              std::string* pFileName,
                              int* pLineNumber)
 {
-   r::sexp::Protect rProtect;
-   *pLineNumber = r::sexp::asInteger(CAR(pContext->srcref));
-   SEXP filename = r::sexp::getAttrib(
-            pContext->srcref,
-            "srcfile");
-   *pFileName = r::sexp::asString(filename);
+   SEXP srcref = pContext->srcref;
+   if (srcref)
+   {
+      *pLineNumber = r::sexp::asInteger(srcref);
+      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                    .call(pFileName);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+   }
+
    return;
 }
-*/
 
 json::Array callFramesAsJson()
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   RCNTXT* pSrcContext = pRContext;
    json::Array listFrames;
    int contextDepth = 0;
 
@@ -137,13 +142,17 @@ json::Array callFramesAsJson()
          varFrame["context_depth"] = ++contextDepth;
          varFrame["function_name"] = functionNameFromContext(pRContext);
 
-         /* TODO(jmcphers) - extract source refs
+         // in the linked list of R contexts, the srcref associated with each
+         // context points to the place from which the context was invoked.
+         // however, for traditional debugging, we want the call frame to show
+         // where control *left* the frame to go to the next frame. pSrcContext
+         // keeps track of the previous invocation.
          std::string filename;
          int lineNumber = 0;
-         getSourceRefFromContext(pRContext, &filename, &lineNumber);
+         getSourceRefFromContext(pSrcContext, &filename, &lineNumber);
          varFrame["file_name"] = filename;
          varFrame["line_number"] = lineNumber;
-         */
+         pSrcContext = pRContext;
 
          listFrames.push_back(varFrame);
       }

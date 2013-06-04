@@ -90,6 +90,11 @@
    return (description)
 })
 
+.rs.addFunction("sourceFileFromRef", function(srcref)
+{
+    return(capture.output(print(attr(srcref, "srcfile"))))
+})
+
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(

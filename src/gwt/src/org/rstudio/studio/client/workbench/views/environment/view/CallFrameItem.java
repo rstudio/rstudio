@@ -46,7 +46,10 @@ public class CallFrameItem extends Composite
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      functionName.setText(frame.getFunctionName());
+      functionName.setText(
+              frame.getFunctionName() + " at " +
+              frame.getFileName().trim() + ":" +
+              frame.getLineNumber());
       functionName.addClickHandler(this);
    }
 
@@ -58,7 +61,10 @@ public class CallFrameItem extends Composite
 
    public void onClick(ClickEvent event)
    {
-      observer_.changeContextDepth(frame_.getContextDepth());
+      if (!isActive_)
+      {
+         observer_.changeContextDepth(frame_.getContextDepth());
+      }
    }
 
    @UiField Label functionName;
