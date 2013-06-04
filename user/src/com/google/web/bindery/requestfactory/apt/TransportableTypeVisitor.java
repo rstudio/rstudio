@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.web.bindery.requestfactory.apt;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -77,6 +78,20 @@ class TransportableTypeVisitor extends TypeVisitorBase<Boolean> {
       }
       return t.getTypeArguments().get(0).accept(this, state);
     }
+    final DeclaredType mapType = state.findType(Map.class);
+    if (state.types.isAssignable(t, mapType)) {
+      if (!allowNestedParameterization) {
+        return false;
+      }
+      allowNestedParameterization = false;
+      DeclaredType asMap =
+          (DeclaredType) State.viewAs(mapType, t, state);
+      if (asMap.getTypeArguments().isEmpty()) {
+        return false;
+      }
+      return t.getTypeArguments().get(0).accept(this, state)
+          && t.getTypeArguments().get(1).accept(this, state);
+    }
     return false;
   }
 
@@ -91,7 +106,7 @@ class TransportableTypeVisitor extends TypeVisitorBase<Boolean> {
       /*
        * Weird case seen in Eclipse with self-parameterized type variables such
        * as <T extends Enum<T>>.
-       * 
+       *
        * TODO(bobv): Should intersection types be allowed at all? They don't
        * seem to make much sense in the most-derived interface types, since the
        * RF Generator won't know how to implement them.

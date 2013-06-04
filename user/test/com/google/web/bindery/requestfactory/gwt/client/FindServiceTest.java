@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,8 @@ package com.google.web.bindery.requestfactory.gwt.client;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.requestfactory.shared.EntityProxyChange;
 import com.google.web.bindery.requestfactory.shared.EntityProxyId;
+import com.google.web.bindery.requestfactory.shared.MapKeyProxy;
+import com.google.web.bindery.requestfactory.shared.MapValueProxy;
 import com.google.web.bindery.requestfactory.shared.Receiver;
 import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.SimpleBarProxy;
@@ -28,7 +30,9 @@ import com.google.web.bindery.requestfactory.shared.SimpleRequestFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests for {@link com.google.web.bindery.requestfactory.shared.RequestFactory}
@@ -40,6 +44,9 @@ public class FindServiceTest extends RequestFactoryTestBase {
    */
 
   private static final int TEST_DELAY = 5000;
+
+  private static final String[] SIMPLE_FOO_RELATIONS = { "barField", "simpleBarKeyMap",
+    "simpleBarValueMap", "entityKeyAndValueMap" };
 
   @Override
   public String getModuleName() {
@@ -143,14 +150,14 @@ public class FindServiceTest extends RequestFactoryTestBase {
   public void testFetchEntityWithRelation() {
     final boolean relationsPresent = true;
     delayTestFinish(TEST_DELAY);
-    req.simpleFooRequest().findSimpleFooById(999L).with("barField").fire(
+    req.simpleFooRequest().findSimpleFooById(999L).with(SIMPLE_FOO_RELATIONS).fire(
         new Receiver<SimpleFooProxy>() {
           @Override
           public void onSuccess(SimpleFooProxy response) {
             checkReturnedProxy(response, relationsPresent);
 
             final EntityProxyId<SimpleFooProxy> stableId = response.stableId();
-            req.find(stableId).with("barField").fire(new Receiver<SimpleFooProxy>() {
+            req.find(stableId).with(SIMPLE_FOO_RELATIONS).fire(new Receiver<SimpleFooProxy>() {
 
               @Override
               public void onSuccess(SimpleFooProxy returnedProxy) {
@@ -159,6 +166,119 @@ public class FindServiceTest extends RequestFactoryTestBase {
                 finishTestAndReset();
               }
             });
+          }
+        });
+  }
+
+  public void testFetchEntityWithEntityKeyValueMapNoChildren() {
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).with("entityKeyAndValueMap").fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+
+            assertEquals(1, response.getEntityKeyAndValueMap().size());
+
+            Map.Entry<MapKeyProxy, MapValueProxy> entry =
+                response.getEntityKeyAndValueMap().entrySet().iterator().next();
+
+            assertNotNull(entry.getKey());
+            assertNotNull(entry.getValue());
+
+            assertNull(entry.getKey().getSimple());
+            assertNull(entry.getValue().getSimple());
+
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testFetchEntityWithEntityKeyValueMapJustKeyChildren() {
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).with("entityKeyAndValueMap.keys.simple").fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(1, response.getEntityKeyAndValueMap().size());
+
+            Map.Entry<MapKeyProxy, MapValueProxy> entry =
+                response.getEntityKeyAndValueMap().entrySet().iterator().next();
+
+            assertNotNull(entry.getKey());
+            assertNotNull(entry.getValue());
+
+            assertNotNull(entry.getKey().getSimple());
+            assertNull(entry.getValue().getSimple());
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testFetchEntityWithEntityKeyValueMapJustValueChildren() {
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).with("entityKeyAndValueMap.values.simple").fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(1, response.getEntityKeyAndValueMap().size());
+
+            Map.Entry<MapKeyProxy, MapValueProxy> entry =
+                response.getEntityKeyAndValueMap().entrySet().iterator().next();
+
+            assertNotNull(entry.getKey());
+            assertNotNull(entry.getValue());
+
+            assertNull(entry.getKey().getSimple());
+            assertNotNull(entry.getValue().getSimple());
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testFetchEntityWithEntityKeyValueMapBothKeyAndValueChildren() {
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).with("entityKeyAndValueMap.keys.simple",
+        "entityKeyAndValueMap.values.simple").fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            assertEquals(1, response.getEntityKeyAndValueMap().size());
+
+            Map.Entry<MapKeyProxy, MapValueProxy> entry =
+                response.getEntityKeyAndValueMap().entrySet().iterator().next();
+
+            assertNotNull(entry.getKey());
+            assertNotNull(entry.getValue());
+
+            assertNotNull(entry.getKey().getSimple());
+            assertNotNull(entry.getValue().getSimple());
+            finishTestAndReset();
+          }
+        });
+  }
+
+  public void testFetchEntityWithRelationWithEmptyMaps() {
+    final boolean relationsPresent = true;
+    delayTestFinish(TEST_DELAY);
+    req.simpleFooRequest().findSimpleFooById(999L).with(SIMPLE_FOO_RELATIONS).fire(
+        new Receiver<SimpleFooProxy>() {
+          @Override
+          public void onSuccess(SimpleFooProxy response) {
+            checkReturnedProxy(response, relationsPresent);
+
+            SimpleFooRequest editRequest = req.simpleFooRequest();
+            SimpleFooProxy editableSimpleFoo = editRequest.edit(response);
+            editableSimpleFoo.setSimpleBarKeyMap( new HashMap<SimpleBarProxy, Integer>());
+            editableSimpleFoo.setSimpleBarValueMap( new HashMap<Integer, SimpleBarProxy>());
+            editRequest.persistAndReturnSelf().using(editableSimpleFoo).with(SIMPLE_FOO_RELATIONS).fire(
+                new Receiver<SimpleFooProxy>() {
+                  @Override
+                  public void onSuccess(SimpleFooProxy returnedProxy) {
+                    assertEquals(0, returnedProxy.getSimpleBarKeyMap().size());
+                    assertEquals(0, returnedProxy.getSimpleBarValueMap().size());
+                    finishTestAndReset();
+                  }
+                });
           }
         });
   }
@@ -275,10 +395,15 @@ public class FindServiceTest extends RequestFactoryTestBase {
     assertEquals(8L, (long) response.getLongField());
     assertEquals(com.google.web.bindery.requestfactory.shared.SimpleEnum.FOO, response
         .getEnumField());
+    assertEquals(3, response.getValueMap().size());
     if (checkForRelations) {
       assertNotNull(response.getBarField());
+      assertEquals(1, response.getSimpleBarKeyMap().size());
+      assertEquals(1, response.getEntityKeyAndValueMap().size());
     } else {
       assertEquals(null, response.getBarField());
+      assertEquals(null, response.getSimpleBarKeyMap());
+      assertEquals(null, response.getEntityKeyAndValueMap());
     }
   }
 }

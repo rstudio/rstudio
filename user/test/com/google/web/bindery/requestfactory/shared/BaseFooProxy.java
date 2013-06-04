@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -75,6 +76,14 @@ public interface BaseFooProxy extends EntityProxy {
 
   List<SimpleValueProxy> getSimpleValues();
 
+  Map<String, Integer> getValueMap();
+
+  Map<Integer, SimpleBarProxy> getSimpleBarValueMap();
+
+  Map<SimpleBarProxy, Integer> getSimpleBarKeyMap();
+
+  Map<MapKeyProxy, MapValueProxy> getEntityKeyAndValueMap();
+
   boolean getUnpersisted();
 
   String getUserName();
@@ -130,4 +139,13 @@ public interface BaseFooProxy extends EntityProxy {
   void setUnpersisted(boolean unpersisted);
 
   void setUserName(String userName);
+
+  void setValueMap(Map<String, Integer> map);
+
+  void setSimpleBarKeyMap(Map<SimpleBarProxy, Integer> map);
+
+  void setSimpleBarValueMap(Map<Integer, SimpleBarProxy> map);
+
+  void setEntityKeyAndValueMap(Map<MapKeyProxy, MapValueProxy> map);
+
 }

@@ -1,11 +1,11 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -640,11 +640,11 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
   public boolean isChanged() {
     /*
      * NB: Don't use the presence of ephemeral objects for this test.
-     * 
+     *
      * Diff the objects until one is found to be different. It's not just a
      * simple flag-check because of the possibility of "unmaking" a change, per
      * the JavaDoc.
-     * 
+     *
      * TODO: try to get rid of the 'diffing' flag and optimize the diffing of
      * objects: http://code.google.com/p/google-web-toolkit/issues/detail?id=7379
      */
@@ -699,7 +699,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   /**
    * Creates a new proxy with an assigned ID.
-   * 
+   *
    * @param clazz The proxy type
    * @param id The id to be assigned to the new proxy
    * @param useAppendedContexts if {@code true} use the AutoBeanFactory types associated with any
@@ -911,7 +911,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   /**
    * Create a new EntityProxy from a snapshot in the return payload.
-   * 
+   *
    * @param id the EntityProxyId of the object
    * @param returnRecord the JSON map containing property/value pairs
    * @param operations the WriteOperation eventns to broadcast over the EventBus
@@ -932,11 +932,21 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
           if (ctx.canSet()) {
             if (properties.containsKey(propertyName)) {
               Splittable raw = properties.get(propertyName);
-              Class<?> elementType =
-                  ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
-                      .getElementType() : null;
-              Object decoded =
-                  EntityCodex.decode(AbstractRequestContext.this, ctx.getType(), elementType, raw);
+              Object decoded = null;
+              if (ctx.getType() == Map.class) {
+                MapPropertyContext mapCtx = (MapPropertyContext) ctx;
+                Class<?> keyType = mapCtx.getKeyType();
+                Class<?> valueType = mapCtx.getValueType();
+                decoded =
+                    EntityCodex.decode(AbstractRequestContext.this, mapCtx.getType(), keyType,
+                        valueType, raw);
+              } else {
+                Class<?> elementType =
+                    ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
+                        .getElementType() : null;
+                decoded =
+                    EntityCodex.decode(AbstractRequestContext.this, ctx.getType(), elementType, raw);
+              }
               ctx.set(decoded);
             }
           }
@@ -987,7 +997,7 @@ public abstract class AbstractRequestContext implements RequestContext, EntityCo
 
   /**
    * Get-or-create method for synthetic ids.
-   * 
+   *
    * @see #syntheticIds
    */
   private <Q extends BaseProxy> SimpleProxyId<Q> allocateSyntheticId(String typeToken,
