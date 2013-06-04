@@ -37,17 +37,6 @@ public:
         fileMode_(fileMode)
    {
    }
-   
-   LocalStreamAsyncServer(const std::string& serverName,
-                          const std::string& baseUri,
-                          boost::asio::io_service& ioService,
-                          core::system::FileMode fileMode)
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName,
-                                                             ioService,
-                                                             baseUri),
-        fileMode_(fileMode)
-   {
-   }
 
    virtual ~LocalStreamAsyncServer()
    {
