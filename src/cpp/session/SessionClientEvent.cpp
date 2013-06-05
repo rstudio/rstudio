@@ -37,9 +37,6 @@ const int kConsoleWriteError = 4;
 const int kShowErrorMessage = 5;
 const int kShowHelp = 6;
 const int kBrowseUrl = 7;
-const int kWorkspaceRefresh = 8;
-const int kWorkspaceAssign = 9;
-const int kWorkspaceRemove = 10;   
 const int kShowEditor = 11;
 const int kChooseFile = 13;
 const int kAbendWarning = 14;
@@ -99,6 +96,9 @@ const int kLoadedPackageUpdates = 71;
 const int kActivatePane = 72;
 const int kShowPresentationPane = 73;
 const int kEnvironmentRefresh = 74;
+const int kContextDepthChanged = 75;
+const int kEnvironmentAssigned = 76;
+const int kEnvironmentRemoved = 77;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -134,12 +134,6 @@ std::string ClientEvent::typeName() const
          return "show_help";
       case client_events::kBrowseUrl: 
          return "browse_url";
-      case client_events::kWorkspaceRefresh:
-         return "workspace_refresh";
-      case client_events::kWorkspaceAssign: 
-         return "workspace_assign";
-      case client_events::kWorkspaceRemove: 
-         return "workspace_remove";   
       case client_events::kShowEditor: 
          return "show_editor";
       case client_events::kChooseFile: 
@@ -255,7 +249,13 @@ std::string ClientEvent::typeName() const
       case client_events::kShowPresentationPane:
          return "show_presentation_pane";
       case client_events::kEnvironmentRefresh:
-         return "environment_refresh";
+         return "environment_refresh";   
+      case client_events::kContextDepthChanged:
+         return "context_depth_changed";
+      case client_events::kEnvironmentAssigned:
+         return "environment_assigned";
+      case client_events::kEnvironmentRemoved:
+         return "environment_removed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

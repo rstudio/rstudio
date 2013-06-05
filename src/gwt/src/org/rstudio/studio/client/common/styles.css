@@ -58,15 +58,6 @@ tr.sectionHead td {
    font-size: 7pt;
 }
 
-.rstudio-WorkspaceObjectTable {
-   outline: none ;
-   border: none ;
-}
-
-.rstudio-ScalarEdit {
-   color: blue;
-}
-
 .rstudio-HelpFrame {
    outline: none ;
    border: none ;

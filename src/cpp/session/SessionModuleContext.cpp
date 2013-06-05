@@ -118,9 +118,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
       
       // determine the event type from the event name
       int type = -1 ;
-      if (name == "workspace_refresh")
-         type = session::client_events::kWorkspaceRefresh;
-      else if (name == "package_status_changed")
+      if (name == "package_status_changed")
          type = session::client_events::kPackageStatusChanged;
       else if (name == "installed_packages_changed")
          type = session::client_events::kInstalledPackagesChanged;

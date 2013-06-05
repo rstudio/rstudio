@@ -39,9 +39,6 @@ extern const int kChooseFile;
 extern const int kQuit;
 extern const int kSuicide;
 extern const int kAbendWarning;
-extern const int kWorkspaceRefresh;
-extern const int kWorkspaceAssign;
-extern const int kWorkspaceRemove;
 extern const int kBusy;
 extern const int kFileChanged;
 extern const int kWorkingDirChanged;
@@ -97,6 +94,9 @@ extern const int kLoadedPackageUpdates;
 extern const int kActivatePane;
 extern const int kShowPresentationPane;
 extern const int kEnvironmentRefresh;
+extern const int kContextDepthChanged;
+extern const int kEnvironmentAssigned;
+extern const int kEnvironmentRemoved;
 }
    
 class ClientEvent

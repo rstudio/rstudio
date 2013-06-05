@@ -43,14 +43,12 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOp
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    FilesServerOperations,
                                                    PackagesServerOperations,
                                                    HelpServerOperations,
-                                                   WorkspaceServerOperations,
                                                    PlotsServerOperations,
                                                    EditServerOperations,
                                                    SourceServerOperations,

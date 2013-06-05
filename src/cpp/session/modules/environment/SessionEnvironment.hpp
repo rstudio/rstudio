@@ -16,6 +16,8 @@
 #ifndef SESSION_SESSION_ENVIRONMENT_HPP
 #define SESSION_SESSION_ENVIRONMENT_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -23,6 +25,8 @@ namespace core {
 namespace session {
 namespace modules {      
 namespace environment {
+
+core::json::Value environmentStateAsJson();
 
 core::Error initialize();
    

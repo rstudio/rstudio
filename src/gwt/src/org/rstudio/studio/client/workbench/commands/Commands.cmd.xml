@@ -194,7 +194,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateFiles"/>
          <cmd refid="activatePlots"/>
          <cmd refid="activatePackages"/>
-         <cmd refid="activateWorkspace"/>
+         <cmd refid="activateEnvironment"/>
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <separator/>
@@ -387,7 +387,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="activateFiles" value="Ctrl+5"/>
       <shortcut refid="activatePlots" value="Ctrl+6"/>
       <shortcut refid="activatePackages" value="Ctrl+7"/>
-      <shortcut refid="activateWorkspace" value="Ctrl+8"/>
+      <shortcut refid="activateEnvironment" value="Ctrl+8"/>
       <shortcut refid="activateVcs" value="Ctrl+9"/>
       <shortcut refid="activateBuild" value="Ctrl+0"/>
       <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -610,8 +610,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Move Focus to Sou_rce"/>
    <cmd id="activateConsole"
         menuLabel="Move Focus to _Console"/>
-   <cmd id="activateWorkspace"
-        menuLabel="Show _Workspace"/>
+   <cmd id="activateEnvironment"
+        menuLabel="Show _Environment"/>
    <cmd id="activateData"
         menuLabel="Show _Data"/>
    <cmd id="activateHistory"

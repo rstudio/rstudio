@@ -31,4 +31,5 @@ public interface StandardIcons extends ClientBundle
    ImageResource empty_command();
    ImageResource show_log();
    ImageResource help();
+   ImageResource function();
 }

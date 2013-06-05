@@ -62,7 +62,11 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -92,10 +96,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.workspace.events.WorkspaceRefreshEvent;
-import org.rstudio.studio.client.workbench.views.workspace.model.WorkspaceObjectInfo;
 
 import java.util.ArrayList;
 
@@ -184,20 +184,6 @@ public class ClientEventDispatcher
          {
             String path = event.getData();
             eventBus_.fireEvent(new WorkingDirChangedEvent(path));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRefresh))
-         {
-            eventBus_.fireEvent(new WorkspaceRefreshEvent());
-         }
-         else if (type.equals(ClientEvent.WorkspaceAssign))
-         {
-            WorkspaceObjectInfo objectInfo = event.getData();
-            eventBus_.fireEvent(new WorkspaceObjectAssignedEvent(objectInfo));
-         }
-         else if (type.equals(ClientEvent.WorkspaceRemove))
-         {
-            String objectName = event.getData();
-            eventBus_.fireEvent(new WorkspaceObjectRemovedEvent(objectName));
          }
          else if (type.equals(ClientEvent.ShowHelp))
          {
@@ -452,6 +438,10 @@ public class ClientEventDispatcher
             UiPrefsChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new UiPrefsChangedEvent(data));
          }
+         else if (type.equals(ClientEvent.ContextDepthChanged)) {
+            ContextDepthChangedEvent.ContextData data = event.getData();
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+         }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {
             eventBus_.fireEvent(new HandleUnsavedChangesEvent());
@@ -474,6 +464,16 @@ public class ClientEventDispatcher
          {
             SaveAction action = event.getData();
             eventBus_.fireEvent(new SaveActionChangedEvent(action));
+         }
+         else if (type.equals(ClientEvent.EnvironmentAssigned))
+         {
+            RObject objectInfo = event.getData();
+            eventBus_.fireEvent(new EnvironmentObjectAssignedEvent(objectInfo));
+         }
+         else if (type.equals(ClientEvent.EnvironmentRemoved))
+         {
+            String objectName = event.getData();
+            eventBus_.fireEvent(new EnvironmentObjectRemovedEvent(objectName));
          }
          else
          {

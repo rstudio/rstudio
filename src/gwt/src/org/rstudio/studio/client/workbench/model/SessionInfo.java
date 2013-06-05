@@ -26,6 +26,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -308,13 +309,11 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
-   public final native boolean getShowEnvironmentTab() /*-{
-      return this.show_environment_tab;
-   }-*/;
-   
    public final native String getSwitchToProject() /*-{
       return this.switch_to_project;
    }-*/;
 
-   
+   public final native EnvironmentState getEnvironmentState() /*-{
+      return this.environment_state;
+   }-*/;
 }

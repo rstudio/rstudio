@@ -115,13 +115,7 @@ public interface ThemeStyles extends CssResource
    String sessionAbendMessage();
    String applicationHeaderStrong();
           
-   String workspace();
-   String workspaceSectionHead();
-   String workspaceDataRow();
-   String workspaceDataFrameRow();
-   String scalarEdit();
-   String editing();
-   String editPending();
+   String environmentDataFrameRow();
 
    String odd();
    

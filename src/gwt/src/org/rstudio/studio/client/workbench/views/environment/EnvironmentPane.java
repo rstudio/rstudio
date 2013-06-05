@@ -15,66 +15,251 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
+
 public class EnvironmentPane extends WorkbenchPane 
-                             implements EnvironmentPresenter.Display
+                             implements EnvironmentPresenter.Display,
+                                        EnvironmentObjects.Observer
 {
    @Inject
-   public EnvironmentPane(Commands commands)
+   public EnvironmentPane(Commands commands,
+                          EventBus eventBus)
    {
       super("Environment");
       
       commands_ = commands;
-      
+      eventBus_ = eventBus;
+
+      expandedObjects_ = new ArrayList<String>();
+      scrollPosition_ = 0;
+      isClientStateDirty_ = false;
+
+      EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+
       ensureWidget();
    }
+
+   // WorkbenchPane overrides -------------------------------------------------
 
    @Override
    protected Toolbar createMainToolbar()
    {
+      environmentName_ = new Label(GLOBAL_ENVIRONMENT_NAME);
+      environmentName_.setStyleName(
+            EnvironmentPaneResources.INSTANCE
+                    .environmentPaneStyle()
+                    .environmentNameLabel());
+      functionIndicator_ = new Image(
+            StandardIcons.INSTANCE.function());
+      functionIndicator_.setVisible(false);
+
       Toolbar toolbar = new Toolbar();
-      
+      toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
+      toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      toolbar.addRightWidget(functionIndicator_);
+      toolbar.addRightWidget(environmentName_);
       toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
-      
+
       return toolbar;
    }
-   
+
    @Override
    protected Widget createMainWidget()
    {
-      objectList_ = new ListBox();
-      objectList_.setVisibleItemCount(2);
-      objectList_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      objectList_.setHeight("100%");
-      
-      return objectList_;
+      objects_ = new EnvironmentObjects();
+      objects_.setObserver(this);
+      return objects_;
    }
+
+   // EnviromentPresenter.Display implementation ------------------------------
 
    @Override
    public void addObject(RObject object)
    {
-      String itemText = object.getName() + " - " +
-                        object.getType() + 
-                        " [" + object.getLength() + "]";
-      objectList_.addItem(itemText, object.getName());
+      objects_.addObject(object);
+   }
+
+   @Override
+   public void addObjects(JsArray<RObject> objects)
+   {
+      objects_.addObjects(objects);
+   }
+   
+   @Override
+   public void removeObject(String objectName)
+   {
+      objects_.removeObject(objectName);
+   }
+   
+   @Override
+   public void setContextDepth(int contextDepth)
+   {
+      objects_.setContextDepth(contextDepth);
+
+      // if the environment we're about to show is nested, turn off the toolbar
+      // commands that act on the global environment
+      Boolean commandsEnabled = contextDepth == 0;
+      commands_.loadWorkspace().setEnabled(commandsEnabled);
+      commands_.saveWorkspace().setEnabled(commandsEnabled);
+      commands_.clearWorkspace().setEnabled(commandsEnabled);
+      commands_.importDatasetFromFile().setEnabled(commandsEnabled);
+      commands_.importDatasetFromURL().setEnabled(commandsEnabled);
+      dataImportButton_.setEnabled(commandsEnabled);
+
+      functionIndicator_.setVisible(contextDepth > 0);
    }
 
    @Override
    public void clearObjects()
    {
-      objectList_.clear();
+      objects_.clearObjects();
+      expandedObjects_.clear();
+      scrollPosition_ = 0;
+      isClientStateDirty_ = true;
    }
-   
-   private ListBox objectList_;
-   
+
+   @Override
+   public void setEnvironmentName(String environmentName)
+   {
+      environmentName_.setText(environmentName);
+      objects_.setEnvironmentName(environmentName);
+   }
+
+   @Override
+   public int getScrollPosition()
+   {
+      return scrollPosition_;
+   }
+
+   @Override
+   public void setScrollPosition(int scrollPosition)
+   {
+      objects_.setScrollPosition(scrollPosition);
+   }
+
+   @Override
+   public void setExpandedObjects(JsArrayString objects)
+   {
+      objects_.setExpandedObjects(objects);
+      expandedObjects_.clear();
+      for (int idx = 0; idx < objects.length(); idx++)
+      {
+         expandedObjects_.add(objects.get(idx));
+      }
+   }
+
+   @Override
+   public String[] getExpandedObjects()
+   {
+      return expandedObjects_.toArray(new String[0]);
+   }
+
+   public boolean clientStateDirty()
+   {
+      return isClientStateDirty_;
+   }
+
+   public void setClientStateClean()
+   {
+      isClientStateDirty_ = false;
+   }
+
+   @Override
+   public void resize()
+   {
+      objects_.onResize();
+   }
+
+   // EnviromentObjects.Observer implementation -------------------------------
+
+   public void setPersistedScrollPosition(int scrollPosition)
+   {
+      scrollPosition_ = scrollPosition;
+      isClientStateDirty_ = true;
+   }
+
+   public void setObjectExpanded(String objectName)
+   {
+      expandedObjects_.add(objectName);
+      isClientStateDirty_ = true;
+   }
+
+   public void setObjectCollapsed(String objectName)
+   {
+      expandedObjects_.remove(objectName);
+      isClientStateDirty_ = true;
+   }
+
+   public void editObject(String objectName)
+   {
+      executeFunctionForObject("fix", objectName);
+   }
+
+   public void viewObject(String objectName)
+   {
+      executeFunctionForObject("View", objectName);
+   }
+
+   public void forceEvalObject(String objectName)
+   {
+      executeFunctionForObject("force", objectName);
+   }
+
+   // Private methods ---------------------------------------------------------
+
+   private void executeFunctionForObject(String function, String objectName)
+   {
+      String editCode =
+              function + "(" + StringUtil.toRSymbolName(objectName) + ")";
+      SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
+      eventBus_.fireEvent(event);
+   }
+
+   private Widget createImportMenu()
+   {
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      dataImportButton_ = new ToolbarButton(
+              "Import Dataset",
+              StandardIcons.INSTANCE.import_dataset(),
+              menu);
+      return dataImportButton_;
+
+   }
+
+   public final static String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
+
+   private ToolbarButton dataImportButton_;
+   private Label environmentName_;
+   private Image functionIndicator_;
+   private EnvironmentObjects objects_;
    private Commands commands_;
+   private EventBus eventBus_;
+   private ArrayList<String> expandedObjects_;
+   private int scrollPosition_;
+   private boolean isClientStateDirty_;
 }

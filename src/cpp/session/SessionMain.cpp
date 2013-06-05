@@ -97,7 +97,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
-#include "modules/SessionWorkspace.hpp"
+#include "modules/SessionDirty.hpp"
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
@@ -573,6 +573,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    // check whether a switch project is required
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
+
+   sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1478,7 +1480,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::files::initialize)
       (modules::find::initialize)
       (modules::environment::initialize)
-      (modules::workspace::initialize)
+      (modules::dirty::initialize)
       (modules::workbench::initialize)
       (modules::data::initialize)
       (modules::help::initialize)

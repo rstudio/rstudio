@@ -14,11 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 public interface EnvironmentServerOperations
 {
    void listEnvironment(ServerRequestCallback<JsArray<RObject> > callback);
+
+   void removeAllObjects(boolean includeHidden,
+                         ServerRequestCallback<Void> requestCallback);
+
+   void downloadDataFile(String dataFileURL,
+                         ServerRequestCallback<DownloadInfo> requestCallback);
+
+   void getDataPreview(
+           String dataFilePath,
+           ServerRequestCallback<DataPreviewResult> requestCallback);
+
+   void getOutputPreview(
+           String dataFilePath,
+           boolean heading,
+           String separator,
+           String decimal,
+           String quote,
+           ServerRequestCallback<DataPreviewResult> requestCallback);
+
 }

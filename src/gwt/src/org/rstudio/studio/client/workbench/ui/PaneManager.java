@@ -62,7 +62,7 @@ public class PaneManager
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
    
    public enum Tab {
-      Workspace, History, Files, Plots, Packages, Help, VCS, Build, 
+      History, Files, Plots, Packages, Help, VCS, Build,
       Presentation, Environment
    }
 
@@ -101,7 +101,6 @@ public class PaneManager
                       @Named("Console") final Widget consolePane,
                       ConsoleInterruptButton consoleInterrupt,
                       SourceShim source,
-                      @Named("Workspace") final WorkbenchTab workspaceTab,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -121,7 +120,6 @@ public class PaneManager
       consolePane_ = (ConsolePane)consolePane;
       consoleInterrupt_ = consoleInterrupt;
       source_ = source;
-      workspaceTab_ = workspaceTab;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -252,8 +250,6 @@ public class PaneManager
    {
       switch (tab)
       {
-         case Workspace:
-            return workspaceTab_;
          case History:
             return historyTab_;
          case Files:
@@ -278,7 +274,7 @@ public class PaneManager
 
    public WorkbenchTab[] getAllTabs()
    {
-      return new WorkbenchTab[] { workspaceTab_, historyTab_, filesTab_,
+      return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, buildTab_, presentationTab_,
                                   environmentTab_};
@@ -421,8 +417,6 @@ public class PaneManager
    {
       switch (tab)
       {
-         case Workspace:
-            return "Workspace";
          case History:
             return "History";
          case Files:
@@ -447,8 +441,6 @@ public class PaneManager
    
    private Tab tabForName(String name)
    {
-      if (name.equalsIgnoreCase("workspace"))
-         return Tab.Workspace;
       if (name.equalsIgnoreCase("history"))
          return Tab.History;
       if (name.equalsIgnoreCase("files"))
@@ -480,7 +472,6 @@ public class PaneManager
    private final ConsolePane consolePane_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final SourceShim source_;
-   private final WorkbenchTab workspaceTab_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;

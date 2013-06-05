@@ -21,6 +21,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <core/Log.hpp>
@@ -92,15 +93,23 @@ void listEnvironment(SEXP env,
    SEXP envVarsSEXP;
    Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
    
-   // populate pVariables
-   for (int i=0; i<Rf_length(envVarsSEXP); i++)
+   // get variables
+   std::vector<std::string> vars;
+   Error error = r::sexp::extract(envVarsSEXP, &vars);
+   if (error)
    {
-      std::string varName(CHAR(STRING_ELT(envVarsSEXP, i)));
-      SEXP varSEXP = Rf_findVar(Rf_install(varName.c_str()), env);
-      if (varSEXP != R_UnboundValue) // should never be unbound 
+      LOG_ERROR(error);
+      return;
+   }
+
+   // populate pVariables
+   BOOST_FOREACH(const std::string& var, vars)
+   {
+      SEXP varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
+      if (varSEXP != R_UnboundValue) // should never be unbound
       {
          pProtect->add(varSEXP);
-         pVariables->push_back(std::make_pair(varName, varSEXP));
+         pVariables->push_back(std::make_pair(var, varSEXP));
       }
       else
       {

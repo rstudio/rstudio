@@ -65,6 +65,8 @@ import org.rstudio.studio.client.workbench.model.TexCapabilities;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
+import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
+import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -83,7 +85,6 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
-import org.rstudio.studio.client.workbench.views.workspace.model.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -468,42 +469,12 @@ public class RemoteServer implements Server
                   requestCallback) ;
    }
    
-   public void listObjects(
-         ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, LIST_OBJECTS, requestCallback);
-   }
-
-  
    public void removeAllObjects(boolean includeHidden,
                                 ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE,
                   REMOVE_ALL_OBJECTS,
                   includeHidden,
-                  requestCallback);
-   }
-
-   
-   public void setObjectValue(String objectName,
-                              String value,
-                              ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(objectName));
-      params.set(1, new JSONString(value));
-      sendRequest(RPC_SCOPE,
-                  SET_OBJECT_VALUE,
-                  params,
-                  requestCallback);
-   }
-
-   public void getObjectValue(String objectName,
-                              ServerRequestCallback<RpcObjectList<WorkspaceObjectInfo>> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  GET_OBJECT_VALUE,
-                  objectName,
                   requestCallback);
    }
 
@@ -2905,10 +2876,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 
-   private static final String LIST_OBJECTS = "list_objects";
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
-   private static final String SET_OBJECT_VALUE = "set_object_value";
-   private static final String GET_OBJECT_VALUE = "get_object_value";
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";

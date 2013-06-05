@@ -14,14 +14,19 @@
  */
 
 #include "SessionEnvironment.hpp"
+#include "EnvironmentMonitor.hpp"
 
 #include <algorithm>
 
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
-
+#include <r/RExec.hpp>
+#include <r/session/RSession.hpp>
+#include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include "EnvironmentUtils.hpp"
 
 using namespace core ;
 
@@ -29,58 +34,160 @@ namespace session {
 namespace modules { 
 namespace environment {
 
+EnvironmentMonitor s_environmentMonitor;
+
 namespace {
 
-json::Object varToJson(const r::sexp::Variable& var)
+bool handleRBrowseEnv(const core::FilePath& filePath)
 {
-   json::Object varJson;
-   varJson["name"] = var.first;
-   SEXP varSEXP = var.second;
-   varJson["type"] = r::sexp::typeAsString(varSEXP);
-   varJson["len"] = r::sexp::length(varSEXP);
-   return varJson;
+   if (filePath.filename() == "wsbrowser.html")
+   {
+      module_context::showContent("R objects", filePath);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+// return the context for the topmost function on the callstack
+RCNTXT* getTopFunctionContext()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (!(pRContext->callflag & CTXT_FUNCTION) && pRContext->callflag)
+   {
+      pRContext = pRContext->nextcontext;
+   }
+   return pRContext;
+}
+
+// return whether the context stack contains a pure (interactive) browser
+bool inBrowseContext()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (pRContext->callflag)
+   {
+      if ((pRContext->callflag & CTXT_BROWSER) &&
+          !(pRContext->callflag & CTXT_FUNCTION))
+      {
+         return true;
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return false;
+}
+
+SEXP getTopFunctionEnvironment()
+{
+   // if we're in an eval tree (i.e. browser), return the environment of the
+   // fuction on top of the stack; otherwise, return the global environment
+   return r::getGlobalContext()->evaldepth > 0 ?
+            getTopFunctionContext()->cloenv :
+            R_GlobalEnv;
+}
+
+json::Array environmentListAsJson()
+{
+    using namespace r::sexp;
+    Protect rProtect;
+    std::vector<Variable> vars;
+    listEnvironment(getTopFunctionEnvironment(), false, &rProtect, &vars);
+
+    // get object details and transform to json
+    json::Array listJson;
+    std::transform(vars.begin(),
+                   vars.end(),
+                   std::back_inserter(listJson),
+                   varToJson);
+    return listJson;
 }
 
 Error listEnvironment(const json::JsonRpcRequest&,
                       json::JsonRpcResponse* pResponse)
 {
-   // list all of the variables in the global environment
-   using namespace r::sexp;
-   Protect rProtect;
-   std::vector<Variable> vars;
-   listEnvironment(R_GlobalEnv, true, &rProtect, &vars);
-
-   // get object details and transform to json
-   json::Array listJson;
-   std::transform(vars.begin(),
-                  vars.end(),
-                  std::back_inserter(listJson),
-                  varToJson);
-
    // return list
-   pResponse->setResult(listJson);
+   pResponse->setResult(environmentListAsJson());
    return Success();
 }
 
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   s_environmentMonitor.checkForChanges();
+}
 
+std::string getTopFunctionName()
+{
+   return r::sexp::asString(PRINTNAME(CAR(getTopFunctionContext()->call)));
+}
+
+void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
+{
+   int contextDepth = getTopFunctionContext()->evaldepth;
+
+   // we entered (or left) a call frame
+   if (*pContextDepth != contextDepth)
+   {
+      json::Object varJson;
+
+      // if we appear to be switching into debug mode, make sure there's a
+      // browser call somewhere on the stack. if there isn't, then we're
+      // probably just waiting for user input inside a function (e.g. scan());
+      // assume the user isn't interested in seeing the function's internals.
+      if (*pContextDepth == 0 &&
+          contextDepth > 0 &&
+          !inBrowseContext())
+      {
+         return;
+      }
+
+      *pContextDepth = contextDepth;
+
+      // start monitoring the enviroment at the new depth
+      s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
+
+      // emit an event to the client indicating the new call frame and the
+      // current state of the environment
+      varJson["context_depth"] = contextDepth;
+      varJson["environment_list"] = environmentListAsJson();
+      varJson["function_name"] = getTopFunctionName();
+
+      ClientEvent event (client_events::kContextDepthChanged, varJson);
+      module_context::enqueClientEvent(event);
+   }
 }
 
 } // anonymous namespace
 
+json::Value environmentStateAsJson()
+{
+   json::Object stateJson;
+   stateJson["context_depth"] = getTopFunctionContext()->evaldepth;
+   stateJson["function_name"] = getTopFunctionName();
+   return stateJson;
+}
+
 Error initialize()
 {
+   boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
+
+   // begin monitoring the global environment
+   s_environmentMonitor.setMonitoredEnvironment(getTopFunctionEnvironment());
+
    // subscribe to events
    using boost::bind;
    using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
+   events().onConsolePrompt.connect(bind(onConsolePrompt, pContextDepth));
+
+   json::JsonRpcFunction listEnv = boost::bind(listEnvironment, _1, _2);
 
    // source R functions
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "list_environment", listEnvironment))
+      (bind(registerRBrowseFileHandler, handleRBrowseEnv))
+      (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();
