@@ -32,6 +32,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -45,8 +46,11 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -62,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.environment.events.*;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent.LineData;
 import org.rstudio.studio.client.workbench.views.environment.model.*;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 
 import com.google.gwt.core.client.JsArray;
@@ -146,6 +151,21 @@ public class EnvironmentPresenter extends BasePresenter
             view_.setEnvironmentName(event.getFunctionName());
             view_.setCallFrames(event.getCallFrames());
             setViewFromEnvironmentList(event.getEnvironmentList());
+            if (contextDepth_ > 0 &&
+                event.getCallFrames().length() > 0)
+            {
+               CallFrame browseFrame = event.getCallFrames().get(
+                       contextDepth_ - 1);
+               currentBrowseFile_ = browseFrame.getFileName().trim();
+               currentBrowseLineNumber_ = browseFrame.getLineNumber();
+               openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                           currentBrowseLineNumber_);
+            }
+            else
+            {
+               currentBrowseFile_ = "";
+               currentBrowseLineNumber_ = 0;
+            }
          }
       });
       
@@ -176,6 +196,8 @@ public class EnvironmentPresenter extends BasePresenter
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
             view_.setBrowserLine(event.getLineNumber());
+            currentBrowseLineNumber_ = event.getLineNumber();
+            openOrUpdateFileBrowsePoint(currentBrowseFile_, currentBrowseLineNumber_);
          }
 
       });
@@ -385,6 +407,21 @@ public class EnvironmentPresenter extends BasePresenter
       view_.setContextDepth(contextDepth_);
    }
 
+   // Private methods ---------------------------------------------------------
+
+   private void openOrUpdateFileBrowsePoint(String file, int lineNumber)
+   {
+      if (file.length() > 0 && lineNumber > 0)
+      {
+         FileSystemItem sourceFile = FileSystemItem.createFile(file);
+         FilePosition filePosition = FilePosition.create(lineNumber, 1);
+         eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
+                                                     filePosition,
+                                                     FileTypeRegistry.R,
+                                                     true));
+      }
+   }
+
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
       if (initialized_)
@@ -511,4 +548,6 @@ public class EnvironmentPresenter extends BasePresenter
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;
+   private int currentBrowseLineNumber_;
+   private String currentBrowseFile_;
 }

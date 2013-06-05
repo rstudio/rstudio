@@ -19,21 +19,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.view.client.ProvidesKey;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 
 public class CallFrame extends JavaScriptObject
 {
    protected CallFrame()
    {
    }
-
-   public static native CallFrame createGlobalFrame() /*-{
-      var frame = new Object();
-      frame.function_name = "Global environment";
-      frame.context_depth = 0;
-      frame.file_name = "";
-      frame.line_number = 0;
-      return frame;
-   }-*/;
 
    public final native String getFunctionName() /*-{
        return this.function_name;
