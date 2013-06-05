@@ -32,8 +32,21 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.FormPanelExample}
  * </p>
+ *
+ * <h3>CSS Style Rules</h3>
+ * <dl>
+ * <dt>.gwt-FileUpload {} </dt>
+ *
+ * <h3>NOTICE about styling</h3>
+ * <p>
+ * The developer should be aware that most browsers do not allow styling
+ * many properties of the rendered input-file element because of security restrictions.<br/>
+ * You can style certain properties like position, visibility, opacity, etc. But size,
+ * color, backgrounds etc. will not work either using css or calling widget methods like setSize().
+ * </p>
+ * </dl>
  */
-public class FileUpload extends Widget implements HasName, HasChangeHandlers, HasEnabled {
+public class FileUpload extends FocusWidget implements HasName, HasChangeHandlers, HasEnabled {
 
   /**
    * Creates a FileUpload widget that wraps an existing &lt;input
@@ -121,5 +134,20 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers, Ha
 
   private InputElement getInputElement() {
     return getElement().cast();
+  }
+
+  /**
+   * Programmatic equivalent of the user clicking the button, opening
+   * the file selection browser.
+   *
+   * <p>
+   * NOTE: in certain browsers programmatic click is disabled if the
+   * element display is none, for instance in webkit you have to move
+   * the element off screen.
+   * </p>
+   *
+   */
+  public void click() {
+    getInputElement().click();
   }
 }

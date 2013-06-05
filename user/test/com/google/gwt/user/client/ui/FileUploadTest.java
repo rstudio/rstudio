@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -22,6 +25,16 @@ import com.google.gwt.junit.client.GWTTestCase;
  * 
  */
 public class FileUploadTest extends GWTTestCase {
+
+  private static class TestHandler implements ClickHandler {
+    boolean clicked;
+    EventTarget target;
+
+    public void onClick(ClickEvent event) {
+      target = event.getNativeEvent().getEventTarget();
+      clicked = true;
+    }
+  }
 
   @Override
   public String getModuleName() {
@@ -35,5 +48,18 @@ public class FileUploadTest extends GWTTestCase {
     assertFalse(fileUpload.isEnabled());
     fileUpload.setEnabled(true);
     assertTrue(fileUpload.isEnabled());
+  }
+
+  public void testClick() {
+    FileUpload fileUpload = new FileUpload();
+    RootPanel.get().add(fileUpload);
+
+    TestHandler h = new TestHandler();
+    fileUpload.addClickHandler(h);
+
+    fileUpload.click();
+    assertTrue(h.clicked);
+
+    assertEquals(fileUpload.getElement(), h.target);
   }
 }

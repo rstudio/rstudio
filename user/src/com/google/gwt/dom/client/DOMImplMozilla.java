@@ -31,6 +31,16 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   /**
+   * Return true if using Gecko 1.9 (Firefox 3) or later.
+   *
+   * @return true if using Gecko 1.9 (Firefox 3) or later
+   */
+  private static boolean isGecko19() {
+    int geckoVersion = getGeckoVersion();
+    return (geckoVersion != -1) && (geckoVersion >= 1009000);
+  }
+
+  /**
    * Return true if using Gecko 1.9.0 (Firefox 3) or earlier.
    * 
    * @return true if using Gecko 1.9.0 (Firefox 3) or earlier
@@ -71,7 +81,21 @@ class DOMImplMozilla extends DOMImplStandard {
   }
 
   @Override
-  public native void buttonClick(ButtonElement button) /*-{
+  public void buttonClick(ButtonElement button) {
+    if (isGecko19()) {
+      super.buttonClick(button);
+    } else {
+      buttonClickImpl(button);
+    }
+  }
+
+  /**
+   * This workaround is for browsers which don't set up the event
+   * target properly for synthesized clicks.
+   * It is here since gwt-1.6 or before.
+   * Probably we could get rid of it.
+   */
+  private native void buttonClickImpl(ButtonElement button) /*-{
     var doc = button.ownerDocument;
     if (doc != null) {
       var evt = doc.createEvent('MouseEvents');
@@ -260,16 +284,6 @@ class DOMImplMozilla extends DOMImplStandard {
       return doc.getBoxObjectFor(elem).screenY -
         doc.getBoxObjectFor(doc.documentElement).screenY;
     }
-  }-*/;
-
-  /**
-   * Return true if using Gecko 1.9 (Firefox 3) or later.
-   * 
-   * @return true if using Gecko 1.9 (Firefox 3) or later
-   */
-  private native boolean isGecko19() /*-{
-    var geckoVersion = @com.google.gwt.dom.client.DOMImplMozilla::getGeckoVersion()();
-    return (geckoVersion != -1) && (geckoVersion >= 1009000);
   }-*/;
 
   private native boolean isRTL(Element elem) /*-{
