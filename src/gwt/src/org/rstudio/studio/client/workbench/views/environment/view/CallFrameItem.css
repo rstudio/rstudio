@@ -6,10 +6,19 @@
    padding-left: 5px;
    padding-right: 5px;
    cursor: pointer;
+   border: 1px solid transparent;
+   font-size: 90%;
+   margin-bottom: 2px;
+   width: 100%;
 }
 
 .activeFrame
 {
    background-color: #D0D0FF;
    cursor: default;
+}
+
+.topFrame
+{
+   border: 1px solid #707070;
 }

@@ -117,6 +117,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
 
       splitPanel.addSouth(callFramePanel_, splitPosition_);
+      splitPanel.setWidgetMinSize(callFramePanel_, 20);
       splitPanel.add(objectList_);
    }
 

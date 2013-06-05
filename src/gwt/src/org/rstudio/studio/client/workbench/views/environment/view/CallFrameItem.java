@@ -38,6 +38,7 @@ public class CallFrameItem extends Composite
    {
       String activeFrame();
       String callFrame();
+      String topFrame();
    }
 
    public CallFrameItem(CallFrame frame, Observer observer)
@@ -47,6 +48,10 @@ public class CallFrameItem extends Composite
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       functionName.addClickHandler(this);
+      if (frame.getContextDepth() == 1)
+      {
+         functionName.addStyleName(style.topFrame());
+      }
       setDisplayText(frame_.getLineNumber());
    }
 
@@ -77,13 +82,24 @@ public class CallFrameItem extends Composite
       {
          functionName.setText(
                  frame_.getFunctionName() + " at " +
-                 frame_.getFileName().trim() + ":" +
+                 friendlyFileName(frame_.getFileName()) + ":" +
                  lineNumber);
       }
       else
       {
          functionName.setText(frame_.getFunctionName());
       }
+   }
+
+   private String friendlyFileName(String unfriendlyFileName)
+   {
+      int idx = unfriendlyFileName.lastIndexOf("/");
+      if (idx < 0)
+      {
+         idx = unfriendlyFileName.lastIndexOf("\\");
+      }
+      return unfriendlyFileName.substring(
+              idx + 1, unfriendlyFileName.length()).trim();
    }
 
    @UiField Label functionName;
