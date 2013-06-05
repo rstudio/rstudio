@@ -16,7 +16,8 @@
 #ifndef SERVER_CONSTANTS_HPP
 #define SERVER_CONSTANTS_HPP
 
-#define kMonitorSocketPath    "/tmp/rstudio-rserver/rserver-monitor.socket"
+#define kMonitorSocketPath         "/tmp/rstudio-rserver/rserver-monitor.socket"
+#define kMonitorSharedSecretEnvVar "RS_MONITOR_SHARED_SECRET"
 
 #endif // SERVER_CONSTANTS_HPP
 
