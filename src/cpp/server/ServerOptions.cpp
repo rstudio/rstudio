@@ -22,6 +22,8 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixSystem.hpp>
 
+#include <server/ServerConstants.hpp>
+
 #include "ServerAppArmor.hpp"
 
 using namespace core ;
@@ -187,7 +189,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
 
    options_description monitor("monitor");
    monitor.add_options()
-      ("monitor-interval-seconds",
+      (kMonitorIntervalSeconds,
        value<int>(&monitorIntervalSeconds_)->default_value(300),
        "monitoring interval");
 
