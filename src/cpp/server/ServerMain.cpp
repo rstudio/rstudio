@@ -52,6 +52,7 @@
 #include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerInit.hpp"
+#include "ServerMetrics.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
@@ -402,6 +403,11 @@ int main(int argc, char * const argv[])
 
       // call overlay initialize
       error = overlay::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize metrics
+      error = metrics::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
