@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
+import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
@@ -153,10 +154,13 @@ class HandlerEvaluator {
               ("Method '%s' can not be bound. You probably missed ui:field='%s' "
                   + "in the template."), boundMethod, objectName);
         }
+        JClassType objectType = fieldWriter.getInstantiableType();
+        if (objectType.isGenericType() != null) {
+          objectType = tryEnhancingTypeInfo(objectName, objectType);
+        }
 
         // Retrieves the "add handler" method in the object.
-        JMethod addHandlerMethodType = getAddHandlerMethodForObject(
-            fieldWriter.getInstantiableType(), handlerType);
+        JMethod addHandlerMethodType = getAddHandlerMethodForObject(objectType, handlerType);
         if (addHandlerMethodType == null) {
           logger.die("Field '%s' does not have an 'add%s' method associated.",
               objectName, handlerType.getName());
@@ -167,6 +171,23 @@ class HandlerEvaluator {
             addHandlerMethodType.getName(), objectName);
       }
     }
+  }
+
+  private JClassType tryEnhancingTypeInfo(String objectName, JClassType objectType) {
+    OwnerField uiField = ownerClass.getUiField(objectName);
+    if (uiField != null) {
+      JParameterizedType pType = uiField.getRawType().isParameterized();
+      if (pType != null) {
+        // Even field is parameterized, it might be a super class. In that case, if we use the field
+        // type then we might miss some add handlers methods from the objectType itself; something
+        // we don't want to happen!
+        if (pType.getBaseType().equals(objectType)) {
+          // Now we proved type from UiField is more specific, let's use that one
+          return pType;
+        }
+      }
+    }
+    return objectType;
   }
 
   /**
@@ -269,6 +290,7 @@ class HandlerEvaluator {
       JClassType handlerType) throws UnableToCompleteException {
     JMethod handlerMethod = null;
     JMethod alternativeHandlerMethod = null;
+    JMethod alternativeHandlerMethod2 = null;
     for (JMethod method : objectType.getInheritableMethods()) {
 
       // Condition 1: returns HandlerRegistration?
@@ -281,9 +303,9 @@ class HandlerEvaluator {
           continue;
         }
 
-        JType subjectHandler = parameters[0].getType();
+        JType methodParam = parameters[0].getType();
 
-        if (handlerType.equals(subjectHandler)) {
+        if (handlerType.equals(methodParam)) {
 
           // Condition 3: does more than one method match the condition?
           if (handlerMethod != null) {
@@ -293,6 +315,7 @@ class HandlerEvaluator {
           }
 
           handlerMethod = method;
+          continue;
         }
 
         /**
@@ -302,21 +325,30 @@ class HandlerEvaluator {
          * equality. For instance:
          *
          *   handlerType => TableHandler<String>
-         *   subjectHandler => TableHandler
+         *   subjectHandler => Alt 1: TableHandler or Alt 2: TableHandler<T>
          *
          * This is done as an alternative handler method to preserve the
          * original logic.
          */
         JParameterizedType ptype = handlerType.isParameterized();
         if (ptype != null) {
-          if (subjectHandler.equals(ptype.getRawType())) {
+          // Alt 1: TableHandler<String> => TableHandler
+          if (methodParam.equals(ptype.getRawType())) {
             alternativeHandlerMethod = method;
+          }
+
+          // Alt 2: TableHandler<String> => TableHandler<T>
+          if (objectType.isGenericType() != null
+              && methodParam.getErasedType().equals(ptype.getRawType())) {
+            // Unfortunately this is overly lenient but it was always like this
+            alternativeHandlerMethod2 = method;
           }
         }
       }
     }
 
-    return (handlerMethod != null) ? handlerMethod : alternativeHandlerMethod;
+    return (handlerMethod != null) ? handlerMethod
+        : (alternativeHandlerMethod != null) ? alternativeHandlerMethod : alternativeHandlerMethod2;
   }
 
   /**

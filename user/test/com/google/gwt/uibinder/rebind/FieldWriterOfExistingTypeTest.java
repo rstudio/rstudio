@@ -16,8 +16,6 @@
 package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JGenericType;
-import com.google.gwt.core.ext.typeinfo.JRawType;
 
 import junit.framework.TestCase;
 
@@ -33,7 +31,6 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
 
   private static final String FIELD_NAME = "field_name";
   private static final String QUALIFIED_SOURCE_NAME = "qualified_source_name";
-  private static final String ARG_QUALIFIED_SOURCE_NAME = "arg_qualified_source_name";
 
   private IMocksControl control;
 
@@ -63,34 +60,7 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
     control.verify();
   }
 
-  /**
-   * Generic type.
-   */
-  public void testGenericType() throws Exception {
-    JGenericType genericType = control.createMock(JGenericType.class);
-    expect(type.isGenericType()).andReturn(genericType);
-
-    JRawType rawType = control.createMock(JRawType.class);
-    expect(genericType.getRawType()).andReturn(rawType);
-
-    expect(rawType.getQualifiedSourceName()).andReturn(QUALIFIED_SOURCE_NAME);
-
-    control.replay();
-    FieldWriter field = new FieldWriterOfExistingType(null,
-        FieldWriterType.DEFAULT, type, FIELD_NAME, MortalLogger.NULL);
-
-    assertSame(rawType, field.getAssignableType());
-    assertSame(rawType, field.getInstantiableType());
-    assertEquals(QUALIFIED_SOURCE_NAME, field.getQualifiedSourceName());
-    control.verify();
-  }
-
-  /**
-   * Non generic type.
-   */
-  public void testNonGenericType() throws Exception {
-    expect(type.isGenericType()).andReturn(null);
-
+  public void testType() throws Exception {
     expect(type.getQualifiedSourceName()).andReturn(QUALIFIED_SOURCE_NAME);
 
     control.replay();

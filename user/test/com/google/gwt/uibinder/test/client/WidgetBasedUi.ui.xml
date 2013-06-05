@@ -692,8 +692,9 @@
   <gwt3:google.gwt.user.client.ui.ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 
   <gwt:DoubleBox ui:field='myDoubleBox'  />
-  <demo:WildcardValueChangeWidget ui:field='myWildcardValueChangeWidgetString'  />
-  <demo:WildcardValueChangeWidget ui:field='myWildcardValueChangeWidgetList'  />
+  <demo:ValueChangeWidget ui:field='myValueChangeWidget' />
+  <demo:ValueChangeWidget ui:field='myValueChangeWidget_raw' />
+  <demo:ExtendsValueChangeWidget ui:field='myValueChangeWidget_extends' />
 
   <img src="{values.aUrl}" ui:field='myImage'/>
   

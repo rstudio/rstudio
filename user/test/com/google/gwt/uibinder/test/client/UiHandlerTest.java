@@ -15,21 +15,20 @@
  */
 package com.google.gwt.uibinder.test.client;
 
-import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.ui.DockPanel;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.HANDLER;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.HANDLER_LIST_T;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.HANDLER_STRING;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.HANDLER_T;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.HANDLER_WILDCARD;
+import static com.google.gwt.uibinder.test.client.ValueChangeWidget.HandlerType.SELECT_HANDLER_T;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Functional test for UiHandler
- *
- * TODO(rluble): add more relevant tests.
  */
 public class UiHandlerTest extends GWTTestCase {
   private WidgetBasedUi widgetUi;
-  private DomBasedUi domUi;
-  private DockPanel root;
 
   @Override
   public String getModuleName() {
@@ -41,39 +40,43 @@ public class UiHandlerTest extends GWTTestCase {
     super.gwtSetUp();
     UiBinderTestApp app = UiBinderTestApp.getInstance();
     widgetUi = app.getWidgetUi();
-    domUi = app.getDomUi();
-    root = widgetUi.root;
   }
 
   public void testValueChangeEvent() {
-    widgetUi.valueChangeEvent = null;
+    widgetUi.doubleValueChangeEvent = null;
     widgetUi.myDoubleBox.setValue(0.0);
     widgetUi.myDoubleBox.setValue(10.0, true);
-    assertNotNull(widgetUi.valueChangeEvent);
-    assertEquals(10.0, widgetUi.valueChangeEvent.getValue());
+    assertNotNull(widgetUi.doubleValueChangeEvent);
+    assertEquals(10.0, widgetUi.doubleValueChangeEvent.getValue());
   }
 
-  /**
-   * Tests that the code generated for handling events parametrized by wildcards work.
-   */
-  public void testValueChangeEventWildcardString() {
-    widgetUi.wildcardValueChangeEventString = null;
-    widgetUi.myWildcardValueChangeWidgetString.setValue(null);
-    widgetUi.myWildcardValueChangeWidgetString.setValue("Changed");
-    assertNotNull(widgetUi.wildcardValueChangeEventString);
-    assertEquals("Changed", (String) widgetUi.wildcardValueChangeEventString.getValue());
+  public void testValueChangeHandlers() {
+    ValueChangeWidget<?> w = widgetUi.myValueChangeWidget;
+    assertEquals(1, w.getHandlerCount(HANDLER_WILDCARD));
+    assertEquals(1, w.getHandlerCount(HANDLER_STRING));
+    assertEquals(1, w.getHandlerCount(HANDLER)); /* Matched by List<?> */
+    assertEquals(1, w.getHandlerCount(HANDLER_T));
+    assertEquals(1, w.getHandlerCount(HANDLER_LIST_T));
+    assertEquals(0, w.getHandlerCount(SELECT_HANDLER_T));
   }
 
-  /**
-   * Tests that the code generated for handling events parametrized by wildcards work.
-   */
-  public void testValueChangeEventWildcardList() {
-    widgetUi.wildcardValueChangeEventList = null;
-    List<String> newValue = new ArrayList<String>();
-    newValue.add("Changed");
-    widgetUi.myWildcardValueChangeWidgetList.setValue(null);
-    widgetUi.myWildcardValueChangeWidgetList.setValue(newValue);
-    assertNotNull(widgetUi.wildcardValueChangeEventList);
-    assertEquals(newValue, widgetUi.wildcardValueChangeEventList.getValue());
+  public void testValueChangeHandlers_extends() {
+    ValueChangeWidget<?> w_extends = widgetUi.myValueChangeWidget_extends;
+    assertEquals(1, w_extends.getHandlerCount(HANDLER_WILDCARD));
+    assertEquals(1, w_extends.getHandlerCount(HANDLER_STRING));
+    assertEquals(1, w_extends.getHandlerCount(HANDLER)); /* Matched by List<?> */
+    assertEquals(1, w_extends.getHandlerCount(HANDLER_T));
+    assertEquals(1, w_extends.getHandlerCount(HANDLER_LIST_T));
+    assertEquals(0, w_extends.getHandlerCount(SELECT_HANDLER_T));
+  }
+
+  public void testValueChangeHandlers_raw() {
+    ValueChangeWidget<?> w_raw = widgetUi.myValueChangeWidget_raw;
+    assertEquals(1, w_raw.getHandlerCount(HANDLER_WILDCARD));
+    assertEquals(1, w_raw.getHandlerCount(HANDLER_STRING));
+    assertEquals(1, w_raw.getHandlerCount(HANDLER));
+    assertEquals(0, w_raw.getHandlerCount(HANDLER_T));
+    assertEquals(0, w_raw.getHandlerCount(HANDLER_LIST_T));
+    assertEquals(1, w_raw.getHandlerCount(SELECT_HANDLER_T));
   }
 }

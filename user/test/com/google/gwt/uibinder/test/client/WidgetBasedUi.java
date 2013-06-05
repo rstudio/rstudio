@@ -24,6 +24,7 @@ import com.google.gwt.dom.client.OListElement;
 import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
@@ -201,34 +202,64 @@ public class WidgetBasedUi extends Composite {
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
   @UiField DoubleBox myDoubleBox;
-  @UiField(provided = true)
-  WildcardValueChangeWidget myWildcardValueChangeWidgetString =
-      new WildcardValueChangeWidget<String>();
-  @UiField(provided = true)
-  WildcardValueChangeWidget myWildcardValueChangeWidgetList =
-      new WildcardValueChangeWidget<List<?>>();
+  @SuppressWarnings("rawtypes")
+  @UiField ValueChangeWidget<List> myValueChangeWidget;
+  @SuppressWarnings("rawtypes")
+  @UiField ValueChangeWidget myValueChangeWidget_raw;
+  @SuppressWarnings("rawtypes")
+  @UiField ExtendsValueChangeWidget<List> myValueChangeWidget_extends;
   @UiField ImageElement myImage;
   @UiField HTML htmlWithComputedSafeHtml;
   @UiField HTML htmlWithComputedText;
   @UiField Label labelWithComputedText;
 
-  public ValueChangeEvent<Double> valueChangeEvent;
+  ValueChangeEvent<Double> doubleValueChangeEvent;
   @UiHandler("myDoubleBox")
   void onValueChange(ValueChangeEvent<Double> event) {
-    this.valueChangeEvent = event;
+    this.doubleValueChangeEvent = event;
   }
 
-  public ValueChangeEvent<?> wildcardValueChangeEventString;
-  @UiHandler("myWildcardValueChangeWidgetString")
-  void onWildcaredValueChangeString(ValueChangeEvent<?> event) {
-    this.wildcardValueChangeEventString = event;
-  }
+  @UiHandler("myValueChangeWidget")
+  void onWildcardValueChange(ValueChangeEvent<?> event) { /* EMPTY */}
 
-  public ValueChangeEvent<List<?>> wildcardValueChangeEventList;
-  @UiHandler("myWildcardValueChangeWidgetList")
-  void onWildcaredValueChangeList(ValueChangeEvent<List<?>> event) {
-    this.wildcardValueChangeEventList = event;
-  }
+  @UiHandler("myValueChangeWidget")
+  void onStringValueChange(ValueChangeEvent<String> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget")
+  void onListRawValueChange(ValueChangeEvent<List> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget")
+  void onListValueChange(ValueChangeEvent<List<List>> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget")
+  void onListWildcardValueChange(ValueChangeEvent<List<?>> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_extends")
+  void onWildcardValueChange_extends(ValueChangeEvent<?> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_extends")
+  void onStringValueChange_extends(ValueChangeEvent<String> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_extends")
+  void onListRawValueChange_extends(ValueChangeEvent<List> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_extends")
+  void onListValueChange_extends(ValueChangeEvent<List<List>> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_extends")
+  void onListWildcardValueChange_extends(ValueChangeEvent<List<?>> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_raw")
+  void onWildcardValueChange_raw(ValueChangeEvent<?> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_raw")
+  void onStringValueChange_raw(ValueChangeEvent<String> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_raw")
+  void onListValueChange_raw(ValueChangeEvent<List> event) { /* EMPTY */}
+
+  @UiHandler("myValueChangeWidget_raw")
+  void onSelection_raw(SelectionEvent<List> event) { /* EMPTY */}
 
   public WidgetBasedUi() {
     external.style().ensureInjected();
