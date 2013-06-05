@@ -194,6 +194,9 @@ else()
    # r library
    add_subdirectory(r)
 
+   # monitor library
+   add_subdirectory(monitor)
+
    # add overlay if it exists
    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
       include(CMakeOverlay.txt)

@@ -142,6 +142,11 @@ public:
    { 
       return std::string(rsessionConfigFile_.c_str()); 
    }
+
+   std::string monitorSharedSecret() const
+   {
+      return std::string(monitorSharedSecret_.c_str());
+   }
    
    std::string getOverlayOption(const std::string& name)
    {
@@ -197,6 +202,7 @@ private:
    std::string rldpathPath_;
    std::string rsessionConfigFile_;
    std::string rsessionLdLibraryPath_;
+   std::string monitorSharedSecret_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

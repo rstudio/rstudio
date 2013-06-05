@@ -104,6 +104,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // startup for easy bash script enable/disable of offline state)
    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
 
+   // generate monitor shared secret
+   monitorSharedSecret_ = core::system::generateUuid();
+
    // program - name and execution
    options_description server("server");
    server.add_options()

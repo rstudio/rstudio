@@ -111,6 +111,7 @@ include_directories(
    ${Boost_INCLUDE_DIRS}
    ${SERVER_SYSTEM_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${MONITOR_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include
 )
 
@@ -120,6 +121,7 @@ add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 # set link dependencies
 target_link_libraries(rserver 
    rstudio-core
+   rstudio-monitor
    ${SERVER_SYSTEM_LIBRARIES}
 )
 
