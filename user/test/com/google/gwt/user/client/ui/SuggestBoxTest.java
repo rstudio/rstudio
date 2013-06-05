@@ -17,6 +17,11 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestBox.DefaultSuggestionDisplay;
 import com.google.gwt.user.client.ui.SuggestBox.SuggestionCallback;
@@ -365,6 +370,42 @@ public class SuggestBoxTest extends WidgetTestBase {
     TextBox b = TextBox.wrap(wrapper);
     SuggestBox box = new SuggestBox(createOracle(), b);
     assertTrue(b.getParent() == box);
+  }
+
+  /**
+   * See https://code.google.com/p/google-web-toolkit/issues/detail?id=3533
+   */
+  public void testKeyDownEvent() {
+    final int[] eventFireCount = {0};
+    SuggestBox box = new SuggestBox();
+    RootPanel.get().add(box);
+    box.addKeyDownHandler(new KeyDownHandler() {
+      @Override
+      public void onKeyDown(KeyDownEvent event) {
+        eventFireCount[0]++;
+      }
+    });
+    NativeEvent e = Document.get().createKeyDownEvent(false, false, false, false, 'g');
+    box.getElement().dispatchEvent(e);
+    assertEquals(1, eventFireCount[0]);
+  }
+
+  /**
+   * See https://code.google.com/p/google-web-toolkit/issues/detail?id=3533
+   */
+  public void testKeyUpEvent() {
+    final int[] eventFireCount = {0};
+    SuggestBox box = new SuggestBox();
+    RootPanel.get().add(box);
+    box.addKeyUpHandler(new KeyUpHandler() {
+      @Override
+      public void onKeyUp(KeyUpEvent event) {
+        eventFireCount[0]++;
+      }
+    });
+    NativeEvent e = Document.get().createKeyUpEvent(false, false, false, false, 'g');
+    box.getElement().dispatchEvent(e);
+    assertEquals(1, eventFireCount[0]);
   }
 
   protected SuggestBox createSuggestBox() {

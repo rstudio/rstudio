@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.editor.client.IsEditor;
 import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
-import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -1119,8 +1118,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   private void addEventsToTextBox() {
-    class TextBoxEvents extends HandlesAllKeyEvents implements
-        ValueChangeHandler<String> {
+    class TextBoxEvents implements KeyDownHandler, KeyUpHandler, ValueChangeHandler<String> {
 
       public void onKeyDown(KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
@@ -1140,17 +1138,11 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
             }
             break;
         }
-        delegateEvent(SuggestBox.this, event);
-      }
-
-      public void onKeyPress(KeyPressEvent event) {
-        delegateEvent(SuggestBox.this, event);
       }
 
       public void onKeyUp(KeyUpEvent event) {
         // After every user key input, refresh the popup's suggestions.
         refreshSuggestions();
-        delegateEvent(SuggestBox.this, event);
       }
 
       public void onValueChange(ValueChangeEvent<String> event) {
@@ -1159,7 +1151,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
 
     TextBoxEvents events = new TextBoxEvents();
-    events.addKeyHandlersTo(box);
+    box.addKeyDownHandler(events);
+    box.addKeyUpHandler(events);
     box.addValueChangeHandler(events);
   }
 
