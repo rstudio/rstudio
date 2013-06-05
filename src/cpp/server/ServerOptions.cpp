@@ -185,6 +185,12 @@ ProgramStatus Options::read(int argc, char * const argv[])
                                                    dep.authPamRequiresPriv),
         "deprecated: will always be true");
 
+   options_description monitor("monitor");
+   monitor.add_options()
+      ("monitor-interval-seconds",
+       value<int>(&monitorIntervalSeconds_)->default_value(300),
+       "monitoring interval");
+
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
@@ -192,10 +198,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook
-   addOverlayOptions(&server, &www, &rsession, &auth);
+   addOverlayOptions(&server, &www, &rsession, &auth, &monitor);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth);
-   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
  
    // read options
    bool help = false;

@@ -67,6 +67,11 @@ public:
    virtual ~AsyncServerImpl()
    {
    }
+
+   virtual boost::asio::io_service& ioService()
+   {
+      return acceptorService_.ioService();
+   }
    
    virtual void setAbortOnResourceError(bool abortOnResourceError)
    {

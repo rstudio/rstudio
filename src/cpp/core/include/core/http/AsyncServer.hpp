@@ -20,6 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/asio/io_service.hpp>
 
 #include <core/ScheduledCommand.hpp>
 
@@ -35,6 +36,8 @@ public:
    virtual ~AsyncServer()
    {
    }
+
+   virtual boost::asio::io_service& ioService() = 0;
    
    virtual void setAbortOnResourceError(bool abortOnResourceError) = 0;
    

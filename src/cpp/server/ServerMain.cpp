@@ -33,6 +33,8 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <monitor/http/Client.hpp>
+
 #include <session/SessionConstants.hpp>
 
 
@@ -42,6 +44,7 @@
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerConstants.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
 
@@ -310,6 +313,14 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 
 } // namespace scheduler
 
+
+void sendMetric(const monitor::metrics::Metric& metric)
+{
+   monitor::http::sendMetricAsync(s_pHttpServer->ioService(),
+                                  kMonitorSocketPath,
+                                  server::options().monitorSharedSecret(),
+                                  metric);
+}
 
 } // namespace server
 

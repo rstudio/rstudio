@@ -147,6 +147,11 @@ public:
    {
       return std::string(monitorSharedSecret_.c_str());
    }
+
+   int monitorIntervalSeconds() const
+   {
+      return monitorIntervalSeconds_;
+   }
    
    std::string getOverlayOption(const std::string& name)
    {
@@ -160,7 +165,8 @@ private:
    void addOverlayOptions(boost::program_options::options_description* pServer,
                           boost::program_options::options_description* pWWW,
                           boost::program_options::options_description* pRSession,
-                          boost::program_options::options_description* pAuth);
+                          boost::program_options::options_description* pAuth,
+                          boost::program_options::options_description* pMonitor);
 
    bool validateOverlayOptions(std::string* pErrMsg);
 
@@ -203,6 +209,7 @@ private:
    std::string rsessionConfigFile_;
    std::string rsessionLdLibraryPath_;
    std::string monitorSharedSecret_;
+   int monitorIntervalSeconds_;
    std::map<std::string,std::string> overlayOptions_;
 };
       
