@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:rcv="urn:import:org.rstudio.core.client.cellview">
     <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" />
-    <g:SplitLayoutPanel ui:field="splitPanel" styleName="{style.environmentPane}"></g:SplitLayoutPanel>
+    <rcv:AutoHidingSplitLayoutPanel ui:field="splitPanel" styleName="{style.environmentPane}"></rcv:AutoHidingSplitLayoutPanel>
 </ui:UiBinder>
