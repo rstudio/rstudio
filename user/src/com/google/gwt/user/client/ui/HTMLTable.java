@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -27,9 +29,9 @@ import com.google.gwt.event.dom.client.DragEndHandler;
 import com.google.gwt.event.dom.client.DragEnterEvent;
 import com.google.gwt.event.dom.client.DragEnterHandler;
 import com.google.gwt.event.dom.client.DragEvent;
+import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DragLeaveHandler;
-import com.google.gwt.event.dom.client.DragHandler;
 import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DragStartEvent;
@@ -63,6 +65,54 @@ import java.util.NoSuchElementException;
 @SuppressWarnings("deprecation")
 public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     HasAllDragAndDropHandlers, HasClickHandlers, HasDoubleClickHandlers {
+
+  /**
+   * Interface to access {@link HTMLTable}'s DOM.
+   */
+  private interface HTMLTableImpl {
+    JsArray<com.google.gwt.dom.client.Element> getRows(com.google.gwt.dom.client.Element tbody);
+
+    JsArray<com.google.gwt.dom.client.Element> getCells(com.google.gwt.dom.client.Element row);
+  }
+
+  /**
+   * Standard implementation for accessing the Table DOM.
+   */
+  @SuppressWarnings("unused") // used due to rebinding
+  private static class HTMLTableStandardImpl implements HTMLTableImpl {
+
+    @Override
+    public native JsArray<com.google.gwt.dom.client.Element> getRows(
+        com.google.gwt.dom.client.Element tbody) /*-{
+      return tbody.rows;
+    }-*/;
+
+    @Override
+    public native JsArray<com.google.gwt.dom.client.Element> getCells(
+        com.google.gwt.dom.client.Element row) /*-{
+      return row.cells;
+    }-*/;
+  }
+
+  /**
+   * IE specific implementation for accessing the Table DOM.
+   * see: issue 6938
+   */
+  @SuppressWarnings("unused") // used due to rebinding
+  private static class HTMLTableIEImpl implements HTMLTableImpl {
+
+    @Override
+    public native JsArray<com.google.gwt.dom.client.Element> getRows(
+        com.google.gwt.dom.client.Element tbody) /*-{
+      return tbody.children;
+    }-*/;
+
+    @Override
+    public native JsArray<com.google.gwt.dom.client.Element> getCells(
+        com.google.gwt.dom.client.Element row) /*-{
+      return row.children;
+    }-*/;
+  }
 
   /**
    * Return value for {@link HTMLTable#getCellForEvent}.
@@ -372,16 +422,16 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     }
 
     /**
-     * Native method to get a cell's element.
+     * Get a cell's element.
      * 
-     * @param table the table element
+     * @param tbody the table element
      * @param row the row of the cell
      * @param col the column of the cell
      * @return the element
      */
-    private native Element getCellElement(Element table, int row, int col) /*-{
-      return table.rows[row].cells[col];
-    }-*/;
+    private Element getCellElement(Element tbody, int row, int col) {
+      return impl.getCells(impl.getRows(tbody).get(row)).get(col).cast();
+    }
 
     /**
      * Gets the TD element representing the specified cell unsafely (meaning
@@ -681,9 +731,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       return getRow(bodyElem, row);
     }
 
-    protected native Element getRow(Element elem, int row)/*-{
-      return elem.rows[row];
-    }-*/;
+    protected Element getRow(Element tbody, int row) {
+      return impl.getRows(tbody).get(row).cast();
+    }
 
     /**
      * Convenience methods to set an attribute on a row.
@@ -698,6 +748,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       DOM.setElementAttribute(elem, attrName, value);
     }
   }
+
+  private static final HTMLTableImpl impl = GWT.create(HTMLTableImpl.class);
 
   /**
    * Table's body.
@@ -1227,9 +1279,10 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param row the row
    * @return number of columns in the row
    */
-  protected native int getDOMCellCount(Element tableBody, int row) /*-{
-    return tableBody.rows[row].cells.length;
-  }-*/;
+  protected int getDOMCellCount(Element tableBody, int row) {
+    com.google.gwt.dom.client.Element rowElement = impl.getRows(tableBody).get(row);
+    return impl.getCells(rowElement).length();
+  }
 
   /**
    * Directly ask the underlying DOM what the cell count on the given row is.
@@ -1250,9 +1303,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     return getDOMRowCount(bodyElem);
   }
 
-  protected native int getDOMRowCount(Element elem) /*-{
-    return elem.rows.length;
-  }-*/;
+  protected int getDOMRowCount(Element tbody) {
+    return impl.getRows(tbody).length();
+  }
 
   /**
    * Determines the TD associated with the specified event.
@@ -1469,6 +1522,14 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   protected void setRowFormatter(RowFormatter rowFormatter) {
     this.rowFormatter = rowFormatter;
+  }
+
+  void addCells(Element tbody, int row, int num) {
+    com.google.gwt.dom.client.Element rowElem = impl.getRows(tbody).get(row);
+    for (int i = 0; i < num; i++) {
+      TableCellElement tdElement = Document.get().createTDElement();
+      rowElem.appendChild(tdElement);
+    }
   }
 
   /**

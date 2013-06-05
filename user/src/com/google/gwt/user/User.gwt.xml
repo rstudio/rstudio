@@ -48,6 +48,7 @@
    <inherits name="com.google.gwt.user.Focus"/>
    <inherits name="com.google.gwt.user.Form"/>
    <inherits name="com.google.gwt.user.History"/>
+   <inherits name="com.google.gwt.user.HTMLTable"/>
    <inherits name="com.google.gwt.user.HTTPRequest"/>
    <inherits name="com.google.gwt.user.Hyperlink"/>
    <inherits name="com.google.gwt.user.ImageBundle"/>  

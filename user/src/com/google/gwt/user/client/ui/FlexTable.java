@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * A flexible table that creates cells on demand. It can be jagged (that is,
@@ -91,14 +90,6 @@ public class FlexTable extends HTMLTable {
       DOM.setElementPropertyInt(ensureElement(row, column), "rowSpan", rowSpan);
     }
   }
-
-  private static native void addCells(Element table, int row, int num)/*-{
-    var rowElem = table.rows[row];
-    for(var i = 0; i < num; i++){
-      var cell = $doc.createElement("td");
-      rowElem.appendChild(cell);  
-    }
-  }-*/;
 
   public FlexTable() {
     super();
