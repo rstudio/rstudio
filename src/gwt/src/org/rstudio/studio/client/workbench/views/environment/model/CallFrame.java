@@ -26,6 +26,15 @@ public class CallFrame extends JavaScriptObject
    {
    }
 
+   public static native CallFrame createGlobalFrame() /*-{
+      var frame = new Object();
+      frame.function_name = "Global environment";
+      frame.context_depth = 0;
+      frame.file_name = "";
+      frame.line_number = 0;
+      return frame;
+   }-*/;
+
    public final native String getFunctionName() /*-{
        return this.function_name;
    }-*/;

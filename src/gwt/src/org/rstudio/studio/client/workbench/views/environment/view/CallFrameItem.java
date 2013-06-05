@@ -46,10 +46,18 @@ public class CallFrameItem extends Composite
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      functionName.setText(
-              frame.getFunctionName() + " at " +
-              frame.getFileName().trim() + ":" +
-              frame.getLineNumber());
+      if (frame_.getContextDepth() > 0)
+      {
+         functionName.setText(
+                 frame.getFunctionName() + " at " +
+                 frame.getFileName().trim() + ":" +
+                 frame.getLineNumber());
+
+      }
+      else
+      {
+         functionName.setText(frame.getFunctionName());
+      }
       functionName.addClickHandler(this);
    }
 

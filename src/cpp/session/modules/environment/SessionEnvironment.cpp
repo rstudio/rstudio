@@ -232,7 +232,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
    RCNTXT* pContextTop = getFunctionContext(TOP_FUNCTION, &depth);
 
    // we entered (or left) a call frame
-   if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment())
+   if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment() ||
+       depth != *pContextDepth)
    {
       json::Object varJson;
 

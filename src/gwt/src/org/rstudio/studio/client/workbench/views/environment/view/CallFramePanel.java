@@ -50,6 +50,11 @@ public class CallFramePanel extends ResizeComposite
          }
          callFramePanel.add(item);
       }
+      /* TODO(jmcphers) - add an item to represent the bottom of the callstack?
+      callFramePanel.add(new CallFrameItem(
+              CallFrame.createGlobalFrame(),
+              observer_));
+       */
    }
 
    public void clearCallFrames()
