@@ -46,19 +46,8 @@ public class CallFrameItem extends Composite
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
-      if (frame_.getContextDepth() > 0)
-      {
-         functionName.setText(
-                 frame.getFunctionName() + " at " +
-                 frame.getFileName().trim() + ":" +
-                 frame.getLineNumber());
-
-      }
-      else
-      {
-         functionName.setText(frame.getFunctionName());
-      }
       functionName.addClickHandler(this);
+      setDisplayText(frame_.getLineNumber());
    }
 
    public void setActive()
@@ -67,11 +56,33 @@ public class CallFrameItem extends Composite
       isActive_ = true;
    }
 
+   public void updateLineNumber(int newLineNumber)
+   {
+      setDisplayText(newLineNumber);
+   }
+
    public void onClick(ClickEvent event)
    {
       if (!isActive_)
       {
          observer_.changeContextDepth(frame_.getContextDepth());
+      }
+   }
+
+   // Private functions -------------------------------------------------------
+
+   private void setDisplayText(int lineNumber)
+   {
+      if (frame_.getContextDepth() > 0)
+      {
+         functionName.setText(
+                 frame_.getFunctionName() + " at " +
+                 frame_.getFileName().trim() + ":" +
+                 lineNumber);
+      }
+      else
+      {
+         functionName.setText(frame_.getFunctionName());
       }
    }
 

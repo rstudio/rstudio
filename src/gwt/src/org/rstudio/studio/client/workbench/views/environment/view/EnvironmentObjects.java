@@ -237,6 +237,11 @@ public class EnvironmentObjects extends ResizeComposite
       deferredExpandedObjects_ = objects;
    }
 
+   public void updateLineNumber (int newLineNumber)
+   {
+      callFramePanel_.updateLineNumber(newLineNumber);
+   }
+
    // Private methods: object management --------------------------------------
 
    private int indexOfExistingObject(String objectName)

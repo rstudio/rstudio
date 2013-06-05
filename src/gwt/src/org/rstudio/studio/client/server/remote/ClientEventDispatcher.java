@@ -62,10 +62,8 @@ import org.rstudio.studio.client.workbench.views.data.events.ViewDataEvent;
 import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
-import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent.LineData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -474,6 +472,11 @@ public class ClientEventDispatcher
          {
             String objectName = event.getData();
             eventBus_.fireEvent(new EnvironmentObjectRemovedEvent(objectName));
+         }
+         else if (type.equals(ClientEvent.BrowserLineChanged))
+         {
+            LineData lineData = event.getData();
+            eventBus_.fireEvent(new BrowserLineChangedEvent(lineData));
          }
          else
          {

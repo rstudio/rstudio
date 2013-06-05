@@ -47,7 +47,7 @@ public class CallFrame extends JavaScriptObject
        return this.file_name;
    }-*/;
 
-   public final native String getLineNumber() /*-{
+   public final native int getLineNumber() /*-{
        return this.line_number;
    }-*/;
 }

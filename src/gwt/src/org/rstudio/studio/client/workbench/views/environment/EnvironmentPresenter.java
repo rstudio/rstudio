@@ -59,10 +59,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent.LineData;
 import org.rstudio.studio.client.workbench.views.environment.model.*;
 
 
@@ -97,6 +95,7 @@ public class EnvironmentPresenter extends BasePresenter
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
+      void setBrowserLine(int browserLine);
    }
    
    @Inject
@@ -168,6 +167,17 @@ public class EnvironmentPresenter extends BasePresenter
          {
             view_.removeObject(event.getObjectName());
          }
+      });
+
+      eventBus.addHandler(BrowserLineChangedEvent.TYPE,
+            new BrowserLineChangedEvent.Handler()
+      {
+         @Override
+         public void onBrowserLineChanged(BrowserLineChangedEvent event)
+         {
+            view_.setBrowserLine(event.getLineNumber());
+         }
+
       });
 
       new JSObjectStateValue(

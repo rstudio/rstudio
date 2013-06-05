@@ -97,6 +97,7 @@ extern const int kEnvironmentRefresh;
 extern const int kContextDepthChanged;
 extern const int kEnvironmentAssigned;
 extern const int kEnvironmentRemoved;
+extern const int kBrowserLineChanged;
 }
    
 class ClientEvent

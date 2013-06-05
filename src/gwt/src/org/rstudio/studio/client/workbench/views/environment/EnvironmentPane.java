@@ -219,6 +219,12 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.onResize();
    }
 
+   @Override
+   public void setBrowserLine(int newLineNumber)
+   {
+      objects_.updateLineNumber(newLineNumber);
+   }
+
    // EnviromentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)

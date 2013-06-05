@@ -123,7 +123,6 @@ void getSourceRefFromContext(const RCNTXT* pContext,
          LOG_ERROR(error);
       }
    }
-
    return;
 }
 
@@ -201,6 +200,14 @@ void enqueContextDepthChangedEvent(int depth)
    module_context::enqueClientEvent(event);
 }
 
+void enqueBrowserLineChangedEvent(int newLineNumber)
+{
+   json::Object varJson;
+   varJson["line_number"] = newLineNumber;
+   ClientEvent event (client_events::kBrowserLineChanged, varJson);
+   module_context::enqueClientEvent(event);
+}
+
 Error setContextDepth(boost::shared_ptr<int> pContextDepth,
                       const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
@@ -251,6 +258,12 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       s_environmentMonitor.setMonitoredEnvironment(pContextTop->cloenv);
       *pContextDepth = depth;
       enqueContextDepthChangedEvent(depth);
+   }
+   // if we're debugging and stayed in the same frame, update the line number
+   else if (depth > 0)
+   {
+      int lineNumber = r::sexp::asInteger(r::getGlobalContext()->srcref);
+      enqueBrowserLineChangedEvent(lineNumber);
    }
 }
 

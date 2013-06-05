@@ -25,6 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
+import java.util.ArrayList;
+
 public class CallFramePanel extends ResizeComposite
 {
    public interface Binder extends UiBinder<Widget, CallFramePanel>
@@ -35,6 +37,7 @@ public class CallFramePanel extends ResizeComposite
    {
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       observer_ = observer;
+      callFrameItems_ = new ArrayList<CallFrameItem>();
    }
 
    public void setCallFrames(JsArray<CallFrame> frameList, int contextDepth)
@@ -48,6 +51,7 @@ public class CallFramePanel extends ResizeComposite
          {
             item.setActive();
          }
+         callFrameItems_.add(item);
          callFramePanel.add(item);
       }
       /* TODO(jmcphers) - add an item to represent the bottom of the callstack?
@@ -57,13 +61,23 @@ public class CallFramePanel extends ResizeComposite
        */
    }
 
+   public void updateLineNumber(int newLineNumber)
+   {
+      if (callFrameItems_.size() > 0)
+      {
+         callFrameItems_.get(0).updateLineNumber(newLineNumber);
+      }
+   }
+
    public void clearCallFrames()
    {
       callFramePanel.clear();
+      callFrameItems_.clear();
    }
 
    @UiField
    VerticalPanel callFramePanel;
 
    Observer observer_;
+   ArrayList<CallFrameItem> callFrameItems_;
 }
