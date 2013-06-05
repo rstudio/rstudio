@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac.typemodel;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
+import com.google.gwt.dev.javac.typemodel.test.MyArrayList;
 import com.google.gwt.dev.javac.typemodel.test.MyCustomList;
 import com.google.gwt.dev.javac.typemodel.test.MyIntegerList;
 import com.google.gwt.dev.javac.typemodel.test.MyList;
@@ -49,8 +50,25 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
-  public void testGetInheritableMethods() {
-    // TODO Auto-generated method stub
+  public void testGetInheritableMethods() throws NotFoundException {
+    JMethod addMethod = null;
+    JMethod indexedAddMethod = null;
+    for (JMethod jMethod : getTestType().getInheritableMethods()) {
+      if (jMethod.getName().equals("add")) {
+        if (jMethod.getParameters().length == 1) {
+          assertNull(addMethod);
+          addMethod = jMethod;
+        } else {
+          assertEquals(2, jMethod.getParameters().length);
+          assertNull(indexedAddMethod);
+          indexedAddMethod = jMethod;
+        }
+      }
+    }
+
+    JClassType javaLangObject = moduleContext.getOracle().getJavaLangObject();
+    assertEquals(javaLangObject, addMethod.getParameters()[0].getType());
+    assertEquals(javaLangObject, indexedAddMethod.getParameters()[1].getType());
   }
 
   @Override
@@ -111,7 +129,7 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
   @Override
   protected JRawType getTestType() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
-    JClassType testType = oracle.getType(ArrayList.class.getName());
+    JClassType testType = oracle.getType(MyArrayList.class.getName());
     return testType.isGenericType().getRawType();
   }
 }

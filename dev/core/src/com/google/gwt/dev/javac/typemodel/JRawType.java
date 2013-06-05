@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a raw type; that is a generic type with no type arguments.
@@ -101,6 +102,18 @@ public class JRawType extends JMaybeParameterizedType implements
       }
     }
     return interfaces.toArray(TypeOracle.NO_JCLASSES);
+  }
+
+  @Override
+  protected void getInheritableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature) {
+    members.getInheritableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+  }
+
+  @Override
+  protected void getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature) {
+    members.getInheritableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
   }
 
   @Override
