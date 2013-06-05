@@ -81,7 +81,7 @@ void checkForSaveActionChanged()
    }
 }
 
-void onSuspend(Settings* pSettings)
+void onSuspend(const r::session::RSuspendOptions&, Settings* pSettings)
 {
    pSettings->set(kSaveActionState, s_lastSaveAction);
    pSettings->set(kImageDirtyState, r::session::imageIsDirty());
