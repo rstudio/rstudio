@@ -45,6 +45,7 @@ public:
    Metric(const std::string& scope,
           const std::string& name,
           double value,
+          int intervalSeconds,
           MetricType type = GaugeMetric,
           const std::string& unit = std::string(),
           boost::posix_time::ptime timestamp =
@@ -52,6 +53,7 @@ public:
       : scope_(scope),
         name_(name),
         value_(value),
+        intervalSeconds_(intervalSeconds),
         type_(type),
         unit_(unit),
         timestamp_(timestamp)
@@ -66,6 +68,7 @@ public:
    const std::string& scope() const { return scope_; }
    const std::string& name() const { return name_; }
    double value() const { return value_; }
+   int intervalSeconds() const { return intervalSeconds_; }
    MetricType type() const { return type_; }
    const std::string& unit() const { return unit_; }
    const boost::posix_time::ptime& timestamp() const { return timestamp_; }
@@ -74,6 +77,7 @@ private:
    std::string scope_;
    std::string name_;
    double value_;
+   int intervalSeconds_;
    MetricType type_;
    std::string unit_;
    boost::posix_time::ptime timestamp_;

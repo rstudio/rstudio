@@ -39,6 +39,7 @@ std::string metricToJson(const Metric& metric)
    metricJson["scope"] = metric.scope();
    metricJson["name"] = metric.name();
    metricJson["value"] = metric.value();
+   metricJson["interval"] = metric.intervalSeconds();
    metricJson["type"] = metric.type();
    metricJson["unit"] = metric.unit();
    metricJson["ts"] = date_time::millisecondsSinceEpoch(metric.timestamp());
@@ -64,11 +65,12 @@ Error metricFromJson(const std::string& metricJson, Metric* pMetric)
    // read the fields
    std::string scope, name, unit;
    double value, ts;
-   int type;
+   int type, intervalSeconds;
    Error error = json::readObject(jsonObject,
                                   "scope", &scope,
                                   "name", &name,
                                   "value", &value,
+                                  "interval", &intervalSeconds,
                                   "type", &type,
                                   "unit", &unit,
                                   "ts", &ts);
@@ -78,6 +80,7 @@ Error metricFromJson(const std::string& metricJson, Metric* pMetric)
    *pMetric = Metric(scope,
                      name,
                      value,
+                     intervalSeconds,
                      (MetricType)type,
                      unit,
                      date_time::timeFromMillisecondsSinceEpoch(ts));
