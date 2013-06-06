@@ -61,8 +61,8 @@ public class MouseWheelEvent extends MouseEvent<MouseWheelHandler> {
   }
 
   /**
-   * Get the change in the mouse wheel position along the Y-axis; positive if
-   * the mouse wheel is moving north (toward the top of the screen) or negative
+   * Get the change in the mouse wheel position along the Y-axis; negative if
+   * the mouse wheel is moving north (toward the top of the screen) or positive
    * if the mouse wheel is moving south (toward the bottom of the screen).
    * 
    * Note that delta values are not normalized across browsers or OSes.
