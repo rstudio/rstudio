@@ -13,6 +13,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability setuid,
   capability sys_resource,
   capability kill,
+  capability chown,
   /** rwixmkl,
 
 
