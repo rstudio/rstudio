@@ -37,8 +37,8 @@ public:
 
    Metric(const std::string& scope,
           const std::string& name,
-          double value,
           int intervalSeconds,
+          double value,
           const std::string& type = "gauge",
           const std::string& unit = std::string(),
           boost::posix_time::ptime timestamp =
@@ -60,8 +60,8 @@ public:
    // property accessors
    const std::string& scope() const { return scope_; }
    const std::string& name() const { return name_; }
-   double value() const { return value_; }
    int intervalSeconds() const { return intervalSeconds_; }
+   double value() const { return value_; }
    const std::string& type() const { return type_; }
    const std::string& unit() const { return unit_; }
    const boost::posix_time::ptime& timestamp() const { return timestamp_; }
@@ -69,8 +69,8 @@ public:
 private:
    std::string scope_;
    std::string name_;
-   double value_;
    int intervalSeconds_;
+   double value_;
    std::string type_;
    std::string unit_;
    boost::posix_time::ptime timestamp_;
