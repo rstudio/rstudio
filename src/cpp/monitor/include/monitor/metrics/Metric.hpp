@@ -30,13 +30,6 @@ namespace core {
 namespace monitor {
 namespace metrics {
 
-enum MetricType
-{
-   GaugeMetric = 0,
-   TimerMetric = 1,
-   CounterMetric = 2
-};
-
 class Metric
 {
 public:
@@ -46,7 +39,7 @@ public:
           const std::string& name,
           double value,
           int intervalSeconds,
-          MetricType type = GaugeMetric,
+          const std::string& type = "gauge",
           const std::string& unit = std::string(),
           boost::posix_time::ptime timestamp =
                      boost::posix_time::microsec_clock::universal_time())
@@ -69,7 +62,7 @@ public:
    const std::string& name() const { return name_; }
    double value() const { return value_; }
    int intervalSeconds() const { return intervalSeconds_; }
-   MetricType type() const { return type_; }
+   const std::string& type() const { return type_; }
    const std::string& unit() const { return unit_; }
    const boost::posix_time::ptime& timestamp() const { return timestamp_; }
 
@@ -78,7 +71,7 @@ private:
    std::string name_;
    double value_;
    int intervalSeconds_;
-   MetricType type_;
+   std::string type_;
    std::string unit_;
    boost::posix_time::ptime timestamp_;
 };

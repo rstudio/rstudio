@@ -63,9 +63,9 @@ Error metricFromJson(const std::string& metricJson, Metric* pMetric)
    json::Object jsonObject = jsonValue.get_obj();
 
    // read the fields
-   std::string scope, name, unit;
+   std::string scope, name, type, unit;
    double value, ts;
-   int type, intervalSeconds;
+   int intervalSeconds;
    Error error = json::readObject(jsonObject,
                                   "scope", &scope,
                                   "name", &name,
@@ -81,7 +81,7 @@ Error metricFromJson(const std::string& metricJson, Metric* pMetric)
                      name,
                      value,
                      intervalSeconds,
-                     (MetricType)type,
+                     type,
                      unit,
                      date_time::timeFromMillisecondsSinceEpoch(ts));
 
