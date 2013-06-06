@@ -45,8 +45,8 @@ public:
                      boost::posix_time::microsec_clock::universal_time())
       : scope_(scope),
         name_(name),
-        value_(value),
         intervalSeconds_(intervalSeconds),
+        value_(value),
         type_(type),
         unit_(unit),
         timestamp_(timestamp)
