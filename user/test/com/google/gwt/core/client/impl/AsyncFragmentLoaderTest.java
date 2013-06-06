@@ -152,7 +152,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 5;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, progress);
+        new int[] {}, reqs, progress, null);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(numEntries);
@@ -184,7 +184,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 10;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
 
     // request fragment 1
     MockErrorHandler error1try1 = new MockErrorHandler();
@@ -298,7 +298,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, progress);
+        new int[] {}, reqs, progress, null);
 
     // Load fragment 1
     loader.inject(1, NULL_ERROR_HANDLER);
@@ -337,7 +337,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, progress);
+        new int[] {}, reqs, progress, null);
 
     // Request 1
     loader.inject(1, NULL_ERROR_HANDLER);
@@ -377,7 +377,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(1);
@@ -431,7 +431,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
 
     /*
      * Repeatedly queue up extra downloads waiting on an initial and then fail.
@@ -453,7 +453,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 20;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
     loader.startPrefetching();
     // request a prefetch of something in the initial load sequence
     loader.setPrefetchQueue(2);
@@ -542,7 +542,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 20;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
     loader.startPrefetching();
     // request a prefetch of something in the initial load sequence
     loader.setPrefetchQueue(3, 2, 1);
@@ -588,7 +588,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 20;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, progress);
+        new int[] {}, reqs, progress, null);
     loader.stopPrefetching();
     // Prefetch 1, but leave prefetching off
     loader.setPrefetchQueue(1);
@@ -630,7 +630,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 20;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries,
-        new int[] {}, reqs, progress);
+        new int[] {}, reqs, progress, null);
     loader.startPrefetching();
 
     // Load the leftovers and one fragment
@@ -678,7 +678,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
     MockProgressLogger progress = new MockProgressLogger();
     int numEntries = 6;
     AsyncFragmentLoader loader = new AsyncFragmentLoader(numEntries, new int[] {
-        1, 2, 3}, reqs, progress);
+        1, 2, 3}, reqs, progress, null);
 
     loader.inject(1, NULL_ERROR_HANDLER);
     reqs.assertFragmentsRequested(1);
