@@ -1155,7 +1155,8 @@ public class Source implements InsertSourceHandler,
                        event.getPosition(),
                        null, 
                        event.getHighlightLine(),
-                       false);
+                       false,
+                       event.getSetFocus());
    }
    
    
@@ -1170,6 +1171,7 @@ public class Source implements InsertSourceHandler,
                        event.getPosition(),
                        event.getPattern(),
                        true,
+                       true,
                        true);
       
    }
@@ -1180,7 +1182,8 @@ public class Source implements InsertSourceHandler,
                                  final FilePosition position,
                                  final String pattern,
                                  final boolean highlightLine,
-                                 final boolean forceHighlightMode)
+                                 final boolean forceHighlightMode,
+                                 final boolean setFocus)
    { 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
@@ -1232,7 +1235,8 @@ public class Source implements InsertSourceHandler,
                         !uiPrefs_.highlightSelectedLine().getValue();
                   target.navigateToPosition(srcPosition,
                                             false,
-                                            highlight);
+                                            highlight,
+                                            setFocus);
                }
             });
          }

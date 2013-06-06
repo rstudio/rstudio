@@ -79,7 +79,8 @@ public class TextFileType extends EditableFileType
       eventBus.fireEvent(new OpenSourceFileEvent(file,
                                                  position, 
                                                  this, 
-                                                 highlightLine));
+                                                 highlightLine,
+                                                 true));
    }
    
    @Override

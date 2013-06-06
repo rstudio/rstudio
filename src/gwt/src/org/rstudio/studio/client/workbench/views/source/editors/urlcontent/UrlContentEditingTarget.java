@@ -204,6 +204,14 @@ public class UrlContentEditingTarget implements EditingTarget
                                   boolean highlightLine)
    {   
    }
+
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  boolean setFocus)
+   {
+   }
    
    @Override
    public void restorePosition(SourcePosition position)

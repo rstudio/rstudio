@@ -414,11 +414,12 @@ public class EnvironmentPresenter extends BasePresenter
       if (file.length() > 0 && lineNumber > 0)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
-         FilePosition filePosition = FilePosition.create(lineNumber, 1);
+         FilePosition filePosition = FilePosition.create(lineNumber, 0);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
                                                      filePosition,
                                                      FileTypeRegistry.R,
-                                                     true));
+                                                     true,
+                                                     false));
       }
    }
 

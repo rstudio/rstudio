@@ -75,7 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-public class AceEditor implements DocDisplay, 
+public class AceEditor implements DocDisplay,
                                   InputEditorDisplay,
                                   NavigableSourceEditor
 {
@@ -1436,10 +1436,19 @@ public class AceEditor implements DocDisplay,
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
+      navigateToPosition(position, recordCurrent, highlightLine, true);
+   }
+
+   @Override
+   public void navigateToPosition(SourcePosition position,
+                                  boolean recordCurrent,
+                                  boolean highlightLine,
+                                  boolean setFocus)
+   {
       if (recordCurrent)
          recordCurrentNavigationPosition();
-      
-      navigate(position, true, highlightLine);
+
+      navigate(position, recordCurrent, highlightLine, setFocus);
    }
    
    @Override
@@ -1457,12 +1466,13 @@ public class AceEditor implements DocDisplay,
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {
-      navigate(srcPosition, addToHistory, false);
+      navigate(srcPosition, addToHistory, false, true);
    }
    
    private void navigate(SourcePosition srcPosition, 
                          boolean addToHistory,
-                         boolean highlightLine)
+                         boolean highlightLine,
+                         boolean setFocus)
    {  
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
@@ -1485,8 +1495,11 @@ public class AceEditor implements DocDisplay,
       else
          moveCursorNearTop();
       
-      // set focus
-      focus();
+      // set focus if requested
+      if (setFocus)
+      {
+         focus();
+      }
       
       if (highlightLine)
          applyLineHighlight(position.getRow());

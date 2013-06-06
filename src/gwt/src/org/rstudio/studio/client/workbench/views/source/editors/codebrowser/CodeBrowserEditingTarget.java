@@ -413,13 +413,23 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                   final boolean recordCurrent,
                                   final boolean highlightLine)
    {
+      navigateToPosition(position, recordCurrent, highlightLine, true);
+   }
+
+   @Override
+   public void navigateToPosition(final SourcePosition position,
+                                  final boolean recordCurrent,
+                                  final boolean highlightLine,
+                                  final boolean setFocus)
+   {
       ensureContext(position.getContext(), new Command() {
          @Override
          public void execute()
          {
-            docDisplay_.navigateToPosition(position, 
-                                           recordCurrent, 
-                                           highlightLine);
+            docDisplay_.navigateToPosition(position,
+                                           recordCurrent,
+                                           highlightLine,
+                                           setFocus);
             view_.scrollToLeft();
          }
       });

@@ -32,6 +32,11 @@ public interface NavigableSourceEditor
    void navigateToPosition(SourcePosition position, 
                            boolean recordCurrentPosition,
                            boolean highlightLine);
+
+   void navigateToPosition(SourcePosition position,
+                           boolean recordCurrentPosition,
+                           boolean highlightLine,
+                           boolean setFocus);
    
    void restorePosition(SourcePosition position);
    
