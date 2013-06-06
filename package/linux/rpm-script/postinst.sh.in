@@ -20,6 +20,7 @@ mkdir -p /var/lib/rstudio-server
 mkdir -p /var/lib/rstudio-server/conf
 mkdir -p /var/lib/rstudio-server/body
 mkdir -p /var/lib/rstudio-server/proxy
+mkdir -p /var/lib/rstudio-server/rrd
 
 # write installed indicator then force suspend active sessions
 # (so that the new client is never paired against the old server)
