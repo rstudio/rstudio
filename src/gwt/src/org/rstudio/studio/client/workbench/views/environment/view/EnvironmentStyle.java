@@ -19,6 +19,7 @@ import com.google.gwt.resources.client.CssResource;
 
 interface EnvironmentStyle extends CssResource
 {
+   int headerRowHeight();
    String expandCol();
    String nameCol();
    String valueCol();

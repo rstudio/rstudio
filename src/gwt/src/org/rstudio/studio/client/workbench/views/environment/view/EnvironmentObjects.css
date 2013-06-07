@@ -1,6 +1,8 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@def headerRowHeight 17px;
+
 .environmentPane
 {
    font-family: fixedWidthFont;
@@ -86,6 +88,7 @@
    background-color: #f0f0f0;
    font-family: proportionalFont;
    font-weight: bold;
+   height: headerRowHeight;
 }
 
 .categoryHeaderText

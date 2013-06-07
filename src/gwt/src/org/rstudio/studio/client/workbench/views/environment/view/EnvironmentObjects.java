@@ -117,7 +117,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
 
       splitPanel.addSouth(callFramePanel_, splitPosition_);
-      splitPanel.setWidgetMinSize(callFramePanel_, 20);
+      splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
       splitPanel.add(objectList_);
    }
 
@@ -213,6 +213,14 @@ public class EnvironmentObjects extends ResizeComposite
    public void setCallFrames(JsArray<CallFrame> frameList)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
+
+      // after setting the frames, resize the call frame panel to neatly wrap
+      // the new list, up to a maximum of half the height of the split panel.
+      int desiredCallFramePanelSize = style.headerRowHeight() +
+                                      callFramePanel_.getHeightOfAllFrames();
+      splitPanel.setWidgetSize(callFramePanel_,
+                               Math.min(desiredCallFramePanelSize,
+                                        splitPanel.getOffsetHeight() / 2));
    }
 
    public void setEnvironmentName(String environmentName)

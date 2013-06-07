@@ -100,7 +100,10 @@
     argSummary <- ""
     for (arg in args)
     {
-        thisArg <- capture.output(print(arg))
+        thisArg <- if (is.language(arg))
+                capture.output(print(arg))
+            else
+                as.character(arg)
         argSummary <- paste(argSummary, thisArg, sep =
             if (argSummary == "") "" else ", ")
     }

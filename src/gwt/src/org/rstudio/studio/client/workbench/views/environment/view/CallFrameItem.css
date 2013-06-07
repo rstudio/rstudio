@@ -1,15 +1,20 @@
-
+@def callFrameHeight 17px;
+@def callFrameMargin 2px;
 
 .callFrame
 {
-   margin-left: 15px;
-   padding-left: 5px;
-   padding-right: 5px;
+   padding-left: 10px;
+   padding-right: 10px;
    cursor: pointer;
    border: 1px solid transparent;
    font-size: 90%;
-   margin-bottom: 2px;
+   margin-bottom: callFrameMargin;
    width: 100%;
+   height: callFrameHeight;
+   box-sizing: border-box;
+   overflow-x: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
 }
 
 .activeFrame

@@ -36,6 +36,8 @@ public class CallFrameItem extends Composite
 
    interface Style extends CssResource
    {
+      int callFrameHeight();
+      int callFrameMargin();
       String activeFrame();
       String callFrame();
       String topFrame();
@@ -72,6 +74,11 @@ public class CallFrameItem extends Composite
       {
          observer_.changeContextDepth(frame_.getContextDepth());
       }
+   }
+
+   public int getHeight()
+   {
+      return style.callFrameHeight() + (style.callFrameMargin() * 2);
    }
 
    // Private functions -------------------------------------------------------

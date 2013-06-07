@@ -42,11 +42,13 @@ public class CallFramePanel extends ResizeComposite
 
    public void setCallFrames(JsArray<CallFrame> frameList, int contextDepth)
    {
-      callFramePanel.clear();
+      clearCallFrames();
       for (int idx = 0; idx < frameList.length(); idx++)
       {
          CallFrame frame = frameList.get(idx);
          CallFrameItem item = new CallFrameItem(frame, observer_);
+         // when the context depth changes, the first item is selected
+         // automatically
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();
@@ -54,11 +56,6 @@ public class CallFramePanel extends ResizeComposite
          callFrameItems_.add(item);
          callFramePanel.add(item);
       }
-      /* TODO(jmcphers) - add an item to represent the bottom of the callstack?
-      callFramePanel.add(new CallFrameItem(
-              CallFrame.createGlobalFrame(),
-              observer_));
-       */
    }
 
    public void updateLineNumber(int newLineNumber)
@@ -73,6 +70,23 @@ public class CallFramePanel extends ResizeComposite
    {
       callFramePanel.clear();
       callFrameItems_.clear();
+   }
+
+   public int getHeightOfAllFrames()
+   {
+      if (callFrameItems_.size() == 0)
+      {
+         return 0;
+      }
+      else
+      {
+         // simplification because all frames are the same size--if this changes,
+         // iterate over each frame and query its height
+         int singleFrameSize = callFrameItems_.get(0).getHeight();
+
+         // leave a half-frame of white space so UI doesn't feel jammed
+         return (int)(singleFrameSize * (callFrameItems_.size() + 0.5));
+      }
    }
 
    @UiField
