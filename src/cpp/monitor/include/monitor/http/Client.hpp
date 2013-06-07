@@ -29,24 +29,24 @@ namespace metrics {
 
 namespace http {
 
-void sendMetric(const std::string& metricsSocket,
-                const std::string& sharedSecret,
-                const metrics::Metric& metric);
+void sendMetrics(const std::string& metricsSocket,
+                 const std::string& sharedSecret,
+                 const std::vector<metrics::Metric>& metrics);
 
-void sendMultiMetric(const std::string& metricsSocket,
-                     const std::string& sharedSecret,
-                     const metrics::MultiMetric& metric);
+void sendMultiMetrics(const std::string& metricsSocket,
+                      const std::string& sharedSecret,
+                      const std::vector<metrics::MultiMetric>& metrics);
 
-void sendMetricAsync(boost::asio::io_service& ioService,
-                     const std::string& metricsSocket,
-                     const std::string& sharedSecret,
-                     const metrics::Metric& metric);
+void sendMetricsAsync(boost::asio::io_service& ioService,
+                      const std::string& metricsSocket,
+                      const std::string& sharedSecret,
+                      const std::vector<metrics::Metric>& metrics);
 
 
-void sendMultiMetricAsync(boost::asio::io_service& ioService,
-                          const std::string& metricsSocket,
-                          const std::string& sharedSecret,
-                          const metrics::MultiMetric& metric);
+void sendMultiMetricsAsync(boost::asio::io_service& ioService,
+                           const std::string& metricsSocket,
+                           const std::string& sharedSecret,
+                           const std::vector<metrics::MultiMetric>& metrics);
 
 
 } // namespace http

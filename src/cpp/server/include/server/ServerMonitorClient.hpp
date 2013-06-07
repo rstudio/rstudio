@@ -16,12 +16,30 @@
 #ifndef SERVER_MONITOR_CLIENT_HPP
 #define SERVER_MONITOR_CLIENT_HPP
 
+#include <vector>
 
 #include <monitor/metrics/Metric.hpp>
 
 namespace server {
 
-void sendMetric(const monitor::metrics::Metric& metric);
+void sendMetrics(const std::vector<monitor::metrics::Metric>& metrics);
+
+inline void sendMetric(const monitor::metrics::Metric& metric)
+{
+   std::vector<monitor::metrics::Metric> metrics;
+   metrics.push_back(metric);
+   sendMetrics(metrics);
+}
+
+void sendMetrics(const std::vector<monitor::metrics::MultiMetric>& metrics);
+
+inline void sendMetric(const monitor::metrics::MultiMetric& metric)
+{
+   std::vector<monitor::metrics::MultiMetric> metrics;
+   metrics.push_back(metric);
+   sendMetrics(metrics);
+}
+
 
 } // namespace server
 

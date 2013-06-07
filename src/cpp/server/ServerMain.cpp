@@ -314,12 +314,20 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 } // namespace scheduler
 
 
-void sendMetric(const monitor::metrics::Metric& metric)
+void sendMetrics(const std::vector<monitor::metrics::Metric>& metrics)
 {
-   monitor::http::sendMetricAsync(s_pHttpServer->ioService(),
-                                  kMonitorSocketPath,
-                                  server::options().monitorSharedSecret(),
-                                  metric);
+   monitor::http::sendMetricsAsync(s_pHttpServer->ioService(),
+                                   kMonitorSocketPath,
+                                   server::options().monitorSharedSecret(),
+                                   metrics);
+}
+
+void sendMetrics(const std::vector<monitor::metrics::MultiMetric>& metrics)
+{
+   monitor::http::sendMultiMetricsAsync(s_pHttpServer->ioService(),
+                                        kMonitorSocketPath,
+                                        server::options().monitorSharedSecret(),
+                                        metrics);
 }
 
 } // namespace server
