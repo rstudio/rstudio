@@ -143,7 +143,7 @@ private:
 
 // metric handlers
 typedef boost::function<void(const Metric&)> MetricHandler;
-typedef boost::function<void(const Metric&)> MultiMetricHandler;
+typedef boost::function<void(const MultiMetric&)> MultiMetricHandler;
 
 // json serialization
 core::json::Object metricToJson(const Metric& metric);
