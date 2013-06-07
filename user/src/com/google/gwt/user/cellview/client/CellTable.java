@@ -824,11 +824,11 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     // enabled), and refreshColumnWidth/clearColumnWidth. The latter two are no op if setColumnWidth
     // is not invoked first.
     if (colGroupEnabled) {
-      TableColElement columnElement = ensureTableColElement(column);
-      columnElement.getStyle().setProperty("width", width == null ? "" : width);
-
-      boolean isColumnVisible = !"0".equals(width) && !"0px".equals(width);
-      setVisible(columnElement, isColumnVisible);
+      if (width == null) {
+        ensureTableColElement(column).getStyle().clearWidth();
+      } else {
+        ensureTableColElement(column).getStyle().setProperty("width", width);
+      }
     }
   }
 

@@ -297,7 +297,6 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     table.removeColumn(column1);
     table.getPresenter().flush();
     assertEquals("0px", col1.getStyle().getWidth());
-    assertEquals("none", col1.getStyle().getDisplay());
   }
 
   @Override
