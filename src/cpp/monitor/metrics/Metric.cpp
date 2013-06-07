@@ -38,7 +38,7 @@ json::Object metricBaseToJson(const MetricBase& metric)
    metricJson["interval"] = metric.intervalSeconds();
    metricJson["type"] = metric.type();
    metricJson["unit"] = metric.unit();
-   metricJson["ts"] = date_time::millisecondsSinceEpoch(metric.timestamp());
+   metricJson["ts"] = date_time::secondsSinceEpoch(metric.timestamp());
    return metricJson;
 }
 
@@ -102,7 +102,7 @@ Error metricFromJson(const json::Object& metricJson, Metric* pMetric)
                      MetricData(name, value),
                      type,
                      unit,
-                     date_time::timeFromMillisecondsSinceEpoch(ts));
+                     date_time::timeFromSecondsSinceEpoch(ts));
 
    return Success();
 }
@@ -166,7 +166,7 @@ Error metricFromJson(const json::Object& multiMetricJson,
                                data,
                                type,
                                unit,
-                               date_time::timeFromMillisecondsSinceEpoch(ts));
+                               date_time::timeFromSecondsSinceEpoch(ts));
 
    return Success();
 }
