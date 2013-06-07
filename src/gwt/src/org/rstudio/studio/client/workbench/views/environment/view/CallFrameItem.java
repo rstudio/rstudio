@@ -81,6 +81,18 @@ public class CallFrameItem extends Composite
       return style.callFrameHeight() + (style.callFrameMargin() * 2);
    }
 
+   public static boolean isNavigatableFilename(String fileName)
+   {
+      if (fileName.length() > 0 &&
+          !fileName.equalsIgnoreCase("NULL") &&
+          !fileName.equalsIgnoreCase("<tmp>") &&
+          !fileName.equalsIgnoreCase("~/.active-rstudio-document"))
+      {
+         return true;
+      }
+      return false;
+   }
+
    // Private functions -------------------------------------------------------
 
    private void setDisplayText(int lineNumber)
@@ -118,15 +130,7 @@ public class CallFrameItem extends Composite
 
    private boolean hasFileLocation()
    {
-      String fileName = frame_.getFileName().trim();
-      if (fileName.length() > 0 &&
-          !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>") &&
-          !fileName.equalsIgnoreCase("~/.active-rstudio-document"))
-      {
-         return true;
-      }
-      return false;
+      return isNavigatableFilename(frame_.getFileName().trim());
    }
 
    @UiField Label functionName;

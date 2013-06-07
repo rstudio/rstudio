@@ -73,6 +73,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 
 import java.util.HashMap;
@@ -158,8 +159,11 @@ public class EnvironmentPresenter extends BasePresenter
                        contextDepth_ - 1);
                currentBrowseFile_ = browseFrame.getFileName().trim();
                currentBrowseLineNumber_ = browseFrame.getLineNumber();
-               openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                           currentBrowseLineNumber_);
+               if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
+               {
+                  openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                              currentBrowseLineNumber_);
+               }
             }
             else
             {
@@ -197,7 +201,11 @@ public class EnvironmentPresenter extends BasePresenter
          {
             view_.setBrowserLine(event.getLineNumber());
             currentBrowseLineNumber_ = event.getLineNumber();
-            openOrUpdateFileBrowsePoint(currentBrowseFile_, currentBrowseLineNumber_);
+            if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
+            {
+               openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                           currentBrowseLineNumber_);
+            }
          }
 
       });

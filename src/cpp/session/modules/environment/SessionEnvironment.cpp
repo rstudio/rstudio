@@ -55,7 +55,9 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
 }
 
 // return the function context at the given depth
-RCNTXT* getFunctionContext(const int depth, int* pFoundDepth = NULL)
+RCNTXT* getFunctionContext(const int depth,
+                           int* pFoundDepth = NULL,
+                           SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
    int currentDepth = 0;
@@ -73,6 +75,10 @@ RCNTXT* getFunctionContext(const int depth, int* pFoundDepth = NULL)
    if (pFoundDepth)
    {
       *pFoundDepth = currentDepth;
+   }
+   if (pEnvironment)
+   {
+      *pEnvironment = currentDepth == 0 ? R_GlobalEnv : pRContext->cloenv;
    }
    return pRContext;
 }
@@ -242,10 +248,11 @@ void onDetectChanges(module_context::ChangeSource source)
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 {
    int depth = 0;
-   RCNTXT* pContextTop = getFunctionContext(TOP_FUNCTION, &depth);
+   SEXP environmentTop = NULL;
+   getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
 
    // we entered (or left) a call frame
-   if (pContextTop->cloenv != s_environmentMonitor.getMonitoredEnvironment() ||
+   if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
        depth != *pContextDepth)
    {
       json::Object varJson;
@@ -261,7 +268,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       }
 
       // start monitoring the enviroment at the new depth
-      s_environmentMonitor.setMonitoredEnvironment(pContextTop->cloenv);
+      s_environmentMonitor.setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       enqueContextDepthChangedEvent(depth);
    }
@@ -279,7 +286,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 json::Value environmentStateAsJson()
 {
    json::Object stateJson;
-   int contextDepth;
+   int contextDepth = 0;
    RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, &contextDepth);
    stateJson["context_depth"] = contextDepth;
    stateJson["function_name"] = functionNameFromContext(pContext);
@@ -291,9 +298,10 @@ Error initialize()
 {
    boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
 
-   // begin monitoring the top-level environment
-   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, pContextDepth.get());
-   s_environmentMonitor.setMonitoredEnvironment(pContext->cloenv);
+   // begin monitoring the environment
+   SEXP environmentTop = NULL;
+   getFunctionContext(TOP_FUNCTION, pContextDepth.get(), &environmentTop);
+   s_environmentMonitor.setMonitoredEnvironment(environmentTop);
 
    // subscribe to events
    using boost::bind;

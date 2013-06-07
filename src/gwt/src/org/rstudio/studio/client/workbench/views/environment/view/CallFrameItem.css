@@ -3,8 +3,8 @@
 
 .callFrame
 {
-   padding-left: 10px;
-   padding-right: 10px;
+   padding-left: 5px;
+   padding-right: 5px;
    cursor: pointer;
    border: 1px solid transparent;
    font-size: 90%;
