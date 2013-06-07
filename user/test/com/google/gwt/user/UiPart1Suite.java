@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanelRtlTest;
 import com.google.gwt.user.client.ui.DockLayoutPanelTest;
 import com.google.gwt.user.client.ui.DockPanelTest;
 import com.google.gwt.user.client.ui.ElementWrappingTest;
-import com.google.gwt.user.client.ui.FastStringMapTest;
 import com.google.gwt.user.client.ui.FileUploadTest;
 import com.google.gwt.user.client.ui.FiniteWidgetIteratorTest;
 import com.google.gwt.user.client.ui.FlexTableTest;
@@ -96,7 +95,6 @@ public class UiPart1Suite {
     suite.addTestSuite(DOMTest.class);
     suite.addTestSuite(DOMRtlTest.class);
     suite.addTestSuite(ElementWrappingTest.class);
-    suite.addTestSuite(FastStringMapTest.class);
     suite.addTestSuite(FileUploadTest.class);
     suite.addTestSuite(FiniteWidgetIteratorTest.class);
     suite.addTestSuite(FlexTableTest.class);
