@@ -54,6 +54,15 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
+// given a context from the context stack, indicate whether it is executing a
+// user-defined function
+bool isUserFunctionContext(RCNTXT *pContext)
+{
+   return (pContext->callflag & CTXT_FUNCTION) &&
+         pContext->srcref &&
+         r::sexp::asInteger(pContext->srcref) > 0;
+}
+
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
                            int* pFoundDepth = NULL,
@@ -63,7 +72,7 @@ RCNTXT* getFunctionContext(const int depth,
    int currentDepth = 0;
    while (pRContext->callflag)
    {
-      if (pRContext->callflag & CTXT_FUNCTION)
+      if (isUserFunctionContext(pRContext))
       {
          if (++currentDepth == depth)
          {
@@ -138,7 +147,7 @@ json::Array callFramesAsJson()
 
    while (pRContext->callflag)
    {
-      if (pRContext->callflag & CTXT_FUNCTION)
+      if (isUserFunctionContext(pRContext))
       {
          json::Object varFrame;
          varFrame["context_depth"] = ++contextDepth;
