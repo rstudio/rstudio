@@ -80,10 +80,17 @@ public class CallFrameItem extends Composite
    {
       if (frame_.getContextDepth() > 0)
       {
+         String fileLocation = "";
+         if (hasFileLocation())
+         {
+            fileLocation = " at " +
+                           friendlyFileName(frame_.getFileName()) + ":" +
+                           lineNumber;
+         }
          functionName.setText(
-                 frame_.getFunctionName() + " at " +
-                 friendlyFileName(frame_.getFileName()) + ":" +
-                 lineNumber);
+                 frame_.getFunctionName() +
+                 "(" + frame_.getArgumentList() + ")" +
+                 fileLocation);
       }
       else
       {
@@ -100,6 +107,19 @@ public class CallFrameItem extends Composite
       }
       return unfriendlyFileName.substring(
               idx + 1, unfriendlyFileName.length()).trim();
+   }
+
+   private boolean hasFileLocation()
+   {
+      String fileName = frame_.getFileName().trim();
+      if (fileName.length() > 0 &&
+          !fileName.equalsIgnoreCase("NULL") &&
+          !fileName.equalsIgnoreCase("<tmp>") &&
+          !fileName.equalsIgnoreCase("~/.active-rstudio-document"))
+      {
+         return true;
+      }
+      return false;
    }
 
    @UiField Label functionName;

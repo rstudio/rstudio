@@ -43,5 +43,9 @@ public class CallFrame extends JavaScriptObject
    public final native int getLineNumber() /*-{
        return this.line_number;
    }-*/;
+
+   public final native String getArgumentList() /*-{
+       return this.argument_list;
+   }-*/;
 }
 

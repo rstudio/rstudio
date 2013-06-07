@@ -113,15 +113,12 @@ void getSourceRefFromContext(const RCNTXT* pContext,
                              int* pLineNumber)
 {
    SEXP srcref = pContext->srcref;
-   if (srcref)
+   *pLineNumber = r::sexp::asInteger(srcref);
+   Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                 .call(pFileName);
+   if (error)
    {
-      *pLineNumber = r::sexp::asInteger(srcref);
-      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
-                    .call(pFileName);
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
+      LOG_ERROR(error);
    }
    return;
 }
@@ -152,6 +149,15 @@ json::Array callFramesAsJson()
          varFrame["file_name"] = filename;
          varFrame["line_number"] = lineNumber;
          pSrcContext = pRContext;
+
+         std::string argList;
+         Error error = r::exec::RFunction(".rs.argumentListSummary",
+                                    CDR(pRContext->call)).call(&argList);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         varFrame["argument_list"] = error ? "" : argList;
 
          listFrames.push_back(varFrame);
       }

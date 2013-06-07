@@ -95,6 +95,18 @@
     return(capture.output(print(attr(srcref, "srcfile"))))
 })
 
+.rs.addFunction("argumentListSummary", function(args)
+{
+    argSummary <- ""
+    for (arg in args)
+    {
+        thisArg <- capture.output(print(arg))
+        argSummary <- paste(argSummary, thisArg, sep =
+            if (argSummary == "") "" else ", ")
+    }
+    return(argSummary)
+})
+
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(
