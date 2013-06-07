@@ -17,6 +17,7 @@
 #define MONITOR_METRIC_METRIC_HPP
 
 #include <string>
+#include <vector>
 
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -30,23 +31,19 @@ namespace core {
 namespace monitor {
 namespace metrics {
 
-class Metric
+// convenience base class for Metric and MultiMetric
+class MetricBase
 {
-public:
-   Metric() {}
+protected:
+   MetricBase() {}
 
-   Metric(const std::string& scope,
-          const std::string& name,
-          int intervalSeconds,
-          double value,
-          const std::string& type = "gauge",
-          const std::string& unit = std::string(),
-          boost::posix_time::ptime timestamp =
-                     boost::posix_time::microsec_clock::universal_time())
+   MetricBase(const std::string& scope,
+              int intervalSeconds,
+              const std::string& type,
+              const std::string& unit,
+              boost::posix_time::ptime timestamp)
       : scope_(scope),
-        name_(name),
         intervalSeconds_(intervalSeconds),
-        value_(value),
         type_(type),
         unit_(unit),
         timestamp_(timestamp)
@@ -55,33 +52,107 @@ public:
 
 public:
    // check for empty
-   bool isEmpty() const { return !name_.empty(); }
+   bool isEmpty() const { return scope_.empty(); }
 
    // property accessors
    const std::string& scope() const { return scope_; }
-   const std::string& name() const { return name_; }
    int intervalSeconds() const { return intervalSeconds_; }
-   double value() const { return value_; }
    const std::string& type() const { return type_; }
    const std::string& unit() const { return unit_; }
    const boost::posix_time::ptime& timestamp() const { return timestamp_; }
 
 private:
    std::string scope_;
-   std::string name_;
    int intervalSeconds_;
-   double value_;
    std::string type_;
    std::string unit_;
    boost::posix_time::ptime timestamp_;
 };
 
-// metric handler
+struct MetricData
+{
+   MetricData()
+      : value(0)
+   {
+   }
+
+   MetricData(const MetricData& data)
+      : name(data.name), value(data.value)
+   {
+   }
+
+   MetricData(const std::string& name, double value)
+      : name(name), value(value)
+   {
+   }
+
+   bool isEmpty() const { return name.empty(); }
+
+   std::string name;
+   double value;
+};
+
+class Metric : public MetricBase
+{
+public:
+   Metric() : MetricBase() {}
+
+   Metric(const std::string& scope,
+          int intervalSeconds,
+          const MetricData& data,
+          const std::string& type = "gauge",
+          const std::string& unit = std::string(),
+          boost::posix_time::ptime timestamp =
+                     boost::posix_time::microsec_clock::universal_time())
+      : MetricBase(scope, intervalSeconds, type, unit, timestamp),
+        data_(data)
+   {
+   }
+
+public:
+   const MetricData& data() const { return data_; }
+
+private:
+   MetricData data_;
+};
+
+
+class MultiMetric : public MetricBase
+{
+public:
+   MultiMetric() : MetricBase() {}
+
+   MultiMetric(const std::string& scope,
+               int intervalSeconds,
+               const std::vector<MetricData>& data,
+               const std::string& type = "gauge",
+               const std::string& unit = std::string(),
+               boost::posix_time::ptime timestamp =
+                           boost::posix_time::microsec_clock::universal_time())
+      : MetricBase(scope, intervalSeconds, type, unit, timestamp),
+        data_(data)
+   {
+   }
+
+public:
+   const std::vector<MetricData>& data() const { return data_; }
+
+private:
+   std::vector<MetricData> data_;
+};
+
+// metric handlers
 typedef boost::function<void(const Metric&)> MetricHandler;
+typedef boost::function<void(const Metric&)> MultiMetricHandler;
 
 // json serialization
-std::string metricToJson(const Metric& metric);
-core::Error metricFromJson(const std::string& metricJson, Metric* pMetric);
+core::json::Object metricToJson(const Metric& metric);
+core::Error metricFromJson(const core::json::Object& metricJson,
+                           Metric* pMetric);
+
+core::json::Object metricToJson(const MultiMetric& multiMetric);
+core::Error metricFromJson(const core::json::Object& multiMetricJson,
+                           MultiMetric* pMultiMetric);
 
 
 } // namespace metrics

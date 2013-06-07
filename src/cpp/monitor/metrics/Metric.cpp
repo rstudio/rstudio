@@ -17,6 +17,8 @@
 
 #include <ostream>
 
+#include <boost/foreach.hpp>
+
 #include <core/Error.hpp>
 #include <core/DateTime.hpp>
 
@@ -26,64 +28,145 @@ using namespace core;
 
 namespace monitor {
 namespace metrics {
-  
+
 namespace {
 
-
-} // anonymous namespace
-   
-
-std::string metricToJson(const Metric& metric)
+json::Object metricBaseToJson(const MetricBase& metric)
 {
    json::Object metricJson;
    metricJson["scope"] = metric.scope();
-   metricJson["name"] = metric.name();
    metricJson["interval"] = metric.intervalSeconds();
-   metricJson["value"] = metric.value();
    metricJson["type"] = metric.type();
    metricJson["unit"] = metric.unit();
    metricJson["ts"] = date_time::millisecondsSinceEpoch(metric.timestamp());
-   std::ostringstream ostr;
-   json::write(metricJson, ostr);
-   return ostr.str();
+   return metricJson;
 }
 
-Error metricFromJson(const std::string& metricJson, Metric* pMetric)
+Error metricBaseFromJson(const json::Object& metricJson,
+                         std::string* pScope,
+                         int* pIntervalSeconds,
+                         std::string* pType,
+                         std::string* pUnit,
+                         double* pTimestamp)
 {
-   // parse the json into an object
-   json::Value jsonValue;
-   if (!json::parse(metricJson, &jsonValue) ||
-       !json::isType<json::Object>(jsonValue))
-   {
-      Error error = systemError(boost::system::errc::protocol_error,
-                                "Error parsing metric json: " + metricJson,
-                                 ERROR_LOCATION);
-      return error;
-   }
-   json::Object jsonObject = jsonValue.get_obj();
+   return json::readObject(metricJson,
+                          "scope", pScope,
+                          "interval", pIntervalSeconds,
+                          "type", pType,
+                          "unit", pUnit,
+                          "ts", pTimestamp);
+}
 
+json::Value toMetricDataJson(const MetricData& data)
+{
+   json::Object dataJson;
+   dataJson["name"] = data.name;
+   dataJson["value"] = data.value;
+   return dataJson;
+}
+
+
+} // anonymous namespace
+
+json::Object metricToJson(const Metric& metric)
+{
+   json::Object metricJson = metricBaseToJson(metric);
+   metricJson["name"] = metric.data().name;
+   metricJson["value"] = metric.data().value;
+   return metricJson;
+}
+
+Error metricFromJson(const json::Object& metricJson, Metric* pMetric)
+{
    // read the fields
    std::string scope, name, type, unit;
    double value, ts;
    int intervalSeconds;
-   Error error = json::readObject(jsonObject,
-                                  "scope", &scope,
-                                  "name", &name,
-                                  "interval", &intervalSeconds,
-                                  "value", &value,
-                                  "type", &type,
-                                  "unit", &unit,
-                                  "ts", &ts);
+   Error error = metricBaseFromJson(metricJson,
+                                    &scope,
+                                    &intervalSeconds,
+                                    &type,
+                                    &unit,
+                                    &ts);
+   if (error)
+      return error;
+
+   error = json::readObject(metricJson,
+                            "name", &name,
+                            "value", &value);
    if (error)
       return error;
 
    *pMetric = Metric(scope,
-                     name,
                      intervalSeconds,
-                     value,
+                     MetricData(name, value),
                      type,
                      unit,
                      date_time::timeFromMillisecondsSinceEpoch(ts));
+
+   return Success();
+}
+
+json::Object metricToJson(const MultiMetric& multiMetric)
+{
+   json::Object multiMetricJson = metricBaseToJson(multiMetric);
+
+   json::Array dataJson;
+   std::transform(multiMetric.data().begin(),
+                  multiMetric.data().end(),
+                  std::back_inserter(dataJson),
+                  toMetricDataJson);
+   multiMetricJson["data"] = dataJson;
+
+   return multiMetricJson;
+}
+
+Error metricFromJson(const json::Object& multiMetricJson,
+                     MultiMetric* pMultiMetric)
+{
+   // read the fields
+   std::string scope, type, unit;
+   double ts;
+   int intervalSeconds;
+   Error error = metricBaseFromJson(multiMetricJson,
+                                    &scope,
+                                    &intervalSeconds,
+                                    &type,
+                                    &unit,
+                                    &ts);
+   if (error)
+      return error;
+
+   // read the data array
+   json::Array dataJson;
+   error = json::readObject(multiMetricJson, "data", &dataJson);
+   if (error)
+      return error;
+
+   // create vector of metric data
+   std::vector<MetricData> data;
+   BOOST_FOREACH(const json::Value& value, dataJson)
+   {
+      if (!json::isType<json::Object>(value))
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+
+      MetricData dataItem;
+      json::Object valueObj = value.get_obj();
+      Error error = json::readObject(valueObj,
+                                     "name", &dataItem.name,
+                                     "value", &dataItem.value);
+      if (error)
+         return error;
+
+      data.push_back(dataItem);
+   }
+
+   *pMultiMetric = MultiMetric(scope,
+                               intervalSeconds,
+                               data,
+                               type,
+                               unit,
+                               date_time::timeFromMillisecondsSinceEpoch(ts));
 
    return Success();
 }

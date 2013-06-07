@@ -24,6 +24,7 @@ namespace monitor {
 
 namespace metrics {
    class Metric;
+   class MultiMetric;
 }
 
 namespace http {
@@ -32,10 +33,20 @@ void sendMetric(const std::string& metricsSocket,
                 const std::string& sharedSecret,
                 const metrics::Metric& metric);
 
+void sendMultiMetric(const std::string& metricsSocket,
+                     const std::string& sharedSecret,
+                     const metrics::MultiMetric& metric);
+
 void sendMetricAsync(boost::asio::io_service& ioService,
                      const std::string& metricsSocket,
                      const std::string& sharedSecret,
                      const metrics::Metric& metric);
+
+
+void sendMultiMetricAsync(boost::asio::io_service& ioService,
+                          const std::string& metricsSocket,
+                          const std::string& sharedSecret,
+                          const metrics::MultiMetric& metric);
 
 
 } // namespace http

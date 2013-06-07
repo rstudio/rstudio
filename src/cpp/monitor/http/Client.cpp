@@ -38,6 +38,19 @@ void sendMetricAsync(boost::asio::io_service& ioService,
 {
 }
 
+void sendMultiMetric(const std::string& metricsSocket,
+                     const std::string& sharedSecret,
+                     const metrics::MultiMetric& metric)
+{
+}
+
+
+void sendMultiMetricAsync(boost::asio::io_service& ioService,
+                          const std::string& metricsSocket,
+                          const std::string& sharedSecret,
+                          const metrics::MultiMetric& metric)
+{
+}
 
 } // namespace http
 } // namespace monitor
