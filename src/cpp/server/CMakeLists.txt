@@ -27,7 +27,6 @@ set(SERVER_SOURCE_FILES
    ServerInit.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp
-   ServerMetrics.cpp
    ServerOffline.cpp
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
