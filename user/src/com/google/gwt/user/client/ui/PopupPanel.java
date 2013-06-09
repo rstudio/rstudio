@@ -36,12 +36,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 import java.util.ArrayList;
@@ -1029,6 +1029,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param target the target to show the popup below
    */
   public final void showRelativeTo(final UIObject target) {
+    showRelativeTo(target.getElement());
+  }
+
+  /**
+   * Normally, the popup is positioned directly below the relative target, with
+   * its left edge aligned with the left edge of the target. Depending on the
+   * width and height of the popup and the distance from the target to the
+   * bottom and right edges of the window, the popup may be displayed directly
+   * above the target, and/or its right edge may be aligned with the right edge
+   * of the target.
+   *
+   * @param target the target to show the popup below
+   */
+  public final void showRelativeTo(final Element target) {
     // Set the position of the popup right before it is shown.
     setPopupPositionAndShow(new PositionCallback() {
       public void setPosition(int offsetWidth, int offsetHeight) {
@@ -1191,7 +1205,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param offsetWidth the drop down's offset width
    * @param offsetHeight the drop down's offset height
    */
-  private void position(final UIObject relativeObject, int offsetWidth,
+  private void position(final Element relativeObject, int offsetWidth,
       int offsetHeight) {
     // Calculate left position for the popup. The computation for
     // the left position is bidi-sensitive.
