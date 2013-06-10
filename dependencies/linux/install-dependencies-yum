@@ -44,6 +44,7 @@ sudo yum install -y xml-commons-apis
 
 # rrdtool
 sudo yum install -y rrdtool
+sudo yum install -y python-psutil
 
 # common
 cd ../common
