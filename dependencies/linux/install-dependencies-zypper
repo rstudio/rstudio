@@ -44,6 +44,7 @@ sudo zypper --non-interactive in ant
 
 #rrdtool
 sudo zypper --non-interactive in rrdtool
+sudo zypper --non-interactive in python-psutil
 
 # common
 cd ../common
