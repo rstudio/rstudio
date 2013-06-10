@@ -1502,7 +1502,15 @@ public class AceEditor implements DocDisplay,
       }
       
       if (highlightLine)
+      {
          applyLineHighlight(position.getRow());
+      }
+      else if (!setFocus)
+      {
+         // if navigating to a new position without changing focus, stop
+         // highlighting the old position
+         clearLineHighlight();
+      }
       
       // add to navigation history if requested and our current mode
       // supports history navigation

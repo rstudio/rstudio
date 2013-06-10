@@ -162,11 +162,15 @@ public class EnvironmentPresenter extends BasePresenter
                if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
                {
                   openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                              currentBrowseLineNumber_);
+                                              currentBrowseLineNumber_,
+                                              true);
                }
             }
             else
             {
+               openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                           currentBrowseLineNumber_,
+                                           false);
                currentBrowseFile_ = "";
                currentBrowseLineNumber_ = 0;
             }
@@ -204,7 +208,8 @@ public class EnvironmentPresenter extends BasePresenter
             if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
             {
                openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                           currentBrowseLineNumber_);
+                                           currentBrowseLineNumber_,
+                                           true);
             }
          }
 
@@ -417,7 +422,9 @@ public class EnvironmentPresenter extends BasePresenter
 
    // Private methods ---------------------------------------------------------
 
-   private void openOrUpdateFileBrowsePoint(String file, int lineNumber)
+   private void openOrUpdateFileBrowsePoint(String file,
+                                            int lineNumber,
+                                            boolean highlightLine)
    {
       if (file.length() > 0 && lineNumber > 0)
       {
@@ -426,7 +433,7 @@ public class EnvironmentPresenter extends BasePresenter
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
                                                      filePosition,
                                                      FileTypeRegistry.R,
-                                                     true,
+                                                     highlightLine,
                                                      false));
       }
    }
