@@ -34,6 +34,8 @@
 
       if (is.scalarOrVector(val))
       {
+         if (length(val) == 0)
+            return (paste(.rs.getSingleClass(val), " (empty)"))
          if (length(val) == 1)
          {
             if (nchar(val) < 1024)

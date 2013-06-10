@@ -43,6 +43,7 @@ import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import java.util.*;
 
@@ -56,9 +57,7 @@ public class EnvironmentObjects extends ResizeComposite
 
    public interface Observer
    {
-      void editObject(String objectName);
       void viewObject(String objectName);
-      void forceEvalObject(String objectName);
       void setObjectExpanded(String objectName);
       void setObjectCollapsed(String objectName);
       void setPersistedScrollPosition(int scrollPosition);
@@ -218,9 +217,13 @@ public class EnvironmentObjects extends ResizeComposite
       // the new list, up to a maximum of half the height of the split panel.
       int desiredCallFramePanelSize = style.headerRowHeight() +
                                       callFramePanel_.getHeightOfAllFrames();
-      splitPanel.setWidgetSize(callFramePanel_,
-                               Math.min(desiredCallFramePanelSize,
-                                        splitPanel.getOffsetHeight() / 2));
+      if (splitPanel.getOffsetHeight() > 0)
+      {
+         desiredCallFramePanelSize = Math.min(
+                 desiredCallFramePanelSize,
+                 splitPanel.getOffsetHeight() / 2);
+      }
+      splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
    }
 
    public void setEnvironmentName(String environmentName)
@@ -349,26 +352,10 @@ public class EnvironmentObjects extends ResizeComposite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            // don't do any invocation if we're not viewing the top level of
-            // the callstack.
-            if (!enableClickableObjects())
-            {
-               return;
-            }
-
-            // initial click on a promise forces eval, at which point it gets a
-            // value we can interact with
-            if (object.isPromise())
-            {
-               observer_.forceEvalObject(object.rObject.getName());
-            }
-            else if (object.getCategory() == RObjectEntry.Categories.Data)
+            if (object.getCategory() == RObjectEntry.Categories.Data &&
+                enableClickableObjects())
             {
                observer_.viewObject(object.rObject.getName());
-            }
-            else
-            {
-               observer_.editObject(object.rObject.getName());
             }
          }
       });
@@ -455,31 +442,35 @@ public class EnvironmentObjects extends ResizeComposite
             }
          };
       objectExpandColumn_.setFieldUpdater(
-         new FieldUpdater<RObjectEntry, String>()
-         {
-            @Override
-            public void update(int index, RObjectEntry object, String value)
-            {
-               if (object.canExpand())
-               {
-                  object.expanded = !object.expanded;
-                  // tell the observer this happened, so it can persist
-                  // the state
-                  if (useStatePersistence())
-                  {
-                     if (object.expanded)
-                     {
-                        observer_.setObjectExpanded(object.rObject.getName());
-                     }
-                     else
-                     {
-                        observer_.setObjectCollapsed(object.rObject.getName());
-                     }
-                  }
-                  objectList_.redrawRow(index);
-               }
-            }
-         });
+              new FieldUpdater<RObjectEntry, String>()
+              {
+                 @Override
+                 public void update(int index,
+                                    RObjectEntry object,
+                                    String value)
+                 {
+                    if (object.canExpand())
+                    {
+                       object.expanded = !object.expanded;
+                       // tell the observer this happened, so it can persist
+                       // the state
+                       if (useStatePersistence())
+                       {
+                          if (object.expanded)
+                          {
+                             observer_.setObjectExpanded(object.rObject
+                                                                 .getName());
+                          }
+                          else
+                          {
+                             observer_.setObjectCollapsed(object.rObject
+                                                                  .getName());
+                          }
+                       }
+                       objectList_.redrawRow(index);
+                    }
+                 }
+              });
    }
 
    private Widget buildEmptyGridMessage()
@@ -593,7 +584,8 @@ public class EnvironmentObjects extends ResizeComposite
       {
          TableCellBuilder nameCol = row.startTD();
          String styleName = style.nameCol();
-         if (enableClickableObjects())
+         if (rowValue.getCategory() == Categories.Data &&
+             enableClickableObjects())
          {
             styleName += (" " + style.clickableCol());
          }
@@ -624,13 +616,12 @@ public class EnvironmentObjects extends ResizeComposite
          {
             descriptionStyle += (" " + style.unevaluatedPromise());
          }
-         else if (rowValue.getCategory() == RObjectEntry.Categories.Data)
+         else if (rowValue.getCategory() == RObjectEntry.Categories.Data &&
+             enableClickableObjects())
          {
-            descriptionStyle += (" " + style.dataFrameValueCol());
-         }
-         if (enableClickableObjects())
-         {
-            descriptionStyle += (" " + style.clickableCol());
+            descriptionStyle += (" " +
+                                 style.dataFrameValueCol() + " " +
+                                 style.clickableCol());
          }
          descCol.className(descriptionStyle);
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);

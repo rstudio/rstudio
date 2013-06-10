@@ -245,19 +245,9 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   public void editObject(String objectName)
-   {
-      executeFunctionForObject("fix", objectName);
-   }
-
    public void viewObject(String objectName)
    {
       executeFunctionForObject("View", objectName);
-   }
-
-   public void forceEvalObject(String objectName)
-   {
-      executeFunctionForObject("force", objectName);
    }
 
    // Private methods ---------------------------------------------------------

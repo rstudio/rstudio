@@ -59,8 +59,7 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
 bool isUserFunctionContext(RCNTXT *pContext)
 {
    return (pContext->callflag & CTXT_FUNCTION) &&
-         pContext->srcref &&
-         r::sexp::asInteger(pContext->srcref) > 0;
+         pContext->srcref;
 }
 
 // return the function context at the given depth
