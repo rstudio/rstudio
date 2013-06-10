@@ -34,13 +34,7 @@ public final class Float extends Number implements Comparable<Float> {
   private static final long POWER_32_INT = 4294967296L;
 
   public static int compare(float x, float y) {
-    if (x < y) {
-      return -1;
-    } else if (x > y) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Double.compare(x, y);
   }
 
   public static int floatToIntBits(float value) {
@@ -187,13 +181,7 @@ public final class Float extends Number implements Comparable<Float> {
   }
 
   public int compareTo(Float b) {
-    if (value < b.value) {
-      return -1;
-    } else if (value > b.value) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return compare(value, b.value);
   }
 
   @Override

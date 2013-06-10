@@ -86,22 +86,24 @@ public final class Double extends Number implements Comparable<Double> {
   };
 
   public static int compare(double x, double y) {
+    if (x < y) {
+      return -1;
+    }
+    if (x > y) {
+      return 1;
+    }
+    if (x == y) {
+      return 0;
+    }
+
     if (isNaN(x)) {
       if (isNaN(y)) {
         return 0;
       } else {
         return 1;
       }
-    } else if (isNaN(y)) {
-      return -1;
-    }
-
-    if (x < y) {
-      return -1;
-    } else if (x > y) {
-      return 1;
     } else {
-      return 0;
+      return -1;
     }
   }
 

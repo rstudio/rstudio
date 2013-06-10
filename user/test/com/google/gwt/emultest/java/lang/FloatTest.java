@@ -52,6 +52,34 @@ public class FloatTest extends GWTTestCase {
     }
   }
 
+  public void testCompare() {
+    assertTrue("Float.compare failed for 1 < 2", Float.compare(1f, 2f) < 0);
+    assertTrue("Float.compare failed for 2 > 1", Float.compare(2f, 1f) > 0);
+    assertEquals(0, Float.compare(1f, 1f));
+
+    assertEquals(0, Float.compare(Float.NaN, Float.NaN));
+    assertTrue(Float.compare(0.0f, Float.NaN) < 0);
+    assertTrue(Float.compare(Float.NaN, Float.POSITIVE_INFINITY) > 0);
+    assertTrue(Float.compare(Float.NaN, 0.0f) > 0);
+    assertTrue(Float.compare(Float.POSITIVE_INFINITY, Float.NaN) < 0);
+  }
+
+  public void testCompareTo() {
+    Float float1 = new Float(1f);
+    Float float2 = new Float(2f);
+    Float floatNaN1 = new Float(Float.NaN);
+
+    assertTrue("Float.compare failed for 1 < 2", float1.compareTo(2f) < 0);
+    assertTrue("Float.compare failed for 2 > 1", float2.compareTo(1f) > 0);
+    assertEquals(0, float1.compareTo(float1));
+
+    assertEquals(0, floatNaN1.compareTo(new Float(Float.NaN)));
+    assertTrue(new Float(0.0f).compareTo(new Float(Float.NaN)) < 0);
+    assertTrue(floatNaN1.compareTo(new Float(Float.POSITIVE_INFINITY)) > 0);
+    assertTrue(floatNaN1.compareTo(new Float(0.0f)) > 0);
+    assertTrue(new Float(Float.POSITIVE_INFINITY).compareTo(new Float(Float.NaN)) < 0);
+  }
+
   public void testFloatConstants() {
     assertTrue(Float.isNaN(Float.NaN));
     assertTrue(Float.isInfinite(Float.NEGATIVE_INFINITY));

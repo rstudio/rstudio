@@ -26,6 +26,12 @@ public class ShortTest extends GWTTestCase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  public void testCompare() {
+    assertTrue("Short.compare failed for 1 < 2", Short.compare((short) 1, (short) 2) < 0);
+    assertTrue("Short.compare failed for 2 > 1", Short.compare((short) 2, (short) 1) > 0);
+    assertEquals(0, Short.compare((short) 1, (short) 1));
+  }
+
   public void testConstants() {
     assertEquals(16, Short.SIZE);
     assertEquals((short) 0x7fff, Short.MAX_VALUE);

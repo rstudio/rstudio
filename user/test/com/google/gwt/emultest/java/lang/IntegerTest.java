@@ -114,6 +114,12 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(1, Integer.bitCount(Integer.MIN_VALUE));
   }
 
+  public void testCompare() {
+    assertTrue("Integer.compare failed for 1 < 2", Integer.compare(1, 2) < 0);
+    assertTrue("Integer.compare failed for 2 > 1", Integer.compare(2, 1) > 0);
+    assertEquals(0, Integer.compare(1, 1));
+  }
+
   public void testCompareTo() {
     assertEquals(-1, new Integer(12345).compareTo(new Integer(12346)));
     assertEquals(1, new Integer("12345").compareTo(new Integer(12344)));

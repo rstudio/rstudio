@@ -33,6 +33,10 @@ public final class Short extends Number implements Comparable<Short> {
     private static Short[] boxedValues = new Short[256];
   }
 
+  public static int compare(short x, short y) {
+    return x - y;
+  }
+
   public static Short decode(String s) throws NumberFormatException {
     return Short.valueOf((short) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
@@ -97,13 +101,7 @@ public final class Short extends Number implements Comparable<Short> {
   }
 
   public int compareTo(Short b) {
-    if (value < b.value) {
-      return -1;
-    } else if (value > b.value) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return compare(value, b.value);
   }
 
   @Override

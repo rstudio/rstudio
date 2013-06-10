@@ -33,6 +33,10 @@ public final class Byte extends Number implements Comparable<Byte> {
     private static Byte[] boxedValues = new Byte[256];
   }
 
+  public static int compare(byte x, byte y) {
+    return x - y;
+  }
+
   public static Byte decode(String s) throws NumberFormatException {
     return Byte.valueOf((byte) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
@@ -93,13 +97,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public int compareTo(Byte b) {
-    if (value < b.value) {
-      return -1;
-    } else if (value > b.value) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return compare(value, b.value);
   }
 
   @Override

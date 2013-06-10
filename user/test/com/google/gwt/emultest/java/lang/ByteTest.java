@@ -32,6 +32,12 @@ public class ByteTest extends GWTTestCase {
     assertEquals(8, Byte.SIZE);
   }
 
+  public void testCompare() {
+    assertTrue("Byte.compare failed for 1 < 2", Byte.compare((byte) 1, (byte) 2) < 0);
+    assertTrue("Byte.compare failed for 2 > 1", Byte.compare((byte) 2, (byte) 1) > 0);
+    assertEquals(0, Byte.compare((byte) 1, (byte) 1));
+  }
+
   public void testStatics() {
     // test the new 1.5 statics... older stuff "assumed to work"
     assertEquals(0, Byte.valueOf((byte) 0).intValue());
