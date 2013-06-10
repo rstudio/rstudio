@@ -85,7 +85,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createButtonInputBuilder() {
+  public HtmlInputBuilder createButtonInputBuilder() {
     return impl().startButtonInput();
   }
 
@@ -95,7 +95,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createCheckboxInputBuilder() {
+  public HtmlInputBuilder createCheckboxInputBuilder() {
     return impl().startCheckboxInput();
   }
 
@@ -125,7 +125,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createFileInputBuilder() {
+  public HtmlInputBuilder createFileInputBuilder() {
     return impl().startFileInput();
   }
 
@@ -180,7 +180,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createHiddenInputBuilder() {
+  public HtmlInputBuilder createHiddenInputBuilder() {
     return impl().startHiddenInput();
   }
 
@@ -200,7 +200,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createImageInputBuilder() {
+  public HtmlInputBuilder createImageInputBuilder() {
     return impl().startImageInput();
   }
 
@@ -260,7 +260,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createPasswordInputBuilder() {
+  public HtmlInputBuilder createPasswordInputBuilder() {
     return impl().startPasswordInput();
   }
 
@@ -280,7 +280,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createRadioInputBuilder(String name) {
+  public HtmlInputBuilder createRadioInputBuilder(String name) {
     return impl().startRadioInput(name);
   }
 
@@ -290,7 +290,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createResetInputBuilder() {
+  public HtmlInputBuilder createResetInputBuilder() {
     return impl().startResetInput();
   }
 
@@ -325,7 +325,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createSubmitInputBuilder() {
+  public HtmlInputBuilder createSubmitInputBuilder() {
     return impl().startSubmitInput();
   }
 
@@ -355,7 +355,7 @@ public class HtmlBuilderFactory extends ElementBuilderFactory {
   }
 
   @Override
-  public InputBuilder createTextInputBuilder() {
+  public HtmlInputBuilder createTextInputBuilder() {
     return impl().startTextInput();
   }
 

@@ -211,7 +211,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return brBuilder;
   }
 
-  public InputBuilder startButtonInput() {
+  public HtmlInputBuilder startButtonInput() {
     return startInput(ButtonElement.TAG);
   }
 
@@ -223,7 +223,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return canvasBuilder;
   }
 
-  public InputBuilder startCheckboxInput() {
+  public HtmlInputBuilder startCheckboxInput() {
     return startInput("checkbox");
   }
 
@@ -256,7 +256,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return fieldSetBuilder;
   }
 
-  public InputBuilder startFileInput() {
+  public HtmlInputBuilder startFileInput() {
     return startInput("file");
   }
 
@@ -316,7 +316,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return headBuilder;
   }
 
-  public InputBuilder startHiddenInput() {
+  public HtmlInputBuilder startHiddenInput() {
     return startInput("hidden");
   }
 
@@ -344,7 +344,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return imageBuilder;
   }
 
-  public InputBuilder startImageInput() {
+  public HtmlInputBuilder startImageInput() {
     return startInput("image");
   }
 
@@ -430,7 +430,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return paramBuilder;
   }
 
-  public InputBuilder startPasswordInput() {
+  public HtmlInputBuilder startPasswordInput() {
     return startInput("password");
   }
 
@@ -450,8 +450,8 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return startQuote(QuoteElement.TAG_Q);
   }
 
-  public InputBuilder startRadioInput(String name) {
-    InputBuilder builder = startInput("radio");
+  public HtmlInputBuilder startRadioInput(String name) {
+    HtmlInputBuilder builder = startInput("radio");
     attribute("name", name);
     return builder;
   }
@@ -460,7 +460,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return startButton("reset");
   }
 
-  public InputBuilder startResetInput() {
+  public HtmlInputBuilder startResetInput() {
     return startInput("reset");
   }
 
@@ -505,7 +505,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return startButton("submit");
   }
 
-  public InputBuilder startSubmitInput() {
+  public HtmlInputBuilder startSubmitInput() {
     return startInput("submit");
   }
 
@@ -542,7 +542,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     return textAreaBuilder;
   }
 
-  public InputBuilder startTextInput() {
+  public HtmlInputBuilder startTextInput() {
     return startInput("text");
   }
 
