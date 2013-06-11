@@ -1469,9 +1469,16 @@ public class AceEditor implements DocDisplay,
       Position position = Position.create(srcPosition.getRow(), 
             srcPosition.getColumn());
       
-      if (srcPosition.getScrollPosition() != -1)
-         scrollToY(srcPosition.getScrollPosition());
-
+      int firstRow = widget_.getEditor().getFirstVisibleRow();
+      int lastRow = widget_.getEditor().getLastVisibleRow();
+      int debugRow = srcPosition.getRow();
+      
+      // if the line to be debugged is not visible, scroll it into view
+      if (debugRow <= firstRow || debugRow >= lastRow)
+      {
+         widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
+      }
+ 
       applyDebugLineHighlight(position.getRow());
    }
    
