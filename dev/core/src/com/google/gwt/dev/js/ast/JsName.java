@@ -35,7 +35,7 @@ public class JsName implements Serializable {
   /**
    * @param ident the unmangled ident to use for this name
    */
-  JsName(JsScope enclosing, String ident, String shortIdent) {
+  public JsName(JsScope enclosing, String ident, String shortIdent) {
     this.enclosing = enclosing;
     this.ident = StringInterner.get().intern(ident);
     this.shortIdent = StringInterner.get().intern(shortIdent);

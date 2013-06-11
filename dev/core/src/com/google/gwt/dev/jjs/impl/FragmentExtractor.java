@@ -48,10 +48,25 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A class that extracts a fragment of code based on a supplied liveness
- * condition.
+ * Extracts multiple JS statements (called a fragment) out of the complete JS program based on
+ * supplied type/method/field/string liveness conditions.
+ * 
+ * <p>
+ * <b>Liveness as defined here is not an intuitive concept.</b> A type or method (note that
+ * constructors are methods) is considered live for the current fragment when that type can only be
+ * instantiated or method executed when the current fragment has already been loaded. That does not
+ * always mean that it was caused by direct execution of the current fragment. It may instead mean
+ * that direction execution of some other fragment has been affected by the loading of the current
+ * fragment in a way that results in the instantiation of the type or execution of the method. It is
+ * this second case that can lead to seemingly contradictory but valid situations like having a type
+ * which is not currently live but which has a currently live constructor. For example it might be
+ * possible to instantiate type Foo even with fragment Bar being loaded (i.e. Foo is not live for
+ * Bar) but the loading of fragment Bar might be required to reach a particular one of Bar's
+ * multiple constructor (i.e. that constructor is live for Bar).
+ * </p>
  */
 public class FragmentExtractor {
+
   /**
    * A {@link LivenessPredicate} that bases liveness on a single
    * {@link ControlFlowAnalyzer}.
@@ -63,23 +78,28 @@ public class FragmentExtractor {
       this.cfa = cfa;
     }
 
+    @Override
     public boolean isLive(JDeclaredType type) {
       return cfa.getInstantiatedTypes().contains(type);
     }
 
+    @Override
     public boolean isLive(JField field) {
       return cfa.getLiveFieldsAndMethods().contains(field)
           || cfa.getFieldsWritten().contains(field);
     }
 
+    @Override
     public boolean isLive(JMethod method) {
       return cfa.getLiveFieldsAndMethods().contains(method);
     }
 
+    @Override
     public boolean isLive(String string) {
       return cfa.getLiveStrings().contains(string);
     }
 
+    @Override
     public boolean miscellaneousStatementsAreLive() {
       return true;
     }
@@ -132,38 +152,99 @@ public class FragmentExtractor {
    * A {@link LivenessPredicate} where nothing is alive.
    */
   public static class NothingAlivePredicate implements LivenessPredicate {
+    @Override
     public boolean isLive(JDeclaredType type) {
       return false;
     }
 
+    @Override
     public boolean isLive(JField field) {
       return false;
     }
 
+    @Override
     public boolean isLive(JMethod method) {
       return false;
     }
 
+    @Override
     public boolean isLive(String string) {
       return false;
     }
 
+    @Override
     public boolean miscellaneousStatementsAreLive() {
       return false;
     }
   }
 
   /**
-   * A logger for statements that the fragment extractor encounters. Install one
-   * using
-   * {@link FragmentExtractor#setStatementLogger(com.google.gwt.fragserv.FragmentExtractor.StatementLogger)}
-   * .
+   * A logger for statements that the fragment extractor encounters. Install one using
+   * {@link FragmentExtractor#setStatementLogger(StatementLogger)} .
    */
   public static interface StatementLogger {
     void logStatement(JsStatement stat, boolean isIncluded);
   }
 
+  /**
+   * Mutates the provided defineSeed statement to remove references to constructors which have not
+   * been made live by the current fragment. It also counts the constructor references that
+   * were not removed.
+   */
+  private class DefineSeedMinimizerVisitor extends JsModVisitor {
+
+    private final LivenessPredicate alreadyLoadedPredicate;
+    private final LivenessPredicate livenessPredicate;
+    private int liveConstructorCount;
+
+    private DefineSeedMinimizerVisitor(
+        LivenessPredicate alreadyLoadedPredicate, LivenessPredicate livenessPredicate) {
+      this.alreadyLoadedPredicate = alreadyLoadedPredicate;
+      this.livenessPredicate = livenessPredicate;
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext ctx) {
+      JMethod method = map.nameToMethod(x.getName());
+      if (!(method instanceof JConstructor)) {
+        return;
+      }
+      // Only examines references to constructor methods.
+
+      JConstructor constructor = (JConstructor) method;
+      boolean fragmentExpandsConstructorLiveness =
+          !alreadyLoadedPredicate.isLive(constructor) && livenessPredicate.isLive(constructor);
+      if (fragmentExpandsConstructorLiveness) {
+        // Counts kept references to live constructors.
+        liveConstructorCount++;
+      } else {
+        // Removes references to dead constructors.
+        ctx.removeMe();
+      }
+    }
+
+    /**
+     * Enables varargs mutation.
+     */
+    @Override
+    protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
+      doAcceptWithInsertRemove(collection);
+    }
+  }
+
+  private static class MinimalDefineSeedResult {
+
+    private int liveConstructorCount;
+    private JsExprStmt statement;
+
+    public MinimalDefineSeedResult(JsExprStmt statement, int liveConstructorCount) {
+      this.statement = statement;
+      this.liveConstructorCount = liveConstructorCount;
+    }
+  }
+
   private static class NullStatementLogger implements StatementLogger {
+    @Override
     public void logStatement(JsStatement method, boolean isIncluded) {
     }
   }
@@ -189,6 +270,13 @@ public class FragmentExtractor {
     }
 
     return map.vtableInitToMethod(stat);
+  }
+
+  private static JsExprStmt createDefineSeedClone(JsExprStmt defineSeedStatement) {
+    Cloner cloner = new Cloner();
+    cloner.accept(defineSeedStatement.getExpression());
+    JsExprStmt minimalDefineSeedStatement = cloner.getExpression().makeStmt();
+    return minimalDefineSeedStatement;
   }
 
   private final JProgram jprogram;
@@ -230,8 +318,8 @@ public class FragmentExtractor {
    * ensure that <code>livenessPredicate</code> includes strictly more live code
    * than <code>alreadyLoadedPredicate</code>.
    */
-  public List<JsStatement> extractStatements(LivenessPredicate livenessPredicate,
-      LivenessPredicate alreadyLoadedPredicate) {
+  public List<JsStatement> extractStatements(
+      LivenessPredicate livenessPredicate, LivenessPredicate alreadyLoadedPredicate) {
     List<JsStatement> extractedStats = new ArrayList<JsStatement>();
 
     /**
@@ -241,44 +329,41 @@ public class FragmentExtractor {
     JClassType pendingVtableType = null;
     JsExprStmt pendingDefineSeed = null;
 
+    List<JsStatement> statements = jsprogram.getGlobalBlock().getStatements();
+    for (JsStatement statement : statements) {
 
-      // Since we haven't run yet.
-    assert jsprogram.getFragmentCount() == 1;
+      boolean keep;
+      JClassType vtableTypeAssigned = vtableTypeAssigned(statement);
+      if (vtableTypeAssigned != null) {
+        // Keeps defineSeed statements of live types or types with a live constructor.
+        MinimalDefineSeedResult minimalDefineSeedResult = createMinimalDefineSeed(
+            livenessPredicate, alreadyLoadedPredicate, (JsExprStmt) statement);
+        boolean liveType = !alreadyLoadedPredicate.isLive(vtableTypeAssigned)
+            && livenessPredicate.isLive(vtableTypeAssigned);
+        boolean liveConstructors = minimalDefineSeedResult.liveConstructorCount > 0;
 
-    List<JsStatement> stats = jsprogram.getGlobalBlock().getStatements();
-    for (JsStatement stat : stats) {
-
-      boolean keepIt;
-      JClassType vtableTypeAssigned = vtableTypeAssigned(stat);
-      if (vtableTypeAssigned != null
-          && livenessPredicate.isLive(vtableTypeAssigned)) {
-        boolean[] anyCtorsSetup = new boolean[1];
-        JsExprStmt result = maybeRemoveCtorsFromDefineSeedStmt(livenessPredicate,
-            alreadyLoadedPredicate, stat, anyCtorsSetup);
-        boolean anyWorkDone = anyCtorsSetup[0]
-            || !alreadyLoadedPredicate.isLive(vtableTypeAssigned);
-        if (anyWorkDone) {
-          stat = result;
-          keepIt = true;
+        if (liveConstructors || liveType) {
+          statement = minimalDefineSeedResult.statement;
+          keep = true;
         } else {
-          pendingDefineSeed = result;
+          pendingDefineSeed = minimalDefineSeedResult.statement;
           pendingVtableType = vtableTypeAssigned;
-          keepIt = false;
+          keep = false;
         }
-      } else if (containsRemovableVars(stat)) {
-        stat = removeSomeVars((JsVars) stat, livenessPredicate, alreadyLoadedPredicate);
-        keepIt = !(stat instanceof JsEmpty);
+      } else if (containsRemovableVars(statement)) {
+        statement = removeSomeVars((JsVars) statement, livenessPredicate, alreadyLoadedPredicate);
+        keep = !(statement instanceof JsEmpty);
       } else {
-        keepIt = isLive(stat, livenessPredicate) && !isLive(stat, alreadyLoadedPredicate);
+        keep = isLive(statement, livenessPredicate) && !isLive(statement, alreadyLoadedPredicate);
       }
 
-      statementLogger.logStatement(stat, keepIt);
+      statementLogger.logStatement(statement, keep);
 
-      if (keepIt) {
+      if (keep) {
         if (vtableTypeAssigned != null) {
           currentVtableType = vtableTypeAssigned;
         }
-        JClassType vtableType = vtableTypeNeeded(stat);
+        JClassType vtableType = vtableTypeNeeded(statement);
         if (vtableType != null && vtableType != currentVtableType) {
           assert pendingVtableType == vtableType;
           extractedStats.add(pendingDefineSeed);
@@ -286,7 +371,7 @@ public class FragmentExtractor {
           pendingDefineSeed = null;
           pendingVtableType = null;
         }
-        extractedStats.add(stat);
+        extractedStats.add(statement);
       }
     }
 
@@ -316,12 +401,10 @@ public class FragmentExtractor {
   }
 
   /**
-   * Check whether this statement is a <code>JsVars</code> that contains
-   * individual vars that could be removed. If it does, then
-   * {@link #removeSomeVars(JsVars, LivenessPredicate, LivenessPredicate)} is
-   * sensible for this statement and should be used instead of
-   * {@link #isLive(JsStatement, com.google.gwt.fragserv.FragmentExtractor.LivenessPredicate)}
-   * .
+   * Check whether this statement is a {@link JsVars} that contains individual vars that could be
+   * removed. If it does, then {@link #removeSomeVars(JsVars, LivenessPredicate, LivenessPredicate)}
+   * is sensible for this statement and should be used instead of
+   * {@link #isLive(JsStatement, LivenessPredicate)} .
    */
   private boolean containsRemovableVars(JsStatement stat) {
     if (stat instanceof JsVars) {
@@ -334,6 +417,26 @@ public class FragmentExtractor {
       }
     }
     return false;
+  }
+
+  /**
+   * DefineSeeds mark the existence of a class and associate a castMaps with the class's various
+   * constructors. These multiple constructors are provided as JsNameRef varargs to the defineSeed
+   * call but only the constructors that are live in the current fragment should be included.
+   * 
+   * <p>
+   * This function strips out the dead constructors and returns the modified defineSeed call. The
+   * stripped constructors will be kept by other defineSeed calls in other fragments at other times.
+   * </p>
+   */
+  private MinimalDefineSeedResult createMinimalDefineSeed(LivenessPredicate livenessPredicate,
+      LivenessPredicate alreadyLoadedPredicate, JsExprStmt defineSeedStatement) {
+    DefineSeedMinimizerVisitor defineSeedMinimizerVisitor =
+        new DefineSeedMinimizerVisitor(alreadyLoadedPredicate, livenessPredicate);
+    JsExprStmt minimalDefineSeedStatement = createDefineSeedClone(defineSeedStatement);
+    defineSeedMinimizerVisitor.accept(minimalDefineSeedStatement);
+    return new MinimalDefineSeedResult(
+        minimalDefineSeedStatement, defineSeedMinimizerVisitor.liveConstructorCount);
   }
 
   private boolean isLive(JsStatement stat, LivenessPredicate livenessPredicate) {
@@ -379,42 +482,6 @@ public class FragmentExtractor {
 
     // It's not an intern variable at all
     return livenessPredicate.miscellaneousStatementsAreLive();
-  }
-
-  /**
-   * Weird case: the seed function's liveness is associated with the type
-   * itself. However, individual constructors can have a liveness that is a
-   * subset of the type's liveness.
-   */
-  private JsExprStmt maybeRemoveCtorsFromDefineSeedStmt(
-      final LivenessPredicate livenessPredicate,
-      final LivenessPredicate alreadyLoadedPredicate, JsStatement stat,
-      final boolean[] anyCtorsSetup) {
-    Cloner c = new Cloner();
-    c.accept(((JsExprStmt) stat).getExpression());
-    JsExprStmt result = c.getExpression().makeStmt();
-    new JsModVisitor() {
-      public void endVisit(JsNameRef x, JsContext ctx) {
-        JMethod maybeCtor = map.nameToMethod(x.getName());
-        if (maybeCtor instanceof JConstructor) {
-          JConstructor ctor = (JConstructor) maybeCtor;
-          if (!livenessPredicate.isLive(ctor)
-              || alreadyLoadedPredicate.isLive(ctor)) {
-            ctx.removeMe();
-          } else {
-            anyCtorsSetup[0] = true;
-          }
-        }
-      };
-
-      /**
-       * Overridden to allow insert/remove on the varargs portion.
-       */
-      protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
-        doAcceptWithInsertRemove(collection);
-      };
-    }.accept(result);
-    return result;
   }
 
   /**
