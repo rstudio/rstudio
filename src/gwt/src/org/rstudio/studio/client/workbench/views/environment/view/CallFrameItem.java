@@ -81,7 +81,7 @@ public class CallFrameItem extends Composite
       return style.callFrameHeight() + (style.callFrameMargin() * 2);
    }
 
-   public static boolean isNavigatableFilename(String fileName)
+   public static boolean isNavigableFilename(String fileName)
    {
       if (fileName.length() > 0 &&
           !fileName.equalsIgnoreCase("NULL") &&
@@ -130,7 +130,7 @@ public class CallFrameItem extends Composite
 
    private boolean hasFileLocation()
    {
-      return isNavigatableFilename(frame_.getFileName().trim());
+      return isNavigableFilename(frame_.getFileName().trim());
    }
 
    @UiField Label functionName;

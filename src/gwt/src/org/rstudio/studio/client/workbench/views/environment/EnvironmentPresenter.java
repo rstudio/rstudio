@@ -128,6 +128,8 @@ public class EnvironmentPresenter extends BasePresenter
       eventBus_ = eventBus;
       refreshingView_ = false;
       initialized_ = false;
+      currentBrowseFile_ = "";
+      currentBrowseLineNumber_ = 0;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -145,33 +147,10 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
-            contextDepth_ = event.getContextDepth();
-            view_.setContextDepth(contextDepth_);
-            view_.setEnvironmentName(event.getFunctionName());
-            view_.setCallFrames(event.getCallFrames());
+            loadNewContextState(event.getContextDepth(), 
+                  event.getFunctionName(),
+                  event.getCallFrames());
             setViewFromEnvironmentList(event.getEnvironmentList());
-            if (contextDepth_ > 0 &&
-                event.getCallFrames().length() > 0)
-            {
-               CallFrame browseFrame = event.getCallFrames().get(
-                       contextDepth_ - 1);
-               currentBrowseFile_ = browseFrame.getFileName().trim();
-               currentBrowseLineNumber_ = browseFrame.getLineNumber();
-               if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
-               {
-                  openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                              currentBrowseLineNumber_,
-                                              true);
-               }
-            }
-            else
-            {
-               openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                           currentBrowseLineNumber_,
-                                           false);
-               currentBrowseFile_ = "";
-               currentBrowseLineNumber_ = 0;
-            }
          }
       });
       
@@ -203,7 +182,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             view_.setBrowserLine(event.getLineNumber());
             currentBrowseLineNumber_ = event.getLineNumber();
-            if (CallFrameItem.isNavigatableFilename(currentBrowseFile_))
+            if (CallFrameItem.isNavigableFilename(currentBrowseFile_))
             {
                openOrUpdateFileBrowsePoint(currentBrowseFile_,
                                            currentBrowseLineNumber_,
@@ -403,13 +382,9 @@ public class EnvironmentPresenter extends BasePresenter
 
    public void initialize(EnvironmentState environmentState)
    {
-      EnvironmentState state = environmentState;
-      setContextDepth(state.contextDepth());
-      if (state.contextDepth() > 0)
-      {
-         view_.setEnvironmentName(state.functionName());
-         view_.setCallFrames(state.callFrames());
-      }
+      loadNewContextState(environmentState.contextDepth(),
+            environmentState.functionName(),
+            environmentState.callFrames());
    }
    
    public void setContextDepth(int contextDepth)
@@ -420,6 +395,36 @@ public class EnvironmentPresenter extends BasePresenter
 
    // Private methods ---------------------------------------------------------
 
+   private void loadNewContextState(int contextDepth, 
+         String environmentName,
+         JsArray<CallFrame> callFrames)
+   {
+      setContextDepth(contextDepth);
+      view_.setEnvironmentName(environmentName);
+      if (callFrames != null && 
+          callFrames.length() > 0)
+      {
+         view_.setCallFrames(callFrames);
+         CallFrame browseFrame = callFrames.get(
+                 contextDepth_ - 1);
+         currentBrowseFile_ = browseFrame.getFileName().trim();
+         currentBrowseLineNumber_ = browseFrame.getLineNumber();
+         if (CallFrameItem.isNavigableFilename(currentBrowseFile_))
+         {
+            openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                        currentBrowseLineNumber_,
+                                        true);
+         }
+      }   
+      else
+      {
+         openOrUpdateFileBrowsePoint(currentBrowseFile_,
+                                     currentBrowseLineNumber_,
+                                     false);
+         currentBrowseFile_ = "";
+         currentBrowseLineNumber_ = 0;
+      }
+   }
    private void openOrUpdateFileBrowsePoint(String file,
                                             int lineNumber,
                                             boolean debugging)
