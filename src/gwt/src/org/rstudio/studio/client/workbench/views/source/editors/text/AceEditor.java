@@ -318,6 +318,14 @@ public class AceEditor implements DocDisplay,
          }
       });
       
+      addValueChangeHandler(new ValueChangeHandler<Void>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> event)
+         {
+            clearDebugLineHighlight();
+         }
+      });
    }
 
    private void indentPastedRange(Range range)
