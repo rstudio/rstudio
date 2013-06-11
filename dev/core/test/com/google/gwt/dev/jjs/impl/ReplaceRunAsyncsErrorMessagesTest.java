@@ -52,18 +52,48 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
     });
 
     addSnippetImport("test.SplitPoint3");
+    expectError("Errors in 'test/EntryPoint.java'");
     expectError("Line 8: Multiple runAsync calls are named test.SplitPoint1");
     expectError("One call is at 'test/SplitPoint1.java:5'");
     expectError("One call is at 'test/SplitPoint3.java:5'");
     testSnippet("RunAsyncCode.runAsyncCode(SplitPoint1.class);");
   }
 
+  public void testMissingOnSuccess() {
+    sourceOracle.addOrReplace(new MockJavaResource("test.SplitPoint4") {
+        @Override
+      public CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package test;\n");
+        code.append("import com.google.gwt.core.client.GWT;\n");
+        code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+        code.append("public class SplitPoint4 {\n");
+        code.append(
+            "  public abstract class AbstractRunAsyncCallback implements RunAsyncCallback {\n");
+        code.append("    public void run() {\n");
+        code.append("      GWT.runAsync(this);\n");
+        code.append("    }\n");
+        code.append("  }\n");
+        code.append("}\n");
+        return code;
+      }
+    });
+
+    addSnippetImport("test.SplitPoint4");
+    expectError("Errors in 'test/SplitPoint4.java'");
+    expectError("Line 7: Only a RunAsyncCallback with a defined onSuccess() can "
+        + "be passed to runAsync().");
+    testSnippet("new SplitPoint4();");
+  }
+
   public void testNonClassLiteral() {
+    expectError("Errors in 'test/EntryPoint.java'");
     expectError("Line 7: Only a class literal may be passed to runAsyncCode");
     testSnippet("RunAsyncCode.runAsyncCode(new SplitPoint1().getClass());");
   }
 
   public void testNonExistentSplitPoint() {
+    expectError("Errors in 'test/EntryPoint.java'");
     expectError("Line 7: No runAsync call is named java.lang.String");
     testSnippet("RunAsyncCode.runAsyncCode(String.class);");
   }
@@ -111,7 +141,6 @@ public class ReplaceRunAsyncsErrorMessagesTest extends JJSTestBase {
   private void initializeTestLoggerBuilder() {
     testLoggerBuilder = new UnitTestTreeLogger.Builder();
     testLoggerBuilder.setLowestLogLevel(TreeLogger.ERROR);
-    expectError("Errors in 'test/EntryPoint.java'");
   }
 
   private void testSnippet(String codeSnippet) {

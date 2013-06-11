@@ -112,7 +112,11 @@ public class ReplaceRunAsyncs {
         } else {
           callbackMethod = program.getIndexedMethod("RunAsyncCallback.onSuccess");
         }
-        assert callbackMethod != null;
+        if (callbackMethod == null) {
+          error(x.getSourceInfo(), "Only a RunAsyncCallback with a defined onSuccess() can "
+              + "be passed to runAsync().");
+          return;
+        }
         JMethodCall onSuccessCall = new JMethodCall(info, asyncCallback, callbackMethod);
 
         JRunAsync runAsyncNode = new JRunAsync(info, splitPoint, name, runAsyncCall, onSuccessCall);
