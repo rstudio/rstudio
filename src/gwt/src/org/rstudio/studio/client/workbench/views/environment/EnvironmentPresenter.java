@@ -182,12 +182,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             view_.setBrowserLine(event.getLineNumber());
             currentBrowseLineNumber_ = event.getLineNumber();
-            if (CallFrameItem.isNavigableFilename(currentBrowseFile_))
-            {
-               openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                           currentBrowseLineNumber_,
-                                           true);
-            }
+            openOrUpdateFileBrowsePoint(true);
          }
 
       });
@@ -407,29 +402,34 @@ public class EnvironmentPresenter extends BasePresenter
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
-         currentBrowseFile_ = browseFrame.getFileName().trim();
-         currentBrowseLineNumber_ = browseFrame.getLineNumber();
-         if (CallFrameItem.isNavigableFilename(currentBrowseFile_))
+         
+         // if the file is different, turn off debug highlighting in the old 
+         // file before turning it on in the new one
+         String newBrowseFile = browseFrame.getFileName().trim();
+         if (!newBrowseFile.equals(currentBrowseFile_))
          {
-            openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                        currentBrowseLineNumber_,
-                                        true);
+            openOrUpdateFileBrowsePoint(false);
          }
+         
+         // highlight the active line in the file now being debugged
+         currentBrowseFile_ = newBrowseFile;
+         currentBrowseLineNumber_ = browseFrame.getLineNumber();
+         openOrUpdateFileBrowsePoint(true);
       }   
       else
       {
-         openOrUpdateFileBrowsePoint(currentBrowseFile_,
-                                     currentBrowseLineNumber_,
-                                     false);
+         openOrUpdateFileBrowsePoint(false);
          currentBrowseFile_ = "";
          currentBrowseLineNumber_ = 0;
       }
    }
-   private void openOrUpdateFileBrowsePoint(String file,
-                                            int lineNumber,
-                                            boolean debugging)
+   
+   private void openOrUpdateFileBrowsePoint(boolean debugging)
    {
-      if (file.length() > 0 && lineNumber > 0)
+      String file = currentBrowseFile_;
+      int lineNumber = currentBrowseLineNumber_;
+      if (CallFrameItem.isNavigableFilename(file) &&
+          lineNumber > 0)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          FilePosition filePosition = FilePosition.create(lineNumber, 0);
