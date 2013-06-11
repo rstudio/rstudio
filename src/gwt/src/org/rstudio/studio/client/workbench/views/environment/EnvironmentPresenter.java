@@ -47,10 +47,10 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -64,9 +64,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
-import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent.LineData;
 import org.rstudio.studio.client.workbench.views.environment.model.*;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 
 
 import com.google.gwt.core.client.JsArray;
@@ -424,17 +422,18 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void openOrUpdateFileBrowsePoint(String file,
                                             int lineNumber,
-                                            boolean highlightLine)
+                                            boolean debugging)
    {
       if (file.length() > 0 && lineNumber > 0)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          FilePosition filePosition = FilePosition.create(lineNumber, 0);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
-                                                     filePosition,
-                                                     FileTypeRegistry.R,
-                                                     highlightLine,
-                                                     false));
+                                filePosition,
+                                FileTypeRegistry.R,
+                                debugging ? 
+                                      NavigationMethod.DebugStep :
+                                      NavigationMethod.DebugEnd));
       }
    }
 

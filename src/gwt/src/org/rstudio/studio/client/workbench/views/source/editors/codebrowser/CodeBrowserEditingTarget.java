@@ -413,23 +413,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
                                   final boolean recordCurrent,
                                   final boolean highlightLine)
    {
-      navigateToPosition(position, recordCurrent, highlightLine, true);
-   }
-
-   @Override
-   public void navigateToPosition(final SourcePosition position,
-                                  final boolean recordCurrent,
-                                  final boolean highlightLine,
-                                  final boolean setFocus)
-   {
       ensureContext(position.getContext(), new Command() {
          @Override
          public void execute()
          {
             docDisplay_.navigateToPosition(position,
                                            recordCurrent,
-                                           highlightLine,
-                                           setFocus);
+                                           highlightLine);
             view_.scrollToLeft();
          }
       });
@@ -555,7 +545,21 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       assert false : "Not implemented";
    }
+   
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+      docDisplay_.highlightDebugLocation(pos); 
+   }
 
+   @Override
+   public void endDebugHighlighting()
+   {
+      docDisplay_.endDebugHighlighting();      
+   } 
+
+   // Private methods --------------------------------------------------------
+   
    private CodeBrowserContents getContents()
    {
       if (doc_.getProperties().keys().length() > 0)
@@ -614,6 +618,4 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private SearchPathFunctionDefinition currentFunction_ = null;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
-
-  
 }

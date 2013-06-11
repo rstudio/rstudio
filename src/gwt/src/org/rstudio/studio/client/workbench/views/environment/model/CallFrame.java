@@ -16,11 +16,6 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.view.client.ProvidesKey;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 
 public class CallFrame extends JavaScriptObject
 {

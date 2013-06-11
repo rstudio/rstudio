@@ -25,6 +25,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
@@ -301,7 +302,12 @@ public class FileTypeRegistry
             fileType = TEXT;
    
          if (fileType != null)
-            fileType.openFile(file, position, highlightLine, eventBus_);
+            fileType.openFile(file, 
+                  position, 
+                  highlightLine ?
+                        NavigationMethod.HighlightLine :
+                        NavigationMethod.Default, 
+                  eventBus_);
       }
    }
    

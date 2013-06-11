@@ -206,14 +206,6 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    @Override
-   public void navigateToPosition(SourcePosition position,
-                                  boolean recordCurrent,
-                                  boolean highlightLine,
-                                  boolean setFocus)
-   {
-   }
-   
-   @Override
    public void restorePosition(SourcePosition position)
    {   
    }
@@ -230,6 +222,16 @@ public class UrlContentEditingTarget implements EditingTarget
       // concept of a position
       return true;
    }
+     
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+   }
+
+   @Override
+   public void endDebugHighlighting()
+   {
+   } 
    
    public boolean onBeforeDismiss()
    {

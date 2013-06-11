@@ -51,6 +51,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
@@ -1154,9 +1155,8 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        null, 
-                       event.getHighlightLine(),
-                       false,
-                       event.getSetFocus());
+                       event.getNavigationMethod(),
+                       false);
    }
    
    
@@ -1170,8 +1170,7 @@ public class Source implements InsertSourceHandler,
                        event.getFileType(),
                        event.getPosition(),
                        event.getPattern(),
-                       true,
-                       true,
+                       NavigationMethod.HighlightLine,
                        true);
       
    }
@@ -1181,9 +1180,8 @@ public class Source implements InsertSourceHandler,
                                  final TextFileType fileType,
                                  final FilePosition position,
                                  final String pattern,
-                                 final boolean highlightLine,
-                                 final boolean forceHighlightMode,
-                                 final boolean setFocus)
+                                 final NavigationMethod navMethod, 
+                                 final boolean forceHighlightMode)
    { 
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
@@ -1225,18 +1223,28 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute()
                {
-                  // force highlight mode if requested
-                  if (forceHighlightMode)
-                     target.forceLineHighlighting();
-                  
-                  // now navigate to the new position
-                  boolean highlight = 
-                        highlightLine &&
-                        !uiPrefs_.highlightSelectedLine().getValue();
-                  target.navigateToPosition(srcPosition,
-                                            false,
-                                            highlight,
-                                            setFocus);
+                  if (navMethod == NavigationMethod.DebugStep)
+                  {
+                     target.highlightDebugLocation(srcPosition);
+                  }
+                  else if (navMethod == NavigationMethod.DebugEnd)
+                  {
+                     target.endDebugHighlighting();
+                  }
+                  else
+                  {
+                     // force highlight mode if requested
+                     if (forceHighlightMode)
+                        target.forceLineHighlighting();
+                     
+                     // now navigate to the new position
+                     boolean highlight = 
+                           navMethod == NavigationMethod.HighlightLine &&
+                           !uiPrefs_.highlightSelectedLine().getValue();
+                     target.navigateToPosition(srcPosition,
+                                               false,
+                                               highlight);
+                  }
                }
             });
          }

@@ -422,15 +422,6 @@ public class TextEditingTarget implements EditingTarget
    }
 
    @Override
-   public void navigateToPosition(SourcePosition position,
-                                  boolean recordCurrent,
-                                  boolean highlightLine,
-                                  boolean setFocus)
-   {
-      docDisplay_.navigateToPosition(position, recordCurrent, highlightLine, setFocus);
-   }
-   
-   @Override
    public void restorePosition(SourcePosition position)
    {
       docDisplay_.restorePosition(position);
@@ -453,6 +444,18 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.setHighlightSelectedLine(true);
    }
+   
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+      docDisplay_.highlightDebugLocation(pos); 
+   }
+
+   @Override
+   public void endDebugHighlighting()
+   {
+      docDisplay_.endDebugHighlighting();      
+   } 
    
    private void jumpToPreviousFunction()
    {
