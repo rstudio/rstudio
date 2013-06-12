@@ -39,6 +39,7 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -699,7 +700,7 @@ public class EnvironmentObjects extends ResizeComposite
            "Function environment is empty";
 
    @UiField EnvironmentStyle style;
-   @UiField SplitLayoutPanel splitPanel;
+   @UiField AutoHidingSplitLayoutPanel splitPanel;
 
    ScrollingDataGrid<RObjectEntry> objectList_;
    CallFramePanel callFramePanel_;

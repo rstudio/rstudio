@@ -130,7 +130,10 @@ void EnvironmentMonitor::checkForChanges()
 
    if (!initialized_)
    {
-      enqueRefreshEvent();
+      if (getMonitoredEnvironment() == R_GlobalEnv)
+      {
+         enqueRefreshEvent();
+      }
       initialized_ = true;
    }
    else
@@ -139,7 +142,11 @@ void EnvironmentMonitor::checkForChanges()
       {
          // optimize for empty currentEnv (user reset workspace) or empty
          // lastEnv_ (startup) by just sending a single refresh event
-         if (currentEnv.empty() || lastEnv_.empty())
+         // only do this for the global environment--while debugging local
+         // environments, the environment object list is sent down as part of
+         // the context depth event.
+         if ((currentEnv.empty() || lastEnv_.empty())
+             && getMonitoredEnvironment() == R_GlobalEnv)
          {
             enqueRefreshEvent();
          }

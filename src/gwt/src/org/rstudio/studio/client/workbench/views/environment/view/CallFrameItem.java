@@ -41,6 +41,7 @@ public class CallFrameItem extends Composite
       String activeFrame();
       String callFrame();
       String topFrame();
+      String noSourceFrame();
    }
 
    public CallFrameItem(CallFrame frame, Observer observer)
@@ -53,6 +54,10 @@ public class CallFrameItem extends Composite
       if (frame.getContextDepth() == 1)
       {
          functionName.addStyleName(style.topFrame());
+      }
+      if (!isNavigableFilename(frame.getFileName()))
+      {
+         functionName.addStyleName(style.noSourceFrame());
       }
       setDisplayText(frame_.getLineNumber());
    }

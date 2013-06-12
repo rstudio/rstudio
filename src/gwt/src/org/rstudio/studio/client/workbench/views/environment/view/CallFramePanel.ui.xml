@@ -17,7 +17,7 @@
         </g:FlowPanel>
         <g:ResizeLayoutPanel styleName="{environmentStyle.fillHeight}">
             <g:ScrollPanel styleName="{environmentStyle.fillHeight}">
-                <g:VerticalPanel styleName="{style.frameList}" ui:field="callFramePanel"></g:VerticalPanel>
+                <g:HTMLPanel styleName="{style.frameList}" ui:field="callFramePanel"></g:HTMLPanel>
             </g:ScrollPanel>
         </g:ResizeLayoutPanel>
     </g:HeaderPanel>

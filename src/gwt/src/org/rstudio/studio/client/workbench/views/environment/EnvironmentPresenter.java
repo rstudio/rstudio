@@ -477,8 +477,11 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Listing Objects",
-                                            error.getUserMessage());
+            if (!workbenchContext_.isRestartInProgress())
+            {
+               globalDisplay_.showErrorMessage("Error Listing Objects",
+                                               error.getUserMessage());
+            }
             view_.setProgress(false);
             refreshingView_ = false;
          }
