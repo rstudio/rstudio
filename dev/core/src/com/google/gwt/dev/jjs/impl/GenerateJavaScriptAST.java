@@ -2779,10 +2779,10 @@ public class GenerateJavaScriptAST {
         // Global optimized compile can prune some clinit calls.
         return null;
       }
-      if (x.canBePolymorphic() || program.isStaticImpl(x)) {
+      JDeclaredType enclosingType = x.getEnclosingType();
+      if (x.canBePolymorphic() || (program.isStaticImpl(x) && !program.isJavaScriptObject(enclosingType))) {
         return null;
       }
-      JDeclaredType enclosingType = x.getEnclosingType();
       if (enclosingType == null || !enclosingType.hasClinit()) {
         return null;
       }
