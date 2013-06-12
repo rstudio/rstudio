@@ -80,18 +80,18 @@ public class CallFramePanel extends ResizeComposite
       }
       else
       {
-         // simplification because all frames are the same size--if this changes,
-         // iterate over each frame and query its height
-         int singleFrameSize = callFrameItems_.get(0).getHeight();
-
-         // leave a half-frame of white space so UI doesn't feel jammed
-         return (int)(singleFrameSize * (callFrameItems_.size() + 0.5));
+         // simplification because all frames are the same size--if this 
+         // changes, iterate over each frame and query its height.
+         return ((callFrameItems_.get(0).getHeight() * callFrameItems_.size())
+               + (style.callFramePanelMargin() / 2));
       }
    }
 
    @UiField
    HTMLPanel callFramePanel;
-
+   @UiField
+   CallFramePanelStyle style;
+   
    Observer observer_;
    ArrayList<CallFrameItem> callFrameItems_;
 }

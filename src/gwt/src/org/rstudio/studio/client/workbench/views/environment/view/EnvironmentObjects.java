@@ -222,7 +222,7 @@ public class EnvironmentObjects extends ResizeComposite
       {
          desiredCallFramePanelSize = Math.min(
                  desiredCallFramePanelSize,
-                 splitPanel.getOffsetHeight() / 2);
+                 (int)(0.66 * splitPanel.getOffsetHeight()));
       }
       splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
    }

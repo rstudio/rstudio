@@ -1,0 +1,14 @@
+@def callFramePanelMargin 12px;
+
+.frameList
+{
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.framePanel
+{
+    margin-bottom: callFramePanelMargin;
+}

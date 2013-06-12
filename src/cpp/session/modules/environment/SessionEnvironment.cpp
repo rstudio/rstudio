@@ -164,6 +164,13 @@ json::Array callFramesAsJson()
          varFrame["line_number"] = lineNumber;
          pSrcContext = pRContext;
 
+         // extract the first line of the function. the client can optionally
+         // use this to compute the source location as an offset into the
+         // function rather than as an absolute file position (useful when
+         // we need to debug a copy of the function rather than the real deal).
+         varFrame["function_line_number"] = r::sexp::asInteger(
+                  r::sexp::getAttrib(pSrcContext->callfun, "srcref"));
+
          std::string argList;
          Error error = r::exec::RFunction(".rs.argumentListSummary",
                                     CDR(pRContext->call)).call(&argList);

@@ -19,13 +19,13 @@
 
 .activeFrame
 {
-   background-color: #D0D0FF;
+   background-color: #FFEE9B;
    cursor: default;
 }
 
 .topFrame
 {
-   border: 1px solid #707070;
+   border: 1px dashed #707070;
 }
 
 .noSourceFrame

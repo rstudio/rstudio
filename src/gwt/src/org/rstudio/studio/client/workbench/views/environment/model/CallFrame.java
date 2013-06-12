@@ -42,5 +42,9 @@ public class CallFrame extends JavaScriptObject
    public final native String getArgumentList() /*-{
        return this.argument_list;
    }-*/;
+   
+   public final native int getFunctionLineNumber() /*-{
+       return this.function_line_number;
+   }-*/;
 }
 

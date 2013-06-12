@@ -448,23 +448,23 @@ public class TextEditingTarget implements EditingTarget
    @Override
    public void highlightDebugLocation(SourcePosition pos)
    {
-      isDebuggingActive_ = true;
-      docDisplay_.highlightDebugLocation(pos);
+      debugPosition_ = pos;
+      docDisplay_.highlightDebugLocation(debugPosition_);
       updateDebugWarningBar();
    }
 
    @Override
    public void endDebugHighlighting()
    {
-      isDebuggingActive_ = false;
       docDisplay_.endDebugHighlighting();      
+      debugPosition_ = null;
       updateDebugWarningBar();
    }
    
    private void updateDebugWarningBar()
    {
       // show the warning bar if we're debugging and the document is dirty
-      if (isDebuggingActive_ && 
+      if (debugPosition_ != null && 
           dirtyState().getValue() && 
           !isDebugWarningVisible_)
       {
@@ -473,9 +473,14 @@ public class TextEditingTarget implements EditingTarget
       }
       // hide the warning bar if the dirty state or debug state change
       else if (isDebugWarningVisible_ &&
-               (!isDebuggingActive_ || dirtyState().getValue() == false))
+               (debugPosition_ == null || dirtyState().getValue() == false))
       {
          view_.hideWarningBar();
+         // if we're still debugging, start highlighting the line again
+         if (debugPosition_ != null)
+         {
+            docDisplay_.highlightDebugLocation(debugPosition_);
+         }
          isDebugWarningVisible_ = false;
       }      
    }
@@ -3238,6 +3243,6 @@ public class TextEditingTarget implements EditingTarget
          new IntervalTracker(1000, true);
    private AnchoredSelection lastExecutedCode_;
    
-   private boolean isDebuggingActive_ = false;
+   private SourcePosition debugPosition_ = null;
    private boolean isDebugWarningVisible_ = false;
 }
