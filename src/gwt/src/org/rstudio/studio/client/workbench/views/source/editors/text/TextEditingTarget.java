@@ -448,14 +448,37 @@ public class TextEditingTarget implements EditingTarget
    @Override
    public void highlightDebugLocation(SourcePosition pos)
    {
-      docDisplay_.highlightDebugLocation(pos); 
+      isDebuggingActive_ = true;
+      docDisplay_.highlightDebugLocation(pos);
+      updateDebugWarningBar();
    }
 
    @Override
    public void endDebugHighlighting()
    {
+      isDebuggingActive_ = false;
       docDisplay_.endDebugHighlighting();      
-   } 
+      updateDebugWarningBar();
+   }
+   
+   private void updateDebugWarningBar()
+   {
+      // show the warning bar if we're debugging and the document is dirty
+      if (isDebuggingActive_ && 
+          dirtyState().getValue() && 
+          !isDebugWarningVisible_)
+      {
+         view_.showWarningBar("Debug lines may not match because the file contains unsaved changes.");
+         isDebugWarningVisible_ = true;
+      }
+      // hide the warning bar if the dirty state or debug state change
+      else if (isDebugWarningVisible_ &&
+               (!isDebuggingActive_ || dirtyState().getValue() == false))
+      {
+         view_.hideWarningBar();
+         isDebugWarningVisible_ = false;
+      }      
+   }
    
    private void jumpToPreviousFunction()
    {
@@ -615,6 +638,17 @@ public class TextEditingTarget implements EditingTarget
       spelling_ = new TextEditingTargetSpelling(docDisplay_, 
                                                 docUpdateSentinel_);
 
+      // show/hide the debug toolbar when the dirty state changes. (note:
+      // this doesn't yet handle the case where the user saves the document,
+      // in which case we should still show some sort of warning.)
+      dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+            {
+               public void onValueChange(ValueChangeEvent<Boolean> evt)
+               {
+                  updateDebugWarningBar();
+               }
+            }
+      );
       initStatusBar();
    }
    
@@ -3203,4 +3237,7 @@ public class TextEditingTarget implements EditingTarget
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
    private AnchoredSelection lastExecutedCode_;
+   
+   private boolean isDebuggingActive_ = false;
+   private boolean isDebugWarningVisible_ = false;
 }
