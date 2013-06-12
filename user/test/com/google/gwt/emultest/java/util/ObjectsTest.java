@@ -82,14 +82,6 @@ public class ObjectsTest extends GWTTestCase {
 
     Object obj = new Object();
     assertTrue(Objects.equals(obj, obj));
-
-    assertFalse(Objects.equals(new Object() {
-      @Override
-      public boolean equals(Object other) {
-        fail("Shouldn't call equals if second argument is null");
-        return false;
-      }
-    }, null));
   }
 
   public void testHashCode() {

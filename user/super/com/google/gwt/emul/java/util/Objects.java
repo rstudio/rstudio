@@ -29,7 +29,13 @@ public final class Objects {
   }
 
   public static boolean deepEquals(Object a, Object b) {
-    if (equals(a, b)) {
+    if (a == b) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return false;
+    }
+    if (a.equals(b)) {
       return true;
     }
 
