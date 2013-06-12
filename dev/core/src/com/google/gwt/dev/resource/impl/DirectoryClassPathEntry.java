@@ -36,6 +36,9 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
 
     static final Message1String INCLUDING_FILE = new Message1String(
         TreeLogger.DEBUG, "Including file: $0");
+    
+    static final Message1String EXCLUDING_FILE = new Message1String(
+        TreeLogger.DEBUG, "Excluding file: $0");
   }
 
   /**
@@ -118,6 +121,9 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
             Messages.INCLUDING_FILE.log(logger, childPath, null);
             FileResource r = new FileResource(this, childPath, child);
             results.get(i).put(r, prefix);
+          }
+          else {
+            Messages.EXCLUDING_FILE.log(logger, childPath, null);
           }
         }
       }
