@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.CanvasElement;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.VideoElement;
 
 /**
  * Rendering interface used to draw on a {@link CanvasElement}.
@@ -499,6 +500,49 @@ public class Context2d extends JavaScriptObject implements Context {
    * @param dh the height of the destination rectangle
    */
   public final native void drawImage(ImageElement image, double sx, double sy, double sw, double sh,
+      double dx, double dy, double dw, double dh) /*-{
+    this.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+  }-*/;
+
+  /**
+   * Draws a video's current frame.
+   *
+   * @param image a {@link VideoElement} object
+   * @param dx the x coordinate of the upper-left corner of the destination rectangle
+   * @param dy the y coordinate of the upper-left corner of the destination rectangle
+   */
+  public final native void drawImage(VideoElement image, double dx, double dy) /*-{
+    this.drawImage(image, dx, dy);
+  }-*/;
+
+  /**
+   * Draws a scaled video's current frame.
+   *
+   * @param image a {@link VideoElement} object
+   * @param dx the x coordinate of the upper-left corner of the destination rectangle
+   * @param dy the y coordinate of the upper-left corner of the destination rectangle
+   * @param dw the width of the destination rectangle
+   * @param dh the height of the destination rectangle
+   */
+  public final native void drawImage(VideoElement image, double dx, double dy, double dw,
+      double dh) /*-{
+    this.drawImage(image, dx, dy, dw, dh);
+  }-*/;
+
+  /**
+   * Draws a scaled subset of a video's current frame.
+   *
+   * @param image a {@link VideoElement} object
+   * @param sx the x coordinate of the upper-left corner of the source rectangle
+   * @param sy the y coordinate of the upper-left corner of the source rectangle
+   * @param sw the width of the source rectangle
+   * @param sh the width of the source rectangle
+   * @param dx the x coordinate of the upper-left corner of the destination rectangle
+   * @param dy the y coordinate of the upper-left corner of the destination rectangle
+   * @param dw the width of the destination rectangle
+   * @param dh the height of the destination rectangle
+   */
+  public final native void drawImage(VideoElement image, double sx, double sy, double sw, double sh,
       double dx, double dy, double dw, double dh) /*-{
     this.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
   }-*/;
