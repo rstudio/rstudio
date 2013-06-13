@@ -313,6 +313,10 @@ public class CSSResourceTest extends GWTTestCase {
         + Resources.INSTANCE.dataMethod().getUrl() + "')"));
     assertTrue(text.contains("backgroundNested:url('"
         + Resources.INSTANCE.nested().dataMethod().getUrl() + "')"));
+    assertTrue(text.contains("backgroundImage:url('"
+        + Resources.INSTANCE.spriteMethod().getURL() + "')"));
+    assertTrue(text.contains("backgroundImageNested:url('"
+        + Resources.INSTANCE.nested().spriteMethod().getURL() + "')"));
 
     // Check @eval expansion
     assertTrue(text.contains(red() + ";"));

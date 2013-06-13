@@ -17,8 +17,10 @@ package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.resources.client.DataResource;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssCompilerException;
 import com.google.gwt.resources.css.ast.CssDef;
@@ -44,6 +46,7 @@ import java.util.Map;
 public class SubstitutionReplacer extends CssVisitor {
   private final ResourceContext context;
   private final JClassType dataResourceType;
+  private final JClassType imageResourceType;
   private final TreeLogger logger;
   private final Map<String, CssDef> substitutions;
 
@@ -52,6 +55,8 @@ public class SubstitutionReplacer extends CssVisitor {
     this.context = context;
     this.dataResourceType = context.getGeneratorContext().getTypeOracle().findType(
         DataResource.class.getCanonicalName());
+    this.imageResourceType = context.getGeneratorContext().getTypeOracle().findType(
+        ImageResource.class.getCanonicalName());
     this.logger = logger;
     this.substitutions = substitutions;
   }
@@ -95,21 +100,34 @@ public class SubstitutionReplacer extends CssVisitor {
         assert def.getValues().get(0).isDotPathValue() != null;
         DotPathValue functionName = def.getValues().get(0).isDotPathValue();
 
+        JType methodType = null;
         try {
-          ResourceGeneratorUtil.getMethodByPath(context.getClientBundleType(),
-              functionName.getParts(), dataResourceType);
+          methodType = ResourceGeneratorUtil.getMethodByPath(context.getClientBundleType(),
+              functionName.getParts(), null).getReturnType();
         } catch (NotFoundException e) {
           logger.log(TreeLogger.ERROR, e.getMessage());
           throw new CssCompilerException("Cannot find data method");
         }
 
-        String instance = "((" + DataResource.class.getName() + ")("
+        if (!methodType.equals(dataResourceType) &&
+            !methodType.equals(imageResourceType)) {
+          String message = "Invalid method type for url substitution: " + methodType + ". " +
+              "Only DataResource and ImageResource are supported.";
+          logger.log(TreeLogger.ERROR, message);
+          throw new CssCompilerException(message);
+        }
+
+        String instance = "((" + methodType.getQualifiedSourceName() + ")("
             + context.getImplementationSimpleSourceName() + ".this."
             + functionName.getExpression() + "))";
 
         StringBuilder expression = new StringBuilder();
         expression.append("\"url('\" + ");
-        expression.append(instance).append(".getUrl()");
+        if (methodType.equals(dataResourceType)) {
+          expression.append(instance).append(".getUrl()");
+        } else if (methodType.equals(imageResourceType)) {
+          expression.append(instance).append(".getURL()");
+        }
         expression.append(" + \"')\"");
         result.add(new ExpressionValue(expression.toString()));
       } else {
