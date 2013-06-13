@@ -26,6 +26,7 @@
 #include <r/session/RSession.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <core/FileSerializer.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -117,11 +118,6 @@ std::string functionNameFromContext(RCNTXT* pContext)
    return r::sexp::asString(PRINTNAME(CAR(pContext->call)));
 }
 
-std::string getFunctionName(int depth)
-{
-   return functionNameFromContext(getFunctionContext(depth));
-}
-
 void getSourceRefFromContext(const RCNTXT* pContext,
                              std::string* pFileName,
                              int* pLineNumber)
@@ -135,6 +131,11 @@ void getSourceRefFromContext(const RCNTXT* pContext,
       LOG_ERROR(error);
    }
    return;
+}
+
+SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
+{
+   return r::sexp::getAttrib(pContext->callfun, "srcref");
 }
 
 json::Array callFramesAsJson()
@@ -168,8 +169,11 @@ json::Array callFramesAsJson()
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         varFrame["function_line_number"] = r::sexp::asInteger(
-                  r::sexp::getAttrib(pSrcContext->callfun, "srcref"));
+         SEXP srcRef = getFunctionSourceRefFromContext(pSrcContext);
+         if (srcRef && TYPEOF(srcRef) != NILSXP)
+         {
+            varFrame["function_line_number"] = INTEGER(srcRef)[0];
+         }
 
          std::string argList;
          Error error = r::exec::RFunction(".rs.argumentListSummary",
@@ -212,18 +216,117 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
-void enqueContextDepthChangedEvent(int depth)
+// given a function context, indicate whether the copy of the source code
+// for the function is different than the source code on disk.
+bool functionIsOutOfSync(const RCNTXT *pContext,
+                         std::string *pFunctionCode)
+{
+   std::string fileName;
+   std::string fileContent;
+   Error error;
+
+   // start by extracting the source code from the call site
+   error = r::exec::RFunction(".rs.sourceCodeFromCall", pContext->callfun)
+         .call(pFunctionCode);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   // next, look up the name of the source file that contains the file in
+   // question
+   SEXP srcRef = getFunctionSourceRefFromContext(pContext);
+   if (srcRef == NULL || TYPEOF(srcRef) == NILSXP)
+   {
+      return true;
+   }
+   error = r::exec::RFunction(".rs.sourceFileFromRef", srcRef)
+                 .call(&fileName);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   // check for ~/.active-rstudio-document -- we never want to match sources
+   // in this file, as it's used to source unsaved changes from RStudio
+   // editor buffers
+   boost::algorithm::trim(fileName);
+   if (fileName == "~/.active-rstudio-document")
+   {
+      return true;
+   }
+
+   // make sure the file exists
+   FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
+   if (!sourceFilePath.exists())
+   {
+      return true;
+   }
+
+   // read the portion of the file pointed to by the source refs from disk
+   // the sourceref structure (including the array offsets used below)
+   // is documented here:
+   // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
+   error = readStringFromFile(
+         sourceFilePath,
+         &fileContent,
+         string_utils::LineEndingPosix,
+         INTEGER(srcRef)[0],  // the first line
+         INTEGER(srcRef)[2],  // the last line
+         INTEGER(srcRef)[4],  // character position on the first line
+         INTEGER(srcRef)[5]   // character position on the last line
+         );
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+   return *pFunctionCode != fileContent;
+}
+
+// create a JSON object that contains information about the current environment;
+// used both to initialize the environment state on first load and to send
+// information about the new environment on a context change
+json::Value commonEnvironmentStateData(int depth)
 {
    json::Object varJson;
 
-   // emit an event to the client indicating the new call frame and the
-   // current state of the environment
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson(depth);
    varJson["call_frames"] = callFramesAsJson();
-   varJson["function_name"] = getFunctionName(depth);
 
-   ClientEvent event (client_events::kContextDepthChanged, varJson);
+   // if we're in a debug context, add information about the function currently
+   // being debugged
+   if (depth > 0)
+   {
+      RCNTXT* pContext = getFunctionContext(depth);
+      varJson["function_name"] = functionNameFromContext(pContext);
+
+      // see if the function to be debugged is out of sync with its saved sources
+      // (if available)--if it is, emit its code so the client can display it
+      std::string functionCode;
+      bool useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
+      varJson["use_provided_source"] = useProvidedSource;
+      varJson["function_code"] = useProvidedSource ? functionCode : "";
+   }
+   else
+   {
+      varJson["function_name"] = "";
+      varJson["use_provided_source"] = false;
+      varJson["function_code"] = "";
+   }
+
+   return varJson;
+}
+
+void enqueContextDepthChangedEvent(int depth)
+{
+   // emit an event to the client indicating the new call frame and the
+   // current state of the environment
+   ClientEvent event (client_events::kContextDepthChanged,
+                      commonEnvironmentStateData(depth));
    module_context::enqueClientEvent(event);
 }
 
@@ -300,13 +403,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
 
 json::Value environmentStateAsJson()
 {
-   json::Object stateJson;
    int contextDepth = 0;
-   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, &contextDepth);
-   stateJson["context_depth"] = contextDepth;
-   stateJson["function_name"] = functionNameFromContext(pContext);
-   stateJson["call_frames"] = callFramesAsJson();
-   return stateJson;
+   getFunctionContext(TOP_FUNCTION, &contextDepth);
+   return commonEnvironmentStateData(contextDepth);
 }
 
 Error initialize()

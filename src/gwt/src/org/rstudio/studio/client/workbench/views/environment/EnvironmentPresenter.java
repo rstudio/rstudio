@@ -56,6 +56,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -73,6 +74,8 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
 import java.util.HashMap;
 
@@ -149,7 +152,9 @@ public class EnvironmentPresenter extends BasePresenter
          {
             loadNewContextState(event.getContextDepth(), 
                   event.getFunctionName(),
-                  event.getCallFrames());
+                  event.getCallFrames(),
+                  event.useProvidedSource(),
+                  event.getFunctionCode());
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });
@@ -379,7 +384,9 @@ public class EnvironmentPresenter extends BasePresenter
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.functionName(),
-            environmentState.callFrames());
+            environmentState.callFrames(),
+            environmentState.getUseProvidedSource(),
+            environmentState.getFunctionCode());
    }
    
    public void setContextDepth(int contextDepth)
@@ -392,10 +399,13 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
-         JsArray<CallFrame> callFrames)
+         JsArray<CallFrame> callFrames,
+         boolean useBrowseSources,
+         String functionCode)
    {
       setContextDepth(contextDepth);
-      view_.setEnvironmentName(environmentName);
+      environmentName_ = environmentName;
+      view_.setEnvironmentName(environmentName_);
       if (callFrames != null && 
           callFrames.length() > 0)
       {
@@ -410,17 +420,24 @@ public class EnvironmentPresenter extends BasePresenter
          {
             openOrUpdateFileBrowsePoint(false);
          }
+
+         useCurrentBrowseSource_ = useBrowseSources;
+         currentBrowseSource_ = functionCode;
          
          // highlight the active line in the file now being debugged
          currentBrowseFile_ = newBrowseFile;
          currentBrowseLineNumber_ = browseFrame.getLineNumber();
+         currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
          openOrUpdateFileBrowsePoint(true);
       }   
       else
       {
          openOrUpdateFileBrowsePoint(false);
+         useCurrentBrowseSource_ = false;
+         currentBrowseSource_ = "";
          currentBrowseFile_ = "";
          currentBrowseLineNumber_ = 0;
+         currentFunctionLineNumber_ = 0;
       }
    }
    
@@ -428,8 +445,12 @@ public class EnvironmentPresenter extends BasePresenter
    {
       String file = currentBrowseFile_;
       int lineNumber = currentBrowseLineNumber_;
+      // if we have a real filename and sign from the server that the file 
+      // is in sync with the actual copy of the function, navigate to the
+      // file itself
       if (CallFrameItem.isNavigableFilename(file) &&
-          lineNumber > 0)
+          lineNumber > 0 &&
+          !useCurrentBrowseSource_)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
          FilePosition filePosition = FilePosition.create(lineNumber, 0);
@@ -439,6 +460,26 @@ public class EnvironmentPresenter extends BasePresenter
                                 debugging ? 
                                       NavigationMethod.DebugStep :
                                       NavigationMethod.DebugEnd));
+
+      }
+      // otherwise, if we have a copy of the source from the server, load
+      // the copy from the server into the code browser window
+      else if (useCurrentBrowseSource_ &&
+               currentBrowseSource_.length() > 0)
+      {
+         if (debugging)
+         {
+            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                  SearchPathFunctionDefinition.create(
+                        environmentName_, 
+                        "source unavailable or out of sync", 
+                        currentBrowseSource_),
+                  lineNumber - currentFunctionLineNumber_));
+         }
+         else
+         {
+            eventBus_.fireEvent(new CodeBrowserFinishedEvent());
+         }
       }
    }
 
@@ -572,5 +613,9 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean refreshingView_;
    private boolean initialized_;
    private int currentBrowseLineNumber_;
+   private int currentFunctionLineNumber_;
    private String currentBrowseFile_;
+   private boolean useCurrentBrowseSource_;
+   private String currentBrowseSource_;
+   private String environmentName_;
 }

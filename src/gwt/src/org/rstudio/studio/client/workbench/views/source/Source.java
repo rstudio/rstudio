@@ -109,6 +109,7 @@ public class Source implements InsertSourceHandler,
                              ShowContentHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
+                             CodeBrowserFinishedHandler,
                              BeforeShowHandler
 {
    public interface Display extends IsWidget,
@@ -1931,8 +1932,28 @@ public class Source implements InsertSourceHandler,
          public void onSuccess(CodeBrowserEditingTarget target)
          {
             target.showFunction(event.getFunction());
+            if (event.getDebugLineNumber() > 0)
+            {
+               target.highlightDebugLocation(SourcePosition.create(
+                     event.getDebugLineNumber(), 0));
+            }
          }
       });
+   }
+   
+   @Override
+   public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
+   {
+      // see if there is an existing target to use
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         String path = editors_.get(i).getPath();
+         if (CodeBrowserEditingTarget.PATH.equals(path))
+         {
+            view_.closeTab(i, false);
+            return;
+         }
+      }
    }
      
    private void activateCodeBrowser(

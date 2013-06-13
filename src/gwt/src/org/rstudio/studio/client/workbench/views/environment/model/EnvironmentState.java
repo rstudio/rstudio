@@ -35,4 +35,12 @@ public class EnvironmentState extends JavaScriptObject
    public final native JsArray<CallFrame> callFrames() /*-{
       return this.call_frames;
    }-*/;
+   
+   public final native boolean getUseProvidedSource() /*-{
+      return this.use_provided_source;
+   }-*/;
+   
+   public final native String getFunctionCode() /*-{
+      return this.function_code;
+   }-*/;
 }

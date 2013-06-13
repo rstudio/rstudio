@@ -47,6 +47,14 @@ public class ContextDepthChangedEvent extends
       public final native JsArray<CallFrame> getCallFrames() /*-{
          return this.call_frames;
       }-*/;
+      
+      public final native boolean getUseProvidedSource() /*-{
+         return this.use_provided_source;
+      }-*/;
+      
+      public final native String getFunctionCode() /*-{
+         return this.function_code;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -79,6 +87,16 @@ public class ContextDepthChangedEvent extends
       String functionName = contextData_.getFunctionName();
       return functionName.length() > 0 && functionName != "NA" ?
              contextData_.getFunctionName() : EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
+   }
+   
+   public String getFunctionCode()
+   {
+      return contextData_.getFunctionCode();
+   }
+   
+   public boolean useProvidedSource()
+   {
+      return contextData_.getUseProvidedSource();
    }
 
    @Override

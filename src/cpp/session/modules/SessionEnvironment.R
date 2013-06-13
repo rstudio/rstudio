@@ -97,6 +97,11 @@
     return(capture.output(print(attr(srcref, "srcfile"))))
 })
 
+.rs.addFunction("sourceCodeFromCall", function(call)
+{
+    return(paste(capture.output(print(call)), collapse="\n"))
+})
+
 .rs.addFunction("argumentListSummary", function(args)
 {
     argSummary <- ""

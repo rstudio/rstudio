@@ -153,7 +153,11 @@ Error writeStringToFile(const FilePath& filePath,
 
 Error readStringFromFile(const FilePath& filePath,
                          std::string* pStr,
-                         string_utils::LineEnding lineEnding)
+                         string_utils::LineEnding lineEnding,
+                         int startLine,
+                         int endLine,
+                         int startCharacter,
+                         int endCharacter)
 {
    using namespace boost::system::errc ;
    
@@ -168,10 +172,36 @@ Error readStringFromFile(const FilePath& filePath,
       // set exception mask (required for proper reporting of errors)
       pIfs->exceptions(std::istream::failbit | std::istream::badbit);
       
-      // copy file to string stream
-      std::ostringstream ostr;
-      boost::iostreams::copy(*pIfs, ostr);
-      *pStr = ostr.str();
+      if (endLine > startLine)
+      {
+         int currentLine = 0;
+         std::string content;
+         std::string line;
+         while (++currentLine <= endLine)
+         {
+            std::getline(*pIfs, line);
+
+            if (currentLine >= startLine)
+            {
+               content += line.substr(
+                        currentLine == startLine ? startCharacter - 1 : 0,
+                        currentLine == endLine ? endCharacter : line.length());
+               if (currentLine != endLine)
+               {
+                  content += "\n";
+               }
+            }
+         }
+         *pStr = content;
+      }
+      else
+      {
+         // copy file to string stream
+         std::ostringstream ostr;
+         boost::iostreams::copy(*pIfs, ostr);
+         *pStr = ostr.str();
+      }
+
       string_utils::convertLineEndings(pStr, lineEnding);
 
       // return success

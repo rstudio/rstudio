@@ -24,6 +24,16 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
    {
    }
    
+   public final static native SearchPathFunctionDefinition create(String name, 
+         String namespace, String code)
+   /*-{
+     return { name: name,
+              namespace: namespace,
+              code: code,
+              methods: [],
+              from_src_attrib: true };
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;
