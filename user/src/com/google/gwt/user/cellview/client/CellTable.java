@@ -18,6 +18,7 @@ package com.google.gwt.user.cellview.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.TableLayout;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
@@ -889,14 +890,21 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     super.refreshColumnWidths();
 
     /*
-     * Set the width to zero for all col elements that appear after the last
-     * column. Clearing the width would cause it to take up the remaining width
-     * in a fixed layout table.
+     * Set the width to zero and the display to none for all col elements that 
+     * appear after the last column. Clearing the width would cause it to take 
+     * up the remaining width in a fixed layout table.
+     * 
+     * Clear the display for all columns that appear in the table. 
      */
     if (colGroupEnabled) {
       int colCount = colgroup.getChildCount();
-      for (int i = getRealColumnCount(); i < colCount; i++) {
+      int lastColumn = getRealColumnCount(); 
+      for (int i = 0; i < lastColumn; i++) {
+        ensureTableColElement(i).getStyle().clearDisplay();
+      }
+      for (int i = lastColumn; i < colCount; i++) {
         doSetColumnWidth(i, "0px");
+        ensureTableColElement(i).getStyle().setDisplay(Display.NONE);
       }
     }
   }

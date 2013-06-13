@@ -283,7 +283,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
   }
 
   /**
-   * Test that removing a column sets its width to zero.
+   * Test that removing a column sets its width to zero and the display to none.
    */
   public void testRemoveColumnWithWidth() {
     CellTable<String> table = createAbstractHasData(new TextCell());
@@ -297,6 +297,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     table.removeColumn(column1);
     table.getPresenter().flush();
     assertEquals("0px", col1.getStyle().getWidth());
+    assertEquals("none", col1.getStyle().getDisplay().toLowerCase());
   }
 
   @Override
