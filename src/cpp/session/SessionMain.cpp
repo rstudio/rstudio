@@ -167,11 +167,6 @@ bool s_printCharsetWarning = false;
 
 std::queue<r::session::RConsoleInput> s_consoleInputBuffer;
 
-// superivsor is a module level static so that we can terminateChildren
-// upon exit of the session (otherwise we could leave a long running
-// sweave operation still hogging cpu after we exit)
-core::system::ProcessSupervisor s_interruptableChildSupervisor;
-
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
 const char * const kConsoleInput = "console_input" ;
@@ -2067,8 +2062,6 @@ void rCleanup(bool terminatedNormally)
       }
 
       // terminate known child processes
-      terminateAllChildren(&s_interruptableChildSupervisor,
-                           ERROR_LOCATION);
       terminateAllChildren(&module_context::processSupervisor(),
                            ERROR_LOCATION);
    }
@@ -2424,50 +2417,6 @@ void onChildExit(int exitStatus, int* pExitStatus)
 }
 
 } // anonymous namespace
-
-Error executeInterruptableChild(const std::string& path,
-                                const std::vector<std::string>& args,
-                                int *pExitStatus)
-{
-   // error if an interruptable child is already running (we can't
-   // marry more than one child process to the interrupt state without)
-   if (s_interruptableChildSupervisor.hasRunningChildren())
-   {
-      return systemError(boost::system::errc::device_or_resource_busy,
-                         ERROR_LOCATION);
-   }
-
-
-   // NOTE: we specify ProcessOptions::terminateChildren so that when
-   // the user interrupts the job then we end up killing both the
-   // child and all of its subprocesses (desirable for sweave so we
-   // can kill the underlying R executable as well).
-
-   // setup callbacks
-   core::system::ProcessCallbacks cb;
-   cb.onStdout = boost::bind(rConsoleWrite, _2, 0);
-   cb.onStderr = boost::bind(rConsoleWrite, _2, 1);
-   cb.onContinue = continueChildProcess;
-
-   // capture process exit status
-   *pExitStatus = EXIT_SUCCESS;
-   cb.onExit = boost::bind(onChildExit, _1, pExitStatus);
-
-   // run process with a supervisor
-   core::system::ProcessOptions options;
-   options.terminateChildren = true;
-   Error error = s_interruptableChildSupervisor.runProgram(path,
-                                                           args,
-                                                           options,
-                                                           cb);
-   if (error)
-      return error;
-
-   // wait for process (no timeout)
-   s_interruptableChildSupervisor.wait();
-
-   return Success();
-}
 
 int saveWorkspaceAction()
 {
