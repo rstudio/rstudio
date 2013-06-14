@@ -25,13 +25,14 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
    }
    
    public final static native SearchPathFunctionDefinition create(String name, 
-         String namespace, String code)
+         String namespace, String code, boolean debugCode)
    /*-{
      return { name: name,
               namespace: namespace,
               code: code,
               methods: [],
-              from_src_attrib: true };
+              from_src_attrib: true,
+              active_debug_code: debugCode };
    }-*/;
    
    public final native String getName() /*-{
@@ -52,5 +53,9 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
     
    public final native boolean isCodeFromSrcAttrib() /*-{
       return this.from_src_attrib;
+   }-*/;
+   
+   public final native boolean isActiveDebugCode() /*-{
+      return this.active_debug_code ? true : false;
    }-*/;
 }

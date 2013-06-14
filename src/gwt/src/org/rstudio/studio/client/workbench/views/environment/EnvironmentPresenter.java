@@ -484,7 +484,8 @@ public class EnvironmentPresenter extends BasePresenter
                   SearchPathFunctionDefinition.create(
                         environmentName_, 
                         "source unavailable or out of sync", 
-                        currentBrowseSource_),
+                        currentBrowseSource_,
+                        true),
                   lineNumber - currentFunctionLineNumber_));
          }
          else

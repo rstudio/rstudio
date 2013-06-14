@@ -26,6 +26,7 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -1185,7 +1186,13 @@ public class Source implements InsertSourceHandler,
                                  final String pattern,
                                  final NavigationMethod navMethod, 
                                  final boolean forceHighlightMode)
-   { 
+   {
+      if (navMethod == NavigationMethod.DebugStep ||
+          navMethod == NavigationMethod.DebugEnd)
+      {
+         setPendingDebugSelection();
+      }
+
       final CommandWithArg<FileSystemItem> action = new CommandWithArg<FileSystemItem>()
       {
          @Override
@@ -1661,7 +1668,9 @@ public class Source implements InsertSourceHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
-         if (initialized_)
+         // don't send focus to the tab if we're expecting a debug selection
+         // event
+         if (initialized_ && !isDebugSelectionPending())
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1672,8 +1681,12 @@ public class Source implements InsertSourceHandler,
                }
             });
          }
+         else if (isDebugSelectionPending())
+         {
+            clearPendingDebugSelection();
+         }
       }
-
+      
       if (initialized_)
          manageCommands();
    }
@@ -1929,6 +1942,11 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
+      if (event.getDebugLineNumber() > 0)
+      {
+         setPendingDebugSelection();
+      }
+      
       activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
@@ -2012,7 +2030,35 @@ public class Source implements InsertSourceHandler,
             });
    }
    
+   private boolean isDebugSelectionPending()
+   {
+      return debugSelectionTimer_ != null;
+   }
    
+   private void clearPendingDebugSelection()
+   {
+      if (debugSelectionTimer_ != null)
+      {
+         debugSelectionTimer_.cancel();
+         debugSelectionTimer_ = null;
+      }
+   }
+   
+   private void setPendingDebugSelection()
+   {
+      if (!isDebugSelectionPending())
+      {
+         debugSelectionTimer_ = new Timer()
+         {
+            public void run()
+            {
+               debugSelectionTimer_ = null;
+            }
+         };
+         debugSelectionTimer_.schedule(250);
+      }
+   }
+      
    private class SourceNavigationResultCallback<T extends EditingTarget> 
                         extends ResultCallback<T,ServerError>
    {
@@ -2089,6 +2135,7 @@ public class Source implements InsertSourceHandler,
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
+   private Timer debugSelectionTimer_ = null;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;

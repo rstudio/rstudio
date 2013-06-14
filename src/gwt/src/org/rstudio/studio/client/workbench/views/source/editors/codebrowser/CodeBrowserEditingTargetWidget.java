@@ -210,7 +210,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    {
       currentFunctionNamespace_ = functionDef.getNamespace();
       docDisplay_.setCode(formatCode(functionDef), false); 
-      docDisplay_.focus();
+      // don't send focus to the display for debugging; we want it to stay in
+      // the console
+      if (!functionDef.isActiveDebugCode())
+      {
+         docDisplay_.focus();
+      }
       contextWidget_.setCurrentFunction(functionDef);
    }
    
