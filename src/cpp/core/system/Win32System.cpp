@@ -58,7 +58,11 @@ namespace core {
 namespace system {
 
 namespace {
+// main log writer
 LogWriter* s_pLogWriter = NULL;
+
+// additional log writers
+std::vector<boost::shared_ptr<LogWriter> > s_logWriters;
 
 Error initJobObject(bool* detachFromJob)
 {
@@ -192,10 +196,19 @@ void initializeLog(const std::string& programIdentity, int logLevel, const FileP
    s_pLogWriter = new FileLogWriter(programIdentity, logLevel, settingsDir);
 }
 
+void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
+{
+   s_logWriters.push_back(pLogWriter);
+}
+
 void log(LogLevel logLevel, const std::string& message)
 {
    if (s_pLogWriter)
       s_pLogWriter->log(logLevel, message);
+
+   std::for_each(s_logWriters.begin(),
+                 s_logWriters.end(),
+                 boost::bind(&LogWriter::log, _1, logLevel, message));
 }
 
 bool isWin64()
