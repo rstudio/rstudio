@@ -41,6 +41,7 @@
 #include <core/Settings.hpp>
 #include <core/Thread.hpp>
 #include <core/Log.hpp>
+#include <core/LogWriter.hpp>
 #include <core/system/System.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/system/System.hpp>
@@ -72,6 +73,9 @@
 #include <r/session/REventLoop.hpp>
 
 extern "C" const char *locale2charset(const char *);
+
+#include <monitor/MonitorConstants.hpp>
+#include <monitor/http/Client.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
@@ -2591,6 +2595,12 @@ int main (int argc, char * const argv[])
       ProgramStatus status = options.read(argc, argv) ;
       if (status.exit())
          return status.exitCode() ;
+
+      // register monitor log handler
+      core::system::addLogWriter(monitor::http::monitorLogWriter(
+                                             kMonitorSocketPath,
+                                             options.monitorSharedSecret(),
+                                             options.programIdentity()));
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;

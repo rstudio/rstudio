@@ -27,6 +27,8 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+#include <monitor/MonitorConstants.hpp>
+
 #include <session/SessionConstants.hpp>
 
 using namespace core ;
@@ -47,6 +49,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 {
    using namespace boost::program_options ;
    
+   // get the shared secret
+   monitorSharedSecret_ = core::system::getenv(kMonitorSharedSecretEnvVar);
+   core::system::unsetenv(kMonitorSharedSecretEnvVar);
+
    // compute the resource path
    FilePath resourcePath;
    Error error = core::system::installPath("..", argc, argv, &resourcePath);

@@ -328,6 +328,11 @@ public:
       return core::string_utils::LineEndingNative;
    }
 
+   std::string monitorSharedSecret() const
+   {
+      return monitorSharedSecret_.c_str();
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -420,6 +425,9 @@ private:
 
    // initial project
    std::string initialProjectPath_;
+
+   // monitor
+   std::string monitorSharedSecret_;
 
    // overlay options
    std::map<std::string,std::string> overlayOptions_;

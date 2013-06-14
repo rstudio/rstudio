@@ -187,6 +187,7 @@ include_directories(
    include
    ${LIBR_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -240,6 +241,7 @@ target_link_libraries(rsession
    rstudio-core-hunspell
    rstudio-core-synctex
    ${RSTUDIO_CORE_ZLIB}
+   rstudio-monitor
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}

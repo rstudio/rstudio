@@ -22,7 +22,7 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixSystem.hpp>
 
-#include <server/ServerConstants.hpp>
+#include <monitor/MonitorConstants.hpp>
 
 #include "ServerAppArmor.hpp"
 
