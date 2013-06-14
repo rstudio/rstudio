@@ -169,23 +169,36 @@ Error readStringFromFile(const FilePath& filePath,
 
    try
    {
-      // set exception mask (required for proper reporting of errors)
-      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
-      
+      // if a line region was specified, read that region instead of the
+      // entire file.
       if (endLine > startLine)
       {
+         // set exception mask; note that we can't let failbit create an
+         // exception here because reading eof can trigger failbit in our case.
+         pIfs->exceptions(std::istream::badbit);
+
          int currentLine = 0;
          std::string content;
          std::string line;
-         while (++currentLine <= endLine)
+         // loop over each line in the file. (consider: is there a more
+         // performant way to seek past the first N lines?)
+         while (++currentLine <= endLine
+                && !pIfs->eof())
          {
             std::getline(*pIfs, line);
-
             if (currentLine >= startLine)
             {
+               // compute the portion of the line to be read; if this is the
+               // start or end of the region to be read, use the character
+               // offsets supplied
+               int lineLength = line.length();
                content += line.substr(
-                        currentLine == startLine ? startCharacter - 1 : 0,
-                        currentLine == endLine ? endCharacter : line.length());
+                        currentLine == startLine ?
+                           std::min(startCharacter - 1, lineLength) :
+                           0,
+                        currentLine == endLine ?
+                           std::min(endCharacter, lineLength) :
+                           lineLength);
                if (currentLine != endLine)
                {
                   content += "\n";
@@ -194,8 +207,12 @@ Error readStringFromFile(const FilePath& filePath,
          }
          *pStr = content;
       }
+      // reading the entire file
       else
       {
+         // set exception mask (required for proper reporting of errors)
+         pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
          // copy file to string stream
          std::ostringstream ostr;
          boost::iostreams::copy(*pIfs, ostr);

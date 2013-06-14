@@ -277,6 +277,8 @@ public class Source implements InsertSourceHandler,
       });
       
       events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
+      
+      events.addHandler(CodeBrowserFinishedEvent.TYPE, this);
 
       events.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
