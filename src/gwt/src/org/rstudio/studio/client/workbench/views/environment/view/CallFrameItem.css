@@ -32,3 +32,8 @@
 {
 	color: #A0A0A0;
 }
+
+.hiddenFrame
+{
+	display: none;
+}

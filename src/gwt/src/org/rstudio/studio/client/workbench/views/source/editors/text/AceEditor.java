@@ -1473,8 +1473,9 @@ public class AceEditor implements DocDisplay,
       int lastRow = widget_.getEditor().getLastVisibleRow();
       int debugRow = srcPosition.getRow();
       
-      // if the line to be debugged is not visible, scroll it into view
-      if (debugRow <= firstRow || debugRow >= lastRow)
+      // if the line to be debugged is past or near the edges of the screen,
+      // scroll it into view. allow two lines of context.
+      if (debugRow <= (firstRow + 2) || debugRow >= (lastRow - 2))
       {
          widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
       }

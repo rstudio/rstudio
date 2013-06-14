@@ -81,6 +81,9 @@ RCNTXT* getFunctionContext(const int depth,
       }
       pRContext = pRContext->nextcontext;
    }
+
+   // indicate the depth at which we stopped and the environment we found at
+   // that depth, if requested
    if (pFoundDepth)
    {
       *pFoundDepth = currentDepth;

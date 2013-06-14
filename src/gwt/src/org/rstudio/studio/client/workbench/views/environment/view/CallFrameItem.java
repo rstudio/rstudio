@@ -42,11 +42,13 @@ public class CallFrameItem extends Composite
       String callFrame();
       String topFrame();
       String noSourceFrame();
+      String hiddenFrame();
    }
 
    public CallFrameItem(CallFrame frame, Observer observer)
    {
       isActive_ = false;
+      isVisible_ = true;
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -58,6 +60,15 @@ public class CallFrameItem extends Composite
       if (!isNavigableFilename(frame.getFileName()))
       {
          functionName.addStyleName(style.noSourceFrame());
+         
+         // hide call frames for which we don't have usable sources--but leave
+         // them in the DOM (we may want to easily show/hide these at the user's
+         // request)
+         if (frame.getContextDepth() > 1)
+         {
+            functionName.addStyleName(style.hiddenFrame());
+            isVisible_ = false;
+         }
       }
       setDisplayText(frame_.getLineNumber());
    }
@@ -83,7 +94,9 @@ public class CallFrameItem extends Composite
 
    public int getHeight()
    {
-      return style.callFrameHeight() + (style.callFrameMargin() * 2);
+      return isVisible_ ? 
+           style.callFrameHeight() + (style.callFrameMargin() * 2) :
+           0;
    }
 
    public static boolean isNavigableFilename(String fileName)
@@ -144,4 +157,5 @@ public class CallFrameItem extends Composite
    Observer observer_;
    CallFrame frame_;
    boolean isActive_;
+   boolean isVisible_;
 }

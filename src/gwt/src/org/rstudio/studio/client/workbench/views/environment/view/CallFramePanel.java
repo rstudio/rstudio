@@ -80,10 +80,12 @@ public class CallFramePanel extends ResizeComposite
       }
       else
       {
-         // simplification because all frames are the same size--if this 
-         // changes, iterate over each frame and query its height.
-         return ((callFrameItems_.get(0).getHeight() * callFrameItems_.size())
-               + (style.callFramePanelMargin() / 2));
+         int totalFrameSize = 0;
+         for (int idx = 0; idx < callFrameItems_.size(); idx++)
+         {
+            totalFrameSize += callFrameItems_.get(idx).getHeight();
+         }
+         return totalFrameSize + (style.callFramePanelMargin() / 2);
       }
    }
 
