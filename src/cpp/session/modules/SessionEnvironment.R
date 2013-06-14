@@ -121,7 +121,11 @@
 {
    tryCatch(
    {
-      if (is(obj, "ore.frame"))
+      if (missing(obj))
+      {
+        return("Missing argument")
+      }
+      else if (is(obj, "ore.frame"))
       {
          return(paste(ncol(obj),"columns"))
       }

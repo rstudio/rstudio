@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -391,6 +392,12 @@ public class EnvironmentPresenter extends BasePresenter
    
    public void setContextDepth(int contextDepth)
    {
+      // if entering debug state, activate this tab 
+      if (contextDepth > 0 &&
+          contextDepth_ == 0)
+      {
+         eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
+      }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
    }
@@ -414,9 +421,13 @@ public class EnvironmentPresenter extends BasePresenter
                  contextDepth_ - 1);
          
          // if the file is different, turn off debug highlighting in the old 
-         // file before turning it on in the new one
+         // file before turning it on in the new one. don't do this if both
+         // the current and the next file to be debugged have supplied sources,
+         // since there's no need to close and reopen the code browser in this
+         // case. 
          String newBrowseFile = browseFrame.getFileName().trim();
-         if (!newBrowseFile.equals(currentBrowseFile_))
+         if (!newBrowseFile.equals(currentBrowseFile_)
+            && !(useBrowseSources && useCurrentBrowseSource_))
          {
             openOrUpdateFileBrowsePoint(false);
          }

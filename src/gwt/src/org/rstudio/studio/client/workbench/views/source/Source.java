@@ -1946,37 +1946,45 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserFinished(final CodeBrowserFinishedEvent event)
    {
-      // see if there is an existing target to use
-      for (int i = 0; i < editors_.size(); i++)
+      int codeBrowserTabIndex = indexOfCodeBrowserTab();
+      if (codeBrowserTabIndex >= 0)
       {
-         String path = editors_.get(i).getPath();
+         view_.closeTab(codeBrowserTabIndex, false);
+         return;
+      }
+   }
+   
+   // returns the index of the tab currently containing the code browser, or
+   // -1 if the code browser tab isn't currently open;
+   private int indexOfCodeBrowserTab()
+   {
+      // see if there is an existing target to use
+      for (int idx = 0; idx < editors_.size(); idx++)
+      {
+         String path = editors_.get(idx).getPath();
          if (CodeBrowserEditingTarget.PATH.equals(path))
          {
-            view_.closeTab(i, false);
-            return;
+            return idx;
          }
       }
+      return -1;
    }
      
    private void activateCodeBrowser(
          final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
    {
-      // see if there is an existing target to use
-      for (int i = 0; i < editors_.size(); i++)
+      int codeBrowserTabIndex = indexOfCodeBrowserTab();
+      if (codeBrowserTabIndex >= 0)
       {
-         String path = editors_.get(i).getPath();
-         if (CodeBrowserEditingTarget.PATH.equals(path))
-         {
-            // select it
-            ensureVisible(false);
-            view_.selectTab(i);
-            
-            // callback
-            callback.onSuccess( (CodeBrowserEditingTarget)editors_.get(i));
-            
-            // satisfied request
-            return;
-         }
+         ensureVisible(false);
+         view_.selectTab(codeBrowserTabIndex);
+         
+         // callback
+         callback.onSuccess( (CodeBrowserEditingTarget)
+               editors_.get(codeBrowserTabIndex));
+         
+         // satisfied request
+         return;
       }
 
       // create a new one
