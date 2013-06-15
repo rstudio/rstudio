@@ -32,6 +32,7 @@ namespace system {
 enum FileMode
 {
    UserReadWriteMode,
+   UserReadWriteExecuteMode,
    UserReadWriteGroupReadMode,
    EveryoneReadMode,
    EveryoneReadWriteMode,
@@ -47,6 +48,10 @@ inline Error changeFileMode(const FilePath& filePath,
    {
       case UserReadWriteMode:
          mode = S_IRUSR | S_IWUSR;
+         break;
+
+      case UserReadWriteExecuteMode:
+         mode = S_IRUSR | S_IWUSR | S_IXUSR;
          break;
 
       case UserReadWriteGroupReadMode:
