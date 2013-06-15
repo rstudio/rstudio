@@ -1,5 +1,5 @@
 /*
- * ServerConstants.hpp
+ * MonitorConstants.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,12 +13,12 @@
  *
  */
 
-#ifndef SERVER_CONSTANTS_HPP
-#define SERVER_CONSTANTS_HPP
+#ifndef MONITOR_CONSTANTS_HPP
+#define MONITOR_CONSTANTS_HPP
 
 #define kMonitorSocketPath         "/tmp/rstudio-rserver/rserver-monitor.socket"
 #define kMonitorSharedSecretEnvVar "RS_MONITOR_SHARED_SECRET"
 #define kMonitorIntervalSeconds    "monitor-interval-seconds"
 
-#endif // SERVER_CONSTANTS_HPP
+#endif // MONITOR_CONSTANTS_HPP
 

@@ -33,6 +33,12 @@ protected:
                               const std::string& message);
 };
 
+namespace system {
+
+void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter);
+
+} // namespace system
+
 } // namespace core
 
 #endif // LOG_WRITER_HPP

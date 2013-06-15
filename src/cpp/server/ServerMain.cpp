@@ -18,6 +18,7 @@
 #include <signal.h>
 
 #include <core/Error.hpp>
+#include <core/LogWriter.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
@@ -33,6 +34,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <monitor/MonitorConstants.hpp>
 #include <monitor/http/Client.hpp>
 
 #include <session/SessionConstants.hpp>
@@ -44,9 +46,9 @@
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 #include <server/ServerOptions.hpp>
-#include <server/ServerConstants.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
+#include <server/ServerMonitorClient.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -330,6 +332,21 @@ void sendMetrics(const std::vector<monitor::metrics::MultiMetric>& metrics)
                                         metrics);
 }
 
+namespace {
+
+const char * const kProgramIdentity = "rserver";
+
+boost::shared_ptr<LogWriter> monitorAsyncLogWriter()
+{
+   return monitor::http::monitorAsyncLogWriter(
+                                        s_pHttpServer->ioService(),
+                                        kMonitorSocketPath,
+                                        server::options().monitorSharedSecret(),
+                                        kProgramIdentity);
+}
+
+} // anonymous namespace
+
 } // namespace server
 
 
@@ -338,7 +355,7 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      initializeSystemLog("rserver", core::system::kLogLevelWarning);
+      initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -407,6 +424,10 @@ int main(int argc, char * const argv[])
       error = httpServerInit();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // register the monitor log writer (needs to happen after
+      // http server init so the io service is available)
+      core::system::addLogWriter(monitorAsyncLogWriter());
 
       // call overlay initialize
       error = overlay::initialize();

@@ -18,6 +18,10 @@
 
 #include <string>
 
+#include <core/system/System.hpp>
+
+#include <core/LogWriter.hpp>
+
 #include <boost/asio/io_service.hpp>
 
 namespace monitor {
@@ -28,6 +32,30 @@ namespace metrics {
 }
 
 namespace http {
+
+boost::shared_ptr<core::LogWriter> monitorLogWriter(
+                                       const std::string& metricsSocket,
+                                       const std::string& sharedSecret,
+                                       const std::string& programIdentity);
+
+boost::shared_ptr<core::LogWriter> monitorAsyncLogWriter(
+                                       boost::asio::io_service& ioService,
+                                       const std::string& metricsSocket,
+                                       const std::string& sharedSecret,
+                                       const std::string& programIdentity);
+
+void log(const std::string& metricsSocket,
+         const std::string& sharedSecret,
+         const std::string& programIdentity,
+         core::system::LogLevel level,
+         const std::string& message);
+
+void logAsync(boost::asio::io_service& ioService,
+              const std::string& metricsSocket,
+              const std::string& sharedSecret,
+              const std::string& programIdentity,
+              core::system::LogLevel level,
+              const std::string& message);
 
 void sendMetrics(const std::string& metricsSocket,
                  const std::string& sharedSecret,

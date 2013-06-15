@@ -37,6 +37,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      /tmp/rstudio-rsession/** rw,
      /tmp/rstudio-rserver/** rw,
 
+     ${CMAKE_INSTALL_PREFIX}/metrics/rserver-metrics Ux,
+
      ${CMAKE_INSTALL_PREFIX}/bin/rserver-* Ux,
 
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
