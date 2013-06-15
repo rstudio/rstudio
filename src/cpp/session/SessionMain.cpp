@@ -2395,33 +2395,6 @@ bool rSessionResumed()
    return s_rSessionResumed;
 }
 
-namespace {
-
-bool continueChildProcess(core::system::ProcessOperations&)
-{
-   // pump events so we can actually receive an interrupt
-   polledEventHandler();
-
-   // check for interrupts pending. note that we need to do this
-   // before we call event_loop::processEvents because code within
-   // there might clear the interrupts pending flag
-   if (r::exec::interruptsPending())
-      return false;
-
-   // keep R gui alive when we are in desktop mode
-   processDesktopGuiEvents();
-
-   // return status
-   return true;
-}
-
-void onChildExit(int exitStatus, int* pExitStatus)
-{
-   *pExitStatus = exitStatus;
-}
-
-} // anonymous namespace
-
 int saveWorkspaceAction()
 {
    // allow project override
