@@ -15,6 +15,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability kill,
   capability chown,
   capability fowner,
+  capability fsetid,
   /** rwixmkl,
 
 
