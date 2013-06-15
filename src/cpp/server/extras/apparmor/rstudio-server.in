@@ -16,6 +16,8 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
   capability chown,
   capability fowner,
   capability fsetid,
+  capability dac_override,
+  capability dac_read_search,
   /** rwixmkl,
 
 
