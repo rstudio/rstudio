@@ -31,6 +31,7 @@ FileLogWriter::FileLogWriter(const std::string& programIdentity,
    logDir.ensureDirectory();
 
    logFile_ = logDir.childPath(programIdentity + ".log");
+   rotatedLogFile_ = logDir.childPath(programIdentity + ".rotated.log");
 
    if (!logFile_.exists())
    {
@@ -64,12 +65,18 @@ void FileLogWriter::log(core::system::LogLevel logLevel,
 
 
 
-#define LOGMAX (4096*1024)  // remove every 4 megabytes
+#define LOGMAX (2048*1024)  // rotate/remove every 2 megabytes
 bool FileLogWriter::rotateLogFile()
 {
    if (logFile_.exists() && logFile_.size() > LOGMAX)
    {
-      logFile_.remove();
+      // first remove the rotated log file if it exists (ignore errors because
+      // there's nothing we can do with them at this level)
+      rotatedLogFile_.removeIfExists();
+
+      // now rotate the log file
+      logFile_.move(rotatedLogFile_);
+
       return true;
    }
    return false;

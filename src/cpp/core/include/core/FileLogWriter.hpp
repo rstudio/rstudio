@@ -38,6 +38,7 @@ private:
     std::string programIdentity_;
     int logLevel_;
     FilePath logFile_;
+    FilePath rotatedLogFile_;
 };
 
 } // namespace core
