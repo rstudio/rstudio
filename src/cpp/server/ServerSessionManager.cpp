@@ -27,6 +27,7 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 
+#include <monitor/MonitorConstants.hpp>
 #include <session/SessionConstants.hpp>
 
 #include <server/ServerOptions.hpp>
@@ -79,6 +80,10 @@ core::system::ProcessConfig sessionProcessConfig(
    // append R environment variables
    core::system::Options rEnvVars = r_environment::variables();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
+
+   // add monitor shared secret
+   environment.push_back(std::make_pair(kMonitorSharedSecretEnvVar,
+                                        options.monitorSharedSecret()));
 
    // build the config object and return it
    core::system::ProcessConfig config;
