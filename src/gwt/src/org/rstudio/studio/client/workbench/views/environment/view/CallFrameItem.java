@@ -38,9 +38,8 @@ public class CallFrameItem extends Composite
    {
       int callFrameHeight();
       int callFrameMargin();
-      String activeFrame();
       String callFrame();
-      String topFrame();
+      String activeFrame();
       String noSourceFrame();
       String hiddenFrame();
    }
@@ -53,10 +52,6 @@ public class CallFrameItem extends Composite
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       functionName.addClickHandler(this);
-      if (frame.getContextDepth() == 1)
-      {
-         functionName.addStyleName(style.topFrame());
-      }
       if (!isNavigableFilename(frame.getFileName()))
       {
          functionName.addStyleName(style.noSourceFrame());
