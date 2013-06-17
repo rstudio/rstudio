@@ -155,7 +155,8 @@
       }
       else if (is.matrix(obj)
               || is.numeric(obj)
-              || is.factor(obj))
+              || is.factor(obj)
+              || is.raw(obj))
       {
          return(capture.output(str(obj)))
       }

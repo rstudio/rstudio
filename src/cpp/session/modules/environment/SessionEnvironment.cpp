@@ -26,7 +26,9 @@
 #include <r/session/RSession.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 #include <core/FileSerializer.hpp>
+#include <boost/foreach.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -266,6 +268,25 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    if (!sourceFilePath.exists())
    {
       return true;
+   }
+
+   // check the list of source documents in the working set; if this source
+   // document has unsaved changes, don't try to match the lines
+   std::vector<boost::shared_ptr<source_database::SourceDocument> > docs ;
+   error = source_database::list(&docs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return true;
+   }
+
+   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> doc, docs)
+   {
+      if (doc->path() == fileName &&
+          doc->dirty())
+      {
+         return true;
+      }
    }
 
    // read the portion of the file pointed to by the source refs from disk
