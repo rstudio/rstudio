@@ -65,14 +65,22 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.*;
-import org.rstudio.studio.client.workbench.views.environment.model.*;
 
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
@@ -420,14 +428,16 @@ public class EnvironmentPresenter extends BasePresenter
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
          
-         // if the file is different, turn off debug highlighting in the old 
-         // file before turning it on in the new one. don't do this if both
-         // the current and the next file to be debugged have supplied sources,
-         // since there's no need to close and reopen the code browser in this
-         // case. 
+         // if the file is different or we're swapping into or out of the source
+         // viewer, turn off highlighting in the old file before turning it on
+         // in the new one. avoid this in the case where the file is different
+         // but both frames are viewed from source, since in this case an
+         // unnecessary close and reopen of the source viewer would be 
+         // triggered.
          String newBrowseFile = browseFrame.getFileName().trim();
-         if (!newBrowseFile.equals(currentBrowseFile_)
-            && !(useBrowseSources && useCurrentBrowseSource_))
+         if ((!newBrowseFile.equals(currentBrowseFile_) ||
+                  useBrowseSources != useCurrentBrowseSource_) &&
+             !(useBrowseSources && useCurrentBrowseSource_))
          {
             openOrUpdateFileBrowsePoint(false);
          }

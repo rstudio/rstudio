@@ -69,7 +69,6 @@ public class EnvironmentObjects extends ResizeComposite
 
    public EnvironmentObjects(Observer observer)
    {
-      splitPosition_ = 150;
       observer_ = observer;
       contextDepth_ = 0;
 
@@ -116,7 +115,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectList_.setEmptyTableWidget(buildEmptyGridMessage());
       objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
 
-      splitPanel.addSouth(callFramePanel_, splitPosition_);
+      splitPanel.addSouth(callFramePanel_, 150);
       splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
       splitPanel.add(objectList_);
    }
@@ -714,7 +713,6 @@ public class EnvironmentObjects extends ResizeComposite
 
    private Observer observer_;
    private int contextDepth_;
-   private int splitPosition_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_;

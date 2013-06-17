@@ -47,8 +47,6 @@ public class CallFramePanel extends ResizeComposite
       {
          CallFrame frame = frameList.get(idx);
          CallFrameItem item = new CallFrameItem(frame, observer_);
-         // when the context depth changes, the first item is selected
-         // automatically
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();

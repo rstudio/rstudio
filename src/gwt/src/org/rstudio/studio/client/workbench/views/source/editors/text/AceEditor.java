@@ -1447,7 +1447,7 @@ public class AceEditor implements DocDisplay,
       if (recordCurrent)
          recordCurrentNavigationPosition();
 
-      navigate(position, recordCurrent, highlightLine);
+      navigate(position, true, highlightLine);
    }
    
    @Override
@@ -1474,8 +1474,9 @@ public class AceEditor implements DocDisplay,
       int debugRow = srcPosition.getRow();
       
       // if the line to be debugged is past or near the edges of the screen,
-      // scroll it into view. allow two lines of context.
-      if (debugRow <= (firstRow + 2) || debugRow >= (lastRow - 2))
+      // scroll it into view. allow some lines of context.
+      if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) || 
+          debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
       {
          widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
       }
@@ -1519,12 +1520,11 @@ public class AceEditor implements DocDisplay,
       else
          moveCursorNearTop();
       
+      // set focus
       focus();
       
       if (highlightLine)
-      {
          applyLineHighlight(position.getRow());
-      }
       
       // add to navigation history if requested and our current mode
       // supports history navigation
@@ -1762,6 +1762,7 @@ public class AceEditor implements DocDisplay,
       }
    }
 
+   private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
