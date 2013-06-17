@@ -27,6 +27,7 @@ set(SERVER_SOURCE_FILES
    ServerInit.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp
+   ServerMetrics.cpp
    ServerOffline.cpp
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
@@ -111,6 +112,7 @@ include_directories(
    ${Boost_INCLUDE_DIRS}
    ${SERVER_SYSTEM_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
+   ${MONITOR_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include
 )
 
@@ -120,6 +122,7 @@ add_executable(rserver ${SERVER_SOURCE_FILES} ${SERVER_HEADER_FILES})
 # set link dependencies
 target_link_libraries(rserver 
    rstudio-core
+   rstudio-monitor
    ${SERVER_SYSTEM_LIBRARIES}
 )
 
@@ -183,4 +186,9 @@ if (UNIX AND NOT APPLE)
    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_UPSTART_PROFILE}
            DESTINATION ${RSERVER_UPSTART_DIR})
 
+endif()
+
+# add overlay if it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+   include(CMakeOverlay.txt)
 endif()

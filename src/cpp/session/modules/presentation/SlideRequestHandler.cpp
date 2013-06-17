@@ -21,6 +21,7 @@
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/regex.hpp>
@@ -47,6 +48,8 @@ using namespace core;
 namespace session {
 namespace modules { 
 namespace presentation {
+
+void onSlideDeckChangedOverlay(const SlideDeck& slideDeck);
 
 namespace {
 
@@ -318,6 +321,22 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
    }
 }
 
+std::string presentationCommandClickHandler(const std::string& name,
+                                            const std::string& params)
+{
+   using namespace boost::algorithm;
+   std::ostringstream ostr;
+   ostr << "onclick='";
+   ostr << "window.parent.dispatchPresentationCommand(";
+   json::Object cmdObj;
+   using namespace boost::algorithm;
+   cmdObj["name"] = name;
+   cmdObj["params"] = params;
+   json::write(cmdObj, ostr);
+   ostr << "); return false;'";
+   return ostr.str();
+}
+
 std::string fixupLink(const boost::cmatch& match)
 {
    std::string href = http::util::urlDecode(match[1]);
@@ -340,16 +359,41 @@ std::string fixupLink(const boost::cmatch& match)
       std::size_t colonLoc = href.find_first_of(':');
       if (href.size() > colonLoc+2)
       {
-         std::ostringstream ostr;
-         ostr << "onclick='";
-         ostr << "window.parent.dispatchPresentationCommand(";
-         json::Object cmdObj;
          using namespace boost::algorithm;
-         cmdObj["name"] = trim_copy(href.substr(0, colonLoc));
-         cmdObj["params"] = trim_copy(href.substr(colonLoc+1));
-         json::write(cmdObj, ostr);
-         ostr << "); return false;'";
-         onClick = ostr.str();
+         std::string name =  trim_copy(href.substr(0, colonLoc));
+         std::string params = trim_copy(href.substr(colonLoc+1));
+         onClick = presentationCommandClickHandler(name, params);
+      }
+
+      return match[0] + " " + onClick;
+   }
+   else if (boost::algorithm::starts_with(href, "tutorial:"))
+   {
+      // paths are relative to the parent dir of the presenentation dir
+      using namespace boost::algorithm;
+      std::size_t colonLoc = href.find_first_of(':');
+      std::string path = trim_copy(href.substr(colonLoc+1));
+      path = core::http::util::urlDecode(path);
+      if (boost::algorithm::starts_with(path, "~/"))
+         path = module_context::resolveAliasedPath(path).absolutePath();
+      FilePath filePath = presentation::state::directory()
+                                                   .parent().complete(path);
+
+      Error error = core::system::realPath(filePath, &filePath);
+      if (error)
+      {
+         if (!core::isPathNotFoundError(error))
+            LOG_ERROR(error);
+         return match[0];
+      }
+
+      // bulid the call
+      std::string onClick;
+      if (href.size() > colonLoc+2)
+      {
+         std::string name = "tutorial";
+         std::string params = module_context::createAliasedPath(filePath);
+         onClick = presentationCommandClickHandler(name, params);
       }
 
       return match[0] + " " + onClick;
@@ -365,6 +409,29 @@ boost::iostreams::regex_filter linkFilter()
    return boost::iostreams::regex_filter(
             boost::regex("<a href=\"([^\"]+)\""),
             fixupLink);
+}
+
+std::string userSlidesCss(const SlideDeck& slideDeck)
+{
+   // first determine the path to the css file -- check for a css field
+   // first and if that doesn't exist form one from the basename of
+   // the presentation
+   std::string cssFile = slideDeck.css();
+   if (cssFile.empty())
+      cssFile = presentation::state::filePath().stem() + ".css";
+   FilePath cssPath = presentation::state::directory().complete(cssFile);
+
+   // read user css if it exists
+   std::string userSlidesCss;
+   if (cssPath.exists())
+   {
+      Error error = core::readStringFromFile(cssPath, &userSlidesCss);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // return it
+   return userSlidesCss;
 }
 
 
@@ -402,8 +469,10 @@ bool readPresentation(SlideDeck* pSlideDeck,
    }
 
    // render the slides
+   std::string slidesHead;
    std::string revealConfig;
    error = presentation::renderSlides(*pSlideDeck,
+                                      &slidesHead,
                                       pSlides,
                                       &revealConfig,
                                       pInitActions,
@@ -418,8 +487,10 @@ bool readPresentation(SlideDeck* pSlideDeck,
    // build template variables
    std::map<std::string,std::string>& vars = *pVars;
    vars["title"] = pSlideDeck->title();
+   vars["slides_head"] = slidesHead;
    vars["slides"] = *pSlides;
    vars["slides_css"] =  resourceFiles().get("presentation/slides.css");
+   vars["user_slides_css"] = userSlidesCss(*pSlideDeck);
    vars["r_highlight"] = resourceFiles().get("r_highlight.html");
    vars["reveal_config"] = revealConfig;
    vars["preamble"] = pSlideDeck->preamble();
@@ -560,6 +631,29 @@ void localRevealVars(std::map<std::string,std::string>* pVars)
    vars["reveal_js"] = revealLink("revealjs/js/reveal.js");
 }
 
+
+void revealSizeVars(const SlideDeck& slideDeck,
+                    bool zoom,
+                    bool allowAutosize,
+                    std::map<std::string,std::string>* pVars)
+{
+   std::map<std::string,std::string>& vars = *pVars;
+
+   bool autosize = allowAutosize && slideDeck.autosize();
+   vars["reveal_autosize"] = autosize ? "true" : "false";
+   if (autosize)
+   {
+      std::string zoomStr = zoom ? "true" : "false";
+      vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
+      vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+   }
+   else
+   {
+      vars["reveal_width"] = safe_convert::numberToString(slideDeck.width());
+      vars["reveal_height"] = safe_convert::numberToString(slideDeck.height());
+   }
+}
+
 void externalBrowserVars(const SlideDeck& slideDeck,
                          std::map<std::string,std::string>* pVars)
 {
@@ -569,13 +663,15 @@ void externalBrowserVars(const SlideDeck& slideDeck,
    vars["slides_js"] = "";
    vars["init_commands"] = "";
 
-   // width and height (these are the reveal defaults)
-   vars["reveal_width"] = "960";
-   vars["reveal_height"] = "700";
+   // width and height
+   revealSizeVars(slideDeck, false, false, pVars);
 
    // use transitions for standalone
    vars["reveal_transition"] = slideDeck.transition();
+   vars["reveal_transition_speed"] = slideDeck.transitionSpeed();
 
+   // rtl
+   vars["reveal_rtl"] = slideDeck.rtl();
 }
 
 bool createStandalonePresentation(const FilePath& targetFile,
@@ -633,20 +729,29 @@ bool createStandalonePresentation(const FilePath& targetFile,
    return renderPresentation(vars, filters, *pOfs, &errMsg);
 }
 
-FilePath viewInBrowserPath()
+
+void loadSlideDeckDependencies(const SlideDeck& slideDeck)
 {
-   static FilePath previewPath;
-   if (previewPath.empty())
+   // see if there is a depends field
+   std::string dependsField = slideDeck.depends();
+   std::vector<std::string> depends;
+   boost::algorithm::split(depends,
+                           dependsField,
+                           boost::algorithm::is_any_of(","));
+
+   // load any dependencies
+   BOOST_FOREACH(std::string pkg, depends)
    {
-      previewPath = module_context::tempFile("view", "dir");
-      Error error = previewPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
+      boost::algorithm::trim(pkg);
+
+      if (module_context::isPackageInstalled(pkg))
+      {
+         Error error = r::exec::RFunction(".rs.loadPackage", pkg, "").call();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
-
-   return previewPath.complete("presentation.html");
 }
-
 
 void handlePresentationRootRequest(const std::string& path,
                                    http::Response* pResponse)
@@ -668,8 +773,12 @@ void handlePresentationRootRequest(const std::string& path,
       return;
    }
 
+   // load any dependencies
+   loadSlideDeckDependencies(slideDeck);
+
    // notify slide deck changed
    log().onSlideDeckChanged(slideDeck);
+   onSlideDeckChangedOverlay(slideDeck);
 
    // set preload to none for media
    vars["slides"] = boost::algorithm::replace_all_copy(
@@ -700,14 +809,18 @@ void handlePresentationRootRequest(const std::string& path,
    vars["slides_js"] = resourceFiles().get("presentation/slides.js");
    vars["init_commands"] = initCommands;
 
-   // width and height are dynamic
-   std::string zoomStr = (path == "zoom") ? "true" : "false";
-   vars["reveal_width"] = "revealDetectWidth(" + zoomStr + ")";
-   vars["reveal_height"] = "revealDetectHeight(" + zoomStr + ")";
+   // width and height
+   bool zoom = path == "zoom";
+   revealSizeVars(slideDeck, zoom, true, &vars);
 
    // no transition in desktop mode (qtwebkit can't keep up)
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
    vars["reveal_transition"] =  isDesktop? "none" : slideDeck.transition();
+   vars["reveal_transition_speed"] = isDesktop ? "default" :
+                                                 slideDeck.transitionSpeed();
+
+   // rtl
+   vars["reveal_rtl"] = slideDeck.rtl();
 
    // render to output stream
    std::stringstream previewOutputStream;
@@ -715,9 +828,20 @@ void handlePresentationRootRequest(const std::string& path,
    filters.push_back(linkFilter());
    if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
    {
+      // set response
       pResponse->setNoCacheHeaders();
       pResponse->setContentType("text/html");
       pResponse->setBody(previewOutputStream);
+
+      // also save a view in browser version if that path already exists
+      // (allows the user to do a simple browser refresh to see changes)
+      FilePath viewInBrowserPath = presentation::state::viewInBrowserPath();
+      if (viewInBrowserPath.exists())
+      {
+         std::string errMsg;
+         if (!savePresentationAsStandalone(viewInBrowserPath, &errMsg))
+            LOG_ERROR_MESSAGE(errMsg);
+      }
    }
    else
    {
@@ -885,6 +1009,17 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    }
 }
 
+void handlePresentationFileRequest(const http::Request& request,
+                                  const std::string& dir,
+                                  http::Response* pResponse)
+{
+   std::string path = http::util::pathAfterPrefix(request,
+                                                  "/presentation/" + dir + "/");
+   FilePath resPath = options().rResourcesPath().complete("presentation");
+   FilePath filePath = resPath.complete(dir + "/" + path);
+   pResponse->setCacheableFile(filePath, request);
+}
+
 } // anonymous namespace
 
 
@@ -916,10 +1051,13 @@ void handlePresentationPaneRequest(const http::Request& request,
    // special handling for reveal.js assets
    else if (boost::algorithm::starts_with(path, "revealjs/"))
    {
-      path = http::util::pathAfterPrefix(request, "/presentation/revealjs/");
-      FilePath resPath = options().rResourcesPath().complete("presentation");
-      FilePath filePath = resPath.complete("revealjs/" + path);
-      pResponse->setCacheableFile(filePath, request);
+      handlePresentationFileRequest(request, "revealjs", pResponse);
+   }
+
+   // special handling for images
+   else if (boost::algorithm::starts_with(path, "slides-images/"))
+   {
+      handlePresentationFileRequest(request, "slides-images", pResponse);
    }
 
    // special handling for mathjax assets
@@ -1014,14 +1152,10 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
-bool savePresentationAsStandalone(core::FilePath* pFilePath,
+bool savePresentationAsStandalone(const core::FilePath& filePath,
                                   std::string* pErrMsg)
 {
-   // provide default if necessary
-   if (pFilePath->empty())
-      *pFilePath = viewInBrowserPath();
-
-   return createStandalonePresentation(*pFilePath,
+   return createStandalonePresentation(filePath,
                                        saveAsStandaloneVars,
                                        pErrMsg);
 }

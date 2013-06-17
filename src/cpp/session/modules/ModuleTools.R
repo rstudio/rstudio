@@ -84,3 +84,9 @@
    tryCatch(eval(parse(text=paste(packageName, ":::", name, sep=""))),
             error = function(e) NULL)
 })
+
+.rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
+{
+  name %in% .packages(all.available = TRUE, lib.loc = libLoc)
+})
+

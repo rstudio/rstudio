@@ -47,6 +47,7 @@
 #include <session/SessionLocalStreams.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
+#include <server/auth/ServerAuthHandler.hpp>
 
 #include <server/ServerOptions.hpp>
 
@@ -66,14 +67,12 @@ void launchSessionRecovery(const std::string& username)
       LOG_ERROR(error);
 }
 
-
 http::ConnectionRetryProfile sessionRetryProfile(const std::string& username)
 {
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
-   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               username);
+   retryProfile.recoveryFunction = boost::bind(launchSessionRecovery, username);
    return retryProfile;
 }
 
@@ -113,12 +112,14 @@ void handleContentError(
    // log if not connection terminated
    logIfNotConnectionTerminated(error, ptrConnection->request());
 
-   // convert connection unavailable to ServiceUnavailable http status
+   // handle connection unavailable with sign out if session launches
+   // require authentication, otherwise just return service unavailable
    if (http::isConnectionUnavailableError(error))
    {
       // write service unavailable
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
+
       ptrConnection->writeResponse();
    }
    // otherwise just forward the error
@@ -143,7 +144,7 @@ void handleRpcError(
    if (http::isConnectionUnavailableError(error))
    {
       json::setJsonRpcError(json::errc::ConnectionError,
-                            &(ptrConnection->response())) ;
+                            &(ptrConnection->response()));
    }
    else
    {

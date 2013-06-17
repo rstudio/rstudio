@@ -33,4 +33,8 @@ public class SlideNavigationItem extends JavaScriptObject
    public final native int getIndex() /*-{
       return this.index;
    }-*/;
+   
+   public final native int getLine() /*-{
+      return this.line;
+   }-*/;
 }

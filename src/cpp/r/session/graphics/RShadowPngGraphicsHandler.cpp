@@ -94,13 +94,6 @@ void shadowDevOff(DeviceContext* pDC)
    }
 }
 
-void shadowDevOff(pDevDesc dev)
-{
-   DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
-   if (pDC)
-      shadowDevOff(pDC);
-}
-
 Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
 {
    ShadowDeviceData* pDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
@@ -114,9 +107,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, "
-                        "bg = \"transparent\", "
-                        "pointsize = 16)");
+      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3% %4%, pointsize = 16)");
       std::string code = boost::str(fmt %
                                     string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
                                     pDC->width %
@@ -501,17 +492,10 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
    
 void newPage(const pGEcontext gc, pDevDesc dev)
 {
-   // close existing shadow dev (this is so that new plots don't
-   // paint transparently over old plots -- this might occur because
-   // we now set bg = transparent)
-   shadowDevOff(dev);
-
-   // create a new shadow dev
    pDevDesc pngDevDesc = shadowDevDesc(dev);
    if (pngDevDesc == NULL)
       return;
-
-   // call new page
+   
    pngDevDesc->newPage(gc, pngDevDesc);
 }
 

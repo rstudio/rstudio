@@ -13,7 +13,7 @@
  *
  */
 
-#include "Pam.hpp"
+#include <core/system/Pam.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
@@ -21,10 +21,8 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-using namespace core ;
-
-namespace server {
-namespace pam {
+namespace core {
+namespace system {
 
 namespace {
 
@@ -139,7 +137,8 @@ int conv(int num_msg,
 } // anonymous namespace
 
 
-PAM::PAM(bool silent) :
+PAM::PAM(const std::string& service, bool silent) :
+      service_(service),
       defaultFlags_(silent ? PAM_SILENT : 0),
       pamh_(NULL),
       status_(PAM_SUCCESS)
@@ -148,9 +147,12 @@ PAM::PAM(bool silent) :
 
 PAM::~PAM()
 {
-   if (pamh_)
+   try
    {
-      ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
+      close();
+   }
+   catch(...)
+   {
    }
 }
 
@@ -162,12 +164,12 @@ std::pair<int, const std::string> PAM::lastError()
 }
 
 int PAM::login(const std::string& username,
-                   const std::string& password)
+               const std::string& password)
 {
    struct pam_conv myConv;
    myConv.conv = conv;
    myConv.appdata_ptr = const_cast<void*>(static_cast<const void*>(password.c_str()));
-   status_ = ::pam_start("rstudio",
+   status_ = ::pam_start(service_.c_str(),
                          username.c_str(),
                          &myConv,
                          &pamh_);
@@ -195,5 +197,14 @@ int PAM::login(const std::string& username,
    return PAM_SUCCESS;
 }
 
-} // namespace pam
-} // namespace server
+void PAM::close()
+{
+   if (pamh_)
+   {
+      ::pam_end(pamh_, status_ | (defaultFlags_ & PAM_SILENT));
+      pamh_ = NULL;
+   }
+}
+
+} // namespace system
+} // namespace core

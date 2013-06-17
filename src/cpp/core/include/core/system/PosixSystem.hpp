@@ -69,18 +69,18 @@ core::Error setResourceLimit(ResourceLimit resourceLimit,
 
 enum StdStreamBehavior
 {
-   StdStreamClose,
-   StdStreamDevNull,
-   StdStreamInherit,
+   StdStreamClose = 0,
+   StdStreamDevNull = 1,
+   StdStreamInherit = 2
 };
 
 struct ProcessConfig
 {
    ProcessConfig()
       : stdStreamBehavior(StdStreamInherit),
-        memoryLimitBytes(-1),
-        stackLimitBytes(-1),
-        userProcessesLimit(-1)
+        memoryLimitBytes(0),
+        stackLimitBytes(0),
+        userProcessesLimit(0)
    {
    }
 

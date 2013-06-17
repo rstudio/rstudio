@@ -23,6 +23,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/ProgramOptions.hpp>
+#include <core/SafeConvert.hpp>
 
 namespace core {
    class ProgramStatus;
@@ -141,22 +142,17 @@ public:
    { 
       return std::string(rsessionConfigFile_.c_str()); 
    }
-   
-   int rsessionMemoryLimitMb() const
+
+   std::string monitorSharedSecret() const
    {
-      return rsessionMemoryLimitMb_;
-   }
-   
-   int rsessionStackLimitMb() const
-   {
-      return rsessionStackLimitMb_;
+      return std::string(monitorSharedSecret_.c_str());
    }
 
-   int rsessionUserProcessLimit() const
+   int monitorIntervalSeconds() const
    {
-      return rsessionUserProcessLimit_;
+      return monitorIntervalSeconds_;
    }
-
+   
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -169,11 +165,28 @@ private:
    void addOverlayOptions(boost::program_options::options_description* pServer,
                           boost::program_options::options_description* pWWW,
                           boost::program_options::options_description* pRSession,
-                          boost::program_options::options_description* pAuth);
+                          boost::program_options::options_description* pAuth,
+                          boost::program_options::options_description* pMonitor);
 
    bool validateOverlayOptions(std::string* pErrMsg);
 
    void resolveOverlayOptions();
+
+   void setOverlayOption(const std::string& name, const std::string& value)
+   {
+      overlayOptions_[name] = value;
+   }
+
+   void setOverlayOption(const std::string& name, bool value)
+   {
+      setOverlayOption(name, value ? std::string("1") : std::string("0"));
+   }
+
+   void setOverlayOption(const std::string& name, int value)
+   {
+      setOverlayOption(name, core::safe_convert::numberToString(value));
+   }
+
 
 private:
    core::FilePath installPath_;
@@ -195,9 +208,8 @@ private:
    std::string rldpathPath_;
    std::string rsessionConfigFile_;
    std::string rsessionLdLibraryPath_;
-   int rsessionMemoryLimitMb_;
-   int rsessionStackLimitMb_;
-   int rsessionUserProcessLimit_;
+   std::string monitorSharedSecret_;
+   int monitorIntervalSeconds_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

@@ -76,14 +76,7 @@ public class ApplicationWindow extends Composite
    
    public void performGoToFunction()
    {
-      if (applicationHeader_.isToolbarVisible())
-      {
-         applicationHeader_.focusGoToFunction();
-      }
-      else
-      {
-         new CodeSearchDialog(pCodeSearch_).showModal();  
-      }
+      new CodeSearchDialog(pCodeSearch_).showModal();  
    }
       
    public void showApplicationAgreement(String title,

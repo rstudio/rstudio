@@ -73,11 +73,21 @@ bool isValidField(const std::string& name)
           boost::iequals(name, "title") ||
           boost::iequals(name, "author") ||
           boost::iequals(name, "date") ||
+          boost::iequals(name, "autosize") ||
+          boost::iequals(name, "width") ||
+          boost::iequals(name, "height") ||
+          boost::iequals(name, "rtl") ||
+          boost::iequals(name, "depends") ||
           boost::iequals(name, "transition") ||
+          boost::iequals(name, "transition-speed") ||
           boost::iequals(name, "font-family") ||
           boost::iequals(name, "font-import") ||
+          boost::iequals(name, "css") ||
+          boost::iequals(name, "class") ||
           boost::iequals(name, "navigation") ||
           boost::iequals(name, "incremental") ||
+          boost::iequals(name, "left") ||
+          boost::iequals(name, "right") ||
           boost::iequals(name, "id") ||
           boost::iequals(name, "audio") ||
           boost::iequals(name, "video") ||
@@ -217,10 +227,25 @@ void insertField(std::vector<Slide::Field>* pFields, const Slide::Field& field)
 
 std::string Slide::transition() const
 {
-   std::string value = fieldValue("transition", "linear");
+   std::string value = fieldValue("transition");
    if (value == "rotate")
       value = "default";
    return value;
+}
+
+std::string Slide::rtl() const
+{
+   std::string value = fieldValue("rtl");
+   if (value == "true")
+      return value;
+   else
+      return "false";
+}
+
+bool Slide::autosize() const
+{
+   std::string value = fieldValue("autosize");
+   return value == "true";
 }
 
 std::string SlideDeck::title() const
@@ -231,6 +256,41 @@ std::string SlideDeck::title() const
       return std::string();
 }
 
+std::string SlideDeck::rtl() const
+{
+   if (!slides_.empty())
+      return slides_[0].rtl();
+   else
+      return "false";
+}
+
+bool SlideDeck::autosize() const
+{
+   if (!slides_.empty())
+      return slides_[0].autosize();
+   else
+      return false;
+}
+
+int SlideDeck::width() const
+{
+   const int kDefaultWidth = 960;
+   if (!slides_.empty() && !slides_[0].width().empty())
+      return safe_convert::stringTo<int>(slides_[0].width(), kDefaultWidth);
+   else
+      return kDefaultWidth;
+}
+
+
+int SlideDeck::height() const
+{
+   const int kDefaultHeight = 700;
+   if (!slides_.empty() && !slides_[0].height().empty())
+      return safe_convert::stringTo<int>(slides_[0].height(), kDefaultHeight);
+   else
+      return kDefaultHeight;
+}
+
 std::string SlideDeck::fontFamily() const
 {
    if (!slides_.empty())
@@ -239,12 +299,36 @@ std::string SlideDeck::fontFamily() const
       return std::string();
 }
 
-std::string SlideDeck::transition() const
+std::string SlideDeck::css() const
 {
    if (!slides_.empty())
-      return slides_[0].transition();
+      return slides_[0].css();
    else
-      return "linear";
+      return std::string();
+}
+
+std::string SlideDeck::transition() const
+{
+   std::string transition;
+   if (!slides_.empty())
+      transition = slides_[0].transition();
+
+   if (transition.empty())
+      transition = "linear";
+
+   return transition;
+}
+
+std::string SlideDeck::transitionSpeed() const
+{
+   std::string speed;
+   if (!slides_.empty())
+      speed = slides_[0].transitionSpeed();
+
+   if (!speed.empty())
+      return speed;
+   else
+      return "default";
 }
 
 std::string SlideDeck::navigation() const
@@ -252,7 +336,7 @@ std::string SlideDeck::navigation() const
    if (!slides_.empty())
       return slides_[0].navigation();
    else
-      return "slides";
+      return "slide";
 }
 
 std::string SlideDeck::incremental() const
@@ -264,15 +348,17 @@ std::string SlideDeck::incremental() const
       return "false";
 }
 
+std::string SlideDeck::depends() const
+{
+   if (!slides_.empty())
+      return slides_[0].depends();
+   else
+      return "slide";
+}
+
 
 Error SlideDeck::readSlides(const FilePath& filePath)
 {
-   // clear existing
-   slides_.clear();
-
-   // capture base dir
-   baseDir_ = filePath.parent();
-
    // read the file
    std::string slides;
    Error error = readStringFromFile(filePath,
@@ -280,6 +366,19 @@ Error SlideDeck::readSlides(const FilePath& filePath)
                                     string_utils::LineEndingPosix);
    if (error)
       return error;
+
+
+   // read the slides
+   return readSlides(slides, filePath.parent());
+}
+
+Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
+{
+   // clear existing
+   slides_.clear();
+
+   // capture base dir
+   baseDir_ = baseDir;
 
    // split into lines
    std::vector<std::string> lines;
@@ -315,6 +414,9 @@ Error SlideDeck::readSlides(const FilePath& filePath)
 
       // title is the line before (if there is one)
       std::string title = lineIndex > 0 ? lines[lineIndex-1] : "";
+
+      // line of code the slide is on
+      int line = !title.empty() ? lineIndex - 1 : lineIndex;
 
       // find the begin index (line after)
       std::size_t beginIndex = lineIndex + 1;
@@ -378,16 +480,18 @@ Error SlideDeck::readSlides(const FilePath& filePath)
       slides_.push_back(Slide(title,
                               slideFields,
                               invalidFields,
-                              content));
+                              content,
+                              line));
    }
 
    // if the deck is empty then insert a placeholder first slide
    if (slides_.empty())
    {
-      slides_.push_back(Slide(filePath.parent().filename(),
+      slides_.push_back(Slide(baseDir.filename(),
                               std::vector<Slide::Field>(),
                               std::vector<std::string>(),
-                              std::string()));
+                              std::string(),
+                              0));
    }
 
    return Success();

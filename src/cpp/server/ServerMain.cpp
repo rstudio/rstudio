@@ -33,6 +33,8 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <monitor/http/Client.hpp>
+
 #include <session/SessionConstants.hpp>
 
 
@@ -42,6 +44,7 @@
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 #include <server/ServerOptions.hpp>
+#include <server/ServerConstants.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
 
@@ -49,6 +52,7 @@
 #include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerInit.hpp"
+#include "ServerMetrics.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
@@ -311,6 +315,14 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 } // namespace scheduler
 
 
+void sendMetric(const monitor::metrics::Metric& metric)
+{
+   monitor::http::sendMetricAsync(s_pHttpServer->ioService(),
+                                  kMonitorSocketPath,
+                                  server::options().monitorSharedSecret(),
+                                  metric);
+}
+
 } // namespace server
 
 
@@ -391,6 +403,11 @@ int main(int argc, char * const argv[])
 
       // call overlay initialize
       error = overlay::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize metrics
+      error = metrics::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

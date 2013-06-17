@@ -25,7 +25,7 @@
 #!slides_css#
 
 .reveal {
-  font-family: #!reveal_font#, Times, "Times New Roman", serif;
+  font-family: #!reveal_font#, sans-serif;
 }
   
 .reveal h1,
@@ -36,6 +36,9 @@
 .reveal h6 {
   font-family: #!reveal_heading_font#, Impact, sans-serif;
 }
+
+#!user_slides_css#
+
   </style>
   
   <!-- reveal print css -->
@@ -46,6 +49,8 @@
 #!mathjax#  
 
 #!preamble#
+
+#!slides_head#
 
 </head>
 
@@ -87,6 +92,8 @@ function commandsForSlide(indexh) {
       #!reveal_config#
       theme: 'simple', 
       transition: '#!reveal_transition#',
+      transitionSpeed: '#!reveal_transition_speed#',
+      rtl: #!reveal_rtl#,
       width: #!reveal_width#,
       height: #!reveal_height#,
     
@@ -109,8 +116,33 @@ function commandsForSlide(indexh) {
       if (window.MathJax)
         window.MathJax.Hub.Rerender(event.currentSlide);  
     });
+    
+    // forward command key events to the rstudio frame
+   window.onkeydown = function(e) {
 
+      // allow 'o' to toggle overview mode
+      switch( e.keyCode ) {
+         case 79: case 42: window.Reveal.toggleOverview(); break;  
+      }
    
+      if (window.parent.presentationKeydown)
+         window.parent.presentationKeydown(e);   
+   }
+   
+   window.onresize = function() { 
+     
+     // bail if autosize is disabled
+     if (!#!reveal_autosize#)
+       return;
+      
+     if(window.activeTimer)
+       clearTimeout(window.activeTimer);
+       
+     window.activeTimer = setTimeout(function() { 
+       window.location.reload(true); 
+     }, 300);
+   }
+
 #!init_commands#   
    
   </script>

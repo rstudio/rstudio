@@ -20,9 +20,15 @@
 define("mode/markdown_highlight_rules", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
+var lang = require("ace/lib/lang");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 
 var MarkdownHighlightRules = function() {
+
+    var slideFields = lang.arrayToMap(
+        ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
+              .split("|")
+        );
 
     // regexp must not have capturing parentheses
     // regexps are ordered -> the first match is used
@@ -37,6 +43,10 @@ var MarkdownHighlightRules = function() {
         }, { // code block
             token : "support.function",
             regex : "^[ ]{4}.+"
+        }, { // h1 with equals
+            token: "markup.heading.1",
+            regex: "^\\={3,}\\s*$",
+            next: "fieldblock"
         }, { // h1
             token: "markup.heading.1",
             regex: "^=+(?=\\s*$)"
@@ -48,11 +58,7 @@ var MarkdownHighlightRules = function() {
                 return "markup.heading." + value.search(/[^#]/);
             },
             regex : "^#{1,6}(?:[^ #].*| +.*(?:[^ #].*|[^ ]+.* +#+ *))$"
-        }, { // dcffield
-            token : ["comment.doc.tag", "text"],
-            regex : "^" +"([\\w-]+\\:)" + "(.+)" + "$"
-        }, 
-        { // Github style block
+        },  { // Github style block
             token : "support.function",
             regex : "^```[a-zA-Z]+\\s*$",
             next  : "githubblock"
@@ -141,6 +147,31 @@ var MarkdownHighlightRules = function() {
             next  : "start"
         }, {
             token : "support.function",
+            regex : ".+"
+        } ],
+        
+        "fieldblock" : [ {
+            token : function(value) {
+                var field = value.slice(0,-1);
+                if (slideFields[field])
+                    return "comment.doc.tag";
+                else
+                    return "text";
+            },
+            regex : "^" +"[\\w-]+\\:",
+            next  : "fieldblockvalue"
+        }, {
+            token : "text",
+            regex : "(?=.+)",
+            next  : "start"
+        } ],
+
+        "fieldblockvalue" : [ {
+            token : "text",
+            regex : "$",
+            next  : "fieldblock"
+        }, {
+            token : "text",
             regex : ".+"
         } ],
 

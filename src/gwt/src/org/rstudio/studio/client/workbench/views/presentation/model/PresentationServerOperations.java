@@ -29,6 +29,9 @@ public interface PresentationServerOperations extends RPubsServerOperations
    
    void createStandalonePresentation(
                            String targetFile,
+                           ServerRequestCallback<Void> requestCallback);
+   
+   void createDesktopViewInBrowserPresentation(
                            ServerRequestCallback<String> requestCallback);
    
    void createPresentationRPubsSource(
@@ -47,4 +50,20 @@ public interface PresentationServerOperations extends RPubsServerOperations
                              ServerRequestCallback<Void> requestCallback);
    
    void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
+   
+   void tutorialFeedback(String feedback, 
+                         ServerRequestCallback<Void> requestCallback);
+   
+   void tutorialQuizResponse(int slideIndex, int answer, boolean correct,
+                             ServerRequestCallback<Void> requestCallback);
+   
+   void getSlideNavigationForFile(
+                     String filePath,
+                     ServerRequestCallback<SlideNavigation> requestCallback);
+   
+   void getSlideNavigationForCode(
+                     String code,
+                     String baseDir,
+                     ServerRequestCallback<SlideNavigation> requestCallback);
+   
 }

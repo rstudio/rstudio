@@ -52,11 +52,13 @@ public class SourceShim extends Composite
    public abstract static class AsyncSource extends AsyncShim<Source>
       implements OpenSourceFileHandler, 
                  OpenPresentationSourceFileHandler,
+                 EditPresentationSourceEvent.Handler,
                  InsertSourceHandler, 
                  FileEditHandler
    {
       public abstract void onOpenSourceFile(OpenSourceFileEvent event);
       public abstract void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
+      public abstract void onEditPresentationSource(EditPresentationSourceEvent event);
       
       @Handler
       public abstract void onNewSourceDoc();
@@ -152,6 +154,7 @@ public class SourceShim extends Composite
       asyncSource.setParent(this);
       events.addHandler(OpenSourceFileEvent.TYPE, asyncSource);
       events.addHandler(OpenPresentationSourceFileEvent.TYPE, asyncSource);
+      events.addHandler(EditPresentationSourceEvent.TYPE, asyncSource);
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       asyncSource_ = asyncSource;
 

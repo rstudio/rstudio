@@ -8,8 +8,24 @@
 .reveal h3,
 .reveal h4,
 .reveal h5,
-.reveal h6 {
+.reveal h6 { 
    margin-bottom: .6em;    
+}
+
+.reveal p,
+.reveal table {
+   margin-bottom: 1em; 
+}
+
+.reveal li {
+   margin-bottom: .4em;
+}
+
+.reveal ul ul,
+.reveal ul ol,
+.reveal ol ol,
+.reveal ol ul {
+	margin-top: .4em;
 }
 
 .reveal .slides {
@@ -25,6 +41,7 @@
   max-width: 95%;
   border: 1px solid #ccc;
   white-space: pre-wrap;
+  margin-bottom: 1em; 
 }
 
 .reveal pre code {
@@ -32,9 +49,21 @@
   font-size: 1.6em;
   line-height: 1.1em;
   background-color: white;
+  overflow: visible;
+  max-height: none;
+  word-wrap: normal;
 }
 
-.reveal code.r, code.cpp {
+.reveal code {
+  overflow: visible;
+  max-height: none;
+}
+
+.reveal code.r {
+  background-color: #F8F8F8;
+}
+
+.reveal code.cpp {
   background-color: #F8F8F8;
 }
 
@@ -57,6 +86,36 @@
 
 .prompt .reveal .state-background {
    background: #C6D7DC;
+}
+
+.quiz-multichoice .reveal .state-background {
+  background: rgba(254,220,179,1);
+}
+
+.quiz-multichoice .reveal ul {
+  list-style-type: none;
+  margin-bottom: 30px;
+}
+
+.quiz-multichoice .reveal li {
+  margin-top: 15px;
+}
+
+.quiz-multichoice .reveal .quizFeedback {
+  margin-bottom: 30px;
+}
+
+.quiz-multichoice .reveal .quizFeedback img {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  float: left;
+  margin-top: -15px;
+}
+
+.quiz-multichoice .reveal .quizFeedback span {
+  font-size: 1.4em; 
+  margin-left: 12px;
 }
 
 .section .reveal .state-background {

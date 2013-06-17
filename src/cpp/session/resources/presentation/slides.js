@@ -1,7 +1,4 @@
 
-// forward command key events to the rstudio frame
-if (window.parent.presentationKeydown)
-  window.onkeydown = function(e) {window.parent.presentationKeydown(e);}
 
 // manage media playback, atCommands, etc.
 function mediaManager(media, atCommands) {
@@ -100,14 +97,3 @@ function revealDetectHeight(zoomed) {
     return 700;
   }
 }
-
-window.onresize = function() { 
-  
-  if(window.activeTimer)
-    clearTimeout(window.activeTimer);
-    
-  window.activeTimer = setTimeout(function() { 
-    window.location.reload(true); 
-  }, 300);
-}
-

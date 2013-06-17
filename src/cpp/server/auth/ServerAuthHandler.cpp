@@ -99,7 +99,8 @@ void registerHandler(const Handler& handler)
    uri_handlers::addBlocking(kSignIn, s_handler.signIn);
 
    uri_handlers::addBlocking(kSignOut,
-                             auth::secureHttpHandler(s_handler.signOut));
+                             auth::secureHttpHandler(
+                                boost::bind(s_handler.signOut, _2, _3)));
 
    uri_handlers::add(kRefreshCredentialsAndContinue,
                      s_handler.refreshCredentialsThenContinue);
@@ -114,6 +115,11 @@ void registerHandler(const Handler& handler)
 bool isRegistered()
 {
    return ! s_handler.getUserIdentifier.empty();
+}
+
+void signOut(const http::Request& request, http::Response* pResponse)
+{
+   s_handler.signOut(request, pResponse);
 }
 
 } // namespace handler

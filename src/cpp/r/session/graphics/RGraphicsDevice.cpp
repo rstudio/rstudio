@@ -545,6 +545,12 @@ Error makeActive()
    return Success();
 }
 
+bool isActive()
+{
+   return s_pGEDevDesc != NULL &&
+          Rf_ndevNumber(s_pGEDevDesc->dev) == Rf_curDevice();
+}
+
 SEXP rs_activateGD()
 {
    Error error = makeActive();
@@ -668,6 +674,7 @@ Error initialize(
 
    // create plot manager (provide functions & events)
    GraphicsDeviceFunctions graphicsDevice;
+   graphicsDevice.isActive = isActive;
    graphicsDevice.displaySize = displaySize;
    graphicsDevice.convert = convert;
    graphicsDevice.saveSnapshot = saveSnapshot;

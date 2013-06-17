@@ -39,6 +39,7 @@ set (SESSION_SOURCE_FILES
    SessionMain.cpp
    SessionModuleContext.cpp
    SessionOptions.cpp
+   SessionOptionsOverlay.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionSourceDatabase.cpp
@@ -86,10 +87,11 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
    modules/presentation/PresentationState.cpp
-   modules/presentation/PresentationStateOverlay.cpp
+   modules/presentation/PresentationOverlay.cpp
    modules/presentation/SlideMediaRenderer.cpp
    modules/presentation/SlideNavigationList.cpp
    modules/presentation/SlideParser.cpp
+   modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/tex/SessionCompilePdf.cpp

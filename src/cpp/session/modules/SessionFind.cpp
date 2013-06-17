@@ -567,13 +567,13 @@ json::Object findInFilesStateAsJson()
 
 core::Error initialize()
 {
+   using boost::bind;
    using namespace session::module_context;
 
    // register suspend handler
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
 
    // install handlers
-   using boost::bind;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "begin_find", beginFind))

@@ -1,5 +1,5 @@
 /*
- * PresentationStateOverlay.cpp
+ * ServerMetrics.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,25 +13,20 @@
  *
  */
 
+#ifndef SERVER_METRICS_HPP
+#define SERVER_METRICS_HPP
 
-#include "PresentationState.hpp"
-
-#include <core/Error.hpp>
-
-using namespace core;
-
-namespace session {
-namespace modules { 
-namespace presentation {
-namespace state {
-
-Error initializeOverlay()
-{
-   return Success();
+namespace core {
+   class Error;
 }
 
-} // namespace state
-} // namespace presentation
-} // namespace modules
-} // namesapce session
+namespace server {
+namespace metrics {
+
+core::Error initialize();
+
+} // namespace metrics
+} // namespace server
+
+#endif // SERVER_METRICS_HPP
 

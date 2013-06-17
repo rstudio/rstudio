@@ -23,6 +23,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/json/Json.hpp>
 
@@ -73,11 +74,13 @@ public:
    Slide(const std::string& title,
          const std::vector<Field>& fields,
          const std::vector<std::string>& invalidFields,
-         const std::string& content)
+         const std::string& content,
+         std::size_t line)
       : title_(title),
         fields_(fields),
         invalidFields_(invalidFields),
-        content_(content)
+        content_(content),
+        line_(line)
    {
    }
 
@@ -86,11 +89,24 @@ public:
    std::string title() const { return title_; }
    bool showTitle() const;
 
+   // line
+   int line() const { return line_; }
+
    std::string author() const { return fieldValue("author"); }
    std::string date() const { return fieldValue("date"); }
+   std::string rtl() const;
+   bool autosize() const;
+   std::string width() const { return fieldValue("width"); }
+   std::string height() const { return fieldValue("height"); }
+   std::string depends() const { return fieldValue("depends"); }
    std::string fontFamily() const { return fieldValue("font-family"); }
+   std::string css() const { return fieldValue("css"); }
    std::string transition() const;
-   std::string navigation() const { return fieldValue("navigation", "slides"); }
+   std::string transitionSpeed() const
+   {
+      return fieldValue("transition-speed");
+   }
+   std::string navigation() const { return fieldValue("navigation", "slide"); }
 
 public:
    // global/local fields
@@ -101,6 +117,9 @@ public:
    std::string type() const { return fieldValue("type"); }
    std::string video() const { return fieldValue("video"); }
    std::string audio() const { return fieldValue("audio"); }
+   std::string cssClass() const { return fieldValue("class"); }
+   std::string left() const { return fieldValue("left"); }
+   std::string right() const { return fieldValue("right"); }
 
    std::vector<Command> commands() const;
 
@@ -120,6 +139,7 @@ private:
    std::vector<Field> fields_;
    std::vector<std::string> invalidFields_;
    std::string content_;
+   int line_;
 };
 
 class SlideDeck
@@ -130,14 +150,25 @@ public:
    }
 
    core::Error readSlides(const core::FilePath& filePath);
+   core::Error readSlides(const std::string& slides, const core::
+                          FilePath& baseDir);
 
    std::string title() const;
+   std::string rtl() const;
+   bool autosize() const;
+   int width() const;
+   int height() const;
 
    std::string fontFamily() const;
 
+   std::string css() const;
+
    std::string transition() const;
+   std::string transitionSpeed() const;
    std::string navigation() const;
    std::string incremental() const;
+
+   std::string depends() const;
 
    std::string preamble() const { return preamble_; }
 
@@ -150,12 +181,6 @@ private:
    std::string preamble_;
    std::vector<Slide> slides_;
 };
-
-
-core::Error readSlides(const core::FilePath& filePath,
-                       std::vector<Slide>* pSlides,
-                       std::string* pUserErrMsg);
-
 
 } // namespace presentation
 } // namespace modules

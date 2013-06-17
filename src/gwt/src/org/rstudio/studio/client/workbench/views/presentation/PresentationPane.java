@@ -63,18 +63,31 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
+      boolean isTutorial =
+                 session_.getSessionInfo().getPresentationState().isTutorial();
+      
       Toolbar toolbar = new Toolbar();
       
       toolbar.addLeftWidget(commands_.presentationHome().createToolbarButton());
       toolbar.addLeftSeparator();
+      
+      titleLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles()
+                                                .presentationNavigatorLabel());
       menuWidget_ = toolbar.addLeftPopupMenu(titleLabel_, slidesMenu_); 
       getSlideMenu().setDropDownVisible(false);
       toolbar.addLeftSeparator();
+      
+      if (!isTutorial)
+      {
+         toolbar.addLeftWidget(commands_.presentationEdit().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+      
       toolbar.addLeftWidget(commands_.presentationFullscreen().createToolbarButton());
      
       // More
-      if (!session_.getSessionInfo().getPresentationState().isTutorial())
-      {
+      if (!isTutorial)
+      { 
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
          moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
@@ -85,9 +98,14 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
                                                       StandardIcons.INSTANCE.more_actions(),
                                                       moreMenu);
          toolbar.addRightWidget(moreButton);
-         toolbar.addRightSeparator();
+         
+      }
+      else
+      {
+         toolbar.addRightWidget(commands_.tutorialFeedback().createToolbarButton());
       }
       
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
         
       return toolbar;
@@ -222,7 +240,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    public String getPresentationTitle()
    {
-      return titleLabel_.getText();
+      return frame_.getFrameTitle();
    }
    
    private final native void initPresentationCallbacks() /*-{

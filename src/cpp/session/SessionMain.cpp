@@ -388,6 +388,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // the InvalidClientId error.
    clientEventService().setClientId(clientId, clearEvents);
 
+   // set RSTUDIO_HTTP_REFERER environment variable based on Referer
+   if (options.programMode() == kSessionProgramModeServer)
+   {
+      std::string referer = ptrConnection->request().headerValue("referer");
+      core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+   }
+
    // prepare session info 
    json::Object sessionInfo ;
    sessionInfo["clientId"] = clientId;
@@ -1455,6 +1462,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       // overlay R
       (bind(sourceModuleRFile, "SessionOverlay.R"))
    
+      // addins
+      (addins::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
@@ -1488,9 +1498,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
       // workers
       (workers::web_request::initialize)
-
-      // addins
-      (addins::initialize)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
@@ -1944,9 +1951,9 @@ void rShowMessage(const std::string& message)
    session::clientEventQueue().add(event);
 }
    
-void rSuspended()
+void rSuspended(const r::session::RSuspendOptions& options)
 {
-   module_context::onSuspended(&(persistentState().settings()));
+   module_context::onSuspended(options, &(persistentState().settings()));
 }
    
 void rResumed()
@@ -2384,6 +2391,11 @@ Error registerRpcMethod(const std::string& name,
          std::make_pair(name,
                         std::make_pair(true, json::adaptToAsync(function))));
    return Success();
+}
+
+bool rSessionResumed()
+{
+   return s_rSessionResumed;
 }
 
 namespace {

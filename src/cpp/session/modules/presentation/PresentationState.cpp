@@ -43,6 +43,7 @@ struct PresentationState
    bool isTutorial;
    FilePath filePath;
    int slideIndex;
+   FilePath viewInBrowserPath; // not saved, is created on demand
 };
 
 // write-through cache of presentation state
@@ -176,6 +177,26 @@ FilePath filePath()
 FilePath directory()
 {
    return s_presentationState.filePath.parent();
+}
+
+FilePath viewInBrowserPath()
+{
+   if (s_presentationState.viewInBrowserPath.empty())
+   {
+      FilePath viewDir = module_context::tempFile("view", "dir");
+      Error error = viewDir.ensureDirectory();
+      if (!error)
+      {
+         s_presentationState.viewInBrowserPath =
+                                    viewDir.childPath("presentation.html");
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+
+   return s_presentationState.viewInBrowserPath;
 }
 
 void clear()

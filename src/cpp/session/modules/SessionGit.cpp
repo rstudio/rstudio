@@ -2633,7 +2633,7 @@ core::Error initialize()
    }
 
    // add suspend/resume handler
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    // add settings changed handler
    userSettings().onChanged.connect(onUserSettingsChanged);

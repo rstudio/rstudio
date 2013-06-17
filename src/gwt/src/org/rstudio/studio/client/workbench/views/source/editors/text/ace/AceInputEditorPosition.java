@@ -46,6 +46,13 @@ public class AceInputEditorPosition extends InputEditorPosition
       return new AceInputEditorPosition(session_,
                                         Position.create(getRow() + 1, 0));
    }
+   
+   @Override
+   public InputEditorPosition moveToPreviousLine()
+   {
+      int newRow = Math.max(getRow() - 1, 0);
+      return new AceInputEditorPosition(session_, Position.create(newRow, 0));
+   }
 
    private int getRow()
    {

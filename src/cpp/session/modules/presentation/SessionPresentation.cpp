@@ -13,7 +13,8 @@
  *
  */
 
-// TODO: icons & file associations
+
+// TODO: custom code navigator for presentations
 
 #include "SessionPresentation.hpp"
 
@@ -37,6 +38,7 @@
 #include "PresentationLog.hpp"
 #include "PresentationState.hpp"
 #include "SlideRequestHandler.hpp"
+#include "SlideNavigationList.hpp"
 
 
 using namespace core;
@@ -245,6 +247,124 @@ Error setWorkingDirectory(const json::JsonRpcRequest& request,
    return filePath.makeCurrentPath();
 }
 
+Error tutorialFeedback(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // get the feedback
+   std::string feedback;
+   Error error = json::readParam(request.params, 0, &feedback);
+   if (error)
+      return error;
+
+   // confirm we are active
+   if (!presentation::state::isActive())
+   {
+      pResponse->setError(json::errc::MethodUnexpected);
+      return Success();
+   }
+
+   // record the feedback
+   presentation::log().recordFeedback(feedback);
+
+   return Success();
+}
+
+Error tutorialQuizResponse(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // get the params
+   int slideIndex, answer;
+   bool correct;
+   Error error = json::readParams(request.params,
+                                  &slideIndex,
+                                  &answer,
+                                  &correct);
+   if (error)
+      return error;
+
+   // confirm we are active
+   if (!presentation::state::isActive())
+   {
+      pResponse->setError(json::errc::MethodUnexpected);
+      return Success();
+   }
+
+   // record the feedback
+   presentation::log().recordQuizResponse(slideIndex, answer, correct);
+
+   return Success();
+}
+
+
+Error getSlideNavigation(const std::string& code,
+                         const FilePath& baseDir,
+                         json::Object* pSlideNavigationJson)
+{
+   SlideDeck slideDeck;
+   Error error = slideDeck.readSlides(code, baseDir);
+   if (error)
+      return error;
+
+   SlideNavigationList navigationList("slide");
+   BOOST_FOREACH(const Slide& slide, slideDeck.slides())
+   {
+      navigationList.add(slide);
+   }
+
+   *pSlideNavigationJson = navigationList.asJson();
+
+   return Success();
+}
+
+Error getSlideNavigationForFile(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // get param
+   std::string file;
+   Error error = json::readParam(request.params, 0, &file);
+   if (error)
+      return error;
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   // read code
+   std::string code;
+   error = core::readStringFromFile(filePath,
+                                    &code,
+                                    string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   // get slide navigation
+   json::Object slideNavigationJson;
+   error = getSlideNavigation(code, filePath.parent(), &slideNavigationJson);
+   if (error)
+      return error;
+   pResponse->setResult(slideNavigationJson);
+
+   return Success();
+}
+
+Error getSlideNavigationForCode(const json::JsonRpcRequest& request,
+                               json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string code, parentDir;
+   Error error = json::readParams(request.params, &code, &parentDir);
+   if (error)
+      return error;
+   FilePath parentDirPath = module_context::resolveAliasedPath(parentDir);
+
+   // get slide navigation
+   json::Object slideNavigationJson;
+   error = getSlideNavigation(code, parentDirPath, &slideNavigationJson);
+   if (error)
+      return error;
+   pResponse->setResult(slideNavigationJson);
+
+   return Success();
+}
+
+
 Error createStandalonePresentation(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
 {
@@ -252,13 +372,27 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &pathParam);
    if (error)
       return error;
-
-   FilePath targetPath;
-   if (!pathParam.empty())
-      targetPath = module_context::resolveAliasedPath(pathParam);
+   FilePath targetPath = module_context::resolveAliasedPath(pathParam);
 
    std::string errMsg;
-   if (savePresentationAsStandalone(&targetPath, &errMsg))
+   if (!savePresentationAsStandalone(targetPath, &errMsg))
+   {
+      pResponse->setError(systemError(boost::system::errc::io_error,
+                                      ERROR_LOCATION),
+                          json::toJsonString(errMsg));
+   }
+
+   return Success();
+}
+
+Error createDesktopViewInBrowserPresentation(
+                                   const json::JsonRpcRequest& request,
+                                   json::JsonRpcResponse* pResponse)
+{
+   // save to view in browser path
+   FilePath targetPath = presentation::state::viewInBrowserPath();
+   std::string errMsg;
+   if (savePresentationAsStandalone(targetPath, &errMsg))
    {
       pResponse->setResult(module_context::createAliasedPath(targetPath));
    }
@@ -335,6 +469,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))
       (bind(registerRpcMethod, "create_standalone_presentation", createStandalonePresentation))
+      (bind(registerRpcMethod, "create_desktop_view_in_browser_presentation",
+                                createDesktopViewInBrowserPresentation))
       (bind(registerRpcMethod, "create_presentation_rpubs_source", createPresentationRpubsSource))
       (bind(registerRpcMethod, "set_presentation_slide_index", setPresentationSlideIndex))
       (bind(registerRpcMethod, "create_new_presentation", createNewPresentation))
@@ -342,6 +478,10 @@ Error initialize()
       (bind(registerRpcMethod, "close_presentation_pane", closePresentationPane))
       (bind(registerRpcMethod, "presentation_execute_code", presentationExecuteCode))
       (bind(registerRpcMethod, "set_working_directory", setWorkingDirectory))
+      (bind(registerRpcMethod, "tutorial_feedback", tutorialFeedback))
+      (bind(registerRpcMethod, "tutorial_quiz_response", tutorialQuizResponse))
+      (bind(registerRpcMethod, "get_slide_navigation_for_file", getSlideNavigationForFile))
+      (bind(registerRpcMethod, "get_slide_navigation_for_code", getSlideNavigationForCode))
       (bind(presentation::state::initialize))
       (bind(sourceModuleRFile, "SessionPresentation.R"));
 

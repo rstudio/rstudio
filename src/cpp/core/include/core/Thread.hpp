@@ -75,6 +75,82 @@ private:
    T value_;
 };
 
+template <typename K, typename V>
+class ThreadsafeMap : boost::noncopyable
+{
+public:
+   ThreadsafeMap() {}
+   virtual ~ThreadsafeMap() {}
+
+   bool contains(const K& key)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         return map_.find(key) != map_.end();
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return false;
+   }
+
+   V get(const K& key, const V& defaultValue = V())
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         typename std::map<K,V>::const_iterator it = map_.find(key);
+         if (it != map_.end())
+            return it->second;
+         else
+            return defaultValue;
+      }
+      END_LOCK_MUTEX
+
+      // keep compiler happy
+      return defaultValue;
+   }
+
+   V collect(const K& key)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         typename std::map<K,V>::const_iterator it = map_.find(key);
+         if (it != map_.end())
+         {
+            std::string val = it->second;
+            map_.erase(key);
+            return val;
+         }
+      }
+      END_LOCK_MUTEX
+
+      return V();
+   }
+
+   void set(const K& key, const V& val)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         map_[key] = val;
+      }
+      END_LOCK_MUTEX
+   }
+
+   void remove(const K& key)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         map_.erase(key);
+      }
+      END_LOCK_MUTEX
+   }
+
+private:
+   boost::mutex mutex_;
+   std::map<K,V> map_;
+};
+
+
 template <typename T>
 class ThreadsafeQueue : boost::noncopyable
 {

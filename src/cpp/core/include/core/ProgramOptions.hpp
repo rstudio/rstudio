@@ -22,6 +22,8 @@
 #include <boost/utility.hpp>
 #include <boost/program_options.hpp>
 
+#include <core/ProgramStatus.hpp>
+
 namespace core {
    
 class Error;
@@ -46,13 +48,26 @@ struct OptionsDescription
    boost::program_options::positional_options_description positionalOptions;
    boost::program_options::options_description configFile;
 };
-   
+
+
 ProgramStatus read(const OptionsDescription& optionsDescription,
-                   int argc, 
-                   char * const argv[]);
+                   int argc,
+                   char * const argv[],
+                   bool* pHelp);
+
+inline ProgramStatus read(const OptionsDescription& optionsDescription,
+                          int argc,
+                          char * const argv[])
+{
+   bool help;
+   return read(optionsDescription, argc, argv, &help);
+}
 
 void reportError(const std::string& errorMessage,
                  const ErrorLocation& location);
+
+void reportWarning(const std::string& warningMessage,
+                   const ErrorLocation& location);
    
 } // namespace program_options
 } // namespace core 

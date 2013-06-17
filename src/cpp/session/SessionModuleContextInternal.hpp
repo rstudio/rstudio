@@ -24,6 +24,12 @@ namespace core {
    class Settings;
 }
 
+namespace r {
+namespace session {
+   struct RSuspendOptions;
+}
+}
+
 namespace session {   
 namespace module_context {
  
@@ -31,7 +37,9 @@ namespace module_context {
 core::Error initialize();
       
 // suspend and resume
-void onSuspended(core::Settings* pPersistentState);
+
+void onSuspended(const r::session::RSuspendOptions& options,
+                 core::Settings* pPersistentState);
 void onResumed(const core::Settings& persistentState);
 
 // notify of backgound processing

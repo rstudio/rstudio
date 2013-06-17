@@ -30,6 +30,7 @@ namespace presentation {
 class SlideDeck;
 
 core::Error renderSlides(const SlideDeck& slideDeck,
+                         std::string* pSlidesHead,
                          std::string* pSlides,
                          std::string* pRevealConfig,
                          std::string* pInitActions,

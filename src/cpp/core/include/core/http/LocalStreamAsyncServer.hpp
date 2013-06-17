@@ -16,6 +16,8 @@
 #ifndef CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 #define CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 
+#include <boost/asio/io_service.hpp>
+
 #include <core/http/LocalStreamSocketUtils.hpp>
 #include <core/http/AsyncServerImpl.hpp>
 
@@ -35,13 +37,20 @@ public:
         fileMode_(fileMode)
    {
    }
-   
+
    virtual ~LocalStreamAsyncServer()
    {
       try
       {
          Error error = removeLocalStream();
-         if (error)
+
+         // log error, but not for permission denied (because this could be
+         // a stream created by root and then torn down after yielding
+         // privilege to a different user)
+         if (error && (
+                error.code() != boost::system::errc::permission_denied &&
+                error.code() != boost::system::errc::operation_not_permitted
+            ))
             LOG_ERROR(error);
       }
       catch(...)

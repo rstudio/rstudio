@@ -35,12 +35,12 @@ SlideNavigationList::SlideNavigationList(const std::string& type)
         inSubSection_(false),
         hasSections_(false)
 {
-   if (type == "slides")
+   if (type == "slide")
    {
       allowNavigation_ = true;
       allowSlideNavigation_ = true;
    }
-   else if (type == "sections")
+   else if (type == "section")
    {
       allowNavigation_ = true;
       allowSlideNavigation_ = false;
@@ -58,12 +58,12 @@ void SlideNavigationList::add(const Slide& slide)
    if (!allowNavigation_)
    {
       if (slides_.empty())
-         addSlide(slide.title(), 0, 0);
+         addSlide(slide.title(), 0, 0, slide.line());
    }
    else if (!allowSlideNavigation_)
    {
       if (slide.type() == "section")
-         addSlide(slide.title(), 0, index_);
+         addSlide(slide.title(), 0, index_, slide.line());
    }
    else
    {
@@ -90,7 +90,7 @@ void SlideNavigationList::add(const Slide& slide)
          indent = inSubSection_ ? 2 : 1;
       }
 
-      addSlide(slide.title(), indent, index_);
+      addSlide(slide.title(), indent, index_, slide.line());
    }
 
    index_++;
@@ -112,23 +112,30 @@ std::string SlideNavigationList::asCall() const
 {
    std::ostringstream ostr;
    ostr << "window.parent.initPresentationNavigator(";
+   json::write(asJson(), ostr);
+   ostr << ");";
+   return ostr.str();
+}
+
+json::Object SlideNavigationList::asJson() const
+{
    json::Object slideNavigationJson;
    slideNavigationJson["total_slides"] = index_;
    slideNavigationJson["items"] = slides_;
-   json::write(slideNavigationJson, ostr);
-   ostr << ");";
-   return ostr.str();
+   return slideNavigationJson;
 }
 
 
 void SlideNavigationList::addSlide(const std::string& title,
                                    int indent,
-                                   int index)
+                                   int index,
+                                   int line)
 {
    json::Object slideJson;
    slideJson["title"] = title;
    slideJson["indent"] = indent;
    slideJson["index"] = index;
+   slideJson["line"] = line;
    slides_.push_back(slideJson);
 }
 

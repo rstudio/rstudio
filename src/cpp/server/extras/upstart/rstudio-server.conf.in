@@ -20,9 +20,6 @@ pre-start script
    ${CMAKE_INSTALL_PREFIX}/extras/apparmor/apparmor-profile-load rstudio-server
 end script
 
-# unlimited size for core dumps
-limit core unlimited unlimited
-
 # run the server
 exec ${CMAKE_INSTALL_PREFIX}/bin/rserver
 

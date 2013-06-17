@@ -86,6 +86,8 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setResource(RES.chunk());
       else if (type == StatusBar.SCOPE_SECTION)
          scopeIcon_.setResource(RES.section());
+      else if (type == StatusBar.SCOPE_SLIDE)
+         scopeIcon_.setResource(RES.slide());
    }
 
    @UiField
@@ -101,6 +103,7 @@ public class StatusBarWidget extends Composite
    {
       ImageResource chunk();
       ImageResource section();
+      ImageResource slide();
    }
    private static Resources RES = GWT.create(Resources.class);
 }

@@ -54,6 +54,10 @@ elseif(RSTUDIO_DESKTOP)
 
 endif()
 
+# include overlay if it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+   include(CMakeOverlay.txt)
+endif()
 
 # dynamically configured debian control scripts
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debian-control/${DEBIAN_POSTINST}

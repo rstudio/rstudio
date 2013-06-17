@@ -170,14 +170,6 @@ oop.inherits(Mode, MarkdownMode);
                             selection: [1,0,1,0]};
                 }
             }
-
-            else if ((text === "=") && this.inMarkdownLanguageMode(state)) {
-                var pos = editor.getSelectionRange().start;
-                var match = /^(={2,})/.exec(session.doc.getLine(pos.row));
-                if (match && editor.getSelectionRange().start.column >= match[1].length) {
-                    return {text: Array(54).join("=") + "\n"};
-                }
-            }
         }
         return false;
     };

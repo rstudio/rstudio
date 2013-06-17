@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.plots.model.Point;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
+import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
@@ -2532,13 +2533,23 @@ public class RemoteServer implements Server
    @Override
    public void createStandalonePresentation(
                               String targetFile,
-                              ServerRequestCallback<String> requestCallback)
+                              ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, 
                   CREATE_STANDALONE_PRESENTATION, 
                   StringUtil.notNull(targetFile), 
                   requestCallback);
    }
+   
+   @Override
+   public void createDesktopViewInBrowserPresentation(
+                              ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  CREATE_DESKTOP_VIEW_IN_BROWSER_PRESENTATION, 
+                  requestCallback);
+   }
+
    
    @Override
    public void createPresentationRPubsSource(
@@ -2576,6 +2587,52 @@ public class RemoteServer implements Server
    public void closePresentationPane(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, CLOSE_PRESENTATION_PANE, requestCallback);
+   }
+   
+   @Override
+   public void tutorialFeedback(String feedback, 
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, TUTORIAL_FEEDBACK, feedback, requestCallback);
+   }
+   
+   @Override
+   public void tutorialQuizResponse(
+                           int slideIndex, int answer, boolean correct,
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(slideIndex));
+      params.set(1, new JSONNumber(answer));
+      params.set(2, JSONBoolean.getInstance(correct));
+      sendRequest(RPC_SCOPE, TUTORIAL_QUIZ_RESPONSE, params, requestCallback);
+   }
+   
+   
+   @Override
+   public void getSlideNavigationForFile(
+                     String filePath,
+                     ServerRequestCallback<SlideNavigation> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+                  GET_SLIDE_NAVIGATION_FOR_FILE, 
+                  filePath,
+                  requestCallback);
+   }
+
+   @Override
+   public void getSlideNavigationForCode(
+                     String code,
+                     String baseDir,
+                     ServerRequestCallback<SlideNavigation> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(code));
+      params.set(1, new JSONString(baseDir));
+      sendRequest(RPC_SCOPE, 
+                  GET_SLIDE_NAVIGATION_FOR_CODE, 
+                  params,
+                  requestCallback);
    }
    
    
@@ -2975,12 +3032,19 @@ public class RemoteServer implements Server
    
    private static final String SET_WORKING_DIRECTORY = "set_working_directory";
    private static final String CREATE_STANDALONE_PRESENTATION = "create_standalone_presentation";
+   private static final String CREATE_DESKTOP_VIEW_IN_BROWSER_PRESENTATION = "create_desktop_view_in_browser_presentation";
    private static final String CREATE_PRESENTATION_RPUBS_SOURCE = "create_presentation_rpubs_source";
    private static final String SET_PRESENTATION_SLIDE_INDEX = "set_presentation_slide_index";
    private static final String PRESENTATION_EXECUTE_CODE = "presentation_execute_code";
    private static final String CREATE_NEW_PRESENTATION = "create_new_presentation";
    private static final String SHOW_PRESENTATION_PANE = "show_presentation_pane";
    private static final String CLOSE_PRESENTATION_PANE = "close_presentation_pane";
+   
+   private static final String TUTORIAL_FEEDBACK = "tutorial_feedback";
+   private static final String TUTORIAL_QUIZ_RESPONSE = "tutorial_quiz_response";
+   
+   private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
+   private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

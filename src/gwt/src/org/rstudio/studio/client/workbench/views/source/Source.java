@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
@@ -1177,6 +1178,22 @@ public class Source implements InsertSourceHandler,
                        NavigationMethod.HighlightLine,
                        true);
       
+   }
+   
+   public void onEditPresentationSource(final EditPresentationSourceEvent event)
+   { 
+      openFile(
+            event.getSourceFile(), 
+            FileTypeRegistry.RPRESENTATION,
+            new CommandWithArg<EditingTarget>() {
+               @Override
+               public void execute(final EditingTarget editor)
+               {   
+                  TextEditingTargetPresentationHelper.navigateToSlide(
+                                                         editor, 
+                                                         event.getSlideIndex());
+               }
+         });
    }
    
    

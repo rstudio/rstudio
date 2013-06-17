@@ -19,8 +19,8 @@
 
 #include <boost/utility.hpp>
 
-namespace server {
-namespace pam {
+namespace core {
+namespace system {
 
 // NOTE: Mac OS X supports PAM but ships with it in a locked-down config
 // which will cause all passwords to be rejected. To make it work run:
@@ -35,20 +35,24 @@ namespace pam {
 class PAM : boost::noncopyable
 {
 public:
-   PAM(bool silent);
+   PAM(const std::string& service, bool silent);
    virtual ~PAM();
 
    std::pair<int, const std::string> lastError();
 
+   int status() const { return status_; }
 
-   int login(const std::string& username,
-             const std::string& password);
+   virtual int login(const std::string& username,
+                     const std::string& password);
 
-private:
+   virtual void close();
+
+protected:
+    std::string service_;
     int defaultFlags_;
     pam_handle_t* pamh_;
     int status_;
 };
 
-} // namespace pam
-} // namespace server
+} // namespace system
+} // namespace core

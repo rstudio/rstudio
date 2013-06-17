@@ -996,7 +996,7 @@ Error initialize()
    events().onShutdown.connect(onShutdown);
 
    // add suspend/resume handler
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    // register fileEdit method
    R_CallMethodDef methodDef ;

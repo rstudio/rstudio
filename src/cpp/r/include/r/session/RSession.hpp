@@ -111,6 +111,7 @@ extern const int kSerializationActionSuspendSession;
 extern const int kSerializationActionResumeSession;
 extern const int kSerializationActionCompleted;
 
+struct RSuspendOptions;
 struct RCallbacks
 {
    boost::function<core::Error(const RInitInfo&)> init ;
@@ -127,7 +128,7 @@ struct RCallbacks
    boost::function<void(const std::string&)> showMessage ;
    boost::function<void(bool)> busy;
    boost::function<void(bool)> deferredInit;
-   boost::function<void()> suspended;
+   boost::function<void(const r::session::RSuspendOptions& options)> suspended;
    boost::function<void()> resumed;
    boost::function<bool()> handleUnsavedChanges;
    boost::function<void()> quit;

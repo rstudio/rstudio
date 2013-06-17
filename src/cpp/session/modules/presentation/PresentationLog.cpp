@@ -113,7 +113,6 @@ void Log::onSlideIndexChanged(int index)
    currentSlideIndex_ = index;
 
    append(NavigationEntry,
-          presentation::state::filePath(),
           currentSlideIndex_,
           currentSlideType(),
           currentSlideHelpTopic(),
@@ -133,17 +132,15 @@ void Log::onConsolePrompt(const std::string& prompt)
 
    if (!consoleInputBuffer_.empty())
    {
-      std::string input = boost::algorithm::trim_copy(
-                            boost::algorithm::join(consoleInputBuffer_, "\n"));
-      std::string errors = boost::algorithm::trim_copy(
-                            boost::algorithm::join(errorOutputBuffer_, "\n"));
+      using namespace boost::algorithm;
+      std::string input = trim_copy(join(consoleInputBuffer_, "\n"));
+      std::string errors = trim_copy(join(errorOutputBuffer_, "\n"));
 
       // check to see if this command was one of the ones instrumented
       // by the current slide
       if (slideDeckInputCommands_[currentSlideIndex_].count(input) == 0)
       {
          append(InputEntry,
-                presentation::state::filePath(),
                 currentSlideIndex_,
                 currentSlideType(),
                 currentSlideHelpTopic(),
@@ -187,6 +184,43 @@ std::string csvString(std::string str)
    return "\"" + str + "\"";
 }
 
+std::string timestamp()
+{
+   // generate timestamp
+   using namespace boost::posix_time;
+   ptime time = microsec_clock::universal_time();
+   std::string dateTime = date_time::format(time, "%Y-%m-%dT%H:%M:%SZ");
+   return dateTime;
+}
+
+std::string csvPresentationPath()
+{
+   return csvString(module_context::createAliasedPath(
+                                         presentation::state::filePath()));
+}
+
+Error ensureTargetFile(const std::string& filename,
+                       const std::string& header,
+                       FilePath* pTargetFile)
+{
+   using namespace module_context;
+   FilePath presDir =  userScratchPath().childPath("presentation");
+   Error error = presDir.ensureDirectory();
+   if (error)
+      return error;
+
+   *pTargetFile = presDir.childPath(filename);
+   if (!pTargetFile->exists())
+   {
+      Error error = core::writeStringToFile(*pTargetFile, header + "\n");
+      if (error)
+         return error;
+   }
+
+   return Success();
+}
+
+
 } // anonymous namespace
 
 std::string Log::currentSlideType() const
@@ -214,7 +248,6 @@ std::string Log::currentSlideHelpDoc() const
 }
 
 void Log::append(EntryType type,
-                 const FilePath& presPath,
                  int slideIndex,
                  const std::string& slideType,
                  const std::string& helpTopic,
@@ -222,39 +255,29 @@ void Log::append(EntryType type,
                  const std::string& input,
                  const std::string& errors)
 {
-   // determine log file path and ensure it exists
-   using namespace module_context;
-   FilePath presDir =  userScratchPath().childPath("presentation");
-   Error error = presDir.ensureDirectory();
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
+   // ensure target file
+   FilePath logFilePath;
+   Error error = ensureTargetFile(
+            "presentation-log-v2.csv",
+            "type, timestamp, username, presentation, slide, slide-type, "
+            "help-topic, help-doc, input, errors\n",
+            &logFilePath);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
 
-   FilePath logFilePath = presDir.childPath("presentation-log-v1.csv");
-   if (!logFilePath.exists())
-   {
-      Error error = core::writeStringToFile(logFilePath,
-         "type, timestamp, presentation, slide, slide-type, help-topic, "
-         "help-doc, input, errors\n");
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-   }
-
-   // generate timestamp
-   using namespace boost::posix_time;
-   ptime time = microsec_clock::universal_time();
-   std::string dateTime = date_time::format(time, "%Y-%m-%dT%H:%M:%SZ");
-
    // generate entry
    std::vector<std::string> fields;
    fields.push_back((type == NavigationEntry) ? "Navigation" : "Input");
-   fields.push_back(dateTime);
-   fields.push_back(csvString(module_context::createAliasedPath(presPath)));
+   fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(slideIndex));
    fields.push_back(slideType);
    fields.push_back(csvString(helpTopic));
@@ -268,6 +291,76 @@ void Log::append(EntryType type,
    if (error)
       LOG_ERROR(error);
 }
+
+void Log::recordFeedback(const std::string& feedback)
+{
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
+   // ensure target file
+   FilePath feedbackFilePath;
+   Error error = ensureTargetFile("feedback-v2.csv",
+                                  "timestamp, username, presentation, "
+                                  "slide, feedback\n",
+                                  &feedbackFilePath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // generate entry
+   std::vector<std::string> fields;
+   fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvPresentationPath());
+   fields.push_back(safe_convert::numberToString(currentSlideIndex_));
+   fields.push_back(csvString(feedback));
+   std::string entry = boost::algorithm::join(fields, ",");
+
+   // append entry
+   error = core::appendToFile(feedbackFilePath, entry + "\n");
+   if (error)
+      LOG_ERROR(error);
+}
+
+void Log::recordQuizResponse(int index, int answer, bool correct)
+{
+   // bail if this isn't a tutorial
+   if (!presentation::state::isTutorial())
+      return;
+
+   // ensure target file
+   FilePath quizResponseFilePath;
+   Error error = ensureTargetFile(
+                      "quiz-responses-v2.csv",
+                      "timestamp, username, presentation, slide, "
+                      "answer, correct",
+                       &quizResponseFilePath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // generate entry
+   std::vector<std::string> fields;
+   fields.push_back(timestamp());
+   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvPresentationPath());
+   fields.push_back(safe_convert::numberToString(index));
+   fields.push_back(safe_convert::numberToString(answer));
+   fields.push_back(safe_convert::numberToString(correct));
+   std::string entry = boost::algorithm::join(fields, ",");
+
+   // append entry
+   error = core::appendToFile(quizResponseFilePath, entry + "\n");
+   if (error)
+      LOG_ERROR(error);
+}
+
+
 
 
 } // namespace presentation

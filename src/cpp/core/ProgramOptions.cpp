@@ -66,11 +66,22 @@ void reportError(const std::string& errorMessage, const ErrorLocation& location)
       core::log::logErrorMessage(errorMessage, location);
 }
 
+void reportWarning(const std::string& warningMessage,
+                   const ErrorLocation& location)
+{
+   if (core::system::stderrIsTerminal())
+      std::cerr << "WARNING: " << warningMessage << std::endl;
+   else
+      core::log::logWarningMessage(warningMessage, location);
+}
+
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
-                   int argc, 
-                   char * const argv[])
+                   int argc,
+                   char * const argv[],
+                   bool* pHelp)
 {
+   *pHelp = false;
    std::string configFile;
    try
    {        
@@ -123,7 +134,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          catch(const std::exception& e)
          {
             reportError(
-              "IO error reading " + configFile + ": " + std::string(e.what()),
+              "Error reading " + configFile + ": " + std::string(e.what()),
               ERROR_LOCATION);
 
             return ProgramStatus::exitFailure();
@@ -133,6 +144,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // show help if requested
       if (vm.count("help"))
       {
+         *pHelp = true;
          std::cout << commandLineOptions ;
          return ProgramStatus::exitSuccess() ;
       }

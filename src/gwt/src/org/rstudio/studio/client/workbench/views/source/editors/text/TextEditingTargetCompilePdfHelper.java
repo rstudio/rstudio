@@ -328,7 +328,8 @@ public class TextEditingTargetCompilePdfHelper
    // a valid string by returing the pref if the directive is invalid
    public String getActiveRnwWeaveName()
    {
-      if (docDisplay_.getFileType().canKnitToHTML())
+      if (docDisplay_.getFileType().canKnitToHTML() || 
+          docDisplay_.getFileType().isRpres())
          return "knitr";
 
       RnwWeaveDirective rnwWeaveDirective = detectRnwWeaveDirective(

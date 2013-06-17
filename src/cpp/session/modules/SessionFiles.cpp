@@ -877,11 +877,11 @@ bool isMonitoringDirectory(const FilePath& directory)
 Error initialize()
 {
    // register suspend handler
+   using boost::bind;
    using namespace module_context;
-   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+   addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
    
    // subscribe to events
-   using boost::bind;
    events().onClientInit.connect(bind(onClientInit));
 
    // register path info function

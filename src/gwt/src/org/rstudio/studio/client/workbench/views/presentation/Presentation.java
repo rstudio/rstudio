@@ -28,8 +28,8 @@ import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Barrier;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.Barrier.Token;
@@ -38,7 +38,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
@@ -64,6 +63,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigationItem;
+import org.rstudio.studio.client.workbench.views.source.events.EditPresentationSourceEvent;
 
 public class Presentation extends BasePresenter 
 {
@@ -162,6 +163,12 @@ public class Presentation extends BasePresenter
                   
                   view_.load(buildPresentationUrl());
                }
+               else if (file.getParentPathString().equals(getCurrentPresDir()) 
+                          &&
+                        file.getExtension().toLowerCase().equals(".css"))
+               {
+                  view_.load(buildPresentationUrl());
+               }
             }
          }
       });
@@ -221,6 +228,14 @@ public class Presentation extends BasePresenter
    }
    
    @Handler
+   void onPresentationEdit()
+   {
+      eventBus_.fireEvent(new EditPresentationSourceEvent(
+            FileSystemItem.createFile(currentState_.getFilePath()),
+            currentState_.getSlideIndex()));
+   }
+   
+   @Handler
    void onPresentationFullscreen()
    {
       // clear the internal iframe so there is no conflict over handling
@@ -245,15 +260,14 @@ public class Presentation extends BasePresenter
    {
       if (Desktop.isDesktop())
       {
-         saveAsStandalone(null, 
-                          new NullProgressIndicator(),
-                          new CommandWithArg<String>() {
-            @Override
-            public void execute(String arg)
-            {
-               Desktop.getFrame().showFile(arg);
-            }
-         });
+         server_.createDesktopViewInBrowserPresentation(
+            new SimpleRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String path)
+               {
+                  Desktop.getFrame().showFile(path);
+               }
+            });
       }
       else
       {
@@ -289,38 +303,30 @@ public class Presentation extends BasePresenter
                
                indicator.onProgress("Saving Presentation...");
    
-               saveAsStandalone(targetFile.getPath(), 
-                                indicator,
-                                new CommandWithArg<String>() {
-
-                  @Override
-                  public void execute(String arg)
-                  {
-                     saveAsStandaloneDir_ = targetFile.getParentPathString();
-                     session_.persistClientState();
-                  }         
-               });    
+               server_.createStandalonePresentation(
+                  targetFile.getPath(), 
+                  new VoidServerRequestCallback(indicator) {
+                     @Override
+                     public void onSuccess()
+                     {
+                        saveAsStandaloneDir_ = targetFile.getParentPathString();
+                        session_.persistClientState();
+                     }
+                  });
             }
       }); 
    }
    
    private void saveAsStandalone(String targetFile, 
                                  final ProgressIndicator indicator,
-                                 final CommandWithArg<String> onSuccess)
+                                 final Command onSuccess)
    {
       server_.createStandalonePresentation(
-            targetFile, new ServerRequestCallback<String>() {
+            targetFile, new VoidServerRequestCallback(indicator) {
                @Override
-               public void onResponseReceived(String savedFile)
+               public void onSuccess()
                {
-                  indicator.onCompleted();
-                  onSuccess.execute(savedFile);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  indicator.onError(getErrorMessage(error));
+                  onSuccess.execute();
                }
             });
    }
@@ -361,6 +367,38 @@ public class Presentation extends BasePresenter
       
       view_.load(buildPresentationUrl());
    }
+   
+   @Handler
+   void onTutorialFeedback()
+   {
+      EditDialog editDialog = new EditDialog("Provide Feedback",
+                                             "Submit", 
+                                             "",
+                                             false, 
+                                             true,
+                                             new Size(450,300),
+                     new ProgressOperationWithInput<String>() {
+         @Override
+         public void execute(String input, ProgressIndicator indicator)
+         {
+            if (input == null)
+            {
+               indicator.onCompleted();
+               return;
+            }
+            
+            indicator.onProgress("Saving feedback...");
+            
+            server_.tutorialFeedback(input, 
+                                     new VoidServerRequestCallback(indicator));
+            
+         }
+      });
+      
+      editDialog.showModal();
+      
+   }
+   
    
    @Override
    public void onSelected()
@@ -463,6 +501,16 @@ public class Presentation extends BasePresenter
              view_.hasSlides();
    }
    
+   private String getCurrentPresDir()
+   {
+      if (currentState_ == null)
+         return "";
+      
+      FileSystemItem presFilePath = FileSystemItem.createFile(
+                                               currentState_.getFilePath());
+      return presFilePath.getParentPathString();
+   }
+   
    private void onPresentationSlideChanged(final int index, 
                                            final JavaScriptObject jsCmds)
    {  
@@ -545,6 +593,16 @@ public class Presentation extends BasePresenter
       slideMenu.setDropDownVisible(slideNavigation_.getItems().length() > 1);
    }
    
+   private void recordPresentationQuizAnswer(int slideIndex, 
+                                             int answer, 
+                                             boolean correct)
+   {
+      server_.tutorialQuizResponse(slideIndex, 
+                                   answer, 
+                                   correct, 
+                                   new VoidServerRequestCallback());
+   }
+   
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationSlideChanged = $entry(function(index, cmds) {
@@ -555,6 +613,9 @@ public class Presentation extends BasePresenter
       });
       $wnd.initPresentationNavigator = $entry(function(slides) {
          thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::initPresentationNavigator(Lcom/google/gwt/core/client/JavaScriptObject;)(slides);
+      });
+      $wnd.recordPresentationQuizAnswer = $entry(function(index, answer, correct) {
+         thiz.@org.rstudio.studio.client.workbench.views.presentation.Presentation::recordPresentationQuizAnswer(IIZ)(index, answer, correct);
       });
    }-*/;   
    

@@ -852,6 +852,7 @@ well as menu structures (for main menu and popup menus).
         desc="Revert selected changes"/>
    <cmd id="vcsShowHistory"
         menuLabel="_History"
+        buttonLabel="History"
         desc="View history of previous commits"/>
    <cmd id="vcsRefresh"
         desc="Refresh listing"/>
@@ -925,7 +926,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="presentationNext"
         desc="Go to the next slide"/>
    <cmd id="presentationPrev"
-        desc="Go to the previous slide"/>      
+        desc="Go to the previous slide"/> 
+   <cmd id="presentationEdit"
+        desc="Edit this slide of the presentation"/>
+        
    <cmd id="presentationViewInBrowser"
         menuLabel="_View in Browser"
         desc="View the presentation in an external web browser"/>
@@ -935,6 +939,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="presentationPublishToRpubs"
         menuLabel="Publish to RPubs..."
         desc="Publish the presentation to RPubs"/>   
+
+   <cmd id="tutorialFeedback"
+        desc="Provide feedback on this tutorial"/>     
        
    <cmd id="historySendToSource"
         menuLabel="Insert into _Source"

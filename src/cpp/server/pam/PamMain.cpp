@@ -23,11 +23,9 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/system/PosixUser.hpp>
-
-#include "Pam.hpp"
+#include <core/system/Pam.hpp>
 
 using namespace core ;
-using namespace server::pam;
 
 namespace {
 
@@ -95,7 +93,8 @@ int main(int argc, char * const argv[])
       }
 
       // verify password
-      if (PAM(false).login(username, password) == PAM_SUCCESS)
+      if (core::system::PAM("rstudio", false).login(username,
+                                                    password) == PAM_SUCCESS)
          return EXIT_SUCCESS;
       else
          return EXIT_FAILURE;

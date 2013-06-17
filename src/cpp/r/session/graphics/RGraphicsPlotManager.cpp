@@ -301,8 +301,7 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    // generate code for creating bitmap file device
    boost::format fmt(
       "{ require(grDevices, quietly=TRUE); "
-      "  %1%(filename=\"%2%\", width=%3%, height=%4%, "
-      " bg = \"transparent\", pointsize = 16 %5%); }");
+      "  %1%(filename=\"%2%\", width=%3%, height=%4%, pointsize = 16 %5%); }");
    std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
                                                      string_utils::utf8ToSystem(targetPath.absolutePath()) %
                                                      width %
@@ -408,6 +407,11 @@ bool PlotManager::hasOutput() const
 bool PlotManager::hasChanges() const
 {
    return displayHasChanges_ ;
+}
+
+bool PlotManager::isActiveDevice() const
+{
+   return graphicsDevice_.isActive();
 }
 
 boost::posix_time::ptime PlotManager::lastChange() const

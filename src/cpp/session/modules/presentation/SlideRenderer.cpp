@@ -33,6 +33,7 @@
 #include "SlideParser.hpp"
 #include "SlideMediaRenderer.hpp"
 #include "SlideNavigationList.hpp"
+#include "SlideQuizRenderer.hpp"
 
 using namespace core;
 
@@ -68,10 +69,22 @@ Error renderMarkdown(const std::string& content, std::string* pHTML)
 }
 
 
-std::string divWrap(const std::string& classNames, const std::string& contents)
+std::string divWrap(const std::string& classNames,
+                    const std::string& width,
+                    const std::string& contents)
 {
-   boost::format fmt("\n<div class=\"%1%\">\n%2%\n</div>\n");
-   return boost::str(fmt % classNames % contents);
+   std::string styleAttribute;
+   if (!width.empty())
+      styleAttribute = "style=\"width: " + width + ";\" ";
+
+   boost::format fmt("\n<div class=\"%1%\" %2%>\n%3%\n</div>\n");
+   return boost::str(fmt % classNames % styleAttribute % contents);
+}
+
+std::string divWrap(const std::string& classNames,
+                    const std::string& contents)
+{
+   return divWrap(classNames, "", contents);
 }
 
 std::string mediaClass(const std::string& html)
@@ -127,9 +140,95 @@ void addFragmentClass(const std::string& fragmentClass,
                                    bqWithClass + "\n<p>");
 }
 
+void validateTransitionType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "none") ||
+                  boost::iequals(type, "default") ||
+                  boost::iequals(type, "linear") ||
+                  boost::iequals(type, "fade") ||
+                  boost::iequals(type, "zoom") ||
+                  boost::iequals(type, "concave");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for transition field: "
+                                        + type + "\n");
+   }
+}
+
+void validateTransitionSpeedType(const std::string& speed)
+{
+   bool isValid = speed.empty() ||
+                  boost::iequals(speed, "default") ||
+                  boost::iequals(speed, "fast") ||
+                  boost::iequals(speed, "slow");
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for transition-speed "
+                                        "field: " + speed + "\n");
+   }
+}
+
+void validateNavigationType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "slide") ||
+                  boost::iequals(type, "section") ||
+                  boost::iequals(type, "none");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for navigation field: "
+                                        + type + "\n");
+   }
+}
+
+void validateIncrementalType(const std::string& type)
+{
+   bool isValid = boost::iequals(type, "false") ||
+                  boost::iequals(type, "true");
+
+   if (!isValid)
+   {
+      module_context::consoleWriteError("Invalid value for incremental field: "
+                                        + type + "\n");
+   }
+}
+
+void validateSlideDeckFields(const SlideDeck& slideDeck)
+{
+   validateTransitionType(slideDeck.transition());
+   validateTransitionSpeedType(slideDeck.transitionSpeed());
+   validateNavigationType(slideDeck.navigation());
+   validateIncrementalType(slideDeck.incremental());
+}
+
+void computeColumnWidths(const std::string& width,
+                         std::string* pSpecifiedWidth,
+                         std::string* pOtherWidth)
+{
+   int w = core::safe_convert::stringTo<int>(width, 50);
+   *pSpecifiedWidth = safe_convert::numberToString(w - 2) + "%";
+   *pOtherWidth = safe_convert::numberToString(100 - w - 2) + "%";
+}
+
+void computeColumnWidths(const Slide& slide,
+                         std::string* pLeftWidth,
+                         std::string* pRightWidth)
+{
+   boost::regex re("([0-9]+)\\s*%?");
+   boost::smatch match;
+
+   if (boost::regex_match(slide.left(), match, re))
+      computeColumnWidths(match[1], pLeftWidth, pRightWidth);
+   else if (boost::regex_match(slide.right(), match, re))
+      computeColumnWidths(match[1], pRightWidth, pLeftWidth);
+}
+
 Error slideToHtml(const Slide& slide,
+                  int slideNumber,
                   const std::string& extraContent,
                   const std::string& incremental,
+                  std::string* pHead,
                   std::string* pHTML)
 {
    // invalid fields
@@ -151,6 +250,16 @@ Error slideToHtml(const Slide& slide,
    Error error = renderMarkdown(slide.content(), &markdownHTML);
    if (error)
       return error;
+
+   // see if we need to render a quiz
+   if (slide.type() == "quiz-multichoice")
+   {
+      std::string head;
+      renderQuiz(slideNumber, &head, &markdownHTML);
+      pHead->append(head);
+   }
+
+   // append the html
    pHTML->append(markdownHTML);
 
    // add the extra content
@@ -160,6 +269,8 @@ Error slideToHtml(const Slide& slide,
    std::string slideClasses = "slideContent";
    if (!slide.showTitle())
       slideClasses += " noTitle";
+   if (!slide.cssClass().empty())
+      slideClasses += " " + slide.cssClass();
 
    // look for an <hr/> splitting the html into columns
    const std::string kHRTag = "<hr/>";
@@ -172,11 +283,16 @@ Error slideToHtml(const Slide& slide,
       if (pHTML->length() > (column1.length() + kHRTag.length()))
          column2 = pHTML->substr(hrLoc + kHRTag.length());
 
+      // compute the column widths
+      std::string leftWidth;
+      std::string rightWidth;
+      computeColumnWidths(slide, &leftWidth, &rightWidth);
+
       // now render two divs with the columns
       pHTML->clear();
       std::ostringstream ostr;
-      ostr << divWrap("column column1 " + slideClasses, column1);
-      ostr << divWrap("column column2 " + slideClasses, column2);
+      ostr << divWrap("column column1 " + slideClasses, leftWidth, column1);
+      ostr << divWrap("column column2 " + slideClasses, rightWidth, column2);
       *pHTML = ostr.str();
    }
 
@@ -204,58 +320,11 @@ Error slideToHtml(const Slide& slide,
    return Success();
 }
 
-void validateTransitionType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "none") ||
-                  boost::iequals(type, "default") ||
-                  boost::iequals(type, "linear") ||
-                  boost::iequals(type, "fade") ||
-                  boost::iequals(type, "zoom") ||
-                  boost::iequals(type, "concave");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for transition field: "
-                                        + type + "\n");
-   }
-}
-
-void validateNavigationType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "slides") ||
-                  boost::iequals(type, "sections") ||
-                  boost::iequals(type, "none");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for navigation field: "
-                                        + type + "\n");
-   }
-}
-
-void validateIncrementalType(const std::string& type)
-{
-   bool isValid = boost::iequals(type, "false") ||
-                  boost::iequals(type, "true");
-
-   if (!isValid)
-   {
-      module_context::consoleWriteError("Invalid value for incremental field: "
-                                        + type + "\n");
-   }
-}
-
-void validateSlideDeckFields(const SlideDeck& slideDeck)
-{
-   validateTransitionType(slideDeck.transition());
-   validateNavigationType(slideDeck.navigation());
-   validateIncrementalType(slideDeck.incremental());
-}
-
 } // anonymous namespace
 
 
 Error renderSlides(const SlideDeck& slideDeck,
+                   std::string* pSlidesHead,
                    std::string* pSlides,
                    std::string* pRevealConfig,
                    std::string* pInitActions,
@@ -294,6 +363,32 @@ Error renderSlides(const SlideDeck& slideDeck,
       // add the state if there is a type
       if (!type.empty())
          ostr << " data-state=\"" << type <<  "\"";
+
+      // add the transition
+      std::string transition;
+      if (!slide.transition().empty())
+      {
+         validateTransitionType(slide.transition());
+         transition = slide.transition();
+      }
+      else
+      {
+         transition = slideDeck.transition();
+      }
+      ostr << " data-transition=\"" << transition << "\"";
+
+      // add the transition speed
+      std::string transitionSpeed;
+      if (!slide.transitionSpeed().empty())
+      {
+         validateTransitionSpeedType(slide.transitionSpeed());
+         transitionSpeed = slide.transitionSpeed();
+      }
+      else
+      {
+         transitionSpeed = slideDeck.transitionSpeed();
+      }
+      ostr << " data-transition-speed=\"" << transitionSpeed << "\"";
 
       // end section tag
       ostr << ">\n";
@@ -399,13 +494,20 @@ Error renderSlides(const SlideDeck& slideDeck,
 
 
       // render markdown
-      std::string htmlContent;
+      std::string headContent, htmlContent;
       Error error = slideToHtml(slide,
+                                slideNumber,
                                 ostrMedia.str(),
                                 incremental,
+                                &headContent,
                                 &htmlContent);
       if (error)
          return error;
+
+      // record head
+      pSlidesHead->append(headContent);
+
+      // record html
       ostr << htmlContent << "\n";
 
       // render end section

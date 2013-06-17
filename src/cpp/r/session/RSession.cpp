@@ -1506,7 +1506,7 @@ bool suspend(const RSuspendOptions& options,
       s_suspended = true;
       
       // call suspend hook
-      s_callbacks.suspended();
+      s_callbacks.suspended(options);
    
       // clean up but don't save workspace or runLast because we have
       // been suspended

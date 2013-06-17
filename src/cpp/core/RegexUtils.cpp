@@ -20,6 +20,10 @@
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
 #include <core/StringUtils.hpp>
 
 namespace core {
@@ -58,6 +62,51 @@ bool textMatches(const std::string& text,
                        match,
                        regex,
                        flags);
+}
+
+Error filterString(const std::string& input,
+                   const std::vector<boost::iostreams::regex_filter>& filters,
+                   std::string* pOutput)
+{
+   try
+   {
+      // create input stream
+      std::istringstream inputStream(input);
+      inputStream.exceptions(std::istream::failbit | std::istream::badbit);
+
+      // create filtered output stream
+      std::ostringstream outputStream;
+      outputStream.exceptions(std::istream::failbit | std::istream::badbit);
+      boost::iostreams::filtering_ostream filteredStream;
+      for (std::size_t i=0; i<filters.size(); i++)
+         filteredStream.push(filters[i]);
+      filteredStream.push(outputStream);
+
+      boost::iostreams::copy(inputStream, filteredStream, 128);
+
+      *pOutput = outputStream.str();
+
+      return Success();
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error, ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("input", input.substr(0, 50));
+      return error;
+   }
+
+   // keep compiler happy
+   return Success();
+}
+
+Error filterString(const std::string& input,
+                   const boost::iostreams::regex_filter& filter,
+                   std::string* pOutput)
+{
+   std::vector<boost::iostreams::regex_filter> filters;
+   filters.push_back(filter);
+   return filterString(input, filters, pOutput);
 }
 
 

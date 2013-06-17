@@ -32,6 +32,45 @@ namespace {
 
 const char * const kDefaultProgramUser = "rstudio-server";
 
+struct Deprecated
+{
+   Deprecated()
+      : memoryLimitMb(0),
+        stackLimitMb(0),
+        userProcessLimit(0),
+        authPamRequiresPriv(true)
+   {
+   }
+
+   int memoryLimitMb;
+   int stackLimitMb;
+   int userProcessLimit;
+   bool authPamRequiresPriv;
+};
+
+void printDeprecationWarning(const std::string& option)
+{
+   program_options::reportWarning("The option '" + option + "' is deprecated "
+                                  "and will be discarded.",
+                                  ERROR_LOCATION);
+}
+
+void printDeprecationWarnings(const Deprecated& userOptions)
+{
+   Deprecated defaultOptions;
+
+   if (userOptions.memoryLimitMb != defaultOptions.memoryLimitMb)
+      printDeprecationWarning("rsession-memory-limit-mb");
+
+   if (userOptions.stackLimitMb != defaultOptions.stackLimitMb)
+      printDeprecationWarning("rsession-stack-limit-mb");
+
+   if (userOptions.userProcessLimit != defaultOptions.userProcessLimit)
+      printDeprecationWarning("rsession-process-limit");
+
+   if (userOptions.authPamRequiresPriv != defaultOptions.authPamRequiresPriv)
+      printDeprecationWarning("auth-pam-requires-priv");
+}
 
 } // anonymous namespace
 
@@ -64,6 +103,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // special program offline option (based on file existence at 
    // startup for easy bash script enable/disable of offline state)
    serverOffline_ = FilePath("/var/lib/rstudio-server/offline").exists();
+
+   // generate monitor shared secret
+   monitorSharedSecret_ = core::system::generateUuid();
 
    // program - name and execution
    options_description server("server");
@@ -98,6 +140,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
          "thread pool size");
 
    // rsession
+   Deprecated dep;
    options_description rsession("rsession");
    rsession.add_options()
       ("rsession-which-r",
@@ -116,17 +159,16 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&rsessionConfigFile_)->default_value(""),
          "path to rsession config file")
       ("rsession-memory-limit-mb",
-         value<int>(&rsessionMemoryLimitMb_)->default_value(0),
-         "rsession memory limit (mb)")
+         value<int>(&dep.memoryLimitMb)->default_value(dep.memoryLimitMb),
+         "rsession memory limit (mb) - DEPRECATED")
       ("rsession-stack-limit-mb",
-         value<int>(&rsessionStackLimitMb_)->default_value(0),
-         "rsession stack limit (mb)")
+         value<int>(&dep.stackLimitMb)->default_value(dep.stackLimitMb),
+         "rsession stack limit (mb) - DEPRECATED")
       ("rsession-process-limit",
-         value<int>(&rsessionUserProcessLimit_)->default_value(0),
-         "rsession user process limit");
+         value<int>(&dep.userProcessLimit)->default_value(dep.userProcessLimit),
+         "rsession user process limit - DEPRECATED");
    
    // still read depracated options (so we don't break config files)
-   bool deprecatedAuthPamRequiresPriv;
    options_description auth("auth");
    auth.add_options()
       ("auth-validate-users",
@@ -139,8 +181,15 @@ ProgramStatus Options::read(int argc, char * const argv[])
         value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
        "path to PAM helper binary")
       ("auth-pam-requires-priv",
-        value<bool>(&deprecatedAuthPamRequiresPriv)->default_value(true),
+        value<bool>(&dep.authPamRequiresPriv)->default_value(
+                                                   dep.authPamRequiresPriv),
         "deprecated: will always be true");
+
+   options_description monitor("monitor");
+   monitor.add_options()
+      ("monitor-interval-seconds",
+       value<int>(&monitorIntervalSeconds_)->default_value(300),
+       "monitoring interval");
 
    // define program options
    FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
@@ -149,13 +198,37 @@ ProgramStatus Options::read(int argc, char * const argv[])
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook
-   addOverlayOptions(&server, &www, &rsession, &auth);
+   addOverlayOptions(&server, &www, &rsession, &auth, &monitor);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth);
-   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
  
    // read options
-   ProgramStatus status = core::program_options::read(optionsDesc, argc, argv);
+   bool help = false;
+   ProgramStatus status = core::program_options::read(optionsDesc,
+                                                      argc,
+                                                      argv,
+                                                      &help);
+
+   // terminate if this was a help request
+   if (help)
+      return ProgramStatus::exitSuccess();
+
+   // print deprecation warnings
+   printDeprecationWarnings(dep);
+
+   // call overlay hooks
+   resolveOverlayOptions();
+   std::string errMsg;
+   if (!validateOverlayOptions(&errMsg))
+   {
+      program_options::reportError(errMsg, ERROR_LOCATION);
+      return ProgramStatus::exitFailure();
+   }
+
+   // exit if the call to read indicated we should -- note we don't do this
+   // immediately so that we can allow overlay validation to occur (otherwise
+   // a --test-config wouldn't test overlay options)
    if (status.exit())
       return status;
     
@@ -202,17 +275,6 @@ ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(&rsessionPath_);
    resolvePath(&rldpathPath_);
    resolvePath(&rsessionConfigFile_);
-
-   // overlay hook
-   resolveOverlayOptions();
-
-   // overlay validation
-   std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
-   {
-      LOG_ERROR_MESSAGE(errMsg);
-      return ProgramStatus::exitFailure();
-   }
 
    // return status
    return status;

@@ -47,6 +47,12 @@ namespace core {
    }
 }
 
+namespace r {
+namespace session {
+   struct RSuspendOptions;
+}
+}
+
 namespace session {   
 namespace module_context {
     
@@ -355,7 +361,8 @@ core::FilePath shellWorkingDirectory();
 
 // persist state accross suspend and resume
    
-typedef boost::function<void (core::Settings*)> SuspendFunction;
+typedef boost::function<void (const r::session::RSuspendOptions&,
+                              core::Settings*)> SuspendFunction;
 typedef boost::function<void(const core::Settings&)> ResumeFunction;
 
 class SuspendHandler
@@ -378,6 +385,8 @@ private:
 };
    
 void addSuspendHandler(const SuspendHandler& handler);
+
+bool rSessionResumed();
 
 } // namespace module_context
 } // namespace session

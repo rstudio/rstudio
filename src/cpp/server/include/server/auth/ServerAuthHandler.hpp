@@ -65,7 +65,7 @@ struct Handler
    core::http::AsyncUriHandlerFunction refreshCredentialsThenContinue;
    core::http::AsyncUriHandlerFunction updateCredentials;
    core::http::UriHandlerFunction signIn;
-   server::auth::SecureUriHandlerFunction signOut;
+   core::http::UriHandlerFunction signOut;
 };
 
 // register the auth handler
@@ -73,6 +73,10 @@ void registerHandler(const Handler& handler);
 
 // is there a handler already registered?
 bool isRegistered();
+
+// sign out
+void signOut(const core::http::Request& request,
+             core::http::Response* pResponse);
 
 } // namespace handler
 } // namespace auth

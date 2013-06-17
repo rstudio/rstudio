@@ -23,7 +23,11 @@
 #include <boost/signals.hpp>
 
 #include <core/Thread.hpp>
+
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixChildProcessTracker.hpp>
+
+#include <core/r_util/RSessionLaunchProfile.hpp>
 
 namespace core {
    class Error;
@@ -43,7 +47,7 @@ class SessionManager
 {
 private:
    // singleton
-   SessionManager() {}
+   SessionManager();
    friend SessionManager& sessionManager();
 
 public:
@@ -51,13 +55,20 @@ public:
    core::Error launchSession(const std::string& username);
    void removePendingLaunch(const std::string& username);
 
-   // notificatio that a SIGCHLD was received
+   // set a custom session launcher
+   typedef boost::function<core::Error(
+                           const core::r_util::SessionLaunchProfile&)>
+                                                  SessionLaunchFunction;
+   void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
+
+   // notification that a SIGCHLD was received
    void notifySIGCHLD();
 
 private:
-   void addActivePid(PidType pid);
-   void removeActivePid(PidType pid);
-   std::vector<PidType> activePids();
+   // default session launcher -- runs the process then uses the
+   // ChildProcessTracker to track it's pid for later reaping
+   core::Error launchAndTrackSession(
+                        const core::r_util::SessionLaunchProfile& profile);
 
 private:
    // pending launches
@@ -65,19 +76,19 @@ private:
    typedef std::map<std::string,boost::posix_time::ptime> LaunchMap;
    LaunchMap pendingLaunches_;
 
-   // pids we have launched
-   boost::mutex pidsMutex_;
-   std::vector<PidType> activePids_;
+   // session launch function
+   SessionLaunchFunction sessionLaunchFunction_;
+
+   // child process tracker
+   core::system::ChildProcessTracker processTracker_;
 };
 
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
-//
-core::Error launchSession(const std::string& username, PidType* pPid);
-
 core::Error launchSession(const std::string& username,
                           const core::system::Options& extraArgs,
                           PidType* pPid);
+
 
 } // namespace server
 

@@ -8,9 +8,10 @@ fi
 
 cd revealjs
 
-# Get the latest 
+# Get version 2.4.0 
 git checkout master
 git pull
+git checkout 2.4.0
 VERSION=`git rev-parse HEAD`
 
 # record the version
