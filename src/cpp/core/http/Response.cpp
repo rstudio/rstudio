@@ -124,6 +124,17 @@ Error Response::setBody(const std::string& content)
    return setBody(is);
 }
 
+Error Response::setCacheableBody(const FilePath& filePath,
+                                 const Request& request)
+{
+   std::string content;
+   Error error = core::readStringFromFile(filePath, &content);
+   if (error)
+      return error;
+
+   return setCacheableBody(content, request);
+}
+
 void Response::setDynamicHtml(const std::string& html,
                               const Request& request)
 {

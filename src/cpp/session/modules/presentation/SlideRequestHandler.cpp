@@ -1017,7 +1017,7 @@ void handlePresentationFileRequest(const http::Request& request,
                                                   "/presentation/" + dir + "/");
    FilePath resPath = options().rResourcesPath().complete("presentation");
    FilePath filePath = resPath.complete(dir + "/" + path);
-   pResponse->setCacheableFile(filePath, request);
+   pResponse->setCacheableBody(filePath, request);
 }
 
 } // anonymous namespace
@@ -1065,7 +1065,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    {
       FilePath filePath =
             session::options().mathjaxPath().parent().childPath(path);
-      pResponse->setCacheableFile(filePath, request);
+      pResponse->setCacheableBody(filePath, request);
    }
 
 
@@ -1083,7 +1083,7 @@ void handlePresentationPaneRequest(const http::Request& request,
          pResponse->addHeader("Accept-Ranges", "bytes");
 
          // return the file
-         pResponse->setCacheableFile(targetFile, request);
+         pResponse->setCacheableBody(targetFile, request);
       }
    }
 }
@@ -1126,7 +1126,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
       // just a stock file
       else
       {
-         pResponse->setCacheableFile(filePath, request);
+         pResponse->setCacheableBody(filePath, request);
       }
    }
 
@@ -1147,7 +1147,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                                      "/help/presentation/");
 
       // serve the file back
-      pResponse->setCacheableFile(s_presentationHelpDir.complete(path),
+      pResponse->setCacheableBody(s_presentationHelpDir.complete(path),
                                   request);
    }
 }

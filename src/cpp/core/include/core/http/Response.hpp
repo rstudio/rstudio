@@ -143,6 +143,8 @@ public:
          return setBody(content, filter);
       }
    }
+
+   Error setCacheableBody(const FilePath& filePath, const Request& request);
    
    template <typename Filter>
    Error setBody(const std::string& content, 
