@@ -40,9 +40,16 @@ public:
 
    virtual void log(core::system::LogLevel level, const std::string& message)
    {
+      log(programIdentity_, level, message);
+   }
+
+   virtual void log(const std::string& programIdentity,
+                    core::system::LogLevel level,
+                    const std::string& message)
+   {
       monitor::http::log(metricsSocket_,
                          sharedSecret_,
-                         programIdentity_,
+                         programIdentity,
                          level,
                          message);
    }
@@ -67,10 +74,17 @@ public:
 
    virtual void log(core::system::LogLevel level, const std::string& message)
    {
+      log(programIdentity_, level, message);
+   }
+
+   virtual void log(const std::string& programIdentity,
+                    core::system::LogLevel level,
+                    const std::string& message)
+   {
       monitor::http::logAsync(ioService_,
                               metricsSocket_,
                               sharedSecret_,
-                              programIdentity_,
+                              programIdentity,
                               level,
                               message);
    }
