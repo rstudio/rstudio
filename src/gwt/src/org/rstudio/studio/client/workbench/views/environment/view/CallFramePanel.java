@@ -17,11 +17,20 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
@@ -32,10 +41,51 @@ public class CallFramePanel extends ResizeComposite
    public interface Binder extends UiBinder<Widget, CallFramePanel>
    {
    }
-
-   public CallFramePanel(Observer observer)
+   
+   public interface CallFramePanelHost
    {
+      void minimizeCallFramePanel();
+      void restoreCallFramePanel();
+   }
+   
+   public CallFramePanel(Observer observer, CallFramePanelHost panelHost)
+   {
+      final ThemeStyles globalStyles = ThemeResources.INSTANCE.themeStyles();
+      panelHost_ = panelHost;
+      
+      // import the minimize buttons from the global theme resources
+      HTML minimize = new HTML();
+      minimize.setStylePrimaryName(globalStyles.minimize());
+      minimize.addClickHandler(new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            if (isMinimized_)
+            {
+               callFramePanelHeader.removeStyleName(globalStyles.minimizedWindow());
+               panelHost_.restoreCallFramePanel();
+               isMinimized_ = false;
+            }
+            else
+            {
+               callFramePanelHeader.addStyleName(globalStyles.minimizedWindow());
+               panelHost_.minimizeCallFramePanel();
+               isMinimized_ = true;
+            }
+         }
+      });
+      
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+
+      Label tracebackTitle = new Label("Traceback");
+      tracebackTitle.addStyleName(style.tracebackHeader());
+      
+      callFramePanelHeader.addStyleName(globalStyles.windowframe());
+      callFramePanelHeader.add(tracebackTitle);
+      callFramePanelHeader.add(minimize);
+      callFramePanelHeader.setWidgetRightWidth(minimize, 14, Style.Unit.PX, 
+                                                         14, Style.Unit.PX);
+      
       observer_ = observer;
       callFrameItems_ = new ArrayList<CallFrameItem>();
    }
@@ -83,15 +133,24 @@ public class CallFramePanel extends ResizeComposite
          {
             totalFrameSize += callFrameItems_.get(idx).getHeight();
          }
-         return totalFrameSize + (style.callFramePanelMargin() / 2);
+         return totalFrameSize + style.callFramePanelMargin();
       }
+   }
+   
+   public boolean isMinimized()
+   {
+      return isMinimized_;
    }
 
    @UiField
    HTMLPanel callFramePanel;
    @UiField
    CallFramePanelStyle style;
+   @UiField
+   LayoutPanel callFramePanelHeader;
    
    Observer observer_;
+   CallFramePanelHost panelHost_;
    ArrayList<CallFrameItem> callFrameItems_;
+   boolean isMinimized_ = false;
 }

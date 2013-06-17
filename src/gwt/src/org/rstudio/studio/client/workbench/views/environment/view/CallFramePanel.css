@@ -11,6 +11,7 @@
 .framePanel
 {
     margin-bottom: callFramePanelMargin;
+    margin-top: 3px;
 }
 
 .executionArrow
@@ -18,4 +19,10 @@
    position: absolute;
    left: 3px;
    top: 2px;
+}
+
+.tracebackHeader
+{
+	margin-top: 2px;
+	margin-left: 10px;
 }

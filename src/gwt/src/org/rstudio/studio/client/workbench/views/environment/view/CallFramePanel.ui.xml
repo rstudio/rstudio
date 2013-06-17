@@ -5,9 +5,7 @@
     <ui:style src="CallFramePanel.css" type="org.rstudio.studio.client.workbench.views.environment.view.CallFramePanelStyle"></ui:style>
     <ui:image src="ExecutionArrow.png" field="executionArrow"></ui:image>
     <g:HeaderPanel styleName="{environmentStyle.environmentPanel}">
-        <g:FlowPanel styleName="{environmentStyle.categoryHeaderRow}">
-            <g:Label styleName="{environmentStyle.categoryHeaderText}" text="Traceback"></g:Label>
-        </g:FlowPanel>
+        <g:LayoutPanel styleName="{environmentStyle.categoryHeaderRow}" ui:field="callFramePanelHeader" />
         <g:ResizeLayoutPanel styleName="{environmentStyle.fillHeight}">
             <g:ScrollPanel styleName="{environmentStyle.fillHeight}">
                 <g:HTMLPanel>

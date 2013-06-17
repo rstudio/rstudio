@@ -44,11 +44,13 @@ import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import java.util.*;
 
 public class EnvironmentObjects extends ResizeComposite
+   implements CallFramePanelHost
 {
    // Public interfaces -------------------------------------------------------
 
@@ -106,7 +108,7 @@ public class EnvironmentObjects extends ResizeComposite
       });
 
       // set up the call frame panel
-      callFramePanel_ = new CallFramePanel(observer_);
+      callFramePanel_ = new CallFramePanel(observer_, this);
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -223,7 +225,17 @@ public class EnvironmentObjects extends ResizeComposite
                  desiredCallFramePanelSize,
                  (int)(0.66 * splitPanel.getOffsetHeight()));
       }
-      splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
+      
+      // if the panel is minimized, just update the cached height so it'll get
+      // set to what we want when/if the panel is restored
+      if (callFramePanel_.isMinimized())
+      {
+         callFramePanelHeight_ = desiredCallFramePanelSize;
+      }
+      else
+      {
+         splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
+      }
    }
 
    public void setEnvironmentName(String environmentName)
@@ -252,6 +264,22 @@ public class EnvironmentObjects extends ResizeComposite
    public void updateLineNumber (int newLineNumber)
    {
       callFramePanel_.updateLineNumber(newLineNumber);
+   }
+
+   // CallFramePanelHost implementation ---------------------------------------
+
+   @Override
+   public void minimizeCallFramePanel()
+   {
+      callFramePanelHeight_ = splitPanel.getWidgetSize(callFramePanel_).intValue();
+      splitPanel.setWidgetSize(callFramePanel_, style.headerRowHeight());
+   }
+
+   @Override
+   public void restoreCallFramePanel()
+   {
+      splitPanel.setWidgetSize(callFramePanel_, callFramePanelHeight_);
+      callFramePanel_.onResize();
    }
 
    // Private methods: object management --------------------------------------
@@ -713,8 +741,10 @@ public class EnvironmentObjects extends ResizeComposite
 
    private Observer observer_;
    private int contextDepth_;
+   private int callFramePanelHeight_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_;
    private JsArrayString deferredExpandedObjects_;
+
 }
