@@ -44,13 +44,18 @@ StderrLogWriter::~StderrLogWriter()
 void StderrLogWriter::log(core::system::LogLevel logLevel,
                           const std::string& message)
 {
+   log(programIdentity_, logLevel, message);
+}
+
+void StderrLogWriter::log(const std::string& programIdentity,
+                          core::system::LogLevel logLevel,
+                          const std::string& message)
+{
    if (logLevel > logLevel_)
       return;
 
-   std::cerr << formatLogEntry(programIdentity_, message);
+   std::cerr << formatLogEntry(programIdentity, message);
 }
-
-
 
 
 } // namespace core

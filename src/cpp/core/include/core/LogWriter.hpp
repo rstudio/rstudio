@@ -28,6 +28,10 @@ public:
    virtual void log(core::system::LogLevel level,
                     const std::string& message) = 0;
 
+   virtual void log(const std::string& programIdentity,
+                    core::system::LogLevel level,
+                    const std::string& message) = 0;
+
 protected:
    std::string formatLogEntry(const std::string& programIdentify,
                               const std::string& message);

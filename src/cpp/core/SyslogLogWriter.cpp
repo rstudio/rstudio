@@ -94,5 +94,12 @@ void SyslogLogWriter::log(core::system::LogLevel logLevel,
    ::syslog(logPriority(logLevel), "%s", cleanedMessage.c_str()) ;
 }
 
+void SyslogLogWriter::log(const std::string&,
+                          core::system::LogLevel logLevel,
+                          const std::string& message)
+{
+   log(logLevel, message);
+}
+
 } // namespace core
 

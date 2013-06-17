@@ -29,6 +29,10 @@ public:
     virtual void log(core::system::LogLevel level,
                      const std::string& message);
 
+    virtual void log(const std::string& programIdentity,
+                     core::system::LogLevel level,
+                     const std::string& message);
+
 private:
     std::string programIdentity_;
     int logLevel_;

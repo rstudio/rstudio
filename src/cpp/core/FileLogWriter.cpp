@@ -54,13 +54,20 @@ FileLogWriter::~FileLogWriter()
 void FileLogWriter::log(core::system::LogLevel logLevel,
                         const std::string& message)
 {
+   log(programIdentity_, logLevel, message);
+}
+
+void FileLogWriter::log(const std::string& programIdentity,
+                        core::system::LogLevel logLevel,
+                        const std::string& message)
+{
    if (logLevel > logLevel_)
       return;
 
    rotateLogFile();
 
    // Swallow errors--we can't do anything anyway
-   core::appendToFile(logFile_, formatLogEntry(programIdentity_, message));
+   core::appendToFile(logFile_, formatLogEntry(programIdentity, message));
 }
 
 
