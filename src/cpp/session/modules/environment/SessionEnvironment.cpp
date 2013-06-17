@@ -316,6 +316,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 json::Value commonEnvironmentStateData(int depth)
 {
    json::Object varJson;
+   bool useProvidedSource = false;
+   std::string functionCode;
 
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson(depth);
@@ -328,19 +330,21 @@ json::Value commonEnvironmentStateData(int depth)
       RCNTXT* pContext = getFunctionContext(depth);
       varJson["function_name"] = functionNameFromContext(pContext);
 
-      // see if the function to be debugged is out of sync with its saved sources
-      // (if available)--if it is, emit its code so the client can display it
-      std::string functionCode;
-      bool useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
-      varJson["use_provided_source"] = useProvidedSource;
-      varJson["function_code"] = useProvidedSource ? functionCode : "";
+      // see if the function to be debugged is out of sync with its saved
+      // sources (if available)--if it is, emit its code so the client can
+      // display it
+      if (isUserFunctionContext(pContext))
+      {
+         useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
+      }
    }
    else
    {
       varJson["function_name"] = "";
-      varJson["use_provided_source"] = false;
-      varJson["function_code"] = "";
    }
+
+   varJson["use_provided_source"] = useProvidedSource;
+   varJson["function_code"] = useProvidedSource ? functionCode : "";
 
    return varJson;
 }

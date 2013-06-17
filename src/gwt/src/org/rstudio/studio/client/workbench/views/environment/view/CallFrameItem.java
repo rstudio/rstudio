@@ -98,8 +98,7 @@ public class CallFrameItem extends Composite
    {
       if (fileName.length() > 0 &&
           !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>") &&
-          !fileName.equalsIgnoreCase("~/.active-rstudio-document"))
+          !fileName.equalsIgnoreCase("<tmp>"))
       {
          return true;
       }

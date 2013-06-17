@@ -456,11 +456,16 @@ public class EnvironmentPresenter extends BasePresenter
    {
       String file = currentBrowseFile_;
       int lineNumber = currentBrowseLineNumber_;
+      
+      if (!CallFrameItem.isNavigableFilename(file))
+      {
+         return;
+      }
+      
       // if we have a real filename and sign from the server that the file 
       // is in sync with the actual copy of the function, navigate to the
       // file itself
-      if (CallFrameItem.isNavigableFilename(file) &&
-          lineNumber > 0 &&
+      if (lineNumber > 0 &&
           !useCurrentBrowseSource_)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
