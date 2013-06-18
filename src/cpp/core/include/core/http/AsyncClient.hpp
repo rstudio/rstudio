@@ -30,6 +30,7 @@
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -63,9 +64,11 @@ class AsyncClient :
    boost::noncopyable
 {
 public:
-   AsyncClient(boost::asio::io_service& ioService)
+   AsyncClient(boost::asio::io_service& ioService,
+               bool logToStderr = false)
       : ioService_(ioService),
-        connectionRetryContext_(ioService)
+        connectionRetryContext_(ioService),
+        logToStderr_(logToStderr)
    {
    }
 
@@ -114,7 +117,7 @@ public:
    {
       Error error = closeSocket(socket().lowest_layer());
       if (error)
-         LOG_ERROR(error);
+         logError(error);
    }
 
 protected:
@@ -236,9 +239,7 @@ private:
       }
       else
       {
-         // unexpected error setting timer. log it
-         LOG_ERROR(Error(ec, ERROR_LOCATION));
-
+         logError(Error(ec, ERROR_LOCATION));
          return false;
       }
    }
@@ -406,6 +407,18 @@ private:
          responseHandler_(response_);
    }
 
+   void logError(const Error& error) const
+   {
+      if (logToStderr_)
+      {
+         std::cerr << error << std::endl;
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+
 // struct and instance variable to track connection retry state
 private:
    struct ConnectionRetryContext
@@ -427,6 +440,7 @@ protected:
 private:
    boost::asio::io_service& ioService_;
    ConnectionRetryContext connectionRetryContext_;
+   bool logToStderr_;
    ResponseHandler responseHandler_;
    ErrorHandler errorHandler_;
    http::Request request_;

@@ -44,10 +44,12 @@ struct NetworkReply::Impl
  #ifdef _WIN32
       : pClient(new http::NamedPipeAsyncClient(ioService(),
                                                localPeer,
+                                               false,
                                                retryProfile())),
  #else
       : pClient(new http::LocalStreamAsyncClient(ioService(),
                                                  FilePath(localPeer),
+                                                 false,
                                                  retryProfile())),
  #endif
         replyReadOffset(0)
