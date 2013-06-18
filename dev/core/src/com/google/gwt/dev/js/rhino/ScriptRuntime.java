@@ -52,7 +52,7 @@ public class ScriptRuntime {
     public static double NaN = 0.0d / 0.0;
 
     public static String numberToString(double d, int base) {
-        if (d != d)
+        if (Double.isNaN(d))
             return "NaN";
         if (d == Double.POSITIVE_INFINITY)
             return "Infinity";
