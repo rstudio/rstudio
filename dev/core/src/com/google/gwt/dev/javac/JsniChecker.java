@@ -81,7 +81,10 @@ public class JsniChecker {
    * A call-back interface to resolve types.
    */
   public interface TypeResolver {
-    ReferenceBinding resolveType(String typeName);
+    /**
+     * @param sourceOrBinaryName Either source or binary names are allowed in JSNI
+     */
+    ReferenceBinding resolveType(String sourceOrBinaryName);
   }
 
   private class JsniDeclChecker extends SafeASTVisitor implements

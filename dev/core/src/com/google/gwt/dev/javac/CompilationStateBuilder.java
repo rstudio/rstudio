@@ -84,8 +84,8 @@ public class CompilationStateBuilder {
           Map<String, Binding> jsniRefs = new HashMap<String, Binding>();
           JsniChecker.check(cud, jsoState, jsniMethods, jsniRefs, new JsniChecker.TypeResolver() {
             @Override
-            public ReferenceBinding resolveType(String typeName) {
-              ReferenceBinding resolveType = compiler.resolveType(typeName);
+            public ReferenceBinding resolveType(String sourceOrBinaryName) {
+              ReferenceBinding resolveType = compiler.resolveType(sourceOrBinaryName);
               if (resolveType != null) {
                 jsniDeps.add(String.valueOf(resolveType.qualifiedSourceName()));
               }

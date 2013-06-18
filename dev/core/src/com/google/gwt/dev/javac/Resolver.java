@@ -39,7 +39,7 @@ public interface Resolver {
 
   void addThrows(JAbstractMethod method, JClassType exception);
 
-  Map<String, JRealClassType> getBinaryMapper();
+  Map<String, JRealClassType> getInternalMapper();
 
   TypeOracle getTypeOracle();
 

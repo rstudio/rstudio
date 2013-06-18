@@ -16,9 +16,8 @@
 package com.google.gwt.dev.util;
 
 import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
-import com.google.gwt.dev.util.Name.SourceName;
+import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 
 import junit.framework.TestCase;
 
@@ -50,12 +49,6 @@ public class NameTest extends TestCase {
         BinaryName.toInternalName("org.test.Foo$Bar$Baz$"));
     assertEquals("org/test/Foo$Bar$Baz$1",
         BinaryName.toInternalName("org.test.Foo$Bar$Baz$1"));
-    assertEquals("org.test.Foo$Bar",
-        BinaryName.getInnerClassName("org.test.Foo", "Bar"));
-    assertEquals("org.test.Foo",
-        BinaryName.getOuterClassName("org.test.Foo$Bar"));
-    assertEquals("org.test",
-        BinaryName.getPackageName("org.test.Foo$Bar"));
     assertEquals("Foo$Bar", BinaryName.getClassName("org.test.Foo$Bar"));
     assertEquals("Bar", BinaryName.getShortClassName("org.test.Foo$Bar"));
   }
@@ -103,14 +96,7 @@ public class NameTest extends TestCase {
         InternalName.toBinaryName("org/test/Foo$Bar$Baz$"));
     assertEquals("org.test.Foo$Bar$Baz$1",
         InternalName.toBinaryName("org/test/Foo$Bar$Baz$1"));
-    assertEquals("org/test/Foo$Bar",
-        InternalName.getInnerClassName("org/test/Foo", "Bar"));
-    assertEquals("org/test/Foo",
-        InternalName.getOuterClassName("org/test/Foo$Bar"));
-    assertEquals("org/test",
-        InternalName.getPackageName("org/test/Foo$Bar"));
     assertEquals("Foo$Bar", InternalName.getClassName("org/test/Foo$Bar"));
-    assertEquals("Bar", InternalName.getShortClassName("org/test/Foo$Bar"));
   }
 
   public void testIsBinaryName() {
@@ -164,25 +150,4 @@ public class NameTest extends TestCase {
     assertTrue(Name.isSourceName("org.test.Foo.Bar.Baz$"));
   }
 
-  public void testIsSourceOrBinaryName() {
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo$Bar"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo$Bar$Baz"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo$Bar$Baz$"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo$Bar$Baz$1"));
-    assertFalse(Name.isSourceOrBinaryName("org/test/Foo"));
-    assertFalse(Name.isSourceOrBinaryName("org/test/Foo$Bar"));
-    assertFalse(Name.isSourceOrBinaryName("org/test/Foo$Bar$Baz"));
-    assertFalse(Name.isSourceOrBinaryName("org/test/Foo$Bar$Baz$"));
-    assertFalse(Name.isSourceOrBinaryName("org/test/Foo$Bar$Baz$1"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo.Bar"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo.Bar.Baz"));
-    assertTrue(Name.isSourceOrBinaryName("org.test.Foo.Bar.Baz$"));
-  }
-
-  public void testSourceName() {
-    assertEquals("org.test.Foo.Bar",
-        SourceName.getInnerClassName("org.test.Foo", "Bar"));
-    assertEquals("Bar", SourceName.getShortClassName("org.test.Foo.Bar"));
-  }
 }

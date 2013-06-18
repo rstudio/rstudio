@@ -393,9 +393,9 @@ public class JdtCompiler {
     }
 
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
-      char[] binaryNameChars = CharOperation.concatWith(compoundTypeName, '/');
-      String binaryName = String.valueOf(binaryNameChars);
-      CompiledClass compiledClass = binaryTypes.get(binaryName);
+      char[] internalNameChars = CharOperation.concatWith(compoundTypeName, '/');
+      String internalName = String.valueOf(internalNameChars);
+      CompiledClass compiledClass = internalTypes.get(internalName);
       try {
         if (compiledClass != null) {
           return compiledClass.getNameEnvironmentAnswer();
@@ -403,11 +403,11 @@ public class JdtCompiler {
       } catch (ClassFormatException ex) {
         // fall back to binary class
       }
-      if (isPackage(binaryName)) {
+      if (isPackage(internalName)) {
         return null;
       }
       if (additionalTypeProviderDelegate != null) {
-        GeneratedUnit unit = additionalTypeProviderDelegate.doFindAdditionalType(binaryName);
+        GeneratedUnit unit = additionalTypeProviderDelegate.doFindAdditionalType(internalName);
         if (unit != null) {
           CompilationUnitBuilder b = CompilationUnitBuilder.create(unit);
           Adapter a = new Adapter(b);
@@ -415,7 +415,7 @@ public class JdtCompiler {
         }
       }
       try {
-        URL resource = getClassLoader().getResource(binaryName + ".class");
+        URL resource = getClassLoader().getResource(internalName + ".class");
         if (resource != null) {
           InputStream openStream = resource.openStream();
           try {
@@ -540,19 +540,20 @@ public class JdtCompiler {
     return options;
   }
 
-  public static ReferenceBinding resolveType(LookupEnvironment lookupEnvironment, String typeName) {
+  private static ReferenceBinding resolveType(LookupEnvironment lookupEnvironment,
+      String sourceOrBinaryName) {
     ReferenceBinding type = null;
 
-    int p = typeName.indexOf('$');
+    int p = sourceOrBinaryName.indexOf('$');
     if (p > 0) {
       // resolve an outer type before trying to get the cached inner
-      String cupName = typeName.substring(0, p);
+      String cupName = sourceOrBinaryName.substring(0, p);
       char[][] chars = CharOperation.splitOn('.', cupName.toCharArray());
       ReferenceBinding outerType = lookupEnvironment.getType(chars);
       if (outerType != null) {
         // outer class was found
         resolveRecursive(outerType);
-        chars = CharOperation.splitOn('.', typeName.toCharArray());
+        chars = CharOperation.splitOn('.', sourceOrBinaryName.toCharArray());
         type = lookupEnvironment.getCachedType(chars);
         if (type == null) {
           // no inner type; this is a pure failure
@@ -561,7 +562,7 @@ public class JdtCompiler {
       }
     } else {
       // just resolve the type straight out
-      char[][] chars = CharOperation.splitOn('.', typeName.toCharArray());
+      char[][] chars = CharOperation.splitOn('.', sourceOrBinaryName.toCharArray());
       type = lookupEnvironment.getType(chars);
     }
 
@@ -580,10 +581,11 @@ public class JdtCompiler {
 
     // Assume that the last '.' should be '$' and try again.
     //
-    p = typeName.lastIndexOf('.');
+    p = sourceOrBinaryName.lastIndexOf('.');
     if (p >= 0) {
-      typeName = typeName.substring(0, p) + "$" + typeName.substring(p + 1);
-      return resolveType(lookupEnvironment, typeName);
+      sourceOrBinaryName =
+          sourceOrBinaryName.substring(0, p) + "$" + sourceOrBinaryName.substring(p + 1);
+      return resolveType(lookupEnvironment, sourceOrBinaryName);
     }
 
     return null;
@@ -617,9 +619,9 @@ public class JdtCompiler {
   private AdditionalTypeProviderDelegate additionalTypeProviderDelegate;
 
   /**
-   * Maps dotted binary names to compiled classes.
+   * Maps internal names to compiled classes.
    */
-  private final Map<String, CompiledClass> binaryTypes = new HashMap<String, CompiledClass>();
+  private final Map<String, CompiledClass> internalTypes = new HashMap<String, CompiledClass>();
 
   /**
    * Only active during a compile.
@@ -895,8 +897,8 @@ public class JdtCompiler {
     }
   }
 
-  public ReferenceBinding resolveType(String typeName) {
-    return resolveType(compilerImpl.lookupEnvironment, typeName);
+  public ReferenceBinding resolveType(String sourceOrBinaryName) {
+    return resolveType(compilerImpl.lookupEnvironment, sourceOrBinaryName);
   }
 
   public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
@@ -919,7 +921,7 @@ public class JdtCompiler {
 
   private void addBinaryTypes(Collection<CompiledClass> compiledClasses) {
     for (CompiledClass cc : compiledClasses) {
-      binaryTypes.put(cc.getInternalName(), cc);
+      internalTypes.put(cc.getInternalName(), cc);
     }
   }
 

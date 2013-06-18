@@ -87,8 +87,8 @@ public class ResolveGenericsTest extends AsmTestCase {
       delegate.addThrows(method, exception);
     }
 
-    public Map<String, JRealClassType> getBinaryMapper() {
-      return delegate.getBinaryMapper();
+    public Map<String, JRealClassType> getInternalMapper() {
+      return delegate.getInternalMapper();
     }
 
     public TypeOracle getTypeOracle() {
@@ -196,7 +196,7 @@ public class ResolveGenericsTest extends AsmTestCase {
         "dispatch", TestHandler.class);
     for (JClassType type : oracle.getTypes()) {
       if (type instanceof JRealClassType) {
-        typeOracleUpdater.getBinaryMapper().put(
+        typeOracleUpdater.getInternalMapper().put(
             type.getQualifiedBinaryName().replace('.', '/'),
             (JRealClassType) type);
       }
@@ -289,11 +289,11 @@ public class ResolveGenericsTest extends AsmTestCase {
   }
 
   private void resolveClassSignature(JRealClassType type, String signature) {
-    Map<String, JRealClassType> binaryMapper = resolver.getBinaryMapper();
+    Map<String, JRealClassType> internalMapper = resolver.getInternalMapper();
     TypeParameterLookup lookup = new TypeParameterLookup();
     lookup.pushEnclosingScopes(type);
-    ResolveClassSignature classResolver = new ResolveClassSignature(resolver,
-        binaryMapper, failTreeLogger, type, lookup);
+    ResolveClassSignature classResolver =
+        new ResolveClassSignature(resolver, internalMapper, failTreeLogger, type, lookup);
     new SignatureReader(signature).accept(classResolver);
     classResolver.finish();
   }

@@ -41,7 +41,7 @@ import java.util.Map;
 public class ResolveTypeSignature extends EmptySignatureVisitor {
 
   private final Resolver resolver;
-  private final Map<String, JRealClassType> binaryMapper;
+  private final Map<String, JRealClassType> internalMapper;
   private final TreeLogger logger;
   private final JType[] returnTypeRef;
   private final TypeParameterLookup lookup;
@@ -56,26 +56,28 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
    * Resolve a parameterized type.
    *
    * @param resolver
-   * @param binaryMapper
+   * @param internalMapper
    * @param logger
    * @param returnTypeRef "pointer" to return location, ie. 1-element array
    * @param lookup
    * @param enclosingClass
    */
   public ResolveTypeSignature(Resolver resolver,
-      Map<String, JRealClassType> binaryMapper, TreeLogger logger,
+ Map<String, JRealClassType> internalMapper,
+      TreeLogger logger,
       JType[] returnTypeRef, TypeParameterLookup lookup,
       JClassType enclosingClass) {
-    this(resolver, binaryMapper, logger, returnTypeRef, lookup, enclosingClass,
+    this(resolver, internalMapper, logger, returnTypeRef, lookup, enclosingClass,
         '=');
   }
 
   public ResolveTypeSignature(Resolver resovler,
-      Map<String, JRealClassType> binaryMapper, TreeLogger logger,
+ Map<String, JRealClassType> internalMapper,
+      TreeLogger logger,
       JType[] returnTypeRef, TypeParameterLookup lookup,
       JClassType enclosingClass, char wildcardMatch) {
     this.resolver = resovler;
-    this.binaryMapper = binaryMapper;
+    this.internalMapper = internalMapper;
     this.logger = logger;
     this.returnTypeRef = returnTypeRef;
     this.lookup = lookup;
@@ -130,7 +132,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   public void visitClassType(String internalName) {
     assert Name.isInternalName(internalName);
     outerClass = enclosingClass;
-    JRealClassType classType = binaryMapper.get(internalName);
+    JRealClassType classType = internalMapper.get(internalName);
     // TODO(jat): failures here are likely binary-only annotations or local
     // classes that have been elided from TypeOracle -- what should we do in
     // those cases? Currently we log an error and replace them with Object,
@@ -190,7 +192,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     // not sure what the enclosing class of a type argument means, but
     // I haven't found a case where it is actually used while processing
     // the type argument.
-    return new ResolveTypeSignature(resolver, binaryMapper, logger, arg,
+    return new ResolveTypeSignature(resolver, internalMapper, logger, arg,
         lookup, null, wildcard);
   }
 

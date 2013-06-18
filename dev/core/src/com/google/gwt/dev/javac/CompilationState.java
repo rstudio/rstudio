@@ -36,7 +36,7 @@ import java.util.Map;
 public class CompilationState {
 
   /**
-   * Classes mapped by binary name.
+   * Classes mapped by internal name.
    */
   protected final Map<String, CompiledClass> classFileMap = new HashMap<String, CompiledClass>();
 
@@ -115,7 +115,7 @@ public class CompilationState {
   }
 
   /**
-   * Returns a map of all compiled classes by binary name.
+   * Returns a map of all compiled classes by internal name.
    */
   public Map<String, CompiledClass> getClassFileMap() {
     return exposedClassFileMap;
