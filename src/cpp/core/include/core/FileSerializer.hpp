@@ -214,7 +214,11 @@ Error writeStringToFile(const core::FilePath& filePath,
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,
-                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough);
+                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
+                         int startLine = 0,
+                         int endLine = 0,
+                         int startCharacter = 0,
+                         int endCharacter = 0);
 
 // read a string from a file with a filter
 template <typename Filter>

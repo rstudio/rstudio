@@ -1,5 +1,5 @@
 /*
- * EnvironmentStyle.java
+ * CallFramePanelStyle.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,24 +17,8 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.resources.client.CssResource;
 
-interface EnvironmentStyle extends CssResource
+public interface CallFramePanelStyle extends CssResource
 {
-   int headerRowHeight();
-   String expandCol();
-   String nameCol();
-   String valueCol();
-   String clickableCol();
-   String detailRow();
-   String categoryHeaderRow();
-   String categoryHeaderText();
-   String emptyEnvironmentPanel();
-   String emptyEnvironmentName();
-   String emptyEnvironmentMessage();
-   String expandIcon();
-   String unevaluatedPromise();
-   String objectGrid();
-   String widthSettingRow();
-   String dataFrameValueCol();
-   String environmentPanel();
+   int callFramePanelMargin();
+   String tracebackHeader();
 }
-

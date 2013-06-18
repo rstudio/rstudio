@@ -34,6 +34,9 @@ def mix_colors(a, b, proportion)
   return [red, green, blue]
 end
 
+def create_line_marker_rule(markerName, markerColor)
+  return "\n.ace_marker-layer #{markerName} {position: absolute; z-index: -1; background-color: #{markerColor};}"
+end
 
 
 OutDir = '../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes'
@@ -71,12 +74,16 @@ Find.find('ace/lib/ace/theme/') do |file|
   background = parse_css_color(background)
   foreground = parse_css_color(foreground)
   foreign_bg = format_css_color(mix_colors(background, foreground, 0.8))
-  rules += "\n.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: #{foreign_bg};}"
-
-  find_bg = format_css_color(mix_colors(background, foreground, 0.5))
-  rules += "\n.ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: #{find_bg};}"
+  rules += create_line_marker_rule(".ace_foreign_line", foreign_bg)
   
-
+  find_bg = format_css_color(mix_colors(background, foreground, 0.5))
+  rules += create_line_marker_rule(".ace_find_line", find_bg) 
+  
+  # compute the background color to be used for the line currently active in the debugger
+  debug_primary = parse_css_color("#FFDE38")
+  debug_bg = format_css_color(mix_colors(background, debug_primary, 0.5))
+  rules += create_line_marker_rule(".ace_active_debug_line", debug_bg)
+  
   newfile = "#{OutDir}/#{File.basename(file).gsub(/\.js$/, '.css')}"
   File.open(newfile, 'w') {|f| f.write(rules)}
 end

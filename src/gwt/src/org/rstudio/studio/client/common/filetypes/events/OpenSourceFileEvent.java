@@ -25,6 +25,13 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    public static final GwtEvent.Type<OpenSourceFileHandler> TYPE =
       new GwtEvent.Type<OpenSourceFileHandler>();
 
+   public enum NavigationMethod
+   {
+      Default,
+      HighlightLine,
+      DebugStep,
+      DebugEnd
+   }
    
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
    {
@@ -35,18 +42,18 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
                               FilePosition position, 
                               TextFileType fileType)
    {
-      this(file, position, fileType, false);
+      this(file, position, fileType, NavigationMethod.Default);
    }
    
    public OpenSourceFileEvent(FileSystemItem file, 
                               FilePosition position, 
                               TextFileType fileType,
-                              boolean highlightLine)
+                              NavigationMethod navMethod)
    {
       file_ = file;
       position_ = position;
       fileType_ = fileType;  
-      highlightLine_ = highlightLine;
+      navigationMethod_ = navMethod;
    }
    
    public FileSystemItem getFile()
@@ -64,9 +71,9 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
       return position_;
    }
    
-   public boolean getHighlightLine()
+   public NavigationMethod getNavigationMethod()
    {
-      return highlightLine_;
+      return navigationMethod_;
    }
 
    @Override
@@ -84,5 +91,5 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
    private final FileSystemItem file_;
    private final FilePosition position_;
    private final TextFileType fileType_;
-   private final boolean highlightLine_;
+   private final NavigationMethod navigationMethod_;
 }

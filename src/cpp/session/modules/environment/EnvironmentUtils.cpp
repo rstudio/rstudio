@@ -107,6 +107,7 @@ json::Object varToJson(const r::sexp::Variable& var)
    // is this a type of object for which we can get something that looks like
    // a value? if so, get the value appropriate to the object's class.
    if ((varSEXP != R_UnboundValue) &&
+       (varSEXP != R_MissingArg) &&
        !r::sexp::isLanguage(varSEXP) &&
        !isUnevaluatedPromise(varSEXP))
    {
@@ -144,7 +145,8 @@ json::Object varToJson(const r::sexp::Variable& var)
       {
          varJson["type"] = std::string("unknown");
       }
-      varJson["value"] = isUnevaluatedPromise(varSEXP) ?
+      varJson["value"] = (isUnevaluatedPromise(varSEXP) ||
+                          varSEXP == R_MissingArg) ?
                descriptionOfVar(varSEXP) :
                std::string("<unknown>");
       varJson["description"] = std::string("");

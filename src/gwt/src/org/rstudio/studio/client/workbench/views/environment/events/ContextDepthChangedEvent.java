@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.environment.events;
 
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,12 +36,24 @@ public class ContextDepthChangedEvent extends
          return this.context_depth;
       }-*/;
       
-      public final native JsArray<RObject> getEnvironmentList () /*-{
+      public final native JsArray<RObject> getEnvironmentList() /*-{
          return this.environment_list;
       }-*/;
 
       public final native String getFunctionName() /*-{
          return this.function_name;
+      }-*/;
+
+      public final native JsArray<CallFrame> getCallFrames() /*-{
+         return this.call_frames;
+      }-*/;
+      
+      public final native boolean getUseProvidedSource() /*-{
+         return this.use_provided_source;
+      }-*/;
+      
+      public final native String getFunctionCode() /*-{
+         return this.function_code;
       }-*/;
    }
 
@@ -64,11 +77,26 @@ public class ContextDepthChangedEvent extends
       return contextData_.getEnvironmentList();
    }
 
+   public JsArray<CallFrame> getCallFrames()
+   {
+      return contextData_.getCallFrames();
+   }
+
    public String getFunctionName()
    {
       String functionName = contextData_.getFunctionName();
       return functionName.length() > 0 && functionName != "NA" ?
              contextData_.getFunctionName() : EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
+   }
+   
+   public String getFunctionCode()
+   {
+      return contextData_.getFunctionCode();
+   }
+   
+   public boolean useProvidedSource()
+   {
+      return contextData_.getUseProvidedSource();
    }
 
    @Override

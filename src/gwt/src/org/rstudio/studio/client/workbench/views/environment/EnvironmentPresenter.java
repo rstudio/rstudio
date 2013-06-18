@@ -32,6 +32,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -45,36 +46,49 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
-import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class EnvironmentPresenter extends BasePresenter
@@ -92,6 +106,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name);
+      void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
       void setExpandedObjects(JsArrayString objects);
@@ -99,6 +114,7 @@ public class EnvironmentPresenter extends BasePresenter
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
+      void setBrowserLine(int browserLine);
    }
    
    @Inject
@@ -112,7 +128,8 @@ public class EnvironmentPresenter extends BasePresenter
                                WorkbenchContext workbenchContext,
                                ConsoleDispatcher consoleDispatcher,
                                RemoteFileSystemContext fsContext,
-                               Session session)
+                               Session session,
+                               SourceShim sourceShim)
    {
       super(view);
       binder.bind(commands, this);
@@ -127,6 +144,9 @@ public class EnvironmentPresenter extends BasePresenter
       eventBus_ = eventBus;
       refreshingView_ = false;
       initialized_ = false;
+      currentBrowseFile_ = "";
+      currentBrowseLineNumber_ = 0;
+      sourceShim_ = sourceShim;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -144,9 +164,11 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
-            contextDepth_ = event.getContextDepth();
-            view_.setContextDepth(contextDepth_);
-            view_.setEnvironmentName(event.getFunctionName());
+            loadNewContextState(event.getContextDepth(), 
+                  event.getFunctionName(),
+                  event.getCallFrames(),
+                  event.useProvidedSource(),
+                  event.getFunctionCode());
             setViewFromEnvironmentList(event.getEnvironmentList());
          }
       });
@@ -169,6 +191,19 @@ public class EnvironmentPresenter extends BasePresenter
          {
             view_.removeObject(event.getObjectName());
          }
+      });
+
+      eventBus.addHandler(BrowserLineChangedEvent.TYPE,
+            new BrowserLineChangedEvent.Handler()
+      {
+         @Override
+         public void onBrowserLineChanged(BrowserLineChangedEvent event)
+         {
+            view_.setBrowserLine(event.getLineNumber());
+            currentBrowseLineNumber_ = event.getLineNumber();
+            openOrUpdateFileBrowsePoint(true);
+         }
+
       });
 
       new JSObjectStateValue(
@@ -361,18 +396,149 @@ public class EnvironmentPresenter extends BasePresenter
 
    public void initialize(EnvironmentState environmentState)
    {
-      EnvironmentState state = environmentState;
-      setContextDepth(state.contextDepth());
-      if (state.contextDepth() > 0)
-      {
-         view_.setEnvironmentName(state.functionName());
-      }
+      loadNewContextState(environmentState.contextDepth(),
+            environmentState.functionName(),
+            environmentState.callFrames(),
+            environmentState.getUseProvidedSource(),
+            environmentState.getFunctionCode());
    }
    
    public void setContextDepth(int contextDepth)
    {
+      // if entering debug state, activate this tab 
+      if (contextDepth > 0 &&
+          contextDepth_ == 0)
+      {
+         eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
+      }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
+   }
+
+   // Private methods ---------------------------------------------------------
+
+   private void loadNewContextState(int contextDepth, 
+         String environmentName,
+         JsArray<CallFrame> callFrames,
+         boolean useBrowseSources,
+         String functionCode)
+   {
+      setContextDepth(contextDepth);
+      environmentName_ = environmentName;
+      view_.setEnvironmentName(environmentName_);
+      if (callFrames != null && 
+          callFrames.length() > 0)
+      {
+         view_.setCallFrames(callFrames);
+         CallFrame browseFrame = callFrames.get(
+                 contextDepth_ - 1);
+         String newBrowseFile = browseFrame.getFileName().trim();
+         
+         // check to see if the file we're about to switch to contains unsaved
+         // changes. if it does, use the source supplied by the server, even if
+         // the server thinks the document is clean.
+         if (fileContainsUnsavedChanges(newBrowseFile))
+         {
+            useBrowseSources = true;
+         }
+         
+         // if the file is different or we're swapping into or out of the source
+         // viewer, turn off highlighting in the old file before turning it on
+         // in the new one. avoid this in the case where the file is different
+         // but both frames are viewed from source, since in this case an
+         // unnecessary close and reopen of the source viewer would be 
+         // triggered.
+         if ((!newBrowseFile.equals(currentBrowseFile_) ||
+                  useBrowseSources != useCurrentBrowseSource_) &&
+             !(useBrowseSources && useCurrentBrowseSource_))
+         {
+            openOrUpdateFileBrowsePoint(false);
+         }
+
+         useCurrentBrowseSource_ = useBrowseSources;
+         currentBrowseSource_ = functionCode;
+         
+         // highlight the active line in the file now being debugged
+         currentBrowseFile_ = newBrowseFile;
+         currentBrowseLineNumber_ = browseFrame.getLineNumber();
+         currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
+         openOrUpdateFileBrowsePoint(true);
+      }   
+      else
+      {
+         openOrUpdateFileBrowsePoint(false);
+         useCurrentBrowseSource_ = false;
+         currentBrowseSource_ = "";
+         currentBrowseFile_ = "";
+         currentBrowseLineNumber_ = 0;
+         currentFunctionLineNumber_ = 0;
+      }
+   }
+   
+   // given a path, indicate whether it corresponds to a file that currently
+   // contains unsaved changes.
+   private boolean fileContainsUnsavedChanges(String path)
+   {
+      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
+         sourceShim_.getUnsavedChanges();
+      
+      for (UnsavedChangesTarget target: unsavedSourceDocs)
+      {
+         if (target.getPath().equals(path))
+         {
+            return true;
+         }
+      }     
+      
+      return false;
+   }
+   
+   private void openOrUpdateFileBrowsePoint(boolean debugging)
+   {
+      String file = currentBrowseFile_;
+      int lineNumber = currentBrowseLineNumber_;
+      
+      if (!CallFrameItem.isNavigableFilename(file))
+      {
+         return;
+      }
+      
+      // if we have a real filename and sign from the server that the file 
+      // is in sync with the actual copy of the function, navigate to the
+      // file itself
+      if (lineNumber > 0 &&
+          !useCurrentBrowseSource_)
+      {
+         FileSystemItem sourceFile = FileSystemItem.createFile(file);
+         FilePosition filePosition = FilePosition.create(lineNumber, 0);
+         eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
+                                filePosition,
+                                FileTypeRegistry.R,
+                                debugging ? 
+                                      NavigationMethod.DebugStep :
+                                      NavigationMethod.DebugEnd));
+
+      }
+      // otherwise, if we have a copy of the source from the server, load
+      // the copy from the server into the code browser window
+      else if (useCurrentBrowseSource_ &&
+               currentBrowseSource_.length() > 0)
+      {
+         if (debugging)
+         {
+            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                  SearchPathFunctionDefinition.create(
+                        environmentName_, 
+                        "source unavailable or out of sync", 
+                        currentBrowseSource_,
+                        true),
+                  lineNumber - currentFunctionLineNumber_));
+         }
+         else
+         {
+            eventBus_.fireEvent(new CodeBrowserFinishedEvent());
+         }
+      }
    }
 
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
@@ -410,8 +576,11 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Listing Objects",
-                                            error.getUserMessage());
+            if (!workbenchContext_.isRestartInProgress())
+            {
+               globalDisplay_.showErrorMessage("Error Listing Objects",
+                                               error.getUserMessage());
+            }
             view_.setProgress(false);
             refreshingView_ = false;
          }
@@ -498,7 +667,15 @@ public class EnvironmentPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
+   private final SourceShim sourceShim_;
+   
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;
+   private int currentBrowseLineNumber_;
+   private int currentFunctionLineNumber_;
+   private String currentBrowseFile_;
+   private boolean useCurrentBrowseSource_;
+   private String currentBrowseSource_;
+   private String environmentName_;
 }

@@ -43,6 +43,7 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                     HasFoldChangeHandlers,
@@ -196,4 +197,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    String getTextForRange(Range range);
 
    Anchor createAnchor(Position pos);
+   
+   void highlightDebugLocation(SourcePosition pos);
+   void endDebugHighlighting();
 }

@@ -50,6 +50,12 @@ void enqueAssignedEvent(const r::sexp::Variable& variable)
    module_context::enqueClientEvent(assignedEvent);
 }
 
+void enqueRefreshEvent()
+{
+   ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
+   module_context::enqueClientEvent(refreshEvent);
+}
+
 // if the given variable is an unevaluated promise, add it to the given
 // list of variables
 void addUnevaledPromise(std::vector<r::sexp::Variable>* pEnv,
@@ -88,10 +94,15 @@ void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
    checkForChanges();
 }
 
+SEXP EnvironmentMonitor::getMonitoredEnvironment()
+{
+   return environment_.get();
+}
+
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
    r::sexp::Protect rProtect;
-   r::sexp::listEnvironment(environment_.get(), false, &rProtect, pEnv);
+   r::sexp::listEnvironment(getMonitoredEnvironment(), false, &rProtect, pEnv);
 }
 
 void EnvironmentMonitor::checkForChanges()
@@ -116,57 +127,73 @@ void EnvironmentMonitor::checkForChanges()
 
    std::for_each(currentEnv.begin(), currentEnv.end(),
                  boost::bind(addUnevaledPromise, &currentPromises, _1));
+
    if (!initialized_)
    {
-      lastEnv_ = currentEnv;
-      unevaledPromises_ = currentPromises;
+      if (getMonitoredEnvironment() == R_GlobalEnv)
+      {
+         enqueRefreshEvent();
+      }
       initialized_ = true;
-      return;
    }
-
-   // if there are changes
-   if (currentEnv != lastEnv_)
+   else
    {
-      std::set_difference(lastEnv_.begin(), lastEnv_.end(),
-                          currentEnv.begin(), currentEnv.end(),
-                          std::back_inserter(removedVars),
-                          compareVarName);
+      if (currentEnv != lastEnv_)
+      {
+         // optimize for empty currentEnv (user reset workspace) or empty
+         // lastEnv_ (startup) by just sending a single refresh event
+         // only do this for the global environment--while debugging local
+         // environments, the environment object list is sent down as part of
+         // the context depth event.
+         if ((currentEnv.empty() || lastEnv_.empty())
+             && getMonitoredEnvironment() == R_GlobalEnv)
+         {
+            enqueRefreshEvent();
+         }
+         else
+         {
+            std::set_difference(lastEnv_.begin(), lastEnv_.end(),
+                                currentEnv.begin(), currentEnv.end(),
+                                std::back_inserter(removedVars),
+                                compareVarName);
 
-      // fire removed event for deletes
-      std::for_each(removedVars.begin(),
-                    removedVars.end(),
-                    enqueRemovedEvent);
+            // fire removed event for deletes
+            std::for_each(removedVars.begin(),
+                          removedVars.end(),
+                          enqueRemovedEvent);
 
-      // remove deleted objects from the list of uneval'ed promises
-      // so we'll stop monitoring them for evaluation
-      std::for_each(removedVars.begin(),
-                    removedVars.end(),
-                    boost::bind(removeVarFromList, &unevaledPromises_, _1));
+            // remove deleted objects from the list of uneval'ed promises
+            // so we'll stop monitoring them for evaluation
+            std::for_each(removedVars.begin(),
+                          removedVars.end(),
+                          boost::bind(removeVarFromList, &unevaledPromises_, _1));
 
-      // find adds & assigns (all variable name/value combinations in the
-      // current environment but NOT in the previous environment)
-      std::set_difference(currentEnv.begin(), currentEnv.end(),
-                          lastEnv_.begin(), lastEnv_.end(),
-                          std::back_inserter(addedVars));
+            // find adds & assigns (all variable name/value combinations in the
+            // current environment but NOT in the previous environment)
+            std::set_difference(currentEnv.begin(), currentEnv.end(),
+                                lastEnv_.begin(), lastEnv_.end(),
+                                std::back_inserter(addedVars));
+         }
+      }
+      if (!currentEnv.empty() && !lastEnv_.empty())
+      {
+         // have any promises been evaluated since we last checked?
+         if (currentPromises != unevaledPromises_)
+         {
+            // for each promise that is in the set of promises we are monitoring
+            // for evaluation but not in the set of currently tracked promises,
+            // we assume this to be an eval--process as an assign
+            std::set_difference(unevaledPromises_.begin(), unevaledPromises_.end(),
+                                currentPromises.begin(), currentPromises.end(),
+                                std::back_inserter(addedVars));
+         }
 
-
+         // fire assigned event for adds, assigns, and promise evaluations
+         std::for_each(addedVars.begin(),
+                       addedVars.end(),
+                       enqueAssignedEvent);
+      }
    }
-
-   // have any promises been evaluated since we last checked?
-   if (currentPromises != unevaledPromises_)
-   {
-      // for each promise that is in the set of promises we are monitoring
-      // for evaluation but not in the set of currently tracked promises,
-      // we assume this to be an eval--process as an assign
-      std::set_difference(unevaledPromises_.begin(), unevaledPromises_.end(),
-                          currentPromises.begin(), currentPromises.end(),
-                          std::back_inserter(addedVars));
-   }
-
-   // fire assigned event for adds, assigns, and promise evaluations
-   std::for_each(addedVars.begin(),
-                 addedVars.end(),
-                 enqueAssignedEvent);
 
    unevaledPromises_ = currentPromises;
    lastEnv_ = currentEnv;

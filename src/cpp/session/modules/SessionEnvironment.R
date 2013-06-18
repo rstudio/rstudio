@@ -34,6 +34,8 @@
 
       if (is.scalarOrVector(val))
       {
+         if (length(val) == 0)
+            return (paste(.rs.getSingleClass(val), " (empty)"))
          if (length(val) == 1)
          {
             if (nchar(val) < 1024)
@@ -90,11 +92,40 @@
    return (description)
 })
 
+.rs.addFunction("sourceFileFromRef", function(srcref)
+{
+    return(capture.output(print(attr(srcref, "srcfile"))))
+})
+
+.rs.addFunction("sourceCodeFromCall", function(call)
+{
+    return(paste(capture.output(print(call)), collapse="\n"))
+})
+
+.rs.addFunction("argumentListSummary", function(args)
+{
+    argSummary <- ""
+    for (arg in args)
+    {
+        thisArg <- if (is.language(arg))
+                capture.output(print(arg))
+            else
+                as.character(arg)
+        argSummary <- paste(argSummary, thisArg, sep =
+            if (argSummary == "") "" else ", ")
+    }
+    return(argSummary)
+})
+
 .rs.addFunction("valueDescription", function(obj)
 {
    tryCatch(
    {
-      if (is(obj, "ore.frame"))
+      if (missing(obj))
+      {
+        return("Missing argument")
+      }
+      else if (is(obj, "ore.frame"))
       {
          return(paste(ncol(obj),"columns"))
       }
@@ -124,7 +155,8 @@
       }
       else if (is.matrix(obj)
               || is.numeric(obj)
-              || is.factor(obj))
+              || is.factor(obj)
+              || is.raw(obj))
       {
          return(capture.output(str(obj)))
       }
