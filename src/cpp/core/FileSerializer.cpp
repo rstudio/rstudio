@@ -153,7 +153,11 @@ Error writeStringToFile(const FilePath& filePath,
 
 Error readStringFromFile(const FilePath& filePath,
                          std::string* pStr,
-                         string_utils::LineEnding lineEnding)
+                         string_utils::LineEnding lineEnding,
+                         int startLine,
+                         int endLine,
+                         int startCharacter,
+                         int endCharacter)
 {
    using namespace boost::system::errc ;
    
@@ -165,13 +169,56 @@ Error readStringFromFile(const FilePath& filePath,
 
    try
    {
-      // set exception mask (required for proper reporting of errors)
-      pIfs->exceptions(std::istream::failbit | std::istream::badbit);
-      
-      // copy file to string stream
-      std::ostringstream ostr;
-      boost::iostreams::copy(*pIfs, ostr);
-      *pStr = ostr.str();
+      // if a line region was specified, read that region instead of the
+      // entire file.
+      if (endLine > startLine)
+      {
+         // set exception mask; note that we can't let failbit create an
+         // exception here because reading eof can trigger failbit in our case.
+         pIfs->exceptions(std::istream::badbit);
+
+         int currentLine = 0;
+         std::string content;
+         std::string line;
+         // loop over each line in the file. (consider: is there a more
+         // performant way to seek past the first N lines?)
+         while (++currentLine <= endLine
+                && !pIfs->eof())
+         {
+            std::getline(*pIfs, line);
+            if (currentLine >= startLine)
+            {
+               // compute the portion of the line to be read; if this is the
+               // start or end of the region to be read, use the character
+               // offsets supplied
+               int lineLength = line.length();
+               content += line.substr(
+                        currentLine == startLine ?
+                           std::min(startCharacter - 1, lineLength) :
+                           0,
+                        currentLine == endLine ?
+                           std::min(endCharacter, lineLength) :
+                           lineLength);
+               if (currentLine != endLine)
+               {
+                  content += "\n";
+               }
+            }
+         }
+         *pStr = content;
+      }
+      // reading the entire file
+      else
+      {
+         // set exception mask (required for proper reporting of errors)
+         pIfs->exceptions(std::istream::failbit | std::istream::badbit);
+
+         // copy file to string stream
+         std::ostringstream ostr;
+         boost::iostreams::copy(*pIfs, ostr);
+         *pStr = ostr.str();
+      }
+
       string_utils::convertLineEndings(pStr, lineEnding);
 
       // return success

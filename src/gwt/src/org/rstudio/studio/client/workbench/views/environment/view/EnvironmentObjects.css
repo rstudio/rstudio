@@ -1,11 +1,23 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
+@def headerRowHeight 20px;
+
+.environmentPane
+{
+   font-family: fixedWidthFont;
+   background-color: #e0e0e0;
+}
+
+.environmentPanel
+{
+   background-color: #ffffff;
+}
+
 .objectGrid
 {
    height: 100%;
    width: 100%;
-   font-family: fixedWidthFont;
 }
 
 .objectGrid table,
@@ -27,7 +39,6 @@
    border: 1px solid #f0f0f0;
    border-left: none;
    background: none;
-   cursor: pointer;
 }
 
 .objectGrid td.expandCol
@@ -43,8 +54,12 @@
    white-space: nowrap;
    text-overflow: ellipsis;
    overflow-x: hidden;
-   cursor: pointer;
    padding-right: 20px;
+}
+
+.objectGrid td.clickableCol
+{
+   cursor: pointer;
 }
 
 .objectGrid td.dataFrameValueCol
@@ -58,18 +73,6 @@
    font-size: 90%;
 }
 
-.objectGrid .categoryHeaderRow
-{
-   background-color: #f0f0f0;
-   font-family: proportionalFont;
-   font-weight: bold;
-}
-
-.objectGrid .categoryHeaderText
-{
-   padding-left: 5px;
-}
-
 .objectGrid .detailRow td
 {
    padding-left: 10px;
@@ -78,6 +81,19 @@
    white-space: nowrap;
    overflow-x: hidden;
    text-overflow: ellipsis;
+}
+
+.categoryHeaderRow
+{
+   background-color: #f0f0f0;
+   font-family: proportionalFont;
+   font-weight: bold;
+   height: headerRowHeight;
+}
+
+.categoryHeaderText
+{
+   padding-left: 5px;
 }
 
 .emptyEnvironmentPanel
@@ -125,4 +141,11 @@
    height: 0px;
    border: none;
 }
+
+.fillHeight
+{
+   height: 100%;
+}
+
+
 

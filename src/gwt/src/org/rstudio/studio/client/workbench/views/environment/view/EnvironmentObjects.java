@@ -39,14 +39,18 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
+import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
+import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import java.util.*;
 
-public class EnvironmentObjects extends Composite
-   implements RequiresResize
+public class EnvironmentObjects extends ResizeComposite
+   implements CallFramePanelHost
 {
    // Public interfaces -------------------------------------------------------
 
@@ -56,18 +60,20 @@ public class EnvironmentObjects extends Composite
 
    public interface Observer
    {
-      void editObject(String objectName);
       void viewObject(String objectName);
-      void forceEvalObject(String objectName);
       void setObjectExpanded(String objectName);
       void setObjectCollapsed(String objectName);
       void setPersistedScrollPosition(int scrollPosition);
+      void changeContextDepth(int newDepth);
    }
 
    // Constructor -------------------------------------------------------------
 
-   public EnvironmentObjects()
+   public EnvironmentObjects(Observer observer)
    {
+      observer_ = observer;
+      contextDepth_ = 0;
+
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
       objectList_ = new ScrollingDataGrid<RObjectEntry>(
@@ -101,19 +107,35 @@ public class EnvironmentObjects extends Composite
          }
       });
 
+      // set up the call frame panel
+      callFramePanel_ = new CallFramePanel(observer_, this);
+
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
       // these need to be done post-initWidget since they reference objects
       // created by initWidget
       objectList_.setEmptyTableWidget(buildEmptyGridMessage());
-      objectList_.setStyleName(style.objectGrid());
-      environmentContents.add(objectList_);
+      objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
+
+      splitPanel.addSouth(callFramePanel_, 150);
+      splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
+      splitPanel.add(objectList_);
    }
 
    // Public methods ----------------------------------------------------------
 
    public void setContextDepth(int contextDepth)
    {
+      if (contextDepth > 0)
+      {
+         splitPanel.setWidgetHidden(callFramePanel_, false);
+         splitPanel.onResize();
+      }
+      else if (contextDepth == 0)
+      {
+         callFramePanel_.clearCallFrames();
+         splitPanel.setWidgetHidden(callFramePanel_, true);
+      }
       contextDepth_ = contextDepth;
    }
 
@@ -189,9 +211,31 @@ public class EnvironmentObjects extends Composite
       }
    }
 
-   public void setObserver(Observer observer)
+   public void setCallFrames(JsArray<CallFrame> frameList)
    {
-      observer_ = observer;
+      callFramePanel_.setCallFrames(frameList, contextDepth_);
+
+      // after setting the frames, resize the call frame panel to neatly wrap
+      // the new list, up to a maximum of half the height of the split panel.
+      int desiredCallFramePanelSize = style.headerRowHeight() +
+                                      callFramePanel_.getHeightOfAllFrames();
+      if (splitPanel.getOffsetHeight() > 0)
+      {
+         desiredCallFramePanelSize = Math.min(
+                 desiredCallFramePanelSize,
+                 (int)(0.66 * splitPanel.getOffsetHeight()));
+      }
+      
+      // if the panel is minimized, just update the cached height so it'll get
+      // set to what we want when/if the panel is restored
+      if (callFramePanel_.isMinimized())
+      {
+         callFramePanelHeight_ = desiredCallFramePanelSize;
+      }
+      else
+      {
+         splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
+      }
    }
 
    public void setEnvironmentName(String environmentName)
@@ -217,11 +261,25 @@ public class EnvironmentObjects extends Composite
       deferredExpandedObjects_ = objects;
    }
 
-   // RequiresResize implementation -------------------------------------------
-
-   public void onResize()
+   public void updateLineNumber (int newLineNumber)
    {
-      objectList_.onResize();
+      callFramePanel_.updateLineNumber(newLineNumber);
+   }
+
+   // CallFramePanelHost implementation ---------------------------------------
+
+   @Override
+   public void minimizeCallFramePanel()
+   {
+      callFramePanelHeight_ = splitPanel.getWidgetSize(callFramePanel_).intValue();
+      splitPanel.setWidgetSize(callFramePanel_, style.headerRowHeight());
+   }
+
+   @Override
+   public void restoreCallFramePanel()
+   {
+      splitPanel.setWidgetSize(callFramePanel_, callFramePanelHeight_);
+      callFramePanel_.onResize();
    }
 
    // Private methods: object management --------------------------------------
@@ -322,19 +380,10 @@ public class EnvironmentObjects extends Composite
          @Override
          public void update(int index, RObjectEntry object, String value)
          {
-            // initial click on a promise forces eval, at which point it gets a
-            // value we can interact with
-            if (object.isPromise())
-            {
-               observer_.forceEvalObject(object.rObject.getName());
-            }
-            else if (object.getCategory() == RObjectEntry.Categories.Data)
+            if (object.getCategory() == RObjectEntry.Categories.Data &&
+                enableClickableObjects())
             {
                observer_.viewObject(object.rObject.getName());
-            }
-            else
-            {
-               observer_.editObject(object.rObject.getName());
             }
          }
       });
@@ -421,31 +470,35 @@ public class EnvironmentObjects extends Composite
             }
          };
       objectExpandColumn_.setFieldUpdater(
-         new FieldUpdater<RObjectEntry, String>()
-         {
-            @Override
-            public void update(int index, RObjectEntry object, String value)
-            {
-               if (object.canExpand())
-               {
-                  object.expanded = !object.expanded;
-                  // tell the observer this happened, so it can persist
-                  // the state
-                  if (useStatePersistence())
-                  {
-                     if (object.expanded)
-                     {
-                        observer_.setObjectExpanded(object.rObject.getName());
-                     }
-                     else
-                     {
-                        observer_.setObjectCollapsed(object.rObject.getName());
-                     }
-                  }
-                  objectList_.redrawRow(index);
-               }
-            }
-         });
+              new FieldUpdater<RObjectEntry, String>()
+              {
+                 @Override
+                 public void update(int index,
+                                    RObjectEntry object,
+                                    String value)
+                 {
+                    if (object.canExpand())
+                    {
+                       object.expanded = !object.expanded;
+                       // tell the observer this happened, so it can persist
+                       // the state
+                       if (useStatePersistence())
+                       {
+                          if (object.expanded)
+                          {
+                             observer_.setObjectExpanded(object.rObject
+                                                                 .getName());
+                          }
+                          else
+                          {
+                             observer_.setObjectCollapsed(object.rObject
+                                                                  .getName());
+                          }
+                       }
+                       objectList_.redrawRow(index);
+                    }
+                 }
+              });
    }
 
    private Widget buildEmptyGridMessage()
@@ -459,6 +512,11 @@ public class EnvironmentObjects extends Composite
       messagePanel.add(environmentName_);
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
+   }
+
+   private boolean enableClickableObjects()
+   {
+      return contextDepth_ < 2;
    }
 
    // Private methods: state persistence --------------------------------------
@@ -553,7 +611,13 @@ public class EnvironmentObjects extends Composite
       private void buildNameColumn(RObjectEntry rowValue, TableRowBuilder row)
       {
          TableCellBuilder nameCol = row.startTD();
-         nameCol.className(style.nameCol());
+         String styleName = style.nameCol();
+         if (rowValue.getCategory() == Categories.Data &&
+             enableClickableObjects())
+         {
+            styleName += (" " + style.clickableCol());
+         }
+         nameCol.className(styleName);
          nameCol.title(
                  rowValue.rObject.getName() +
                  " (" + rowValue.rObject.getType() + ")");
@@ -580,9 +644,12 @@ public class EnvironmentObjects extends Composite
          {
             descriptionStyle += (" " + style.unevaluatedPromise());
          }
-         else if (rowValue.getCategory() == RObjectEntry.Categories.Data)
+         else if (rowValue.getCategory() == RObjectEntry.Categories.Data &&
+             enableClickableObjects())
          {
-            descriptionStyle += (" " + style.dataFrameValueCol());
+            descriptionStyle += (" " +
+                                 style.dataFrameValueCol() + " " +
+                                 style.clickableCol());
          }
          descCol.className(descriptionStyle);
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
@@ -659,10 +726,11 @@ public class EnvironmentObjects extends Composite
    private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
            "Function environment is empty";
 
-   @UiField HTMLPanel environmentContents;
    @UiField EnvironmentStyle style;
+   @UiField AutoHidingSplitLayoutPanel splitPanel;
 
    ScrollingDataGrid<RObjectEntry> objectList_;
+   CallFramePanel callFramePanel_;
    Label environmentName_;
    Label environmentEmptyMessage_;
 
@@ -673,8 +741,10 @@ public class EnvironmentObjects extends Composite
 
    private Observer observer_;
    private int contextDepth_;
+   private int callFramePanelHeight_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_;
    private JsArrayString deferredExpandedObjects_;
+
 }

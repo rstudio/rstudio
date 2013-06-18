@@ -124,3 +124,4 @@
 .ace_bracket {margin: 0 !important; border: 0 !important; background-color: #BFBFBF;}
 .ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(204, 204, 204);}
 .ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: rgb(127, 127, 127);}
+.ace_marker-layer .ace_active_debug_line {position: absolute; z-index: -1; background-color: rgb(255, 238, 155);}

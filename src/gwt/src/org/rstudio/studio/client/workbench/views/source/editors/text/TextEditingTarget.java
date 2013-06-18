@@ -423,7 +423,7 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
    }
-   
+
    @Override
    public void restorePosition(SourcePosition position)
    {
@@ -446,6 +446,46 @@ public class TextEditingTarget implements EditingTarget
    public void forceLineHighlighting()
    {
       docDisplay_.setHighlightSelectedLine(true);
+   }
+   
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+      debugPosition_ = pos;
+      docDisplay_.highlightDebugLocation(debugPosition_);
+      updateDebugWarningBar();
+   }
+
+   @Override
+   public void endDebugHighlighting()
+   {
+      docDisplay_.endDebugHighlighting();      
+      debugPosition_ = null;
+      updateDebugWarningBar();
+   }
+   
+   private void updateDebugWarningBar()
+   {
+      // show the warning bar if we're debugging and the document is dirty
+      if (debugPosition_ != null && 
+          dirtyState().getValue() && 
+          !isDebugWarningVisible_)
+      {
+         view_.showWarningBar("Debug lines may not match because the file contains unsaved changes.");
+         isDebugWarningVisible_ = true;
+      }
+      // hide the warning bar if the dirty state or debug state change
+      else if (isDebugWarningVisible_ &&
+               (debugPosition_ == null || dirtyState().getValue() == false))
+      {
+         view_.hideWarningBar();
+         // if we're still debugging, start highlighting the line again
+         if (debugPosition_ != null)
+         {
+            docDisplay_.highlightDebugLocation(debugPosition_);
+         }
+         isDebugWarningVisible_ = false;
+      }      
    }
    
    private void jumpToPreviousFunction()
@@ -606,6 +646,17 @@ public class TextEditingTarget implements EditingTarget
       spelling_ = new TextEditingTargetSpelling(docDisplay_, 
                                                 docUpdateSentinel_);
 
+      // show/hide the debug toolbar when the dirty state changes. (note:
+      // this doesn't yet handle the case where the user saves the document,
+      // in which case we should still show some sort of warning.)
+      dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+            {
+               public void onValueChange(ValueChangeEvent<Boolean> evt)
+               {
+                  updateDebugWarningBar();
+               }
+            }
+      );
       initStatusBar();
    }
    
@@ -3249,4 +3300,7 @@ public class TextEditingTarget implements EditingTarget
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
    private AnchoredSelection lastExecutedCode_;
+   
+   private SourcePosition debugPosition_ = null;
+   private boolean isDebugWarningVisible_ = false;
 }

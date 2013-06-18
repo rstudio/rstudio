@@ -75,7 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-public class AceEditor implements DocDisplay, 
+public class AceEditor implements DocDisplay,
                                   InputEditorDisplay,
                                   NavigableSourceEditor
 {
@@ -318,6 +318,14 @@ public class AceEditor implements DocDisplay,
          }
       });
       
+      addValueChangeHandler(new ValueChangeHandler<Void>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Void> event)
+         {
+            clearDebugLineHighlight();
+         }
+      });
    }
 
    private void indentPastedRange(Range range)
@@ -1438,7 +1446,7 @@ public class AceEditor implements DocDisplay,
    {
       if (recordCurrent)
          recordCurrentNavigationPosition();
-      
+
       navigate(position, true, highlightLine);
    }
    
@@ -1453,6 +1461,33 @@ public class AceEditor implements DocDisplay,
    {
       Position currPos = getCursorPosition();
       return currPos.getRow() == position.getRow();
+   }
+   
+   @Override
+   public void highlightDebugLocation(SourcePosition srcPosition)
+   {
+      Position position = Position.create(srcPosition.getRow(), 
+            srcPosition.getColumn());
+      
+      int firstRow = widget_.getEditor().getFirstVisibleRow();
+      int lastRow = widget_.getEditor().getLastVisibleRow();
+      int debugRow = srcPosition.getRow();
+      
+      // if the line to be debugged is past or near the edges of the screen,
+      // scroll it into view. allow some lines of context.
+      if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) || 
+          debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
+      {
+         widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
+      }
+ 
+      applyDebugLineHighlight(position.getRow());
+   }
+   
+   @Override
+   public void endDebugHighlighting()
+   {
+      clearDebugLineHighlight();
    }
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
@@ -1683,20 +1718,22 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setDisableOverwrite(disableOverwrite);
    }
-   
+
+   private Integer createLineHighlightMarker(int line, String style)
+   {
+      Range range = Range.fromPoints(Position.create(line, 0),
+                                     Position.create(line+1, 0));
+      return getSession().addMarker(range, style, "background", false);
+   }
+
    private void applyLineHighlight(int line)
    {
       clearLineHighlight();
       
       if (!widget_.getEditor().getHighlightActiveLine())
       {
-         Range range = Range.fromPoints(Position.create(line, 0),
-                                        Position.create(line+1, 0));
-         
-         lineHighlightMarkerId_ = getSession().addMarker(range, 
-                                                         "ace_find_line",
-                                                         "background", 
-                                                         false);
+         lineHighlightMarkerId_ = createLineHighlightMarker(line,
+                                                            "ace_find_line");
       }  
    }
    
@@ -1709,7 +1746,23 @@ public class AceEditor implements DocDisplay,
       }
    }
 
+   private void applyDebugLineHighlight(int line)
+   {
+      clearDebugLineHighlight();
+      lineDebugMarkerId_ = createLineHighlightMarker(line,
+                                                     "ace_active_debug_line");
+   }
 
+   private void clearDebugLineHighlight()
+   {
+      if (lineDebugMarkerId_ != null)
+      {
+         getSession().removeMarker(lineDebugMarkerId_);
+         lineDebugMarkerId_ = null;
+      }
+   }
+
+   private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
@@ -1719,7 +1772,7 @@ public class AceEditor implements DocDisplay,
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private Integer lineHighlightMarkerId_ = null;
-
+   private Integer lineDebugMarkerId_ = null;
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =

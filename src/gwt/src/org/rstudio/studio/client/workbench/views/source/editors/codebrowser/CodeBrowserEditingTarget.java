@@ -423,8 +423,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
          @Override
          public void execute()
          {
-            docDisplay_.navigateToPosition(position, 
-                                           recordCurrent, 
+            docDisplay_.navigateToPosition(position,
+                                           recordCurrent,
                                            highlightLine);
             view_.scrollToLeft();
          }
@@ -551,7 +551,21 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       assert false : "Not implemented";
    }
+   
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+      docDisplay_.highlightDebugLocation(pos); 
+   }
 
+   @Override
+   public void endDebugHighlighting()
+   {
+      docDisplay_.endDebugHighlighting();      
+   } 
+
+   // Private methods --------------------------------------------------------
+   
    private CodeBrowserContents getContents()
    {
       if (doc_.getProperties().keys().length() > 0)

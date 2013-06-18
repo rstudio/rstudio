@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style src="EnvironmentObjects.css" type="org.rstudio.studio.client.workbench.views.environment.view.EnvironmentStyle" field="environmentStyle" />
+    <ui:style src="CallFramePanel.css" type="org.rstudio.studio.client.workbench.views.environment.view.CallFramePanelStyle"></ui:style>
+    <ui:image src="ExecutionArrow.png" field="executionArrow"></ui:image>
+    <g:HeaderPanel styleName="{environmentStyle.environmentPanel}">
+        <g:LayoutPanel styleName="{environmentStyle.categoryHeaderRow}" ui:field="callFramePanelHeader" />
+        <g:ResizeLayoutPanel styleName="{environmentStyle.fillHeight}">
+            <g:ScrollPanel styleName="{environmentStyle.fillHeight}">
+                <g:HTMLPanel>
+                  <g:Image resource="{executionArrow}" styleName="{style.executionArrow}"></g:Image>
+	               <g:HTMLPanel styleName="{style.frameList} {style.framePanel}" ui:field="callFramePanel"></g:HTMLPanel>
+                </g:HTMLPanel>
+            </g:ScrollPanel>
+        </g:ResizeLayoutPanel>
+    </g:HeaderPanel>
+</ui:UiBinder>

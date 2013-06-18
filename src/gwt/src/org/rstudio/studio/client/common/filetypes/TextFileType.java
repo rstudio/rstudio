@@ -23,6 +23,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -73,19 +74,19 @@ public class TextFileType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file,
                         FilePosition position,
-                        boolean highlightLine,
+                        NavigationMethod navMethod,
                         EventBus eventBus)
    {
       eventBus.fireEvent(new OpenSourceFileEvent(file,
                                                  position, 
                                                  this, 
-                                                 highlightLine));
+                                                 navMethod));
    }
    
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      openFile(file, null, false, eventBus);
+      openFile(file, null, NavigationMethod.Default, eventBus);
    }
 
    public EditorLanguage getEditorLanguage()

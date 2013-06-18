@@ -24,10 +24,16 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 
@@ -42,12 +48,16 @@ public class EnvironmentPane extends WorkbenchPane
 {
    @Inject
    public EnvironmentPane(Commands commands,
-                          EventBus eventBus)
+                          EventBus eventBus,
+                          GlobalDisplay globalDisplay,
+                          EnvironmentServerOperations serverOperations)
    {
       super("Environment");
       
       commands_ = commands;
       eventBus_ = eventBus;
+      server_ = serverOperations;
+      globalDisplay_ = globalDisplay;
 
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
@@ -65,9 +75,9 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = new Label(GLOBAL_ENVIRONMENT_NAME);
       environmentName_.setStyleName(
-            EnvironmentPaneResources.INSTANCE
-                    .environmentPaneStyle()
-                    .environmentNameLabel());
+              EnvironmentPaneResources.INSTANCE
+                      .environmentPaneStyle()
+                      .environmentNameLabel());
       functionIndicator_ = new Image(
             StandardIcons.INSTANCE.function());
       functionIndicator_.setVisible(false);
@@ -89,8 +99,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      objects_ = new EnvironmentObjects();
-      objects_.setObserver(this);
+      objects_ = new EnvironmentObjects(this);
       return objects_;
    }
 
@@ -149,6 +158,12 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   public void setCallFrames(JsArray<CallFrame> frameList)
+   {
+      objects_.setCallFrames(frameList);
+   }
+
+   @Override
    public int getScrollPosition()
    {
       return scrollPosition_;
@@ -177,6 +192,19 @@ public class EnvironmentPane extends WorkbenchPane
       return expandedObjects_.toArray(new String[0]);
    }
 
+   @Override
+   public void changeContextDepth(int newDepth)
+   {
+      server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error opening call frame", error.getUserMessage());
+         }
+      });
+   }
+
    public boolean clientStateDirty()
    {
       return isClientStateDirty_;
@@ -191,6 +219,12 @@ public class EnvironmentPane extends WorkbenchPane
    public void resize()
    {
       objects_.onResize();
+   }
+
+   @Override
+   public void setBrowserLine(int newLineNumber)
+   {
+      objects_.updateLineNumber(newLineNumber);
    }
 
    // EnviromentObjects.Observer implementation -------------------------------
@@ -213,19 +247,9 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   public void editObject(String objectName)
-   {
-      executeFunctionForObject("fix", objectName);
-   }
-
    public void viewObject(String objectName)
    {
       executeFunctionForObject("View", objectName);
-   }
-
-   public void forceEvalObject(String objectName)
-   {
-      executeFunctionForObject("force", objectName);
    }
 
    // Private methods ---------------------------------------------------------
@@ -259,6 +283,8 @@ public class EnvironmentPane extends WorkbenchPane
    private EnvironmentObjects objects_;
    private Commands commands_;
    private EventBus eventBus_;
+   private GlobalDisplay globalDisplay_;
+   private EnvironmentServerOperations server_;
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;

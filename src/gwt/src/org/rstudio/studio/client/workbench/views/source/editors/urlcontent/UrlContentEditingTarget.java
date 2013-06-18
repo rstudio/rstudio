@@ -210,7 +210,7 @@ public class UrlContentEditingTarget implements EditingTarget
                                   boolean highlightLine)
    {   
    }
-   
+
    @Override
    public void restorePosition(SourcePosition position)
    {   
@@ -228,6 +228,16 @@ public class UrlContentEditingTarget implements EditingTarget
       // concept of a position
       return true;
    }
+     
+   @Override
+   public void highlightDebugLocation(SourcePosition pos)
+   {
+   }
+
+   @Override
+   public void endDebugHighlighting()
+   {
+   } 
    
    public boolean onBeforeDismiss()
    {

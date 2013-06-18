@@ -217,6 +217,10 @@ SEXP getAttrib(SEXP object, SEXP attrib)
    return Rf_getAttrib(object, attrib);
 }
 
+SEXP getAttrib(SEXP object, const std::string& attrib)
+{
+   return getAttrib(object, Rf_install(attrib.c_str()));
+}
 
 Error extract(SEXP valueSEXP, int* pInt)
 {

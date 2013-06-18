@@ -1,7 +1,7 @@
 /*
- * EnvironmentState.java
+ * CallFrame.java
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,31 +16,35 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class EnvironmentState extends JavaScriptObject
+public class CallFrame extends JavaScriptObject
 {
-   protected EnvironmentState()
+   protected CallFrame()
    {
    }
-   
-   public final native int contextDepth() /*-{
-      return this.context_depth;
+
+   public final native String getFunctionName() /*-{
+       return this.function_name;
    }-*/;
 
-   public final native String functionName() /*-{
-      return this.function_name;
+   public final native int getContextDepth() /*-{
+       return this.context_depth;
    }-*/;
 
-   public final native JsArray<CallFrame> callFrames() /*-{
-      return this.call_frames;
+   public final native String getFileName() /*-{
+       return this.file_name;
+   }-*/;
+
+   public final native int getLineNumber() /*-{
+       return this.line_number;
+   }-*/;
+
+   public final native String getArgumentList() /*-{
+       return this.argument_list;
    }-*/;
    
-   public final native boolean getUseProvidedSource() /*-{
-      return this.use_provided_source;
-   }-*/;
-   
-   public final native String getFunctionCode() /*-{
-      return this.function_code;
+   public final native int getFunctionLineNumber() /*-{
+       return this.function_line_number;
    }-*/;
 }
+

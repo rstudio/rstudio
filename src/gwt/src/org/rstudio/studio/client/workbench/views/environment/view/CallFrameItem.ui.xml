@@ -1,0 +1,6 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:style src="CallFrameItem.css" type="org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem.Style" />
+    <g:Label ui:field="functionName" styleName="{style.callFrame}"></g:Label>
+</ui:UiBinder>

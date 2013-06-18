@@ -81,6 +81,7 @@ double asReal(SEXP object);
 bool asLogical(SEXP object);
 
 SEXP getAttrib(SEXP object, SEXP attrib);
+SEXP getAttrib(SEXP object, const std::string& attrib);
 
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);
