@@ -123,19 +123,14 @@ std::string functionNameFromContext(RCNTXT* pContext)
    return r::sexp::asString(PRINTNAME(CAR(pContext->call)));
 }
 
-void getSourceRefFromContext(const RCNTXT* pContext,
+Error getSourceRefFromContext(const RCNTXT* pContext,
                              std::string* pFileName,
                              int* pLineNumber)
 {
    SEXP srcref = pContext->srcref;
    *pLineNumber = r::sexp::asInteger(srcref);
-   Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
                  .call(pFileName);
-   if (error)
-   {
-      LOG_ERROR(error);
-   }
-   return;
 }
 
 SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
@@ -149,6 +144,7 @@ json::Array callFramesAsJson()
    RCNTXT* pSrcContext = pRContext;
    json::Array listFrames;
    int contextDepth = 0;
+   Error error;
 
    while (pRContext->callflag)
    {
@@ -165,7 +161,11 @@ json::Array callFramesAsJson()
          // keeps track of the previous invocation.
          std::string filename;
          int lineNumber = 0;
-         getSourceRefFromContext(pSrcContext, &filename, &lineNumber);
+         error = getSourceRefFromContext(pSrcContext, &filename, &lineNumber);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
          varFrame["file_name"] = filename;
          varFrame["line_number"] = lineNumber;
          pSrcContext = pRContext;
@@ -226,8 +226,6 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
 bool functionIsOutOfSync(const RCNTXT *pContext,
                          std::string *pFunctionCode)
 {
-   std::string fileName;
-   std::string fileContent;
    Error error;
 
    // start by extracting the source code from the call site
@@ -241,6 +239,7 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 
    // next, look up the name of the source file that contains the file in
    // question
+   std::string fileName;
    SEXP srcRef = getFunctionSourceRefFromContext(pContext);
    if (srcRef == NULL || TYPEOF(srcRef) == NILSXP)
    {
@@ -293,6 +292,7 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    // the sourceref structure (including the array offsets used below)
    // is documented here:
    // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
+   std::string fileContent;
    error = readStringFromFile(
          sourceFilePath,
          &fileContent,

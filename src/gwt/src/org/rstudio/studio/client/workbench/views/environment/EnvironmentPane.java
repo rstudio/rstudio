@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -194,7 +195,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void changeContextDepth(int newDepth)
    {
-      server_.setContextDepth(newDepth, new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+      server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()
       {
          @Override
          public void onError(ServerError error)

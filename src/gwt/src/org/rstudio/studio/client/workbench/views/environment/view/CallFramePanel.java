@@ -53,7 +53,7 @@ public class CallFramePanel extends ResizeComposite
       final ThemeStyles globalStyles = ThemeResources.INSTANCE.themeStyles();
       panelHost_ = panelHost;
       
-      // import the minimize buttons from the global theme resources
+      // import the minimize button from the global theme resources
       HTML minimize = new HTML();
       minimize.setStylePrimaryName(globalStyles.minimize());
       minimize.addClickHandler(new ClickHandler()
