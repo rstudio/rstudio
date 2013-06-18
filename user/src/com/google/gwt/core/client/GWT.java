@@ -258,14 +258,19 @@ public final class GWT {
    * should use the same name.
    */
   @SuppressWarnings("unused") // parameter will be used following replacement
-  public static void runAsync(Class<?> name, RunAsyncCallback callback) {
-    runAsync(callback);
+  public static void runAsync(Class<?> name, final RunAsyncCallback callback) {
+    runAsyncImpl(callback);
   }
+
 
   /**
    * Run the specified callback once the necessary code for it has been loaded.
    */
   public static void runAsync(final RunAsyncCallback callback) {
+    runAsyncImpl(callback);
+  }
+
+  private static void runAsyncImpl(final RunAsyncCallback callback) {
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
       @Override public void execute() {
         callback.onSuccess();
