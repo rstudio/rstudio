@@ -484,7 +484,7 @@ public class EnvironmentPresenter extends BasePresenter
       
       for (UnsavedChangesTarget target: unsavedSourceDocs)
       {
-         if (target.getPath() == path)
+         if (target.getPath().equals(path))
          {
             return true;
          }
