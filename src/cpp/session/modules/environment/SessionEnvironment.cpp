@@ -269,25 +269,6 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
       return true;
    }
 
-   // check the list of source documents in the working set; if this source
-   // document has unsaved changes, don't try to match the lines
-   std::vector<boost::shared_ptr<source_database::SourceDocument> > docs ;
-   error = source_database::list(&docs);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
-
-   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> doc, docs)
-   {
-      if (doc->path() == fileName &&
-          doc->dirty())
-      {
-         return true;
-      }
-   }
-
    // read the portion of the file pointed to by the source refs from disk
    // the sourceref structure (including the array offsets used below)
    // is documented here:
@@ -331,8 +312,7 @@ json::Value commonEnvironmentStateData(int depth)
       varJson["function_name"] = functionNameFromContext(pContext);
 
       // see if the function to be debugged is out of sync with its saved
-      // sources (if available)--if it is, emit its code so the client can
-      // display it
+      // sources (if available).
       if (isUserFunctionContext(pContext))
       {
          useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
@@ -343,8 +323,12 @@ json::Value commonEnvironmentStateData(int depth)
       varJson["function_name"] = "";
    }
 
+   // always emit the code for the function, even if we don't think that the
+   // client's going to need it. we only checked the saved copy of the function
+   // above; the client may be aware of local/unsaved changes to the function,
+   // in which case it will need to fall back on a server-provided copy.
    varJson["use_provided_source"] = useProvidedSource;
-   varJson["function_code"] = useProvidedSource ? functionCode : "";
+   varJson["function_code"] = functionCode;
 
    return varJson;
 }

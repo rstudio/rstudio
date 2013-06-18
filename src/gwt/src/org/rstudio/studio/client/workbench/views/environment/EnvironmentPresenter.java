@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -83,9 +84,11 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentSt
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
+import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class EnvironmentPresenter extends BasePresenter
@@ -125,7 +128,8 @@ public class EnvironmentPresenter extends BasePresenter
                                WorkbenchContext workbenchContext,
                                ConsoleDispatcher consoleDispatcher,
                                RemoteFileSystemContext fsContext,
-                               Session session)
+                               Session session,
+                               SourceShim sourceShim)
    {
       super(view);
       binder.bind(commands, this);
@@ -142,6 +146,7 @@ public class EnvironmentPresenter extends BasePresenter
       initialized_ = false;
       currentBrowseFile_ = "";
       currentBrowseLineNumber_ = 0;
+      sourceShim_ = sourceShim;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -427,6 +432,15 @@ public class EnvironmentPresenter extends BasePresenter
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
+         String newBrowseFile = browseFrame.getFileName().trim();
+         
+         // check to see if the file we're about to switch to contains unsaved
+         // changes. if it does, use the source supplied by the server, even if
+         // the server thinks the document is clean.
+         if (fileContainsUnsavedChanges(newBrowseFile))
+         {
+            useBrowseSources = true;
+         }
          
          // if the file is different or we're swapping into or out of the source
          // viewer, turn off highlighting in the old file before turning it on
@@ -434,7 +448,6 @@ public class EnvironmentPresenter extends BasePresenter
          // but both frames are viewed from source, since in this case an
          // unnecessary close and reopen of the source viewer would be 
          // triggered.
-         String newBrowseFile = browseFrame.getFileName().trim();
          if ((!newBrowseFile.equals(currentBrowseFile_) ||
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
@@ -460,6 +473,24 @@ public class EnvironmentPresenter extends BasePresenter
          currentBrowseLineNumber_ = 0;
          currentFunctionLineNumber_ = 0;
       }
+   }
+   
+   // given a path, indicate whether it corresponds to a file that currently
+   // contains unsaved changes.
+   private boolean fileContainsUnsavedChanges(String path)
+   {
+      ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
+         sourceShim_.getUnsavedChanges();
+      
+      for (UnsavedChangesTarget target: unsavedSourceDocs)
+      {
+         if (target.getPath() == path)
+         {
+            return true;
+         }
+      }     
+      
+      return false;
    }
    
    private void openOrUpdateFileBrowsePoint(boolean debugging)
@@ -636,6 +667,8 @@ public class EnvironmentPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
+   private final SourceShim sourceShim_;
+   
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;
