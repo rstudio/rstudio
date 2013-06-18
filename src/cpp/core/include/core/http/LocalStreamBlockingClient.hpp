@@ -31,7 +31,7 @@ inline Error sendRequest(const FilePath& localStreamPath,
    // create client
    boost::asio::io_service ioService;
    boost::shared_ptr<LocalStreamAsyncClient> pClient(
-         new LocalStreamAsyncClient(ioService, localStreamPath));
+         new LocalStreamAsyncClient(ioService, localStreamPath, true));
 
    // execute blocking request
    return sendRequest<boost::asio::local::stream_protocol::socket>(ioService,
