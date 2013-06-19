@@ -58,10 +58,8 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
-import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
@@ -173,25 +171,6 @@ public class Presentation extends BasePresenter
          }
       });
       
-      new StringStateValue(
-            MODULE_PRESENTATION,
-            KEY_SAVEAS_DIR,
-            ClientState.PERSISTENT,
-            session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(String value)
-         {
-            saveAsStandaloneDir_ = value;
-         }
-
-         @Override
-         protected String getValue()
-         {
-            return saveAsStandaloneDir_;
-         }
-      };
-      
       initPresentationCallbacks();
    }
    
@@ -278,15 +257,21 @@ public class Presentation extends BasePresenter
    
    @Handler
    void onPresentationSaveAsStandalone()
-   {
-      FileSystemItem defaultDir = saveAsStandaloneDir_ != null ?
-            FileSystemItem.createDir(saveAsStandaloneDir_) :
-            FileSystemItem.home();
-       
+   { 
+      // determine the default file name
+      if (saveAsStandaloneDefaultPath_ == null)
+      {
+         FileSystemItem presFilePath = FileSystemItem.createFile(
+                                             currentState_.getFilePath());
+         saveAsStandaloneDefaultPath_ = FileSystemItem.createFile(
+               presFilePath.getParentPath().completePath(presFilePath.getStem() 
+                                                  + ".html"));
+      }
+            
       fileDialogs_.saveFile(
          "Save Presentation As", 
           fileSystemContext_, 
-          defaultDir, 
+          saveAsStandaloneDefaultPath_, 
           ".html",
           false, 
           new ProgressOperationWithInput<FileSystemItem>(){
@@ -309,8 +294,7 @@ public class Presentation extends BasePresenter
                      @Override
                      public void onSuccess()
                      {
-                        saveAsStandaloneDir_ = targetFile.getParentPathString();
-                        session_.persistClientState();
+                        saveAsStandaloneDefaultPath_ = targetFile;
                      }
                   });
             }
@@ -698,8 +682,5 @@ public class Presentation extends BasePresenter
    private SlideNavigation slideNavigation_ = null;
    private boolean usingRmd_ = false;
   
-   
-   private String saveAsStandaloneDir_;
-   private static final String MODULE_PRESENTATION = "presentation";
-   private static final String KEY_SAVEAS_DIR = "saveAsStandaloneDir";
+   private FileSystemItem saveAsStandaloneDefaultPath_ = null;
 }
