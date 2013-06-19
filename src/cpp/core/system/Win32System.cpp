@@ -28,6 +28,7 @@
 #include <shlobj.h>
 
 #include <boost/foreach.hpp>
+#include <boost/bind.hpp>
 #include <boost/system/windows_error.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range.hpp>
