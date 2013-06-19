@@ -16,7 +16,7 @@
 
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
+import com.google.gwt.core.server.StackTraceDeobfuscator;
 import com.google.gwt.junit.linker.JUnitSymbolMapsLinker;
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil;
 import com.google.gwt.user.client.rpc.LoggingRPCTest;

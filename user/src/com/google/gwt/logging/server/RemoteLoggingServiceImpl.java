@@ -16,7 +16,7 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
+import com.google.gwt.core.server.StackTraceDeobfuscator;
 import com.google.gwt.logging.server.RemoteLoggingServiceUtil.RemoteLoggingException;
 import com.google.gwt.logging.shared.RemoteLoggingService;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;

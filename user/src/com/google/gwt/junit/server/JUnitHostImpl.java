@@ -17,7 +17,7 @@ package com.google.gwt.junit.server;
 
 import static com.google.gwt.user.client.rpc.RpcRequestBuilder.MODULE_BASE_HEADER;
 
-import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
+import com.google.gwt.core.server.StackTraceDeobfuscator;
 import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitMessageQueue.ClientInfoExt;

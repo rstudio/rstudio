@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.server.impl;
+package com.google.gwt.core.server;
 
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapConsumerFactory;
 import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapping;

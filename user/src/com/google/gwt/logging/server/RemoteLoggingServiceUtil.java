@@ -16,7 +16,7 @@
 
 package com.google.gwt.logging.server;
 
-import com.google.gwt.core.server.impl.StackTraceDeobfuscator;
+import com.google.gwt.core.server.StackTraceDeobfuscator;
 
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;

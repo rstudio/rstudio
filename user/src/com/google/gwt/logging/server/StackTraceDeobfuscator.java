@@ -26,7 +26,7 @@ import java.util.logging.LogRecord;
  * @deprecated Use com.google.gwt.core.server.StackTraceDeobfuscator instead.
  */
 @Deprecated
-public class StackTraceDeobfuscator extends com.google.gwt.core.server.impl.StackTraceDeobfuscator {
+public class StackTraceDeobfuscator extends com.google.gwt.core.server.StackTraceDeobfuscator {
 
   protected File symbolMapsDirectory;
 
