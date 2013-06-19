@@ -292,6 +292,15 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Remove all children of the node.
+   */
+  public final native Node removeAllChildren() /*-{
+    while (this.lastChild) {
+      this.removeChild(this.lastChild);
+    }
+  }-*/;
+
+  /**
    * Removes this node from its parent node if it is attached to one.
    */
   public final void removeFromParent() {

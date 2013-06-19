@@ -40,7 +40,7 @@ public class NodeTest extends GWTTestCase {
     // <div>foo<button/>bar</div>
     DivElement div = doc.createDivElement();
     Text txt0 = doc.createTextNode("foo");
-    ButtonElement btn0 = doc.createButtonElement();
+    ButtonElement btn0 = doc.createPushButtonElement();
     Text txt1 = doc.createTextNode("bar");
 
     body.appendChild(div);
@@ -49,7 +49,7 @@ public class NodeTest extends GWTTestCase {
     div.appendChild(txt1);
 
     // appendChild, insertBefore
-    ButtonElement btn1 = doc.createButtonElement();
+    ButtonElement btn1 = doc.createPushButtonElement();
 
     // <div>foo<btn0/>bar<btn1/></div>
     div.appendChild(btn1);
@@ -86,6 +86,23 @@ public class NodeTest extends GWTTestCase {
     btn1.removeFromParent();
     assertNull(btn1.getParentElement());
     assertEquals(txt0, div.getFirstChild());
+  }
+
+  public void testRemoveAllChildren() throws Exception {
+    Document doc = Document.get();
+    BodyElement body = doc.getBody();
+
+    DivElement div = doc.createDivElement();
+    div.appendChild(doc.createTextNode("foo"));
+    div.appendChild(doc.createAnchorElement());
+    div.appendChild(doc.createTextNode("bar"));
+    body.appendChild(div);
+
+    assertEquals("foo<a></a>bar", div.getInnerHTML());
+
+    div.removeAllChildren();
+    assertEquals("", div.getInnerHTML());
+    assertEquals(0, div.getChildCount());
   }
 
   /**
