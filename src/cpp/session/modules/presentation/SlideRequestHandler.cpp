@@ -231,10 +231,10 @@ std::string embeddedWebFonts()
 
 }
 
-bool hasKnitrVersion1()
+bool hasKnitrVersion_1_2()
 {
    bool hasVersion = false;
-   Error error = r::exec::RFunction(".rs.hasKnitrVersion1").call(&hasVersion);
+   Error error = r::exec::RFunction(".rs.hasKnitrVersion_1_2").call(&hasVersion);
    if (error)
       LOG_ERROR(error);
    return hasVersion;
@@ -258,9 +258,9 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
    }
 
    // confirm correct version of knitr
-   if (!hasKnitrVersion1())
+   if (!hasKnitrVersion_1_2())
    {
-      *pErrMsg = "knitr version 1.0 or greater is required for presentations";
+      *pErrMsg = "knitr version 1.2 or greater is required for presentations";
       return false;
    }
 

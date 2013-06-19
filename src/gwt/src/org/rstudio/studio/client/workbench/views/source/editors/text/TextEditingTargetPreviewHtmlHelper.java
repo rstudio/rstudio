@@ -53,13 +53,13 @@ public class TextEditingTargetPreviewHtmlHelper
       {
          if (fileType.isRpres())
          {
-            showKnitrPreviewWarning(display, "R Presentations", "1.0");
+            showKnitrPreviewWarning(display, "R Presentations", "1.2");
             return false;
          }
          else if (fileType.requiresKnit())
          {
    
-            showKnitrPreviewWarning(display, feature, "1.0");
+            showKnitrPreviewWarning(display, feature, "1.2");
             return false;
          }
       }

@@ -2354,13 +2354,13 @@ public class TextEditingTarget implements EditingTarget
    void previewRpresentation()
    {
       SessionInfo sessionInfo = session_.getSessionInfo();
-      if (!sessionInfo.getHTMLCapabilities().isRMarkdownSupported())
+      if (!fileTypeCommands_.getHTMLCapabiliites().isRMarkdownSupported())
       {
          globalDisplay_.showMessage(
                MessageDisplay.MSG_WARNING,
                "Unable to Preview",
                "R Presentations require the knitr package " +
-               "(version 1.0 or higher)");
+               "(version 1.2 or higher)");
          return;
       } 
       

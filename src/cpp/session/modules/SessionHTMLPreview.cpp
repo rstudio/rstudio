@@ -1029,8 +1029,8 @@ core::json::Object capabilitiesAsJson()
    capsJson["stitch_supported"] = false;
 
    // query for required versions
-   std::string markdownVersion = "1.0";
-   std::string stitchVersion = "1.0";
+   std::string markdownVersion = "1.2";
+   std::string stitchVersion = "1.2";
    r::sexp::Protect rProtect;
    SEXP capsSEXP;
    r::exec::RFunction func(".rs.getHTMLCapabilities");
