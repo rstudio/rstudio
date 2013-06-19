@@ -78,10 +78,11 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
-.rs.addFunction("promiseDescription", function(obj)
+# used to create description for both language objects and promises
+.rs.addFunction("languageDescription", function(obj)
 {
    # by default, the description should be the expression associated with the
-   # promise
+   # object
    description <- capture.output(substitute(obj))
 
    # create a more friendly description for delay-loaded data
@@ -99,7 +100,12 @@
 
 .rs.addFunction("sourceCodeFromCall", function(call)
 {
-    return(paste(capture.output(print(call)), collapse="\n"))
+    return(paste(capture.output(attr(call, "srcref")), collapse="\n"))
+})
+
+.rs.addFunction("functionNameFromCall", function(call)
+{
+    return(as.character(substitute(call)))
 })
 
 .rs.addFunction("argumentListSummary", function(args)
