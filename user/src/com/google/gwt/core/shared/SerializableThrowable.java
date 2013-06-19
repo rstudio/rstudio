@@ -55,6 +55,7 @@ public final class SerializableThrowable extends Throwable {
 
   private String typeName;
   private boolean exactTypeKnown;
+  private transient Throwable originalThrowable;
   private StackTraceElement[] dummyFieldToIncludeTheTypeInSerialization;
 
   /**
@@ -95,7 +96,7 @@ public final class SerializableThrowable extends Throwable {
   }
 
   /**
-   * Return {@code true} if provided type name is the exact type of the throwable that is designed
+   * Return {@code true} if provided type name is the exact type of the throwable that is designated
    * by this instance. This can return {@code false} if the class metadata is not available in the
    * runtime. In that case {@link #getDesignatedType()} will return the type resolved by best-effort
    * and may not be the exact type; instead it can be one of the ancestors of the real type that
@@ -115,6 +116,15 @@ public final class SerializableThrowable extends Throwable {
     return super.initCause(fromThrowable(cause));
   }
 
+  /**
+   * Returns the original throwable that this serializable throwable is derived from. Note that the
+   * original throwable is kept in a transient field; that is; it will not be transferred to server
+   * side. In that case this method will return {@code null}.
+   */
+  public Throwable getOriginalThrowable() {
+    return originalThrowable;
+  }
+
   @Override
   public String toString() {
     String type = exactTypeKnown ? typeName : (typeName + "(EXACT TYPE UNKNOWN)");
@@ -126,6 +136,7 @@ public final class SerializableThrowable extends Throwable {
     SerializableThrowable throwable = new SerializableThrowable(null, t.getMessage());
     throwable.setStackTrace(t.getStackTrace());
     throwable.initCause(t.getCause());
+    throwable.originalThrowable = t;
     ThrowableTypeResolver.resolveDesignatedType(throwable, t);
     return throwable;
   }
