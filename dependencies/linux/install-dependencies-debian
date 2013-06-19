@@ -44,9 +44,11 @@ sudo apt-get -y install libpango1.0-dev
 sudo apt-get -y install openjdk-6-jdk 
 sudo apt-get -y install ant
 
-# rrdtool and psutil
-sudo apt-get -y install rrdtool
-sudo apt-get -y install python-psutil
+# overlay
+if [ -e install-overlay-debian ]
+then
+  ./install-overlay-debian
+fi
 
 # common
 sudo apt-get -y install unzip

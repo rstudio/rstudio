@@ -42,9 +42,11 @@ sudo yum install -y java-1.6.0-openjdk
 sudo yum install -y ant
 sudo yum install -y xml-commons-apis
 
-# rrdtool
-sudo yum install -y rrdtool
-sudo yum install -y python-psutil
+# overlay
+if [ -e install-overlay-yum ]
+then
+  ./install-overlay-yum
+fi
 
 # common
 cd ../common

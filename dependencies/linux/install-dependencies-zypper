@@ -42,9 +42,11 @@ sudo zypper --non-interactive in pango-devel
 sudo zypper --non-interactive in java-1_6_0-openjdk-devel
 sudo zypper --non-interactive in ant
 
-#rrdtool
-sudo zypper --non-interactive in rrdtool
-sudo zypper --non-interactive in python-psutil
+# overlay
+if [ -e install-overlay-zypper ]
+then
+  ./install-overlay-zypper
+fi
 
 # common
 cd ../common
