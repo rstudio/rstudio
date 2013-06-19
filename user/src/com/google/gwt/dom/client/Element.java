@@ -595,6 +595,18 @@ public class Element extends Node {
   }
 
   /**
+   * Add the class name if it doesn't exist or removes it if does.
+   *
+   * @param className the class name to be toggled
+   */
+  public final void toggleClassName(String className) {
+    boolean added = addClassName(className);
+    if (!added) {
+      removeClassName(className);
+    }
+  }
+
+  /**
    * Replace one class name with another.
    *
    * @param oldClassName the class name to be replaced

@@ -34,11 +34,9 @@ public class ElementTest extends GWTTestCase {
     return "com.google.gwt.dom.DOMTest";
   }
 
-  public void testAddRemoveReplaceHasClassName() {
+  public void testAddClassName() {
     DivElement div = Document.get().createDivElement();
-
     div.setClassName("foo");
-    assertEquals("foo", div.getClassName());
 
     assertTrue(div.addClassName("bar"));
     assertEquals("foo bar", div.getClassName());
@@ -48,12 +46,13 @@ public class ElementTest extends GWTTestCase {
 
     assertFalse(div.addClassName("baz"));
     assertEquals("foo bar baz", div.getClassName());
+  }
 
-    div.replaceClassName("bar", "tintin");
-    assertTrue(div.getClassName().contains("tintin"));
-    assertFalse(div.getClassName().contains("bar"));
+  public void testRemoveClassName() {
+    DivElement div = Document.get().createDivElement();
+    div.setClassName("foo bar baz");
 
-    assertTrue(div.removeClassName("tintin"));
+    assertTrue(div.removeClassName("bar"));
     assertEquals("foo baz", div.getClassName());
 
     assertFalse(div.removeClassName("bar"));
@@ -64,13 +63,40 @@ public class ElementTest extends GWTTestCase {
 
     assertTrue(div.removeClassName("foo"));
     assertEquals("", div.getClassName());
+  }
 
+  public void testHasClassName() {
+    DivElement div = Document.get().createDivElement();
     div.setClassName("foo bar");
+
     assertTrue(div.hasClassName("bar"));
     assertTrue(div.hasClassName("foo"));
-    div.removeClassName("foo");
+
+    div.setClassName("bar");
     assertFalse(div.hasClassName("foo"));
     assertTrue(div.hasClassName("bar"));
+  }
+
+  public void testToggleClassName() {
+    DivElement div = Document.get().createDivElement();
+    div.setClassName("foo bar baz");
+
+    div.toggleClassName("bar");
+    assertEquals("foo baz", div.getClassName());
+
+    div.toggleClassName("bar");
+    assertEquals("foo baz bar", div.getClassName());
+  }
+
+  public void testReplaceClassName() {
+    DivElement div = Document.get().createDivElement();
+    div.setClassName("foo bar baz");
+
+    div.replaceClassName("bar", "tintin");
+    assertEquals("foo baz tintin", div.getClassName());
+
+    div.replaceClassName("bar", "tintin2");
+    assertEquals("foo baz tintin tintin2", div.getClassName());
   }
 
   public void testIndexOfName() {
