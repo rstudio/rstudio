@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayNumber;
 
 public class EditSession extends JavaScriptObject
 {
@@ -151,5 +152,13 @@ public class EditSession extends JavaScriptObject
 
    public native final void removeMarker(int markerId) /*-{
       this.removeMarker(markerId);
+   }-*/;
+   
+   public native final void setBreakpoint(int line) /*-{
+      this.setBreakpoint(line);
+   }-*/;
+
+   public native final void clearBreakpoint(int line) /*-{
+      this.clearBreakpoint(line);
    }-*/;
 }

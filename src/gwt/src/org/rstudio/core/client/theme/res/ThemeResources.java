@@ -180,4 +180,9 @@ public interface ThemeResources extends ClientBundle
    ImageResource removePackage();
    
    ImageResource newsButton();
+   
+   @Source("activeBreakpoint.png")
+   DataResource activeBreakpoint();
+   @Source("inactiveBreakpoint.png")
+   DataResource inactiveBreakpoint();
 }

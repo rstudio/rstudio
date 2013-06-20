@@ -110,10 +110,10 @@ public class AceEditorNative extends JavaScriptObject {
               }));
    }-*/;
    
-   public native final void onGutterMouseDown(Command command) /*-{
+   public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
       this.on("guttermousedown",
-         $entry(function () {
-           command.@com.google.gwt.user.client.Command::execute()();
+         $entry(function (arg) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
          }));         
    }-*/;
 

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.*;
@@ -30,7 +32,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
@@ -83,11 +84,23 @@ public class AceEditorWidget extends Composite
             fireEvent(new FoldChangeEvent());
          }
       });
-      editor_.onGutterMouseDown(new Command()
+      editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
       {
         @Override
-        public void execute()
+        public void execute(AceMouseEventNative arg)
         {
+           int lineNumber = arg.getDocumentPosition().getRow();
+           int breakpointIdx = breakpointLines_.indexOf(lineNumber);
+           if (breakpointIdx >= 0)
+           {
+              editor_.getSession().clearBreakpoint(lineNumber);
+              breakpointLines_.remove(breakpointIdx);
+           }
+           else
+           {
+              editor_.getSession().setBreakpoint(lineNumber);
+              breakpointLines_.add(lineNumber);
+           }
         }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
@@ -298,4 +311,5 @@ public class AceEditorWidget extends Composite
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
+   private ArrayList<Integer> breakpointLines_ = new ArrayList<Integer>();
 }
