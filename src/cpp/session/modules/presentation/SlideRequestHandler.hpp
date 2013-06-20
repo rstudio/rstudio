@@ -17,20 +17,56 @@
 #define SESSION_PRESENTATION_SLIDE_REQUEST_HANDLER_HPP
 
 #include <string>
+#include <core/http/Response.hpp>
 
 namespace core {
    class Error;
    class FilePath;
    namespace http {
       class Request;
-      class Response;
    }
 }
  
 namespace session {
 namespace modules { 
 namespace presentation {
-   
+
+struct ErrorResponse
+{
+   explicit ErrorResponse(const std::string& message = std::string())
+      : statusCode(core::http::status::InternalServerError),
+        contentType("text/plain"),
+        message(message),
+        action(boost::function<void()>())
+   {
+      htmlMessage = "<pre>" + message + "</pre>";
+   }
+
+   ErrorResponse(core::http::status::Code statusCode,
+                 const std::string& contentType,
+                 const std::string& message,
+                 const std::string& htmlMessage = std::string(),
+                 boost::function<void()> action = boost::function<void()>())
+      : statusCode(statusCode),
+        contentType(contentType),
+        message(message),
+        action(action)
+   {
+      if (htmlMessage.empty())
+         this->htmlMessage = "<pre>" + message + "</pre>";
+   }
+
+   core::http::status::Code statusCode;
+   std::string contentType;
+   std::string message;
+   std::string htmlMessage;
+   boost::function<void()> action;
+};
+
+void setErrorResponse(const ErrorResponse& errorResponse,
+                      core::http::Response* pResponse);
+
+
 void handlePresentationPaneRequest(const core::http::Request& request,
                                   core::http::Response* pResponse);
                        
@@ -40,10 +76,10 @@ void handlePresentationHelpRequest(const core::http::Request& request,
                                    core::http::Response* pResponse);
 
 bool savePresentationAsStandalone(const core::FilePath& filePath,
-                                  std::string* pErrMsg);
+                                  ErrorResponse* pErrorResponse);
 
 bool savePresentationAsRpubsSource(const core::FilePath& filePath,
-                                   std::string* pErrMsg);
+                                   ErrorResponse* pErrorResponse);
 
 } // namespace presentation
 } // namespace modules

@@ -374,12 +374,12 @@ Error createStandalonePresentation(const json::JsonRpcRequest& request,
       return error;
    FilePath targetPath = module_context::resolveAliasedPath(pathParam);
 
-   std::string errMsg;
-   if (!savePresentationAsStandalone(targetPath, &errMsg))
+   ErrorResponse errorResponse;
+   if (!savePresentationAsStandalone(targetPath, &errorResponse))
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errMsg));
+                          json::toJsonString(errorResponse.message));
    }
 
    return Success();
@@ -391,8 +391,8 @@ Error createDesktopViewInBrowserPresentation(
 {
    // save to view in browser path
    FilePath targetPath = presentation::state::viewInBrowserPath();
-   std::string errMsg;
-   if (savePresentationAsStandalone(targetPath, &errMsg))
+   ErrorResponse errorResponse;
+   if (savePresentationAsStandalone(targetPath, &errorResponse))
    {
       pResponse->setResult(module_context::createAliasedPath(targetPath));
    }
@@ -400,7 +400,7 @@ Error createDesktopViewInBrowserPresentation(
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errMsg));
+                          json::toJsonString(errorResponse.message));
    }
 
    return Success();
@@ -415,8 +415,8 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    FilePath filePath = presentation::state::directory().childPath(
                                                       stem + "-rpubs.html");
 
-   std::string errMsg;
-   if (savePresentationAsRpubsSource(filePath, &errMsg))
+   ErrorResponse errorResponse;
+   if (savePresentationAsRpubsSource(filePath, &errorResponse))
    {
       json::Object resultJson;
       resultJson["published"] = !rpubs::previousUploadId(filePath).empty();
@@ -428,7 +428,7 @@ Error createPresentationRpubsSource(const json::JsonRpcRequest& request,
    {
       pResponse->setError(systemError(boost::system::errc::io_error,
                                       ERROR_LOCATION),
-                          json::toJsonString(errMsg));
+                          json::toJsonString(errorResponse.message));
    }
 
    return Success();

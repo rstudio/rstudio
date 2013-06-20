@@ -240,7 +240,7 @@ bool hasKnitrVersion_1_2()
    return hasVersion;
 }
 
-bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
+bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
 {
    // first detect whether we even need to knit -- if there is an .md
    // file with timestamp the same as or later than the .Rmd then skip it
@@ -253,14 +253,15 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
    Error error = module_context::rScriptPath(&rProgramPath);
    if (error)
    {
-      *pErrMsg = error.summary();
+      *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
 
    // confirm correct version of knitr
    if (!hasKnitrVersion_1_2())
    {
-      *pErrMsg = "knitr version 1.2 or greater is required for presentations";
+      *pErrorResponse = ErrorResponse("knitr version 1.2 or greater is "
+                                      "required for presentations");
       return false;
    }
 
@@ -307,12 +308,13 @@ bool performKnit(const FilePath& rmdPath, std::string* pErrMsg)
             &result);
    if (error)
    {
-      *pErrMsg = error.summary();
+      *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      *pErrMsg = "Error occurred during knit: " + result.stdErr;
+      *pErrorResponse = ErrorResponse("Error occurred during knit: " +
+                                      result.stdErr);
       return false;
    }
    else
@@ -440,14 +442,14 @@ bool readPresentation(SlideDeck* pSlideDeck,
                       std::string* pInitActions,
                       std::string* pSlideActions,
                       std::map<std::string,std::string>* pVars,
-                      std::string* pErrMsg)
+                      ErrorResponse* pErrorResponse)
 {
    // look for slides and knit if we need to
    FilePath rmdFile = presentation::state::filePath();
    std::string ext = rmdFile.extensionLowerCase();
    if (rmdFile.exists() && (ext != ".md"))
    {
-      if (!performKnit(rmdFile, pErrMsg))
+      if (!performKnit(rmdFile, pErrorResponse))
          return false;
    }
 
@@ -455,7 +457,8 @@ bool readPresentation(SlideDeck* pSlideDeck,
    FilePath slidesFile = rmdFile.parent().childPath(rmdFile.stem() + ".md");
    if (!slidesFile.exists())
    {
-      *pErrMsg = slidesFile.absolutePath() + " not found";
+      *pErrorResponse = ErrorResponse(slidesFile.absolutePath() +
+                                      " not found");
       return false;
    }
 
@@ -464,7 +467,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrMsg = error.summary();
+      *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
 
@@ -480,7 +483,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrMsg = error.summary();
+      *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
 
@@ -502,7 +505,7 @@ bool renderPresentation(
                    const std::map<std::string,std::string>& vars,
                    const std::vector<boost::iostreams::regex_filter>& filters,
                    std::ostream& os,
-                   std::string* pErrMsg)
+                   ErrorResponse* pErrorResponse)
 {
    std::string presentationTemplate =
                            resourceFiles().get("presentation/slides.html");
@@ -528,7 +531,7 @@ bool renderPresentation(
    }
    catch(const std::exception& e)
    {
-      *pErrMsg = e.what();
+      *pErrorResponse = ErrorResponse(e.what());
       return false;
    }
 
@@ -676,19 +679,18 @@ void externalBrowserVars(const SlideDeck& slideDeck,
 
 bool createStandalonePresentation(const FilePath& targetFile,
                                   const VarSource& varSource,
-                                  std::string* pErrMsg)
+                                  ErrorResponse* pErrorResponse)
 {
    // read presentation
    presentation::SlideDeck slideDeck;
    std::string slides, initCommands, slideCommands;
    std::map<std::string,std::string> vars;
-   std::string errMsg;
    if (!readPresentation(&slideDeck,
                          &slides,
                          &initCommands,
                          &slideCommands,
                          &vars,
-                         pErrMsg))
+                         pErrorResponse))
    {
       return false;
    }
@@ -716,7 +718,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    if (error)
    {
       LOG_ERROR(error);
-      *pErrMsg = error.summary();
+      *pErrorResponse = ErrorResponse(error.summary());
       return false;
    }
 
@@ -726,7 +728,7 @@ bool createStandalonePresentation(const FilePath& targetFile,
    filters.push_back(html_utils::Base64ImageFilter(dirPath));
 
    // render presentation
-   return renderPresentation(vars, filters, *pOfs, &errMsg);
+   return renderPresentation(vars, filters, *pOfs, pErrorResponse);
 }
 
 
@@ -760,16 +762,15 @@ void handlePresentationRootRequest(const std::string& path,
    presentation::SlideDeck slideDeck;
    std::string slides, initCommands, slideCommands;
    std::map<std::string,std::string> vars;
-   std::string errMsg;
+   ErrorResponse errorResponse;
    if (!readPresentation(&slideDeck,
                          &slides,
                          &initCommands,
                          &slideCommands,
                          &vars,
-                         &errMsg))
+                         &errorResponse))
    {
-      pResponse->setError(http::status::InternalServerError,
-                          errMsg);
+      setErrorResponse(errorResponse, pResponse);
       return;
    }
 
@@ -826,7 +827,7 @@ void handlePresentationRootRequest(const std::string& path,
    std::stringstream previewOutputStream;
    std::vector<boost::iostreams::regex_filter> filters;
    filters.push_back(linkFilter());
-   if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
+   if (renderPresentation(vars, filters, previewOutputStream, &errorResponse))
    {
       // set response
       pResponse->setNoCacheHeaders();
@@ -838,14 +839,14 @@ void handlePresentationRootRequest(const std::string& path,
       FilePath viewInBrowserPath = presentation::state::viewInBrowserPath();
       if (viewInBrowserPath.exists())
       {
-         std::string errMsg;
-         if (!savePresentationAsStandalone(viewInBrowserPath, &errMsg))
-            LOG_ERROR_MESSAGE(errMsg);
+         ErrorResponse errorResponse;
+         if (!savePresentationAsStandalone(viewInBrowserPath, &errorResponse))
+            LOG_ERROR_MESSAGE(errorResponse.message);
       }
    }
    else
    {
-      pResponse->setError(http::status::InternalServerError, errMsg);
+      setErrorResponse(errorResponse, pResponse);
    }
 }
 
@@ -866,13 +867,11 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       mdFilePath = filePath.parent().complete(filePath.stem() + ".md");
 
       // do the knit if we need to
-      std::string errMsg;
-      if (!performKnit(filePath, &errMsg))
+      ErrorResponse errorResponse;
+      if (!performKnit(filePath, &errorResponse))
       {
-         pResponse->setError(http::status::InternalServerError,
-                             errMsg);
+         setErrorResponse(errorResponse, pResponse);
          return;
-
       }
    }
    else
@@ -964,16 +963,15 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    presentation::SlideDeck slideDeck;
    std::string slides, initCommands, slideCommands;
    std::map<std::string,std::string> vars;
-   std::string errMsg;
+   ErrorResponse errorResponse;
    if (!readPresentation(&slideDeck,
                          &slides,
                          &initCommands,
                          &slideCommands,
                          &vars,
-                         &errMsg))
+                         &errorResponse))
    {
-      pResponse->setError(http::status::InternalServerError,
-                          errMsg);
+      setErrorResponse(errorResponse, pResponse);
       return;
    }
 
@@ -997,7 +995,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    std::stringstream previewOutputStream;
    std::vector<boost::iostreams::regex_filter> filters;
    filters.push_back(linkFilter());
-   if (renderPresentation(vars, filters, previewOutputStream, &errMsg))
+   if (renderPresentation(vars, filters, previewOutputStream, &errorResponse))
    {
       pResponse->setNoCacheHeaders();
       pResponse->setContentType("text/html");
@@ -1005,7 +1003,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    }
    else
    {
-      pResponse->setError(http::status::InternalServerError, errMsg);
+      setErrorResponse(errorResponse, pResponse);
    }
 }
 
@@ -1022,6 +1020,23 @@ void handlePresentationFileRequest(const http::Request& request,
 
 } // anonymous namespace
 
+
+void setErrorResponse(const ErrorResponse& errorResponse,
+                      core::http::Response* pResponse)
+{
+   // error message contingent on content type
+   std::string message = errorResponse.contentType == "text/html" ?
+                           errorResponse.htmlMessage :
+                           errorResponse.message;
+
+   // set error
+   pResponse->setError(errorResponse.statusCode, message);
+   pResponse->setContentType(errorResponse.contentType);
+
+   // perform optional action
+   if (errorResponse.action)
+      errorResponse.action();
+}
 
 void handlePresentationPaneRequest(const http::Request& request,
                                    http::Response* pResponse)
@@ -1153,17 +1168,19 @@ void handlePresentationHelpRequest(const core::http::Request& request,
 }
 
 bool savePresentationAsStandalone(const core::FilePath& filePath,
-                                  std::string* pErrMsg)
+                                  ErrorResponse* pErrorResponse)
 {
    return createStandalonePresentation(filePath,
                                        saveAsStandaloneVars,
-                                       pErrMsg);
+                                       pErrorResponse);
 }
 
 bool savePresentationAsRpubsSource(const core::FilePath& filePath,
-                                   std::string* pErrMsg)
+                                   ErrorResponse* pErrorResponse)
 {
-   return createStandalonePresentation(filePath, publishToRPubsVars, pErrMsg);
+   return createStandalonePresentation(filePath,
+                                       publishToRPubsVars,
+                                       pErrorResponse);
 }
 
 
