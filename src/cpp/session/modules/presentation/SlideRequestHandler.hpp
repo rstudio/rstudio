@@ -44,6 +44,8 @@ struct ErrorResponse
    core::http::status::Code statusCode;
 };
 
+bool clearKnitrCache(ErrorResponse* pErrorResponse);
+
 void handlePresentationPaneRequest(const core::http::Request& request,
                                   core::http::Response* pResponse);
                        

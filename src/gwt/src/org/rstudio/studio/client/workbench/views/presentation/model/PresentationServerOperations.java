@@ -66,4 +66,6 @@ public interface PresentationServerOperations extends RPubsServerOperations
                      String baseDir,
                      ServerRequestCallback<SlideNavigation> requestCallback);
    
+   void clearPresentationCache(ServerRequestCallback<Void> requestCallback);
+   
 }
