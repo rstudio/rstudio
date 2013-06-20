@@ -23,6 +23,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <boost/regex.hpp>
 #include <boost/iostreams/filter/regex.hpp>
@@ -277,6 +278,7 @@ bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
+                     "opts_knit$set(stop_on_error = 2L); "
                      "opts_chunk$set(cache=TRUE, "
                                     "cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
@@ -313,9 +315,30 @@ bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      *pErrorResponse = ErrorResponse("Error occurred during knit: " +
-                                      result.stdErr);
-      return false;
+      // if the markdown file doesn't exist then create one to
+      // play the error text back into
+      if (!mdPath.exists())
+      {
+         Error error = core::writeStringToFile(mdPath,
+                                               mdPath.stem() +
+                                               "=======================\n");
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      // append the knitr error message to the file
+      std::ostringstream ostr;
+      ostr << std::endl
+           << "```" << std::endl
+           << "Error executing R code:" << std::endl << std::endl
+           << boost::algorithm::trim_copy(result.stdErr) << std::endl
+           << "```" << std::endl;
+
+      Error error = core::appendToFile(mdPath, ostr.str());
+      if (error)
+         LOG_ERROR(error);
+
+      return true;
    }
    else
    {
