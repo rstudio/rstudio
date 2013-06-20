@@ -121,6 +121,7 @@ json::Object varToJson(const r::sexp::Variable& var)
           varClass == "data.table" ||
           varClass == "list" ||
           varClass == "cast_df" ||
+          varClass == "xts" ||
           Rf_isS4(varSEXP))
       {
          varJson["contents"] = contentsOfVar(varSEXP);

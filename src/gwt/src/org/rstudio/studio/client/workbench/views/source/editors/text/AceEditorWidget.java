@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
@@ -81,6 +82,13 @@ public class AceEditorWidget extends Composite
          {
             fireEvent(new FoldChangeEvent());
          }
+      });
+      editor_.onGutterMouseDown(new Command()
+      {
+        @Override
+        public void execute()
+        {
+        }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
       {

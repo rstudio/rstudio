@@ -98,9 +98,9 @@
     return(capture.output(print(attr(srcref, "srcfile"))))
 })
 
-.rs.addFunction("sourceCodeFromCall", function(call)
+.rs.addFunction("sourceCodeFromFunction", function(fun)
 {
-    return(paste(capture.output(attr(call, "srcref")), collapse="\n"))
+    return(paste(capture.output(attr(fun, "srcref")), collapse="\n"))
 })
 
 .rs.addFunction("functionNameFromCall", function(call)

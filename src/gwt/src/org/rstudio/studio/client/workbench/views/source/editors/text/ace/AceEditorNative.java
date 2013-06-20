@@ -109,6 +109,13 @@ public class AceEditorNative extends JavaScriptObject {
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
    }-*/;
+   
+   public native final void onGutterMouseDown(Command command) /*-{
+      this.on("guttermousedown",
+         $entry(function () {
+           command.@com.google.gwt.user.client.Command::execute()();
+         }));         
+   }-*/;
 
    public final HandlerRegistration delegateEventsTo(HasHandlers handlers)
    {

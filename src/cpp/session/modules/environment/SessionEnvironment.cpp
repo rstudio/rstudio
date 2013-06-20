@@ -118,11 +118,26 @@ bool inBrowseContext()
    return false;
 }
 
-Error functionNameFromContext(RCNTXT* pContext,
+Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
    return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
                             .call(pFunctionName);
+}
+
+SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
+{
+   SEXP callObject = pContext->callfun;
+   // enabling tracing on a function turns it into an S4 object with an
+   // 'original' slot that includes the function's original contents. use
+   // this instead if it's set up. (consider: is it safe to assume that S4
+   // objects here are always traced functions, or do we need to compare classes
+   // to be safe?)
+   if (Rf_isS4(callObject))
+   {
+      callObject = r::sexp::getAttrib(callObject, "original");
+   }
+   return callObject;
 }
 
 Error getSourceRefFromContext(const RCNTXT* pContext,
@@ -137,7 +152,7 @@ Error getSourceRefFromContext(const RCNTXT* pContext,
 
 SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
 {
-   return r::sexp::getAttrib(pContext->callfun, "srcref");
+   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
 json::Array callFramesAsJson()
@@ -237,7 +252,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    Error error;
 
    // start by extracting the source code from the call site
-   error = r::exec::RFunction(".rs.sourceCodeFromCall", pContext->callfun)
+   error = r::exec::RFunction(".rs.sourceCodeFromFunction",
+                              getOriginalFunctionCallObject(pContext))
          .call(pFunctionCode);
    if (error)
    {
@@ -389,15 +405,17 @@ void onDetectChanges(module_context::ChangeSource source)
    s_environmentMonitor.checkForChanges();
 }
 
-void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
+void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
    int depth = 0;
    SEXP environmentTop = NULL;
-   getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
+   RCNTXT* pRContext =
+         getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
 
-   // we entered (or left) a call frame
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
-       depth != *pContextDepth)
+       depth != *pContextDepth ||
+       pRContext != *pCurrentContext)
    {
       json::Object varJson;
 
@@ -414,6 +432,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // start monitoring the enviroment at the new depth
       s_environmentMonitor.setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
+      *pCurrentContext = pRContext;
       enqueContextDepthChangedEvent(depth);
    }
    // if we're debugging and stayed in the same frame, update the line number
@@ -436,7 +455,10 @@ json::Value environmentStateAsJson()
 
 Error initialize()
 {
-   boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
+   boost::shared_ptr<int> pContextDepth =
+         boost::make_shared<int>(0);
+   boost::shared_ptr<RCNTXT*> pCurrentContext =
+         boost::make_shared<RCNTXT*>(r::getGlobalContext());
 
    // begin monitoring the environment
    SEXP environmentTop = NULL;
@@ -447,7 +469,9 @@ Error initialize()
    using boost::bind;
    using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   events().onConsolePrompt.connect(bind(onConsolePrompt, pContextDepth));
+   events().onConsolePrompt.connect(bind(onConsolePrompt,
+                                         pContextDepth,
+                                         pCurrentContext));
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);
