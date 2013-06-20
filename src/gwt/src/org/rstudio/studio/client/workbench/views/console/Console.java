@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEve
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 public class Console
 {
@@ -39,6 +41,7 @@ public class Console
       void bringToFront();
       void focus();
       IsWidget getConsoleInterruptButton();
+      void setDebugMode(boolean debugMode);
    }
    
    @Inject
@@ -76,6 +79,16 @@ public class Console
          public void onConsolePrompt(ConsolePromptEvent event)
          {
             fadeInHelper_.hide();
+         }
+      });
+      
+      events.addHandler(DebugModeChangedEvent.TYPE, 
+            new DebugModeChangedEvent.Handler()
+      { 
+         @Override
+         public void onDebugModeChanged(DebugModeChangedEvent event)
+         {
+            view.setDebugMode(event.getDebugMode());
          }
       });
    }
