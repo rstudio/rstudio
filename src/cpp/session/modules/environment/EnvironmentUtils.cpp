@@ -60,8 +60,9 @@ json::Value descriptionOfVar(SEXP var)
 {
    std::string value;
    Error error = r::exec::RFunction(
-            isUnevaluatedPromise(var) ?
-                  ".rs.promiseDescription" :
+            isUnevaluatedPromise(var) ||
+            r::sexp::isLanguage(var) ?
+                  ".rs.languageDescription" :
                   ".rs.valueDescription",
                var).call(&value);
    if (error)
@@ -146,6 +147,7 @@ json::Object varToJson(const r::sexp::Variable& var)
          varJson["type"] = std::string("unknown");
       }
       varJson["value"] = (isUnevaluatedPromise(varSEXP) ||
+                          r::sexp::isLanguage(varSEXP) ||
                           varSEXP == R_MissingArg) ?
                descriptionOfVar(varSEXP) :
                std::string("<unknown>");

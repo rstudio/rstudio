@@ -118,9 +118,11 @@ bool inBrowseContext()
    return false;
 }
 
-std::string functionNameFromContext(RCNTXT* pContext)
+Error functionNameFromContext(RCNTXT* pContext,
+                              std::string* pFunctionName)
 {
-   return r::sexp::asString(PRINTNAME(CAR(pContext->call)));
+   return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
+                            .call(pFunctionName);
 }
 
 Error getSourceRefFromContext(const RCNTXT* pContext,
@@ -151,8 +153,14 @@ json::Array callFramesAsJson()
       if (isUserFunctionContext(pRContext))
       {
          json::Object varFrame;
+         std::string functionName;
+         error = functionNameFromContext(pRContext, &functionName);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
          varFrame["context_depth"] = ++contextDepth;
-         varFrame["function_name"] = functionNameFromContext(pRContext);
+         varFrame["function_name"] = functionName;
 
          // in the linked list of R contexts, the srcref associated with each
          // context points to the place from which the context was invoked.
@@ -309,7 +317,13 @@ json::Value commonEnvironmentStateData(int depth)
    if (depth > 0)
    {
       RCNTXT* pContext = getFunctionContext(depth);
-      varJson["function_name"] = functionNameFromContext(pContext);
+      std::string functionName;
+      Error error = functionNameFromContext(pContext, &functionName);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      varJson["function_name"] = functionName;
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
