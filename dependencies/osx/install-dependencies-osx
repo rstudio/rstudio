@@ -17,14 +17,15 @@
 
 set -e
 
-cd ../common
-./install-common
-cd ../osx
-
 if [ -e install-overlay ]
 then
   ./install-overlay
 fi
+
+cd ../common
+./install-common
+cd ../osx
+
 
 # enable PAM
 sudo cp /etc/pam.d/ftpd /etc/pam.d/rstudio
