@@ -33,33 +33,16 @@ namespace presentation {
 
 struct ErrorResponse
 {
-   explicit ErrorResponse(const std::string& message = std::string())
-      : statusCode(core::http::status::InternalServerError),
-        contentType("text/plain"),
-        message(message)
+   explicit ErrorResponse(const std::string& message = std::string(),
+                          core::http::status::Code statusCode
+                                  = core::http::status::InternalServerError)
+      : message(message), statusCode(statusCode)
    {
    }
 
-   ErrorResponse(const std::string& message,
-                 const std::string& htmlMessage,
-                 core::http::status::Code statusCode
-                                   = core::http::status::InternalServerError)
-      : statusCode(statusCode),
-        contentType("text/html"),
-        message(message),
-        htmlMessage(htmlMessage)
-   {
-   }
-
-   core::http::status::Code statusCode;
-   std::string contentType;
    std::string message;
-   std::string htmlMessage;
+   core::http::status::Code statusCode;
 };
-
-void setErrorResponse(const ErrorResponse& errorResponse,
-                      core::http::Response* pResponse);
-
 
 void handlePresentationPaneRequest(const core::http::Request& request,
                                   core::http::Response* pResponse);

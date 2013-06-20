@@ -793,7 +793,7 @@ void handlePresentationRootRequest(const std::string& path,
                          &vars,
                          &errorResponse))
    {
-      setErrorResponse(errorResponse, pResponse);
+      pResponse->setError(errorResponse.statusCode, errorResponse.message);
       return;
    }
 
@@ -869,7 +869,7 @@ void handlePresentationRootRequest(const std::string& path,
    }
    else
    {
-      setErrorResponse(errorResponse, pResponse);
+      pResponse->setError(errorResponse.statusCode, errorResponse.message);
    }
 }
 
@@ -893,7 +893,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
       ErrorResponse errorResponse;
       if (!performKnit(filePath, &errorResponse))
       {
-         setErrorResponse(errorResponse, pResponse);
+         pResponse->setError(errorResponse.statusCode, errorResponse.message);
          return;
       }
    }
@@ -994,7 +994,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
                          &vars,
                          &errorResponse))
    {
-      setErrorResponse(errorResponse, pResponse);
+      pResponse->setError(errorResponse.statusCode, errorResponse.message);
       return;
    }
 
@@ -1026,7 +1026,7 @@ void handlePresentationViewInBrowserRequest(const http::Request& request,
    }
    else
    {
-      setErrorResponse(errorResponse, pResponse);
+      pResponse->setError(errorResponse.statusCode, errorResponse.message);
    }
 }
 
@@ -1043,19 +1043,6 @@ void handlePresentationFileRequest(const http::Request& request,
 
 } // anonymous namespace
 
-
-void setErrorResponse(const ErrorResponse& errorResponse,
-                      core::http::Response* pResponse)
-{
-   // error message contingent on content type
-   std::string message = errorResponse.contentType == "text/html" ?
-                           errorResponse.htmlMessage :
-                           errorResponse.message;
-
-   // set error
-   pResponse->setError(errorResponse.statusCode, message);
-   pResponse->setContentType(errorResponse.contentType);
-}
 
 void handlePresentationPaneRequest(const http::Request& request,
                                    http::Response* pResponse)
