@@ -211,7 +211,8 @@ public abstract class
 
    // Environment
    public abstract AppCommand activateEnvironment();
-  
+   public abstract AppCommand refreshEnvironment();
+ 
    // Plots
    public abstract AppCommand nextPlot();
    public abstract AppCommand previousPlot();
@@ -285,9 +286,6 @@ public abstract class
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
    
-   // Environment
-   public abstract AppCommand refreshEnvironment();
-   
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();
@@ -307,7 +305,13 @@ public abstract class
    public abstract AppCommand mru9();
    public abstract AppCommand clearRecentFiles();
 
-   public abstract AppCommand checkSpelling();
-   
+   // Debugging
+   public abstract AppCommand debugContinue();
+   public abstract AppCommand debugStop();
+   public abstract AppCommand debugStep();
+
+   // Other
+   public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
+   
 }
