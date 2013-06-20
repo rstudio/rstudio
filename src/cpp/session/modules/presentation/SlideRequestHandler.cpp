@@ -1032,10 +1032,6 @@ void setErrorResponse(const ErrorResponse& errorResponse,
    // set error
    pResponse->setError(errorResponse.statusCode, message);
    pResponse->setContentType(errorResponse.contentType);
-
-   // perform optional action
-   if (errorResponse.action)
-      errorResponse.action();
 }
 
 void handlePresentationPaneRequest(const http::Request& request,

@@ -36,31 +36,25 @@ struct ErrorResponse
    explicit ErrorResponse(const std::string& message = std::string())
       : statusCode(core::http::status::InternalServerError),
         contentType("text/plain"),
-        message(message),
-        action(boost::function<void()>())
+        message(message)
    {
-      htmlMessage = "<pre>" + message + "</pre>";
    }
 
-   ErrorResponse(core::http::status::Code statusCode,
-                 const std::string& contentType,
-                 const std::string& message,
-                 const std::string& htmlMessage = std::string(),
-                 boost::function<void()> action = boost::function<void()>())
+   ErrorResponse(const std::string& message,
+                 const std::string& htmlMessage,
+                 core::http::status::Code statusCode
+                                   = core::http::status::InternalServerError)
       : statusCode(statusCode),
-        contentType(contentType),
+        contentType("text/html"),
         message(message),
-        action(action)
+        htmlMessage(htmlMessage)
    {
-      if (htmlMessage.empty())
-         this->htmlMessage = "<pre>" + message + "</pre>";
    }
 
    core::http::status::Code statusCode;
    std::string contentType;
    std::string message;
    std::string htmlMessage;
-   boost::function<void()> action;
 };
 
 void setErrorResponse(const ErrorResponse& errorResponse,
