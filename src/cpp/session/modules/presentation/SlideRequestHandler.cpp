@@ -241,6 +241,24 @@ bool hasKnitrVersion_1_2()
    return hasVersion;
 }
 
+std::string extractKnitrError(const std::string& stdError)
+{
+   std::string knitrError = stdError;
+
+   // strip everything before "Error in"
+   size_t errorInPos = knitrError.find("Error in");
+   if (errorInPos != std::string::npos)
+      knitrError = knitrError.substr(errorInPos);
+
+   // strip everything (inclusive) after "Calls: "
+   size_t callsPos = knitrError.find("Calls: ");
+   if (callsPos != std::string::npos)
+      knitrError = knitrError.substr(0, callsPos);
+
+   return boost::algorithm::trim_copy(knitrError);
+
+}
+
 bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
 {
    // first detect whether we even need to knit -- if there is an .md
@@ -321,7 +339,7 @@ bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
       {
          Error error = core::writeStringToFile(mdPath,
                                                mdPath.stem() +
-                                               "=======================\n");
+                                               "\n=======================\n");
          if (error)
             LOG_ERROR(error);
       }
@@ -330,8 +348,7 @@ bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
       std::ostringstream ostr;
       ostr << std::endl
            << "```" << std::endl
-           << "Error executing R code:" << std::endl << std::endl
-           << boost::algorithm::trim_copy(result.stdErr) << std::endl
+           << extractKnitrError(result.stdErr) << std::endl
            << "```" << std::endl;
 
       Error error = core::appendToFile(mdPath, ostr.str());
