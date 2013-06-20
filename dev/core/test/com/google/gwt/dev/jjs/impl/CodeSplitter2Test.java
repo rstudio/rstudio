@@ -83,13 +83,14 @@ public class CodeSplitter2Test extends JJSTestBase {
   
   private JProgram jProgram = null;
   private JsProgram jsProgram = null;
-  
-  public void setUp() throws Exception{
+
+  @Override
+  public void setUp() throws Exception {
     super.setUp();
     stackMode.addDefinedValue(new ConditionNone(), "STRIP");
     jsProgram = new JsProgram();
   }
-  
+
   public void testSimple() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
     code.append("package test;\n");
@@ -127,6 +128,34 @@ public class CodeSplitter2Test extends JJSTestBase {
     
     // functionC must be in the initial fragment.
     assertInFragment("functionC", 0);
+  }
+
+  public void testOnSuccessCallCast() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("package test;\n");
+    code.append("import com.google.gwt.core.client.GWT;\n");
+    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+    code.append("public class EntryPoint {\n");
+    code.append("  " + functionA);
+    code.append("  " + functionB);
+    code.append("  " + functionC);
+    code.append("  public static void onModuleLoad() {\n");
+    code.append("    functionC();");
+    code.append("    " + createRunAsync("(RunAsyncCallback)", "functionA();"));
+    code.append("    " + createRunAsync("(RunAsyncCallback)", "functionB();"));
+    code.append("  }\n");
+    code.append("}\n");
+    compileSnippet(code.toString());
+
+    // init + 2 fragments + leftover.
+    assertFragmentCount(4);
+
+    assertInFragment("functionA", 1);
+    assertInFragment("functionB", 2);
+
+    // Verify that functionA and B aren't in the leftover.
+    assertNotInFragment("functionA", 3);
+    assertNotInFragment("functionB", 3);
   }
 
   public void testMergeLeftOvers() throws UnableToCompleteException {
@@ -292,6 +321,8 @@ public class CodeSplitter2Test extends JJSTestBase {
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
     CastNormalizer.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram);
+    TypeTightener.exec(jProgram);
+    MethodCallTightener.exec(jProgram);
     Map<StandardSymbolData, JsName> symbolTable =
       new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
@@ -332,13 +363,21 @@ public class CodeSplitter2Test extends JJSTestBase {
         mergeLimit);
   }
 
-  
-  private static String createRunAsync(String body) {
-    return "GWT.runAsync(new RunAsyncCallback() {" +
-           "public void onFailure(Throwable reason) {}" +
-           "public void onSuccess() {" + body + "}});";
+  private static String createRunAsync(String cast, String body) {
+    StringBuffer code = new StringBuffer();
+    code.append("GWT.runAsync(" + cast + "new RunAsyncCallback() {\n");
+    code.append("  public void onFailure(Throwable reason) {}\n");
+    code.append("  public void onSuccess() {\n");
+    code.append("    " + body);
+    code.append("  }\n");
+    code.append("});\n");
+    return code.toString();
   }
-  
+
+  private static String createRunAsync(String body) {
+    return createRunAsync("", body);
+  }
+
   /**
    * Add some of the compiler intrinsic 
    */
