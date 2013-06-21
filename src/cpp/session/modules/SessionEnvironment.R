@@ -110,17 +110,12 @@
 
 .rs.addFunction("argumentListSummary", function(args)
 {
-    argSummary <- ""
-    for (arg in args)
-    {
-        thisArg <- if (is.language(arg))
+    return(paste(lapply(args, function(arg) {
+        if (is.language(arg))
                 capture.output(print(arg))
             else
                 as.character(arg)
-        argSummary <- paste(argSummary, thisArg, sep =
-            if (argSummary == "") "" else ", ")
-    }
-    return(argSummary)
+        }), collapse = ", "))
 })
 
 .rs.addFunction("valueDescription", function(obj)

@@ -189,8 +189,17 @@ json::Array callFramesAsJson()
          }
 
          std::string argList;
-         Error error = r::exec::RFunction(".rs.argumentListSummary",
-                                    CDR(pRContext->call)).call(&argList);
+         SEXP args = CDR(pRContext->call);
+         switch (TYPEOF(args))
+         {
+            case LISTSXP:
+               error = r::exec::RFunction(".rs.argumentListSummary", args)
+                 .call(&argList);
+              break;
+            case LANGSXP:
+               error = r::exec::RFunction(".rs.languageDescription", args)
+                 .call(&argList);
+         }
          if (error)
          {
             LOG_ERROR(error);
@@ -330,7 +339,9 @@ json::Value commonEnvironmentStateData(int depth)
       // sources (if available).
       if (isUserFunctionContext(pContext))
       {
-         useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
+         useProvidedSource =
+               functionIsOutOfSync(pContext, &functionCode) &&
+               functionCode != "NULL";
       }
    }
    else
