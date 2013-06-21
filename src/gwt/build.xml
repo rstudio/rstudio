@@ -120,7 +120,7 @@
          <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra extras"/>
          <arg line="${gwt.extra.args}"/>
-         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="${gwt.main.module}"/>
       </java>
    </target>
@@ -178,7 +178,7 @@
          <arg value="-startupUrl"/>
          <arg value="http://localhost:8787"/>
          <arg line="-bindAddress 0.0.0.0"/>
-         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="org.rstudio.studio.RStudioDraft"/>
       </java>
    </target>
