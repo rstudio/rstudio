@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
@@ -248,6 +249,24 @@ public class EnvironmentPresenter extends BasePresenter
    {
       refreshView();
    }
+   
+   @Handler
+   void onDebugContinue()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("c", true));
+   }
+   
+   @Handler
+   void onDebugStop()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("Q", true));     
+   }
+
+   @Handler
+   void onDebugStep()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("n", true));     
+   }
 
    void onClearWorkspace()
    {
@@ -410,6 +429,13 @@ public class EnvironmentPresenter extends BasePresenter
           contextDepth_ == 0)
       {
          eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
+         eventBus_.fireEvent(new DebugModeChangedEvent(true));
+      }
+      // if leaving debug mode, let everyone know
+      else if (contextDepth == 0 &&
+               contextDepth_ > 0)
+      {
+         eventBus_.fireEvent(new DebugModeChangedEvent(false));
       }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);

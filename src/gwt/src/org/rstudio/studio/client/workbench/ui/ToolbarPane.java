@@ -146,6 +146,11 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    {
       setToolbarVisibility(visible, mainToolbar_);
    }
+   
+   public void setSecondaryToolbarVisible(boolean visible)
+   {
+      setToolbarVisibility(visible, secondaryToolbar_);
+   }
 
    private void setToolbarVisibility(final boolean visible,
                                      final Toolbar toolbar)

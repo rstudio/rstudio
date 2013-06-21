@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -40,6 +41,7 @@ public class ConsolePane extends WorkbenchPane
 
       consoleProvider_ = consoleProvider ;
       commands_ = commands;
+      debugMode_ = false;
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -81,10 +83,24 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addRightWidget(consoleInterruptButton_);
       return toolbar;
    }
+   
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar();
+      toolbar.addLeftWidget(commands_.debugContinue().createToolbarButton());
+      toolbar.addLeftWidget(commands_.debugStop().createToolbarButton());
+      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton());
+      return toolbar;
+   }
 
    @Override
    protected Widget createMainWidget()
    {
+      // initialize the debug toolbar--generally this hides it until debug state
+      // is entered.
+      setDebugMode(debugMode_);
+
       shell_ = consoleProvider_.get() ;
       return (Widget) shell_.getDisplay() ;
    }
@@ -107,9 +123,17 @@ public class ConsolePane extends WorkbenchPane
       shell_.onSelected();
    }
 
+   @Override
+   public void setDebugMode(boolean debugMode)
+   {
+      debugMode_ = debugMode;
+      setSecondaryToolbarVisible(debugMode_);
+   }
+   
    private Provider<Shell> consoleProvider_ ;
    private final Commands commands_;
    private Shell shell_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private boolean debugMode_;
 }
