@@ -87,10 +87,12 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar(true);
       toolbar.addLeftWidget(commands_.debugContinue().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.debugStop().createToolbarButton());
-      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton());      
       return toolbar;
    }
 
