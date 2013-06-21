@@ -270,9 +270,10 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
       return true;
    }
 
-   // make sure the file exists
+   // make sure the file exists and isn't a directory
    FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
-   if (!sourceFilePath.exists())
+   if (!sourceFilePath.exists() ||
+       sourceFilePath.isDirectory())
    {
       return true;
    }
