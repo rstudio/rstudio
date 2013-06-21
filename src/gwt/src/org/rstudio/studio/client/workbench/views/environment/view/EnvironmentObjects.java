@@ -634,7 +634,8 @@ public class EnvironmentObjects extends ResizeComposite
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
-         if (!title.equals("NO_VALUE"))
+         if ((!title.equals("NO_VALUE")) &&
+             title != null)
          {
             if (rowValue.isPromise())
             {

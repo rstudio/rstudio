@@ -199,6 +199,7 @@ json::Array callFramesAsJson()
             case LANGSXP:
                error = r::exec::RFunction(".rs.languageDescription", args)
                  .call(&argList);
+               break;
          }
          if (error)
          {
