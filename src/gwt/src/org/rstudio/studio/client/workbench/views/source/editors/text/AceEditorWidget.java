@@ -32,13 +32,16 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 
@@ -69,12 +72,14 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightActiveLine(false);
       editor_.setHighlightGutterLine(false);
       editor_.delegateEventsTo(AceEditorWidget.this);
-      editor_.onChange(new Command()
+      editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
-         public void execute()
+         public void execute(AceDocumentChangeEventNative changeEvent)
          {
-            ValueChangeEvent.fire(AceEditorWidget.this, null);
+            ValueChangeEvent.fire(AceEditorWidget.this, null);            
+            updateBreakpoints(changeEvent);
          }
+
       });
       editor_.onChangeFold(new Command()
       {
@@ -307,7 +312,93 @@ public class AceEditorWidget extends Composite
    {
       editor_.onCursorChange();
    }
-
+   
+   private void updateBreakpoints(AceDocumentChangeEventNative changeEvent)
+   {
+      // if there are no breakpoints, don't do any work to move them about
+      if (breakpointLines_.size() == 0)
+      {
+         return;
+      }
+      
+      // see if we need to move any breakpoints around in response to 
+      // this change to the document's text
+      String action = changeEvent.getAction();
+      Range range = changeEvent.getRange();
+      Position start = range.getStart();
+      Position end = range.getEnd();
+      
+      // if the edit was all on one line or the action didn't change text
+      // in a way that could change lines, we can't have moved anything
+      if (start.getRow() == end.getRow() || 
+          (!action.equals("insertText") &&
+           !action.equals("insertLines") &&
+           !action.equals("removeText") &&
+           !action.equals("removeLines")))
+      {
+         return;
+      }
+      
+      int shiftedBy = 0;
+      int shiftStartRow = 0;
+      
+      // compute how many rows to shift
+      if (action == "insertText" || 
+          action == "insertLines")
+      {
+         shiftedBy = end.getRow() - start.getRow();
+      } 
+      else
+      {
+         shiftedBy = start.getRow() - end.getRow();
+      }
+      
+      // compute where to start shifting
+      shiftStartRow = start.getRow() + 
+            ((action == "insertText" && start.getColumn() > 0) ? 
+                  1 : 0);
+      
+      // make a pass through the breakpoints and move them as appropriate:
+      // remove all the breakpoints after the row where the change
+      // happened, and add them back at their new position if they were
+      // not part of a deleted range. 
+      //
+      // this must be done in two passes, so we can distinguish
+      // breakpoints that haven't been processed yet from those that have.
+      // (an alternative would be to keep the set of breakpoints sorted.)
+      ArrayList<Integer> oldBreakpoints = new ArrayList<Integer>();
+     
+      for (int idx = 0; idx < breakpointLines_.size(); idx++)
+      {
+         Integer breakpointLine = breakpointLines_.get(idx);
+         if (breakpointLine >= shiftStartRow)
+         {
+            // remove the breakpoint from its old position
+            breakpointLines_.remove(idx);
+            oldBreakpoints.add(breakpointLine);
+            editor_.getSession().clearBreakpoint(breakpointLine);
+            idx--;
+         }
+      }
+      for (Integer breakpointLine: oldBreakpoints)
+      {
+         // calculate the new position of the breakpoint
+         Integer newBreakpointPosition = 
+               new Integer(breakpointLine + shiftedBy);
+         
+         // add a breakpoint in this new position only if it wasn't 
+         // in a deleted range, and if we don't already have a
+         // breakpoint there
+         if (breakpointLine >= end.getRow() &&
+             !(breakpointLine == end.getRow() && shiftedBy < 0) &&
+             !breakpointLines_.contains(newBreakpointPosition))
+         {
+            breakpointLines_.add(newBreakpointPosition);
+            editor_.getSession().setBreakpoint(newBreakpointPosition);
+         }
+      }
+   }
+  
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;

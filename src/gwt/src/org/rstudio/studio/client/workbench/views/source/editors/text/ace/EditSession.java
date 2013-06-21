@@ -161,4 +161,12 @@ public class EditSession extends JavaScriptObject
    public native final void clearBreakpoint(int line) /*-{
       this.clearBreakpoint(line);
    }-*/;
+   
+   public native final void setBreakpoints(int[] lines) /*-{
+      this.setBreakpoints(lines);
+   }-*/;
+   
+   public native final void clearBreakpoints(int[] lines) /*-{
+      this.clearBreakpoints(lines);
+   }-*/;
 }

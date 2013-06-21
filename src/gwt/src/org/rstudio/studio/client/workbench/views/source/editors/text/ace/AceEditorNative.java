@@ -96,11 +96,11 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
 
 
-   public native final void onChange(Command command) /*-{
+   public native final void onChange(CommandWithArg<AceDocumentChangeEventNative> command) /*-{
       this.getSession().on("change",
-              $entry(function () {
-                 command.@com.google.gwt.user.client.Command::execute()();
-              }));
+        $entry(function (arg) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+        }));
    }-*/;
 
    public native final void onChangeFold(Command command) /*-{
