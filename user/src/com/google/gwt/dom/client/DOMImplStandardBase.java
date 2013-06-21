@@ -223,7 +223,7 @@ class DOMImplStandardBase extends DOMImplStandard {
 
   @Override
   public int getScrollLeft(Element elem) {
-    if (isRTL(elem)) {
+    if (!elem.hasTagName(BodyElement.TAG) && isRTL(elem)) {
       return super.getScrollLeft(elem)
           - (elem.getScrollWidth() - elem.getClientWidth());
     }
@@ -253,7 +253,7 @@ class DOMImplStandardBase extends DOMImplStandard {
 
   @Override
   public void setScrollLeft(Element elem, int left) {
-    if (isRTL(elem)) {
+    if (!elem.hasTagName(BodyElement.TAG) && isRTL(elem)) {
       left += elem.getScrollWidth() - elem.getClientWidth();
     }
     super.setScrollLeft(elem, left);

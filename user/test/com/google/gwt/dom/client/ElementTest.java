@@ -599,6 +599,40 @@ public class ElementTest extends GWTTestCase {
     assertEquals(0, outer.getScrollLeft());
   }
 
+  @DoNotRunWith({Platform.HtmlUnitLayout})
+  public void testDocumentScrollLeftInRtl() {
+    Document.get().getDocumentElement().setDir("rtl");
+    Document.get().getBody().getStyle().setProperty("direction", "rtl");
+
+    final DivElement bigdiv = Document.get().createDivElement();
+
+    bigdiv.getStyle().setProperty("position", "absolute");
+    bigdiv.getStyle().setProperty("top", "0px");
+    bigdiv.getStyle().setProperty("right", "0px");
+    bigdiv.getStyle().setProperty("width", "10000px");  // Bigger than window size.
+    bigdiv.getStyle().setProperty("height", "400px");
+
+    Document.get().getBody().appendChild(bigdiv);
+
+    // The important thing is that setting and retrieving scrollLeft values in
+    // RTL mode works only for negative numbers, and that they round-trip
+    // correctly.
+    try {
+      assertEquals(0, Document.get().getScrollLeft());
+
+      Document.get().setScrollLeft(-32);
+      assertEquals(-32, Document.get().getScrollLeft());
+
+      Document.get().setScrollLeft(32);
+      assertEquals(0, Document.get().getScrollLeft());
+    } finally {
+      // Restore direction unconditionally to not break all other tests.
+      Document.get().getBody().removeChild(bigdiv);
+      Document.get().getBody().getStyle().setProperty("direction", "ltr");
+      Document.get().getDocumentElement().setDir("ltr");
+    }
+  }
+
   /**
    * innerHTML.
    */
