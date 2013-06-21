@@ -200,9 +200,12 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            view_.setBrowserLine(event.getLineNumber());
-            currentBrowseLineNumber_ = event.getLineNumber();
-            openOrUpdateFileBrowsePoint(true);
+            if (currentBrowseLineNumber_ != event.getLineNumber())
+            {
+               view_.setBrowserLine(event.getLineNumber());
+               currentBrowseLineNumber_ = event.getLineNumber();
+               openOrUpdateFileBrowsePoint(true);
+            }
          }
 
       });
