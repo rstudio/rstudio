@@ -61,11 +61,6 @@ public class ConsoleInterruptButton extends Composite
                fadeInHelper_.beginShow();
                commands_.interruptR().setEnabled(true);
             }
-            else
-            {
-               fadeInHelper_.hide();
-               commands_.interruptR().setEnabled(false);
-            }
          }
       });
 
