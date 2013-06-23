@@ -17,13 +17,15 @@ package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.lang.reflect.Type;
+
 /**
  * Generally unsupported. This class is provided so that the GWT compiler can
  * choke down class literal references.
  * 
  * @param <T> the type of the object
  */
-public final class Class<T> {
+public final class Class<T> implements Type {
 
   private static final int PRIMITIVE = 0x00000001;
   private static final int INTERFACE = 0x00000002;
