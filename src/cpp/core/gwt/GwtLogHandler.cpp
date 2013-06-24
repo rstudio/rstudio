@@ -16,6 +16,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 
 #include <boost/format.hpp>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
@@ -29,20 +30,110 @@
 namespace core {
 namespace gwt {
 
-void handleLogRequest(const std::string& username,
-                      const http::Request& request, 
-                      http::Response* pResponse)
+namespace {
+
+struct StackItem
 {
-   // parse log method
-   json::JsonRpcRequest jsonRpcRequest;
-   if (!parseJsonRpcRequestForMethod(request.body(),
-                                     "log",
-                                     &jsonRpcRequest,
-                                     pResponse) )
+   StackItem() : lineNumber(0) {}
+
+   std::string fileName;
+   std::string className;
+   std::string methodName;
+   int lineNumber;
+};
+
+struct ClientException
+{
+   std::string description;
+   std::string permutation;
+   std::vector<StackItem> stack;
+};
+
+Error parseClientException(const json::Object exJson, ClientException* pEx)
+{
+   json::Array stackJson;
+   Error error = json::readObject(exJson,
+                                  "description", &(pEx->description),
+                                  "permutation", &(pEx->permutation),
+                                  "stack", &stackJson);
+   if (error)
+       return error;
+
+   BOOST_FOREACH(const json::Value& stackItemJson, stackJson)
    {
+      if (!json::isType<json::Object>(stackItemJson))
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+
+      StackItem stackItem;
+      Error error = json::readObject(stackItemJson.get_obj(),
+                                     "file_name", &stackItem.fileName,
+                                     "class_name", &stackItem.className,
+                                     "method_name", &stackItem.methodName,
+                                     "line_number", &stackItem.lineNumber);
+      if (error)
+         return error;
+
+      pEx->stack.push_back(stackItem);
+   }
+
+   return Success();
+}
+
+
+void handleLogExceptionRequest(const std::string& username,
+                               const std::string& userAgent,
+                               const json::JsonRpcRequest& jsonRpcRequest,
+                               http::Response* pResponse)
+{
+   // read client exception json object
+   json::Object exJson;
+   Error error = json::readParam(jsonRpcRequest.params, 0, &exJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      json::setJsonRpcError(error, pResponse);
       return;
    }
    
+
+   // parse
+   ClientException ex;
+   error = parseClientException(exJson, &ex);
+   if (error)
+   {
+      LOG_ERROR(error);
+      json::setJsonRpcError(error, pResponse);
+      return;
+   }
+
+   // build the log message
+   std::ostringstream ostr;
+   ostr << ex.description << std::endl;
+   BOOST_FOREACH(const StackItem& stackItem, ex.stack)
+   {
+      ostr << "   " << stackItem.methodName << std::endl;
+   }
+
+   // form the log entry
+   boost::format fmt("CLIENT EXCEPTION (%1%-%2%, %3%): %4%");
+   std::string logEntry = boost::str(fmt % username
+                                         % jsonRpcRequest.clientId
+                                         % userAgent
+                                         % ostr.str());
+
+   // log it
+   core::system::log(core::system::kLogLevelError, logEntry);
+
+
+   // set void result
+   json::setVoidJsonRpcResult(pResponse);
+}
+
+void handleLogMessageRequest(const std::string& username,
+                             const std::string& userAgent,
+                             const json::JsonRpcRequest& jsonRpcRequest,
+                             http::Response* pResponse)
+{
    // read params
    int level = 0;
    std::string message ;
@@ -86,15 +177,58 @@ void handleLogRequest(const std::string& username,
                                            username %
                                            jsonRpcRequest.clientId %
                                            message %
-                                           request.userAgent());
    
    
+                                           userAgent);
    // log it
    core::system::log(logLevel, logEntry);
    
    // set void result
    json::setVoidJsonRpcResult(pResponse);
 }
+
+
+} // anonymous namespace
+
+void handleLogRequest(const std::string& username,
+                      const http::Request& request, 
+                      http::Response* pResponse)
+{
+   // parse request
+   json::JsonRpcRequest jsonRpcRequest;
+   Error parseError = parseJsonRpcRequest(request.body(), &jsonRpcRequest) ;
+   if (parseError)
+   {
+      LOG_ERROR(parseError);
+      json::setJsonRpcError(parseError, pResponse);
+      return;
+   }
+
+   // check for supported methods
+   if (jsonRpcRequest.method == "log")
+   {
+      handleLogMessageRequest(username,
+                              request.userAgent(),
+                              jsonRpcRequest,
+                              pResponse);
+   }
+   else if (jsonRpcRequest.method == "log_exception")
+   {
+      handleLogExceptionRequest(username,
+                                request.userAgent(),
+                                jsonRpcRequest,
+                                pResponse);
+   }
+   else
+   {
+      Error methodError = Error(json::errc::MethodNotFound, ERROR_LOCATION);
+      methodError.addProperty("method", jsonRpcRequest.method);
+      LOG_ERROR(methodError);
+      json::setJsonRpcError(methodError, pResponse);
+      return;
+   }
+}
+
 
 } // namespace gwt
 } // namespace core
