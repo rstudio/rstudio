@@ -64,6 +64,7 @@ public class PresentationTab extends DelayLoadWorkbenchTab<Presentation>
             
             if (state.isTutorial())
             {
+               commands.clearPresentationCache().remove();
                commands.presentationViewInBrowser().remove();
                commands.presentationSaveAsStandalone().remove();
                commands.presentationPublishToRpubs().remove();

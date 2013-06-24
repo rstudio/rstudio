@@ -204,8 +204,19 @@ json::Array callFramesAsJson()
          }
 
          std::string argList;
-         Error error = r::exec::RFunction(".rs.argumentListSummary",
-                                    CDR(pRContext->call)).call(&argList);
+         SEXP args = CDR(pRContext->call);
+         switch (TYPEOF(args))
+         {
+            case LISTSXP:
+               error = r::exec::RFunction(".rs.argumentListSummary", args)
+                 .call(&argList);
+              break;
+            case LANGSXP:
+               SEXP env = pRContext->cloenv;
+               error = r::exec::RFunction(".rs.languageDescription", env, args)
+                 .call(&argList);
+               break;
+         }
          if (error)
          {
             LOG_ERROR(error);
@@ -224,14 +235,15 @@ json::Array environmentListAsJson(int depth)
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    listEnvironment(getEnvironment(depth), false, &rProtect, &vars);
+    SEXP env = getEnvironment(depth);
+    listEnvironment(env, false, &rProtect, &vars);
 
     // get object details and transform to json
     json::Array listJson;
     std::transform(vars.begin(),
                    vars.end(),
                    std::back_inserter(listJson),
-                   varToJson);
+                   boost::bind(varToJson, env, _1));
     return listJson;
 }
 
@@ -279,16 +291,19 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 
    // check for ~/.active-rstudio-document -- we never want to match sources
    // in this file, as it's used to source unsaved changes from RStudio
-   // editor buffers
+   // editor buffers. don't match sources to an empty filename, either
+   // (this will resolve to the user's home directory below).
    boost::algorithm::trim(fileName);
-   if (fileName == "~/.active-rstudio-document")
+   if (fileName == "~/.active-rstudio-document" ||
+       fileName.length() == 0)
    {
       return true;
    }
 
-   // make sure the file exists
+   // make sure the file exists and isn't a directory
    FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
-   if (!sourceFilePath.exists())
+   if (!sourceFilePath.exists() ||
+       sourceFilePath.isDirectory())
    {
       return true;
    }
@@ -345,7 +360,9 @@ json::Value commonEnvironmentStateData(int depth)
       // sources (if available).
       if (isUserFunctionContext(pContext))
       {
-         useProvidedSource = functionIsOutOfSync(pContext, &functionCode);
+         useProvidedSource =
+               functionIsOutOfSync(pContext, &functionCode) &&
+               functionCode != "NULL";
       }
    }
    else

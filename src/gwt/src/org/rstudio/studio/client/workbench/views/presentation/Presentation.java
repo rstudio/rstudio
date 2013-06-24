@@ -38,7 +38,9 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -341,6 +343,54 @@ public class Presentation extends BasePresenter
       });
    }
    
+   @Handler
+   void onClearPresentationCache()
+   {
+      globalDisplay_.showYesNoMessage(
+            MessageDialog.INFO, 
+            "Clear Knitr Cache", 
+            "Clearing the Knitr cache will discard previously cached " +
+            "output and re-run all of the R code chunks within the " +
+            "presentation.\n\n" +
+            "Are you sure you want to clear the cache now?",
+            false,
+            new ProgressOperation() {
+
+               @Override
+               public void execute(final ProgressIndicator indicator)
+               {
+                  indicator.onProgress("Clearing Knitr Cache...");
+                  server_.clearPresentationCache(
+                        new ServerRequestCallback<Void>() {
+                           @Override
+                           public void onResponseReceived(Void response)
+                           {
+                              indicator.onCompleted();
+                              view_.load(buildPresentationUrl());
+                           }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              indicator.onCompleted();
+                              globalDisplay_.showErrorMessage(
+                                                "Error Clearing Cache",
+                                                 getErrorMessage(error));
+                           }
+                        });
+               }
+               
+            },
+            new ProgressOperation() {
+
+               @Override
+               public void execute(ProgressIndicator indicator)
+               {
+                  indicator.onCompleted();
+               }   
+            },
+            true);  
+   }
    
    
    @Handler

@@ -24,6 +24,10 @@ namespace modules {
 namespace environment {
 namespace {
 
+// the string sent to the client when we're unable to get the display value
+// of a variable
+const char UNKNOWN_VALUE[] = "<unknown>";
+
 json::Value classOfVar(SEXP var)
 {
    std::string value;
@@ -60,9 +64,8 @@ json::Value descriptionOfVar(SEXP var)
 {
    std::string value;
    Error error = r::exec::RFunction(
-            isUnevaluatedPromise(var) ||
-            r::sexp::isLanguage(var) ?
-                  ".rs.languageDescription" :
+            isUnevaluatedPromise(var) ?
+                  ".rs.promiseDescription" :
                   ".rs.valueDescription",
                var).call(&value);
    if (error)
@@ -99,7 +102,29 @@ bool isUnevaluatedPromise (SEXP var)
    return (TYPEOF(var) == PROMSXP) && (PRVALUE(var) == R_UnboundValue);
 }
 
-json::Object varToJson(const r::sexp::Variable& var)
+// convert a language variable to a value. language variables are special in
+// that we can't allow them to be evaluated (doing so may e.g. trigger early
+// evaluation of a call), so instead we pass the name of the variable and a
+// reference to its environment so the lookup only happens in the context of
+
+json::Value languageVarToJson(SEXP env, std::string objectName)
+{
+   std::string value;
+   Error error = r::exec::RFunction(".rs.languageDescription",
+               env, objectName)
+               .call(&value);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return UNKNOWN_VALUE;
+   }
+   else
+   {
+      return value;
+   }
+}
+
+json::Object varToJson(SEXP env, const r::sexp::Variable& var)
 {
    json::Object varJson;
    varJson["name"] = var.first;
@@ -110,7 +135,8 @@ json::Object varToJson(const r::sexp::Variable& var)
    if ((varSEXP != R_UnboundValue) &&
        (varSEXP != R_MissingArg) &&
        !r::sexp::isLanguage(varSEXP) &&
-       !isUnevaluatedPromise(varSEXP))
+       !isUnevaluatedPromise(varSEXP) &&
+       TYPEOF(varSEXP) != SYMSXP)
    {
       json::Value varClass = classOfVar(varSEXP);
       varJson["type"] = varClass;
@@ -135,23 +161,29 @@ json::Object varToJson(const r::sexp::Variable& var)
    // what we can and stub out the rest.
    else
    {
-      if (r::sexp::isLanguage((varSEXP)))
+      if (r::sexp::isLanguage(varSEXP) ||
+          TYPEOF(varSEXP) == SYMSXP)
       {
          varJson["type"] = std::string("language");
+         varJson["value"] = languageVarToJson(env, var.first);
       }
       else if (isUnevaluatedPromise(varSEXP))
       {
          varJson["type"] = std::string("promise");
+         varJson["value"] = descriptionOfVar(varSEXP);
       }
       else
       {
          varJson["type"] = std::string("unknown");
+         if (varSEXP == R_MissingArg)
+         {
+            varJson["value"] = descriptionOfVar(varSEXP);
+         }
+         else
+         {
+            varJson["value"] = UNKNOWN_VALUE;
+         }
       }
-      varJson["value"] = (isUnevaluatedPromise(varSEXP) ||
-                          r::sexp::isLanguage(varSEXP) ||
-                          varSEXP == R_MissingArg) ?
-               descriptionOfVar(varSEXP) :
-               std::string("<unknown>");
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
       varJson["length"] = 0;

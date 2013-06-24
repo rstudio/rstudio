@@ -364,6 +364,22 @@ Error getSlideNavigationForCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error clearPresentationCache(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+
+   ErrorResponse errorResponse;
+   if (!clearKnitrCache(&errorResponse))
+   {
+      pResponse->setError(systemError(boost::system::errc::io_error,
+                                      ERROR_LOCATION),
+                          json::toJsonString(errorResponse.message));
+   }
+
+   return Success();
+}
+
+
 
 Error createStandalonePresentation(const json::JsonRpcRequest& request,
                                    json::JsonRpcResponse* pResponse)
@@ -482,6 +498,7 @@ Error initialize()
       (bind(registerRpcMethod, "tutorial_quiz_response", tutorialQuizResponse))
       (bind(registerRpcMethod, "get_slide_navigation_for_file", getSlideNavigationForFile))
       (bind(registerRpcMethod, "get_slide_navigation_for_code", getSlideNavigationForCode))
+      (bind(registerRpcMethod, "clear_presentation_cache", clearPresentationCache))
       (bind(presentation::state::initialize))
       (bind(sourceModuleRFile, "SessionPresentation.R"));
 

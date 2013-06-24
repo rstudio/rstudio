@@ -2635,6 +2635,13 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   @Override
+   public void clearPresentationCache(
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, CLEAR_PRESENTATION_CACHE, requestCallback);
+   }
+   
    
    public void compilePdf(FileSystemItem targetFile,
                           String encoding,
@@ -3055,6 +3062,7 @@ public class RemoteServer implements Server
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
    private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";
+   private static final String CLEAR_PRESENTATION_CACHE = "clear_presentation_cache";
    
    private static final String COMPILE_PDF = "compile_pdf";
    private static final String IS_COMPILE_PDF_RUNNING = "is_compile_pdf_running";

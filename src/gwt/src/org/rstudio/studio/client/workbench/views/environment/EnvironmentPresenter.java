@@ -201,9 +201,12 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            view_.setBrowserLine(event.getLineNumber());
-            currentBrowseLineNumber_ = event.getLineNumber();
-            openOrUpdateFileBrowsePoint(true);
+            if (currentBrowseLineNumber_ != event.getLineNumber())
+            {
+               view_.setBrowserLine(event.getLineNumber());
+               currentBrowseLineNumber_ = event.getLineNumber();
+               openOrUpdateFileBrowsePoint(true);
+            }
          }
 
       });
@@ -273,19 +276,19 @@ public class EnvironmentPresenter extends BasePresenter
    @Handler
    void onDebugContinue()
    {
-      eventBus_.fireEvent(new SendToConsoleEvent("c", true));
+      eventBus_.fireEvent(new SendToConsoleEvent("c", true, true));
    }
    
    @Handler
    void onDebugStop()
    {
-      eventBus_.fireEvent(new SendToConsoleEvent("Q", true));     
+      eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));     
    }
 
    @Handler
    void onDebugStep()
    {
-      eventBus_.fireEvent(new SendToConsoleEvent("n", true));     
+      eventBus_.fireEvent(new SendToConsoleEvent("n", true, true));     
    }
    
    void onClearWorkspace()

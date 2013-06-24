@@ -528,20 +528,23 @@ public class EnvironmentObjects extends ResizeComposite
          @Override
          public void execute()
          {
-            // loop through the objects in the list and check to see if each
-            // is marked expanded in the persisted list of expanded objects
-            List<RObjectEntry> objects = objectDataProvider_.getList();
-            for (int idxObj = 0; idxObj < objects.size(); idxObj++)
-            {
-               for (int idxExpanded = 0;
-                    idxExpanded < deferredExpandedObjects_.length();
-                    idxExpanded++)
+            if (deferredExpandedObjects_ != null)
+            { 
+               // loop through the objects in the list and check to see if each
+               // is marked expanded in the persisted list of expanded objects
+               List<RObjectEntry> objects = objectDataProvider_.getList();
+               for (int idxObj = 0; idxObj < objects.size(); idxObj++)
                {
-                  if (objects.get(idxObj).rObject.getName() ==
-                      deferredExpandedObjects_.get(idxExpanded))
+                  for (int idxExpanded = 0;
+                       idxExpanded < deferredExpandedObjects_.length();
+                       idxExpanded++)
                   {
-                     objects.get(idxObj).expanded = true;
-                     objectList_.redrawRow(idxObj);
+                     if (objects.get(idxObj).rObject.getName() ==
+                         deferredExpandedObjects_.get(idxExpanded))
+                     {
+                        objects.get(idxObj).expanded = true;
+                        objectList_.redrawRow(idxObj);
+                     }
                   }
                }
             }
@@ -631,7 +634,8 @@ public class EnvironmentObjects extends ResizeComposite
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
-         if (!title.equals("NO_VALUE"))
+         if ((!title.equals("NO_VALUE")) &&
+             title != null)
          {
             if (rowValue.isPromise())
             {
@@ -744,7 +748,7 @@ public class EnvironmentObjects extends ResizeComposite
    private int callFramePanelHeight_;
 
    // deferred settings--set on load but not applied until we have data.
-   private int deferredScrollPosition_;
+   private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
 
 }

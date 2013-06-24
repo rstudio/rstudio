@@ -89,6 +89,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       if (!isTutorial)
       { 
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
+         moreMenu.addItem(commands_.clearPresentationCache().createMenuItem(false));
+         moreMenu.addSeparator();
          moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
          moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
          moreMenu.addSeparator();

@@ -18,8 +18,15 @@ public class SecondaryToolbar extends Toolbar
 {
    public SecondaryToolbar()
    {
+      this(false);
+   }
+   
+   public SecondaryToolbar(boolean appearAsPrimary)
+   {
       super();
-      addStyleName(styles_.secondaryToolbar());
+      
+      if (!appearAsPrimary)
+         addStyleName(styles_.secondaryToolbar());
    }
 
    @Override

@@ -259,11 +259,23 @@ std::string extractKnitrError(const std::string& stdError)
 
 }
 
-bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
+bool performKnit(const FilePath& rmdPath,
+                 bool clearCache,
+                 ErrorResponse* pErrorResponse)
 {
-   // first detect whether we even need to knit -- if there is an .md
-   // file with timestamp the same as or later than the .Rmd then skip it
+   // calculate the target md path
    FilePath mdPath = rmdPath.parent().childPath(rmdPath.stem() + ".md");
+
+   // remove the md if we are clearing the cache
+   if (clearCache)
+   {
+      Error error = mdPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // Now detect whether we even need to knit -- if there is an .md
+   // file with timestamp the same as or later than the .Rmd then skip it
    if (mdPath.exists() && (mdPath.lastWriteTime() > rmdPath.lastWriteTime()))
       return true;
 
@@ -288,6 +300,18 @@ bool performKnit(const FilePath& rmdPath, ErrorResponse* pErrorResponse)
    error = mdPath.removeIfExists();
    if (error)
       LOG_ERROR(error);
+
+   // remove the cache if requested
+   if (clearCache)
+   {
+      FilePath cachePath = rmdPath.parent().childPath(rmdPath.stem()+"-cache");
+      if (cachePath.exists())
+      {
+         Error error = cachePath.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 
    // args
    std::vector<std::string> args;
@@ -489,7 +513,7 @@ bool readPresentation(SlideDeck* pSlideDeck,
    std::string ext = rmdFile.extensionLowerCase();
    if (rmdFile.exists() && (ext != ".md"))
    {
-      if (!performKnit(rmdFile, pErrorResponse))
+      if (!performKnit(rmdFile, false, pErrorResponse))
          return false;
    }
 
@@ -908,7 +932,7 @@ void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
 
       // do the knit if we need to
       ErrorResponse errorResponse;
-      if (!performKnit(filePath, &errorResponse))
+      if (!performKnit(filePath, false, &errorResponse))
       {
          pResponse->setError(errorResponse.statusCode, errorResponse.message);
          return;
@@ -1059,6 +1083,16 @@ void handlePresentationFileRequest(const http::Request& request,
 }
 
 } // anonymous namespace
+
+bool clearKnitrCache(ErrorResponse* pErrorResponse)
+{
+   FilePath rmdFile = presentation::state::filePath();
+   std::string ext = rmdFile.extensionLowerCase();
+   if (rmdFile.exists() && (ext != ".md"))
+      return performKnit(rmdFile, true, pErrorResponse);
+   else
+      return true;
+}
 
 
 void handlePresentationPaneRequest(const http::Request& request,
