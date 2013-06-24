@@ -197,7 +197,8 @@ json::Array callFramesAsJson()
                  .call(&argList);
               break;
             case LANGSXP:
-               error = r::exec::RFunction(".rs.languageDescription", args)
+               SEXP env = pRContext->cloenv;
+               error = r::exec::RFunction(".rs.languageDescription", env, args)
                  .call(&argList);
                break;
          }
@@ -219,14 +220,15 @@ json::Array environmentListAsJson(int depth)
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    listEnvironment(getEnvironment(depth), false, &rProtect, &vars);
+    SEXP env = getEnvironment(depth);
+    listEnvironment(env, false, &rProtect, &vars);
 
     // get object details and transform to json
     json::Array listJson;
     std::transform(vars.begin(),
                    vars.end(),
                    std::back_inserter(listJson),
-                   varToJson);
+                   boost::bind(varToJson, env, _1));
     return listJson;
 }
 

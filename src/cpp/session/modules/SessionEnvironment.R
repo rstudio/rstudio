@@ -78,8 +78,8 @@
    is.function(val) || identical(.rs.getSingleClass(val), "C++Function")
 })
 
-# used to create description for both language objects and promises
-.rs.addFunction("languageDescription", function(obj)
+# used to create description for promises
+.rs.addFunction("promiseDescription", function(obj)
 {
    # by default, the description should be the expression associated with the
    # object
@@ -91,6 +91,12 @@
       description <- "Data (not yet loaded)"
    }
    return (description)
+})
+
+# used to create descriptions for language objects and symbols
+.rs.addFunction("languageDescription", function(env, objectName)
+{
+    return(capture.output(print(get(objectName, env))))
 })
 
 .rs.addFunction("sourceFileFromRef", function(srcref)

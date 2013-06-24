@@ -31,6 +31,8 @@ public:
    void checkForChanges();
 private:
    void listEnv(std::vector<r::sexp::Variable>* pEnvironment);
+   void enqueRemovedEvent(const r::sexp::Variable& variable);
+   void enqueAssignedEvent(const r::sexp::Variable& variable);
 
    std::vector<r::sexp::Variable> lastEnv_;
    std::vector<r::sexp::Variable> unevaledPromises_;
