@@ -44,7 +44,7 @@ public class CallFrameItem extends Composite
       String hiddenFrame();
    }
 
-   public CallFrameItem(CallFrame frame, Observer observer)
+   public CallFrameItem(CallFrame frame, Observer observer, boolean hidden)
    {
       isActive_ = false;
       isVisible_ = true;
@@ -59,7 +59,7 @@ public class CallFrameItem extends Composite
          // hide call frames for which we don't have usable sources--but leave
          // them in the DOM (we may want to easily show/hide these at the user's
          // request)
-         if (frame.getContextDepth() > 1)
+         if (hidden)
          {
             functionName.addStyleName(style.hiddenFrame());
             isVisible_ = false;

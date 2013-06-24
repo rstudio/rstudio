@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class CallFramePanel extends ResizeComposite
 {
@@ -93,17 +94,37 @@ public class CallFramePanel extends ResizeComposite
    public void setCallFrames(JsArray<CallFrame> frameList, int contextDepth)
    {
       clearCallFrames();
-      for (int idx = 0; idx < frameList.length(); idx++)
+      
+      // walk backwards through the call frames so we can figure out when 
+      // user code was first encountered on the callstack. 
+      boolean encounteredUserCode = false;
+      for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
-         CallFrameItem item = new CallFrameItem(frame, observer_);
+         if (CallFrameItem.isNavigableFilename(frame.getFileName())) 
+         {
+            encounteredUserCode = true;
+         }
+         // hide the frame if it isn't the top frame and we haven't yet 
+         // encountered user code
+         CallFrameItem item = new CallFrameItem(
+               frame, 
+               observer_, 
+               !encounteredUserCode && idx > 0);
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();
          }
          callFrameItems_.add(item);
+      }
+      
+      // now walk forwards through the frames and add each to the UI
+      Collections.reverse(callFrameItems_);
+      for (CallFrameItem item: callFrameItems_)
+      {
          callFramePanel.add(item);
       }
+      
    }
 
    public void updateLineNumber(int newLineNumber)
