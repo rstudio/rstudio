@@ -174,7 +174,6 @@
          <jvmarg value="-Xmx2048M"/>
       	<arg value="-src"/>
       	<arg value = "src"/>
-         <arg value="-noprecompile"/>
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
