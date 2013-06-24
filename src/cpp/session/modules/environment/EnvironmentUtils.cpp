@@ -24,6 +24,10 @@ namespace modules {
 namespace environment {
 namespace {
 
+// the string sent to the client when we're unable to get the display value
+// of a variable
+const char UNKNOWN_VALUE[] = "<unknown>";
+
 json::Value classOfVar(SEXP var)
 {
    std::string value;
@@ -102,7 +106,7 @@ bool isUnevaluatedPromise (SEXP var)
 // that we can't allow them to be evaluated (doing so may e.g. trigger early
 // evaluation of a call), so instead we pass the name of the variable and a
 // reference to its environment so the lookup only happens in the context of
-// the R session.
+
 json::Value languageVarToJson(SEXP env, std::string objectName)
 {
    std::string value;
@@ -112,7 +116,7 @@ json::Value languageVarToJson(SEXP env, std::string objectName)
    if (error)
    {
       LOG_ERROR(error);
-      return json::Value();
+      return UNKNOWN_VALUE;
    }
    else
    {
@@ -176,7 +180,7 @@ json::Object varToJson(SEXP env, const r::sexp::Variable& var)
          }
          else
          {
-            varJson["value"] = "<unknown>";
+            varJson["value"] = UNKNOWN_VALUE;
          }
       }
       varJson["description"] = std::string("");
