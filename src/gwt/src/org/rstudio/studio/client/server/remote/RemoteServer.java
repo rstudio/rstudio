@@ -2833,12 +2833,21 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getFunctionSteps(String filename, 
+   public void getFunctionSteps(String fileName, 
                                 int[] lineNumbers,
                                 ServerRequestCallback<Void> requestCallback)
    {
+      JSONArray lineNums = new JSONArray();
+      for (int idx = 0; idx < lineNumbers.length; idx++)
+      {
+         lineNums.set(idx, new JSONNumber(lineNumbers[idx]));
+      }
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(fileName));
+      params.set(1, lineNums);
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STEPS,
+                  params,
                   requestCallback);
    }
 

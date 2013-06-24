@@ -1,5 +1,5 @@
 /*
- * DebugBreakpointSetEvent.java
+ * BreakpointRequestedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,15 +17,15 @@ package org.rstudio.studio.client.workbench.views.environment.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class DebugBreakpointSetEvent
-        extends GwtEvent<DebugBreakpointSetEvent.Handler>
+public class BreakpointRequestedEvent
+        extends GwtEvent<BreakpointRequestedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onDebugBreakpointSet(DebugBreakpointSetEvent event);
+      void onBreakpointRequested(BreakpointRequestedEvent event);
    }
 
-   public DebugBreakpointSetEvent(String fileName, int lineNumber)
+   public BreakpointRequestedEvent(String fileName, int lineNumber)
    {
       fileName_ = fileName;
       lineNumber_ = lineNumber;
@@ -50,7 +50,7 @@ public class DebugBreakpointSetEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onDebugBreakpointSet(this);
+      handler.onBreakpointRequested(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

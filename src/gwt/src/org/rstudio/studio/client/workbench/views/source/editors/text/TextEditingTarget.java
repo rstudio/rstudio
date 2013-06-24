@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePe
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -512,6 +513,7 @@ public class TextEditingTarget implements EditingTarget
                           Provider<String> defaultNameProvider)
    {
       id_ = document.getId();
+      path_ = document.getPath();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
@@ -594,8 +596,18 @@ public class TextEditingTarget implements EditingTarget
          }
       });
       
+      docDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
+      {         
+         @Override
+         public void onBreakpointSet(BreakpointSetEvent event)
+         {
+            events_.fireEvent(new BreakpointRequestedEvent(path_, event.getLineNumber()));
+            Debug.log("Someone wants to set a breakpoint in file " + path_ 
+              + " at line " + event.getLineNumber());
+         }
+      });
       
-      // validate required compontents (e.g. Tex, knitr, C++ etc.)
+      // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
       previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
       
@@ -3279,6 +3291,7 @@ public class TextEditingTarget implements EditingTarget
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
    private String id_;
+   private String path_;
    private HandlerRegistration commandHandlerReg_;
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();

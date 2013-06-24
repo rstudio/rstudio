@@ -35,7 +35,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -305,9 +305,9 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, AceClickEvent.TYPE);
    }
    
-   public HandlerRegistration addSetBreakpointHandler(DebugBreakpointSetEvent.Handler handler)
+   public HandlerRegistration addSetBreakpointHandler(BreakpointRequestedEvent.Handler handler)
    {
-      return addHandler(handler, DebugBreakpointSetEvent.TYPE);
+      return addHandler(handler, BreakpointRequestedEvent.TYPE);
    }
 
    public void forceResize()

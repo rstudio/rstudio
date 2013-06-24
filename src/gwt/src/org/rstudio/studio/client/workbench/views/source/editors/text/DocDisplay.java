@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
@@ -201,4 +202,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void highlightDebugLocation(SourcePosition pos);
    void endDebugHighlighting();
+   
+   HandlerRegistration addBreakpointSetHandler
+      (BreakpointSetEvent.Handler handler);
 }

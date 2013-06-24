@@ -32,6 +32,8 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -74,7 +76,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
@@ -211,13 +213,14 @@ public class EnvironmentPresenter extends BasePresenter
 
       });
       
-      eventBus.addHandler(DebugBreakpointSetEvent.TYPE,
-            new DebugBreakpointSetEvent.Handler()
+      eventBus.addHandler(BreakpointRequestedEvent.TYPE,
+            new BreakpointRequestedEvent.Handler()
             {               
                @Override
-               public void onDebugBreakpointSet(DebugBreakpointSetEvent event)
+               public void onBreakpointRequested(BreakpointRequestedEvent event)
                {
                   int[] lineNumber = new int[] { event.getLineNumber() };
+                  Debug.log("About to ask the server for breakpoint location");
                   server_.getFunctionSteps(event.getFileName(), lineNumber, 
                         new ServerRequestCallback<org.rstudio.studio.client.server.Void>() {
                            @Override

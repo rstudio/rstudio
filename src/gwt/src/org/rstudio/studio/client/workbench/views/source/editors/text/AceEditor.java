@@ -36,7 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -62,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -229,15 +228,6 @@ public class AceEditor implements DocDisplay,
          }
       });
       
-      widget_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
-      {
-         @Override
-         public void onBreakpointSet(BreakpointSetEvent event)
-         {
-            Debug.log("Looks like someone set a breakpoint.");
-         }
-      });
-
       addCapturingKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -1501,6 +1491,13 @@ public class AceEditor implements DocDisplay,
       clearDebugLineHighlight();
    }
    
+   @Override
+   public HandlerRegistration addBreakpointSetHandler(
+         BreakpointSetEvent.Handler handler)
+   {
+      return widget_.addBreakpointSetHandler(handler);
+   }
+   
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
    {
       navigate(srcPosition, addToHistory, false);
@@ -1591,9 +1588,9 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
    
-   public HandlerRegistration addDebugBreakpointSetHandler(DebugBreakpointSetEvent.Handler handler)
+   public HandlerRegistration addDebugBreakpointSetHandler(BreakpointRequestedEvent.Handler handler)
    {
-      return handlers_.addHandler(DebugBreakpointSetEvent.TYPE, handler);
+      return handlers_.addHandler(BreakpointRequestedEvent.TYPE, handler);
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

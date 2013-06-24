@@ -19,6 +19,29 @@
 {
     return(lapply(lineNumbers, function(lineNumber)
     {
-        return(findLineNum(fileName, lineNumber))
+        findLineNum(fileName, lineNumber, envir = globalenv())
     }))
-}
+})
+
+.rs.addJsonRpcHandler("get_function_steps", function(fileName, lineNumbers)
+{
+    results <- .rs.getFunctionSteps(fileName, lineNumbers)
+    formattedResults <- data.frame(
+        line = numeric(0),
+        name = character(0),
+        at = numeric(0),
+        stringsAsFactors = FALSE)
+    for (result in results)
+    {
+        for (entry in result)
+        {
+            formattedResult <- list(
+                line = entry$line,
+                name = entry$name,
+                at = entry$at)
+            formattedResults <- rbind(formattedResults, formattedResult)
+        }
+    }
+    formattedResults$name <- as.character(formattedResults$name)
+    return(formattedResults)
+})
