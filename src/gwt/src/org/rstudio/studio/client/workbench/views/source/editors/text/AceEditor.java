@@ -229,10 +229,10 @@ public class AceEditor implements DocDisplay,
          }
       });
       
-      addDebugBreakpointSetHandler(new DebugBreakpointSetEvent.Handler()
+      widget_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
       {
          @Override
-         public void onDebugBreakpointSet(DebugBreakpointSetEvent event)
+         public void onBreakpointSet(BreakpointSetEvent event)
          {
             Debug.log("Looks like someone set a breakpoint.");
          }

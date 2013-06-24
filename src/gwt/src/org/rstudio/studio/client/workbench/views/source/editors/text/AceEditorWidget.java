@@ -105,7 +105,7 @@ public class AceEditorWidget extends Composite
            {
               editor_.getSession().setBreakpoint(lineNumber);
               breakpointLines_.add(lineNumber);
-              fireEvent(new DebugBreakpointSetEvent("", lineNumber));
+              fireEvent(new BreakpointSetEvent(lineNumber));
            }
         }
       });
@@ -169,6 +169,12 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addFoldChangeHandler(Handler handler)
    {
       return addHandler(handler, FoldChangeEvent.TYPE);
+   }
+   
+   public HandlerRegistration addBreakpointSetHandler
+      (BreakpointSetEvent.Handler handler)
+   {
+      return addHandler(handler, BreakpointSetEvent.TYPE);
    }
 
    public AceEditorNative getEditor() {

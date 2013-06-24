@@ -130,6 +130,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+   
    Position getCursorPosition();
    void setCursorPosition(Position position);
    void moveCursorNearTop();
