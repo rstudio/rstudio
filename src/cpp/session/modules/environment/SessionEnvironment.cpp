@@ -273,9 +273,11 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 
    // check for ~/.active-rstudio-document -- we never want to match sources
    // in this file, as it's used to source unsaved changes from RStudio
-   // editor buffers
+   // editor buffers. don't match sources to an empty filename, either
+   // (this will resolve to the user's home directory below).
    boost::algorithm::trim(fileName);
-   if (fileName == "~/.active-rstudio-document")
+   if (fileName == "~/.active-rstudio-document" ||
+       fileName.length() == 0)
    {
       return true;
    }
