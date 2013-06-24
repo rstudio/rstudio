@@ -32,10 +32,10 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -105,6 +105,7 @@ public class AceEditorWidget extends Composite
            {
               editor_.getSession().setBreakpoint(lineNumber);
               breakpointLines_.add(lineNumber);
+              fireEvent(new DebugBreakpointSetEvent("", lineNumber));
            }
         }
       });
@@ -296,6 +297,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)
    {
       return addHandler(handler, AceClickEvent.TYPE);
+   }
+   
+   public HandlerRegistration addSetBreakpointHandler(DebugBreakpointSetEvent.Handler handler)
+   {
+      return addHandler(handler, DebugBreakpointSetEvent.TYPE);
    }
 
    public void forceResize()

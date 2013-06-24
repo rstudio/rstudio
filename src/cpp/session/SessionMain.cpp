@@ -94,6 +94,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
+#include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConsole.hpp"
@@ -1494,6 +1495,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::history::initialize)
       (modules::code_search::initialize)
       (modules::build::initialize)
+      (modules::breakpoints::initialize)
 
       // workers
       (workers::web_request::initialize)

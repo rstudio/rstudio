@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -224,6 +226,15 @@ public class AceEditor implements DocDisplay,
          public void onFoldChange(FoldChangeEvent event)
          {
             AceEditor.this.fireEvent(new FoldChangeEvent());
+         }
+      });
+      
+      addDebugBreakpointSetHandler(new DebugBreakpointSetEvent.Handler()
+      {
+         @Override
+         public void onDebugBreakpointSet(DebugBreakpointSetEvent event)
+         {
+            Debug.log("Looks like someone set a breakpoint.");
          }
       });
 
@@ -1578,6 +1589,11 @@ public class AceEditor implements DocDisplay,
          FoldChangeEvent.Handler handler)
    {
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
+   }
+   
+   public HandlerRegistration addDebugBreakpointSetHandler(DebugBreakpointSetEvent.Handler handler)
+   {
+      return handlers_.addHandler(DebugBreakpointSetEvent.TYPE, handler);
    }
 
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)

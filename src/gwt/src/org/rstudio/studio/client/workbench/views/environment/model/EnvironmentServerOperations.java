@@ -42,4 +42,8 @@ public interface EnvironmentServerOperations
 
    void setContextDepth(int newContextDepth,
                         ServerRequestCallback<Void> requestCallback);
+   
+   void getFunctionSteps(String fileName,
+                         int[] lineNumbers,
+                         ServerRequestCallback<Void> requestCallback);
 }

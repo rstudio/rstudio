@@ -2824,6 +2824,16 @@ public class RemoteServer implements Server
                   newContextDepth,
                   requestCallback);
    }
+   
+   @Override
+   public void getFunctionSteps(String filename, 
+                                int[] lineNumbers,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_FUNCTION_STEPS,
+                  requestCallback);
+   }
 
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3072,6 +3082,8 @@ public class RemoteServer implements Server
 
    private static final String LIST_ENVIRONMENT = "list_environment";
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
+   
+   private static final String GET_FUNCTION_STEPS = "get_function_steps";
    
    private static final String LOG = "log";
 

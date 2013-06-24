@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugBreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
@@ -206,6 +207,25 @@ public class EnvironmentPresenter extends BasePresenter
          }
 
       });
+      
+      eventBus.addHandler(DebugBreakpointSetEvent.TYPE,
+            new DebugBreakpointSetEvent.Handler()
+            {               
+               @Override
+               public void onDebugBreakpointSet(DebugBreakpointSetEvent event)
+               {
+                  int[] lineNumber = new int[] { event.getLineNumber() };
+                  server_.getFunctionSteps(event.getFileName(), lineNumber, 
+                        new ServerRequestCallback<org.rstudio.studio.client.server.Void>() {
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                               // TODO: Don't set a breakpoint if we can't find
+                               // corresponding function steps.
+                           }                     
+                  });
+               }
+            });
 
       new JSObjectStateValue(
               "environment-pane",
@@ -267,7 +287,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       eventBus_.fireEvent(new SendToConsoleEvent("n", true));     
    }
-
+   
    void onClearWorkspace()
    {
       view_.bringToFront();
