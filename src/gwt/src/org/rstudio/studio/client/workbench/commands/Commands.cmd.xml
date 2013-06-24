@@ -316,10 +316,8 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
-            <!--
             <cmd refid="raiseException"/>
 -           <cmd refid="raiseException2"/>
-            -->
          </menu>
       </menu>
 
