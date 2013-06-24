@@ -16,8 +16,10 @@
 #include <core/gwt/GwtFileHandler.hpp>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/text/TemplateFilter.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -158,6 +160,18 @@ void handleFileRequest(const std::string& wwwLocalPath,
    {
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);
+   }
+   // case: main page -- don't cache and dynamically set compiler stack mode
+   else if (uri == mainPage)
+   {
+      using namespace boost::algorithm;
+      bool isChrome = contains(request.userAgent(), "Chrome")      ||
+                      contains(request.userAgent(), "chromeframe");
+      std::map<std::string,std::string> vars;
+      vars["compiler_stack_mode"] = isChrome ? "native" : "emulated";
+
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(filePath, request, text::TemplateFilter(vars));
    }
    
    // case: normal cacheable file
