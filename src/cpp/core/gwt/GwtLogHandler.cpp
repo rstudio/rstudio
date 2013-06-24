@@ -40,7 +40,7 @@ SymbolMaps s_symbolMaps;
 // client exception
 struct ClientException
 {
-   std::string description;
+   std::string message;
    std::string strongName;
    std::vector<StackElement> stack;
 };
@@ -49,7 +49,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
 {
    json::Array stackJson;
    Error error = json::readObject(exJson,
-                                  "description", &(pEx->description),
+                                  "message", &(pEx->message),
                                   "strong_name", &(pEx->strongName),
                                   "stack", &stackJson);
    if (error)
@@ -108,10 +108,10 @@ void handleLogExceptionRequest(const std::string& username,
 
    // build the log message
    std::ostringstream ostr;
-   ostr << ex.description << std::endl;
+   ostr << ex.message << std::endl;
    BOOST_FOREACH(const StackElement& element, stack)
    {
-      ostr << "   " << element.methodName << std::endl;
+      ostr << element.className << "::" << element.methodName << std::endl;
    }
 
    // form the log entry

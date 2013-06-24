@@ -28,17 +28,17 @@ public class ClientException extends JavaScriptObject
       for (StackTraceElement element : e.getStackTrace())
          stack.push(StackElement.create(element));
       
-      return create(e.toString(),
+      return create(e.getMessage(),
                     GWT.getPermutationStrongName(),
                     stack);
    }
    
    public static native final ClientException create(
-                                               String description,
+                                               String message,
                                                String strongName,
                                                JsArray<StackElement> stack) /*-{
       var ex = new Object();
-      ex.description = description;
+      ex.message = message;
       ex.strong_name = strongName;
       ex.stack = stack;
       return ex;
@@ -48,8 +48,8 @@ public class ClientException extends JavaScriptObject
    {  
    }
    
-   public native final String getDescription() /*-{
-      return this.description;
+   public native final String getMessage() /*-{
+      return this.message;
    }-*/;
    
    public native final String getStrongName() /*-{
