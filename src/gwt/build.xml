@@ -135,6 +135,13 @@
       </exec>
    </target>
 
+   <target name="desktop-draft" description="Compile desktop using GWT's draft mode">
+      <antcall target="gwtc">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
+         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
+      </antcall>
+   </target>
+
    <target name="draft" description="Compile using GWT's draft mode">
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioServer"/>
