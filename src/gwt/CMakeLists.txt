@@ -17,7 +17,9 @@ cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
 # build desktop variation only if appropriate
-if (NOT RSTUDIO_SERVER)
+if (RSTUDIO_SERVER)
+   set(ANT_ARGS "server")
+else()
    set(ANT_ARGS "desktop")
 endif()
 

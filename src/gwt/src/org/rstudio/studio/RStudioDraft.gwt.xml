@@ -1,5 +1,0 @@
-<module rename-to="rstudio">
-   <inherits name="org.rstudio.studio.RStudio" />
-   <set-property name="user.agent" value="safari,gecko1_8" />
-   <set-property name="locale" value="default" />
-</module>
