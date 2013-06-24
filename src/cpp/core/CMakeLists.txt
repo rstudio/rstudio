@@ -53,6 +53,7 @@ set (CORE_SOURCE_FILES
    WaitUtils.cpp
    gwt/GwtFileHandler.cpp
    gwt/GwtLogHandler.cpp
+   gwt/GwtSymbolMaps.cpp
    json/Json.cpp
    json/JsonRpc.cpp
    json/spirit/json_spirit_reader.cpp

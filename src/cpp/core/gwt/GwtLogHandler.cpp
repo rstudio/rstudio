@@ -27,26 +27,22 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <core/gwt/GwtSymbolMaps.hpp>
+
 namespace core {
 namespace gwt {
 
 namespace {
 
-struct StackItem
-{
-   StackItem() : lineNumber(0) {}
+// symbol maps
+SymbolMaps s_symbolMaps;
 
-   std::string fileName;
-   std::string className;
-   std::string methodName;
-   int lineNumber;
-};
-
+// client exception
 struct ClientException
 {
    std::string description;
-   std::string permutation;
-   std::vector<StackItem> stack;
+   std::string strongName;
+   std::vector<StackElement> stack;
 };
 
 Error parseClientException(const json::Object exJson, ClientException* pEx)
@@ -54,26 +50,26 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
    json::Array stackJson;
    Error error = json::readObject(exJson,
                                   "description", &(pEx->description),
-                                  "permutation", &(pEx->permutation),
+                                  "strong_name", &(pEx->strongName),
                                   "stack", &stackJson);
    if (error)
        return error;
 
-   BOOST_FOREACH(const json::Value& stackItemJson, stackJson)
+   BOOST_FOREACH(const json::Value& elementJson, stackJson)
    {
-      if (!json::isType<json::Object>(stackItemJson))
+      if (!json::isType<json::Object>(elementJson))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
-      StackItem stackItem;
-      Error error = json::readObject(stackItemJson.get_obj(),
-                                     "file_name", &stackItem.fileName,
-                                     "class_name", &stackItem.className,
-                                     "method_name", &stackItem.methodName,
-                                     "line_number", &stackItem.lineNumber);
+      StackElement element;
+      Error error = json::readObject(elementJson.get_obj(),
+                                     "file_name", &element.fileName,
+                                     "class_name", &element.className,
+                                     "method_name", &element.methodName,
+                                     "line_number", &element.lineNumber);
       if (error)
          return error;
 
-      pEx->stack.push_back(stackItem);
+      pEx->stack.push_back(element);
    }
 
    return Success();
@@ -106,12 +102,16 @@ void handleLogExceptionRequest(const std::string& username,
       return;
    }
 
+   // resymbolize the stack
+   std::vector<StackElement> stack = s_symbolMaps.resymbolize(ex.stack,
+                                                              ex.strongName);
+
    // build the log message
    std::ostringstream ostr;
    ostr << ex.description << std::endl;
-   BOOST_FOREACH(const StackItem& stackItem, ex.stack)
+   BOOST_FOREACH(const StackElement& element, stack)
    {
-      ostr << "   " << stackItem.methodName << std::endl;
+      ostr << "   " << element.methodName << std::endl;
    }
 
    // form the log entry
@@ -189,6 +189,13 @@ void handleLogMessageRequest(const std::string& username,
 
 
 } // anonymous namespace
+
+void initializeSymbolMaps(const core::FilePath& symbolMapsPath)
+{
+   Error error = s_symbolMaps.initialize(symbolMapsPath);
+   if (error)
+      LOG_ERROR(error);
+}
 
 void handleLogRequest(const std::string& username,
                       const http::Request& request, 

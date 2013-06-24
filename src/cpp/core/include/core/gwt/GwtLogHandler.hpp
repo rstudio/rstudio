@@ -19,14 +19,19 @@
 #include <string>
 
 namespace core {
-   
-namespace http {   
+
+class FilePath;
+
+namespace http {
    class Request;
    class Response;
 }
    
 namespace gwt {
    
+
+void initializeSymbolMaps(const core::FilePath& symbolMapsPath);
+
 void handleLogRequest(const std::string& username,
                       const http::Request& request, 
                       http::Response* pResponse);
@@ -35,4 +40,5 @@ void handleLogRequest(const std::string& username,
 } // namespace core
 
 #endif // CORE_GWT_LOG_HANDLER_HPP
+
 

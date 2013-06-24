@@ -24,9 +24,9 @@ public class ClientException extends JavaScriptObject
 {   
    public static final ClientException create(Throwable e) 
    {
-      JsArray<StackItem> stack = JsArray.createArray().cast();
+      JsArray<StackElement> stack = JsArray.createArray().cast();
       for (StackTraceElement element : e.getStackTrace())
-         stack.push(StackItem.create(element));
+         stack.push(StackElement.create(element));
       
       return create(e.toString(),
                     GWT.getPermutationStrongName(),
@@ -35,11 +35,11 @@ public class ClientException extends JavaScriptObject
    
    public static native final ClientException create(
                                                String description,
-                                               String permutation,
-                                               JsArray<StackItem> stack) /*-{
+                                               String strongName,
+                                               JsArray<StackElement> stack) /*-{
       var ex = new Object();
       ex.description = description;
-      ex.permutation = permutation;
+      ex.strong_name = strongName;
       ex.stack = stack;
       return ex;
    }-*/;
@@ -52,17 +52,17 @@ public class ClientException extends JavaScriptObject
       return this.description;
    }-*/;
    
-   public native final String getPermutation() /*-{
-      return this.permutation;
+   public native final String getStrongName() /*-{
+      return this.strong_name;
    }-*/;
    
-   public native final JsArray<StackItem> getStack() /*-{
+   public native final JsArray<StackElement> getStack() /*-{
       return this.stack;
    }-*/;
    
-   public static class StackItem extends JavaScriptObject
+   public static class StackElement extends JavaScriptObject
    {
-      public static final StackItem create(StackTraceElement element) 
+      public static final StackElement create(StackTraceElement element) 
       {
          return create(StringUtil.notNull(element.getFileName()),
                        StringUtil.notNull(element.getClassName()),
@@ -70,7 +70,7 @@ public class ClientException extends JavaScriptObject
                        element.getLineNumber());
       }
       
-      public static native final StackItem create(String fileName,
+      public static native final StackElement create(String fileName,
                                                   String className,
                                                   String methodName,
                                                   int lineNumber) /*-{
@@ -82,7 +82,7 @@ public class ClientException extends JavaScriptObject
          return item;       
       }-*/;
       
-      protected StackItem()
+      protected StackElement()
       {
       }
       

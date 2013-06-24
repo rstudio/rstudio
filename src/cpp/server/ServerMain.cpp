@@ -169,8 +169,8 @@ void httpServerAddHandlers()
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
 
    // establish progress handler
-   FilePath wwwLocalPath(server::options().wwwLocalPath());
-   FilePath progressPagePath = wwwLocalPath.complete("progress.htm");
+   FilePath wwwPath(server::options().wwwLocalPath());
+   FilePath progressPagePath = wwwPath.complete("progress.htm");
    uri_handlers::addBlocking("/progress",
                                secureHttpHandler(boost::bind(
                                core::text::handleSecureTemplateRequest,
@@ -183,6 +183,9 @@ void httpServerAddHandlers()
 
    // restrct access to templates directory
    uri_handlers::addBlocking("/templates", http::notFoundHandler);
+
+   // initialize gwt symbol maps
+   gwt::initializeSymbolMaps(wwwPath.childPath("extras/rstudio/symbolMaps"));
 
    // add default handler for gwt app
    uri_handlers::setBlockingDefault(blockingFileHandler());
