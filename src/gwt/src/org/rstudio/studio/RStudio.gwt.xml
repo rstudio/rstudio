@@ -112,14 +112,6 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
-   <!-- generate source maps -->
-   <set-property name="compiler.useSourceMaps" value="true"/> 
-
-   <!-- define permutations for emulated and native stack modes (the desktop and 
-        superdevmode derivative configs override this to 'native') -->
-   <set-property name="compiler.stackMode" value="emulated,native"/>
-   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
-
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 </module>

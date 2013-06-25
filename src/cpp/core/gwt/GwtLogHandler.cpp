@@ -18,6 +18,7 @@
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
@@ -40,7 +41,7 @@ SymbolMaps s_symbolMaps;
 // client exception
 struct ClientException
 {
-   std::string description;
+   std::string message;
    std::string strongName;
    std::vector<StackElement> stack;
 };
@@ -49,7 +50,7 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
 {
    json::Array stackJson;
    Error error = json::readObject(exJson,
-                                  "description", &(pEx->description),
+                                  "message", &(pEx->message),
                                   "strong_name", &(pEx->strongName),
                                   "stack", &stackJson);
    if (error)
@@ -75,6 +76,28 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
    return Success();
 }
 
+
+std::string formatMethod(const std::string& method)
+{
+   if (!method.empty() && method[0] == '$')
+      return method.substr(1);
+   else
+      return method;
+}
+
+bool isExceptionMechanismElement(const StackElement& element)
+{
+   return boost::algorithm::ends_with(element.methodName, "fillInStackTrace")
+
+          ||
+
+          (boost::algorithm::starts_with(element.fileName,
+                                        "com/google/gwt/emul/java/lang/")
+          &&
+
+          boost::algorithm::ends_with(element.fileName,
+                                      "Exception.java"));
+}
 
 void handleLogExceptionRequest(const std::string& username,
                                const std::string& userAgent,
@@ -107,18 +130,36 @@ void handleLogExceptionRequest(const std::string& username,
                                                               ex.strongName);
 
    // build the log message
+   bool printFrame = false;
+   bool firstItem = true;
    std::ostringstream ostr;
-   ostr << ex.description << std::endl;
    BOOST_FOREACH(const StackElement& element, stack)
    {
-      ostr << "   " << element.methodName << std::endl;
+      // skip past java/lang/Exception entries
+      if (!printFrame)
+      {
+         if (!isExceptionMechanismElement(element))
+            printFrame = true;
+      }
+
+      if (printFrame)
+      {
+         ostr << (firstItem ? "" : " ")
+              << element.fileName << "#" << element.lineNumber
+              << "::" << formatMethod(element.methodName)
+              << std::endl;
+
+         firstItem = false;
+      }
    }
 
    // form the log entry
-   boost::format fmt("CLIENT EXCEPTION (%1%-%2%, %3%): %4%");
+   boost::format fmt("CLIENT EXCEPTION (%1%-%2%, %3%): %4%\n"
+                     "OCCURRED AT: %5%");
    std::string logEntry = boost::str(fmt % username
                                          % jsonRpcRequest.clientId
                                          % userAgent
+                                         % ex.message
                                          % ostr.str());
 
    // log it

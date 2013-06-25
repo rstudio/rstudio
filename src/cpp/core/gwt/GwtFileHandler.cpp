@@ -161,17 +161,11 @@ void handleFileRequest(const std::string& wwwLocalPath,
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);
    }
-   // case: main page -- don't cache and dynamically set compiler stack mode
+   // case: main page -- don't cache
    else if (uri == mainPage)
    {
-      using namespace boost::algorithm;
-      bool isChrome = contains(request.userAgent(), "Chrome")      ||
-                      contains(request.userAgent(), "chromeframe");
-      std::map<std::string,std::string> vars;
-      vars["compiler_stack_mode"] = isChrome ? "native" : "emulated";
-
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request, text::TemplateFilter(vars));
+      pResponse->setFile(filePath, request);
    }
    
    // case: normal cacheable file

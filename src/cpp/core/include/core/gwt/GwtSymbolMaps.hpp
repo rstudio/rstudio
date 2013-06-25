@@ -19,19 +19,20 @@
 #include <string>
 
 #include <boost/utility.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <core/FilePath.hpp>
 
 namespace core {
 
 class Error;
+class FilePath;
 
 namespace gwt {
 
 struct StackElement
 {
    StackElement() : lineNumber(0) {}
-
    std::string fileName;
    std::string className;
    std::string methodName;
@@ -41,13 +42,10 @@ struct StackElement
 class SymbolMaps : boost::noncopyable
 {
 public:
-   SymbolMaps() {}
+   SymbolMaps();
+   virtual ~SymbolMaps();
 
-   Error initialize(const FilePath& symbolMapsPath)
-   {
-      symbolMapsPath_ = symbolMapsPath;
-      return Success();
-   }
+   Error initialize(const FilePath& symbolMapsPath);
 
    std::vector<StackElement> resymbolize(const std::vector<StackElement>& stack,
                                          const std::string& strongName);
@@ -56,7 +54,8 @@ public:
                             const std::string& strongName);
 
 private:
-   FilePath symbolMapsPath_;
+   struct Impl;
+   boost::scoped_ptr<Impl> pImpl_;
 };
 
 } // namespace gwt
