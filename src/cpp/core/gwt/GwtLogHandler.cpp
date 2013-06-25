@@ -18,6 +18,7 @@
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
@@ -76,6 +77,28 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
 }
 
 
+std::string formatMethod(const std::string& method)
+{
+   if (!method.empty() && method[0] == '$')
+      return method.substr(1);
+   else
+      return method;
+}
+
+bool isExceptionMechanismElement(const StackElement& element)
+{
+   return boost::algorithm::ends_with(element.methodName, "fillInStackTrace")
+
+          ||
+
+          (boost::algorithm::starts_with(element.fileName,
+                                        "com/google/gwt/emul/java/lang/")
+          &&
+
+          boost::algorithm::ends_with(element.fileName,
+                                      "Exception.java"));
+}
+
 void handleLogExceptionRequest(const std::string& username,
                                const std::string& userAgent,
                                const json::JsonRpcRequest& jsonRpcRequest,
@@ -107,11 +130,24 @@ void handleLogExceptionRequest(const std::string& username,
                                                               ex.strongName);
 
    // build the log message
+   bool printFrame = false;
    std::ostringstream ostr;
    ostr << ex.message << std::endl;
    BOOST_FOREACH(const StackElement& element, stack)
    {
-      ostr << element.className << "::" << element.methodName << std::endl;
+      // skip past java/lang/Exception entries
+      if (!printFrame)
+      {
+         if (!isExceptionMechanismElement(element))
+            printFrame = true;
+      }
+
+      if (printFrame)
+      {
+         ostr << element.fileName << "#" << element.lineNumber
+              << "::" << formatMethod(element.methodName)
+              << std::endl;
+      }
    }
 
    // form the log entry

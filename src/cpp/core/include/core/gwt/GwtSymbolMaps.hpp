@@ -17,16 +17,16 @@
 #define CORE_GWT_SYMBOL_MAPS_HPP
 
 #include <string>
-#include <map>
 
 #include <boost/utility.hpp>
-#include <boost/regex.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <core/FilePath.hpp>
 
 namespace core {
 
 class Error;
+class FilePath;
 
 namespace gwt {
 
@@ -39,15 +39,11 @@ struct StackElement
    int lineNumber;
 };
 
-typedef std::map<std::string,std::string> SymbolMap;
-
 class SymbolMaps : boost::noncopyable
 {
 public:
-   SymbolMaps() :
-      jnsiRegex_("@?([^:]+)::([^(]+)(\\((.*)\\))?")
-   {
-   }
+   SymbolMaps();
+   virtual ~SymbolMaps();
 
    Error initialize(const FilePath& symbolMapsPath);
 
@@ -57,15 +53,9 @@ public:
    StackElement resymbolize(const StackElement& se,
                             const std::string& strongName);
 
-
 private:
-   const SymbolMap& mapForStrongName(const std::string& strongName);
-
-private:
-   FilePath symbolMapsPath_;
-   typedef std::map<std::string,SymbolMap> SymbolMapCache;
-   SymbolMapCache symbolMapCache_;
-   boost::regex jnsiRegex_;
+   struct Impl;
+   boost::scoped_ptr<Impl> pImpl_;
 };
 
 } // namespace gwt
