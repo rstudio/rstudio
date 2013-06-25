@@ -217,6 +217,7 @@ std::vector<StackElement> SymbolMaps::resymbolize(
    {
       requiredSymbols.insert(stackElement.methodName);
    }
+   pImpl_->loadSymbolMap(strongName, requiredSymbols);
 
    // perform the resymbolization
    std::vector<StackElement> resymbolizedStack;
