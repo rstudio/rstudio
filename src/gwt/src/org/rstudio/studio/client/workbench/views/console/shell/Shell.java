@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
@@ -63,7 +64,8 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleResetHistoryHandler,
                               ConsoleRestartRCompletedEvent.Handler,
                               ConsoleExecutePendingInputEvent.Handler,
-                              SendToConsoleHandler
+                              SendToConsoleHandler,
+                              DebugModeChangedEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -119,6 +121,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleRestartRCompletedEvent.TYPE, this);
       eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
+      eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -337,6 +340,15 @@ public class Shell implements ConsoleInputHandler,
    {
       if (view_.getInputEditorDisplay().isFocused())
          processCommandEntry();  
+   }
+   
+   @Override
+   public void onDebugModeChanged(DebugModeChangedEvent event)
+   {
+      if (event.getDebugMode())
+      {
+         view_.ensureInputVisible();
+      }
    }
 
    private final class InputKeyDownHandler implements KeyDownHandler,

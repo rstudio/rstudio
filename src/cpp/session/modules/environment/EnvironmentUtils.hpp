@@ -20,7 +20,7 @@ namespace session {
 namespace modules {
 namespace environment {
 
-core::json::Object varToJson(const r::sexp::Variable& var);
+core::json::Object varToJson(SEXP env, const r::sexp::Variable& var);
 bool isUnevaluatedPromise(SEXP var);
 
 } // namespace environment

@@ -34,22 +34,6 @@ bool compareVarName(const r::sexp::Variable& var1,
    return var1.first < var2.first;
 }
 
-void enqueRemovedEvent(const r::sexp::Variable& variable)
-{
-   ClientEvent removedEvent(client_events::kEnvironmentRemoved, variable.first);
-   module_context::enqueClientEvent(removedEvent);
-}
-
-void enqueAssignedEvent(const r::sexp::Variable& variable)
-{
-   // get object info
-   json::Value objInfo = varToJson(variable);
-
-   // enque event
-   ClientEvent assignedEvent(client_events::kEnvironmentAssigned, objInfo);
-   module_context::enqueClientEvent(assignedEvent);
-}
-
 void enqueRefreshEvent()
 {
    ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
@@ -84,6 +68,22 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 EnvironmentMonitor::EnvironmentMonitor() :
    initialized_(false)
 {}
+
+void EnvironmentMonitor::enqueRemovedEvent(const r::sexp::Variable& variable)
+{
+   ClientEvent removedEvent(client_events::kEnvironmentRemoved, variable.first);
+   module_context::enqueClientEvent(removedEvent);
+}
+
+void EnvironmentMonitor::enqueAssignedEvent(const r::sexp::Variable& variable)
+{
+   // get object info
+   json::Value objInfo = varToJson(getMonitoredEnvironment(), variable);
+
+   // enque event
+   ClientEvent assignedEvent(client_events::kEnvironmentAssigned, objInfo);
+   module_context::enqueClientEvent(assignedEvent);
+}
 
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
 {
@@ -160,7 +160,8 @@ void EnvironmentMonitor::checkForChanges()
             // fire removed event for deletes
             std::for_each(removedVars.begin(),
                           removedVars.end(),
-                          enqueRemovedEvent);
+                          boost::bind(&EnvironmentMonitor::enqueRemovedEvent,
+                                      this, _1));
 
             // remove deleted objects from the list of uneval'ed promises
             // so we'll stop monitoring them for evaluation
@@ -191,7 +192,8 @@ void EnvironmentMonitor::checkForChanges()
          // fire assigned event for adds, assigns, and promise evaluations
          std::for_each(addedVars.begin(),
                        addedVars.end(),
-                       enqueAssignedEvent);
+                       boost::bind(&EnvironmentMonitor::enqueAssignedEvent,
+                                    this, _1));
       }
    }
 
