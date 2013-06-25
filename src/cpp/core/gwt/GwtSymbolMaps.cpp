@@ -56,7 +56,7 @@ ReadCollectionAction parseSymbolMapLine(
    if (line.empty() || (line[0] == '#'))
       return ReadCollectionIgnoreLine;
 
-   int commaPos = line.find_first_of(',');
+   size_t commaPos = line.find_first_of(',');
    if (commaPos == std::string::npos)
       return ReadCollectionIgnoreLine;
 
