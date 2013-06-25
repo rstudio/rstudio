@@ -131,8 +131,8 @@ void handleLogExceptionRequest(const std::string& username,
 
    // build the log message
    bool printFrame = false;
+   bool firstItem = true;
    std::ostringstream ostr;
-   ostr << ex.message << std::endl;
    BOOST_FOREACH(const StackElement& element, stack)
    {
       // skip past java/lang/Exception entries
@@ -144,17 +144,22 @@ void handleLogExceptionRequest(const std::string& username,
 
       if (printFrame)
       {
-         ostr << element.fileName << "#" << element.lineNumber
+         ostr << (firstItem ? "" : " ")
+              << element.fileName << "#" << element.lineNumber
               << "::" << formatMethod(element.methodName)
               << std::endl;
+
+         firstItem = false;
       }
    }
 
    // form the log entry
-   boost::format fmt("CLIENT EXCEPTION (%1%-%2%, %3%): %4%");
+   boost::format fmt("CLIENT EXCEPTION (%1%-%2%, %3%): %4%\n"
+                     "OCCURRED AT: %5%");
    std::string logEntry = boost::str(fmt % username
                                          % jsonRpcRequest.clientId
                                          % userAgent
+                                         % ex.message
                                          % ostr.str());
 
    // log it
