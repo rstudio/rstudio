@@ -82,8 +82,7 @@ public:
 
       LOCK_MUTEX(mutex_)
       {
-         std::map<std::string,std::string>& map = cache_[strongName];
-         map.insert(symbolMap.begin(), symbolMap.end());
+         cache_[strongName].insert(symbolMap.begin(), symbolMap.end());
       }
       END_LOCK_MUTEX
    }
@@ -241,6 +240,9 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
    std::string symbolData = pImpl_->loadOneSymbol(strongName, se.methodName);
 
    // detect whether we are source map capable and extract the column if we are
+   // (note: were not currently using source maps but we still ported this
+   // code from the GWT Java implementation in case we want to add the
+   // sourcemap support later)
    bool sourceMapCapable = false;
    int column = 1;
    if (!steFilename.empty())
@@ -258,7 +260,7 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
          catch(boost::bad_lexical_cast&)
          {
          }
-         steFilename = steFilename.substr(columnMarkerPos);
+         steFilename = steFilename.substr(0, columnMarkerPos);
       }
    }
 
