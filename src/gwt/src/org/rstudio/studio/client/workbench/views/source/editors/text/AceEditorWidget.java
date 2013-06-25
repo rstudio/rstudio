@@ -94,18 +94,20 @@ public class AceEditorWidget extends Composite
         @Override
         public void execute(AceMouseEventNative arg)
         {
+           // rows are 0-based, but debug line numbers are 1-based
            int lineNumber = arg.getDocumentPosition().getRow();
            int breakpointIdx = breakpointLines_.indexOf(lineNumber);
            if (breakpointIdx >= 0)
            {
               editor_.getSession().clearBreakpoint(lineNumber);
               breakpointLines_.remove(breakpointIdx);
+              fireEvent(new BreakpointSetEvent(lineNumber + 1, false));
            }
            else
            {
               editor_.getSession().setBreakpoint(lineNumber);
               breakpointLines_.add(lineNumber);
-              fireEvent(new BreakpointSetEvent(lineNumber));
+              fireEvent(new BreakpointSetEvent(lineNumber + 1, true));
            }
         }
       });

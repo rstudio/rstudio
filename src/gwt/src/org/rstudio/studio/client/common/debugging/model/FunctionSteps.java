@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.common.debugging.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayNumber;
 
 public class FunctionSteps extends JavaScriptObject
 {
@@ -30,7 +29,7 @@ public class FunctionSteps extends JavaScriptObject
       return this.line;
    }-*/;
    
-   public final native JsArrayNumber getSteps() /*-{
+   public final native int getSteps() /*-{
       return this.at;
    }-*/;
 }

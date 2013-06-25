@@ -23,6 +23,27 @@
     }))
 })
 
+.rs.addFunction("setFunctionBreakpoints", function(functionName, steps)
+{
+    if (length(steps) == 0)
+    {
+        untrace(functionName)
+    }
+    else
+    {
+        trace(
+            what = functionName,
+            at = steps,
+            tracer = browser,
+            print = FALSE)
+    }
+})
+
+.rs.addJsonRpcHandler("set_function_breakpoints", function(functionName, steps)
+{
+    .rs.setFunctionBreakpoints(functionName, steps)
+})
+
 .rs.addJsonRpcHandler("get_function_steps", function(fileName, lineNumbers)
 {
     results <- .rs.getFunctionSteps(fileName, lineNumbers)

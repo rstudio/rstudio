@@ -24,14 +24,20 @@ public class BreakpointSetEvent extends GwtEvent<BreakpointSetEvent.Handler>
       void onBreakpointSet(BreakpointSetEvent event);
    }
 
-   public BreakpointSetEvent(int lineNumber)
+   public BreakpointSetEvent(int lineNumber, boolean set)
    {
       lineNumber_ = lineNumber;
+      set_ = set;
    }
    
    public int getLineNumber()
    {
       return lineNumber_;
+   }
+   
+   public boolean isSet()
+   {
+      return set_;
    }
 
    @Override
@@ -49,4 +55,5 @@ public class BreakpointSetEvent extends GwtEvent<BreakpointSetEvent.Handler>
    public static final Type<Handler> TYPE = new Type<Handler>();
    
    private int lineNumber_;
+   private boolean set_;
 }

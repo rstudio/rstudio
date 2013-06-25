@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.common.debugging.model;
 
-import com.google.gwt.core.client.JsArrayNumber;
-
 public class Breakpoint
 {
    public Breakpoint(
@@ -27,6 +25,7 @@ public class Breakpoint
       functionName_ = steps.getName();
       lineNumber_ = steps.getLineNumber();
       functionSteps_ = steps.getSteps();
+      active_ = false;
    }
    
    public String getFileName()
@@ -44,13 +43,24 @@ public class Breakpoint
       return functionName_;
    }
    
-   public JsArrayNumber getFunctionSteps()
+   public int getFunctionSteps()
    {
       return functionSteps_;
+   }
+   
+   public boolean isActive()
+   {
+      return active_;
+   }
+   
+   public void activate()
+   {
+      active_ = true;
    }
    
    private String fileName_;
    private int lineNumber_;
    private String functionName_;
-   private JsArrayNumber functionSteps_;
+   private int functionSteps_;
+   private boolean active_;
 }

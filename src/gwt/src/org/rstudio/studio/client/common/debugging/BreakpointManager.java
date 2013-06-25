@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
@@ -33,21 +34,22 @@ public class BreakpointManager
    @Inject
    public BreakpointManager(DebuggingServerOperations server)
    {
-      Debug.log("Hi! Here I am to manage your breakpoints!");
       server_ = server;
    }
    
+   // Public methods ---------------------------------------------------------
    public void setBreakpoint(final String fileName, int lineNumber)
    {
-      Debug.log("Breakpoint requested at file " + fileName + " and line " + lineNumber);
       int[] lineNumbers = new int[] { lineNumber };
-      server_.getFunctionSteps(fileName, lineNumbers, 
+      server_.getFunctionSteps(
+            fileName, 
+            lineNumbers, 
             new ServerRequestCallback<JsArray<FunctionSteps> > () {
                @Override
                public void onResponseReceived(JsArray<FunctionSteps> response)
                {
-                  // TODO: Set the breakpoint
-                  Debug.log("Breakpoint will be set at "+ response.get(0).getName() + ":" + response.get(0).getSteps());
+                  breakpoints_.add(new Breakpoint(fileName, response.get(0)));
+                  setFunctionBreakpoints(fileName, response.get(0).getName());
                }
                
                @Override
@@ -58,6 +60,44 @@ public class BreakpointManager
       });
    }
    
-   private ArrayList<Breakpoint> breakpoints_;
+   public void removeBreakpoint(final String fileName, int lineNumber)
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getFileName().equals(fileName) &&
+             breakpoint.getLineNumber() == lineNumber)
+         {
+            breakpoints_.remove(breakpoint);
+            setFunctionBreakpoints(fileName, breakpoint.getFunctionName());
+         }
+      }
+   }
+  
+   // Private methods ---------------------------------------------------------
+   private void setFunctionBreakpoints(String fileName, String functionName)
+   {
+      ArrayList<Integer> steps = new ArrayList<Integer>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getFunctionName().equals(functionName) &&
+             breakpoint.getFileName().equals(fileName))
+         {
+            steps.add(breakpoint.getFunctionSteps());
+         }
+      }
+      server_.setFunctionBreakpoints(
+            functionName, 
+            steps,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                   
+               }
+            });
+   }
+   
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private final DebuggingServerOperations server_;
 }

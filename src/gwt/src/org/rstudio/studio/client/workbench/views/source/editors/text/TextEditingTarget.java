@@ -603,7 +603,14 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void onBreakpointSet(BreakpointSetEvent event)
          {
-            breakpointManager_.setBreakpoint(path_, event.getLineNumber());
+            if (event.isSet())
+            {
+               breakpointManager_.setBreakpoint(path_, event.getLineNumber());
+            }
+            else
+            {
+               breakpointManager_.removeBreakpoint(path_, event.getLineNumber());
+            }
          }
       });
       

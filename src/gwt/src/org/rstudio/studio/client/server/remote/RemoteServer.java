@@ -1,5 +1,5 @@
 /*
- * RemoteServer.java
+kS * RemoteServer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -2852,7 +2852,27 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
-
+   
+   @Override
+   public void setFunctionBreakpoints(
+         String functionName,
+         ArrayList<Integer> steps,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray breakSteps = new JSONArray();
+      for (int idx = 0; idx < steps.size(); idx++)
+      {
+         breakSteps.set(idx, new JSONNumber(steps.get(idx)));
+      }
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionName));
+      params.set(1, breakSteps);
+      sendRequest(RPC_SCOPE,
+                  SET_FUNCTION_BREAKPOINTS,
+                  params,
+                  requestCallback);
+   }
+         
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3103,6 +3123,7 @@ public class RemoteServer implements Server
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
+   private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    
    private static final String LOG = "log";
 

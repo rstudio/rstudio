@@ -15,10 +15,13 @@
 
 package org.rstudio.studio.client.common.debugging;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
 public interface DebuggingServerOperations
 {
@@ -26,4 +29,9 @@ public interface DebuggingServerOperations
          String fileName, 
          int[] lineNumbers,
          ServerRequestCallback<JsArray<FunctionSteps>> requestCallback);
+   
+   public void setFunctionBreakpoints(
+         String functionName,
+         ArrayList<Integer> steps,
+         ServerRequestCallback<Void> requestCallback);
 }
