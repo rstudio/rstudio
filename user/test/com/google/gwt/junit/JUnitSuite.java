@@ -54,6 +54,7 @@ public class JUnitSuite {
 
     suite.addTestSuite(FakeCssMakerTest.class);
     suite.addTestSuite(FakeMessagesMakerTest.class);
+    suite.addTestSuite(FakeSafeHtmlTemplatesMakerTest.class);
     suite.addTestSuite(GWTMockUtilitiesTest.class);
     suite.addTestSuite(GWTTestCaseNoClientTest.class);
 
