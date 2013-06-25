@@ -1,5 +1,5 @@
 /*
- * BreakpointRequestedEvent.java
+ * BreakpointSavedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,33 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.environment.events;
+package org.rstudio.studio.client.common.debugging.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BreakpointRequestedEvent
-        extends GwtEvent<BreakpointRequestedEvent.Handler>
+public class BreakpointSavedEvent
+        extends GwtEvent<BreakpointSavedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onBreakpointRequested(BreakpointRequestedEvent event);
+      void onBreakpointSaved(BreakpointSavedEvent event);
    }
 
-   public BreakpointRequestedEvent(String fileName, int lineNumber)
+   public BreakpointSavedEvent()
    {
-      fileName_ = fileName;
-      lineNumber_ = lineNumber;
-   }
-
-   public String getFileName()
-   {
-      return fileName_;
-   }
-   
-   public int getLineNumber()
-   {
-      return lineNumber_;
    }
 
    @Override
@@ -50,11 +38,8 @@ public class BreakpointRequestedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onBreakpointRequested(this);
+      handler.onBreakpointSaved(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
-   
-   private String fileName_ = "";
-   private int lineNumber_ = 0;
 }

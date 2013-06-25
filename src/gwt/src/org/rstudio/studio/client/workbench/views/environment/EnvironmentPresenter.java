@@ -33,7 +33,6 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -48,7 +47,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -77,7 +75,6 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
@@ -214,32 +211,6 @@ public class EnvironmentPresenter extends BasePresenter
 
       });
       
-      eventBus.addHandler(BreakpointRequestedEvent.TYPE,
-            new BreakpointRequestedEvent.Handler()
-            {               
-               @Override
-               public void onBreakpointRequested(BreakpointRequestedEvent event)
-               {
-                  int[] lineNumber = new int[] { event.getLineNumber() };
-                  server_.getFunctionSteps(event.getFileName(), lineNumber, 
-                        new ServerRequestCallback<JsArray<FunctionSteps> > () {
-                           @Override
-                           public void onResponseReceived(JsArray<FunctionSteps> response)
-                           {
-                              // TODO: Set the breakpoint
-                              Debug.log("Breakpoint will be set at "+ response.get(0).getName() + ":" + response.get(0).getSteps());
-                           }
-                           
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                               // TODO: Don't set a breakpoint if we can't find
-                               // corresponding function steps.
-                           }                     
-                  });
-               }
-            });
-
       new JSObjectStateValue(
               "environment-pane",
               "environmentPaneState",

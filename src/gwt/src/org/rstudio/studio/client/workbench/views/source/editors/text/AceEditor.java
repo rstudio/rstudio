@@ -61,7 +61,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -1588,11 +1587,6 @@ public class AceEditor implements DocDisplay,
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
    
-   public HandlerRegistration addDebugBreakpointSetHandler(BreakpointRequestedEvent.Handler handler)
-   {
-      return handlers_.addHandler(BreakpointRequestedEvent.TYPE, handler);
-   }
-
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addCapturingKeyDownHandler(handler);
