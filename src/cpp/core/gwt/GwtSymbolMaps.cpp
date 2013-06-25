@@ -333,11 +333,11 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
       }
    }
 
-   int jsLineNumber = se.lineNumber;
-
    // try to refine location with sourceMap
+   // int jsLineNumber = se.lineNumber;
 
-   // TODO
+   // NOTE: not yet implemented -- the upside of this appears to be that
+   // we could get the precise line location of the exception
 
    if (!declaringClass.empty())
    {
