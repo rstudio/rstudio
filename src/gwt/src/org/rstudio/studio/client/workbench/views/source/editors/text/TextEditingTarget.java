@@ -55,6 +55,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
+import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -86,7 +87,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePe
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
-import org.rstudio.studio.client.workbench.views.environment.events.BreakpointRequestedEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -297,7 +297,8 @@ public class TextEditingTarget implements EditingTarget
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs)
+                            UIPrefs prefs, 
+                            BreakpointManager breakpointManager)
    {
       commands_ = commands;
       server_ = server;
@@ -311,6 +312,7 @@ public class TextEditingTarget implements EditingTarget
       session_ = session;
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
+      breakpointManager_ = breakpointManager;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -601,9 +603,7 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void onBreakpointSet(BreakpointSetEvent event)
          {
-            events_.fireEvent(new BreakpointRequestedEvent(path_, event.getLineNumber()));
-            Debug.log("Someone wants to set a breakpoint in file " + path_ 
-              + " at line " + event.getLineNumber());
+            breakpointManager_.setBreakpoint(path_, event.getLineNumber());
          }
       });
       
@@ -3305,6 +3305,7 @@ public class TextEditingTarget implements EditingTarget
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
+   private BreakpointManager breakpointManager_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

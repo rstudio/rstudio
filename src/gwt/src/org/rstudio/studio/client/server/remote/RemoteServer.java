@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -2833,9 +2834,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getFunctionSteps(String fileName, 
-                                int[] lineNumbers,
-                                ServerRequestCallback<Void> requestCallback)
+   public void getFunctionSteps(
+                 String fileName, 
+                 int[] lineNumbers,
+                 ServerRequestCallback<JsArray<FunctionSteps>> requestCallback)
    {
       JSONArray lineNums = new JSONArray();
       for (int idx = 0; idx < lineNumbers.length; idx++)

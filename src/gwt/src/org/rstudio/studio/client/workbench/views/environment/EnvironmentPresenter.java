@@ -48,6 +48,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -220,9 +221,15 @@ public class EnvironmentPresenter extends BasePresenter
                public void onBreakpointRequested(BreakpointRequestedEvent event)
                {
                   int[] lineNumber = new int[] { event.getLineNumber() };
-                  Debug.log("About to ask the server for breakpoint location");
                   server_.getFunctionSteps(event.getFileName(), lineNumber, 
-                        new ServerRequestCallback<org.rstudio.studio.client.server.Void>() {
+                        new ServerRequestCallback<JsArray<FunctionSteps> > () {
+                           @Override
+                           public void onResponseReceived(JsArray<FunctionSteps> response)
+                           {
+                              // TODO: Set the breakpoint
+                              Debug.log("Breakpoint will be set at "+ response.get(0).getName() + ":" + response.get(0).getSteps());
+                           }
+                           
                            @Override
                            public void onError(ServerError error)
                            {

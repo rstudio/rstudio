@@ -44,38 +44,6 @@ namespace session {
 namespace modules {
 namespace breakpoints {
 
-namespace {
-
-/*
-Error getFunctionSteps(
-      const json::JsonRpcRequest& request,
-      json::JsonRpcResponse* pResponse)
-{
-   json::Value fileName;
-   json::Array lineNumbers;
-   Error error = json::readParams(request.params, &fileName, &lineNumbers);
-   std::string result;
-
-   Protect protect;
-   BOOST_FOREACH(json::Value lineNumber, lineNumbers)
-   {
-      std::cerr << "checking for line " << lineNumber.get_int() << std::endl;
-   }
-
-   error = r::exec::RFunction(".rs.getFunctionSteps",
-                              fileName,
-                              lineNumbers)
-         .call(&result);
-
-   std::cerr << "got " << result << " results" << std::endl;
-
-   return error;
-}
-
-*/
-
-} // anonymous namespace
-
 Error initialize()
 {
    // subscribe to events
