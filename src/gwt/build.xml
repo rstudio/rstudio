@@ -118,7 +118,7 @@
          <arg value="-XdisableCastChecking"/>
          <arg line="-gen gen"/>
          <!--<arg line="-style PRETTY"/>-->
-         <arg line="-extra www/extras"/>
+         <arg line="-extra extras"/>
          <arg line="${gwt.extra.args}"/>
          <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="${gwt.main.module}"/>
@@ -131,7 +131,7 @@
          <param name="gwt.extra.args" value="${gwt.extra.args} -compileReport"/>
       </antcall>
       <exec executable="open" os="Mac OS X">
-         <arg file="www/extras/rstudio/soycReport/compile-report/index.html"/>
+         <arg file="extras/rstudio/soycReport/compile-report/index.html"/>
       </exec>
    </target>
 
@@ -207,7 +207,7 @@
       <delete dir="www/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
-      <delete dir="www/extras" failonerror="false" />
+      <delete dir="extras" failonerror="false" />
    </target>
 
 </project>

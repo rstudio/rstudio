@@ -1353,7 +1353,7 @@ void registerGwtHandlers()
           boost::bind(text::handleTemplateRequest, progressPagePath, _1, _2));
 
    // initialize gwt symbol maps
-   gwt::initializeSymbolMaps(wwwPath.childPath("extras/rstudio/symbolMaps"));
+   gwt::initializeSymbolMaps(options.wwwSymbolMapsPath());
 
    // set default handler
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), "/");

@@ -33,3 +33,5 @@ add_custom_command(
 
 # installation rules
 install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+install(DIRECTORY extras/rstudio/symbolMaps/
+        DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)

@@ -185,7 +185,7 @@ void httpServerAddHandlers()
    uri_handlers::addBlocking("/templates", http::notFoundHandler);
 
    // initialize gwt symbol maps
-   gwt::initializeSymbolMaps(wwwPath.childPath("extras/rstudio/symbolMaps"));
+   gwt::initializeSymbolMaps(server::options().wwwSymbolMapsPath());
 
    // add default handler for gwt app
    uri_handlers::setBlockingDefault(blockingFileHandler());

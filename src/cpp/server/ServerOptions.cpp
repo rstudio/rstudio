@@ -137,6 +137,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
       ("www-local-path",
          value<std::string>(&wwwLocalPath_)->default_value("www"),
          "www files path")
+      ("www-symbol-maps-path",
+         value<std::string>(&wwwSymbolMapsPath_)->default_value(
+                                                      "www-symbolmaps"),
+        "www symbol maps path")
       ("www-thread-pool-size",
          value<int>(&wwwThreadPoolSize_)->default_value(2),
          "thread pool size");
@@ -273,6 +277,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)
    resolvePath(&wwwLocalPath_);
+   resolvePath(&wwwSymbolMapsPath_);
    resolvePath(&authPamHelperPath_);
    resolvePath(&rsessionPath_);
    resolvePath(&rldpathPath_);
