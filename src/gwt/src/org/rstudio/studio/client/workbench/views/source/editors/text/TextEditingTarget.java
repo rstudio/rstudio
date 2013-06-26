@@ -413,7 +413,16 @@ public class TextEditingTarget implements EditingTarget
       {         
          @Override
          public void onBreakpointSaved(BreakpointSavedEvent event)
-         {
+         {            
+            // discard the event if it's not related to the file this editor
+            // instance is concerned with
+            if (!event.breakpoint().getFileName().equals(path_))
+            {
+               return;
+            }
+            
+            // if the breakpoint was saved successfully, enable it on the editor
+            // surface; otherwise, just remove it.
             if (event.successful())
             {
                docDisplay_.addOrUpdateBreakpoint(event.breakpoint());

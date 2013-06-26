@@ -15,68 +15,73 @@
 
 package org.rstudio.studio.client.common.debugging.model;
 
-public class Breakpoint
+import com.google.gwt.core.client.JavaScriptObject;
+
+// This class represents a breakpoint in nearly every context: 
+// instances are used in the editor, in the breakpoint manager
+// (BreakpointManager), and are also persisted raw in the project state
+// (BreakpointState). 
+public class Breakpoint extends JavaScriptObject
 {   
-   public Breakpoint(
+   protected Breakpoint() {}
+   
+   public native static Breakpoint create(
          int breakpointId,
          String fileName,
          int lineNumber)
-   {
-      id_ = breakpointId;
-      fileName_ = fileName;
-      lineNumber_ = lineNumber;
-
-      functionSteps_ = 0;
-      functionName_ = "";
-      active_ = false;
-   }
+   /*-{
+      return {
+         id : breakpointId,
+         file_name : fileName,
+         line_number : lineNumber,
+         function_steps : 0,
+         function_name : "",
+         active : false
+      };
+   }-*/;
    
-   public void addFunctionSteps(FunctionSteps steps)
-   {
-      functionName_ = steps.getName();
-      lineNumber_ = steps.getLineNumber();
-      functionSteps_ = steps.getSteps();
-   }
+   public final native void addFunctionSteps(
+         String function_name,
+         int lineNumber,
+         int functionSteps)
+   /*-{
+      this.function_name = function_name;
+      this.line_number = lineNumber;
+      this.function_steps = functionSteps;
+   }-*/;
    
-   public int getBreakpointId()
-   {
-      return id_;
-   }
+   public final  native int getBreakpointId()
+   /*-{
+      return this.id;
+   }-*/;
    
-   public String getFileName()
-   {
-      return fileName_;
-   }
+   public final native String getFileName()
+   /*-{
+      return this.file_name;
+   }-*/;
    
-   public int getLineNumber()
-   {
-      return lineNumber_;
-   }
+   public final native int getLineNumber()
+   /*-{
+      return this.line_number;
+   }-*/;
    
-   public String getFunctionName()
-   {
-      return functionName_;
-   }
+   public final native String getFunctionName()
+   /*-{
+      return this.function_name;
+   }-*/;
    
-   public int getFunctionSteps()
-   {
-      return functionSteps_;
-   }
+   public final native int getFunctionSteps()
+   /*-{
+      return this.function_steps;
+   }-*/;
    
-   public boolean isActive()
-   {
-      return active_;
-   }
+   public final native boolean isActive()
+   /*-{
+      return this.active;
+   }-*/;
    
-   public void activate()
-   {
-      active_ = true;
-   }
-   
-   private String fileName_;
-   private int lineNumber_;
-   private String functionName_;
-   private int functionSteps_;
-   private boolean active_;
-   private int id_;
+   public final native void activate()
+   /*-{
+      this.active = true;
+   }-*/;
 }
