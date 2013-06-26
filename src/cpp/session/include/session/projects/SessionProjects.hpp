@@ -37,6 +37,7 @@
 
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
+#include <core/r_util/RPackageInfo.hpp>
  
 namespace session {
 namespace projects {
@@ -112,6 +113,7 @@ public:
       config_ = config;
       updateDefaultEncoding();
       updateBuildTargetPath();
+      updatePackageInfo();
    }
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
@@ -141,6 +143,12 @@ public:
    const RProjectBuildOptions& buildOptions() const
    {
       return buildOptions_;
+   }
+
+   // current package info (if this is a package)
+   const core::r_util::RPackageInfo& packageInfo() const
+   {
+      return packageInfo_;
    }
 
    // does this project context have a file monitor? (might not have one
@@ -179,6 +187,7 @@ private:
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();
+   void updatePackageInfo();
 
    void augmentRbuildignore();
 
@@ -190,6 +199,7 @@ private:
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
+   core::r_util::RPackageInfo packageInfo_;
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
