@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_breakpoint;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_breakpoint, ace_inactive-breakpoint;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -211,11 +211,21 @@ pre {
   font-family: fixedWidthFont !important;
 }
 
+.ace_breakpoint,
+.ace_inactive-breakpoint
+{
+   background-position: 10% center;
+   background-repeat: no-repeat;
+}
+
 .ace_breakpoint
 {
    background-image: ACTIVEBREAKPOINT;	
-   background-position: 20% center;
-   background-repeat: no-repeat;
+}
+
+.ace_inactive-breakpoint
+{
+	background-image: INACTIVEBREAKPOINT;
 }
 
 .gwt-MenuBar {
