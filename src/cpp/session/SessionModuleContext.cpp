@@ -971,6 +971,22 @@ bool isDirectoryMonitored(const FilePath& directory)
           session::modules::files::isMonitoringDirectory(directory);
 }
 
+bool isRScriptInPackageBuildTarget(const FilePath &filePath)
+{
+   using namespace session::projects;
+
+   if (projectContext().config().buildType == r_util::kBuildTypePackage)
+   {
+      FilePath pkgPath = projects::projectContext().buildTargetPath();
+      std::string pkgRelative = filePath.relativePath(pkgPath);
+      return boost::algorithm::starts_with(pkgRelative, "R/");
+   }
+   else
+   {
+      return false;
+   }
+}
+
 bool fileListingFilter(const core::FileInfo& fileInfo)
 {
    // check extension for special file types which are always visible
