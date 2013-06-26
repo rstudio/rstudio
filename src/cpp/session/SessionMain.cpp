@@ -15,6 +15,10 @@
 
 #include <session/SessionMain.hpp>
 
+// required to avoid Win64 winsock order of include
+// compilation problem
+#include <boost/asio/io_service.hpp>
+
 #include <string>
 #include <vector>
 #include <queue>

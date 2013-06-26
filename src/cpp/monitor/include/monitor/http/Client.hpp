@@ -18,11 +18,10 @@
 
 #include <string>
 
-#include <core/system/System.hpp>
-
-#include <core/LogWriter.hpp>
-
 #include <boost/asio/io_service.hpp>
+
+#include <core/system/System.hpp>
+#include <core/LogWriter.hpp>
 
 namespace monitor {
 
