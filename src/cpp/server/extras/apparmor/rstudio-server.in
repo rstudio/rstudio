@@ -46,6 +46,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
      ${CMAKE_INSTALL_PREFIX}/bin/rsession ux,
      ${CMAKE_INSTALL_PREFIX}/www/** r,
+     ${CMAKE_INSTALL_PREFIX}/www-symbolmaps/** r,
   }   
 }
 
