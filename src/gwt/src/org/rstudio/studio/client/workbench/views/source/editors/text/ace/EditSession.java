@@ -168,4 +168,12 @@ public class EditSession extends JavaScriptObject
    public native final void clearBreakpoints(int[] lines) /*-{
       this.clearBreakpoints(lines);
    }-*/;
+   
+   public native final void addGutterDecoration(int line, String clazz) /*-{
+   	  this.addGutterDecoration(line, clazz);
+   }-*/;
+   
+   public native final void removeGutterDecoration(int line, String clazz) /*-{
+	  this.removeGutterDecoration(line, clazz);
+   }-*/;
 }

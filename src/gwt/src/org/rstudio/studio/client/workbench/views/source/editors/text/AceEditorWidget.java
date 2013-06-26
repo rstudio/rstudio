@@ -34,6 +34,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
@@ -104,7 +105,7 @@ public class AceEditorWidget extends Composite
            }
            else
            {
-              editor_.getSession().setBreakpoint(lineNumber);
+              editor_.getSession().addGutterDecoration(lineNumber, "ace_inactive-breakpoint");
               breakpointLines_.add(lineNumber);
               fireEvent(new BreakpointSetEvent(lineNumber + 1, true));
            }
@@ -374,15 +375,15 @@ public class AceEditorWidget extends Composite
       // this must be done in two passes, so we can distinguish
       // breakpoints that haven't been processed yet from those that have.
       // (an alternative would be to keep the set of breakpoints sorted.)
-      ArrayList<Integer> oldBreakpoints = new ArrayList<Integer>();
+      ArrayList<Breakpoint> oldBreakpoints = new ArrayList<Breakpoint>();
      
-      for (int idx = 0; idx < breakpointLines_.size(); idx++)
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
       {
-         Integer breakpointLine = breakpointLines_.get(idx);
+         int idx = getIndexOfBreakpoint()
          if (breakpointLine >= shiftStartRow)
          {
             // remove the breakpoint from its old position
-            breakpointLines_.remove(idx);
+            breakpoints_.remove(idx);
             oldBreakpoints.add(breakpointLine);
             editor_.getSession().clearBreakpoint(breakpointLine);
             idx--;
@@ -406,9 +407,26 @@ public class AceEditorWidget extends Composite
          }
       }
    }
+   
+   private int getBreakpointIdxById(int breakpointId)
+   {
+	   for (Breakpoint breakpoint: breakpoints_)
+	   {
+	   }
+	   return -1;
+   }
+   
+   private int getBreakpointIdxByLine(int breakpointId)
+   {
+	   for (Breakpoint breakpoint: breakpoints_)
+	   {
+		   
+	   }
+	   return -1;
+   }
   
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
-   private ArrayList<Integer> breakpointLines_ = new ArrayList<Integer>();
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
 }
