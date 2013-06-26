@@ -16,16 +16,31 @@
 package org.rstudio.studio.client.common.debugging.model;
 
 public class Breakpoint
-{
+{   
    public Breakpoint(
-         String fileName, 
-         FunctionSteps steps)
+         int breakpointId,
+         String fileName,
+         int lineNumber)
    {
+      id_ = breakpointId;
       fileName_ = fileName;
+      lineNumber_ = lineNumber;
+
+      functionSteps_ = 0;
+      functionName_ = "";
+      active_ = false;
+   }
+   
+   public void addFunctionSteps(FunctionSteps steps)
+   {
       functionName_ = steps.getName();
       lineNumber_ = steps.getLineNumber();
       functionSteps_ = steps.getSteps();
-      active_ = false;
+   }
+   
+   public int getBreakpointId()
+   {
+      return id_;
    }
    
    public String getFileName()
@@ -63,4 +78,5 @@ public class Breakpoint
    private String functionName_;
    private int functionSteps_;
    private boolean active_;
+   private int id_;
 }

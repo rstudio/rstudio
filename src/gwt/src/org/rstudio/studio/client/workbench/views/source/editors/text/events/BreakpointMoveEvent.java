@@ -14,11 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.GwtEvent.Type;
 
 public class BreakpointMoveEvent extends GwtEvent<BreakpointMoveEvent.Handler>
 {

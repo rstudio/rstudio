@@ -48,6 +48,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -1495,6 +1496,18 @@ public class AceEditor implements DocDisplay,
          BreakpointSetEvent.Handler handler)
    {
       return widget_.addBreakpointSetHandler(handler);
+   }
+   
+   @Override
+   public void addOrUpdateBreakpoint(Breakpoint breakpoint)
+   {
+      widget_.addOrUpdateBreakpoint(breakpoint);
+   }
+   
+   @Override
+   public void removeBreakpoint(Breakpoint breakpoint)
+   {
+      widget_.removeBreakpoint(breakpoint);
    }
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)

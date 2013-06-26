@@ -56,6 +56,8 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
+import org.rstudio.studio.client.common.debugging.events.BreakpointSavedEvent;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -404,6 +406,24 @@ public class TextEditingTarget implements EditingTarget
             view_.showFindReplace(event.getDefaultForward());
          }
       });
+      
+      events_.addHandler(
+            BreakpointSavedEvent.TYPE, 
+            new BreakpointSavedEvent.Handler()
+      {         
+         @Override
+         public void onBreakpointSaved(BreakpointSavedEvent event)
+         {
+            if (event.successful())
+            {
+               docDisplay_.addOrUpdateBreakpoint(event.breakpoint());
+            }
+            else
+            {
+               docDisplay_.removeBreakpoint(event.breakpoint());
+            }
+         }
+      });
    }
    
    @Override
@@ -605,11 +625,13 @@ public class TextEditingTarget implements EditingTarget
          {
             if (event.isSet())
             {
-               breakpointManager_.setBreakpoint(path_, event.getLineNumber());
+               Breakpoint breakpoint = 
+                 breakpointManager_.setBreakpoint(path_, event.getLineNumber());
+               docDisplay_.addOrUpdateBreakpoint(breakpoint);
             }
             else
             {
-               breakpointManager_.removeBreakpoint(path_, event.getLineNumber());
+               breakpointManager_.removeBreakpoint(event.getBreakpointId());
             }
          }
       });
@@ -2870,6 +2892,8 @@ public class TextEditingTarget implements EditingTarget
          docDisplay_.unfoldAll();
       }
    }
+   
+   
    
    boolean useScopeTreeFolding()
    {

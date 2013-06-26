@@ -95,19 +95,28 @@ public class AceEditorWidget extends Composite
         public void execute(AceMouseEventNative arg)
         {
            // rows are 0-based, but debug line numbers are 1-based
-           int lineNumber = arg.getDocumentPosition().getRow();
-           int breakpointIdx = breakpointLines_.indexOf(lineNumber);
+           int lineNumber = lineFromRow(arg.getDocumentPosition().getRow());
+           int breakpointIdx = getBreakpointIdxByLine(lineNumber);
+           
+           // if there's already a breakpoint on that line, remove it
            if (breakpointIdx >= 0)
            {
-              editor_.getSession().clearBreakpoint(lineNumber);
-              breakpointLines_.remove(breakpointIdx);
-              fireEvent(new BreakpointSetEvent(lineNumber + 1, false));
+              Breakpoint breakpoint = breakpoints_.get(breakpointIdx);
+              removeBreakpointMarker(breakpoint);
+              fireEvent(new BreakpointSetEvent(
+                    lineNumber, 
+                    breakpoint.getBreakpointId(),
+                    false));
            }
+           // if there's no breakpoint on that line yet, create a new unset
+           // breakpoint there (the breakpoint manager will pick up the new
+           // breakpoint and attempt to set it on the server)
            else
            {
-              editor_.getSession().addGutterDecoration(lineNumber, "ace_inactive-breakpoint");
-              breakpointLines_.add(lineNumber);
-              fireEvent(new BreakpointSetEvent(lineNumber + 1, true));
+              fireEvent(new BreakpointSetEvent(
+                    lineNumber,
+                    BreakpointSetEvent.UNSET_BREAKPOINT_ID,
+                    true));
            }
         }
       });
@@ -178,7 +187,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, BreakpointSetEvent.TYPE);
    }
-
+   
    public AceEditorNative getEditor() {
       return editor_;
    }
@@ -322,10 +331,37 @@ public class AceEditorWidget extends Composite
       editor_.onCursorChange();
    }
    
+   public void addOrUpdateBreakpoint(Breakpoint breakpoint)
+   {
+      int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
+      if (idx >= 0)
+      {
+         Breakpoint oldBreakpoint = breakpoints_.get(idx);
+         removeBreakpointMarker(oldBreakpoint);
+         breakpoints_.set(idx, breakpoint);
+      }
+      else
+      {
+         breakpoints_.add(breakpoint);
+      }
+      placeBreakpointMarker(breakpoint);
+   }
+   
+   public void removeBreakpoint(Breakpoint breakpoint)
+   {
+      int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
+      if (idx >= 0)
+      {
+         Breakpoint oldBreakpoint = breakpoints_.get(idx);
+         removeBreakpointMarker(oldBreakpoint);
+         breakpoints_.remove(idx);
+      }
+   }
+   
    private void updateBreakpoints(AceDocumentChangeEventNative changeEvent)
    {
       // if there are no breakpoints, don't do any work to move them about
-      if (breakpointLines_.size() == 0)
+      if (breakpoints_.size() == 0)
       {
          return;
       }
@@ -375,54 +411,108 @@ public class AceEditorWidget extends Composite
       // this must be done in two passes, so we can distinguish
       // breakpoints that haven't been processed yet from those that have.
       // (an alternative would be to keep the set of breakpoints sorted.)
-      ArrayList<Breakpoint> oldBreakpoints = new ArrayList<Breakpoint>();
+      ArrayList<Breakpoint> movedBreakpoints = new ArrayList<Breakpoint>();
      
       for (int idx = 0; idx < breakpoints_.size(); idx++)
       {
-         int idx = getIndexOfBreakpoint()
+         Breakpoint breakpoint = breakpoints_.get(idx);
+         int breakpointLine = breakpoint.getLineNumber();
          if (breakpointLine >= shiftStartRow)
          {
             // remove the breakpoint from its old position
-            breakpoints_.remove(idx);
-            oldBreakpoints.add(breakpointLine);
-            editor_.getSession().clearBreakpoint(breakpointLine);
-            idx--;
+            movedBreakpoints.add(breakpoint);
+            removeBreakpointMarker(breakpoint);
          }
       }
-      for (Integer breakpointLine: oldBreakpoints)
+      for (Breakpoint breakpoint: movedBreakpoints)
       {
          // calculate the new position of the breakpoint
-         Integer newBreakpointPosition = 
-               new Integer(breakpointLine + shiftedBy);
+         int oldBreakpointPosition = breakpoint.getLineNumber();
+         int newBreakpointPosition = 
+               oldBreakpointPosition + shiftedBy;
          
          // add a breakpoint in this new position only if it wasn't 
          // in a deleted range, and if we don't already have a
          // breakpoint there
-         if (breakpointLine >= end.getRow() &&
-             !(breakpointLine == end.getRow() && shiftedBy < 0) &&
-             !breakpointLines_.contains(newBreakpointPosition))
+         if (oldBreakpointPosition >= end.getRow() &&
+             !(oldBreakpointPosition == end.getRow() && shiftedBy < 0) &&
+             getBreakpointIdxByLine(newBreakpointPosition) < 0)
          {
-            breakpointLines_.add(newBreakpointPosition);
-            editor_.getSession().setBreakpoint(newBreakpointPosition);
+            placeBreakpointMarker(breakpoint);
          }
+         else
+         {
+            breakpoints_.remove(breakpoint);
+            fireEvent(new BreakpointSetEvent(
+                  breakpoint.getLineNumber(), 
+                  breakpoint.getBreakpointId(),
+                  false)); 
+         }
+      }
+   }
+   
+   private void placeBreakpointMarker(Breakpoint breakpoint)
+   {
+      int line = breakpoint.getLineNumber();
+      if (breakpoint.isActive())
+      {
+         editor_.getSession().setBreakpoint(rowFromLine(line));
+      }
+      else
+      {
+         editor_.getSession().addGutterDecoration(
+               rowFromLine(line), 
+               "ace_inactive-breakpoint");
+      }
+   }
+   
+   private void removeBreakpointMarker(Breakpoint breakpoint)
+   {
+      int line = breakpoint.getLineNumber();
+      if (breakpoint.isActive())
+      {
+         editor_.getSession().clearBreakpoint(rowFromLine(line));
+      }
+      else
+      {
+         editor_.getSession().removeGutterDecoration(
+               rowFromLine(line), 
+               "ace_inactive-breakpoint");
       }
    }
    
    private int getBreakpointIdxById(int breakpointId)
    {
-	   for (Breakpoint breakpoint: breakpoints_)
+	   for (int idx = 0; idx < breakpoints_.size(); idx++)
 	   {
+	      if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
+	      {
+	         return idx;
+	      }
 	   }
 	   return -1;
    }
    
-   private int getBreakpointIdxByLine(int breakpointId)
+   private int getBreakpointIdxByLine(int lineNumber)
    {
-	   for (Breakpoint breakpoint: breakpoints_)
-	   {
-		   
-	   }
-	   return -1;
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
+      {
+         if (breakpoints_.get(idx).getLineNumber() == lineNumber)
+         {
+            return idx;
+         }
+      }
+      return -1;
+   }
+   
+   private int lineFromRow(int row)
+   {
+      return row + 1; 
+   }
+   
+   private int rowFromLine(int line)
+   {
+      return line - 1;
    }
   
    private final AceEditorNative editor_;

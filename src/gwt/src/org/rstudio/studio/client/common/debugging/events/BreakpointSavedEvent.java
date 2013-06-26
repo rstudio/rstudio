@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.debugging.events;
 
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -25,8 +27,20 @@ public class BreakpointSavedEvent
       void onBreakpointSaved(BreakpointSavedEvent event);
    }
 
-   public BreakpointSavedEvent()
+   public BreakpointSavedEvent(Breakpoint breakpoint, boolean successful)
    {
+      breakpoint_ = breakpoint;
+      successful_ = successful;
+   }
+   
+   public boolean successful()
+   {
+      return successful_;
+   }
+   
+   public Breakpoint breakpoint()
+   {
+      return breakpoint_;
    }
 
    @Override
@@ -42,4 +56,7 @@ public class BreakpointSavedEvent
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   private Breakpoint breakpoint_;
+   private boolean successful_;
 }

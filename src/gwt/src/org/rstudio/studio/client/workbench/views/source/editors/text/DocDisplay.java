@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -205,4 +206,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addBreakpointSetHandler
       (BreakpointSetEvent.Handler handler);
+   void addOrUpdateBreakpoint(Breakpoint breakpoint);
+   void removeBreakpoint(Breakpoint breakpoint);
 }
