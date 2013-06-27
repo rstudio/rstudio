@@ -290,9 +290,11 @@ void doSignIn(const http::Request& request,
 
       // register login with monitor
       using namespace monitor::events;
-      monitor::monitorClient().logEvent(Event(kAuthScope,
-                                              kAuthLoginEvent,
-                                              username));
+      monitor::monitorClient().logEvent(Event(
+                                           kAuthScope,
+                                           kAuthLoginEvent,
+                                           username,
+                                           core::system::currentProcessId()));
    }
    else
    {
@@ -314,9 +316,11 @@ void signOut(const http::Request& request,
       std::string username = userIdentifierToLocalUsername(userIdentifier);
 
       using namespace monitor::events;
-      monitor::monitorClient().logEvent(Event(kAuthScope,
-                                              kAuthLogoutEvent,
-                                              username));
+      monitor::monitorClient().logEvent(Event(
+                                           kAuthScope,
+                                           kAuthLogoutEvent,
+                                           username,
+                                           core::system::currentProcessId()));
    }
 
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
