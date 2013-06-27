@@ -103,6 +103,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
 
 FilePath projectFromDirectory(const FilePath& directoryPath);
 
+// update the package install args default (only if it is set to
+// the previous default value)
+bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig);
+
 } // namespace r_util
 } // namespace core 
 

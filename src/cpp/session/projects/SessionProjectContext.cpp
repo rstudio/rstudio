@@ -55,6 +55,10 @@ bool canWriteToProjectDir(const FilePath& projectDirPath)
    }
 }
 
+// access to project settings
+std::string readSetting(const char * const settingName);
+void writeSetting(const char * const settingName, const std::string& value);
+
 }  // anonymous namespace
 
 
@@ -156,6 +160,15 @@ Error ProjectContext::startup(const FilePath& projectFile,
                                    pUserErrMsg);
    if (error)
       return error;
+
+   // update package install args with new defaults (one time only)
+   const char * kUpdatePackageInstallDefault = "update-pkg-install-default";
+   if (readSetting(kUpdatePackageInstallDefault).empty())
+   {
+      writeSetting(kUpdatePackageInstallDefault, "1");
+      if (r_util::updateSetPackageInstallArgsDefault(&config))
+         providedDefaults = true;
+   }
 
    // if we provided defaults then re-write the project file
    // with the defaults
