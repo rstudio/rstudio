@@ -36,7 +36,8 @@ public class Breakpoint extends JavaScriptObject
          line_number : lineNumber,
          function_steps : 0,
          function_name : "",
-         active : false
+         active : false,
+         showing_armed: false
       };
    }-*/;
    
@@ -83,6 +84,16 @@ public class Breakpoint extends JavaScriptObject
    public final native void activate()
    /*-{
       this.active = true;
+   }-*/;
+   
+   public final native boolean showingArmed()
+   /*-{
+      return this.showing_armed;
+   }-*/;
+   
+   public final native void setShowingArmed(boolean armed)
+   /*-{
+      this.showing_armed = armed;
    }-*/;
    
    public final native void moveToLineNumber(int lineNumber)

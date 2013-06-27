@@ -138,5 +138,12 @@ public class Renderer extends JavaScriptObject
          this.$renderChanges(this.CHANGE_FULL);
       }
    }-*/;
-
+   
+   public native final void addGutterDecoration(int line, String clazz) /*-{
+      this.addGutterDecoration(line, clazz);
+   }-*/;
+   
+   public native final void removeGutterDecoration(int line, String clazz) /*-{
+      this.removeGutterDecoration(line, clazz);
+   }-*/;  
 }

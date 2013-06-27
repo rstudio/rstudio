@@ -626,33 +626,38 @@ public class TextEditingTarget implements EditingTarget
             }, 500);
          }
       });
-      
-      docDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
-      {         
-         @Override
-         public void onBreakpointSet(BreakpointSetEvent event)
-         {
-            if (event.isSet())
-            {
-               Breakpoint breakpoint = 
-                 breakpointManager_.setBreakpoint(path_, event.getLineNumber());
-               docDisplay_.addOrUpdateBreakpoint(breakpoint);
-            }
-            else
-            {
-               breakpointManager_.removeBreakpoint(event.getBreakpointId());
-            }
-         }
-      });
-      
-      docDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
+
+      if (fileType_.isR())
       {
-         @Override
-         public void onBreakpointMove(BreakpointMoveEvent event)
+         docDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
+         {         
+            @Override
+            public void onBreakpointSet(BreakpointSetEvent event)
+            {
+               if (event.isSet())
+               {
+                  Breakpoint breakpoint = 
+                    breakpointManager_.setBreakpoint(
+                          path_, 
+                          event.getLineNumber());
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+               }
+               else
+               {
+                  breakpointManager_.removeBreakpoint(event.getBreakpointId());
+               }
+            }
+         });
+         
+         docDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
          {
-            breakpointManager_.moveBreakpoint(event.getBreakpointId());
-         }
-      });
+            @Override
+            public void onBreakpointMove(BreakpointMoveEvent event)
+            {
+               breakpointManager_.moveBreakpoint(event.getBreakpointId());
+            }
+         });
+      }
       
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();

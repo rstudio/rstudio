@@ -108,6 +108,11 @@ public class BreakpointManager implements SessionInitHandler
                            steps.getSteps());                     
                      setFunctionBreakpoints(fileName, response.get(0).getName());
                   }
+                  // didn't find anything; remove this breakpoint
+                  else
+                  {
+                     discardUnsettableBreakpoint(breakpoint);
+                  }
                }
                
                @Override
@@ -115,9 +120,7 @@ public class BreakpointManager implements SessionInitHandler
                {
                   // didn't find anything on that line that we could use to set
                   // a breakpoint; remove it 
-                  events_.fireEvent(
-                        new BreakpointSavedEvent(breakpoint, false));
-                  breakpoints_.remove(breakpoint);
+                  discardUnsettableBreakpoint(breakpoint);
                }
       });
       breakpointStateDirty_ = true;
@@ -236,7 +239,8 @@ public class BreakpointManager implements SessionInitHandler
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.getFunctionName().equals(functionName) &&
-             breakpoint.getFileName().equals(fileName))
+             breakpoint.getFileName().equals(fileName) &&
+             functionName.length() > 0)
          {
             steps.add(breakpoint.getFunctionSteps());
             breakpoints.add(breakpoint);
@@ -268,6 +272,13 @@ public class BreakpointManager implements SessionInitHandler
                   }
                }
             });
+   }
+   
+   private void discardUnsettableBreakpoint(Breakpoint breakpoint)
+   {
+      events_.fireEvent(
+            new BreakpointSavedEvent(breakpoint, false));
+      breakpoints_.remove(breakpoint);
    }
    
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();

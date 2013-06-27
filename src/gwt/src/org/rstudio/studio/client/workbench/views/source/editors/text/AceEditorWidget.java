@@ -343,9 +343,14 @@ public class AceEditorWidget extends Composite
       int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
       if (idx >= 0)
       {
-         Breakpoint oldBreakpoint = breakpoints_.get(idx);
-         removeBreakpointMarker(oldBreakpoint);
-         breakpoints_.set(idx, breakpoint);
+         removeBreakpointMarker(breakpoint);
+         // if the breakpoint is active but hasn't yet been marked as armed in
+         // the editor, make that change now (and vice versa for breakpoints 
+         // moving to the disabled state)
+         if (breakpoint.isActive() != breakpoint.showingArmed())
+         {
+            breakpoint.setShowingArmed(breakpoint.isActive());
+         }
       }
       else
       {
@@ -359,8 +364,7 @@ public class AceEditorWidget extends Composite
       int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
       if (idx >= 0)
       {
-         Breakpoint oldBreakpoint = breakpoints_.get(idx);
-         removeBreakpointMarker(oldBreakpoint);
+         removeBreakpointMarker(breakpoint);
          breakpoints_.remove(idx);
       }
    }
@@ -463,36 +467,30 @@ public class AceEditorWidget extends Composite
    private void placeBreakpointMarker(Breakpoint breakpoint)
    {
       int line = breakpoint.getLineNumber();
-      if (breakpoint.isActive())
+      if (breakpoint.showingArmed())
       {
          editor_.getSession().setBreakpoint(rowFromLine(line));
       }
       else
       {
-         /*
-         TODO: Figure out why this doesn't work. 
-         editor_.getSession().addGutterDecoration(
+        editor_.getRenderer().addGutterDecoration(
                rowFromLine(line), 
                "ace_inactive-breakpoint");
-         */
       }
    }
    
    private void removeBreakpointMarker(Breakpoint breakpoint)
    {
       int line = breakpoint.getLineNumber();
-      if (breakpoint.isActive())
+      if (breakpoint.showingArmed())
       {
          editor_.getSession().clearBreakpoint(rowFromLine(line));
       }
       else
       {
-         /*
-         TODO: Figure out why this doesn't work. 
-         editor_.getSession().removeGutterDecoration(
+         editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line), 
                "ace_inactive-breakpoint");
-         */
       }
    }
    
