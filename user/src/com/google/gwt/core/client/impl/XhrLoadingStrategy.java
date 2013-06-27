@@ -29,7 +29,7 @@ public class XhrLoadingStrategy extends LoadingStrategyBase {
   /**
    * Uses XHR's to download the code.
    */
-  protected static class XhrDownloadStrategy implements DownloadStrategy {
+  public static class XhrDownloadStrategy implements DownloadStrategy {
     @Override
     public void tryDownload(final RequestData request) {
       final XMLHttpRequest xhr = XMLHttpRequest.create();

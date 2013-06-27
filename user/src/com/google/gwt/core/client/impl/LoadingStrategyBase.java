@@ -57,7 +57,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
    * RequestData's tryInstall() function, and if it fails, it should call it's
    * RequestData's onLoadError() function.
    */
-  interface DownloadStrategy {
+  protected interface DownloadStrategy {
     void tryDownload(final RequestData request);
   }
   
@@ -110,7 +110,11 @@ public class LoadingStrategyBase implements LoadingStrategy {
       this.downloadStrategy = downloadStrategy;
     }
     
+    public LoadTerminatedHandler getErrorHandler() { return errorHandler; }
+    
     public int getFragment() { return fragment; }
+    
+    public int getRetryCount() { return retryCount; }
     
     public String getUrl() { return url; }
     
