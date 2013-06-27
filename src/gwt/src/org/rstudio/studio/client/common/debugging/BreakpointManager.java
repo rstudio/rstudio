@@ -74,25 +74,22 @@ public class BreakpointManager implements SessionInitHandler
    
    // Public methods ---------------------------------------------------------
    
-   public Breakpoint setBreakpoint(final String fileName, int lineNumber)
+   public Breakpoint setBreakpoint(
+         final String fileName,
+         final String functionName,
+         int lineNumber)
    {
       // create the new breakpoint and arguments for the server call
       int[] lineNumbers = new int[] { lineNumber };
       final int newBreakpointId = currentBreakpointId_++;
       final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
             fileName, 
+            functionName,
             lineNumber);
       breakpoints_.add(breakpoint);
       
-      // ask the server for the name of the function, and the steps in that 
-      // function, that are associated with the given file and line number
-      // (consider: the server operation necessary is slow because it has to
-      // look through the source refs of every function to find the file and 
-      // line number; since the editor already knows which function we're 
-      // interested in, could we speed things up by examining its parse tree
-      // directly?)
       server_.getFunctionSteps(
-            fileName, 
+            functionName, 
             lineNumbers, 
             new ServerRequestCallback<JsArray<FunctionSteps>> () {
                @Override
@@ -106,7 +103,7 @@ public class BreakpointManager implements SessionInitHandler
                      breakpoint.addFunctionSteps(steps.getName(),
                            steps.getLineNumber(),
                            steps.getSteps());                     
-                     setFunctionBreakpoints(fileName, response.get(0).getName());
+                     setFunctionBreakpoints(fileName, functionName);
                   }
                   // didn't find anything; remove this breakpoint
                   else

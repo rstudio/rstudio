@@ -28,6 +28,7 @@ public class Breakpoint extends JavaScriptObject
    public native static Breakpoint create(
          int breakpointId,
          String fileName,
+         String functionName,
          int lineNumber)
    /*-{
       return {
@@ -35,7 +36,7 @@ public class Breakpoint extends JavaScriptObject
          file_name : fileName,
          line_number : lineNumber,
          function_steps : 0,
-         function_name : "",
+         function_name : functionName,
          active : false,
          showing_armed: false
       };

@@ -1328,10 +1328,17 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().getCodeModel().getCurrentChunk(position);
    }
 
+   @Override
    public Scope getCurrentFunction()
    {
+      return getFunctionAtPosition(getCursorPosition());
+   }
+   
+   @Override
+   public Scope getFunctionAtPosition(Position position)
+   {
       return getSession().getMode().getCodeModel().getCurrentFunction(
-            getCursorPosition());
+            position);
    }
 
    public Position getCursorPosition()

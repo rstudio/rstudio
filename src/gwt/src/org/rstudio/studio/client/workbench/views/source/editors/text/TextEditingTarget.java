@@ -636,9 +636,15 @@ public class TextEditingTarget implements EditingTarget
             {
                if (event.isSet())
                {
+                  Position breakpointPosition = 
+                        Position.create(event.getLineNumber(), 0);
+                  String functionName = 
+                        docDisplay_.getFunctionAtPosition(breakpointPosition)
+                                   .getLabel();
                   Breakpoint breakpoint = 
                     breakpointManager_.setBreakpoint(
                           path_, 
+                          functionName,
                           event.getLineNumber());
                   docDisplay_.addOrUpdateBreakpoint(breakpoint);
                }

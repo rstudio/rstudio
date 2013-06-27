@@ -13,57 +13,93 @@
 #
 #
 
-# this function is used to get a list of function steps that correspond to
-# line numbers in a given file.
-.rs.addFunction("getFunctionSteps", function(fileName, lineNumbers)
+# adapted from lineNumInExpr
+.rs.addFunction("stepsAtLine", function(funBody, line)
 {
-    return(lapply(lineNumbers, function(lineNumber)
-    {
-        findLineNum(fileName, lineNumber, envir = globalenv())
-    }))
+   if (typeof(funBody) != "language")
+   {
+      return(NULL)
+   }
+
+   srcrefs <- attr(funBody, "srcref")
+   for (i in seq_along(funBody))
+   {
+      srcref <- srcrefs[[i]]
+
+      if (!is.null(srcref) && (srcref[1] > line || line > srcref[3]))
+      {
+         next
+      }
+
+      finer <- .rs.stepsAtLine(funBody[[i]], line)
+      if (!is.null(finer))
+      {
+         return(c(i, finer))
+      }
+
+      if (!is.null(srcref) &&
+          !(typeof(funBody[[i]]) == "symbol" &&
+            identical(as.character(funBody[[i]]), "{")))
+      {
+         return(i)
+      }
+   }
+   return(NULL)
+})
+
+# this function is used to get the steps in the given function that are
+# associated with the given line number, using the function's source
+# references.
+.rs.addFunction("getFunctionSteps", function(functionName, lineNumbers)
+{
+   funBody <- body(get(functionName, envir=globalenv()))
+   return(lapply(lineNumbers, function(lineNumber)
+   {
+      return(list(
+         name=functionName,
+         line=lineNumber,
+         at=.rs.stepsAtLine(funBody, lineNumber)))
+   }))
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(functionName, steps)
 {
-    if (length(steps) == 0)
-    {
-        untrace(functionName)
-    }
-    else
-    {
-        trace(
-            what = functionName,
-            at = steps,
-            tracer = browser,
-            print = FALSE)
-    }
+   if (length(steps) == 0)
+   {
+      untrace(functionName)
+   }
+   else
+   {
+      trace(
+          what = functionName,
+          at = steps,
+          tracer = browser,
+          print = FALSE)
+   }
 })
 
 .rs.addJsonRpcHandler("set_function_breakpoints", function(functionName, steps)
 {
-    .rs.setFunctionBreakpoints(functionName, steps)
+   .rs.setFunctionBreakpoints(functionName, steps)
 })
 
-.rs.addJsonRpcHandler("get_function_steps", function(fileName, lineNumbers)
+.rs.addJsonRpcHandler("get_function_steps", function(functionName, lineNumbers)
 {
-    results <- .rs.getFunctionSteps(fileName, lineNumbers)
-    formattedResults <- data.frame(
-        line = numeric(0),
-        name = character(0),
-        at = numeric(0),
-        stringsAsFactors = FALSE)
-    for (result in results)
-    {
-        for (entry in result)
-        {
-            formattedResult <- list(
-                line = entry$line,
-                name = entry$name,
-                at = entry$at)
-            formattedResults <- rbind(formattedResults, formattedResult)
-        }
-    }
-    formattedResults$name <- as.character(formattedResults$name)
-    return(formattedResults)
+   results <- .rs.getFunctionSteps(functionName, lineNumbers)
+   formattedResults <- data.frame(
+      line = numeric(0),
+      name = character(0),
+      at = numeric(0),
+      stringsAsFactors = FALSE)
+   for (result in results)
+   {
+      formattedResult <- list(
+         line = result$line,
+         name = result$name,
+         at = result$at)
+      formattedResults <- rbind(formattedResults, formattedResult)
+   }
+   formattedResults$name <- as.character(formattedResults$name)
+   return(formattedResults)
 })
 
