@@ -91,6 +91,10 @@ bool isExceptionMechanismElement(const StackElement& element)
 
           ||
 
+          boost::algorithm::ends_with(element.methodName, "createStackTrace")
+
+          ||
+
           (boost::algorithm::starts_with(element.fileName,
                                         "com/google/gwt/emul/java/lang/")
           &&
