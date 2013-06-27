@@ -707,6 +707,16 @@ public class TextEditingTarget implements EditingTarget
                }
             }
       );
+      
+      // find all of the debug breakpoints set in this document and replay them
+      // onto the edit surface
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(path_);
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         docDisplay_.addOrUpdateBreakpoint(breakpoint);
+      }
+      
       initStatusBar();
    }
    

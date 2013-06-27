@@ -73,6 +73,7 @@ public class BreakpointManager implements SessionInitHandler
    }
    
    // Public methods ---------------------------------------------------------
+   
    public Breakpoint setBreakpoint(final String fileName, int lineNumber)
    {
       int[] lineNumbers = new int[] { lineNumber };
@@ -124,6 +125,21 @@ public class BreakpointManager implements SessionInitHandler
       }
       breakpointStateDirty_ = true;
    }
+   
+   public ArrayList<Breakpoint> getBreakpointsInFile(String fileName)
+   {
+      ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getFileName().equals(fileName))
+         {
+            breakpoints.add(breakpoint);
+         }
+      }
+      return breakpoints;
+   }
+
+   // Event handlers ----------------------------------------------------------
 
    @Override
    public void onSessionInit(SessionInitEvent sie)
@@ -156,11 +172,6 @@ public class BreakpointManager implements SessionInitHandler
                          currentBreakpointId_, 
                          breakpoint.getBreakpointId() + 1);
                    
-                   // quick and dirty: populate the breakpoint in any open 
-                   // editors                
-                   events_.fireEvent(new BreakpointSavedEvent(
-                         breakpoint, true));                     
-
                    breakpoints_.add(breakpoint);
                 }
              }
@@ -186,8 +197,9 @@ public class BreakpointManager implements SessionInitHandler
           }
        };
    }
-
+   
    // Private methods ---------------------------------------------------------
+
    private void setFunctionBreakpoints(String fileName, String functionName)
    {
       ArrayList<Integer> steps = new ArrayList<Integer>();
