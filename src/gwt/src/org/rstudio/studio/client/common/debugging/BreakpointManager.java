@@ -172,7 +172,6 @@ public class BreakpointManager
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
-      // TODO: Make this persistent; temporary is only to ease debugging.
       new JSObjectStateValue(
             "debug-breakpoints",
             "debugBreakpointState",
@@ -279,7 +278,7 @@ public class BreakpointManager
 
    private void setFunctionBreakpoints(String functionName)
    {
-      ArrayList<Integer> steps = new ArrayList<Integer>();
+      ArrayList<String> steps = new ArrayList<String>();
       final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {

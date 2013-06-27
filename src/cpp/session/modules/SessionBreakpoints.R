@@ -59,13 +59,13 @@
       return(list(
          name=functionName,
          line=lineNumber,
-         at=.rs.stepsAtLine(funBody, lineNumber)))
+         at=paste(.rs.stepsAtLine(funBody, lineNumber), collapse=",")))
    }))
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(functionName, steps)
 {
-   if (length(steps) == 0)
+   if (length(steps) == 0 || nchar(steps) == 0)
    {
       untrace(functionName)
    }
@@ -73,7 +73,7 @@
    {
       trace(
           what = functionName,
-          at = steps,
+          at = lapply(strsplit(as.character(steps), ","), as.numeric),
           tracer = browser,
           print = FALSE)
    }
@@ -90,7 +90,7 @@
    formattedResults <- data.frame(
       line = numeric(0),
       name = character(0),
-      at = numeric(0),
+      at = character(0),
       stringsAsFactors = FALSE)
    for (result in results)
    {
@@ -101,6 +101,7 @@
       formattedResults <- rbind(formattedResults, formattedResult)
    }
    formattedResults$name <- as.character(formattedResults$name)
+   formattedResults$at <- as.character(formattedResults$at)
    return(formattedResults)
 })
 

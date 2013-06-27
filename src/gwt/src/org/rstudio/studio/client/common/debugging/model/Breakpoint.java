@@ -35,7 +35,7 @@ public class Breakpoint extends JavaScriptObject
          id : breakpointId,
          file_name : fileName,
          line_number : lineNumber,
-         function_steps : 0,
+         function_steps : "",
          function_name : functionName,
          active : false,
          showing_armed: false
@@ -52,7 +52,7 @@ public class Breakpoint extends JavaScriptObject
       this.function_steps = functionSteps;
    }-*/;
    
-   public final  native int getBreakpointId()
+   public final native int getBreakpointId()
    /*-{
       return this.id;
    }-*/;
@@ -72,7 +72,7 @@ public class Breakpoint extends JavaScriptObject
       return this.function_name;
    }-*/;
    
-   public final native int getFunctionSteps()
+   public final native String getFunctionSteps()
    /*-{
       return this.function_steps;
    }-*/;

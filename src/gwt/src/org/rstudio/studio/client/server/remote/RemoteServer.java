@@ -2856,13 +2856,13 @@ public class RemoteServer implements Server
    @Override
    public void setFunctionBreakpoints(
          String functionName,
-         ArrayList<Integer> steps,
+         ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray breakSteps = new JSONArray();
       for (int idx = 0; idx < steps.size(); idx++)
       {
-         breakSteps.set(idx, new JSONNumber(steps.get(idx)));
+         breakSteps.set(idx, new JSONString(steps.get(idx)));
       }
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));

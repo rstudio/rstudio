@@ -32,6 +32,6 @@ public interface DebuggingServerOperations
    
    public void setFunctionBreakpoints(
          String functionName,
-         ArrayList<Integer> steps,
+         ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback);
 }
