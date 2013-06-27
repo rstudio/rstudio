@@ -603,6 +603,11 @@ std::string generateUuid(bool includeDashes)
    return uuidStr;
 }
 
+PidType currentProcessId()
+{
+   return ::getpid();
+}
+
 Error executablePath(int argc, char * const argv[],
                      FilePath* pExecutablePath)
 {

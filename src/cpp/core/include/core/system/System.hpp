@@ -241,7 +241,9 @@ bool stdoutIsTerminal();
 std::string generateUuid(bool includeDashes = true);
 std::string generateShortenedUuid();
 
-// executable and installation path
+// process info
+
+PidType currentProcessId();
 
 Error executablePath(int argc, char * const argv[],
                      FilePath* pExecutablePath);

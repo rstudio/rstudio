@@ -27,6 +27,10 @@
 
 namespace monitor {
 
+namespace events {
+   class Event;
+}
+
 namespace metrics {
    class Metric;
    class MultiMetric;
@@ -56,6 +60,8 @@ public:
 
    virtual void sendMultiMetrics(
                         const std::vector<metrics::MultiMetric>& metrics) = 0;
+
+   virtual void logEvent(const events::Event& event) = 0;
 
 protected:
    const std::string& metricsSocket() const { return metricsSocket_; }

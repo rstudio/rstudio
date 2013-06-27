@@ -20,6 +20,7 @@ file(GLOB_RECURSE MONITOR_HEADER_FILES "*.h*")
 
 # source files
 set (MONITOR_SOURCE_FILES
+   events/Event.cpp
    metrics/Metric.cpp
    MonitorClient.cpp
    MonitorClientOverlay.cpp
