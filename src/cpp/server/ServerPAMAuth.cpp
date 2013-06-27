@@ -27,6 +27,7 @@
 #include <core/http/AsyncUriHandler.hpp>
 #include <core/text/TemplateFilter.hpp>
 
+#include <monitor/MonitorClient.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
@@ -286,6 +287,12 @@ void doSignIn(const http::Request& request,
                                std::string(),
                                pResponse);
       pResponse->setMovedTemporarily(request, appUri);
+
+      // register login with monitor
+      using namespace monitor::events;
+      monitor::monitorClient().logEvent(Event(kAuthScope,
+                                              kAuthLoginEvent,
+                                              username));
    }
    else
    {
@@ -300,6 +307,18 @@ void doSignIn(const http::Request& request,
 void signOut(const http::Request& request,
              http::Response* pResponse)
 {
+   // register logout with monitor if we have the username
+   std::string userIdentifier = getUserIdentifier(request);
+   if (!userIdentifier.empty())
+   {
+      std::string username = userIdentifierToLocalUsername(userIdentifier);
+
+      using namespace monitor::events;
+      monitor::monitorClient().logEvent(Event(kAuthScope,
+                                              kAuthLogoutEvent,
+                                              username));
+   }
+
    auth::secure_cookie::remove(request, kUserId, "", pResponse);
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }

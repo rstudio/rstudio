@@ -33,9 +33,10 @@ enum EventScope
 #define kAuthLogoutEvent      1002
 
 #define kSessionStartEvent    2001
-#define kSessionSuspendEvent  2002
-#define kSessionQuitEvent     2003
-#define kSessionExitEvent     2004
+#define kSessionSuicideEvent  2002
+#define kSessionSuspendEvent  2003
+#define kSessionQuitEvent     2004
+#define kSessionExitEvent     2005
 
 class Event
 {

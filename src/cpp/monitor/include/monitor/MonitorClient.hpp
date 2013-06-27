@@ -23,18 +23,12 @@
 #include <core/system/System.hpp>
 #include <core/LogWriter.hpp>
 
+#include <monitor/events/Event.hpp>
+#include <monitor/metrics/Metric.hpp>
+
 #include "MonitorConstants.hpp"
 
 namespace monitor {
-
-namespace events {
-   class Event;
-}
-
-namespace metrics {
-   class Metric;
-   class MultiMetric;
-}
 
 class Client : boost::noncopyable
 {

@@ -1958,6 +1958,12 @@ void rShowMessage(const std::string& message)
    
 void rSuspended(const r::session::RSuspendOptions& options)
 {
+   // log to monitor
+   using namespace monitor::events;
+   monitor::monitorClient().logEvent(Event(kSessionScope,
+                                           kSessionSuspendEvent));
+
+   // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
 }
    
@@ -1996,6 +2002,10 @@ void rQuit()
    if (s_wasForked)
       return;
 
+   // log to monitor
+   using namespace monitor::events;
+   monitor::monitorClient().logEvent(Event(kSessionScope, kSessionQuitEvent));
+
    // notify modules
    module_context::events().onQuit();
 
@@ -2012,6 +2022,11 @@ void rSuicide(const std::string& message)
 {
    if (s_wasForked)
       return;
+
+   // log to monitor
+   using namespace monitor::events;
+   monitor::monitorClient().logEvent(Event(kSessionScope,
+                                           kSessionSuicideEvent));
 
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
@@ -2709,6 +2724,12 @@ int main (int argc, char * const argv[])
             ensureRLibsUser(options.userHomePath(), options.rLibsUser());
       }
 
+      // we've gotten through startup so let's log a start event
+      using namespace monitor::events;
+      monitor::monitorClient().logEvent(Event(kSessionScope,
+                                              kSessionStartEvent));
+
+
       // install home and doc dir overrides if requested (for debugger mode)
       if (!options.rHomeDirOverride().empty())
          core::system::setenv("R_HOME", options.rHomeDirOverride());
@@ -2772,7 +2793,13 @@ int main (int argc, char * const argv[])
       // run r (does not return, terminates process using exit)
       error = r::session::run(rOptions, rCallbacks) ;
       if (error)
+      {
+          // this is logically equivilant to R_Suicide
+          monitor::monitorClient().logEvent(Event(kSessionScope,
+                                                  kSessionSuicideEvent));
+          // return failure
           return sessionExitFailure(error, ERROR_LOCATION);
+      }
       
       // return success for good form
       return EXIT_SUCCESS;
