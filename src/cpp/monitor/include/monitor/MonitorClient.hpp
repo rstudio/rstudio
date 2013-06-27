@@ -23,6 +23,8 @@
 #include <core/system/System.hpp>
 #include <core/LogWriter.hpp>
 
+#include "MonitorConstants.hpp"
+
 namespace monitor {
 
 namespace metrics {
@@ -32,7 +34,7 @@ namespace metrics {
 
 class Client : boost::noncopyable
 {
-public:
+protected:
    Client(const std::string& metricsSocket,
           const std::string& sharedSecret)
       : metricsSocket_(metricsSocket),
@@ -40,15 +42,15 @@ public:
    {
    }
 
+public:
    virtual ~Client() {}
 
-public:
    virtual void logMessage(const std::string& programIdentity,
                            core::system::LogLevel level,
                            const std::string& message) = 0;
 
-   virtual boost::shared_ptr<core::LogWriter> createLogWriter(
-                                       const std::string& programIdentity) = 0;
+   boost::shared_ptr<core::LogWriter> createLogWriter(
+                                       const std::string& programIdentity);
 
    virtual void sendMetrics(const std::vector<metrics::Metric>& metrics) = 0;
 
@@ -64,53 +66,14 @@ private:
    std::string sharedSecret_;
 };
 
-class SyncClient : public Client
-{
-public:
-   SyncClient(const std::string& metricsSocket,
-              const std::string& sharedSecret)
-      : Client(metricsSocket, sharedSecret)
-   {
-   }
+void initializeMonitorClient(const std::string& metricsSocket,
+                             const std::string& sharedSecret);
 
-   void logMessage(const std::string& programIdentity,
-                   core::system::LogLevel level,
-                   const std::string& message);
+void initializeMonitorClient(const std::string& metricsSocket,
+                             const std::string& sharedSecret,
+                             boost::asio::io_service& ioService);
 
-   boost::shared_ptr<core::LogWriter> createLogWriter(
-                                       const std::string& programIdentity);
-
-   void sendMetrics(const std::vector<metrics::Metric>& metrics);
-
-   void sendMultiMetrics(const std::vector<metrics::MultiMetric>& metrics);
-};
-
-
-class AsyncClient : public Client
-{
-public:
-   AsyncClient(const std::string& metricsSocket,
-               const std::string& sharedSecret,
-               boost::asio::io_service& ioService)
-      : Client(metricsSocket, sharedSecret),
-        ioService_(ioService)
-   {
-   }
-
-   void logMessage(const std::string& programIdentity,
-                   core::system::LogLevel level,
-                   const std::string& message);
-
-   boost::shared_ptr<core::LogWriter> createLogWriter(
-                                       const std::string& programIdentity);
-
-   void sendMetrics(const std::vector<metrics::Metric>& metrics);
-
-   void sendMultiMetrics(const std::vector<metrics::MultiMetric>& metrics);
-
-private:
-   boost::asio::io_service& ioService_;
-};
+Client& monitorClient();
 
 } // namespace monitor
 

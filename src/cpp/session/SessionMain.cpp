@@ -78,8 +78,7 @@
 
 extern "C" const char *locale2charset(const char *);
 
-#include <monitor/MonitorConstants.hpp>
-#include <monitor/http/Client.hpp>
+#include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
@@ -2576,11 +2575,13 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
-      // register monitor log handler
-      core::system::addLogWriter(monitor::http::monitorLogWriter(
-                                             kMonitorSocketPath,
-                                             options.monitorSharedSecret(),
-                                             options.programIdentity()));
+      // initialize monitor
+      monitor::initializeMonitorClient(kMonitorSocketPath,
+                                       options.monitorSharedSecret());
+
+      // register monitor log writer
+      core::system::addLogWriter(monitor::monitorClient().createLogWriter(
+                                                options.programIdentity()));
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;

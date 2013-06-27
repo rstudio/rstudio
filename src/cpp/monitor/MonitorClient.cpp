@@ -15,6 +15,8 @@
 
 #include <monitor/MonitorClient.hpp>
 
+#include "MonitorClientImpl.hpp"
+
 namespace monitor {
 
 namespace {
@@ -22,10 +24,8 @@ namespace {
 class MonitorLogWriter : public core::LogWriter
 {
 public:
-   MonitorLogWriter(const std::string& programIdentity,
-                    Client* pClient)
-      : programIdentity_(programIdentity),
-        pClient_(pClient)
+   MonitorLogWriter(const std::string& programIdentity)
+      : programIdentity_(programIdentity)
    {
    }
 
@@ -38,30 +38,46 @@ public:
                     core::system::LogLevel level,
                     const std::string& message)
    {
-      pClient_->logMessage(programIdentity, level, message);
+      monitorClient().logMessage(programIdentity, level, message);
    }
 
 private:
    std::string programIdentity_;
-   Client* pClient_;
 };
+
+// single global instance of the monitor client (allocate it on the heap
+// and never free it so that there are no order of destruction surprises)
+Client* s_pClient = NULL;
 
 } // anonymous namespace
 
-
-boost::shared_ptr<core::LogWriter> SyncClient::createLogWriter(
-                                           const std::string& programIdentity)
+boost::shared_ptr<core::LogWriter> Client::createLogWriter(
+                                    const std::string& programIdentity)
 {
    return boost::shared_ptr<core::LogWriter>(
-                        new MonitorLogWriter(programIdentity, this));
+                                 new MonitorLogWriter(programIdentity));
 }
 
-boost::shared_ptr<core::LogWriter> AsyncClient::createLogWriter(
-                                           const std::string& programIdentity)
-{
-   return boost::shared_ptr<core::LogWriter>(
-                        new MonitorLogWriter(programIdentity, this));
 
+void initializeMonitorClient(const std::string& metricsSocket,
+                             const std::string& sharedSecret)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new SyncClient(metricsSocket, sharedSecret);
+}
+
+void initializeMonitorClient(const std::string& metricsSocket,
+                             const std::string& sharedSecret,
+                             boost::asio::io_service& ioService)
+{
+   BOOST_ASSERT(s_pClient == NULL);
+   s_pClient = new AsyncClient(metricsSocket, sharedSecret, ioService);
+}
+
+Client& monitorClient()
+{
+   BOOST_ASSERT(s_pClient != NULL);
+   return *s_pClient;
 }
 
 } // namespace monitor

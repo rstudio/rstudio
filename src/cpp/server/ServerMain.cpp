@@ -34,8 +34,7 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
-#include <monitor/MonitorConstants.hpp>
-#include <monitor/http/Client.hpp>
+#include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
 
@@ -48,7 +47,6 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
-#include <server/ServerMonitorClient.hpp>
 
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
@@ -317,39 +315,6 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 }
 
 } // namespace scheduler
-
-
-void sendMetrics(const std::vector<monitor::metrics::Metric>& metrics)
-{
-   monitor::http::sendMetricsAsync(s_pHttpServer->ioService(),
-                                   kMonitorSocketPath,
-                                   server::options().monitorSharedSecret(),
-                                   metrics);
-}
-
-void sendMetrics(const std::vector<monitor::metrics::MultiMetric>& metrics)
-{
-   monitor::http::sendMultiMetricsAsync(s_pHttpServer->ioService(),
-                                        kMonitorSocketPath,
-                                        server::options().monitorSharedSecret(),
-                                        metrics);
-}
-
-namespace {
-
-const char * const kProgramIdentity = "rserver";
-
-boost::shared_ptr<LogWriter> monitorAsyncLogWriter()
-{
-   return monitor::http::monitorAsyncLogWriter(
-                                        s_pHttpServer->ioService(),
-                                        kMonitorSocketPath,
-                                        server::options().monitorSharedSecret(),
-                                        kProgramIdentity);
-}
-
-} // anonymous namespace
-
 } // namespace server
 
 
@@ -358,6 +323,7 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
+      const char * const kProgramIdentity = "rserver";
       initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
 
       // ignore SIGPIPE
@@ -428,9 +394,15 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // register the monitor log writer (needs to happen after
-      // http server init so the io service is available)
-      core::system::addLogWriter(monitorAsyncLogWriter());
+      // initialize monitor (needs to happen post http server init for access
+      // to the server's io service)
+      monitor::initializeMonitorClient(kMonitorSocketPath,
+                                       server::options().monitorSharedSecret(),
+                                       s_pHttpServer->ioService());
+
+      // add a monitor log writer
+      core::system::addLogWriter(
+                  monitor::monitorClient().createLogWriter(kProgramIdentity));
 
       // call overlay initialize
       error = overlay::initialize();

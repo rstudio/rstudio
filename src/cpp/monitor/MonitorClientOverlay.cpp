@@ -14,6 +14,7 @@
  */
 
 #include <monitor/MonitorClient.hpp>
+#include "MonitorClientImpl.hpp"
 
 namespace monitor {
 
