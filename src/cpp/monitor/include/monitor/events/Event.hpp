@@ -16,6 +16,8 @@
 #ifndef MONITOR_EVENTS_EVENT_HPP
 #define MONITOR_EVENTS_EVENT_HPP
 
+#include <iosfwd>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/system/System.hpp>
@@ -77,6 +79,8 @@ private:
    boost::posix_time::ptime timestamp_;
    std::string data_;
 };
+
+std::ostream& operator<<(std::ostream& ostr, const Event& event);
 
 } // namespace events
 } // namespace monitor

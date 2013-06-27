@@ -15,6 +15,12 @@
 
 #include <monitor/events/Event.hpp>
 
+#include <iostream>
+
+#include <core/StringUtils.hpp>
+
+#include <core/http/Util.hpp>
+
 namespace monitor {
 namespace events {
 
@@ -26,6 +32,61 @@ Event::Event(EventScope scope,
    username_ = core::system::username();
    pid_ = core::system::currentProcessId();
    timestamp_ =  boost::posix_time::microsec_clock::universal_time();
+}
+
+std::ostream& operator<<(std::ostream& ostr, const Event& event)
+{
+   switch(event.scope())
+   {
+      case kAuthScope:
+         ostr << "auth";
+         break;
+      case kSessionScope:
+         ostr << "session";
+         break;
+      default:
+         ostr << "<unknown>";
+         break;
+   }
+   ostr << " ";
+
+   switch(event.id())
+   {
+      case kAuthLoginEvent:
+         ostr << "login";
+         break;
+      case kAuthLogoutEvent:
+         ostr << "logout";
+         break;
+      case kSessionStartEvent:
+         ostr << "start";
+         break;
+      case kSessionSuicideEvent:
+         ostr << "suicide";
+         break;
+      case kSessionSuspendEvent:
+         ostr << "suspend";
+         break;
+      case kSessionQuitEvent:
+         ostr << "quit";
+         break;
+      case kSessionExitEvent:
+         ostr << "exit";
+         break;
+      default:
+         ostr << "<unknown>";
+         break;
+   }
+
+   ostr << " - ";
+   ostr << event.username() << " [" << event.pid() << "] - ";
+   ostr << core::http::util::httpDate(event.timestamp());
+   if (!event.data().empty())
+   {
+      ostr << " - " << event.data();
+   }
+
+   return ostr;
 }
 
 } // namespace events
