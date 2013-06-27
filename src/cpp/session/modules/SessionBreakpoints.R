@@ -13,7 +13,8 @@
 #
 #
 
-# adapted from lineNumInExpr
+# given the body of a function, search recursively through its parsed
+# representation for a step with a given source reference line number.
 .rs.addFunction("stepsAtLine", function(funBody, line)
 {
    if (typeof(funBody) != "language")

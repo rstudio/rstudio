@@ -16,7 +16,9 @@
 package org.rstudio.studio.client.common.debugging;
 
 import java.util.ArrayList;
+import java.util.TreeSet;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.BreakpointSavedEvent;
@@ -30,7 +32,10 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
@@ -55,7 +60,9 @@ import com.google.inject.Singleton;
 //    the breakpoint is now enabled.
 
 @Singleton
-public class BreakpointManager implements SessionInitHandler
+public class BreakpointManager 
+               implements SessionInitHandler, 
+                          PackageStatusChangedHandler
 {
    @Inject
    public BreakpointManager(
@@ -70,6 +77,7 @@ public class BreakpointManager implements SessionInitHandler
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
+      events_.addHandler(PackageStatusChangedEvent.TYPE, this);
    }
    
    // Public methods ---------------------------------------------------------
@@ -103,7 +111,7 @@ public class BreakpointManager implements SessionInitHandler
                      breakpoint.addFunctionSteps(steps.getName(),
                            steps.getLineNumber(),
                            steps.getSteps());                     
-                     setFunctionBreakpoints(fileName, functionName);
+                     setFunctionBreakpoints(functionName);
                   }
                   // didn't find anything; remove this breakpoint
                   else
@@ -131,9 +139,7 @@ public class BreakpointManager implements SessionInitHandler
          if (breakpoint.getBreakpointId() == breakpointId)
          {
             breakpoints_.remove(breakpoint);
-            setFunctionBreakpoints(
-                  breakpoint.getFileName(), 
-                  breakpoint.getFunctionName());
+            setFunctionBreakpoints(breakpoint.getFunctionName());
             break;
          }
       }
@@ -170,7 +176,7 @@ public class BreakpointManager implements SessionInitHandler
       new JSObjectStateValue(
             "debug-breakpoints",
             "debugBreakpointState",
-            ClientState.TEMPORARY,
+            ClientState.PROJECT_PERSISTENT,
             session_.getSessionInfo().getClientState(),
             false)
        {
@@ -227,16 +233,57 @@ public class BreakpointManager implements SessionInitHandler
        };
    }
    
+   @Override
+   public void onPackageStatusChanged(PackageStatusChangedEvent event)
+   {
+      // discard the event if we aren't in package development mode
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         return;
+      }
+
+      // ignore package unload events
+      if (!event.getPackageStatus().isLoaded())
+      {
+         return;
+      }
+      
+      // figure out if the package that just loaded was the one we're currently
+      // developing; if it isn't, discard the event
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      String packageName = projectDir.getStem();
+      String eventPackageName = event.getPackageStatus().getName(); 
+      if (packageName != eventPackageName)
+      {
+         return;
+      }         
+      
+      // enable any breakpoints inside files that are inside the project folder
+      TreeSet<String> functionsToBreak = new TreeSet<String>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getFileName().startsWith(projectDir.getPath()))
+         {
+            functionsToBreak.add(breakpoint.getFunctionName());
+         }
+      }
+      for (String functionName: functionsToBreak)
+      {
+         setFunctionBreakpoints(functionName);
+      }
+   }
+   
    // Private methods ---------------------------------------------------------
 
-   private void setFunctionBreakpoints(String fileName, String functionName)
+   private void setFunctionBreakpoints(String functionName)
    {
       ArrayList<Integer> steps = new ArrayList<Integer>();
       final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.getFunctionName().equals(functionName) &&
-             breakpoint.getFileName().equals(fileName) &&
              functionName.length() > 0)
          {
             steps.add(breakpoint.getFunctionSteps());
