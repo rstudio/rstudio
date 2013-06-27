@@ -76,12 +76,21 @@ public class BreakpointManager implements SessionInitHandler
    
    public Breakpoint setBreakpoint(final String fileName, int lineNumber)
    {
+      // create the new breakpoint and arguments for the server call
       int[] lineNumbers = new int[] { lineNumber };
       final int newBreakpointId = currentBreakpointId_++;
       final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
             fileName, 
             lineNumber);
       breakpoints_.add(breakpoint);
+      
+      // ask the server for the name of the function, and the steps in that 
+      // function, that are associated with the given file and line number
+      // (consider: the server operation necessary is slow because it has to
+      // look through the source refs of every function to find the file and 
+      // line number; since the editor already knows which function we're 
+      // interested in, could we speed things up by examining its parse tree
+      // directly?)
       server_.getFunctionSteps(
             fileName, 
             lineNumbers, 
@@ -89,6 +98,8 @@ public class BreakpointManager implements SessionInitHandler
                @Override
                public void onResponseReceived(JsArray<FunctionSteps> response)
                {
+                  // found the function and the steps in the function; next, 
+                  // ask the server to set the breakpoint
                   if (response.length() > 0)
                   {
                      FunctionSteps steps = response.get(0);
@@ -102,6 +113,8 @@ public class BreakpointManager implements SessionInitHandler
                @Override
                public void onError(ServerError error)
                {
+                  // didn't find anything on that line that we could use to set
+                  // a breakpoint; remove it 
                   events_.fireEvent(
                         new BreakpointSavedEvent(breakpoint, false));
                   breakpoints_.remove(breakpoint);
@@ -121,9 +134,18 @@ public class BreakpointManager implements SessionInitHandler
             setFunctionBreakpoints(
                   breakpoint.getFileName(), 
                   breakpoint.getFunctionName());
+            break;
          }
       }
       breakpointStateDirty_ = true;
+   }
+   
+   public void moveBreakpoint(int breakpointId)
+   {
+      // because of Java(Script)'s reference semantics, the editor's instance
+      // of the breakpoint object is the same one we have here, so we don't
+      // need to update the line number--we just need to persist the new state.
+      breakpointStateDirty_ = true;      
    }
    
    public ArrayList<Breakpoint> getBreakpointsInFile(String fileName)
@@ -173,6 +195,13 @@ public class BreakpointManager implements SessionInitHandler
                          breakpoint.getBreakpointId() + 1);
                    
                    breakpoints_.add(breakpoint);
+                   
+                   // this initialization happens after the source windows are
+                   // up, so fire an event to the editor to show this 
+                   // breakpoint. as new source windows are opened, they will
+                   // call getBreakpointsInFile to populate themselves.
+                   events_.fireEvent(new BreakpointSavedEvent(
+                         breakpoint, true));                     
                 }
              }
           }

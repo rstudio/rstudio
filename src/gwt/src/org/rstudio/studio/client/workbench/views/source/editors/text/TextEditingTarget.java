@@ -645,6 +645,15 @@ public class TextEditingTarget implements EditingTarget
          }
       });
       
+      docDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
+      {
+         @Override
+         public void onBreakpointMove(BreakpointMoveEvent event)
+         {
+            breakpointManager_.moveBreakpoint(event.getBreakpointId());
+         }
+      });
+      
       // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
       previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  

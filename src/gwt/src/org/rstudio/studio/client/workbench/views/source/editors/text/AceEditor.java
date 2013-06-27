@@ -1499,6 +1499,13 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public HandlerRegistration addBreakpointMoveHandler(
+         BreakpointMoveEvent.Handler handler)
+   {
+      return widget_.addBreakpointMoveHandler(handler);
+   }
+   
+   @Override
    public void addOrUpdateBreakpoint(Breakpoint breakpoint)
    {
       widget_.addOrUpdateBreakpoint(breakpoint);

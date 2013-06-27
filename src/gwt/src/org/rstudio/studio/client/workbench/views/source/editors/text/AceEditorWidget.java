@@ -189,6 +189,12 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, BreakpointSetEvent.TYPE);
    }
    
+   public HandlerRegistration addBreakpointMoveHandler
+      (BreakpointMoveEvent.Handler handler)
+   {
+      return addHandler(handler, BreakpointMoveEvent.TYPE);
+   }
+   
    public AceEditorNative getEditor() {
       return editor_;
    }
@@ -441,6 +447,7 @@ public class AceEditorWidget extends Composite
          {
             breakpoint.moveToLineNumber(lineFromRow(newBreakpointPosition));
             placeBreakpointMarker(breakpoint);
+            fireEvent(new BreakpointMoveEvent(breakpoint.getBreakpointId())); 
          }
          else
          {
@@ -462,9 +469,12 @@ public class AceEditorWidget extends Composite
       }
       else
       {
+         /*
+         TODO: Figure out why this doesn't work. 
          editor_.getSession().addGutterDecoration(
                rowFromLine(line), 
                "ace_inactive-breakpoint");
+         */
       }
    }
    
@@ -477,9 +487,12 @@ public class AceEditorWidget extends Composite
       }
       else
       {
+         /*
+         TODO: Figure out why this doesn't work. 
          editor_.getSession().removeGutterDecoration(
                rowFromLine(line), 
                "ace_inactive-breakpoint");
+         */
       }
    }
    
