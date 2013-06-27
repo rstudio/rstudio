@@ -107,6 +107,7 @@ public class AceEditorWidget extends Composite
                     lineNumber, 
                     breakpoint.getBreakpointId(),
                     false));
+              breakpoints_.remove(breakpointIdx);
            }
            // if there's no breakpoint on that line yet, create a new unset
            // breakpoint there (the breakpoint manager will pick up the new
@@ -416,8 +417,8 @@ public class AceEditorWidget extends Composite
       for (int idx = 0; idx < breakpoints_.size(); idx++)
       {
          Breakpoint breakpoint = breakpoints_.get(idx);
-         int breakpointLine = breakpoint.getLineNumber();
-         if (breakpointLine >= shiftStartRow)
+         int breakpointRow = rowFromLine(breakpoint.getLineNumber());
+         if (breakpointRow >= shiftStartRow)
          {
             // remove the breakpoint from its old position
             movedBreakpoints.add(breakpoint);
@@ -427,7 +428,7 @@ public class AceEditorWidget extends Composite
       for (Breakpoint breakpoint: movedBreakpoints)
       {
          // calculate the new position of the breakpoint
-         int oldBreakpointPosition = breakpoint.getLineNumber();
+         int oldBreakpointPosition = rowFromLine(breakpoint.getLineNumber());
          int newBreakpointPosition = 
                oldBreakpointPosition + shiftedBy;
          
@@ -436,8 +437,9 @@ public class AceEditorWidget extends Composite
          // breakpoint there
          if (oldBreakpointPosition >= end.getRow() &&
              !(oldBreakpointPosition == end.getRow() && shiftedBy < 0) &&
-             getBreakpointIdxByLine(newBreakpointPosition) < 0)
+             getBreakpointIdxByLine(lineFromRow(newBreakpointPosition)) < 0)
          {
+            breakpoint.moveToLineNumber(lineFromRow(newBreakpointPosition));
             placeBreakpointMarker(breakpoint);
          }
          else

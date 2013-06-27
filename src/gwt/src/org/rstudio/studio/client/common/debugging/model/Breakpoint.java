@@ -84,4 +84,9 @@ public class Breakpoint extends JavaScriptObject
    /*-{
       this.active = true;
    }-*/;
+   
+   public final native void moveToLineNumber(int lineNumber)
+   /*-{
+     this.line_number = lineNumber;
+   }-*/;
 }
