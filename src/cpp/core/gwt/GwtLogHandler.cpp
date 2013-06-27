@@ -95,6 +95,11 @@ bool isExceptionMechanismElement(const StackElement& element)
 
           ||
 
+          boost::algorithm::starts_with(element.fileName,
+                                   "com/google/gwt/emul/java/lang/Throwable")
+
+          ||
+
           (boost::algorithm::starts_with(element.fileName,
                                         "com/google/gwt/emul/java/lang/")
           &&
