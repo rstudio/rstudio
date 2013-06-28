@@ -42,6 +42,7 @@ import com.google.gwt.view.client.NoSelectionModel;
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
@@ -120,6 +121,8 @@ public class EnvironmentObjects extends ResizeComposite
       splitPanel.addSouth(callFramePanel_, 150);
       splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
       splitPanel.add(objectList_);
+      
+      FontSizer.applyNormalFontSize(this);
    }
 
    // Public methods ----------------------------------------------------------
