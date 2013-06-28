@@ -24,7 +24,11 @@ class Error ;
 class ErrorLocation ;
    
 namespace log {
-        
+
+extern const char DELIM;
+
+std::string cleanDelims(const std::string& source);
+
 void logError(const Error& error, const ErrorLocation& loggedFromLocation) ;
    
 void logErrorMessage(const std::string& message, 

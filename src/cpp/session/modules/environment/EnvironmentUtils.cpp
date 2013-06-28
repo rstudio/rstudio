@@ -106,7 +106,7 @@ bool isUnevaluatedPromise (SEXP var)
 // that we can't allow them to be evaluated (doing so may e.g. trigger early
 // evaluation of a call), so instead we pass the name of the variable and a
 // reference to its environment so the lookup only happens in the context of
-
+// the R session.
 json::Value languageVarToJson(SEXP env, std::string objectName)
 {
    std::string value;

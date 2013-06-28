@@ -102,6 +102,11 @@ public:
       return std::string(wwwLocalPath_.c_str());
    }
 
+   core::FilePath wwwSymbolMapsPath() const
+   {
+      return core::FilePath(wwwSymbolMapsPath_.c_str());
+   }
+
    std::string wwwPort() const
    {
       return std::string(wwwPort_.c_str());
@@ -368,6 +373,7 @@ private:
    
    // www
    std::string wwwLocalPath_;
+   std::string wwwSymbolMapsPath_;
    std::string wwwPort_;
 
    // session

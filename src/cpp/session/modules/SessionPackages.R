@@ -24,12 +24,20 @@
          .rs.enqueClientEvent("package_status_changed", packageStatus)
       }
    
+   notifyPackageLoaded <- function(pkgname, ...)
+   {
+      .Call("rs_packageLoaded", pkgname)
+   }
+   
    sapply(.packages(TRUE), function(packageName) 
    {
       if ( !(packageName %in% .rs.hookedPackages) )
       {
          attachEventName = packageEvent(packageName, "attach")
          setHook(attachEventName, reportPackageStatus(TRUE), action="append")
+         
+         loadEventName = packageEvent(packageName, "onLoad")
+         setHook(loadEventName, notifyPackageLoaded, action="append")
              
          detachEventName = packageEvent(packageName, "detach")
          setHook(detachEventName, reportPackageStatus(FALSE), action="append")

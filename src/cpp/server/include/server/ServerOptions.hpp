@@ -95,6 +95,11 @@ public:
    {
       return std::string(wwwLocalPath_.c_str()); 
    }
+
+   core::FilePath wwwSymbolMapsPath() const
+   {
+      return core::FilePath(wwwSymbolMapsPath_.c_str());
+   }
    
    int wwwThreadPoolSize() const
    {
@@ -199,6 +204,7 @@ private:
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;
+   std::string wwwSymbolMapsPath_;
    int wwwThreadPoolSize_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;

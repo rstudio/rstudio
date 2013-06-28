@@ -120,7 +120,7 @@
          <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra extras"/>
          <arg line="${gwt.extra.args}"/>
-         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="${gwt.main.module}"/>
       </java>
    </target>
@@ -135,15 +135,29 @@
       </exec>
    </target>
 
+   <target name="desktop-draft" description="Compile desktop using GWT's draft mode">
+      <antcall target="gwtc">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
+         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
+      </antcall>
+   </target>
+
    <target name="draft" description="Compile using GWT's draft mode">
       <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioServer"/>
+         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
       </antcall>
    </target>
 
    <target name="desktop" description="Compile only desktop permutation">
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
+      </antcall>
+   </target>
+
+   <target name="server" description="Compile only server permutation">
+      <antcall target="gwtc">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioServer"/>
       </antcall>
    </target>
 	
@@ -178,7 +192,7 @@
          <arg value="-startupUrl"/>
          <arg value="http://localhost:8787"/>
          <arg line="-bindAddress 0.0.0.0"/>
-         <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+         <!-- Additional arguments like -logLevel DEBUG -->
          <arg value="org.rstudio.studio.RStudioDraft"/>
       </java>
    </target>

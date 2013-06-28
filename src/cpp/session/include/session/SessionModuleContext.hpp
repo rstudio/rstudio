@@ -221,6 +221,7 @@ struct Events : boost::noncopyable
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;
    boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
+   boost::signal<void(const std::string&)>   onPackageLoaded;
    boost::signal<void(bool)>                 onDeferredInit;
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
@@ -296,6 +297,9 @@ void enqueClientEvent(const ClientEvent& event);
 
 // check whether a directory is currently being monitored by one of our subsystems
 bool isDirectoryMonitored(const core::FilePath& directory);
+
+// check whether an R source file belongs to the package under development
+bool isRScriptInPackageBuildTarget(const core::FilePath& filePath);
 
 // convenience method for filtering out file listing and changes
 bool fileListingFilter(const core::FileInfo& fileInfo);

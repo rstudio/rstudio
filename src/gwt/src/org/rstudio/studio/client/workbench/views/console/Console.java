@@ -68,8 +68,6 @@ public class Console
          {
             if (event.isBusy())
                fadeInHelper_.beginShow();
-            else
-               fadeInHelper_.hide();
          }
       });
 

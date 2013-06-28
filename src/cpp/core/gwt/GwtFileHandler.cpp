@@ -16,8 +16,10 @@
 #include <core/gwt/GwtFileHandler.hpp>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/text/TemplateFilter.hpp>
 #include <core/system/System.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -155,6 +157,12 @@ void handleFileRequest(const std::string& wwwLocalPath,
    
    // case: files designated to never be cached 
    else if (regex_match(uri, boost::regex(".*\\.nocache\\..*")))
+   {
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(filePath, request);
+   }
+   // case: main page -- don't cache
+   else if (uri == mainPage)
    {
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);

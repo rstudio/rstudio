@@ -14,8 +14,7 @@
  */
 package org.rstudio.studio.client.application;
 
-import org.rstudio.core.client.CsvWriter;
-import org.rstudio.studio.client.server.LogEntryType;
+import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
@@ -44,10 +43,10 @@ public class ApplicationUncaughtExceptionHandler
    
    public void onUncaughtException(Throwable e)
    {
-      logException(e, "Uncaught Exception");
+      logException(e);
    }
 
-   private void logException(Throwable e, String label)
+   private void logException(Throwable e)
    {
       try
       {
@@ -55,65 +54,27 @@ public class ApplicationUncaughtExceptionHandler
          if (defaultUncaughtExceptionHandler_ != null)
             defaultUncaughtExceptionHandler_.onUncaughtException(e);
          
-         // NOTE: we use use | as the logical line delimiter because server log
-         // entries cannont contain newlines)
-         
-         // uncaught exception
-         StringBuilder message = new StringBuilder();
-         message.append(label).append(": ");
+         // log uncaught exception
+         server_.logException(ClientException.create(unwrap(e)),
+                              new VoidServerRequestCallback());
 
-         CsvWriter csv = new CsvWriter();
-         csv.writeValue(GWT.getPermutationStrongName());
-         csv.writeValue(e.toString());
-
-         StringBuilder stackTrace = new StringBuilder();
-         writeStackTrace(e, stackTrace, false);
-
-         csv.writeValue(stackTrace.toString());
-
-         message.append(csv.getValue());
-         
-         // log to server
-         server_.log(LogEntryType.ERROR, 
-                     message.toString(),
-                     new VoidServerRequestCallback());
-
-         if (e instanceof UmbrellaException)
-         {
-            UmbrellaException ue = (UmbrellaException)e;
-            for (Throwable t : ue.getCauses())
-               if (t != null)
-                  logException(t, "Nested Exception");
-         }
       }
       catch(Throwable throwable)
       {
          // make sure exceptions never escape the uncaught handler
       }
    }
-
-   private void writeStackTrace(Throwable e,
-                                StringBuilder stackTrace,
-                                boolean includeMessage)
+   
+   private Throwable unwrap(Throwable e)
    {
-      if (e == null)
-         return;
-
-      if (includeMessage)
-         stackTrace.append("\n").append(e.toString()).append("\n");
-
-      // stack frame
-      StackTraceElement[] stack = e.getStackTrace();
-      if (stack != null)
-      {
-         for (int i=0; i<stack.length; i++)
-         {
-            if (i > 0)
-               stackTrace.append("\n");
-            stackTrace.append("    at ");
-            stackTrace.append(stack[i].toString());
-         }
+      if (e instanceof UmbrellaException) 
+      {   
+         UmbrellaException ue = (UmbrellaException) e;  
+         if(ue.getCauses().size() == 1)   
+            return unwrap(ue.getCauses().iterator().next());  
       }
+      
+      return e;
    }
 
    

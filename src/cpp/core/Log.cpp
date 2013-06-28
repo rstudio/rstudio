@@ -27,18 +27,10 @@ namespace log {
 
 namespace {   
 
-const char DELIM = ';';
 const char * const OCCURRED_AT = "OCCURRED AT";
 const char * const LOGGED_FROM = "LOGGED FROM";
 const char * const CAUSED_BY = "CAUSED BY";
-   
-std::string cleanDelims(const std::string& source)
-{
-   std::string cleanTarget(source);
-   std::replace(cleanTarget.begin(), cleanTarget.end(), DELIM, ' ');
-   return cleanTarget;
-}
-   
+
 void writeError(const Error& error, std::ostream& os)
 {
    // build intermediate string so we can remove any embedded instances of
@@ -104,6 +96,16 @@ void logMessageWithLocation(const std::string& prefix,
 }
 
 }
+
+const char DELIM = ';';
+
+std::string cleanDelims(const std::string& source)
+{
+   std::string cleanTarget(source);
+   std::replace(cleanTarget.begin(), cleanTarget.end(), DELIM, ' ');
+   return cleanTarget;
+}
+
    
 void logError(const Error& error, const ErrorLocation& loggedFromLocation) 
 {

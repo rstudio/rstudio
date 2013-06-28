@@ -256,6 +256,9 @@ Error ProjectContext::initialize()
       // compute the build target path
       updateBuildTargetPath();
 
+      // update package info
+      updatePackageInfo();
+
       // compute the default encoding
       updateDefaultEncoding();
 
@@ -522,6 +525,16 @@ void ProjectContext::updateBuildTargetPath()
          buildTargetPath_=  projects::projectContext().directory().childPath(
                                                                   buildTarget);
       }
+   }
+}
+
+void ProjectContext::updatePackageInfo()
+{
+   if (config().buildType == r_util::kBuildTypePackage)
+   {
+      Error error = packageInfo_.read(buildTargetPath());
+      if (error)
+         LOG_ERROR(error);
    }
 }
 

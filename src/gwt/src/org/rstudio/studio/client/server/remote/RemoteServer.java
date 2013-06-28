@@ -169,6 +169,12 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(logEntry));
       sendRequest(LOG_SCOPE , LOG, params, requestCallback);
    }
+   
+   public void logException(ClientException e,
+                            ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
+   }
     
    public void clientInit(
                      final ServerRequestCallback<SessionInfo> requestCallback)
@@ -3126,6 +3132,5 @@ public class RemoteServer implements Server
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    
    private static final String LOG = "log";
-
-  
+   private static final String LOG_EXCEPTION = "log_exception";
 }

@@ -15,6 +15,10 @@
 
 #include <session/SessionMain.hpp>
 
+// required to avoid Win64 winsock order of include
+// compilation problem
+#include <boost/asio/io_service.hpp>
+
 #include <string>
 #include <vector>
 #include <queue>
@@ -1343,11 +1347,14 @@ void registerGwtHandlers()
          boost::bind(gwt::handleLogRequest, options.userIdentity(), _1, _2));
 
    // establish progress handler
-   FilePath wwwLocalPath(options.wwwLocalPath());
-   FilePath progressPagePath = wwwLocalPath.complete("progress.htm");
+   FilePath wwwPath(options.wwwLocalPath());
+   FilePath progressPagePath = wwwPath.complete("progress.htm");
    module_context::registerUriHandler(
          "/progress",
           boost::bind(text::handleTemplateRequest, progressPagePath, _1, _2));
+
+   // initialize gwt symbol maps
+   gwt::initializeSymbolMaps(options.wwwSymbolMapsPath());
 
    // set default handler
    s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), "/");

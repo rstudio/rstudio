@@ -108,6 +108,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("www-local-path",
          value<std::string>(&wwwLocalPath_)->default_value("www"),
          "www local path")
+      ("www-symbol-maps-path",
+         value<std::string>(&wwwSymbolMapsPath_)->default_value(
+                                                         "www-symbolmaps"),
+         "www symbol maps path")
       ("www-port",
          value<std::string>(&wwwPort_)->default_value("8787"),
          "port to listen on");
@@ -347,6 +351,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
    resolvePath(resourcePath, &wwwLocalPath_);
+   resolvePath(resourcePath, &wwwSymbolMapsPath_);
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionLibraryPath_);
