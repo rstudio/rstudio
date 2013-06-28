@@ -48,11 +48,11 @@ void AsyncClient::sendMultiMetrics(
 {
 }
 
-void SyncClient::logEvent(const events::Event& event)
+void SyncClient::logEvent(const Event& event)
 {
 }
 
-void AsyncClient::logEvent(const events::Event& event)
+void AsyncClient::logEvent(const Event& event)
 {
 }
 

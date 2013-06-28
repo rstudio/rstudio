@@ -23,7 +23,6 @@
 #include <core/system/System.hpp>
 
 namespace monitor {
-namespace events {
 
 enum EventScope
 {
@@ -45,11 +44,11 @@ class Event
 public:
    Event(EventScope scope,
          int id,
-         const std::string& username,
-         PidType pid,
+         const std::string& data = std::string(),
+         const std::string& username = core::system::username(),
+         PidType pid = core::system::currentProcessId(),
          boost::posix_time::ptime timestamp =
-                        boost::posix_time::microsec_clock::universal_time(),
-         const std::string& data = std::string())
+                        boost::posix_time::microsec_clock::universal_time())
       : scope_(scope),
         id_(id),
         username_(username),
@@ -58,10 +57,6 @@ public:
         data_(data)
    {
    }
-
-   Event(EventScope scope,
-         int id,
-         const std::string& data = std::string());
 
 public:
    EventScope scope() const { return scope_; }
@@ -82,7 +77,6 @@ private:
 
 std::ostream& operator<<(std::ostream& ostr, const Event& event);
 
-} // namespace events
 } // namespace monitor
 
 #endif // MONITOR_EVENTS_EVENT_HPP

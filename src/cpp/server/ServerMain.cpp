@@ -402,7 +402,7 @@ int main(int argc, char * const argv[])
 
       // add a monitor log writer
       core::system::addLogWriter(
-                  monitor::monitorClient().createLogWriter(kProgramIdentity));
+                monitor::client().createLogWriter(kProgramIdentity));
 
       // call overlay initialize
       error = overlay::initialize();

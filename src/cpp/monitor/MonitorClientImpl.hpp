@@ -37,7 +37,7 @@ public:
 
    void sendMultiMetrics(const std::vector<metrics::MultiMetric>& metrics);
 
-   void logEvent(const events::Event& event);
+   void logEvent(const Event& event);
 };
 
 class AsyncClient : public Client
@@ -59,7 +59,7 @@ public:
 
    void sendMultiMetrics(const std::vector<metrics::MultiMetric>& metrics);
 
-   void logEvent(const events::Event& event);
+   void logEvent(const Event& event);
 
 protected:
    boost::asio::io_service& ioService() { return ioService_; }

@@ -192,7 +192,8 @@ bool disallowSuspend() { return false; }
 volatile sig_atomic_t s_suspendRequested = 0;
 volatile sig_atomic_t s_forceSuspend = 0;
 volatile sig_atomic_t s_forceSuspendInterruptedR = 0;
-   
+bool s_suspendedFromTimeout = false;
+
 // cooperative suspend -- the http server is forced to timeout and a flag 
 // indicating that we should suspend at ourfirst valid opportunity is set
 void handleUSR1(int unused)
@@ -1130,9 +1131,15 @@ bool waitForMethod(const std::string& method,
       {
          if (allowSuspend())
          {
+            // note that we timed out
+            s_suspendedFromTimeout = true;
+
             // attempt to suspend (does not return if it succeeds)
             if ( !suspendSession(false) )
             {
+               // reset timeout flag
+               s_suspendedFromTimeout = false;
+
                // if it fails then reset the timeout timer so we don't keep
                // hammering away on the failure case
                timeoutTime = timeoutTimeFromNow();
@@ -1959,9 +1966,11 @@ void rShowMessage(const std::string& message)
 void rSuspended(const r::session::RSuspendOptions& options)
 {
    // log to monitor
-   using namespace monitor::events;
-   monitor::monitorClient().logEvent(Event(kSessionScope,
-                                           kSessionSuspendEvent));
+   using namespace monitor;
+   std::string data;
+   if (s_suspendedFromTimeout)
+      data = safe_convert::numberToString(session::options().timeoutMinutes());
+   client().logEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
@@ -2003,8 +2012,8 @@ void rQuit()
       return;
 
    // log to monitor
-   using namespace monitor::events;
-   monitor::monitorClient().logEvent(Event(kSessionScope, kSessionQuitEvent));
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionQuitEvent));
 
    // notify modules
    module_context::events().onQuit();
@@ -2024,9 +2033,8 @@ void rSuicide(const std::string& message)
       return;
 
    // log to monitor
-   using namespace monitor::events;
-   monitor::monitorClient().logEvent(Event(kSessionScope,
-                                           kSessionSuicideEvent));
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
 
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
@@ -2595,7 +2603,7 @@ int main (int argc, char * const argv[])
                                        options.monitorSharedSecret());
 
       // register monitor log writer
-      core::system::addLogWriter(monitor::monitorClient().createLogWriter(
+      core::system::addLogWriter(monitor::client().createLogWriter(
                                                 options.programIdentity()));
 
       // convenience flags for server and desktop mode
@@ -2725,9 +2733,8 @@ int main (int argc, char * const argv[])
       }
 
       // we've gotten through startup so let's log a start event
-      using namespace monitor::events;
-      monitor::monitorClient().logEvent(Event(kSessionScope,
-                                              kSessionStartEvent));
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionStartEvent));
 
 
       // install home and doc dir overrides if requested (for debugger mode)
@@ -2795,8 +2802,8 @@ int main (int argc, char * const argv[])
       if (error)
       {
           // this is logically equivilant to R_Suicide
-          monitor::monitorClient().logEvent(Event(kSessionScope,
-                                                  kSessionSuicideEvent));
+          client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+
           // return failure
           return sessionExitFailure(error, ERROR_LOCATION);
       }

@@ -55,7 +55,7 @@ public:
    virtual void sendMultiMetrics(
                         const std::vector<metrics::MultiMetric>& metrics) = 0;
 
-   virtual void logEvent(const events::Event& event) = 0;
+   virtual void logEvent(const Event& event) = 0;
 
 protected:
    const std::string& metricsSocket() const { return metricsSocket_; }
@@ -73,7 +73,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
                              const std::string& sharedSecret,
                              boost::asio::io_service& ioService);
 
-Client& monitorClient();
+Client& client();
 
 } // namespace monitor
 

@@ -22,17 +22,6 @@
 #include <core/http/Util.hpp>
 
 namespace monitor {
-namespace events {
-
-Event::Event(EventScope scope,
-             int id,
-             const std::string& data)
-   : scope_(scope), id_(id), data_(data)
-{
-   username_ = core::system::username();
-   pid_ = core::system::currentProcessId();
-   timestamp_ =  boost::posix_time::microsec_clock::universal_time();
-}
 
 std::ostream& operator<<(std::ostream& ostr, const Event& event)
 {
@@ -89,6 +78,5 @@ std::ostream& operator<<(std::ostream& ostr, const Event& event)
    return ostr;
 }
 
-} // namespace events
 } // namespace monitor
 

@@ -38,7 +38,7 @@ public:
                     core::system::LogLevel level,
                     const std::string& message)
    {
-      monitorClient().logMessage(programIdentity, level, message);
+      client().logMessage(programIdentity, level, message);
    }
 
 private:
@@ -74,7 +74,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
    s_pClient = new AsyncClient(metricsSocket, sharedSecret, ioService);
 }
 
-Client& monitorClient()
+Client& client()
 {
    BOOST_ASSERT(s_pClient != NULL);
    return *s_pClient;
