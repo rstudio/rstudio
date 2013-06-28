@@ -17,10 +17,12 @@ import java.util.Set;
 class HtmlWriter {
   private static final Set<String> ALLOWED_TAGS =
       Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-          "html", "head", "title", "style", "body", "pre", "span", "h1", "h2", "a",
+          "html", "head", "title", "style",
+          "body", "h1", "h2", "h3", "h4", "h5", "h6", "a", "pre", "span",
           "table", "tr", "td")));
   private static final Set<String> ALLOWED_ATTS =
-      Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("class=", "href=")));
+      Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+          "class=", "href=")));
 
   private final Writer out;
 

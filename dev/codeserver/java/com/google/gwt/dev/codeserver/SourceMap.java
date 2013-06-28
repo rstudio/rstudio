@@ -93,7 +93,7 @@ class SourceMap {
   /**
    * Returns a sorted list of all filenames in the given directory.
    */
-  public List<String> getSourceFilesInDirectory(String parent) {
+  List<String> getSourceFilesInDirectory(String parent) {
     if (!parent.endsWith("/")) {
       throw new IllegalArgumentException("unexpected: " + parent);
     }
