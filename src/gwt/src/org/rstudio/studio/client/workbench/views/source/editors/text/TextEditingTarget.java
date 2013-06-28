@@ -639,12 +639,19 @@ public class TextEditingTarget implements EditingTarget
                   Position breakpointPosition = 
                         Position.create(event.getLineNumber(), 0);
                   
+                  // don't try to create a breakpoint if we're not inside a
+                  // function scope
+                  Scope innerFunction = 
+                        docDisplay_.getFunctionAtPosition(breakpointPosition);
+                  if (innerFunction == null || !innerFunction.isFunction())
+                  {
+                     return;
+                  }
+
                   // the scope tree will find nested functions, but in R these
                   // are addressable only as substeps of the parent function.
                   // keep walking up the scope tree until we've reached the top
                   // level function.
-                  Scope innerFunction = 
-                        docDisplay_.getFunctionAtPosition(breakpointPosition);
                   while (innerFunction.getParentScope() != null &&
                          innerFunction.getParentScope().isFunction()) 
                   {

@@ -318,8 +318,7 @@ public class BreakpointManager
                {
                   for (Breakpoint breakpoint: breakpoints)
                   {
-                     events_.fireEvent(new BreakpointSavedEvent(
-                           breakpoint, false));                     
+                     discardUnsettableBreakpoint(breakpoint);
                   }
                }
             });

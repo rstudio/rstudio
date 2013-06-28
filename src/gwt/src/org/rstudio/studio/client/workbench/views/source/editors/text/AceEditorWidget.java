@@ -94,6 +94,14 @@ public class AceEditorWidget extends Composite
         @Override
         public void execute(AceMouseEventNative arg)
         {
+           // make sure the click is actually intended for the gutter
+           com.google.gwt.dom.client.Element targetElement = 
+                 Element.as(arg.getNativeEvent().getEventTarget());
+           if (targetElement.getClassName().indexOf("ace_gutter-cell") < 0)
+           {
+              return;
+           }
+           
            // rows are 0-based, but debug line numbers are 1-based
            int lineNumber = lineFromRow(arg.getDocumentPosition().getRow());
            int breakpointIdx = getBreakpointIdxByLine(lineNumber);

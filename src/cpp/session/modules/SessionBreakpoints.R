@@ -22,36 +22,33 @@
       return(NULL)
    }
 
-   srcrefs <- attr(funBody, "srcref")
-   for (i in 1:length(funBody))
+   refs <- attr(funBody, "srcref")
+   for (idx in 1:length(funBody))
    {
-      # make sure we have a source reference for this line
-      srcref <- srcrefs[[i]]
-      if (is.null(srcref))
+      # if there's a source ref on this line, check it against the line number
+      # provided by the caller
+      ref <- refs[[idx]]
+      if (length(ref) > 0)
       {
-         next
-      }
-
-      # if the requested line is outside the range of this source ref, proceed
-      # to the next source ref
-      if (line > srcref[3] ||
-          line < srcref[1])
-      {
-         next
+         if (line > ref[3] || line < ref[1])
+         {
+            next
+         }
       }
 
       # check for sub-steps--these exist when there's a nested function
-      nestedFunSteps <- .rs.stepsAtLine(funBody[[i]], line)
+      nestedFunSteps <- .rs.stepsAtLine(funBody[[idx]], line)
       if (!is.null(nestedFunSteps))
       {
-         return(c(i, nestedFunSteps))
+         return(c(idx, nestedFunSteps))
       }
 
       # match functions rather than opening brackets
-      if (!(typeof(funBody[[i]]) == "symbol" &&
-          identical(as.character(funBody[[i]]), "{")))
+      if (length(ref) > 0 &&
+          !(typeof(funBody[[idx]]) == "symbol" &&
+            identical(as.character(funBody[[idx]]), "{")))
       {
-         return(i)
+         return(idx)
       }
    }
    return(NULL)
