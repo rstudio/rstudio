@@ -38,7 +38,8 @@ public interface ApplicationServerOperations extends PrefsServerOperations
                         ServerRequestCallback<Void> requestCallback);
    
    // suspend the current session
-   void suspendSession(ServerRequestCallback<Void> requestCallback) ;
+   void suspendSession(boolean force,
+                       ServerRequestCallback<Void> requestCallback) ;
 
    // handle unsaved changes completed
    void handleUnsavedChangesCompleted(

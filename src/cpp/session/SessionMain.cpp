@@ -182,6 +182,7 @@ const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
+const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
 
 // convenience function for disallowing suspend (note still doesn't override
@@ -838,6 +839,21 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // acknowledge request & quit session
             ptrConnection->sendJsonRpcResponse();
             r::session::quit(saveWorkspace); // does not return
+         }
+         else if (jsonRpcRequest.method == kSuspendSession)
+         {
+            // check for force
+            bool force = true;
+            Error error = json::readParams(jsonRpcRequest.params, &force);
+            if (error)
+               LOG_ERROR(error);
+
+            // acknowledge request and set flags to suspend session
+            ptrConnection->sendJsonRpcResponse();
+            if (force)
+               handleUSR2(0);
+            else
+               handleUSR1(0);
          }
 
          // interrupt

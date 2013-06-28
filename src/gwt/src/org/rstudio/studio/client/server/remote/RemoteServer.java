@@ -208,9 +208,10 @@ public class RemoteServer implements Server
    }
    
    
-   public void suspendSession(ServerRequestCallback<Void> requestCallback)
+   public void suspendSession(boolean force,
+                              ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, SUSPEND_SESSION, requestCallback);
+      sendRequest(RPC_SCOPE, SUSPEND_SESSION, force, requestCallback);
    }
    
 
