@@ -120,6 +120,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/build/SessionBuild.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
+#include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -1523,6 +1524,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::history::initialize)
       (modules::code_search::initialize)
       (modules::build::initialize)
+      (modules::overlay::initialize)
 
       // workers
       (workers::web_request::initialize)
