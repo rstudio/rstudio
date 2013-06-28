@@ -23,24 +23,33 @@
    }
 
    srcrefs <- attr(funBody, "srcref")
-   for (i in seq_along(funBody))
+   for (i in 1:length(funBody))
    {
+      # make sure we have a source reference for this line
       srcref <- srcrefs[[i]]
-
-      if (!is.null(srcref) && (srcref[1] > line || line > srcref[3]))
+      if (is.null(srcref))
       {
          next
       }
 
-      finer <- .rs.stepsAtLine(funBody[[i]], line)
-      if (!is.null(finer))
+      # if the requested line is outside the range of this source ref, proceed
+      # to the next source ref
+      if (line > srcref[3] ||
+          line < srcref[1])
       {
-         return(c(i, finer))
+         next
       }
 
-      if (!is.null(srcref) &&
-          !(typeof(funBody[[i]]) == "symbol" &&
-            identical(as.character(funBody[[i]]), "{")))
+      # check for sub-steps--these exist when there's a nested function
+      nestedFunSteps <- .rs.stepsAtLine(funBody[[i]], line)
+      if (!is.null(nestedFunSteps))
+      {
+         return(c(i, nestedFunSteps))
+      }
+
+      # match functions rather than opening brackets
+      if (!(typeof(funBody[[i]]) == "symbol" &&
+          identical(as.character(funBody[[i]]), "{")))
       {
          return(i)
       }

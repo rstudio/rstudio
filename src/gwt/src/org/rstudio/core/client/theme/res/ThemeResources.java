@@ -185,4 +185,6 @@ public interface ThemeResources extends ClientBundle
    DataResource activeBreakpoint();
    @Source("inactiveBreakpoint.png")
    DataResource inactiveBreakpoint();
+   @Source("pendingBreakpoint.png")
+   DataResource pendingBreakpoint();
 }

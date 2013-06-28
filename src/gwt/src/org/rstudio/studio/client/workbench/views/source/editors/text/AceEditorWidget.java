@@ -475,7 +475,7 @@ public class AceEditorWidget extends Composite
       {
         editor_.getRenderer().addGutterDecoration(
                rowFromLine(line), 
-               "ace_inactive-breakpoint");
+               "ace_pending-breakpoint");
       }
    }
    
@@ -490,7 +490,7 @@ public class AceEditorWidget extends Composite
       {
          editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line), 
-               "ace_inactive-breakpoint");
+               "ace_pending-breakpoint");
       }
    }
    

@@ -2,7 +2,8 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external fixedWidthFont;
-@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_breakpoint, ace_inactive-breakpoint;
+@external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
+@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -100,6 +101,7 @@
 
 @url ACTIVEBREAKPOINT activeBreakpoint;
 @url INACTIVEBREAKPOINT inactiveBreakpoint;
+@url PENDINGBREAKPOINT pendingBreakpoint;
 
 body.windows, body.macintosh, body.linux {}
 
@@ -212,6 +214,7 @@ pre {
 }
 
 .ace_breakpoint,
+.ace_pending-breakpoint,
 .ace_inactive-breakpoint
 {
    background-position: 10% center;
@@ -221,6 +224,11 @@ pre {
 .ace_breakpoint
 {
    background-image: ACTIVEBREAKPOINT;	
+}
+
+.ace_pending-breakpoint
+{
+	background-image: PENDINGBREAKPOINT;
 }
 
 .ace_inactive-breakpoint

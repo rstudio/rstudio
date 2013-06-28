@@ -34,10 +34,14 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedHandler;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -62,7 +66,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class BreakpointManager 
                implements SessionInitHandler, 
-                          PackageStatusChangedHandler
+                          PackageStatusChangedHandler,
+                          ConsoleInputProcessedHandler
 {
    @Inject
    public BreakpointManager(
@@ -78,6 +83,7 @@ public class BreakpointManager
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(PackageStatusChangedEvent.TYPE, this);
+      events_.addHandler(ConsoleInputProcessedEvent.TYPE, this);
    }
    
    // Public methods ---------------------------------------------------------
@@ -260,20 +266,22 @@ public class BreakpointManager
       }         
       
       // enable any breakpoints inside files that are inside the project folder
-      TreeSet<String> functionsToBreak = new TreeSet<String>();
-      for (Breakpoint breakpoint: breakpoints_)
-      {
-         if (breakpoint.getFileName().startsWith(projectDir.getPath()))
-         {
-            functionsToBreak.add(breakpoint.getFunctionName());
-         }
-      }
-      for (String functionName: functionsToBreak)
-      {
-         setFunctionBreakpoints(functionName);
-      }
+      resetBreakpointsInPath(projectDir.getPath(), false);
    }
-   
+
+   @Override
+   public void onConsoleInputProcessed(ConsoleInputProcessedEvent event)
+   {
+      RegExp sourceExp = RegExp.compile("source\\('([^']*)'\\)");
+      MatchResult fileMatch = sourceExp.exec(event.getInput());
+      if (fileMatch == null || fileMatch.getGroupCount() == 0)
+      {
+         return;
+      }
+      
+      resetBreakpointsInPath(fileMatch.getGroup(1), true);
+   }
+
    // Private methods ---------------------------------------------------------
 
    private void setFunctionBreakpoints(String functionName)
@@ -322,6 +330,25 @@ public class BreakpointManager
       events_.fireEvent(
             new BreakpointSavedEvent(breakpoint, false));
       breakpoints_.remove(breakpoint);
+   }
+   
+   private void resetBreakpointsInPath(String path, boolean isFile)
+   {
+      TreeSet<String> functionsToBreak = new TreeSet<String>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         boolean processBreakpoint = isFile ?
+               breakpoint.getFileName().equals(path) :
+               breakpoint.getFileName().startsWith(path);
+         if (processBreakpoint)
+         {
+            functionsToBreak.add(breakpoint.getFunctionName());
+         }
+      }
+      for (String functionName: functionsToBreak)
+      {
+         setFunctionBreakpoints(functionName);
+      }
    }
    
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
