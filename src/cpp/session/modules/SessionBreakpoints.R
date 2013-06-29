@@ -54,6 +54,32 @@
    return(NULL)
 })
 
+.rs.addFunction("tracedSourceRefs", function(funBody, originalFunBody)
+{
+  if (typeof(funBody) != "language")
+  {
+    return(NULL)
+  }
+
+  # copy the original source references
+  attr(funBody, "srcref") <- attr(originalFunBody, "srcref")
+
+  # loop over statements in the body
+  for (idx in 1:length(funBody))
+  {
+    if (!is.null(attr(originalFunBody[[idx]], "srcref")))
+    {
+      updateTracedRefs(funBody[[idx]], originalFunBody[[idx]])
+    }
+    if (typeof(originalFunBody[[idx]]) != "symbol" &&
+        funBody[[idx]] != originalFunBody[[idx]])
+    {
+      attr(funBody[[idx]], "srcref") <-
+        rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
+    }
+  }
+})
+
 # this function is used to get the steps in the given function that are
 # associated with the given line number, using the function's source
 # references.
@@ -77,6 +103,7 @@
    }
    else
    {
+      # inject the browser calls
       trace(
           what = functionName,
           at = lapply(strsplit(as.character(steps), ","), as.numeric),
