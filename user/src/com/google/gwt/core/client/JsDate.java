@@ -160,7 +160,7 @@ public class JsDate extends JavaScriptObject {
   }-*/;
 
   /**
-   * Returns the month, from <code>0</code> (January) to <code>6</code>
+   * Returns the month, from <code>0</code> (January) to <code>11</code>
    * December.
    */
   public final native int getMonth() /*-{
@@ -238,7 +238,7 @@ public class JsDate extends JavaScriptObject {
   }-*/;
 
   /**
-   * Returns the month, from <code>0</code> (January) to <code>6</code>
+   * Returns the month, from <code>0</code> (January) to <code>11</code>
    * December, in UTC.
    */
   public final native int getUTCMonth() /*-{
