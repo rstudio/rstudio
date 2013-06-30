@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
@@ -196,6 +198,32 @@ public class DialogBoxTest extends PopupTest {
     primaryPopup.setAnimationEnabled(true);
 
     testDependantPopupPanel(primaryPopup);
+  }
+
+  public void testHandlerIsCleared() {
+    DialogBox dialogBox = new DialogBox();
+
+    assertNull(dialogBox.resizeHandlerRegistration);
+
+    dialogBox.show();
+    assertNotNull(dialogBox.resizeHandlerRegistration);
+
+    dialogBox.hide();
+    assertNull(dialogBox.resizeHandlerRegistration);
+
+    DialogBox autoHideBox = new DialogBox(true);
+    assertNull(autoHideBox.resizeHandlerRegistration);
+
+    autoHideBox.show();
+    assertNotNull(autoHideBox.resizeHandlerRegistration);
+
+    // trigger auto hide with mouse down
+    NativeEvent mouseDownEvent = dialogBox.getElement()
+        .getOwnerDocument().createMouseDownEvent(
+        0, 0, 0, 0, 0, false, false, false, false, 0);
+    Document.get().getBody().dispatchEvent(mouseDownEvent);
+    // handler should be gone
+    assertNull(autoHideBox.resizeHandlerRegistration);
   }
 
   public void testSafeHtmlConstructor() {
