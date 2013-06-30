@@ -76,4 +76,9 @@ class SafeHtmlString implements SafeHtml {
   public int hashCode() {
     return html.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return "safe: \"" + asString() + "\"";
+  }
 }
