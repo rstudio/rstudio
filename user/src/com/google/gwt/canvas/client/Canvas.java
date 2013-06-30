@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.CanvasElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.PartialSupport;
 import com.google.gwt.user.client.ui.FocusWidget;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * A widget representing a &lt;canvas&gt; element.
@@ -52,18 +53,46 @@ public class Canvas extends FocusWidget {
   }
 
   /**
+   * Wrap an existing canvas element.
+   * The element must already be attached to the document. If the element is removed from the
+   * document, you must call {@link RootPanel#detachNow(Widget)}.
+   * Note: This method can return null if there is no support for canvas by the
+   * current browser.
+   *
+   * @param element the element to wrap
+   * @return the {@link Canvas} widget or null if canvas is not supported by the current browser.
+   */
+  public static Canvas wrap(CanvasElement element) {
+    if (!isSupported(element)) {
+      return null;
+    }
+    assert Document.get().getBody().isOrHasChild(element);
+    Canvas canvas = new Canvas(element);
+
+    // Mark it attached and remember it for cleanup.
+    canvas.onAttach();
+    RootPanel.detachOnWindowClose(canvas);
+
+    return canvas;
+  }
+
+  /**
    * Runtime check for whether the canvas element is supported in this browser.
    * 
    * @return whether the canvas element is supported
    */
   public static boolean isSupported() {
+    return isSupported(Document.get().createCanvasElement());
+  }
+
+  private static boolean isSupported(CanvasElement element) {
     if (detector == null) {
       detector = GWT.create(CanvasElementSupportDetector.class);
     }
     if (!detector.isSupportedCompileTime()) {
       return false;
     }
-    CanvasElement element = Document.get().createCanvasElement();
+
     if (!detector.isSupportedRunTime(element)) {
       return false;
     }
