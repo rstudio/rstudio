@@ -463,15 +463,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Sets whether this list allows multiple selections. <em>NOTE: The preferred
-   * way of enabling multiple selections in a list box is by using the
-   * {@link #ListBox(boolean)} constructor. Using this method can spuriously
-   * fail on Internet Explorer 6.0.</em>
-   * 
+   * Sets whether this list allows multiple selections. <em>NOTE:
+   * Using this method can spuriously fail on Internet Explorer 6.0.</em>
+   *
    * @param multiple <code>true</code> to allow multiple selections
-   * @deprecated use {@link #ListBox(boolean)} instead
    */
-  @Deprecated
   public void setMultipleSelect(boolean multiple) {
     getSelectElement().setMultiple(multiple);
   }
