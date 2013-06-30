@@ -188,7 +188,8 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   private int clientLeft;
   private int clientTop;
 
-  private HandlerRegistration resizeHandlerRegistration;
+  // Visible for Testing
+  HandlerRegistration resizeHandlerRegistration;
 
   /**
    * Creates an empty dialog box. It should not be shown until its child widget
@@ -292,12 +293,12 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML,
   }
 
   @Override
-  public void hide() {
+  public void hide(boolean autoClosed) {
     if (resizeHandlerRegistration != null) {
       resizeHandlerRegistration.removeHandler();
       resizeHandlerRegistration = null;
     }
-    super.hide();
+    super.hide(autoClosed);
   }
 
   @Override
