@@ -133,13 +133,32 @@
           tracer = browser,
           print = FALSE)
 
+      # unlock the binding if necessary to inject the source references
+      lockedBinding <- FALSE
+
       # remap the source references so that the code injected by trace() is
       # mapped back to the line on which the breakpoint was set.  We need to
       # assign directly to the @.Data internal slot since assignment to the
       # public-facing body of the function will remove the tracing information.
-      body(envir[[functionName]]@.Data) <- .rs.tracedSourceRefs(
-         body(envir[[functionName]]@.Data),
-         body(envir[[functionName]]@original))
+      tryCatch({
+         if (bindingIsLocked(functionName, envir))
+         {
+            unlockBinding(functionName, envir)
+            lockedBinding <- TRUE
+         }
+         body(envir[[functionName]]@.Data) <- .rs.tracedSourceRefs(
+            body(envir[[functionName]]@.Data),
+            body(envir[[functionName]]@original))
+         },
+         finally =
+         {
+            # restore the lock
+            if (lockedBinding)
+            {
+               lockBinding(functionName, envir)
+            }
+         }
+      )
    }
    return(functionName)
 })
