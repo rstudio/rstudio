@@ -13,6 +13,21 @@
 #
 #
 
+# given the name of a function, return the name of the first environment on the
+# search path in which the function was found.
+.rs.addFunction("getEnvironmentOfFunction", function(objName)
+{
+   envs <- search()
+   for (e in envs)
+   {
+      env <- as.environment(e)
+      if (exists(objName, env, mode = "function", inherits = FALSE))
+      {
+         return (env)
+      }
+   }
+})
+
 # given the body of a function, search recursively through its parsed
 # representation for a step with a given source reference line number.
 .rs.addFunction("stepsAtLine", function(funBody, line)
@@ -54,23 +69,28 @@
    return(NULL)
 })
 
-.rs.addFunction("tracedSourceRefs", function(funBody, originalFunBody)
+.rs.addFunction("tracedSourceRefs",function(funBody, originalFunBody)
 {
   if (typeof(funBody) != "language")
   {
     return(NULL)
   }
 
-  # copy the original source references
+  # start with a copy of the original source references
   attr(funBody, "srcref") <- attr(originalFunBody, "srcref")
 
-  # loop over statements in the body
   for (idx in 1:length(funBody))
   {
+    # if this expression has source refs attached, recurse to create
+    # updated source refs
     if (!is.null(attr(originalFunBody[[idx]], "srcref")))
     {
-      updateTracedRefs(funBody[[idx]], originalFunBody[[idx]])
+      funBody[[idx]] <- .rs.tracedSourceRefs(
+         funBody[[idx]],
+         originalFunBody[[idx]])
     }
+    # if this expression was replaced by trace(), copy the source references
+    # from the original expression over each expression injected by trace()
     if (typeof(originalFunBody[[idx]]) != "symbol" &&
         funBody[[idx]] != originalFunBody[[idx]])
     {
@@ -78,6 +98,7 @@
         rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
     }
   }
+  return(funBody)
 })
 
 # this function is used to get the steps in the given function that are
@@ -97,6 +118,7 @@
 
 .rs.addFunction("setFunctionBreakpoints", function(functionName, steps)
 {
+   envir <- .rs.getEnvironmentOfFunction(functionName)
    if (length(steps) == 0 || nchar(steps) == 0)
    {
       untrace(functionName)
@@ -106,10 +128,20 @@
       # inject the browser calls
       trace(
           what = functionName,
+          where = envir,
           at = lapply(strsplit(as.character(steps), ","), as.numeric),
           tracer = browser,
           print = FALSE)
+
+      # remap the source references so that the code injected by trace() is
+      # mapped back to the line on which the breakpoint was set.  We need to
+      # assign directly to the @.Data internal slot since assignment to the
+      # public-facing body of the function will remove the tracing information.
+      body(envir[[functionName]]@.Data) <- .rs.tracedSourceRefs(
+         body(envir[[functionName]]@.Data),
+         body(envir[[functionName]]@original))
    }
+   return(functionName)
 })
 
 .rs.addJsonRpcHandler("set_function_breakpoints", function(functionName, steps)

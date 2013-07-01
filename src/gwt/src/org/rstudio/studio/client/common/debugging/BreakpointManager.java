@@ -36,6 +36,9 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedHandler;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
@@ -67,7 +70,8 @@ import com.google.inject.Singleton;
 public class BreakpointManager 
                implements SessionInitHandler, 
                           PackageStatusChangedHandler,
-                          ConsoleInputProcessedHandler
+                          ConsoleInputProcessedHandler,
+                          ContextDepthChangedEvent.Handler
 {
    @Inject
    public BreakpointManager(
@@ -83,7 +87,8 @@ public class BreakpointManager
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(PackageStatusChangedEvent.TYPE, this);
-      events_.addHandler(ConsoleInputProcessedEvent.TYPE, this);
+      events_.addHandler(ConsoleInputProcessedEvent.TYPE, this);      
+      events_.addHandler(ContextDepthChangedEvent.TYPE, this);
    }
    
    // Public methods ---------------------------------------------------------
@@ -280,6 +285,24 @@ public class BreakpointManager
       }
       
       resetBreakpointsInPath(fileMatch.getGroup(1), true);
+   }
+   
+   @Override
+   public void onContextDepthChanged(ContextDepthChangedEvent event)
+   {
+      // When we move around in debug context and hit a breakpoint, the initial
+      // evaluation state is a temporary construction that needs to be stepped
+      // past to begin actually evaluating the function. Step past it
+      // immediately.
+      JsArray<CallFrame> frames = event.getCallFrames();
+      for (int idx = 0; idx < frames.length(); idx++)
+      {
+         if (frames.get(idx).getFunctionName().equals(".doTrace"))
+         {
+            events_.fireEvent(new SendToConsoleEvent("n", true));
+            break;
+         }
+      }
    }
 
    // Private methods ---------------------------------------------------------
