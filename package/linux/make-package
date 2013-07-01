@@ -57,11 +57,6 @@ cmake -DRSTUDIO_TARGET=$1 \
 
 make
 
-if [ "$2" != "DEB" ]
-then
-  fakeroot cpack -G $2
-else
-  cpack -G $2
-fi
+fakeroot cpack -G $2
 
 cd ..
