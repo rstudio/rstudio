@@ -19,6 +19,5 @@ import com.google.gwt.resources.client.CssResource;
 
 public interface CallFramePanelStyle extends CssResource
 {
-   int callFramePanelMargin();
    String tracebackHeader();
 }
