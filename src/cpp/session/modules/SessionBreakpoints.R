@@ -71,9 +71,9 @@
 
 .rs.addFunction("tracedSourceRefs",function(funBody, originalFunBody)
 {
-  if (typeof(funBody) != "language")
+  if (is.symbol(funBody) || is.symbol(originalFunBody))
   {
-    return(NULL)
+    return (funBody)
   }
 
   # start with a copy of the original source references
@@ -81,22 +81,24 @@
 
   for (idx in 1:length(funBody))
   {
-    # if this expression has source refs attached, recurse to create
-    # updated source refs
-    if (!is.null(attr(originalFunBody[[idx]], "srcref")))
+    if (is.null(funBody[[idx]])) next
+
+    # if this expression was replaced by trace(), copy the source references
+    # from the original expression over each expression injected by trace()
+    if (sum(funBody[[idx]] != originalFunBody[[idx]]) > 0)
+    {
+      attr(funBody[[idx]], "srcref") <-
+        rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
+    }
+
+    # recurse to symbol level
+    else if (is.language(funBody[[idx]]))
     {
       funBody[[idx]] <- .rs.tracedSourceRefs(
          funBody[[idx]],
          originalFunBody[[idx]])
     }
-    # if this expression was replaced by trace(), copy the source references
-    # from the original expression over each expression injected by trace()
-    if (typeof(originalFunBody[[idx]]) != "symbol" &&
-        funBody[[idx]] != originalFunBody[[idx]])
-    {
-      attr(funBody[[idx]], "srcref") <-
-        rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
-    }
+
   }
   return(funBody)
 })
