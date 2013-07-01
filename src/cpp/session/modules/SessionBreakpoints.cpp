@@ -31,10 +31,12 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 using namespace core ;
 using namespace r::sexp;
@@ -43,12 +45,32 @@ using namespace r::exec;
 namespace session {
 namespace modules {
 namespace breakpoints {
+namespace
+{
+
+void onPackageLoaded(const std::string& pkgname)
+{
+   // check whether this package is the one currently under development
+   const projects::ProjectContext& projectContext = projects::projectContext();
+   if (projectContext.config().buildType == r_util::kBuildTypePackage &&
+       projectContext.packageInfo().name() == pkgname)
+   {
+      ClientEvent packageLoadedEvent(client_events::kActivePackageLoaded);
+      module_context::enqueClientEvent(packageLoadedEvent);
+   }
+}
+
+} // anonymous namespace
 
 Error initialize()
 {
+
    // subscribe to events
    using boost::bind;
    using namespace module_context;
+
+   events().onPackageLoaded.connect(onPackageLoaded);
+
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionBreakpoints.R"));

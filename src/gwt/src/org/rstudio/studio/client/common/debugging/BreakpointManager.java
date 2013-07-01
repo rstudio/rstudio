@@ -18,9 +18,9 @@ package org.rstudio.studio.client.common.debugging;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.debugging.events.ActivePackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.BreakpointSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.BreakpointState;
@@ -32,15 +32,12 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.regexp.shared.MatchResult;
@@ -69,7 +66,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class BreakpointManager 
                implements SessionInitHandler, 
-                          PackageStatusChangedHandler,
+                          ActivePackageLoadedEvent.Handler,
                           ConsoleInputProcessedHandler,
                           ContextDepthChangedEvent.Handler
 {
@@ -86,7 +83,7 @@ public class BreakpointManager
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
-      events_.addHandler(PackageStatusChangedEvent.TYPE, this);
+      events_.addHandler(ActivePackageLoadedEvent.TYPE, this);
       events_.addHandler(ConsoleInputProcessedEvent.TYPE, this);      
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
    }
@@ -244,34 +241,12 @@ public class BreakpointManager
    }
    
    @Override
-   public void onPackageStatusChanged(PackageStatusChangedEvent event)
+   public void onActivePackageLoaded(ActivePackageLoadedEvent event)
    {
-      // discard the event if we aren't in package development mode
-      String type = session_.getSessionInfo().getBuildToolsType();
-      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
-      {
-         return;
-      }
-
-      // ignore package unload events
-      if (!event.getPackageStatus().isLoaded())
-      {
-         return;
-      }
-      
-      // figure out if the package that just loaded was the one we're currently
-      // developing; if it isn't, discard the event
-      FileSystemItem projectDir = session_.getSessionInfo()
-            .getActiveProjectDir();
-      String packageName = projectDir.getStem();
-      String eventPackageName = event.getPackageStatus().getName(); 
-      if (packageName != eventPackageName)
-      {
-         return;
-      }         
-      
-      // enable any breakpoints inside files that are inside the project folder
-      resetBreakpointsInPath(projectDir.getPath(), false);
+      // when the active package is loaded (e.g. during Build & Reload), we
+      // lose trace state on all associated breakpoints--re-enable them.
+      resetBreakpointsInPath(
+            session_.getSessionInfo().getActiveProjectDir().getPath(), false);
    }
 
    @Override
