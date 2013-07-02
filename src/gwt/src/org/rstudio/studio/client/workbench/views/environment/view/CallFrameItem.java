@@ -24,6 +24,8 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
@@ -66,6 +68,8 @@ public class CallFrameItem extends Composite
          }
       }
       setDisplayText(frame_.getLineNumber());
+      
+      FontSizer.applyNormalFontSize(this);
    }
 
    public void setActive()

@@ -13,3 +13,13 @@ diagnosticsReport <- function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
 }
 
+previewRd <- function(rdFile) {
+  
+  if (!is.character(rdFile) || (length(rdFile) != 1))
+    stop("rdFile must be a single element character vector.")
+  if (!file.exists(rdFile))
+    stop("The specified rdFile ' ", rdFile, "' does not exist.")
+      
+  invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
+}
+

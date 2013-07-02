@@ -78,8 +78,7 @@
 
 extern "C" const char *locale2charset(const char *);
 
-#include <monitor/MonitorConstants.hpp>
-#include <monitor/http/Client.hpp>
+#include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionOptions.hpp>
@@ -122,6 +121,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/build/SessionBuild.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
+#include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -184,6 +184,7 @@ const char * const kChooseFileCompleted = "choose_file_completed";
 const char * const kLocatorCompleted = "locator_completed";
 const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
 const char * const kQuitSession = "quit_session" ;   
+const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
 
 // convenience function for disallowing suspend (note still doesn't override
@@ -194,7 +195,8 @@ bool disallowSuspend() { return false; }
 volatile sig_atomic_t s_suspendRequested = 0;
 volatile sig_atomic_t s_forceSuspend = 0;
 volatile sig_atomic_t s_forceSuspendInterruptedR = 0;
-   
+bool s_suspendedFromTimeout = false;
+
 // cooperative suspend -- the http server is forced to timeout and a flag 
 // indicating that we should suspend at ourfirst valid opportunity is set
 void handleUSR1(int unused)
@@ -840,6 +842,21 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             ptrConnection->sendJsonRpcResponse();
             r::session::quit(saveWorkspace); // does not return
          }
+         else if (jsonRpcRequest.method == kSuspendSession)
+         {
+            // check for force
+            bool force = true;
+            Error error = json::readParams(jsonRpcRequest.params, &force);
+            if (error)
+               LOG_ERROR(error);
+
+            // acknowledge request and set flags to suspend session
+            ptrConnection->sendJsonRpcResponse();
+            if (force)
+               handleUSR2(0);
+            else
+               handleUSR1(0);
+         }
 
          // interrupt
          else if ( jsonRpcRequest.method == kInterrupt )
@@ -1132,9 +1149,15 @@ bool waitForMethod(const std::string& method,
       {
          if (allowSuspend())
          {
+            // note that we timed out
+            s_suspendedFromTimeout = true;
+
             // attempt to suspend (does not return if it succeeds)
             if ( !suspendSession(false) )
             {
+               // reset timeout flag
+               s_suspendedFromTimeout = false;
+
                // if it fails then reset the timeout timer so we don't keep
                // hammering away on the failure case
                timeoutTime = timeoutTimeFromNow();
@@ -1502,6 +1525,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::history::initialize)
       (modules::code_search::initialize)
       (modules::build::initialize)
+      (modules::overlay::initialize)
       (modules::breakpoints::initialize)
 
       // workers
@@ -1961,6 +1985,14 @@ void rShowMessage(const std::string& message)
    
 void rSuspended(const r::session::RSuspendOptions& options)
 {
+   // log to monitor
+   using namespace monitor;
+   std::string data;
+   if (s_suspendedFromTimeout)
+      data = safe_convert::numberToString(session::options().timeoutMinutes());
+   client().logEvent(Event(kSessionScope, kSessionSuspendEvent, data));
+
+   // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
 }
    
@@ -1999,6 +2031,10 @@ void rQuit()
    if (s_wasForked)
       return;
 
+   // log to monitor
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionQuitEvent));
+
    // notify modules
    module_context::events().onQuit();
 
@@ -2015,6 +2051,10 @@ void rSuicide(const std::string& message)
 {
    if (s_wasForked)
       return;
+
+   // log to monitor
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
 
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
@@ -2578,11 +2618,13 @@ int main (int argc, char * const argv[])
       if (status.exit())
          return status.exitCode() ;
 
-      // register monitor log handler
-      core::system::addLogWriter(monitor::http::monitorLogWriter(
-                                             kMonitorSocketPath,
-                                             options.monitorSharedSecret(),
-                                             options.programIdentity()));
+      // initialize monitor
+      monitor::initializeMonitorClient(kMonitorSocketPath,
+                                       options.monitorSharedSecret());
+
+      // register monitor log writer
+      core::system::addLogWriter(monitor::client().createLogWriter(
+                                                options.programIdentity()));
 
       // convenience flags for server and desktop mode
       bool desktopMode = options.programMode() == kSessionProgramModeDesktop;
@@ -2710,6 +2752,11 @@ int main (int argc, char * const argv[])
             ensureRLibsUser(options.userHomePath(), options.rLibsUser());
       }
 
+      // we've gotten through startup so let's log a start event
+      using namespace monitor;
+      client().logEvent(Event(kSessionScope, kSessionStartEvent));
+
+
       // install home and doc dir overrides if requested (for debugger mode)
       if (!options.rHomeDirOverride().empty())
          core::system::setenv("R_HOME", options.rHomeDirOverride());
@@ -2773,7 +2820,13 @@ int main (int argc, char * const argv[])
       // run r (does not return, terminates process using exit)
       error = r::session::run(rOptions, rCallbacks) ;
       if (error)
+      {
+          // this is logically equivilant to R_Suicide
+          client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+
+          // return failure
           return sessionExitFailure(error, ERROR_LOCATION);
+      }
       
       // return success for good form
       return EXIT_SUCCESS;

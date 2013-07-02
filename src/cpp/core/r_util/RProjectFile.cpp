@@ -37,6 +37,10 @@ const char * const kBuildTypeCustom = "Custom";
 
 namespace {
 
+const char * const kPackageInstallArgsDefault = "--no-multiarch "
+                                                "--with-keep.source";
+const char * const kPackageInstallArgsPreviousDefault = "--no-multiarch";
+
 Error requiredFieldError(const std::string& field,
                          std::string* pUserErrMsg)
 {
@@ -147,7 +151,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packagePath = packagePath;
-   pConfig->packageInstallArgs = "--no-multiarch";
+   pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
 
 std::string detectBuildType(const FilePath& projectFilePath,
@@ -692,6 +696,19 @@ FilePath projectFromDirectory(const FilePath& directoryPath)
    else
    {
       return FilePath();
+   }
+}
+
+bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
+{
+   if (pConfig->packageInstallArgs == kPackageInstallArgsPreviousDefault)
+   {
+      pConfig->packageInstallArgs = kPackageInstallArgsDefault;
+      return true;
+   }
+   else
+   {
+      return false;
    }
 }
 

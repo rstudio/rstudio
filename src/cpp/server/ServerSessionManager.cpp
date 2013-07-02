@@ -27,7 +27,7 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 
-#include <monitor/MonitorConstants.hpp>
+#include <monitor/MonitorClient.hpp>
 #include <session/SessionConstants.hpp>
 
 #include <server/ServerOptions.hpp>
@@ -91,6 +91,16 @@ core::system::ProcessConfig sessionProcessConfig(
    config.environment = environment;
    config.stdStreamBehavior = core::system::StdStreamInherit;
    return config;
+}
+
+void onProcessExit(const std::string& username, PidType pid)
+{
+   using namespace monitor;
+   client().logEvent(Event(kSessionScope,
+                           kSessionExitEvent,
+                           "",
+                           username,
+                           pid));
 }
 
 } // anonymous namespace
@@ -187,7 +197,9 @@ Error SessionManager::launchAndTrackSession(
       return error;
 
    // track it for subsequent reaping
-   processTracker_.addProcess(pid);
+   processTracker_.addProcess(pid, boost::bind(onProcessExit,
+                                               profile.username,
+                                               pid));
 
    // return success
    return Success();
