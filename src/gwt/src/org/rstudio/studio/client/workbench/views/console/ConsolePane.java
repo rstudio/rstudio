@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -130,6 +132,18 @@ public class ConsolePane extends WorkbenchPane
    {
       debugMode_ = debugMode;
       setSecondaryToolbarVisible(debugMode_);
+      
+      if (debugMode_)
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+            @Override
+            public void execute()
+            {
+               if (shell_ != null)
+                  shell_.getDisplay().ensureInputVisible();
+            }
+         });
+      }
    }
    
    private Provider<Shell> consoleProvider_ ;
