@@ -141,21 +141,10 @@ public class CallFramePanel extends ResizeComposite
       callFrameItems_.clear();
    }
 
-   public int getHeightOfAllFrames()
+   public int getDesiredPanelHeight()
    {
-      if (callFrameItems_.size() == 0)
-      {
-         return 0;
-      }
-      else
-      {
-         int totalFrameSize = 0;
-         for (int idx = 0; idx < callFrameItems_.size(); idx++)
-         {
-            totalFrameSize += callFrameItems_.get(idx).getHeight();
-         }
-         return totalFrameSize + style.callFramePanelMargin();
-      }
+      return callFramePanelHeader.getOffsetHeight() + 
+            callFramePanel.getOffsetHeight();
    }
    
    public boolean isMinimized()

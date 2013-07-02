@@ -189,6 +189,10 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
       else
          filePath = realPath;
 
+      // don't show warnings from Makeconf
+      if (filePath.filename() == "Makeconf")
+         continue;
+
       // resolve type
       CompileError::Type errType = (type == "warning") ? CompileError::Warning :
                                                          CompileError::Error;
