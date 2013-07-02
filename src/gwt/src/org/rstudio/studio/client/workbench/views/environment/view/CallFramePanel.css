@@ -10,8 +10,8 @@
 
 .framePanel
 {
-    margin-bottom: callFramePanelMargin;
-    margin-top: 3px;
+    padding-bottom: callFramePanelMargin;
+    padding-top: 3px;
 }
 
 .executionArrow
