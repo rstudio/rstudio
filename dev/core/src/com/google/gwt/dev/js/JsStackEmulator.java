@@ -81,7 +81,7 @@ public class JsStackEmulator {
 
   /**
    * Resets the global stack depth to the local stack index and top stack frame
-   * after calls to Exceptions.caught. This is created by
+   * after calls to Exceptions.wrap. This is created by
    * {@link EntryExitVisitor#visit(JsCatch, JsContext)}.
    */
   private class CatchStackReset extends JsModVisitor {
@@ -97,7 +97,7 @@ public class JsStackEmulator {
 
     @Override
     public void endVisit(JsExprStmt x, JsContext ctx) {
-      // Looking for e = caught(e);
+      // Looking for e = wrap(e);
       JsExpression expr = x.getExpression();
 
       if (!(expr instanceof JsBinaryOperation)) {
@@ -120,8 +120,8 @@ public class JsStackEmulator {
         return;
       }
 
-      // caughtFunction is the JsFunction translated from Exceptions.caught
-      if (name.getStaticRef() != caughtFunction) {
+      // caughtFunction is the JsFunction translated from Exceptions.wrap
+      if (name.getStaticRef() != wrapFunction) {
         return;
       }
 
@@ -196,7 +196,7 @@ public class JsStackEmulator {
    * try {
    *   foo();
    * } catch (e) {
-   *   e = caught(e);
+   *   e = wrap(e);
    *   $stackDepth = stackIndex;
    *   throw e;
    * } finally {
@@ -450,21 +450,21 @@ public class JsStackEmulator {
 
     private JsCatch makeSyntheticCatchBlock(JsTry x) {
       /*
-       * catch (e) { e = caught(e); throw e; }
+       * catch (e) { e = wrap(e); throw e; }
        */
       SourceInfo info = x.getSourceInfo();
 
       JsCatch c = new JsCatch(info, currentFunction.getScope(), "e");
       JsName paramName = c.getParameter().getName();
 
-      // caught(e)
-      JsInvocation caughtCall = new JsInvocation(info);
-      caughtCall.setQualifier(caughtFunction.getName().makeRef(info));
-      caughtCall.getArguments().add(paramName.makeRef(info));
+      // wrap(e)
+      JsInvocation wrapCall = new JsInvocation(info);
+      wrapCall.setQualifier(wrapFunction.getName().makeRef(info));
+      wrapCall.getArguments().add(paramName.makeRef(info));
 
-      // e = caught(e)
+      // e = wrap(e)
       JsBinaryOperation asg = new JsBinaryOperation(info, JsBinaryOperator.ASG,
-          paramName.makeRef(info), caughtCall);
+          paramName.makeRef(info), wrapCall);
 
       // throw e
       JsThrow throwStatement = new JsThrow(info, paramName.makeRef(info));
@@ -852,7 +852,7 @@ public class JsStackEmulator {
     return stackMode;
   }
 
-  private JsFunction caughtFunction;
+  private JsFunction wrapFunction;
   private JsName lineNumbers;
   private JProgram jprogram;
   private final JsProgram jsProgram;
@@ -886,8 +886,8 @@ public class JsStackEmulator {
   }
 
   private void execImpl() {
-    caughtFunction = jsProgram.getIndexedFunction("Exceptions.caught");
-    if (caughtFunction == null) {
+    wrapFunction = jsProgram.getIndexedFunction("Exceptions.wrap");
+    if (wrapFunction == null) {
       // No exceptions caught? Weird, but possible.
       return;
     }

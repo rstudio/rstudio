@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
@@ -30,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -51,6 +53,7 @@ public class CatchBlockNormalizer {
    * Collapses all multi-catch blocks into a single catch block.
    */
   private class CollapseCatchBlocks extends JModVisitor {
+    JMethod wrapMethod = program.getIndexedMethod("Exceptions.wrap");
 
     // @Override
     @Override
@@ -71,9 +74,8 @@ public class CatchBlockNormalizer {
       JBlock newCatchBlock = new JBlock(catchInfo);
 
       {
-        // $e = Exceptions.caught($e)
-        JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
-        JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
+        // $e = Exceptions.wrap($e)
+        JMethodCall call = new JMethodCall(catchInfo, null, wrapMethod);
         call.addArg(new JLocalRef(catchInfo, exVar));
         newCatchBlock.addStmt(JProgram.createAssignmentStmt(catchInfo, new JLocalRef(catchInfo,
             exVar), call));
@@ -144,6 +146,38 @@ public class CatchBlockNormalizer {
     }
   }
 
+  private class UnwrapJavaScriptExceptionVisitor extends JModVisitor {
+    JDeclaredType jseType =
+        program.getFromTypeMap("com.google.gwt.core.client.JavaScriptException");
+    JMethod unwrapMethod = program.getIndexedMethod("Exceptions.unwrap");
+
+    @Override
+    public void endVisit(JThrowStatement x, Context ctx) {
+      assert jseType != null;
+
+      JExpression expr = x.getExpr();
+
+      // Optimization: unwrap not needed if "new BlahException()"
+      if (expr instanceof JNewInstance && !expr.getType().equals(jseType)) {
+        return;
+      }
+
+      // Optimization: unwrap not needed if expression can never be JavaScriptException
+      if (!program.typeOracle.canTheoreticallyCast((JReferenceType) expr.getType(), jseType)) {
+        return;
+      }
+
+      // throw x; -> throw Exceptions.unwrap(x);
+      ctx.replaceMe(createUnwrappedThrow(x));
+    }
+
+    private JThrowStatement createUnwrappedThrow(JThrowStatement x) {
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, unwrapMethod);
+      call.addArg(x.getExpr());
+      return new JThrowStatement(x.getSourceInfo(), call);
+    }
+  }
+
   public static void exec(JProgram program) {
     new CatchBlockNormalizer(program).execImpl();
   }
@@ -165,6 +199,8 @@ public class CatchBlockNormalizer {
   private void execImpl() {
     CollapseCatchBlocks collapser = new CollapseCatchBlocks();
     collapser.accept(program);
+    UnwrapJavaScriptExceptionVisitor unwrapper = new UnwrapJavaScriptExceptionVisitor();
+    unwrapper.accept(program);
   }
 
   private JLocal popTempLocal() {

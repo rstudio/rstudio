@@ -16,18 +16,38 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * This is a magic class the compiler uses to throw and check exceptions.
  */
 final class Exceptions {
 
-  static Object caught(Object e) {
+  static Object wrap(Object e) {
     if (e instanceof Throwable) {
       return e;
     }
-    return new JavaScriptException(e);
+    return e == null ? new JavaScriptException(null) : getCachableJavaScriptException(e);
   }
+
+  static Object unwrap(Object e) {
+    if (e instanceof JavaScriptException) {
+      JavaScriptObject exception = ((JavaScriptException) e).getException();
+      if (exception != null) {
+        return exception;
+      }
+    }
+    return e;
+  }
+
+  private static native JavaScriptException getCachableJavaScriptException(Object e)/*-{
+    var jse = e.__gwt$exception;
+    if (!jse) {
+      jse = @com.google.gwt.core.client.JavaScriptException::new(Ljava/lang/Object;)(e);
+      e.__gwt$exception = jse;
+    }
+    return jse;
+  }-*/;
 
   static boolean throwAssertionError() {
     throw new AssertionError();
