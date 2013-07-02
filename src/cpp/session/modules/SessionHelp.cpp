@@ -19,6 +19,7 @@
 
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
+#include <boost/format.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
@@ -43,6 +44,7 @@
 #include <r/RFunctionHook.hpp>
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -791,12 +793,31 @@ void handleHelpRequest(const http::Request& request, http::Response* pResponse)
                       pResponse);
 }
 
+SEXP rs_previewRd(SEXP rdFileSEXP)
+{
+   std::string rdFile = r::sexp::safeAsString(rdFileSEXP);
+   boost::format fmt("help/preview?file=%1%");
+   std::string url = boost::str(fmt % http::util::urlEncode(rdFile));
+   ClientEvent event(client_events::kShowHelp, url);
+   module_context::enqueClientEvent(event);
+   return R_NilValue;
+}
+
+
 } // anonymous namespace
    
 Error initialize()
 {
    // determine whether we should provide headers to custom handlers
    s_provideHeaders = r::util::hasRequiredVersion("2.13");
+
+
+   // register previewRd function
+   R_CallMethodDef previewRdMethodDef ;
+   previewRdMethodDef.name = "rs_previewRd" ;
+   previewRdMethodDef.fun = (DL_FUNC)rs_previewRd ;
+   previewRdMethodDef.numArgs = 1;
+   r::routines::addCallMethod(previewRdMethodDef);
 
    using boost::bind;
    using core::http::UriHandler;
