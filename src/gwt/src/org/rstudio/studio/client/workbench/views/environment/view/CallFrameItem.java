@@ -38,8 +38,6 @@ public class CallFrameItem extends Composite
 
    interface Style extends CssResource
    {
-      int callFrameHeight();
-      int callFrameMargin();
       String callFrame();
       String activeFrame();
       String noSourceFrame();
@@ -89,13 +87,6 @@ public class CallFrameItem extends Composite
       {
          observer_.changeContextDepth(frame_.getContextDepth());
       }
-   }
-
-   public int getHeight()
-   {
-      return isVisible_ ? 
-           style.callFrameHeight() + (style.callFrameMargin() * 2) :
-           0;
    }
 
    public static boolean isNavigableFilename(String fileName)

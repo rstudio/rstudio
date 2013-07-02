@@ -39,6 +39,7 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -127,6 +128,16 @@ public class EnvironmentObjects extends ResizeComposite
 
    // Public methods ----------------------------------------------------------
 
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      if (pendingCallFramePanelSize_)
+      {
+         autoSizeCallFramePanel();
+      }
+   }
+   
    public void setContextDepth(int contextDepth)
    {
       if (contextDepth > 0)
@@ -218,29 +229,28 @@ public class EnvironmentObjects extends ResizeComposite
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
 
-      // after setting the frames, resize the call frame panel to neatly wrap
-      // the new list, up to a maximum of half the height of the split panel.
-      int desiredCallFramePanelSize = style.headerRowHeight() +
-                                      callFramePanel_.getHeightOfAllFrames();
+      // if the parent panel has layout information, auto-size the call frame
+      // panel (let GWT go first so the call frame panel visibility has 
+      // taken effect) 
       if (splitPanel.getOffsetHeight() > 0)
       {
-         desiredCallFramePanelSize = Math.min(
-                 desiredCallFramePanelSize,
-                 (int)(0.66 * splitPanel.getOffsetHeight()));
-      }
-      
-      // if the panel is minimized, just update the cached height so it'll get
-      // set to what we want when/if the panel is restored
-      if (callFramePanel_.isMinimized())
-      {
-         callFramePanelHeight_ = desiredCallFramePanelSize;
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {            
+            @Override
+            public void execute()
+            {
+               autoSizeCallFramePanel();
+            }
+         });
       }
       else
       {
-         splitPanel.setWidgetSize(callFramePanel_, desiredCallFramePanelSize);
+         // wait until the split panel has layout information to compute the 
+         // correct size of the call frame panel
+         pendingCallFramePanelSize_ = true;
       }
    }
-
+   
    public void setEnvironmentName(String environmentName)
    {
       environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
@@ -521,6 +531,38 @@ public class EnvironmentObjects extends ResizeComposite
    {
       return contextDepth_ < 2;
    }
+   
+   private void autoSizeCallFramePanel()
+   {
+      // after setting the frames, resize the call frame panel to neatly 
+      // wrap the new list, up to a maximum of 2/3 of the height of the 
+      // split panel.
+      int desiredCallFramePanelSize = 
+            callFramePanel_.getDesiredPanelHeight();
+      
+      if (splitPanel.getOffsetHeight() > 0)
+      {
+         desiredCallFramePanelSize = Math.min(
+                 desiredCallFramePanelSize,
+                 (int)(0.66 * splitPanel.getOffsetHeight()));
+      }
+                  
+      // if the panel is minimized, just update the cached height so it'll 
+      // get set to what we want when/if the panel is restored
+      if (callFramePanel_.isMinimized())
+      {
+         callFramePanelHeight_ = desiredCallFramePanelSize;
+      }
+      else
+      {
+         splitPanel.setWidgetSize(
+               callFramePanel_, desiredCallFramePanelSize);
+         callFramePanel_.onResize();
+      }
+      
+      pendingCallFramePanelSize_ = false;
+   }
+
 
    // Private methods: state persistence --------------------------------------
 
@@ -753,5 +795,6 @@ public class EnvironmentObjects extends ResizeComposite
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
+   private boolean pendingCallFramePanelSize_ = false;
 
 }
