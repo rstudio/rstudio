@@ -352,12 +352,9 @@ public class AceEditorWidget extends Composite
       if (idx >= 0)
       {
          removeBreakpointMarker(breakpoint);
-         // if the breakpoint is active but hasn't yet been marked as armed in
-         // the editor, make that change now (and vice versa for breakpoints 
-         // moving to the disabled state)
-         if (breakpoint.isActive() != breakpoint.showingArmed())
+         if (breakpoint.getState() != breakpoint.getEditorState())
          {
-            breakpoint.setShowingArmed(breakpoint.isActive());
+            breakpoint.setEditorState(breakpoint.getState());
          }
       }
       else
@@ -475,30 +472,42 @@ public class AceEditorWidget extends Composite
    private void placeBreakpointMarker(Breakpoint breakpoint)
    {
       int line = breakpoint.getLineNumber();
-      if (breakpoint.showingArmed())
+      if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
       {
          editor_.getSession().setBreakpoint(rowFromLine(line));
       }
-      else
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_PROCESSING)
       {
         editor_.getRenderer().addGutterDecoration(
                rowFromLine(line), 
                "ace_pending-breakpoint");
+      } 
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
+      {
+         editor_.getRenderer().addGutterDecoration(
+               rowFromLine(line), 
+               "ace_inactive-breakpoint");
       }
    }
    
    private void removeBreakpointMarker(Breakpoint breakpoint)
    {
       int line = breakpoint.getLineNumber();
-      if (breakpoint.showingArmed())
+      if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
       {
          editor_.getSession().clearBreakpoint(rowFromLine(line));
       }
-      else
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_PROCESSING)
+      {
+        editor_.getRenderer().removeGutterDecoration(
+               rowFromLine(line), 
+               "ace_pending-breakpoint");
+      } 
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
       {
          editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line), 
-               "ace_pending-breakpoint");
+               "ace_inactive-breakpoint");
       }
    }
    

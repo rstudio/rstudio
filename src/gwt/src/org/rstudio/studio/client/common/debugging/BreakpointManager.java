@@ -93,49 +93,25 @@ public class BreakpointManager
    public Breakpoint setBreakpoint(
          final String fileName,
          final String functionName,
-         int lineNumber)
+         int lineNumber, 
+         boolean immediately)
    {
       // create the new breakpoint and arguments for the server call
-      int[] lineNumbers = new int[] { lineNumber };
       final int newBreakpointId = currentBreakpointId_++;
       final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
             fileName, 
             functionName,
-            lineNumber);
+            lineNumber,
+            immediately ?
+                  Breakpoint.STATE_PROCESSING :
+                  Breakpoint.STATE_INACTIVE);
       breakpoints_.add(breakpoint);
       
-      server_.getFunctionSteps(
-            functionName, 
-            lineNumbers, 
-            new ServerRequestCallback<JsArray<FunctionSteps>> () {
-               @Override
-               public void onResponseReceived(JsArray<FunctionSteps> response)
-               {
-                  // found the function and the steps in the function; next, 
-                  // ask the server to set the breakpoint
-                  if (response.length() > 0)
-                  {
-                     FunctionSteps steps = response.get(0);
-                     breakpoint.addFunctionSteps(steps.getName(),
-                           steps.getLineNumber(),
-                           steps.getSteps());                     
-                     setFunctionBreakpoints(functionName);
-                  }
-                  // didn't find anything; remove this breakpoint
-                  else
-                  {
-                     discardUnsettableBreakpoint(breakpoint);
-                  }
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  // didn't find anything on that line that we could use to set
-                  // a breakpoint; remove it 
-                  discardUnsettableBreakpoint(breakpoint);
-               }
-      });
+      if (immediately)
+      {
+         prepareAndSetFunctionBreakpoints(functionName);
+      }
+      
       breakpointStateDirty_ = true;
       return breakpoint;
    }
@@ -305,7 +281,7 @@ public class BreakpointManager
                {
                   for (Breakpoint breakpoint: breakpoints)
                   {
-                     breakpoint.activate();
+                     breakpoint.setState(Breakpoint.STATE_ACTIVE);
                      events_.fireEvent(new BreakpointSavedEvent(
                            breakpoint, true));                     
                   }
@@ -314,19 +290,84 @@ public class BreakpointManager
                @Override
                public void onError(ServerError error)
                {
-                  for (Breakpoint breakpoint: breakpoints)
-                  {
-                     discardUnsettableBreakpoint(breakpoint);
-                  }
+                  discardUnsettableBreakpoints(breakpoints);
                }
             });
    }
    
-   private void discardUnsettableBreakpoint(Breakpoint breakpoint)
+   private void prepareAndSetFunctionBreakpoints(final String functionName)
    {
-      events_.fireEvent(
-            new BreakpointSavedEvent(breakpoint, false));
-      breakpoints_.remove(breakpoint);
+      // look over the list of breakpoints in this function and see if any are
+      // marked inactive
+      final ArrayList<Breakpoint> inactiveBreakpoints = 
+            new ArrayList<Breakpoint>();
+      int[] inactiveLines = new int[]{};
+      int numLines = 0;
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getFunctionName().equals(functionName) &&
+             breakpoint.getState() != Breakpoint.STATE_ACTIVE)
+         {
+            inactiveBreakpoints.add(breakpoint);
+            inactiveLines[numLines++] = breakpoint.getLineNumber();
+         }
+      }
+      
+      // if we found breakpoints that aren't yet active, try to get the 
+      // corresponding steps from the function 
+      if (inactiveBreakpoints.size() > 0)
+      {
+         server_.getFunctionSteps(
+               functionName, 
+               inactiveLines, 
+               new ServerRequestCallback<JsArray<FunctionSteps>> () {
+                  @Override
+                  public void onResponseReceived
+                         (JsArray<FunctionSteps> response)
+                  {
+                     // found the function and the steps in the function; next, 
+                     // ask the server to set the breakpoint
+                     if (response.length() > 0)
+                     {
+                        for (int i = 0; i < inactiveBreakpoints.size() && 
+                                        i < response.length(); i++)
+                        {
+                           FunctionSteps steps = response.get(i);
+                           Breakpoint breakpoint = inactiveBreakpoints.get(i);
+                           breakpoint.addFunctionSteps(steps.getName(),
+                                 steps.getLineNumber(),
+                                 steps.getSteps());          
+                        }
+                       setFunctionBreakpoints(functionName);
+                      }
+                     // no results: discard the breakpoints
+                     else
+                     {
+                        discardUnsettableBreakpoints(inactiveBreakpoints);
+                     }
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     discardUnsettableBreakpoints(inactiveBreakpoints);
+                  }
+         });
+      }
+      else
+      {
+         setFunctionBreakpoints(functionName);
+      }
+   }
+   
+   private void discardUnsettableBreakpoints(ArrayList<Breakpoint> breakpoints)
+   {
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         events_.fireEvent(
+               new BreakpointSavedEvent(breakpoint, false));
+         breakpoints_.remove(breakpoint);
+      }
    }
    
    private void resetBreakpointsInPath(String path, boolean isFile)
@@ -344,7 +385,7 @@ public class BreakpointManager
       }
       for (String functionName: functionsToBreak)
       {
-         setFunctionBreakpoints(functionName);
+         prepareAndSetFunctionBreakpoints(functionName);
       }
    }
    

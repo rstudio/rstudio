@@ -24,12 +24,20 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class Breakpoint extends JavaScriptObject
 {   
    protected Breakpoint() {}
+
+   // Syntactically an enum would be preferable here but GWT enum wrappers 
+   // don't serialize well inside native JS objects. Do not change these values;
+   // they are persisted in project storage. 
+   public final static int STATE_PROCESSING = 0;
+   public final static int STATE_ACTIVE = 1;
+   public final static int STATE_INACTIVE = 2;
    
    public native static Breakpoint create(
          int breakpointId,
          String fileName,
          String functionName,
-         int lineNumber)
+         int lineNumber, 
+         int initialState)
    /*-{
       return {
          id : breakpointId,
@@ -37,8 +45,8 @@ public class Breakpoint extends JavaScriptObject
          line_number : lineNumber,
          function_steps : "",
          function_name : functionName,
-         active : false,
-         showing_armed: false
+         state : initialState,
+         editor_state: initialState
       };
    }-*/;
    
@@ -77,24 +85,24 @@ public class Breakpoint extends JavaScriptObject
       return this.function_steps;
    }-*/;
    
-   public final native boolean isActive()
+   public final native int getState()
    /*-{
-      return this.active;
+      return this.state;
    }-*/;
    
-   public final native void activate()
+   public final native void setState (int state)
    /*-{
-      this.active = true;
+      this.state = state;
    }-*/;
    
-   public final native boolean showingArmed()
+   public final native int getEditorState()
    /*-{
-      return this.showing_armed;
+      return this.editor_state;
    }-*/;
    
-   public final native void setShowingArmed(boolean armed)
+   public final native void setEditorState (int state)
    /*-{
-      this.showing_armed = armed;
+      this.editor_state = state;
    }-*/;
    
    public final native void moveToLineNumber(int lineNumber)

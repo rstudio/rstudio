@@ -663,8 +663,16 @@ public class TextEditingTarget implements EditingTarget
                     breakpointManager_.setBreakpoint(
                           path_, 
                           functionName,
-                          event.getLineNumber());
+                          event.getLineNumber(),
+                          dirtyState().getValue() == false);
                   docDisplay_.addOrUpdateBreakpoint(breakpoint);
+                  
+                  if (dirtyState().getValue())
+                  {
+                     String message = "Breakpoints will be activated when " +
+                     	              "this file is sourced or rebuilt.";                           
+                     view_.showWarningBar(message);
+                  }
                }
                else
                {
