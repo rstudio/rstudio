@@ -14,22 +14,25 @@
  */
 package org.rstudio.studio.client.common.debugging.events;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class BreakpointSavedEvent
-        extends GwtEvent<BreakpointSavedEvent.Handler>
+public class BreakpointsSavedEvent
+        extends GwtEvent<BreakpointsSavedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onBreakpointSaved(BreakpointSavedEvent event);
+      void onBreakpointsSaved(BreakpointsSavedEvent event);
    }
 
-   public BreakpointSavedEvent(Breakpoint breakpoint, boolean successful)
+   public BreakpointsSavedEvent(
+         ArrayList<Breakpoint> breakpoints, boolean successful)
    {
-      breakpoint_ = breakpoint;
+      breakpoints_ = breakpoints;
       successful_ = successful;
    }
    
@@ -38,9 +41,9 @@ public class BreakpointSavedEvent
       return successful_;
    }
    
-   public Breakpoint breakpoint()
+   public ArrayList<Breakpoint> breakpoints()
    {
-      return breakpoint_;
+      return breakpoints_;
    }
 
    @Override
@@ -52,11 +55,11 @@ public class BreakpointSavedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onBreakpointSaved(this);
+      handler.onBreakpointsSaved(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
    
-   private Breakpoint breakpoint_;
+   private ArrayList<Breakpoint> breakpoints_;
    private boolean successful_;
 }

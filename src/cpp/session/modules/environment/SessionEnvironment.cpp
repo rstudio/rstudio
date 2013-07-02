@@ -27,7 +27,6 @@
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
-#include <core/FileSerializer.hpp>
 #include <boost/foreach.hpp>
 
 #include "EnvironmentUtils.hpp"
@@ -281,53 +280,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    {
       return true;
    }
-   error = r::exec::RFunction(".rs.sourceFileFromRef", srcRef)
-                 .call(&fileName);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
 
-   // check for ~/.active-rstudio-document -- we never want to match sources
-   // in this file, as it's used to source unsaved changes from RStudio
-   // editor buffers. don't match sources to an empty filename, either
-   // (this will resolve to the user's home directory below).
-   boost::algorithm::trim(fileName);
-   if (fileName == "~/.active-rstudio-document" ||
-       fileName.length() == 0)
-   {
-      return true;
-   }
-
-   // make sure the file exists and isn't a directory
-   FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
-   if (!sourceFilePath.exists() ||
-       sourceFilePath.isDirectory())
-   {
-      return true;
-   }
-
-   // read the portion of the file pointed to by the source refs from disk
-   // the sourceref structure (including the array offsets used below)
-   // is documented here:
-   // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
-   std::string fileContent;
-   error = readStringFromFile(
-         sourceFilePath,
-         &fileContent,
-         string_utils::LineEndingPosix,
-         INTEGER(srcRef)[0],  // the first line
-         INTEGER(srcRef)[2],  // the last line
-         INTEGER(srcRef)[4],  // character position on the first line
-         INTEGER(srcRef)[5]   // character position on the last line
-         );
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
-   return *pFunctionCode != fileContent;
+   return functionDiffersFromSource(srcRef, *pFunctionCode);
 }
 
 // create a JSON object that contains information about the current environment;

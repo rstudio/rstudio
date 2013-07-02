@@ -34,4 +34,8 @@ public interface DebuggingServerOperations
          String functionName,
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback);
+   
+   public void getFunctionSyncState(
+         String functionName,
+         ServerRequestCallback<Boolean> requestCallback);
 }

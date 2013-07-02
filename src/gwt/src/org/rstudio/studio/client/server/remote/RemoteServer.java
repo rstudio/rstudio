@@ -2879,6 +2879,19 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   @Override
+   public void getFunctionSyncState(
+         String functionName,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionName));
+      sendRequest(RPC_SCOPE,
+                  GET_FUNCTION_SYNC_STATE,
+                  params,
+                  requestCallback);
+   }
          
    private String clientId_;
    private double clientVersion_ = 0;
@@ -3131,6 +3144,7 @@ public class RemoteServer implements Server
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
+   private static final String GET_FUNCTION_SYNC_STATE = "get_function_sync_state";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";

@@ -21,7 +21,7 @@ import java.util.TreeSet;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ActivePackageLoadedEvent;
-import org.rstudio.studio.client.common.debugging.events.BreakpointSavedEvent;
+import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.BreakpointState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
@@ -53,13 +53,17 @@ import com.google.inject.Singleton;
 // 2) The editing target (which maintains a reference to the breakpoint manager)
 //    asks the manager to create a breakpoint, and passes the new breakpoint 
 //    back to the editing surface (addOrUpdateBreakpoint)
-// 3) The breakpoint manager fetches the name of the function and the step of
+// 3) The breakpoint manager checks to see whether the source code for the 
+//    function on disk is identical to the source code for the function as
+//    it exists in the R session (get_function_sync_state). If it isn't, 
+//    it defers setting the breakpoint.
+// 4) The breakpoint manager fetches the name of the function and the step of
 //    the function in which the breakpoint occurs from the server, and updates
 //    the breakpoint with this information (get_function_steps) 
-// 4) The breakpoint manager combines the breakpoint with all of the other 
+// 5) The breakpoint manager combines the breakpoint with all of the other 
 //    breakpoints for the function, and makes a single call to the server to
 //    update the function's breakpoints (set_function_breakpoints)
-// 5) If successful, the breakpoint manager emits a BreakpointSavedEvent, which
+// 6) If successful, the breakpoint manager emits a BreakpointSavedEvent, which
 //    is picked up by the editing target, which updates the display to show that
 //    the breakpoint is now enabled.
 
@@ -109,7 +113,35 @@ public class BreakpointManager
       
       if (immediately)
       {
-         prepareAndSetFunctionBreakpoints(functionName);
+         server_.getFunctionSyncState(functionName, 
+               new ServerRequestCallback<Boolean>()
+         {
+            @Override
+            public void onResponseReceived(Boolean inSync)
+            {
+               // if the function lines up with the version on the server, set
+               // the breakpoint now
+               if (inSync)
+               {
+                  prepareAndSetFunctionBreakpoints(functionName);
+               }
+               // otherwise, save an inactive breakpoint--we'll revisit the
+               // marker the next time the file is sourced or the package is
+               // rebuilt
+               else
+               {
+                  markInactiveBreakpoint(breakpoint);
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               // if we can't figure out whether the function is in sync, 
+               // leave it inactive for now
+               markInactiveBreakpoint(breakpoint);
+            }
+         });
       }
       
       breakpointStateDirty_ = true;
@@ -123,7 +155,10 @@ public class BreakpointManager
          if (breakpoint.getBreakpointId() == breakpointId)
          {
             breakpoints_.remove(breakpoint);
-            setFunctionBreakpoints(breakpoint.getFunctionName());
+            if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
+            {
+               setFunctionBreakpoints(breakpoint.getFunctionName());
+            }
             break;
          }
       }
@@ -185,13 +220,13 @@ public class BreakpointManager
                    
                    breakpoints_.add(breakpoint);
                    
-                   // this initialization happens after the source windows are
-                   // up, so fire an event to the editor to show this 
-                   // breakpoint. as new source windows are opened, they will
-                   // call getBreakpointsInFile to populate themselves.
-                   events_.fireEvent(new BreakpointSavedEvent(
-                         breakpoint, true));                     
                 }
+                // this initialization happens after the source windows are
+                // up, so fire an event to the editor to show all known 
+                // breakpoints. as new source windows are opened, they will
+                // call getBreakpointsInFile to populate themselves.
+                events_.fireEvent(
+                      new BreakpointsSavedEvent(breakpoints_, true));
              }
           }
    
@@ -282,9 +317,9 @@ public class BreakpointManager
                   for (Breakpoint breakpoint: breakpoints)
                   {
                      breakpoint.setState(Breakpoint.STATE_ACTIVE);
-                     events_.fireEvent(new BreakpointSavedEvent(
-                           breakpoint, true));                     
                   }
+                  events_.fireEvent(
+                        new BreakpointsSavedEvent(breakpoints, true));
                }
                
                @Override
@@ -294,9 +329,10 @@ public class BreakpointManager
                }
             });
    }
-   
+      
    private void prepareAndSetFunctionBreakpoints(final String functionName)
    {
+      
       // look over the list of breakpoints in this function and see if any are
       // marked inactive
       final ArrayList<Breakpoint> inactiveBreakpoints = 
@@ -364,10 +400,10 @@ public class BreakpointManager
    {
       for (Breakpoint breakpoint: breakpoints)
       {
-         events_.fireEvent(
-               new BreakpointSavedEvent(breakpoint, false));
          breakpoints_.remove(breakpoint);
       }
+      events_.fireEvent(
+            new BreakpointsSavedEvent(breakpoints, false));
    }
    
    private void resetBreakpointsInPath(String path, boolean isFile)
@@ -387,6 +423,14 @@ public class BreakpointManager
       {
          prepareAndSetFunctionBreakpoints(functionName);
       }
+   }
+   
+   private void markInactiveBreakpoint(Breakpoint breakpoint)
+   {
+      breakpoint.setState(Breakpoint.STATE_INACTIVE);
+      ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+      breakpoints.add(breakpoint);
+      events_.fireEvent(new BreakpointsSavedEvent(breakpoints, true));
    }
    
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();

@@ -165,6 +165,27 @@
    return(functionName)
 })
 
+.rs.addFunction("getUntracedFunction", function(functionName)
+{
+   envir <- .rs.getEnvironmentOfFunction(functionName)
+   fun <- get(functionName, mode="function", envir=envir)
+   if (isS4(fun) && class(fun) == "functionWithTrace")
+   {
+      fun <- fun@original
+   }
+   return(fun)
+})
+
+.rs.addFunction("getFunctionSourceRefs", function(functionName)
+{
+   attr(.rs.getUntracedFunction(functionName), "srcref")
+})
+
+.rs.addFunction("getFunctionSourceCode", function(functionName)
+{
+   paste(capture.output(.rs.getFunctionSourceRefs(functionName)), collapse="\n")
+})
+
 .rs.addJsonRpcHandler("set_function_breakpoints", function(functionName, steps)
 {
    .rs.setFunctionBreakpoints(functionName, steps)

@@ -13,6 +13,8 @@
  *
  */
 
+#include "environment/EnvironmentUtils.hpp"
+
 #include <algorithm>
 
 #include <boost/bind.hpp>
@@ -60,11 +62,44 @@ void onPackageLoaded(const std::string& pkgname)
    }
 }
 
+Error getFunctionSyncState(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string functionName;
+   Error error = json::readParam(request.params, 0, &functionName);
+   if (error)
+   {
+       return error;
+   }
+
+   // get the source refs and code for the function
+   SEXP srcRefs = NULL;
+   Protect protect;
+   error = r::exec::RFunction(".rs.getFunctionSourceRefs", functionName)
+         .call(&srcRefs, &protect);
+   if (error)
+   {
+      return error;
+   }
+
+   std::string functionCode;
+   error = r::exec::RFunction(".rs.getFunctionSourceCode", functionName)
+         .call(&functionCode);
+   if (error)
+   {
+      return error;
+   }
+
+   // compare with the disk
+   bool inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
+   pResponse->setResult(json::Value(inSync));
+   return Success();
+}
+
 } // anonymous namespace
 
 Error initialize()
 {
-
    // subscribe to events
    using boost::bind;
    using namespace module_context;
@@ -73,6 +108,7 @@ Error initialize()
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_function_sync_state", getFunctionSyncState))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"));
 
    return initBlock.execute();

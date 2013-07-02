@@ -56,7 +56,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
-import org.rstudio.studio.client.common.debugging.events.BreakpointSavedEvent;
+import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -408,29 +408,33 @@ public class TextEditingTarget implements EditingTarget
       });
       
       events_.addHandler(
-            BreakpointSavedEvent.TYPE, 
-            new BreakpointSavedEvent.Handler()
+            BreakpointsSavedEvent.TYPE, 
+            new BreakpointsSavedEvent.Handler()
       {         
          @Override
-         public void onBreakpointSaved(BreakpointSavedEvent event)
+         public void onBreakpointsSaved(BreakpointsSavedEvent event)
          {            
-            // discard the event if it's not related to the file this editor
-            // instance is concerned with
-            if (!event.breakpoint().getFileName().equals(path_))
+            for (Breakpoint breakpoint: event.breakpoints())
             {
-               return;
+               // discard the event if it's not related to the file this editor
+               // instance is concerned with
+               if (!breakpoint.getFileName().equals(path_))
+               {
+                  return;
+               }
+                           
+               // if the breakpoint was saved successfully, enable it on the editor
+               // surface; otherwise, just remove it.
+               if (event.successful())
+               {
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+               }
+               else
+               {
+                  docDisplay_.removeBreakpoint(breakpoint);
+               }
             }
-            
-            // if the breakpoint was saved successfully, enable it on the editor
-            // surface; otherwise, just remove it.
-            if (event.successful())
-            {
-               docDisplay_.addOrUpdateBreakpoint(event.breakpoint());
-            }
-            else
-            {
-               docDisplay_.removeBreakpoint(event.breakpoint());
-            }
+            updateBreakpointWarningBar();
          }
       });
    }
@@ -665,19 +669,13 @@ public class TextEditingTarget implements EditingTarget
                           functionName,
                           event.getLineNumber(),
                           dirtyState().getValue() == false);
-                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
-                  
-                  if (dirtyState().getValue())
-                  {
-                     String message = "Breakpoints will be activated when " +
-                     	              "this file is sourced or rebuilt.";                           
-                     view_.showWarningBar(message);
-                  }
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);                  
                }
                else
                {
                   breakpointManager_.removeBreakpoint(event.getBreakpointId());
                }
+               updateBreakpointWarningBar();
             }
          });
          
@@ -766,6 +764,36 @@ public class TextEditingTarget implements EditingTarget
       initStatusBar();
    }
    
+   private void updateBreakpointWarningBar()
+   {
+      // check to see if there are any inactive breakpoints in this file
+      boolean hasInactiveBreakpoints = false;
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(path_);
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
+         {
+            hasInactiveBreakpoints = true;
+            break;
+         }
+      }
+
+      if (hasInactiveBreakpoints && !isBreakpointWarningVisible_)
+      {
+         String message = "Breakpoints will be activated when " +
+                          "this file is saved and sourced or " + 
+                          "rebuilt.";                           
+         view_.showWarningBar(message);
+         isBreakpointWarningVisible_ = true;
+      }
+      else if (!hasInactiveBreakpoints && isBreakpointWarningVisible_)
+      {
+         view_.hideWarningBar();         
+         isBreakpointWarningVisible_ = false;
+      }
+   }
+      
    private void checkCompilePdfDependencies()
    {
       compilePdfHelper_.checkCompilers(view_, fileType_);
@@ -3413,4 +3441,5 @@ public class TextEditingTarget implements EditingTarget
    
    private SourcePosition debugPosition_ = null;
    private boolean isDebugWarningVisible_ = false;
+   private boolean isBreakpointWarningVisible_ = false;
 }
