@@ -230,7 +230,7 @@ public class UrlContentEditingTarget implements EditingTarget
    }
      
    @Override
-   public void highlightDebugLocation(SourcePosition pos)
+   public void highlightDebugLocation(SourcePosition pos, boolean executing)
    {
    }
 

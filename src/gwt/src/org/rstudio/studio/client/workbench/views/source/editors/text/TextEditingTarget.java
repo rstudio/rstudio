@@ -493,10 +493,10 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition pos)
+   public void highlightDebugLocation(SourcePosition pos, boolean executing)
    {
       debugPosition_ = pos;
-      docDisplay_.highlightDebugLocation(debugPosition_);
+      docDisplay_.highlightDebugLocation(debugPosition_, executing);
       updateDebugWarningBar();
    }
 
@@ -526,7 +526,7 @@ public class TextEditingTarget implements EditingTarget
          // if we're still debugging, start highlighting the line again
          if (debugPosition_ != null)
          {
-            docDisplay_.highlightDebugLocation(debugPosition_);
+            docDisplay_.highlightDebugLocation(debugPosition_, false);
          }
          isDebugWarningVisible_ = false;
       }      

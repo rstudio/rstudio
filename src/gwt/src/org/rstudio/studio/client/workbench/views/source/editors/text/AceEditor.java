@@ -1472,7 +1472,8 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition srcPosition)
+   public void highlightDebugLocation(SourcePosition srcPosition, 
+                                      boolean executing)
    {
       Position position = Position.create(srcPosition.getRow(), 
             srcPosition.getColumn());
@@ -1489,7 +1490,7 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
       }
  
-      applyDebugLineHighlight(position.getRow());
+      applyDebugLineHighlight(position.getRow(), executing);
    }
    
    @Override
@@ -1780,11 +1781,18 @@ public class AceEditor implements DocDisplay,
       }
    }
 
-   private void applyDebugLineHighlight(int line)
+   private void applyDebugLineHighlight(int line, boolean executing)
    {
       clearDebugLineHighlight();
       lineDebugMarkerId_ = createLineHighlightMarker(line,
                                                      "ace_active_debug_line");
+      if (executing)
+      {
+         executionLine_ = line;
+         widget_.getEditor().getRenderer().addGutterDecoration(
+               executionLine_, 
+               "ace_executing-line");
+      }
    }
 
    private void clearDebugLineHighlight()
@@ -1793,6 +1801,13 @@ public class AceEditor implements DocDisplay,
       {
          getSession().removeMarker(lineDebugMarkerId_);
          lineDebugMarkerId_ = null;
+      }
+      if (executionLine_ != null)
+      {
+         widget_.getEditor().getRenderer().removeGutterDecoration(
+               executionLine_, 
+               "ace_executing-line");
+         executionLine_ = null;
       }
    }
 
@@ -1807,6 +1822,7 @@ public class AceEditor implements DocDisplay,
    private RnwCompletionContext rnwContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
+   private Integer executionLine_ = null;
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =

@@ -77,7 +77,7 @@ public interface EditingTarget extends IsWidget,
    Position search(String regex);
    Position search(Position startPos, String regex);
    
-   void highlightDebugLocation(SourcePosition pos);   
+   void highlightDebugLocation(SourcePosition pos, boolean executing);   
    void endDebugHighlighting();
    
    /**

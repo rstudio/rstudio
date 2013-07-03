@@ -1252,7 +1252,11 @@ public class Source implements InsertSourceHandler,
                {
                   if (navMethod == NavigationMethod.DebugStep)
                   {
-                     target.highlightDebugLocation(srcPosition);
+                     target.highlightDebugLocation(srcPosition, true);
+                  }
+                  else if (navMethod == NavigationMethod.DebugFrame)
+                  {
+                     target.highlightDebugLocation(srcPosition, false);
                   }
                   else if (navMethod == NavigationMethod.DebugEnd)
                   {
@@ -1972,7 +1976,8 @@ public class Source implements InsertSourceHandler,
             if (event.getDebugLineNumber() > 0)
             {
                target.highlightDebugLocation(SourcePosition.create(
-                     event.getDebugLineNumber(), 0));
+                     event.getDebugLineNumber(), 0),
+                     event.getExecuting());
             }
          }
       });

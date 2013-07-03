@@ -553,9 +553,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition pos)
+   public void highlightDebugLocation(SourcePosition pos, boolean executing)
    {
-      docDisplay_.highlightDebugLocation(pos); 
+      docDisplay_.highlightDebugLocation(pos, executing); 
    }
 
    @Override

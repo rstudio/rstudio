@@ -545,7 +545,10 @@ public class EnvironmentPresenter extends BasePresenter
                                 filePosition,
                                 FileTypeRegistry.R,
                                 debugging ? 
-                                      NavigationMethod.DebugStep :
+                                      (contextDepth_ == 1 ?
+                                         NavigationMethod.DebugStep :
+                                         NavigationMethod.DebugFrame)
+                                      :
                                       NavigationMethod.DebugEnd));
 
       }
@@ -562,7 +565,8 @@ public class EnvironmentPresenter extends BasePresenter
                         "source unavailable or out of sync", 
                         currentBrowseSource_,
                         true),
-                  lineNumber - currentFunctionLineNumber_));
+                  lineNumber - currentFunctionLineNumber_,
+                  contextDepth_ == 1));
          }
          else
          {

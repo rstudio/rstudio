@@ -203,7 +203,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    Anchor createAnchor(Position pos);
    
-   void highlightDebugLocation(SourcePosition pos);
+   void highlightDebugLocation(SourcePosition pos, boolean executing);
    void endDebugHighlighting();
    
    HandlerRegistration addBreakpointSetHandler

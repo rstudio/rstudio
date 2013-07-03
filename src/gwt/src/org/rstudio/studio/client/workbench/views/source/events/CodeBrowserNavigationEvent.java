@@ -25,14 +25,16 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
-      this(function, 0);
+      this(function, 0, false);
    }
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function,
-                                     int debugLineNumber)
+                                     int debugLineNumber,
+                                     boolean executing)
    {
       function_ = function;
       debugLineNumber_ = debugLineNumber;
+      executing_ = executing;
    }
    
    public SearchPathFunctionDefinition getFunction()
@@ -43,6 +45,11 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    public int getDebugLineNumber()
    {
       return debugLineNumber_;
+   }
+   
+   public boolean getExecuting()
+   {
+      return executing_; 
    }
    
    @Override
@@ -59,5 +66,6 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
 
    final int debugLineNumber_;
    final SearchPathFunctionDefinition function_;
+   final boolean executing_;
 }
 
