@@ -416,15 +416,15 @@ public class TextEditingTarget implements EditingTarget
          {            
             for (Breakpoint breakpoint: event.breakpoints())
             {
-               // discard the event if it's not related to the file this editor
-               // instance is concerned with
+               // discard the breakpoint if it's not related to the file this 
+               // editor instance is concerned with
                if (!breakpoint.getFileName().equals(path_))
                {
-                  return;
+                  continue;
                }
                            
-               // if the breakpoint was saved successfully, enable it on the editor
-               // surface; otherwise, just remove it.
+               // if the breakpoint was saved successfully, enable it on the 
+               // editor surface; otherwise, just remove it.
                if (event.successful())
                {
                   docDisplay_.addOrUpdateBreakpoint(breakpoint);
@@ -649,7 +649,7 @@ public class TextEditingTarget implements EditingTarget
                if (event.isSet())
                {
                   Position breakpointPosition = 
-                        Position.create(event.getLineNumber(), 0);
+                        Position.create(event.getLineNumber(), 1);
                   
                   // don't try to create a breakpoint if we're not inside a
                   // function scope

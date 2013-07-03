@@ -21,11 +21,13 @@
    for (e in envs)
    {
       env <- as.environment(e)
-      if (exists(objName, env, mode = "function", inherits = FALSE))
+      if (!is.null(env) &&
+          exists(objName, env, mode = "function", inherits = FALSE))
       {
          return (env)
       }
    }
+   return(NULL)
 })
 
 # given the body of a function, search recursively through its parsed
@@ -81,7 +83,7 @@
 
   for (idx in 1:length(funBody))
   {
-    if (is.null(funBody[[idx]])) next
+    if (is.null(funBody[[idx]]) || is.pairlist(funBody[[idx]])) next
 
     # if this expression was replaced by trace(), copy the source references
     # from the original expression over each expression injected by trace()
@@ -111,10 +113,12 @@
    funBody <- body(fun)
 
    # attempt to find the end line of the function
+   funStartLine <- 0
    funEndLine <- 0
    funSrcRef <- attr(.rs.getUntracedFunction(functionName), "srcref")
    if (!is.null(funSrcRef) && length(funSrcRef) > 3)
    {
+      funStartLine <- funSrcRef[1]
       funEndLine <- funSrcRef[3]
    }
    else
@@ -125,19 +129,24 @@
    # process each line on which a breakpoint was requested
    lapply(lineNumbers, function(lineNumber)
    {
-      # if we don't find any function steps associated with the given line
-      # number, keep trying the next one until we do, up to the end of the
-      # function (as marked by its source references)
-      steps <- numeric()
-      repeat
+      # don't try to process lines that aren't inside the body of the function
+      steps <- integer()
+      if (lineNumber >= funStartLine &&
+          lineNumber <= funEndLine)
       {
-         steps <- .rs.stepsAtLine(funBody, lineNumber)
-         if (length(steps) > 0 ||
-             lineNumber >= funEndLine)
+         # if we don't find any function steps associated with the given line
+         # number, keep trying the next one until we do, up to the end of the
+         # function (as marked by its source references)
+         repeat
          {
-            break
+            steps <- .rs.stepsAtLine(funBody, lineNumber)
+            if (length(steps) > 0 ||
+                lineNumber >= funEndLine)
+            {
+               break
+            }
+            lineNumber <- lineNumber + 1
          }
-         lineNumber <- lineNumber + 1
       }
 
       list(
