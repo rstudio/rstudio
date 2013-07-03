@@ -46,7 +46,8 @@ public class Breakpoint extends JavaScriptObject
          function_steps : "",
          function_name : functionName,
          state : initialState,
-         editor_state: initialState
+         editor_state: initialState, 
+         is_pending_debug_completion: false
       };
    }-*/;
    
@@ -108,5 +109,15 @@ public class Breakpoint extends JavaScriptObject
    public final native void moveToLineNumber(int lineNumber)
    /*-{
      this.line_number = lineNumber;
+   }-*/;
+   
+   public final native boolean isPendingDebugCompletion()
+   /*-{
+     return this.is_pending_debug_completion;
+   }-*/;
+
+   public final native boolean setPendingDebugCompletion(boolean pending)
+   /*-{
+     this.is_pending_debug_completion = pending;
    }-*/;
 }

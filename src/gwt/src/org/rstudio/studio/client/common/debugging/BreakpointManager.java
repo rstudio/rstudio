@@ -111,7 +111,16 @@ public class BreakpointManager
                   Breakpoint.STATE_INACTIVE);
       breakpoints_.add(breakpoint);
       
-      if (immediately)
+      // if the breakpoint is in a function that is active on the callstack, 
+      // it's being set on the stored rather than the executing copy. It's 
+      // possible to set it right now, but it will probably violate user 
+      // expectations. Process it when the function is no longer executing.
+      if (activeFunctions_.contains(functionName))
+      {
+         breakpoint.setPendingDebugCompletion(true);
+         markInactiveBreakpoint(breakpoint);
+      }      
+      else if (immediately)
       {
          server_.getFunctionSyncState(functionName, 
                new ServerRequestCallback<Boolean>()
@@ -281,14 +290,44 @@ public class BreakpointManager
       // past to begin actually evaluating the function. Step past it
       // immediately.
       JsArray<CallFrame> frames = event.getCallFrames();
+      TreeSet<String> activeFunctions = new TreeSet<String>();
       for (int idx = 0; idx < frames.length(); idx++)
       {
-         if (frames.get(idx).getFunctionName().equals(".doTrace"))
+         String functionName = frames.get(idx).getFunctionName();
+         if (functionName.equals(".doTrace"))
          {
             events_.fireEvent(new SendToConsoleEvent("n", true));
-            break;
+         }
+         activeFunctions.add(functionName);
+      }
+      
+      // For any functions that were previously active in the callstack but
+      // are no longer active, enable any pending breakpoints for those 
+      // functions.
+      TreeSet<String> enableFunctions = new TreeSet<String>();
+      for (String function: activeFunctions_)
+      {
+         if (!activeFunctions.contains(function))
+         {
+            for (Breakpoint breakpoint: breakpoints_)
+            {
+               if (breakpoint.isPendingDebugCompletion() &&
+                   breakpoint.getState() == Breakpoint.STATE_INACTIVE &&
+                   breakpoint.getFunctionName().equals(function))
+               {
+                  enableFunctions.add(function);
+               }
+            }
          }
       }
+      
+      for (String function: enableFunctions)
+      {
+         prepareAndSetFunctionBreakpoints(function);
+      }
+      
+      // Record the new frame list.
+      activeFunctions_ = activeFunctions;
    }
 
    // Private methods ---------------------------------------------------------
@@ -445,8 +484,9 @@ public class BreakpointManager
       breakpoints.add(breakpoint);
       events_.fireEvent(new BreakpointsSavedEvent(breakpoints, true));
    }
-   
+     
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
+   private TreeSet<String> activeFunctions_ = new TreeSet<String>();
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;

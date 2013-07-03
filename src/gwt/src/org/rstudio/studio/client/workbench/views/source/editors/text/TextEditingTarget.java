@@ -770,26 +770,39 @@ public class TextEditingTarget implements EditingTarget
    {
       // check to see if there are any inactive breakpoints in this file
       boolean hasInactiveBreakpoints = false;
+      boolean hasDebugPendingBreakpoints = false;
       ArrayList<Breakpoint> breakpoints = 
             breakpointManager_.getBreakpointsInFile(path_);
       for (Breakpoint breakpoint: breakpoints)
       {
          if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
          {
-            hasInactiveBreakpoints = true;
+            if (breakpoint.isPendingDebugCompletion())
+            {
+               hasDebugPendingBreakpoints = true;
+            }
+            else
+            {
+               hasInactiveBreakpoints = true;               
+            }
             break;
          }
       }
+      boolean showWarning = hasDebugPendingBreakpoints || 
+                            hasInactiveBreakpoints;
 
-      if (hasInactiveBreakpoints && !isBreakpointWarningVisible_)
+      if (showWarning && !isBreakpointWarningVisible_)
       {
-         String message = "Breakpoints will be activated when " +
-                          "this file is saved and sourced or " + 
-                          "rebuilt.";                           
+         String message = hasDebugPendingBreakpoints ? 
+                "Breakpoints will be activated when the function is " +
+                "finished running."
+                :
+                "Breakpoints will be activated when this file is saved and " + 
+                "sourced or rebuilt.";                           
          view_.showWarningBar(message);
          isBreakpointWarningVisible_ = true;
       }
-      else if (!hasInactiveBreakpoints && isBreakpointWarningVisible_)
+      else if (!showWarning && isBreakpointWarningVisible_)
       {
          view_.hideWarningBar();         
          isBreakpointWarningVisible_ = false;
