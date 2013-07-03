@@ -364,16 +364,26 @@ public class BreakpointManager
                      // ask the server to set the breakpoint
                      if (response.length() > 0)
                      {
+                        ArrayList<Breakpoint> unSettableBreakpoints = 
+                              new ArrayList<Breakpoint>();
                         for (int i = 0; i < inactiveBreakpoints.size() && 
                                         i < response.length(); i++)
                         {
                            FunctionSteps steps = response.get(i);
                            Breakpoint breakpoint = inactiveBreakpoints.get(i);
-                           breakpoint.addFunctionSteps(steps.getName(),
-                                 steps.getLineNumber(),
-                                 steps.getSteps());          
+                           if (steps.getSteps().length() > 0)
+                           {
+                              breakpoint.addFunctionSteps(steps.getName(),
+                                    steps.getLineNumber(),
+                                    steps.getSteps());
+                           }
+                           else
+                           {
+                              unSettableBreakpoints.add(breakpoint);
+                           }
                         }
-                       setFunctionBreakpoints(functionName);
+                        discardUnsettableBreakpoints(unSettableBreakpoints);
+                        setFunctionBreakpoints(functionName);
                       }
                      // no results: discard the breakpoints
                      else
@@ -397,6 +407,10 @@ public class BreakpointManager
    
    private void discardUnsettableBreakpoints(ArrayList<Breakpoint> breakpoints)
    {
+      if (breakpoints.size() == 0)
+      {
+         return;
+      }
       for (Breakpoint breakpoint: breakpoints)
       {
          breakpoints_.remove(breakpoint);

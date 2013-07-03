@@ -431,6 +431,8 @@ public class TextEditingTarget implements EditingTarget
                }
                else
                {
+                  view_.showWarningBar("Breakpoints can only be set inside " +
+                                       "the body of a function. ");
                   docDisplay_.removeBreakpoint(breakpoint);
                }
             }

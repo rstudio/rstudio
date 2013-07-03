@@ -29,7 +29,7 @@ public class FunctionSteps extends JavaScriptObject
       return this.line;
    }-*/;
    
-   public final native int getSteps() /*-{
+   public final native String getSteps() /*-{
       return this.at;
    }-*/;
 }

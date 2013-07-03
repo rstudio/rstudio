@@ -53,7 +53,7 @@ public class Breakpoint extends JavaScriptObject
    public final native void addFunctionSteps(
          String function_name,
          int lineNumber,
-         int functionSteps)
+         String functionSteps)
    /*-{
       this.function_name = function_name;
       this.line_number = lineNumber;
