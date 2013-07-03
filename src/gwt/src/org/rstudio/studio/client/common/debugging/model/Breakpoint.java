@@ -31,6 +31,7 @@ public class Breakpoint extends JavaScriptObject
    public final static int STATE_PROCESSING = 0;
    public final static int STATE_ACTIVE = 1;
    public final static int STATE_INACTIVE = 2;
+   public final static int STATE_DUPLICATE = 3;
    
    public native static Breakpoint create(
          int breakpointId,
@@ -47,6 +48,7 @@ public class Breakpoint extends JavaScriptObject
          function_name : functionName,
          state : initialState,
          editor_state: initialState, 
+         editor_line_number: lineNumber,
          is_pending_debug_completion: false
       };
    }-*/;
@@ -106,9 +108,20 @@ public class Breakpoint extends JavaScriptObject
       this.editor_state = state;
    }-*/;
    
+   public final native int getEditorLineNumber()
+   /*-{
+      return this.editor_line_number;
+   }-*/;
+
+   public final native void setEditorLineNumber(int lineNumber)
+   /*-{
+      this.editor_line_number = lineNumber;
+   }-*/;   
+
    public final native void moveToLineNumber(int lineNumber)
    /*-{
      this.line_number = lineNumber;
+     this.editor_line_number = lineNumber;
    }-*/;
    
    public final native boolean isPendingDebugCompletion()

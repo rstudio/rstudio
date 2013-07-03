@@ -403,25 +403,7 @@ public class BreakpointManager
                      // ask the server to set the breakpoint
                      if (response.length() > 0)
                      {
-                        ArrayList<Breakpoint> unSettableBreakpoints = 
-                              new ArrayList<Breakpoint>();
-                        for (int i = 0; i < inactiveBreakpoints.size() && 
-                                        i < response.length(); i++)
-                        {
-                           FunctionSteps steps = response.get(i);
-                           Breakpoint breakpoint = inactiveBreakpoints.get(i);
-                           if (steps.getSteps().length() > 0)
-                           {
-                              breakpoint.addFunctionSteps(steps.getName(),
-                                    steps.getLineNumber(),
-                                    steps.getSteps());
-                           }
-                           else
-                           {
-                              unSettableBreakpoints.add(breakpoint);
-                           }
-                        }
-                        discardUnsettableBreakpoints(unSettableBreakpoints);
+                        processFunctionSteps(inactiveBreakpoints, response);
                         setFunctionBreakpoints(functionName);
                       }
                      // no results: discard the breakpoints
@@ -483,6 +465,50 @@ public class BreakpointManager
       ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
       breakpoints.add(breakpoint);
       events_.fireEvent(new BreakpointsSavedEvent(breakpoints, true));
+   }
+   
+   private void processFunctionSteps(
+         ArrayList<Breakpoint> breakpoints,
+         JsArray<FunctionSteps> stepList)
+   {
+      ArrayList<Breakpoint> unSettableBreakpoints = 
+            new ArrayList<Breakpoint>();
+      for (int i = 0; i < breakpoints.size() && 
+                      i < stepList.length(); i++)
+      {
+         FunctionSteps steps = stepList.get(i);
+         Breakpoint breakpoint = breakpoints.get(i);
+         if (steps.getSteps().length() > 0)
+         {
+            // if the server set this breakpoint on a different line than 
+            // requested, make sure there's not already a breakpoint on that
+            // line; if there is, discard this one.
+            if (breakpoint.getLineNumber() != steps.getLineNumber())
+            {
+               for (Breakpoint possibleDupe: breakpoints_)
+               {
+                  if (breakpoint.getFileName().equals(
+                         possibleDupe.getFileName()) &&
+                      steps.getLineNumber() == 
+                         possibleDupe.getLineNumber() &&
+                      breakpoint.getBreakpointId() != 
+                         possibleDupe.getBreakpointId())
+                  {
+                     breakpoint.setState(Breakpoint.STATE_DUPLICATE);
+                     unSettableBreakpoints.add(breakpoint);
+                  }
+               }
+            }
+            breakpoint.addFunctionSteps(steps.getName(),
+                  steps.getLineNumber(),
+                  steps.getSteps());
+         }
+         else
+         {
+            unSettableBreakpoints.add(breakpoint);
+         }
+      }
+      discardUnsettableBreakpoints(unSettableBreakpoints);
    }
      
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();

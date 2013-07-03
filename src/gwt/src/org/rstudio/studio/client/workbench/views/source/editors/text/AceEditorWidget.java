@@ -352,10 +352,8 @@ public class AceEditorWidget extends Composite
       if (idx >= 0)
       {
          removeBreakpointMarker(breakpoint);
-         if (breakpoint.getState() != breakpoint.getEditorState())
-         {
-            breakpoint.setEditorState(breakpoint.getState());
-         }
+         breakpoint.setEditorState(breakpoint.getState());
+         breakpoint.setEditorLineNumber(breakpoint.getLineNumber());
       }
       else
       {
@@ -432,7 +430,7 @@ public class AceEditorWidget extends Composite
       for (int idx = 0; idx < breakpoints_.size(); idx++)
       {
          Breakpoint breakpoint = breakpoints_.get(idx);
-         int breakpointRow = rowFromLine(breakpoint.getLineNumber());
+         int breakpointRow = rowFromLine(breakpoint.getEditorLineNumber());
          if (breakpointRow >= shiftStartRow)
          {
             // remove the breakpoint from its old position
@@ -443,7 +441,8 @@ public class AceEditorWidget extends Composite
       for (Breakpoint breakpoint: movedBreakpoints)
       {
          // calculate the new position of the breakpoint
-         int oldBreakpointPosition = rowFromLine(breakpoint.getLineNumber());
+         int oldBreakpointPosition = 
+               rowFromLine(breakpoint.getEditorLineNumber());
          int newBreakpointPosition = 
                oldBreakpointPosition + shiftedBy;
          
@@ -462,7 +461,7 @@ public class AceEditorWidget extends Composite
          {
             breakpoints_.remove(breakpoint);
             fireEvent(new BreakpointSetEvent(
-                  breakpoint.getLineNumber(), 
+                  breakpoint.getEditorLineNumber(), 
                   breakpoint.getBreakpointId(),
                   false)); 
          }
@@ -471,7 +470,7 @@ public class AceEditorWidget extends Composite
    
    private void placeBreakpointMarker(Breakpoint breakpoint)
    {
-      int line = breakpoint.getLineNumber();
+      int line = breakpoint.getEditorLineNumber();
       if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
       {
          editor_.getSession().setBreakpoint(rowFromLine(line));
@@ -492,7 +491,7 @@ public class AceEditorWidget extends Composite
    
    private void removeBreakpointMarker(Breakpoint breakpoint)
    {
-      int line = breakpoint.getLineNumber();
+      int line = breakpoint.getEditorLineNumber();
       if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
       {
          editor_.getSession().clearBreakpoint(rowFromLine(line));
@@ -527,7 +526,7 @@ public class AceEditorWidget extends Composite
    {
       for (int idx = 0; idx < breakpoints_.size(); idx++)
       {
-         if (breakpoints_.get(idx).getLineNumber() == lineNumber)
+         if (breakpoints_.get(idx).getEditorLineNumber() == lineNumber)
          {
             return idx;
          }

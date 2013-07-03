@@ -98,7 +98,6 @@
          funBody[[idx]],
          originalFunBody[[idx]])
     }
-
   }
   return(funBody)
 })
@@ -108,14 +107,44 @@
 # references.
 .rs.addFunction("getFunctionSteps", function(functionName, lineNumbers)
 {
-   funBody <- body(get(functionName, envir=globalenv()))
-   return(lapply(lineNumbers, function(lineNumber)
+   fun <- get(functionName, envir=globalenv())
+   funBody <- body(fun)
+
+   # attempt to find the end line of the function
+   funEndLine <- 0
+   funSrcRef <- attr(.rs.getUntracedFunction(functionName), "srcref")
+   if (!is.null(funSrcRef) && length(funSrcRef) > 3)
    {
-      return(list(
+      funEndLine <- funSrcRef[3]
+   }
+   else
+   {
+      return(list())
+   }
+
+   # process each line on which a breakpoint was requested
+   lapply(lineNumbers, function(lineNumber)
+   {
+      # if we don't find any function steps associated with the given line
+      # number, keep trying the next one until we do, up to the end of the
+      # function (as marked by its source references)
+      steps <- numeric()
+      repeat
+      {
+         steps <- .rs.stepsAtLine(funBody, lineNumber)
+         if (length(steps) > 0 ||
+             lineNumber >= funEndLine)
+         {
+            break
+         }
+         lineNumber <- lineNumber + 1
+      }
+
+      list(
          name=functionName,
          line=lineNumber,
-         at=paste(.rs.stepsAtLine(funBody, lineNumber), collapse=",")))
-   }))
+         at=paste(steps, collapse=","))
+   })
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(functionName, steps)

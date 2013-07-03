@@ -431,8 +431,14 @@ public class TextEditingTarget implements EditingTarget
                }
                else
                {
-                  view_.showWarningBar("Breakpoints can only be set inside " +
-                                       "the body of a function. ");
+                  // Show a warning for breakpoints that didn't get set (unless
+                  // the reason the breakpoint wasn't set was that we already
+                  // had a breakpoint on the line)
+                  if (breakpoint.getState() != Breakpoint.STATE_DUPLICATE)
+                  {
+                     view_.showWarningBar("Breakpoints can only be set inside "+
+                                          "the body of a function. ");
+                  }
                   docDisplay_.removeBreakpoint(breakpoint);
                }
             }
