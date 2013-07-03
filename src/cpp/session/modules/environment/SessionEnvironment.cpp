@@ -211,8 +211,7 @@ json::Array callFramesAsJson()
                  .call(&argList);
               break;
             case LANGSXP:
-               SEXP env = pRContext->cloenv;
-               error = r::exec::RFunction(".rs.languageDescription", env, args)
+               error = r::exec::RFunction(".rs.promiseDescription", args)
                  .call(&argList);
                break;
          }
