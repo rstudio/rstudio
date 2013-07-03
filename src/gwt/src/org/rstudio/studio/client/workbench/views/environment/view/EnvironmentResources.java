@@ -29,5 +29,8 @@ public interface EnvironmentResources extends ClientBundle
 
    @Source("CollapseIcon.png")
    ImageResource collapseIcon();
+   
+   @Source("TracedFunction.png")
+   ImageResource tracedFunction();
 }
 

@@ -476,6 +476,11 @@ public class EnvironmentObjects extends ResizeComposite
 
                   return expandImage.getSafeUri().asString();
                }
+               else if (object.hasTraceInfo())
+               {
+                  return EnvironmentResources.INSTANCE
+                        .tracedFunction().getSafeUri().asString();
+               }
                else
                {
                   return "";

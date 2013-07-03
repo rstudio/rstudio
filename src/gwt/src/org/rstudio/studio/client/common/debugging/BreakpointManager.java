@@ -332,7 +332,6 @@ public class BreakpointManager
       
    private void prepareAndSetFunctionBreakpoints(final String functionName)
    {
-      
       // look over the list of breakpoints in this function and see if any are
       // marked inactive
       final ArrayList<Breakpoint> inactiveBreakpoints = 
