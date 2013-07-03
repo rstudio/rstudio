@@ -206,6 +206,10 @@
 .rs.addFunction("getUntracedFunction", function(functionName)
 {
    envir <- .rs.getEnvironmentOfFunction(functionName)
+   if (is.null(envir))
+   {
+      return(NULL)
+   }
    fun <- get(functionName, mode="function", envir=envir)
    if (isS4(fun) && class(fun) == "functionWithTrace")
    {
@@ -216,7 +220,12 @@
 
 .rs.addFunction("getFunctionSourceRefs", function(functionName)
 {
-   attr(.rs.getUntracedFunction(functionName), "srcref")
+   fun <- .rs.getUntracedFunction(functionName)
+   if (is.null(fun))
+   {
+      return(NULL)
+   }
+   attr(fun, "srcref")
 })
 
 .rs.addFunction("getFunctionSourceCode", function(functionName)

@@ -83,7 +83,7 @@
 {
    # by default, the description should be the expression associated with the
    # object
-   description <- capture.output(substitute(obj))
+   description <- paste(capture.output(substitute(obj)), collapse="")
 
    # create a more friendly description for delay-loaded data
    if (substr(description, 1, 16) == "lazyLoadDBfetch(")
