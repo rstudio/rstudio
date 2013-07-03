@@ -42,6 +42,11 @@ enum EventScope
 class Event
 {
 public:
+   Event()
+      : empty_(true)
+   {
+   }
+
    Event(EventScope scope,
          int id,
          const std::string& data = std::string(),
@@ -49,7 +54,8 @@ public:
          PidType pid = core::system::currentProcessId(),
          boost::posix_time::ptime timestamp =
                         boost::posix_time::microsec_clock::universal_time())
-      : scope_(scope),
+      : empty_(false),
+        scope_(scope),
         id_(id),
         username_(username),
         pid_(pid),
@@ -59,6 +65,7 @@ public:
    }
 
 public:
+   bool empty() const { return empty_; }
    EventScope scope() const { return scope_; }
    int id() const { return id_; }
    const std::string& username() const { return username_; }
@@ -67,6 +74,7 @@ public:
    const std::string& data() const { return data_; }
 
 private:
+   bool empty_;
    EventScope scope_;
    int id_;
    std::string username_;
