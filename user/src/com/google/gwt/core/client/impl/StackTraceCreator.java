@@ -74,7 +74,7 @@ public class StackTraceCreator {
     }-*/;
 
     public void createStackTrace(JavaScriptException e) {
-      JsArrayString stack = inferFrom(e.getException());
+      JsArrayString stack = inferFrom(e.getThrown());
 
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
@@ -121,7 +121,7 @@ public class StackTraceCreator {
      *
      * @param e a JavaScriptObject
      */
-    public JsArrayString inferFrom(JavaScriptObject e) {
+    public JsArrayString inferFrom(Object e) {
       return JavaScriptObject.createArray().cast();
     }
 
@@ -206,7 +206,7 @@ public class StackTraceCreator {
     }
 
     @Override
-    public JsArrayString inferFrom(JavaScriptObject e) {
+    public JsArrayString inferFrom(Object e) {
       throw new RuntimeException("Should not reach here");
     }
 
@@ -237,8 +237,9 @@ public class StackTraceCreator {
     }
 
     @Override
-    public JsArrayString inferFrom(JavaScriptObject e) {
-      JsArrayString stack = getStack(e);
+    public JsArrayString inferFrom(Object e) {
+      JavaScriptObject jso = (e instanceof JavaScriptObject) ? (JavaScriptObject) e : null;
+      JsArrayString stack = getStack(jso);
       for (int i = 0, j = stack.length(); i < j; i++) {
         stack.set(i, extractName(stack.get(i)));
       }
@@ -296,7 +297,7 @@ public class StackTraceCreator {
 
     @Override
     public void createStackTrace(JavaScriptException e) {
-      JsArrayString stack = inferFrom(e.getException());
+      JsArrayString stack = inferFrom(e.getThrown());
       parseStackTrace(e, stack);
     }
 
@@ -307,7 +308,7 @@ public class StackTraceCreator {
     }
 
     @Override
-    public JsArrayString inferFrom(JavaScriptObject e) {
+    public JsArrayString inferFrom(Object e) {
       JsArrayString stack = super.inferFrom(e);
       if (stack.length() == 0) {
         // Safari should fall back to default Collector:

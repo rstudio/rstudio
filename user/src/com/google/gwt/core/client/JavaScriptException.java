@@ -45,6 +45,8 @@ import com.google.gwt.core.client.impl.StackTraceCreator;
  */
 public final class JavaScriptException extends RuntimeException {
 
+  private static final Object NOT_SET = new Object();
+
   private static String getExceptionDescription(Object e) {
     if (e instanceof JavaScriptObject) {
       return getExceptionDescription0((JavaScriptObject) e);
@@ -133,7 +135,7 @@ public final class JavaScriptException extends RuntimeException {
     this.message = "JavaScript " + name + " exception: " + description;
     this.name = name;
     this.description = description;
-    this.e = null;
+    this.e = NOT_SET;
   }
 
   /**
@@ -144,7 +146,21 @@ public final class JavaScriptException extends RuntimeException {
   protected JavaScriptException(String message) {
     super(message);
     this.message = this.description = message;
-    this.e = null;
+    this.e = NOT_SET;
+  }
+
+  /**
+   * Returns {@code true} if a thrown object is not set for the exception.
+   */
+  public boolean isThrownSet() {
+    return e != NOT_SET;
+  }
+
+  /**
+   * Returns the original thrown object from javascript; may be {@code null}.
+   */
+  public Object getThrown() {
+    return e == NOT_SET ? null : e;
   }
 
   /**
@@ -152,24 +168,23 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getDescription() {
-    if (message == null) {
-      init();
-    }
+    ensureInit();
     return description;
   }
 
   /**
    * Returns the original JavaScript the exception; may be <code>null</code>.
+   *
+   * @deprecated deprecated in favor for {@link #getThrown()} and {@link #isThrownSet()}
    */
+  @Deprecated
   public JavaScriptObject getException() {
     return (e instanceof JavaScriptObject) ? (JavaScriptObject) e : null;
   }
 
   @Override
   public String getMessage() {
-    if (message == null) {
-      init();
-    }
+    ensureInit();
     return message;
   }
 
@@ -178,16 +193,17 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getName() {
-    if (message == null) {
-      init();
-    }
+    ensureInit();
     return name;
   }
 
-  private void init() {
-    name = getExceptionName(e);
-    description = description + ": " + getExceptionDescription(e);
-    message = "(" + name + ") " + getExceptionProperties(e) + description;
+  private void ensureInit() {
+    if (message == null) {
+      Object exception = getThrown();
+      name = getExceptionName(exception);
+      description = description + ": " + getExceptionDescription(exception);
+      message = "(" + name + ") " + getExceptionProperties(exception) + description;
+    }
   }
 
 }

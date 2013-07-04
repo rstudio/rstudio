@@ -101,15 +101,16 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
-   * Get the JavaScriptObject wrapped by a JavaScriptException. We have to do
+   * Get the original thrown object. If the exception is JavaScriptException,
+   * gets the object wrapped by a JavaScriptException. We have to do
    * this reflectively, since the JavaScriptException object is from an
    * arbitrary classloader. If the object is not a JavaScriptException, or is
-   * not from the given ClassLoader, we'll return null.
+   * not from the given ClassLoader, or the exception is not set we'll return
+   * exception itself.
    */
-  static Object getJavaScriptExceptionException(ClassLoader cl,
-      Object javaScriptException) {
-    if (javaScriptException.getClass().getClassLoader() != cl) {
-      return null;
+  static Object getThrownObject(ClassLoader cl, Object exception) {
+    if (exception.getClass().getClassLoader() != cl) {
+      return exception;
     }
 
     Exception caught;
@@ -117,12 +118,16 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
 
-      if (!javaScriptExceptionClass.isInstance(javaScriptException)) {
+      if (!javaScriptExceptionClass.isInstance(exception)) {
         // Not a JavaScriptException
-        return null;
+        return exception;
       }
-      Method getException = javaScriptExceptionClass.getMethod("getException");
-      return getException.invoke(javaScriptException);
+      Method isThrownSet = javaScriptExceptionClass.getMethod("isThrownSet");
+      if (!((Boolean) isThrownSet.invoke(exception))) {
+        return exception;
+      }
+      Method getThrown = javaScriptExceptionClass.getMethod("getThrown");
+      return getThrown.invoke(exception);
     } catch (NoSuchMethodException e) {
       caught = e;
     } catch (ClassNotFoundException e) {

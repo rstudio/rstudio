@@ -16,7 +16,6 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * This is a magic class the compiler uses to throw and check exceptions.
@@ -32,9 +31,9 @@ final class Exceptions {
 
   static Object unwrap(Object e) {
     if (e instanceof JavaScriptException) {
-      JavaScriptObject exception = ((JavaScriptException) e).getException();
-      if (exception != null) {
-        return exception;
+      JavaScriptException jse = ((JavaScriptException) e);
+      if (jse.isThrownSet()) {
+        return jse.getThrown();
       }
     }
     return e;

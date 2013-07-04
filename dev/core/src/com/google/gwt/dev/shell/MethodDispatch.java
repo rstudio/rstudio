@@ -109,21 +109,14 @@ class MethodDispatch implements DispatchMethod {
   /**
    * Send an exception back to the client. This will either wrap a Java
    * Throwable as a Java Object to be sent over the wire, or if the exception is
-   * a JavaScriptObject unwinding through the stack, send the JSO instead.
+   * a JavaScriptException unwinding through the stack, send the original thrown
+   * object instead.
    */
   private void wrapException(JsValue returnValue, Throwable t) {
     ModuleSpace.setThrownJavaException(t);
 
-    // See if we're in the process of throwing a JavaScriptObject; remove
-    // it from the JavaScriptException object and throw the JS object instead
-    Object jsoException = ModuleSpace.getJavaScriptExceptionException(
-        classLoader, t);
-
-    if (jsoException != null) {
-      JsValueGlue.set(returnValue, classLoader, jsoException.getClass(),
-          jsoException);
-    } else {
-      JsValueGlue.set(returnValue, classLoader, t.getClass(), t);
-    }
+    Object thrown = ModuleSpace.getThrownObject(classLoader, t);
+    Class<?> type = thrown == null ? Object.class : thrown.getClass();
+    JsValueGlue.set(returnValue, classLoader, type, thrown);
   }
 }

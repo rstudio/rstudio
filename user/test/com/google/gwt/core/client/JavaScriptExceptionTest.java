@@ -98,7 +98,7 @@ public class JavaScriptExceptionTest extends GWTTestCase {
 
   private static void assertJavaScriptException(Object expected, Throwable exception) {
     assertTrue(exception instanceof JavaScriptException);
-    assertEquals(expected, ((JavaScriptException) exception).getException());
+    assertEquals(expected, ((JavaScriptException) exception).getThrown());
   }
 
   private static void assertJsoProperties(boolean extraPropertiesShouldBePresent) {
@@ -109,7 +109,8 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     } catch (JavaScriptException e) {
       assertEquals("myName", e.getName());
       assertDescription(e, "myDescription");
-      assertSame(jso, e.getException());
+      assertTrue(e.isThrownSet());
+      assertSame(jso, e.getThrown());
       assertTrue(e.getMessage().contains("myName"));
       assertTrue(e.getMessage().contains(e.getDescription()));
       if (extraPropertiesShouldBePresent) {
@@ -182,18 +183,19 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     e = makeJSO();
     assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
 
-    // TODO(goktug): non-jso objects will be supported in follow up CL
-    //
-    // e = "testing";
-    // assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
-    //
-    // e = makeJavaObject();
-    // assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
-    //
-    // e = null;
-    // assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
+    e = "testing";
+    assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
+
+    e = null;
+    assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
+
+    e = makeJavaObject();
+    assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
 
     e = new RuntimeException();
+    assertSame(e, catchJava(createThrowNativeRunnable(e)));
+
+    e = new JavaScriptException("exception message"); // Thrown is not set
     assertSame(e, catchJava(createThrowNativeRunnable(e)));
 
     e = new JavaScriptException(makeJSO());
@@ -207,21 +209,22 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     e = makeJSO();
     assertSame(e, nativeJavaNativeSandwich(e));
 
-    // TODO(goktug): non-jso objects will be supported in follow up CL
-    //
-    // e = "testing";
-    // assertEquals(e, nativeJavaNativeSandwich(e));
-    // if (GWT.isScript()) { // Devmode will not preserve the same String instance
-    //   assertSame(e, nativeJavaNativeSandwich(e));
-    // }
-    //
-    // e = makeJavaObject();
-    // assertJavaScriptException(e, catchJava(createThrowNativeRunnable(e)));
-    //
-    // e = null;
-    // assertSame(e, nativeJavaNativeSandwich(e));
+    e = "testing";
+    assertEquals(e, nativeJavaNativeSandwich(e));
+    if (GWT.isScript()) { // Devmode will not preserve the same String instance
+      assertSame(e, nativeJavaNativeSandwich(e));
+    }
+
+    e = null;
+    assertSame(e, nativeJavaNativeSandwich(e));
+
+    e = makeJavaObject();
+    assertSame(e, nativeJavaNativeSandwich(e));
 
     e = new RuntimeException();
+    assertSame(e, nativeJavaNativeSandwich(e));
+
+    e = new JavaScriptException("exception message"); // Thrown is not set
     assertSame(e, nativeJavaNativeSandwich(e));
 
     JavaScriptObject jso = makeJSO();
@@ -283,7 +286,8 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     } catch (JavaScriptException e) {
       assertEquals("null", e.getName());
       assertDescription(e, "null");
-      assertEquals(null, e.getException());
+      assertTrue(e.isThrownSet());
+      assertEquals(null, e.getThrown());
       assertTrue(e.getMessage().contains("null"));
     }
   }
@@ -296,7 +300,8 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     } catch (JavaScriptException e) {
       assertEquals(o.getClass().getName(), e.getName());
       assertDescription(e, "myLameObject");
-      assertEquals(null, e.getException());
+      assertTrue(e.isThrownSet());
+      assertEquals(o, e.getThrown());
       assertTrue(e.getMessage().contains(o.getClass().getName()));
       assertTrue(e.getMessage().contains(e.getDescription()));
     }
@@ -309,7 +314,8 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     } catch (JavaScriptException e) {
       assertEquals("String", e.getName());
       assertDescription(e, "foobarbaz");
-      assertEquals(null, e.getException());
+      assertTrue(e.isThrownSet());
+      assertEquals("foobarbaz", e.getThrown());
       assertTrue(e.getMessage().contains(e.getDescription()));
     }
   }
