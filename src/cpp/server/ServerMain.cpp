@@ -87,7 +87,8 @@ http::UriHandlerFunction blockingFileHandler()
    Options& options = server::options();
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
-                                   mainPageFilter);
+                                   mainPageFilter,
+                                   options.wwwUseEmulatedStack());
 }
 
 //

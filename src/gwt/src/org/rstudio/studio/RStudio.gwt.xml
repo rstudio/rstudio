@@ -112,6 +112,10 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
+   <!-- define permutations for emulated and native stack modes -->
+   <set-property name="compiler.stackMode" value="emulated,native"/>
+   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
+
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 </module>

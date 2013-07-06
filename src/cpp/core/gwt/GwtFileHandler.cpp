@@ -92,6 +92,7 @@ FilePath requestedFile(const std::string& wwwLocalPath,
 void handleFileRequest(const std::string& wwwLocalPath,
                        const std::string& baseUri,
                        core::http::UriFilterFunction mainPageFilter,
+                       bool useEmulatedStack,
                        const http::Request& request, 
                        http::Response* pResponse)
 {
@@ -161,11 +162,13 @@ void handleFileRequest(const std::string& wwwLocalPath,
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request);
    }
-   // case: main page -- don't cache
+   // case: main page -- don't cache and dynamically set compiler stack mode
    else if (uri == mainPage)
    {
+      std::map<std::string,std::string> vars;
+      vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(filePath, request);
+      pResponse->setFile(filePath, request, text::TemplateFilter(vars));
    }
    
    // case: normal cacheable file
@@ -183,12 +186,14 @@ void handleFileRequest(const std::string& wwwLocalPath,
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
                                        const std::string& baseUri,
-                                       http::UriFilterFunction mainPageFilter)
+                                       http::UriFilterFunction mainPageFilter,
+                                       bool useEmulatedStack)
 {
    return boost::bind(handleFileRequest,
                       wwwLocalPath,
                       baseUri,
                       mainPageFilter,
+                      useEmulatedStack,
                       _1,
                       _2);
 }  
