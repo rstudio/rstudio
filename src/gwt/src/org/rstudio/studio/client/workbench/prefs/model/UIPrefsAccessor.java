@@ -263,6 +263,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("navigate_to_build_error", true);
    }
    
+   public PrefValue<Boolean> packagesPaneEnabled()
+   {
+      return bool("packages_pane_enabled", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

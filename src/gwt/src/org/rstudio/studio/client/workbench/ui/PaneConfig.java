@@ -66,12 +66,12 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAlwaysVisibleTabs()
    {
       return new String[] {"Environment", "History", "Files", "Plots",
-                           "Packages", "Help"};
+                           "Help"};
    }
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation" };
+      return new String[] {"Build", "VCS", "Presentation", "Packages" };
    }
 
    // Any tabs that were added after our first public release.

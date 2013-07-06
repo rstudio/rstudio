@@ -241,6 +241,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // navigate to build error
          navigateToBuildError().setGlobalValue(
                     newUiPrefs.navigateToBuildError().getGlobalValue());
+         
+         // enable packages pane
+         packagesPaneEnabled().setGlobalValue(
+                    newUiPrefs.packagesPaneEnabled().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
