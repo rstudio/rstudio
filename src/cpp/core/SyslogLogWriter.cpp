@@ -17,6 +17,8 @@
 
 #include <syslog.h>
 
+#include <iostream>
+
 #include <boost/algorithm/string.hpp>
 
 #include <core/system/System.hpp>
@@ -62,10 +64,11 @@ SyslogLogWriter::~SyslogLogWriter()
    }
 }
 
-SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity, int logLevel)
+SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity,
+                                 int logLevel)
+   : programIdentity_(programIdentity),
+     logToStderr_(core::system::stderrIsTerminal())
 {
-   using namespace core::system;
-
    // copy program identity into new string whose buffer will stay
    // around long enough to successfully register with openlog
    // (passing the c_str of programIdentity wasn't working on OSX)
@@ -73,8 +76,6 @@ SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity, int logLeve
 
    // initialize log options
    int logOptions = LOG_CONS | LOG_PID ;
-   if (stderrIsTerminal())
-       logOptions |= LOG_PERROR;
 
    // open log
    ::openlog(pProgramIdentity->c_str(), logOptions, LOG_USER);
@@ -84,6 +85,9 @@ SyslogLogWriter::SyslogLogWriter(const std::string& programIdentity, int logLeve
 void SyslogLogWriter::log(core::system::LogLevel logLevel,
                           const std::string& message)
 {
+   if (logToStderr_)
+      std::cerr << formatLogEntry(programIdentity_, message, false);
+
    // unix system log entries are delimited by newlines so we replace
    // them with an alternate delimiter
    std::string cleanedMessage(message);

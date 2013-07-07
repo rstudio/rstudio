@@ -34,7 +34,8 @@ public:
 
 protected:
    std::string formatLogEntry(const std::string& programIdentify,
-                              const std::string& message);
+                              const std::string& message,
+                              bool escapeNewlines = true);
 };
 
 namespace system {

@@ -23,11 +23,13 @@
 namespace core {
 
 std::string LogWriter::formatLogEntry(const std::string& programIdentity,
-                                      const std::string& message)
+                                      const std::string& message,
+                                      bool escapeNewlines)
 {
-   // replace newlines with standard escape sequence
+   // replace newlines with standard escape sequence if requested
    std::string cleanedMessage(message);
-   boost::algorithm::replace_all(cleanedMessage, "\n", "|||");
+   if (escapeNewlines)
+      boost::algorithm::replace_all(cleanedMessage, "\n", "|||");
 
    // generate time string
    using namespace boost::posix_time;
