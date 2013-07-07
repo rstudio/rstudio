@@ -24,15 +24,17 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 public class CheckBoxExample implements EntryPoint {
 
+  @Override
   public void onModuleLoad() {
     // Make a new check box, and select it by default.
     CheckBox cb = new CheckBox("Foo");
-    cb.setChecked(true);
+    cb.setValue(true);
 
     // Hook up a handler to find out when it's clicked.
     cb.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
-        boolean checked = ((CheckBox) event.getSource()).isChecked();
+        boolean checked = ((CheckBox) event.getSource()).getValue();
         Window.alert("It is " + (checked ? "" : "not ") + "checked");
       }
     });
