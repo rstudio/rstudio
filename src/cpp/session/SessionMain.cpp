@@ -550,8 +550,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
 
-   sessionInfo["show_environment_tab"] = userSettings().showEnvironmentTab();
-
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
                                                                   "devtools");
