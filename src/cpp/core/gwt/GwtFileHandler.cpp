@@ -165,8 +165,13 @@ void handleFileRequest(const std::string& wwwLocalPath,
    // case: main page -- don't cache and dynamically set compiler stack mode
    else if (uri == mainPage)
    {
+      // check for emulated stack
       std::map<std::string,std::string> vars;
+      useEmulatedStack = useEmulatedStack ||
+                         (request.queryParamValue("emulatedStack") == "1");
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
+
+      // return the page
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request, text::TemplateFilter(vars));
    }
