@@ -80,6 +80,7 @@ void registerHandler(const Handler& handler);
 bool isRegistered();
 
 // set sign in cookies
+bool canSetSignInCookies();
 void setSignInCookies(const core::http::Request& request,
                       const std::string& username,
                       bool persist,

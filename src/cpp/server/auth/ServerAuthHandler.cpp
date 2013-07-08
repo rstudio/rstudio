@@ -117,6 +117,11 @@ bool isRegistered()
    return ! s_handler.getUserIdentifier.empty();
 }
 
+bool canSetSignInCookies()
+{
+   return !s_handler.setSignInCookies.empty();
+}
+
 void setSignInCookies(const core::http::Request& request,
                       const std::string& username,
                       bool persist,
