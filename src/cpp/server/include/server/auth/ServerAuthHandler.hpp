@@ -66,6 +66,11 @@ struct Handler
    core::http::AsyncUriHandlerFunction updateCredentials;
    core::http::UriHandlerFunction signIn;
    core::http::UriHandlerFunction signOut;
+
+   boost::function<void(const core::http::Request&,
+                        const std::string&,
+                        bool,
+                        core::http::Response*)> setSignInCookies;
 };
 
 // register the auth handler
@@ -73,6 +78,12 @@ void registerHandler(const Handler& handler);
 
 // is there a handler already registered?
 bool isRegistered();
+
+// set sign in cookies
+void setSignInCookies(const core::http::Request& request,
+                      const std::string& username,
+                      bool persist,
+                      core::http::Response* pResponse);
 
 // sign out
 void signOut(const core::http::Request& request,

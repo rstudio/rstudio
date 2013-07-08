@@ -225,6 +225,29 @@ void publicKey(const http::Request&,
    pResponse->setContentType("text/plain");
 }
 
+void setSignInCookies(const core::http::Request& request,
+                      const std::string& username,
+                      bool persist,
+                      core::http::Response* pResponse)
+{
+   boost::optional<boost::gregorian::days> expiry;
+   if (persist)
+      expiry = boost::gregorian::days(3652);
+   else
+      expiry = boost::none;
+
+   auth::secure_cookie::set(kUserId,
+                            username,
+                            request,
+                            boost::posix_time::time_duration(24*3652,
+                                                             0,
+                                                             0,
+                                                             0),
+                            expiry,
+                            std::string(),
+                            pResponse);
+}
+
 void doSignIn(const http::Request& request,
               http::Response* pResponse)
 {
@@ -270,22 +293,7 @@ void doSignIn(const http::Request& request,
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 
-      boost::optional<boost::gregorian::days> expiry;
-      if (persist)
-         expiry = boost::gregorian::days(3652);
-      else
-         expiry = boost::none;
-
-      auth::secure_cookie::set(kUserId,
-                               username,
-                               request,
-                               boost::posix_time::time_duration(24*3652,
-                                                                0,
-                                                                0,
-                                                                0),
-                               expiry,
-                               std::string(),
-                               pResponse);
+      setSignInCookies(request, username, persist, pResponse);
       pResponse->setMovedTemporarily(request, appUri);
 
       // register login with monitor
@@ -339,6 +347,7 @@ Error initialize()
    pamHandler.refreshCredentialsThenContinue = refreshCredentialsThenContinue;
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
+   pamHandler.setSignInCookies = setSignInCookies;
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers
