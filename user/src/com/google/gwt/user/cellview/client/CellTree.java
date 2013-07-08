@@ -1025,6 +1025,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     int parentChildCount = (parent == null) ? 0 : parent.getChildCount();
     int index = keyboardSelectedNode.getIndex();
     int childCount = keyboardSelectedNode.getChildCount();
+    boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
+    keyCode = KeyCodes.maybeSwapArrowKeysForRtl(keyCode, isRtl);
 
     switch (keyCode) {
       case KeyCodes.KEY_DOWN:
@@ -1069,18 +1071,10 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         }
         break;
       case KeyCodes.KEY_RIGHT:
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          keyboardNavigateShallow();
-        } else {
-          keyboardNavigateDeep();
-        }
+        keyboardNavigateDeep();
         break;
       case KeyCodes.KEY_LEFT:
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          keyboardNavigateDeep();
-        } else {
-          keyboardNavigateShallow();
-        }
+        keyboardNavigateShallow();
         break;
     }
   }

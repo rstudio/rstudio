@@ -270,20 +270,14 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
       String eventType = event.getType();
       if (BrowserEvents.KEYDOWN.equals(eventType) && !isKeyboardNavigationSuppressed()) {
         int keyCode = event.getKeyCode();
+        boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
+        keyCode = KeyCodes.maybeSwapArrowKeysForRtl(keyCode, isRtl);
         switch (keyCode) {
           case KeyCodes.KEY_LEFT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              keyboardNavigateDeep();
-            } else {
-              keyboardNavigateShallow();
-            }
+            keyboardNavigateShallow();
             return;
           case KeyCodes.KEY_RIGHT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              keyboardNavigateShallow();
-            } else {
-              keyboardNavigateDeep();
-            }
+            keyboardNavigateDeep();
             return;
         }
       }

@@ -626,21 +626,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       case Event.ONKEYDOWN: {
         int keyCode = DOM.eventGetKeyCode(event);
+        boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
+        keyCode = KeyCodes.maybeSwapArrowKeysForRtl(keyCode, isRtl);
         switch (keyCode) {
           case KeyCodes.KEY_LEFT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              moveToNextItem();
-            } else {
-              moveToPrevItem();
-            }
+            moveToPrevItem();
             eatEvent(event);
             break;
           case KeyCodes.KEY_RIGHT:
-            if (LocaleInfo.getCurrentLocale().isRTL()) {
-              moveToPrevItem();
-            } else {
-              moveToNextItem();
-            }
+            moveToNextItem();
             eatEvent(event);
             break;
           case KeyCodes.KEY_UP:

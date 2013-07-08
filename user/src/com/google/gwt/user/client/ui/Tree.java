@@ -164,11 +164,6 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     }
   }
 
-  private static final int OTHER_KEY_DOWN = 63233;
-  private static final int OTHER_KEY_LEFT = 63234;
-  private static final int OTHER_KEY_RIGHT = 63235;
-  private static final int OTHER_KEY_UP = 63232;
-
   static native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
     var name = elem.nodeName;
     return ((name == "SELECT") ||
@@ -178,51 +173,6 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
         (name == "BUTTON") ||
         (name == "LABEL"));
   }-*/;
-
-  private static boolean isArrowKey(int code) {
-    switch (code) {
-      case OTHER_KEY_DOWN:
-      case OTHER_KEY_RIGHT:
-      case OTHER_KEY_UP:
-      case OTHER_KEY_LEFT:
-      case KeyCodes.KEY_DOWN:
-      case KeyCodes.KEY_RIGHT:
-      case KeyCodes.KEY_UP:
-      case KeyCodes.KEY_LEFT:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Normalized key codes. Also switches KEY_RIGHT and KEY_LEFT in RTL
-   * languages.
-   */
-  private static int standardizeKeycode(int code) {
-    switch (code) {
-      case OTHER_KEY_DOWN:
-        code = KeyCodes.KEY_DOWN;
-        break;
-      case OTHER_KEY_RIGHT:
-        code = KeyCodes.KEY_RIGHT;
-        break;
-      case OTHER_KEY_UP:
-        code = KeyCodes.KEY_UP;
-        break;
-      case OTHER_KEY_LEFT:
-        code = KeyCodes.KEY_LEFT;
-        break;
-    }
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      if (code == KeyCodes.KEY_RIGHT) {
-        code = KeyCodes.KEY_LEFT;
-      } else if (code == KeyCodes.KEY_LEFT) {
-        code = KeyCodes.KEY_RIGHT;
-      }
-    }
-    return code;
-  }
 
   /**
    * Map of TreeItem.widget -> TreeItem.
@@ -734,7 +684,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     switch (eventType) {
       case Event.ONKEYDOWN:
       case Event.ONKEYUP: {
-        if (isArrowKey(DOM.eventGetKeyCode(event))) {
+        if (KeyCodes.isArrowKey(DOM.eventGetKeyCode(event))) {
           DOM.eventCancelBubble(event, true);
           DOM.eventPreventDefault(event);
           return;
@@ -1178,7 +1128,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     if (isKeyboardNavigationEnabled(curSelection)) {
       int code = DOM.eventGetKeyCode(event);
 
-      switch (standardizeKeycode(code)) {
+      switch (KeyCodes.maybeSwapArrowKeysForRtl(code, LocaleInfo.getCurrentLocale().isRTL())) {
         case KeyCodes.KEY_UP: {
           moveSelectionUp(curSelection);
           break;
