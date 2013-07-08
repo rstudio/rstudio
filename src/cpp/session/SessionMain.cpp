@@ -566,6 +566,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_history_capacity"] =
                               r::session::consoleHistory().capacity();
 
+   sessionInfo["disable_packages"] =
+               !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
    sessionInfo["allow_vcs"] = options.allowVcs();

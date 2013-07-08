@@ -88,7 +88,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       
       CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
             uiPrefs.packagesPaneEnabled());
-      add(chkEnablePackages);
       chkEnablePackages.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -96,6 +95,8 @@ public class PackagesPreferencesPane extends PreferencesPane
             reloadRequired_ = true;
          }
       });
+      if (!session.getSessionInfo().getDisablePackages())
+         add(chkEnablePackages);
 
       
       useInternet2_ = new CheckBox(

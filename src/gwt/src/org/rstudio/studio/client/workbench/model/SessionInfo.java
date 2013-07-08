@@ -316,4 +316,8 @@ public class SessionInfo extends JavaScriptObject
    public final native EnvironmentState getEnvironmentState() /*-{
       return this.environment_state;
    }-*/;
+   
+   public final native boolean getDisablePackages() /*-{
+      return this.disable_packages;
+   }-*/;
 }
