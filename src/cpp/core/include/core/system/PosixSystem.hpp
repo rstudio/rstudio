@@ -31,6 +31,10 @@ namespace core {
 namespace core {
 namespace system {
 
+namespace user {
+   struct User;
+}
+
 // daemonize the process
 core::Error daemonize();
 
@@ -101,7 +105,7 @@ core::Error launchChildProcess(std::string path,
 
 bool isUserNotFoundError(const core::Error& error);
 
-core::Error userBelongsToGroup(const std::string& username,
+core::Error userBelongsToGroup(const user::User& user,
                                const std::string& groupName,
                                bool* pBelongs);
 
