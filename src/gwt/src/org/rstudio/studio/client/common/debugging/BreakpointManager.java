@@ -63,7 +63,7 @@ import com.google.inject.Singleton;
 // 5) The breakpoint manager combines the breakpoint with all of the other 
 //    breakpoints for the function, and makes a single call to the server to
 //    update the function's breakpoints (set_function_breakpoints)
-// 6) If successful, the breakpoint manager emits a BreakpointSavedEvent, which
+// 6) If successful, the breakpoint manager emits a BreakpointsSavedEvent, which
 //    is picked up by the editing target, which updates the display to show that
 //    the breakpoint is now enabled.
 
@@ -357,8 +357,7 @@ public class BreakpointManager
                   {
                      breakpoint.setState(Breakpoint.STATE_ACTIVE);
                   }
-                  events_.fireEvent(
-                        new BreakpointsSavedEvent(breakpoints, true));
+                  notifyBreakpointsSaved(breakpoints, true);
                }
                
                @Override
@@ -436,8 +435,7 @@ public class BreakpointManager
       {
          breakpoints_.remove(breakpoint);
       }
-      events_.fireEvent(
-            new BreakpointsSavedEvent(breakpoints, false));
+      notifyBreakpointsSaved(breakpoints, false);
    }
    
    private void resetBreakpointsInPath(String path, boolean isFile)
@@ -464,7 +462,7 @@ public class BreakpointManager
       breakpoint.setState(Breakpoint.STATE_INACTIVE);
       ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
       breakpoints.add(breakpoint);
-      events_.fireEvent(new BreakpointsSavedEvent(breakpoints, true));
+      notifyBreakpointsSaved(breakpoints, true);
    }
    
    private void processFunctionSteps(
@@ -509,6 +507,15 @@ public class BreakpointManager
          }
       }
       discardUnsettableBreakpoints(unSettableBreakpoints);
+   }
+   
+   private void notifyBreakpointsSaved(
+         ArrayList<Breakpoint> breakpoints, 
+         boolean saved)
+   {
+      breakpointStateDirty_ = true;
+      events_.fireEvent(
+            new BreakpointsSavedEvent(breakpoints, saved));
    }
      
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
