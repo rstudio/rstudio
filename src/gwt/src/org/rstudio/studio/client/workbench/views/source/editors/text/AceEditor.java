@@ -1472,25 +1472,26 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition srcPosition, 
+   public void highlightDebugLocation(SourcePosition startPosition,
+                                      SourcePosition endPosition,
                                       boolean executing)
-   {
-      Position position = Position.create(srcPosition.getRow(), 
-            srcPosition.getColumn());
-      
+   {      
       int firstRow = widget_.getEditor().getFirstVisibleRow();
       int lastRow = widget_.getEditor().getLastVisibleRow();
-      int debugRow = srcPosition.getRow();
+      int debugRow = endPosition.getRow();
       
       // if the line to be debugged is past or near the edges of the screen,
       // scroll it into view. allow some lines of context.
       if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) || 
           debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
       {
-         widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
+         widget_.getEditor().scrollToLine(endPosition.getRow(), true);
       }
  
-      applyDebugLineHighlight(position.getRow(), executing);
+      applyDebugLineHighlight(
+            startPosition.asPosition(), 
+            endPosition.asPosition(), 
+            executing);
    }
    
    @Override
@@ -1756,10 +1757,20 @@ public class AceEditor implements DocDisplay,
 
    private Integer createLineHighlightMarker(int line, String style)
    {
-      Range range = Range.fromPoints(Position.create(line, 0),
-                                     Position.create(line+1, 0));
+      return createRangeHighlightMarker(Position.create(line, 0),
+                                        Position.create(line+1, 0),
+                                        style);
+   }
+   
+   private Integer createRangeHighlightMarker(
+         Position start, 
+         Position end, 
+         String style)
+   {
+      Range range = Range.fromPoints(start, end);
       return getSession().addMarker(range, style, "background", false);
    }
+   
 
    private void applyLineHighlight(int line)
    {
@@ -1781,14 +1792,18 @@ public class AceEditor implements DocDisplay,
       }
    }
 
-   private void applyDebugLineHighlight(int line, boolean executing)
+   private void applyDebugLineHighlight(
+         Position startPos,
+         Position endPos,
+         boolean executing)
    {
       clearDebugLineHighlight();
-      lineDebugMarkerId_ = createLineHighlightMarker(line,
-                                                     "ace_active_debug_line");
+      lineDebugMarkerId_ = createRangeHighlightMarker(
+            startPos, endPos,
+            "ace_active_debug_line");
       if (executing)
       {
-         executionLine_ = line;
+         executionLine_ = startPos.getRow();
          widget_.getEditor().getRenderer().addGutterDecoration(
                executionLine_, 
                "ace_executing-line");

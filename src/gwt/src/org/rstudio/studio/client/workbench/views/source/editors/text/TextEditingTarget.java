@@ -493,10 +493,14 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition pos, boolean executing)
+   public void highlightDebugLocation(
+         SourcePosition startPos,
+         SourcePosition endPos,
+         boolean executing)
    {
-      debugPosition_ = pos;
-      docDisplay_.highlightDebugLocation(debugPosition_, executing);
+      debugStartPos_ = startPos;
+      debugEndPos_ = endPos;
+      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
       updateDebugWarningBar();
    }
 
@@ -504,14 +508,15 @@ public class TextEditingTarget implements EditingTarget
    public void endDebugHighlighting()
    {
       docDisplay_.endDebugHighlighting();      
-      debugPosition_ = null;
+      debugStartPos_ = null;
+      debugEndPos_ = null;
       updateDebugWarningBar();
    }
    
    private void updateDebugWarningBar()
    {
       // show the warning bar if we're debugging and the document is dirty
-      if (debugPosition_ != null && 
+      if (debugStartPos_ != null && 
           dirtyState().getValue() && 
           !isDebugWarningVisible_)
       {
@@ -520,13 +525,15 @@ public class TextEditingTarget implements EditingTarget
       }
       // hide the warning bar if the dirty state or debug state change
       else if (isDebugWarningVisible_ &&
-               (debugPosition_ == null || dirtyState().getValue() == false))
+               (debugStartPos_ == null || dirtyState().getValue() == false))
       {
          view_.hideWarningBar();
          // if we're still debugging, start highlighting the line again
-         if (debugPosition_ != null)
+         if (debugStartPos_ != null)
          {
-            docDisplay_.highlightDebugLocation(debugPosition_, false);
+            docDisplay_.highlightDebugLocation(
+                  debugStartPos_, 
+                  debugEndPos_, false);
          }
          isDebugWarningVisible_ = false;
       }      
@@ -3460,7 +3467,8 @@ public class TextEditingTarget implements EditingTarget
          new IntervalTracker(1000, true);
    private AnchoredSelection lastExecutedCode_;
    
-   private SourcePosition debugPosition_ = null;
+   private SourcePosition debugStartPos_ = null;
+   private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
 }

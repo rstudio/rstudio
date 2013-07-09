@@ -19,6 +19,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+
+import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -222,9 +224,9 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setBrowserLine(int newLineNumber)
+   public void setBrowserRange(DebugFilePosition range)
    {
-      objects_.updateLineNumber(newLineNumber);
+      objects_.updateLineNumber(range.getLine());
    }
 
    // EnviromentObjects.Observer implementation -------------------------------

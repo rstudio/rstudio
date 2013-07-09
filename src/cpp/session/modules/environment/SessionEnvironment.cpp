@@ -139,12 +139,10 @@ SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
    return callObject;
 }
 
-Error getSourceRefFromContext(const RCNTXT* pContext,
-                             std::string* pFileName,
-                             int* pLineNumber)
+Error getFileNameFromContext(const RCNTXT* pContext,
+                             std::string* pFileName)
 {
    SEXP srcref = pContext->srcref;
-   *pLineNumber = r::sexp::asInteger(srcref);
    return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
                  .call(pFileName);
 }
@@ -152,6 +150,24 @@ Error getSourceRefFromContext(const RCNTXT* pContext,
 SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
 {
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
+}
+
+void addDebugRange(json::Object* pObject, const SEXP srcref)
+{
+   if (r::sexp::isNull(srcref))
+   {
+      (*pObject)["line_number"] = 0;
+      (*pObject)["end_line_number"] = 0;
+      (*pObject)["character_number"] = 0;
+      (*pObject)["end_character_number"] = 0;
+   }
+   else
+   {
+      (*pObject)["line_number"] = INTEGER(srcref)[0];
+      (*pObject)["end_line_number"] = INTEGER(srcref)[2];
+      (*pObject)["character_number"] = INTEGER(srcref)[4];
+      (*pObject)["end_character_number"] = INTEGER(srcref)[5];
+   }
 }
 
 json::Array callFramesAsJson()
@@ -182,14 +198,13 @@ json::Array callFramesAsJson()
          // where control *left* the frame to go to the next frame. pSrcContext
          // keeps track of the previous invocation.
          std::string filename;
-         int lineNumber = 0;
-         error = getSourceRefFromContext(pSrcContext, &filename, &lineNumber);
+         error = getFileNameFromContext(pSrcContext, &filename);
          if (error)
          {
             LOG_ERROR(error);
          }
          varFrame["file_name"] = filename;
-         varFrame["line_number"] = lineNumber;
+         addDebugRange(&varFrame, pSrcContext->srcref);
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
@@ -342,10 +357,10 @@ void enqueContextDepthChangedEvent(int depth)
    module_context::enqueClientEvent(event);
 }
 
-void enqueBrowserLineChangedEvent(int newLineNumber)
+void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
-   varJson["line_number"] = newLineNumber;
+   addDebugRange(&varJson, srcref);
    ClientEvent event (client_events::kBrowserLineChanged, varJson);
    module_context::enqueClientEvent(event);
 }
@@ -408,8 +423,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
-      int lineNumber = r::sexp::asInteger(r::getGlobalContext()->srcref);
-      enqueBrowserLineChangedEvent(lineNumber);
+      enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
    }
 }
 
