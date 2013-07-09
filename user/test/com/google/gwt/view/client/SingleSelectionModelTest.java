@@ -105,6 +105,10 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     assertFalse(model.isSelected("test1"));
     assertFalse(model.isSelected("test0"));
     assertEquals(0, model.getSelectedSet().size());
+
+    model.setSelected("test2", true);
+    assertEquals(1, model.getSelectedSet().size());
+    assertEquals("test2", model.getSelectedSet().iterator().next());
   }
 
   public void testSetSelectedNull() {

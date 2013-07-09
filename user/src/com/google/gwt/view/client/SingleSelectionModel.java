@@ -71,8 +71,9 @@ public class SingleSelectionModel<T> extends AbstractSelectionModel<T>
   @Override
   public Set<T> getSelectedSet() {
     Set<T> set = new HashSet<T>();
-    if (curSelection != null) {
-      set.add(curSelection);
+    T item = getSelectedObject();
+    if (item != null) {
+      set.add(item);
     }
     return set;
   }
