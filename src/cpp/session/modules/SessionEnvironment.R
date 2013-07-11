@@ -96,7 +96,20 @@
 # used to create descriptions for language objects and symbols
 .rs.addFunction("languageDescription", function(env, objectName)
 {
-    return(capture.output(print(get(objectName, env))))
+   desc <- "Missing object"
+   tryCatch(
+   {
+      desc <- capture.output(print(get(objectName, env)))
+   },
+   error = function(e)
+   {
+      # silently ignore; if the object can't be retrieved from the
+      # environment, treat it as missing
+   },
+   finally =
+   {
+      return(desc)
+   })
 })
 
 .rs.addFunction("sourceFileFromRef", function(srcref)

@@ -563,6 +563,7 @@ public class EnvironmentObjects extends ResizeComposite
          splitPanel.setWidgetSize(
                callFramePanel_, desiredCallFramePanelSize);
          callFramePanel_.onResize();
+         objectList_.onResize();
       }
       
       pendingCallFramePanelSize_ = false;

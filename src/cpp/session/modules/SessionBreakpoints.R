@@ -17,15 +17,15 @@
 # search path in which the function was found.
 .rs.addFunction("getEnvironmentOfFunction", function(objName)
 {
-   envs <- search()
-   for (e in envs)
+   env <- globalenv()
+   while (environmentName(env) != "R_EmptyEnv")
    {
-      env <- as.environment(e)
       if (!is.null(env) &&
           exists(objName, env, mode = "function", inherits = FALSE))
       {
          return (env)
       }
+      env <- parent.env(env)
    }
    return(NULL)
 })
@@ -87,7 +87,8 @@
 
     # if this expression was replaced by trace(), copy the source references
     # from the original expression over each expression injected by trace()
-    if (sum(funBody[[idx]] != originalFunBody[[idx]]) > 0)
+    if (length(funBody[[idx]]) != length(originalFunBody[[idx]]) ||
+        sum(funBody[[idx]] != originalFunBody[[idx]]) > 0)
     {
       attr(funBody[[idx]], "srcref") <-
         rep(list(attr(originalFunBody, "srcref")[[idx]]), length(funBody[[idx]]))
