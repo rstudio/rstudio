@@ -408,6 +408,11 @@ Error useDefaultSignalHandler(SignalType signal)
    }
 }
 
+void sendSignalToSelf(SignalType signal)
+{
+   ::kill(::getpid(), signalForType(signal));
+}
+
 std::string username()
 {
    return system::getenv("USER");

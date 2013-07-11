@@ -218,6 +218,8 @@ core::Error handleSignal(SignalType signal, void (*handler)(int));
 core::Error ignoreSignal(SignalType signal);   
 core::Error useDefaultSignalHandler(SignalType signal);
 
+void sendSignalToSelf(SignalType signal);
+
 // user info
 std::string username();
 FilePath userHomePath(std::string envOverride = std::string());
