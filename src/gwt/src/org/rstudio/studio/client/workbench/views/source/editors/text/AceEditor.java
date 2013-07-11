@@ -1768,7 +1768,7 @@ public class AceEditor implements DocDisplay,
          String style)
    {
       Range range = Range.fromPoints(start, end);
-      return getSession().addMarker(range, style, "background", false);
+      return getSession().addMarker(range, style, "text", false);
    }
    
 
