@@ -788,6 +788,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
 
    // return the file
+   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(tempFilePath, request);
 }
 

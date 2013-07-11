@@ -749,6 +749,7 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    }
 
    // send it back
+   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(filePath, request);
 }
 
