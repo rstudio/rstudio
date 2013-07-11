@@ -49,7 +49,8 @@ public class Breakpoint extends JavaScriptObject
          state : initialState,
          editor_state: initialState, 
          editor_line_number: lineNumber,
-         is_pending_debug_completion: false
+         is_pending_debug_completion: false,
+         needs_updated_steps: false
       };
    }-*/;
    
@@ -96,6 +97,12 @@ public class Breakpoint extends JavaScriptObject
    public final native void setState (int state)
    /*-{
       this.state = state;
+      // when the breakpoint becomes active, clear the flag indicating that 
+      // it needs updating
+      if (this.state == 1)
+      {
+         this.needs_updated_steps = false;
+      }
    }-*/;
    
    public final native int getEditorState()
@@ -132,5 +139,15 @@ public class Breakpoint extends JavaScriptObject
    public final native boolean setPendingDebugCompletion(boolean pending)
    /*-{
      this.is_pending_debug_completion = pending;
+   }-*/;
+   
+   public final native boolean needsUpdatedSteps()
+   /*-{
+     return this.needs_updated_steps;
+   }-*/;
+   
+   public final native void markStepsNeedUpdate()
+   /*-{
+      this.needs_updated_steps = true;
    }-*/;
 }

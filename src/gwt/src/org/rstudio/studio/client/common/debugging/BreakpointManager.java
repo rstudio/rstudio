@@ -159,16 +159,13 @@ public class BreakpointManager
    
    public void removeBreakpoint(int breakpointId)
    {
-      for (Breakpoint breakpoint: breakpoints_)
+      Breakpoint breakpoint = getBreakpoint(breakpointId);
+      if (breakpoint != null)
       {
-         if (breakpoint.getBreakpointId() == breakpointId)
+         breakpoints_.remove(breakpoint);
+         if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
          {
-            breakpoints_.remove(breakpoint);
-            if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
-            {
-               setFunctionBreakpoints(breakpoint.getFunctionName());
-            }
-            break;
+            setFunctionBreakpoints(breakpoint.getFunctionName());
          }
       }
       breakpointStateDirty_ = true;
@@ -179,7 +176,15 @@ public class BreakpointManager
       // because of Java(Script)'s reference semantics, the editor's instance
       // of the breakpoint object is the same one we have here, so we don't
       // need to update the line number--we just need to persist the new state.
-      breakpointStateDirty_ = true;      
+      breakpointStateDirty_ = true;
+      
+      // the breakpoint knows its position in the function, which needs to be
+      // recalculated; do that the next time we set breakpoints on this function
+      Breakpoint breakpoint = getBreakpoint(breakpointId);
+      if (breakpoint != null)
+      {
+         breakpoint.markStepsNeedUpdate();
+      }
    }
    
    public ArrayList<Breakpoint> getBreakpointsInFile(String fileName)
@@ -371,7 +376,8 @@ public class BreakpointManager
    private void prepareAndSetFunctionBreakpoints(final String functionName)
    {
       // look over the list of breakpoints in this function and see if any are
-      // marked inactive
+      // marked inactive, or if they need their steps refreshed (necessary
+      // when a function has had steps added or removed in the editor)
       final ArrayList<Breakpoint> inactiveBreakpoints = 
             new ArrayList<Breakpoint>();
       int[] inactiveLines = new int[]{};
@@ -379,7 +385,8 @@ public class BreakpointManager
       for (Breakpoint breakpoint: breakpoints_)
       {
          if (breakpoint.getFunctionName().equals(functionName) &&
-             breakpoint.getState() != Breakpoint.STATE_ACTIVE)
+             (breakpoint.getState() != Breakpoint.STATE_ACTIVE ||
+              breakpoint.needsUpdatedSteps()))
          {
             inactiveBreakpoints.add(breakpoint);
             inactiveLines[numLines++] = breakpoint.getLineNumber();
@@ -516,6 +523,18 @@ public class BreakpointManager
       breakpointStateDirty_ = true;
       events_.fireEvent(
             new BreakpointsSavedEvent(breakpoints, saved));
+   }
+   
+   private Breakpoint getBreakpoint (int breakpointId)
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.getBreakpointId() == breakpointId)
+         {
+            return breakpoint;
+         }
+      }
+      return null;
    }
      
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
