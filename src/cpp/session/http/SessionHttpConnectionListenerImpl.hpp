@@ -281,6 +281,12 @@ private:
          return;
       }
 
+      // check for a suspend_session. done here as well as in foreground to
+      // allow clients without the requisite client-id and/or version header
+      // to also initiate a suspend (e.g. an admin/supervisor process)
+      if (connection::checkForSuspend(ptrHttpConnection))
+         return;
+
       // place the connection on the correct queue
       if (connection::isGetEvents(ptrHttpConnection))
          eventsConnectionQueue_.enqueConnection(ptrHttpConnection);
