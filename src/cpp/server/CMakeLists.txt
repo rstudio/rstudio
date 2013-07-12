@@ -92,8 +92,8 @@ endforeach()
 
 
 # generate config file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/server-config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/server-config.h)
 
 # required on Fedora for AppArmor-related code to compile
 if(NOT APPLE)
