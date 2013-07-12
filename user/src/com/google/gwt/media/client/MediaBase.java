@@ -25,6 +25,8 @@ import com.google.gwt.event.dom.client.EndedHandler;
 import com.google.gwt.event.dom.client.HasAllMediaHandlers;
 import com.google.gwt.event.dom.client.ProgressEvent;
 import com.google.gwt.event.dom.client.ProgressHandler;
+import com.google.gwt.event.dom.client.LoadedMetadataEvent;
+import com.google.gwt.event.dom.client.LoadedMetadataHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.media.dom.client.MediaError;
 import com.google.gwt.media.dom.client.TimeRanges;
@@ -63,6 +65,11 @@ public abstract class MediaBase extends FocusWidget
   @Override
   public HandlerRegistration addProgressHandler(ProgressHandler handler) {
     return addBitlessDomHandler(handler, ProgressEvent.getType());
+  }
+
+  @Override
+  public HandlerRegistration addLoadedMetadataHandler(LoadedMetadataHandler handler) {
+    return addBitlessDomHandler(handler, LoadedMetadataEvent.getType());
   }
 
   /**

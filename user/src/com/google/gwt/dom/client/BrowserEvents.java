@@ -45,6 +45,7 @@ public class BrowserEvents {
   public static final String KEYPRESS = "keypress";
   public static final String KEYUP = "keyup";
   public static final String LOAD = "load";
+  public static final String LOADEDMETADATA = "loadedmetadata";
   public static final String LOSECAPTURE = "losecapture";
   public static final String MOUSEDOWN = "mousedown";
   public static final String MOUSEMOVE = "mousemove";
