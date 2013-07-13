@@ -53,7 +53,11 @@ class FieldInitOrderChild extends FieldInitOrderBase {
   }
 
   private void recordValues(ArrayList<String> seenValues) {
-    seenValues.add("i1=" + i1 + ",i2=" + i2 + ",i3=" + i3 + ",i4=" + i4 + ",i5=" + i5 + ",i6=" + i6
-        + ",i7=" + i7);
+    // i3, i4 and i7 would be directly converted into strings hence show undefined instead of null.
+    // String operations should take care of corner cases where a string is null or undefined
+    // see issue 8257.
+    seenValues.add("i1=" + i1 + ",i2=" + i2 + ",i3=" + (i3 == null ? "null" : i3) +
+        ",i4=" +  (i4 == null ? "null" : i4) + ",i5=" + i5 + ",i6=" + i6
+        + ",i7=" + (i7 == null ? "null" : i7));
   }
 }

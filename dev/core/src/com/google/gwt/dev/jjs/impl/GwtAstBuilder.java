@@ -2181,8 +2181,8 @@ public class GwtAstBuilder {
     private JField createEnumValuesField(JEnumType type) {
       // $VALUES = new E[]{A,B,B};
       JArrayType enumArrayType = new JArrayType(type);
-      JField valuesField =
-          new JField(type.getSourceInfo(), "$VALUES", type, enumArrayType, true, Disposition.FINAL);
+      JField valuesField = new JField(type.getSourceInfo(), JEnumType.VALUES_ARRAY_NAME, type,
+          enumArrayType, true, Disposition.FINAL);
       type.addField(valuesField);
       SourceInfo info = type.getSourceInfo();
       List<JExpression> initializers = new ArrayList<JExpression>();

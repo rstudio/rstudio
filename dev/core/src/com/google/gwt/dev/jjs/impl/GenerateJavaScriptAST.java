@@ -68,6 +68,7 @@ import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -898,6 +899,10 @@ public class GenerateJavaScriptAST {
         accept(x.getLiteralInitializer());
       } else if (x.getEnclosingType() == program.getTypeJavaLangObject()) {
         // Special fields whose initialization is done somewhere else.
+        push(null);
+      } else if (x.getType().getDefaultValue() == JNullLiteral.INSTANCE) {
+        // Fields whose default value is null are left uninitialized and will
+        // have a JS value of undefined.
         push(null);
       } else {
         // setup the default value, see Issue 380

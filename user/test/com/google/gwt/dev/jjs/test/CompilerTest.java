@@ -825,6 +825,7 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+
   /**
    * Issue #615: Internal Compiler Error.
    */

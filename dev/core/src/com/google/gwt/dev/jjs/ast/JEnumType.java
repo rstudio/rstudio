@@ -31,6 +31,8 @@ public class JEnumType extends JClassType {
   private List<JEnumField> enumList = Lists.create();
   private boolean isOrdinalized = false;
 
+  public static final String VALUES_ARRAY_NAME = "$VALUES";
+
   public JEnumType(SourceInfo info, String name, boolean isAbstract) {
     super(info, name, isAbstract, false);
   }

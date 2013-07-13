@@ -442,7 +442,7 @@ public class EnumOrdinalizer {
          * $VALUES array (as well as the values() method) should not block
          * ordinalization. Instead, convert $VALUES to an array of int.
          */
-        if (x.getField().getName().equals("$VALUES")
+        if (x.getField().getName().equals(JEnumType.VALUES_ARRAY_NAME)
             && ((this.currentMethod.getEnclosingType() != x.getField().getEnclosingType()) ||
                 (!this.currentMethod.getName().equals("values") &&
                  !this.currentMethod.getName().equals("$clinit")))) {
@@ -769,7 +769,8 @@ public class EnumOrdinalizer {
             // See if LHS is a field ref to the class being initialized.
             JField field = enumRef.getField();
             if (field.isStatic() && field.getEnclosingType() == enclosingType) {
-              if (field instanceof JEnumField || field.getName().equals("$VALUES")) {
+              if (field instanceof JEnumField ||
+                  field.getName().equals(JEnumType.VALUES_ARRAY_NAME)) {
                 block.removeStmt(removeIndex--);
                 field.setInitializer(null);
               }
