@@ -969,7 +969,7 @@ public class TextEditingTarget implements EditingTarget
    public void verifyPrerequisites()
    {
       // NOTE: will be a no-op for non-c/c++ file types
-      cppHelper_.checkBuildCppDependencies(view_, fileType_);
+      cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
    }
    
 
@@ -2273,7 +2273,7 @@ public class TextEditingTarget implements EditingTarget
                }
             };
             
-            if (isCpp && dirtyState_.getValue())
+            if (isCpp && (dirtyState_.getValue() || (getPath() == null)))
                saveThenExecute(null, sourceCommand);
             else
                sourceCommand.execute(); 
@@ -2332,6 +2332,12 @@ public class TextEditingTarget implements EditingTarget
    void onAuthoringRPresentationsHelp()
    {
       globalDisplay_.openRStudioLink("authoring_presentations");
+   }
+   
+   @Handler
+   void onRcppHelp()
+   {
+      globalDisplay_.openRStudioLink("rcpp_help");
    }
      
    @Handler

@@ -273,10 +273,6 @@ public class SessionInfo extends JavaScriptObject
       return this.devtools_installed;
    }-*/;
    
-   public final native boolean getHaveRcppAttributes() /*-{
-      return this.have_rcpp_attributes;
-   }-*/;
-   
    public final native boolean isCairoPdfAvailable() /*-{
       return this.have_cairo_pdf;
    }-*/;

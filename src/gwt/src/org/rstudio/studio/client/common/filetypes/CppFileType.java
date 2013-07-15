@@ -19,7 +19,6 @@ import java.util.HashSet;
 import com.google.gwt.resources.client.ImageResource;
 
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -43,7 +42,7 @@ public class CppFileType extends TextFileType
    @Override
    public boolean canSource()
    {
-      return isCpp() && getHaveRcppAttributes();
+      return isCpp();
    }
  
    @Override
@@ -67,21 +66,12 @@ public class CppFileType extends TextFileType
       {
          result.add(commands.commentUncomment());
          result.add(commands.reflowComment());
-      }
-      if (getHaveRcppAttributes())
-      {
          result.add(commands.sourceActiveDocument());
          result.add(commands.sourceActiveDocumentWithEcho());
+         result.add(commands.rcppHelp());
       }
       return result;
    }
-   
-   private boolean getHaveRcppAttributes()
-   {
-      return RStudioGinjector.INSTANCE.getSession()
-                              .getSessionInfo().getHaveRcppAttributes();
-   }
-   
-   
+    
    private final boolean isCpp_;
 }

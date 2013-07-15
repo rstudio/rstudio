@@ -16,11 +16,13 @@
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
 public interface BuildServerOperations
 {
    // check if we can build C/C++ code
-   void canBuildCpp(ServerRequestCallback<Boolean> requestCallback);
+   void getCppCapabilities(
+                     ServerRequestCallback<CppCapabilities> requestCallback);
    
    // returns true to indicate that the build has started, returns false
    // to indicate that the build could not be started because another

@@ -246,6 +246,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.goToLine());
       dynamicCommands_.add(commands.checkSpelling());
       dynamicCommands_.add(commands.codeCompletion());
+      dynamicCommands_.add(commands.rcppHelp());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -503,6 +504,24 @@ public class Source implements InsertSourceHandler,
                    target.verifyPrerequisites();
                 }
              });
+   }
+   
+   @Handler
+   public void onNewRcppDoc()
+   {
+      newSourceDocWithTemplate(
+          FileTypeRegistry.CPP, 
+          "", 
+          "rcpp.cpp",
+          Position.create(0, 0),
+          new CommandWithArg<EditingTarget> () {
+            @Override
+            public void execute(EditingTarget target)
+            {
+               target.verifyPrerequisites(); 
+            }
+          }
+      );
    }
    
    @Handler
