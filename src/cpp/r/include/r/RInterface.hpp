@@ -46,17 +46,24 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
+#ifdef _WIN32
+// on Windows platforms, use a manual definition of sigjmp_buf that corresponds
+// to how R lays out the structure in memory
+
+typedef struct
+{
+  jmp_buf buf;
+  int sigmask;
+  int savedmask;
+}
+sigjmp_buf[1];
+#endif
+
 typedef struct RCNTXT {
     struct RCNTXT *nextcontext;
     int callflag;
-#ifdef _WIN32
-    // on Windows, the size of the buffer used by R is larger than the one
-    // declared in setjmp.h; we need to match this size exactly so the rest of
-    // the structure layout in memory is valid.
-    _JBTYPE cjmpbuf[_JBLEN + 2];
-#else
     sigjmp_buf cjmpbuf;
-#endif
+
     int cstacktop;
     int evaldepth;
     SEXP promargs;
