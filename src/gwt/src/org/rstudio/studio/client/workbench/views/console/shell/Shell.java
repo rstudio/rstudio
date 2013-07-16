@@ -218,12 +218,6 @@ public class Shell implements ConsoleInputHandler,
       server_.consoleInput(event.getInput(), 
                            new ServerRequestCallback<Void>() {
          @Override
-         public void onResponseReceived(Void v)
-         {
-            eventBus_.fireEvent(
-                  new ConsoleInputProcessedEvent(event.getInput()));
-         }
-         @Override
          public void onError(ServerError error) 
          {
             // show the error in the console then re-prompt

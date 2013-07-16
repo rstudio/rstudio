@@ -33,8 +33,8 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleInputProcessedHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -71,8 +71,8 @@ import com.google.inject.Singleton;
 public class BreakpointManager 
                implements SessionInitHandler, 
                           ActivePackageLoadedEvent.Handler,
-                          ConsoleInputProcessedHandler,
-                          ContextDepthChangedEvent.Handler
+                          ContextDepthChangedEvent.Handler,
+                          ConsoleWriteInputHandler
 {
    @Inject
    public BreakpointManager(
@@ -88,7 +88,7 @@ public class BreakpointManager
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ActivePackageLoadedEvent.TYPE, this);
-      events_.addHandler(ConsoleInputProcessedEvent.TYPE, this);      
+      events_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
    }
    
@@ -275,7 +275,7 @@ public class BreakpointManager
    }
 
    @Override
-   public void onConsoleInputProcessed(ConsoleInputProcessedEvent event)
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
       RegExp sourceExp = RegExp.compile("source\\('([^']*)'\\)");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
