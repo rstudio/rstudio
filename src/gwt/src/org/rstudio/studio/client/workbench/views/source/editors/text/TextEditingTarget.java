@@ -806,12 +806,23 @@ public class TextEditingTarget implements EditingTarget
 
       if (showWarning && !isBreakpointWarningVisible_)
       {
-         String message = hasDebugPendingBreakpoints ? 
-                "Breakpoints will be activated when the function is " +
-                "finished running."
-                :
-                "Breakpoints will be activated when this file is saved and " + 
-                "sourced or rebuilt.";                           
+         
+         String message = "";
+         if (hasDebugPendingBreakpoints) 
+         {
+            message = "Breakpoints will be activated when the function is " +
+                      "finished running.";
+         }
+         else if (isPackageFile())
+         {
+            message = "Breakpoints will be activated when the package is " +
+                      "rebuilt.";
+         }
+         else
+         {
+            message = "Breakpoints will be activated when this file is " + 
+                      "sourced.";
+         }
          view_.showWarningBar(message);
          isBreakpointWarningVisible_ = true;
       }
@@ -820,6 +831,22 @@ public class TextEditingTarget implements EditingTarget
          view_.hideWarningBar();         
          isBreakpointWarningVisible_ = false;
       }
+   }
+   
+   private boolean isPackageFile()
+   {
+      // not a package file if we're not in package development mode
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         return false;
+      }
+
+      // get the directory associated with the project and see if the file is
+      // inside that directory
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      return getPath().startsWith(projectDir.getPath());
    }
       
    private void checkCompilePdfDependencies()
