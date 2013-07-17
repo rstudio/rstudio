@@ -43,7 +43,7 @@ public class SourceDocument extends JavaScriptObject
    }-*/;
 
    public native final String getRawPath() /*-{
-      return this.raw_path;
+      return this.raw_path ? this.raw_path : this.path;
    }-*/;
 
    public native final void setPath(String path) /*-{

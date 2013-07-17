@@ -418,7 +418,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // discard the breakpoint if it's not related to the file this 
                // editor instance is concerned with
-               if (!breakpoint.isInFile(rawPath_))
+               if (!breakpoint.isInFile(getRawPath()))
                {
                   continue;
                }
@@ -681,7 +681,7 @@ public class TextEditingTarget implements EditingTarget
                   Breakpoint breakpoint = 
                     breakpointManager_.setBreakpoint(
                           getPath(),
-                          rawPath_, 
+                          getRawPath(), 
                           functionName,
                           event.getLineNumber(),
                           dirtyState().getValue() == false);
@@ -771,7 +771,7 @@ public class TextEditingTarget implements EditingTarget
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(rawPath_);
+            breakpointManager_.getBreakpointsInFile(getRawPath());
       for (Breakpoint breakpoint: breakpoints)
       {
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
@@ -786,7 +786,7 @@ public class TextEditingTarget implements EditingTarget
       boolean hasInactiveBreakpoints = false;
       boolean hasDebugPendingBreakpoints = false;
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(rawPath_);
+            breakpointManager_.getBreakpointsInFile(getRawPath());
       for (Breakpoint breakpoint: breakpoints)
       {
          if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
@@ -1460,7 +1460,6 @@ public class TextEditingTarget implements EditingTarget
 
                            events_.fireEvent(
                                  new SourceFileSavedEvent(saveItem.getPath()));
-                           
                         }
  
                      };
@@ -1584,6 +1583,15 @@ public class TextEditingTarget implements EditingTarget
    public String getPath()
    {
       return docUpdateSentinel_.getPath();
+   }
+   
+   public String getRawPath()
+   {
+      if (rawPath_ != null)
+      {
+         return rawPath_;
+      }
+      return getPath(); 
    }
    
    public String getContext()
