@@ -1,4 +1,3 @@
-
 .ace_editor {
   border: 2px solid rgb(159, 159, 159);
 }
@@ -109,6 +108,10 @@ background-color:#800F00;
 .ace_storage {
   color:#FFEE80;
 }
+
+.ace_string {
+  color:#24D406;
+} 
 
 .ace_string.ace_regexp {
   color:#80FFC2;
