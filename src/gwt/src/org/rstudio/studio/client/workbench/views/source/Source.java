@@ -496,19 +496,6 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      newDoc(FileTypeRegistry.CPP,
-             new ResultCallback<EditingTarget, ServerError> () {
-                @Override
-                public void onSuccess(EditingTarget target)
-                {
-                   target.verifyPrerequisites();
-                }
-             });
-   }
-   
-   @Handler
-   public void onNewRcppDoc()
-   {
       newSourceDocWithTemplate(
           FileTypeRegistry.CPP, 
           "", 

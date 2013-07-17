@@ -67,8 +67,6 @@ public class SourceShim extends Composite
       @Handler
       public abstract void onNewCppDoc();
       @Handler
-      public abstract void onNewRcppDoc();
-      @Handler
       public abstract void onNewSweaveDoc();
       @Handler
       public abstract void onNewRMarkdownDoc();
