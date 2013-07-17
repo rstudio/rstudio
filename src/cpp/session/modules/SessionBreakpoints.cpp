@@ -65,8 +65,8 @@ void onPackageLoaded(const std::string& pkgname)
 Error getFunctionSyncState(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
-   std::string functionName;
-   Error error = json::readParam(request.params, 0, &functionName);
+   std::string functionName, fileName;
+   Error error = json::readParams(request.params, &functionName, &fileName);
    if (error)
    {
        return error;
@@ -75,7 +75,9 @@ Error getFunctionSyncState(const json::JsonRpcRequest& request,
    // get the source refs and code for the function
    SEXP srcRefs = NULL;
    Protect protect;
-   error = r::exec::RFunction(".rs.getFunctionSourceRefs", functionName)
+   error = r::exec::RFunction(".rs.getFunctionSourceRefs",
+                              functionName,
+                              fileName)
          .call(&srcRefs, &protect);
    if (error)
    {
@@ -83,7 +85,9 @@ Error getFunctionSyncState(const json::JsonRpcRequest& request,
    }
 
    std::string functionCode;
-   error = r::exec::RFunction(".rs.getFunctionSourceCode", functionName)
+   error = r::exec::RFunction(".rs.getFunctionSourceCode",
+                              functionName,
+                              fileName)
          .call(&functionCode);
    if (error)
    {

@@ -63,7 +63,6 @@ typedef struct RCNTXT {
     struct RCNTXT *nextcontext;
     int callflag;
     sigjmp_buf cjmpbuf;
-
     int cstacktop;
     int evaldepth;
     SEXP promargs;

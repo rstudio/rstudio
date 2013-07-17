@@ -2842,7 +2842,8 @@ public class RemoteServer implements Server
    
    @Override
    public void getFunctionSteps(
-                 String fileName, 
+                 String functionName,
+                 String fileName,
                  int[] lineNumbers,
                  ServerRequestCallback<JsArray<FunctionSteps>> requestCallback)
    {
@@ -2852,8 +2853,9 @@ public class RemoteServer implements Server
          lineNums.set(idx, new JSONNumber(lineNumbers[idx]));
       }
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(fileName));
-      params.set(1, lineNums);
+      params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(fileName));
+      params.set(2, lineNums);
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STEPS,
                   params,
@@ -2863,6 +2865,7 @@ public class RemoteServer implements Server
    @Override
    public void setFunctionBreakpoints(
          String functionName,
+         String fileName,
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback)
    {
@@ -2873,7 +2876,8 @@ public class RemoteServer implements Server
       }
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
-      params.set(1, breakSteps);
+      params.set(1, new JSONString(fileName));
+      params.set(2, breakSteps);
       sendRequest(RPC_SCOPE,
                   SET_FUNCTION_BREAKPOINTS,
                   params,
@@ -2883,10 +2887,12 @@ public class RemoteServer implements Server
    @Override
    public void getFunctionSyncState(
          String functionName,
+         String fileName,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(fileName));
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_SYNC_STATE,
                   params,

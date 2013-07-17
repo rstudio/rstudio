@@ -26,16 +26,19 @@ import org.rstudio.studio.client.server.Void;
 public interface DebuggingServerOperations
 {
    public void getFunctionSteps(
-         String fileName, 
+         String functionName,
+         String fileName,
          int[] lineNumbers,
          ServerRequestCallback<JsArray<FunctionSteps>> requestCallback);
    
    public void setFunctionBreakpoints(
          String functionName,
+         String fileName,
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback);
    
    public void getFunctionSyncState(
          String functionName,
+         String fileName,
          ServerRequestCallback<Boolean> requestCallback);
 }

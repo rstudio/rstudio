@@ -15,15 +15,34 @@
 
 # given the name of a function, return the name of the first environment on the
 # search path in which the function was found.
-.rs.addFunction("getEnvironmentOfFunction", function(objName)
+.rs.addFunction("getEnvironmentOfFunction", function(objName, fileName)
 {
    env <- globalenv()
    while (environmentName(env) != "R_EmptyEnv")
    {
+      # if the function with the given name exists in this environment...
       if (!is.null(env) &&
           exists(objName, env, mode = "function", inherits = FALSE))
       {
-         return (env)
+         # we need the source reference to look up the filename; we may need to
+         # access the original copy of a traced function to ge this
+         fun <- get(objName, env)
+         if (isS4(fun) && class(fun) == "functionWithTrace")
+         {
+            fun <- fun@original
+         }
+         srcref <- attr(fun, "srcref")
+         if (!is.null(srcref))
+         {
+            # get the name of the file from which the function originated, and
+            # trim off the trailing space; see if it matches the filename
+            srcfile <- capture.output(attr(srcref, "srcfile"))
+            srcfile <- substr(srcfile, 1, nchar(srcfile) - 1)
+            if (normalizePath(srcfile) == normalizePath(fileName))
+            {
+               return (env)
+            }
+         }
       }
       env <- parent.env(env)
    }
@@ -108,15 +127,18 @@
 # this function is used to get the steps in the given function that are
 # associated with the given line number, using the function's source
 # references.
-.rs.addFunction("getFunctionSteps", function(functionName, lineNumbers)
+.rs.addFunction("getFunctionSteps", function(
+   functionName,
+   fileName,
+   lineNumbers)
 {
-   fun <- get(functionName, envir=globalenv())
+   fun <- .rs.getUntracedFunction(functionName, fileName)
    funBody <- body(fun)
 
    # attempt to find the end line of the function
    funStartLine <- 0
    funEndLine <- 0
-   funSrcRef <- attr(.rs.getUntracedFunction(functionName), "srcref")
+   funSrcRef <- attr(fun, "srcref")
    if (!is.null(funSrcRef) && length(funSrcRef) > 3)
    {
       funStartLine <- funSrcRef[1]
@@ -157,12 +179,21 @@
    })
 })
 
-.rs.addFunction("setFunctionBreakpoints", function(functionName, steps)
+.rs.addFunction("setFunctionBreakpoints", function(
+   functionName,
+   fileName,
+   steps)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName)
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
+   if (is.null(envir))
+   {
+      return (NULL)
+   }
    if (length(steps) == 0 || nchar(steps) == 0)
    {
-      untrace(functionName)
+      untrace(
+         what = functionName,
+         where = envir)
    }
    else
    {
@@ -204,9 +235,9 @@
    return(functionName)
 })
 
-.rs.addFunction("getUntracedFunction", function(functionName)
+.rs.addFunction("getUntracedFunction", function(functionName, fileName)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName)
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
    if (is.null(envir))
    {
       return(NULL)
@@ -219,9 +250,9 @@
    return(fun)
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(functionName)
+.rs.addFunction("getFunctionSourceRefs", function(functionName, fileName)
 {
-   fun <- .rs.getUntracedFunction(functionName)
+   fun <- .rs.getUntracedFunction(functionName, fileName)
    if (is.null(fun))
    {
       return(NULL)
@@ -229,19 +260,26 @@
    attr(fun, "srcref")
 })
 
-.rs.addFunction("getFunctionSourceCode", function(functionName)
+.rs.addFunction("getFunctionSourceCode", function(functionName, fileName)
 {
-   paste(capture.output(.rs.getFunctionSourceRefs(functionName)), collapse="\n")
+   paste(capture.output(
+      .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addJsonRpcHandler("set_function_breakpoints", function(functionName, steps)
+.rs.addJsonRpcHandler("set_function_breakpoints", function(
+   functionName,
+   fileName,
+   steps)
 {
-   .rs.setFunctionBreakpoints(functionName, steps)
+   .rs.setFunctionBreakpoints(functionName, fileName, steps)
 })
 
-.rs.addJsonRpcHandler("get_function_steps", function(functionName, lineNumbers)
+.rs.addJsonRpcHandler("get_function_steps", function(
+   functionName,
+   fileName,
+   lineNumbers)
 {
-   results <- .rs.getFunctionSteps(functionName, lineNumbers)
+   results <- .rs.getFunctionSteps(functionName, fileName, lineNumbers)
    formattedResults <- data.frame(
       line = numeric(0),
       name = character(0),

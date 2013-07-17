@@ -358,6 +358,9 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
    jsonDoc["path"] = !path().empty() ? path_ : json::Value();
+   jsonDoc["raw_path"] = !path().empty() ?
+            module_context::resolveAliasedPath(path()).absolutePath() :
+            json::Value();
    jsonDoc["type"] = !type().empty() ? type_ : json::Value();
    jsonDoc["hash"] = hash();
    jsonDoc["contents"] = contents();

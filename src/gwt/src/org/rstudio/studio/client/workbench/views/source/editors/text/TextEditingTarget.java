@@ -418,7 +418,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // discard the breakpoint if it's not related to the file this 
                // editor instance is concerned with
-               if (!breakpoint.getFileName().equals(path_))
+               if (!breakpoint.getFileName().equals(rawPath_))
                {
                   continue;
                }
@@ -563,7 +563,7 @@ public class TextEditingTarget implements EditingTarget
                           Provider<String> defaultNameProvider)
    {
       id_ = document.getId();
-      path_ = document.getPath();
+      rawPath_ = document.getRawPath();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
@@ -680,7 +680,7 @@ public class TextEditingTarget implements EditingTarget
                   
                   Breakpoint breakpoint = 
                     breakpointManager_.setBreakpoint(
-                          path_, 
+                          rawPath_, 
                           functionName,
                           event.getLineNumber(),
                           dirtyState().getValue() == false);
@@ -770,7 +770,7 @@ public class TextEditingTarget implements EditingTarget
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(path_);
+            breakpointManager_.getBreakpointsInFile(rawPath_);
       for (Breakpoint breakpoint: breakpoints)
       {
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
@@ -785,7 +785,7 @@ public class TextEditingTarget implements EditingTarget
       boolean hasInactiveBreakpoints = false;
       boolean hasDebugPendingBreakpoints = false;
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(path_);
+            breakpointManager_.getBreakpointsInFile(rawPath_);
       for (Breakpoint breakpoint: breakpoints)
       {
          if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
@@ -3443,7 +3443,6 @@ public class TextEditingTarget implements EditingTarget
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
    private String id_;
-   private String path_;
    private HandlerRegistration commandHandlerReg_;
    private ArrayList<HandlerRegistration> releaseOnDismiss_ =
          new ArrayList<HandlerRegistration>();
@@ -3471,4 +3470,5 @@ public class TextEditingTarget implements EditingTarget
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
+   private String rawPath_ = null;
 }

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JsArray;
 
-import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -43,10 +42,5 @@ public interface EnvironmentServerOperations
            ServerRequestCallback<DataPreviewResult> requestCallback);
 
    void setContextDepth(int newContextDepth,
-                        ServerRequestCallback<Void> requestCallback);
-   
-   public void getFunctionSteps(
-         String fileName, 
-         int[] lineNumbers,
-         ServerRequestCallback<JsArray<FunctionSteps>> requestCallback);
+                        ServerRequestCallback<Void> requestCallback);   
 }
