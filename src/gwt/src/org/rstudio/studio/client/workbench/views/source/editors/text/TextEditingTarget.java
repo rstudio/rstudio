@@ -418,7 +418,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // discard the breakpoint if it's not related to the file this 
                // editor instance is concerned with
-               if (!breakpoint.getFileName().equals(rawPath_))
+               if (!breakpoint.isInFile(rawPath_))
                {
                   continue;
                }
@@ -680,6 +680,7 @@ public class TextEditingTarget implements EditingTarget
                   
                   Breakpoint breakpoint = 
                     breakpointManager_.setBreakpoint(
+                          getPath(),
                           rawPath_, 
                           functionName,
                           event.getLineNumber(),

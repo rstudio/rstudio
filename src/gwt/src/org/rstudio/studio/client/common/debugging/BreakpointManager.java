@@ -96,7 +96,8 @@ public class BreakpointManager
    // Public methods ---------------------------------------------------------
    
    public Breakpoint setBreakpoint(
-         final String fileName,
+         final String path,
+         final String rawPath,
          final String functionName,
          int lineNumber, 
          boolean immediately)
@@ -104,7 +105,8 @@ public class BreakpointManager
       // create the new breakpoint and arguments for the server call
       final int newBreakpointId = currentBreakpointId_++;
       final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
-            fileName, 
+            path,
+            rawPath,
             functionName,
             lineNumber,
             immediately ?
@@ -117,14 +119,14 @@ public class BreakpointManager
       // possible to set it right now, but it will probably violate user 
       // expectations. Process it when the function is no longer executing.
       if (activeFunctions_.contains(
-            new ActiveFunction(functionName, fileName)))
+            new ActiveFunction(breakpoint)))
       {
          breakpoint.setPendingDebugCompletion(true);
          markInactiveBreakpoint(breakpoint);
       }      
       else if (immediately)
       {
-         server_.getFunctionSyncState(functionName, fileName,
+         server_.getFunctionSyncState(functionName, rawPath,
                new ServerRequestCallback<Boolean>()
          {
             @Override
@@ -195,7 +197,7 @@ public class BreakpointManager
       ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
-         if (breakpoint.getFileName().equals(fileName))
+         if (breakpoint.isInFile(fileName))
          {
             breakpoints.add(breakpoint);
          }
@@ -280,14 +282,14 @@ public class BreakpointManager
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      RegExp sourceExp = RegExp.compile("source\\('([^']*)'\\)");
+      RegExp sourceExp = RegExp.compile("source(.with.encoding)?\\('([^']*)'.*");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
          return;
       }
       
-      resetBreakpointsInPath(fileMatch.getGroup(1), true);
+      resetBreakpointsInPath(fileMatch.getGroup(2), true);
    }
    
    @Override
@@ -456,8 +458,8 @@ public class BreakpointManager
       for (Breakpoint breakpoint: breakpoints_)
       {
          boolean processBreakpoint = isFile ?
-               breakpoint.getFileName().equals(path) :
-               breakpoint.getFileName().startsWith(path);
+               breakpoint.isInFile(path) :
+               breakpoint.isInPath(path);
          if (processBreakpoint)
          {
             functionsToBreak.add(new ActiveFunction(breakpoint));
@@ -497,8 +499,8 @@ public class BreakpointManager
             {
                for (Breakpoint possibleDupe: breakpoints_)
                {
-                  if (breakpoint.getFileName().equals(
-                         possibleDupe.getFileName()) &&
+                  if (breakpoint.getPath().equals(
+                         possibleDupe.getPath()) &&
                       steps.getLineNumber() == 
                          possibleDupe.getLineNumber() &&
                       breakpoint.getBreakpointId() != 
@@ -557,13 +559,13 @@ public class BreakpointManager
       
       public ActiveFunction (Breakpoint breakpoint)
       {
-         this(breakpoint.getFunctionName(), breakpoint.getFileName());
+         this(breakpoint.getFunctionName(), breakpoint.getPath());
       }
       
       public boolean containsBreakpoint(Breakpoint breakpoint)
       {
          return (breakpoint.getFunctionName().equals(functionName) &&
-                 breakpoint.getFileName().equals(fileName));
+                 breakpoint.getPath().equals(fileName));
       }
       
       @Override
