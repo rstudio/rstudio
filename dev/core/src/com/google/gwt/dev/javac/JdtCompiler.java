@@ -373,6 +373,8 @@ public class JdtCompiler {
       decl.types = stripGwtIncompatible(decl.types);
       // Fix anonymous inner classes
       stripGwtIncompatibleAnonymousInnerClasses(decl);
+      // Lastly remove any unused imports
+      UnusedImportsRemover.exec(decl);
       return decl;
     }
   }

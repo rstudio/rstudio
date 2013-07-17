@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.dev.jjs.test.gwtincompatible.GwtIncompatible;
+import static com.google.gwt.dev.jjs.test.gwtincompatible.ClassWithGwtIncompatibleMethod.gwtIncompatibleMethod;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -50,6 +51,7 @@ public class GwtIncompatibleTest extends GWTTestCase {
     @GwtIncompatible("incompatible")
     @Override
     int getClassFooNbrConstructors() {
+      gwtIncompatibleMethod();
       return new Foo().getNbrConstructors();
     }
   }
