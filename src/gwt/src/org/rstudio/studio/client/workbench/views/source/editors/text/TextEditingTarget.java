@@ -2398,9 +2398,10 @@ public class TextEditingTarget implements EditingTarget
          // require print statements so if you don't echo to the console
          // then you don't see any of the output
          
-         boolean isCpp = fileType_.isCpp();
+         boolean saveWhenSourcing = fileType_.isCpp() || 
+               docDisplay_.hasBreakpoints();
          
-         if ((dirtyState_.getValue() || sweave) && !isCpp)
+         if ((dirtyState_.getValue() || sweave) && !saveWhenSourcing)
          {
             server_.saveActiveDocument(code, 
                                        sweave,
@@ -2435,7 +2436,7 @@ public class TextEditingTarget implements EditingTarget
                }
             };
             
-            if (isCpp && dirtyState_.getValue())
+            if (saveWhenSourcing && dirtyState_.getValue())
                saveThenExecute(null, sourceCommand);
             else
                sourceCommand.execute(); 

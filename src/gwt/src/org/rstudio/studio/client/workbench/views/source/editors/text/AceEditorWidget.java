@@ -372,6 +372,11 @@ public class AceEditorWidget extends Composite
       }
    }
    
+   public boolean hasBreakpoints()
+   {
+      return breakpoints_.size() > 0;
+   }
+   
    private void updateBreakpoints(AceDocumentChangeEventNative changeEvent)
    {
       // if there are no breakpoints, don't do any work to move them about
