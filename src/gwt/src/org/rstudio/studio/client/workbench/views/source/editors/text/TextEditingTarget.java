@@ -563,7 +563,6 @@ public class TextEditingTarget implements EditingTarget
                           Provider<String> defaultNameProvider)
    {
       id_ = document.getId();
-      rawPath_ = document.getRawPath();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
       view_ = new TextEditingTargetWidget(commands_,
@@ -1587,11 +1586,7 @@ public class TextEditingTarget implements EditingTarget
    
    public String getRawPath()
    {
-      if (rawPath_ != null)
-      {
-         return rawPath_;
-      }
-      return getPath(); 
+      return docUpdateSentinel_.getRawPath();
    }
    
    public String getContext()
@@ -3480,5 +3475,4 @@ public class TextEditingTarget implements EditingTarget
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
-   private String rawPath_ = null;
 }
