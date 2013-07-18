@@ -408,6 +408,11 @@ Error useDefaultSignalHandler(SignalType signal)
    }
 }
 
+void sendSignalToSelf(SignalType signal)
+{
+   ::kill(::getpid(), signalForType(signal));
+}
+
 std::string username()
 {
    return system::getenv("USER");
@@ -1096,7 +1101,7 @@ bool isUserNotFoundError(const Error& error)
    return error.code() == boost::system::errc::permission_denied;
 }
 
-Error userBelongsToGroup(const std::string& username,
+Error userBelongsToGroup(const user::User& user,
                          const std::string& groupName,
                          bool* pBelongs)
 {
@@ -1137,16 +1142,25 @@ Error userBelongsToGroup(const std::string& username,
       return error;
    }
 
-   // scan the list of member names for this user
    *pBelongs = false; // default to not found
-   char** pUsers = grp.gr_mem;
-   while (*pUsers)
+
+   // see if the group id matches the user's group id
+   if (user.groupId == grp.gr_gid)
    {
-      const char* pUser = *(pUsers++);
-      if (username.compare(pUser) == 0)
+      *pBelongs = true;
+   }
+   // else scan the list of member names for this user
+   else
+   {
+      char** pUsers = grp.gr_mem;
+      while (*pUsers)
       {
-         *pBelongs = true;
-         break;
+         const char* pUser = *(pUsers++);
+         if (user.username.compare(pUser) == 0)
+         {
+            *pBelongs = true;
+            break;
+         }
       }
    }
 

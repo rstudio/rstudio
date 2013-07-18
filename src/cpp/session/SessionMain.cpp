@@ -551,14 +551,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
 
-   sessionInfo["show_environment_tab"] = userSettings().showEnvironmentTab();
-
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
-                                                                  "devtools");
-
-   sessionInfo["have_rcpp_attributes"] = module_context::haveRcppAttributes();
-
+                                                                  "devtools");   
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
 
    // console history -- we do this at the end because
@@ -568,6 +563,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["console_history"] = historyArray;
    sessionInfo["console_history_capacity"] =
                               r::session::consoleHistory().capacity();
+
+   sessionInfo["disable_packages"] =
+               !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
 
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();

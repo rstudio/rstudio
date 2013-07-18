@@ -141,6 +141,9 @@ ProgramStatus Options::read(int argc, char * const argv[])
          value<std::string>(&wwwSymbolMapsPath_)->default_value(
                                                       "www-symbolmaps"),
         "www symbol maps path")
+      ("www-use-emulated-stack",
+       value<bool>(&wwwUseEmulatedStack_)->default_value(false),
+       "use gwt emulated stack")
       ("www-thread-pool-size",
          value<int>(&wwwThreadPoolSize_)->default_value(2),
          "thread pool size");

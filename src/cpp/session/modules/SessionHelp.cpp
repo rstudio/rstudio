@@ -257,15 +257,25 @@ void setDynamicContentResponse(const std::string& content,
    if (request.acceptsEncoding(http::kGzipEncoding))
       pResponse->setContentEncoding(http::kGzipEncoding);
    
-   // force cache revalidation since this is dynamic content
-   pResponse->setCacheWithRevalidationHeaders();
-   
-   // set as cacheable content (uses eTag/If-None-Match)
-   Error error = pResponse->setCacheableBody(content, request, filter);
-   if (error)
+   // if the response doesn't already have Cache-Control then
+   // send an eTag back and force revalidation
+   if (!pResponse->containsHeader("Cache-Control"))
    {
-      pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+      // force cache revalidation since this is dynamic content
+      pResponse->setCacheWithRevalidationHeaders();
+
+      // set as cacheable content (uses eTag/If-None-Match)
+      Error error = pResponse->setCacheableBody(content, request, filter);
+      if (error)
+      {
+         pResponse->setError(http::status::InternalServerError,
+                             error.code().message());
+      }
+   }
+   // otherwise just leave it alone
+   else
+   {
+      pResponse->setBody(content, filter);
    }
 }
    
@@ -778,6 +788,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
 
    // return the file
+   pResponse->setCacheWithRevalidationHeaders();
    pResponse->setCacheableFile(tempFilePath, request);
 }
 

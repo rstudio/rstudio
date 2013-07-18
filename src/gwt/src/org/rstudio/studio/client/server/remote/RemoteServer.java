@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.presentation.model.SlideNavigation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
+import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -2799,9 +2800,10 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void canBuildCpp(ServerRequestCallback<Boolean> requestCallback)
+   public void getCppCapabilities(
+                     ServerRequestCallback<CppCapabilities> requestCallback)
    {
-      sendRequest(RPC_SCOPE, CAN_BUILD_CPP, requestCallback);
+      sendRequest(RPC_SCOPE, GET_CPP_CAPABILITIES, requestCallback);
    }
    
    @Override
@@ -3140,7 +3142,7 @@ public class RemoteServer implements Server
    private static final String BEGIN_FIND = "begin_find";
    private static final String STOP_FIND = "stop_find";
    
-   private static final String CAN_BUILD_CPP = "can_build_cpp";
+   private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String START_BUILD = "start_build";
    private static final String TERMINATE_BUILD = "terminate_build";
    private static final String DEVTOOLS_LOAD_ALL_PATH = "devtools_load_all_path";

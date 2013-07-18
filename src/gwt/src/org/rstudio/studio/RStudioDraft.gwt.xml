@@ -1,0 +1,5 @@
+<module rename-to="rstudio">
+   <inherits name="org.rstudio.studio.RStudioServer"/>
+   <set-property name="rstudio.desktop" value="false"/>
+   <set-property name="compiler.stackMode" value="emulated"/>
+</module>

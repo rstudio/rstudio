@@ -172,6 +172,52 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 }
 
+// on windows we allow suspend_session to be handled on the foreground
+// thread since we don't have a way to ::kill on that that platform
+#ifdef _WIN32
+
+bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   return false;
+}
+
+#else
+
+bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   using namespace core::json;
+   if (isMethod(ptrConnection, "suspend_session"))
+   {
+      bool force = false;
+      JsonRpcRequest jsonRpcRequest;
+      core::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
+                                              &jsonRpcRequest);
+      if (error)
+      {
+         ptrConnection->sendJsonRpcError(error);
+      }
+      else if ((error = readParam(jsonRpcRequest.params, 0, &force)))
+      {
+         ptrConnection->sendJsonRpcError(error);
+      }
+      else
+      {
+         // send a signal to this process to suspend
+         using namespace core::system;
+         sendSignalToSelf(force ? SigUsr2 : SigUsr1);
+
+         // send response
+         ptrConnection->sendJsonRpcResponse();
+      }
+
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+#endif
 
 bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
                   const std::string& secret)

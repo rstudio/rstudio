@@ -54,7 +54,7 @@ void StderrLogWriter::log(const std::string& programIdentity,
    if (logLevel > logLevel_)
       return;
 
-   std::cerr << formatLogEntry(programIdentity, message);
+   std::cerr << formatLogEntry(programIdentity, message, false);
 }
 
 

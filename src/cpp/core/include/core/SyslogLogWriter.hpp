@@ -30,6 +30,10 @@ public:
     virtual void log(const std::string& programIdentity,
                      core::system::LogLevel level,
                      const std::string& message);
+
+private:
+    std::string programIdentity_;
+    bool logToStderr_;
 };
 
 } // namespace core

@@ -30,6 +30,7 @@ public abstract class
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
+   public abstract AppCommand newRcppDoc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
    public abstract AppCommand newRHTMLDoc();
@@ -57,6 +58,7 @@ public abstract class
    public abstract AppCommand executeCurrentChunk();
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToHelp();
+   public abstract AppCommand rcppHelp();
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();

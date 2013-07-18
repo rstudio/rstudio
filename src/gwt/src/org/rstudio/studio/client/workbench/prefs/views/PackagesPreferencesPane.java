@@ -54,11 +54,10 @@ public class PackagesPreferencesPane extends PreferencesPane
       globalDisplay_ = globalDisplay;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
-      Label installationLabel = new Label("Package installation");
+      Label installationLabel = new Label("Package management");
       installationLabel.addStyleName(baseRes.styles().headerLabel());
       nudgeRight(installationLabel);
-      if (session.getSessionInfo().getAllowCRANReposEdit())
-         add(installationLabel);
+      add(installationLabel);
       
       cranMirrorTextBox_ = new TextBoxWithButton(
             "CRAN mirror:",
@@ -82,20 +81,37 @@ public class PackagesPreferencesPane extends PreferencesPane
       textBoxWithChooser(cranMirrorTextBox_);
       cranMirrorTextBox_.setText("");
       if (session.getSessionInfo().getAllowCRANReposEdit())
+      {
+         lessSpaced(cranMirrorTextBox_);
          add(cranMirrorTextBox_);
+      }
+      
+      CheckBox chkEnablePackages = checkboxPref("Enable packages pane", 
+            uiPrefs.packagesPaneEnabled());
+      chkEnablePackages.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            reloadRequired_ = true;
+         }
+      });
+      if (!session.getSessionInfo().getDisablePackages())
+         add(chkEnablePackages);
+
       
       useInternet2_ = new CheckBox(
                         "Use Internet Explorer library/proxy for HTTP",
                         true);
       if (BrowseCap.isWindowsDesktop())
       {     
-         lessSpaced(cranMirrorTextBox_);
+         lessSpaced(chkEnablePackages);
          spaced(useInternet2_);
          add(useInternet2_);
       }
       else
       {
-         spaced(cranMirrorTextBox_);
+         spaced(chkEnablePackages);
+         chkEnablePackages.getElement().getStyle().setMarginBottom(12, Unit.PX);
       }
       
       Label developmentLabel = new Label("Package development");
@@ -202,7 +218,7 @@ public class PackagesPreferencesPane extends PreferencesPane
                                               hideObjectFiles_.getValue());
       rPrefs.setPackagesPrefs(packagesPrefs);
       
-      return reload;
+      return reload || reloadRequired_;
    }
 
    private final PreferencesDialogResources res_;
@@ -215,5 +231,5 @@ public class PackagesPreferencesPane extends PreferencesPane
    private CheckBox cleanupAfterCheckSuccess_;
    private CheckBox viewDirAfterCheckFailure_;
    private CheckBox hideObjectFiles_;
-  
+   private boolean reloadRequired_ = false;
 }

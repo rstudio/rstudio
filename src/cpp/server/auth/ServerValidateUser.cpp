@@ -53,7 +53,7 @@ bool validateUser(const std::string& username, const std::string& requiredGroup)
    {    
       // see if they are a member of the required group
       bool belongsToGroup ;
-      error = core::system::userBelongsToGroup(username,
+      error = core::system::userBelongsToGroup(user,
                                                requiredGroup,
                                                &belongsToGroup);
       if (error)

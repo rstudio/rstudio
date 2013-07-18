@@ -100,6 +100,11 @@ public:
    {
       return core::FilePath(wwwSymbolMapsPath_.c_str());
    }
+
+   bool wwwUseEmulatedStack() const
+   {
+      return wwwUseEmulatedStack_;
+   }
    
    int wwwThreadPoolSize() const
    {
@@ -205,6 +210,7 @@ private:
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;
    std::string wwwSymbolMapsPath_;
+   bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;

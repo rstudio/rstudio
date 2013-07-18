@@ -157,8 +157,6 @@ public:
    bool viewDirAfterRCmdCheck() const;
    void setViewDirAfterRCmdCheck(bool viewDir);
 
-   bool showEnvironmentTab() const;
-
 private:
 
    void onSettingsFileChanged(

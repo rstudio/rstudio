@@ -3,6 +3,7 @@
    <set-property name="user.agent" value="safari" />
    <set-property name="rstudio.desktop" value="false" />
    <set-property name="compiler.useSourceMaps" value="true"/>
+   <set-property name="compiler.stackMode" value="native"/>
    <set-property name="locale" value="default" />
    <add-linker name="xsiframe"/>
    <set-configuration-property name="devModeRedirectEnabled" value="true"/>

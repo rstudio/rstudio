@@ -188,6 +188,79 @@ Error appendToFile(const core::FilePath& filePath,
    return Success() ;
 }
 
+template <typename T>
+Error appendStructToFile(const core::FilePath& filePath,
+                         const T& data)
+{
+   using namespace boost::system::errc ;
+
+   // open the file stream
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.open_w(&pOfs, false);
+   if (error)
+      return error;
+
+   try
+   {
+      pOfs->seekp(0, std::ios_base::end);
+
+      // append the content
+      pOfs->write((const char*)&data, sizeof(T));
+      if (pOfs->fail())
+         return systemError(io_error, ERROR_LOCATION);
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
+   }
+
+   return Success() ;
+}
+
+template <typename T>
+Error readStructVectorFromFile(const core::FilePath& filePath,
+                               std::vector<T>* pVector)
+{
+   using namespace boost::system::errc ;
+
+   // open the file stream
+   boost::shared_ptr<std::istream> pIfs;
+   Error error = filePath.open_r(&pIfs);
+   if (error)
+      return error;
+
+   try
+   {
+      while(true)
+      {
+         T data;
+         pIfs->read((char*)&data, sizeof(T));
+         if (pIfs->eof())
+            break;
+         else if (pIfs->fail())
+            return systemError(io_error, ERROR_LOCATION);
+         else
+            pVector->push_back(data);
+      }
+   }
+   catch(const std::exception& e)
+   {
+      Error error = systemError(boost::system::errc::io_error,
+                                ERROR_LOCATION);
+      error.addProperty("what", e.what());
+      error.addProperty("path", filePath.absolutePath());
+      return error;
+   }
+
+   return Success() ;
+}
+
+
+
 // convenince methods for simple string collections
 ReadCollectionAction parseString(const std::string& line, std::string* pStr);
 std::string stringifyString(const std::string& str);

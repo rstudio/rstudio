@@ -273,28 +273,38 @@ public class FindReplace
                                     position,
                                     range,
                                     regex);
-
-      Range resultRange = search.find(editor_.getSession());
-
-      if (resultRange == null)
+   
+      try
       {
-         if (!incremental)
+         Range resultRange = search.find(editor_.getSession());
+         if (resultRange == null)
          {
-            globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                       errorCaption_,
-                                       "No more occurrences.");
+            if (!incremental)
+            {
+               globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+                                          errorCaption_,
+                                          "No more occurrences.");
+            }
+            else
+            {
+               editor_.collapseSelection(true);
+            }
+            
+            return false;
          }
          else
          {
-            editor_.collapseSelection(true);
+            editor_.revealRange(resultRange, false);
+            return true;
          }
+      }
+      catch(Throwable e)
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
+               errorCaption_,
+               "Invalid search term.");
          
          return false;
-      }
-      else
-      {
-         editor_.revealRange(resultRange, false);
-         return true;
       }
    }
 

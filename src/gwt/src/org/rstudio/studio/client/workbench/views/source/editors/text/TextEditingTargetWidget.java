@@ -129,6 +129,7 @@ public class TextEditingTargetWidget
                                           StandardIcons.INSTANCE.help(), 
                                           helpMenu);
       toolbar.addLeftWidget(helpMenuButton_);
+      toolbar.addLeftWidget(rcppHelpButton_ = commands_.rcppHelp().createToolbarButton());
       
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(previewHTMLButton_ = commands_.previewHTML().createToolbarButton());
@@ -249,6 +250,7 @@ public class TextEditingTargetWidget
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isMarkdown = fileType.isMarkdown();
       boolean isRPresentation = fileType.isRpres();
+      boolean isCpp = fileType.isCpp();
       
       sourceOnSave_.setVisible(fileType.canSourceOnSave());
       srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
@@ -269,6 +271,7 @@ public class TextEditingTargetWidget
       chunksButton_.setVisible(canExecuteChunks);
       
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
+      rcppHelpButton_.setVisible(isCpp);
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -454,6 +457,7 @@ public class TextEditingTargetWidget
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
    private ToolbarButton helpMenuButton_;
+   private ToolbarButton rcppHelpButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

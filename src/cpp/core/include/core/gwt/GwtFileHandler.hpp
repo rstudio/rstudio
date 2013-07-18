@@ -24,7 +24,8 @@ namespace gwt {
 http::UriHandlerFunction fileHandlerFunction(
       const std::string& wwwLocalPath,
       const std::string& baseUri = std::string(),
-      http::UriFilterFunction mainPageFilter = http::UriFilterFunction());
+      http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
+      bool useEmulatedStack = false);
    
 } // namespace gwt
 } // namespace core

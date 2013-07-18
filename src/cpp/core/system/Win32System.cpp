@@ -562,6 +562,10 @@ Error useDefaultSignalHandler(SignalType signal)
    return Success();
 }
 
+void sendSignalToSelf(SignalType signal)
+{
+}
+
 class ClipboardScope : boost::noncopyable
 {
 public:

@@ -18,6 +18,8 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
 public class TextEditingTargetCppHelper
 {
@@ -26,27 +28,42 @@ public class TextEditingTargetCppHelper
       server_ = server;
    }
    
-   public void checkBuildCppDependencies(final WarningBarDisplay display, 
-                                         TextFileType fileType)
+   public void checkBuildCppDependencies(
+                     final EditingTarget editingTarget,
+                     final WarningBarDisplay warningBar, 
+                     TextFileType fileType)
    {
       // bail if this isn't a C file or we've already verified we can build
-      if (!fileType.isC() || canBuildCpp_)
+      if (!fileType.isC() || capabilities_.hasAllCapabiliites())
          return;
       
-      server_.canBuildCpp(new ServerRequestCallback<Boolean>() {
+      server_.getCppCapabilities(
+                     new ServerRequestCallback<CppCapabilities>() {
          
          @Override
-         public void onResponseReceived(Boolean canBuild)
+         public void onResponseReceived(CppCapabilities capabilities)
          {
-            if (canBuild)
+            if (capabilities_.hasAllCapabiliites())
             {
-               canBuildCpp_ = true;
+               capabilities_ = capabilities;
             }
             else 
             {
-               display.showWarningBar(
-                  "The tools required to build C/C++ code for R " +
-                  "are not currently installed");
+               if (!capabilities.getCanBuild())
+               {
+                  warningBar.showWarningBar(
+                     "The tools required to build C/C++ code for R " +
+                     "are not currently installed");
+               }
+               else if (!capabilities.getCanSourceCpp())
+               {
+                  if (editingTarget.search("Rcpp\\:\\:export") != null)
+                  {
+                     warningBar.showWarningBar(
+                        "The Rcpp package (version 0.10.1 or higher) is not " +
+                        "currently installed");
+                  }
+               }
             }
          }
          
@@ -62,7 +79,8 @@ public class TextEditingTargetCppHelper
    private BuildServerOperations server_;
   
    
-   // cache the canBuildCpp value statically -- once we get an affirmative
-   // response we never check again
-   private static boolean canBuildCpp_ = false;
+   // cache the value statically -- once we get an affirmative response
+   // we never check again
+   private static CppCapabilities capabilities_ 
+                                    = CppCapabilities.createDefault();
 }

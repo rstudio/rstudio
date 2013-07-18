@@ -13,6 +13,9 @@
  *
  */
 
+#cmakedefine RSTUDIO_DEVELOPMENT
+
+
 
 
 

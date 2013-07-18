@@ -31,13 +31,14 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newSourceDoc"/>
             <separator/>
             <cmd refid="newTextDoc"/>
-            <cmd refid="newRDocumentationDoc"/>
-            <cmd refid="newCppDoc"/>
+            <cmd refid="newRcppDoc"/>
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRMarkdownDoc"/>
             <cmd refid="newRHTMLDoc"/>
             <cmd refid="newRPresentationDoc"/>
+            <separator/>
+            <cmd refid="newRDocumentationDoc"/>
          </menu>
          <cmd refid="newProject"/>
          <separator/>
@@ -474,9 +475,16 @@ well as menu structures (for main menu and popup menus).
         desc="Create a new text file"/>   
         
    <cmd id="newCppDoc"
-        menuLabel="_C/C++ File"
-        desc="Create a new C/C++ file"/>          
+        menuLabel="C/C++ F_ile"
+        desc="Create a new C/C++ file"/>    
         
+   <cmd id="newRcppDoc"
+        menuLabel="R_cpp File"
+        desc="Create a new Rcpp file"/> 
+        
+   <cmd id="rcppHelp"
+        desc="Help on using Rcpp"/>         
+              
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
         desc="Create a new R Sweave document"/>  
@@ -495,7 +503,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="newRDocumentationDoc"
         menuLabel="R_d File"
-        desc="Create a new Rd file"/>  
+        desc="Create a new Rd documentation file"/>  
         
    <cmd id="openSourceDoc"
         menuLabel="_Open File..."

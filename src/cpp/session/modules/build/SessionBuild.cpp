@@ -1078,10 +1078,13 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error canBuildCpp(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+Error getCppCapabilities(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(module_context::canBuildCpp());
+   json::Object capsJson;
+   capsJson["can_build"] = module_context::canBuildCpp();
+   capsJson["can_source_cpp"] = module_context::haveRcppAttributes();
+   pResponse->setResult(capsJson);
 
    return Success();
 }
@@ -1324,7 +1327,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "start_build", startBuild))
       (bind(registerRpcMethod, "terminate_build", terminateBuild))
-      (bind(registerRpcMethod, "can_build_cpp", canBuildCpp))
+      (bind(registerRpcMethod, "get_cpp_capabilities", getCppCapabilities))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));

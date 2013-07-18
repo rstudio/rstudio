@@ -45,6 +45,7 @@ void handleAbortNextProjParam(
 bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
                    const boost::function<void()> cleanupHandler);
 
+bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection);
 
 bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
                   const std::string& secret);
