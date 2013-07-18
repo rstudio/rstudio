@@ -372,6 +372,15 @@ public class AceEditorWidget extends Composite
       }
    }
    
+   public void removeAllBreakpoints()
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         removeBreakpointMarker(breakpoint);
+      }
+      breakpoints_.clear();
+   }
+   
    public boolean hasBreakpoints()
    {
       return breakpoints_.size() > 0;

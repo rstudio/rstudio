@@ -1488,6 +1488,14 @@ public class TextEditingTarget implements EditingTarget
                         @Override
                         public void execute()
                         {
+                           // breakpoints are file-specific, so when saving as
+                           // a different file, clear the display of breakpoints
+                           // from the old file name
+                           if (!getPath().equals(saveItem.getPath()))
+                           {
+                              docDisplay_.removeAllBreakpoints();
+                           }
+                                 
                            docUpdateSentinel_.save(
                                  saveItem.getPath(),
                                  fileType.getTypeId(),
