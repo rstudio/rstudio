@@ -22,7 +22,6 @@
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
 
-
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
@@ -40,7 +39,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core ;
+using namespace core;
 using namespace r::sexp;
 using namespace r::exec;
 
@@ -57,11 +56,14 @@ void onPackageLoaded(const std::string& pkgname)
    if (projectContext.config().buildType == r_util::kBuildTypePackage &&
        projectContext.packageInfo().name() == pkgname)
    {
+      // if it is, emit a package loaded event to the client
       ClientEvent packageLoadedEvent(client_events::kActivePackageLoaded);
       module_context::enqueClientEvent(packageLoadedEvent);
    }
 }
 
+// Called by the client to ascertain whether the given function in the given
+// file is in sync with the corresponding R object
 Error getFunctionSyncState(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -119,7 +121,7 @@ Error initialize()
 }
 
 
-} // namepsace dirty
+} // namepsace breakpoints
 } // namespace modules
 } // namesapce session
 

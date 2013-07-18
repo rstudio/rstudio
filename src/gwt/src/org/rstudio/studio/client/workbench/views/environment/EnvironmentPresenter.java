@@ -555,7 +555,6 @@ public class EnvironmentPresenter extends BasePresenter
       else if (useCurrentBrowseSource_ &&
                currentBrowseSource_.length() > 0)
       {
-         
          if (debugging)
          {
             eventBus_.fireEvent(new CodeBrowserNavigationEvent(

@@ -18,7 +18,7 @@ package org.rstudio.studio.client.common.debugging.model;
 import com.google.gwt.core.client.JavaScriptObject;
 
 // This class represents a breakpoint in nearly every context: 
-// instances are used in the editor, in the breakpoint manager
+// instances are used in the editor (AceEditorWidget), in the breakpoint manager
 // (BreakpointManager), and are also persisted raw in the project state
 // (BreakpointState). 
 public class Breakpoint extends JavaScriptObject

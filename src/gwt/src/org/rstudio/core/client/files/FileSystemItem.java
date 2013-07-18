@@ -64,7 +64,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.path;
    }-*/;
 
-   public final native String getRawPath() /*-{
+   private final native String getRawPath() /*-{
       return this.raw_path || this.path;
    }-*/;
 

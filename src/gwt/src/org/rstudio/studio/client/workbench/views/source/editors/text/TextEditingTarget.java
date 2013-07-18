@@ -3067,8 +3067,6 @@ public class TextEditingTarget implements EditingTarget
       }
    }
    
-   
-   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree() && !fileType_.isRmd();

@@ -59,9 +59,9 @@ import com.google.inject.Singleton;
 //    function on disk is identical to the source code for the function as
 //    it exists in the R session (get_function_sync_state). If it isn't, 
 //    it defers setting the breakpoint.
-// 4) The breakpoint manager fetches the name of the function and the step of
-//    the function in which the breakpoint occurs from the server, and updates
-//    the breakpoint with this information (get_function_steps) 
+// 4) The breakpoint manager fetches the steps and substeps of the function in 
+//    which the breakpoint occurs from the server, and updates the breakpoint
+//    with this information (get_function_steps) 
 // 5) The breakpoint manager combines the breakpoint with all of the other 
 //    breakpoints for the function, and makes a single call to the server to
 //    update the function's breakpoints (set_function_breakpoints)
@@ -113,7 +113,7 @@ public class BreakpointManager
                   Breakpoint.STATE_INACTIVE);
       breakpoints_.add(breakpoint);
       
-      // if the breakpoint is in a function that is active on the callstack, 
+      // If the breakpoint is in a function that is active on the callstack, 
       // it's being set on the stored rather than the executing copy. It's 
       // possible to set it right now, but it will probably violate user 
       // expectations. Process it when the function is no longer executing.
@@ -281,13 +281,13 @@ public class BreakpointManager
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
+      // when a file is sourced, replay all the breakpoints in the file.
       RegExp sourceExp = RegExp.compile("source(.with.encoding)?\\('([^']*)'.*");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
          return;
-      }
-      
+      }      
       resetBreakpointsInPath(fileMatch.getGroup(2), true);
    }
    

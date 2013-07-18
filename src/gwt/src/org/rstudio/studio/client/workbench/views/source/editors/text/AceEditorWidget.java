@@ -435,10 +435,6 @@ public class AceEditorWidget extends Composite
       // remove all the breakpoints after the row where the change
       // happened, and add them back at their new position if they were
       // not part of a deleted range. 
-      //
-      // this must be done in two passes, so we can distinguish
-      // breakpoints that haven't been processed yet from those that have.
-      // (an alternative would be to keep the set of breakpoints sorted.)
       ArrayList<Breakpoint> movedBreakpoints = new ArrayList<Breakpoint>();
      
       for (int idx = 0; idx < breakpoints_.size(); idx++)

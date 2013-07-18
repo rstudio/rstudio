@@ -13,8 +13,8 @@
 #
 #
 
-# given the name of a function, return the name of the first environment on the
-# search path in which the function was found.
+# given a function name and filename, find the environment that contains a
+# function with the given name that originated from the given file.
 .rs.addFunction("getEnvironmentOfFunction", function(objName, fileName)
 {
    env <- globalenv()
@@ -90,6 +90,9 @@
    return(NULL)
 })
 
+# given a traced function body and the original function body, recursively copy
+# the source references from the original body to the traced body, adding
+# source references to the injected trace code from the line being traced
 .rs.addFunction("tracedSourceRefs",function(funBody, originalFunBody)
 {
   if (is.symbol(funBody) || is.symbol(originalFunBody))
@@ -191,21 +194,25 @@
    }
    if (length(steps) == 0 || nchar(steps) == 0)
    {
-      untrace(
+      # Restore the function to its original state. Note that trace/untrace
+      # emit messages when they act on a function in a package environment; hide
+      # those messages since they're just noise to the user.
+      suppressMessages(untrace(
          what = functionName,
-         where = envir)
+         where = envir))
    }
    else
    {
       # inject the browser calls
-      trace(
+      suppressMessages(trace(
           what = functionName,
           where = envir,
           at = lapply(strsplit(as.character(steps), ","), as.numeric),
           tracer = browser,
-          print = FALSE)
+          print = FALSE))
 
-      # unlock the binding if necessary to inject the source references
+      # unlock the binding if necessary to inject the source references;
+      # bindings are often locked in package environments
       lockedBinding <- FALSE
 
       # remap the source references so that the code injected by trace() is
