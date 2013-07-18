@@ -21,6 +21,7 @@ import java.util.TreeSet;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.debugging.events.ActivePackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -97,7 +98,6 @@ public class BreakpointManager
    
    public Breakpoint setBreakpoint(
          final String path,
-         final String rawPath,
          final String functionName,
          int lineNumber, 
          boolean immediately)
@@ -106,7 +106,6 @@ public class BreakpointManager
       final int newBreakpointId = currentBreakpointId_++;
       final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
             path,
-            rawPath,
             functionName,
             lineNumber,
             immediately ?
@@ -119,14 +118,14 @@ public class BreakpointManager
       // possible to set it right now, but it will probably violate user 
       // expectations. Process it when the function is no longer executing.
       if (activeFunctions_.contains(
-            new ActiveFunction(breakpoint)))
+            new FileFunction(breakpoint)))
       {
          breakpoint.setPendingDebugCompletion(true);
          markInactiveBreakpoint(breakpoint);
       }      
       else if (immediately)
       {
-         server_.getFunctionSyncState(functionName, rawPath,
+         server_.getFunctionSyncState(functionName, path,
                new ServerRequestCallback<Boolean>()
          {
             @Override
@@ -137,7 +136,7 @@ public class BreakpointManager
                if (inSync)
                {
                   prepareAndSetFunctionBreakpoints(
-                        new ActiveFunction(breakpoint));
+                        new FileFunction(breakpoint));
                }
                // otherwise, save an inactive breakpoint--we'll revisit the
                // marker the next time the file is sourced or the package is
@@ -170,7 +169,7 @@ public class BreakpointManager
          breakpoints_.remove(breakpoint);
          if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
          {
-            setFunctionBreakpoints(new ActiveFunction(breakpoint));
+            setFunctionBreakpoints(new FileFunction(breakpoint));
          }
       }
       breakpointStateDirty_ = true;
@@ -300,7 +299,7 @@ public class BreakpointManager
       // past to begin actually evaluating the function. Step past it
       // immediately.
       JsArray<CallFrame> frames = event.getCallFrames();
-      Set<ActiveFunction> activeFunctions = new TreeSet<ActiveFunction>();
+      Set<FileFunction> activeFunctions = new TreeSet<FileFunction>();
       for (int idx = 0; idx < frames.length(); idx++)
       {
          String functionName = frames.get(idx).getFunctionName();
@@ -309,14 +308,14 @@ public class BreakpointManager
          {
             events_.fireEvent(new SendToConsoleEvent("n", true));
          }
-         activeFunctions.add(new ActiveFunction(functionName, fileName));
+         activeFunctions.add(new FileFunction(functionName, fileName, false));
       }
       
       // For any functions that were previously active in the callstack but
       // are no longer active, enable any pending breakpoints for those 
       // functions.
-      Set<ActiveFunction> enableFunctions = new TreeSet<ActiveFunction>();
-      for (ActiveFunction function: activeFunctions_)
+      Set<FileFunction> enableFunctions = new TreeSet<FileFunction>();
+      for (FileFunction function: activeFunctions_)
       {
          if (!activeFunctions.contains(function))
          {
@@ -332,7 +331,7 @@ public class BreakpointManager
          }
       }
       
-      for (ActiveFunction function: enableFunctions)
+      for (FileFunction function: enableFunctions)
       {
          prepareAndSetFunctionBreakpoints(function);
       }
@@ -343,7 +342,7 @@ public class BreakpointManager
 
    // Private methods ---------------------------------------------------------
 
-   private void setFunctionBreakpoints(ActiveFunction function)
+   private void setFunctionBreakpoints(FileFunction function)
    {
       ArrayList<String> steps = new ArrayList<String>();
       final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
@@ -379,7 +378,7 @@ public class BreakpointManager
             });
    }
       
-   private void prepareAndSetFunctionBreakpoints(final ActiveFunction function)
+   private void prepareAndSetFunctionBreakpoints(final FileFunction function)
    {
       // look over the list of breakpoints in this function and see if any are
       // marked inactive, or if they need their steps refreshed (necessary
@@ -454,7 +453,7 @@ public class BreakpointManager
    
    private void resetBreakpointsInPath(String path, boolean isFile)
    {
-      Set<ActiveFunction> functionsToBreak = new TreeSet<ActiveFunction>();
+      Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          boolean processBreakpoint = isFile ?
@@ -462,10 +461,10 @@ public class BreakpointManager
                breakpoint.isInPath(path);
          if (processBreakpoint)
          {
-            functionsToBreak.add(new ActiveFunction(breakpoint));
+            functionsToBreak.add(new FileFunction(breakpoint));
          }
       }
-      for (ActiveFunction function: functionsToBreak)
+      for (FileFunction function: functionsToBreak)
       {
          prepareAndSetFunctionBreakpoints(function);
       }
@@ -485,6 +484,10 @@ public class BreakpointManager
    {
       ArrayList<Breakpoint> unSettableBreakpoints = 
             new ArrayList<Breakpoint>();
+      
+      // Walk through the array of breakpoints for which we requested function
+      // steps and the array of results from the server in lock-step, populating
+      // each breakpoint with its steps.
       for (int i = 0; i < breakpoints.size() && 
                       i < stepList.length(); i++)
       {
@@ -546,42 +549,65 @@ public class BreakpointManager
      
    // Private classes ---------------------------------------------------------
    
-   class ActiveFunction implements Comparable<ActiveFunction>
+   class FileFunction implements Comparable<FileFunction>
    {
       public String functionName;
       public String fileName;
-
-      public ActiveFunction (String fun, String file)
+      boolean fullPath;
+      
+      public FileFunction (String fun, String file, boolean useFullPath)
       {
          functionName = fun;
-         fileName = file;
+         fileName = file.trim();        
+         fullPath = useFullPath;
+      }
+
+      public FileFunction (String fun, String file)
+      {
+         this(fun, file, true);
       }
       
-      public ActiveFunction (Breakpoint breakpoint)
+      public FileFunction (Breakpoint breakpoint)
       {
          this(breakpoint.getFunctionName(), breakpoint.getPath());
       }
       
       public boolean containsBreakpoint(Breakpoint breakpoint)
       {
-         return (breakpoint.getFunctionName().equals(functionName) &&
-                 breakpoint.getPath().equals(fileName));
+         if (!breakpoint.getFunctionName().equals(functionName))
+         {
+            return false;
+         }
+         if (fullPath)
+         {
+            return breakpoint.getPath().equals(fileName);
+         }
+         else
+         {
+            return FilePathUtils.friendlyFileName(breakpoint.getPath()).equals(
+                  FilePathUtils.friendlyFileName(fileName));
+         }  
       }
       
       @Override
-      public int compareTo(ActiveFunction other)
+      public int compareTo(FileFunction other)
       {
          int fun = functionName.compareTo(other.functionName);
          if (fun != 0)
          {
             return fun;
          }
+         if (!fullPath || !other.fullPath)
+         {
+            return FilePathUtils.friendlyFileName(fileName).compareTo(
+                  FilePathUtils.friendlyFileName(other.fileName));
+         }
          return fileName.compareTo(other.fileName);
-      }
+      }      
    }
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private Set<ActiveFunction> activeFunctions_ = new TreeSet<ActiveFunction>();
+   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;

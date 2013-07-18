@@ -25,7 +25,7 @@
           exists(objName, env, mode = "function", inherits = FALSE))
       {
          # we need the source reference to look up the filename; we may need to
-         # access the original copy of a traced function to ge this
+         # access the original copy of a traced function to get this
          fun <- get(objName, env)
          if (isS4(fun) && class(fun) == "functionWithTrace")
          {

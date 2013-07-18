@@ -423,7 +423,7 @@ public class TextEditingTarget implements EditingTarget
             {
                // discard the breakpoint if it's not related to the file this 
                // editor instance is concerned with
-               if (!breakpoint.isInFile(getRawPath()))
+               if (!breakpoint.isInFile(getPath()))
                {
                   continue;
                }
@@ -693,7 +693,6 @@ public class TextEditingTarget implements EditingTarget
                   Breakpoint breakpoint = 
                     breakpointManager_.setBreakpoint(
                           getPath(),
-                          getRawPath(), 
                           functionName,
                           event.getLineNumber(),
                           dirtyState().getValue() == false);
@@ -783,7 +782,7 @@ public class TextEditingTarget implements EditingTarget
       // find all of the debug breakpoints set in this document and replay them
       // onto the edit surface
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(getRawPath());
+            breakpointManager_.getBreakpointsInFile(getPath());
       for (Breakpoint breakpoint: breakpoints)
       {
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
@@ -798,7 +797,7 @@ public class TextEditingTarget implements EditingTarget
       boolean hasInactiveBreakpoints = false;
       boolean hasDebugPendingBreakpoints = false;
       ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(getRawPath());
+            breakpointManager_.getBreakpointsInFile(getPath());
       for (Breakpoint breakpoint: breakpoints)
       {
          if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
@@ -1623,12 +1622,7 @@ public class TextEditingTarget implements EditingTarget
    {
       return docUpdateSentinel_.getPath();
    }
-   
-   public String getRawPath()
-   {
-      return docUpdateSentinel_.getRawPath();
-   }
-   
+      
    public String getContext()
    {
       return null;

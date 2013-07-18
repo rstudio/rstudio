@@ -36,15 +36,13 @@ public class Breakpoint extends JavaScriptObject
    public native static Breakpoint create(
          int breakpointId,
          String path,
-         String rawPath,
          String functionName,
          int lineNumber, 
          int initialState)
    /*-{
       return {
          id : breakpointId,
-         path : path,
-         raw_path: rawPath, 
+         path : path.trim(),
          line_number : lineNumber,
          function_steps : "",
          function_name : functionName,
@@ -150,16 +148,16 @@ public class Breakpoint extends JavaScriptObject
    
    public final native boolean isInFile(String filename)
    /*-{
-      return this.path == filename || this.raw_path == filename;
+      return this.path == filename;
    }-*/;
    
    public final native boolean isInPath(String path)
    /*-{
-      return this.path.indexOf(path) == 0 || this.raw_path.indexOf(path) == 0;
+      return this.path.indexOf(path) == 0;
    }-*/;
    
    public final native String getPath()
    /*-{
-     return this.raw_path;
+     return this.path;
    }-*/;
 }

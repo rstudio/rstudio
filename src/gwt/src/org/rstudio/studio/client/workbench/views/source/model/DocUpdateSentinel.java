@@ -487,11 +487,6 @@ public class DocUpdateSentinel
       return sourceDoc_.getPath();
    }
    
-   public String getRawPath()
-   {
-      return sourceDoc_.getRawPath();
-   }
-   
    public String getContents()
    {
       return sourceDoc_.getContents();
