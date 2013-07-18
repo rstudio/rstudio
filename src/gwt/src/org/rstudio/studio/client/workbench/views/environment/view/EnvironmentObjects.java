@@ -447,18 +447,7 @@ public class EnvironmentObjects extends ResizeComposite
             public SafeHtml render(String object)
             {
                SafeHtmlBuilder sb = new SafeHtmlBuilder();
-               if (!object.equals(""))
-               {
-                  sb.appendHtmlConstant("<input type=\"image\" src=\"")
-                          .appendEscaped(object)
-                          .appendHtmlConstant("\" class=\"")
-                          .appendEscaped(style.expandIcon())
-                          .appendHtmlConstant("\" />");
-               }
-               else
-               {
-                  sb.appendHtmlConstant("&nbsp;");
-               }
+               sb.appendHtmlConstant(object);
                return sb.toSafeHtml();
             }
          };
@@ -468,23 +457,28 @@ public class EnvironmentObjects extends ResizeComposite
             @Override
             public String getValue(RObjectEntry object)
             {
+               String imageUri = "";
+               String imageStyle = style.expandIcon();
                if (object.canExpand())
                {
                   ImageResource expandImage = object.expanded ?
                       EnvironmentResources.INSTANCE.collapseIcon() :
                       EnvironmentResources.INSTANCE.expandIcon();
 
-                  return expandImage.getSafeUri().asString();
+                  imageUri = expandImage.getSafeUri().asString();
                }
                else if (object.hasTraceInfo())
                {
-                  return EnvironmentResources.INSTANCE
+                  imageUri = EnvironmentResources.INSTANCE
                         .tracedFunction().getSafeUri().asString();
+                  imageStyle += (" " + style.unclickableIcon());
                }
-               else
+               if (imageUri.length() > 0)
                {
-                  return "";
+                  return "<input type=\"image\" src=\"" + imageUri + "\" " +
+                         "class=\"" + imageStyle + "\" />";                        
                }
+               return "";
             }
          };
       objectExpandColumn_.setFieldUpdater(
