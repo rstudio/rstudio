@@ -414,6 +414,11 @@ public class TextEditingTarget implements EditingTarget
          @Override
          public void onBreakpointsSaved(BreakpointsSavedEvent event)
          {            
+            // if this document isn't ready for breakpoints, stop now
+            if (docUpdateSentinel_ == null)
+            {
+               return;
+            }
             for (Breakpoint breakpoint: event.breakpoints())
             {
                // discard the breakpoint if it's not related to the file this 
@@ -654,6 +659,14 @@ public class TextEditingTarget implements EditingTarget
             {
                if (event.isSet())
                {
+                  // don't try to set breakpoints in unsaved code
+                  if (isNewDoc())
+                  {
+                     view_.showWarningBar("Breakpoints cannot be set until " +
+                                          "the file is saved.");
+                     return;
+                  }
+                  
                   Position breakpointPosition = 
                         Position.create(event.getLineNumber(), 1);
                   
