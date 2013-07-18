@@ -496,19 +496,33 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      newSourceDocWithTemplate(
-          FileTypeRegistry.CPP, 
-          "", 
-          "rcpp.cpp",
-          Position.create(0, 0),
-          new CommandWithArg<EditingTarget> () {
-            @Override
-            public void execute(EditingTarget target)
-            {
-               target.verifyPrerequisites(); 
-            }
-          }
-      );
+      if (uiPrefs_.useRcppTemplate().getValue())
+      {
+         newSourceDocWithTemplate(
+             FileTypeRegistry.CPP, 
+             "", 
+             "rcpp.cpp",
+             Position.create(0, 0),
+             new CommandWithArg<EditingTarget> () {
+               @Override
+               public void execute(EditingTarget target)
+               {
+                  target.verifyPrerequisites(); 
+               }
+             }
+         );
+      }
+      else
+      {
+         newDoc(FileTypeRegistry.CPP,
+                new ResultCallback<EditingTarget, ServerError> () {
+                   @Override
+                   public void onSuccess(EditingTarget target)
+                   {
+                      target.verifyPrerequisites();
+                   }
+                });
+      }
    }
    
    @Handler

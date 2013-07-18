@@ -245,6 +245,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // enable packages pane
          packagesPaneEnabled().setGlobalValue(
                     newUiPrefs.packagesPaneEnabled().getGlobalValue());
+         
+         // use rcpp template
+         useRcppTemplate().setGlobalValue(
+                    newUiPrefs.useRcppTemplate().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {
