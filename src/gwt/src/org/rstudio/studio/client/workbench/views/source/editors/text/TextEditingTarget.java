@@ -828,7 +828,7 @@ public class TextEditingTarget implements EditingTarget
          else if (isPackageFile())
          {
             message = "Breakpoints will be activated when the package is " +
-                      "rebuilt.";
+                      "built and reloaded.";
          }
          else
          {
@@ -858,7 +858,7 @@ public class TextEditingTarget implements EditingTarget
       // inside that directory
       FileSystemItem projectDir = session_.getSessionInfo()
             .getActiveProjectDir();
-      return getPath().startsWith(projectDir.getPath());
+      return getPath().startsWith(projectDir.getPath() + "/R");
    }
       
    private void checkCompilePdfDependencies()

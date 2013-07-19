@@ -152,7 +152,7 @@ SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
-void addDebugRange(json::Object* pObject, const SEXP srcref)
+void addDebugRange(const SEXP srcref, json::Object* pObject)
 {
    if (r::sexp::isNull(srcref))
    {
@@ -204,7 +204,7 @@ json::Array callFramesAsJson()
             LOG_ERROR(error);
          }
          varFrame["file_name"] = filename;
-         addDebugRange(&varFrame, pSrcContext->srcref);
+         addDebugRange(pSrcContext->srcref, &varFrame);
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
@@ -360,7 +360,7 @@ void enqueContextDepthChangedEvent(int depth)
 void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
-   addDebugRange(&varJson, srcref);
+   addDebugRange(srcref, &varJson);
    ClientEvent event (client_events::kBrowserLineChanged, varJson);
    module_context::enqueClientEvent(event);
 }
