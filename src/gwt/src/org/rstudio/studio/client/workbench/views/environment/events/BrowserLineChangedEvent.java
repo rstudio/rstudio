@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.events;
 
+import org.rstudio.core.client.DebugFilePosition;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -21,8 +23,6 @@ import com.google.gwt.event.shared.GwtEvent;
 public class BrowserLineChangedEvent
         extends GwtEvent<BrowserLineChangedEvent.Handler>
 {
-   // at some point, this may also include the point inside the line where the
-   // expression being evaluated exists
    public static class LineData extends JavaScriptObject
    {
       protected LineData()
@@ -33,6 +33,17 @@ public class BrowserLineChangedEvent
           return this.line_number;
       }-*/;
 
+      public final native int getEndLineNumber() /*-{
+          return this.end_line_number;
+      }-*/;
+        
+      public final native int getCharacterNumber() /*-{
+          return this.character_number;
+      }-*/;
+        
+      public final native int getEndCharacterNumber() /*-{
+          return this.end_character_number;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -49,7 +60,31 @@ public class BrowserLineChangedEvent
    {
       return lineData_.getLineNumber();
    }
+   
+   public int getEndLineNumber()
+   {
+      return lineData_.getEndLineNumber();
+   }
 
+   public int getCharacterNumber()
+   {
+      return lineData_.getCharacterNumber();
+   }
+   
+   public int getEndCharacterNumber()
+   {
+      return lineData_.getEndCharacterNumber();
+   }
+   
+   public DebugFilePosition getRange()
+   {
+      return DebugFilePosition.create(
+            getLineNumber(), 
+            getEndLineNumber(), 
+            getCharacterNumber(), 
+            getEndCharacterNumber());
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {

@@ -32,6 +32,8 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
+
+import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -115,7 +117,7 @@ public class EnvironmentPresenter extends BasePresenter
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
-      void setBrowserLine(int browserLine);
+      void setBrowserRange(DebugFilePosition filePosition);
    }
    
    @Inject
@@ -146,7 +148,7 @@ public class EnvironmentPresenter extends BasePresenter
       refreshingView_ = false;
       initialized_ = false;
       currentBrowseFile_ = "";
-      currentBrowseLineNumber_ = 0;
+      currentBrowsePosition_ = null;
       sourceShim_ = sourceShim;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
@@ -200,16 +202,15 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void onBrowserLineChanged(BrowserLineChangedEvent event)
          {
-            if (currentBrowseLineNumber_ != event.getLineNumber())
+            if (currentBrowsePosition_.compareTo(event.getRange()) != 0)
             {
-               view_.setBrowserLine(event.getLineNumber());
-               currentBrowseLineNumber_ = event.getLineNumber();
+               currentBrowsePosition_ = event.getRange();
+               view_.setBrowserRange(currentBrowsePosition_);
                openOrUpdateFileBrowsePoint(true);
             }
          }
-
       });
-
+      
       new JSObjectStateValue(
               "environment-pane",
               "environmentPaneState",
@@ -270,7 +271,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       eventBus_.fireEvent(new SendToConsoleEvent("n", true, true));     
    }
-
+   
    void onClearWorkspace()
    {
       view_.bringToFront();
@@ -489,7 +490,7 @@ public class EnvironmentPresenter extends BasePresenter
          
          // highlight the active line in the file now being debugged
          currentBrowseFile_ = newBrowseFile;
-         currentBrowseLineNumber_ = browseFrame.getLineNumber();
+         currentBrowsePosition_ = browseFrame.getRange();
          currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
          openOrUpdateFileBrowsePoint(true);
       }   
@@ -499,7 +500,7 @@ public class EnvironmentPresenter extends BasePresenter
          useCurrentBrowseSource_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
-         currentBrowseLineNumber_ = 0;
+         currentBrowsePosition_ = null;
          currentFunctionLineNumber_ = 0;
       }
    }
@@ -525,7 +526,6 @@ public class EnvironmentPresenter extends BasePresenter
    private void openOrUpdateFileBrowsePoint(boolean debugging)
    {
       String file = currentBrowseFile_;
-      int lineNumber = currentBrowseLineNumber_;
       
       if (!CallFrameItem.isNavigableFilename(file))
       {
@@ -535,16 +535,18 @@ public class EnvironmentPresenter extends BasePresenter
       // if we have a real filename and sign from the server that the file 
       // is in sync with the actual copy of the function, navigate to the
       // file itself
-      if (lineNumber > 0 &&
+      if (currentBrowsePosition_ != null &&
           !useCurrentBrowseSource_)
       {
          FileSystemItem sourceFile = FileSystemItem.createFile(file);
-         FilePosition filePosition = FilePosition.create(lineNumber, 0);
          eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
-                                filePosition,
+                                (FilePosition) currentBrowsePosition_.cast(),
                                 FileTypeRegistry.R,
                                 debugging ? 
-                                      NavigationMethod.DebugStep :
+                                      (contextDepth_ == 1 ?
+                                         NavigationMethod.DebugStep :
+                                         NavigationMethod.DebugFrame)
+                                      :
                                       NavigationMethod.DebugEnd));
 
       }
@@ -561,7 +563,9 @@ public class EnvironmentPresenter extends BasePresenter
                         "source unavailable or out of sync", 
                         currentBrowseSource_,
                         true),
-                  lineNumber - currentFunctionLineNumber_));
+                  currentBrowsePosition_.functionRelativePosition(
+                        currentFunctionLineNumber_),
+                  contextDepth_ == 1));
          }
          else
          {
@@ -572,10 +576,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void setViewFromEnvironmentList(JsArray<RObject> objects)
    {
-      if (initialized_)
-      {
-         view_.clearObjects();
-      }
+      view_.clearObjects();
       view_.addObjects(objects);
    }
     
@@ -701,7 +702,7 @@ public class EnvironmentPresenter extends BasePresenter
    private int contextDepth_;
    private boolean refreshingView_;
    private boolean initialized_;
-   private int currentBrowseLineNumber_;
+   private DebugFilePosition currentBrowsePosition_;
    private int currentFunctionLineNumber_;
    private String currentBrowseFile_;
    private boolean useCurrentBrowseSource_;

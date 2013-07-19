@@ -89,6 +89,7 @@ class ClientEvent extends JavaScriptObject
    public static final String EnvironmentAssigned = "environment_assigned";
    public static final String EnvironmentRemoved = "environment_removed";
    public static final String BrowserLineChanged = "browser_line_changed";
+   public static final String ActivePackageLoaded = "active_package_loaded";
 
    protected ClientEvent()
    {

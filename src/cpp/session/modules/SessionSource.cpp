@@ -940,18 +940,6 @@ SEXP rs_fileEdit(SEXP fileSEXP)
    return R_NilValue;
 }
 
-void onPackageLoaded(const std::string& pkgname)
-{
-   // check whether this package is the one currently under development
-   const projects::ProjectContext& projectContext = projects::projectContext();
-   if (projectContext.config().buildType == r_util::kBuildTypePackage &&
-       projectContext.packageInfo().name() == pkgname)
-   {
-
-
-   }
-}
-
 } // anonymous namespace
 
 Error clientInitDocuments(core::json::Array* pJsonDocs)
@@ -1006,7 +994,6 @@ Error initialize()
    // connect to events
    using namespace module_context;
    events().onShutdown.connect(onShutdown);
-   events().onPackageLoaded.connect(onPackageLoaded);
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
