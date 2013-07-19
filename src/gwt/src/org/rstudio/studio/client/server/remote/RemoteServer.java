@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -2900,7 +2901,66 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
-         
+   
+   @Override 
+   public void sourceForDebugging(
+         String fileName,
+         ArrayList<Breakpoint> breakpoints,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray topLevelBreakpoints = new JSONArray();
+      JSONArray functionBreakpoints = new JSONArray();
+      
+      // Sort the breakpoints into top-level and function categories, and pass
+      // to the server the minimal set of information it needs from each to 
+      // execute the breakpoint
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         int tlIdx = 0;
+         int bpIdx = 0;
+         if (breakpoint.isTopLevel())
+         {
+            topLevelBreakpoints.set(tlIdx++, 
+                  new JSONNumber(breakpoint.getLineNumber()));
+         }
+         else
+         {
+            JSONObject bp = new JSONObject();
+            bp.put("line", new JSONNumber(breakpoint.getLineNumber()));
+            bp.put("steps", new JSONString(breakpoint.getFunctionSteps()));
+            bp.put("fun", new JSONString(breakpoint.getFunctionName()));
+            functionBreakpoints.set(bpIdx, bp);
+         }
+      }
+      
+      JSONArray sourceParams = new JSONArray();
+      sourceParams.set(0, new JSONString(fileName));
+      sourceParams.set(1, topLevelBreakpoints);
+      sourceParams.set(2, functionBreakpoints);
+      
+      sendRequest(RPC_SCOPE,
+            SOURCE_FOR_DEBUGGING,
+            sourceParams,
+            requestCallback);
+   }
+   
+   public void executeDebugSource(
+         String fileName,
+         int step, 
+         int mode, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(fileName));
+      params.set(1, new JSONNumber(step));
+      params.set(2, new JSONNumber(mode));
+
+      sendRequest(RPC_SCOPE,
+            EXECUTE_DEBUG_SOURCE,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3153,6 +3213,8 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    private static final String GET_FUNCTION_SYNC_STATE = "get_function_sync_state";
+   private static final String SOURCE_FOR_DEBUGGING = "source_for_debugging";
+   private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";

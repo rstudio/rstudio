@@ -2472,13 +2472,20 @@ public class TextEditingTarget implements EditingTarget
                @Override
                public void execute()
                {
-                  consoleDispatcher_.executeSourceCommand(
-                        getPath(),
-                        fileType_,
-                        docUpdateSentinel_.getEncoding(),
-                        activeCodeIsAscii(),
-                        forceEcho ? true : echo,
-                        true); // focus  
+                  if (docDisplay_.hasBreakpoints())
+                  {
+                     breakpointManager_.sourceForDebugging(getPath());
+                  }
+                  else
+                  {
+                     consoleDispatcher_.executeSourceCommand(
+                           getPath(),
+                           fileType_,
+                           docUpdateSentinel_.getEncoding(),
+                           activeCodeIsAscii(),
+                           forceEcho ? true : echo,
+                           true); // focus  
+                  }
                }
             };
             

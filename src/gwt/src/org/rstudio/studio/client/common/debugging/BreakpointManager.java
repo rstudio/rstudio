@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 import com.google.gwt.core.client.JsArray;
@@ -203,7 +204,28 @@ public class BreakpointManager
       }
       return breakpoints;
    }
+   
+   public void sourceForDebugging(String fileName)
+   {
+      // Find all the breakpoints in the requested file
+      ArrayList<Breakpoint> breakpoints = getBreakpointsInFile(fileName);
+      server_.sourceForDebugging(fileName, breakpoints, 
+            new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            // TODO: execute_debug_source to start evaluating the parse tree
+            events_.fireEvent(new DebugModeChangedEvent(true));
+         }
 
+         @Override
+         public void onError(ServerError error)
+         {
+         }         
+      });
+   }
+   
    // Event handlers ----------------------------------------------------------
 
    @Override

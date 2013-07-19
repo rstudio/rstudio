@@ -273,6 +273,75 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
+.rs.addFunction("sourceForDebugging", function(
+   fileName,
+   topLevelBreakpoints,
+   functionBreakpoints)
+{
+   # establish state for debugging sources
+   .rs.currentDebugFile <<- fileName
+   .rs.parsedForDebugging <<- parse(fileName)
+   .rs.topLevelBreakpoints <<- topLevelBreakpoints
+   .rs.functionBreakpoints <<- functionBreakpoints
+})
+
+# Modes:
+# 0 - step (execute one expression)
+# 1 - run (execute until a breakpoint is hit)
+# 2 - stop (abort execution)
+.rs.addFunction("executeDebugSource", function(fileName, step, mode)
+{
+   srcref <- integer()
+   repeat
+   {
+      # get the expression to evaluate and its location in the file
+      expr <- .rs.parsedForDebugging[[step]]
+      srcref <- attr(.rs.parsedForDebugging, "srcref")[[step]]
+
+      # if this is a top-level breakpoint, don't execute it
+      if (srcref[1] %in% .rs.topLevelBreakpoints)
+      {
+         break
+      }
+
+      # evaluate it!
+      eval(expr, envir = globalenv())
+
+      # if the code we just evaluated contains function breakpoints, turn those
+      # on (CONSIDER: we probably need to get function steps here in case things
+      # have moved since the last source)
+      functionName <- ""
+      steps <- list()
+      for (breakpoint in .rs.functionBreakpoints)
+      {
+         if (breakpoint$line >= srcref[1] &&
+             breakpoint$line <= srcref[3])
+         {
+            steps <- c(steps, breakpoint$steps)
+            functionName <- breakpoint$fun
+         }
+      }
+      if (length(steps) > 0)
+      {
+         .rs.setFunctionBreakpoints(functionName, fileName, steps)
+      }
+
+      # move to the next expression
+      step <- step+1
+      if (step > length(.rs.parsedForDebugging) ||
+          mode == 0)
+      {
+         break
+      }
+   }
+
+   # if we paused on an expression, send it back to the client
+   if (length(srcref) > 0)
+   {
+
+   }
+})
+
 .rs.addJsonRpcHandler("set_function_breakpoints", function(
    functionName,
    fileName,
@@ -303,5 +372,18 @@
    formattedResults$name <- as.character(formattedResults$name)
    formattedResults$at <- as.character(formattedResults$at)
    return(formattedResults)
+})
+
+.rs.addJsonRpcHandler("source_for_debugging", function(
+   fileName,
+   topLevelBreakpoints,
+   functionBreakpoints)
+{
+   .rs.sourceForDebugging(fileName, topLevelBreakpoints, functionBreakpoints)
+})
+
+.rs.addJsonRpcHandler("execute_debug_source", function(fileName, step, mode)
+{
+   .rs.executeDebugSource(fileName, step, mode)
 })
 

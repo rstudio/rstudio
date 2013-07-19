@@ -50,10 +50,11 @@ public class Breakpoint extends JavaScriptObject
          editor_state: initialState, 
          editor_line_number: lineNumber,
          is_pending_debug_completion: false,
-         needs_updated_steps: false
+         needs_updated_steps: false,
+         is_top_level: false
       };
    }-*/;
-   
+      
    public final native void addFunctionSteps(
          String function_name,
          int lineNumber,
@@ -159,5 +160,10 @@ public class Breakpoint extends JavaScriptObject
    public final native String getPath()
    /*-{
      return this.path;
+   }-*/;
+   
+   public final native boolean isTopLevel()
+   /*-{
+      return this.is_top_level;
    }-*/;
 }
