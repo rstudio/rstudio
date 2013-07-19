@@ -213,10 +213,11 @@ public class Shell implements ConsoleInputHandler,
       keyPressPreviewHandlers_.add(handler) ;
    }
    
-   public void onConsoleInput(ConsoleInputEvent event)
+   public void onConsoleInput(final ConsoleInputEvent event)
    {
       server_.consoleInput(event.getInput(), 
-                           new ServerRequestCallback<Void>() { 
+                           new ServerRequestCallback<Void>() {
+         @Override
          public void onError(ServerError error) 
          {
             // show the error in the console then re-prompt

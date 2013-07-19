@@ -48,7 +48,13 @@ public class RObjectEntry
    public boolean canExpand()
    {
       return rObject.getLength() > 0 &&
-             rObject.getContents().length() > 0;
+             rObject.getContents().length() > 0 &&
+             !hasTraceInfo();
+   }
+   
+   public boolean hasTraceInfo()
+   {
+      return rObject.getType().equals("functionWithTrace");
    }
 
    public int getCategory()
@@ -61,7 +67,8 @@ public class RObjectEntry
       {
          return Categories.Data;
       }
-      else if (type.equals("function"))
+      else if (type.equals("function") ||
+               hasTraceInfo())
       {
          return Categories.Function;
       }

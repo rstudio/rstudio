@@ -3,6 +3,7 @@
 
 @external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
+@external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -97,6 +98,11 @@
 @url SEARCHFIELDRIGHT searchFieldRight;
 
 @url WORKSPACESECTIONHEADERTILE workspaceSectionHeaderTile;
+
+@url ACTIVEBREAKPOINT activeBreakpoint;
+@url INACTIVEBREAKPOINT inactiveBreakpoint;
+@url PENDINGBREAKPOINT pendingBreakpoint;
+@url EXECUTINGLINE executingLine;
 
 body.windows, body.macintosh, body.linux {}
 
@@ -206,6 +212,35 @@ pre {
 
 .ace_editor, .ace_text-layer {
   font-family: fixedWidthFont !important;
+}
+
+.ace_breakpoint,
+.ace_pending-breakpoint,
+.ace_inactive-breakpoint,
+.ace_executing-line
+{
+   background-position: 10% center;
+   background-repeat: no-repeat;
+}
+
+.ace_breakpoint
+{
+   background-image: ACTIVEBREAKPOINT;	
+}
+
+.ace_pending-breakpoint
+{
+	background-image: PENDINGBREAKPOINT;
+}
+
+.ace_inactive-breakpoint
+{
+	background-image: INACTIVEBREAKPOINT;
+}
+
+.ace_executing-line
+{
+	background-image: EXECUTINGLINE;
 }
 
 .gwt-MenuBar {

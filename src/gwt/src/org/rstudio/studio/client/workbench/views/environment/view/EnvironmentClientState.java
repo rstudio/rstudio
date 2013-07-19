@@ -33,7 +33,6 @@ public class EnvironmentClientState extends JavaScriptObject
        return options ;
    }-*/;
 
-
    public final native int getScrollPosition() /*-{
        return this.scroll_position;
    }-*/;

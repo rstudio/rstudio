@@ -30,6 +30,7 @@ public class OpenSourceFileEvent extends GwtEvent<OpenSourceFileHandler>
       Default,
       HighlightLine,
       DebugStep,
+      DebugFrame, 
       DebugEnd
    }
    

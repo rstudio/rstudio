@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.model;
 
+import org.rstudio.core.client.DebugFilePosition;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class CallFrame extends JavaScriptObject
@@ -38,6 +40,18 @@ public class CallFrame extends JavaScriptObject
    public final native int getLineNumber() /*-{
        return this.line_number;
    }-*/;
+   
+   public final native int getEndLineNumber() /*-{
+       return this.end_line_number;
+   }-*/;
+   
+   public final native int getCharacterNumber() /*-{
+       return this.character_number;
+   }-*/;
+   
+   public final native int getEndCharacterNumber() /*-{
+       return this.end_character_number;
+   }-*/;
 
    public final native String getArgumentList() /*-{
        return this.argument_list;
@@ -46,5 +60,18 @@ public class CallFrame extends JavaScriptObject
    public final native int getFunctionLineNumber() /*-{
        return this.function_line_number;
    }-*/;
+   
+   public final native int getFunctionCharacterNumber() /*-{
+       return this.function_character_number;
+   }-*/;
+   
+   public final DebugFilePosition getRange() 
+   {
+      return DebugFilePosition.create(
+            getLineNumber(), 
+            getEndLineNumber(), 
+            getCharacterNumber(), 
+            getEndCharacterNumber());
+   };
 }
 

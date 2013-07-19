@@ -100,6 +100,7 @@ const int kContextDepthChanged = 75;
 const int kEnvironmentAssigned = 76;
 const int kEnvironmentRemoved = 77;
 const int kBrowserLineChanged = 78;
+const int kActivePackageLoaded = 79;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -259,6 +260,8 @@ std::string ClientEvent::typeName() const
          return "environment_removed";
       case client_events::kBrowserLineChanged:
          return "browser_line_changed";
+      case client_events::kActivePackageLoaded:
+         return "active_package_loaded";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

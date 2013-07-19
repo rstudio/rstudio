@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -28,6 +29,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
@@ -130,6 +133,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
+   
    Position getCursorPosition();
    void setCursorPosition(Position position);
    void moveCursorNearTop();
@@ -157,6 +161,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentChunk();
    Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
+   Scope getFunctionAtPosition(Position position);
    boolean hasScopeTree();
    JsArray<Scope> getScopeTree();
    InsertChunkInfo getInsertChunkInfo();
@@ -198,6 +203,18 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    Anchor createAnchor(Position pos);
    
-   void highlightDebugLocation(SourcePosition pos);
+   void highlightDebugLocation(
+         SourcePosition startPos,
+         SourcePosition endPos,
+         boolean executing);
    void endDebugHighlighting();
+   
+   HandlerRegistration addBreakpointSetHandler
+      (BreakpointSetEvent.Handler handler);
+   HandlerRegistration addBreakpointMoveHandler
+      (BreakpointMoveEvent.Handler handler);
+   void addOrUpdateBreakpoint(Breakpoint breakpoint);
+   void removeBreakpoint(Breakpoint breakpoint);
+   void removeAllBreakpoints();
+   boolean hasBreakpoints();
 }

@@ -44,7 +44,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DocUpdateSentinel
-      implements ValueChangeHandler<Void>,FoldChangeEvent.Handler
+      implements ValueChangeHandler<Void>,
+      FoldChangeEvent.Handler
 {
    private class ReopenFileCallback extends ServerRequestCallback<SourceDocument>
    {
@@ -480,7 +481,7 @@ public class DocUpdateSentinel
       changesPending_ = true;
       bufferedCommand_.nudge();
    }
-
+   
    public String getPath()
    {
       return sourceDoc_.getPath();

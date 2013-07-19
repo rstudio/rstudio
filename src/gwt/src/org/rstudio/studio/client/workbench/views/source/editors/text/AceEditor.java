@@ -48,6 +48,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
@@ -226,7 +227,7 @@ public class AceEditor implements DocDisplay,
             AceEditor.this.fireEvent(new FoldChangeEvent());
          }
       });
-
+      
       addCapturingKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -1327,10 +1328,17 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().getCodeModel().getCurrentChunk(position);
    }
 
+   @Override
    public Scope getCurrentFunction()
    {
+      return getFunctionAtPosition(getCursorPosition());
+   }
+   
+   @Override
+   public Scope getFunctionAtPosition(Position position)
+   {
       return getSession().getMode().getCodeModel().getCurrentFunction(
-            getCursorPosition());
+            position);
    }
 
    public Position getCursorPosition()
@@ -1464,30 +1472,70 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition srcPosition)
-   {
-      Position position = Position.create(srcPosition.getRow(), 
-            srcPosition.getColumn());
-      
+   public void highlightDebugLocation(SourcePosition startPosition,
+                                      SourcePosition endPosition,
+                                      boolean executing)
+   {      
       int firstRow = widget_.getEditor().getFirstVisibleRow();
       int lastRow = widget_.getEditor().getLastVisibleRow();
-      int debugRow = srcPosition.getRow();
+      int debugRow = endPosition.getRow();
       
       // if the line to be debugged is past or near the edges of the screen,
       // scroll it into view. allow some lines of context.
       if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) || 
           debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
       {
-         widget_.getEditor().scrollToLine(srcPosition.getRow(), true);
+         widget_.getEditor().scrollToLine(endPosition.getRow(), true);
       }
  
-      applyDebugLineHighlight(position.getRow());
+      applyDebugLineHighlight(
+            startPosition.asPosition(), 
+            endPosition.asPosition(), 
+            executing);
    }
    
    @Override
    public void endDebugHighlighting()
    {
       clearDebugLineHighlight();
+   }
+   
+   @Override
+   public HandlerRegistration addBreakpointSetHandler(
+         BreakpointSetEvent.Handler handler)
+   {
+      return widget_.addBreakpointSetHandler(handler);
+   }
+   
+   @Override
+   public HandlerRegistration addBreakpointMoveHandler(
+         BreakpointMoveEvent.Handler handler)
+   {
+      return widget_.addBreakpointMoveHandler(handler);
+   }
+   
+   @Override
+   public void addOrUpdateBreakpoint(Breakpoint breakpoint)
+   {
+      widget_.addOrUpdateBreakpoint(breakpoint);
+   }
+   
+   @Override
+   public void removeBreakpoint(Breakpoint breakpoint)
+   {
+      widget_.removeBreakpoint(breakpoint);
+   }
+   
+   @Override 
+   public void removeAllBreakpoints()
+   {
+      widget_.removeAllBreakpoints();
+   }
+   
+   @Override
+   public boolean hasBreakpoints()
+   {
+      return widget_.hasBreakpoints();
    }
    
    private void navigate(SourcePosition srcPosition, boolean addToHistory)
@@ -1579,7 +1627,7 @@ public class AceEditor implements DocDisplay,
    {
       return handlers_.addHandler(FoldChangeEvent.TYPE, handler);
    }
-
+   
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
       return widget_.addCapturingKeyDownHandler(handler);
@@ -1721,10 +1769,20 @@ public class AceEditor implements DocDisplay,
 
    private Integer createLineHighlightMarker(int line, String style)
    {
-      Range range = Range.fromPoints(Position.create(line, 0),
-                                     Position.create(line+1, 0));
-      return getSession().addMarker(range, style, "background", false);
+      return createRangeHighlightMarker(Position.create(line, 0),
+                                        Position.create(line+1, 0),
+                                        style);
    }
+   
+   private Integer createRangeHighlightMarker(
+         Position start, 
+         Position end, 
+         String style)
+   {
+      Range range = Range.fromPoints(start, end);
+      return getSession().addMarker(range, style, "text", false);
+   }
+   
 
    private void applyLineHighlight(int line)
    {
@@ -1746,11 +1804,22 @@ public class AceEditor implements DocDisplay,
       }
    }
 
-   private void applyDebugLineHighlight(int line)
+   private void applyDebugLineHighlight(
+         Position startPos,
+         Position endPos,
+         boolean executing)
    {
       clearDebugLineHighlight();
-      lineDebugMarkerId_ = createLineHighlightMarker(line,
-                                                     "ace_active_debug_line");
+      lineDebugMarkerId_ = createRangeHighlightMarker(
+            startPos, endPos,
+            "ace_active_debug_line");
+      if (executing)
+      {
+         executionLine_ = startPos.getRow();
+         widget_.getEditor().getRenderer().addGutterDecoration(
+               executionLine_, 
+               "ace_executing-line");
+      }
    }
 
    private void clearDebugLineHighlight()
@@ -1759,6 +1828,13 @@ public class AceEditor implements DocDisplay,
       {
          getSession().removeMarker(lineDebugMarkerId_);
          lineDebugMarkerId_ = null;
+      }
+      if (executionLine_ != null)
+      {
+         widget_.getEditor().getRenderer().removeGutterDecoration(
+               executionLine_, 
+               "ace_executing-line");
+         executionLine_ = null;
       }
    }
 
@@ -1773,6 +1849,7 @@ public class AceEditor implements DocDisplay,
    private RnwCompletionContext rnwContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
+   private Integer executionLine_ = null;
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =

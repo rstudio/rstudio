@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.event.dom.client.*;
@@ -32,11 +34,14 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 
@@ -67,12 +72,14 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightActiveLine(false);
       editor_.setHighlightGutterLine(false);
       editor_.delegateEventsTo(AceEditorWidget.this);
-      editor_.onChange(new Command()
+      editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
-         public void execute()
+         public void execute(AceDocumentChangeEventNative changeEvent)
          {
-            ValueChangeEvent.fire(AceEditorWidget.this, null);
+            ValueChangeEvent.fire(AceEditorWidget.this, null);            
+            updateBreakpoints(changeEvent);
          }
+
       });
       editor_.onChangeFold(new Command()
       {
@@ -81,6 +88,46 @@ public class AceEditorWidget extends Composite
          {
             fireEvent(new FoldChangeEvent());
          }
+      });
+      editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
+      {
+        @Override
+        public void execute(AceMouseEventNative arg)
+        {
+           // make sure the click is actually intended for the gutter
+           com.google.gwt.dom.client.Element targetElement = 
+                 Element.as(arg.getNativeEvent().getEventTarget());
+           if (targetElement.getClassName().indexOf("ace_gutter-cell") < 0)
+           {
+              return;
+           }
+           
+           // rows are 0-based, but debug line numbers are 1-based
+           int lineNumber = lineFromRow(arg.getDocumentPosition().getRow());
+           int breakpointIdx = getBreakpointIdxByLine(lineNumber);
+           
+           // if there's already a breakpoint on that line, remove it
+           if (breakpointIdx >= 0)
+           {
+              Breakpoint breakpoint = breakpoints_.get(breakpointIdx);
+              removeBreakpointMarker(breakpoint);
+              fireEvent(new BreakpointSetEvent(
+                    lineNumber, 
+                    breakpoint.getBreakpointId(),
+                    false));
+              breakpoints_.remove(breakpointIdx);
+           }
+           // if there's no breakpoint on that line yet, create a new unset
+           // breakpoint there (the breakpoint manager will pick up the new
+           // breakpoint and attempt to set it on the server)
+           else
+           {
+              fireEvent(new BreakpointSetEvent(
+                    lineNumber,
+                    BreakpointSetEvent.UNSET_BREAKPOINT_ID,
+                    true));
+           }
+        }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
       {
@@ -143,7 +190,19 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, FoldChangeEvent.TYPE);
    }
-
+   
+   public HandlerRegistration addBreakpointSetHandler
+      (BreakpointSetEvent.Handler handler)
+   {
+      return addHandler(handler, BreakpointSetEvent.TYPE);
+   }
+   
+   public HandlerRegistration addBreakpointMoveHandler
+      (BreakpointMoveEvent.Handler handler)
+   {
+      return addHandler(handler, BreakpointMoveEvent.TYPE);
+   }
+   
    public AceEditorNative getEditor() {
       return editor_;
    }
@@ -271,7 +330,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, AceClickEvent.TYPE);
    }
-
+   
    public void forceResize()
    {
       editor_.getRenderer().onResize(true);
@@ -286,8 +345,217 @@ public class AceEditorWidget extends Composite
    {
       editor_.onCursorChange();
    }
-
+   
+   public void addOrUpdateBreakpoint(Breakpoint breakpoint)
+   {
+      int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
+      if (idx >= 0)
+      {
+         removeBreakpointMarker(breakpoint);
+         breakpoint.setEditorState(breakpoint.getState());
+         breakpoint.setEditorLineNumber(breakpoint.getLineNumber());
+      }
+      else
+      {
+         breakpoints_.add(breakpoint);
+      }
+      placeBreakpointMarker(breakpoint);
+   }
+   
+   public void removeBreakpoint(Breakpoint breakpoint)
+   {
+      int idx = getBreakpointIdxById(breakpoint.getBreakpointId());
+      if (idx >= 0)
+      {
+         removeBreakpointMarker(breakpoint);
+         breakpoints_.remove(idx);
+      }
+   }
+   
+   public void removeAllBreakpoints()
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         removeBreakpointMarker(breakpoint);
+      }
+      breakpoints_.clear();
+   }
+   
+   public boolean hasBreakpoints()
+   {
+      return breakpoints_.size() > 0;
+   }
+   
+   private void updateBreakpoints(AceDocumentChangeEventNative changeEvent)
+   {
+      // if there are no breakpoints, don't do any work to move them about
+      if (breakpoints_.size() == 0)
+      {
+         return;
+      }
+      
+      // see if we need to move any breakpoints around in response to 
+      // this change to the document's text
+      String action = changeEvent.getAction();
+      Range range = changeEvent.getRange();
+      Position start = range.getStart();
+      Position end = range.getEnd();
+      
+      // if the edit was all on one line or the action didn't change text
+      // in a way that could change lines, we can't have moved anything
+      if (start.getRow() == end.getRow() || 
+          (!action.equals("insertText") &&
+           !action.equals("insertLines") &&
+           !action.equals("removeText") &&
+           !action.equals("removeLines")))
+      {
+         return;
+      }
+      
+      int shiftedBy = 0;
+      int shiftStartRow = 0;
+      
+      // compute how many rows to shift
+      if (action == "insertText" || 
+          action == "insertLines")
+      {
+         shiftedBy = end.getRow() - start.getRow();
+      } 
+      else
+      {
+         shiftedBy = start.getRow() - end.getRow();
+      }
+      
+      // compute where to start shifting
+      shiftStartRow = start.getRow() + 
+            ((action == "insertText" && start.getColumn() > 0) ? 
+                  1 : 0);
+      
+      // make a pass through the breakpoints and move them as appropriate:
+      // remove all the breakpoints after the row where the change
+      // happened, and add them back at their new position if they were
+      // not part of a deleted range. 
+      ArrayList<Breakpoint> movedBreakpoints = new ArrayList<Breakpoint>();
+     
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
+      {
+         Breakpoint breakpoint = breakpoints_.get(idx);
+         int breakpointRow = rowFromLine(breakpoint.getEditorLineNumber());
+         if (breakpointRow >= shiftStartRow)
+         {
+            // remove the breakpoint from its old position
+            movedBreakpoints.add(breakpoint);
+            removeBreakpointMarker(breakpoint);
+         }
+      }
+      for (Breakpoint breakpoint: movedBreakpoints)
+      {
+         // calculate the new position of the breakpoint
+         int oldBreakpointPosition = 
+               rowFromLine(breakpoint.getEditorLineNumber());
+         int newBreakpointPosition = 
+               oldBreakpointPosition + shiftedBy;
+         
+         // add a breakpoint in this new position only if it wasn't 
+         // in a deleted range, and if we don't already have a
+         // breakpoint there
+         if (oldBreakpointPosition >= end.getRow() &&
+             !(oldBreakpointPosition == end.getRow() && shiftedBy < 0) &&
+             getBreakpointIdxByLine(lineFromRow(newBreakpointPosition)) < 0)
+         {
+            breakpoint.moveToLineNumber(lineFromRow(newBreakpointPosition));
+            placeBreakpointMarker(breakpoint);
+            fireEvent(new BreakpointMoveEvent(breakpoint.getBreakpointId())); 
+         }
+         else
+         {
+            breakpoints_.remove(breakpoint);
+            fireEvent(new BreakpointSetEvent(
+                  breakpoint.getEditorLineNumber(), 
+                  breakpoint.getBreakpointId(),
+                  false)); 
+         }
+      }
+   }
+   
+   private void placeBreakpointMarker(Breakpoint breakpoint)
+   {
+      int line = breakpoint.getEditorLineNumber();
+      if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
+      {
+         editor_.getSession().setBreakpoint(rowFromLine(line));
+      }
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_PROCESSING)
+      {
+        editor_.getRenderer().addGutterDecoration(
+               rowFromLine(line), 
+               "ace_pending-breakpoint");
+      } 
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
+      {
+         editor_.getRenderer().addGutterDecoration(
+               rowFromLine(line), 
+               "ace_inactive-breakpoint");
+      }
+   }
+   
+   private void removeBreakpointMarker(Breakpoint breakpoint)
+   {
+      int line = breakpoint.getEditorLineNumber();
+      if (breakpoint.getEditorState() == Breakpoint.STATE_ACTIVE)
+      {
+         editor_.getSession().clearBreakpoint(rowFromLine(line));
+      }
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_PROCESSING)
+      {
+        editor_.getRenderer().removeGutterDecoration(
+               rowFromLine(line), 
+               "ace_pending-breakpoint");
+      } 
+      else if (breakpoint.getEditorState() == Breakpoint.STATE_INACTIVE)
+      {
+         editor_.getRenderer().removeGutterDecoration(
+               rowFromLine(line), 
+               "ace_inactive-breakpoint");
+      }
+   }
+   
+   private int getBreakpointIdxById(int breakpointId)
+   {
+	   for (int idx = 0; idx < breakpoints_.size(); idx++)
+	   {
+	      if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
+	      {
+	         return idx;
+	      }
+	   }
+	   return -1;
+   }
+   
+   private int getBreakpointIdxByLine(int lineNumber)
+   {
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
+      {
+         if (breakpoints_.get(idx).getEditorLineNumber() == lineNumber)
+         {
+            return idx;
+         }
+      }
+      return -1;
+   }
+   
+   private int lineFromRow(int row)
+   {
+      return row + 1; 
+   }
+   
+   private int rowFromLine(int line)
+   {
+      return line - 1;
+   }
+  
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private boolean initToEmptyString_ = true;
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
 }

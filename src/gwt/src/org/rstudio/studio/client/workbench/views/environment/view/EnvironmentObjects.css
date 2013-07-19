@@ -120,6 +120,11 @@
    left: 3px;
 }
 
+.unclickableIcon
+{
+	cursor: default;
+}
+
 .unevaluatedPromise
 {
    color: #a0a0a0;
