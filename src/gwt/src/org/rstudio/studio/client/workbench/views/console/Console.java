@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHan
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleHandler;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 
 public class Console
 {
@@ -86,7 +87,7 @@ public class Console
          @Override
          public void onDebugModeChanged(DebugModeChangedEvent event)
          {
-            view.setDebugMode(event.getDebugMode());
+            view.setDebugMode(event.getDebugMode() != DebugMode.Normal);
          }
       });
    }

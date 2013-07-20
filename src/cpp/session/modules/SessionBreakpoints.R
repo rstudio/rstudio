@@ -286,7 +286,7 @@
 })
 
 # Modes:
-# 0 - step (execute one expression)
+# 0 - single step (execute one expression)
 # 1 - run (execute until a breakpoint is hit)
 # 2 - stop (abort execution)
 .rs.addFunction("executeDebugSource", function(fileName, step, mode)
@@ -335,10 +335,22 @@
       }
    }
 
-   # if we paused on an expression, send it back to the client
    if (length(srcref) > 0)
    {
-
+      return(list(
+         step = step,
+         line_number = srcref[1],
+         end_line_number = srcref[3],
+         character_number = srcref[5],
+         end_character_number = srcref[6]))
+   }
+   else
+   {
+      return(list(
+         line_number = 0,
+         end_line_number = 0,
+         character_number = 0,
+         end_character_number = 0))
    }
 })
 

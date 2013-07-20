@@ -39,7 +39,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 import com.google.gwt.core.client.JsArray;
@@ -81,11 +80,13 @@ public class BreakpointManager
    public BreakpointManager(
          DebuggingServerOperations server,
          EventBus events,
-         Session session)
+         Session session,
+         DebugCommander debugCommander)
    {
       server_ = server;
       events_ = events;
       session_ = session;
+      debugCommander_ = debugCommander;
 
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
@@ -205,7 +206,7 @@ public class BreakpointManager
       return breakpoints;
    }
    
-   public void sourceForDebugging(String fileName)
+   public void sourceForDebugging(final String fileName)
    {
       // Find all the breakpoints in the requested file
       ArrayList<Breakpoint> breakpoints = getBreakpointsInFile(fileName);
@@ -215,8 +216,7 @@ public class BreakpointManager
          @Override
          public void onResponseReceived(Void v)
          {
-            // TODO: execute_debug_source to start evaluating the parse tree
-            events_.fireEvent(new DebugModeChangedEvent(true));
+            debugCommander_.beginTopLevelDebugSession(fileName);
          }
 
          @Override
@@ -628,11 +628,14 @@ public class BreakpointManager
       }      
    }
 
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;
+   private final DebugCommander debugCommander_;
+
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
+   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
+
    private boolean breakpointStateDirty_ = false;
    private int currentBreakpointId_ = 0;
 }

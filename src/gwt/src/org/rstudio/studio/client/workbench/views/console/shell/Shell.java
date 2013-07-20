@@ -51,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCom
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
@@ -346,7 +347,7 @@ public class Shell implements ConsoleInputHandler,
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent event)
    {
-      if (event.getDebugMode())
+      if (event.getDebugMode() != DebugMode.Normal)
       {
          view_.ensureInputVisible();
       }

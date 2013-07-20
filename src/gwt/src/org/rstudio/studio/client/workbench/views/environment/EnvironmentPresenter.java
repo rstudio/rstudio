@@ -12,23 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-/* Some examples:
- * 
- * Adding an RPC method
- * https://github.com/rstudio/rstudio/commit/6815944da3e140aa1064a0c9866db7a70731c9d0
- * 
- * Presenter -> Model/View 
- * https://github.com/rstudio/rstudio/commit/0b7ef94ec6d9ad8c0a9385d2d1a8b43edf280f52
- * 
- * Adding a Command
- * https://github.com/rstudio/rstudio/commit/a5eee4b211dc09eac2221a9f825cfcfc3221f144
- * 
- * Raising Events from the Server
- * https://github.com/rstudio/rstudio/commit/6178166bf1c97a338986a85e5694f7278c0bc940
- * 
- */
-
 package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -48,6 +31,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -76,10 +60,10 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
@@ -132,7 +116,8 @@ public class EnvironmentPresenter extends BasePresenter
                                ConsoleDispatcher consoleDispatcher,
                                RemoteFileSystemContext fsContext,
                                Session session,
-                               SourceShim sourceShim)
+                               SourceShim sourceShim,
+                               DebugCommander debugCommander)
    {
       super(view);
       binder.bind(commands, this);
@@ -150,6 +135,7 @@ public class EnvironmentPresenter extends BasePresenter
       currentBrowseFile_ = "";
       currentBrowsePosition_ = null;
       sourceShim_ = sourceShim;
+      debugCommander_ = debugCommander;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -252,24 +238,6 @@ public class EnvironmentPresenter extends BasePresenter
    void onRefreshEnvironment()
    {
       refreshView();
-   }
-   
-   @Handler
-   void onDebugContinue()
-   {
-      eventBus_.fireEvent(new SendToConsoleEvent("c", true, true));
-   }
-   
-   @Handler
-   void onDebugStop()
-   {
-      eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));     
-   }
-
-   @Handler
-   void onDebugStep()
-   {
-      eventBus_.fireEvent(new SendToConsoleEvent("n", true, true));     
    }
    
    void onClearWorkspace()
@@ -433,13 +401,13 @@ public class EnvironmentPresenter extends BasePresenter
           contextDepth_ == 0)
       {
          eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
-         eventBus_.fireEvent(new DebugModeChangedEvent(true));
+         debugCommander_.enterDebugMode(DebugMode.Function);
       }
       // if leaving debug mode, let everyone know
       else if (contextDepth == 0 &&
                contextDepth_ > 0)
       {
-         eventBus_.fireEvent(new DebugModeChangedEvent(false));
+         debugCommander_.leaveDebugMode();
       }
       contextDepth_ = contextDepth;
       view_.setContextDepth(contextDepth_);
@@ -698,6 +666,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
    private final SourceShim sourceShim_;
+   private final DebugCommander debugCommander_;
    
    private int contextDepth_;
    private boolean refreshingView_;

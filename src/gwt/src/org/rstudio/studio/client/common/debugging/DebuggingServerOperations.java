@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
+import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -52,5 +53,5 @@ public interface DebuggingServerOperations
          String fileName,
          int step, 
          int mode, 
-         ServerRequestCallback<Void> requestCallback);
+         ServerRequestCallback<TopLevelLineData> requestCallback);
 }
