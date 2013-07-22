@@ -21,4 +21,8 @@ public class TopLevelLineData extends LineData
    public final native int getState() /*-{
       return this.state;
    }-*/;
+   
+   public final native boolean getNeedsBreakpointInjection() /*-{
+      return this.needs_breakpoint_injection;
+   }-*/;
 }

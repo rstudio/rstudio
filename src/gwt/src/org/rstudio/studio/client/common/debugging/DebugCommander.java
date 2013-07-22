@@ -66,25 +66,32 @@ public class DebugCommander
          public void onResponseReceived(TopLevelLineData lineData)
          {
             debugStep_ = lineData.getStep();
-            if (lineData.getState() == TopLevelLineData.STATE_INJECTION_SITE)
+            if (lineData.getNeedsBreakpointInjection())
             {
                // When the server pauses for breakpoint injection, have the
                // breakpoint manager inject breakpoints into the function just
                // evaluated. Regardless of the result, the breakpoint manager 
                // will emit a BreakpointsSavedEvent, which we'll use as a cue
                // to continue execution.
-               waitingForBreakpointInject_ = 
+               boolean foundBreakpoints = 
                      breakpointManager_.injectBreakpointsDuringSource(
                         debugFile_, 
                         lineData.getLineNumber(), 
                         lineData.getEndLineNumber());
-               
-               if (!waitingForBreakpointInject_)
+              
+               if (lineData.getState() == TopLevelLineData.STATE_INJECTION_SITE)
                {
-                  continueTopLevelDebugSession();
+                  if (foundBreakpoints)
+                  {
+                     waitingForBreakpointInject_ = true;
+                  }
+                  else
+                  {
+                     continueTopLevelDebugSession();
+                  }
                }
             }
-            else
+            if (lineData.getState() != TopLevelLineData.STATE_INJECTION_SITE)
             {
                FileSystemItem sourceFile = FileSystemItem.createFile(debugFile_);
                DebugFilePosition position = DebugFilePosition.create(

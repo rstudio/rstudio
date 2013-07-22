@@ -307,7 +307,12 @@
    stepBegin <- step
    srcref <- integer()
    executionState <- 0L  # Paused for user
-   repeat
+   needsBreakpointInjection <- FALSE
+   if (mode == 2)
+   {
+      executionState <- 2L   # Finished
+   }
+   else repeat
    {
       # get the expression to evaluate and its location in the file
       expr <- topDebugState[["parsedForDebugging"]][[step]]
@@ -340,7 +345,11 @@
       {
          if (bp$line >= srcref[1] && bp$line <= srcref[3])
          {
-            executionState <- 1L  # Paused for breakpoint injection
+            needsBreakpointInjection <- TRUE
+            if (mode == 1)
+            {
+               executionState <- 1L  # Paused for breakpoint injection
+            }
             break
          }
       }
@@ -358,6 +367,7 @@
       return(list(
          step = .rs.scalar(step),
          state = .rs.scalar(executionState),
+         needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
          line_number = .rs.scalar(srcref[1]),
          end_line_number = .rs.scalar(srcref[3]),
          character_number = .rs.scalar(srcref[5]),
@@ -368,6 +378,7 @@
       return(list(
          step = .rs.scalar(0L),
          state = .rs.scalar(executionState),
+         needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
          line_number = .rs.scalar(0L),
          end_line_number = .rs.scalar(0L),
          character_number = .rs.scalar(0L),
