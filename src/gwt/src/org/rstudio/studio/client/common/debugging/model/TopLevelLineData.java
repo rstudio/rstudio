@@ -9,4 +9,8 @@ public class TopLevelLineData extends LineData
    public final native int getStep() /*-{
       return this.step;
    }-*/;
+   
+   public final native boolean getFinished() /*-{
+      return this.step == 0;
+   }-*/;
 }

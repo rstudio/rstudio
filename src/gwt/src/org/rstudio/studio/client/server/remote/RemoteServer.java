@@ -2919,7 +2919,7 @@ public class RemoteServer implements Server
       {
          int tlIdx = 0;
          int bpIdx = 0;
-         if (breakpoint.isTopLevel())
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
          {
             topLevelBreakpoints.set(tlIdx++, 
                   new JSONNumber(breakpoint.getLineNumber()));

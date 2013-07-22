@@ -15,35 +15,64 @@
 
 package org.rstudio.studio.client.common.debugging;
 
+import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 
-import com.google.gwt.event.shared.EventBus;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class DebugCommander
 {
+   public interface Binder
+      extends CommandBinder<Commands, DebugCommander> {}
+
    @Inject
    public DebugCommander(
+         Binder binder,
+         Commands commands,
          EventBus eventBus, 
          DebuggingServerOperations debugServer)
    {
       eventBus_ = eventBus;
       debugServer_ = debugServer;
+      binder.bind(commands, this);
       debugStepCallback_ = new ServerRequestCallback<TopLevelLineData>()
       {
          @Override
          public void onResponseReceived(TopLevelLineData lineData)
          {
-            // TODO: Fire OpenSourceFileEvent with line data mapped to source
-            // file
+            debugStep_ = lineData.getStep();
+            FileSystemItem sourceFile = FileSystemItem.createFile(debugFile_);
+            DebugFilePosition position = DebugFilePosition.create(
+                  lineData.getLineNumber(), 
+                  lineData.getEndLineNumber(), 
+                  lineData.getCharacterNumber(), 
+                  lineData.getEndCharacterNumber());
+            eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
+                                   (FilePosition) position.cast(),
+                                   FileTypeRegistry.R,
+                                   lineData.getFinished() ?
+                                         NavigationMethod.DebugEnd :
+                                         NavigationMethod.DebugStep));
+            if (lineData.getFinished())
+            {
+               leaveDebugMode();
+            }
          }
          
          @Override
@@ -101,16 +130,14 @@ public class DebugCommander
       debugStep_ = 1;
       debugFile_ = filename;
       enterDebugMode(DebugMode.TopLevel);
-      // TODO: Make STEP_RUN be the default
-      executeDebugStep(STEP_SINGLE);
+      executeDebugStep(STEP_RUN);
    }
    
    public void enterDebugMode(DebugMode mode)
    {
       // when entering function debug context, save the current top-level debug
       // mode so we can restore it later 
-      if (debugMode_ == DebugMode.Normal &&
-          mode == DebugMode.Function)
+      if (mode == DebugMode.Function)
       {
          topDebugMode_ = debugMode_;
       }
@@ -120,7 +147,7 @@ public class DebugCommander
    
    public void leaveDebugMode()
    {
-      // when leaving function debug context,restore the top-level debug mode
+      // when leaving function debug context, restore the top-level debug mode
       if (debugMode_ == DebugMode.Function)
       {
          eventBus_.fireEvent(new DebugModeChangedEvent(topDebugMode_));

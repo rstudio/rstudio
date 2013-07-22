@@ -98,6 +98,21 @@ public class BreakpointManager
    
    // Public methods ---------------------------------------------------------
    
+   public Breakpoint setTopLevelBreakpoint(
+         final String path,
+         final int lineNumber)
+   {
+      Breakpoint breakpoint = Breakpoint.create(
+            currentBreakpointId_++, 
+            path, 
+            "toplevel", 
+            lineNumber, 
+            Breakpoint.STATE_ACTIVE, 
+            Breakpoint.TYPE_TOPLEVEL);
+      breakpoints_.add(breakpoint);
+      return breakpoint;
+   }
+   
    public Breakpoint setBreakpoint(
          final String path,
          final String functionName,
@@ -112,7 +127,8 @@ public class BreakpointManager
             lineNumber,
             immediately ?
                   Breakpoint.STATE_PROCESSING :
-                  Breakpoint.STATE_INACTIVE);
+                  Breakpoint.STATE_INACTIVE,
+            Breakpoint.TYPE_FUNCTION);
       breakpoints_.add(breakpoint);
       
       // If the breakpoint is in a function that is active on the callstack, 

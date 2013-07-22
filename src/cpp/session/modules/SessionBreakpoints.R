@@ -279,10 +279,14 @@
    functionBreakpoints)
 {
    # establish state for debugging sources
-   .rs.currentDebugFile <<- fileName
-   .rs.parsedForDebugging <<- parse(fileName)
-   .rs.topLevelBreakpoints <<- topLevelBreakpoints
-   .rs.functionBreakpoints <<- functionBreakpoints
+   topDebugState <- new.env()
+   assign("currentDebugFile", fileName, topDebugState)
+   assign("parsedForDebugging", parse(fileName), topDebugState)
+   assign("topLevelBreakpoints", topLevelBreakpoints, topDebugState)
+   assign("functionBreakpoints", functionBreakpoints, topDebugState)
+
+   # cache debug state inside the RStudio tools environment
+   assign(".rs.topDebugState", topDebugState, as.environment("tools:rstudio"))
 })
 
 # Modes:
@@ -291,15 +295,19 @@
 # 2 - stop (abort execution)
 .rs.addFunction("executeDebugSource", function(fileName, step, mode)
 {
+   topDebugState <- get(".rs.topDebugState", as.environment("tools:rstudio"))
+   stepBegin <- step
    srcref <- integer()
    repeat
    {
       # get the expression to evaluate and its location in the file
-      expr <- .rs.parsedForDebugging[[step]]
-      srcref <- attr(.rs.parsedForDebugging, "srcref")[[step]]
+      expr <- topDebugState[["parsedForDebugging"]][[step]]
+      srcref <- attr(topDebugState[["parsedForDebugging"]], "srcref")[[step]]
 
-      # if this is a top-level breakpoint, don't execute it
-      if (srcref[1] %in% .rs.topLevelBreakpoints)
+      # if this is a top-level breakpoint and not the step we were asked to
+      # execute, don't execute it
+      if (srcref[1] %in% topDebugState[["topLevelBreakpoints"]] &&
+          step > stepBegin)
       {
          break
       }
@@ -312,7 +320,7 @@
       # have moved since the last source)
       functionName <- ""
       steps <- list()
-      for (breakpoint in .rs.functionBreakpoints)
+      for (breakpoint in topDebugState[["functionBreakpoints"]])
       {
          if (breakpoint$line >= srcref[1] &&
              breakpoint$line <= srcref[3])
@@ -328,9 +336,14 @@
 
       # move to the next expression
       step <- step+1
-      if (step > length(.rs.parsedForDebugging) ||
-          mode == 0)
+      if (step > length(topDebugState[["parsedForDebugging"]]))
       {
+         srcref <- integer()
+         break
+      }
+      else if (mode == 0)
+      {
+         srcref <- attr(topDebugState[["parsedForDebugging"]], "srcref")[[step]]
          break
       }
    }
@@ -347,6 +360,7 @@
    else
    {
       return(list(
+         step = 0,
          line_number = 0,
          end_line_number = 0,
          character_number = 0,
@@ -396,6 +410,6 @@
 
 .rs.addJsonRpcHandler("execute_debug_source", function(fileName, step, mode)
 {
-   .rs.executeDebugSource(fileName, step, mode)
+   .rs.executeDebugSource(fileName, step[[1]], mode)
 })
 
