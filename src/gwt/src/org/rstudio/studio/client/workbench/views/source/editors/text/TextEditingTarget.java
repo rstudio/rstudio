@@ -56,6 +56,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
+import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -300,7 +301,8 @@ public class TextEditingTarget implements EditingTarget
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
-                            BreakpointManager breakpointManager)
+                            BreakpointManager breakpointManager,
+                            DebugCommander debugCommander)
    {
       commands_ = commands;
       server_ = server;
@@ -315,6 +317,7 @@ public class TextEditingTarget implements EditingTarget
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
+      debugCommander_ = debugCommander;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -2478,7 +2481,7 @@ public class TextEditingTarget implements EditingTarget
                {
                   if (docDisplay_.hasBreakpoints())
                   {
-                     breakpointManager_.sourceForDebugging(getPath());
+                     debugCommander_.sourceForDebugging(getPath());
                   }
                   else
                   {
@@ -3519,6 +3522,7 @@ public class TextEditingTarget implements EditingTarget
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
+   private DebugCommander debugCommander_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

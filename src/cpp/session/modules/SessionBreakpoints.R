@@ -286,18 +286,27 @@
    assign("functionBreakpoints", functionBreakpoints, topDebugState)
 
    # cache debug state inside the RStudio tools environment
-   assign(".rs.topDebugState", topDebugState, as.environment("tools:rstudio"))
+   .rs.setVar("topDebugState", topDebugState)
+
+   return(TRUE)
 })
+
 
 # Modes:
 # 0 - single step (execute one expression)
 # 1 - run (execute until a breakpoint is hit)
 # 2 - stop (abort execution)
+#
+# Results:
+# 0 - paused for user (on a breakpoint or step)
+# 1 - paused on a function breakpoint injection site
+# 2 - evaluation finished
 .rs.addFunction("executeDebugSource", function(fileName, step, mode)
 {
-   topDebugState <- get(".rs.topDebugState", as.environment("tools:rstudio"))
+   topDebugState <- .rs.topDebugState
    stepBegin <- step
    srcref <- integer()
+   executionState <- 0L  # Paused for user
    repeat
    {
       # get the expression to evaluate and its location in the file
@@ -315,33 +324,29 @@
       # evaluate it!
       eval(expr, envir = globalenv())
 
-      # if the code we just evaluated contains function breakpoints, turn those
-      # on (CONSIDER: we probably need to get function steps here in case things
-      # have moved since the last source)
-      functionName <- ""
-      steps <- list()
-      for (breakpoint in topDebugState[["functionBreakpoints"]])
-      {
-         if (breakpoint$line >= srcref[1] &&
-             breakpoint$line <= srcref[3])
-         {
-            steps <- c(steps, breakpoint$steps)
-            functionName <- breakpoint$fun
-         }
-      }
-      if (length(steps) > 0)
-      {
-         .rs.setFunctionBreakpoints(functionName, fileName, steps)
-      }
-
       # move to the next expression
-      step <- step+1
+      step <- step + 1L
+
       if (step > length(topDebugState[["parsedForDebugging"]]))
       {
          srcref <- integer()
+         executionState <- 2L  # Finished
          break
       }
-      else if (mode == 0)
+
+      # if there are any function breakpoints inside the expression, pause and
+      # let the client evaluate them
+      for (bp in topDebugState[["functionBreakpoints"]])
+      {
+         if (bp$line >= srcref[1] && bp$line <= srcref[3])
+         {
+            executionState <- 1L  # Paused for breakpoint injection
+            break
+         }
+      }
+      if (executionState == 1) break
+
+      if (mode == 0)  # Single-step execution mode
       {
          srcref <- attr(topDebugState[["parsedForDebugging"]], "srcref")[[step]]
          break
@@ -351,20 +356,22 @@
    if (length(srcref) > 0)
    {
       return(list(
-         step = step,
-         line_number = srcref[1],
-         end_line_number = srcref[3],
-         character_number = srcref[5],
-         end_character_number = srcref[6]))
+         step = .rs.scalar(step),
+         state = .rs.scalar(executionState),
+         line_number = .rs.scalar(srcref[1]),
+         end_line_number = .rs.scalar(srcref[3]),
+         character_number = .rs.scalar(srcref[5]),
+         end_character_number = .rs.scalar(srcref[6])))
    }
    else
    {
       return(list(
-         step = 0,
-         line_number = 0,
-         end_line_number = 0,
-         character_number = 0,
-         end_character_number = 0))
+         step = .rs.scalar(0L),
+         state = .rs.scalar(executionState),
+         line_number = .rs.scalar(0L),
+         end_line_number = .rs.scalar(0L),
+         character_number = .rs.scalar(0L),
+         end_character_number = .rs.scalar(0L)))
    }
 })
 

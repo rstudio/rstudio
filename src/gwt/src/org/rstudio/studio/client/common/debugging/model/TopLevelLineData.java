@@ -6,11 +6,19 @@ public class TopLevelLineData extends LineData
 {
    protected TopLevelLineData() {}
    
+   public static final int STATE_PAUSED = 0;
+   public static final int STATE_INJECTION_SITE = 1;
+   public static final int STATE_FINISHED = 2;
+   
    public final native int getStep() /*-{
       return this.step;
    }-*/;
    
    public final native boolean getFinished() /*-{
       return this.step == 0;
+   }-*/;
+   
+   public final native int getState() /*-{
+      return this.state;
    }-*/;
 }

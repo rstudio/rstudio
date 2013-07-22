@@ -80,13 +80,11 @@ public class BreakpointManager
    public BreakpointManager(
          DebuggingServerOperations server,
          EventBus events,
-         Session session,
-         DebugCommander debugCommander)
+         Session session)
    {
       server_ = server;
       events_ = events;
       session_ = session;
-      debugCommander_ = debugCommander;
 
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
@@ -222,24 +220,23 @@ public class BreakpointManager
       return breakpoints;
    }
    
-   public void sourceForDebugging(final String fileName)
+   public boolean injectBreakpointsDuringSource(
+         String fileName, 
+         int startLine, 
+         int endLine)
    {
-      // Find all the breakpoints in the requested file
-      ArrayList<Breakpoint> breakpoints = getBreakpointsInFile(fileName);
-      server_.sourceForDebugging(fileName, breakpoints, 
-            new ServerRequestCallback<Void>()
+      for (Breakpoint breakpoint: breakpoints_)
       {
-         @Override
-         public void onResponseReceived(Void v)
+         if (breakpoint.isInFile(fileName) && 
+             breakpoint.getLineNumber() >= startLine &&
+             breakpoint.getLineNumber() <= endLine &&
+             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
          {
-            debugCommander_.beginTopLevelDebugSession(fileName);
+            prepareAndSetFunctionBreakpoints(new FileFunction(breakpoint));
+            return true;
          }
-
-         @Override
-         public void onError(ServerError error)
-         {
-         }         
-      });
+      }
+      return false;
    }
    
    // Event handlers ----------------------------------------------------------
@@ -647,7 +644,6 @@ public class BreakpointManager
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;
-   private final DebugCommander debugCommander_;
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
