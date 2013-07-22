@@ -168,32 +168,6 @@ if(RSTUDIO_CONFIG_CORE_DEV)
 
 else()
 
-   # find LibR
-   if(RSTUDIO_SESSION_WIN64)
-      set(LIBR_FIND_WINDOWS_64BIT TRUE)
-   endif()
-   find_package(LibR REQUIRED)
-
-   # verify we got the required R version
-   if(LIBR_FOUND AND RSTUDIO_VERIFY_R_VERSION)
-      include(CheckCSourceRuns)
-      set(CMAKE_REQUIRED_INCLUDES ${LIBR_INCLUDE_DIRS})
-      check_c_source_runs("
-        #include <Rversion.h>
-        int main()
-        {
-           int meetsRequirement = R_VERSION >= R_Version(${RSTUDIO_R_MAJOR_VERSION_REQUIRED},${RSTUDIO_R_MINOR_VERSION_REQUIRED},${RSTUDIO_R_PATCH_VERSION_REQUIRED});
-           return !meetsRequirement;
-        }"
-        LIBR_MINIMUM_VERSION)
-      if(NOT LIBR_MINIMUM_VERSION)
-         message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found.")
-      endif()
-   endif()
-
-   # r library
-   add_subdirectory(r)
-
    # monitor library
    add_subdirectory(monitor)
 
@@ -202,30 +176,59 @@ else()
       include(CMakeOverlay.txt)
    endif()
 
-   # initialize subdirectories
-   file(MAKE_DIRECTORY conf)
+   # proceed if we aren't building rstudio monitor-only
+   if(NOT RSTUDIO_CONFIG_MONITOR_ONLY)
 
-   # add desktop subprojects if we aren't building in server only mode
-   if(RSTUDIO_DESKTOP)
-      add_subdirectory(diagnostics)
-      add_subdirectory(desktop)
-      configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
-      configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
+      # find LibR
+      if(RSTUDIO_SESSION_WIN64)
+         set(LIBR_FIND_WINDOWS_64BIT TRUE)
+      endif()
+      find_package(LibR REQUIRED)
 
-   endif()
+      # verify we got the required R version
+      if(LIBR_FOUND AND RSTUDIO_VERIFY_R_VERSION)
+         include(CheckCSourceRuns)
+         set(CMAKE_REQUIRED_INCLUDES ${LIBR_INCLUDE_DIRS})
+         check_c_source_runs("
+           #include <Rversion.h>
+           int main()
+           {
+              int meetsRequirement = R_VERSION >= R_Version(${RSTUDIO_R_MAJOR_VERSION_REQUIRED},${RSTUDIO_R_MINOR_VERSION_REQUIRED},${RSTUDIO_R_PATCH_VERSION_REQUIRED});
+              return !meetsRequirement;
+           }"
+           LIBR_MINIMUM_VERSION)
+         if(NOT LIBR_MINIMUM_VERSION)
+            message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found.")
+         endif()
+      endif()
 
-   # add this after desktop so it is not included in fixup_bundle
-   # processing which we do in desktop
-   add_subdirectory(session)
+      # r library
+      add_subdirectory(r)
 
-   # add server subprojects if we aren't building in desktop only mode
-   if(RSTUDIO_SERVER)
+      # initialize subdirectories
+      file(MAKE_DIRECTORY conf)
 
-      add_subdirectory(server)
-      configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
-      configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
-      configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
+      # add desktop subprojects if we aren't building in server only mode
+      if(RSTUDIO_DESKTOP)
+         add_subdirectory(diagnostics)
+         add_subdirectory(desktop)
+         configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
+         configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
+      endif()
 
+      # add this after desktop so it is not included in fixup_bundle
+      # processing which we do in desktop
+      add_subdirectory(session)
+
+      # add server subprojects if we aren't building in desktop only mode
+      if(RSTUDIO_SERVER)
+
+         add_subdirectory(server)
+         configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
+         configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
+         configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)
+
+      endif()
    endif()
 
 endif()
