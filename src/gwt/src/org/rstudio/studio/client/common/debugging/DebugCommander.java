@@ -68,16 +68,22 @@ public class DebugCommander
             debugStep_ = lineData.getStep();
             if (lineData.getNeedsBreakpointInjection())
             {
-               // When the server pauses for breakpoint injection, have the
-               // breakpoint manager inject breakpoints into the function just
-               // evaluated. Regardless of the result, the breakpoint manager 
+               // If the server is paused for breakpoint injection, inject into
+               // the current line; otherwise, inject into the line we just 
+               // evaluated
+               TopLevelLineData bpLineData = lineData.getState() == 
+                     TopLevelLineData.STATE_INJECTION_SITE ?
+                           lineData :
+                           previousLineData_;
+
+               // If there are breakpoints in the range, the breakpoint manager 
                // will emit a BreakpointsSavedEvent, which we'll use as a cue
                // to continue execution.
                boolean foundBreakpoints = 
                      breakpointManager_.injectBreakpointsDuringSource(
                         debugFile_, 
-                        lineData.getLineNumber(), 
-                        lineData.getEndLineNumber());
+                        bpLineData.getLineNumber(), 
+                        bpLineData.getEndLineNumber());
               
                if (lineData.getState() == TopLevelLineData.STATE_INJECTION_SITE)
                {
@@ -110,6 +116,7 @@ public class DebugCommander
             {
                leaveDebugMode();
             }
+            previousLineData_ = lineData;
          }
          
          @Override
@@ -156,6 +163,10 @@ public class DebugCommander
       if (debugMode_ == DebugMode.Function)
       {
          eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));
+         
+         // Abandon top-level debug mode, too--"Stop" exits all debug contexts
+         // simultaneously
+         topDebugMode_ = DebugMode.Normal;
       }
       else if (debugMode_ == DebugMode.TopLevel)
       {
@@ -271,6 +282,7 @@ public class DebugCommander
    private DebugMode topDebugMode_ = DebugMode.Normal;
    private int debugStep_ = 1;
    private int debugStepMode_ = STEP_SINGLE;
-   private String debugFile_ = "";
    private boolean waitingForBreakpointInject_ = false;
+   private String debugFile_ = "";
+   private TopLevelLineData previousLineData_ = null;
 }

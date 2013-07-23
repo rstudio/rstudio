@@ -130,6 +130,10 @@ public class AceEditorWidget extends Composite
               if (pos != null)
               {
                  lineNumber = lineFromRow(pos.getRow());
+                 if (getBreakpointIdxByLine(lineNumber) >= 0)
+                 {
+                    return;
+                 }
               }
 
               fireEvent(new BreakpointSetEvent(

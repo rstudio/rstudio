@@ -292,15 +292,20 @@
 })
 
 
-# Modes:
+# Executes a portion of a previously parsed file, pausing on breakpoints.
+#
+# Modes (input)
 # 0 - single step (execute one expression)
 # 1 - run (execute until a breakpoint is hit)
 # 2 - stop (abort execution)
 #
-# Results:
+# Results (output)
 # 0 - paused for user (on a breakpoint or step)
 # 1 - paused on a function breakpoint injection site
 # 2 - evaluation finished
+#
+# Note that there is special behavior on the client attached to the name of
+# this function.
 .rs.addFunction("executeDebugSource", function(fileName, step, mode)
 {
    topDebugState <- .rs.topDebugState
