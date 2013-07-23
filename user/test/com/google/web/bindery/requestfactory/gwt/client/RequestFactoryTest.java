@@ -15,6 +15,7 @@
  */
 package com.google.web.bindery.requestfactory.gwt.client;
 
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.web.bindery.autobean.shared.AutoBeanCodex;
 import com.google.web.bindery.autobean.shared.AutoBeanUtils;
 import com.google.web.bindery.requestfactory.shared.EntityProxy;
@@ -126,6 +127,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
 
   private class FailFixAndRefire<T> extends Receiver<T> {
 
+    private final RegExp THREE = RegExp.compile("\\b3\\b");
+    private final RegExp THIRTY = RegExp.compile("\\b30\\b");
+
     private final SimpleFooProxy proxy;
     private final Request<T> request;
     private boolean voidReturnExpected;
@@ -140,7 +144,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       assertEquals(1, errors.size());
       ConstraintViolation<?> error = errors.iterator().next();
       assertEquals("userName", error.getPropertyPath().toString());
-      assertEquals("size must be between 3 and 30", error.getMessage());
+      assertTrue(THREE.test(error.getMessage()));
+      assertTrue(THIRTY.test(error.getMessage()));
       assertEquals("{javax.validation.constraints.Size.message}", error.getMessageTemplate());
       assertSame(proxy, error.getRootBean());
       assertSame(proxy, error.getLeafBean());
@@ -172,7 +177,8 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
       assertEquals(1, errors.size());
       com.google.web.bindery.requestfactory.shared.Violation error = errors.iterator().next();
       assertEquals("userName", error.getPath());
-      assertEquals("size must be between 3 and 30", error.getMessage());
+      assertTrue(THREE.test(error.getMessage()));
+      assertTrue(THIRTY.test(error.getMessage()));
       assertEquals(proxy.stableId(), error.getProxyId());
 
       // Now re-used the request to fix the edit
