@@ -105,7 +105,7 @@ public class AceEditorWidget extends Composite
            // rows are 0-based, but debug line numbers are 1-based
            int lineNumber = lineFromRow(arg.getDocumentPosition().getRow());
            int breakpointIdx = getBreakpointIdxByLine(lineNumber);
-           
+
            // if there's already a breakpoint on that line, remove it
            if (breakpointIdx >= 0)
            {
@@ -117,11 +117,21 @@ public class AceEditorWidget extends Composite
                     false));
               breakpoints_.remove(breakpointIdx);
            }
+           
            // if there's no breakpoint on that line yet, create a new unset
            // breakpoint there (the breakpoint manager will pick up the new
            // breakpoint and attempt to set it on the server)
            else
            {
+              // move the breakpoint down to the first line that has a
+              // non-whitespace, non-comment token
+              Position pos = editor_.getSession().getMode().getCodeModel()
+                 .findNextSignificantToken(arg.getDocumentPosition());
+              if (pos != null)
+              {
+                 lineNumber = lineFromRow(pos.getRow());
+              }
+
               fireEvent(new BreakpointSetEvent(
                     lineNumber,
                     BreakpointSetEvent.UNSET_BREAKPOINT_ID,

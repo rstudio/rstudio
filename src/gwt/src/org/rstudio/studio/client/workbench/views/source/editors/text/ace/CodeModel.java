@@ -62,5 +62,8 @@ public class CodeModel extends JavaScriptObject
       else
          return null;
    }-*/;
-
+   
+   public native final Position findNextSignificantToken(Position pos) /*-{
+      return this.findNextSignificantToken(pos);
+   }-*/;
 }
