@@ -32,12 +32,12 @@ import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
-import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
@@ -1313,18 +1313,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_HISTORY_ARCHIVE_BY_PREFIX, params, requestCallback);
    }
 
-   private JSONArray toJSONStringArray(ArrayList<String> paths)
-   {
-      JSONArray jsonPaths = new JSONArray();
-      for (int i = 0; i < paths.size(); i++)
-         jsonPaths.set(i, new JSONString(paths.get(i)));
-      return jsonPaths;
-   }
-
    public void gitAdd(ArrayList<String> paths,
                       ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1334,7 +1326,7 @@ public class RemoteServer implements Server
    public void gitRemove(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1344,7 +1336,7 @@ public class RemoteServer implements Server
    public void gitDiscard(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1354,7 +1346,7 @@ public class RemoteServer implements Server
    public void gitRevert(ArrayList<String> paths,
                          ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1364,7 +1356,7 @@ public class RemoteServer implements Server
    public void gitStage(ArrayList<String> paths,
                         ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -1374,7 +1366,7 @@ public class RemoteServer implements Server
    public void gitUnstage(ArrayList<String> paths,
                           ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray jsonPaths = toJSONStringArray(paths);
+      JSONArray jsonPaths = JSONUtils.toJSONStringArray(paths);
 
       JSONArray params = new JSONArray();
       params.set(0, jsonPaths);
@@ -2311,7 +2303,7 @@ public class RemoteServer implements Server
                       ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, toJSONStringArray(paths));
+      params.set(0, JSONUtils.toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_ADD, params, requestCallback);
    }
 
@@ -2320,7 +2312,7 @@ public class RemoteServer implements Server
                          ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, toJSONStringArray(paths));
+      params.set(0, JSONUtils.toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_DELETE, params, requestCallback);
    }
 
@@ -2329,7 +2321,7 @@ public class RemoteServer implements Server
                          ServerRequestCallback<ProcessResult> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, toJSONStringArray(paths));
+      params.set(0, JSONUtils.toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_REVERT, params, requestCallback);
    }
 
@@ -2340,7 +2332,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accept));
-      params.set(1, toJSONStringArray(paths));
+      params.set(1, JSONUtils.toJSONStringArray(paths));
       sendRequest(RPC_SCOPE, SVN_RESOLVE, params, requestCallback);
    }
 
@@ -2370,7 +2362,7 @@ public class RemoteServer implements Server
                          ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, toJSONStringArray(paths));
+      params.set(0, JSONUtils.toJSONStringArray(paths));
       params.set(1, new JSONString(message));
 
       sendRequest(RPC_SCOPE, SVN_COMMIT, params,
@@ -2906,38 +2898,11 @@ public class RemoteServer implements Server
    @Override 
    public void sourceForDebugging(
          String fileName,
-         ArrayList<Breakpoint> breakpoints,
          ServerRequestCallback<Void> requestCallback)
    {
-      JSONArray topLevelBreakpoints = new JSONArray();
-      JSONArray functionBreakpoints = new JSONArray();
-      
-      // Sort the breakpoints into top-level and function categories, and pass
-      // to the server the minimal set of information it needs from each to 
-      // execute the breakpoint
-      for (Breakpoint breakpoint: breakpoints)
-      {
-         int tlIdx = 0;
-         int bpIdx = 0;
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-         {
-            topLevelBreakpoints.set(tlIdx++, 
-                  new JSONNumber(breakpoint.getLineNumber()));
-         }
-         else
-         {
-            JSONObject bp = new JSONObject();
-            bp.put("line", new JSONNumber(breakpoint.getLineNumber()));
-            bp.put("steps", new JSONString(breakpoint.getFunctionSteps()));
-            bp.put("fun", new JSONString(breakpoint.getFunctionName()));
-            functionBreakpoints.set(bpIdx, bp);
-         }
-      }
       
       JSONArray sourceParams = new JSONArray();
       sourceParams.set(0, new JSONString(fileName));
-      sourceParams.set(1, topLevelBreakpoints);
-      sourceParams.set(2, functionBreakpoints);
       
       sendRequest(RPC_SCOPE,
             SOURCE_FOR_DEBUGGING,
@@ -2947,14 +2912,18 @@ public class RemoteServer implements Server
    
    public void executeDebugSource(
          String fileName,
+         ArrayList<Integer> topBreakLines,
+         ArrayList<Integer> debugBreakLines,
          int step, 
          int mode, 
          ServerRequestCallback<TopLevelLineData> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(fileName));
-      params.set(1, new JSONNumber(step));
-      params.set(2, new JSONNumber(mode));
+      params.set(1, JSONUtils.toJSONNumberArray(topBreakLines));
+      params.set(2, JSONUtils.toJSONNumberArray(debugBreakLines));
+      params.set(3, new JSONNumber(step));
+      params.set(4, new JSONNumber(mode));
 
       sendRequest(RPC_SCOPE,
             EXECUTE_DEBUG_SOURCE,

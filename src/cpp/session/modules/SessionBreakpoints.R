@@ -273,18 +273,13 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addFunction("sourceForDebugging", function(
-   fileName,
-   topLevelBreakpoints,
-   functionBreakpoints)
+.rs.addFunction("sourceForDebugging", function(fileName)
 {
    # establish state for debugging sources
    topDebugState <- new.env()
 
    # save arguments for later use below
    assign("currentDebugFile", fileName, topDebugState)
-   assign("topLevelBreakpoints", topLevelBreakpoints, topDebugState)
-   assign("functionBreakpoints", functionBreakpoints, topDebugState)
 
    # parse the file and store the parsed expressions
    assign("parsedForDebugging",
@@ -293,7 +288,7 @@
    # cache debug state inside the RStudio tools environment
    .rs.setVar("topDebugState", topDebugState)
 
-   return(TRUE)
+   return(NULL)
 })
 
 
@@ -311,14 +306,29 @@
 #
 # Note that there is special behavior on the client attached to the name of
 # this function.
-.rs.addFunction("executeDebugSource", function(fileName, step, mode)
+.rs.addFunction("executeDebugSource", function(
+   fileName,
+   topBreakLines,
+   functionBreakLines,
+   step,
+   mode)
 {
-   topDebugState <- .rs.topDebugState
-   parsed <- topDebugState[["parsedForDebugging"]]
+   topDebugState <- environment()
+   parsed <- expression()
    stepBegin <- step
    srcref <- integer()
    executionState <- 0L  # Paused for user
    needsBreakpointInjection <- FALSE
+
+   if (exists(".rs.topDebugState"))
+   {
+      topDebugState <- .rs.topDebugState
+      parsed <- topDebugState[["parsedForDebugging"]]
+   }
+   else
+   {
+      mode <- 2  # Stop debugging, we don't have any state
+   }
    if (mode == 2)
    {
       executionState <- 2L   # Finished
@@ -331,8 +341,7 @@
 
       # if this is a top-level breakpoint and not the step we were asked to
       # execute, don't execute it
-      if (srcref[1] %in% topDebugState[["topLevelBreakpoints"]] &&
-          step > stepBegin)
+      if (srcref[1] %in% topBreakLines && step > stepBegin)
       {
          break
       }
@@ -342,7 +351,6 @@
 
       # move to the next expression
       step <- step + 1L
-
       if (step > length(parsed))
       {
          executionState <- 2L  # Finished
@@ -350,9 +358,9 @@
 
       # if there are any function breakpoints inside the expression, pause and
       # let the client evaluate them
-      for (bp in topDebugState[["functionBreakpoints"]])
+      for (bp in functionBreakLines)
       {
-         if (bp$line >= srcref[1] && bp$line <= srcref[3])
+         if (bp >= srcref[1] && bp <= srcref[3])
          {
             needsBreakpointInjection <- TRUE
             if (mode == 1 && executionState != 2)
@@ -437,16 +445,23 @@
    return(formattedResults)
 })
 
-.rs.addJsonRpcHandler("source_for_debugging", function(
-   fileName,
-   topLevelBreakpoints,
-   functionBreakpoints)
+.rs.addJsonRpcHandler("source_for_debugging", function(fileName)
 {
-   .rs.sourceForDebugging(fileName, topLevelBreakpoints, functionBreakpoints)
+   .rs.sourceForDebugging(fileName)
 })
 
-.rs.addJsonRpcHandler("execute_debug_source", function(fileName, step, mode)
+.rs.addJsonRpcHandler("execute_debug_source", function(
+   fileName,
+   topBreakLines,
+   functionBreakLines,
+   step,
+   mode)
 {
-   .rs.executeDebugSource(fileName, step[[1]], mode)
+   .rs.executeDebugSource(
+      fileName,
+      topBreakLines,
+      functionBreakLines,
+      step[[1]],
+      mode)
 })
 

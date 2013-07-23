@@ -125,6 +125,7 @@ public class DebugCommander
          @Override
          public void onError(ServerError error)
          {
+            leaveDebugMode();
          }   
       };
       
@@ -232,12 +233,9 @@ public class DebugCommander
 
    public void sourceForDebugging(final String fileName)
    {
-      // Find all the breakpoints in the requested file
-      final ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(fileName);
 
       // Initiate the debug session on the server
-      debugServer_.sourceForDebugging(fileName, breakpoints, 
+      debugServer_.sourceForDebugging(fileName,
             new ServerRequestCallback<Void>()
       {
          @Override
@@ -245,6 +243,8 @@ public class DebugCommander
          {
             // See if any of the breakpoints are top-level (if they are, we 
             // need to show the top-level debug toolbar)
+            ArrayList<Breakpoint> breakpoints = 
+                  breakpointManager_.getBreakpointsInFile(fileName);
             boolean hasTopLevelBreakpoints = false;
             for (Breakpoint breakpoint: breakpoints)
             {
@@ -262,7 +262,7 @@ public class DebugCommander
          public void onError(ServerError error)
          {
             globalDisplay_.showErrorMessage("Error sourcing " + fileName,
-                  error.getUserMessage());
+                  error.getMessage());
          }         
       });
    }
@@ -272,8 +272,30 @@ public class DebugCommander
    private void executeDebugStep(int stepMode)
    {
       debugStepMode_ = stepMode;
+
+      // The user is free to manipulate breakpoints between steps, so we need
+      // to fetch the list of breakpoints after every step and pass the updated
+      // list to the server.
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(debugFile_);
+      ArrayList<Integer> topBreakLines = new ArrayList<Integer>();
+      ArrayList<Integer> functionBreakLines = new ArrayList<Integer>();
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+         {
+            topBreakLines.add(breakpoint.getLineNumber());
+         }
+         else
+         {
+            functionBreakLines.add(breakpoint.getLineNumber());
+         }
+      }
+     
       debugServer_.executeDebugSource(
-            debugFile_, 
+            debugFile_,
+            topBreakLines,
+            functionBreakLines,
             debugStep_, 
             stepMode, 
             debugStepCallback_);
