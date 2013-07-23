@@ -100,15 +100,13 @@ public class BreakpointManager
          final String path,
          final int lineNumber)
    {
-      Breakpoint breakpoint = Breakpoint.create(
+      return addBreakpoint(Breakpoint.create(
             currentBreakpointId_++, 
             path, 
             "toplevel", 
             lineNumber, 
             Breakpoint.STATE_ACTIVE, 
-            Breakpoint.TYPE_TOPLEVEL);
-      breakpoints_.add(breakpoint);
-      return breakpoint;
+            Breakpoint.TYPE_TOPLEVEL));
    }
    
    public Breakpoint setBreakpoint(
@@ -118,16 +116,15 @@ public class BreakpointManager
          boolean immediately)
    {
       // create the new breakpoint and arguments for the server call
-      final int newBreakpointId = currentBreakpointId_++;
-      final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
+      final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
+            currentBreakpointId_++,
             path,
             functionName,
             lineNumber,
             immediately ?
                   Breakpoint.STATE_PROCESSING :
                   Breakpoint.STATE_INACTIVE,
-            Breakpoint.TYPE_FUNCTION);
-      breakpoints_.add(breakpoint);
+            Breakpoint.TYPE_FUNCTION));
       
       // If the breakpoint is in a function that is active on the callstack, 
       // it's being set on the stored rather than the executing copy. It's 
@@ -580,6 +577,13 @@ public class BreakpointManager
          }
       }
       return null;
+   }
+   
+   private Breakpoint addBreakpoint (Breakpoint breakpoint)
+   {
+      breakpoints_.add(breakpoint);
+      breakpointStateDirty_ = true;
+      return breakpoint;
    }
      
    // Private classes ---------------------------------------------------------
