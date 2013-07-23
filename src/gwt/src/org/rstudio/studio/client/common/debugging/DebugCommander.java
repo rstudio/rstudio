@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -52,10 +53,12 @@ public class DebugCommander
          Commands commands,
          EventBus eventBus,
          BreakpointManager breakpointManager,
+         GlobalDisplay globalDisplay,
          DebuggingServerOperations debugServer)
    {
       eventBus_ = eventBus;
       debugServer_ = debugServer;
+      globalDisplay_ = globalDisplay;
       breakpointManager_ = breakpointManager;
       
       binder.bind(commands, this);
@@ -189,14 +192,6 @@ public class DebugCommander
 
    // Public methods ----------------------------------------------------------
 
-   public void beginTopLevelDebugSession(String filename)
-   {
-      debugStep_ = 1;
-      debugFile_ = filename;
-      enterDebugMode(DebugMode.TopLevel);
-      executeDebugStep(STEP_RUN);
-   }
-   
    public void continueTopLevelDebugSession()
    {
       executeDebugStep(debugStepMode_);
@@ -238,19 +233,36 @@ public class DebugCommander
    public void sourceForDebugging(final String fileName)
    {
       // Find all the breakpoints in the requested file
-      ArrayList<Breakpoint> breakpoints = breakpointManager_.getBreakpointsInFile(fileName);
+      final ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(fileName);
+
+      // Initiate the debug session on the server
       debugServer_.sourceForDebugging(fileName, breakpoints, 
             new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
          {
-            beginTopLevelDebugSession(fileName);
+            // See if any of the breakpoints are top-level (if they are, we 
+            // need to show the top-level debug toolbar)
+            boolean hasTopLevelBreakpoints = false;
+            for (Breakpoint breakpoint: breakpoints)
+            {
+               if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+               {
+                  hasTopLevelBreakpoints = true;
+                  break;
+               }
+            }            
+
+            beginTopLevelDebugSession(fileName, hasTopLevelBreakpoints);
          }
 
          @Override
          public void onError(ServerError error)
          {
+            globalDisplay_.showErrorMessage("Error sourcing " + fileName,
+                  error.getUserMessage());
          }         
       });
    }
@@ -267,6 +279,19 @@ public class DebugCommander
             debugStepCallback_);
    }
 
+   private void beginTopLevelDebugSession(
+         String filename, 
+         boolean hasTopLevelBreakpoints)
+   {
+      debugStep_ = 1;
+      debugFile_ = filename;
+      if (hasTopLevelBreakpoints)
+      {
+         enterDebugMode(DebugMode.TopLevel);
+      }
+      executeDebugStep(STEP_RUN);
+   }
+   
    // These values are understood by the server; if you change them, you'll need
    // to update the server's understanding in SessionBreakpoints.R. 
    private static final int STEP_SINGLE = 0;
@@ -277,6 +302,7 @@ public class DebugCommander
    private final ServerRequestCallback<TopLevelLineData> debugStepCallback_;
    private final EventBus eventBus_;
    private final BreakpointManager breakpointManager_;
+   private final GlobalDisplay globalDisplay_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;

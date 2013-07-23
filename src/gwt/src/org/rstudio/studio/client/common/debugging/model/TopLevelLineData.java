@@ -15,7 +15,7 @@ public class TopLevelLineData extends LineData
    }-*/;
    
    public final native boolean getFinished() /*-{
-      return this.step == 0;
+      return this.state == 2;
    }-*/;
    
    public final native int getState() /*-{

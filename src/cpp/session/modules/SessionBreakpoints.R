@@ -280,10 +280,15 @@
 {
    # establish state for debugging sources
    topDebugState <- new.env()
+
+   # save arguments for later use below
    assign("currentDebugFile", fileName, topDebugState)
-   assign("parsedForDebugging", parse(fileName), topDebugState)
    assign("topLevelBreakpoints", topLevelBreakpoints, topDebugState)
    assign("functionBreakpoints", functionBreakpoints, topDebugState)
+
+   # parse the file and store the parsed expressions
+   assign("parsedForDebugging",
+      suppressWarnings(parse(fileName)), topDebugState)
 
    # cache debug state inside the RStudio tools environment
    .rs.setVar("topDebugState", topDebugState)
@@ -309,6 +314,7 @@
 .rs.addFunction("executeDebugSource", function(fileName, step, mode)
 {
    topDebugState <- .rs.topDebugState
+   parsed <- topDebugState[["parsedForDebugging"]]
    stepBegin <- step
    srcref <- integer()
    executionState <- 0L  # Paused for user
@@ -320,8 +326,8 @@
    else repeat
    {
       # get the expression to evaluate and its location in the file
-      expr <- topDebugState[["parsedForDebugging"]][[step]]
-      srcref <- attr(topDebugState[["parsedForDebugging"]], "srcref")[[step]]
+      expr <- parsed[[step]]
+      srcref <- attr(parsed, "srcref")[[step]]
 
       # if this is a top-level breakpoint and not the step we were asked to
       # execute, don't execute it
@@ -337,11 +343,9 @@
       # move to the next expression
       step <- step + 1L
 
-      if (step > length(topDebugState[["parsedForDebugging"]]))
+      if (step > length(parsed))
       {
-         srcref <- integer()
          executionState <- 2L  # Finished
-         break
       }
 
       # if there are any function breakpoints inside the expression, pause and
@@ -351,20 +355,30 @@
          if (bp$line >= srcref[1] && bp$line <= srcref[3])
          {
             needsBreakpointInjection <- TRUE
-            if (mode == 1)
+            if (mode == 1 && executionState != 2)
             {
                executionState <- 1L  # Paused for breakpoint injection
             }
             break
          }
       }
-      if (executionState == 1) break
+      if (executionState == 1 || executionState == 2) break
 
       if (mode == 0)  # Single-step execution mode
       {
-         srcref <- attr(topDebugState[["parsedForDebugging"]], "srcref")[[step]]
+         srcref <- attr(parsed, "srcref")[[step]]
          break
       }
+   }
+
+   if (executionState == 2)
+   {
+      if (step > length(parsed))
+         message(paste("Sourced '", topDebugState[["currentDebugFile"]],
+                       "' with debug information", sep=""))
+      else
+         message(paste("Source of '", topDebugState[["currentDebugFile"]],
+                       "' aborted", sep=""))
    }
 
    if (length(srcref) > 0)

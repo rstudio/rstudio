@@ -847,7 +847,15 @@ public class TextEditingTarget implements EditingTarget
       }
       else if (!showWarning && isBreakpointWarningVisible_)
       {
-         view_.hideWarningBar();         
+         hideBreakpointWarningBar();
+      }
+   }
+   
+   private void hideBreakpointWarningBar()
+   {
+      if (isBreakpointWarningVisible_)
+      {
+         view_.hideWarningBar();
          isBreakpointWarningVisible_ = false;
       }
    }
@@ -2481,6 +2489,7 @@ public class TextEditingTarget implements EditingTarget
                {
                   if (docDisplay_.hasBreakpoints())
                   {
+                     hideBreakpointWarningBar();
                      debugCommander_.sourceForDebugging(getPath());
                   }
                   else
@@ -3173,13 +3182,21 @@ public class TextEditingTarget implements EditingTarget
                }
                else
                {
-                  consoleDispatcher_.executeSourceCommand(
+                  if (docDisplay_.hasBreakpoints())
+                  {
+                     hideBreakpointWarningBar();
+                     debugCommander_.sourceForDebugging(getPath());
+                  }
+                  else
+                  {
+                     consoleDispatcher_.executeSourceCommand(
                                              docUpdateSentinel_.getPath(), 
                                              fileType_,
                                              docUpdateSentinel_.getEncoding(), 
                                              activeCodeIsAscii(),
                                              false,
                                              false);
+                  }
                }
             }
          }
