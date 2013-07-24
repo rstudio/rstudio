@@ -131,9 +131,11 @@
 {
     return(paste(lapply(args, function(arg) {
         if (is.language(arg))
-                capture.output(print(arg))
-            else
-                as.character(arg)
+            capture.output(print(arg))
+        else if (is.environment(arg))
+            deparse(substitute(arg))
+        else
+            as.character(arg)
         }), collapse = ", "))
 })
 
