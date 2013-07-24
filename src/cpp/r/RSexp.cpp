@@ -119,6 +119,11 @@ void listEnvironment(SEXP env,
    }
 }
 
+SEXP findVar(const std::string &name, const SEXP env)
+{
+   return Rf_findVar(Rf_install(name.c_str()), env);
+}
+
 SEXP findVar(const std::string& name, const std::string& ns)
 {
    if (name.empty())
@@ -126,7 +131,7 @@ SEXP findVar(const std::string& name, const std::string& ns)
    
    SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
    
-   return Rf_findVar(Rf_install(name.c_str()), env);
+   return findVar(name, env);
 }
   
 SEXP findFunction(const std::string& name, const std::string& ns) 

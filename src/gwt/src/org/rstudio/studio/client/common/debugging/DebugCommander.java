@@ -25,6 +25,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.debugging.model.DebugState;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -32,11 +33,15 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.Nav
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
+import org.rstudio.studio.client.workbench.views.environment.events.LineData;
 
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
@@ -45,7 +50,9 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class DebugCommander
-   implements ConsoleWriteInputHandler
+         implements ConsoleWriteInputHandler,
+                    SessionInitHandler,
+                    BreakpointsSavedEvent.Handler
 {
    public interface Binder
       extends CommandBinder<Commands, DebugCommander> {}
@@ -55,14 +62,18 @@ public class DebugCommander
          Binder binder,
          Commands commands,
          EventBus eventBus,
+         Session session,
          BreakpointManager breakpointManager,
          DebuggingServerOperations debugServer)
    {
       eventBus_ = eventBus;
+      session_ = session;
       debugServer_ = debugServer;
       breakpointManager_ = breakpointManager;
       
-      eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
+      eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);
+      eventBus_.addHandler(SessionInitEvent.TYPE, this);
+      eventBus_.addHandler(BreakpointsSavedEvent.TYPE, this);
       
       binder.bind(commands, this);
 
@@ -77,7 +88,7 @@ public class DebugCommander
                // If the server is paused for breakpoint injection, inject into
                // the current line; otherwise, inject into the line we just 
                // evaluated
-               TopLevelLineData bpLineData = lineData.getState() == 
+               LineData bpLineData = lineData.getState() == 
                      TopLevelLineData.STATE_INJECTION_SITE ?
                            lineData :
                            previousLineData_;
@@ -105,18 +116,7 @@ public class DebugCommander
             }
             if (lineData.getState() != TopLevelLineData.STATE_INJECTION_SITE)
             {
-               FileSystemItem sourceFile = FileSystemItem.createFile(debugFile_);
-               DebugFilePosition position = DebugFilePosition.create(
-                     lineData.getLineNumber(), 
-                     lineData.getEndLineNumber(), 
-                     lineData.getCharacterNumber(), 
-                     lineData.getEndCharacterNumber());
-               eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
-                                      (FilePosition) position.cast(),
-                                      FileTypeRegistry.R,
-                                      lineData.getFinished() ?
-                                            NavigationMethod.DebugEnd :
-                                            NavigationMethod.DebugStep));
+               highlightDebugPosition(lineData, lineData.getFinished());
             }
             if (lineData.getFinished())
             {
@@ -132,21 +132,6 @@ public class DebugCommander
          }   
       };
       
-      eventBus_.addHandler(
-            BreakpointsSavedEvent.TYPE, 
-            new BreakpointsSavedEvent.Handler()
-      {
-         @Override
-         public void onBreakpointsSaved(BreakpointsSavedEvent event)
-         {
-            if (waitingForBreakpointInject_)
-            {
-               waitingForBreakpointInject_ = false;
-               continueTopLevelDebugSession();
-            }
-         }         
-      });
-
    }
 
    // Command and event handlers ----------------------------------------------
@@ -205,6 +190,32 @@ public class DebugCommander
       }      
       beginTopLevelDebugSession(fileMatch.getGroup(1));      
    }
+
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      DebugState debugState = 
+            session_.getSessionInfo().getDebugState();
+      
+      if (debugState.isTopLevelDebug())
+      {
+         debugFile_ = debugState.getDebugFile();
+         debugStep_ = debugState.getDebugStep();
+         previousLineData_ = debugState.cast();
+         enterDebugMode(DebugMode.TopLevel);
+         highlightDebugPosition((LineData)debugState.cast(), false);
+      }
+   }
+   
+   @Override
+   public void onBreakpointsSaved(BreakpointsSavedEvent event)
+   {
+      if (waitingForBreakpointInject_)
+      {
+         waitingForBreakpointInject_ = false;
+         continueTopLevelDebugSession();
+      }
+   }         
 
    // Public methods ----------------------------------------------------------
 
@@ -313,6 +324,22 @@ public class DebugCommander
       beginTopLevelDebugSession(fileName, hasTopLevelBreakpoints);
    }
    
+   private void highlightDebugPosition(LineData lineData, boolean finished)
+   {
+      FileSystemItem sourceFile = FileSystemItem.createFile(debugFile_);
+      DebugFilePosition position = DebugFilePosition.create(
+            lineData.getLineNumber(), 
+            lineData.getEndLineNumber(), 
+            lineData.getCharacterNumber(), 
+            lineData.getEndCharacterNumber());
+      eventBus_.fireEvent(new OpenSourceFileEvent(sourceFile,
+                             (FilePosition) position.cast(),
+                             FileTypeRegistry.R,
+                             finished ?
+                                NavigationMethod.DebugEnd :
+                                NavigationMethod.DebugStep));
+   }
+   
    // These values are understood by the server; if you change them, you'll need
    // to update the server's understanding in SessionBreakpoints.R. 
    private static final int STEP_SINGLE = 0;
@@ -323,6 +350,7 @@ public class DebugCommander
    private final ServerRequestCallback<TopLevelLineData> debugStepCallback_;
    private final EventBus eventBus_;
    private final BreakpointManager breakpointManager_;
+   private final Session session_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;
@@ -330,5 +358,5 @@ public class DebugCommander
    private int debugStepMode_ = STEP_SINGLE;
    private boolean waitingForBreakpointInject_ = false;
    private String debugFile_ = "";
-   private TopLevelLineData previousLineData_ = null;
+   private LineData previousLineData_ = null;
 }

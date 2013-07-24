@@ -279,9 +279,10 @@
    topDebugState <- new.env()
 
    # parse the file and store the parsed expressions
-   assign("currentDebugFile", fileName, topDebugState)
-   assign("parsedForDebugging",
-      suppressWarnings(parse(fileName)), topDebugState)
+   topDebugState$currentDebugFile <- fileName
+   topDebugState$parsedForDebugging <- suppressWarnings(parse(fileName))
+   topDebugState$currentDebugStep <- 1
+   topDebugState$currentDebugSrcref <- rep(0L, 8)
 
    # cache debug state inside the RStudio tools environment
    .rs.setVar("topDebugState", topDebugState)
@@ -312,14 +313,14 @@
    topDebugState <- environment()
    parsed <- expression()
    stepBegin <- step
-   srcref <- integer()
+   srcref <- rep(0L, 8)
    executionState <- 0L  # Paused for user
    needsBreakpointInjection <- FALSE
 
    if (exists(".rs.topDebugState"))
    {
       topDebugState <- .rs.topDebugState
-      parsed <- topDebugState[["parsedForDebugging"]]
+      parsed <- topDebugState$parsedForDebugging
    }
    else
    {
@@ -375,28 +376,27 @@
       }
    }
 
-   if (length(srcref) > 0)
+   # when finished running, clean up any debug state we were holding on to
+   if (executionState == 2)
    {
-      return(list(
-         step = .rs.scalar(step),
-         state = .rs.scalar(executionState),
-         needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
-         line_number = .rs.scalar(srcref[1]),
-         end_line_number = .rs.scalar(srcref[3]),
-         character_number = .rs.scalar(srcref[5]),
-         end_character_number = .rs.scalar(srcref[6])))
+      .rs.clearVar("topDebugState")
    }
-   else
+   # if still running, save the step and line so we can emit them to the client
+   # as session information
+   else if (exists(".rs.topDebugState"))
    {
-      return(list(
-         step = .rs.scalar(0L),
-         state = .rs.scalar(executionState),
-         needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
-         line_number = .rs.scalar(0L),
-         end_line_number = .rs.scalar(0L),
-         character_number = .rs.scalar(0L),
-         end_character_number = .rs.scalar(0L)))
+      .rs.topDebugState$currentDebugStep <- step
+      .rs.topDebugState$currentDebugSrcref <- srcref
    }
+
+   return(list(
+      step = .rs.scalar(step),
+      state = .rs.scalar(executionState),
+      needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
+      line_number = .rs.scalar(srcref[1]),
+      end_line_number = .rs.scalar(srcref[3]),
+      character_number = .rs.scalar(srcref[5]),
+      end_character_number = .rs.scalar(srcref[6])))
 })
 
 .rs.addJsonRpcHandler("set_function_breakpoints", function(
