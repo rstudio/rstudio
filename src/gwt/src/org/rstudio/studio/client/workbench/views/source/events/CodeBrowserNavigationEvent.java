@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,14 +26,16 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function)
    {
-      this(function, 0);
+      this(function, null, false);
    }
    
    public CodeBrowserNavigationEvent(SearchPathFunctionDefinition function,
-                                     int debugLineNumber)
+                                     DebugFilePosition debugPosition,
+                                     boolean executing)
    {
       function_ = function;
-      debugLineNumber_ = debugLineNumber;
+      debugPosition_ = debugPosition;
+      executing_ = executing;
    }
    
    public SearchPathFunctionDefinition getFunction()
@@ -40,9 +43,14 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
       return function_;
    }
    
-   public int getDebugLineNumber()
+   public DebugFilePosition getDebugPosition()
    {
-      return debugLineNumber_;
+      return debugPosition_;
+   }
+   
+   public boolean getExecuting()
+   {
+      return executing_; 
    }
    
    @Override
@@ -57,7 +65,8 @@ public class CodeBrowserNavigationEvent extends GwtEvent<CodeBrowserNavigationHa
       return TYPE;
    }
 
-   final int debugLineNumber_;
+   final DebugFilePosition debugPosition_;
    final SearchPathFunctionDefinition function_;
+   final boolean executing_;
 }
 

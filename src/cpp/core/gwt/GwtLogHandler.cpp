@@ -164,7 +164,7 @@ void handleLogExceptionRequest(const std::string& username,
                      "Client-ID: %5%\n"
                      "User-Agent: %6%");
    std::string logEntry = boost::str(
-                        fmt % log::cleanDelims(username)
+                        fmt % log::cleanDelims("rsession-" + username)
                             % log::cleanDelims(ex.message)
                             % log::DELIM
                             % log::cleanDelims(ostr.str())

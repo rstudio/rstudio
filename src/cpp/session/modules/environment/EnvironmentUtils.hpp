@@ -22,6 +22,7 @@ namespace environment {
 
 core::json::Object varToJson(SEXP env, const r::sexp::Variable& var);
 bool isUnevaluatedPromise(SEXP var);
+bool functionDiffersFromSource(SEXP srcRef, const std::string& functionCode);
 
 } // namespace environment
 } // namespace modules

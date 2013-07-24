@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
@@ -110,7 +111,8 @@ public class CallFrameItem extends Composite
          if (hasFileLocation())
          {
             fileLocation = " at " +
-                           friendlyFileName(frame_.getFileName()) + ":" +
+                           FilePathUtils.friendlyFileName(
+                                 frame_.getFileName()) + ":" +
                            lineNumber;
          }
          functionName.setText(
@@ -122,17 +124,6 @@ public class CallFrameItem extends Composite
       {
          functionName.setText(frame_.getFunctionName());
       }
-   }
-
-   private String friendlyFileName(String unfriendlyFileName)
-   {
-      int idx = unfriendlyFileName.lastIndexOf("/");
-      if (idx < 0)
-      {
-         idx = unfriendlyFileName.lastIndexOf("\\");
-      }
-      return unfriendlyFileName.substring(
-              idx + 1, unfriendlyFileName.length()).trim();
    }
 
    private boolean hasFileLocation()

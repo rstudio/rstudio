@@ -19,6 +19,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
@@ -69,7 +70,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SynctexServerOperations,
                                                    BuildServerOperations,
                                                    PresentationServerOperations,
-                                                   EnvironmentServerOperations
+                                                   EnvironmentServerOperations,
+                                                   DebuggingServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

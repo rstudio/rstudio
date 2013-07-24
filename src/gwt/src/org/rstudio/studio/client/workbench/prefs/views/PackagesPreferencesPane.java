@@ -134,6 +134,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(viewDirAfterCheckFailure_);
       add(viewDirAfterCheckFailure_);
       
+      add(checkboxPref("Use Rcpp template when creating C++ files", uiPrefs.useRcppTemplate()));
       
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);

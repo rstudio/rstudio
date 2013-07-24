@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class SourcePosition extends JavaScriptObject
@@ -68,5 +70,10 @@ public class SourcePosition extends JavaScriptObject
       else
          return other.getContext().equals(getContext()) &&
                 (other.getRow() == getRow());
+   }
+   
+   public final Position asPosition()
+   {
+      return Position.create(getRow(), getColumn());
    }
 }

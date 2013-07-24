@@ -380,6 +380,7 @@ MimeType s_mimeTypes[] =
    { "svg",   "image/svg+xml" },
    { "swf",   "application/x-shockwave-flash" },
    { "ttf",   "application/x-font-ttf" },
+   { "woff",  "application/font-woff" },
    
    // markdown types
    { "md",       "text/x-markdown" },

@@ -1,5 +1,5 @@
 /*
- * RemoteServer.java
+kS * RemoteServer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -2840,7 +2841,66 @@ public class RemoteServer implements Server
                   newContextDepth,
                   requestCallback);
    }
-
+   
+   @Override
+   public void getFunctionSteps(
+                 String functionName,
+                 String fileName,
+                 int[] lineNumbers,
+                 ServerRequestCallback<JsArray<FunctionSteps>> requestCallback)
+   {
+      JSONArray lineNums = new JSONArray();
+      for (int idx = 0; idx < lineNumbers.length; idx++)
+      {
+         lineNums.set(idx, new JSONNumber(lineNumbers[idx]));
+      }
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(fileName));
+      params.set(2, lineNums);
+      sendRequest(RPC_SCOPE,
+                  GET_FUNCTION_STEPS,
+                  params,
+                  requestCallback);
+   }
+   
+   @Override
+   public void setFunctionBreakpoints(
+         String functionName,
+         String fileName,
+         ArrayList<String> steps,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray breakSteps = new JSONArray();
+      for (int idx = 0; idx < steps.size(); idx++)
+      {
+         breakSteps.set(idx, new JSONString(steps.get(idx)));
+      }
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(fileName));
+      params.set(2, breakSteps);
+      sendRequest(RPC_SCOPE,
+                  SET_FUNCTION_BREAKPOINTS,
+                  params,
+                  requestCallback);
+   }
+   
+   @Override
+   public void getFunctionSyncState(
+         String functionName,
+         String fileName,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionName));
+      params.set(1, new JSONString(fileName));
+      sendRequest(RPC_SCOPE,
+                  GET_FUNCTION_SYNC_STATE,
+                  params,
+                  requestCallback);
+   }
+         
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3089,6 +3149,10 @@ public class RemoteServer implements Server
 
    private static final String LIST_ENVIRONMENT = "list_environment";
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
+   
+   private static final String GET_FUNCTION_STEPS = "get_function_steps";
+   private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
+   private static final String GET_FUNCTION_SYNC_STATE = "get_function_sync_state";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";

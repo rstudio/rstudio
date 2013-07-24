@@ -15,9 +15,12 @@
 cmake_minimum_required(VERSION 2.6)
 
 # don't add gwt for special 64-bit binary builds on windows (since
-# we've already got it from the 32-bit build) or for development mode 
-# (since we'll want to build it incrementally using superdevmode)
-if ( (NOT RSTUDIO_SESSION_WIN64) AND (NOT RSTUDIO_DEVELOPMENT) )
+# we've already got it from the 32-bit build), for development mode
+# (since we'll want to build it incrementally using superdevmode),
+# or when building monitor only
+if ( (NOT RSTUDIO_SESSION_WIN64) AND
+     (NOT RSTUDIO_DEVELOPMENT) AND
+     (NOT RSTUDIO_CONFIG_MONITOR_ONLY) )
    add_subdirectory(gwt)
 endif()
 

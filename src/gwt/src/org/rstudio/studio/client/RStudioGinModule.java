@@ -32,6 +32,8 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperations;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.debugging.BreakpointManager;
+import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
@@ -187,6 +189,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
       bind(HTMLPreview.class).in(Singleton.class);      
+      bind(BreakpointManager.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -285,6 +288,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);
       bind(EnvironmentServerOperations.class).to(RemoteServer.class);
+      bind(DebuggingServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

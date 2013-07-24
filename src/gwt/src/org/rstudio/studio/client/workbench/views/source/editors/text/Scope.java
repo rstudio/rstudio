@@ -47,6 +47,10 @@ public class Scope extends JavaScriptObject
       return this.isFunction();
    }-*/;
 
+   public native final Scope getParentScope() /*-{
+      return this.parentScope;
+   }-*/;
+
    /**
     * For named functions, the preamble points to the beginning of the function
     * declaration, including function name. For chunks, it points to the

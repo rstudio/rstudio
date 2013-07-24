@@ -31,6 +31,7 @@ interface EnvironmentStyle extends CssResource
    String emptyEnvironmentName();
    String emptyEnvironmentMessage();
    String expandIcon();
+   String unclickableIcon();
    String unevaluatedPromise();
    String objectGrid();
    String widthSettingRow();

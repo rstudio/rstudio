@@ -83,7 +83,7 @@
 {
    # by default, the description should be the expression associated with the
    # object
-   description <- capture.output(substitute(obj))
+   description <- paste(capture.output(substitute(obj)), collapse="")
 
    # create a more friendly description for delay-loaded data
    if (substr(description, 1, 16) == "lazyLoadDBfetch(")
@@ -96,7 +96,20 @@
 # used to create descriptions for language objects and symbols
 .rs.addFunction("languageDescription", function(env, objectName)
 {
-    return(capture.output(print(get(objectName, env))))
+   desc <- "Missing object"
+   tryCatch(
+   {
+      desc <- capture.output(print(get(objectName, env)))
+   },
+   error = function(e)
+   {
+      # silently ignore; if the object can't be retrieved from the
+      # environment, treat it as missing
+   },
+   finally =
+   {
+      return(desc)
+   })
 })
 
 .rs.addFunction("sourceFileFromRef", function(srcref)
@@ -104,9 +117,9 @@
     return(capture.output(print(attr(srcref, "srcfile"))))
 })
 
-.rs.addFunction("sourceCodeFromCall", function(call)
+.rs.addFunction("sourceCodeFromFunction", function(fun)
 {
-    return(paste(capture.output(attr(call, "srcref")), collapse="\n"))
+    return(paste(capture.output(attr(fun, "srcref")), collapse="\n"))
 })
 
 .rs.addFunction("functionNameFromCall", function(call)

@@ -96,11 +96,11 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
 
 
-   public native final void onChange(Command command) /*-{
+   public native final void onChange(CommandWithArg<AceDocumentChangeEventNative> command) /*-{
       this.getSession().on("change",
-              $entry(function () {
-                 command.@com.google.gwt.user.client.Command::execute()();
-              }));
+        $entry(function (arg) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+        }));
    }-*/;
 
    public native final void onChangeFold(Command command) /*-{
@@ -108,6 +108,13 @@ public class AceEditorNative extends JavaScriptObject {
               $entry(function () {
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
+   }-*/;
+   
+   public native final <T> void onGutterMouseDown(CommandWithArg<T> command) /*-{
+      this.on("guttermousedown",
+         $entry(function (arg) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+         }));         
    }-*/;
 
    public final HandlerRegistration delegateEventsTo(HasHandlers handlers)

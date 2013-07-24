@@ -55,6 +55,9 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
+import org.rstudio.studio.client.common.debugging.BreakpointManager;
+import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -296,7 +299,8 @@ public class TextEditingTarget implements EditingTarget
                             Synctex synctex,
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
-                            UIPrefs prefs)
+                            UIPrefs prefs, 
+                            BreakpointManager breakpointManager)
    {
       commands_ = commands;
       server_ = server;
@@ -310,6 +314,7 @@ public class TextEditingTarget implements EditingTarget
       session_ = session;
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
+      breakpointManager_ = breakpointManager;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -401,6 +406,50 @@ public class TextEditingTarget implements EditingTarget
             view_.showFindReplace(event.getDefaultForward());
          }
       });
+      
+      events_.addHandler(
+            BreakpointsSavedEvent.TYPE, 
+            new BreakpointsSavedEvent.Handler()
+      {         
+         @Override
+         public void onBreakpointsSaved(BreakpointsSavedEvent event)
+         {            
+            // if this document isn't ready for breakpoints, stop now
+            if (docUpdateSentinel_ == null)
+            {
+               return;
+            }
+            for (Breakpoint breakpoint: event.breakpoints())
+            {
+               // discard the breakpoint if it's not related to the file this 
+               // editor instance is concerned with
+               if (!breakpoint.isInFile(getPath()))
+               {
+                  continue;
+               }
+                           
+               // if the breakpoint was saved successfully, enable it on the 
+               // editor surface; otherwise, just remove it.
+               if (event.successful())
+               {
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+               }
+               else
+               {
+                  // Show a warning for breakpoints that didn't get set (unless
+                  // the reason the breakpoint wasn't set was that we already
+                  // had a breakpoint on the line)
+                  if (breakpoint.getState() != Breakpoint.STATE_DUPLICATE)
+                  {
+                     view_.showWarningBar("Breakpoints can only be set inside "+
+                                          "the body of a function. ");
+                  }
+                  docDisplay_.removeBreakpoint(breakpoint);
+               }
+            }
+            updateBreakpointWarningBar();
+         }
+      });
    }
    
    @Override
@@ -449,10 +498,14 @@ public class TextEditingTarget implements EditingTarget
    }
    
    @Override
-   public void highlightDebugLocation(SourcePosition pos)
+   public void highlightDebugLocation(
+         SourcePosition startPos,
+         SourcePosition endPos,
+         boolean executing)
    {
-      debugPosition_ = pos;
-      docDisplay_.highlightDebugLocation(debugPosition_);
+      debugStartPos_ = startPos;
+      debugEndPos_ = endPos;
+      docDisplay_.highlightDebugLocation(startPos, endPos, executing);
       updateDebugWarningBar();
    }
 
@@ -460,14 +513,15 @@ public class TextEditingTarget implements EditingTarget
    public void endDebugHighlighting()
    {
       docDisplay_.endDebugHighlighting();      
-      debugPosition_ = null;
+      debugStartPos_ = null;
+      debugEndPos_ = null;
       updateDebugWarningBar();
    }
    
    private void updateDebugWarningBar()
    {
       // show the warning bar if we're debugging and the document is dirty
-      if (debugPosition_ != null && 
+      if (debugStartPos_ != null && 
           dirtyState().getValue() && 
           !isDebugWarningVisible_)
       {
@@ -476,13 +530,15 @@ public class TextEditingTarget implements EditingTarget
       }
       // hide the warning bar if the dirty state or debug state change
       else if (isDebugWarningVisible_ &&
-               (debugPosition_ == null || dirtyState().getValue() == false))
+               (debugStartPos_ == null || dirtyState().getValue() == false))
       {
          view_.hideWarningBar();
          // if we're still debugging, start highlighting the line again
-         if (debugPosition_ != null)
+         if (debugStartPos_ != null)
          {
-            docDisplay_.highlightDebugLocation(debugPosition_);
+            docDisplay_.highlightDebugLocation(
+                  debugStartPos_, 
+                  debugEndPos_, false);
          }
          isDebugWarningVisible_ = false;
       }      
@@ -593,9 +649,74 @@ public class TextEditingTarget implements EditingTarget
             }, 500);
          }
       });
+
+      if (fileType_.isR())
+      {
+         docDisplay_.addBreakpointSetHandler(new BreakpointSetEvent.Handler()
+         {         
+            @Override
+            public void onBreakpointSet(BreakpointSetEvent event)
+            {
+               if (event.isSet())
+               {
+                  // don't try to set breakpoints in unsaved code
+                  if (isNewDoc())
+                  {
+                     view_.showWarningBar("Breakpoints cannot be set until " +
+                                          "the file is saved.");
+                     return;
+                  }
+                  
+                  Position breakpointPosition = 
+                        Position.create(event.getLineNumber(), 1);
+                  
+                  // don't try to create a breakpoint if we're not inside a
+                  // function scope
+                  Scope innerFunction = 
+                        docDisplay_.getFunctionAtPosition(breakpointPosition);
+                  if (innerFunction == null || !innerFunction.isFunction())
+                  {
+                     return;
+                  }
+
+                  // the scope tree will find nested functions, but in R these
+                  // are addressable only as substeps of the parent function.
+                  // keep walking up the scope tree until we've reached the top
+                  // level function.
+                  while (innerFunction.getParentScope() != null &&
+                         innerFunction.getParentScope().isFunction()) 
+                  {
+                     innerFunction = innerFunction.getParentScope();
+                  }
+                  String functionName = innerFunction.getLabel();
+                  
+                  Breakpoint breakpoint = 
+                    breakpointManager_.setBreakpoint(
+                          getPath(),
+                          functionName,
+                          event.getLineNumber(),
+                          dirtyState().getValue() == false);
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);                  
+               }
+               else
+               {
+                  breakpointManager_.removeBreakpoint(event.getBreakpointId());
+               }
+               updateBreakpointWarningBar();
+            }
+         });
+         
+         docDisplay_.addBreakpointMoveHandler(new BreakpointMoveEvent.Handler()
+         {
+            @Override
+            public void onBreakpointMove(BreakpointMoveEvent event)
+            {
+               breakpointManager_.moveBreakpoint(event.getBreakpointId());
+            }
+         });
+      }
       
-      
-      // validate required compontents (e.g. Tex, knitr, C++ etc.)
+      // validate required components (e.g. Tex, knitr, C++ etc.)
       checkCompilePdfDependencies();
       previewHtmlHelper_.verifyPrerequisites(view_, fileType_);  
       
@@ -657,9 +778,89 @@ public class TextEditingTarget implements EditingTarget
                }
             }
       );
+      
+      // find all of the debug breakpoints set in this document and replay them
+      // onto the edit surface
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(getPath());
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         docDisplay_.addOrUpdateBreakpoint(breakpoint);
+      }
+      
       initStatusBar();
    }
    
+   private void updateBreakpointWarningBar()
+   {
+      // check to see if there are any inactive breakpoints in this file
+      boolean hasInactiveBreakpoints = false;
+      boolean hasDebugPendingBreakpoints = false;
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(getPath());
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         if (breakpoint.getState() == Breakpoint.STATE_INACTIVE)
+         {
+            if (breakpoint.isPendingDebugCompletion())
+            {
+               hasDebugPendingBreakpoints = true;
+            }
+            else
+            {
+               hasInactiveBreakpoints = true;               
+            }
+            break;
+         }
+      }
+      boolean showWarning = hasDebugPendingBreakpoints || 
+                            hasInactiveBreakpoints;
+
+      if (showWarning && !isBreakpointWarningVisible_)
+      {
+         
+         String message = "";
+         if (hasDebugPendingBreakpoints) 
+         {
+            message = "Breakpoints will be activated when the function is " +
+                      "finished running.";
+         }
+         else if (isPackageFile())
+         {
+            message = "Breakpoints will be activated when the package is " +
+                      "built and reloaded.";
+         }
+         else
+         {
+            message = "Breakpoints will be activated when this file is " + 
+                      "sourced.";
+         }
+         view_.showWarningBar(message);
+         isBreakpointWarningVisible_ = true;
+      }
+      else if (!showWarning && isBreakpointWarningVisible_)
+      {
+         view_.hideWarningBar();         
+         isBreakpointWarningVisible_ = false;
+      }
+   }
+   
+   private boolean isPackageFile()
+   {
+      // not a package file if we're not in package development mode
+      String type = session_.getSessionInfo().getBuildToolsType();
+      if (!type.equals(SessionInfo.BUILD_TOOLS_PACKAGE))
+      {
+         return false;
+      }
+
+      // get the directory associated with the project and see if the file is
+      // inside that directory
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      return getPath().startsWith(projectDir.getPath() + "/R");
+   }
+      
    private void checkCompilePdfDependencies()
    {
       compilePdfHelper_.checkCompilers(view_, fileType_);
@@ -1287,6 +1488,14 @@ public class TextEditingTarget implements EditingTarget
                         @Override
                         public void execute()
                         {
+                           // breakpoints are file-specific, so when saving as
+                           // a different file, clear the display of breakpoints
+                           // from the old file name
+                           if (!getPath().equals(saveItem.getPath()))
+                           {
+                              docDisplay_.removeAllBreakpoints();
+                           }
+                                 
                            docUpdateSentinel_.save(
                                  saveItem.getPath(),
                                  fileType.getTypeId(),
@@ -1297,7 +1506,6 @@ public class TextEditingTarget implements EditingTarget
 
                            events_.fireEvent(
                                  new SourceFileSavedEvent(saveItem.getPath()));
-                           
                         }
  
                      };
@@ -1422,7 +1630,7 @@ public class TextEditingTarget implements EditingTarget
    {
       return docUpdateSentinel_.getPath();
    }
-   
+      
    public String getContext()
    {
       return null;
@@ -2236,9 +2444,10 @@ public class TextEditingTarget implements EditingTarget
          // require print statements so if you don't echo to the console
          // then you don't see any of the output
          
-         boolean isCpp = fileType_.isCpp();
+         boolean saveWhenSourcing = fileType_.isCpp() || 
+               docDisplay_.hasBreakpoints();
          
-         if ((dirtyState_.getValue() || sweave) && !isCpp)
+         if ((dirtyState_.getValue() || sweave) && !saveWhenSourcing)
          {
             server_.saveActiveDocument(code, 
                                        sweave,
@@ -2273,7 +2482,7 @@ public class TextEditingTarget implements EditingTarget
                }
             };
             
-            if (isCpp && (dirtyState_.getValue() || (getPath() == null)))
+            if (saveWhenSourcing && (dirtyState_.getValue() || (getPath() == null)))
                saveThenExecute(null, sourceCommand);
             else
                sourceCommand.execute(); 
@@ -3298,6 +3507,7 @@ public class TextEditingTarget implements EditingTarget
    private boolean ignoreDeletes_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
+   private BreakpointManager breakpointManager_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
@@ -3307,6 +3517,8 @@ public class TextEditingTarget implements EditingTarget
          new IntervalTracker(1000, true);
    private AnchoredSelection lastExecutedCode_;
    
-   private SourcePosition debugPosition_ = null;
+   private SourcePosition debugStartPos_ = null;
+   private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
+   private boolean isBreakpointWarningVisible_ = false;
 }

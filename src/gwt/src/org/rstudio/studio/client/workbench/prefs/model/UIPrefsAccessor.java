@@ -268,6 +268,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("packages_pane_enabled", true);
    }
    
+   public PrefValue<Boolean> useRcppTemplate()
+   {
+      return bool("use_rcpp_template", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

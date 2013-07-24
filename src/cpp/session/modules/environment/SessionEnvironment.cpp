@@ -27,7 +27,6 @@
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
-#include <core/FileSerializer.hpp>
 #include <boost/foreach.hpp>
 
 #include "EnvironmentUtils.hpp"
@@ -118,26 +117,57 @@ bool inBrowseContext()
    return false;
 }
 
-Error functionNameFromContext(RCNTXT* pContext,
+Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
    return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
                             .call(pFunctionName);
 }
 
-Error getSourceRefFromContext(const RCNTXT* pContext,
-                             std::string* pFileName,
-                             int* pLineNumber)
+SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
+{
+   SEXP callObject = pContext->callfun;
+   // enabling tracing on a function turns it into an S4 object with an
+   // 'original' slot that includes the function's original contents. use
+   // this instead if it's set up. (consider: is it safe to assume that S4
+   // objects here are always traced functions, or do we need to compare classes
+   // to be safe?)
+   if (Rf_isS4(callObject))
+   {
+      callObject = r::sexp::getAttrib(callObject, "original");
+   }
+   return callObject;
+}
+
+Error getFileNameFromContext(const RCNTXT* pContext,
+                             std::string* pFileName)
 {
    SEXP srcref = pContext->srcref;
-   *pLineNumber = r::sexp::asInteger(srcref);
    return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
                  .call(pFileName);
 }
 
 SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
 {
-   return r::sexp::getAttrib(pContext->callfun, "srcref");
+   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
+}
+
+void addDebugRange(const SEXP srcref, json::Object* pObject)
+{
+   if (r::sexp::isNull(srcref))
+   {
+      (*pObject)["line_number"] = 0;
+      (*pObject)["end_line_number"] = 0;
+      (*pObject)["character_number"] = 0;
+      (*pObject)["end_character_number"] = 0;
+   }
+   else
+   {
+      (*pObject)["line_number"] = INTEGER(srcref)[0];
+      (*pObject)["end_line_number"] = INTEGER(srcref)[2];
+      (*pObject)["character_number"] = INTEGER(srcref)[4];
+      (*pObject)["end_character_number"] = INTEGER(srcref)[5];
+   }
 }
 
 json::Array callFramesAsJson()
@@ -168,14 +198,13 @@ json::Array callFramesAsJson()
          // where control *left* the frame to go to the next frame. pSrcContext
          // keeps track of the previous invocation.
          std::string filename;
-         int lineNumber = 0;
-         error = getSourceRefFromContext(pSrcContext, &filename, &lineNumber);
+         error = getFileNameFromContext(pSrcContext, &filename);
          if (error)
          {
             LOG_ERROR(error);
          }
          varFrame["file_name"] = filename;
-         varFrame["line_number"] = lineNumber;
+         addDebugRange(pSrcContext->srcref, &varFrame);
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
@@ -197,8 +226,7 @@ json::Array callFramesAsJson()
                  .call(&argList);
               break;
             case LANGSXP:
-               SEXP env = pRContext->cloenv;
-               error = r::exec::RFunction(".rs.languageDescription", env, args)
+               error = r::exec::RFunction(".rs.promiseDescription", args)
                  .call(&argList);
                break;
          }
@@ -249,7 +277,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    Error error;
 
    // start by extracting the source code from the call site
-   error = r::exec::RFunction(".rs.sourceCodeFromCall", pContext->callfun)
+   error = r::exec::RFunction(".rs.sourceCodeFromFunction",
+                              getOriginalFunctionCallObject(pContext))
          .call(pFunctionCode);
    if (error)
    {
@@ -265,53 +294,8 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
    {
       return true;
    }
-   error = r::exec::RFunction(".rs.sourceFileFromRef", srcRef)
-                 .call(&fileName);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
 
-   // check for ~/.active-rstudio-document -- we never want to match sources
-   // in this file, as it's used to source unsaved changes from RStudio
-   // editor buffers. don't match sources to an empty filename, either
-   // (this will resolve to the user's home directory below).
-   boost::algorithm::trim(fileName);
-   if (fileName == "~/.active-rstudio-document" ||
-       fileName.length() == 0)
-   {
-      return true;
-   }
-
-   // make sure the file exists and isn't a directory
-   FilePath sourceFilePath = module_context::resolveAliasedPath(fileName);
-   if (!sourceFilePath.exists() ||
-       sourceFilePath.isDirectory())
-   {
-      return true;
-   }
-
-   // read the portion of the file pointed to by the source refs from disk
-   // the sourceref structure (including the array offsets used below)
-   // is documented here:
-   // http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf
-   std::string fileContent;
-   error = readStringFromFile(
-         sourceFilePath,
-         &fileContent,
-         string_utils::LineEndingPosix,
-         INTEGER(srcRef)[0],  // the first line
-         INTEGER(srcRef)[2],  // the last line
-         INTEGER(srcRef)[4],  // character position on the first line
-         INTEGER(srcRef)[5]   // character position on the last line
-         );
-   if (error)
-   {
-      LOG_ERROR(error);
-      return true;
-   }
-   return *pFunctionCode != fileContent;
+   return functionDiffersFromSource(srcRef, *pFunctionCode);
 }
 
 // create a JSON object that contains information about the current environment;
@@ -373,10 +357,10 @@ void enqueContextDepthChangedEvent(int depth)
    module_context::enqueClientEvent(event);
 }
 
-void enqueBrowserLineChangedEvent(int newLineNumber)
+void enqueBrowserLineChangedEvent(const SEXP srcref)
 {
    json::Object varJson;
-   varJson["line_number"] = newLineNumber;
+   addDebugRange(srcref, &varJson);
    ClientEvent event (client_events::kBrowserLineChanged, varJson);
    module_context::enqueClientEvent(event);
 }
@@ -406,15 +390,17 @@ void onDetectChanges(module_context::ChangeSource source)
    s_environmentMonitor.checkForChanges();
 }
 
-void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
+void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
    int depth = 0;
    SEXP environmentTop = NULL;
-   getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
+   RCNTXT* pRContext =
+         getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
 
-   // we entered (or left) a call frame
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
-       depth != *pContextDepth)
+       depth != *pContextDepth ||
+       pRContext != *pCurrentContext)
    {
       json::Object varJson;
 
@@ -431,13 +417,13 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth)
       // start monitoring the enviroment at the new depth
       s_environmentMonitor.setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
+      *pCurrentContext = pRContext;
       enqueContextDepthChangedEvent(depth);
    }
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
-      int lineNumber = r::sexp::asInteger(r::getGlobalContext()->srcref);
-      enqueBrowserLineChangedEvent(lineNumber);
+      enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
    }
 }
 
@@ -453,7 +439,10 @@ json::Value environmentStateAsJson()
 
 Error initialize()
 {
-   boost::shared_ptr<int> pContextDepth = boost::make_shared<int>(0);
+   boost::shared_ptr<int> pContextDepth =
+         boost::make_shared<int>(0);
+   boost::shared_ptr<RCNTXT*> pCurrentContext =
+         boost::make_shared<RCNTXT*>(r::getGlobalContext());
 
    // begin monitoring the environment
    SEXP environmentTop = NULL;
@@ -464,7 +453,9 @@ Error initialize()
    using boost::bind;
    using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
-   events().onConsolePrompt.connect(bind(onConsolePrompt, pContextDepth));
+   events().onConsolePrompt.connect(bind(onConsolePrompt,
+                                         pContextDepth,
+                                         pCurrentContext));
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);

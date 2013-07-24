@@ -496,32 +496,33 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      newDoc(FileTypeRegistry.CPP,
-             new ResultCallback<EditingTarget, ServerError> () {
-                @Override
-                public void onSuccess(EditingTarget target)
-                {
-                   target.verifyPrerequisites();
-                }
-             });
-   }
-   
-   @Handler
-   public void onNewRcppDoc()
-   {
-      newSourceDocWithTemplate(
-          FileTypeRegistry.CPP, 
-          "", 
-          "rcpp.cpp",
-          Position.create(0, 0),
-          new CommandWithArg<EditingTarget> () {
-            @Override
-            public void execute(EditingTarget target)
-            {
-               target.verifyPrerequisites(); 
-            }
-          }
-      );
+      if (uiPrefs_.useRcppTemplate().getValue())
+      {
+         newSourceDocWithTemplate(
+             FileTypeRegistry.CPP, 
+             "", 
+             "rcpp.cpp",
+             Position.create(0, 0),
+             new CommandWithArg<EditingTarget> () {
+               @Override
+               public void execute(EditingTarget target)
+               {
+                  target.verifyPrerequisites(); 
+               }
+             }
+         );
+      }
+      else
+      {
+         newDoc(FileTypeRegistry.CPP,
+                new ResultCallback<EditingTarget, ServerError> () {
+                   @Override
+                   public void onSuccess(EditingTarget target)
+                   {
+                      target.verifyPrerequisites();
+                   }
+                });
+      }
    }
    
    @Handler
@@ -1223,8 +1224,11 @@ public class Source implements InsertSourceHandler,
                                  final NavigationMethod navMethod, 
                                  final boolean forceHighlightMode)
    {
-      if (navMethod == NavigationMethod.DebugStep ||
-          navMethod == NavigationMethod.DebugEnd)
+      final boolean isDebugNavigation = 
+            navMethod == NavigationMethod.DebugStep ||
+            navMethod == NavigationMethod.DebugFrame || 
+            navMethod == NavigationMethod.DebugEnd;
+      if (isDebugNavigation)
       {
          setPendingDebugSelection();
       }
@@ -1243,9 +1247,19 @@ public class Source implements InsertSourceHandler,
                {
                   if (position != null)
                   {
+                     SourcePosition endPosition = null;
+                     if (isDebugNavigation)
+                     {
+                        DebugFilePosition filePos = 
+                              (DebugFilePosition) position.cast();
+                        endPosition = SourcePosition.create(
+                              filePos.getEndLine() - 1,
+                              filePos.getEndColumn() + 1);
+                     }
                      navigate(target, 
                               SourcePosition.create(position.getLine() - 1,
-                                                    position.getColumn() - 1));
+                                                    position.getColumn() - 1),
+                              endPosition);
                   }
                   else if (pattern != null)
                   {
@@ -1253,7 +1267,8 @@ public class Source implements InsertSourceHandler,
                      if (pos != null)
                      {
                         navigate(target, 
-                                 SourcePosition.create(pos.getRow(), 0));
+                                 SourcePosition.create(pos.getRow(), 0),
+                                 null);
                      }
                   }
                }
@@ -1262,7 +1277,8 @@ public class Source implements InsertSourceHandler,
          }
          
          private void navigate(final EditingTarget target,
-                               final SourcePosition srcPosition)
+                               final SourcePosition srcPosition,
+                               final SourcePosition srcEndPosition)
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1271,7 +1287,17 @@ public class Source implements InsertSourceHandler,
                {
                   if (navMethod == NavigationMethod.DebugStep)
                   {
-                     target.highlightDebugLocation(srcPosition);
+                     target.highlightDebugLocation(
+                           srcPosition, 
+                           srcEndPosition, 
+                           true);
+                  }
+                  else if (navMethod == NavigationMethod.DebugFrame)
+                  {
+                     target.highlightDebugLocation(
+                           srcPosition,
+                           srcEndPosition,
+                           false);
                   }
                   else if (navMethod == NavigationMethod.DebugEnd)
                   {
@@ -1978,7 +2004,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
-      if (event.getDebugLineNumber() > 0)
+      if (event.getDebugPosition() != null)
       {
          setPendingDebugSelection();
       }
@@ -1988,10 +2014,15 @@ public class Source implements InsertSourceHandler,
          public void onSuccess(CodeBrowserEditingTarget target)
          {
             target.showFunction(event.getFunction());
-            if (event.getDebugLineNumber() > 0)
+            if (event.getDebugPosition() != null)
             {
                target.highlightDebugLocation(SourcePosition.create(
-                     event.getDebugLineNumber(), 0));
+                        event.getDebugPosition().getLine(), 
+                        event.getDebugPosition().getColumn() - 1),
+                     SourcePosition.create(
+                        event.getDebugPosition().getEndLine(),
+                        event.getDebugPosition().getEndColumn() + 1),
+                     event.getExecuting());
             }
          }
       });

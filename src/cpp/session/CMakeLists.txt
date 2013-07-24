@@ -51,6 +51,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
+   modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp

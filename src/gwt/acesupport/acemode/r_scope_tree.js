@@ -146,6 +146,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
       // Whether this scope is
       this.scopeType = scopeType;
+      
+      // A pointer to the parent scope (if any) 
+      this.parentScope = null;
 
       this.$children = [];
    };
@@ -198,7 +201,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
                node.$children = this.$children.splice(
                                              index, this.$children.length - index);
             }
-
+            node.parentScope = this;
             this.$children.push(node);
          }
       };
