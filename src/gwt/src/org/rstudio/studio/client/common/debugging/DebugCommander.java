@@ -179,6 +179,20 @@ public class DebugCommander
       }
    }
    
+   @Handler
+   public void onRestartR()
+   {   
+      // Restarting R cleans up the state we use to persist information about 
+      // the debug session on the server, so we need to kill the client's 
+      // debug session when this happens
+      if (debugMode_ == DebugMode.TopLevel)
+      {
+         highlightDebugPosition(previousLineData_, true);
+         leaveDebugMode();
+      }
+      topDebugMode_ = DebugMode.Normal;
+   }
+
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {

@@ -367,7 +367,6 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
-
 void onDetectChanges(module_context::ChangeSource source)
 {
    s_environmentMonitor.checkForChanges();
