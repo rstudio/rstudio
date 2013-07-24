@@ -23,6 +23,7 @@
 
 #include <boost/asio/ssl/context.hpp>
 #include <boost/asio/ssl/stream.hpp>
+#include <boost/asio/ssl/rfc2818_verification.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic pop
