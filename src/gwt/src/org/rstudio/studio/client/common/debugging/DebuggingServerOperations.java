@@ -43,10 +43,6 @@ public interface DebuggingServerOperations
          String fileName,
          ServerRequestCallback<Boolean> requestCallback);
    
-   public void sourceForDebugging(
-         String fileName,
-         ServerRequestCallback<Void> requestCallback);
-   
    public void executeDebugSource(
          String fileName,
          ArrayList<Integer> topBreakLines,

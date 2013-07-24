@@ -273,22 +273,18 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addFunction("sourceForDebugging", function(fileName)
+.rs.addGlobalFunction("source.for.debug", function(fileName)
 {
    # establish state for debugging sources
    topDebugState <- new.env()
 
-   # save arguments for later use below
-   assign("currentDebugFile", fileName, topDebugState)
-
    # parse the file and store the parsed expressions
+   assign("currentDebugFile", fileName, topDebugState)
    assign("parsedForDebugging",
       suppressWarnings(parse(fileName)), topDebugState)
 
    # cache debug state inside the RStudio tools environment
    .rs.setVar("topDebugState", topDebugState)
-
-   return(NULL)
 })
 
 
@@ -379,16 +375,6 @@
       }
    }
 
-   if (executionState == 2)
-   {
-      if (step > length(parsed))
-         message(paste("Sourced '", topDebugState[["currentDebugFile"]],
-                       "' with debug information", sep=""))
-      else
-         message(paste("Source of '", topDebugState[["currentDebugFile"]],
-                       "' aborted", sep=""))
-   }
-
    if (length(srcref) > 0)
    {
       return(list(
@@ -443,11 +429,6 @@
    formattedResults$name <- as.character(formattedResults$name)
    formattedResults$at <- as.character(formattedResults$at)
    return(formattedResults)
-})
-
-.rs.addJsonRpcHandler("source_for_debugging", function(fileName)
-{
-   .rs.sourceForDebugging(fileName)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(

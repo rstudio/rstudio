@@ -23,7 +23,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -32,17 +31,21 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class DebugCommander
+   implements ConsoleWriteInputHandler
 {
    public interface Binder
       extends CommandBinder<Commands, DebugCommander> {}
@@ -53,13 +56,13 @@ public class DebugCommander
          Commands commands,
          EventBus eventBus,
          BreakpointManager breakpointManager,
-         GlobalDisplay globalDisplay,
          DebuggingServerOperations debugServer)
    {
       eventBus_ = eventBus;
       debugServer_ = debugServer;
-      globalDisplay_ = globalDisplay;
       breakpointManager_ = breakpointManager;
+      
+      eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
       
       binder.bind(commands, this);
 
@@ -190,6 +193,18 @@ public class DebugCommander
          executeDebugStep(STEP_SINGLE);
       }
    }
+   
+   @Override
+   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+   {
+      RegExp sourceExp = RegExp.compile("source.for.debug\\('([^']*)'.*");
+      MatchResult fileMatch = sourceExp.exec(event.getInput());
+      if (fileMatch == null || fileMatch.getGroupCount() == 0)
+      {
+         return;
+      }      
+      beginTopLevelDebugSession(fileMatch.getGroup(1));      
+   }
 
    // Public methods ----------------------------------------------------------
 
@@ -231,42 +246,6 @@ public class DebugCommander
       return debugMode_;
    }
 
-   public void sourceForDebugging(final String fileName)
-   {
-
-      // Initiate the debug session on the server
-      debugServer_.sourceForDebugging(fileName,
-            new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onResponseReceived(Void v)
-         {
-            // See if any of the breakpoints are top-level (if they are, we 
-            // need to show the top-level debug toolbar)
-            ArrayList<Breakpoint> breakpoints = 
-                  breakpointManager_.getBreakpointsInFile(fileName);
-            boolean hasTopLevelBreakpoints = false;
-            for (Breakpoint breakpoint: breakpoints)
-            {
-               if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-               {
-                  hasTopLevelBreakpoints = true;
-                  break;
-               }
-            }            
-
-            beginTopLevelDebugSession(fileName, hasTopLevelBreakpoints);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            globalDisplay_.showErrorMessage("Error sourcing " + fileName,
-                  error.getMessage());
-         }         
-      });
-   }
-   
    // Private methods ---------------------------------------------------------
 
    private void executeDebugStep(int stepMode)
@@ -313,6 +292,26 @@ public class DebugCommander
       }
       executeDebugStep(STEP_RUN);
    }
+
+   private void beginTopLevelDebugSession(String fileName)
+   {
+      // Initiate the debug session on the server
+      // See if any of the breakpoints are top-level (if they are, we 
+      // need to show the top-level debug toolbar)
+      ArrayList<Breakpoint> breakpoints = 
+            breakpointManager_.getBreakpointsInFile(fileName);
+      boolean hasTopLevelBreakpoints = false;
+      for (Breakpoint breakpoint: breakpoints)
+      {
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+         {
+            hasTopLevelBreakpoints = true;
+            break;
+         }
+      }            
+
+      beginTopLevelDebugSession(fileName, hasTopLevelBreakpoints);
+   }
    
    // These values are understood by the server; if you change them, you'll need
    // to update the server's understanding in SessionBreakpoints.R. 
@@ -324,7 +323,6 @@ public class DebugCommander
    private final ServerRequestCallback<TopLevelLineData> debugStepCallback_;
    private final EventBus eventBus_;
    private final BreakpointManager breakpointManager_;
-   private final GlobalDisplay globalDisplay_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;

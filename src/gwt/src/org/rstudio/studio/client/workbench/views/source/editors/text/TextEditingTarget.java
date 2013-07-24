@@ -56,7 +56,6 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
-import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -301,8 +300,7 @@ public class TextEditingTarget implements EditingTarget
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
-                            BreakpointManager breakpointManager,
-                            DebugCommander debugCommander)
+                            BreakpointManager breakpointManager)
    {
       commands_ = commands;
       server_ = server;
@@ -317,7 +315,6 @@ public class TextEditingTarget implements EditingTarget
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
-      debugCommander_ = debugCommander;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -2477,7 +2474,8 @@ public class TextEditingTarget implements EditingTarget
                         "UTF-8",
                         activeCodeIsAscii(),
                         forceEcho ? true : echo,
-                        true); // focus
+                        true,
+                        docDisplay_.hasBreakpoints()); 
                }
             });
          }
@@ -2490,18 +2488,15 @@ public class TextEditingTarget implements EditingTarget
                   if (docDisplay_.hasBreakpoints())
                   {
                      hideBreakpointWarningBar();
-                     debugCommander_.sourceForDebugging(getPath());
                   }
-                  else
-                  {
-                     consoleDispatcher_.executeSourceCommand(
-                           getPath(),
-                           fileType_,
-                           docUpdateSentinel_.getEncoding(),
-                           activeCodeIsAscii(),
-                           forceEcho ? true : echo,
-                           true); // focus  
-                  }
+                  consoleDispatcher_.executeSourceCommand(
+                        getPath(),
+                        fileType_,
+                        docUpdateSentinel_.getEncoding(),
+                        activeCodeIsAscii(),
+                        forceEcho ? true : echo,
+                        true,
+                        docDisplay_.hasBreakpoints());   
                }
             };
             
@@ -3185,18 +3180,15 @@ public class TextEditingTarget implements EditingTarget
                   if (docDisplay_.hasBreakpoints())
                   {
                      hideBreakpointWarningBar();
-                     debugCommander_.sourceForDebugging(getPath());
                   }
-                  else
-                  {
-                     consoleDispatcher_.executeSourceCommand(
-                                             docUpdateSentinel_.getPath(), 
-                                             fileType_,
-                                             docUpdateSentinel_.getEncoding(), 
-                                             activeCodeIsAscii(),
-                                             false,
-                                             false);
-                  }
+                  consoleDispatcher_.executeSourceCommand(
+                                          docUpdateSentinel_.getPath(), 
+                                          fileType_,
+                                          docUpdateSentinel_.getEncoding(), 
+                                          activeCodeIsAscii(),
+                                          false,
+                                          false,
+                                          docDisplay_.hasBreakpoints());
                }
             }
          }
@@ -3539,7 +3531,6 @@ public class TextEditingTarget implements EditingTarget
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
-   private DebugCommander debugCommander_;
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

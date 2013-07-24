@@ -2895,21 +2895,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
-   @Override 
-   public void sourceForDebugging(
-         String fileName,
-         ServerRequestCallback<Void> requestCallback)
-   {
-      
-      JSONArray sourceParams = new JSONArray();
-      sourceParams.set(0, new JSONString(fileName));
-      
-      sendRequest(RPC_SCOPE,
-            SOURCE_FOR_DEBUGGING,
-            sourceParams,
-            requestCallback);
-   }
-   
    public void executeDebugSource(
          String fileName,
          ArrayList<Integer> topBreakLines,
