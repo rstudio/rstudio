@@ -273,14 +273,22 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addGlobalFunction("source.for.debug", function(fileName)
+.rs.addGlobalFunction("source.for.debug", function(path, encoding=NULL)
 {
+   fileToParse <- path
+   # apply encoding if specified
+   if (!is.null(encoding))
+   {
+      fileToParse <- file(path, open='r', encoding=encoding)
+      on.exit(close(fileToParse))
+   }
+
    # establish state for debugging sources
    topDebugState <- new.env()
 
    # parse the file and store the parsed expressions
-   topDebugState$currentDebugFile <- fileName
-   topDebugState$parsedForDebugging <- suppressWarnings(parse(fileName))
+   topDebugState$currentDebugFile <- path
+   topDebugState$parsedForDebugging <- suppressWarnings(parse(fileToParse))
    topDebugState$currentDebugStep <- 1
    topDebugState$currentDebugSrcref <- rep(0L, 8)
 
@@ -379,7 +387,7 @@
    # when finished running, clean up any debug state we were holding on to
    if (executionState == 2)
    {
-      .rs.clearVar("topDebugState")
+      if (exists(".rs.topDebugState"))  .rs.clearVar("topDebugState")
    }
    # if still running, save the step and line so we can emit them to the client
    # as session information
