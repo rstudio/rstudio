@@ -29,6 +29,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
      #include <abstractions/base>
      #include <abstractions/nameservice>
+     #include <abstractions/ssl_certs>
 
      capability setgid,
      capability setuid,
