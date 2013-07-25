@@ -234,7 +234,14 @@ public class DebugCommander
       if (waitingForBreakpointInject_)
       {
          waitingForBreakpointInject_ = false;
-         continueTopLevelDebugSession();
+         if (debugStepMode_ == STEP_RUN)
+         {
+            executeDebugStep(STEP_RESUME);
+         }
+         else
+         {
+            executeDebugStep(debugStepMode_);
+         }
       }
    }         
 
@@ -316,7 +323,7 @@ public class DebugCommander
          String filename, 
          boolean hasTopLevelBreakpoints)
    {
-      debugStep_ = 1;
+      debugStep_ = 0;
       debugFile_ = filename;
       if (hasTopLevelBreakpoints)
       {
@@ -366,6 +373,7 @@ public class DebugCommander
    private static final int STEP_SINGLE = 0;
    private static final int STEP_RUN = 1;
    private static final int STEP_STOP = 2;
+   private static final int STEP_RESUME = 3;
 
    private final DebuggingServerOperations debugServer_;
    private final ServerRequestCallback<TopLevelLineData> debugStepCallback_;

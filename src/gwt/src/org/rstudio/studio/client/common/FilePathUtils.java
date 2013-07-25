@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 
 public class FilePathUtils

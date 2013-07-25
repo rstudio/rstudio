@@ -290,7 +290,7 @@
    # parse the file and store the parsed expressions
    topDebugState$currentDebugFile <- path
    topDebugState$parsedForDebugging <- suppressWarnings(parse(fileToParse))
-   topDebugState$currentDebugStep <- 1
+   topDebugState$currentDebugStep <- 0
    topDebugState$currentDebugSrcref <- rep(0L, 8)
    topDebugState$echo <- echo
 
@@ -305,6 +305,7 @@
 # 0 - single step (execute one expression)
 # 1 - run (execute until a breakpoint is hit)
 # 2 - stop (abort execution)
+# 3 - resume (continue execution after pausing for breakpoint injection)
 #
 # Results (output)
 # 0 - paused for user (on a breakpoint or step)
@@ -314,18 +315,17 @@
 # Note that there is special behavior on the client attached to the name of
 # this function.
 .rs.addFunction("executeDebugSource", function(
-   fileName,
-   topBreakLines,
-   functionBreakLines,
-   step,
-   mode)
+   fileName, topBreakLines, functionBreakLines, step, mode)
 {
+   # set up state for this evaluation session
    topDebugState <- environment()
    parsed <- expression()
    stepBegin <- step
    srcref <- rep(0L, 8)
    executionState <- 0L  # Paused for user
    needsBreakpointInjection <- FALSE
+   if (step == 0)
+      step <- step + 1
 
    if (exists(".rs.topDebugState"))
    {
@@ -346,14 +346,15 @@
       expr <- parsed[[step]]
       srcref <- attr(parsed, "srcref")[[step]]
 
-      # if this is a top-level breakpoint and not the step we were asked to
-      # execute, don't execute it
-      if (srcref[1] %in% topBreakLines && step > stepBegin)
+      # Pause if this is a top-level breakpoint. We want to hit the breakpoint
+      # if either it isn't the step we were asked to execute or this is a
+      # resumed step (so we can't have already hit the breakpoink).
+      if (srcref[1] %in% topBreakLines && (step > stepBegin || mode == 3))
       {
          break
       }
 
-      # evaluate it, with echo if deisired
+      # evaluate it, with echo if desired
       if (topDebugState$echo)
          print(srcref)
       result <- withVisible(eval(expr, envir = globalenv()))
