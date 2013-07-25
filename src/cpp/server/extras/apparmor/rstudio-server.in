@@ -42,7 +42,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      /tmp/rstudio-rserver/** rw,
      /etc/rstudio/** r,
 
-     ${CMAKE_INSTALL_PREFIX}/metrics/rserver-metrics Ux,
+     ${CMAKE_INSTALL_PREFIX}/metrics/rserver-* Ux,
 
      ${CMAKE_INSTALL_PREFIX}/bin/rserver-* Ux,
 
