@@ -99,7 +99,7 @@ public class DebugCommander
             // If we're waiting for the user, introduce the debug toolbar
             if (lineData.getState() == TopLevelLineData.STATE_PAUSED)
             {
-               setDebugToolbar(true);
+               setDebugging(true);
             }
 
             if (lineData.getNeedsBreakpointInjection())
@@ -251,7 +251,7 @@ public class DebugCommander
          debugStep_ = debugState.getDebugStep();
          previousLineData_ = debugState.cast();
          enterDebugMode(DebugMode.TopLevel);
-         setDebugToolbar(true);
+         setDebugging(true);
          highlightDebugPosition((LineData)debugState.cast(), false);
       }
    }
@@ -286,7 +286,7 @@ public class DebugCommander
       // mode so we can restore it later 
       if (mode == DebugMode.Function)
       {
-         setDebugToolbar(true);
+         setDebugging(true);
          topDebugMode_ = debugMode_;
       }
       debugMode_ = mode;
@@ -316,12 +316,12 @@ public class DebugCommander
          }
          else
          {
-            setDebugToolbar(false);
+            setDebugging(false);
          }
       }
       else
       {
-         setDebugToolbar(false);
+         setDebugging(false);
          debugMode_ = DebugMode.Normal;
          topDebugMode_ = DebugMode.Normal;
          debugFile_ = "";
@@ -406,7 +406,7 @@ public class DebugCommander
       eventBus_.fireEvent(new SendToConsoleEvent("", true));
    }
    
-   private void setDebugToolbar(boolean debugging)
+   private void setDebugging(boolean debugging)
    {
       if (debugging_ != debugging)
       {

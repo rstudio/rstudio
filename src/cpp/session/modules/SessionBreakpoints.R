@@ -274,23 +274,16 @@
 })
 
 .rs.addGlobalFunction("source.for.debug", function(
-   path, encoding=NULL, echo=FALSE)
+   path, encoding="unknown", echo=FALSE)
 {
-   fileToParse <- path
-   # apply encoding if specified
-   if (!is.null(encoding))
-   {
-      fileToParse <- file(path, open='r', encoding=encoding)
-      on.exit(close(fileToParse))
-   }
-
    # establish state for debugging sources
    topDebugState <- new.env()
 
    # parse the file and store the parsed expressions
    topDebugState$currentDebugFile <- path
-   topDebugState$parsedForDebugging <- suppressWarnings(parse(fileToParse))
-   topDebugState$currentDebugStep <- 0
+   topDebugState$parsedForDebugging <- suppressWarnings(
+      parse(path, encoding=encoding))
+   topDebugState$currentDebugStep <- 0L
    topDebugState$currentDebugSrcref <- rep(0L, 8)
    topDebugState$echo <- echo
 
@@ -325,7 +318,7 @@
    executionState <- 0L  # Paused for user
    needsBreakpointInjection <- FALSE
    if (step == 0)
-      step <- step + 1
+      step <- step + 1L
 
    if (exists(".rs.topDebugState"))
    {
@@ -348,7 +341,7 @@
 
       # Pause if this is a top-level breakpoint. We want to hit the breakpoint
       # if either it isn't the step we were asked to execute or this is a
-      # resumed step (so we can't have already hit the breakpoink).
+      # resumed step (so we can't have already hit the breakpoint).
       if (srcref[1] %in% topBreakLines && (step > stepBegin || mode == 3))
       {
          break
