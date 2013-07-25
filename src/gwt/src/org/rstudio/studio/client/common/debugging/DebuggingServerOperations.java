@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
+import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
@@ -41,4 +42,12 @@ public interface DebuggingServerOperations
          String functionName,
          String fileName,
          ServerRequestCallback<Boolean> requestCallback);
+   
+   public void executeDebugSource(
+         String fileName,
+         ArrayList<Integer> topBreakLines,
+         ArrayList<Integer> functionBreakLines,
+         int step, 
+         int mode, 
+         ServerRequestCallback<TopLevelLineData> requestCallback);
 }

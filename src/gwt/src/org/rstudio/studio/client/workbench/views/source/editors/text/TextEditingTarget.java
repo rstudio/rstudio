@@ -659,6 +659,8 @@ public class TextEditingTarget implements EditingTarget
             {
                if (event.isSet())
                {
+                  Breakpoint breakpoint = null;
+                  
                   // don't try to set breakpoints in unsaved code
                   if (isNewDoc())
                   {
@@ -668,34 +670,36 @@ public class TextEditingTarget implements EditingTarget
                   }
                   
                   Position breakpointPosition = 
-                        Position.create(event.getLineNumber(), 1);
+                        Position.create(event.getLineNumber() - 1, 1);
                   
-                  // don't try to create a breakpoint if we're not inside a
-                  // function scope
+                  // if we're not in function scope, set a top-level breakpoint
                   Scope innerFunction = 
                         docDisplay_.getFunctionAtPosition(breakpointPosition);
                   if (innerFunction == null || !innerFunction.isFunction())
                   {
-                     return;
+                     breakpoint = breakpointManager_.setTopLevelBreakpoint(
+                           getPath(),
+                           event.getLineNumber());
                   }
 
                   // the scope tree will find nested functions, but in R these
                   // are addressable only as substeps of the parent function.
                   // keep walking up the scope tree until we've reached the top
                   // level function.
-                  while (innerFunction.getParentScope() != null &&
-                         innerFunction.getParentScope().isFunction()) 
+                  else
                   {
-                     innerFunction = innerFunction.getParentScope();
+                     while (innerFunction.getParentScope() != null &&
+                            innerFunction.getParentScope().isFunction()) 
+                     {
+                        innerFunction = innerFunction.getParentScope();
+                     }
+                     breakpoint = breakpointManager_.setBreakpoint(
+                           getPath(),
+                           innerFunction.getLabel(),
+                           event.getLineNumber(),
+                           dirtyState().getValue() == false);
                   }
-                  String functionName = innerFunction.getLabel();
                   
-                  Breakpoint breakpoint = 
-                    breakpointManager_.setBreakpoint(
-                          getPath(),
-                          functionName,
-                          event.getLineNumber(),
-                          dirtyState().getValue() == false);
                   docDisplay_.addOrUpdateBreakpoint(breakpoint);                  
                }
                else
@@ -840,7 +844,15 @@ public class TextEditingTarget implements EditingTarget
       }
       else if (!showWarning && isBreakpointWarningVisible_)
       {
-         view_.hideWarningBar();         
+         hideBreakpointWarningBar();
+      }
+   }
+   
+   private void hideBreakpointWarningBar()
+   {
+      if (isBreakpointWarningVisible_)
+      {
+         view_.hideWarningBar();
          isBreakpointWarningVisible_ = false;
       }
    }
@@ -2462,7 +2474,8 @@ public class TextEditingTarget implements EditingTarget
                         "UTF-8",
                         activeCodeIsAscii(),
                         forceEcho ? true : echo,
-                        true); // focus
+                        true,
+                        docDisplay_.hasBreakpoints()); 
                }
             });
          }
@@ -2472,13 +2485,18 @@ public class TextEditingTarget implements EditingTarget
                @Override
                public void execute()
                {
+                  if (docDisplay_.hasBreakpoints())
+                  {
+                     hideBreakpointWarningBar();
+                  }
                   consoleDispatcher_.executeSourceCommand(
                         getPath(),
                         fileType_,
                         docUpdateSentinel_.getEncoding(),
                         activeCodeIsAscii(),
                         forceEcho ? true : echo,
-                        true); // focus  
+                        true,
+                        docDisplay_.hasBreakpoints());   
                }
             };
             
@@ -3159,13 +3177,18 @@ public class TextEditingTarget implements EditingTarget
                }
                else
                {
+                  if (docDisplay_.hasBreakpoints())
+                  {
+                     hideBreakpointWarningBar();
+                  }
                   consoleDispatcher_.executeSourceCommand(
                                              docUpdateSentinel_.getPath(), 
                                              fileType_,
                                              docUpdateSentinel_.getEncoding(), 
                                              activeCodeIsAscii(),
                                              false,
-                                             false);
+                                             false,
+                                             docDisplay_.hasBreakpoints());
                }
             }
          }

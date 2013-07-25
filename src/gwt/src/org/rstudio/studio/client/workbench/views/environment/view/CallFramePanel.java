@@ -101,6 +101,15 @@ public class CallFramePanel extends ResizeComposite
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
+         
+         // hide the portion of the callstack containing our source-for-debug
+         // functions
+         if (frame.getFunctionName().contains(".rs.executeDebugSource") ||
+             frame.getFileName().contains("SessionBreakpoints.R"))
+         {
+            continue;
+         }
+         
          if (CallFrameItem.isNavigableFilename(frame.getFileName())) 
          {
             encounteredUserCode = true;

@@ -55,6 +55,8 @@ void listEnvironment(SEXP env,
 // object info
 SEXP findVar(const std::string& name,
              const std::string& ns = std::string()); 
+SEXP findVar(const std::string& name,
+             const SEXP env);
 SEXP findFunction(const std::string& name,
                   const std::string& ns = std::string());
 std::string typeAsString(SEXP object);

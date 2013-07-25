@@ -415,6 +415,6 @@ public class FileSystemItem extends JavaScriptObject
    private static final FileIconResources RES = FileIconResources.INSTANCE;
    
    public static final String HOME_PATH = "~";
-   private static final String HOME_PREFIX = HOME_PATH + "/";
+   public static final String HOME_PREFIX = HOME_PATH + "/";
    private static final String PUBLIC = "Public";
 }

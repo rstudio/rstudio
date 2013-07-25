@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfServerOperati
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
+import org.rstudio.studio.client.common.debugging.DebugCommander;
 import org.rstudio.studio.client.common.debugging.DebuggingServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
@@ -190,6 +191,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PDFViewer.class).in(Singleton.class);
       bind(HTMLPreview.class).in(Singleton.class);      
       bind(BreakpointManager.class).asEagerSingleton();
+      bind(DebugCommander.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

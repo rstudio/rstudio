@@ -86,7 +86,7 @@ public class Console
          @Override
          public void onDebugModeChanged(DebugModeChangedEvent event)
          {
-            view.setDebugMode(event.getDebugMode());
+            view.setDebugMode(event.debugging());
          }
       });
    }

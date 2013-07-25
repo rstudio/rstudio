@@ -579,6 +579,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
+   sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

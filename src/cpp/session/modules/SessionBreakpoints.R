@@ -273,6 +273,161 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
+.rs.addGlobalFunction("source.for.debug", function(
+   path, encoding="unknown", echo=FALSE)
+{
+   # establish state for debugging sources
+   topDebugState <- new.env()
+
+   # parse the file and store the parsed expressions
+   topDebugState$currentDebugFile <- path
+   topDebugState$parsedForDebugging <- suppressWarnings(
+      parse(path, encoding=encoding))
+   topDebugState$currentDebugStep <- 0L
+   topDebugState$currentDebugSrcref <- rep(0L, 8)
+   topDebugState$echo <- echo
+
+   # cache debug state inside the RStudio tools environment
+   .rs.setVar("topDebugState", topDebugState)
+})
+
+
+# Executes a portion of a previously parsed file, pausing on breakpoints. Relies
+# on state created by source.for.debug.
+#
+# Modes (input)
+# 0 - single step (execute one expression)
+# 1 - run (execute until a breakpoint is hit)
+# 2 - stop (abort execution)
+# 3 - resume (continue execution after pausing for breakpoint injection)
+#
+# Results (output)
+# 0 - paused for user (on a breakpoint or step)
+# 1 - paused on a function breakpoint injection site
+# 2 - evaluation finished
+#
+# Note that there is special behavior on the client attached to the name of
+# this function.
+.rs.addFunction("executeDebugSource", function(
+   fileName, topBreakLines, functionBreakLines, step, mode)
+{
+   # set up state for this evaluation session
+   topDebugState <- environment()
+   parsed <- expression()
+   stepBegin <- step
+   srcref <- rep(0L, 8)
+   executionState <- 0L  # Paused for user
+   needsBreakpointInjection <- FALSE
+   if (step == 0)
+      step <- step + 1L
+
+   # check to ensure the internal top-level debugging state environment is
+   # present; if not, exit immediately
+   if (exists(".rs.topDebugState"))
+   {
+      topDebugState <- .rs.topDebugState
+      parsed <- topDebugState$parsedForDebugging
+   }
+   else
+   {
+      mode <- 2  # Stop
+   }
+
+   if (mode == 2)
+   {
+      executionState <- 2L   # Finished
+   }
+   else repeat
+   {
+      # get the expression to evaluate and its location in the file
+      expr <- parsed[[step]]
+      srcref <- attr(parsed, "srcref")[[step]]
+
+      # Pause if this is a top-level breakpoint. We want to hit the breakpoint
+      # if either it isn't the step we were asked to execute or this is a
+      # resumed step (so we can't have already hit the breakpoint).
+      if (srcref[1] %in% topBreakLines && (step > stepBegin || mode == 3))
+      {
+         break
+      }
+
+      # evaluate it, with echo if desired
+      if (topDebugState$echo)
+         print(srcref)
+      tryCatch(
+         {
+            result <- withVisible(eval(expr, envir=globalenv()))
+            if (topDebugState$echo)
+            {
+               if (result$visible)
+                  print(result$value)
+               writeLines("")
+            }
+         },
+         error = function(e)
+         {
+            # If an error is encountered, print it and move on--we still need to
+            # send debug state to the client, and evaluate the rest of the file
+            # (consider: this doesn't match the behavior of source(), which
+            # stops evaluation when an error is encountered.)
+            print(e)
+         }
+      )
+
+      # move to the next expression
+      step <- step + 1L
+      if (step > length(parsed))
+      {
+         executionState <- 2L  # Finished
+      }
+
+      # if there are any function breakpoints inside the expression, pause and
+      # let the client evaluate them
+      for (bp in functionBreakLines)
+      {
+         if (bp >= srcref[1] && bp <= srcref[3])
+         {
+            needsBreakpointInjection <- TRUE
+            # if running or resuming and not finished
+            if ((mode == 1 || mode == 3) && executionState != 2)
+            {
+               executionState <- 1L  # Paused for breakpoint injection
+            }
+            break
+         }
+      }
+      if (executionState == 1 || executionState == 2) break
+
+      if (mode == 0)  # Single-step execution mode
+      {
+         srcref <- attr(parsed, "srcref")[[step]]
+         break
+      }
+   }
+
+   # when finished running, clean up any debug state we were holding on to
+   if (executionState == 2)
+   {
+      if (exists(".rs.topDebugState"))  .rs.clearVar("topDebugState")
+   }
+   # if still running, save the step and line so we can emit them to the client
+   # as session information
+   else if (exists(".rs.topDebugState"))
+   {
+      .rs.topDebugState$currentDebugStep <- step
+      .rs.topDebugState$currentDebugSrcref <- srcref
+   }
+
+   return(list(
+      step = .rs.scalar(step),
+      state = .rs.scalar(executionState),
+      needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
+      line_number = .rs.scalar(srcref[1]),
+      end_line_number = .rs.scalar(srcref[3]),
+      character_number = .rs.scalar(srcref[5]),
+      end_character_number = .rs.scalar(srcref[6])))
+})
+
 .rs.addJsonRpcHandler("set_function_breakpoints", function(
    functionName,
    fileName,
@@ -303,5 +458,20 @@
    formattedResults$name <- as.character(formattedResults$name)
    formattedResults$at <- as.character(formattedResults$at)
    return(formattedResults)
+})
+
+.rs.addJsonRpcHandler("execute_debug_source", function(
+   fileName,
+   topBreakLines,
+   functionBreakLines,
+   step,
+   mode)
+{
+   .rs.executeDebugSource(
+      fileName,
+      topBreakLines,
+      functionBreakLines,
+      step,
+      mode)
 })
 

@@ -1478,14 +1478,17 @@ public class AceEditor implements DocDisplay,
    {      
       int firstRow = widget_.getEditor().getFirstVisibleRow();
       int lastRow = widget_.getEditor().getLastVisibleRow();
-      int debugRow = endPosition.getRow();
+      
+      // if the expression is large, let's just try to land in the middle
+      int debugRow = (int) Math.floor(startPosition.getRow() + (
+            endPosition.getRow() - startPosition.getRow())/2);
       
       // if the line to be debugged is past or near the edges of the screen,
       // scroll it into view. allow some lines of context.
       if (debugRow <= (firstRow + DEBUG_CONTEXT_LINES) || 
           debugRow >= (lastRow - DEBUG_CONTEXT_LINES))
       {
-         widget_.getEditor().scrollToLine(endPosition.getRow(), true);
+         widget_.getEditor().scrollToLine(debugRow, true);
       }
  
       applyDebugLineHighlight(

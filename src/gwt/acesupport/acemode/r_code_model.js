@@ -997,7 +997,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       return result;
    };
-
+   
    this.$findNextSignificantToken = function(pos, lastRow)
    {
       if (this.$tokens.length == 0)
@@ -1027,6 +1027,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       }
       return null;
    };
+
+   this.findNextSignificantToken = function(pos)
+   {
+	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
+   }
    
    this.$findPreviousSignificantToken = function(pos, firstRow)
    {

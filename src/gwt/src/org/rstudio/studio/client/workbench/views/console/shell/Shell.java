@@ -346,7 +346,7 @@ public class Shell implements ConsoleInputHandler,
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent event)
    {
-      if (event.getDebugMode())
+      if (event.debugging())
       {
          view_.ensureInputVisible();
       }

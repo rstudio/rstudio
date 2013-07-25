@@ -24,15 +24,15 @@ public class DebugModeChangedEvent
    {
       void onDebugModeChanged(DebugModeChangedEvent event);
    }
-
-   public DebugModeChangedEvent(boolean debugMode)
+   
+   public DebugModeChangedEvent(boolean debugging)
    {
-      debugMode_ = debugMode;
+      debugging_ = debugging;
    }
 
-   public boolean getDebugMode()
+   public boolean debugging()
    {
-      return debugMode_;
+      return debugging_;
    }
 
    @Override
@@ -48,5 +48,5 @@ public class DebugModeChangedEvent
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private final boolean debugMode_;
+   private final boolean debugging_;
 }
