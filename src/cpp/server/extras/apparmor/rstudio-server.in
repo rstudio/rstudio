@@ -40,6 +40,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      owner /tmp/** rw,
      /tmp/rstudio-rsession/** rw,
      /tmp/rstudio-rserver/** rw,
+     /etc/rstudio/** r,
 
      ${CMAKE_INSTALL_PREFIX}/metrics/rserver-metrics Ux,
 
