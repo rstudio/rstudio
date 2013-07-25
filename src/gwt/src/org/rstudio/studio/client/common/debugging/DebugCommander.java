@@ -42,13 +42,14 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 import org.rstudio.studio.client.workbench.views.environment.events.LineData;
 
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+
 
 @Singleton
 public class DebugCommander
@@ -58,6 +59,13 @@ public class DebugCommander
 {
    public interface Binder
       extends CommandBinder<Commands, DebugCommander> {}
+
+   public enum DebugMode
+   {
+      Normal,
+      Function,
+      TopLevel
+   }
 
    @Inject
    public DebugCommander(
@@ -87,6 +95,13 @@ public class DebugCommander
          public void onResponseReceived(TopLevelLineData lineData)
          {
             debugStep_ = lineData.getStep();
+            
+            // If we're waiting for the user, introduce the debug toolbar
+            if (lineData.getState() == TopLevelLineData.STATE_PAUSED)
+            {
+               setDebugToolbar(true);
+            }
+
             if (lineData.getNeedsBreakpointInjection())
             {
                // If the server is paused for breakpoint injection, inject into
@@ -118,29 +133,33 @@ public class DebugCommander
                   }
                }
             }
+            previousLineData_ = lineData;
             if (lineData.getState() != TopLevelLineData.STATE_INJECTION_SITE)
             {
                highlightDebugPosition(lineData, lineData.getFinished());
             }
-
-            // Hack: R doesn't restore the console prompt after a function
-            // browser in this case, so fire an <Enter> to bring it back. 
             if (debugMode_ == DebugMode.Function)
             {
-               eventBus_.fireEvent(new SendToConsoleEvent("", true));
+               restoreConsolePrompt();
             }
-
             if (lineData.getFinished())
             {
                leaveDebugMode();
             }
-            previousLineData_ = lineData;
          }
          
          @Override
          public void onError(ServerError error)
          {
-            leaveDebugMode();
+            // If we hit an error while debugging a function, the most likely 
+            // cause is that the user aborted the function (which also aborts 
+            // evaluation of the routine we use to manage the top-level debug
+            // session). Get the prompt back to trigger re-evaluation of the 
+            // context stack. 
+            if (debugMode_ == DebugMode.Function)
+            {
+               restoreConsolePrompt();
+            }
          }   
       };
       
@@ -167,10 +186,10 @@ public class DebugCommander
       if (debugMode_ == DebugMode.Function)
       {
          eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));
-         
-         // Abandon top-level debug mode, too--"Stop" exits all debug contexts
-         // simultaneously
-         topDebugMode_ = DebugMode.Normal;
+         if (topDebugMode_ == DebugMode.TopLevel)
+         {
+            haltingTopLevelDebug_ = true;
+         }
       }
       else if (debugMode_ == DebugMode.TopLevel)
       {
@@ -232,6 +251,7 @@ public class DebugCommander
          debugStep_ = debugState.getDebugStep();
          previousLineData_ = debugState.cast();
          enterDebugMode(DebugMode.TopLevel);
+         setDebugToolbar(true);
          highlightDebugPosition((LineData)debugState.cast(), false);
       }
    }
@@ -266,10 +286,10 @@ public class DebugCommander
       // mode so we can restore it later 
       if (mode == DebugMode.Function)
       {
+         setDebugToolbar(true);
          topDebugMode_ = debugMode_;
       }
       debugMode_ = mode;
-      eventBus_.fireEvent(new DebugModeChangedEvent(debugMode_));
    }
    
    public void leaveDebugMode()
@@ -277,19 +297,34 @@ public class DebugCommander
       // when leaving function debug context, restore the top-level debug mode
       if (debugMode_ == DebugMode.Function)
       {
-         eventBus_.fireEvent(new DebugModeChangedEvent(topDebugMode_));
          debugMode_ = topDebugMode_;
-         // when returning to top-level debug mode, restore the line higlighting
+         
          if (debugMode_ == DebugMode.TopLevel)
          {
-            highlightDebugPosition(previousLineData_, false);
+            // If the user halted debugging at the function level, then we were
+            // waiting for that operation to finish; now halt debugging at the
+            // top level as well.
+            if (haltingTopLevelDebug_)
+            {
+               haltingTopLevelDebug_ = false;
+               executeDebugStep(STEP_STOP);
+            }
+            else
+            {
+               highlightDebugPosition(previousLineData_, false);
+            }
+         }
+         else
+         {
+            setDebugToolbar(false);
          }
       }
       else
       {
-         eventBus_.fireEvent(new DebugModeChangedEvent(DebugMode.Normal));
+         setDebugToolbar(false);
          debugMode_ = DebugMode.Normal;
          topDebugMode_ = DebugMode.Normal;
+         debugFile_ = "";
       }
    }
    
@@ -339,37 +374,13 @@ public class DebugCommander
             debugStepCallback_);
    }
 
-   private void beginTopLevelDebugSession(
-         String filename, 
-         boolean hasTopLevelBreakpoints)
+
+   private void beginTopLevelDebugSession(String path)
    {
       debugStep_ = 0;
-      debugFile_ = filename;
-      if (hasTopLevelBreakpoints)
-      {
-         enterDebugMode(DebugMode.TopLevel);
-      }
+      debugFile_ = path;
+      enterDebugMode(DebugMode.TopLevel);
       executeDebugStep(STEP_RUN);
-   }
-
-   private void beginTopLevelDebugSession(String fileName)
-   {
-      // Initiate the debug session on the server
-      // See if any of the breakpoints are top-level (if they are, we 
-      // need to show the top-level debug toolbar)
-      ArrayList<Breakpoint> breakpoints = 
-            breakpointManager_.getBreakpointsInFile(fileName);
-      boolean hasTopLevelBreakpoints = false;
-      for (Breakpoint breakpoint: breakpoints)
-      {
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-         {
-            hasTopLevelBreakpoints = true;
-            break;
-         }
-      }            
-
-      beginTopLevelDebugSession(fileName, hasTopLevelBreakpoints);
    }
    
    private void highlightDebugPosition(LineData lineData, boolean finished)
@@ -386,6 +397,22 @@ public class DebugCommander
                              finished ?
                                 NavigationMethod.DebugEnd :
                                 NavigationMethod.DebugStep));
+   }
+
+   // Hack: R doesn't restore the console prompt after a function
+   // browser in this case, so fire an <Enter> to bring it back. 
+   private void restoreConsolePrompt()
+   {
+      eventBus_.fireEvent(new SendToConsoleEvent("", true));
+   }
+   
+   private void setDebugToolbar(boolean debugging)
+   {
+      if (debugging_ != debugging)
+      {
+         debugging_ = debugging;
+         eventBus_.fireEvent(new DebugModeChangedEvent(debugging_));
+      }
    }
    
    // These values are understood by the server; if you change them, you'll need
@@ -407,6 +434,8 @@ public class DebugCommander
    private int debugStep_ = 1;
    private int debugStepMode_ = STEP_SINGLE;
    private boolean waitingForBreakpointInject_ = false;
+   private boolean haltingTopLevelDebug_ = false;
    private String debugFile_ = "";
    private LineData previousLineData_ = null;
+   private boolean debugging_ = false;
 }

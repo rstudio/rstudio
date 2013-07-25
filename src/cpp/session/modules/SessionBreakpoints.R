@@ -357,11 +357,13 @@
       # evaluate it, with echo if desired
       if (topDebugState$echo)
          print(srcref)
-      result <- withVisible(eval(expr, envir = globalenv()))
-      if (result$visible && topDebugState$echo)
-         print(result$value)
+      result <- withVisible(eval(expr, envir=globalenv()))
       if (topDebugState$echo)
+      {
+         if (result$visible)
+            print(result$value)
          writeLines("")
+      }
 
       # move to the next expression
       step <- step + 1L

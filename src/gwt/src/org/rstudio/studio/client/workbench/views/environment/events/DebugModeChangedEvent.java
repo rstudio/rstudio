@@ -25,21 +25,14 @@ public class DebugModeChangedEvent
       void onDebugModeChanged(DebugModeChangedEvent event);
    }
    
-   public enum DebugMode
+   public DebugModeChangedEvent(boolean debugging)
    {
-      Normal,
-      Function,
-      TopLevel
+      debugging_ = debugging;
    }
 
-   public DebugModeChangedEvent(DebugMode debugMode)
+   public boolean debugging()
    {
-      debugMode_ = debugMode;
-   }
-
-   public DebugMode getDebugMode()
-   {
-      return debugMode_;
+      return debugging_;
    }
 
    @Override
@@ -55,5 +48,5 @@ public class DebugModeChangedEvent
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private final DebugMode debugMode_;
+   private final boolean debugging_;
 }

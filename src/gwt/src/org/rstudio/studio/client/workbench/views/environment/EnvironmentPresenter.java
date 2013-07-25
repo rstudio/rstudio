@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.DebugCommander;
+import org.rstudio.studio.client.common.debugging.DebugCommander.DebugMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
@@ -63,7 +64,6 @@ import org.rstudio.studio.client.workbench.views.environment.events.ContextDepth
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent.DebugMode;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
