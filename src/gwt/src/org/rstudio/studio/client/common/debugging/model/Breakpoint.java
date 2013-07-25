@@ -169,5 +169,5 @@ public class Breakpoint extends JavaScriptObject
    public final native int getType()
    /*-{
       return this.type;
-   }-*/;
+   }-*/;   
 }

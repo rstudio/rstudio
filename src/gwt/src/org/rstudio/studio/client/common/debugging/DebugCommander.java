@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.DebugState;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -64,12 +66,14 @@ public class DebugCommander
          EventBus eventBus,
          Session session,
          BreakpointManager breakpointManager,
-         DebuggingServerOperations debugServer)
+         DebuggingServerOperations debugServer,
+         WorkbenchContext workbench)
    {
       eventBus_ = eventBus;
       session_ = session;
       debugServer_ = debugServer;
       breakpointManager_ = breakpointManager;
+      workbench_ = workbench;
       
       eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus_.addHandler(SessionInitEvent.TYPE, this);
@@ -201,8 +205,11 @@ public class DebugCommander
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
          return;
-      }      
-      beginTopLevelDebugSession(fileMatch.getGroup(1));      
+      }     
+      String path = FilePathUtils.normalizePath(
+            fileMatch.getGroup(1), 
+            workbench_.getCurrentWorkingDir().getPath());
+      beginTopLevelDebugSession(path);      
    }
 
    @Override
@@ -365,6 +372,7 @@ public class DebugCommander
    private final EventBus eventBus_;
    private final BreakpointManager breakpointManager_;
    private final Session session_;
+   private final WorkbenchContext workbench_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;

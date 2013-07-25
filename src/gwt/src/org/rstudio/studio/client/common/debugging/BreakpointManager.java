@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -80,11 +81,13 @@ public class BreakpointManager
    public BreakpointManager(
          DebuggingServerOperations server,
          EventBus events,
-         Session session)
+         Session session,
+         WorkbenchContext workbench)
    {
       server_ = server;
       events_ = events;
       session_ = session;
+      workbench_ = workbench;
 
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
@@ -320,7 +323,10 @@ public class BreakpointManager
       {
          return;
       }      
-      resetBreakpointsInPath(fileMatch.getGroup(2), true);
+      String path = FilePathUtils.normalizePath(
+            fileMatch.getGroup(2), 
+            workbench_.getCurrentWorkingDir().getPath());
+      resetBreakpointsInPath(path, true);
    }
    
    @Override
@@ -648,6 +654,7 @@ public class BreakpointManager
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;
+   private final WorkbenchContext workbench_;
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();

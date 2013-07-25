@@ -273,7 +273,8 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addGlobalFunction("source.for.debug", function(path, encoding=NULL)
+.rs.addGlobalFunction("source.for.debug", function(
+   path, encoding=NULL, echo=FALSE)
 {
    fileToParse <- path
    # apply encoding if specified
@@ -291,6 +292,7 @@
    topDebugState$parsedForDebugging <- suppressWarnings(parse(fileToParse))
    topDebugState$currentDebugStep <- 1
    topDebugState$currentDebugSrcref <- rep(0L, 8)
+   topDebugState$echo <- echo
 
    # cache debug state inside the RStudio tools environment
    .rs.setVar("topDebugState", topDebugState)
@@ -351,8 +353,14 @@
          break
       }
 
-      # evaluate it!
-      eval(expr, envir = globalenv())
+      # evaluate it, with echo if deisired
+      if (topDebugState$echo)
+         print(srcref)
+      result <- withVisible(eval(expr, envir = globalenv()))
+      if (result$visible && topDebugState$echo)
+         print(result$value)
+      if (topDebugState$echo)
+         writeLines("")
 
       # move to the next expression
       step <- step + 1L
