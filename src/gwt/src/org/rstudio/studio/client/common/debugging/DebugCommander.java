@@ -122,6 +122,14 @@ public class DebugCommander
             {
                highlightDebugPosition(lineData, lineData.getFinished());
             }
+
+            // Hack: R doesn't restore the console prompt after a function
+            // browser in this case, so fire an <Enter> to bring it back. 
+            if (debugMode_ == DebugMode.Function)
+            {
+               eventBus_.fireEvent(new SendToConsoleEvent("", true));
+            }
+
             if (lineData.getFinished())
             {
                leaveDebugMode();
@@ -271,6 +279,11 @@ public class DebugCommander
       {
          eventBus_.fireEvent(new DebugModeChangedEvent(topDebugMode_));
          debugMode_ = topDebugMode_;
+         // when returning to top-level debug mode, restore the line higlighting
+         if (debugMode_ == DebugMode.TopLevel)
+         {
+            highlightDebugPosition(previousLineData_, false);
+         }
       }
       else
       {
@@ -283,6 +296,13 @@ public class DebugCommander
    public DebugMode getDebugMode()
    {
       return debugMode_;
+   }
+   
+   public boolean hasTopLevelDebugSession(String path)
+   {
+      return (debugMode_ == DebugMode.TopLevel ||
+              topDebugMode_ == DebugMode.TopLevel) &&
+             debugFile_.equalsIgnoreCase(path);
    }
 
    // Private methods ---------------------------------------------------------
