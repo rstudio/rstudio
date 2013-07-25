@@ -50,7 +50,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 
-
+// DebugCommander is responsible for managing top-level metadata concerning
+// debug sessions (both function and top-level) and for processing the basic
+// debug commands (run, step, etc) in the appropriate context. 
 @Singleton
 public class DebugCommander
          implements ConsoleWriteInputHandler,
@@ -89,6 +91,9 @@ public class DebugCommander
       
       binder.bind(commands, this);
 
+      // The callback supplied whenever we execute a portion of a file for
+      // debugging. The server's response indicates where execution paused and
+      // why.
       debugStepCallback_ = new ServerRequestCallback<TopLevelLineData>()
       {
          @Override
@@ -104,13 +109,13 @@ public class DebugCommander
 
             if (lineData.getNeedsBreakpointInjection())
             {
-               // If the server is paused for breakpoint injection, inject into
-               // the current line; otherwise, inject into the line we just 
-               // evaluated
+               // If the debugger is paused, inject into the line just 
+               // evaluated rather than the current line (since the current line
+               // hasn't yet been evaluated)
                LineData bpLineData = lineData.getState() == 
-                     TopLevelLineData.STATE_INJECTION_SITE ?
-                           lineData :
-                           previousLineData_;
+                     TopLevelLineData.STATE_PAUSED ?
+                           previousLineData_ :
+                           lineData;
 
                // If there are breakpoints in the range, the breakpoint manager 
                // will emit a BreakpointsSavedEvent, which we'll use as a cue
@@ -399,8 +404,9 @@ public class DebugCommander
                                 NavigationMethod.DebugStep));
    }
 
-   // Hack: R doesn't restore the console prompt after a function
-   // browser in this case, so fire an <Enter> to bring it back. 
+   // Hack: R doesn't always restore the console prompt after a function
+   // browser when the browser was invoked during an eval from our tools, so
+   // fire an <Enter> to bring it back.
    private void restoreConsolePrompt()
    {
       eventBus_.fireEvent(new SendToConsoleEvent("", true));

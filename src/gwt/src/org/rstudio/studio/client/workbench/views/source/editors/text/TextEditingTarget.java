@@ -3182,13 +3182,13 @@ public class TextEditingTarget implements EditingTarget
                      hideBreakpointWarningBar();
                   }
                   consoleDispatcher_.executeSourceCommand(
-                                          docUpdateSentinel_.getPath(), 
-                                          fileType_,
-                                          docUpdateSentinel_.getEncoding(), 
-                                          activeCodeIsAscii(),
-                                          false,
-                                          false,
-                                          docDisplay_.hasBreakpoints());
+                                             docUpdateSentinel_.getPath(), 
+                                             fileType_,
+                                             docUpdateSentinel_.getEncoding(), 
+                                             activeCodeIsAscii(),
+                                             false,
+                                             false,
+                                             docDisplay_.hasBreakpoints());
                }
             }
          }

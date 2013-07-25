@@ -104,7 +104,8 @@ public class CallFramePanel extends ResizeComposite
          
          // hide the portion of the callstack containing our source-for-debug
          // functions
-         if (frame.getFunctionName().contains(".rs.executeDebugSource"))
+         if (frame.getFunctionName().contains(".rs.executeDebugSource") ||
+             frame.getFileName().contains("SessionBreakpoints.R"))
          {
             continue;
          }

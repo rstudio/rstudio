@@ -246,7 +246,7 @@ public class BreakpointManager
    {
       new JSObjectStateValue(
             "debug-breakpoints",
-            "debugBreakpointState",
+            "debugBreakpointsState",
             ClientState.PROJECT_PERSISTENT,
             session_.getSessionInfo().getClientState(),
             false)

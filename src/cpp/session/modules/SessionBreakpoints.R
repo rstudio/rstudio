@@ -292,7 +292,8 @@
 })
 
 
-# Executes a portion of a previously parsed file, pausing on breakpoints.
+# Executes a portion of a previously parsed file, pausing on breakpoints. Relies
+# on state created by source.for.debug.
 #
 # Modes (input)
 # 0 - single step (execute one expression)
@@ -320,6 +321,8 @@
    if (step == 0)
       step <- step + 1L
 
+   # check to ensure the internal top-level debugging state environment is
+   # present; if not, exit immediately
    if (exists(".rs.topDebugState"))
    {
       topDebugState <- .rs.topDebugState
@@ -327,8 +330,9 @@
    }
    else
    {
-      mode <- 2  # Stop debugging, we don't have any state
+      mode <- 2  # Stop
    }
+
    if (mode == 2)
    {
       executionState <- 2L   # Finished
@@ -350,13 +354,25 @@
       # evaluate it, with echo if desired
       if (topDebugState$echo)
          print(srcref)
-      result <- withVisible(eval(expr, envir=globalenv()))
-      if (topDebugState$echo)
-      {
-         if (result$visible)
-            print(result$value)
-         writeLines("")
-      }
+      tryCatch(
+         {
+            result <- withVisible(eval(expr, envir=globalenv()))
+            if (topDebugState$echo)
+            {
+               if (result$visible)
+                  print(result$value)
+               writeLines("")
+            }
+         },
+         error = function(e)
+         {
+            # We can't let an error pass through here since we need to send the
+            # debug state to the client. Print the error and don't execute the
+            # rest of the file (this mirrors the behavior of source())
+            print(e)
+            executionState <- 2L   # Finished
+         }
+      )
 
       # move to the next expression
       step <- step + 1L
@@ -372,7 +388,8 @@
          if (bp >= srcref[1] && bp <= srcref[3])
          {
             needsBreakpointInjection <- TRUE
-            if (mode == 1 && executionState != 2)
+            # if running or resuming and not finished
+            if ((mode == 1 || mode == 3) && executionState != 2)
             {
                executionState <- 1L  # Paused for breakpoint injection
             }
@@ -454,7 +471,7 @@
       fileName,
       topBreakLines,
       functionBreakLines,
-      step[[1]],
+      step,
       mode)
 })
 

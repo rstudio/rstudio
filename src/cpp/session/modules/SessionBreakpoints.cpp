@@ -108,7 +108,8 @@ json::Value debugStateAsJson()
 {
    json::Object state;
 
-   // get the debug state from R
+   // look for the debug state environment created by source.for.debug; if
+   // it exists, emit the pieces the client cares about.
    SEXP debugState = r::sexp::findVar(".rs.topDebugState");
    if (TYPEOF(debugState) == ENVSXP)
    {

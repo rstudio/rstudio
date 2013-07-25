@@ -3168,7 +3168,6 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    private static final String GET_FUNCTION_SYNC_STATE = "get_function_sync_state";
-   private static final String SOURCE_FOR_DEBUGGING = "source_for_debugging";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    
    private static final String LOG = "log";
