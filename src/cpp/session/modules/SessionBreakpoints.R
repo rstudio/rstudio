@@ -366,11 +366,11 @@
          },
          error = function(e)
          {
-            # We can't let an error pass through here since we need to send the
-            # debug state to the client. Print the error and don't execute the
-            # rest of the file (this mirrors the behavior of source())
+            # If an error is encountered, print it and move on--we still need to
+            # send debug state to the client, and evaluate the rest of the file
+            # (consider: this doesn't match the behavior of source(), which
+            # stops evaluation when an error is encountered.)
             print(e)
-            executionState <- 2L   # Finished
          }
       )
 
