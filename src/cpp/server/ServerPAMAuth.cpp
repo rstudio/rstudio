@@ -288,6 +288,9 @@ void doSignIn(const http::Request& request,
    std::string username = plainText.substr(0, splitAt);
    std::string password = plainText.substr(splitAt + 1, plainText.size());
 
+   // tranform to local username
+   username = auth::handler::userIdentifierToLocalUsername(username);
+
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
       if (appUri.size() > 0 && appUri[0] != '/')
