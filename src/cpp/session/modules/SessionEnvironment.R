@@ -83,7 +83,7 @@
 {
    # by default, the description should be the expression associated with the
    # object
-   description <- paste(capture.output(substitute(obj)), collapse="")
+   description <- paste(deparse(substitute(obj)), collapse="")
 
    # create a more friendly description for delay-loaded data
    if (substr(description, 1, 16) == "lazyLoadDBfetch(")
@@ -131,9 +131,11 @@
 {
     return(paste(lapply(args, function(arg) {
         if (is.language(arg))
-                capture.output(print(arg))
-            else
-                as.character(arg)
+            capture.output(print(arg))
+        else if (is.environment(arg))
+            deparse(substitute(arg))
+        else
+            as.character(arg)
         }), collapse = ", "))
 })
 

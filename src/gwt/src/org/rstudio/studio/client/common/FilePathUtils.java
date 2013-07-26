@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.files.FileSystemItem;
+
 public class FilePathUtils
 {
    public static String friendlyFileName(String unfriendlyFileName)
@@ -26,5 +28,24 @@ public class FilePathUtils
       }
       return unfriendlyFileName.substring(
               idx + 1, unfriendlyFileName.length()).trim();
+   }
+   
+   public static String normalizePath (String path, String workingDirectory)
+   {
+      // absolute paths don't need to be normalized
+      if (path.startsWith(FileSystemItem.HOME_PREFIX) ||
+          path.startsWith("/"))
+      {
+         return path;
+      }
+      
+      // if the path appears to be relative, prepend the working directory
+      // (consider: should we try to handle ..-style relative notation here?)
+      String prefix = new String(workingDirectory + 
+            (workingDirectory.endsWith("/") ? "" : "/"));
+      String relative = new String(path.startsWith("./") ? 
+            path.substring(2, path.length()) : path);
+      
+      return prefix + relative;
    }
 }

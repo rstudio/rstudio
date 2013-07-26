@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -80,11 +81,13 @@ public class BreakpointManager
    public BreakpointManager(
          DebuggingServerOperations server,
          EventBus events,
-         Session session)
+         Session session,
+         WorkbenchContext workbench)
    {
       server_ = server;
       events_ = events;
       session_ = session;
+      workbench_ = workbench;
 
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
@@ -96,6 +99,19 @@ public class BreakpointManager
    
    // Public methods ---------------------------------------------------------
    
+   public Breakpoint setTopLevelBreakpoint(
+         final String path,
+         final int lineNumber)
+   {
+      return addBreakpoint(Breakpoint.create(
+            currentBreakpointId_++, 
+            path, 
+            "toplevel", 
+            lineNumber, 
+            Breakpoint.STATE_ACTIVE, 
+            Breakpoint.TYPE_TOPLEVEL));
+   }
+   
    public Breakpoint setBreakpoint(
          final String path,
          final String functionName,
@@ -103,15 +119,15 @@ public class BreakpointManager
          boolean immediately)
    {
       // create the new breakpoint and arguments for the server call
-      final int newBreakpointId = currentBreakpointId_++;
-      final Breakpoint breakpoint = Breakpoint.create(newBreakpointId,
+      final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
+            currentBreakpointId_++,
             path,
             functionName,
             lineNumber,
             immediately ?
                   Breakpoint.STATE_PROCESSING :
-                  Breakpoint.STATE_INACTIVE);
-      breakpoints_.add(breakpoint);
+                  Breakpoint.STATE_INACTIVE,
+            Breakpoint.TYPE_FUNCTION));
       
       // If the breakpoint is in a function that is active on the callstack, 
       // it's being set on the stored rather than the executing copy. It's 
@@ -203,7 +219,26 @@ public class BreakpointManager
       }
       return breakpoints;
    }
-
+   
+   public boolean injectBreakpointsDuringSource(
+         String fileName, 
+         int startLine, 
+         int endLine)
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.isInFile(fileName) && 
+             breakpoint.getLineNumber() >= startLine &&
+             breakpoint.getLineNumber() <= endLine &&
+             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
+         {
+            prepareAndSetFunctionBreakpoints(new FileFunction(breakpoint));
+            return true;
+         }
+      }
+      return false;
+   }
+   
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -211,7 +246,7 @@ public class BreakpointManager
    {
       new JSObjectStateValue(
             "debug-breakpoints",
-            "debugBreakpointState",
+            "debugBreakpointsState",
             ClientState.PROJECT_PERSISTENT,
             session_.getSessionInfo().getClientState(),
             false)
@@ -288,7 +323,10 @@ public class BreakpointManager
       {
          return;
       }      
-      resetBreakpointsInPath(fileMatch.getGroup(2), true);
+      String path = FilePathUtils.normalizePath(
+            fileMatch.getGroup(2), 
+            workbench_.getCurrentWorkingDir().getPath());
+      resetBreakpointsInPath(path, true);
    }
    
    @Override
@@ -546,6 +584,13 @@ public class BreakpointManager
       }
       return null;
    }
+   
+   private Breakpoint addBreakpoint (Breakpoint breakpoint)
+   {
+      breakpoints_.add(breakpoint);
+      breakpointStateDirty_ = true;
+      return breakpoint;
+   }
      
    // Private classes ---------------------------------------------------------
    
@@ -606,11 +651,14 @@ public class BreakpointManager
       }      
    }
 
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
    private final DebuggingServerOperations server_;
    private final EventBus events_;
    private final Session session_;
+   private final WorkbenchContext workbench_;
+
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
+   private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
+
    private boolean breakpointStateDirty_ = false;
    private int currentBreakpointId_ = 0;
 }

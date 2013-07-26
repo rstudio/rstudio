@@ -121,7 +121,8 @@ public class ConsoleDispatcher
                                     String encoding, 
                                     boolean contentKnownToBeAscii,
                                     boolean echo,
-                                    boolean focus)
+                                    boolean focus,
+                                    boolean debug)
    {
        
       StringBuilder code = new StringBuilder();
@@ -144,11 +145,15 @@ public class ConsoleDispatcher
           normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
          
          if (contentKnownToBeAscii || isSystemEncoding)
-            code.append("source(" + escapedPath);
+            code.append("source" + 
+                     (debug ? ".for.debug" : "") + 
+                     "(" + escapedPath);
          else
          {
             code.append(
-                  "source.with.encoding(" + escapedPath + ", encoding='" +
+                  "source" + 
+                  (debug ? ".for.debug" : ".with.encoding") + 
+                  "(" + escapedPath + ", encoding='" +
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
          }

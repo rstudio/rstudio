@@ -33,12 +33,16 @@ public class Breakpoint extends JavaScriptObject
    public final static int STATE_INACTIVE = 2;
    public final static int STATE_DUPLICATE = 3;
    
+   public final static int TYPE_FUNCTION = 0;
+   public final static int TYPE_TOPLEVEL = 1;
+   
    public native static Breakpoint create(
          int breakpointId,
          String path,
          String functionName,
          int lineNumber, 
-         int initialState)
+         int initialState,
+         int type)
    /*-{
       return {
          id : breakpointId,
@@ -50,10 +54,11 @@ public class Breakpoint extends JavaScriptObject
          editor_state: initialState, 
          editor_line_number: lineNumber,
          is_pending_debug_completion: false,
-         needs_updated_steps: false
+         needs_updated_steps: false,
+         type: type
       };
    }-*/;
-   
+      
    public final native void addFunctionSteps(
          String function_name,
          int lineNumber,
@@ -160,4 +165,9 @@ public class Breakpoint extends JavaScriptObject
    /*-{
      return this.path;
    }-*/;
+   
+   public final native int getType()
+   /*-{
+      return this.type;
+   }-*/;   
 }

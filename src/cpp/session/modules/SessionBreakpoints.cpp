@@ -104,6 +104,31 @@ Error getFunctionSyncState(const json::JsonRpcRequest& request,
 
 } // anonymous namespace
 
+json::Value debugStateAsJson()
+{
+   json::Object state;
+
+   // look for the debug state environment created by source.for.debug; if
+   // it exists, emit the pieces the client cares about.
+   SEXP debugState = r::sexp::findVar(".rs.topDebugState");
+   if (TYPEOF(debugState) == ENVSXP)
+   {
+      state["top_level_debug"] = json::Value(true);
+      state["debug_step"] = json::Value(
+          r::sexp::asInteger(r::sexp::findVar("currentDebugStep", debugState)));
+      state["debug_file"] = json::Value(
+          r::sexp::asString(r::sexp::findVar("currentDebugFile", debugState)));
+      SEXP srcref = r::sexp::findVar("currentDebugSrcref", debugState);
+      environment::sourceRefToJson(srcref, &state);
+   }
+   else
+   {
+      state["top_level_debug"] = json::Value(false);
+   }
+
+   return state;
+}
+
 Error initialize()
 {
    // subscribe to events

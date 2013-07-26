@@ -245,7 +245,8 @@ public class Workbench implements BusyHandler,
                         pPrefs_.get().defaultEncoding().getValue(),
                         false,
                         false,
-                        true); // focus
+                        true,
+                        false);
 
                   commands_.activateConsole().execute();
                }
