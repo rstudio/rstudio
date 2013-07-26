@@ -145,14 +145,11 @@ public class ConsoleDispatcher
           normalizeEncoding(encoding).equals(normalizeEncoding(systemEncoding));
          
          if (contentKnownToBeAscii || isSystemEncoding)
-            code.append("source" + 
-                     (debug ? ".for.debug" : "") + 
+            code.append((debug ? "debugSource" : "source") + 
                      "(" + escapedPath);
          else
          {
-            code.append(
-                  "source" + 
-                  (debug ? ".for.debug" : ".with.encoding") + 
+            code.append((debug ? "debugSource" : "source.with.encoding") + 
                   "(" + escapedPath + ", encoding='" +
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
