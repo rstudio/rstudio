@@ -208,6 +208,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsFileDiff());
       dynamicCommands_.add(commands.vcsFileRevert());
       dynamicCommands_.add(commands.executeCode());
+      dynamicCommands_.add(commands.executeCodeWithoutFocus());
       dynamicCommands_.add(commands.executeAllCode());
       dynamicCommands_.add(commands.executeToCurrentLine());
       dynamicCommands_.add(commands.executeFromCurrentLine());

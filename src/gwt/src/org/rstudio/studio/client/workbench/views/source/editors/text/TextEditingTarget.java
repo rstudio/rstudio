@@ -2083,10 +2083,21 @@ public class TextEditingTarget implements EditingTarget
    }
 
    @Handler
+   void onExecuteCodeWithoutFocus()
+   {
+      executeCode(false);
+   }
+   
+   @Handler
    void onExecuteCode()
+   {
+      executeCode(true);
+   }
+   
+   void executeCode(boolean consoleExecuteWhenNotFocused)
    {  
       // allow console a chance to execute code if we aren't focused
-      if (!docDisplay_.isFocused())
+      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
       {
          events_.fireEvent(new ConsoleExecutePendingInputEvent());
          return;

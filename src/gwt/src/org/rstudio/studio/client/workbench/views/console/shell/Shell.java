@@ -95,6 +95,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus_ = eventBus ;
       view_ = display ;
       globalDisplay_ = globalDisplay;
+      commands_ = commands;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
 
@@ -339,8 +340,22 @@ public class Shell implements ConsoleInputHandler,
    @Override
    public void onExecutePendingInput(ConsoleExecutePendingInputEvent event)
    {
-      if (view_.getInputEditorDisplay().isFocused())
+      // if the source view is delegating a Cmd+Enter to us then
+      // take it if we are focused and we have a command to enter
+      if (view_.getInputEditorDisplay().isFocused() &&
+         (view_.getInputEditorDisplay().getText().length() > 0))
+      {
          processCommandEntry();  
+      }
+      // otherwise delegate back to the source view. we do this via
+      // executing a command which is a bit of hack but it's a clean
+      // way to call code within the "current editor" (an event would
+      // go to all editors). another alternative would be to 
+      // call a method on the SourceShim
+      else
+      {
+         commands_.executeCodeWithoutFocus().execute();
+      }
    }
    
    @Override
@@ -520,6 +535,7 @@ public class Shell implements ConsoleInputHandler,
    private final EventBus eventBus_ ;
    private final Display view_ ;
    private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
    private final InputEditorDisplay input_ ;
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
