@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2013 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,7 @@ import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.client.PolishPluralsTest;
 import com.google.gwt.i18n.client.RuntimeLocalesTest;
+import com.google.gwt.i18n.client.RussianPluralsTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
 import com.google.gwt.i18n.rebind.LocaleUtilsTest;
@@ -113,6 +114,7 @@ public class I18NSuite {
     suite.addTestSuite(NumberParse_fr_Test.class);
     suite.addTestSuite(PolishPluralsTest.class);
     suite.addTestSuite(PropertyCatalogFactoryTest.class);
+    suite.addTestSuite(RussianPluralsTest.class);
     suite.addTestSuite(ReflectionMessageInterfaceTest.class);
     suite.addTestSuite(RegionInheritanceTest.class);
     suite.addTestSuite(RuntimeLocalesTest.class);
