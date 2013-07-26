@@ -273,7 +273,7 @@
       .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
 })
 
-.rs.addGlobalFunction("source.for.debug", function(
+.rs.addGlobalFunction("debugSource", function(
    path, encoding="unknown", echo=FALSE)
 {
    # establish state for debugging sources
@@ -293,7 +293,7 @@
 
 
 # Executes a portion of a previously parsed file, pausing on breakpoints. Relies
-# on state created by source.for.debug.
+# on state created by debugSource.
 #
 # Modes (input)
 # 0 - single step (execute one expression)
