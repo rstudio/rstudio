@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -57,7 +58,8 @@ import com.google.inject.Singleton;
 public class DebugCommander
          implements ConsoleWriteInputHandler,
                     SessionInitHandler,
-                    BreakpointsSavedEvent.Handler
+                    BreakpointsSavedEvent.Handler,
+                    RestartStatusEvent.Handler
 {
    public interface Binder
       extends CommandBinder<Commands, DebugCommander> {}
@@ -88,6 +90,7 @@ public class DebugCommander
       eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus_.addHandler(SessionInitEvent.TYPE, this);
       eventBus_.addHandler(BreakpointsSavedEvent.TYPE, this);
+      eventBus_.addHandler(RestartStatusEvent.TYPE, this);
       
       binder.bind(commands, this);
 
@@ -215,24 +218,27 @@ public class DebugCommander
       }
    }
    
-   @Handler
-   public void onRestartR()
-   {   
-      // Restarting R cleans up the state we use to persist information about 
-      // the debug session on the server, so we need to kill the client's 
-      // debug session when this happens
-      if (debugMode_ == DebugMode.TopLevel)
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
       {
-         highlightDebugPosition(previousLineData_, true);
-         leaveDebugMode();
+         // Restarting R cleans up the state we use to persist information about
+         // the debug session on the server, so we need to kill the client's
+         // debug session when this happens
+         if (debugMode_ == DebugMode.TopLevel)
+         {
+            highlightDebugPosition(previousLineData_, true);
+            leaveDebugMode();
+         }
+         topDebugMode_ = DebugMode.Normal;
       }
-      topDebugMode_ = DebugMode.Normal;
    }
 
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      RegExp sourceExp = RegExp.compile("source.for.debug\\('([^']*)'.*");
+      RegExp sourceExp = RegExp.compile("debugSource\\('([^']*)'.*");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
