@@ -166,47 +166,115 @@ public class JsDuplicateFunctionRemover {
     }
   }
 
-  // Needed for OptimizerTestBase
-  public static boolean exec(JsProgram program) {
-    return new JsDuplicateFunctionRemover(program).execImpl(program.getFragmentBlock(0));
-  }
-
-  public static boolean exec(JsProgram program, JsBlock fragment) {
-    return new JsDuplicateFunctionRemover(program).execImpl(fragment);
+  /**
+   * Entry point for the removeDuplicateFunctions optimization.
+   *
+   * This optimization will collapse functions whose JavaScript (output) code is identical. After
+   * collapsing duplicate functions it will remove functions that become unreferenced as a result.
+   *
+   * This pass is safe only for JavaScript functions generated from Java where references to
+   * local function variables can not be extruded by returning a function. E,g. in the next example
+   *
+   * function f1() {return a;}
+   *
+   * funcion f2() { var a; return function() {return a;}}
+   *
+   * f1() and the return of f2() are not duplicates even though the have a syntacticaly identical
+   * parameters and body. The reason is that a in f1() refers to some globally scoped variable a,
+   * whereas a in the return of f2() refers to the local variable a. It would be not correct to
+   * move the return of f2() to the global scope.
+   *
+   * This situation does NOT arise from functions that where generated from Java sources (non
+   * native)
+   *
+   * IMPORTANT NOTE: It is NOT safe to rename JsNames after this pass is performed. E.g.
+   *
+   * Consider an output  JavaScript for two unrelated classes:
+   * defineSeed(...) //class A
+   * _.a
+   * _.m1 = function() { return this.a; }
+   *
+   * defineSeed(...) // class B
+   * _.a
+   * _.m2 = function() { return this.a; }
+   *
+   * Here m1() in class A and m2 in class B have identical parameters and bodies; hence the result
+   * will be
+   *
+   * defineSeed(...) //class A
+   * _.a
+   * _.m1 = g1
+   *
+   * defineSeed(...) // class B
+   * _.a
+   * _.m2 = g1
+   *
+   * function g1() { return this.a; }
+   *
+   * The reference to this.a in g1 will be to either A.a or B.a and as long as those names remain
+   * the same the removal was correct. However if A.a gets renamed then A.m1() and B.m2() would
+   * no longer have been identical hence the dedup that is already done is incorrect.
+   *
+   * @param program the program to optimize
+   * @param nameGenerator a freshNameGenerator to assign fresh names to deduped functions that are
+   *                      lifted to the global scope
+   * @return {@code true} if it made any changes; {@code false} otherwise.
+   */
+  public static boolean exec(JsProgram program, FreshNameGenerator nameGenerator) {
+    return new JsDuplicateFunctionRemover(program, nameGenerator).execImpl();
   }
 
   private final JsProgram program;
 
-  public JsDuplicateFunctionRemover(JsProgram program) {
+  /**
+   * A FreshNameGenerator instance to obtain fresh top scope names consistent with the
+   * naming strategy used.
+   */
+  private FreshNameGenerator freshNameGenerator;
+
+
+  public JsDuplicateFunctionRemover(JsProgram program, FreshNameGenerator freshNameGenerator) {
     this.program = program;
+    this.freshNameGenerator = freshNameGenerator;
   }
 
-  private boolean execImpl(JsBlock fragment) {
-    DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
-    dfbr.accept(fragment);
-    int count = 0;
-    Map<JsFunction, JsName> hoistMap = new HashMap<JsFunction, JsName>();
-    // Hoist all anonymous versions
-    Map<JsFunction, JsFunction> dupMethodMap = dfbr.getDuplicateMethodMap();
-    for (JsFunction x : dupMethodMap.values()) {
-      if (!hoistMap.containsKey(x)) {
+  private boolean execImpl() {
+    boolean changed = false;
+    for (int i = 0; i < program.getFragmentCount(); i++) {
+      JsBlock fragment = program.getFragmentBlock(i);
+
+      DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
+      dfbr.accept(fragment);
+      Map<JsFunction, JsName> newNamesByHoistedFunction = new HashMap<JsFunction, JsName>();
+      // Hoist all anonymous duplicate functions.
+      Map<JsFunction, JsFunction> dupMethodMap = dfbr.getDuplicateMethodMap();
+      for (JsFunction dupMethod : dupMethodMap.values()) {
+        if (newNamesByHoistedFunction.containsKey(dupMethod)) {
+          continue;
+        }
         // move function to top scope and re-declaring it with a unique name
-        JsName newName = program.getScope().declareName("_DUP" + count++);
-        JsFunction newFunc = new JsFunction(x.getSourceInfo(),
-            program.getScope(), newName, x.isFromJava());
-        // we're not using the old function anymore, we can use reuse the body instead of cloning it
-        newFunc.setBody(x.getBody());
+        JsName newName = program.getScope().declareName(freshNameGenerator.getFreshName());
+        JsFunction newFunc = new JsFunction(dupMethod.getSourceInfo(),
+            program.getScope(), newName, dupMethod.isFromJava());
+        // we're not using the old function anymore, we can use reuse the body
+        // instead of cloning it
+        newFunc.setBody(dupMethod.getBody());
         // also copy the parameters from the old function
-        newFunc.getParameters().addAll(x.getParameters());
+        newFunc.getParameters().addAll(dupMethod.getParameters());
         // add the new function to the top level list of statements
         fragment.getStatements().add(newFunc.makeStmt());
-        hoistMap.put(x, newName);
+        newNamesByHoistedFunction.put(dupMethod, newName);
       }
+
+      ReplaceDuplicateInvocationNameRefs rdup = new ReplaceDuplicateInvocationNameRefs(
+          dfbr.getDuplicateMap(), dfbr.getBlacklist(), dupMethodMap, newNamesByHoistedFunction);
+      rdup.accept(fragment);
+      changed = changed || rdup.didChange();
     }
 
-    ReplaceDuplicateInvocationNameRefs rdup = new ReplaceDuplicateInvocationNameRefs(
-        dfbr.getDuplicateMap(), dfbr.getBlacklist(), dupMethodMap, hoistMap);
-    rdup.accept(fragment);
-    return rdup.didChange();
+    if (changed) {
+      JsUnusedFunctionRemover.exec(program);
+    }
+    return changed;
   }
 }

@@ -111,6 +111,7 @@ import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsCoerceIntShift;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
+import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
@@ -125,7 +126,6 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.SizeBreakdown;
-import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -446,20 +446,10 @@ public class JavaToJavaScriptCompiler {
       switch (options.getOutput()) {
         case OBFUSCATED:
           obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
-          JsObfuscateNamer.exec(jsProgram, propertyOracles);
-          if (options.shouldRemoveDuplicateFunctions()) {
-            if (JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
-              boolean changed = false;
-              for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
-                JsBlock fragment = jsProgram.getFragmentBlock(i);
-                changed = JsDuplicateFunctionRemover.exec(jsProgram, fragment) || changed;
-              }
-              if (changed) {
-                JsUnusedFunctionRemover.exec(jsProgram);
-                // run again
-                JsObfuscateNamer.exec(jsProgram, propertyOracles);
-              }
-            }
+          FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram, propertyOracles);
+          if (options.shouldRemoveDuplicateFunctions() &&
+              JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
+            JsDuplicateFunctionRemover.exec(jsProgram, freshNameGenerator);
           }
           break;
         case PRETTY:
