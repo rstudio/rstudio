@@ -209,6 +209,18 @@ public class SourceShim extends Composite
       }
    }
    
+   public void closeAllSourceDocs(String caption, Command onCompleted)
+   {
+      if (source_ != null)
+      {
+         source_.closeAllSourceDocs(caption, onCompleted);
+      }
+      else
+      {
+         onCompleted.execute();
+      }
+   }
+   
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
    {
       if (source_ != null)

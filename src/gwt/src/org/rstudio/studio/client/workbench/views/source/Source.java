@@ -1021,9 +1021,13 @@ public class Source implements InsertSourceHandler,
       return null;
    }
    
- 
    @Handler
    public void onCloseAllSourceDocs()
+   {
+      closeAllSourceDocs("Close All",  null);
+   }
+   
+   public void closeAllSourceDocs(String caption, Command onCompleted)
    { 
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
@@ -1050,9 +1054,10 @@ public class Source implements InsertSourceHandler,
       };
       
       // save targets
-      saveEditingTargetsWithPrompt("Close All",
+      saveEditingTargetsWithPrompt(caption,
                                    dirtyTargets, 
-                                   closeAllTabsCommand,
+                                   CommandUtil.join(closeAllTabsCommand,
+                                                    onCompleted),
                                    null);
       
    }

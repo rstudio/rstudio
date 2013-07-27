@@ -102,6 +102,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       add(restoreLastProject_);
+      
+      add(checkboxPref("Restore previously open source documents at startup", prefs_.restoreSourceDocuments()));
         
       add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
       lessSpaced(loadRData_); 
