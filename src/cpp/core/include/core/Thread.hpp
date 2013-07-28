@@ -46,7 +46,7 @@ template <typename T>
 class ThreadsafeValue : boost::noncopyable
 {
 public:
-   ThreadsafeValue(const T& value) : value_(value) {}
+   explicit ThreadsafeValue(const T& value = T()) : value_(value) {}
    virtual ~ThreadsafeValue() {}
    
    T get()
