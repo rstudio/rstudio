@@ -51,6 +51,9 @@ public abstract class MouseEvent<H extends EventHandler>
    * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_LEFT},
    * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_RIGHT},
    * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_MIDDLE}
+   * <p>
+   * Note: this is unreliable for events not caused by the depression
+   * or release of a mouse button.
    * 
    * @return the button value
    */
