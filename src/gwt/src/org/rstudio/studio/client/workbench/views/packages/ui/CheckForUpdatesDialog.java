@@ -22,6 +22,7 @@ import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -51,13 +52,13 @@ import com.google.gwt.view.client.NoSelectionModel;
 
 public class CheckForUpdatesDialog extends ModalDialog<ArrayList<PackageUpdate>>
 {
-
    public CheckForUpdatesDialog(
          GlobalDisplay globalDisplay,
          ServerDataSource<JsArray<PackageUpdate>> updatesDS,
-         OperationWithInput<ArrayList<PackageUpdate>> checkOperation)
+         OperationWithInput<ArrayList<PackageUpdate>> checkOperation,
+         Operation cancelOperation)
    {
-      super("Update Packages", checkOperation);
+      super("Update Packages", checkOperation, cancelOperation);
       globalDisplay_ = globalDisplay;
       updatesDS_ = updatesDS;
       

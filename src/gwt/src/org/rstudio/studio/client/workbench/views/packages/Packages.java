@@ -377,7 +377,16 @@ public class Packages
                                                                installContext);
                executeWithLoadedPackageCheck(cmd);
             }  
-      }).showModal();
+         },
+         new Operation() {
+            @Override
+            public void execute()
+            {
+               // cancel emits an empty console input line to clear
+               // the busy indicator
+               events_.fireEvent(new SendToConsoleEvent("", true));
+            }
+         }).showModal();
    }
    
    
