@@ -437,7 +437,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
       <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
       <shortcut refid="restartR" value="Cmd+Shift+0"/>
-      <shortcut refid="debugBreakpoint" value="Ctrl+Shift+B"/>
+      <shortcut refid="debugBreakpoint" value="Shift+F9"/>
       <shortcut refid="debugStep" value="Shift+F10"/>
       <shortcut refid="debugContinue" value="Shift+F5"/>
       <shortcut refid="debugStop" value="Shift+F8"/>
