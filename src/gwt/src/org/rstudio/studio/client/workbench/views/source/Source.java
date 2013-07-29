@@ -247,6 +247,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.checkSpelling());
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
+      dynamicCommands_.add(commands.debugBreakpoint());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

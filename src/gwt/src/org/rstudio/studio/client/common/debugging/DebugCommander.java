@@ -86,6 +86,7 @@ public class DebugCommander
       debugServer_ = debugServer;
       breakpointManager_ = breakpointManager;
       workbench_ = workbench;
+      commands_ = commands;
       
       eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus_.addHandler(SessionInitEvent.TYPE, this);
@@ -93,7 +94,9 @@ public class DebugCommander
       eventBus_.addHandler(RestartStatusEvent.TYPE, this);
       
       binder.bind(commands, this);
-
+     
+      setDebugCommandsEnabled(false);
+      
       // The callback supplied whenever we execute a portion of a file for
       // debugging. The server's response indicates where execution paused and
       // why.
@@ -423,8 +426,16 @@ public class DebugCommander
       if (debugging_ != debugging)
       {
          debugging_ = debugging;
+         setDebugCommandsEnabled(debugging_);
          eventBus_.fireEvent(new DebugModeChangedEvent(debugging_));
       }
+   }
+   
+   private void setDebugCommandsEnabled(boolean enabled)
+   {
+      commands_.debugContinue().setEnabled(enabled);
+      commands_.debugStep().setEnabled(enabled);
+      commands_.debugStop().setEnabled(enabled);
    }
    
    // These values are understood by the server; if you change them, you'll need
@@ -440,6 +451,7 @@ public class DebugCommander
    private final BreakpointManager breakpointManager_;
    private final Session session_;
    private final WorkbenchContext workbench_;
+   private final Commands commands_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;

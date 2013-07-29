@@ -308,9 +308,11 @@ public abstract class
    public abstract AppCommand clearRecentFiles();
 
    // Debugging
+   public abstract AppCommand debugBreakpoint();
    public abstract AppCommand debugContinue();
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();
+   public abstract AppCommand debugHelp();   
 
    // Other
    public abstract AppCommand checkSpelling();   

@@ -1913,6 +1913,12 @@ public class TextEditingTarget implements EditingTarget
       else
          doReflowComment("(#)");
    }
+   
+   @Handler
+   void onDebugBreakpoint()
+   {
+      docDisplay_.toggleBreakpointAtCursor();
+   }
 
    void doReflowComment(String commentPrefix)
    {
@@ -2566,7 +2572,13 @@ public class TextEditingTarget implements EditingTarget
    {
       globalDisplay_.openRStudioLink("rcpp_help");
    }
-     
+
+   @Handler
+   void onDebugHelp()
+   {
+      globalDisplay_.openRStudioLink("visual_debugger");
+   }
+   
    @Handler
    void onKnitToHTML()
    {
