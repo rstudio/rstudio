@@ -208,6 +208,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsFileDiff());
       dynamicCommands_.add(commands.vcsFileRevert());
       dynamicCommands_.add(commands.executeCode());
+      dynamicCommands_.add(commands.executeCodeWithoutFocus());
       dynamicCommands_.add(commands.executeAllCode());
       dynamicCommands_.add(commands.executeToCurrentLine());
       dynamicCommands_.add(commands.executeFromCurrentLine());
@@ -1021,9 +1022,13 @@ public class Source implements InsertSourceHandler,
       return null;
    }
    
- 
    @Handler
    public void onCloseAllSourceDocs()
+   {
+      closeAllSourceDocs("Close All",  null);
+   }
+   
+   public void closeAllSourceDocs(String caption, Command onCompleted)
    { 
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
@@ -1050,9 +1055,10 @@ public class Source implements InsertSourceHandler,
       };
       
       // save targets
-      saveEditingTargetsWithPrompt("Close All",
+      saveEditingTargetsWithPrompt(caption,
                                    dirtyTargets, 
-                                   closeAllTabsCommand,
+                                   CommandUtil.join(closeAllTabsCommand,
+                                                    onCompleted),
                                    null);
       
    }

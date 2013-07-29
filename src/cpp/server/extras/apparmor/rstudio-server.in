@@ -29,6 +29,7 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
 
      #include <abstractions/base>
      #include <abstractions/nameservice>
+     #include <abstractions/ssl_certs>
 
      capability setgid,
      capability setuid,
@@ -39,8 +40,9 @@ ${CMAKE_INSTALL_PREFIX}/bin/rserver {
      owner /tmp/** rw,
      /tmp/rstudio-rsession/** rw,
      /tmp/rstudio-rserver/** rw,
+     /etc/rstudio/** r,
 
-     ${CMAKE_INSTALL_PREFIX}/metrics/rserver-metrics Ux,
+     ${CMAKE_INSTALL_PREFIX}/metrics/rserver-* Ux,
 
      ${CMAKE_INSTALL_PREFIX}/bin/rserver-* Ux,
 

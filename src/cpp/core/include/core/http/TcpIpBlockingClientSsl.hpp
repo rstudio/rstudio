@@ -25,13 +25,14 @@ namespace http {
 
 inline Error sendSslRequest(const std::string& address,
                             const std::string& port,
+                            bool verify,
                             const http::Request& request,
-                            http::Response* pResponse)
+                            http::Response* pResponse,)
 {
    // create client
    boost::asio::io_service ioService;
    boost::shared_ptr<TcpIpAsyncClientSsl> pClient(
-         new TcpIpAsyncClientSsl(ioService, address, port));
+         new TcpIpAsyncClientSsl(ioService, address, port, verify));
 
    // execute blocking request
    return sendRequest<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >

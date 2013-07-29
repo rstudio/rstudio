@@ -249,6 +249,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // use rcpp template
          useRcppTemplate().setGlobalValue(
                     newUiPrefs.useRcppTemplate().getGlobalValue());
+         
+         // restore source documents
+         restoreSourceDocuments().setGlobalValue(
+                    newUiPrefs.restoreSourceDocuments().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

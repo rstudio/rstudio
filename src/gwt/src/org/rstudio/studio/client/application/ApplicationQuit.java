@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
@@ -62,6 +63,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -77,6 +79,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           EventBus eventBus,
                           WorkbenchContext workbenchContext,
                           SourceShim sourceShim,
+                          Provider<UIPrefs> pUiPrefs,
                           Commands commands,
                           Binder binder)
    {
@@ -86,6 +89,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       eventBus_ = eventBus;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
+      pUiPrefs_ = pUiPrefs;
       
       // bind to commands
       binder.bind(commands, this);
@@ -137,7 +141,21 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
       else
       {
-         handleUnsavedChanges(caption, quitContext);
+         // if we aren't restoring source documents then close them all now
+         if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
+         {
+            sourceShim_.closeAllSourceDocs(caption, new Command() {
+               @Override
+               public void execute()
+               {
+                  handleUnsavedChanges(caption, quitContext);
+               }
+            });
+         }
+         else
+         {
+            handleUnsavedChanges(caption, quitContext);
+         }
       }
    }
    
@@ -631,6 +649,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<UIPrefs> pUiPrefs_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;

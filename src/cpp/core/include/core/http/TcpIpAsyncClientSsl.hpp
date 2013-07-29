@@ -38,13 +38,23 @@ class TcpIpAsyncClientSsl
 public:
    TcpIpAsyncClientSsl(boost::asio::io_service& ioService,
                        const std::string& address,
-                       const std::string& port)
+                       const std::string& port,
+                       bool verify)
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
        sslContext_(ioService, boost::asio::ssl::context::sslv23_client),
        address_(address),
-       port_(port)
+       port_(port),
+       verify_(verify)
    {
-      sslContext_.set_verify_mode(boost::asio::ssl::context::verify_none);
+      if (verify_)
+      {
+         sslContext_.set_default_verify_paths();
+         sslContext_.set_verify_mode(boost::asio::ssl::context::verify_peer);
+      }
+      else
+      {
+         sslContext_.set_verify_mode(boost::asio::ssl::context::verify_none);
+      }
 
       // use scoped ptr so we can call the constructor after we've configured
       // the ssl::context (immediately above)
@@ -80,6 +90,11 @@ private:
 
    void performHandshake()
    {
+      if (verify_)
+      {
+         ptrSslStream_->set_verify_callback(
+                            boost::asio::ssl::rfc2818_verification(address_));
+      }
       ptrSslStream_->async_handshake(
             boost::asio::ssl::stream_base::client,
             boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
@@ -131,6 +146,7 @@ private:
    boost::scoped_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> > ptrSslStream_;
    std::string address_;
    std::string port_;
+   bool verify_;
 };
    
 

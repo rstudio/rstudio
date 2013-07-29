@@ -698,6 +698,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Run"
         menuLabel="Run _Line(s)"
         desc="Run the current line or selection"/>
+   <cmd id="executeCodeWithoutFocus"/>
    <cmd id="executeToCurrentLine"
         menuLabel="Run From _Beginning To Line"
         desc="Run from the beginning of the source file up through the current line"/>

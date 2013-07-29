@@ -273,6 +273,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("use_rcpp_template", true);
    }
    
+   public PrefValue<Boolean> restoreSourceDocuments()
+   {
+      return bool("restore_source_documents", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
