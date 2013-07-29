@@ -34,14 +34,17 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -265,21 +268,36 @@ class Recompiler {
       String propName = entry.getKey();
       String propValue = entry.getValue();
       logger.log(TreeLogger.Type.INFO, "binding: " + propName + "=" + propValue);
-      overrideBinding(moduleDef, propName, propValue);
+      maybeSetBinding(moduleDef, propName, propValue);
     }
 
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
+    overrideBinding(moduleDef, "superdevmode", "on");
     return moduleDef;
   }
 
-  private static void overrideBinding(ModuleDef module, String propName, String newValue) {
+  /**
+   * Sets a binding unless it's hard-coded in the GWT application.
+   */
+  private static void maybeSetBinding(ModuleDef module, String propName, String newValue) {
     Property prop = module.getProperties().find(propName);
     if (prop instanceof BindingProperty) {
       BindingProperty binding = (BindingProperty) prop;
 
-      if (binding.isAllowedValue(newValue) || "compiler.useSourceMaps".equals(propName)) {
+      if (binding.isAllowedValue(newValue)) {
         binding.setAllowedValues(binding.getRootCondition(), newValue);
       }
+    }
+  }
+
+  /**
+   * Sets a binding even if it's set to a different value in the GWT application.
+   */
+  private static void overrideBinding(ModuleDef module, String propName, String newValue) {
+    Property prop = module.getProperties().find(propName);
+    if (prop instanceof BindingProperty) {
+      BindingProperty binding = (BindingProperty) prop;
+      binding.setAllowedValues(binding.getRootCondition(), newValue);
     }
   }
 

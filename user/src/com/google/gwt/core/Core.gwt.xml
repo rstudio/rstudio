@@ -44,6 +44,18 @@
       <when-type-is class="com.google.gwt.core.client.impl.UnloadSupport"/>
   </replace-with>
 
+  <!--
+    A property that can be used to see if Super Dev Mode is on. It should only be set
+    by Super Dev Mode.
+  -->
+  <define-property name="superdevmode" values="off, on"/>
+  <set-property name="superdevmode" value="off"/>
+
+  <replace-with class="com.google.gwt.core.client.impl.SuperDevModeLogger">
+      <when-property-is name="superdevmode" value="on"/>
+      <when-type-is class="com.google.gwt.core.shared.impl.JsLogger"/>
+  </replace-with>
+
   <define-linker name="soycReport" class="com.google.gwt.core.linker.SoycReportLinker" />
   <define-linker name="symbolMaps" class="com.google.gwt.core.linker.SymbolMapsLinker" />
 

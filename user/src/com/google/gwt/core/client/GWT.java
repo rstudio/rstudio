@@ -235,16 +235,16 @@ public final class GWT {
   }
 
   /**
-   * Logs a message to the development shell logger in Development Mode. Calls
-   * are optimized out in Production Mode.
+   * Logs a message to the development shell logger in Development Mode, or to
+   * the console in Super Dev Mode. Calls are optimized out in Production Mode.
    */
   public static void log(String message) {
     com.google.gwt.core.shared.GWT.log(message);
   }
 
   /**
-   * Logs a message to the development shell logger in Development Mode. Calls
-   * are optimized out in Production Mode.
+   * Logs a message to the development shell logger in Development Mode, or to
+   * the console in Super Dev Mode. Calls are optimized out in Production Mode.
    */
   public static void log(String message, Throwable e) {
     com.google.gwt.core.shared.GWT.log(message, e);

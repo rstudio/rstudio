@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.shared;
 
+import com.google.gwt.core.shared.impl.JsLogger;
+
 /**
  * Supports core functionality that in some cases requires direct support from
  * the compiler and runtime systems such as runtime type information and
@@ -27,6 +29,19 @@ public final class GWT {
    * the implementation for certain methods.
    */
   private static GWTBridge sGWTBridge = null;
+
+  /**
+   * The implementation of GWT.log() to use in JavaScript.
+   */
+  private static final JsLogger logger;
+
+  static {
+    if (isScript()) {
+      logger = create(JsLogger.class);
+    } else {
+      logger = null;
+    }
+  }
 
   /**
    * Instantiates a class via deferred binding.
@@ -116,20 +131,22 @@ public final class GWT {
   }
 
   /**
-   * Logs a message to the development shell logger in Development Mode. Calls
-   * are optimized out in Production Mode.
+   * Logs a message to the development shell logger in Development Mode, or to
+   * the JavaScript console in Super Dev Mode. Calls are optimized out in Production Mode.
    */
   public static void log(String message) {
     log(message, null);
   }
 
   /**
-   * Logs a message to the development shell logger in Development Mode. Calls
-   * are optimized out in Production Mode.
+   * Logs a message to the development shell logger in Development Mode, or to
+   * the JavaScript console in Super Dev Mode. Calls are optimized out in Production Mode.
    */
   public static void log(String message, Throwable e) {
     if (sGWTBridge != null) {
       sGWTBridge.log(message, e);
+    } else if (logger != null) {
+      logger.log(message, e);
     }
   }
 
