@@ -15,6 +15,9 @@ if (NOT PACKAGE_ARCHITECTURE)
    endif()
 endif()
 
+# don't automatically resolve rpm dependencies
+set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+
 # configuration specific
 if(RSTUDIO_SERVER)
 
@@ -37,7 +40,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, ")
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, openssl098e, ")
 
 elseif(RSTUDIO_DESKTOP)
  
