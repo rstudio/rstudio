@@ -10,5 +10,7 @@ cd $CMAKE_VERSION
 ./bootstrap 
 make
 sudo make install
-
+cd ..
+rm -rf $CMAKE_VERSION
+rm -f $CMAKE_TARBALL
  
