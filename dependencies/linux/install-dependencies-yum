@@ -23,6 +23,7 @@ sudo yum install -y gcc
 sudo yum install -y gcc-c++
 sudo yum install -y cmake
 sudo yum install -y rpmdevtools
+sudo yum install -y wget
 
 # core system libraries
 sudo yum install -y libuuid-devel
@@ -38,7 +39,7 @@ sudo yum install -y boost-devel
 sudo yum install -y pango-devel
 
 # gwt prereqs
-sudo yum install -y java-1.6.0-openjdk 
+sudo yum install -y java-1.7.0-openjdk 
 sudo yum install -y ant
 sudo yum install -y xml-commons-apis
 
