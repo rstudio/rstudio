@@ -310,6 +310,7 @@ public class CodeSplitter2 {
     new CodeSplitter2(
         logger, jprogram, jsprogram, map, fragmentsToMerge,
         dependencyRecorder, leftOverMergeLimit).execImpl();
+    dependencyRecorder.close();
     codeSplitterEvent.end();
   }
   
