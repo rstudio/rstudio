@@ -53,6 +53,7 @@ import com.google.gwt.dev.jjs.test.RunAsyncMetricsIntegrationTest;
 import com.google.gwt.dev.jjs.test.RunAsyncTest;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest;
 import com.google.gwt.dev.jjs.test.UnstableGeneratorTest;
+import com.google.gwt.dev.jjs.test.UnusedImportsTest;
 import com.google.gwt.dev.jjs.test.VarargsTest;
 import com.google.gwt.dev.jjs.test.singlejso.TypeHierarchyTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -106,6 +107,7 @@ public class CompilerSuite {
     suite.addTestSuite(SingleJsoImplTest.class);
     suite.addTestSuite(StackTraceLineNumbersTest.class);
     suite.addTestSuite(TypeHierarchyTest.class);
+    suite.addTestSuite(UnusedImportsTest.class);
     suite.addTestSuite(UnstableGeneratorTest.class);
     suite.addTestSuite(VarargsTest.class);
     // $JUnit-END$

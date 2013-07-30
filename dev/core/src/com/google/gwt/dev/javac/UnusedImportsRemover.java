@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.ArrayQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ArrayTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -55,25 +56,25 @@ public class UnusedImportsRemover {
     public void endVisit(
         SingleNameReference singleNameReference,
         BlockScope scope) {
-      usedNames.add(new String(singleNameReference.token));
+      addName(singleNameReference);
     }
 
     public void endVisit(
         SingleNameReference singleNameReference,
         ClassScope scope) {
-      usedNames.add(new String(singleNameReference.token));
+      addName(singleNameReference);
     }
 
     public void endVisit(
         SingleTypeReference singleTypeReference,
         BlockScope scope) {
-      usedNames.add(new String(singleTypeReference.token));
+      addName(singleTypeReference);
     }
 
     public void endVisit(
         SingleTypeReference singleTypeReference,
         ClassScope scope) {
-      usedNames.add(new String(singleTypeReference.token));
+      addName(singleTypeReference);
     }
 
     public void endVisit(MessageSend messageSend, BlockScope scope) {
@@ -83,67 +84,83 @@ public class UnusedImportsRemover {
     }
 
     public void endVisit(ArrayTypeReference arrayTypeReference, BlockScope scope) {
-      usedNames.add(new String(arrayTypeReference.token));
+      addName(arrayTypeReference);
     }
 
     public void endVisit(ArrayTypeReference arrayTypeReference, ClassScope scope) {
-      usedNames.add(new String(arrayTypeReference.token));
+      addName(arrayTypeReference);
     }
 
     public void endVisit(
         ArrayQualifiedTypeReference arrayQualifiedTypeReference,
         BlockScope scope) {
-      usedNames.add(new String(arrayQualifiedTypeReference.tokens[0]));
+      addName(arrayQualifiedTypeReference);
     }
 
     public void endVisit(
         ArrayQualifiedTypeReference arrayQualifiedTypeReference,
         ClassScope scope) {
-      usedNames.add(new String(arrayQualifiedTypeReference.tokens[0]));
+      addName(arrayQualifiedTypeReference);
     }
 
     public void endVisit(ParameterizedQualifiedTypeReference parameterizedQualifiedTypeReference,
         BlockScope scope) {
-      usedNames.add(new String(parameterizedQualifiedTypeReference.tokens[0]));
+      addName(parameterizedQualifiedTypeReference);
     }
 
     public void endVisit(ParameterizedQualifiedTypeReference parameterizedQualifiedTypeReference,
         ClassScope scope) {
-      usedNames.add(new String(parameterizedQualifiedTypeReference.tokens[0]));
+      addName(parameterizedQualifiedTypeReference);
     }
 
     public void endVisit(ParameterizedSingleTypeReference parameterizedSingleTypeReference,
         BlockScope scope) {
-      usedNames.add(new String(parameterizedSingleTypeReference.token));
+      addName(parameterizedSingleTypeReference);
     }
 
     public void endVisit(ParameterizedSingleTypeReference parameterizedSingleTypeReference,
         ClassScope scope) {
-      usedNames.add(new String(parameterizedSingleTypeReference.token));
+      addName(parameterizedSingleTypeReference);
     }
 
     public void endVisit(
         QualifiedTypeReference qualifiedTypeReference,
         BlockScope scope) {
-      usedNames.add(new String(qualifiedTypeReference.tokens[0]));
+      addName(qualifiedTypeReference);
     }
 
     public void endVisit(
         QualifiedTypeReference qualifiedTypeReference,
         ClassScope scope) {
-      usedNames.add(new String(qualifiedTypeReference.tokens[0]));
+      addName(qualifiedTypeReference);
     }
 
     public void endVisit(
         QualifiedNameReference qualifiedNameReference,
         BlockScope scope) {
-      usedNames.add(new String(qualifiedNameReference.tokens[0]));
+      addName(qualifiedNameReference);
     }
 
     public void endVisit(
         QualifiedNameReference qualifiedNameReference,
         ClassScope scope) {
-      usedNames.add(new String(qualifiedNameReference.tokens[0]));
+      addName(qualifiedNameReference);
+    }
+
+    public void addName(QualifiedNameReference reference) {
+      usedNames.add(new String(reference.tokens[0]));
+    }
+
+    public void addName(QualifiedTypeReference reference) {
+      usedNames.add(new String(reference.tokens[0]));
+    }
+
+    public void addName(SingleTypeReference reference) {
+      usedNames.add(new String(reference.token));
+    }
+
+    public void addName(SingleNameReference reference) {
+      usedNames.add(new String(reference.token));
     }
   }
 
@@ -160,6 +177,19 @@ public class UnusedImportsRemover {
     for (TypeDeclaration typeDecl : cud.types) {
       typeDecl.traverse(astVisitor, cud.scope);
     }
+
+    // for some reason JDT does not traverse package annotations even if the traversal started at
+    // the Compilation unit declaration. Hence we do it manually.
+    if (cud.currentPackage != null && cud.currentPackage.annotations != null) {
+      for (Annotation annotation : cud.currentPackage.annotations) {
+        if (annotation.type instanceof SingleTypeReference) {
+          astVisitor.addName((SingleTypeReference) annotation.type);
+        } else if (annotation.type instanceof QualifiedTypeReference) {
+          astVisitor.addName((QualifiedTypeReference) annotation.type);
+        }
+      }
+    }
+
     List<ImportReference> newImports = new ArrayList<ImportReference>();
     for (ImportReference importRef : cud.imports) {
       String importName =
