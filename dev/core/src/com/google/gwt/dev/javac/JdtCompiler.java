@@ -370,11 +370,15 @@ public class JdtCompiler {
       this.diet = false;
       CompilationUnitDeclaration decl = super.parse(sourceUnit, compilationResult);
       this.diet = saveDiet;
-      decl.types = stripGwtIncompatible(decl.types);
-      // Fix anonymous inner classes
-      stripGwtIncompatibleAnonymousInnerClasses(decl);
-      // Lastly remove any unused imports
-      UnusedImportsRemover.exec(decl);
+      if (removeGwtIncomptatible) {
+        decl.types = stripGwtIncompatible(decl.types);
+        // Fix anonymous inner classes
+        stripGwtIncompatibleAnonymousInnerClasses(decl);
+      }
+      if (removeUnusedImports) {
+        // Lastly remove any unused imports
+        UnusedImportsRemover.exec(decl);
+      }
       return decl;
     }
   }
@@ -756,6 +760,16 @@ public class JdtCompiler {
   private final SourceLevel sourceLevel;
 
   /**
+   * Controls whether the compiler strips GwtIncompatible annotations.
+   */
+  private static boolean removeGwtIncomptatible = true;
+
+  /**
+   * Controls whether the compiler strips unused imports.
+   */
+  private static boolean removeUnusedImports = true;
+
+  /**
    * Maps from SourceLevel, the GWT compiler Java source compatibility levels, to JDT
    * Java source compatibility levels.
    */
@@ -1006,6 +1020,20 @@ public class JdtCompiler {
 
   public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
     additionalTypeProviderDelegate = newDelegate;
+  }
+
+  /**
+   * Sets whether the compiler should remove GwtIncompatible annotated classes amd members.
+   */
+  public static void setRemoveGwtIncomptatible(boolean remove) {
+    removeGwtIncomptatible = remove;
+  }
+
+  /**
+   * Sets whether the compiler should remove unused imports.
+   */
+  public static void setRemoveUnusedImports(boolean remove) {
+    removeUnusedImports = remove;
   }
 
   private void addBinaryTypes(Collection<CompiledClass> compiledClasses) {
