@@ -1229,22 +1229,22 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Maximize Console"/>
 
    <cmd id="debugBreakpoint"
-        menuLabel="Toggle Breakpoint"
+        menuLabel="Toggle _Breakpoint"
         desc="Set or remove a breakpoint on the current line of code"/>
    <cmd id="debugContinue"
-        menuLabel="Continue"
+        menuLabel="_Continue"
         buttonLabel="Continue"
         desc="Continue execution until the next breakpoint is encountered"/>
    <cmd id="debugStop"
-        menuLabel="Stop Debugging"
+        menuLabel="_Stop Debugging"
         buttonLabel="Stop"
         desc="Exit debug mode"/>
    <cmd id="debugStep"
-        menuLabel="Execute Next Line"
+        menuLabel="E_xecute Next Line"
         buttonLabel="Next"
         desc="Execute the next line of code"/>
    <cmd id="debugHelp"
-        menuLabel="Visual Debugging Guide"
-        desc="Guide to Visual Debugging with RStudio"/>
+        menuLabel="Debugging _Help"
+        desc="Guide to debugging features"/>
         
 </commands>
