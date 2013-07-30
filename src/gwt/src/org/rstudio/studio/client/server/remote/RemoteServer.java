@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
@@ -2881,16 +2882,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void getFunctionSyncState(
+   public void getFunctionState(
          String functionName,
          String fileName,
-         ServerRequestCallback<Boolean> requestCallback)
+         ServerRequestCallback<FunctionState> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
       sendRequest(RPC_SCOPE,
-                  GET_FUNCTION_SYNC_STATE,
+                  GET_FUNCTION_STATE,
                   params,
                   requestCallback);
    }
@@ -3167,7 +3168,7 @@ public class RemoteServer implements Server
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
-   private static final String GET_FUNCTION_SYNC_STATE = "get_function_sync_state";
+   private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    
    private static final String LOG = "log";

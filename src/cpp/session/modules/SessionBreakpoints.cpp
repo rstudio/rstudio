@@ -51,28 +51,38 @@ namespace
 
 void onPackageLoaded(const std::string& pkgname)
 {
-   // check whether this package is the one currently under development
-   const projects::ProjectContext& projectContext = projects::projectContext();
-   if (projectContext.config().buildType == r_util::kBuildTypePackage &&
-       projectContext.packageInfo().name() == pkgname)
-   {
-      // if it is, emit a package loaded event to the client
-      ClientEvent packageLoadedEvent(client_events::kActivePackageLoaded);
-      module_context::enqueClientEvent(packageLoadedEvent);
-   }
+   ClientEvent packageLoadedEvent(
+            client_events::kPackageLoaded,
+            json::Value(pkgname));
+   module_context::enqueClientEvent(packageLoadedEvent);
+}
+
+void onPackageUnloaded(const std::string& pkgname)
+{
+   ClientEvent packageUnloadedEvent(
+            client_events::kPackageUnloaded,
+            json::Value(pkgname));
+   module_context::enqueClientEvent(packageUnloadedEvent);
 }
 
 // Called by the client to ascertain whether the given function in the given
 // file is in sync with the corresponding R object
-Error getFunctionSyncState(const json::JsonRpcRequest& request,
+Error getFunctionState(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   json::Object response;
    std::string functionName, fileName;
    Error error = json::readParams(request.params, &functionName, &fileName);
    if (error)
    {
        return error;
    }
+
+   // check whether the function is in a package
+   std::string packageName(module_context::packageNameForSourceFile(
+               module_context::resolveAliasedPath(fileName)));
+   response["is_package_function"] = packageName.length() > 0;
+   response["package_name"] = packageName;
 
    // get the source refs and code for the function
    SEXP srcRefs = NULL;
@@ -98,7 +108,9 @@ Error getFunctionSyncState(const json::JsonRpcRequest& request,
 
    // compare with the disk
    bool inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
-   pResponse->setResult(json::Value(inSync));
+   response["sync_state"] = inSync;
+   pResponse->setResult(response);
+
    return Success();
 }
 
@@ -136,10 +148,11 @@ Error initialize()
    using namespace module_context;
 
    events().onPackageLoaded.connect(onPackageLoaded);
+   events().onPackageUnloaded.connect(onPackageUnloaded);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "get_function_sync_state", getFunctionSyncState))
+      (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"));
 
    return initBlock.execute();

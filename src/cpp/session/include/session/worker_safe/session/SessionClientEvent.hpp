@@ -98,7 +98,8 @@ extern const int kContextDepthChanged;
 extern const int kEnvironmentAssigned;
 extern const int kEnvironmentRemoved;
 extern const int kBrowserLineChanged;
-extern const int kActivePackageLoaded;
+extern const int kPackageLoaded;
+extern const int kPackageUnloaded;
 }
    
 class ClientEvent

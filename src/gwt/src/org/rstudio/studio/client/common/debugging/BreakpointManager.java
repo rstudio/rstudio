@@ -22,10 +22,12 @@ import java.util.TreeSet;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
-import org.rstudio.studio.client.common.debugging.events.ActivePackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
+import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
+import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.BreakpointState;
+import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -73,8 +75,9 @@ import com.google.inject.Singleton;
 @Singleton
 public class BreakpointManager 
                implements SessionInitHandler, 
-                          ActivePackageLoadedEvent.Handler,
                           ContextDepthChangedEvent.Handler,
+                          PackageLoadedEvent.Handler,
+                          PackageUnloadedEvent.Handler,
                           ConsoleWriteInputHandler
 {
    @Inject
@@ -92,9 +95,10 @@ public class BreakpointManager
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
-      events_.addHandler(ActivePackageLoadedEvent.TYPE, this);
       events_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
+      events_.addHandler(PackageLoadedEvent.TYPE, this);
+      events_.addHandler(PackageUnloadedEvent.TYPE, this);
    }
    
    // Public methods ---------------------------------------------------------
@@ -141,15 +145,20 @@ public class BreakpointManager
       }      
       else if (immediately)
       {
-         server_.getFunctionSyncState(functionName, path,
-               new ServerRequestCallback<Boolean>()
+         server_.getFunctionState(functionName, path,
+               new ServerRequestCallback<FunctionState>()
          {
             @Override
-            public void onResponseReceived(Boolean inSync)
+            public void onResponseReceived(FunctionState state)
             {
+               if (state.isPackageFunction())
+               {
+                  breakpoint.markAsPackageBreakpoint(state.getPackageName());
+               }
+               
                // if the function lines up with the version on the server, set
                // the breakpoint now
-               if (inSync)
+               if (state.getSyncState())
                {
                   prepareAndSetFunctionBreakpoints(
                         new FileFunction(breakpoint));
@@ -305,15 +314,6 @@ public class BreakpointManager
    }
    
    @Override
-   public void onActivePackageLoaded(ActivePackageLoadedEvent event)
-   {
-      // when the active package is loaded (e.g. during Build & Reload), we
-      // lose trace state on all associated breakpoints--re-enable them.
-      resetBreakpointsInPath(
-            session_.getSessionInfo().getActiveProjectDir().getPath(), false);
-   }
-
-   @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
       // when a file is sourced, replay all the breakpoints in the file.
@@ -376,6 +376,18 @@ public class BreakpointManager
       
       // Record the new frame list.
       activeFunctions_ = activeFunctions;
+   }
+
+   @Override
+   public void onPackageLoaded(PackageLoadedEvent event)
+   {
+      updatePackageBreakpoints(event.getPackageName(), true);
+   }
+
+   @Override
+   public void onPackageUnloaded(PackageUnloadedEvent event)
+   {
+      updatePackageBreakpoints(event.getPackageName(), false);
    }
 
    // Private methods ---------------------------------------------------------
@@ -590,6 +602,38 @@ public class BreakpointManager
       breakpoints_.add(breakpoint);
       breakpointStateDirty_ = true;
       return breakpoint;
+   }
+   
+   private void updatePackageBreakpoints(String packageName, boolean enable)
+   {
+      Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
+      ArrayList<Breakpoint> breakpointsToDisable = new ArrayList<Breakpoint>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         if (breakpoint.isPackageBreakpoint() &&
+             breakpoint.getPackageName().equals(packageName))
+         {
+            if (enable)
+            {
+               functionsToBreak.add(new FileFunction(breakpoint));
+            }
+            else
+            {
+               breakpoint.setState(Breakpoint.STATE_INACTIVE);
+            }
+         }
+      }
+      if (enable)
+      {
+         for (FileFunction function: functionsToBreak)
+         {
+            prepareAndSetFunctionBreakpoints(function);
+         }
+      }
+      else
+      {
+         notifyBreakpointsSaved(breakpointsToDisable, true);
+      }
    }
      
    // Private classes ---------------------------------------------------------

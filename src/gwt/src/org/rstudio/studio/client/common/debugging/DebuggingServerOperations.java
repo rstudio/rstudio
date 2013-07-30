@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.JsArray;
 
+import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -38,10 +39,10 @@ public interface DebuggingServerOperations
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback);
    
-   public void getFunctionSyncState(
+   public void getFunctionState(
          String functionName,
          String fileName,
-         ServerRequestCallback<Boolean> requestCallback);
+         ServerRequestCallback<FunctionState> requestCallback);
    
    public void executeDebugSource(
          String fileName,

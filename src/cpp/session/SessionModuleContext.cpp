@@ -218,6 +218,12 @@ SEXP rs_packageLoaded(SEXP pkgnameSEXP)
    return R_NilValue;
 }
 
+SEXP rs_packageUnloaded(SEXP pkgnameSEXP)
+{
+   std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
+   module_context::events().onPackageUnloaded(pkgname);
+   return R_NilValue;
+}
 
 } // anonymous namespace
 
@@ -423,7 +429,14 @@ Error initialize()
    methodDef11.fun = (DL_FUNC) rs_packageLoaded;
    methodDef11.numArgs = 1;
    r::routines::addCallMethod(methodDef11);
-   
+
+   // register rs_packageUnloaded
+   R_CallMethodDef methodDef12;
+   methodDef12.name = "rs_packageUnloaded" ;
+   methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
+   methodDef12.numArgs = 1;
+   r::routines::addCallMethod(methodDef12);
+
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
 
