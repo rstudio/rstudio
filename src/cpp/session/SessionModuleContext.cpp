@@ -858,6 +858,29 @@ bool isPackageInstalled(const std::string& packageName)
    return !error ? installed : false;
 }
 
+std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
+{
+   // check whether we are in a package
+   FilePath sourceDir = sourceFilePath.parent();
+   if (sourceDir.filename() == "R" &&
+       sourceDir.parent().childPath("DESCRIPTION").exists())
+   {
+      r_util::RPackageInfo pkgInfo;
+      Error error = pkgInfo.read(sourceDir.parent());
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+
+      return pkgInfo.name();
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;

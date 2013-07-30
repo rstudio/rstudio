@@ -90,6 +90,9 @@ core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 
+// find the package name for a source file
+std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
+
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
 core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);
