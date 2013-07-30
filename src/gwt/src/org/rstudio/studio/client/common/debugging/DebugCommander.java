@@ -96,6 +96,7 @@ public class DebugCommander
       binder.bind(commands, this);
      
       setDebugCommandsEnabled(false);
+      commands_.debugBreakpoint().setEnabled(false);
       
       // The callback supplied whenever we execute a portion of a file for
       // debugging. The server's response indicates where execution paused and

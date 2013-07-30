@@ -1801,6 +1801,7 @@ public class Source implements InsertSourceHandler,
       commands_.saveSourceDocAs().setVisible(true);
       commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
+      commands_.debugBreakpoint().setVisible(true);
       
       // manage synctex commands
       manageSynctexCommands();
