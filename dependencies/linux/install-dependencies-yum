@@ -23,6 +23,7 @@ sudo yum install -y gcc
 sudo yum install -y gcc-c++
 sudo yum install -y cmake
 sudo yum install -y rpmdevtools
+sudo yum install -y wget
 
 # core system libraries
 sudo yum install -y libuuid-devel
