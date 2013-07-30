@@ -37,10 +37,10 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, ")
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, openssl098e, ")
 
 elseif(RSTUDIO_DESKTOP)
  
@@ -95,8 +95,8 @@ set(PACKAGE_LONG_DESCRIPTION "RStudio is a set of integrated tools designed to h
 # debian-specific
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}\n ${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.13)")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= 2.14.1)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.7)")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= 2.11.1)")
 
 # rpm-specific
 set(CPACK_RPM_PACKAGE_SUMMARY "${CPACK_PACKAGE_NAME}")
