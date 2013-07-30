@@ -370,7 +370,7 @@ public class JdtCompiler {
       this.diet = false;
       CompilationUnitDeclaration decl = super.parse(sourceUnit, compilationResult);
       this.diet = saveDiet;
-      if (removeGwtIncomptatible) {
+      if (removeGwtIncompatible) {
         decl.types = stripGwtIncompatible(decl.types);
         // Fix anonymous inner classes
         stripGwtIncompatibleAnonymousInnerClasses(decl);
@@ -762,7 +762,7 @@ public class JdtCompiler {
   /**
    * Controls whether the compiler strips GwtIncompatible annotations.
    */
-  private static boolean removeGwtIncomptatible = true;
+  private static boolean removeGwtIncompatible = true;
 
   /**
    * Controls whether the compiler strips unused imports.
@@ -1025,8 +1025,8 @@ public class JdtCompiler {
   /**
    * Sets whether the compiler should remove GwtIncompatible annotated classes amd members.
    */
-  public static void setRemoveGwtIncomptatible(boolean remove) {
-    removeGwtIncomptatible = remove;
+  public static void setRemoveGwtIncompatible(boolean remove) {
+    removeGwtIncompatible = remove;
   }
 
   /**
