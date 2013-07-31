@@ -68,7 +68,11 @@ public class ChooseFolderDialog2 extends FileSystemDialog
    public void onSelection(SelectionEvent<FileSystemItem> event)
    {
       super.onSelection(event);
-      filename_.setText(event.getSelectedItem().getPath());
+      FileSystemItem item = event.getSelectedItem();
+      if (item != null)
+         filename_.setText(item.getPath());
+      else
+         filename_.setText("");
    }
 
    @Override
