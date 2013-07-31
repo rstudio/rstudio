@@ -800,6 +800,8 @@ public class TextEditingTarget implements EditingTarget
       // check to see if there are any inactive breakpoints in this file
       boolean hasInactiveBreakpoints = false;
       boolean hasDebugPendingBreakpoints = false;
+      boolean hasPackagePendingBreakpoints = false;
+      String pendingPackageName = "";
       ArrayList<Breakpoint> breakpoints = 
             breakpointManager_.getBreakpointsInFile(getPath());
       for (Breakpoint breakpoint: breakpoints)
@@ -810,6 +812,11 @@ public class TextEditingTarget implements EditingTarget
             {
                hasDebugPendingBreakpoints = true;
             }
+            else if (breakpoint.isPackageBreakpoint())
+            {
+               hasPackagePendingBreakpoints = true;
+               pendingPackageName = breakpoint.getPackageName();
+            }
             else
             {
                hasInactiveBreakpoints = true;               
@@ -818,11 +825,11 @@ public class TextEditingTarget implements EditingTarget
          }
       }
       boolean showWarning = hasDebugPendingBreakpoints || 
-                            hasInactiveBreakpoints;
+                            hasInactiveBreakpoints ||
+                            hasPackagePendingBreakpoints;
 
       if (showWarning && !isBreakpointWarningVisible_)
       {
-         
          String message = "";
          if (hasDebugPendingBreakpoints) 
          {
@@ -833,6 +840,11 @@ public class TextEditingTarget implements EditingTarget
          {
             message = "Breakpoints will be activated when the package is " +
                       "built and reloaded.";
+         }
+         else if (hasPackagePendingBreakpoints)
+         {
+            message = "Breakpoints will be activated when an updated version " +
+                      "of the " + pendingPackageName + " package is loaded";
          }
          else
          {

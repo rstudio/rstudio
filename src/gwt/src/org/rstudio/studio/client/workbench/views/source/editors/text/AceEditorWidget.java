@@ -519,7 +519,7 @@ public class AceEditorWidget extends Composite
                false));
          breakpoints_.remove(breakpointIdx);
       }
-      
+
       // if there's no breakpoint on that line yet, create a new unset
       // breakpoint there (the breakpoint manager will pick up the new
       // breakpoint and attempt to set it on the server)
@@ -527,13 +527,22 @@ public class AceEditorWidget extends Composite
       {
          // move the breakpoint down to the first line that has a
          // non-whitespace, non-comment token
-         Position tokenPos = editor_.getSession().getMode().getCodeModel()
-            .findNextSignificantToken(pos);
-         if (tokenPos != null)
+         if (editor_.getSession().getMode().getCodeModel() != null)
          {
-            lineNumber = lineFromRow(tokenPos.getRow());
-            if (getBreakpointIdxByLine(lineNumber) >= 0)
+            Position tokenPos = editor_.getSession().getMode().getCodeModel()
+               .findNextSignificantToken(pos);
+            if (tokenPos != null)
             {
+               lineNumber = lineFromRow(tokenPos.getRow());
+               if (getBreakpointIdxByLine(lineNumber) >= 0)
+               {
+                  return;
+               }
+            }
+            else
+            {
+               // if there are no tokens anywhere after the line, don't
+               // set a breakpoint
                return;
             }
          }

@@ -55,7 +55,9 @@ public class Breakpoint extends JavaScriptObject
          editor_line_number: lineNumber,
          is_pending_debug_completion: false,
          needs_updated_steps: false,
-         type: type
+         type: type,
+         is_package_breakpoint: false,
+         package_name: ""
       };
    }-*/;
       
@@ -169,5 +171,18 @@ public class Breakpoint extends JavaScriptObject
    public final native int getType()
    /*-{
       return this.type;
-   }-*/;   
+   }-*/;
+
+   public final native String getPackageName() /*-{
+      return this.package_name;
+   }-*/;
+   
+   public final native boolean isPackageBreakpoint() /*-{
+      return this.is_package_breakpoint;
+   }-*/;
+   
+   public final native void markAsPackageBreakpoint(String packageName) /*-{
+      this.is_package_breakpoint = true;
+      this.package_name = packageName;
+   }-*/;
 }

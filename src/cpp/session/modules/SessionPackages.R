@@ -28,6 +28,11 @@
    {
       .Call("rs_packageLoaded", pkgname)
    }
+
+   notifyPackageUnloaded <- function(pkgname, ...)
+   {
+      .Call("rs_packageUnloaded", pkgname)
+   }
    
    sapply(.packages(TRUE), function(packageName) 
    {
@@ -38,6 +43,9 @@
          
          loadEventName = packageEvent(packageName, "onLoad")
          setHook(loadEventName, notifyPackageLoaded, action="append")
+
+         unloadEventName = packageEvent(packageName, "onUnload")
+         setHook(unloadEventName, notifyPackageUnloaded, action="append")
              
          detachEventName = packageEvent(packageName, "detach")
          setHook(detachEventName, reportPackageStatus(FALSE), action="append")

@@ -37,7 +37,8 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
-import org.rstudio.studio.client.common.debugging.events.ActivePackageLoadedEvent;
+import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
+import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -478,9 +479,15 @@ public class ClientEventDispatcher
             LineData lineData = event.getData();
             eventBus_.fireEvent(new BrowserLineChangedEvent(lineData));
          }
-         else if (type.equals(ClientEvent.ActivePackageLoaded))
+         else if (type.equals(ClientEvent.PackageLoaded))
          {
-            eventBus_.fireEvent(new ActivePackageLoadedEvent());
+            eventBus_.fireEvent(new PackageLoadedEvent(
+                  (String)event.getData()));
+         }
+         else if (type.equals(ClientEvent.PackageUnloaded))
+         {
+            eventBus_.fireEvent(new PackageUnloadedEvent(
+                  (String)event.getData()));
          }
          else
          {
