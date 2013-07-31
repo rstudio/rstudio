@@ -1529,6 +1529,12 @@ public class AceEditor implements DocDisplay,
       widget_.removeBreakpoint(breakpoint);
    }
    
+   @Override
+   public void toggleBreakpointAtCursor()
+   {
+      widget_.toggleBreakpointAtCursor();
+   }
+   
    @Override 
    public void removeAllBreakpoints()
    {

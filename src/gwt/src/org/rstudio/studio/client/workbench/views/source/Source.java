@@ -248,6 +248,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.checkSpelling());
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
+      dynamicCommands_.add(commands.debugBreakpoint());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -1800,6 +1801,7 @@ public class Source implements InsertSourceHandler,
       commands_.saveSourceDocAs().setVisible(true);
       commands_.printSourceDoc().setVisible(true);
       commands_.setWorkingDirToActiveDoc().setVisible(true);
+      commands_.debugBreakpoint().setVisible(true);
       
       // manage synctex commands
       manageSynctexCommands();

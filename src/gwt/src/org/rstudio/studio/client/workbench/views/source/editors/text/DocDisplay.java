@@ -216,5 +216,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void addOrUpdateBreakpoint(Breakpoint breakpoint);
    void removeBreakpoint(Breakpoint breakpoint);
    void removeAllBreakpoints();
+   void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
 }
