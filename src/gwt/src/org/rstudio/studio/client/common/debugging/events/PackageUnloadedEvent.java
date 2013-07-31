@@ -1,5 +1,5 @@
 /*
- * ActivePackageLoadedEvent.java
+ * PackageUnloadedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,16 +17,22 @@ package org.rstudio.studio.client.common.debugging.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ActivePackageLoadedEvent
-        extends GwtEvent<ActivePackageLoadedEvent.Handler>
+public class PackageUnloadedEvent
+        extends GwtEvent<PackageUnloadedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onActivePackageLoaded(ActivePackageLoadedEvent event);
+      void onPackageUnloaded(PackageUnloadedEvent event);
    }
 
-   public ActivePackageLoadedEvent()
+   public PackageUnloadedEvent(String packageName)
    {
+      packageName_ = packageName;
+   }
+   
+   public String getPackageName()
+   {
+      return packageName_;
    }
    
    @Override
@@ -38,8 +44,10 @@ public class ActivePackageLoadedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onActivePackageLoaded(this);
+      handler.onPackageUnloaded(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();   
+   public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   private String packageName_;   
 }
