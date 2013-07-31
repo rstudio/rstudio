@@ -128,11 +128,13 @@ void EnvironmentMonitor::checkForChanges()
    std::for_each(currentEnv.begin(), currentEnv.end(),
                  boost::bind(addUnevaledPromise, &currentPromises, _1));
 
+   bool refreshEnqueued = false;
    if (!initialized_)
    {
       if (getMonitoredEnvironment() == R_GlobalEnv)
       {
          enqueRefreshEvent();
+         refreshEnqueued = true;
       }
       initialized_ = true;
    }
@@ -149,6 +151,7 @@ void EnvironmentMonitor::checkForChanges()
              && getMonitoredEnvironment() == R_GlobalEnv)
          {
             enqueRefreshEvent();
+            refreshEnqueued = true;
          }
          else
          {
@@ -176,7 +179,8 @@ void EnvironmentMonitor::checkForChanges()
                                 std::back_inserter(addedVars));
          }
       }
-      if (!currentEnv.empty() && !lastEnv_.empty())
+      // if a refresh is scheduled there's no need to emit add events one by one
+      if (!refreshEnqueued)
       {
          // have any promises been evaluated since we last checked?
          if (currentPromises != unevaledPromises_)

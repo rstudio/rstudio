@@ -843,8 +843,8 @@ public class TextEditingTarget implements EditingTarget
          }
          else if (hasPackagePendingBreakpoints)
          {
-            message = "Breakpoints will be activated when the " + 
-                      pendingPackageName + " package is loaded";
+            message = "Breakpoints will be activated when an updated version " +
+            	   	  "of the " + pendingPackageName + " package is loaded";
          }
          else
          {
