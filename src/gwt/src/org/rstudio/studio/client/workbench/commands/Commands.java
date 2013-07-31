@@ -310,6 +310,7 @@ public abstract class
 
    // Debugging
    public abstract AppCommand debugBreakpoint();
+   public abstract AppCommand debugClearBreakpoints();
    public abstract AppCommand debugContinue();
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();

@@ -437,9 +437,9 @@ public class TextEditingTarget implements EditingTarget
                else
                {
                   // Show a warning for breakpoints that didn't get set (unless
-                  // the reason the breakpoint wasn't set was that we already
-                  // had a breakpoint on the line)
-                  if (breakpoint.getState() != Breakpoint.STATE_DUPLICATE)
+                  // the reason the breakpoint wasn't set was that it's being
+                  // removed)
+                  if (breakpoint.getState() != Breakpoint.STATE_REMOVING)
                   {
                      view_.showWarningBar("Breakpoints can only be set inside "+
                                           "the body of a function. ");
