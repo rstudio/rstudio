@@ -102,45 +102,7 @@ public class AceEditorWidget extends Composite
               return;
            }
            
-           // rows are 0-based, but debug line numbers are 1-based
-           int lineNumber = lineFromRow(arg.getDocumentPosition().getRow());
-           int breakpointIdx = getBreakpointIdxByLine(lineNumber);
-
-           // if there's already a breakpoint on that line, remove it
-           if (breakpointIdx >= 0)
-           {
-              Breakpoint breakpoint = breakpoints_.get(breakpointIdx);
-              removeBreakpointMarker(breakpoint);
-              fireEvent(new BreakpointSetEvent(
-                    lineNumber, 
-                    breakpoint.getBreakpointId(),
-                    false));
-              breakpoints_.remove(breakpointIdx);
-           }
-           
-           // if there's no breakpoint on that line yet, create a new unset
-           // breakpoint there (the breakpoint manager will pick up the new
-           // breakpoint and attempt to set it on the server)
-           else
-           {
-              // move the breakpoint down to the first line that has a
-              // non-whitespace, non-comment token
-              Position pos = editor_.getSession().getMode().getCodeModel()
-                 .findNextSignificantToken(arg.getDocumentPosition());
-              if (pos != null)
-              {
-                 lineNumber = lineFromRow(pos.getRow());
-                 if (getBreakpointIdxByLine(lineNumber) >= 0)
-                 {
-                    return;
-                 }
-              }
-
-              fireEvent(new BreakpointSetEvent(
-                    lineNumber,
-                    BreakpointSetEvent.UNSET_BREAKPOINT_ID,
-                    true));
-           }
+           toggleBreakpointAtPosition(arg.getDocumentPosition());            
         }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
@@ -215,6 +177,12 @@ public class AceEditorWidget extends Composite
       (BreakpointMoveEvent.Handler handler)
    {
       return addHandler(handler, BreakpointMoveEvent.TYPE);
+   }
+   
+   public void toggleBreakpointAtCursor()
+   {
+      Position pos = editor_.getSession().getSelection().getCursor();
+      toggleBreakpointAtPosition(Position.create(pos.getRow(), 0));
    }
    
    public AceEditorNative getEditor() {
@@ -531,6 +499,49 @@ public class AceEditorWidget extends Composite
          editor_.getRenderer().removeGutterDecoration(
                rowFromLine(line), 
                "ace_inactive-breakpoint");
+      }
+   }
+   
+   private void toggleBreakpointAtPosition(Position pos)
+   {
+      // rows are 0-based, but debug line numbers are 1-based
+      int lineNumber = lineFromRow(pos.getRow());
+      int breakpointIdx = getBreakpointIdxByLine(lineNumber);
+
+      // if there's already a breakpoint on that line, remove it
+      if (breakpointIdx >= 0)
+      {
+         Breakpoint breakpoint = breakpoints_.get(breakpointIdx);
+         removeBreakpointMarker(breakpoint);
+         fireEvent(new BreakpointSetEvent(
+               lineNumber, 
+               breakpoint.getBreakpointId(),
+               false));
+         breakpoints_.remove(breakpointIdx);
+      }
+      
+      // if there's no breakpoint on that line yet, create a new unset
+      // breakpoint there (the breakpoint manager will pick up the new
+      // breakpoint and attempt to set it on the server)
+      else
+      {
+         // move the breakpoint down to the first line that has a
+         // non-whitespace, non-comment token
+         Position tokenPos = editor_.getSession().getMode().getCodeModel()
+            .findNextSignificantToken(pos);
+         if (tokenPos != null)
+         {
+            lineNumber = lineFromRow(tokenPos.getRow());
+            if (getBreakpointIdxByLine(lineNumber) >= 0)
+            {
+               return;
+            }
+         }
+
+         fireEvent(new BreakpointSetEvent(
+               lineNumber,
+               BreakpointSetEvent.UNSET_BREAKPOINT_ID,
+               true));
       }
    }
    
