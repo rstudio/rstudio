@@ -620,6 +620,7 @@ public class BreakpointManager
             else
             {
                breakpoint.setState(Breakpoint.STATE_INACTIVE);
+               breakpointsToDisable.add(breakpoint);
             }
          }
       }

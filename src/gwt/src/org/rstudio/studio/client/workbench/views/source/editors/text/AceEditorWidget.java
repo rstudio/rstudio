@@ -135,6 +135,12 @@ public class AceEditorWidget extends Composite
                     return;
                  }
               }
+              else
+              {
+                 // if there are no tokens anywhere after the line, don't
+                 // set a breakpoint
+                 return;
+              }
 
               fireEvent(new BreakpointSetEvent(
                     lineNumber,
