@@ -1233,7 +1233,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Toggle _Breakpoint"
         desc="Set or remove a breakpoint on the current line of code"/>
    <cmd id="debugClearBreakpoints"
-        menuLabel="Clear _All Breakpoints"
+        menuLabel="Clear _All Breakpoints..."
         desc="Remove all the breakpoints in the current project"/>
    <cmd id="debugContinue"
         menuLabel="_Continue"
