@@ -830,7 +830,6 @@ public class TextEditingTarget implements EditingTarget
 
       if (showWarning && !isBreakpointWarningVisible_)
       {
-         
          String message = "";
          if (hasDebugPendingBreakpoints) 
          {

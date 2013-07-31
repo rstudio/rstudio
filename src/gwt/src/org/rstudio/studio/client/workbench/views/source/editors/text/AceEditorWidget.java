@@ -125,21 +125,24 @@ public class AceEditorWidget extends Composite
            {
               // move the breakpoint down to the first line that has a
               // non-whitespace, non-comment token
-              Position pos = editor_.getSession().getMode().getCodeModel()
-                 .findNextSignificantToken(arg.getDocumentPosition());
-              if (pos != null)
+              if (editor_.getSession().getMode().getCodeModel() != null)
               {
-                 lineNumber = lineFromRow(pos.getRow());
-                 if (getBreakpointIdxByLine(lineNumber) >= 0)
+                 Position pos = editor_.getSession().getMode().getCodeModel()
+                    .findNextSignificantToken(arg.getDocumentPosition());
+                 if (pos != null)
                  {
+                    lineNumber = lineFromRow(pos.getRow());
+                    if (getBreakpointIdxByLine(lineNumber) >= 0)
+                    {
+                       return;
+                    }
+                 }
+                 else
+                 {
+                    // if there are no tokens anywhere after the line, don't
+                    // set a breakpoint
                     return;
                  }
-              }
-              else
-              {
-                 // if there are no tokens anywhere after the line, don't
-                 // set a breakpoint
-                 return;
               }
 
               fireEvent(new BreakpointSetEvent(
