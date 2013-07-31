@@ -214,14 +214,20 @@ SEXP rs_sourceDiagnostics()
 SEXP rs_packageLoaded(SEXP pkgnameSEXP)
 {
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
-   module_context::events().onPackageLoaded(pkgname);
+   ClientEvent packageLoadedEvent(
+            client_events::kPackageLoaded,
+            json::Value(pkgname));
+   enqueClientEvent(packageLoadedEvent);
    return R_NilValue;
 }
 
 SEXP rs_packageUnloaded(SEXP pkgnameSEXP)
 {
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
-   module_context::events().onPackageUnloaded(pkgname);
+   ClientEvent packageUnloadedEvent(
+            client_events::kPackageUnloaded,
+            json::Value(pkgname));
+   enqueClientEvent(packageUnloadedEvent);
    return R_NilValue;
 }
 

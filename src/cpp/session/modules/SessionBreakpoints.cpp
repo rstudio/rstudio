@@ -49,22 +49,6 @@ namespace breakpoints {
 namespace
 {
 
-void onPackageLoaded(const std::string& pkgname)
-{
-   ClientEvent packageLoadedEvent(
-            client_events::kPackageLoaded,
-            json::Value(pkgname));
-   module_context::enqueClientEvent(packageLoadedEvent);
-}
-
-void onPackageUnloaded(const std::string& pkgname)
-{
-   ClientEvent packageUnloadedEvent(
-            client_events::kPackageUnloaded,
-            json::Value(pkgname));
-   module_context::enqueClientEvent(packageUnloadedEvent);
-}
-
 // Called by the client to ascertain whether the given function in the given
 // file is in sync with the corresponding R object
 Error getFunctionState(const json::JsonRpcRequest& request,
@@ -146,9 +130,6 @@ Error initialize()
    // subscribe to events
    using boost::bind;
    using namespace module_context;
-
-   events().onPackageLoaded.connect(onPackageLoaded);
-   events().onPackageUnloaded.connect(onPackageUnloaded);
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
