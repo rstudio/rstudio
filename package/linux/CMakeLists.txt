@@ -15,9 +15,6 @@ if (NOT PACKAGE_ARCHITECTURE)
    endif()
 endif()
 
-# don't automatically resolve rpm dependencies
-set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
-
 # configuration specific
 if(RSTUDIO_SERVER)
 
@@ -40,7 +37,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, ")
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "psmisc, openssl098e, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
 elseif(RSTUDIO_DESKTOP)
  
@@ -104,7 +101,7 @@ set(CPACK_RPM_PACKAGE_DESCRIPTION "${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_RPM_PACKAGE_LICENSE "AGPL v.3.0")
 set(CPACK_RPM_PACKAGE_GROUP "Development/Tools")
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
-set(CPACK_RPM_PACKAGE_DEPENDS "${RSTUDIO_RPM_DEPENDS}")
+set(CPACK_RPM_PACKAGE_REQUIRES "${RSTUDIO_RPM_DEPENDS}")
 
 # build package
 include(CPack)

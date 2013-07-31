@@ -31,7 +31,7 @@ public class Breakpoint extends JavaScriptObject
    public final static int STATE_PROCESSING = 0;
    public final static int STATE_ACTIVE = 1;
    public final static int STATE_INACTIVE = 2;
-   public final static int STATE_DUPLICATE = 3;
+   public final static int STATE_REMOVING = 3;
    
    public final static int TYPE_FUNCTION = 0;
    public final static int TYPE_TOPLEVEL = 1;

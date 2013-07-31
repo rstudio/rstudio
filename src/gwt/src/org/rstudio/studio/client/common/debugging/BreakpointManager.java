@@ -19,9 +19,14 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
@@ -33,6 +38,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -80,18 +86,28 @@ public class BreakpointManager
                           PackageUnloadedEvent.Handler,
                           ConsoleWriteInputHandler
 {
+   public interface Binder
+   extends CommandBinder<Commands, BreakpointManager> {}
+
    @Inject
    public BreakpointManager(
          DebuggingServerOperations server,
          EventBus events,
          Session session,
-         WorkbenchContext workbench)
+         WorkbenchContext workbench,
+         Binder binder,
+         Commands commands,
+         GlobalDisplay globalDisplay)
    {
       server_ = server;
       events_ = events;
       session_ = session;
       workbench_ = workbench;
+      globalDisplay_ = globalDisplay;
+      commands_ = commands;
 
+      commands_.debugClearBreakpoints().setEnabled(false);
+      
       // this singleton class is constructed before the session is initialized,
       // so wait until the session init happens to grab our persisted state
       events_.addHandler(SessionInitEvent.TYPE, this);
@@ -99,6 +115,8 @@ public class BreakpointManager
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
       events_.addHandler(PackageLoadedEvent.TYPE, this);
       events_.addHandler(PackageUnloadedEvent.TYPE, this);
+
+      binder.bind(commands, this);
    }
    
    // Public methods ---------------------------------------------------------
@@ -197,7 +215,7 @@ public class BreakpointManager
             setFunctionBreakpoints(new FileFunction(breakpoint));
          }
       }
-      breakpointStateDirty_ = true;
+      onBreakpointAddOrRemove();
    }
    
    public void moveBreakpoint(int breakpointId)
@@ -280,9 +298,9 @@ public class BreakpointManager
                          currentBreakpointId_, 
                          breakpoint.getBreakpointId() + 1);
                    
-                   breakpoints_.add(breakpoint);
-                   
+                   addBreakpoint(breakpoint);
                 }
+                
                 // this initialization happens after the source windows are
                 // up, so fire an event to the editor to show all known 
                 // breakpoints. as new source windows are opened, they will
@@ -376,6 +394,24 @@ public class BreakpointManager
       
       // Record the new frame list.
       activeFunctions_ = activeFunctions;
+   }
+   
+   @Handler
+   public void onDebugClearBreakpoints()
+   {
+      globalDisplay_.showYesNoMessage(
+            MessageDialog.QUESTION,
+            "Clear All Breakpoints", 
+            "Are you sure you want to remove all the breakpoints in this " +
+            "project?",
+            new Operation() {
+               @Override
+               public void execute()
+               {
+                  clearAllBreakpoints();
+               }
+            },
+            false);
    }
 
    @Override
@@ -498,6 +534,7 @@ public class BreakpointManager
       {
          breakpoints_.remove(breakpoint);
       }
+      onBreakpointAddOrRemove();
       notifyBreakpointsSaved(breakpoints, false);
    }
    
@@ -559,7 +596,7 @@ public class BreakpointManager
                       breakpoint.getBreakpointId() != 
                          possibleDupe.getBreakpointId())
                   {
-                     breakpoint.setState(Breakpoint.STATE_DUPLICATE);
+                     breakpoint.setState(Breakpoint.STATE_REMOVING);
                      unSettableBreakpoints.add(breakpoint);
                   }
                }
@@ -600,7 +637,7 @@ public class BreakpointManager
    private Breakpoint addBreakpoint (Breakpoint breakpoint)
    {
       breakpoints_.add(breakpoint);
-      breakpointStateDirty_ = true;
+      onBreakpointAddOrRemove();
       return breakpoint;
    }
    
@@ -635,6 +672,43 @@ public class BreakpointManager
       {
          notifyBreakpointsSaved(breakpointsToDisable, true);
       }
+   }
+
+   private void clearAllBreakpoints()
+   {
+      Set<FileFunction> functions = new TreeSet<FileFunction>();
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         breakpoint.setState(Breakpoint.STATE_REMOVING);
+         functions.add(new FileFunction(breakpoint));
+      }
+      for (FileFunction function: functions)
+      {
+         server_.setFunctionBreakpoints(
+               function.functionName, 
+               function.fileName, 
+               new ArrayList<String>(),
+               new ServerRequestCallback<Void>()
+               {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // There's a possibility here that the breakpoints were
+                     // not successfully cleared, so we may be in a temporarily
+                     // confusing state, but no error message will be less 
+                     // confusing. 
+                  }
+               });
+      }
+      notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
+      breakpoints_.clear();
+      onBreakpointAddOrRemove();
+   }
+   
+   private void onBreakpointAddOrRemove()
+   {
+      breakpointStateDirty_ = true;
+      commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
    }
      
    // Private classes ---------------------------------------------------------
@@ -700,6 +774,8 @@ public class BreakpointManager
    private final EventBus events_;
    private final Session session_;
    private final WorkbenchContext workbench_;
+   private final GlobalDisplay globalDisplay_;
+   private final Commands commands_;
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
