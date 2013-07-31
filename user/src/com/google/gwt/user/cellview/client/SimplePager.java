@@ -303,12 +303,32 @@ public class SimplePager extends AbstractPager {
    * @param showFastForwardButton if true, show a fast-forward button that
    *          advances by a larger increment than a single page
    * @param fastForwardRows the number of rows to jump when fast forwarding
-   * @param showLastPageButton if true, show a button to go the the last page
+   * @param showLastPageButton if true, show a button to go to the last page
    * @param imageButtonConstants Constants that contain the image button names
    */
   public SimplePager(TextLocation location, Resources resources,
       boolean showFastForwardButton, final int fastForwardRows,
       boolean showLastPageButton, ImageButtonsConstants imageButtonConstants) {
+    this(location, resources, showFastForwardButton, fastForwardRows,
+        showLastPageButton, true, imageButtonConstants);
+  }
+
+  /**
+   * Construct a {@link SimplePager} with the specified resources.
+   *
+   * @param location the location of the text relative to the buttons
+   * @param resources the {@link Resources} to use
+   * @param showFastForwardButton if true, show a fast-forward button that
+   *          advances by a larger increment than a single page
+   * @param fastForwardRows the number of rows to jump when fast forwarding
+   * @param showLastPageButton if true, show a button to go to the last page
+   * @param showFirstPageButton if true, show a button to go to the first page
+   * @param imageButtonConstants Constants that contain the image button names
+   */
+  public SimplePager(TextLocation location, Resources resources,
+      boolean showFastForwardButton, final int fastForwardRows,
+      boolean showLastPageButton, boolean showFirstPageButton,
+      ImageButtonsConstants imageButtonConstants) {
     this.resources = resources;
     this.fastForwardRows = fastForwardRows;
     this.style = resources.simplePagerStyle();
@@ -316,14 +336,19 @@ public class SimplePager extends AbstractPager {
 
     // Create the buttons.
     String disabledStyle = style.disabledButton();
-    firstPage = new ImageButton(resources.simplePagerFirstPage(),
-        resources.simplePagerFirstPageDisabled(), disabledStyle, imageButtonConstants.firstPage());
-    firstPage.addClickHandler(new ClickHandler() {
-      @Override
-      public void onClick(ClickEvent event) {
-        firstPage();
-      }
-    });
+    if (showFirstPageButton) {
+      firstPage = new ImageButton(resources.simplePagerFirstPage(),
+          resources.simplePagerFirstPageDisabled(), disabledStyle,
+          imageButtonConstants.firstPage());
+      firstPage.addClickHandler(new ClickHandler() {
+        @Override
+        public void onClick(ClickEvent event) {
+          firstPage();
+        }
+      });
+    } else {
+      firstPage = null;
+    }
     nextPage = new ImageButton(resources.simplePagerNextPage(),
         resources.simplePagerNextPageDisabled(), disabledStyle, imageButtonConstants.nextPage());
     nextPage.addClickHandler(new ClickHandler() {
@@ -374,7 +399,9 @@ public class SimplePager extends AbstractPager {
     if (location == TextLocation.LEFT) {
       layout.add(label);
     }
-    layout.add(firstPage);
+    if (showFirstPageButton) {
+      layout.add(firstPage);
+    }
     layout.add(prevPage);
     if (location == TextLocation.CENTER) {
       layout.add(label);
@@ -391,7 +418,9 @@ public class SimplePager extends AbstractPager {
     }
 
     // Add style names to the cells.
-    firstPage.getElement().getParentElement().addClassName(style.button());
+    if (showFirstPageButton) {
+      firstPage.getElement().getParentElement().addClassName(style.button());
+    }
     prevPage.getElement().getParentElement().addClassName(style.button());
     label.getElement().getParentElement().addClassName(style.pageDetails());
     nextPage.getElement().getParentElement().addClassName(style.button());
@@ -615,7 +644,9 @@ public class SimplePager extends AbstractPager {
    * @param disabled true to disable, false to enable
    */
   private void setPrevPageButtonsDisabled(boolean disabled) {
-    firstPage.setDisabled(disabled);
+    if (firstPage != null) {
+      firstPage.setDisabled(disabled);
+    }
     prevPage.setDisabled(disabled);
   }
 }
