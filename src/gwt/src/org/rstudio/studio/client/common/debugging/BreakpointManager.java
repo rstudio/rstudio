@@ -25,6 +25,7 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
@@ -84,7 +85,8 @@ public class BreakpointManager
                           ContextDepthChangedEvent.Handler,
                           PackageLoadedEvent.Handler,
                           PackageUnloadedEvent.Handler,
-                          ConsoleWriteInputHandler
+                          ConsoleWriteInputHandler,
+                          RestartStatusEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, BreakpointManager> {}
@@ -115,7 +117,8 @@ public class BreakpointManager
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
       events_.addHandler(PackageLoadedEvent.TYPE, this);
       events_.addHandler(PackageUnloadedEvent.TYPE, this);
-
+      events_.addHandler(RestartStatusEvent.TYPE, this);
+      
       binder.bind(commands, this);
    }
    
@@ -424,6 +427,26 @@ public class BreakpointManager
    public void onPackageUnloaded(PackageUnloadedEvent event)
    {
       updatePackageBreakpoints(event.getPackageName(), false);
+   }
+
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
+      {
+         // Restarting R unloads all the packages, so mark all active package
+         // breakpoints as inactive when this happens.
+         ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
+         for (Breakpoint breakpoint: breakpoints_)
+         {
+            if (breakpoint.isPackageBreakpoint())
+            {
+               breakpoint.setState(Breakpoint.STATE_INACTIVE);
+               breakpoints.add(breakpoint);
+            }
+         }
+         notifyBreakpointsSaved(breakpoints, true);
+      }
    }
 
    // Private methods ---------------------------------------------------------
