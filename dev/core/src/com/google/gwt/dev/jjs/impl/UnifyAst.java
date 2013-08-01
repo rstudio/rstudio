@@ -40,6 +40,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
@@ -64,6 +65,7 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
+import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -197,6 +199,17 @@ public class UnifyAst {
     }
 
     @Override
+    public void endVisit(JExpressionStatement x, Context ctx) {
+      if (x.getExpr() instanceof JMethodCall) {
+        JMethodCall call = (JMethodCall) x.getExpr();
+        if (call.getTarget() == gwtDebuggerMethod) {
+          // We should see all calls here because GWT.debugger() returns void.
+          ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
+        }
+      }
+    }
+
+    @Override
     public void endVisit(JField x, Context ctx) {
       assert false : "Should not get here";
     }
@@ -235,6 +248,9 @@ public class UnifyAst {
         return;
       }
       if (magicMethodCalls.contains(target)) {
+        if (target == gwtDebuggerMethod) {
+          return; // handled in endVisit for JExpressionStatement
+        }
         JExpression result = handleMagicMethodCall(x);
         if (result == null) {
           // Error of some sort.
@@ -462,6 +478,8 @@ public class UnifyAst {
   private static final String GWT_CREATE =
       "com.google.gwt.core.shared.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
 
+  private static final String GWT_DEBUGGER = "com.google.gwt.core.shared.GWT.debugger()V";
+
   private static final String GWT_IS_CLIENT = "com.google.gwt.core.shared.GWT.isClient()Z";
 
   private static final String GWT_IS_PROD_MODE = "com.google.gwt.core.shared.GWT.isProdMode()Z";
@@ -484,7 +502,7 @@ public class UnifyAst {
    * Methods for which the call site must be replaced with magic AST nodes.
    */
   private static final Set<String> MAGIC_METHOD_CALLS = new LinkedHashSet<String>(Arrays.asList(
-      GWT_CREATE, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
+      GWT_CREATE, GWT_DEBUGGER, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
 
   /**
    * Methods with magic implementations that the compiler must insert.
@@ -514,7 +532,8 @@ public class UnifyAst {
   private final Set<JNode> liveFieldsAndMethods = new IdentityHashSet<JNode>();
 
   private final TreeLogger logger;
-  private Set<JMethod> magicMethodCalls = new IdentityHashSet<JMethod>();
+  private final Set<JMethod> magicMethodCalls = new IdentityHashSet<JMethod>();
+  private JMethod gwtDebuggerMethod;
   private final Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
   private final JJSOptions options;
   private final JProgram program;
@@ -927,6 +946,9 @@ public class UnifyAst {
       methodMap.put(sig, method);
       if (MAGIC_METHOD_CALLS.contains(sig)) {
         magicMethodCalls.add(method);
+        if (GWT_DEBUGGER.equals(sig)) {
+          gwtDebuggerMethod = method;
+        }
       }
       if (MAGIC_METHOD_IMPLS.contains(sig)) {
         if (sig.startsWith("com.google.gwt.core.client.GWT.")

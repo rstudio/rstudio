@@ -144,6 +144,19 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
         "boolean b;");
   }
 
+  public void testDebuggerStatement() throws Exception {
+    addSnippetImport("com.google.gwt.core.shared.GWT");
+    optimize("void", "GWT.debugger();").noChange();
+  }
+
+  public void testDeadCodeRemovalNearDebuggerStatement() throws Exception {
+    addSnippetImport("com.google.gwt.core.shared.GWT");
+    optimize("void",
+        "int i = 1; if (i==1) { GWT.debugger(); } else { GWT.debugger(); }").into(
+        "int i; GWT.debugger();"
+    );
+  }
+
   public void testNoChange() throws Exception {
     optimize("void",
         "try {",
@@ -418,7 +431,7 @@ public class DataflowOptimizerTest extends OptimizerTestBase {
   @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     boolean didChange = false;
-    boolean optimizeChange = false;
+    boolean optimizeChange;
 
     // Run optimizations in a loop to make the tests more robusts to unrelated
     // changes.

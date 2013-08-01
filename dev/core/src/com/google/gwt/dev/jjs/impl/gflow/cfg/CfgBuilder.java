@@ -50,6 +50,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperation;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.util.Preconditions;
 
 import java.util.ArrayList;
@@ -456,6 +457,13 @@ public class CfgBuilder {
       }
       CfgContinueNode node = addNode(new CfgContinueNode(parent, x));
       addExit(Exit.createContinue(node, label));
+      popNode();
+      return false;
+    }
+
+    @Override
+    public boolean visit(JDebuggerStatement x, Context ctx) {
+      pushNode(new CfgStatementNode<JStatement>(parent, x));
       popNode();
       return false;
     }

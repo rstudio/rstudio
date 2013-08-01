@@ -151,6 +151,15 @@ public final class GWT {
   }
 
   /**
+   * Emits a JavaScript "debugger" statement on the line that called this method.
+   * If the user has the browser's debugger open, the debugger will stop when the
+   * GWT application executes that line. There is no effect in Dev Mode or in
+   * server-side code.
+   */
+  public static void debugger() {
+  }
+
+  /**
    * Called via reflection in Development Mode; do not ever call this method in
    * Production Mode.  May be called in server code to initialize server bridge.
    */

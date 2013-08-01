@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
@@ -244,6 +245,10 @@ public class JVisitor {
   }
 
   public void endVisit(JContinueStatement x, Context ctx) {
+    endVisit((JStatement) x, ctx);
+  }
+
+  public void endVisit(JDebuggerStatement x, Context ctx) {
     endVisit((JStatement) x, ctx);
   }
 
@@ -576,6 +581,10 @@ public class JVisitor {
   }
 
   public boolean visit(JContinueStatement x, Context ctx) {
+    return visit((JStatement) x, ctx);
+  }
+
+  public boolean visit(JDebuggerStatement x, Context ctx) {
     return visit((JStatement) x, ctx);
   }
 

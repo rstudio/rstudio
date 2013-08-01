@@ -85,6 +85,7 @@ import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -380,6 +381,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       space();
       accept(x.getLabel());
     }
+    return false;
+  }
+
+  @Override
+  public boolean visit(JDebuggerStatement x, Context ctx) {
+    print("GWT.debugger()");
     return false;
   }
 
