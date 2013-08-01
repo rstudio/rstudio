@@ -50,6 +50,8 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.regexp.shared.MatchResult;
@@ -83,8 +85,7 @@ import com.google.inject.Singleton;
 public class BreakpointManager 
                implements SessionInitHandler, 
                           ContextDepthChangedEvent.Handler,
-                          PackageLoadedEvent.Handler,
-                          PackageUnloadedEvent.Handler,
+                          PackageStatusChangedHandler,
                           ConsoleWriteInputHandler,
                           RestartStatusEvent.Handler
 {
@@ -115,9 +116,8 @@ public class BreakpointManager
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
-      events_.addHandler(PackageLoadedEvent.TYPE, this);
-      events_.addHandler(PackageUnloadedEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
+      events_.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       binder.bind(commands, this);
    }
@@ -416,17 +416,12 @@ public class BreakpointManager
             },
             false);
    }
-
+  
    @Override
-   public void onPackageLoaded(PackageLoadedEvent event)
+   public void onPackageStatusChanged(PackageStatusChangedEvent event)
    {
-      updatePackageBreakpoints(event.getPackageName(), true);
-   }
-
-   @Override
-   public void onPackageUnloaded(PackageUnloadedEvent event)
-   {
-      updatePackageBreakpoints(event.getPackageName(), false);
+      updatePackageBreakpoints(event.getPackageStatus().getName(),
+                               event.getPackageStatus().isLoaded());
    }
 
    @Override
