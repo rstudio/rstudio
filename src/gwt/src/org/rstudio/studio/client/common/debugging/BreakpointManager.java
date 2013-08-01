@@ -50,8 +50,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.regexp.shared.MatchResult;
@@ -85,7 +83,8 @@ import com.google.inject.Singleton;
 public class BreakpointManager 
                implements SessionInitHandler, 
                           ContextDepthChangedEvent.Handler,
-                          PackageStatusChangedHandler,
+                          PackageLoadedEvent.Handler,
+                          PackageUnloadedEvent.Handler,
                           ConsoleWriteInputHandler,
                           RestartStatusEvent.Handler
 {
@@ -116,8 +115,9 @@ public class BreakpointManager
       events_.addHandler(SessionInitEvent.TYPE, this);
       events_.addHandler(ConsoleWriteInputEvent.TYPE, this);      
       events_.addHandler(ContextDepthChangedEvent.TYPE, this);
+      events_.addHandler(PackageLoadedEvent.TYPE, this);
+      events_.addHandler(PackageUnloadedEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
-      events_.addHandler(PackageStatusChangedEvent.TYPE, this);
       
       binder.bind(commands, this);
    }
@@ -367,7 +367,8 @@ public class BreakpointManager
          {
             events_.fireEvent(new SendToConsoleEvent("n", true));
          }
-         activeFunctions.add(new FileFunction(functionName, fileName, false));
+         activeFunctions.add(
+               new FileFunction(functionName, fileName, "", false));
       }
       
       // For any functions that were previously active in the callstack but
@@ -416,12 +417,17 @@ public class BreakpointManager
             },
             false);
    }
-  
+
    @Override
-   public void onPackageStatusChanged(PackageStatusChangedEvent event)
+   public void onPackageLoaded(PackageLoadedEvent event)
    {
-      updatePackageBreakpoints(event.getPackageStatus().getName(),
-                               event.getPackageStatus().isLoaded());
+      updatePackageBreakpoints(event.getPackageName(), true);
+   }
+
+   @Override
+   public void onPackageUnloaded(PackageUnloadedEvent event)
+   {
+      updatePackageBreakpoints(event.getPackageName(), false);
    }
 
    @Override
@@ -461,6 +467,7 @@ public class BreakpointManager
       server_.setFunctionBreakpoints(
             function.functionName,
             function.fileName,
+            function.packageName,
             steps,
             new ServerRequestCallback<Void>()
             {
@@ -509,6 +516,7 @@ public class BreakpointManager
          server_.getFunctionSteps(
                function.functionName,
                function.fileName,
+               function.packageName,
                inactiveLines, 
                new ServerRequestCallback<JsArray<FunctionSteps>> () {
                   @Override
@@ -705,6 +713,7 @@ public class BreakpointManager
          server_.setFunctionBreakpoints(
                function.functionName, 
                function.fileName, 
+               function.packageName,
                new ArrayList<String>(),
                new ServerRequestCallback<Void>()
                {
@@ -735,23 +744,29 @@ public class BreakpointManager
    {
       public String functionName;
       public String fileName;
+      public String packageName;
+      
       boolean fullPath;
       
-      public FileFunction (String fun, String file, boolean useFullPath)
+      public FileFunction (
+            String fun, String file, String pkg, boolean useFullPath)
       {
          functionName = fun;
-         fileName = file.trim();        
+         fileName = file.trim();
+         packageName = pkg;
          fullPath = useFullPath;
       }
 
-      public FileFunction (String fun, String file)
+      public FileFunction (String fun, String file, String pkg)
       {
-         this(fun, file, true);
+         this(fun, file, pkg, true);
       }
-      
+            
       public FileFunction (Breakpoint breakpoint)
       {
-         this(breakpoint.getFunctionName(), breakpoint.getPath());
+         this(breakpoint.getFunctionName(), 
+             breakpoint.getPath(), 
+             breakpoint.getPackageName());
       }
       
       public boolean containsBreakpoint(Breakpoint breakpoint)

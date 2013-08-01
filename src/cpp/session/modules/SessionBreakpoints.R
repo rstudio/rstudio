@@ -15,9 +15,13 @@
 
 # given a function name and filename, find the environment that contains a
 # function with the given name that originated from the given file.
-.rs.addFunction("getEnvironmentOfFunction", function(objName, fileName)
+.rs.addFunction("getEnvironmentOfFunction", function(
+   objName, fileName, packageName)
 {
-   env <- globalenv()
+   env <- if (nchar(packageName) > 0)
+         asNamespace(packageName)
+      else
+         globalenv()
    while (environmentName(env) != "R_EmptyEnv")
    {
       # if the function with the given name exists in this environment...
@@ -133,9 +137,10 @@
 .rs.addFunction("getFunctionSteps", function(
    functionName,
    fileName,
+   packageName,
    lineNumbers)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName)
+   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    funBody <- body(fun)
 
    # attempt to find the end line of the function
@@ -185,9 +190,10 @@
 .rs.addFunction("setFunctionBreakpoints", function(
    functionName,
    fileName,
+   packageName,
    steps)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
    if (is.null(envir))
    {
       return (NULL)
@@ -242,9 +248,10 @@
    return(functionName)
 })
 
-.rs.addFunction("getUntracedFunction", function(functionName, fileName)
+.rs.addFunction("getUntracedFunction", function(
+   functionName, fileName, packageName)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
    if (is.null(envir))
    {
       return(NULL)
@@ -257,9 +264,10 @@
    return(fun)
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(functionName, fileName)
+.rs.addFunction("getFunctionSourceRefs", function(
+   functionName, fileName, packageName)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName)
+   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    if (is.null(fun))
    {
       return(NULL)
@@ -267,10 +275,12 @@
    attr(fun, "srcref")
 })
 
-.rs.addFunction("getFunctionSourceCode", function(functionName, fileName)
+.rs.addFunction("getFunctionSourceCode", function(
+   functionName, fileName, packageName)
 {
    paste(capture.output(
-      .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
+      .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
+      collapse="\n")
 })
 
 .rs.addGlobalFunction("debugSource", function(
@@ -431,17 +441,19 @@
 .rs.addJsonRpcHandler("set_function_breakpoints", function(
    functionName,
    fileName,
+   packageName,
    steps)
 {
-   .rs.setFunctionBreakpoints(functionName, fileName, steps)
+   .rs.setFunctionBreakpoints(functionName, fileName, packageName, steps)
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,
    fileName,
+   packageName,
    lineNumbers)
 {
-   .rs.getFunctionSteps(functionName, fileName, lineNumbers)
+   .rs.getFunctionSteps(functionName, fileName, packageName, lineNumbers)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(
