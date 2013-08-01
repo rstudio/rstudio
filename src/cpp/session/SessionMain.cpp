@@ -103,6 +103,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionConsoleProcess.hpp"
 #include "modules/SessionCrypto.hpp"
+#include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
 #include "modules/SessionDirty.hpp"
@@ -1526,6 +1527,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::build::initialize)
       (modules::overlay::initialize)
       (modules::breakpoints::initialize)
+      (modules::errors::initialize)
 
       // workers
       (workers::web_request::initialize)

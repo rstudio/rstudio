@@ -56,6 +56,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionConsole.cpp
    modules/SessionConsoleProcess.cpp
    modules/SessionDirty.cpp
+   modules/SessionErrors.cpp
    modules/SessionFiles.cpp
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
