@@ -23,16 +23,27 @@ mkdir -p /var/lib/rstudio-server/proxy
 
 # write installed indicator then force suspend active sessions
 # (so that the new client is never paired against the old server)
-mkdir -p /etc/rstudio
 sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 rstudio-server force-suspend-all
 
-# add and register init.d script and (re) start the server
-cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
-chmod +x /etc/init.d/rstudio-server
-chkconfig --add rstudio-server
-service rstudio-server stop
-service rstudio-server start
+# add upstart profile or init.d script and start the server
+if test -d /etc/init/
+then
+   # remove any previously existing init.d based scheme
+   service rstudio-server stop 2>/dev/null
+   rm -f /etc/init.d/rstudio-server
+
+   cp ${CMAKE_INSTALL_PREFIX}/extras/upstart/rstudio-server.redhat.conf /etc/init/rstudio-server.conf
+   initctl reload-configuration
+   initctl stop rstudio-server 2>/dev/null
+   initctl start rstudio-server
+else
+   cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
+   chmod +x /etc/init.d/rstudio-server
+   chkconfig --add rstudio-server
+   service rstudio-server stop 2>/dev/null
+   service rstudio-server start
+fi
 
 # add pam profile
 if [ ! -e /etc/pam.d/rstudio ]

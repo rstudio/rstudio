@@ -1,0 +1,21 @@
+# rserver - RStudio main gateway process
+#
+#
+# upstart docs: http://upstart.ubuntu.com/getting-started.html
+#               http://manpages.ubuntu.com/manpages/karmic/man5/init.5.html
+#
+# (note that embedding a script and pre-start and post-start actions are supported)
+#
+
+start on runlevel [2345]
+stop on runlevel [!2345]
+
+expect fork
+
+respawn
+
+# run the server
+exec ${CMAKE_INSTALL_PREFIX}/bin/rserver
+
+
+

@@ -23,7 +23,6 @@ sudo mkdir -p /var/lib/rstudio-server/proxy
 
 # write installed indicator then force suspend active sessions
 # (so that the new client is never paired against the old server)
-sudo mkdir -p /etc/rstudio
 sudo sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 sudo rstudio-server force-suspend-all
 
