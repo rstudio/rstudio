@@ -176,9 +176,9 @@
       }
 
       list(
-         name=functionName,
-         line=lineNumber,
-         at=paste(steps, collapse=","))
+         name=.rs.scalar(functionName),
+         line=.rs.scalar(lineNumber),
+         at=.rs.scalar(paste(steps, collapse=",")))
    })
 })
 
@@ -441,23 +441,7 @@
    fileName,
    lineNumbers)
 {
-   results <- .rs.getFunctionSteps(functionName, fileName, lineNumbers)
-   formattedResults <- data.frame(
-      line = numeric(0),
-      name = character(0),
-      at = character(0),
-      stringsAsFactors = FALSE)
-   for (result in results)
-   {
-      formattedResult <- list(
-         line = result$line,
-         name = result$name,
-         at = result$at)
-      formattedResults <- rbind(formattedResults, formattedResult)
-   }
-   formattedResults$name <- as.character(formattedResults$name)
-   formattedResults$at <- as.character(formattedResults$at)
-   return(formattedResults)
+   .rs.getFunctionSteps(functionName, fileName, lineNumbers)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(
