@@ -73,7 +73,8 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    Protect protect;
    error = r::exec::RFunction(".rs.getFunctionSourceRefs",
                               functionName,
-                              fileName)
+                              fileName,
+                              packageName)
          .call(&srcRefs, &protect);
    if (error)
    {
@@ -83,7 +84,8 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    std::string functionCode;
    error = r::exec::RFunction(".rs.getFunctionSourceCode",
                               functionName,
-                              fileName)
+                              fileName,
+                              packageName)
          .call(&functionCode);
    if (error)
    {
