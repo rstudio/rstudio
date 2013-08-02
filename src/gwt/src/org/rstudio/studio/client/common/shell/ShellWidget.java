@@ -17,7 +17,10 @@ package org.rstudio.studio.client.common.shell;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.ButtonElement;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
@@ -31,6 +34,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -217,7 +221,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), false);
+      DivElement div = Document.get().createDivElement();
+      div.setClassName(ThemeStyles.INSTANCE.consoleErrorBox());
+      
+      SpanElement span = Document.get().createSpanElement();
+      span.setClassName(getErrorClass());
+      span.setInnerText(error);
+      div.appendChild(span);
+      
+      InputElement traceback = Document.get().createButtonInputElement();
+      traceback.setValue("Show Traceback");
+      traceback.setClassName(ThemeStyles.INSTANCE.consoleErrorTraceback());
+      div.appendChild(traceback);
+      
+      output_.getElement().appendChild(div);
+      scrollPanel_.onContentSizeChanged();
    }
 
    public void consoleWriteOutput(final String output)

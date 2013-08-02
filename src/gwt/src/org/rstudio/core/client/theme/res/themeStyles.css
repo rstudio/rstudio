@@ -1115,3 +1115,15 @@ body.ubuntu_mono .searchBox {
   overflow: hidden;
 }
 
+.consoleErrorBox {
+	border: 1px dotted #c0c0c0;
+	position: relative;
+	overflow: hidden;
+	padding: 5px;
+}
+
+.consoleErrorTraceback {
+	right: 10px;
+	top: 0px;
+	position: absolute;
+}

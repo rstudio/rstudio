@@ -30,3 +30,8 @@
    })
    .rs.setVar("last.error", stack)
 })
+
+.rs.addJsonRpcHandler("get_last_error", function()
+{
+   .rs.last.error
+})
