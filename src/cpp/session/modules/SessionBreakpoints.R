@@ -18,11 +18,18 @@
 .rs.addFunction("getEnvironmentOfFunction", function(
    objName, fileName, packageName)
 {
-   env <- if (nchar(packageName) > 0)
-         asNamespace(packageName)
-      else
-         globalenv()
-   while (environmentName(env) != "R_EmptyEnv")
+   isPackage <- nchar(packageName) > 0
+
+   # when searching specifically for a function in a package, search from the
+   # package namespace to the global environment (considers package imports and
+   # non-exported functions); otherwise, search from the global environment to
+   # the empty namespace
+   lastEnvir <- if (isPackage) "R_GlobalEnv" else "R_EmptyEnv"
+   env <- if (isPackage)
+             asNamespace(packageName)
+          else
+             globalenv()
+   while (environmentName(env) != lastEnvir)
    {
       # if the function with the given name exists in this environment...
       if (!is.null(env) &&
@@ -189,23 +196,21 @@
 
 .rs.addFunction("setFunctionBreakpoints", function(
    functionName,
-   fileName,
-   packageName,
+   envir,
    steps)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
-   if (is.null(envir))
-   {
-      return (NULL)
-   }
    if (length(steps) == 0 || nchar(steps) == 0)
    {
       # Restore the function to its original state. Note that trace/untrace
       # emit messages when they act on a function in a package environment; hide
       # those messages since they're just noise to the user.
-      suppressMessages(untrace(
-         what = functionName,
-         where = envir))
+      fun <- get(functionName, envir = envir)
+      if (isS4(fun) && class(fun) == "functionWithTrace")
+      {
+         suppressMessages(untrace(
+            what = functionName,
+            where = envir))
+      }
    }
    else
    {
@@ -436,15 +441,6 @@
       end_line_number = .rs.scalar(srcref[3]),
       character_number = .rs.scalar(srcref[5]),
       end_character_number = .rs.scalar(srcref[6])))
-})
-
-.rs.addJsonRpcHandler("set_function_breakpoints", function(
-   functionName,
-   fileName,
-   packageName,
-   steps)
-{
-   .rs.setFunctionBreakpoints(functionName, fileName, packageName, steps)
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(

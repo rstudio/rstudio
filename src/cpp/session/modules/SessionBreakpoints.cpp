@@ -100,6 +100,99 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// Sets a breakpoint on a single copy of a function. Invoked several times to
+// look for function copies in alternate environemnts. Returns true if a
+// breakpoint was set; false otherwise.
+bool setBreakpoint(const std::string& functionName,
+                   const std::string& fileName,
+                   const std::string& packageName,
+                   const json::Array& steps)
+{
+   SEXP env = NULL;
+   Protect protect;
+   Error error = r::exec::RFunction(".rs.getEnvironmentOfFunction",
+                                    functionName,
+                                    fileName,
+                                    packageName)
+                                    .call(&env, &protect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // if we found a function in the requested environment, set the breakpoint
+   if (TYPEOF(env) == ENVSXP)
+   {
+      error = r::exec::RFunction(".rs.setFunctionBreakpoints",
+                                 functionName,
+                                 env,
+                                 steps).call();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+      // successfully set a breakpoint
+      return true;
+   }
+
+   // did not find the function in the environment
+   return false;
+}
+
+// Set a breakpoint on a function, potentially on multiple copies:
+// 1. The private copy of the function inside the package under development
+//    (even if from another package; it may be an imported copy)
+// 2. The private copy of the function inside its own package (if from a
+//    package)
+// 3. The copy of the function on the global search path
+//
+// Note that this is not guaranteed to find ALL copies of the function in ANY
+// environment--at most, three breakpoints are set.
+Error setBreakpoints(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string functionName, fileName, packageName;
+   json::Array steps;
+   bool set = false;
+   Error error = json::readParams(request.params,
+            &functionName,
+            &fileName,
+            &packageName,
+            &steps);
+   if (error)
+      return error;
+
+   // If we're in package development mode, try to set a breakpoint in the
+   // package's namespace first.
+   const projects::ProjectContext& projectContext = projects::projectContext();
+   if (projectContext.config().buildType == r_util::kBuildTypePackage)
+   {
+      set |= setBreakpoint(
+               functionName, fileName,
+               projectContext.packageInfo().name(), steps);
+   }
+
+   // If a package name was specified, try to set a breakpoint in that package's
+   // namespace, too.
+   if (packageName.length() > 0)
+   {
+      set |= setBreakpoint(functionName, fileName, packageName, steps);
+   }
+
+   // Always search the global namespace.
+   set |= setBreakpoint(functionName, fileName, "", steps);
+
+   // Couldn't find a function to set a breakpoint on--maybe a bad parameter?
+   if (!set)
+   {
+      return Error(json::errc::ParamInvalid, ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value debugStateAsJson()
@@ -136,6 +229,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
+      (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"));
 
    return initBlock.execute();
