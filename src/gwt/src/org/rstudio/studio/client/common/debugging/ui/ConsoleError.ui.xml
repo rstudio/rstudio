@@ -3,20 +3,22 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
 	.consoleErrorBox {
-	   border: 1px dotted #c0c0c0;
+	   border: 1px dashed #c0c0c0;
 	   position: relative;
 	   overflow: hidden;
 	   padding: 5px;
+	   margin: 5px 5px 5px 0px;
 	}
 
 	.consoleErrorTraceback {
-	   right: 10px;
-	   top: 0px;
+	   right: 5px;
+	   top: 4px;
 	   position: absolute;
 	}
 	</ui:style>
-	<g:HTMLPanel styleName="consoleErrorBox">
-	  <g:Button styleName="consoleErrorTraceback" ui:field="showTraceback">
+	<g:HTMLPanel styleName="{style.consoleErrorBox}">
+	  <g:Label ui:field="errorMessage"></g:Label>
+	  <g:Button styleName="{style.consoleErrorTraceback}" ui:field="showTraceback">
 	     Show Traceback
 	  </g:Button>
 	  <g:HTMLPanel ui:field="framePanel" visible="false">

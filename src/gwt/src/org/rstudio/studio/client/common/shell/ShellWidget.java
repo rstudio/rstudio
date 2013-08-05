@@ -47,7 +47,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 public class ShellWidget extends Composite implements ShellDisplay,
-                                                      RequiresResize
+                                                      RequiresResize,
+                                                      ConsoleError.Observer
 {
    public ShellWidget(AceEditor editor)
    {
@@ -226,7 +227,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          final String error, UnhandledError traceInfo)
    {
       clearPendingInput();
-      ConsoleError errorWidget = new ConsoleError(traceInfo);
+      ConsoleError errorWidget = new ConsoleError(
+            traceInfo, getErrorClass(), this);
 
       // TODO: Properly wire these widgets together.
       RootPanel.get().add(errorWidget);
@@ -234,7 +236,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       scrollPanel_.onContentSizeChanged();
    }
-
+   
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
@@ -692,6 +694,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
          ((RequiresResize)getWidget()).onResize();
    }
 
+   @Override
+   public void onErrorBoxResize()
+   {
+      scrollPanel_.onContentSizeChanged();
+   }
+   
    private int lines_ = 0;
    private int maxLines_ = -1;
    private boolean cleared_ = false;

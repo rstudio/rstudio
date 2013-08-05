@@ -10,6 +10,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ConsoleError extends Composite
@@ -21,10 +22,20 @@ public class ConsoleError extends Composite
    interface ConsoleErrorUiBinder extends UiBinder<Widget, ConsoleError>
    {
    }
-
-   public ConsoleError(UnhandledError err)
+   
+   public interface Observer
    {
+      void onErrorBoxResize();
+   }
+
+   public ConsoleError(UnhandledError err, String errorClass, Observer observer)
+   {
+      observer_ = observer;
+      
       initWidget(uiBinder.createAndBindUi(this));
+   
+      errorMessage.setText(err.getErrorMessage());
+      errorMessage.addStyleName(errorClass);
       
       showTraceback.addClickHandler(new ClickHandler()
       {         
@@ -33,12 +44,13 @@ public class ConsoleError extends Composite
          {
             showingTraceback_ = !showingTraceback_;
             showTraceback.setText(showingTraceback_ ? 
-                  "Show Traceback" : "Hide Traceback");
+                  "Hide Traceback" : "Show Traceback");
             framePanel.setVisible(showingTraceback_);
+            observer_.onErrorBoxResize();
          }
       });
       
-      for (int i = 0; i < err.getErrorFrames().length(); i++)
+      for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
          ConsoleErrorFrame frame = new ConsoleErrorFrame(
                err.getErrorFrames().get(i));
@@ -50,6 +62,9 @@ public class ConsoleError extends Composite
    Button showTraceback;
    @UiField
    HTMLPanel framePanel;
+   @UiField
+   Label errorMessage;
    
+   private Observer observer_;
    private boolean showingTraceback_ = false;
 }

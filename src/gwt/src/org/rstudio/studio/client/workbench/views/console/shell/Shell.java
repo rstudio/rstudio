@@ -239,17 +239,27 @@ public class Shell implements ConsoleInputHandler,
       view_.consoleWriteOutput(event.getOutput()) ;
    }
 
-   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
+   public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
    {
-      UnhandledError err = errorManager_.getLastError();
-      if (err.getErrorMessage().equals(event.getError()))
-      {
-         view_.consoleWriteExtendedError(event.getError(), err);
-      }
-      else
-      {
-         view_.consoleWriteError(event.getError());
-      }
+      // when writing an error, wait for event queue to empty -- if it contains
+      // a callstack emitted from our custom error handler, we'll want to wire 
+      // that up at once. 
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {         
+         @Override
+         public void execute()
+         {
+            UnhandledError err = errorManager_.consumeLastError();
+            if (err.getErrorMessage().equals(event.getError()))
+            {
+               view_.consoleWriteExtendedError(event.getError(), err);
+            }
+            else
+            {
+               view_.consoleWriteError(event.getError());
+            }
+         }
+      });
    }
    
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)

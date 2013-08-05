@@ -41,9 +41,11 @@ public class ErrorManager
       lastError_ = event.getError();
    }
    
-   public UnhandledError getLastError()
+   public UnhandledError consumeLastError()
    {
-      return lastError_;
+      UnhandledError err = lastError_;
+      lastError_ = null;
+      return err;
    }
    
    private final EventBus events_;
