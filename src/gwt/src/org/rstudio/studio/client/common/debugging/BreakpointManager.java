@@ -367,7 +367,8 @@ public class BreakpointManager
          {
             events_.fireEvent(new SendToConsoleEvent("n", true));
          }
-         activeFunctions.add(new FileFunction(functionName, fileName, false));
+         activeFunctions.add(
+               new FileFunction(functionName, fileName, "", false));
       }
       
       // For any functions that were previously active in the callstack but
@@ -466,6 +467,7 @@ public class BreakpointManager
       server_.setFunctionBreakpoints(
             function.functionName,
             function.fileName,
+            function.packageName,
             steps,
             new ServerRequestCallback<Void>()
             {
@@ -514,6 +516,7 @@ public class BreakpointManager
          server_.getFunctionSteps(
                function.functionName,
                function.fileName,
+               function.packageName,
                inactiveLines, 
                new ServerRequestCallback<JsArray<FunctionSteps>> () {
                   @Override
@@ -710,6 +713,7 @@ public class BreakpointManager
          server_.setFunctionBreakpoints(
                function.functionName, 
                function.fileName, 
+               function.packageName,
                new ArrayList<String>(),
                new ServerRequestCallback<Void>()
                {
@@ -740,23 +744,29 @@ public class BreakpointManager
    {
       public String functionName;
       public String fileName;
+      public String packageName;
+      
       boolean fullPath;
       
-      public FileFunction (String fun, String file, boolean useFullPath)
+      public FileFunction (
+            String fun, String file, String pkg, boolean useFullPath)
       {
          functionName = fun;
-         fileName = file.trim();        
+         fileName = file.trim();
+         packageName = pkg;
          fullPath = useFullPath;
       }
 
-      public FileFunction (String fun, String file)
+      public FileFunction (String fun, String file, String pkg)
       {
-         this(fun, file, true);
+         this(fun, file, pkg, true);
       }
-      
+            
       public FileFunction (Breakpoint breakpoint)
       {
-         this(breakpoint.getFunctionName(), breakpoint.getPath());
+         this(breakpoint.getFunctionName(), 
+             breakpoint.getPath(), 
+             breakpoint.getPackageName());
       }
       
       public boolean containsBreakpoint(Breakpoint breakpoint)

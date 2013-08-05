@@ -27,7 +27,15 @@ used by these components are included below):
 In addition, RStudio for Windows is bundled with binary copies of GNU
 DiffUtils, GNU Grep, SumatraPDF, and several components of MSYS. 
 These components are licensed to you under the GPLv3, the terms of which
-are included below.
+are included below. You can obtain source code for these components at:
+
+  http://ftp.gnu.org/gnu/diffutils/
+  http://ftp.gnu.org/gnu/grep/
+  http://sourceforge.net/projects/mingw/files/MSYS/
+  http://code.google.com/p/sumatrapdf/
+
+In the alternate, you may request a copy of the source code for 
+any of these components by e-mail to info@rstudio.com.
 
 
 GNU LGPL v2.1

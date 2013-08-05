@@ -12,13 +12,3 @@ You can obtain the source code for the latest version of RStudio at:
 
   https://github.com/rstudio/rstudio/
 
-You can obtain the source code for GNU DiffUtils, GNU Grep, MSYS, and 
-SumatraPDF at:
-
-  http://ftp.gnu.org/gnu/diffutils/
-  http://ftp.gnu.org/gnu/grep/
-  http://sourceforge.net/projects/mingw/files/MSYS/
-  http://code.google.com/p/sumatrapdf/
-
-In the alternate, you may request a copy of the source code for 
-any of these components by e-mail to info@rstudio.com.

@@ -2841,6 +2841,7 @@ public class RemoteServer implements Server
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
+                 String packageName,
                  int[] lineNumbers,
                  ServerRequestCallback<JsArray<FunctionSteps>> requestCallback)
    {
@@ -2852,7 +2853,8 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
-      params.set(2, lineNums);
+      params.set(2, new JSONString(packageName));
+      params.set(3, lineNums);
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STEPS,
                   params,
@@ -2863,6 +2865,7 @@ public class RemoteServer implements Server
    public void setFunctionBreakpoints(
          String functionName,
          String fileName,
+         String packageName,
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback)
    {
@@ -2874,7 +2877,8 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
-      params.set(2, breakSteps);
+      params.set(2, new JSONString(packageName));
+      params.set(3, breakSteps);
       sendRequest(RPC_SCOPE,
                   SET_FUNCTION_BREAKPOINTS,
                   params,
