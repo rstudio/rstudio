@@ -1,5 +1,5 @@
 /*
- * ShellOutputWriter.java
+ * UnhandledError.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,14 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.shell;
 
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+package org.rstudio.studio.client.common.debugging.model;
 
-public interface ShellOutputWriter 
+import org.rstudio.studio.client.workbench.views.environment.events.LineData;
+
+import com.google.gwt.core.client.JsArray;
+
+public class UnhandledError extends LineData
 {
-   void consoleWriteError(String string);
-   void consoleWriteExtendedError(String string, UnhandledError traceInfo);
-   void consoleWriteOutput(String output) ;
-   void consoleWritePrompt(String prompt);
+   protected UnhandledError() {}
+   
+   public final native String getErrorMessage() /*-{
+      return this.message;
+   }-*/;
+   
+   public final native JsArray<ErrorFrame> getErrorFrames() /*-{
+      return this.frames;
+   }-*/;
 }

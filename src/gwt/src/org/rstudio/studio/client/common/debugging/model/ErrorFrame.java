@@ -1,5 +1,5 @@
 /*
- * ShellOutputWriter.java
+ * ErrorFrame.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,14 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.shell;
 
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+package org.rstudio.studio.client.common.debugging.model;
 
-public interface ShellOutputWriter 
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class ErrorFrame extends JavaScriptObject
 {
-   void consoleWriteError(String string);
-   void consoleWriteExtendedError(String string, UnhandledError traceInfo);
-   void consoleWriteOutput(String output) ;
-   void consoleWritePrompt(String prompt);
+   protected ErrorFrame() {}
+   
+   public final native String getFunctionName() /*-{
+      return this.func;
+   }-*/;
+
+   public final native String getFileName() /*-{
+      return this.file;
+   }-*/;
 }

@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -88,6 +89,12 @@ public class ShellInteractionManager implements ShellOutputWriter
             "Error: " + error + "\n");
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
+   }
+   
+   @Override
+   public void consoleWriteExtendedError(
+         String error, UnhandledError traceInfo)
+   {
    }
    
    @Override

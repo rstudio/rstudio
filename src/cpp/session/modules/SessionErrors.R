@@ -24,14 +24,18 @@
       srcfile <- ""
       if (!is.null(srcref))
          srcfile <- capture.output(attr(srcref, "srcfile"))
+      else
+         srcref <- rep(0L, 8)
       list(
-         func = deparse(sys.call(n)),
-         file = srcfile)
+         func = .rs.scalar(deparse(sys.call(n))),
+         file = .rs.scalar(srcfile)),
+         line_number = .rs.scalar(srcref[1]),
+         end_line_number = .rs.scalar(srcref[3]),
+         character_number = .rs.scalar(srcref[5]),
+         end_character_number = .rs.scalar(srcref[6]))
    })
-   .rs.setVar("last.error", stack)
-})
-
-.rs.addJsonRpcHandler("get_last_error", function()
-{
-   .rs.last.error
+   event <- list(
+      frames = stack,
+      message = .rs.scalar(geterrmessage()))
+   .rs.enqueClientEvent("unhandled_error", event)
 })

@@ -17,7 +17,7 @@ package org.rstudio.studio.client.common.shell;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.ButtonElement;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.InputElement;
@@ -40,6 +40,8 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -221,6 +223,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
+      output(error, getErrorClass(), false);
+   }
+   
+   public void consoleWriteExtendedError(
+         final String error, UnhandledError traceInfo)
+   {
+      clearPendingInput();
       DivElement div = Document.get().createDivElement();
       div.setClassName(ThemeStyles.INSTANCE.consoleErrorBox());
       
@@ -233,6 +242,26 @@ public class ShellWidget extends Composite implements ShellDisplay,
       traceback.setValue("Show Traceback");
       traceback.setClassName(ThemeStyles.INSTANCE.consoleErrorTraceback());
       div.appendChild(traceback);
+      
+      for (int i = 0; i < traceInfo.getErrorFrames().length(); i++)
+      {
+         ErrorFrame frame = traceInfo.getErrorFrames().get(i);
+         DivElement frameRow = Document.get().createDivElement();
+         SpanElement function = Document.get().createSpanElement();
+         function.setInnerText(frame.getFunctionName());
+         frameRow.appendChild(function);
+         if (frame.getFileName().length() > 0)
+         {
+            SpanElement at = Document.get().createSpanElement();
+            at.setInnerText(" at ");
+            frameRow.appendChild(at);
+            AnchorElement fileName = Document.get().createAnchorElement();
+            fileName.setHref("#");
+            fileName.setInnerText(frame.getFileName());
+            frameRow.appendChild(fileName);
+         }
+         div.appendChild(frameRow);
+      }
       
       output_.getElement().appendChild(div);
       scrollPanel_.onContentSizeChanged();

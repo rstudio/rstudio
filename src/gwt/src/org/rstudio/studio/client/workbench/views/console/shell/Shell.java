@@ -30,6 +30,8 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -85,7 +87,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 GlobalDisplay globalDisplay,
                 Commands commands,
-                UIPrefs uiPrefs)
+                UIPrefs uiPrefs, 
+                ErrorManager errorManager)
    {
       super() ;
 
@@ -96,6 +99,7 @@ public class Shell implements ConsoleInputHandler,
       view_ = display ;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      errorManager_ = errorManager;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
 
@@ -222,7 +226,8 @@ public class Shell implements ConsoleInputHandler,
          public void onError(ServerError error) 
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
+            view_.consoleWriteError(
+                  "Error: " + error.getUserMessage() + "\n");
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -236,7 +241,15 @@ public class Shell implements ConsoleInputHandler,
 
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      view_.consoleWriteError(event.getError()) ;
+      UnhandledError err = errorManager_.getLastError();
+      if (err.getErrorMessage().equals(event.getError()))
+      {
+         view_.consoleWriteExtendedError(event.getError(), err);
+      }
+      else
+      {
+         view_.consoleWriteError(event.getError());
+      }
    }
    
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
@@ -536,6 +549,7 @@ public class Shell implements ConsoleInputHandler,
    private final Display view_ ;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
+   private final ErrorManager errorManager_;
    private final InputEditorDisplay input_ ;
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;

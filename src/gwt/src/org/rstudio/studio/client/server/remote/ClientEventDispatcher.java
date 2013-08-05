@@ -20,6 +20,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -39,6 +41,8 @@ import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
+import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -488,6 +492,12 @@ public class ClientEventDispatcher
          {
             eventBus_.fireEvent(new PackageUnloadedEvent(
                   (String)event.getData()));
+         }
+         else if (type.equals(ClientEvent.UnhandledError))
+         {
+            UnhandledError err = event.getData();
+            eventBus_.fireEvent(new UnhandledErrorEvent(err));
+            Debug.log("unhandled " + err.getErrorMessage());
          }
          else
          {
