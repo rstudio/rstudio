@@ -26,6 +26,6 @@ public class ErrorFrame extends JavaScriptObject
    }-*/;
 
    public final native String getFileName() /*-{
-      return this.file;
+      return this.file.trim();
    }-*/;
 }

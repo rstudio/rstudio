@@ -28,14 +28,23 @@
          srcref <- rep(0L, 8)
       list(
          func = .rs.scalar(deparse(sys.call(n))),
-         file = .rs.scalar(srcfile)),
+         file = .rs.scalar(srcfile),
          line_number = .rs.scalar(srcref[1]),
          end_line_number = .rs.scalar(srcref[3]),
          character_number = .rs.scalar(srcref[5]),
-         end_character_number = .rs.scalar(srcref[6]))
+         end_character_number = .rs.scalar(srcref[6])
+      )
    })
    event <- list(
       frames = stack,
       message = .rs.scalar(geterrmessage()))
    .rs.enqueClientEvent("unhandled_error", event)
+})
+
+.rs.addFunction("registerErrorHandler", function()
+{
+   if (is.null(getOption("error")))
+   {
+      options(error = .rs.handleError)
+   }
 })

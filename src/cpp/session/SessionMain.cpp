@@ -1607,6 +1607,11 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       LOG_ERROR(error);
 #endif
 
+   // register error handler
+   error = r::exec::RFunction(".rs.registerErrorHandler").call();
+   if (error)
+      LOG_ERROR(error);
+
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)

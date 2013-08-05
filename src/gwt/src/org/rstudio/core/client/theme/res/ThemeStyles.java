@@ -154,7 +154,4 @@ public interface ThemeStyles extends CssResource
    String fullscreenCaptionLabel();
    
    String presentationNavigatorLabel();
-   
-   String consoleErrorBox();
-   String consoleErrorTraceback();
 }

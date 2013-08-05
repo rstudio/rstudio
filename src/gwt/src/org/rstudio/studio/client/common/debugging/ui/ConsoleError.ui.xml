@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	.consoleErrorBox {
+	   border: 1px dotted #c0c0c0;
+	   position: relative;
+	   overflow: hidden;
+	   padding: 5px;
+	}
+
+	.consoleErrorTraceback {
+	   right: 10px;
+	   top: 0px;
+	   position: absolute;
+	}
+	</ui:style>
+	<g:HTMLPanel styleName="consoleErrorBox">
+	  <g:Button styleName="consoleErrorTraceback" ui:field="showTraceback">
+	     Show Traceback
+	  </g:Button>
+	  <g:HTMLPanel ui:field="framePanel" visible="false">
+	  </g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 
