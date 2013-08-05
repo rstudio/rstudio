@@ -26,18 +26,26 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -50,9 +58,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor)
+   public ShellWidget(AceEditor editor, EventBus events)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      events_ = events;
 
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
@@ -237,6 +246,21 @@ public class ShellWidget extends Composite implements ShellDisplay,
       scrollPanel_.onContentSizeChanged();
    }
    
+   @Override
+   public void showSourceForFrame(ErrorFrame frame)
+   {
+      if (events_ == null)
+         return;
+      FileSystemItem sourceFile = FileSystemItem.createFile(
+            frame.getFileName());
+      events_.fireEvent(new OpenSourceFileEvent(sourceFile,
+                             FilePosition.create(
+                                   frame.getLineNumber(),
+                                   frame.getCharacterNumber()),
+                             FileTypeRegistry.R,
+                             NavigationMethod.HighlightLine));      
+   }
+
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
@@ -717,6 +741,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand scrollToBottomCommand_;
    private boolean suppressPendingInput_;
+   private final EventBus events_;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }

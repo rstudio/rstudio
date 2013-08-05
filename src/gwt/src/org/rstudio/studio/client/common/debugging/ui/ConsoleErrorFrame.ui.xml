@@ -2,13 +2,16 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
-   .function
-   {
+   .function {
 	  display: inline;
+	}
+	
+	.sourceLink {
+	  cursor: pointer;
 	}
 	</ui:style>
 	<g:HTMLPanel>
 	  <g:Label ui:field="functionName" styleName="{style.function}"></g:Label>
-	  <g:Anchor ui:field="sourceLink"></g:Anchor>
+	  <g:Anchor ui:field="sourceLink" styleName="{style.sourceLink} ace_constant ace_numeric"></g:Anchor>
 	</g:HTMLPanel>
 </ui:UiBinder> 

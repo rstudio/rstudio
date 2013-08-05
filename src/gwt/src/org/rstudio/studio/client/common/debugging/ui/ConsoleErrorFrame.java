@@ -23,35 +23,29 @@ public class ConsoleErrorFrame extends Composite
    {
    }
 
-   public ConsoleErrorFrame(ErrorFrame frame)
+   public ConsoleErrorFrame(ErrorFrame frame, ConsoleError.Observer observer)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
       frame_ = frame;
+      observer_ = observer;
       
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(frame.getFunctionName() + (hasSource ? " at " : ""));
       if (hasSource)
       {
          sourceLink.setText(frame.getFileName());
-         sourceLink.setHref("#");
          sourceLink.addClickHandler(new ClickHandler()
          {            
             @Override
             public void onClick(ClickEvent event)
             {
-               navigateToSource();
+               if (frame_ != null)
+               {
+                  observer_.showSourceForFrame(frame_);
+               }
             }
          });
-      }
-   }
-   
-   private void navigateToSource()
-   {
-      // TODO: Perform source navigation 
-      if (frame_ != null)
-      {
-         
       }
    }
 
@@ -59,6 +53,7 @@ public class ConsoleErrorFrame extends Composite
    Label functionName;
    @UiField
    Anchor sourceLink;
-   
+
+   private ConsoleError.Observer observer_;
    private ErrorFrame frame_ = null;
 }

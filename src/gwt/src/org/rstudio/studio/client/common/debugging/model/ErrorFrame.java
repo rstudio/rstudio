@@ -15,9 +15,9 @@
 
 package org.rstudio.studio.client.common.debugging.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.views.environment.events.LineData;
 
-public class ErrorFrame extends JavaScriptObject
+public class ErrorFrame extends LineData
 {
    protected ErrorFrame() {}
    

@@ -15,11 +15,10 @@
 
 package org.rstudio.studio.client.common.debugging.model;
 
-import org.rstudio.studio.client.workbench.views.environment.events.LineData;
-
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class UnhandledError extends LineData
+public class UnhandledError extends JavaScriptObject
 {
    protected UnhandledError() {}
    
