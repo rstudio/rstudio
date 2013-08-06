@@ -8,9 +8,10 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -36,21 +37,24 @@ public class ConsoleError extends Composite
       
       initWidget(uiBinder.createAndBindUi(this));
    
-      errorMessage.setText(err.getErrorMessage());
+      errorMessage.setText(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
       
-      showTraceback.addClickHandler(new ClickHandler()
+      ClickHandler showHideTraceback = new ClickHandler()
       {         
          @Override
          public void onClick(ClickEvent event)
          {
             showingTraceback_ = !showingTraceback_;
-            showTraceback.setText(showingTraceback_ ? 
+            showTracebackText.setText(showingTraceback_ ? 
                   "Hide Traceback" : "Show Traceback");
             framePanel.setVisible(showingTraceback_);
             observer_.onErrorBoxResize();
          }
-      });
+      };
+      
+      showTracebackText.addClickHandler(showHideTraceback);
+      showTracebackImage.addClickHandler(showHideTraceback);
       
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
@@ -61,7 +65,9 @@ public class ConsoleError extends Composite
    }
 
    @UiField
-   Button showTraceback;
+   Anchor showTracebackText;
+   @UiField
+   Image showTracebackImage;
    @UiField
    HTMLPanel framePanel;
    @UiField

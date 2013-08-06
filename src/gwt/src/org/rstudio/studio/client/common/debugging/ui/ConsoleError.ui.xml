@@ -2,6 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
+	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+	
 	.consoleErrorBox {
 	   border: 1px dashed #c0c0c0;
 	   position: relative;
@@ -13,14 +15,39 @@
 	.consoleErrorTraceback {
 	   right: 5px;
 	   top: 4px;
-	   position: absolute;
+	   width: 8em;
+	   float: right;
+	   margin-bottom: 15px;
+	}
+	
+	.tracebackText {
+      font-family: proportionalFont;
+      font-size: 80%;
+	   opacity: 0.50;
+	   cursor: pointer;
+	}
+	
+	.tracebackText:hover {
+	   opacity: 1;
+	}
+	
+	.tracebackImage {
+	   cursor: pointer;
+	}
+	
+	.errorMessage {
+	  display: inline;
 	}
 	</ui:style>
+   <ui:image src="traceback.png" field="traceback"></ui:image>
 	<g:HTMLPanel styleName="{style.consoleErrorBox}">
-	  <g:Label ui:field="errorMessage"></g:Label>
-	  <g:Button styleName="{style.consoleErrorTraceback}" ui:field="showTraceback">
-	     Show Traceback
-	  </g:Button>
+	  <g:HTMLPanel styleName="{style.consoleErrorTraceback}">
+	     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.tracebackImage}"></g:Image>
+	     <g:Anchor styleName="{style.tracebackText}" ui:field="showTracebackText">
+	        Show Traceback
+	     </g:Anchor>
+	  </g:HTMLPanel>
+     <g:Label ui:field="errorMessage" styleName="{style.errorMessage}"></g:Label>
 	  <g:HTMLPanel ui:field="framePanel" visible="false">
 	  </g:HTMLPanel>
 	</g:HTMLPanel>
