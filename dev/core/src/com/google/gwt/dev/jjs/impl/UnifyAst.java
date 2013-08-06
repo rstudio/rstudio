@@ -202,7 +202,7 @@ public class UnifyAst {
     public void endVisit(JExpressionStatement x, Context ctx) {
       if (x.getExpr() instanceof JMethodCall) {
         JMethodCall call = (JMethodCall) x.getExpr();
-        if (call.getTarget() == gwtDebuggerMethod) {
+        if (gwtDebuggerMethods.contains(call.getTarget())) {
           // We should see all calls here because GWT.debugger() returns void.
           ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
         }
@@ -248,7 +248,7 @@ public class UnifyAst {
         return;
       }
       if (magicMethodCalls.contains(target)) {
-        if (target == gwtDebuggerMethod) {
+        if (gwtDebuggerMethods.contains(target)) {
           return; // handled in endVisit for JExpressionStatement
         }
         JExpression result = handleMagicMethodCall(x);
@@ -478,7 +478,10 @@ public class UnifyAst {
   private static final String GWT_CREATE =
       "com.google.gwt.core.shared.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
 
-  private static final String GWT_DEBUGGER = "com.google.gwt.core.shared.GWT.debugger()V";
+  private static final String GWT_DEBUGGER_SHARED = "com.google.gwt.core.shared.GWT.debugger()V";
+
+  private static final String GWT_DEBUGGER_CLIENT = "com.google.gwt.core.client.GWT.debugger()V";
+
 
   private static final String GWT_IS_CLIENT = "com.google.gwt.core.shared.GWT.isClient()Z";
 
@@ -502,7 +505,7 @@ public class UnifyAst {
    * Methods for which the call site must be replaced with magic AST nodes.
    */
   private static final Set<String> MAGIC_METHOD_CALLS = new LinkedHashSet<String>(Arrays.asList(
-      GWT_CREATE, GWT_DEBUGGER, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
+      GWT_CREATE, GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
 
   /**
    * Methods with magic implementations that the compiler must insert.
@@ -533,7 +536,7 @@ public class UnifyAst {
 
   private final TreeLogger logger;
   private final Set<JMethod> magicMethodCalls = new IdentityHashSet<JMethod>();
-  private JMethod gwtDebuggerMethod;
+  private final Set<JMethod> gwtDebuggerMethods = new IdentityHashSet<JMethod>();
   private final Map<String, JMethod> methodMap = new HashMap<String, JMethod>();
   private final JJSOptions options;
   private final JProgram program;
@@ -946,8 +949,8 @@ public class UnifyAst {
       methodMap.put(sig, method);
       if (MAGIC_METHOD_CALLS.contains(sig)) {
         magicMethodCalls.add(method);
-        if (GWT_DEBUGGER.equals(sig)) {
-          gwtDebuggerMethod = method;
+        if (GWT_DEBUGGER_SHARED.equals(sig) || GWT_DEBUGGER_CLIENT.equals(sig)) {
+          gwtDebuggerMethods.add(method);
         }
       }
       if (MAGIC_METHOD_IMPLS.contains(sig)) {
