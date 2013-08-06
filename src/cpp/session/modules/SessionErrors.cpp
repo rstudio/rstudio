@@ -17,6 +17,10 @@
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
+
+#include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 
 #include <boost/bind.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -26,6 +30,25 @@ using namespace core;
 namespace session {
 namespace modules {
 namespace errors {
+namespace {
+
+Error setErrManagement(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   int type = 0;
+   Error error = json::readParams(request.params, &type);
+   if (error)
+      return error;
+
+   // clear the previous error handler; if we don't do this, the error handler
+   // we set will be unset by DisableErrorHandlerScope during call evaluation
+   r::options::setErrorOption(R_NilValue);
+
+   return r::exec::RFunction(".rs.setErrorManagementType", type)
+           .call();
+}
+
+} // anonymous namespace
 
 Error initialize()
 {
@@ -34,13 +57,14 @@ Error initialize()
 
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "set_error_management_type", setErrManagement))
       (bind(sourceModuleRFile, "SessionErrors.R"));
 
    return initBlock.execute();
 }
 
 
-} // namepsace breakpoints
+} // namepsace errors
 } // namespace modules
 } // namesapce session
 

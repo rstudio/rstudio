@@ -41,15 +41,18 @@
    .rs.enqueClientEvent("unhandled_error", event)
 })
 
-.rs.addFunction("breakOnError", function()
+.rs.addFunction("setErrorManagementType", function(type)
 {
-   browser(skipCalls = 1)
+   if (type == 0)
+      options(error = .rs.handleError)
+   else if (type == 1)
+      options(error = browser)
 })
 
 .rs.addFunction("registerErrorHandler", function()
 {
    if (is.null(getOption("error")))
    {
-      options(error = .rs.handleError)
+      .rs.setErrorManagementType(0)
    }
 })

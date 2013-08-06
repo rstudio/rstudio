@@ -38,6 +38,11 @@
 	.errorMessage {
 	  display: inline;
 	}
+	
+	.framePanel {
+	  margin-top: 10px;
+	  margin-left: 10px;
+	}
 	</ui:style>
    <ui:image src="traceback.png" field="traceback"></ui:image>
 	<g:HTMLPanel styleName="{style.consoleErrorBox}">
@@ -48,7 +53,7 @@
 	     </g:Anchor>
 	  </g:HTMLPanel>
      <g:Label ui:field="errorMessage" styleName="{style.errorMessage}"></g:Label>
-	  <g:HTMLPanel ui:field="framePanel" visible="false">
+	  <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
 	  </g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 

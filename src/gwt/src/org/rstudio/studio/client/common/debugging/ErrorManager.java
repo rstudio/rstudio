@@ -16,9 +16,15 @@
 
 package org.rstudio.studio.client.common.debugging;
 
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,13 +33,20 @@ import com.google.inject.Singleton;
 public class ErrorManager
              implements UnhandledErrorEvent.Handler
 {
+   public interface Binder
+   extends CommandBinder<Commands, ErrorManager> {}
+
    @Inject
-   public ErrorManager(EventBus events)
+   public ErrorManager(EventBus events, Binder binder, Commands commands, DebuggingServerOperations server)
    {
       events_ = events;
+      server_ = server;
+      binder.bind(commands, this);
       
       events_.addHandler(UnhandledErrorEvent.TYPE, this);
    }
+
+   // Event and command handlers ----------------------------------------------
 
    @Override
    public void onUnhandledError(UnhandledErrorEvent event)
@@ -41,14 +54,55 @@ public class ErrorManager
       lastError_ = event.getError();
    }
    
+   @Handler 
+   public void onErrorsAutomatic()
+   {
+      setErrorManagementType(ERRORS_AUTOMATIC);
+   }
+
+   @Handler 
+   public void onErrorsBreak()
+   {
+      setErrorManagementType(ERRORS_BREAK_ALWAYS);
+   }
+   
+   @Handler
+   public void onErrorsBreakUser()
+   {
+      setErrorManagementType(ERRORS_BREAK_USER);
+   }
+
+   // Public methods ----------------------------------------------------------
+
    public UnhandledError consumeLastError()
    {
       UnhandledError err = lastError_;
       lastError_ = null;
       return err;
    }
+
+   // Private methods ---------------------------------------------------------
+   
+   private void setErrorManagementType(int type)
+   {
+      server_.setErrorManagementType(type, 
+            new ServerRequestCallback<Void>()
+      {         
+         @Override
+         public void onError(ServerError error)
+         {
+            // Don't send any events if we failed to change the error management
+            // strategy
+         }
+      });
+   }
+
+   private static final int ERRORS_AUTOMATIC = 0;
+   private static final int ERRORS_BREAK_ALWAYS = 1;
+   private static final int ERRORS_BREAK_USER = 2;
    
    private final EventBus events_;
+   private final DebuggingServerOperations server_;
 
    private UnhandledError lastError_;
 }
