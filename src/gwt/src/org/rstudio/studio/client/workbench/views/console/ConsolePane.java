@@ -50,6 +50,14 @@ public class ConsolePane extends WorkbenchPane
       // is always created during startup
       ensureWidget();
 
+      errorManagementMenu_ = new ToolbarPopupMenu();      
+      errorManagementMenu_.addItem(
+            commands_.errorsAutomatic().createMenuItem(false));
+      errorManagementMenu_.addItem(
+            commands_.errorsBreak().createMenuItem(false));
+      errorManagementMenu_.addItem(
+            commands_.errorsBreakUser().createMenuItem(false));
+
       new Console(this, events, commands);
    }
 
@@ -68,6 +76,11 @@ public class ConsolePane extends WorkbenchPane
    {
       return consoleInterruptButton_;
    }
+   
+   public Widget getErrorManagementMenu()
+   {
+      return new ToolbarButton("Errors", null, errorManagementMenu_);
+   }
 
    public int getCharacterWidth()
    {
@@ -77,13 +90,6 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      ToolbarPopupMenu errorManagement = new ToolbarPopupMenu();      
-      errorManagement.addItem(
-            commands_.errorsAutomatic().createMenuItem(false));
-      errorManagement.addItem(
-            commands_.errorsBreak().createMenuItem(false));
-      errorManagement.addItem(
-            commands_.errorsBreakUser().createMenuItem(false));
       Toolbar toolbar = new Toolbar();
       workingDir_ = new Label();
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
@@ -91,7 +97,7 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       toolbar.addRightWidget(consoleInterruptButton_);
-      toolbar.addRightPopupMenu(new Label("Errors"), errorManagement);
+      toolbar.addRightPopupMenu(new Label("Errors"), errorManagementMenu_);
       return toolbar;
    }
    
@@ -160,5 +166,6 @@ public class ConsolePane extends WorkbenchPane
    private Shell shell_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private ToolbarPopupMenu errorManagementMenu_;
    private boolean debugMode_;
 }

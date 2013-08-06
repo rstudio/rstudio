@@ -162,9 +162,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
-            owner_.setContextButton(consoleInterrupt_,
-                                    consoleInterrupt_.getWidth(),
-                                    consoleInterrupt_.getHeight());
+            owner_.setContextButton(consoleInterrupt_);
+            owner_.setRightMenu(consolePane_.getErrorManagementMenu());
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -173,7 +172,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
-            owner_.setContextButton(null, 0, 0);
+            owner_.setContextButton(null);
+            owner_.setRightMenu(null);
          }
       }
    }

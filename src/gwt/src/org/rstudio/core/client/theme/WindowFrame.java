@@ -27,6 +27,7 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 
 public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
@@ -244,23 +245,46 @@ public class WindowFrame extends Composite
       }
    }
 
-   public void setContextButton(Widget button, int width, int height)
+   public void setContextButton(ConsoleInterruptButton button)
    {
-      if (contextButton_ != null)
+      if (consoleInterruptButton_ != null)
       {
-         contextButton_.removeFromParent();
-         contextButton_ = null;
+         consoleInterruptButton_.removeFromParent();
+         consoleInterruptButton_ = null;
       }
 
       if (button != null)
       {
-         contextButton_ = button;
+         consoleInterruptButton_ = button;
          frame_.add(button);
-         frame_.setWidgetRightWidth(button, 48, Unit.PX, width, Unit.PX);
-         frame_.setWidgetTopHeight(button, 3, Unit.PX, height, Unit.PX);
+         frame_.setWidgetRightWidth(
+               button, 48, Unit.PX, button.getWidth(), Unit.PX);
+         frame_.setWidgetTopHeight(
+               button, 3, Unit.PX, button.getHeight(), Unit.PX);
          // Without z-index, the header widget will obscure the context button
          // if the former is set after the latter.
          frame_.getWidgetContainerElement(button).getStyle().setZIndex(10);
+      }
+   }
+   
+   public void setRightMenu(Widget menu)
+   {
+      if (rightMenu_ != null)
+      {
+         rightMenu_.removeFromParent();
+         rightMenu_ = null;
+      }
+      
+      if (menu != null)
+      {
+         rightMenu_ = menu;
+         frame_.add(menu);
+         int buttonRight = consoleInterruptButton_ == null ? 0 : consoleInterruptButton_.getWidth();
+         frame_.setWidgetRightWidth(menu, 48 + buttonRight, Unit.PX, 
+               50, Unit.PX);
+         frame_.setWidgetTopHeight(menu, 3, Unit.PX, 
+               20, Unit.PX);
+         frame_.getWidgetContainerElement(menu).getStyle().setZIndex(10);
       }
    }
 
@@ -309,7 +333,8 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
-   private Widget contextButton_;
+   private ConsoleInterruptButton consoleInterruptButton_;
+   private Widget rightMenu_;
    private HandlerRegistration ensureVisibleRegistration_;
    private Widget previousHeader_;
 }
