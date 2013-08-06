@@ -315,7 +315,10 @@ public abstract class
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();
    public abstract AppCommand debugHelp();   
-
+   public abstract AppCommand errorsAutomatic();
+   public abstract AppCommand errorsBreak();
+   public abstract AppCommand errorsBreakUser();
+   
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();

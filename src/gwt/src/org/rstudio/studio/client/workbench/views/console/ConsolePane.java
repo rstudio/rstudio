@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -76,6 +77,13 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
+      ToolbarPopupMenu errorManagement = new ToolbarPopupMenu();      
+      errorManagement.addItem(
+            commands_.errorsAutomatic().createMenuItem(false));
+      errorManagement.addItem(
+            commands_.errorsBreak().createMenuItem(false));
+      errorManagement.addItem(
+            commands_.errorsBreakUser().createMenuItem(false));
       Toolbar toolbar = new Toolbar();
       workingDir_ = new Label();
       workingDir_.setStyleName(ThemeStyles.INSTANCE.subtitle());
@@ -83,6 +91,7 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       toolbar.addRightWidget(consoleInterruptButton_);
+      toolbar.addRightPopupMenu(new Label("Errors"), errorManagement);
       return toolbar;
    }
    

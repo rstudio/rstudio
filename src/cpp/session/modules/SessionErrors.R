@@ -41,6 +41,11 @@
    .rs.enqueClientEvent("unhandled_error", event)
 })
 
+.rs.addFunction("breakOnError", function()
+{
+   browser(skipCalls = 1)
+})
+
 .rs.addFunction("registerErrorHandler", function()
 {
    if (is.null(getOption("error")))

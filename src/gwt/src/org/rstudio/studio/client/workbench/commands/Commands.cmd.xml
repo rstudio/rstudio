@@ -268,6 +268,12 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="debugContinue"/>
          <cmd refid="debugStop"/>
          <separator/>
+         <menu label="_Error Handling">
+            <cmd refid="errorsAutomatic"/>
+            <cmd refid="errorsBreak"/>
+            <cmd refid="errorsBreakUser"/>
+         </menu>
+         <separator/>
          <cmd refid="debugHelp"/>
       </menu>
       
@@ -1250,5 +1256,14 @@ well as menu structures (for main menu and popup menus).
    <cmd id="debugHelp"
         menuLabel="Debugging _Help"
         desc="Guide to debugging features"/>
-        
+   
+   <cmd id="errorsAutomatic"
+        menuLabel="_Automatic"
+        desc="Handle errors automatically"/>
+   <cmd id="errorsBreak"
+        menuLabel="Break _Always"
+        desc="Break when any unhandled error occurs"/>
+   <cmd id="errorsBreakUser"
+        menuLabel="Break in _My Code"
+        desc="Break when an unhandled error occurs in your code"/>       
 </commands>
