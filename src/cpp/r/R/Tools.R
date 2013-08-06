@@ -514,7 +514,30 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
   as.list(call)[-1]
 })
 
+.rs.addFunction("isTraced", function(fun) {
+   isS4(fun) && class(fun) == "functionWithTrace"
+})
 
+# when a function is traced, some data about the function (such as its original
+# body and source references) exist only on the untraced copy
+.rs.addFunction("untraced", function(fun) {
+   if (.rs.isTraced(fun)) 
+      fun@original
+   else
+      fun
+})
 
+.rs.addFunction("getSrcref", function(fun) {
+   attr(.rs.untraced(fun), "srcref")
+})
 
+# returns a list containing line data from the given source reference,
+# formatted for output to the client
+.rs.addFunction("lineDataList", function(srcref) {
+   list(
+      line_number = .rs.scalar(srcref[1]),
+      end_line_number = .rs.scalar(srcref[3]),
+      character_number = .rs.scalar(srcref[5]),
+      end_character_number = .rs.scalar(srcref[6]))
+})
 

@@ -16,29 +16,42 @@
 .rs.addFunction("handleError", function()
 {
    calls <- sys.calls()
-   stack <- lapply(1:(length(calls) - 1), function(n) {
-      func <- sys.function(n)
-      if (isS4(func) && class(func) == "functionWithTrace")
-         func <- func@original
+   stack <- lapply(1:(length(calls) - 1), function(n)
+   {
+      func <- .rs.untraced(sys.function(n))
       srcref <- attr(func, "srcref")
       srcfile <- ""
       if (!is.null(srcref))
          srcfile <- capture.output(attr(srcref, "srcfile"))
       else
          srcref <- rep(0L, 8)
-      list(
-         func = .rs.scalar(deparse(sys.call(n))),
-         file = .rs.scalar(srcfile),
-         line_number = .rs.scalar(srcref[1]),
-         end_line_number = .rs.scalar(srcref[3]),
-         character_number = .rs.scalar(srcref[5]),
-         end_character_number = .rs.scalar(srcref[6])
-      )
+      c (list(func = .rs.scalar(deparse(sys.call(n))),
+              file = .rs.scalar(srcfile)),
+         .rs.lineDataList(srcref))
    })
    event <- list(
       frames = stack,
       message = .rs.scalar(geterrmessage()))
    .rs.enqueClientEvent("unhandled_error", event)
+})
+
+.rs.addFunction("handleUserError", function()
+{
+   calls <- sys.calls()
+   for (n in 1:(length(calls) - 1))
+   {
+      func <- .rs.untraced(sys.function(n))
+      srcref <- attr(func, "srcref")
+      if (!is.null(srcref) && 
+          !is.null(attr(srcref, "srcfile")))
+      {
+         # looks like user code--invoke the browser (but skip this call)
+         browser(skipCalls = 2L)
+         break
+      }
+   }
+   # didn't find any source references--just handle errors in the usual way
+   .rs.handleError()
 })
 
 .rs.addFunction("setErrorManagementType", function(type)
@@ -47,6 +60,8 @@
       options(error = .rs.handleError)
    else if (type == 1)
       options(error = browser)
+   else if (type == 2)
+      options(error = .rs.handleUserError)
 })
 
 .rs.addFunction("registerErrorHandler", function()
@@ -56,3 +71,4 @@
       .rs.setErrorManagementType(0)
    }
 })
+

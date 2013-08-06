@@ -37,12 +37,7 @@
       {
          # we need the source reference to look up the filename; we may need to
          # access the original copy of a traced function to get this
-         fun <- get(objName, env)
-         if (isS4(fun) && class(fun) == "functionWithTrace")
-         {
-            fun <- fun@original
-         }
-         srcref <- attr(fun, "srcref")
+         srcref <- .rs.getSrcref(get(objName, env))
          if (!is.null(srcref))
          {
             # get the name of the file from which the function originated, and
@@ -205,7 +200,7 @@
       # emit messages when they act on a function in a package environment; hide
       # those messages since they're just noise to the user.
       fun <- get(functionName, envir = envir)
-      if (isS4(fun) && class(fun) == "functionWithTrace")
+      if (.rs.isTraced(fun))
       {
          suppressMessages(untrace(
             what = functionName,
@@ -261,12 +256,7 @@
    {
       return(NULL)
    }
-   fun <- get(functionName, mode="function", envir=envir)
-   if (isS4(fun) && class(fun) == "functionWithTrace")
-   {
-      fun <- fun@original
-   }
-   return(fun)
+   .rs.untraced(get(functionName, mode="function", envir=envir))
 })
 
 .rs.addFunction("getFunctionSourceRefs", function(
@@ -433,14 +423,12 @@
       .rs.topDebugState$currentDebugSrcref <- srcref
    }
 
-   return(list(
-      step = .rs.scalar(step),
-      state = .rs.scalar(executionState),
-      needs_breakpoint_injection = .rs.scalar(needsBreakpointInjection),
-      line_number = .rs.scalar(srcref[1]),
-      end_line_number = .rs.scalar(srcref[3]),
-      character_number = .rs.scalar(srcref[5]),
-      end_character_number = .rs.scalar(srcref[6])))
+   return(c(list(
+               step = .rs.scalar(step),
+               state = .rs.scalar(executionState),
+               needs_breakpoint_injection = 
+                     .rs.scalar(needsBreakpointInjection)),
+            .rs.lineDataList(srcref)))
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(
