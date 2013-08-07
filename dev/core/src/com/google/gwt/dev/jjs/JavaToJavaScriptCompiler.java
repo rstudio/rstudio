@@ -75,7 +75,7 @@ import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
-import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
+import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
@@ -705,7 +705,7 @@ public class JavaToJavaScriptCompiler {
       }
 
       // (3) Perform Java AST normalizations.
-      FixAssignmentToUnbox.exec(jprogram);
+      FixAssignmentsToUnboxOrCast.exec(jprogram);
 
       /*
        * TODO: If we defer this until later, we could maybe use the results of

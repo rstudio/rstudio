@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -47,14 +46,15 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
  * resolve that case here as well.
  * </p>
  */
-public class FixAssignmentToUnbox extends JModVisitor {
+public class FixAssignmentsToUnboxOrCast extends JModVisitor {
   /**
    * Normalize compound assignments where the lhs is an unbox operation.
    */
-  private static class CompoundAssignmentToUnboxNormalizer extends CompoundAssignmentNormalizer {
+  private static class CompoundAssignmentsToUnboxOrCastNormalizer
+      extends CompoundAssignmentNormalizer {
     private final AutoboxUtils autoboxUtils;
 
-    protected CompoundAssignmentToUnboxNormalizer(JProgram program) {
+    protected CompoundAssignmentsToUnboxOrCastNormalizer(JProgram program) {
       autoboxUtils = new AutoboxUtils(program);
     }
 
@@ -73,63 +73,74 @@ public class FixAssignmentToUnbox extends JModVisitor {
 
     @Override
     protected boolean shouldBreakUp(JBinaryOperation x) {
-      return isUnboxExpression(x.getLhs());
+      return isUnboxOrCastExpression(x.getLhs());
     }
 
     @Override
     protected boolean shouldBreakUp(JPostfixOperation x) {
-      return isUnboxExpression(x.getArg());
+      return isUnboxOrCastExpression(x.getArg());
     }
 
     @Override
     protected boolean shouldBreakUp(JPrefixOperation x) {
-      return isUnboxExpression(x.getArg());
+      return isUnboxOrCastExpression(x.getArg());
     }
 
-    private boolean isUnboxExpression(JExpression x) {
-      return (autoboxUtils.undoUnbox(x) != null);
+    private boolean isUnboxOrCastExpression(JExpression x) {
+      return (autoboxUtils.undoUnbox(x) != null) || x instanceof JCastOperation;
     }
   }
 
   public static void exec(JProgram program) {
     Event fixAssignmentToUnboxEvent =
         SpeedTracerLogger.start(CompilerEventType.FIX_ASSIGNMENT_TO_UNBOX);
-    new CompoundAssignmentToUnboxNormalizer(program).accept(program);
-    new FixAssignmentToUnbox(program).accept(program);
+    new CompoundAssignmentsToUnboxOrCastNormalizer(program).accept(program);
+    new FixAssignmentsToUnboxOrCast(program).accept(program);
     fixAssignmentToUnboxEvent.end();
   }
 
   private final AutoboxUtils autoboxUtils;
 
-  private FixAssignmentToUnbox(JProgram program) {
+  private FixAssignmentsToUnboxOrCast(JProgram program) {
     this.autoboxUtils = new AutoboxUtils(program);
+  }
+
+  private JBinaryOperation maybeFixLhsCast(JBinaryOperation x) {
+    if (!(x.getLhs() instanceof JCastOperation)) {
+      return x;
+    }
+    // Assignment-to-cast-operation, e.g.
+    // (Foo) x = foo -> x = foo
+    // (Foo) x += foo -> x += foo
+    JCastOperation cast = (JCastOperation) x.getLhs();
+    return new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(), cast.getExpr(),
+            x.getRhs());
+  }
+
+  private JBinaryOperation maybeUndoBox(JBinaryOperation x) {
+    JExpression lhs = x.getLhs();
+    JExpression boxed = autoboxUtils.undoUnbox(lhs);
+    if (boxed == null) {
+      return x;
+    }
+
+    // Assignment-to-unbox, e.g.
+    // unbox(x) = foo -> x = box(foo)
+    JClassType boxedType = (JClassType) boxed.getType();
+    return  new JBinaryOperation(x.getSourceInfo(), boxedType, x.getOp(), boxed,
+        autoboxUtils.box(x.getRhs(), (JPrimitiveType) lhs.getType()));
   }
 
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
-    if (x.getOp() != JBinaryOperator.ASG) {
+    if (!x.isAssignment()) {
       return;
     }
 
-    JExpression lhs = x.getLhs();
-    JExpression boxed = autoboxUtils.undoUnbox(lhs);
-    if (boxed != null) {
-      // Assignment-to-unbox, e.g.
-      // unbox(x) = foo -> x = box(foo)
-      JClassType boxedType = (JClassType) boxed.getType();
-      ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), boxedType, JBinaryOperator.ASG, boxed,
-          autoboxUtils.box(x.getRhs(), (JPrimitiveType) lhs.getType())));
-      return;
-    }
+    JBinaryOperation result = maybeFixLhsCast(maybeUndoBox(x));
 
-    if (lhs instanceof JCastOperation) {
-      // Assignment-to-cast-operation, e.g.
-      // (Foo) x = foo -> x = foo
-      JCastOperation cast = (JCastOperation) lhs;
-      JBinaryOperation newAsg =
-          new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, cast.getExpr(),
-              x.getRhs());
-      ctx.replaceMe(newAsg);
+    if (result != x) {
+      ctx.replaceMe(result);
     }
   }
 }

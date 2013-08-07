@@ -23,7 +23,7 @@ import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
-import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
+import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
@@ -73,7 +73,7 @@ public class AstConstructor {
     jprogram.typeOracle.computeBeforeAST();
 
     // (3) Perform Java AST normalizations.
-    FixAssignmentToUnbox.exec(jprogram);
+    FixAssignmentsToUnboxOrCast.exec(jprogram);
 
     /*
      * TODO: If we defer this until later, we could maybe use the results of the

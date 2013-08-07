@@ -62,7 +62,7 @@ public enum CompilerEventType implements EventType {
   BUILD_TYPE_MAP_FOR_AST("BuildTypeMapForAST", "LightSeaGreen"), //
   GET_COMPILATION_UNITS("GetCompilationUnitDeclarations", "Gainsboro"), //
   GENERATE_JAVA_AST("GenerateJavaAST", "DodgerBlue"), //
-  FIX_ASSIGNMENT_TO_UNBOX("FixAssignmentToUnbox", "Orange"), //
+  FIX_ASSIGNMENT_TO_UNBOX("FixAssignmentsToUnboxOrCast", "Orange"), //
   ASSERTION_NORMALIZER("AssertionNormalizer", "LightPink"), //
   ASSERTION_REMOVER("AssertionRemover", "LightSalmon"), //
   REPLACE_REBINDS("ReplaceRebinds", "Snow"), //

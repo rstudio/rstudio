@@ -1062,7 +1062,7 @@ public class CfgBuilder {
         accept(arrayRef.getInstance());
         accept(arrayRef.getIndexExpr());
       } else if (!(expression instanceof JVariableRef)) {
-        throw new IllegalArgumentException("Unexpeted lhs: " + expression);
+        throw new IllegalArgumentException("Unexpected lhs: " + expression);
       }
     }
 

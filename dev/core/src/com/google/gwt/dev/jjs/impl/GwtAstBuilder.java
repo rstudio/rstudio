@@ -862,7 +862,7 @@ public class GwtAstBuilder {
           JType castType = typeMap.get(x.genericCast);
           /*
            * Note, this may result in an invalid AST due to an LHS cast
-           * operation. We fix this up in FixAssignmentToUnbox.
+           * operation. We fix this up in FixAssignmentsToUnboxOrCast.
            */
           expr = maybeCast(castType, expr);
         }
