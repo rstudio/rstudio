@@ -54,8 +54,10 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+   boost::shared_ptr<SEXP> errorHandler =
+         boost::make_shared<SEXP>(R_NilValue);
 
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_error_management_type", setErrManagement))
       (bind(sourceModuleRFile, "SessionErrors.R"));

@@ -39,9 +39,11 @@ import org.rstudio.studio.client.common.console.ConsoleProcessCreatedEvent;
 import org.rstudio.studio.client.common.console.ServerConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ServerConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ServerProcessExitEvent;
+import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
@@ -497,7 +499,11 @@ public class ClientEventDispatcher
          {
             UnhandledError err = event.getData();
             eventBus_.fireEvent(new UnhandledErrorEvent(err));
-            Debug.log("unhandled " + err.getErrorMessage());
+         }
+         else if (type.equals(ClientEvent.ErrorHandlerChanged))
+         {
+            ErrorHandlerType type = event.getData();
+            eventBus_.fireEvent(new ErrorHandlerChangedEvent(type));
          }
          else
          {

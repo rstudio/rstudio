@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -57,19 +58,19 @@ public class ErrorManager
    @Handler 
    public void onErrorsAutomatic()
    {
-      setErrorManagementType(ERRORS_AUTOMATIC);
+      setErrorManagementType(ErrorHandlerType.ERRORS_AUTOMATIC);
    }
 
    @Handler 
    public void onErrorsBreak()
    {
-      setErrorManagementType(ERRORS_BREAK_ALWAYS);
+      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK_ALWAYS);
    }
    
    @Handler
    public void onErrorsBreakUser()
    {
-      setErrorManagementType(ERRORS_BREAK_USER);
+      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK_USER);
    }
 
    // Public methods ----------------------------------------------------------
@@ -91,16 +92,11 @@ public class ErrorManager
          @Override
          public void onError(ServerError error)
          {
-            // Don't send any events if we failed to change the error management
-            // strategy
+            // TODO: Something reasonable here. 
          }
       });
    }
 
-   private static final int ERRORS_AUTOMATIC = 0;
-   private static final int ERRORS_BREAK_ALWAYS = 1;
-   private static final int ERRORS_BREAK_USER = 2;
-   
    private final EventBus events_;
    private final DebuggingServerOperations server_;
 

@@ -101,6 +101,7 @@ extern const int kBrowserLineChanged;
 extern const int kPackageLoaded;
 extern const int kPackageUnloaded;
 extern const int kUnhandledError;
+extern const int kErrorHandlerChanged;
 }
    
 class ClientEvent
