@@ -96,14 +96,11 @@ ProgramStatus Options::read(int argc, char * const argv[])
    }
 
    // verify installation flag
-   options_description test("test");
-   test.add_options()
+   options_description verify("verify");
+   verify.add_options()
      ("verify-installation",
      value<bool>(&verifyInstallation_)->default_value(false),
-     "verify the current installation")
-     ("test-pam",
-     value<bool>(&testPam_)->default_value(false),
-     "test the pam configuration");
+     "verify the current installation");
 
    // special program offline option (based on file existence at 
    // startup for easy bash script enable/disable of offline state)
@@ -212,7 +209,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    // overlay hook
    addOverlayOptions(&server, &www, &rsession, &auth, &monitor);
 
-   optionsDesc.commandLine.add(test).add(server).add(www).add(rsession).add(auth).add(monitor);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
    optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
  
    // read options

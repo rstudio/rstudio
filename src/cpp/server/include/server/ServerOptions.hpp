@@ -51,11 +51,6 @@ public:
       return verifyInstallation_;
    }
 
-   bool testPam() const
-   {
-      return testPam_;
-   }
-
    std::string serverWorkingDir() const
    { 
       return std::string(serverWorkingDir_.c_str());
@@ -206,7 +201,6 @@ private:
 private:
    core::FilePath installPath_;
    bool verifyInstallation_;
-   bool testPam_;
    std::string serverWorkingDir_;
    std::string serverUser_;
    bool serverDaemonize_;

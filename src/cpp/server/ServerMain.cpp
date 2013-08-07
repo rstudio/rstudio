@@ -54,7 +54,6 @@
 #include "ServerInit.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
-#include "ServerPAMTest.hpp"
 #include "ServerSessionProxy.hpp"
 #include "ServerREnvironment.hpp"
 #include "ServerSessionManager.hpp"
@@ -464,12 +463,6 @@ int main(int argc, char * const argv[])
             return core::system::exitFailure(error, ERROR_LOCATION);
 
          return EXIT_SUCCESS;
-      }
-
-      // run special test pam mode if requested
-      if (options.testPam())
-      {
-         return pam_test::execute();
       }
 
       // call overlay startup

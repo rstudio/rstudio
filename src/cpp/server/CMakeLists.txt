@@ -31,7 +31,6 @@ set(SERVER_SOURCE_FILES
    ServerOptions.cpp
    ServerOptionsOverlay.cpp
    ServerPAMAuth.cpp
-   ServerPAMTest.cpp
    ServerREnvironment.cpp
    ServerSessionProxy.cpp
    ServerSessionManager.cpp

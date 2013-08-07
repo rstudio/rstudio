@@ -14,10 +14,6 @@ testConfig() {
  `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
 }
 
-testPam() {
- `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-pam=1 --server-daemonize=0`
-}
-
 verifyInstallation() {
  `${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0`
 }
@@ -40,10 +36,6 @@ case "$1" in
 
     test-config)
         testConfig
-        ;;
-
-    test-pam)
-        testPam
         ;;
 
     verify-installation)
@@ -101,7 +93,7 @@ case "$1" in
         ;;
 
     *)
-        echo $"Usage: rstudio-server {start|stop|restart|test-config|test-pam|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
+        echo $"Usage: rstudio-server {start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|offline|online|active-sessions|version}"
         exit 2
 esac
 
