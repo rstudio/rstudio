@@ -50,7 +50,7 @@
          break
       }
    }
-   # didn't find any source references--just handle errors in the usual way
+   # handle errors in the usual way when finished
    .rs.handleError()
 })
 

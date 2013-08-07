@@ -21,6 +21,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import org.rstudio.core.client.theme.ExplicitSizeWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -57,6 +59,8 @@ public class ConsolePane extends WorkbenchPane
             commands_.errorsBreak().createMenuItem(false));
       errorManagementMenu_.addItem(
             commands_.errorsBreakUser().createMenuItem(false));
+      errorManagementButton_ = new ToolbarButton(
+            "Errors", null, errorManagementMenu_);
 
       new Console(this, events, commands);
    }
@@ -77,11 +81,11 @@ public class ConsolePane extends WorkbenchPane
       return consoleInterruptButton_;
    }
    
-   public Widget getErrorManagementMenu()
+   public ExplicitSizeWidget getErrorManagementMenu()
    {
-      return new ToolbarButton("Errors", null, errorManagementMenu_);
+      return new ExplicitSizeWidget(errorManagementButton_, 40, 100);
    }
-
+   
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();
@@ -166,6 +170,7 @@ public class ConsolePane extends WorkbenchPane
    private Shell shell_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private ToolbarButton errorManagementButton_;
    private ToolbarPopupMenu errorManagementMenu_;
    private boolean debugMode_;
 }

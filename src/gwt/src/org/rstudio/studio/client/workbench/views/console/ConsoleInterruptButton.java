@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
+import org.rstudio.core.client.theme.ExplicitSize;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEve
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 
 public class ConsoleInterruptButton extends Composite
+               implements ExplicitSize
 {
    @Inject
    public ConsoleInterruptButton(EventBus events,
@@ -82,11 +84,13 @@ public class ConsoleInterruptButton extends Composite
       });
    }
 
+   @Override
    public int getWidth()
    {
       return width_;
    }
 
+   @Override
    public int getHeight()
    {
       return height_;

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.theme.ExplicitSizeWidget;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -44,6 +45,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       findResultsTab_ = findResultsTab;
       sourceCppTab_ = sourceCppTab;
       consoleInterrupt_ = consoleInterrupt;
+      consoleInterruptWidget_ = new ExplicitSizeWidget(
+            consoleInterrupt, consoleInterrupt);
       goToWorkingDirButton_ = goToWorkingDirButton;
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
@@ -162,8 +165,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
-            owner_.setContextButton(consoleInterrupt_);
-            owner_.setRightMenu(consolePane_.getErrorManagementMenu());
+            owner_.addRightWidget(consoleInterruptWidget_);
+            owner_.addRightWidget(consolePane_.getErrorManagementMenu());
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -172,8 +175,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
-            owner_.setContextButton(null);
-            owner_.setRightMenu(null);
+            owner_.removeRightWidget(consolePane_.getErrorManagementMenu());
+            owner_.removeRightWidget(consoleInterruptWidget_);
          }
       }
    }
@@ -185,7 +188,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final FindOutputTab findResultsTab_;
    private final WorkbenchTab sourceCppTab_;
    private boolean sourceCppTabVisible_;
-   private final ConsoleInterruptButton consoleInterrupt_;
+   private ConsoleInterruptButton consoleInterrupt_;
+   private ExplicitSizeWidget consoleInterruptWidget_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
