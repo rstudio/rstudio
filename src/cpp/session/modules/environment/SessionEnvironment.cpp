@@ -56,9 +56,38 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
+SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
+{
+   SEXP callObject = pContext->callfun;
+   // enabling tracing on a function turns it into an S4 object with an
+   // 'original' slot that includes the function's original contents. use
+   // this instead if it's set up. (consider: is it safe to assume that S4
+   // objects here are always traced functions, or do we need to compare classes
+   // to be safe?)
+   if (Rf_isS4(callObject))
+   {
+      callObject = r::sexp::getAttrib(callObject, "original");
+   }
+   return callObject;
+}
+
+Error getFileNameFromContext(const RCNTXT* pContext,
+                             std::string* pFileName)
+{
+   SEXP srcref = pContext->srcref;
+   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                 .call(pFileName);
+}
+
+SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
+{
+   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
+}
+
+
 // given a context from the context stack, indicate whether it is executing a
 // user-defined function
-bool isUserFunctionContext(RCNTXT *pContext)
+bool isPrintableContext(RCNTXT *pContext)
 {
    return (pContext->callflag & CTXT_FUNCTION) &&
          pContext->srcref;
@@ -66,6 +95,7 @@ bool isUserFunctionContext(RCNTXT *pContext)
 
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
+                           bool findUserCode = false,
                            int* pFoundDepth = NULL,
                            SEXP* pEnvironment = NULL)
 {
@@ -73,11 +103,15 @@ RCNTXT* getFunctionContext(const int depth,
    int currentDepth = 0;
    while (pRContext->callflag)
    {
-      if (isUserFunctionContext(pRContext))
+      if (isPrintableContext(pRContext))
       {
-         if (++currentDepth == depth)
+         SEXP srcref = getFunctionSourceRefFromContext(pRContext);
+         // if the caller asked us to find user code, don't stop unless the
+         // context we're examining has a source file attached
+         if (++currentDepth >= depth &&
+             !(findUserCode && (TYPEOF(srcref) == NILSXP)))
          {
-            break;
+             break;
          }
       }
       pRContext = pRContext->nextcontext;
@@ -124,35 +158,6 @@ Error functionNameFromContext(const RCNTXT* pContext,
                             .call(pFunctionName);
 }
 
-SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
-{
-   SEXP callObject = pContext->callfun;
-   // enabling tracing on a function turns it into an S4 object with an
-   // 'original' slot that includes the function's original contents. use
-   // this instead if it's set up. (consider: is it safe to assume that S4
-   // objects here are always traced functions, or do we need to compare classes
-   // to be safe?)
-   if (Rf_isS4(callObject))
-   {
-      callObject = r::sexp::getAttrib(callObject, "original");
-   }
-   return callObject;
-}
-
-Error getFileNameFromContext(const RCNTXT* pContext,
-                             std::string* pFileName)
-{
-   SEXP srcref = pContext->srcref;
-   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
-                 .call(pFileName);
-}
-
-SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
-{
-   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
-}
-
-
 json::Array callFramesAsJson()
 {
    RCNTXT* pRContext = r::getGlobalContext();
@@ -163,7 +168,7 @@ json::Array callFramesAsJson()
 
    while (pRContext->callflag)
    {
-      if (isUserFunctionContext(pRContext))
+      if (isPrintableContext(pRContext))
       {
          json::Object varFrame;
          std::string functionName;
@@ -309,7 +314,7 @@ json::Value commonEnvironmentStateData(int depth)
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
-      if (isUserFunctionContext(pContext))
+      if (isPrintableContext(pContext))
       {
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
@@ -378,7 +383,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    int depth = 0;
    SEXP environmentTop = NULL;
    RCNTXT* pRContext =
-         getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
+         getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
 
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
        depth != *pContextDepth ||
@@ -415,7 +420,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, &contextDepth);
+   getFunctionContext(TOP_FUNCTION, true, &contextDepth);
    return commonEnvironmentStateData(contextDepth);
 }
 
@@ -428,7 +433,7 @@ Error initialize()
 
    // begin monitoring the environment
    SEXP environmentTop = NULL;
-   getFunctionContext(TOP_FUNCTION, pContextDepth.get(), &environmentTop);
+   getFunctionContext(TOP_FUNCTION, true, pContextDepth.get(), &environmentTop);
    s_environmentMonitor.setMonitoredEnvironment(environmentTop);
 
    // subscribe to events

@@ -495,7 +495,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       String file = currentBrowseFile_;
       
-      if (!CallFrameItem.isNavigableFilename(file))
+      if (!CallFrame.isNavigableFilename(file))
       {
          return;
       }

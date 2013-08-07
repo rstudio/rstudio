@@ -53,7 +53,7 @@ public class CallFrameItem extends Composite
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       functionName.addClickHandler(this);
-      if (!isNavigableFilename(frame.getFileName()))
+      if (!frame.isNavigable())
       {
          functionName.addStyleName(style.noSourceFrame());
          
@@ -128,7 +128,7 @@ public class CallFrameItem extends Composite
 
    private boolean hasFileLocation()
    {
-      return isNavigableFilename(frame_.getFileName().trim());
+      return frame_.isNavigable();
    }
 
    @UiField Label functionName;

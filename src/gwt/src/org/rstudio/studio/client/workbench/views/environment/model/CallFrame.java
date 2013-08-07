@@ -73,5 +73,20 @@ public class CallFrame extends JavaScriptObject
             getCharacterNumber(), 
             getEndCharacterNumber());
    };
+   
+   public final boolean isNavigable()
+   {
+      return isNavigableFilename(getFileName());
+   }
+   
+   public final static boolean isNavigableFilename(String fileName)
+   {
+      if (fileName.length() > 0 &&
+          !fileName.equalsIgnoreCase("NULL") &&
+          !fileName.equalsIgnoreCase("<tmp>"))
+      {
+         return true;
+      }
+      return false;
+   }
 }
-

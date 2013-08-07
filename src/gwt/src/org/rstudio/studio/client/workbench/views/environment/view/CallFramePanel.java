@@ -110,7 +110,7 @@ public class CallFramePanel extends ResizeComposite
             continue;
          }
          
-         if (CallFrameItem.isNavigableFilename(frame.getFileName())) 
+         if (frame.isNavigable())
          {
             encounteredUserCode = true;
          }
