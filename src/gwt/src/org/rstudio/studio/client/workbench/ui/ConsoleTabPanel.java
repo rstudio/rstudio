@@ -44,7 +44,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       compilePdfTab_ = compilePdfTab;
       findResultsTab_ = findResultsTab;
       sourceCppTab_ = sourceCppTab;
-      consoleInterrupt_ = consoleInterrupt;
       consoleInterruptWidget_ = new ExplicitSizeWidget(
             consoleInterrupt, consoleInterrupt);
       goToWorkingDirButton_ = goToWorkingDirButton;
@@ -188,7 +187,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final FindOutputTab findResultsTab_;
    private final WorkbenchTab sourceCppTab_;
    private boolean sourceCppTabVisible_;
-   private ConsoleInterruptButton consoleInterrupt_;
    private ExplicitSizeWidget consoleInterruptWidget_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;

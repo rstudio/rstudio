@@ -62,13 +62,6 @@
       options(error = browser)
    else if (type == 2)
       options(error = .rs.handleUserError)
+   else if (type == 3)
+      options(error = NULL)
 })
-
-.rs.addFunction("registerErrorHandler", function()
-{
-   if (is.null(getOption("error")))
-   {
-      .rs.setErrorManagementType(0)
-   }
-})
-

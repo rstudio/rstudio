@@ -250,7 +250,8 @@ public class Shell implements ConsoleInputHandler,
          public void execute()
          {
             UnhandledError err = errorManager_.consumeLastError();
-            if (err.getErrorMessage().equals(event.getError()))
+            if (err != null
+                && err.getErrorMessage().equals(event.getError()))
             {
                view_.consoleWriteExtendedError(event.getError(), err);
             }

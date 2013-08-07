@@ -30,12 +30,14 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
 public class ConsolePane extends WorkbenchPane
-   implements Console.Display, CanFocus
+   implements Console.Display, CanFocus, ErrorHandlerChangedEvent.Handler
 {
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
@@ -60,7 +62,9 @@ public class ConsolePane extends WorkbenchPane
       errorManagementMenu_.addItem(
             commands_.errorsBreakUser().createMenuItem(false));
       errorManagementButton_ = new ToolbarButton(
-            "Errors", null, errorManagementMenu_);
+            "Errors: Automatic", null, errorManagementMenu_);
+      
+      events.addHandler(ErrorHandlerChangedEvent.TYPE, this);
 
       new Console(this, events, commands);
    }
@@ -83,7 +87,7 @@ public class ConsolePane extends WorkbenchPane
    
    public ExplicitSizeWidget getErrorManagementMenu()
    {
-      return new ExplicitSizeWidget(errorManagementButton_, 40, 100);
+      return new ExplicitSizeWidget(errorManagementButton_, 40, 150);
    }
    
    public int getCharacterWidth()
@@ -163,6 +167,13 @@ public class ConsolePane extends WorkbenchPane
             }
          });
       }
+   }
+
+   @Override
+   public void onErrorHandlerChanged(ErrorHandlerChangedEvent event)
+   {
+      errorManagementButton_.setText("Errors: " + 
+              ErrorHandlerType.getNameOfType(event.getHandlerType().getType()));
    }
    
    private Provider<Shell> consoleProvider_ ;

@@ -22,10 +22,30 @@ public class ErrorHandlerType extends JavaScriptObject
    public static final int ERRORS_AUTOMATIC = 0;
    public static final int ERRORS_BREAK_ALWAYS = 1;
    public static final int ERRORS_BREAK_USER = 2;
-
+   public static final int ERRORS_IGNORE = 3;
+   public static final int ERRORS_CUSTOM = 4;
+   
    protected ErrorHandlerType() {}
 
    public final native int getType() /*-{
       return this.type;
    }-*/;   
+   
+   public static String getNameOfType(int type)
+   {
+      switch(type)
+      {
+      case ERRORS_AUTOMATIC:
+         return "Automatic";
+      case ERRORS_BREAK_ALWAYS:
+         return "Break Always";
+      case ERRORS_BREAK_USER: 
+         return "Break in My Code";
+      case ERRORS_IGNORE:
+         return "Ignore";
+      case ERRORS_CUSTOM:
+         return "Custom";
+      }
+      return "Unknown";
+   }
 }

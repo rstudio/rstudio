@@ -32,7 +32,40 @@ namespace modules {
 namespace errors {
 namespace {
 
-Error setErrManagement(const json::JsonRpcRequest& request,
+// Error handler types understood by the client
+const int ERRORS_AUTOMATIC = 0;
+const int ERRORS_BREAK_ALWAYS = 1;
+const int ERRORS_BREAK_USER = 2;
+const int ERRORS_IGNORE = 3;
+const int ERRORS_CUSTOM = 4;
+
+void enqueErrorHandlerChanged(int type)
+{
+   json::Object errorHandlerType;
+   errorHandlerType["type"] = type;
+   ClientEvent errorHandlerChanged(
+            client_events::kErrorHandlerChanged, errorHandlerType);
+   module_context::enqueClientEvent(errorHandlerChanged);
+}
+
+Error setErrHandlerType(int type,
+                        boost::shared_ptr<SEXP> pErrorHandler)
+{
+   // clear the previous error handler; if we don't do this, the error handler
+   // we set will be unset by DisableErrorHandlerScope during call evaluation
+   r::options::setErrorOption(R_NilValue);
+
+   Error error = r::exec::RFunction(".rs.setErrorManagementType", type)
+           .call();
+   if (error)
+      return error;
+
+   *pErrorHandler = r::options::getOption("error");
+   return Success();
+}
+
+Error setErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
+                       const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    int type = 0;
@@ -40,27 +73,57 @@ Error setErrManagement(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // clear the previous error handler; if we don't do this, the error handler
-   // we set will be unset by DisableErrorHandlerScope during call evaluation
-   r::options::setErrorOption(R_NilValue);
+   error = setErrHandlerType(type, pErrorHandler);
+   if (error)
+      return error;
 
-   return r::exec::RFunction(".rs.setErrorManagementType", type)
-           .call();
+   enqueErrorHandlerChanged(type);
+   return Success();
+}
+
+Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
+{
+   SEXP currentHandler = r::options::getOption("error");
+   if (currentHandler == R_NilValue)
+      setErrHandlerType(ERRORS_AUTOMATIC, pErrorHandler);
+   return Success();
+}
+
+void onConsolePrompt(boost::shared_ptr<SEXP> pErrorHandler)
+{
+   // check to see if the error option has been changed from beneath us; if it
+   // has, emit a client event so the client doesn't show an incorrect error
+   // handler
+   SEXP currentHandler = r::options::getOption("error");
+   if (currentHandler != *pErrorHandler)
+   {
+      *pErrorHandler = currentHandler;
+      enqueErrorHandlerChanged(currentHandler == R_NilValue ?
+                                  ERRORS_IGNORE :
+                                  ERRORS_CUSTOM);
+   }
 }
 
 } // anonymous namespace
 
 Error initialize()
 {
+   boost::shared_ptr<SEXP> pErrorHandler =
+         boost::make_shared<SEXP>(R_NilValue);
+
    using boost::bind;
    using namespace module_context;
-   boost::shared_ptr<SEXP> errorHandler =
-         boost::make_shared<SEXP>(R_NilValue);
+
+   events().onConsolePrompt.connect(bind(onConsolePrompt,
+                                         pErrorHandler));
+   json::JsonRpcFunction setErrMgmt =
+         boost::bind(setErrManagement, pErrorHandler, _1, _2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_error_management_type", setErrManagement))
-      (bind(sourceModuleRFile, "SessionErrors.R"));
+      (bind(registerRpcMethod, "set_error_management_type", setErrMgmt))
+      (bind(sourceModuleRFile, "SessionErrors.R"))
+      (bind(initializeErrManagement, pErrorHandler));
 
    return initBlock.execute();
 }
