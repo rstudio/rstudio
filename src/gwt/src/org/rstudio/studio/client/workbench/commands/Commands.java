@@ -318,6 +318,7 @@ public abstract class
    public abstract AppCommand errorsAutomatic();
    public abstract AppCommand errorsBreak();
    public abstract AppCommand errorsBreakUser();
+   public abstract AppCommand errorsIgnore();
    
    // Other
    public abstract AppCommand checkSpelling();   

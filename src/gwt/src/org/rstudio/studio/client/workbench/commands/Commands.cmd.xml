@@ -272,6 +272,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="errorsAutomatic"/>
             <cmd refid="errorsBreak"/>
             <cmd refid="errorsBreakUser"/>
+            <cmd refid="errorsIgnore"/>
          </menu>
          <separator/>
          <cmd refid="debugHelp"/>
@@ -1265,5 +1266,8 @@ well as menu structures (for main menu and popup menus).
         desc="Break when any unhandled error occurs"/>
    <cmd id="errorsBreakUser"
         menuLabel="Break in _My Code"
-        desc="Break when an unhandled error occurs in your code"/>       
+        desc="Break when an unhandled error occurs in your code"/>
+   <cmd id="errorsIgnore"
+        menuLabel="_Ignore"
+        desc="Ignore unhandled errors"/>
 </commands>

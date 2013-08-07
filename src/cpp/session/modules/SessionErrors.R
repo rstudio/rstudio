@@ -16,6 +16,13 @@
 .rs.addFunction("handleError", function()
 {
    calls <- sys.calls()
+
+   # if there's just one call on the stack, this error happened at the top
+   # level; no need to generate a traceback
+   if (length(calls) < 2) 
+      return()
+
+   # create the traceback for the client
    stack <- lapply(1:(length(calls) - 1), function(n)
    {
       func <- .rs.untraced(sys.function(n))

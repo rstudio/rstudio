@@ -72,6 +72,12 @@ public class ErrorManager
    {
       setErrorManagementType(ErrorHandlerType.ERRORS_BREAK_USER);
    }
+   
+   @Handler
+   public void onErrorsIgnore()
+   {
+      setErrorManagementType(ErrorHandlerType.ERRORS_IGNORE);
+   }
 
    // Public methods ----------------------------------------------------------
 

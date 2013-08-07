@@ -61,8 +61,11 @@ public class ConsolePane extends WorkbenchPane
             commands_.errorsBreak().createMenuItem(false));
       errorManagementMenu_.addItem(
             commands_.errorsBreakUser().createMenuItem(false));
+      errorManagementMenu_.addItem(
+            commands_.errorsIgnore().createMenuItem(false));
       errorManagementButton_ = new ToolbarButton(
-            "Errors: Automatic", null, errorManagementMenu_);
+            "", null, errorManagementMenu_);
+      setErrorToolbarHandlerType(ErrorHandlerType.ERRORS_AUTOMATIC);
       
       events.addHandler(ErrorHandlerChangedEvent.TYPE, this);
 
@@ -172,8 +175,13 @@ public class ConsolePane extends WorkbenchPane
    @Override
    public void onErrorHandlerChanged(ErrorHandlerChangedEvent event)
    {
+      setErrorToolbarHandlerType(event.getHandlerType().getType());
+   }
+   
+   private void setErrorToolbarHandlerType(int type)
+   {
       errorManagementButton_.setText("Errors: " + 
-              ErrorHandlerType.getNameOfType(event.getHandlerType().getType()));
+            ErrorHandlerType.getNameOfType(type));
    }
    
    private Provider<Shell> consoleProvider_ ;
