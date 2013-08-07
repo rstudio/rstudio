@@ -51,15 +51,19 @@ void addUnevaledPromise(std::vector<r::sexp::Variable>* pEnv,
    }
 }
 
-// if the given variable exists in the given list, remove it
+// If the given variable exists in the given list, remove it. Compares on name
+// only.
 void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
                        const r::sexp::Variable& var)
 {
-   std::vector<r::sexp::Variable>::iterator iter =
-         std::find(pEnv->begin(), pEnv->end(), var);
-   if (iter != pEnv->end())
+   for (std::vector<r::sexp::Variable>::iterator iter = pEnv->begin();
+        iter != pEnv->end(); iter++)
    {
-      pEnv->erase(iter);
+      if (iter->first == var.first)
+      {
+         pEnv->erase(iter);
+         break;
+      }
    }
 }
 
@@ -177,6 +181,14 @@ void EnvironmentMonitor::checkForChanges()
             std::set_difference(currentEnv.begin(), currentEnv.end(),
                                 lastEnv_.begin(), lastEnv_.end(),
                                 std::back_inserter(addedVars));
+
+            // remove assigned objects from the list of uneval'ed promises
+            // (otherwise, we double-assign in the case where a promise SEXP
+            // is simultaneously forced/evaluated and assigned a new value)
+            std::for_each(addedVars.begin(),
+                          addedVars.end(),
+                          boost::bind(removeVarFromList, &unevaledPromises_, _1));
+
          }
       }
       // if a refresh is scheduled there's no need to emit add events one by one
