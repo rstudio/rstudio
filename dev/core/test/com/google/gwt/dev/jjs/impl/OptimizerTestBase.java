@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -121,7 +122,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     // calls.
     final JMethodBody body = (JMethodBody) method.getBody();
 
-    new TempLocalVisitor() {
+    new JModVisitor() {
 
       private JMethodCall createClinitCall(SourceInfo sourceInfo, JDeclaredType targetType) {
         JMethod clinit = targetType.getClinitTarget().getClinitMethod();
@@ -140,7 +141,8 @@ public abstract class OptimizerTestBase extends JJSTestBase {
           if (instance != null) {
 
             multi.exprs.add(instance);
-            JLocal var = createTempLocal(instance.getSourceInfo(), instance.getType());
+            JLocal var = JProgram.createLocal(instance.getSourceInfo(), "$t", instance.getType(),
+                false, body);
 
             JLocalRef localRef = new JLocalRef(var.getSourceInfo(), var);
             instance = new JBinaryOperation(instance.getSourceInfo(), localRef.getType(),

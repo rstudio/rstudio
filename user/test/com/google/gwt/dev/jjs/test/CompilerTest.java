@@ -521,6 +521,47 @@ public class CompilerTest extends GWTTestCase {
     assertTrue(FALSE ? FALSE : true);
   }
 
+  /**
+   * Test for issue 7045.
+   *
+   * Background. GWT does not explicitly model block scopes but allows names across different blocks
+   * to be repeated and are represented as different local variables with the same name.
+   *
+   * The GenerateJavaScriptAST assumes that locals with the same name can be coalesced. This
+   * assumption only holds if no optimization introduces a local variable reference in
+   * a blockscope that is using a different local of the same name.
+   *
+   * The dataflow optimizer does not respect this assumption when doing copy propagation.
+   */
+  public void testDataflowDuplicateNamesError() {
+    StringBuilder topScope;
+    {
+      StringBuilder localScopeDuplicatedVar = new StringBuilder();
+      localScopeDuplicatedVar.append("initial text");
+      topScope = localScopeDuplicatedVar;
+    }
+
+    {
+      // It's important that this StringBuilder have the same name as the one above.
+      StringBuilder localScopeDuplicatedVar = new StringBuilder();
+      localScopeDuplicatedVar.append("different text");
+    }
+
+    {
+      // The value of main should be "initial text" at this point, but if this code
+      // is run as compiled JavaScript then it will be "different text". (before the issue was
+      // fixed).
+
+      // The copy propagation optimization in the DataflowOptimizer replaces the reference to
+      // topScope by localScopeDuplicatedVar (from the previous block).
+      // When the JavaScript output is produces these two variables are coalesced.
+
+      // Although unlikely an error like this can occur due to the way temporary variables are
+      // generated via the TempLocalVisitor.
+      assertEquals("initial text", topScope.toString());
+    }
+  }
+
   public void testDeadCode() {
     while (returnFalse()) {
       break;

@@ -26,7 +26,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
 
   protected JDeclarationStatement declStmt = null;
   private boolean isFinal;
-  private final String name;
+  private String name;
   private JType type;
 
   JVariable(SourceInfo info, String name, JType type, boolean isFinal) {
@@ -74,6 +74,10 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
 
   public void setFinal() {
     isFinal = true;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public void setType(JType newType) {

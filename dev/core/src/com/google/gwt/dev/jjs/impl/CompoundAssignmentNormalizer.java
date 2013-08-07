@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -26,13 +27,16 @@ import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
@@ -66,7 +70,7 @@ public abstract class CompoundAssignmentNormalizer {
   /**
    * Breaks apart certain complex assignments.
    */
-  private class BreakupAssignOpsVisitor extends TempLocalVisitor {
+  private class BreakupAssignOpsVisitor extends JModVisitor {
 
     /**
      * Replaces side effects in lvalue.
@@ -182,6 +186,12 @@ public abstract class CompoundAssignmentNormalizer {
     }
 
     @Override
+    public void endVisit(JMethodBody body, Context ctx) {
+      assert currentMethodBody == body;
+      currentMethodBody = null;
+    }
+
+    @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
       JUnaryOperator op = x.getOp();
       if (!op.isModifying()) {
@@ -266,6 +276,25 @@ public abstract class CompoundAssignmentNormalizer {
           new JBinaryOperation(arg.getSourceInfo(), arg.getType(), newOp, cloner
               .cloneExpression(arg), one);
       return asg;
+    }
+
+    @Override
+    public boolean visit(JMethodBody body, Context ctx) {
+      assert currentMethodBody == null;
+      currentMethodBody = body;
+      return true;
+    }
+
+    private JMethodBody currentMethodBody = null;
+    // Name to assign to temporaries. All temporaries are created with the same name, which is
+    // not a problem as they are referred to by reference.
+    // {@link GenerateJavaScriptAst.FixNameClashesVisitor} will resolve into unique names when
+    // needed.
+    private static final String TEMP_LOCAL_NAME = "$t";
+
+    private JLocal createTempLocal(SourceInfo info, JType type) {
+      assert currentMethodBody != null;
+      return JProgram.createLocal(info, TEMP_LOCAL_NAME, type, false, currentMethodBody);
     }
   }
 
