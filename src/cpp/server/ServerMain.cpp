@@ -51,6 +51,7 @@
 #include "ServerAddins.hpp"
 #include "ServerAppArmor.hpp"
 #include "ServerBrowser.hpp"
+#include "ServerEval.hpp"
 #include "ServerInit.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
@@ -77,7 +78,8 @@ namespace {
 bool mainPageFilter(const core::http::Request& request,
                     core::http::Response* pResponse)
 {
-   return server::browser::supportedBrowserFilter(request, pResponse) &&
+   return server::eval::expirationFilter(request, pResponse) &&
+          server::browser::supportedBrowserFilter(request, pResponse) &&
           auth::handler::mainPageFilter(request, pResponse);
 }
 
