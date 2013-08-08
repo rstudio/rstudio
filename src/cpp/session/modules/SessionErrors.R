@@ -23,16 +23,18 @@
       return()
 
    # create the traceback for the client
-   stack <- lapply(1:(length(calls) - 1), function(n)
+   stack <- lapply(calls[1:length(calls)-1], function(call)
    {
-      func <- .rs.untraced(sys.function(n))
-      srcref <- attr(func, "srcref")
+      srcref <- attr(call, "srcref")
       srcfile <- ""
       if (!is.null(srcref))
-         srcfile <- capture.output(attr(srcref, "srcfile"))
+      {
+         fileattr <- attr(srcref, "srcfile")
+         srcfile <- fileattr$filename
+      }
       else
          srcref <- rep(0L, 8)
-      c (list(func = .rs.scalar(deparse(sys.call(n))),
+      c (list(func = .rs.scalar(deparse(call)),
               file = .rs.scalar(srcfile)),
          .rs.lineDataList(srcref))
    })

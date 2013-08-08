@@ -49,7 +49,7 @@ public class ConsoleErrorFrame extends Composite
       functionName.setText(frame.getFunctionName() + (hasSource ? " at " : ""));
       if (hasSource)
       {
-         sourceLink.setText(frame.getFileName());
+         sourceLink.setText(frame.getFileName() + "#" + frame.getLineNumber());
          sourceLink.addClickHandler(new ClickHandler()
          {            
             @Override

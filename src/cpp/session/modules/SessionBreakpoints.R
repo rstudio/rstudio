@@ -42,9 +42,8 @@
          {
             # get the name of the file from which the function originated, and
             # trim off the trailing space; see if it matches the filename
-            srcfile <- capture.output(attr(srcref, "srcfile"))
-            srcfile <- substr(srcfile, 1, nchar(srcfile) - 1)
-            if (normalizePath(srcfile) == normalizePath(fileName))
+            fileattr <- attr(srcref, "srcfile")
+            if (normalizePath(fileattr$filename) == normalizePath(fileName))
             {
                return (env)
             }
