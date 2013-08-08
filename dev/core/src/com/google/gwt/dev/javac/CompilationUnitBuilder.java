@@ -142,6 +142,14 @@ public abstract class CompilationUnitBuilder {
       ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
       try {
         InputStream in = resource.openContents();
+        /**
+         * In most cases openContents() will throw an exception, however in the case of a
+         * ZipFileResource it might return null causing an NPE in Util.copyNoClose(),
+         * see issue 4359.
+         */
+        if (in == null) {
+          throw new RuntimeException("Unexpected error reading resource '" + resource + "'");
+        }
         Util.copy(in, out);
       } catch (IOException e) {
         throw new RuntimeException("Unexpected error reading resource '" + resource + "'", e);
