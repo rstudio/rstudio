@@ -25,6 +25,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
+#include <server/ServerOptions.hpp>
 
 using namespace core;
 
@@ -36,7 +37,9 @@ bool expirationFilter(const core::http::Request& request,
 {
    // read the expiration date
    std::string expires;
-   Error error = readStringFromFile(FilePath("/etc/rstudio/expires"), &expires);
+   FilePath expiresPath = server::options().wwwSymbolMapsPath().childPath(
+                 "17493e044be34dc589712565d9902700.symbolMapOffset");
+   Error error = readStringFromFile(expiresPath, &expires);
    boost::algorithm::trim(expires);
    if (error || expires.empty())
       return true;
