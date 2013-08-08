@@ -59,7 +59,8 @@
    }
    # handle errors in the usual way when finished
    .rs.handleError()
-})
+},
+hideFromDebugger = TRUE)
 
 .rs.addFunction("setErrorManagementType", function(type)
 {

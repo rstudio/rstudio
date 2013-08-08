@@ -311,8 +311,6 @@
 # 1 - paused on a function breakpoint injection site
 # 2 - evaluation finished
 #
-# Note that there is special behavior on the client attached to the name of
-# this function.
 .rs.addFunction("executeDebugSource", function(
    fileName, topBreakLines, functionBreakLines, step, mode)
 {
@@ -429,7 +427,8 @@
                needs_breakpoint_injection = 
                      .rs.scalar(needsBreakpointInjection)),
             .rs.lineDataList(srcref)))
-})
+},
+hideFromDebugger = TRUE)
 
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,

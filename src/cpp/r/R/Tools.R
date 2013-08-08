@@ -17,9 +17,12 @@
 .rs.Env <- attach(NULL,name="tools:rstudio")
 
 # add a function to the tools:rstudio environment
-assign( envir = .rs.Env, ".rs.addFunction", function(name, FN)
+assign( envir = .rs.Env, ".rs.addFunction", function(
+   name, FN, hideFromDebugger = FALSE)
 { 
    fullName = paste(".rs.", name, sep="")
+   if (hideFromDebugger)
+      attr(FN, "hideFromDebugger") <- TRUE
    assign(fullName, FN, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
@@ -445,7 +448,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 .rs.addFunction( "addJsonRpcHandler", function(name, FN)
 {
    fullName = paste("rpc.", name, sep="")
-   .rs.addFunction(fullName, FN)
+   .rs.addFunction(fullName, FN, TRUE)
 })
 
 # list all rpc handlers in the tools:rstudio environment

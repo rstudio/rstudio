@@ -85,12 +85,23 @@ SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
 }
 
 
-// given a context from the context stack, indicate whether it is executing a
-// user-defined function
+// given a context from the context stack, indicate whether it should be emitted
+// to the callstack.
 bool isPrintableContext(RCNTXT *pContext)
 {
-   return (pContext->callflag & CTXT_FUNCTION) &&
-         pContext->srcref;
+   if (pContext->callflag & CTXT_FUNCTION)
+   {
+      SEXP hideFlag = r::sexp::getAttrib(pContext->callfun, "hideFromDebugger");
+      if (TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag))
+      {
+         // hidden function
+         return false;
+      }
+      // printable function
+      return true;
+   }
+   // not a function at all
+   return false;
 }
 
 // return the function context at the given depth
