@@ -21,23 +21,18 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
-import org.rstudio.core.client.theme.ExplicitSizeWidget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
 public class ConsolePane extends WorkbenchPane
-   implements Console.Display, CanFocus, ErrorHandlerChangedEvent.Handler
+   implements Console.Display, CanFocus
 {
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
@@ -53,21 +48,6 @@ public class ConsolePane extends WorkbenchPane
       // console is interacted with immediately so we make sure it
       // is always created during startup
       ensureWidget();
-
-      errorManagementMenu_ = new ToolbarPopupMenu();      
-      errorManagementMenu_.addItem(
-            commands_.errorsAutomatic().createMenuItem(false));
-      errorManagementMenu_.addItem(
-            commands_.errorsBreak().createMenuItem(false));
-      errorManagementMenu_.addItem(
-            commands_.errorsBreakUser().createMenuItem(false));
-      errorManagementMenu_.addItem(
-            commands_.errorsIgnore().createMenuItem(false));
-      errorManagementButton_ = new ToolbarButton(
-            "", null, errorManagementMenu_);
-      setErrorToolbarHandlerType(ErrorHandlerType.ERRORS_AUTOMATIC);
-      
-      events.addHandler(ErrorHandlerChangedEvent.TYPE, this);
 
       new Console(this, events, commands);
    }
@@ -87,12 +67,7 @@ public class ConsolePane extends WorkbenchPane
    {
       return consoleInterruptButton_;
    }
-   
-   public ExplicitSizeWidget getErrorManagementMenu()
-   {
-      return new ExplicitSizeWidget(errorManagementButton_, 40, 150);
-   }
-   
+
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();
@@ -108,7 +83,6 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
       toolbar.addRightWidget(consoleInterruptButton_);
-      toolbar.addRightPopupMenu(new Label("Errors"), errorManagementMenu_);
       return toolbar;
    }
    
@@ -171,25 +145,11 @@ public class ConsolePane extends WorkbenchPane
          });
       }
    }
-
-   @Override
-   public void onErrorHandlerChanged(ErrorHandlerChangedEvent event)
-   {
-      setErrorToolbarHandlerType(event.getHandlerType().getType());
-   }
-   
-   private void setErrorToolbarHandlerType(int type)
-   {
-      errorManagementButton_.setText("Errors: " + 
-            ErrorHandlerType.getNameOfType(type));
-   }
    
    private Provider<Shell> consoleProvider_ ;
    private final Commands commands_;
    private Shell shell_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
-   private ToolbarButton errorManagementButton_;
-   private ToolbarPopupMenu errorManagementMenu_;
    private boolean debugMode_;
 }

@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import org.rstudio.core.client.events.*;
-import org.rstudio.core.client.theme.ExplicitSizeWidget;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -44,8 +43,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       compilePdfTab_ = compilePdfTab;
       findResultsTab_ = findResultsTab;
       sourceCppTab_ = sourceCppTab;
-      consoleInterruptWidget_ = new ExplicitSizeWidget(
-            consoleInterrupt, consoleInterrupt);
+      consoleInterrupt_ = consoleInterrupt;
       goToWorkingDirButton_ = goToWorkingDirButton;
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
@@ -164,8 +162,9 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             owner_.setMainWidget(consolePane_);
             owner_.addLeftWidget(goToWorkingDirButton_);
-            owner_.addRightWidget(consoleInterruptWidget_);
-            owner_.addRightWidget(consolePane_.getErrorManagementMenu());
+            owner_.setContextButton(consoleInterrupt_,
+                                    consoleInterrupt_.getWidth(),
+                                    consoleInterrupt_.getHeight());
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -174,8 +173,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          {
             consolePane_.onBeforeUnselected();
             owner_.setFillWidget(this);
-            owner_.removeRightWidget(consolePane_.getErrorManagementMenu());
-            owner_.removeRightWidget(consoleInterruptWidget_);
+            owner_.setContextButton(null, 0, 0);
          }
       }
    }
@@ -187,7 +185,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final FindOutputTab findResultsTab_;
    private final WorkbenchTab sourceCppTab_;
    private boolean sourceCppTabVisible_;
-   private ExplicitSizeWidget consoleInterruptWidget_;
+   private final ConsoleInterruptButton consoleInterrupt_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;

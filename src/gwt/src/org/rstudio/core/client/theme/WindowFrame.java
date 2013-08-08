@@ -243,28 +243,27 @@ public class WindowFrame extends Composite
                ShadowBorder.BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
       }
    }
-   
-   public void addRightWidget(ExplicitSizeWidget sizedWidget)
+
+   public void setContextButton(Widget button, int width, int height)
    {
-      Widget widget = sizedWidget.getWidget();
-      frame_.add(widget);
-      frame_.setWidgetRightWidth(widget, 
-            rightWidgetDockPosition_, Unit.PX, 
-            sizedWidget.getWidth(), Unit.PX);
-      frame_.setWidgetTopHeight(widget, 
-            3, Unit.PX, 
-            sizedWidget.getHeight(), Unit.PX);
-      frame_.getWidgetContainerElement(widget).getStyle().setZIndex(10);
-      
-      rightWidgetDockPosition_ += sizedWidget.getWidth();
+      if (contextButton_ != null)
+      {
+         contextButton_.removeFromParent();
+         contextButton_ = null;
+      }
+
+      if (button != null)
+      {
+         contextButton_ = button;
+         frame_.add(button);
+         frame_.setWidgetRightWidth(button, 48, Unit.PX, width, Unit.PX);
+         frame_.setWidgetTopHeight(button, 3, Unit.PX, height, Unit.PX);
+         // Without z-index, the header widget will obscure the context button
+         // if the former is set after the latter.
+         frame_.getWidgetContainerElement(button).getStyle().setZIndex(10);
+      }
    }
-   
-   public void removeRightWidget(ExplicitSizeWidget sizedWidget)
-   {
-      frame_.remove(sizedWidget.getWidget());
-      rightWidgetDockPosition_ -= sizedWidget.getWidth();
-   }
-   
+
    public void onResize()
    {
       if (frame_ != null)
@@ -310,7 +309,7 @@ public class WindowFrame extends Composite
    private Widget main_;
    private Widget header_;
    private Widget fill_;
+   private Widget contextButton_;
    private HandlerRegistration ensureVisibleRegistration_;
    private Widget previousHeader_;
-   private int rightWidgetDockPosition_ = 48;
 }
