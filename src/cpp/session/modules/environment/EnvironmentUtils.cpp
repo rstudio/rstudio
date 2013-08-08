@@ -254,7 +254,7 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (r::sexp::isNull(srcref))
+   if (srcref == NULL || r::sexp::isNull(srcref))
    {
       (*pObject)["line_number"] = 0;
       (*pObject)["end_line_number"] = 0;

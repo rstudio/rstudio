@@ -85,14 +85,19 @@ SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
 }
 
 
+bool isDebugHiddenContext(RCNTXT* pContext)
+{
+   SEXP hideFlag = r::sexp::getAttrib(pContext->callfun, "hideFromDebugger");
+   return TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag);
+}
+
 // given a context from the context stack, indicate whether it should be emitted
 // to the callstack.
-bool isPrintableContext(RCNTXT *pContext)
+bool isPrintableContext(RCNTXT* pContext)
 {
    if (pContext->callflag & CTXT_FUNCTION)
    {
-      SEXP hideFlag = r::sexp::getAttrib(pContext->callfun, "hideFromDebugger");
-      if (TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag))
+      if (isDebugHiddenContext(pContext))
       {
          // hidden function
          return false;
@@ -176,10 +181,18 @@ json::Array callFramesAsJson()
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
+   bool skipDebugFrame = false;
 
    while (pRContext->callflag)
    {
-      if (isPrintableContext(pRContext))
+      // if this context is hidden from the debugger, we want to avoid
+      // delivering source refs for the context that invoked it. set a flag
+      // to prevent the following context from picking them up.
+      if (isDebugHiddenContext(pRContext))
+      {
+          skipDebugFrame = true;
+      }
+      else if (isPrintableContext(pRContext))
       {
          json::Object varFrame;
          std::string functionName;
@@ -196,14 +209,21 @@ json::Array callFramesAsJson()
          // however, for traditional debugging, we want the call frame to show
          // where control *left* the frame to go to the next frame. pSrcContext
          // keeps track of the previous invocation.
-         std::string filename;
-         error = getFileNameFromContext(pSrcContext, &filename);
-         if (error)
+         if (!skipDebugFrame)
          {
-            LOG_ERROR(error);
+            std::string filename;
+            error = getFileNameFromContext(pSrcContext, &filename);
+            if (error)
+               LOG_ERROR(error);
+            varFrame["file_name"] = filename;
+            sourceRefToJson(pSrcContext->srcref, &varFrame);
          }
-         varFrame["file_name"] = filename;
-         sourceRefToJson(pSrcContext->srcref, &varFrame);
+         else
+         {
+            varFrame["file_name"] = "";
+            sourceRefToJson(NULL, &varFrame);
+            skipDebugFrame = false;
+         }
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
@@ -325,7 +345,7 @@ json::Value commonEnvironmentStateData(int depth)
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
-      if (isPrintableContext(pContext))
+      if ((pContext))
       {
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&

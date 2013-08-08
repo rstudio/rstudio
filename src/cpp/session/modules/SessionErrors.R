@@ -47,6 +47,7 @@
 .rs.addFunction("handleUserError", function()
 {
    calls <- sys.calls()
+   foundUser <- FALSE
    for (n in 1:(length(calls) - 1))
    {
       func <- .rs.untraced(sys.function(n))
@@ -54,13 +55,15 @@
       if (!is.null(srcref) && 
           !is.null(attr(srcref, "srcfile")))
       {
-         # looks like user code--invoke the browser (but skip this call)
-         browser(skipCalls = 2L)
+         # looks like user code--invoke the browser below
+         foundUser <- TRUE
          break
       }
    }
-   # handle errors in the usual way when finished
-   .rs.handleError()
+   if (foundUser)
+      browser(skipCalls = 2L)
+   else
+      .rs.handleError()
 },
 hideFromDebugger = TRUE)
 
