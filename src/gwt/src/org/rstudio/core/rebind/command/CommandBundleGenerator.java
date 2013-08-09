@@ -315,6 +315,8 @@ class CommandBundleGeneratorHelper
       setPropertyBool(writer, name, props.get(name), "enabled");
       setPropertyBool(writer, name, props.get(name),
                       "preventShortcutWhenDisabled");
+      setPropertyBool(writer, name, props.get(name), "isSwitch");
+      setPropertyBool(writer, name, props.get(name), "isSwitchOn");
 
       if (images.hasImage(name))
       {

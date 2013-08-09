@@ -32,6 +32,8 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.ImageResourceProvider;
+import org.rstudio.core.client.command.SimpleImageResourceProvider;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -69,10 +71,17 @@ public class ToolbarButton extends FocusWidget
    }
    
    public ToolbarButton(String text, 
+                        ImageResourceProvider leftImageProvider,
+                        ClickHandler clickHandler)
+   {
+      this(text, leftImageProvider, null, clickHandler);
+   }
+   
+   public ToolbarButton(String text, 
                         ImageResource leftImage,
                         ClickHandler clickHandler)
    {
-      this(text, leftImage, null, clickHandler);
+      this(text, new SimpleImageResourceProvider(leftImage), clickHandler);
    }
    
    public ToolbarButton(ImageResource image,
@@ -179,9 +188,20 @@ public class ToolbarButton extends FocusWidget
          }
       });
    }
+
+   private ToolbarButton(String text,
+                         ImageResource leftImage,
+                         ImageResource rightImage,
+                         ClickHandler clickHandler)
+   {
+      this(text,
+           new SimpleImageResourceProvider(leftImage),
+           rightImage,
+           clickHandler);
+   }
    
    private ToolbarButton(String text, 
-                         ImageResource leftImage,
+                         ImageResourceProvider leftImage,
                          ImageResource rightImage,
                          ClickHandler clickHandler)
    {
@@ -192,8 +212,9 @@ public class ToolbarButton extends FocusWidget
       this.setStylePrimaryName(styles_.toolbarButton());
 
       setText(text);
-      if (leftImage != null)
-         leftImageWidget_ = new Image(leftImage);
+      if (leftImage != null && 
+          leftImage.getImageResource() != null)
+         leftImageWidget_ = new Image(leftImage.getImageResource());
       else
          leftImageWidget_ = new Image();
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());

@@ -319,6 +319,8 @@ public abstract class
    public abstract AppCommand errorsBreak();
    public abstract AppCommand errorsBreakUser();
    public abstract AppCommand errorsIgnore();
+   public abstract AppCommand errorsInMyCode();
+   public abstract AppCommand errorsExpandTraceback();
    
    // Other
    public abstract AppCommand checkSpelling();   

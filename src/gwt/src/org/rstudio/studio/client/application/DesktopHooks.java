@@ -112,6 +112,18 @@ public class DesktopHooks
       AppCommand command = commands_.getCommandById(commandId);
       return command != null && command.isEnabled();
    }
+   
+   boolean isSwitchCommand(String commandId)
+   {
+      AppCommand command = commands_.getCommandById(commandId);
+      return command != null && command.isSwitch();
+   }
+   
+   boolean isSwitchCommandOn(String commandId)
+   {
+      AppCommand command = commands_.getCommandById(commandId);
+      return command != null && command.isSwitch() && command.isSwitchOn();
+   }
 
    String getCommandLabel(String commandId)
    {

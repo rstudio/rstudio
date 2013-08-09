@@ -137,13 +137,6 @@ public class ErrorManager
       return err;
    }
    
-   public void setErrorManagementType(
-         int type, 
-         ServerRequestCallback<Void> callback)
-   {
-      server_.setErrorManagementType(type, callback);
-   }
-   
    public void setDebugSessionHandlerType(
          int type, 
          final ServerRequestCallback<Void> callback)
@@ -170,6 +163,14 @@ public class ErrorManager
    }
    
    // Private methods ---------------------------------------------------------
+
+   private void setErrorManagementType(
+         int type, 
+         ServerRequestCallback<Void> callback)
+   {
+      server_.setErrorManagementType(type, callback);
+   }
+   
    
    private void setErrorManagementType(int type)
    {

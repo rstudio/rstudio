@@ -24,19 +24,19 @@ import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 
-public class AppCommand implements Command, ClickHandler
+public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
-   private class CommandToolbarButton extends ToolbarButton
-         implements EnabledChangedHandler, VisibleChangedHandler
+   private class CommandToolbarButton extends ToolbarButton implements
+         EnabledChangedHandler, VisibleChangedHandler
    {
       public CommandToolbarButton(String buttonLabel,
-                                  ImageResource imageResource,
-                                  AppCommand command)
+            ImageResourceProvider imageResourceProvider, AppCommand command)
       {
-         super(buttonLabel, imageResource, command);
+         super(buttonLabel, imageResourceProvider, command);
          command_ = command;
       }
 
@@ -94,11 +94,10 @@ public class AppCommand implements Command, ClickHandler
       assert visible_ : "AppCommand executed when it was not visible";
       if (!visible_)
          return;
-      
+
       if (enableNoHandlerAssertions_)
       {
-         assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0
-                  : "AppCommand executed but nobody was listening";
+         assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 : "AppCommand executed but nobody was listening";
       }
 
       handlers_.fireEvent(new CommandEvent(this));
@@ -131,12 +130,32 @@ public class AppCommand implements Command, ClickHandler
          handlers_.fireEvent(new VisibleChangedEvent(this));
       }
    }
-   
+
+   public boolean isSwitch()
+   {
+      return isSwitch_;
+   }
+
+   public void setIsSwitch(boolean isSwitch)
+   {
+      isSwitch_ = isSwitch;
+   }
+
+   public boolean isSwitchOn()
+   {
+      return isSwitch_ && isSwitchOn_;
+   }
+
+   public void setIsSwitchOn(boolean isSwitchOn)
+   {
+      isSwitchOn_ = isSwitchOn;
+   }
+
    public boolean preventShortcutWhenDisabled()
    {
       return preventShortcutWhenDisabled_;
    }
-   
+
    public void setPreventShortcutWhenDisabled(boolean preventShortcut)
    {
       preventShortcutWhenDisabled_ = preventShortcut;
@@ -160,9 +179,8 @@ public class AppCommand implements Command, ClickHandler
    {
       String desc = StringUtil.notNull(getDesc());
       String shortcut = getShortcutPrettyHtml();
-      shortcut = StringUtil.isNullOrEmpty(shortcut)
-                 ? ""
-                 : "(" + DomUtils.htmlToText(shortcut) + ")";
+      shortcut = StringUtil.isNullOrEmpty(shortcut) ? "" : "("
+            + DomUtils.htmlToText(shortcut) + ")";
 
       String result = (desc + " " + shortcut).trim();
       return result.length() == 0 ? null : result;
@@ -200,7 +218,8 @@ public class AppCommand implements Command, ClickHandler
    {
       if (menuLabel_ != null)
       {
-         return AppMenuItem.replaceMnemonics(menuLabel_, useMnemonics ? "&" : "");
+         return AppMenuItem.replaceMnemonics(menuLabel_, useMnemonics ? "&"
+               : "");
       }
       return getLabel();
    }
@@ -210,9 +229,20 @@ public class AppCommand implements Command, ClickHandler
       menuLabel_ = menuLabel;
    }
 
+   @Override
    public ImageResource getImageResource()
    {
-      return imageResource_;
+      if (isSwitch())
+      {
+         if (isSwitchOn() || true)
+         {
+            return ThemeResources.INSTANCE.switchOn();
+         }
+         return null;
+      } else
+      {
+         return imageResource_;
+      }
    }
 
    public void setImageResource(ImageResource imageResource)
@@ -245,8 +275,7 @@ public class AppCommand implements Command, ClickHandler
    public ToolbarButton createToolbarButton()
    {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
-                                                             imageResource_,
-                                                             this);
+            this, this);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
       return button;
@@ -259,34 +288,35 @@ public class AppCommand implements Command, ClickHandler
 
    public String getMenuHTML(boolean mainMenu)
    {
-      ImageResource icon = imageResource_;
+      ImageResource icon = getImageResource();
       String label = getMenuLabel(false);
       String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
 
       return formatMenuLabel(icon, label, shortcut);
    }
 
-   public static String formatMenuLabel(ImageResource icon,
-                                         String label,
-                                         String shortcut)
+   public static String formatMenuLabel(ImageResource icon, String label,
+         String shortcut)
    {
       StringBuilder text = new StringBuilder();
+
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
       text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: -10px; margin-bottom: -10px\">");
       if (icon != null)
       {
          text.append(AbstractImagePrototype.create(icon).getHTML());
-      }
-      else
+      } else
       {
          text.append("<br/>");
       }
       text.append("</div></td>");
 
-      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label)) + "</td>");
+      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label))
+            + "</td>");
       if (shortcut != null)
-         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
+         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;"
+               + shortcut + "</td>");
       text.append("</tr></table>");
 
       return text.toString();
@@ -306,7 +336,7 @@ public class AppCommand implements Command, ClickHandler
    {
       return shortcut_ != null ? shortcut_.toString(true) : null;
    }
-   
+
    public static void disableNoHandlerAssertions()
    {
       enableNoHandlerAssertions_ = false;
@@ -316,6 +346,8 @@ public class AppCommand implements Command, ClickHandler
    private boolean visible_ = true;
    private boolean removed_ = false;
    private boolean preventShortcutWhenDisabled_ = true;
+   private boolean isSwitch_ = false;
+   private boolean isSwitchOn_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private String label_;
@@ -324,6 +356,7 @@ public class AppCommand implements Command, ClickHandler
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
-   
+   private AbstractImagePrototype menuImage_;
+
    private static boolean enableNoHandlerAssertions_ = true;
 }
