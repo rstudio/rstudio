@@ -5,18 +5,17 @@
 	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 	
 	.consoleErrorBox {
-	   border: 1px dashed #c0c0c0;
 	   position: relative;
 	   overflow: hidden;
-	   padding: 5px;
 	   margin: 5px 5px 5px 0px;
+	   padding: 5px 0px 5px 0px;
 	}
 
 	.consoleErrorTraceback {
-	   right: 5px;
 	   top: 4px;
 	   width: 8em;
 	   float: right;
+      margin-right: 5px;
 	   margin-bottom: 15px;
 	}
 	
@@ -40,12 +39,12 @@
 	}
 	
 	.framePanel {
-	  margin-top: 10px;
-	  margin-left: 10px;
+	  margin-top: 1em;
+	  margin-left: 0.5em;
 	}
 	</ui:style>
    <ui:image src="traceback.png" field="traceback"></ui:image>
-	<g:HTMLPanel styleName="{style.consoleErrorBox}">
+	<g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
 	  <g:HTMLPanel styleName="{style.consoleErrorTraceback}">
 	     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.tracebackImage}"></g:Image>
 	     <g:Anchor styleName="{style.tracebackText}" ui:field="showTracebackText">

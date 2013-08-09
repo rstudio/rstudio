@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 
 import com.google.gwt.core.client.GWT;
@@ -46,10 +47,12 @@ public class ConsoleErrorFrame extends Composite
       observer_ = observer;
       
       boolean hasSource = !frame.getFileName().isEmpty();
-      functionName.setText(frame.getFunctionName() + (hasSource ? " at " : ""));
+      functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
       if (hasSource)
       {
-         sourceLink.setText(frame.getFileName() + "#" + frame.getLineNumber());
+         sourceLink.setText(
+               FileSystemItem.getNameFromPath(frame.getFileName()) + 
+               "#" + frame.getLineNumber());
          sourceLink.addClickHandler(new ClickHandler()
          {            
             @Override
