@@ -44,6 +44,7 @@ public class ConsoleError extends Composite
    {
       void onErrorBoxResize();
       void showSourceForFrame(ErrorFrame frame);
+      void rerunLastCommand();
    }
 
    public ConsoleError(UnhandledError err, String errorClass, Observer observer)
@@ -68,8 +69,19 @@ public class ConsoleError extends Composite
          }
       };
       
+      ClickHandler rerunWithDebug = new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            observer_.rerunLastCommand();
+         }
+      };
+      
       showTracebackText.addClickHandler(showHideTraceback);
       showTracebackImage.addClickHandler(showHideTraceback);
+      rerunText.addClickHandler(rerunWithDebug);
+      rerunImage.addClickHandler(rerunWithDebug);
       
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {

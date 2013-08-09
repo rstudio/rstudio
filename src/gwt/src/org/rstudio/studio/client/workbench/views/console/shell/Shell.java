@@ -67,7 +67,8 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleRestartRCompletedEvent.Handler,
                               ConsoleExecutePendingInputEvent.Handler,
                               SendToConsoleHandler,
-                              DebugModeChangedEvent.Handler
+                              DebugModeChangedEvent.Handler,
+                              RerunLastCommandEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -127,6 +128,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
+      eventBus.addHandler(RerunLastCommandEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -390,6 +392,13 @@ public class Shell implements ConsoleInputHandler,
          view_.ensureInputVisible();
       }
    }
+   
+   @Override
+   public void onRerunLastCommand(RerunLastCommandEvent event)
+   {
+      historyManager_.navigateHistory(-1);
+      processCommandEntry();
+   }
 
    private final class InputKeyDownHandler implements KeyDownHandler,
                                                       KeyPressHandler
@@ -578,4 +587,5 @@ public class Shell implements ConsoleInputHandler,
    private static final String STATE_INPUT = "input";
 
    private boolean restoreFocus_ = true;
+
 }

@@ -48,6 +48,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.events.RerunLastCommandEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
@@ -259,6 +260,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                    frame.getCharacterNumber()),
                              FileTypeRegistry.R,
                              NavigationMethod.HighlightLine));      
+   }
+   
+   @Override
+   public void rerunLastCommand()
+   {
+      events_.fireEvent(new RerunLastCommandEvent());
    }
 
    public void consoleWriteOutput(final String output)
