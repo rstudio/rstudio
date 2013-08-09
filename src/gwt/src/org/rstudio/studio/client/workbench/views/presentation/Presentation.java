@@ -381,7 +381,7 @@ public class Presentation extends BasePresenter
                            public void onResponseReceived(Void response)
                            {
                               indicator.onCompleted();
-                              view_.load(buildPresentationUrl());
+                              refreshPresentation();
                            }
 
                            @Override
