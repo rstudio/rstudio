@@ -79,14 +79,12 @@ public class ConsoleError extends Composite
       }
    }
 
-   @UiField
-   Anchor showTracebackText;
-   @UiField
-   Image showTracebackImage;
-   @UiField
-   HTMLPanel framePanel;
-   @UiField
-   Label errorMessage;
+   @UiField Anchor showTracebackText;
+   @UiField Image showTracebackImage;
+   @UiField Anchor rerunText;
+   @UiField Image rerunImage;
+   @UiField HTMLPanel framePanel;
+   @UiField Label errorMessage;
    
    private Observer observer_;
    private boolean showingTraceback_ = false;

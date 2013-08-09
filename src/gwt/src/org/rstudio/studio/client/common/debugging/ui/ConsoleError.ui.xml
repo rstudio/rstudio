@@ -11,26 +11,27 @@
 	   padding: 5px 0px 5px 0px;
 	}
 
-	.consoleErrorTraceback {
-	   top: 4px;
-	   width: 8em;
+	.consoleErrorCommands {
+	   top: 5px;
 	   float: right;
-      margin-right: 5px;
+      margin-right: 10px;
 	   margin-bottom: 15px;
+	   line-height: 80%;
+	   position: relative;
 	}
 	
-	.tracebackText {
+	.errorCommandText {
       font-family: proportionalFont;
       font-size: 80%;
 	   opacity: 0.50;
 	   cursor: pointer;
 	}
 	
-	.tracebackText:hover {
+	.errorCommandText:hover {
 	   opacity: 1;
 	}
 	
-	.tracebackImage {
+	.errorCommandImage {
 	   cursor: pointer;
 	}
 	
@@ -44,12 +45,21 @@
 	}
 	</ui:style>
    <ui:image src="traceback.png" field="traceback"></ui:image>
+   <ui:image src="rerun.png" field="rerun"></ui:image>
 	<g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
-	  <g:HTMLPanel styleName="{style.consoleErrorTraceback}">
-	     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.tracebackImage}"></g:Image>
-	     <g:Anchor styleName="{style.tracebackText}" ui:field="showTracebackText">
-	        Show Traceback
-	     </g:Anchor>
+	  <g:HTMLPanel styleName="{style.consoleErrorCommands}">
+	     <g:HTMLPanel>
+		     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.errorCommandImage}"></g:Image>
+		     <g:Anchor styleName="{style.errorCommandText}" ui:field="showTracebackText">
+		        Show Traceback
+		     </g:Anchor>
+	     </g:HTMLPanel>
+        <g:HTMLPanel>
+           <g:Image resource="{rerun}" ui:field="rerunImage" styleName="{style.errorCommandImage}"></g:Image>
+           <g:Anchor styleName="{style.errorCommandText}" ui:field="rerunText">
+              Rerun with Debug
+           </g:Anchor>
+        </g:HTMLPanel>
 	  </g:HTMLPanel>
      <g:Label ui:field="errorMessage" styleName="{style.errorMessage}"></g:Label>
 	  <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
