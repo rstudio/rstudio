@@ -102,6 +102,7 @@ const int kEnvironmentRemoved = 77;
 const int kBrowserLineChanged = 78;
 const int kPackageLoaded = 79;
 const int kPackageUnloaded = 80;
+const int kPresentationPaneRequestCompleted = 81;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -265,6 +266,8 @@ std::string ClientEvent::typeName() const
          return "package_loaded";
       case client_events::kPackageUnloaded:
          return "package_unloaded";
+      case client_events::kPresentationPaneRequestCompleted:
+         return "presentation_pane_request_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

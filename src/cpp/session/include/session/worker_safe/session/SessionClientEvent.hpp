@@ -100,6 +100,7 @@ extern const int kEnvironmentRemoved;
 extern const int kBrowserLineChanged;
 extern const int kPackageLoaded;
 extern const int kPackageUnloaded;
+extern const int kPresentationPaneRequestCompleted;
 }
    
 class ClientEvent

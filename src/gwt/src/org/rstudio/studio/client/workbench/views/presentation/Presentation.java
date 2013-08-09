@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
+import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationRPubsSource;
@@ -94,6 +95,9 @@ public class Presentation extends BasePresenter
       SlideMenu getSlideMenu();
       
       String getPresentationTitle();
+      
+      void showBusy();
+      void hideBusy();
    }
    
    public interface SlideMenu
@@ -161,15 +165,26 @@ public class Presentation extends BasePresenter
                   if (index != -1)
                      currentState_.setSlideIndex(index);
                   
-                  view_.load(buildPresentationUrl());
+                  refreshPresentation();
                }
                else if (file.getParentPathString().equals(getCurrentPresDir()) 
                           &&
                         file.getExtension().toLowerCase().equals(".css"))
                {
-                  view_.load(buildPresentationUrl());
+                  refreshPresentation();
                }
             }
+         }
+      });
+      
+      eventBus.addHandler(PresentationPaneRequestCompletedEvent.TYPE,
+                          new PresentationPaneRequestCompletedEvent.Handler()
+      {
+         @Override
+         public void onPresentationRequestCompleted(
+               PresentationPaneRequestCompletedEvent event)
+         {
+            view_.hideBusy();
          }
       });
       
@@ -399,6 +414,12 @@ public class Presentation extends BasePresenter
       if (Event.getCurrentEvent().getShiftKey())
          currentState_.setSlideIndex(0);
       
+      refreshPresentation();
+   }
+   
+   private void refreshPresentation()
+   {
+      view_.showBusy();
       view_.load(buildPresentationUrl());
    }
    
