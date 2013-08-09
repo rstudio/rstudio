@@ -15,10 +15,21 @@
 
 # given a function name and filename, find the environment that contains a
 # function with the given name that originated from the given file.
-.rs.addFunction("getEnvironmentOfFunction", function(objName, fileName)
+.rs.addFunction("getEnvironmentOfFunction", function(
+   objName, fileName, packageName)
 {
-   env <- globalenv()
-   while (environmentName(env) != "R_EmptyEnv")
+   isPackage <- nchar(packageName) > 0
+
+   # when searching specifically for a function in a package, search from the
+   # package namespace to the global environment (considers package imports and
+   # non-exported functions); otherwise, search from the global environment to
+   # the empty namespace
+   lastEnvir <- if (isPackage) "R_GlobalEnv" else "R_EmptyEnv"
+   env <- if (isPackage)
+             asNamespace(packageName)
+          else
+             globalenv()
+   while (environmentName(env) != lastEnvir)
    {
       # if the function with the given name exists in this environment...
       if (!is.null(env) &&
@@ -133,9 +144,10 @@
 .rs.addFunction("getFunctionSteps", function(
    functionName,
    fileName,
+   packageName,
    lineNumbers)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName)
+   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    funBody <- body(fun)
 
    # attempt to find the end line of the function
@@ -176,30 +188,29 @@
       }
 
       list(
-         name=functionName,
-         line=lineNumber,
-         at=paste(steps, collapse=","))
+         name=.rs.scalar(functionName),
+         line=.rs.scalar(lineNumber),
+         at=.rs.scalar(paste(steps, collapse=",")))
    })
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(
    functionName,
-   fileName,
+   envir,
    steps)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
-   if (is.null(envir))
-   {
-      return (NULL)
-   }
    if (length(steps) == 0 || nchar(steps) == 0)
    {
       # Restore the function to its original state. Note that trace/untrace
       # emit messages when they act on a function in a package environment; hide
       # those messages since they're just noise to the user.
-      suppressMessages(untrace(
-         what = functionName,
-         where = envir))
+      fun <- get(functionName, envir = envir)
+      if (isS4(fun) && class(fun) == "functionWithTrace")
+      {
+         suppressMessages(untrace(
+            what = functionName,
+            where = envir))
+      }
    }
    else
    {
@@ -242,9 +253,10 @@
    return(functionName)
 })
 
-.rs.addFunction("getUntracedFunction", function(functionName, fileName)
+.rs.addFunction("getUntracedFunction", function(
+   functionName, fileName, packageName)
 {
-   envir <- .rs.getEnvironmentOfFunction(functionName, fileName)
+   envir <- .rs.getEnvironmentOfFunction(functionName, fileName, packageName)
    if (is.null(envir))
    {
       return(NULL)
@@ -257,9 +269,10 @@
    return(fun)
 })
 
-.rs.addFunction("getFunctionSourceRefs", function(functionName, fileName)
+.rs.addFunction("getFunctionSourceRefs", function(
+   functionName, fileName, packageName)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName)
+   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    if (is.null(fun))
    {
       return(NULL)
@@ -267,10 +280,12 @@
    attr(fun, "srcref")
 })
 
-.rs.addFunction("getFunctionSourceCode", function(functionName, fileName)
+.rs.addFunction("getFunctionSourceCode", function(
+   functionName, fileName, packageName)
 {
    paste(capture.output(
-      .rs.getFunctionSourceRefs(functionName, fileName)), collapse="\n")
+      .rs.getFunctionSourceRefs(functionName, fileName, packageName)),
+      collapse="\n")
 })
 
 .rs.addGlobalFunction("debugSource", function(
@@ -428,36 +443,13 @@
       end_character_number = .rs.scalar(srcref[6])))
 })
 
-.rs.addJsonRpcHandler("set_function_breakpoints", function(
-   functionName,
-   fileName,
-   steps)
-{
-   .rs.setFunctionBreakpoints(functionName, fileName, steps)
-})
-
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,
    fileName,
+   packageName,
    lineNumbers)
 {
-   results <- .rs.getFunctionSteps(functionName, fileName, lineNumbers)
-   formattedResults <- data.frame(
-      line = numeric(0),
-      name = character(0),
-      at = character(0),
-      stringsAsFactors = FALSE)
-   for (result in results)
-   {
-      formattedResult <- list(
-         line = result$line,
-         name = result$name,
-         at = result$at)
-      formattedResults <- rbind(formattedResults, formattedResult)
-   }
-   formattedResults$name <- as.character(formattedResults$name)
-   formattedResults$at <- as.character(formattedResults$at)
-   return(formattedResults)
+   .rs.getFunctionSteps(functionName, fileName, packageName, lineNumbers)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(

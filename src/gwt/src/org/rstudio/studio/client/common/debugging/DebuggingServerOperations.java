@@ -30,12 +30,14 @@ public interface DebuggingServerOperations
    public void getFunctionSteps(
          String functionName,
          String fileName,
+         String packageName,
          int[] lineNumbers,
          ServerRequestCallback<JsArray<FunctionSteps>> requestCallback);
    
    public void setFunctionBreakpoints(
          String functionName,
          String fileName,
+         String packageName,
          ArrayList<String> steps,
          ServerRequestCallback<Void> requestCallback);
    

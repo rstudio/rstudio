@@ -24,6 +24,7 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 set(SERVER_SOURCE_FILES
    ServerAppArmor.cpp
    ServerBrowser.cpp
+   ServerEval.cpp
    ServerInit.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp

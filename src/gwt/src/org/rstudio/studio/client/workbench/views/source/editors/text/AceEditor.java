@@ -1047,6 +1047,15 @@ public class AceEditor implements DocDisplay,
    public boolean moveSelectionToBlankLine()
    {
       int curRow = getSession().getSelection().getCursor().getRow();
+      
+      // if the current row is the last row then insert a new row
+      if (curRow == (getSession().getLength() - 1))
+      {
+         int rowLen = getSession().getLine(curRow).length();
+         getSession().getSelection().moveCursorTo(curRow, rowLen, false);
+         insertCode("\n");
+      }
+      
       while (curRow < getSession().getLength())
       {
          String line = getSession().getLine(curRow);
