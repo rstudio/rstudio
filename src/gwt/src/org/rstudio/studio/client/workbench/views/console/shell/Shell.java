@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -396,8 +397,22 @@ public class Shell implements ConsoleInputHandler,
    @Override
    public void onRerunLastCommand(RerunLastCommandEvent event)
    {
-      historyManager_.navigateHistory(-1);
-      processCommandEntry();
+      errorManager_.setDebugSessionHandlerType(
+            ErrorHandlerType.ERRORS_BREAK_ALWAYS,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  historyManager_.navigateHistory(-1);
+                  processCommandEntry();
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            }); 
    }
 
    private final class InputKeyDownHandler implements KeyDownHandler,
