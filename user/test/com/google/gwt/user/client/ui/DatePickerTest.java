@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.datepicker.client.CalendarModel;
 import com.google.gwt.user.datepicker.client.CalendarView;
@@ -39,6 +42,15 @@ public class DatePickerTest extends GWTTestCase {
   private static class DatePickerWithView extends DatePicker {
     DatePickerWithView(MockCalendarView view) {
       super(new DefaultMonthSelector(), view, new CalendarModel());
+    }
+
+    // give access to the month selector for testing purpose
+    public DefaultMonthSelector getDefaultMonthSelector() {
+      return (DefaultMonthSelector) super.getMonthSelector();
+    }
+
+    public CalendarModel getCalendarModel() {
+      return super.getModel();
     }
   }
   /**
@@ -162,7 +174,7 @@ public class DatePickerTest extends GWTTestCase {
     mockedDatePicker.setTransientEnabledOnDates(false, dateVisible2,
         dateVisible3);
     mockedDatePicker.setTransientEnabledOnDates(false, datesVisibleList);
-    
+
     assertTrue(view.disabledDates.contains(dateVisible1));
     assertTrue(view.disabledDates.contains(dateVisible2));
     assertTrue(view.disabledDates.contains(dateVisible3));
@@ -179,6 +191,57 @@ public class DatePickerTest extends GWTTestCase {
     assertFalse(view.disabledDates.contains(dateVisible3));
     assertFalse(view.disabledDates.contains(dateVisible4));
     assertFalse(view.disabledDates.contains(dateVisible5));
+  }
+
+  public void testMonthNavigation() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    RootPanel.get().add(dp);
+
+    Date actualDate = new Date(dp.getCalendarModel().getCurrentMonth().getTime());
+    Date dateAfterOneMonth = new Date(actualDate.getYear(), actualDate.getMonth() + 1,
+        actualDate.getDate());
+
+    clickOnNavigationElement(dp.getDefaultMonthSelector().getForwardButtonElement());
+
+    Date currentlyDisplayedDate = dp.getCalendarModel().getCurrentMonth();
+    assertEquals(dateAfterOneMonth.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(dateAfterOneMonth.getYear(), currentlyDisplayedDate.getYear());
+
+    clickOnNavigationElement(dp.getDefaultMonthSelector().getBackwardButtonElement());
+
+    assertEquals(actualDate.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(actualDate.getYear(), currentlyDisplayedDate.getYear());
+  }
+
+  public void testMonthNavigationByDropDown() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    dp.setYearAndMonthDropdownVisible(true);
+    RootPanel.get().add(dp);
+
+    Date actualDate = new Date(dp.getCalendarModel().getCurrentMonth().getTime());
+
+    ListBox monthSelect = dp.getDefaultMonthSelector().getMonthSelectListBox();
+    int newMonth  = (monthSelect.getSelectedIndex() + 6) % 12;
+    monthSelect.setSelectedIndex(newMonth);
+    monthSelect.getElement().dispatchEvent(Document.get().createChangeEvent());
+
+    Date dateAfter = new Date(actualDate.getYear(), newMonth, actualDate.getDate());
+    Date currentlyDisplayedDate = dp.getCalendarModel().getCurrentMonth();
+
+    assertEquals(dateAfter.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(dateAfter.getYear(), currentlyDisplayedDate.getYear());
+  }
+
+  public void testMonthYearNotSelectableByDefault() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    RootPanel.get().add(dp);
+
+    assertFalse(dp.getDefaultMonthSelector().getYearSelectListBox().isAttached());
+    assertFalse(dp.getDefaultMonthSelector().getMonthSelectListBox().isAttached());
+
+    String formattedDate = dp.getCalendarModel().formatCurrentMonthAndYear();
+    String expectedInnerText = "‹" + formattedDate + "›";
+    assertEquals(expectedInnerText, dp.getDefaultMonthSelector().getElement().getInnerText());
   }
 
   public void testStyleSetting() {
@@ -222,23 +285,23 @@ public class DatePickerTest extends GWTTestCase {
     mockedDatePicker.addTransientStyleToDates(STYLE, datesVisibleList);
     assertViewHasStyleOnVisibleDates(STYLE);
     assertPickerLacksStyleOnVisibleDates();
-    
+
     mockedDatePicker.removeStyleFromDates(STYLE, dateVisible1);
     mockedDatePicker.removeStyleFromDates(STYLE, dateVisible2, dateVisible3);
     mockedDatePicker.removeStyleFromDates(STYLE, datesVisibleList);
     assertViewLacksStyleOnVisibleDates(STYLE);
     assertPickerLacksStyleOnVisibleDates();
   }
-  
+
   public void testValueChangeEvent() {
     DatePicker dp = new DatePicker();
     RootPanel.get().add(dp);
     new DateValueChangeTester(dp).run();
   }
-  
+
   public void testValueStyle() {
     assertNull(mockedDatePicker.getStyleOfDate(dateVisible4));
-    
+
     mockedDatePicker.setValue(dateVisible4);
     assertTrue(mockedDatePicker.getStyleOfDate(dateVisible4).contains("datePickerDayIsValue"));
     assertTrue(view.dateStyles.get(dateVisible4).contains("datePickerDayIsValue"));
@@ -246,6 +309,103 @@ public class DatePickerTest extends GWTTestCase {
     mockedDatePicker.setValue(dateVisible5);
     assertNull(mockedDatePicker.getStyleOfDate(dateVisible4));
     assertFalse(view.dateStyles.get(dateVisible4).contains("datePickerDayIsValue"));
+  }
+
+  public void testYearNavigation() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    dp.setYearArrowsVisible(true);
+    RootPanel.get().add(dp);
+
+    Date actualDate = new Date(dp.getCalendarModel().getCurrentMonth().getTime());
+    Date dateAfterOneYear = new Date(actualDate.getYear() + 1, actualDate.getMonth(),
+        actualDate.getDate());
+
+    clickOnNavigationElement(dp.getDefaultMonthSelector().getYearForwardButtonElement());
+
+    Date currentlyDisplayedDate = dp.getCalendarModel().getCurrentMonth();
+    assertEquals(dateAfterOneYear.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(dateAfterOneYear.getYear(), currentlyDisplayedDate.getYear());
+
+    clickOnNavigationElement(dp.getDefaultMonthSelector().getYearBackwardButtonElement());
+
+    assertEquals(actualDate.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(actualDate.getYear(), currentlyDisplayedDate.getYear());
+  }
+
+  public void testYearNavigationByDropDown() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    dp.setYearAndMonthDropdownVisible(true);
+    RootPanel.get().add(dp);
+
+    Date actualDate = new Date(dp.getCalendarModel().getCurrentMonth().getTime());
+
+    ListBox yearSelect = dp.getDefaultMonthSelector().getYearSelectListBox();
+    int newYear  = yearSelect.getSelectedIndex() + 5;
+    yearSelect.setSelectedIndex(newYear);
+    yearSelect.getElement().dispatchEvent(Document.get().createChangeEvent());
+
+    Date dateAfter = new Date(actualDate.getYear() + 5, actualDate.getMonth(), actualDate.getDate());
+    Date currentlyDisplayedDate = dp.getCalendarModel().getCurrentMonth();
+
+    assertEquals(dateAfter.getMonth(), currentlyDisplayedDate.getMonth());
+    assertEquals(dateAfter.getYear(), currentlyDisplayedDate.getYear());
+  }
+
+  public void testVisibleYearCount() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    dp.setYearAndMonthDropdownVisible(true);
+    dp.setCurrentMonth(new Date(82, 6, 10));
+    RootPanel.get().add(dp);
+
+    ListBox yearSelect = dp.getDefaultMonthSelector().getYearSelectListBox();
+
+    assertEquals(21 /* the default */, yearSelect.getItemCount());
+    assertEquals("1972", yearSelect.getItemText(0));
+    assertEquals("1982", yearSelect.getItemText(10));
+    assertEquals("1992", yearSelect.getItemText(20));
+
+    dp.setVisibleYearCount(1);
+    assertEquals(1, yearSelect.getItemCount());
+    assertEquals("1982", yearSelect.getItemText(0));
+
+    dp.setVisibleYearCount(2);
+    assertEquals(2, yearSelect.getItemCount());
+    assertEquals("1982", yearSelect.getItemText(0));
+    assertEquals("1983", yearSelect.getItemText(1));
+
+    dp.setVisibleYearCount(3);
+    assertEquals(3, yearSelect.getItemCount());
+    assertEquals("1981", yearSelect.getItemText(0));
+    assertEquals("1982", yearSelect.getItemText(1));
+    assertEquals("1983", yearSelect.getItemText(2));
+
+    dp.setVisibleYearCount(10);
+    assertEquals(10, yearSelect.getItemCount());
+    assertEquals("1978", yearSelect.getItemText(0));
+    assertEquals("1982", yearSelect.getItemText(4));
+    assertEquals("1987", yearSelect.getItemText(9));
+
+    dp.setVisibleYearCount(11);
+    assertEquals(11, yearSelect.getItemCount());
+    assertEquals("1977", yearSelect.getItemText(0));
+    assertEquals("1982", yearSelect.getItemText(5));
+    assertEquals("1987", yearSelect.getItemText(10));
+  }
+
+  public void testYearArrowsVisibility() {
+    DatePickerWithView dp = new DatePickerWithView(new MockCalendarView());
+    RootPanel.get().add(dp);
+
+    assertNull(dp.getDefaultMonthSelector().getYearForwardButtonElement().getParentElement());
+    assertNull(dp.getDefaultMonthSelector().getYearBackwardButtonElement().getParentElement());
+
+    dp.setYearArrowsVisible(true);
+    assertNotNull(dp.getDefaultMonthSelector().getYearForwardButtonElement().getParentElement());
+    assertNotNull(dp.getDefaultMonthSelector().getYearBackwardButtonElement().getParentElement());
+
+    dp.setYearArrowsVisible(false);
+    assertNull(dp.getDefaultMonthSelector().getYearForwardButtonElement().getParentElement());
+    assertNull(dp.getDefaultMonthSelector().getYearBackwardButtonElement().getParentElement());
   }
 
   private void assertPickerHasNoStyleOnInvisibleDates() {
@@ -312,5 +472,14 @@ public class DatePickerTest extends GWTTestCase {
     assertFalse(view.dateStyles.get(dateVisible3).contains(style));
     assertFalse(view.dateStyles.get(dateVisible4).contains(style));
     assertFalse(view.dateStyles.get(dateVisible5).contains(style));
+  }
+
+  private void clickOnNavigationElement(Element e) {
+    e.dispatchEvent(Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
+        false, NativeEvent.BUTTON_LEFT, null));
+    e.dispatchEvent(Document.get().createMouseDownEvent(1, 0, 0, 0, 0, false, false, false,
+        false, NativeEvent.BUTTON_LEFT));
+    e.dispatchEvent(Document.get().createMouseUpEvent(1, 0, 0, 0, 0, false, false, false, false,
+        NativeEvent.BUTTON_LEFT));
   }
 }

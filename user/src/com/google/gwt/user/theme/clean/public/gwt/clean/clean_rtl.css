@@ -243,7 +243,7 @@ select {
 .gwt-DisclosurePanel .header a,
 .gwt-DisclosurePanel .header td {
   text-decoration: none;  /* Remove underline from header */
-  color: black; 
+  color: black;
   cursor: pointer;
   cursor: hand;
 }
@@ -267,7 +267,7 @@ select {
 }
 .gwt-HorizontalSplitPanel .hsplitter {
   cursor: move;
-  border: 0px; 
+  border: 0px;
   background: #e7e7e7;
   line-height: 0px;
 }
@@ -275,7 +275,7 @@ select {
 }
 .gwt-VerticalSplitPanel .vsplitter {
   cursor: move;
-  border: 0px; 
+  border: 0px;
   background: #e7e7e7;
   line-height: 0px;
 }
@@ -328,7 +328,7 @@ select {
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
   width: 1px;
   height: 1px;
-  background: white; 
+  background: white;
 }
 .gwt-MenuBar-vertical {
   margin-top: 0px;
@@ -613,25 +613,25 @@ select {
   padding: 0px 0px 0px 1px;
   margin-left: 4px;
   margin-bottom: 4px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-up-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 0px 0px 1px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-down {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-down-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-ToggleButton-up {
   margin-left: 4px;
@@ -798,7 +798,7 @@ select {
 .gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 0px;
   height: 0px;
-  zoom: 1;  
+  zoom: 1;
 }
 .gwt-SuggestBoxPopup .suggestPopupTopRightInner {
   width: 0px;
@@ -886,7 +886,7 @@ select {
   background: white;
   color: #333;
   font-weight: bold;
-} 
+}
 .gwt-TabBar .gwt-TabBarItem-disabled {
   cursor: default;
   color: #999999;
@@ -1027,7 +1027,7 @@ select {
 }
 .gwt-ToggleButton-up {
   border:1px solid #bbb;
-  border-bottom: 1px solid #a0a0a0;  
+  border-bottom: 1px solid #a0a0a0;
   cursor: pointer;
   cursor: hand;
 }
@@ -1176,7 +1176,8 @@ select {
   padding: 1px 0 5px 0;
   background: #fff;
 }
-td.datePickerMonth {
+td.datePickerMonth,
+td.datePickerYear {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
@@ -1185,7 +1186,9 @@ td.datePickerMonth {
   color: #333;
 }
 .datePickerPreviousButton,
-.datePickerNextButton {
+.datePickerNextButton,
+.datePickerPreviousYearButton,
+.datePickerNextYearButton {
   font-size: 120%;
   line-height: 1em;
   color: #3a6aad;

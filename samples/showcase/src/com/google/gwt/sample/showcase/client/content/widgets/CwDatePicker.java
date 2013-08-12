@@ -17,6 +17,7 @@ package com.google.gwt.sample.showcase.client.content.widgets;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.Constants;
@@ -58,6 +59,24 @@ public class CwDatePicker extends ContentWidget {
   }
 
   /**
+   * {@link ValueChangeHandler} used to set the value in the text box when the user selects a date
+   */
+  @ShowcaseSource
+  public static class MyDateValueChangeHandler implements ValueChangeHandler<Date> {
+    private final Label text;
+
+    public MyDateValueChangeHandler(Label text) {
+      this.text = text;
+    }
+
+    public void onValueChange(ValueChangeEvent<Date> event) {
+      Date date = event.getValue();
+      String dateString = DateTimeFormat.getMediumDateFormat().format(date);
+      text.setText(dateString);
+    }
+  }
+
+  /**
    * An instance of the constants.
    */
   @ShowcaseData
@@ -86,27 +105,39 @@ public class CwDatePicker extends ContentWidget {
     final Label text = new Label();
 
     // Set the value in the text box when the user selects a date
-    datePicker.addValueChangeHandler(new ValueChangeHandler<Date>() {
-      public void onValueChange(ValueChangeEvent<Date> event) {
-        Date date = event.getValue();
-        String dateString = DateTimeFormat.getMediumDateFormat().format(date);
-        text.setText(dateString);
-      }
-    });
+    datePicker.addValueChangeHandler(new MyDateValueChangeHandler(text));
+
+    // create a date picker where years and months are selectable with drop down lists and where we
+    // can navigate trough the years
+    DatePicker advancedDatePicker = new DatePicker();
+    advancedDatePicker.setYearArrowsVisible(true);
+    advancedDatePicker.setYearAndMonthDropdownVisible(true);
+    // show 51 years in the years dropdown. The range of years is centered on the selected date
+    advancedDatePicker.setVisibleYearCount(51);
+
+    final Label text2 = new Label();
+    text2.getElement().getStyle().setMarginTop(15, Unit.PX);
+
+    // Set the value in the text box when the user selects a date
+    advancedDatePicker.addValueChangeHandler(new MyDateValueChangeHandler(text2));
 
     // Set the default value
     datePicker.setValue(new Date(), true);
+    advancedDatePicker.setValue(new Date(), true);
 
     // Create a DateBox
     DateTimeFormat dateFormat = DateTimeFormat.getLongDateFormat();
     DateBox dateBox = new DateBox();
     dateBox.setFormat(new DateBox.DefaultFormat(dateFormat));
+    dateBox.getDatePicker().setYearArrowsVisible(true);
 
     // Combine the widgets into a panel and return them
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.add(new HTML(constants.cwDatePickerLabel()));
     vPanel.add(text);
     vPanel.add(datePicker);
+    vPanel.add(text2);
+    vPanel.add(advancedDatePicker);
     vPanel.add(new HTML(constants.cwDatePickerBoxLabel()));
     vPanel.add(dateBox);
     return vPanel;

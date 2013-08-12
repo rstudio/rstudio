@@ -204,7 +204,7 @@ a, a:visited, a:hover {
 .gwt-DisclosurePanel .header a,
 .gwt-DisclosurePanel .header td {
   text-decoration: none;  /* Remove underline from header */
-  color: black; 
+  color: black;
   cursor: pointer;
   cursor: hand;
 }
@@ -228,7 +228,7 @@ a, a:visited, a:hover {
 }
 .gwt-HorizontalSplitPanel .hsplitter {
   cursor: move;
-  border: 0px; 
+  border: 0px;
   background: #91c0ef url(images/vborder.png) repeat-y;
   line-height: 0px;
 }
@@ -236,7 +236,7 @@ a, a:visited, a:hover {
 }
 .gwt-VerticalSplitPanel .vsplitter {
   cursor: move;
-  border: 0px; 
+  border: 0px;
   background: #91c0ef url(images/hborder.png) repeat-x;
   line-height: 0px;
 }
@@ -290,7 +290,7 @@ a, a:visited, a:hover {
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
   width: 1px;
   height: 1px;
-  background: white; 
+  background: white;
 }
 .gwt-MenuBar-vertical {
   margin-top: 0px;
@@ -569,25 +569,25 @@ a, a:visited, a:hover {
   padding: 0px 0px 0px 1px;
   margin-left: 4px;
   margin-bottom: 4px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-up-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 0px 0px 1px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-down {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-PushButton-down-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
-  border-width: 1px; 
+  border-width: 1px;
 }
 .gwt-RichTextToolbar .gwt-ToggleButton-up {
   margin-left: 4px;
@@ -739,7 +739,7 @@ a, a:visited, a:hover {
 .gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 5px;
   height: 5px;
-  zoom: 1;  
+  zoom: 1;
 }
 .gwt-SuggestBoxPopup .suggestPopupTopRightInner {
   width: 8px;
@@ -813,7 +813,7 @@ a, a:visited, a:hover {
 .gwt-TabBar .gwt-TabBarItem-selected {
   cursor: default;
   background: #92c1f0;
-} 
+}
 .gwt-TabBar .gwt-TabBarItem-disabled {
   cursor: default;
   color: #999999;
@@ -1070,7 +1070,8 @@ a, a:visited, a:hover {
   background: #C3D9FF;
   width: 100%;
 }
-td.datePickerMonth {
+td.datePickerMonth,
+td.datePickerYear {
   text-align: center;
   vertical-align: center;
   white-space: nowrap;
@@ -1079,7 +1080,9 @@ td.datePickerMonth {
   color: blue;
 }
 .datePickerPreviousButton,
-.datePickerNextButton {
+.datePickerNextButton,
+.datePickerPreviousYearButton,
+.datePickerNextYearButton {
   font-size: 120%;
   line-height: 1em;
   color: blue;
