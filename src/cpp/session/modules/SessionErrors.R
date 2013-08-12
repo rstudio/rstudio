@@ -19,8 +19,8 @@
    foundUserCode <- FALSE
 
    # when this handler is invoked for an unhandled error that didn't happen at
-   # the top level, there are at least three calls on the stack
-   if (length(calls) < 3)
+   # the top level, there are at least four calls on the stack
+   if (length(calls) < 4)
       return()
 
    # create the traceback for the client

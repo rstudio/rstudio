@@ -19,7 +19,8 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 public interface ShellOutputWriter 
 {
    void consoleWriteError(String string);
-   void consoleWriteExtendedError(String string, UnhandledError traceInfo);
+   void consoleWriteExtendedError(
+         String string, UnhandledError traceInfo, boolean expand);
    void consoleWriteOutput(String output) ;
    void consoleWritePrompt(String prompt);
 }

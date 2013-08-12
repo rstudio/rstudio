@@ -61,10 +61,7 @@ public class ConsoleError extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            showingTraceback_ = !showingTraceback_;
-            showTracebackText.setText(showingTraceback_ ? 
-                  "Hide Traceback" : "Show Traceback");
-            framePanel.setVisible(showingTraceback_);
+            setTracebackVisible(!showingTraceback_);
             observer_.onErrorBoxResize();
          }
       };
@@ -89,6 +86,14 @@ public class ConsoleError extends Composite
                err.getErrorFrames().get(i), observer_);
          framePanel.add(frame);
       }
+   }
+   
+   public void setTracebackVisible(boolean visible)
+   {
+      showingTraceback_ = visible;
+      showTracebackText.setText(showingTraceback_ ? 
+            "Hide Traceback" : "Show Traceback");
+      framePanel.setVisible(showingTraceback_);
    }
 
    @UiField Anchor showTracebackText;

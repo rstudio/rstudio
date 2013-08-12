@@ -234,12 +234,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    public void consoleWriteExtendedError(
-         final String error, UnhandledError traceInfo)
+         final String error, UnhandledError traceInfo, boolean expand)
    {
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(
             traceInfo, getErrorClass(), this);
 
+      if (expand)
+         errorWidget.setTracebackVisible(true);
+      
       // TODO: Properly wire these widgets together.
       RootPanel.get().add(errorWidget);
       output_.getElement().appendChild(errorWidget.getElement());

@@ -256,7 +256,8 @@ public class Shell implements ConsoleInputHandler,
             if (err != null
                 && err.getErrorMessage().equals(event.getError()))
             {
-               view_.consoleWriteExtendedError(event.getError(), err);
+               view_.consoleWriteExtendedError(
+                     event.getError(), err, errorManager_.getExpandTraceback());
             }
             else
             {

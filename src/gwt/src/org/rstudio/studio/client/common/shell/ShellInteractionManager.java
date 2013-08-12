@@ -93,7 +93,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    
    @Override
    public void consoleWriteExtendedError(
-         String error, UnhandledError traceInfo)
+         String error, UnhandledError traceInfo, boolean expand)
    {
    }
    

@@ -19,14 +19,21 @@ package org.rstudio.studio.client.common.debugging;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
+import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.inject.Inject;
@@ -36,7 +43,8 @@ import com.google.inject.Singleton;
 public class ErrorManager
              implements UnhandledErrorEvent.Handler,
                         DebugModeChangedEvent.Handler,
-                        ErrorHandlerChangedEvent.Handler
+                        ErrorHandlerChangedEvent.Handler,
+                        SessionInitHandler
 {
    public interface Binder
    extends CommandBinder<Commands, ErrorManager> {}
@@ -53,17 +61,19 @@ public class ErrorManager
          EventBus events, 
          Binder binder, 
          Commands commands, 
-         DebuggingServerOperations server)
+         DebuggingServerOperations server,
+         Session session)
    {
       events_ = events;
       server_ = server;
-      errorHandlerType_ = ErrorHandlerType.ERRORS_TRACEBACK;
       commands_ = commands;
+      session_ = session;
       binder.bind(commands, this);
       
       events_.addHandler(UnhandledErrorEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(ErrorHandlerChangedEvent.TYPE, this);
+      events_.addHandler(SessionInitEvent.TYPE, this);
    }
 
    // Event and command handlers ----------------------------------------------
@@ -102,7 +112,51 @@ public class ErrorManager
    @Override
    public void onErrorHandlerChanged(ErrorHandlerChangedEvent event)
    {
-      errorHandlerType_ = event.getHandlerType().getType();
+      int newType = event.getHandlerType().getType();
+      if (newType != errorManagerState_.getErrorHandlerType())
+      {
+         errorManagerState_.setErrorHandlerType(newType);
+         errorManagerStateDirty_ = true;
+      }
+   }
+
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      new JSObjectStateValue(
+            "error-management",
+            "errorHandlerSettings",
+            ClientState.TEMPORARY,
+            session_.getSessionInfo().getClientState(),
+            false)
+       {
+          @Override
+          protected void onInit(JsObject value)
+          {
+             if (value != null)
+                errorManagerState_ = value.cast();
+             else
+                errorManagerState_ = ErrorManagerState.create(
+                      true, ErrorHandlerType.ERRORS_TRACEBACK, false);
+             
+             commands_.errorsInMyCode().setChecked(
+                   errorManagerState_.getUserCode());
+             commands_.errorsExpandTraceback().setChecked(
+                   errorManagerState_.getExpandTracebacks());
+          }
+   
+          @Override
+          protected JsObject getValue()
+          {
+             return errorManagerState_.cast();
+          }
+   
+          @Override
+          protected boolean hasChanged()
+          {
+             return errorManagerStateDirty_;
+          }
+       };
    }
 
    @Handler
@@ -126,9 +180,28 @@ public class ErrorManager
    @Handler
    public void onErrorsInMyCode()
    {
-      userCode_ = commands_.errorsInMyCode().isChecked();
+      boolean userCode = commands_.errorsInMyCode().isChecked();
+      if (userCode != errorManagerState_.getUserCode())
+      {
+         errorManagerState_.setUserCode(userCode);
+         errorManagerStateDirty_ = true;
+         
+         // reflect the change on the server
+         setErrorManagementType(errorManagerState_.getErrorHandlerType());
+      }
    }
-   
+
+   @Handler
+   public void onErrorsExpandTraceback()
+   {
+      boolean expandTraceback = commands_.errorsExpandTraceback().isChecked();
+      if (expandTraceback != errorManagerState_.getExpandTracebacks())
+      {
+         errorManagerState_.setExpandTracebacks(expandTraceback);
+         errorManagerStateDirty_ = true;
+      }
+   }
+      
    // Public methods ----------------------------------------------------------
 
    public UnhandledError consumeLastError()
@@ -142,7 +215,7 @@ public class ErrorManager
          int type, 
          final ServerRequestCallback<Void> callback)
    {
-      if (type == errorHandlerType_)
+      if (type == errorManagerState_.getErrorHandlerType())
          return;
       
       setErrorManagementType(type, new ServerRequestCallback<Void>()
@@ -150,7 +223,7 @@ public class ErrorManager
          @Override
          public void onResponseReceived(Void v)
          {
-            previousHandlerType_ = errorHandlerType_;
+            previousHandlerType_ = errorManagerState_.getErrorHandlerType();
             debugHandlerState_ = DebugHandlerState.Pending;
             callback.onResponseReceived(v);
          }
@@ -163,13 +236,19 @@ public class ErrorManager
       });
    }
    
+   public boolean getExpandTraceback()
+   {
+      return errorManagerState_.getExpandTracebacks();
+   }
+
    // Private methods ---------------------------------------------------------
 
    private void setErrorManagementType(
          int type, 
          ServerRequestCallback<Void> callback)
    {
-      server_.setErrorManagementType(type, userCode_, callback);
+      server_.setErrorManagementType(
+            type, errorManagerState_.getUserCode(), callback);
    }
    
    private void setErrorManagementType(int type)
@@ -187,11 +266,12 @@ public class ErrorManager
 
    private final EventBus events_;
    private final DebuggingServerOperations server_;
+   private final Session session_;
+   private final Commands commands_;
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
-   private int errorHandlerType_; 
+   private ErrorManagerState errorManagerState_; 
+   private boolean errorManagerStateDirty_ = false;
    private int previousHandlerType_;
    private UnhandledError lastError_;
-   private Commands commands_;
-   private boolean userCode_;
 }
