@@ -285,7 +285,7 @@ public class ProxyCreator {
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATOR_RPC_STOB);
     SerializableTypeOracle typesSentFromBrowser;
     SerializableTypeOracle typesSentToBrowser;
-    String rpcLog;
+    String rpcLog = null;
     try {
       SerializableTypeOracleBuilder typesSentFromBrowserBuilder =
           new SerializableTypeOracleBuilder(logger, propertyOracle, context);
@@ -297,28 +297,33 @@ public class ProxyCreator {
       addRoots(logger, typeOracle, typesSentFromBrowserBuilder, typesSentToBrowserBuilder);
 
       // Decide what types to send in each direction.
-      // Log the decisions to a string that will be written later in this method
       {
-        StringWriter stringWriter = new StringWriter();
-        PrintWriter writer = new PrintWriter(stringWriter);
+        if (logger.isLoggable(TreeLogger.Type.DEBUG)) {
+          // Log the decisions to a string that will be written later in this method
+          StringWriter stringWriter = new StringWriter();
+          PrintWriter writer = new PrintWriter(stringWriter);
 
-        typesSentFromBrowserBuilder.setLogOutputWriter(writer);
-        typesSentToBrowserBuilder.setLogOutputWriter(writer);
+          typesSentFromBrowserBuilder.setLogOutputWriter(writer);
+          typesSentToBrowserBuilder.setLogOutputWriter(writer);
 
-        writer.write("====================================\n");
-        writer.write("Types potentially sent from browser:\n");
-        writer.write("====================================\n\n");
-        writer.flush();
-        typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
-
-        writer.write("===================================\n");
-        writer.write("Types potentially sent from server:\n");
-        writer.write("===================================\n\n");
-        writer.flush();
-        typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
-
-        writer.close();
-        rpcLog = stringWriter.toString();
+          writer.write("====================================\n");
+          writer.write("Types potentially sent from browser:\n");
+          writer.write("====================================\n\n");
+          writer.flush();
+          typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
+  
+          writer.write("===================================\n");
+          writer.write("Types potentially sent from server:\n");
+          writer.write("===================================\n\n");
+          writer.flush();
+          typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
+          
+          writer.close();
+          rpcLog = stringWriter.toString();
+        } else {
+          typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
+          typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
+        }
       }
     } finally {
       event.end();
@@ -370,7 +375,7 @@ public class ProxyCreator {
 
     srcWriter.commit(logger);
 
-    if (logger.isLoggable(TreeLogger.DEBUG)) {
+    if (rpcLog != null) {
       // Create an artifact explaining STOB's decisions. It will be emitted by
       // RpcLogLinker
       context.commitArtifact(logger, new RpcLogArtifact(serviceIntf.getQualifiedSourceName(),
