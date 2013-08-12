@@ -163,9 +163,6 @@ public:
    bool errorsUserCodeOnly() const;
    void setErrorsUserCodeOnly(bool userCodeOnly);
 
-   bool errorsExpandTraceback() const;
-   void setErrorsExpandTraceback(bool expandTraceback);
-
 private:
 
    void onSettingsFileChanged(

@@ -608,14 +608,4 @@ void UserSettings::setErrorsUserCodeOnly(bool userCode)
    return settings_.set("errorsUserCodeOnly", userCode);
 }
 
-bool UserSettings::errorsExpandTraceback() const
-{
-   return settings_.getBool("errorsExpandTraceback", false);
-}
-
-void UserSettings::setErrorsExpandTraceback(bool expandTraceback)
-{
-   return settings_.set("errorsExpandTraceback", expandTraceback);
-}
-
 }// namespace session

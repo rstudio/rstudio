@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.inject.Inject;
@@ -123,8 +124,27 @@ public class ErrorManager
     
       commands_.errorsInMyCode().setChecked(
             errorManagerState_.getUserCodeOnly());
-     
-      commands_.errorsExpandTraceback().setChecked(false);      
+      
+      new BoolStateValue("error-management", 
+            "expandErrorTracebacks", 
+            previousHandlerType_, 
+            session_.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Boolean value)
+         {
+            if (value != null)
+               expandErrorTracebacks_ = value.booleanValue();
+            commands_.errorsExpandTraceback().setChecked(
+                  expandErrorTracebacks_);      
+         }
+         
+         @Override
+         protected Boolean getValue()
+         {
+            return new Boolean(expandErrorTracebacks_);
+         }
+      };     
    }
 
    @Handler
@@ -175,6 +195,7 @@ public class ErrorManager
    @Handler
    public void onErrorsExpandTraceback()
    {
+      expandErrorTracebacks_ = commands_.errorsExpandTraceback().isChecked();
    }
       
    // Public methods ----------------------------------------------------------
@@ -213,7 +234,7 @@ public class ErrorManager
    
    public boolean getExpandTraceback()
    {
-      return false;
+      return expandErrorTracebacks_;
    }
 
    // Private methods ---------------------------------------------------------
@@ -247,4 +268,5 @@ public class ErrorManager
    private ErrorManagerState errorManagerState_; 
    private int previousHandlerType_;
    private UnhandledError lastError_;
+   private boolean expandErrorTracebacks_;
 }
