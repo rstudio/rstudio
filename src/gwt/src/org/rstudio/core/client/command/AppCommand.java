@@ -21,7 +21,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -96,8 +95,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (!visible_)
          return;
 
-      if (isSwitch())
-         setIsSwitchOn(!isSwitchOn());
+      if (isCheckable())
+         setChecked(!isChecked());
 
       if (enableNoHandlerAssertions_)
       {
@@ -135,26 +134,26 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
    }
 
-   public boolean isSwitch()
+   public boolean isCheckable()
    {
-      return isSwitch_;
+      return checkable_;
    }
 
-   public void setIsSwitch(boolean isSwitch)
+   public void setCheckable(boolean isCheckable)
    {
-      isSwitch_ = isSwitch;
+      checkable_ = isCheckable;
    }
 
-   public boolean isSwitchOn()
+   public boolean isChecked()
    {
-      return isSwitch_ && isSwitchOn_;
+      return checkable_ && checked_;
    }
 
-   public void setIsSwitchOn(boolean isSwitchOn)
+   public void setChecked(boolean checked)
    {
-      if (!isSwitch())
+      if (!isCheckable())
          return;
-      isSwitchOn_ = isSwitchOn;
+      checked_ = checked;
    }
 
    public boolean preventShortcutWhenDisabled()
@@ -238,9 +237,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    @Override
    public ImageResource getImageResource()
    {
-      if (isSwitch())
+      if (isCheckable())
       {
-         if (isSwitchOn())
+         if (isChecked())
          {
             return ThemeResources.INSTANCE.switchOn();
          }
@@ -357,8 +356,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private boolean visible_ = true;
    private boolean removed_ = false;
    private boolean preventShortcutWhenDisabled_ = true;
-   private boolean isSwitch_ = false;
-   private boolean isSwitchOn_ = false;
+   private boolean checkable_ = false;
+   private boolean checked_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private String label_;

@@ -258,6 +258,11 @@ void MainWindow::manageCommand(QString cmdId, QAction* action)
          QString::fromAscii("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromAscii("')")).toBool());
    action->setText(pMainFrame->evaluateJavaScript(
          QString::fromAscii("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromAscii("')")).toString());
+   if (action->isCheckable())
+   {
+      action->setChecked(pMainFrame->evaluateJavaScript(
+         QString::fromAscii("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromAscii("')")).toBool());
+   }
 }
 
 void MainWindow::evaluateJavaScript(QString jsCode)
