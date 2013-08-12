@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -95,11 +96,14 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (!visible_)
          return;
 
+      if (isSwitch())
+         setIsSwitchOn(!isSwitchOn());
+
       if (enableNoHandlerAssertions_)
       {
          assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 : "AppCommand executed but nobody was listening";
       }
-
+      
       handlers_.fireEvent(new CommandEvent(this));
    }
 
@@ -148,6 +152,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public void setIsSwitchOn(boolean isSwitchOn)
    {
+      if (!isSwitch())
+         return;
       isSwitchOn_ = isSwitchOn;
    }
 
@@ -223,7 +229,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
       return getLabel();
    }
-
+   
    public void setMenuLabel(String menuLabel)
    {
       menuLabel_ = menuLabel;
@@ -234,12 +240,16 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (isSwitch())
       {
-         if (isSwitchOn() || true)
+         if (isSwitchOn())
          {
             return ThemeResources.INSTANCE.switchOn();
          }
-         return null;
-      } else
+         else
+         {
+            return ThemeResources.INSTANCE.switchOff();
+         }
+      } 
+      else
       {
          return imageResource_;
       }
@@ -288,13 +298,13 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public String getMenuHTML(boolean mainMenu)
    {
-      ImageResource icon = getImageResource();
       String label = getMenuLabel(false);
       String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
 
-      return formatMenuLabel(icon, label, shortcut);
+      return formatMenuLabel(
+            getImageResource(), label, shortcut);
    }
-
+   
    public static String formatMenuLabel(ImageResource icon, String label,
          String shortcut)
    {
@@ -306,7 +316,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (icon != null)
       {
          text.append(AbstractImagePrototype.create(icon).getHTML());
-      } else
+      } 
+      else
       {
          text.append("<br/>");
       }
@@ -341,7 +352,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       enableNoHandlerAssertions_ = false;
    }
-
+   
    private boolean enabled_ = true;
    private boolean visible_ = true;
    private boolean removed_ = false;
@@ -356,7 +367,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
-   private AbstractImagePrototype menuImage_;
-
+ 
    private static boolean enableNoHandlerAssertions_ = true;
 }

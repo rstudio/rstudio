@@ -191,4 +191,5 @@ public interface ThemeResources extends ClientBundle
    DataResource executingLine();
    
    ImageResource switchOn();
+   ImageResource switchOff();
 }
