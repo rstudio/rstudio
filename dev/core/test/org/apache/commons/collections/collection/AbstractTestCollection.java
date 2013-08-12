@@ -691,6 +691,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
     /**
      *  Tests {@link Collection#containsAll(Collection)}.
      */
+    @SuppressWarnings("ModifyingCollectionWithItself")
     public void testCollectionContainsAll() {
         resetEmpty();
         Collection col = new HashSet();

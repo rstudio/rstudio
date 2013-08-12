@@ -316,6 +316,7 @@ public abstract class TreeSetTest<E extends Comparable<E>> extends TestSet {
    * 
    * @see java.util.Set#addAll(Map)
    */
+  @SuppressWarnings("ModifyingCollectionWithItself")
   public void testAddAll_self() {
     // The _throwsUnsupportedOperationException version of this test will
     // verify that the method is not supported.
