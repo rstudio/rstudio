@@ -33,11 +33,10 @@ namespace errors {
 namespace {
 
 // Error handler types understood by the client
-const int ERRORS_AUTOMATIC = 0;
-const int ERRORS_BREAK_ALWAYS = 1;
-const int ERRORS_BREAK_USER = 2;
-const int ERRORS_IGNORE = 3;
-const int ERRORS_CUSTOM = 4;
+const int ERRORS_MESSAGE = 0;
+const int ERRORS_TRACEBACK = 1;
+const int ERRORS_BREAK = 2;
+const int ERRORS_CUSTOM = 3;
 
 void enqueErrorHandlerChanged(int type)
 {
@@ -48,14 +47,15 @@ void enqueErrorHandlerChanged(int type)
    module_context::enqueClientEvent(errorHandlerChanged);
 }
 
-Error setErrHandlerType(int type,
+Error setErrHandlerType(int type, bool inMyCode,
                         boost::shared_ptr<SEXP> pErrorHandler)
 {
    // clear the previous error handler; if we don't do this, the error handler
    // we set will be unset by DisableErrorHandlerScope during call evaluation
    r::options::setErrorOption(R_NilValue);
 
-   Error error = r::exec::RFunction(".rs.setErrorManagementType", type)
+   Error error = r::exec::RFunction(
+            ".rs.setErrorManagementType", type, inMyCode)
            .call();
    if (error)
       return error;
@@ -69,11 +69,12 @@ Error setErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
                        json::JsonRpcResponse* pResponse)
 {
    int type = 0;
-   Error error = json::readParams(request.params, &type);
+   bool inMyCode = false;
+   Error error = json::readParams(request.params, &type, &inMyCode);
    if (error)
       return error;
 
-   error = setErrHandlerType(type, pErrorHandler);
+   error = setErrHandlerType(type, inMyCode, pErrorHandler);
    if (error)
       return error;
 
@@ -85,7 +86,7 @@ Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
 {
    SEXP currentHandler = r::options::getOption("error");
    if (currentHandler == R_NilValue)
-      setErrHandlerType(ERRORS_AUTOMATIC, pErrorHandler);
+      setErrHandlerType(ERRORS_TRACEBACK, true, pErrorHandler);
    return Success();
 }
 
@@ -99,7 +100,7 @@ void onConsolePrompt(boost::shared_ptr<SEXP> pErrorHandler)
    {
       *pErrorHandler = currentHandler;
       enqueErrorHandlerChanged(currentHandler == R_NilValue ?
-                                  ERRORS_IGNORE :
+                                  ERRORS_MESSAGE :
                                   ERRORS_CUSTOM);
    }
 }

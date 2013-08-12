@@ -56,5 +56,6 @@ public interface DebuggingServerOperations
    
    public void setErrorManagementType(
          int type,
+         boolean inMyCode,
          ServerRequestCallback<Void> requestCallback);
 }

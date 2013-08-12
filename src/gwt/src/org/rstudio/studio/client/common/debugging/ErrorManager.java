@@ -57,7 +57,8 @@ public class ErrorManager
    {
       events_ = events;
       server_ = server;
-      errorHandlerType_ = ErrorHandlerType.ERRORS_AUTOMATIC;
+      errorHandlerType_ = ErrorHandlerType.ERRORS_TRACEBACK;
+      commands_ = commands;
       binder.bind(commands, this);
       
       events_.addHandler(UnhandledErrorEvent.TYPE, this);
@@ -104,30 +105,30 @@ public class ErrorManager
       errorHandlerType_ = event.getHandlerType().getType();
    }
 
-   @Handler 
-   public void onErrorsAutomatic()
+   @Handler
+   public void onErrorsMessage()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_AUTOMATIC);
+      setErrorManagementType(ErrorHandlerType.ERRORS_MESSAGE);
+   }
+   
+   @Handler 
+   public void onErrorsTraceback()
+   {
+      setErrorManagementType(ErrorHandlerType.ERRORS_TRACEBACK);
    }
 
    @Handler 
    public void onErrorsBreak()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK_ALWAYS);
+      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK);
    }
    
    @Handler
-   public void onErrorsBreakUser()
+   public void onErrorsInMyCode()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK_USER);
+      userCode_ = commands_.errorsInMyCode().isChecked();
    }
    
-   @Handler
-   public void onErrorsIgnore()
-   {
-      setErrorManagementType(ErrorHandlerType.ERRORS_IGNORE);
-   }
-
    // Public methods ----------------------------------------------------------
 
    public UnhandledError consumeLastError()
@@ -168,9 +169,8 @@ public class ErrorManager
          int type, 
          ServerRequestCallback<Void> callback)
    {
-      server_.setErrorManagementType(type, callback);
+      server_.setErrorManagementType(type, userCode_, callback);
    }
-   
    
    private void setErrorManagementType(int type)
    {
@@ -192,4 +192,6 @@ public class ErrorManager
    private int errorHandlerType_; 
    private int previousHandlerType_;
    private UnhandledError lastError_;
+   private Commands commands_;
+   private boolean userCode_;
 }

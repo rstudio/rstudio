@@ -315,10 +315,9 @@ public abstract class
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();
    public abstract AppCommand debugHelp();   
-   public abstract AppCommand errorsAutomatic();
+   public abstract AppCommand errorsMessage();
+   public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
-   public abstract AppCommand errorsBreakUser();
-   public abstract AppCommand errorsIgnore();
    public abstract AppCommand errorsInMyCode();
    public abstract AppCommand errorsExpandTraceback();
    

@@ -398,7 +398,7 @@ public class Shell implements ConsoleInputHandler,
    public void onRerunLastCommand(RerunLastCommandEvent event)
    {
       errorManager_.setDebugSessionHandlerType(
-            ErrorHandlerType.ERRORS_BREAK_ALWAYS,
+            ErrorHandlerType.ERRORS_BREAK,
             new ServerRequestCallback<Void>()
             {
                @Override

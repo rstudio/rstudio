@@ -13,17 +13,18 @@
 #
 #
 
-.rs.addFunction("handleError", function()
+.rs.addFunction("recordTraceback", function(userOnly)
 {
    calls <- sys.calls()
+   foundUserCode <- FALSE
 
-   # if there's just one call on the stack, this error happened at the top
-   # level; no need to generate a traceback
-   if (length(calls) < 2) 
+   # when this handler is invoked for an unhandled error that didn't happen at
+   # the top level, there are at least three calls on the stack
+   if (length(calls) < 3)
       return()
 
    # create the traceback for the client
-   stack <- lapply(calls[1:length(calls)-1], function(call)
+   stack <- lapply(calls[1:(length(calls) - 2)], function(call)
    {
       srcref <- attr(call, "srcref")
       srcfile <- ""
@@ -31,6 +32,8 @@
       {
          fileattr <- attr(srcref, "srcfile")
          srcfile <- fileattr$filename
+         if (!is.null(srcfile))
+            foundUserCode <<- TRUE
       }
       else
          srcref <- rep(0L, 8)
@@ -38,13 +41,16 @@
               file = .rs.scalar(srcfile)),
          .rs.lineDataList(srcref))
    })
-   event <- list(
-      frames = stack,
-      message = .rs.scalar(geterrmessage()))
-   .rs.enqueClientEvent("unhandled_error", event)
+   if (foundUserCode || !userOnly)
+   {
+      event <- list(
+         frames = stack,
+         message = .rs.scalar(geterrmessage()))
+      .rs.enqueClientEvent("unhandled_error", event)
+   }
 })
 
-.rs.addFunction("handleUserError", function()
+.rs.addFunction("breakOnError", function()
 {
    calls <- sys.calls()
    foundUser <- FALSE
@@ -63,18 +69,20 @@
    if (foundUser)
       browser(skipCalls = 2L)
    else
-      .rs.handleError()
+      .rs.recordTraceback()
 },
 hideFromDebugger = TRUE)
 
-.rs.addFunction("setErrorManagementType", function(type)
+.rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
    if (type == 0)
-      options(error = .rs.handleError)
-   else if (type == 1)
-      options(error = browser)
-   else if (type == 2)
-      options(error = .rs.handleUserError)
-   else if (type == 3)
       options(error = NULL)
+   else if (type == 1 && !userOnly)
+      options(error = function() { .rs.recordTraceback(FALSE) })
+   else if (type == 1 && userOnly)
+      options(error = function() { .rs.recordTraceback(TRUE) })
+   else if (type == 2 && !userOnly)
+      options(error = browser)
+   else if (type == 2 && userOnly)
+      options(error = .rs.breakOnError)
 })

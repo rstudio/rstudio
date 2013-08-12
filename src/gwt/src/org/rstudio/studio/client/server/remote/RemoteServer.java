@@ -2923,10 +2923,12 @@ public class RemoteServer implements Server
    
    public void setErrorManagementType(
          int type,
+         boolean inMyCode,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONNumber(type));
+      params.set(1, JSONBoolean.getInstance(inMyCode));
       
       sendRequest(RPC_SCOPE, 
             SET_ERROR_MANAGEMENT_TYPE, 

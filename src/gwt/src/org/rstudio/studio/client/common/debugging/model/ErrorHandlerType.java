@@ -19,11 +19,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class ErrorHandlerType extends JavaScriptObject
 {
-   public static final int ERRORS_AUTOMATIC = 0;
-   public static final int ERRORS_BREAK_ALWAYS = 1;
-   public static final int ERRORS_BREAK_USER = 2;
-   public static final int ERRORS_IGNORE = 3;
-   public static final int ERRORS_CUSTOM = 4;
+   public static final int ERRORS_MESSAGE = 0;
+   public static final int ERRORS_TRACEBACK = 1;
+   public static final int ERRORS_BREAK = 2;
+   public static final int ERRORS_CUSTOM = 3;
    
    protected ErrorHandlerType() {}
 
@@ -35,14 +34,12 @@ public class ErrorHandlerType extends JavaScriptObject
    {
       switch(type)
       {
-      case ERRORS_AUTOMATIC:
-         return "Automatic";
-      case ERRORS_BREAK_ALWAYS:
-         return "Break Always";
-      case ERRORS_BREAK_USER: 
-         return "Break in My Code";
-      case ERRORS_IGNORE:
-         return "Ignore";
+      case ERRORS_MESSAGE:
+         return "Message Only";
+      case ERRORS_TRACEBACK:
+         return "Traceback";
+      case ERRORS_BREAK: 
+         return "Break in Code";
       case ERRORS_CUSTOM:
          return "Custom";
       }
