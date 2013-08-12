@@ -56,6 +56,9 @@ public interface DebuggingServerOperations
    
    public void setErrorManagementType(
          int type,
-         boolean inMyCode,
+         ServerRequestCallback<Void> requestCallback);
+   
+   public void setErrorsUserCodeOnly(
+         boolean userCode,
          ServerRequestCallback<Void> requestCallback);
 }

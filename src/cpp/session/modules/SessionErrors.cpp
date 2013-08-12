@@ -24,6 +24,8 @@
 
 #include <boost/bind.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
+#include "SessionErrors.hpp"
 
 using namespace core;
 
@@ -31,12 +33,6 @@ namespace session {
 namespace modules {
 namespace errors {
 namespace {
-
-// Error handler types understood by the client
-const int ERRORS_MESSAGE = 0;
-const int ERRORS_TRACEBACK = 1;
-const int ERRORS_BREAK = 2;
-const int ERRORS_CUSTOM = 3;
 
 void enqueErrorHandlerChanged(int type)
 {
@@ -47,8 +43,8 @@ void enqueErrorHandlerChanged(int type)
    module_context::enqueClientEvent(errorHandlerChanged);
 }
 
-Error setErrHandlerType(int type, bool inMyCode,
-                        boost::shared_ptr<SEXP> pErrorHandler)
+Error setErrHandler(int type, bool inMyCode,
+                    boost::shared_ptr<SEXP> pErrorHandler)
 {
    // clear the previous error handler; if we don't do this, the error handler
    // we set will be unset by DisableErrorHandlerScope during call evaluation
@@ -64,29 +60,59 @@ Error setErrHandlerType(int type, bool inMyCode,
    return Success();
 }
 
-Error setErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
-                       const json::JsonRpcRequest& request,
-                       json::JsonRpcResponse* pResponse)
+Error setErrHandlerType(int type,
+                        boost::shared_ptr<SEXP> pErrorHandler)
+{
+   Error error = setErrHandler(type, userSettings().errorsUserCodeOnly(),
+                               pErrorHandler);
+   if (error)
+      return error;
+
+   userSettings().setErrorHandlerType(type);
+   return Success();
+}
+
+Error setErrInUserCodeOnly(bool userCode,
+                           boost::shared_ptr<SEXP> pErrorHandler)
+{
+   Error error = setErrHandler(userSettings().errorHandlerType(), userCode,
+                               pErrorHandler);
+   if (error)
+      return error;
+
+   userSettings().setErrorsUserCodeOnly(userCode);
+   return Success();
+}
+
+Error setErrHandlerType(boost::shared_ptr<SEXP> pErrorHandler,
+                        const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
 {
    int type = 0;
-   bool inMyCode = false;
-   Error error = json::readParams(request.params, &type, &inMyCode);
+   Error error = json::readParams(request.params, &type);
    if (error)
       return error;
 
-   error = setErrHandlerType(type, inMyCode, pErrorHandler);
+   return setErrHandlerType(type, pErrorHandler);
+}
+
+Error setErrInUserCodeOnly(boost::shared_ptr<SEXP> pErrorHandler,
+                           const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   bool userCode = false;
+   Error error = json::readParams(request.params, &userCode);
    if (error)
       return error;
 
-   enqueErrorHandlerChanged(type);
-   return Success();
+   return setErrInUserCodeOnly(userCode, pErrorHandler);
 }
 
 Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
 {
    SEXP currentHandler = r::options::getOption("error");
    if (currentHandler == R_NilValue)
-      setErrHandlerType(ERRORS_TRACEBACK, true, pErrorHandler);
+      setErrHandlerType(userSettings().errorHandlerType(), pErrorHandler);
    return Success();
 }
 
@@ -100,12 +126,20 @@ void onConsolePrompt(boost::shared_ptr<SEXP> pErrorHandler)
    {
       *pErrorHandler = currentHandler;
       enqueErrorHandlerChanged(currentHandler == R_NilValue ?
-                                  ERRORS_MESSAGE :
+                                  ERRORS_MESSAGE:
                                   ERRORS_CUSTOM);
    }
 }
 
 } // anonymous namespace
+
+json::Value errorStateAsJson()
+{
+   json::Object state;
+   state["error_handler_type"] = userSettings().errorHandlerType();
+   state["user_code_only"] = userSettings().errorsUserCodeOnly();
+   return state;
+}
 
 Error initialize()
 {
@@ -118,17 +152,19 @@ Error initialize()
    events().onConsolePrompt.connect(bind(onConsolePrompt,
                                          pErrorHandler));
    json::JsonRpcFunction setErrMgmt =
-         boost::bind(setErrManagement, pErrorHandler, _1, _2);
+         boost::bind(setErrHandlerType, pErrorHandler, _1, _2);
+   json::JsonRpcFunction setUserCode =
+         boost::bind(setErrInUserCodeOnly, pErrorHandler, _1, _2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_error_management_type", setErrMgmt))
+      (bind(registerRpcMethod, "set_errors_user_code_only", setUserCode))
       (bind(sourceModuleRFile, "SessionErrors.R"))
       (bind(initializeErrManagement, pErrorHandler));
 
    return initBlock.execute();
 }
-
 
 } // namepsace errors
 } // namespace modules

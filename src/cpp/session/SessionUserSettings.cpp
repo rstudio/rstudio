@@ -25,6 +25,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include "modules/SessionErrors.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -586,4 +587,35 @@ void UserSettings::setWorkingDirectoryValue(const std::string& key,
       settings_.set(key, filePath.absolutePath());
 }
 
-} // namespace session
+int UserSettings::errorHandlerType() const
+{
+   return settings_.getInt("errorHandlerType",
+                           modules::errors::ERRORS_TRACEBACK);
+}
+
+void UserSettings::setErrorHandlerType(int type)
+{
+   settings_.set("errorHandlerType", type);
+}
+
+bool UserSettings::errorsUserCodeOnly() const
+{
+   return settings_.getBool("errorsUserCodeOnly", true);
+}
+
+void UserSettings::setErrorsUserCodeOnly(bool userCode)
+{
+   return settings_.set("errorsUserCodeOnly", userCode);
+}
+
+bool UserSettings::errorsExpandTraceback() const
+{
+   return settings_.getBool("errorsExpandTraceback", false);
+}
+
+void UserSettings::setErrorsExpandTraceback(bool expandTraceback)
+{
+   return settings_.set("errorsExpandTraceback", expandTraceback);
+}
+
+}// namespace session

@@ -157,6 +157,15 @@ public:
    bool viewDirAfterRCmdCheck() const;
    void setViewDirAfterRCmdCheck(bool viewDir);
 
+   int errorHandlerType() const;
+   void setErrorHandlerType(int type);
+
+   bool errorsUserCodeOnly() const;
+   void setErrorsUserCodeOnly(bool userCodeOnly);
+
+   bool errorsExpandTraceback() const;
+   void setErrorsExpandTraceback(bool expandTraceback);
+
 private:
 
    void onSettingsFileChanged(

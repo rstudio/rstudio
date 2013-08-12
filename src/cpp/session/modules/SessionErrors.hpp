@@ -16,6 +16,8 @@
 #ifndef SESSIONERRORS_HPP
 #define SESSIONERRORS_HPP
 
+#include <core/json/Json.hpp>
+
 namespace core {
    class Error;
 }
@@ -24,7 +26,14 @@ namespace session {
 namespace modules {
 namespace errors {
 
+// Error handler types understood by the client
+const int ERRORS_MESSAGE = 0;
+const int ERRORS_TRACEBACK = 1;
+const int ERRORS_BREAK = 2;
+const int ERRORS_CUSTOM = 3;
+
 core::Error initialize();
+core::json::Value errorStateAsJson();
 
 } // namespace errors
 } // namepace modules

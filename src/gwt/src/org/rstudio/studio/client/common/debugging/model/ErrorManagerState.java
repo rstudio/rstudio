@@ -21,17 +21,6 @@ public class ErrorManagerState extends JavaScriptObject
 {
    protected ErrorManagerState() {}
    
-   public static native ErrorManagerState create(boolean userCode,
-         int errorHandlerType,
-         boolean expandTracebacks
-         ) /*-{
-      return {
-         user_code: userCode,
-         error_handler_type: errorHandlerType,
-         expand_tracebacks: expandTracebacks
-      }      
-   }-*/;
-   
    public final native int getErrorHandlerType() /*-{
       return this.error_handler_type;
    }-*/;
@@ -40,19 +29,11 @@ public class ErrorManagerState extends JavaScriptObject
       this.error_handler_type = type;
    }-*/;
 
-   public final native boolean getUserCode() /*-{
-      return this.user_code;
+   public final native boolean getUserCodeOnly() /*-{
+      return this.user_code_only;
    }-*/;
    
-   public final native void setUserCode(boolean userCode) /*-{
-     this.user_code = userCode;
-   }-*/;
-   
-   public final native boolean getExpandTracebacks() /*-{
-      return this.expand_tracebacks;
-   }-*/;
-   
-   public final native void setExpandTracebacks(boolean expandTracebacks) /*-{
-     this.expand_tracebacks = expandTracebacks;
-   }-*/;
+   public final native void setUserCodeOnly(boolean userCode) /*-{
+     this.user_code_only = userCode;
+   }-*/;   
 } 

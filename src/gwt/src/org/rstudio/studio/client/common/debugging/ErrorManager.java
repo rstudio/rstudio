@@ -19,7 +19,6 @@ package org.rstudio.studio.client.common.debugging;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
@@ -31,9 +30,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
-import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.inject.Inject;
@@ -116,47 +113,18 @@ public class ErrorManager
       if (newType != errorManagerState_.getErrorHandlerType())
       {
          errorManagerState_.setErrorHandlerType(newType);
-         errorManagerStateDirty_ = true;
       }
    }
 
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
-      new JSObjectStateValue(
-            "error-management",
-            "errorHandlerSettings",
-            ClientState.TEMPORARY,
-            session_.getSessionInfo().getClientState(),
-            false)
-       {
-          @Override
-          protected void onInit(JsObject value)
-          {
-             if (value != null)
-                errorManagerState_ = value.cast();
-             else
-                errorManagerState_ = ErrorManagerState.create(
-                      true, ErrorHandlerType.ERRORS_TRACEBACK, false);
-             
-             commands_.errorsInMyCode().setChecked(
-                   errorManagerState_.getUserCode());
-             commands_.errorsExpandTraceback().setChecked(
-                   errorManagerState_.getExpandTracebacks());
-          }
-   
-          @Override
-          protected JsObject getValue()
-          {
-             return errorManagerState_.cast();
-          }
-   
-          @Override
-          protected boolean hasChanged()
-          {
-             return errorManagerStateDirty_;
-          }
-       };
+      errorManagerState_ = session_.getSessionInfo().getErrorState();
+    
+      commands_.errorsInMyCode().setChecked(
+            errorManagerState_.getUserCodeOnly());
+     
+      commands_.errorsExpandTraceback().setChecked(false);      
    }
 
    @Handler
@@ -180,26 +148,33 @@ public class ErrorManager
    @Handler
    public void onErrorsInMyCode()
    {
-      boolean userCode = commands_.errorsInMyCode().isChecked();
-      if (userCode != errorManagerState_.getUserCode())
+      final boolean userCode = commands_.errorsInMyCode().isChecked();
+      if (userCode != errorManagerState_.getUserCodeOnly())
       {
-         errorManagerState_.setUserCode(userCode);
-         errorManagerStateDirty_ = true;
-         
-         // reflect the change on the server
-         setErrorManagementType(errorManagerState_.getErrorHandlerType());
+         server_.setErrorsUserCodeOnly(userCode, 
+               new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               errorManagerState_.setUserCodeOnly(userCode);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               // if an error occurs, restore the command's checked state to
+               // whatever it was previously 
+               commands_.errorsInMyCode().setChecked(
+                     errorManagerState_.getUserCodeOnly());
+            }
+         });;
       }
    }
 
    @Handler
    public void onErrorsExpandTraceback()
    {
-      boolean expandTraceback = commands_.errorsExpandTraceback().isChecked();
-      if (expandTraceback != errorManagerState_.getExpandTracebacks())
-      {
-         errorManagerState_.setExpandTracebacks(expandTraceback);
-         errorManagerStateDirty_ = true;
-      }
    }
       
    // Public methods ----------------------------------------------------------
@@ -238,7 +213,7 @@ public class ErrorManager
    
    public boolean getExpandTraceback()
    {
-      return errorManagerState_.getExpandTracebacks();
+      return false;
    }
 
    // Private methods ---------------------------------------------------------
@@ -247,10 +222,9 @@ public class ErrorManager
          int type, 
          ServerRequestCallback<Void> callback)
    {
-      server_.setErrorManagementType(
-            type, errorManagerState_.getUserCode(), callback);
+      server_.setErrorManagementType(type, callback);
    }
-   
+      
    private void setErrorManagementType(int type)
    {
       setErrorManagementType(type, 
@@ -271,7 +245,6 @@ public class ErrorManager
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
    private ErrorManagerState errorManagerState_; 
-   private boolean errorManagerStateDirty_ = false;
    private int previousHandlerType_;
    private UnhandledError lastError_;
 }
