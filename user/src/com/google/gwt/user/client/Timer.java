@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.impl.Impl;
+
 /**
  * A simplified, browser-safe timer class. This class serves the same purpose as
  * java.util.Timer, but is simplified because of the single-threaded
@@ -38,24 +41,8 @@ package com.google.gwt.user.client;
  */
 public abstract class Timer {
 
-  private static native void clearInterval(int id) /*-{
-    @com.google.gwt.core.client.impl.Impl::clearInterval(I)(id);
-  }-*/;
-
-  private static native void clearTimeout(int id) /*-{
-    @com.google.gwt.core.client.impl.Impl::clearTimeout(I)(id);
-  }-*/;
-
-  private static native int createInterval(Timer timer, int period, int cancelCounter) /*-{
-    return @com.google.gwt.core.client.impl.Impl::setInterval(Lcom/google/gwt/core/client/JavaScriptObject;I)(
-        $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); }),
-      period);
-  }-*/;
-
-  private static native int createTimeout(Timer timer, int delay, int cancelCounter) /*-{
-    return @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(
-      $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); }),
-      delay);
+  private static native JavaScriptObject createCallback(Timer timer, int cancelCounter) /*-{
+    return $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); });
   }-*/;
 
   private boolean isRepeating;
@@ -86,9 +73,9 @@ public abstract class Timer {
 
     cancelCounter++;
     if (isRepeating) {
-      clearInterval(timerId);
+      Impl.clearInterval(timerId);
     } else {
-      clearTimeout(timerId);
+      Impl.clearTimeout(timerId);
     }
     timerId = null;
   }
@@ -113,7 +100,7 @@ public abstract class Timer {
       cancel();
     }
     isRepeating = false;
-    timerId = createTimeout(this, delayMillis, cancelCounter);
+    timerId = Impl.setTimeout(createCallback(this, cancelCounter), delayMillis);
   }
 
   /**
@@ -131,7 +118,7 @@ public abstract class Timer {
       cancel();
     }
     isRepeating = true;
-    timerId = createInterval(this, periodMillis, cancelCounter);
+    timerId = Impl.setInterval(createCallback(this, cancelCounter), periodMillis);
   }
 
   /*
