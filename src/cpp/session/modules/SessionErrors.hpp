@@ -26,7 +26,9 @@ namespace session {
 namespace modules {
 namespace errors {
 
-// Error handler types understood by the client
+// Error handler types understood by the client. The client has its own copy
+// of this enum, and its values are persisted in user settings, so the meaning
+// of these values must be preserved.
 const int ERRORS_MESSAGE = 0;
 const int ERRORS_TRACEBACK = 1;
 const int ERRORS_BREAK = 2;

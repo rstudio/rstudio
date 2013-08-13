@@ -603,5 +603,4 @@ public class Shell implements ConsoleInputHandler,
    private static final String STATE_INPUT = "input";
 
    private boolean restoreFocus_ = true;
-
 }

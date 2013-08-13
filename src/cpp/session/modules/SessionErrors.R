@@ -19,7 +19,11 @@
    foundUserCode <- FALSE
 
    # when this handler is invoked for an unhandled error that didn't happen at
-   # the top level, there are at least four calls on the stack
+   # the top level, there are at least four calls on the stack:
+   # 1. this function
+   # 2. the anonymous error handler (set via options below)
+   # 3. the error invoker (e.g. stop)
+   # 4. the function from which the error was raised
    if (length(calls) < 4)
       return()
 

@@ -101,7 +101,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
       if (enableNoHandlerAssertions_)
       {
-         assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 : "AppCommand executed but nobody was listening";
+         assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 
+                  : "AppCommand executed but nobody was listening";
       }
       
       handlers_.fireEvent(new CommandEvent(this));
@@ -185,8 +186,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       String desc = StringUtil.notNull(getDesc());
       String shortcut = getShortcutPrettyHtml();
-      shortcut = StringUtil.isNullOrEmpty(shortcut) ? "" : "("
-            + DomUtils.htmlToText(shortcut) + ")";
+      shortcut = StringUtil.isNullOrEmpty(shortcut) 
+            ? "" 
+            : "(" + DomUtils.htmlToText(shortcut) + ")";
 
       String result = (desc + " " + shortcut).trim();
       return result.length() == 0 ? null : result;
@@ -224,8 +226,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (menuLabel_ != null)
       {
-         return AppMenuItem.replaceMnemonics(menuLabel_, useMnemonics ? "&"
-               : "");
+         return AppMenuItem.replaceMnemonics(menuLabel_, useMnemonics ? "&" : "");
       }
       return getLabel();
    }
@@ -241,13 +242,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (isCheckable())
       {
          if (isChecked())
-         {
             return ThemeResources.INSTANCE.switchOn();
-         }
          else
-         {
             return ThemeResources.INSTANCE.switchOff();
-         }
       } 
       else
       {
@@ -310,29 +307,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
             getImageResource(), label, shortcut);
    }
    
-   public static String formatMenuLabel(ImageResource icon, String label,
-         String shortcut)
+   public static String formatMenuLabel(ImageResource icon, 
+                                         String label,
+                                         String shortcut)
    {
       StringBuilder text = new StringBuilder();
-
       text.append("<table border=0 cellpadding=0 cellspacing=0 width='100%'><tr>");
 
       text.append("<td width=\"25\"><div style=\"width: 25px; margin-top: -10px; margin-bottom: -10px\">");
       if (icon != null)
       {
          text.append(AbstractImagePrototype.create(icon).getHTML());
-      } 
+      }
       else
       {
          text.append("<br/>");
       }
       text.append("</div></td>");
 
-      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label))
-            + "</td>");
+      text.append("<td>" + DomUtils.textToHtml(StringUtil.notNull(label)) + "</td>");
       if (shortcut != null)
-         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;"
-               + shortcut + "</td>");
+         text.append("<td align=right nowrap>&nbsp;&nbsp;&nbsp;&nbsp;" + shortcut + "</td>");
       text.append("</tr></table>");
 
       return text.toString();

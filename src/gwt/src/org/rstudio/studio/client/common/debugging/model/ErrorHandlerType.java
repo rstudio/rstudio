@@ -19,6 +19,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class ErrorHandlerType extends JavaScriptObject
 {
+   // Error handler types understood by the server. These values are persisted
+   // in user settings, so their meaning must be preserved.
    public static final int ERRORS_MESSAGE = 0;
    public static final int ERRORS_TRACEBACK = 1;
    public static final int ERRORS_BREAK = 2;
@@ -29,20 +31,4 @@ public class ErrorHandlerType extends JavaScriptObject
    public final native int getType() /*-{
       return this.type;
    }-*/;   
-   
-   public static String getNameOfType(int type)
-   {
-      switch(type)
-      {
-      case ERRORS_MESSAGE:
-         return "Message Only";
-      case ERRORS_TRACEBACK:
-         return "Traceback";
-      case ERRORS_BREAK: 
-         return "Break in Code";
-      case ERRORS_CUSTOM:
-         return "Custom";
-      }
-      return "Unknown";
-   }
 }

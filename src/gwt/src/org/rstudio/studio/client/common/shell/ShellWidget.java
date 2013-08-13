@@ -243,7 +243,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (expand)
          errorWidget.setTracebackVisible(true);
       
-      // TODO: Properly wire these widgets together.
+      // The widget must be added to the root panel to have its event handlers
+      // wired properly, but this isn't an ideal structure; consider showing
+      // console output as cell widgets in a virtualized scrolling CellTable
+      // so we can easily add arbitrary controls. 
       RootPanel.get().add(errorWidget);
       output_.getElement().appendChild(errorWidget.getElement());
       

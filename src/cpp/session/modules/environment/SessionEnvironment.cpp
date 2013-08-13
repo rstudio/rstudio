@@ -84,7 +84,6 @@ SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
-
 bool isDebugHiddenContext(RCNTXT* pContext)
 {
    SEXP hideFlag = r::sexp::getAttrib(pContext->callfun, "hideFromDebugger");
