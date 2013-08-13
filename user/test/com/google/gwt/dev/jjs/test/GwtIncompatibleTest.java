@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.dev.jjs.test.gwtincompatible.GwtIncompatible;
 import static com.google.gwt.dev.jjs.test.gwtincompatible.ClassWithGwtIncompatibleMethod.gwtIncompatibleMethod;
+
+import com.google.gwt.dev.jjs.test.gwtincompatible.GwtIncompatibleClass;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -73,9 +75,33 @@ public class GwtIncompatibleTest extends GWTTestCase {
       @GwtIncompatible("incompatible")
       @Override
       int getClassFooNbrConstructors() {
-        return -1; // new Foo().getNbrConstructors();
+        return new Foo().getNbrConstructors() + 1;
       }
      };
+  }
+
+  private DummyBar getAnonymousDummyBarWithAnonymousIncompatibleClass() {
+    return new DummyBar() {
+      @GwtIncompatible("incompatible")
+      @Override
+      int getClassFooNbrConstructors() {
+        return new InDummyBar().createFoo().getNbrConstructors() + 1;
+      }
+
+      @GwtIncompatible("incompatible inner class of an anonymous inner class")
+      class InDummyBar {
+        public Foo createFoo() {
+          return new Foo();
+        }
+      }
+    };
+  }
+
+  public void testGwtIncompatibleReference() {
+    // Have a reference to a GwtIncompatibleClass
+    GwtIncompatibleClass instance = (GwtIncompatibleClass) null;
+
+    assertNull(instance);
   }
 
   public String getModuleName() {
@@ -86,6 +112,8 @@ public class GwtIncompatibleTest extends GWTTestCase {
     Bar b = new Bar();
     assertEquals(-1, b.getClassFooNbrConstructors());
     assertEquals(-1, getAnonymousDummyBar().getClassFooNbrConstructors());
+    assertEquals(-1,
+        getAnonymousDummyBarWithAnonymousIncompatibleClass().getClassFooNbrConstructors());
     assertEquals(-1, new DifferentPackageAnnotations().getClassFooNbrConstructors());
   }
 }

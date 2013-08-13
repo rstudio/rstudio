@@ -30,14 +30,12 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ClassFile;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
 import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.Block;
 import org.eclipse.jdt.internal.compiler.ast.Clinit;
@@ -47,7 +45,6 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -247,117 +244,6 @@ public class JdtCompiler {
     }
 
     /**
-     * Checks whether GwtIncompatible is in the array of {@code Annotation}.
-     *
-     * @param annotations an (possible null) array of {@code Annotation}
-     * @return {@code true} if there is an annotation of class {@code *.GwtIncompatible} in
-     *         array. {@code false} otherwise.
-     */
-    private static boolean hasGwtIncompatibleAnnotation(Annotation[] annotations) {
-      if (annotations == null) {
-        return false;
-      }
-      for (Annotation ann : annotations) {
-        String typeName = new String(ann.type.getLastToken());
-        if (typeName.equals("GwtIncompatible")) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    /**
-     * Modifies the methods array of type {@code tyDecl} to remove any GwtIncompatible methods.
-     */
-    private static void stripGwtIncompatibleMethods(TypeDeclaration tyDecl) {
-      if (tyDecl.methods == null) {
-        return;
-      }
-
-      List<AbstractMethodDeclaration> newMethods = new ArrayList<AbstractMethodDeclaration>();
-      for (AbstractMethodDeclaration methodDecl : tyDecl.methods) {
-         if (!hasGwtIncompatibleAnnotation(methodDecl.annotations)) {
-          newMethods.add(methodDecl);
-         }
-      }
-
-      if (newMethods.size() != tyDecl.methods.length) {
-        tyDecl.methods = newMethods.toArray(new AbstractMethodDeclaration[newMethods.size()]);
-      }
-    }
-
-    /**
-     * Modifies the fields array of type {@code tyDecl} to remove any GwtIncompatible fields.
-     */
-    private static void stripGwtIncompatibleFields(TypeDeclaration tyDecl) {
-      if (tyDecl.fields == null) {
-        return;
-      }
-
-      List<FieldDeclaration> newFields = new ArrayList<FieldDeclaration>();
-      for (FieldDeclaration fieldDecl : tyDecl.fields) {
-        if (!hasGwtIncompatibleAnnotation(fieldDecl.annotations)) {
-          newFields.add(fieldDecl);
-        }
-      }
-
-      if (newFields.size() != tyDecl.fields.length) {
-        tyDecl.fields = newFields.toArray(new FieldDeclaration[newFields.size()]);
-      }
-    }
-
-    /**
-     * Removes inner classes, methods and fields that are @GwtIncompatible from an anonymous
-     * inner class.
-     *
-     * @return The set of types with every element that was annotated by {@code GwtIncompatible}
-     *         removed.
-     */
-    private static void stripGwtIncompatibleAnonymousInnerClasses(
-        CompilationUnitDeclaration cud) {
-      ASTVisitor visitor = new ASTVisitor() {
-        @Override
-        public void endVisit(QualifiedAllocationExpression qualifiedAllocationExpression,
-            BlockScope scope) {
-          if (qualifiedAllocationExpression.anonymousType != null) {
-            stripGwtIncompatible(
-                new TypeDeclaration[]{qualifiedAllocationExpression.anonymousType});
-          }
-        }
-      };
-      cud.traverse(visitor, cud.scope);
-    }
-
-
-      /**
-      * Removes classes, inner classes, methods and fields that are @GwtIncompatible.
-      *
-      * @return The set of types with every element that was annotated by {@code GwtIncompatible}
-      *         removed.
-      */
-    private static TypeDeclaration[] stripGwtIncompatible(TypeDeclaration[] types) {
-      if (types == null) {
-        return types;
-      }
-
-      List<TypeDeclaration> newTypeDecls = new ArrayList<TypeDeclaration>();
-      for (TypeDeclaration tyDecl : types) {
-        if (!hasGwtIncompatibleAnnotation(tyDecl.annotations)) {
-          newTypeDecls.add(tyDecl);
-          tyDecl.memberTypes = stripGwtIncompatible(tyDecl.memberTypes);
-          stripGwtIncompatibleMethods(tyDecl);
-          stripGwtIncompatibleFields(tyDecl);
-        }
-      }
-
-      if (newTypeDecls.size() != types.length) {
-        return newTypeDecls.toArray(new TypeDeclaration[newTypeDecls.size()]);
-      } else {
-        return types;
-      }
-    }
-
-    /**
      * Overrides the main parsing entry point to filter out elements annotated with
      * {@code GwtIncompatible}.
      */
@@ -371,9 +257,8 @@ public class JdtCompiler {
       CompilationUnitDeclaration decl = super.parse(sourceUnit, compilationResult);
       this.diet = saveDiet;
       if (removeGwtIncompatible) {
-        decl.types = stripGwtIncompatible(decl.types);
-        // Fix anonymous inner classes
-        stripGwtIncompatibleAnonymousInnerClasses(decl);
+        // Remove @GwtIncompatible classes and members.
+        GwtIncompatiblePreprocessor.preproccess(decl);
       }
       if (removeUnusedImports) {
         // Lastly remove any unused imports
