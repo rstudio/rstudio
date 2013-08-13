@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.command.DynamicImageResourceProvider;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -22,6 +23,8 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -30,8 +33,10 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
+import com.google.gwt.resources.client.ImageResource;
 
-public class GlobalToolbar extends Toolbar
+public class GlobalToolbar extends Toolbar 
+                           implements ErrorHandlerChangedEvent.Handler
 {
    public GlobalToolbar(Commands commands, 
                         EventBus eventBus,
@@ -57,7 +62,6 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
-      
       
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
@@ -120,6 +124,22 @@ public class GlobalToolbar extends Toolbar
       
       searchWidget_ = codeSearch.getSearchWidget();
       addLeftWidget(searchWidget_);
+      
+      addLeftSeparator();
+      ToolbarPopupMenu errorMenu = new ToolbarPopupMenu();
+      errorMenu.addItem(commands.errorsMessage().createMenuItem(false));
+      errorMenu.addItem(commands.errorsTraceback().createMenuItem(false));
+      errorMenu.addItem(commands.errorsBreak().createMenuItem(false));
+      errorMenu.addSeparator();
+      errorMenu.addItem(commands.errorsInMyCode().createMenuItem(false));
+      errorMenu.addItem(commands.errorsExpandTraceback().createMenuItem(false));
+      
+      errorImage_ = new DynamicImageResourceProvider(
+            errorHandlerImage(ErrorHandlerType.ERRORS_TRACEBACK));
+      ToolbarButton errorButton = new ToolbarButton("", errorImage_, errorMenu);
+      addLeftWidget(errorButton);
+      
+      eventBus.addHandler(ErrorHandlerChangedEvent.TYPE, this);
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
@@ -128,6 +148,8 @@ public class GlobalToolbar extends Toolbar
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
+      errorImage_.setImageResource(errorHandlerImage(
+            sessionInfo.getErrorState().getErrorHandlerType()));
    }
    
    @Override
@@ -136,16 +158,37 @@ public class GlobalToolbar extends Toolbar
       return 27;
    }
    
+   @Override
+   public void onErrorHandlerChanged(ErrorHandlerChangedEvent event)
+   {
+      errorImage_.setImageResource(
+            errorHandlerImage(event.getHandlerType().getType()));
+   }
+   
    public void focusGoToFunction()
    {
       codeSearchFocusContext_.record();
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
      
+   private ImageResource errorHandlerImage(int type)
+   {
+      switch(type)
+      {
+      case ErrorHandlerType.ERRORS_MESSAGE:
+         return commands_.errorsMessage().getImageResource();
+      case ErrorHandlerType.ERRORS_TRACEBACK:
+         return commands_.errorsTraceback().getImageResource();
+      case ErrorHandlerType.ERRORS_BREAK:
+         return commands_.errorsBreak().getImageResource();
+      }
+      return null;
+   }
+   
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
-
+   private final DynamicImageResourceProvider errorImage_;
 }

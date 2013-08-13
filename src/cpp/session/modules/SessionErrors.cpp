@@ -69,6 +69,7 @@ Error setErrHandlerType(int type,
       return error;
 
    userSettings().setErrorHandlerType(type);
+   enqueErrorHandlerChanged(type);
    return Success();
 }
 

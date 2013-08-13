@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuItem;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -252,6 +253,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          return imageResource_;
       }
+   }
+   
+   @Override
+   public void addRenderedImage(Image image)
+   {
    }
 
    public void setImageResource(ImageResource imageResource)

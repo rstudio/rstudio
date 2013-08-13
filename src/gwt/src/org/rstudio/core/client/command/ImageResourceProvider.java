@@ -16,8 +16,10 @@
 package org.rstudio.core.client.command;
 
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Image;
 
 public interface ImageResourceProvider
 {
    public ImageResource getImageResource();
+   public void addRenderedImage(Image image);
 }

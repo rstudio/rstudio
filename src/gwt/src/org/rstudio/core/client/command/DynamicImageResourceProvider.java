@@ -1,5 +1,5 @@
 /*
- * SimpleImageResourceProvider.java
+ * DynamicImageResourceProvider.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,12 +15,15 @@
 
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Image;
 
-public class SimpleImageResourceProvider implements ImageResourceProvider
+public class DynamicImageResourceProvider implements ImageResourceProvider
 {
-   public SimpleImageResourceProvider(ImageResource image)
+   public DynamicImageResourceProvider(ImageResource image)
    {
       imageResource_ = image;
    }
@@ -34,7 +37,19 @@ public class SimpleImageResourceProvider implements ImageResourceProvider
    @Override
    public void addRenderedImage(Image image)
    {
+      renderedImages_.add(image);
+   }
+   
+   public void setImageResource(ImageResource image)
+   {
+      imageResource_ = image;
+      AbstractImagePrototype protoImage = AbstractImagePrototype.create(image);
+      for (Image img: renderedImages_)
+      {
+         protoImage.applyTo(img);
+      }
    }
    
    private ImageResource imageResource_;
+   private ArrayList<Image> renderedImages_ = new ArrayList<Image>();
 }

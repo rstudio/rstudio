@@ -109,9 +109,27 @@ public class ToolbarButton extends FocusWidget
    {
       this(text, leftImage, menu, false);
    }
+   
+   public ToolbarButton(String text,
+                        ImageResourceProvider leftImage,
+                        ToolbarPopupMenu menu)
+   {
+      this(text, leftImage, menu, false);
+   }
     
    public ToolbarButton(String text, 
                         ImageResource leftImage,
+                        ToolbarPopupMenu menu,
+                        boolean rightAlignMenu)
+   {
+      this(text,
+           new SimpleImageResourceProvider(leftImage),
+           menu, 
+           rightAlignMenu);
+   }
+
+   public ToolbarButton(String text, 
+                        ImageResourceProvider leftImage,
                         ToolbarPopupMenu menu,
                         boolean rightAlignMenu)
    {
@@ -214,7 +232,10 @@ public class ToolbarButton extends FocusWidget
       setText(text);
       if (leftImage != null && 
           leftImage.getImageResource() != null)
+      {
          leftImageWidget_ = new Image(leftImage.getImageResource());
+         leftImage.addRenderedImage(leftImageWidget_);
+      }
       else
          leftImageWidget_ = new Image();
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());

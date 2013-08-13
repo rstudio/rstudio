@@ -236,6 +236,11 @@ public class ErrorManager
    {
       return expandErrorTracebacks_;
    }
+   
+   public int getErrorHandlerType()
+   {
+      return errorManagerState_.getErrorHandlerType();
+   }
 
    // Private methods ---------------------------------------------------------
 
