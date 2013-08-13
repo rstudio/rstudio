@@ -18,7 +18,6 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.dev.javac.JSORestrictionsChecker.CheckerState;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -56,6 +55,7 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding;
+import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -559,7 +559,7 @@ public class JsniChecker {
     new JsniChecker(cud, checkerState, typeResolver, jsniMethods, jsniRefs).check();
   }
 
-  static Set<String> getSuppressedWarnings(Annotation[] annotations) {
+  Set<String> getSuppressedWarnings(Annotation[] annotations) {
     if (annotations != null) {
       for (Annotation a : annotations) {
         if (SuppressWarnings.class.getName().equals(
@@ -576,13 +576,19 @@ public class JsniChecker {
                 ArrayInitializer ai = (ArrayInitializer) valueExpr;
                 String[] values = new String[ai.expressions.length];
                 for (int i = 0, j = values.length; i < j; i++) {
-                  values[i] = ((StringLiteral) ai.expressions[i]).constant.stringValue().toLowerCase(
-                      Locale.ENGLISH);
+                  if ((ai.expressions[i]) instanceof StringLiteral) {
+                    StringLiteral expression = (StringLiteral) ai.expressions[i];
+                    values[i] = expression.constant.stringValue().toLowerCase(Locale.ENGLISH);
+                  } else {
+                    suppressionAnnotationWarning(a,
+                        "Unable to analyze SuppressWarnings annotation, " +
+                            ai.expressions[i].toString() + " not a string constant.");
+                  }
                 }
                 return Sets.create(values);
               } else {
-                throw new InternalCompilerException(
-                    "Unable to analyze SuppressWarnings annotation");
+                suppressionAnnotationWarning(a, "Unable to analyze SuppressWarnings annotation, " +
+                    valueExpr.toString() + " not a string constant.");
               }
             }
           }
@@ -662,4 +668,10 @@ public class JsniChecker {
     GWTProblem.recordError(node, cud, message, new InstalledHelpInfo(
         "longJsniRestriction.html"));
   }
+
+  private void suppressionAnnotationWarning(ASTNode node, String message) {
+    GWTProblem.recordProblem(node, cud.compilationResult(), message, null,
+        ProblemSeverities.Warning);
+  }
+
 }

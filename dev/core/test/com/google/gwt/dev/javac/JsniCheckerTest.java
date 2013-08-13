@@ -222,6 +222,36 @@ public class JsniCheckerTest extends CheckerTestCase {
     shouldGenerateNoWarning(code);
   }
 
+  /**
+   * Test for issue 8093.
+   */
+  public void testBadSuppression1() {
+    StringBuffer code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  private static final String RAWTYPES = \"rawtypes\";\n");
+    code.append("  @SuppressWarnings(RAWTYPES)\n");
+    code.append("  public void method1() {\n");
+    code.append("  }\n");
+    code.append("}\n");
+    shouldGenerateWarning(code, 3,
+        "Unable to analyze SuppressWarnings annotation, RAWTYPES not a string constant.");
+  }
+
+  /**
+   * Test for issue 8093.
+   */
+  public void testBadSuppression2() {
+    StringBuffer code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  private static final String UNCHECKED = \"unchecked\";\n");
+    code.append("  @SuppressWarnings({\"rawtypes\", UNCHECKED})\n");
+    code.append("  public void method1() {\n");
+    code.append("  }\n");
+    code.append("}\n");
+    shouldGenerateWarning(code, 3,
+        "Unable to analyze SuppressWarnings annotation, UNCHECKED not a string constant.");
+  }
+
   public void testDeprecationType() {
     StringBuffer code = new StringBuffer();
     code.append("@Deprecated class D {\n");
