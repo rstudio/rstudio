@@ -167,6 +167,23 @@ bool inBrowseContext()
    return false;
 }
 
+// return whether the current context is being evaluated inside a hidden
+// (debugger internal) function.
+bool insideDebugHiddenFunction()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (pRContext->callflag)
+   {
+      if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         if (isDebugHiddenContext(pRContext))
+            return true;
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return false;
+}
+
 Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
@@ -441,10 +458,14 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
-      enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
+      // we don't want to send linenumber updates if the current depth is inside
+      // a debug-hidden function
+      if (!insideDebugHiddenFunction())
+      {
+         enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
+      }
    }
 }
-
 
 } // anonymous namespace
 

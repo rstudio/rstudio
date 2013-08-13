@@ -426,8 +426,7 @@
                needs_breakpoint_injection = 
                      .rs.scalar(needsBreakpointInjection)),
             .rs.lineDataList(srcref)))
-},
-hideFromDebugger = TRUE)
+})
 
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,
