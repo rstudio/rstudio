@@ -50,8 +50,7 @@ public class ErrorManager
    private enum DebugHandlerState
    {
       None,
-      Pending,
-      Active
+      Pending
    }
 
    @Inject
@@ -86,25 +85,13 @@ public class ErrorManager
    public void onDebugModeChanged(DebugModeChangedEvent event)
    {
       // if we expected to go into debug mode, this is what we were waiting
-      // for--remember that we need to switch out of the temporary error
-      // management state for this session
+      // for--change the error handler back to whatever it was formerly
       if (event.debugging() && 
           debugHandlerState_ == DebugHandlerState.Pending)
       {
-         debugHandlerState_ = DebugHandlerState.Active;
-      }
-      // if we're leaving debug mode and we were supplying the error handler
-      // during the session, restore the handler to its previous setting
-      else if (!event.debugging() && 
-               debugHandlerState_ == DebugHandlerState.Active)
-      {
          setErrorManagementType(previousHandlerType_);
-         debugHandlerState_ = DebugHandlerState.None;
       }
-      else
-      {
-         debugHandlerState_ = DebugHandlerState.None;
-      }
+      debugHandlerState_ = DebugHandlerState.None;
    }
 
    @Override
@@ -153,19 +140,19 @@ public class ErrorManager
    @Handler
    public void onErrorsMessage()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_MESSAGE);
+      setErrorManagementTypeCommand(ErrorHandlerType.ERRORS_MESSAGE);
    }
    
    @Handler 
    public void onErrorsTraceback()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_TRACEBACK);
+      setErrorManagementTypeCommand(ErrorHandlerType.ERRORS_TRACEBACK);
    }
 
    @Handler 
    public void onErrorsBreak()
    {
-      setErrorManagementType(ErrorHandlerType.ERRORS_BREAK);
+      setErrorManagementTypeCommand(ErrorHandlerType.ERRORS_BREAK);
    }
    
    @Handler
@@ -242,12 +229,21 @@ public class ErrorManager
       return expandErrorTracebacks_;
    }
    
-   public int getErrorHandlerType()
+   // Private methods ---------------------------------------------------------
+   
+   private int getErrorHandlerType()
    {
       return errorManagerState_.getErrorHandlerType();
    }
 
-   // Private methods ---------------------------------------------------------
+   private void setErrorManagementTypeCommand(int type)
+   {
+      // The error handler may be currently overridden for debug mode. If the
+      // user changes the setting via command during debug mode, we don't want
+      // to change it back when leaving debug mode.
+      debugHandlerState_ = DebugHandlerState.None;
+      setErrorManagementType(type);
+   }
 
    private void setErrorManagementType(
          int type, 
@@ -279,6 +275,11 @@ public class ErrorManager
             type == ErrorHandlerType.ERRORS_TRACEBACK);
       commands_.errorsBreak().setChecked(
             type == ErrorHandlerType.ERRORS_BREAK);
+      commands_.errorsInMyCode().setEnabled(
+            type == ErrorHandlerType.ERRORS_TRACEBACK ||
+            type == ErrorHandlerType.ERRORS_BREAK);
+      commands_.errorsExpandTraceback().setEnabled(
+            type == ErrorHandlerType.ERRORS_TRACEBACK);
    }
 
    private final EventBus events_;
