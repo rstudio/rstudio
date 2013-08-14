@@ -190,6 +190,5 @@ public interface ThemeResources extends ClientBundle
    @Source("executingLine.png")
    DataResource executingLine();
    
-   ImageResource switchOn();
-   ImageResource switchOff();
+   ImageResource menuCheck();
 }

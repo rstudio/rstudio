@@ -114,6 +114,7 @@ public class ErrorManager
       if (newType != errorManagerState_.getErrorHandlerType())
       {
          errorManagerState_.setErrorHandlerType(newType);
+         syncHandlerCommandsCheckedState();
       }
    }
 
@@ -145,6 +146,8 @@ public class ErrorManager
             return new Boolean(expandErrorTracebacks_);
          }
       };     
+      
+      syncHandlerCommandsCheckedState();
    }
 
    @Handler
@@ -178,6 +181,7 @@ public class ErrorManager
             public void onResponseReceived(Void v)
             {
                errorManagerState_.setUserCodeOnly(userCode);
+               commands_.errorsInMyCode().setChecked(userCode);
             }
             
             @Override
@@ -195,7 +199,8 @@ public class ErrorManager
    @Handler
    public void onErrorsExpandTraceback()
    {
-      expandErrorTracebacks_ = commands_.errorsExpandTraceback().isChecked();
+      expandErrorTracebacks_ = !expandErrorTracebacks_;
+      commands_.errorsExpandTraceback().setChecked(expandErrorTracebacks_);      
    }
       
    // Public methods ----------------------------------------------------------
@@ -259,9 +264,21 @@ public class ErrorManager
          @Override
          public void onError(ServerError error)
          {
-            // TODO: Something reasonable here. 
+            // No action necessary--the server emits an event when the handler
+            // type changes
          }
       });
+   }
+   
+   private void syncHandlerCommandsCheckedState()
+   {
+      int type = getErrorHandlerType();
+      commands_.errorsMessage().setChecked(
+            type == ErrorHandlerType.ERRORS_MESSAGE);
+      commands_.errorsTraceback().setChecked(
+            type == ErrorHandlerType.ERRORS_TRACEBACK);
+      commands_.errorsBreak().setChecked(
+            type == ErrorHandlerType.ERRORS_BREAK);
    }
 
    private final EventBus events_;

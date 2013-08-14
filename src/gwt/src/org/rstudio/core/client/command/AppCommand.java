@@ -96,9 +96,6 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       if (!visible_)
          return;
 
-      if (isCheckable())
-         setChecked(!isChecked());
-
       if (enableNoHandlerAssertions_)
       {
          assert handlers_.getHandlerCount(CommandEvent.TYPE) > 0 
@@ -241,10 +238,9 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (isCheckable())
       {
-         if (isChecked())
-            return ThemeResources.INSTANCE.switchOn();
-         else
-            return ThemeResources.INSTANCE.switchOff();
+         return isChecked() ? 
+            ThemeResources.INSTANCE.menuCheck() :
+            null;
       } 
       else
       {

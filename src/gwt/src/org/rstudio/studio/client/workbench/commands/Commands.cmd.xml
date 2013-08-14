@@ -274,6 +274,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="errorsBreak"/>
             <separator/>
             <cmd refid="errorsInMyCode"/>
+            <separator/>
             <cmd refid="errorsExpandTraceback"/>
          </menu>
          <separator/>
@@ -1262,13 +1263,16 @@ well as menu structures (for main menu and popup menus).
    
    <cmd id="errorsMessage"
         menuLabel="_Message Only"
-        desc="Print the error message when an unhandled error occurs"/>
+        desc="Print the error message when an unhandled error occurs"
+        checkable="true"/>
    <cmd id="errorsTraceback"
         menuLabel="Show _Traceback"
-        desc="Show a traceback when an unhandled error occurs"/>
+        desc="Show a traceback when an unhandled error occurs"
+        checkable="true"/>
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
-        desc="Break when any unhandled error occurs"/>
+        desc="Break when any unhandled error occurs"
+        checkable="true"/>
    <cmd id="errorsInMyCode"
         menuLabel="_Just My Code"
         desc="Only break or show tracebacks if your code is involved"
