@@ -309,7 +309,9 @@
 # 0 - paused for user (on a breakpoint or step)
 # 1 - paused on a function breakpoint injection site
 # 2 - evaluation finished
-#
+# 
+# Note that there is special behavior on the client attached to the name of
+# this function.
 .rs.addFunction("executeDebugSource", function(
    fileName, topBreakLines, functionBreakLines, step, mode)
 {

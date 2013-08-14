@@ -4,45 +4,45 @@
 	<ui:style>
 	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 	
-	.consoleErrorBox {
-	   position: relative;
-	   overflow: hidden;
-	   margin: 5px 5px 5px 0px;
-	   padding: 5px 0px 5px 0px;
-	}
+   .consoleErrorBox {
+      position: relative;
+      overflow: hidden;
+      margin: 5px 5px 5px 0px;
+      padding: 5px 0px 5px 0px;
+   }
 
-	.consoleErrorCommands {
-	   top: 5px;
-	   float: right;
+   .consoleErrorCommands {
+      top: 5px;
+      float: right;
       margin-right: 10px;
-	   margin-bottom: 15px;
-	   line-height: 80%;
-	   position: relative;
-	}
-	
-	.errorCommandText {
+      margin-bottom: 15px;
+      line-height: 80%;
+      position: relative;
+   }
+   
+   .errorCommandText {
       font-family: proportionalFont;
       font-size: 80%;
-	   opacity: 0.50;
-	   cursor: pointer;
-	}
-	
-	.errorCommandText:hover {
-	   opacity: 1;
-	}
-	
-	.errorCommandImage {
-	   cursor: pointer;
-	}
-	
-	.errorMessage {
-	  display: inline;
-	}
-	
-	.framePanel {
-	  margin-top: 1em;
-	  margin-left: 0.5em;
-	}
+      opacity: 0.50;
+      cursor: pointer;
+   }
+   
+   .errorCommandText:hover {
+      opacity: 1;
+   }
+   
+   .errorCommandImage {
+      cursor: pointer;
+   }
+   
+   .errorMessage {
+      display: inline;
+   }
+   
+   .framePanel {
+      margin-top: 1em;
+      margin-left: 0.5em;
+   }
 	</ui:style>
    <ui:image src="traceback.png" field="traceback"></ui:image>
    <ui:image src="rerun.png" field="rerun"></ui:image>

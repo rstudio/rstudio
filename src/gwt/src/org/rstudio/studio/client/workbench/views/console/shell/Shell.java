@@ -229,8 +229,7 @@ public class Shell implements ConsoleInputHandler,
          public void onError(ServerError error) 
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError(
-                  "Error: " + error.getUserMessage() + "\n");
+            view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -398,6 +397,7 @@ public class Shell implements ConsoleInputHandler,
    @Override
    public void onRerunLastCommand(RerunLastCommandEvent event)
    {
+      // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
       errorManager_.setDebugSessionHandlerType(
             ErrorHandlerType.ERRORS_BREAK,
             new ServerRequestCallback<Void>()
@@ -405,6 +405,7 @@ public class Shell implements ConsoleInputHandler,
                @Override
                public void onResponseReceived(Void v)
                {
+                  // load the previous history item and execute it immediately
                   historyManager_.navigateHistory(-1);
                   processCommandEntry();
                }
@@ -412,6 +413,7 @@ public class Shell implements ConsoleInputHandler,
                @Override
                public void onError(ServerError error)
                {
+                  // if we failed to set debug mode, don't rerun the command
                }
             }); 
    }

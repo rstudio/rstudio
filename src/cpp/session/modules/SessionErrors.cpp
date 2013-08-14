@@ -51,8 +51,7 @@ Error setErrHandler(int type, bool inMyCode,
    r::options::setErrorOption(R_NilValue);
 
    Error error = r::exec::RFunction(
-            ".rs.setErrorManagementType", type, inMyCode)
-           .call();
+            ".rs.setErrorManagementType", type, inMyCode).call();
    if (error)
       return error;
 
@@ -109,6 +108,9 @@ Error setErrInUserCodeOnly(boost::shared_ptr<SEXP> pErrorHandler,
    return setErrInUserCodeOnly(userCode, pErrorHandler);
 }
 
+// Initialize the error handler to the one that the user specified. Note that
+// this initialization routine runs *before* .Rprofile is sourced, so any error
+// handler set in .Rprofile will trump this one.
 Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
 {
    SEXP currentHandler = r::options::getOption("error");

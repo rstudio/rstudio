@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
+
 public class GlobalToolbar extends Toolbar 
 {
    public GlobalToolbar(Commands commands, 
@@ -42,6 +43,7 @@ public class GlobalToolbar extends Toolbar
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
+
       // add new source doc commands
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
@@ -56,6 +58,7 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
       
+
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarButton newButton = new ToolbarButton("",
@@ -117,15 +120,6 @@ public class GlobalToolbar extends Toolbar
       
       searchWidget_ = codeSearch.getSearchWidget();
       addLeftWidget(searchWidget_);
-      
-      addLeftSeparator();
-      ToolbarPopupMenu errorMenu = new ToolbarPopupMenu();
-      errorMenu.addItem(commands.errorsMessage().createMenuItem(false));
-      errorMenu.addItem(commands.errorsTraceback().createMenuItem(false));
-      errorMenu.addItem(commands.errorsBreak().createMenuItem(false));
-      errorMenu.addSeparator();
-      errorMenu.addItem(commands.errorsInMyCode().createMenuItem(false));
-      errorMenu.addItem(commands.errorsExpandTraceback().createMenuItem(false));
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
@@ -153,4 +147,5 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+
 }

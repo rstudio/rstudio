@@ -54,12 +54,11 @@ public class ErrorManager
    }
 
    @Inject
-   public ErrorManager(
-         EventBus events, 
-         Binder binder, 
-         Commands commands, 
-         DebuggingServerOperations server,
-         Session session)
+   public ErrorManager(EventBus events, 
+                       Binder binder, 
+                       Commands commands, 
+                       DebuggingServerOperations server,
+                       Session session)
    {
       events_ = events;
       server_ = server;
@@ -158,29 +157,22 @@ public class ErrorManager
    @Handler
    public void onErrorsInMyCode()
    {
-      final boolean userCode = commands_.errorsInMyCode().isChecked();
-      if (userCode != errorManagerState_.getUserCodeOnly())
+      final boolean userCode = !errorManagerState_.getUserCodeOnly();
+      server_.setErrorsUserCodeOnly(userCode, 
+            new ServerRequestCallback<Void>()
       {
-         server_.setErrorsUserCodeOnly(userCode, 
-               new ServerRequestCallback<Void>()
+         @Override
+         public void onResponseReceived(Void v)
          {
-            @Override
-            public void onResponseReceived(Void v)
-            {
-               errorManagerState_.setUserCodeOnly(userCode);
-               commands_.errorsInMyCode().setChecked(userCode);
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               // if an error occurs, restore the command's checked state to
-               // whatever it was previously 
-               commands_.errorsInMyCode().setChecked(
-                     errorManagerState_.getUserCodeOnly());
-            }
-         });;
-      }
+            errorManagerState_.setUserCodeOnly(userCode);
+            commands_.errorsInMyCode().setChecked(userCode);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });;
    }
 
    @Handler

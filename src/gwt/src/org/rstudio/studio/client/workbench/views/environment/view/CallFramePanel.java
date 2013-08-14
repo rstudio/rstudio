@@ -103,8 +103,9 @@ public class CallFramePanel extends ResizeComposite
          CallFrame frame = frameList.get(idx);
          
          // hide the portion of the callstack containing our source-for-debug
-         // functions
-         if (frame.getFunctionName().contains(".rs.executeDebugSource") ||
+         // functions, and inline evaluations
+         if (frame.getFunctionName().equals(".rs.executeDebugSource") ||
+             frame.getFunctionName().equals("eval") || 
              frame.getFileName().contains("SessionBreakpoints.R"))
          {
             continue;

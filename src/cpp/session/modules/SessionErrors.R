@@ -54,26 +54,43 @@
    }
 })
 
-.rs.addFunction("breakOnError", function()
+.rs.addFunction("breakOnError", function(userOnly)
 {
    calls <- sys.calls()
-   foundUser <- FALSE
-   for (n in 1:(length(calls) - 1))
+   foundUserCode <- FALSE
+   if (userOnly)
    {
-      func <- .rs.untraced(sys.function(n))
-      srcref <- attr(func, "srcref")
-      if (!is.null(srcref) && 
-          !is.null(attr(srcref, "srcfile")))
+      for (n in 1:(length(calls) - 1))
       {
-         # looks like user code--invoke the browser below
-         foundUser <- TRUE
-         break
+         func <- .rs.untraced(sys.function(n))
+         srcref <- attr(func, "srcref")
+         if (!is.null(srcref) && 
+             !is.null(attr(srcref, "srcfile")))
+         {
+            # looks like user code--invoke the browser below
+            foundUserCode <- TRUE
+            break
+         }
       }
    }
-   if (foundUser)
-      browser(skipCalls = 2L)
-   else
-      .rs.recordTraceback()
+   if (foundUserCode || !userOnly)
+   {
+      frame <- length(sys.frames()) - 3
+      eval(substitute(browser(skipCalls = skip), list(skip = 7 - frame)), 
+           envir = sys.frame(frame))
+   }
+},
+hideFromDebugger = TRUE)
+
+.rs.addFunction("breakOnAnyError", function()
+{
+   .rs.breakOnError(FALSE)
+},
+hideFromDebugger = TRUE)
+
+.rs.addFunction("breakOnUserError", function()
+{
+   .rs.breakOnError(TRUE)
 },
 hideFromDebugger = TRUE)
 
@@ -81,12 +98,10 @@ hideFromDebugger = TRUE)
 {
    if (type == 0)
       options(error = NULL)
-   else if (type == 1 && !userOnly)
-      options(error = function() { .rs.recordTraceback(FALSE) })
-   else if (type == 1 && userOnly)
-      options(error = function() { .rs.recordTraceback(TRUE) })
-   else if (type == 2 && !userOnly)
-      options(error = browser)
+   else if (type == 1)
+      options(error = function() { .rs.recordTraceback(userOnly) })
    else if (type == 2 && userOnly)
-      options(error = .rs.breakOnError)
+      options(error = .rs.breakOnUserError)
+   else if (type == 2 && !userOnly)
+      options(error = .rs.breakOnAnyError)
 })
