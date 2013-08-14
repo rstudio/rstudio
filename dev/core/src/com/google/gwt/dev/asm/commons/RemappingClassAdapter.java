@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2007 INRIA, France Telecom
+ * Copyright (c) 2000-2011 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,115 +31,96 @@
 package com.google.gwt.dev.asm.commons;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 
 /**
- * A <code>ClassAdapter</code> for type remapping.
+ * A {@link ClassVisitor} for type remapping.
  * 
  * @author Eugene Kuleshov
  */
-public class RemappingClassAdapter extends ClassAdapter {
+public class RemappingClassAdapter extends ClassVisitor {
 
     protected final Remapper remapper;
-    
+
     protected String className;
 
-    public RemappingClassAdapter(ClassVisitor cv, Remapper remapper) {
-        super(cv);
+    public RemappingClassAdapter(final ClassVisitor cv, final Remapper remapper) {
+        this(Opcodes.ASM4, cv, remapper);
+    }
+
+    protected RemappingClassAdapter(final int api, final ClassVisitor cv,
+            final Remapper remapper) {
+        super(api, cv);
         this.remapper = remapper;
     }
 
-    public void visit(
-        int version,
-        int access,
-        String name,
-        String signature,
-        String superName,
-        String[] interfaces)
-    {
+    @Override
+    public void visit(int version, int access, String name, String signature,
+            String superName, String[] interfaces) {
         this.className = name;
-        super.visit(version,
-                access,
-                remapper.mapType(name),
-                remapper.mapSignature(signature, false),
-                remapper.mapType(superName),
-                interfaces == null ? null 
-                        : remapper.mapTypes(interfaces));
+        super.visit(version, access, remapper.mapType(name), remapper
+                .mapSignature(signature, false), remapper.mapType(superName),
+                interfaces == null ? null : remapper.mapTypes(interfaces));
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         AnnotationVisitor av;
-        av = super.visitAnnotation(remapper.mapType(desc), visible);
+        av = super.visitAnnotation(remapper.mapDesc(desc), visible);
         return av == null ? null : createRemappingAnnotationAdapter(av);
     }
 
-    public FieldVisitor visitField(
-        int access,
-        String name,
-        String desc,
-        String signature,
-        Object value)
-    {
+    @Override
+    public FieldVisitor visitField(int access, String name, String desc,
+            String signature, Object value) {
         FieldVisitor fv = super.visitField(access,
                 remapper.mapFieldName(className, name, desc),
-                remapper.mapDesc(desc),
-                remapper.mapSignature(signature, true),
+                remapper.mapDesc(desc), remapper.mapSignature(signature, true),
                 remapper.mapValue(value));
         return fv == null ? null : createRemappingFieldAdapter(fv);
     }
 
-    public MethodVisitor visitMethod(
-        int access,
-        String name,
-        String desc,
-        String signature,
-        String[] exceptions)
-    {
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc,
+            String signature, String[] exceptions) {
         String newDesc = remapper.mapMethodDesc(desc);
-        MethodVisitor mv = super.visitMethod(access,
-                remapper.mapMethodName(className, name, desc),
-                newDesc,
-                remapper.mapSignature(signature, false),
+        MethodVisitor mv = super.visitMethod(access, remapper.mapMethodName(
+                className, name, desc), newDesc, remapper.mapSignature(
+                signature, false),
                 exceptions == null ? null : remapper.mapTypes(exceptions));
-        return mv == null ? null : createRemappingMethodAdapter(access, newDesc, mv);
+        return mv == null ? null : createRemappingMethodAdapter(access,
+                newDesc, mv);
     }
 
-    public void visitInnerClass(
-        String name,
-        String outerName,
-        String innerName,
-        int access)
-    {
-        super.visitInnerClass(remapper.mapType(name),
-                outerName == null ? null : remapper.mapType(outerName),
-                innerName, // TODO should it be changed?
-                access);
+    @Override
+    public void visitInnerClass(String name, String outerName,
+            String innerName, int access) {
+        // TODO should innerName be changed?
+        super.visitInnerClass(remapper.mapType(name), outerName == null ? null
+                : remapper.mapType(outerName), innerName, access);
     }
 
+    @Override
     public void visitOuterClass(String owner, String name, String desc) {
-        super.visitOuterClass(remapper.mapType(owner), 
-                name == null ? null : remapper.mapMethodName(owner, name, desc), 
+        super.visitOuterClass(remapper.mapType(owner), name == null ? null
+                : remapper.mapMethodName(owner, name, desc),
                 desc == null ? null : remapper.mapMethodDesc(desc));
     }
 
     protected FieldVisitor createRemappingFieldAdapter(FieldVisitor fv) {
         return new RemappingFieldAdapter(fv, remapper);
     }
-    
-    protected MethodVisitor createRemappingMethodAdapter(
-        int access,
-        String newDesc,
-        MethodVisitor mv)
-    {
+
+    protected MethodVisitor createRemappingMethodAdapter(int access,
+            String newDesc, MethodVisitor mv) {
         return new RemappingMethodAdapter(access, newDesc, mv, remapper);
     }
 
     protected AnnotationVisitor createRemappingAnnotationAdapter(
-        AnnotationVisitor av)
-    {
+            AnnotationVisitor av) {
         return new RemappingAnnotationAdapter(av, remapper);
     }
 }

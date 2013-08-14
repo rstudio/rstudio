@@ -17,8 +17,9 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.asm.ClassReader;
+import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.DiskCache;
@@ -63,6 +64,15 @@ public abstract class CompilationUnit implements Serializable {
       int expectCode;
       int sawCode;
 
+      public AnonymousClassVisitor() {
+
+        this.mv = new MethodVisitor(Opcodes.ASM4, this.mv) {
+          @Override
+          public void visitCode() {
+            ++sawCode;
+          }
+        };
+      }
       public List<String> getInnerClassNames() {
         return classNames;
       }
@@ -84,17 +94,12 @@ public abstract class CompilationUnit implements Serializable {
       }
 
       @Override
-      public AnonymousClassVisitor visitMethod(int access, String name, String desc, String signature,
-          String[] exceptions) {
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+                                                              String[] exceptions) {
         if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
           ++expectCode;
         }
-        return this;
-      }
-
-      @Override
-      public void visitCode() {
-        ++sawCode;
+        return super.visitMethod(access, name, desc, signature, exceptions);
       }
     }
 

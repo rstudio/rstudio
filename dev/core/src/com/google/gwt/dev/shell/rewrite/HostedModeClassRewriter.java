@@ -16,12 +16,11 @@
 package com.google.gwt.dev.shell.rewrite;
 
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -280,7 +279,7 @@ public class HostedModeClassRewriter {
         null, "java/lang/Object", interfaces);
     if (classBytes != null) {
       // Java7 enforces innerclass/outerclass consistency. In order to fix this, copy from original
-      ClassAdapter cv = new ClassAdapter(new EmptyVisitor()) {
+      ClassVisitor cv = new EmptyVisitor() {
         @Override
         public void visitInnerClass(String name, String outerName, String innerName,
             int access) {

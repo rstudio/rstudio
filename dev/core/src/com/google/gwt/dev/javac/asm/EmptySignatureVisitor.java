@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac.asm;
 
+import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.signature.SignatureVisitor;
 
 /**
@@ -28,9 +29,13 @@ import com.google.gwt.dev.asm.signature.SignatureVisitor;
  * There is no need to call any superclass methods from any subclass as they do
  * nothing.
  */
-public class EmptySignatureVisitor implements SignatureVisitor {
+public class EmptySignatureVisitor extends SignatureVisitor {
 
   protected static EmptySignatureVisitor ignore = new EmptySignatureVisitor();
+
+  public EmptySignatureVisitor() {
+    super(Opcodes.ASM4);
+  }
 
   /**
    * Treated as a visitEnd for this visitor.

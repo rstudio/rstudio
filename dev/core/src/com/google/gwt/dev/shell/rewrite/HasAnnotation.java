@@ -16,11 +16,11 @@
 package com.google.gwt.dev.shell.rewrite;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 
 import java.lang.annotation.Annotation;
 
@@ -29,7 +29,7 @@ import java.lang.annotation.Annotation;
  * a type (ignoring any annotatons that may be present on supertypes or
  * superinterfaces).
  */
-public class HasAnnotation extends ClassAdapter {
+public class HasAnnotation extends ClassVisitor {
   /**
    * A utility method to determine if the class defined in
    * <code>classBytes</code> has a particular annotation.
@@ -53,7 +53,7 @@ public class HasAnnotation extends ClassAdapter {
   private final String targetDesc;
 
   public HasAnnotation(ClassVisitor v, Class<? extends Annotation> annotation) {
-    super(v);
+    super(Opcodes.ASM4, v);
     targetDesc = Type.getDescriptor(annotation);
   }
 

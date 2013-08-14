@@ -15,9 +15,7 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.MethodAdapter;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.Remapper;
@@ -37,12 +35,12 @@ import java.util.Set;
  * as the original instance method.</li>
  * </ol>
  */
-class RewriteRefsToJsoClasses extends ClassAdapter {
+class RewriteRefsToJsoClasses extends ClassVisitor {
 
   /**
    * A method body rewriter to actually rewrite call sites.
    */
-  private class MyMethodAdapter extends MethodAdapter {
+  private class MyMethodAdapter extends MethodVisitor {
 
     private Remapper remapper = new Remapper() {
       @Override
@@ -55,7 +53,7 @@ class RewriteRefsToJsoClasses extends ClassAdapter {
     };
 
     public MyMethodAdapter(MethodVisitor mv) {
-      super(mv);
+      super(Opcodes.ASM4, mv);
     }
 
     @Override
@@ -133,7 +131,7 @@ class RewriteRefsToJsoClasses extends ClassAdapter {
    */
   public RewriteRefsToJsoClasses(ClassVisitor cv, Set<String> jsoDescriptors,
       InstanceMethodOracle mapper) {
-    super(cv);
+    super(Opcodes.ASM4, cv);
     this.jsoDescriptors = jsoDescriptors;
     this.mapper = mapper;
   }

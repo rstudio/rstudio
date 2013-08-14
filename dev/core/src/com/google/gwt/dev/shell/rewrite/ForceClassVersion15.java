@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 
@@ -23,10 +22,10 @@ import com.google.gwt.dev.asm.Opcodes;
  * Performs any rewriting necessary to ensure that class files are 1.5
  * compatible.
  */
-class ForceClassVersion15 extends ClassAdapter {
+class ForceClassVersion15 extends ClassVisitor {
 
   public ForceClassVersion15(ClassVisitor v) {
-    super(v);
+    super(Opcodes.ASM4, v);
   }
 
   @Override

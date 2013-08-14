@@ -21,7 +21,7 @@ import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.javac.asm.CollectAnnotationData.AnnotationData;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
 
@@ -135,7 +135,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getFields().size());
     assertEquals(0, cd.getInterfaces().length);
     assertEquals(0, cd.getAnnotations().size());
-    assertEquals("com/google/gwt/dev/asm/commons/EmptyVisitor",
+    assertEquals("com/google/gwt/dev/javac/EmptyVisitor",
         cd.getSuperName());
 
     List<CollectMethodData> methods = cd.getMethods();

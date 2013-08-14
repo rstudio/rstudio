@@ -17,13 +17,11 @@ package com.google.web.bindery.requestfactory.server;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.Attribute;
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.Label;
-import com.google.gwt.dev.asm.MethodAdapter;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
@@ -346,11 +344,13 @@ public class RequestFactoryJarExtractor {
     }
   }
 
-  private class AnnotationProcessor implements AnnotationVisitor {
+  private class AnnotationProcessor extends AnnotationVisitor {
     private final String sourceType;
     private final AnnotationVisitor av;
 
     public AnnotationProcessor(String sourceType, AnnotationVisitor av) {
+      // TODO(rluble): should we chain av to super here?
+      super(Opcodes.ASM4);
       this.sourceType = sourceType;
       this.av = av;
     }
@@ -379,12 +379,12 @@ public class RequestFactoryJarExtractor {
     }
   }
 
-  private class ClassProcessor extends ClassAdapter {
+  private class ClassProcessor extends ClassVisitor {
     private State state;
     private String sourceType;
 
     public ClassProcessor(String sourceType, ClassVisitor cv, State state) {
-      super(cv);
+      super(Opcodes.ASM4, cv);
       this.sourceType = sourceType;
       this.state = state;
     }
@@ -511,11 +511,13 @@ public class RequestFactoryJarExtractor {
   }
 
   // There is no FieldAdapter type
-  private class FieldProcessor implements FieldVisitor {
+  private class FieldProcessor extends FieldVisitor {
     private final String sourceType;
     private final FieldVisitor fv;
 
     public FieldProcessor(String sourceType, FieldVisitor fv) {
+      // TODO(rluble): Should we chain fv to super here?
+      super(Opcodes.ASM4);
       this.sourceType = sourceType;
       this.fv = fv;
     }
@@ -533,11 +535,11 @@ public class RequestFactoryJarExtractor {
     }
   }
 
-  private class MethodProcessor extends MethodAdapter {
+  private class MethodProcessor extends MethodVisitor {
     private final String sourceType;
 
     public MethodProcessor(String sourceType, MethodVisitor mv) {
-      super(mv);
+      super(Opcodes.ASM4, mv);
       this.sourceType = sourceType;
     }
 
@@ -624,9 +626,9 @@ public class RequestFactoryJarExtractor {
    * This allows any dangling GWT types to be loaded by a JVM without triggering
    * an {@link UnsatisfiedLinkError}.
    */
-  private class NativeMethodDefanger extends ClassAdapter {
+  private class NativeMethodDefanger extends ClassVisitor {
     public NativeMethodDefanger(ClassVisitor cv) {
-      super(cv);
+      super(Opcodes.ASM4, cv);
     }
 
     @Override

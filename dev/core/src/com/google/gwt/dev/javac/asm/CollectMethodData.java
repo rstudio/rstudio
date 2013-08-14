@@ -17,9 +17,9 @@ package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.Label;
+import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Collects data from a single method.
  */
-public class CollectMethodData extends EmptyVisitor {
+public class CollectMethodData extends MethodVisitor {
 
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
@@ -58,6 +58,7 @@ public class CollectMethodData extends EmptyVisitor {
   // for new List[]
   public CollectMethodData(CollectClassData.ClassType classType, int access,
       String name, String desc, String signature, String[] exceptions) {
+    super(Opcodes.ASM4);
     this.access = access;
     this.name = name;
     this.desc = desc;

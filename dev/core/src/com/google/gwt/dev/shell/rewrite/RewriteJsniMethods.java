@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
@@ -33,7 +32,7 @@ import java.util.Map;
  * Turns native method declarations into normal Java functions which perform the
  * corresponding JSNI dispatch.
  */
-public class RewriteJsniMethods extends ClassAdapter {
+public class RewriteJsniMethods extends ClassVisitor {
 
   /**
    * Fast way to look up boxing methods.
@@ -329,7 +328,7 @@ public class RewriteJsniMethods extends ClassAdapter {
 
   public RewriteJsniMethods(ClassVisitor v,
       Map<String, String> anonymousClassMap) {
-    super(v);
+    super(Opcodes.ASM4, v);
     this.anonymousClassMap = anonymousClassMap;
   }
 

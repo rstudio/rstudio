@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.util.StringInterner;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 /**
  * Collects data from (possibly nested) annotations on a single entity.
  */
-public class CollectAnnotationData implements AnnotationVisitor {
+public class CollectAnnotationData extends AnnotationVisitor {
 
   /**
    * Holds annotation fields/values.
@@ -71,12 +72,13 @@ public class CollectAnnotationData implements AnnotationVisitor {
   /**
    * Collects data inside an array-valued annotation parameter.
    */
-  public static class MyAnnotationArrayVisitor implements AnnotationVisitor {
+  public static class MyAnnotationArrayVisitor extends AnnotationVisitor {
 
     private final Callback<Object> callback;
     private final List<Object> values = new ArrayList<Object>();
 
     public MyAnnotationArrayVisitor(Callback<Object> callback) {
+      super(Opcodes.ASM4);
       this.callback = callback;
     }
 
@@ -148,6 +150,7 @@ public class CollectAnnotationData implements AnnotationVisitor {
    */
   CollectAnnotationData(String desc, boolean visible,
       Callback<CollectAnnotationData.AnnotationData> callback) {
+    super(Opcodes.ASM4);
     annotation = new AnnotationData(desc, visible);
     this.callback = callback;
   }

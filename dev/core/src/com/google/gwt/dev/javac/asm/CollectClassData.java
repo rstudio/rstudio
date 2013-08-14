@@ -19,7 +19,7 @@ import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.StringInterner;
 

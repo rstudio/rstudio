@@ -1,6 +1,6 @@
 /***
  * ASM: a very small and fast Java bytecode manipulation framework
- * Copyright (c) 2000-2007 INRIA, France Telecom
+ * Copyright (c) 2000-2011 INRIA, France Telecom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,47 +32,45 @@ package com.google.gwt.dev.asm.util;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.Attribute;
 import com.google.gwt.dev.asm.FieldVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 
 /**
- * A {@link FieldVisitor} that prints a disassembled view of the fields it
- * visits.
+ * A {@link FieldVisitor} that prints the fields it visits with a
+ * {@link Printer}.
  * 
  * @author Eric Bruneton
  */
-public class TraceFieldVisitor extends TraceAbstractVisitor implements
-        FieldVisitor
-{
+public final class TraceFieldVisitor extends FieldVisitor {
 
-    /**
-     * The {@link FieldVisitor} to which this visitor delegates calls. May be
-     * <tt>null</tt>.
-     */
-    protected FieldVisitor fv;
+    public final Printer p;
 
-    public AnnotationVisitor visitAnnotation(
-        final String desc,
-        final boolean visible)
-    {
-        AnnotationVisitor av = super.visitAnnotation(desc, visible);
-        if (fv != null) {
-            ((TraceAnnotationVisitor) av).av = fv.visitAnnotation(desc, visible);
-        }
-        return av;
+    public TraceFieldVisitor(final Printer p) {
+        this(null, p);
     }
 
+    public TraceFieldVisitor(final FieldVisitor fv, final Printer p) {
+        super(Opcodes.ASM4, fv);
+        this.p = p;
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(final String desc,
+            final boolean visible) {
+        Printer p = this.p.visitFieldAnnotation(desc, visible);
+        AnnotationVisitor av = fv == null ? null : fv.visitAnnotation(desc,
+                visible);
+        return new TraceAnnotationVisitor(av, p);
+    }
+
+    @Override
     public void visitAttribute(final Attribute attr) {
+        p.visitFieldAttribute(attr);
         super.visitAttribute(attr);
-
-        if (fv != null) {
-            fv.visitAttribute(attr);
-        }
     }
 
+    @Override
     public void visitEnd() {
+        p.visitFieldEnd();
         super.visitEnd();
-
-        if (fv != null) {
-            fv.visitEnd();
-        }
     }
 }

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
@@ -41,7 +40,7 @@ import java.util.Set;
  * behavior as the original.</li>
  * </ol>
  */
-abstract class WriteJsoImpl extends ClassAdapter {
+abstract class WriteJsoImpl extends ClassVisitor {
 
   /**
    * This type implements JavaScriptObject.
@@ -264,7 +263,7 @@ abstract class WriteJsoImpl extends ClassAdapter {
    * @param mapper maps methods to the class in which they are declared
    */
   private WriteJsoImpl(ClassVisitor cv, InstanceMethodOracle mapper) {
-    super(cv);
+    super(Opcodes.ASM4, cv);
     this.mapper = mapper;
   }
 

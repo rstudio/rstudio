@@ -18,8 +18,9 @@ package com.google.gwt.dev.javac.asm;
 import com.google.gwt.dev.asm.AnnotationVisitor;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.asm.signature.SignatureReader;
 import com.google.gwt.dev.asm.signature.SignatureVisitor;
 
@@ -37,7 +38,12 @@ public class CollectReferencesVisitor extends EmptyVisitor {
    * All we care about is picking up type names, so we just return ourselves for
    * nested visitors.
    */
-  private class CollectGenericTypes implements SignatureVisitor {
+  private class CollectGenericTypes extends SignatureVisitor {
+
+    public CollectGenericTypes() {
+      super(Opcodes.ASM4);
+    }
+
     public SignatureVisitor visitArrayType() {
       return this;
     }
@@ -97,6 +103,22 @@ public class CollectReferencesVisitor extends EmptyVisitor {
     }
   }
 
+  CollectReferencesVisitor()
+  {
+    this.av = new AnnotationVisitor(Opcodes.ASM4, this.av) {
+      @Override
+      public void visitEnum(String name, String desc, String value) {
+        addTypeIfClass(desc);
+      }
+      @Override
+      public void visit(String name, Object value) {
+        // don't mark this annotation as a reference or its arguments, so we can
+        // handle binary-only annotations.
+        // TODO(jat): consider implications of updating the annotation class
+      }
+
+    };
+  }
   // internal names
   protected Set<String> referencedTypes = new HashSet<String>();
 
@@ -119,32 +141,12 @@ public class CollectReferencesVisitor extends EmptyVisitor {
   }
 
   @Override
-  public void visit(String name, Object value) {
-    if (value instanceof Type) {
-      addTypeIfClass((Type) value);
-    }
-  }
-
-  @Override
-  public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    // don't mark this annotation as a reference or its arguments, so we can
-    // handle binary-only annotations.
-    // TODO(jat): consider implications of updating the annotation class
-    return null;
-  }
-
-  @Override
-  public void visitEnum(String name, String desc, String value) {
-    addTypeIfClass(desc);
-  }
-
-  @Override
   public FieldVisitor visitField(int access, String name, String desc,
       String signature, Object value) {
     addTypeIfClass(desc);
     collectTypesFromFieldSignature(signature);
     // we don't use visitEnd, so we can just use ourselves for nested visitors
-    return this;
+    return super.visitField(access, name, desc, signature, value);
   }
 
   /**
@@ -169,7 +171,7 @@ public class CollectReferencesVisitor extends EmptyVisitor {
     addTypeIfClass(Type.getReturnType(desc));
     collectTypesFromClassSignature(signature);
     // we don't use visitEnd, so we can just use ourselves for nested visitors
-    return this;
+    return super.visitMethod(access, name, desc, signature, exceptions);
   }
 
   /**

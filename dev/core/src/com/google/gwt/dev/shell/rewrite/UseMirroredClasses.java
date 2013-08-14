@@ -16,9 +16,7 @@
 
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.MethodAdapter;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
@@ -37,8 +35,8 @@ import java.util.Map;
  * rewritten are listed in the mirroredMethods map below. Note that our
  * mirroring process is not robust enough to rewrite methods on subtypes.
  */
-public class UseMirroredClasses extends ClassAdapter {
-  private static class MethodInterceptor extends MethodAdapter {
+public class UseMirroredClasses extends ClassVisitor {
+  private static class MethodInterceptor extends MethodVisitor {
     private static HashMap<String, HashMap<String, String>> mirrorMap;
     static {
         // The list of mirrored methods
@@ -74,7 +72,7 @@ public class UseMirroredClasses extends ClassAdapter {
     private String className;
     
     protected MethodInterceptor(MethodVisitor mv, String className) {
-      super(mv);
+      super(Opcodes.ASM4, mv);
       this.className = className;
     }
 
@@ -146,7 +144,7 @@ public class UseMirroredClasses extends ClassAdapter {
   private String className;
   
   public UseMirroredClasses(ClassVisitor cv, String className) {
-    super(cv);
+    super(Opcodes.ASM4, cv);
     this.className = className;
   }
   

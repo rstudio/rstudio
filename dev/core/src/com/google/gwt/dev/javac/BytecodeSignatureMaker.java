@@ -42,7 +42,7 @@ public class BytecodeSignatureMaker {
    * considered, but the JSNI violator pattern means that even a change in a
    * private member might invalidate an access from another class.
    */
-  private static class CompileDependencyVisitor implements ClassVisitor {
+  private static class CompileDependencyVisitor extends ClassVisitor {
     /**
      * Mask to strip access bits we don't care about for computing the
      * signature.
@@ -54,6 +54,10 @@ public class BytecodeSignatureMaker {
     private String header;
     private Map<String, String> fields = new HashMap<String, String>();
     private Map<String, String> methods = new HashMap<String, String>();
+
+    public CompileDependencyVisitor() {
+      super(Opcodes.ASM4);
+    }
 
     public String getSignature() {
       return Util.computeStrongName(Util.getBytes(getRawString()));

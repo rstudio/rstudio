@@ -16,7 +16,8 @@
 package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.commons.EmptyVisitor;
+import com.google.gwt.dev.asm.FieldVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.List;
 /**
  * Collect data from a single field.
  */
-public class CollectFieldData extends EmptyVisitor {
+public class CollectFieldData extends FieldVisitor {
 
   private final List<CollectAnnotationData> annotations = new ArrayList<CollectAnnotationData>();
   private final int access;
@@ -35,6 +36,7 @@ public class CollectFieldData extends EmptyVisitor {
 
   public CollectFieldData(int access, String name, String desc,
       String signature, Object value) {
+    super(Opcodes.ASM4);
     this.access = access;
     this.name = name;
     this.desc = desc;
