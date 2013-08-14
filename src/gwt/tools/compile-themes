@@ -84,7 +84,7 @@ Find.find('ace/lib/ace/theme/') do |file|
   debug_bg = format_css_color(mix_colors(background, debug_primary, 0.5))
   rules += create_line_marker_rule(".ace_active_debug_line", debug_bg)
 
-  error_bg = format_css_color(mix_colors(background, foreground, 0.7))
+  error_bg = format_css_color(mix_colors(background, foreground, 0.8))
   rules += "\n.ace_console_error { background-color: #{error_bg}; }"
   
   newfile = "#{OutDir}/#{File.basename(file).gsub(/\.js$/, '.css')}"
