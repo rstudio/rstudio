@@ -119,11 +119,11 @@ Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
    return Success();
 }
 
-void onConsolePrompt(boost::shared_ptr<SEXP> pErrorHandler)
+void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler)
 {
-   // check to see if the error option has been changed from beneath us; if it
-   // has, emit a client event so the client doesn't show an incorrect error
-   // handler
+   // check to see if the error option has been changed from beneath us; if
+   // it has, emit a client event so the client doesn't show an incorrect
+   // error handler
    SEXP currentHandler = r::options::getOption("error");
    if (currentHandler != *pErrorHandler)
    {
@@ -152,12 +152,17 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   events().onConsolePrompt.connect(bind(onConsolePrompt,
+   // Check to see whether the error handler has changed immediately after init
+   // (to find changes from e.g. .Rprofile) and after every console prompt
+   events().onConsolePrompt.connect(bind(detectHandlerChange,
                                          pErrorHandler));
+   events().onDeferredInit.connect(bind(detectHandlerChange,
+                                        pErrorHandler));
+
    json::JsonRpcFunction setErrMgmt =
-         boost::bind(setErrHandlerType, pErrorHandler, _1, _2);
+         bind(setErrHandlerType, pErrorHandler, _1, _2);
    json::JsonRpcFunction setUserCode =
-         boost::bind(setErrInUserCodeOnly, pErrorHandler, _1, _2);
+         bind(setErrInUserCodeOnly, pErrorHandler, _1, _2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

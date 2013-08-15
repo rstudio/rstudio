@@ -80,6 +80,11 @@
    }
    if (foundUserCode || !userOnly)
    {
+      # The magic values 3 and 9 here are derived from the position in the
+      # stack where this error handler resides relative to where we expect
+      # the user code that raised the error to be. These will need to be
+      # adjusted if evaluation layers are added or removed between the
+      # root error handler (set in options(error=...)) and this function.
       frame <- length(sys.frames()) - 3
       eval(substitute(browser(skipCalls = pos), list(pos = 9 - frame)),
            envir = sys.frame(frame))

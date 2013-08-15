@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
 
-public class GlobalToolbar extends Toolbar 
+public class GlobalToolbar extends Toolbar
 {
    public GlobalToolbar(Commands commands, 
                         EventBus eventBus,
@@ -43,7 +43,7 @@ public class GlobalToolbar extends Toolbar
       ThemeResources res = ThemeResources.INSTANCE;
       addStyleName(res.themeStyles().globalToolbar());
       
-
+      
       // add new source doc commands
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
@@ -58,7 +58,7 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
       
-
+      
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       ToolbarButton newButton = new ToolbarButton("",

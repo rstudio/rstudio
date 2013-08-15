@@ -184,8 +184,8 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       String desc = StringUtil.notNull(getDesc());
       String shortcut = getShortcutPrettyHtml();
       shortcut = StringUtil.isNullOrEmpty(shortcut) 
-            ? "" 
-            : "(" + DomUtils.htmlToText(shortcut) + ")";
+                 ? "" 
+                 : "(" + DomUtils.htmlToText(shortcut) + ")";
 
       String result = (desc + " " + shortcut).trim();
       return result.length() == 0 ? null : result;
@@ -283,7 +283,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public ToolbarButton createToolbarButton()
    {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
-            this, this);
+                                                             this, this);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
       return button;
