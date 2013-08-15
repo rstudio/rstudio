@@ -79,9 +79,15 @@ Error getFileNameFromContext(const RCNTXT* pContext,
                  .call(pFileName);
 }
 
-SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
+SEXP sourceRefsOfContext(const RCNTXT* pContext)
 {
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
+}
+
+bool hasSourceRefs(const RCNTXT* pContext)
+{
+   SEXP srcref = sourceRefsOfContext(pContext);
+   return srcref != NULL && TYPEOF(srcref) != NILSXP;
 }
 
 bool isDebugHiddenContext(RCNTXT* pContext)
@@ -120,11 +126,10 @@ RCNTXT* getFunctionContext(const int depth,
    {
       if (isPrintableContext(pRContext))
       {
-         SEXP srcref = getFunctionSourceRefFromContext(pRContext);
          // if the caller asked us to find user code, don't stop unless the
          // context we're examining has a source file attached
          if (++currentDepth >= depth &&
-             !(findUserCode && (TYPEOF(srcref) == NILSXP)))
+             !(findUserCode && !hasSourceRefs(pRContext)))
          {
              break;
          }
@@ -197,16 +202,15 @@ json::Array callFramesAsJson()
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
-   bool skipDebugFrame = false;
 
    while (pRContext->callflag)
    {
-      // if this context is hidden from the debugger, we want to avoid
-      // delivering source refs for the context that invoked it. set a flag
-      // to prevent the following context from picking them up.
+      // If this context is hidden from the debugger, we want to avoid
+      // delivering source refs for the context that invoked it. Pick up
+      // source refs from the next context in this case.
       if (isDebugHiddenContext(pRContext))
       {
-          skipDebugFrame = true;
+          pSrcContext = pRContext->nextcontext;
       }
       else if (isPrintableContext(pRContext))
       {
@@ -225,28 +229,19 @@ json::Array callFramesAsJson()
          // however, for traditional debugging, we want the call frame to show
          // where control *left* the frame to go to the next frame. pSrcContext
          // keeps track of the previous invocation.
-         if (!skipDebugFrame)
-         {
-            std::string filename;
-            error = getFileNameFromContext(pSrcContext, &filename);
-            if (error)
-               LOG_ERROR(error);
-            varFrame["file_name"] = filename;
-            sourceRefToJson(pSrcContext->srcref, &varFrame);
-         }
-         else
-         {
-            varFrame["file_name"] = "";
-            sourceRefToJson(NULL, &varFrame);
-            skipDebugFrame = false;
-         }
+         std::string filename;
+         error = getFileNameFromContext(pSrcContext, &filename);
+         if (error)
+            LOG_ERROR(error);
+         varFrame["file_name"] = filename;
+         sourceRefToJson(pSrcContext->srcref, &varFrame);
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = getFunctionSourceRefFromContext(pSrcContext);
+         SEXP srcRef = sourceRefsOfContext(pSrcContext);
          if (srcRef && TYPEOF(srcRef) != NILSXP)
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
@@ -321,16 +316,14 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
       return true;
    }
 
-   // next, look up the name of the source file that contains the file in
-   // question
-   std::string fileName;
-   SEXP srcRef = getFunctionSourceRefFromContext(pContext);
-   if (srcRef == NULL || TYPEOF(srcRef) == NILSXP)
+   // make sure the function has source references
+   if (!hasSourceRefs(pContext))
    {
       return true;
    }
 
-   return functionDiffersFromSource(srcRef, *pFunctionCode);
+   return functionDiffersFromSource(
+            sourceRefsOfContext(pContext), *pFunctionCode);
 }
 
 // create a JSON object that contains information about the current environment;
