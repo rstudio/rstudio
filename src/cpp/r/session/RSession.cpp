@@ -670,7 +670,7 @@ int RReadConsole (const char *pmt,
       promptString = util::rconsole2utf8(promptString);
 
       // get the next input
-      bool addToHistory = (hist == 1);
+      bool addToHistory = (hist == 1) && !browserContextActive();
       RConsoleInput consoleInput;
       if ( s_callbacks.consoleRead(promptString, addToHistory, &consoleInput) )
       {
