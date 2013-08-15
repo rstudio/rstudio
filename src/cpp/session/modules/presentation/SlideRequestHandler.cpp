@@ -321,8 +321,7 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("-e");
    boost::format fmt("library(knitr); "
                      "opts_knit$set(stop_on_error = 2L); "
-                     "opts_chunk$set(cache=TRUE, "
-                                    "cache.path='%1%-cache/', "
+                     "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
@@ -911,6 +910,12 @@ void handlePresentationRootRequest(const std::string& path,
    else
    {
       pResponse->setError(errorResponse.statusCode, errorResponse.message);
+   }
+
+   if (!zoom)
+   {
+      ClientEvent event(client_events::kPresentationPaneRequestCompleted);
+      module_context::enqueClientEvent(event);
    }
 }
 

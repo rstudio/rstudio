@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.presentation;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -31,6 +34,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FullscreenPopupPanel;
@@ -108,7 +112,18 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       }
       
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.refreshPresentation().createToolbarButton());
+      toolbar.addRightWidget(refreshButton_ = 
+                  commands_.refreshPresentation().createToolbarButton());
+      progressButton_ = new ToolbarButton(
+                              CoreResources.INSTANCE.progress_gray(),
+                              new ClickHandler() {
+                                 @Override
+                                 public void onClick(ClickEvent e)
+                                 {
+                                 }
+                              });
+      toolbar.addRightWidget(progressButton_);
+      progressButton_.setVisible(false);
         
       return toolbar;
    }
@@ -245,6 +260,34 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       return frame_.getFrameTitle();
    }
    
+   @Override
+   public void showBusy()
+   {
+      busyPending_ = true;
+      
+      new Timer() {
+         @Override
+         public void run()
+         {
+            if (busyPending_)
+            {
+               refreshButton_.setVisible(false);
+               progressButton_.setVisible(true);
+               busyPending_ = false;
+            }
+         }
+      }.schedule(750);
+   }
+   
+   @Override
+   public void hideBusy()
+   {
+      busyPending_ = false;
+      refreshButton_.setVisible(true);
+      progressButton_.setVisible(false);
+   }
+   
+   
    private final native void initPresentationCallbacks() /*-{
       var thiz = this;
       $wnd.presentationKeydown = $entry(function(e) {
@@ -301,6 +344,9 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    private Label titleLabel_ = new Label();
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;
+   private ToolbarButton refreshButton_;
+   private ToolbarButton progressButton_;
+   private boolean busyPending_ = false;
    private PresentationFrame frame_ ;
    private final Commands commands_;
    private final Session session_;

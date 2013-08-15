@@ -90,6 +90,7 @@ import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsZoomSizeChangedEvent;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
+import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
@@ -493,6 +494,10 @@ public class ClientEventDispatcher
          {
             eventBus_.fireEvent(new PackageUnloadedEvent(
                   (String)event.getData()));
+         }
+         else if (type.equals(ClientEvent.PresentationPaneRequestCompleted))
+         {
+            eventBus_.fireEvent(new PresentationPaneRequestCompletedEvent());
          }
          else if (type.equals(ClientEvent.UnhandledError))
          {

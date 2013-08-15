@@ -116,7 +116,7 @@ public class ImageFrame extends Frame
       doc.write(
          '<html><head></head>' +
          '<body style="margin: 0; padding: 0; overflow: hidden; border: none">' +
-         '<img id="img" ' + sizing + ' style="display: none" src="javascript:false">' +
+         '<img id="img" ' + sizing + ' style="display: none" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs%3D">' +
          '</body></html>');
       doc.close();
    }-*/;
