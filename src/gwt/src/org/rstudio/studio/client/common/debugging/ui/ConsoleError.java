@@ -44,12 +44,16 @@ public class ConsoleError extends Composite
    {
       void onErrorBoxResize();
       void showSourceForFrame(ErrorFrame frame);
-      void rerunLastCommand();
+      void runCommandWithDebug(String command);
    }
 
-   public ConsoleError(UnhandledError err, String errorClass, Observer observer)
+   public ConsoleError(UnhandledError err, 
+                       String errorClass, 
+                       Observer observer, 
+                       String command)
    {
       observer_ = observer;
+      command_ = command;
       
       initWidget(uiBinder.createAndBindUi(this));
    
@@ -71,7 +75,7 @@ public class ConsoleError extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            observer_.rerunLastCommand();
+            observer_.runCommandWithDebug(command_);
          }
       };
       
@@ -105,4 +109,5 @@ public class ConsoleError extends Composite
    
    private Observer observer_;
    private boolean showingTraceback_ = false;
+   private String command_;
 }

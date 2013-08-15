@@ -18,13 +18,15 @@
    calls <- sys.calls()
    foundUserCode <- FALSE
 
-   # when this handler is invoked for an unhandled error that didn't happen at
-   # the top level, there are at least four calls on the stack:
-   # 1. this function
-   # 2. the anonymous error handler (set via options below)
-   # 3. the error invoker (e.g. stop)
-   # 4. the function from which the error was raised
-   if (length(calls) < 4)
+   # When this handler is invoked for an unhandled error happening at
+   # the top level, there four calls on the stack:
+   # 1. This function
+   # 2. The anonymous error handler (set via options below)
+   # 3. The error invoker (e.g. stop)
+   # 4. The function from which the error was raised
+   # So we want there to be at least 5 calls on the stack--otherwise the error
+   # is likely to be top-level.
+   if (length(calls) < 5)
       return()
 
    # create the traceback for the client
@@ -57,6 +59,9 @@
 .rs.addFunction("breakOnError", function(userOnly)
 {
    calls <- sys.calls()
+   if (length(calls) < 5)
+      return()
+
    foundUserCode <- FALSE
    if (userOnly)
    {
@@ -76,7 +81,7 @@
    if (foundUserCode || !userOnly)
    {
       frame <- length(sys.frames()) - 3
-      eval(substitute(browser(skipCalls = skip), list(skip = 7 - frame)), 
+      eval(substitute(browser(skipCalls = pos), list(pos = 9 - frame)),
            envir = sys.frame(frame))
    }
 },

@@ -48,7 +48,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.events.RerunLastCommandEvent;
+import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
@@ -234,11 +234,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    public void consoleWriteExtendedError(
-         final String error, UnhandledError traceInfo, boolean expand)
+         final String error, UnhandledError traceInfo, 
+         boolean expand, String command)
    {
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(
-            traceInfo, getErrorClass(), this);
+            traceInfo, getErrorClass(), this, command);
 
       if (expand)
          errorWidget.setTracebackVisible(true);
@@ -269,9 +270,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
    
    @Override
-   public void rerunLastCommand()
+   public void runCommandWithDebug(String command)
    {
-      events_.fireEvent(new RerunLastCommandEvent());
+      events_.fireEvent(new RunCommandWithDebugEvent(command));
    }
 
    public void consoleWriteOutput(final String output)

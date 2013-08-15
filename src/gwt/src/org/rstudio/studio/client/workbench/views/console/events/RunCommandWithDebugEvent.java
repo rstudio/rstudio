@@ -17,19 +17,29 @@ package org.rstudio.studio.client.workbench.views.console.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RerunLastCommandEvent 
-   extends GwtEvent<RerunLastCommandEvent.Handler>
+public class RunCommandWithDebugEvent 
+   extends GwtEvent<RunCommandWithDebugEvent.Handler>
 {
-   public static final GwtEvent.Type<RerunLastCommandEvent.Handler> TYPE =
-      new GwtEvent.Type<RerunLastCommandEvent.Handler>();
+   public static final GwtEvent.Type<RunCommandWithDebugEvent.Handler> TYPE =
+      new GwtEvent.Type<RunCommandWithDebugEvent.Handler>();
   
    public interface Handler extends EventHandler
    {
-      void onRerunLastCommand(RerunLastCommandEvent event);
+      void onRunCommandWithDebug(RunCommandWithDebugEvent event);
+   }
+   
+   public RunCommandWithDebugEvent(String command)
+   {
+      command_ = command;
+   }
+   
+   public String getCommand()
+   {
+      return command_;
    }
          
    @Override
-   public Type<RerunLastCommandEvent.Handler> getAssociatedType()
+   public Type<RunCommandWithDebugEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
@@ -37,6 +47,8 @@ public class RerunLastCommandEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRerunLastCommand(this);
+      handler.onRunCommandWithDebug(this);
    }
+   
+   private String command_;
 }

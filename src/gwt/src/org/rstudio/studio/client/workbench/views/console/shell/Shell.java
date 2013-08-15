@@ -69,7 +69,7 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleExecutePendingInputEvent.Handler,
                               SendToConsoleHandler,
                               DebugModeChangedEvent.Handler,
-                              RerunLastCommandEvent.Handler
+                              RunCommandWithDebugEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -129,7 +129,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
-      eventBus.addHandler(RerunLastCommandEvent.TYPE, this);
+      eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -256,7 +256,8 @@ public class Shell implements ConsoleInputHandler,
                 && err.getErrorMessage().equals(event.getError()))
             {
                view_.consoleWriteExtendedError(
-                     event.getError(), err, errorManager_.getExpandTraceback());
+                     event.getError(), err, errorManager_.getExpandTraceback(),
+                     historyManager_.getHistoryEntry(-1));
             }
             else
             {
@@ -395,7 +396,7 @@ public class Shell implements ConsoleInputHandler,
    }
    
    @Override
-   public void onRerunLastCommand(RerunLastCommandEvent event)
+   public void onRunCommandWithDebug(final RunCommandWithDebugEvent event)
    {
       // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
       errorManager_.setDebugSessionHandlerType(
@@ -405,9 +406,8 @@ public class Shell implements ConsoleInputHandler,
                @Override
                public void onResponseReceived(Void v)
                {
-                  // load the previous history item and execute it immediately
-                  historyManager_.navigateHistory(-1);
-                  processCommandEntry();
+                  eventBus_.fireEvent(new SendToConsoleEvent(
+                        event.getCommand(), true));
                }
                
                @Override
