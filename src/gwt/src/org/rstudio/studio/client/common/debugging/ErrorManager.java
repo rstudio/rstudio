@@ -77,7 +77,12 @@ public class ErrorManager
    @Override
    public void onUnhandledError(UnhandledErrorEvent event)
    {
-      lastError_ = event.getError();
+      // Don't record errors that happen during debugging; presumably the user
+      // is actively inspecting those
+      if (!debugMode_)
+      {
+         lastError_ = event.getError();
+      }
    }
 
    @Override
@@ -91,6 +96,7 @@ public class ErrorManager
          setErrorManagementType(previousHandlerType_);
       }
       debugHandlerState_ = DebugHandlerState.None;
+      debugMode_ = event.debugging();
    }
 
    @Override
@@ -284,4 +290,5 @@ public class ErrorManager
    private int previousHandlerType_;
    private UnhandledError lastError_;
    private boolean expandErrorTracebacks_;
+   private boolean debugMode_ = false;
 }
