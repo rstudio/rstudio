@@ -135,7 +135,7 @@ public class CollectClassDataTest extends AsmTestCase {
     assertEquals(0, cd.getFields().size());
     assertEquals(0, cd.getInterfaces().length);
     assertEquals(0, cd.getAnnotations().size());
-    assertEquals("com/google/gwt/dev/javac/EmptyVisitor",
+    assertEquals("com/google/gwt/dev/javac/asmbridge/EmptyVisitor",
         cd.getSuperName());
 
     List<CollectMethodData> methods = cd.getMethods();
