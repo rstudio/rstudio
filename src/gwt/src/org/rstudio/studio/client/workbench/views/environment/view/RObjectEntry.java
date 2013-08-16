@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.view.client.ProvidesKey;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -80,7 +82,22 @@ public class RObjectEntry
    {
       return rObject.getType() == "promise";
    }
+   
+   public String getDescriptionId()
+   {
+      return getIdPrefix() + "desc";
+   }
+   
+   public Element getDescriptionElement()
+   {
+      return Document.get().getElementById(getDescriptionId());
+   }
 
+   private String getIdPrefix()
+   {
+      return "robject_" + rObject.getName() + "_";
+   }
+   
    RObject rObject;
    boolean expanded;
    boolean isCategoryLeader;

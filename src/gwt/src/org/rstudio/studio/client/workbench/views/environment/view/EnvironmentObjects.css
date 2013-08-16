@@ -55,6 +55,14 @@
    text-overflow: ellipsis;
    overflow-x: hidden;
    padding-right: 20px;
+   background-color: #ffffff;
+   transition: background-color 0.3s;
+}
+
+.objectGrid td.valueColNew
+{
+   background-color: #f0f0ff;
+   transition: background-color 0s;
 }
 
 .objectGrid td.clickableCol
