@@ -46,6 +46,10 @@ void enqueErrorHandlerChanged(int type)
 Error setErrHandler(int type, bool inMyCode,
                     boost::shared_ptr<SEXP> pErrorHandler)
 {
+   // when setting the error handler to "custom", just leave it as it was
+   if (type == ERRORS_CUSTOM)
+      return Success();
+
    // clear the previous error handler; if we don't do this, the error handler
    // we set will be unset by DisableErrorHandlerScope during call evaluation
    r::options::setErrorOption(R_NilValue);
@@ -85,16 +89,19 @@ Error setErrHandlerType(boost::shared_ptr<SEXP> pErrorHandler,
    return setErrHandlerType(type, pErrorHandler);
 }
 
-// Initialize the error handler to the one that the user specified. Note that
-// this initialization routine runs *before* .Rprofile is sourced, so any error
-// handler set in .Rprofile will trump this one.
 Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
                               boost::shared_ptr<bool> pHandleUserErrorsOnly)
 {
    SEXP currentHandler = r::options::getOption("error");
    *pHandleUserErrorsOnly = userSettings().handleErrorsInUserCodeOnly();
-   if (currentHandler == R_NilValue)
+   // This runs after ~/.RProfile, so don't change the error handler if
+   // there's already one assigned, or if we're aware of a custom error
+   // handler.
+   if (currentHandler == R_NilValue &&
+       userSettings().errorHandlerType() != ERRORS_CUSTOM)
       setErrHandlerType(userSettings().errorHandlerType(), pErrorHandler);
+   else
+      userSettings().setErrorHandlerType(ERRORS_CUSTOM);
    return Success();
 }
 
@@ -107,9 +114,11 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler)
    if (currentHandler != *pErrorHandler)
    {
       *pErrorHandler = currentHandler;
-      enqueErrorHandlerChanged(currentHandler == R_NilValue ?
-                                  ERRORS_MESSAGE:
-                                  ERRORS_CUSTOM);
+      int handlerType = (currentHandler == R_NilValue) ?
+                        ERRORS_MESSAGE :
+                        ERRORS_CUSTOM;
+      userSettings().setErrorHandlerType(handlerType);
+      enqueErrorHandlerChanged(handlerType);
    }
 }
 
