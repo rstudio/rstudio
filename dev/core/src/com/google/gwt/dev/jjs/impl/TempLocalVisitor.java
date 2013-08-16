@@ -85,8 +85,8 @@ public abstract class TempLocalVisitor extends JModVisitor {
       JVariable target = x.getVariableRef().getTarget();
       if (target instanceof JLocal) {
         String name = target.getName();
-        if (name.startsWith(PREFIX)) {
-          curScope.recordTempAllocated(Integer.parseInt(name.substring(PREFIX.length()), 10));
+        if (isTempName(name)) {
+          curScope.recordTempNameAllocation(tempNumberFromTempName(name));
         }
       }
     }
@@ -128,20 +128,25 @@ public abstract class TempLocalVisitor extends JModVisitor {
     /**
      * Caches the last temp allocated in this scope, for speedier lookup.
      */
-    private transient int lastTemp;
+    private transient int lastTempName;
 
     /**
-     * The set of all temps allocated by all my child blocks. This prevents me
-     * from allocating a temp one of my children already allocated; however it
-     * does not prevent my children from reusing temps also used by their
-     * siblings.
+     * The set of all variables that are temps or have a temp like name and are allocated by all my
+     * child blocks. Temp like named variables might have been produced by different
+     * subclasses of this visitor or might very well be user variables.
+     * This bit set is used to prevent allocating a temp that clashes with a variable allocated by
+     * a child scope; however it does not prevent siblings from reusing each others temps.
+     *
+     * TODO(rluble): There is a possibility that a temp like named variable has been extruded from
+     * its declaring scope hence the lifetime assumption here (a variable is only live in its
+     * declaring scope) is not valid.
      */
-    private final BitSet myChildTemps = new BitSet();
+    private final BitSet tempNamesDeclaredInChildrenScopes = new BitSet();
 
     /**
      * The set of temps that have been directly allocated in this scope.
      */
-    private final BitSet myTemps = new BitSet();
+    private final BitSet tempNamesDeclaredInThisScope = new BitSet();
 
     public Scope(Scope parent) {
       this.parent = parent;
@@ -150,20 +155,20 @@ public abstract class TempLocalVisitor extends JModVisitor {
     /**
      * Acquires the next free temp in this scope.
      */
-    public int allocateNextFreeTemp() {
+    public int allocateNextFreeTempNumber() {
       if (allAllocated == null) {
         allAllocated = new BitSet();
         // Any temps already allocated by my parents are not available to me.
         for (Scope it = this; it != null; it = it.parent) {
-          allAllocated.or(it.myTemps);
+          allAllocated.or(it.tempNamesDeclaredInThisScope);
         }
       }
       // Any temps already allocated by my children are not available to me.
-      allAllocated.or(myChildTemps);
+      allAllocated.or(tempNamesDeclaredInChildrenScopes);
       // Find the next free temp.
-      lastTemp = allAllocated.nextClearBit(lastTemp);
-      recordTempAllocated(lastTemp);
-      return lastTemp;
+      lastTempName = allAllocated.nextClearBit(lastTempName);
+      recordTempNameAllocation(lastTempName);
+      return lastTempName;
     }
 
     /**
@@ -172,7 +177,7 @@ public abstract class TempLocalVisitor extends JModVisitor {
     public void enter() {
       // Assume dirty, lazy recompute.
       allAllocated = null;
-      lastTemp = 0;
+      lastTempName = 0;
     }
 
     /**
@@ -186,17 +191,17 @@ public abstract class TempLocalVisitor extends JModVisitor {
     /**
      * Record a temp as being allocated in this scope.
      */
-    public void recordTempAllocated(int tempNumber) {
-      assert !myTemps.get(tempNumber);
+    public void recordTempNameAllocation(int tempNumber) {
+      assert !tempNamesDeclaredInThisScope.get(tempNumber);
       // Record my own usage.
-      myTemps.set(tempNumber);
+      tempNamesDeclaredInThisScope.set(tempNumber);
       if (allAllocated != null) {
         allAllocated.set(tempNumber);
       }
       // Tell all my parents I'm now using this one.
       for (Scope it = this.parent; it != null; it = it.parent) {
-        assert !it.myTemps.get(tempNumber);
-        it.myChildTemps.set(tempNumber);
+        assert !it.tempNamesDeclaredInThisScope.get(tempNumber);
+        it.tempNamesDeclaredInChildrenScopes.set(tempNumber);
       }
     }
   }
@@ -269,8 +274,8 @@ public abstract class TempLocalVisitor extends JModVisitor {
   }
 
   protected JLocal createTempLocal(SourceInfo info, JType type) {
-    int tempNum = curScope.allocateNextFreeTemp();
-    String name = PREFIX + tempNum;
+    int tempNum = curScope.allocateNextFreeTempNumber();
+    String name = tempNameFromNumber(tempNum);
     JLocal local = JProgram.createLocal(info, name, type, false, curMethodBody);
     JDeclarationStatement init = new JDeclarationStatement(info, new JLocalRef(info, local), null);
     insertionStack.peek().insertBefore(init);
@@ -289,5 +294,19 @@ public abstract class TempLocalVisitor extends JModVisitor {
     assert scopes.get(x) == curScope;
     curScope.exit();
     curScope = curScope.parent;
+  }
+
+  private static boolean isTempName(String name) {
+    // Do not use PREFIX in String.matches() as it might contain special regex characters.
+    return name.startsWith(PREFIX) &&
+        name.substring(PREFIX.length()).matches("[0-9]+");
+  }
+  private static String tempNameFromNumber(int tempNum) {
+    return PREFIX + tempNum;
+  }
+
+  private static int tempNumberFromTempName(String name) {
+    assert isTempName(name);
+    return Integer.parseInt(name.substring(PREFIX.length()), 10);
   }
 }

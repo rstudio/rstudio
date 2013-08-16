@@ -122,6 +122,23 @@ public class TempLocalVisitorTest extends JJSTestBase {
     assertTransform(original.toString()).into(expected.toString());
   }
 
+  /**
+   * Test for issue 8304.
+   */
+  public void testNamingConflict() throws Exception {
+    StringBuilder original = new StringBuilder();
+    original.append("boolean $type = false;");
+    original.append("for (int i = 3; $type; );");
+
+    StringBuilder expected = new StringBuilder();
+    expected.append("boolean $t0;");
+    expected.append("boolean $type = $t0 = false;");
+    expected.append("boolean $t2;");
+    expected.append("for (int $t1, i = $t1 = 3; $t2 = $type; );");
+
+    assertTransform(original.toString()).into(expected.toString());
+  }
+
   public void testNested() throws Exception {
     assertTransform("{ int i = 3; } ").into("{ int $t0; int i = $t0 = 3; }");
   }
