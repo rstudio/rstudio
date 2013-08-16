@@ -253,6 +253,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // restore source documents
          restoreSourceDocuments().setGlobalValue(
                     newUiPrefs.restoreSourceDocuments().getGlobalValue());
+         
+         // break in user code only on unhandled errors
+         handleErrorsInUserCodeOnly().setGlobalValue(
+                    newUiPrefs.handleErrorsInUserCodeOnly().getGlobalValue());
+                    
+         // auto expand error tracebacks
+         autoExpandErrorTracebacks().setGlobalValue(
+                    newUiPrefs.autoExpandErrorTracebacks().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

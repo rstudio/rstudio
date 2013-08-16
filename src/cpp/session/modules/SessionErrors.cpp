@@ -62,25 +62,14 @@ Error setErrHandler(int type, bool inMyCode,
 Error setErrHandlerType(int type,
                         boost::shared_ptr<SEXP> pErrorHandler)
 {
-   Error error = setErrHandler(type, userSettings().errorsUserCodeOnly(),
+   Error error = setErrHandler(type,
+                               userSettings().handleErrorsInUserCodeOnly(),
                                pErrorHandler);
    if (error)
       return error;
 
    userSettings().setErrorHandlerType(type);
    enqueErrorHandlerChanged(type);
-   return Success();
-}
-
-Error setErrInUserCodeOnly(bool userCode,
-                           boost::shared_ptr<SEXP> pErrorHandler)
-{
-   Error error = setErrHandler(userSettings().errorHandlerType(), userCode,
-                               pErrorHandler);
-   if (error)
-      return error;
-
-   userSettings().setErrorsUserCodeOnly(userCode);
    return Success();
 }
 
@@ -96,24 +85,14 @@ Error setErrHandlerType(boost::shared_ptr<SEXP> pErrorHandler,
    return setErrHandlerType(type, pErrorHandler);
 }
 
-Error setErrInUserCodeOnly(boost::shared_ptr<SEXP> pErrorHandler,
-                           const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
-{
-   bool userCode = false;
-   Error error = json::readParams(request.params, &userCode);
-   if (error)
-      return error;
-
-   return setErrInUserCodeOnly(userCode, pErrorHandler);
-}
-
 // Initialize the error handler to the one that the user specified. Note that
 // this initialization routine runs *before* .Rprofile is sourced, so any error
 // handler set in .Rprofile will trump this one.
-Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler)
+Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
+                              boost::shared_ptr<bool> pHandleUserErrorsOnly)
 {
    SEXP currentHandler = r::options::getOption("error");
+   *pHandleUserErrorsOnly = userSettings().handleErrorsInUserCodeOnly();
    if (currentHandler == R_NilValue)
       setErrHandlerType(userSettings().errorHandlerType(), pErrorHandler);
    return Success();
@@ -134,13 +113,31 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler)
    }
 }
 
+void onUserSettingsChanged(boost::shared_ptr<SEXP> pErrorHandler,
+                           boost::shared_ptr<bool> pHandleUserErrorsOnly)
+{
+   // check to see if the setting for 'handle errors in user code only'
+   // has been changed since we last looked at it; if it has, switch the
+   // error handler in a corresponding way
+   bool handleUserErrorsOnly = userSettings().handleErrorsInUserCodeOnly();
+   if (handleUserErrorsOnly != *pHandleUserErrorsOnly)
+   {
+      Error error = setErrHandler(userSettings().errorHandlerType(),
+                                  handleUserErrorsOnly,
+                                  pErrorHandler);
+      if (error)
+         LOG_ERROR(error);
+
+      *pHandleUserErrorsOnly = handleUserErrorsOnly;
+   }
+}
+
 } // anonymous namespace
 
 json::Value errorStateAsJson()
 {
    json::Object state;
    state["error_handler_type"] = userSettings().errorHandlerType();
-   state["user_code_only"] = userSettings().errorsUserCodeOnly();
    return state;
 }
 
@@ -148,6 +145,8 @@ Error initialize()
 {
    boost::shared_ptr<SEXP> pErrorHandler =
          boost::make_shared<SEXP>(R_NilValue);
+   boost::shared_ptr<bool> pHandleUserErrorsOnly =
+         boost::make_shared<bool>(true);
 
    using boost::bind;
    using namespace module_context;
@@ -158,18 +157,18 @@ Error initialize()
                                          pErrorHandler));
    events().onDeferredInit.connect(bind(detectHandlerChange,
                                         pErrorHandler));
+   userSettings().onChanged.connect(bind(onUserSettingsChanged,
+                                         pErrorHandler,
+                                         pHandleUserErrorsOnly));
 
    json::JsonRpcFunction setErrMgmt =
          bind(setErrHandlerType, pErrorHandler, _1, _2);
-   json::JsonRpcFunction setUserCode =
-         bind(setErrInUserCodeOnly, pErrorHandler, _1, _2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "set_error_management_type", setErrMgmt))
-      (bind(registerRpcMethod, "set_errors_user_code_only", setUserCode))
       (bind(sourceModuleRFile, "SessionErrors.R"))
-      (bind(initializeErrManagement, pErrorHandler));
+      (bind(initializeErrManagement, pErrorHandler, pHandleUserErrorsOnly));
 
    return initBlock.execute();
 }

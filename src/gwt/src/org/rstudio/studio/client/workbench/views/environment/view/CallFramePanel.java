@@ -162,12 +162,9 @@ public class CallFramePanel extends ResizeComposite
       return isMinimized_;
    }
 
-   @UiField
-   HTMLPanel callFramePanel;
-   @UiField
-   CallFramePanelStyle style;
-   @UiField
-   LayoutPanel callFramePanelHeader;
+   @UiField HTMLPanel callFramePanel;
+   @UiField CallFramePanelStyle style;
+   @UiField LayoutPanel callFramePanelHeader;
    
    Observer observer_;
    CallFramePanelHost panelHost_;

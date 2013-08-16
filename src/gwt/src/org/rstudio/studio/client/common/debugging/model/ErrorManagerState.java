@@ -28,12 +28,4 @@ public class ErrorManagerState extends JavaScriptObject
    public final native void setErrorHandlerType(int type) /*-{
       this.error_handler_type = type;
    }-*/;
-
-   public final native boolean getUserCodeOnly() /*-{
-      return this.user_code_only;
-   }-*/;
-   
-   public final native void setUserCodeOnly(boolean userCode) /*-{
-     this.user_code_only = userCode;
-   }-*/;   
 } 

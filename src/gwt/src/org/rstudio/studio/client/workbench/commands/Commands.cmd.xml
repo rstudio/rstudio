@@ -268,14 +268,10 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="debugContinue"/>
          <cmd refid="debugStop"/>
          <separator/>
-         <menu label="_Error Handling">
+         <menu label="_On Error">
             <cmd refid="errorsMessage"/>
             <cmd refid="errorsTraceback"/>
             <cmd refid="errorsBreak"/>
-            <separator/>
-            <cmd refid="errorsInMyCode"/>
-            <separator/>
-            <cmd refid="errorsExpandTraceback"/>
          </menu>
          <separator/>
          <cmd refid="debugHelp"/>
@@ -1262,7 +1258,7 @@ well as menu structures (for main menu and popup menus).
         desc="Guide to debugging features"/>
    
    <cmd id="errorsMessage"
-        menuLabel="_Message Only"
+        menuLabel="_Show Message Only"
         desc="Print the error message when an unhandled error occurs"
         checkable="true"/>
    <cmd id="errorsTraceback"
@@ -1272,13 +1268,5 @@ well as menu structures (for main menu and popup menus).
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
-        checkable="true"/>
-   <cmd id="errorsInMyCode"
-        menuLabel="_Just My Code"
-        desc="Only break or show tracebacks if your code is involved"
-        checkable="true"/>
-   <cmd id="errorsExpandTraceback"
-        menuLabel="_Expand Traceback"
-        desc="Automatically show the full traceback when an error occurs"
         checkable="true"/>
 </commands>

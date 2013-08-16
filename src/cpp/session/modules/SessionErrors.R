@@ -13,10 +13,19 @@
 #
 #
 
+.rs.addFunction("isSourceCall", function(call)
+{
+   fun <- deparse(call[[1]])
+   return (fun == "source" ||
+           fun == "debugSource" ||
+           fun == "source.with.encoding")
+})
+
 .rs.addFunction("recordTraceback", function(userOnly)
 {
    calls <- sys.calls()
    foundUserCode <- FALSE
+   inSource <- FALSE
 
    # When this handler is invoked for an unhandled error happening at
    # the top level, there four calls on the stack:
@@ -32,6 +41,14 @@
    # create the traceback for the client
    stack <- lapply(calls[1:(length(calls) - 2)], function(call)
    {
+      # we want to ignore the first user code entry after a call to source(),
+      # since that call happens at the top level
+      isSourceCall <- FALSE
+      if (.rs.isSourceCall(call))
+      {
+         isSourceCall <- TRUE
+         inSource <<- TRUE
+      }
       srcref <- attr(call, "srcref")
       srcfile <- ""
       if (!is.null(srcref))
@@ -39,7 +56,12 @@
          fileattr <- attr(srcref, "srcfile")
          srcfile <- fileattr$filename
          if (!is.null(srcfile))
-            foundUserCode <<- TRUE
+         {
+            if (inSource && !isSourceCall)
+               inSource <<- FALSE
+            else
+               foundUserCode <<- TRUE
+         }
       }
       else
          srcref <- rep(0L, 8)
@@ -63,18 +85,32 @@
       return()
 
    foundUserCode <- FALSE
+   inSource <- FALSE
    if (userOnly)
    {
       for (n in 1:(length(calls) - 1))
       {
+         isSourceCall <- FALSE
+         if (.rs.isSourceCall(sys.call(n)))
+         {
+            isSourceCall <- TRUE
+            inSource <- TRUE
+         }
          func <- .rs.untraced(sys.function(n))
          srcref <- attr(func, "srcref")
          if (!is.null(srcref) && 
              !is.null(attr(srcref, "srcfile")))
          {
-            # looks like user code--invoke the browser below
-            foundUserCode <- TRUE
-            break
+            if (inSource && !isSourceCall)
+            {
+               inSource <- FALSE
+            }
+            else
+            {
+               # looks like non-top-level user code--invoke the browser below
+               foundUserCode <- TRUE
+               break
+            }
          }
       }
    }

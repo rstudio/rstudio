@@ -318,8 +318,6 @@ public abstract class
    public abstract AppCommand errorsMessage();
    public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
-   public abstract AppCommand errorsInMyCode();
-   public abstract AppCommand errorsExpandTraceback();
    
    // Other
    public abstract AppCommand checkSpelling();   

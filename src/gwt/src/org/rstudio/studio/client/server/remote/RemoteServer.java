@@ -2934,19 +2934,6 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
-   public void setErrorsUserCodeOnly(
-         boolean userCode,
-         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, JSONBoolean.getInstance(userCode));
-      
-      sendRequest(RPC_SCOPE,
-            SET_ERRORS_USER_CODE_ONLY,
-            params,
-            requestCallback);
-   }
-
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3201,7 +3188,6 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
-   private static final String SET_ERRORS_USER_CODE_ONLY = "set_errors_user_code_only";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";

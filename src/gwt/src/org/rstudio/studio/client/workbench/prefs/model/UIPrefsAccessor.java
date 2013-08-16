@@ -278,6 +278,16 @@ public class UIPrefsAccessor extends Prefs
       return bool("restore_source_documents", true);
    }
    
+   public PrefValue<Boolean> handleErrorsInUserCodeOnly()
+   {
+      return bool("handle_errors_in_user_code_only", true);
+   }
+   
+   public PrefValue<Boolean> autoExpandErrorTracebacks()
+   {
+      return bool("auto_expand_error_tracebacks", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

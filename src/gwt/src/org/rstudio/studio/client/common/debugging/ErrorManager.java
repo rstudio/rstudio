@@ -31,7 +31,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.helper.BoolStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.inject.Inject;
@@ -58,12 +58,14 @@ public class ErrorManager
                        Binder binder, 
                        Commands commands, 
                        DebuggingServerOperations server,
-                       Session session)
+                       Session session,
+                       UIPrefs prefs)
    {
       events_ = events;
       server_ = server;
       commands_ = commands;
       session_ = session;
+      prefs_ = prefs;
       binder.bind(commands, this);
       
       events_.addHandler(UnhandledErrorEvent.TYPE, this);
@@ -114,31 +116,6 @@ public class ErrorManager
    public void onSessionInit(SessionInitEvent sie)
    {
       errorManagerState_ = session_.getSessionInfo().getErrorState();
-    
-      commands_.errorsInMyCode().setChecked(
-            errorManagerState_.getUserCodeOnly());
-      
-      new BoolStateValue("error-management", 
-            "expandErrorTracebacks", 
-            previousHandlerType_, 
-            session_.getSessionInfo().getClientState())
-      {
-         @Override
-         protected void onInit(Boolean value)
-         {
-            if (value != null)
-               expandErrorTracebacks_ = value.booleanValue();
-            commands_.errorsExpandTraceback().setChecked(
-                  expandErrorTracebacks_);      
-         }
-         
-         @Override
-         protected Boolean getValue()
-         {
-            return new Boolean(expandErrorTracebacks_);
-         }
-      };     
-      
       syncHandlerCommandsCheckedState();
    }
 
@@ -160,34 +137,6 @@ public class ErrorManager
       setErrorManagementTypeCommand(ErrorHandlerType.ERRORS_BREAK);
    }
    
-   @Handler
-   public void onErrorsInMyCode()
-   {
-      final boolean userCode = !errorManagerState_.getUserCodeOnly();
-      server_.setErrorsUserCodeOnly(userCode, 
-            new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onResponseReceived(Void v)
-         {
-            errorManagerState_.setUserCodeOnly(userCode);
-            commands_.errorsInMyCode().setChecked(userCode);
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });;
-   }
-
-   @Handler
-   public void onErrorsExpandTraceback()
-   {
-      expandErrorTracebacks_ = !expandErrorTracebacks_;
-      commands_.errorsExpandTraceback().setChecked(expandErrorTracebacks_);      
-   }
-      
    // Public methods ----------------------------------------------------------
 
    public UnhandledError consumeLastError()
@@ -224,7 +173,7 @@ public class ErrorManager
    
    public boolean getExpandTraceback()
    {
-      return expandErrorTracebacks_;
+      return prefs_.autoExpandErrorTracebacks().getGlobalValue();
    }
    
    // Private methods ---------------------------------------------------------
@@ -273,22 +222,17 @@ public class ErrorManager
             type == ErrorHandlerType.ERRORS_TRACEBACK);
       commands_.errorsBreak().setChecked(
             type == ErrorHandlerType.ERRORS_BREAK);
-      commands_.errorsInMyCode().setEnabled(
-            type == ErrorHandlerType.ERRORS_TRACEBACK ||
-            type == ErrorHandlerType.ERRORS_BREAK);
-      commands_.errorsExpandTraceback().setEnabled(
-            type == ErrorHandlerType.ERRORS_TRACEBACK);
    }
 
    private final EventBus events_;
    private final DebuggingServerOperations server_;
    private final Session session_;
    private final Commands commands_;
+   private final UIPrefs prefs_;
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
    private ErrorManagerState errorManagerState_; 
    private int previousHandlerType_;
    private UnhandledError lastError_;
-   private boolean expandErrorTracebacks_;
    private boolean debugMode_ = false;
 }

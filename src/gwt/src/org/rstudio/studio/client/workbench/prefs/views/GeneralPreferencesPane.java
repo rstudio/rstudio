@@ -169,7 +169,13 @@ public class GeneralPreferencesPane extends PreferencesPane
             }));
       nudgeRight(encoding_);
       textBoxWithChooser(encoding_);
+      spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
+      
+      add(checkboxPref("Handle only errors containing my code", 
+            prefs_.handleErrorsInUserCodeOnly()));
+      add(checkboxPref("Automatically expand error tracebacks", 
+            prefs_.autoExpandErrorTracebacks()));
             
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
