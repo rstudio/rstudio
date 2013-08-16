@@ -118,6 +118,14 @@ public class JavaScriptObject {
   }
 
   /**
+   * Clone() is not supported by JSOs but needs to be declared and final to catch accidental
+   * overrides.
+   */
+  protected final Object clone() throws CloneNotSupportedException {
+    throw new CloneNotSupportedException("GWT does not support Object.clone() for JSOs.");
+  }
+
+  /**
    * Returns <code>true</code> if the objects are JavaScript identical
    * (triple-equals).
    */
