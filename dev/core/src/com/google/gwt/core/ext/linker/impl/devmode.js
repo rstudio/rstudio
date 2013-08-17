@@ -389,7 +389,7 @@ function gwtOnLoad(errFn, moduleName, moduleBase, softPermutationId, computeProp
 
   var plugin = tryConnectingToPlugin(topWin.__gwt_SessionID, topWin.location.href);
   if (plugin == null) {
-    loadIframe("http://gwt.google.com/missing-plugin/");
+    loadIframe("http://www.gwtproject.org/missing-plugin/");
   } else {
     window.onUnload = disconnectPlugin();
   }
