@@ -27,11 +27,12 @@ import com.google.gwt.user.client.Event;
 
 /**
  * A mutually-exclusive selection radio button widget. Fires
- * {@link com.google.gwt.event.dom.client.ClickEvent}s
- * when the radio button is clicked, and {@link ValueChangeEvent}s when the
- * button becomes checked. Note, however, that browser limitations prevent
- * ValueChangeEvents from being sent when the radio button is cleared as a side
- * effect of another in the group being clicked.
+ * {@link com.google.gwt.event.dom.client.ClickEvent ClickEvents} when the
+ * radio button is clicked, and {@link ValueChangeEvent ValueChangeEvents}
+ * when the button becomes checked.
+ * Note, however, that browser limitations prevent ValueChangeEvents from
+ * being sent when the radio button is cleared as a side effect of another in
+ * the group being clicked.
  * 
  * <p>
  * <img class='gallery' src='doc-files/RadioButton.png'/>
