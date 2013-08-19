@@ -93,6 +93,7 @@ public:
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
    bool alwaysEnableRnwCorcordance() const;
+   bool handleErrorsInUserCodeOnly() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -157,6 +158,9 @@ public:
    bool viewDirAfterRCmdCheck() const;
    void setViewDirAfterRCmdCheck(bool viewDir);
 
+   int errorHandlerType() const;
+   void setErrorHandlerType(int type);
+
 private:
 
    void onSettingsFileChanged(
@@ -190,6 +194,7 @@ private:
    mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
    mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
+   mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
 };
    
 } // namespace session

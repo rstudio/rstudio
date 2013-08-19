@@ -56,16 +56,67 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-// given a context from the context stack, indicate whether it is executing a
-// user-defined function
-bool isUserFunctionContext(RCNTXT *pContext)
+SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
 {
-   return (pContext->callflag & CTXT_FUNCTION) &&
-         pContext->srcref;
+   SEXP callObject = pContext->callfun;
+   // enabling tracing on a function turns it into an S4 object with an
+   // 'original' slot that includes the function's original contents. use
+   // this instead if it's set up. (consider: is it safe to assume that S4
+   // objects here are always traced functions, or do we need to compare classes
+   // to be safe?)
+   if (Rf_isS4(callObject))
+   {
+      callObject = r::sexp::getAttrib(callObject, "original");
+   }
+   return callObject;
+}
+
+Error getFileNameFromContext(const RCNTXT* pContext,
+                             std::string* pFileName)
+{
+   SEXP srcref = pContext->srcref;
+   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                 .call(pFileName);
+}
+
+SEXP sourceRefsOfContext(const RCNTXT* pContext)
+{
+   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
+}
+
+bool hasSourceRefs(const RCNTXT* pContext)
+{
+   SEXP srcref = sourceRefsOfContext(pContext);
+   return srcref != NULL && TYPEOF(srcref) != NILSXP;
+}
+
+bool isDebugHiddenContext(RCNTXT* pContext)
+{
+   SEXP hideFlag = r::sexp::getAttrib(pContext->callfun, "hideFromDebugger");
+   return TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag);
+}
+
+// given a context from the context stack, indicate whether it should be emitted
+// to the callstack.
+bool isPrintableContext(RCNTXT* pContext)
+{
+   if (pContext->callflag & CTXT_FUNCTION)
+   {
+      if (isDebugHiddenContext(pContext))
+      {
+         // hidden function
+         return false;
+      }
+      // printable function
+      return true;
+   }
+   // not a function at all
+   return false;
 }
 
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
+                           bool findUserCode = false,
                            int* pFoundDepth = NULL,
                            SEXP* pEnvironment = NULL)
 {
@@ -73,11 +124,14 @@ RCNTXT* getFunctionContext(const int depth,
    int currentDepth = 0;
    while (pRContext->callflag)
    {
-      if (isUserFunctionContext(pRContext))
+      if (isPrintableContext(pRContext))
       {
-         if (++currentDepth == depth)
+         // if the caller asked us to find user code, don't stop unless the
+         // context we're examining has a source file attached
+         if (++currentDepth >= depth &&
+             !(findUserCode && !hasSourceRefs(pRContext)))
          {
-            break;
+             break;
          }
       }
       pRContext = pRContext->nextcontext;
@@ -117,41 +171,29 @@ bool inBrowseContext()
    return false;
 }
 
+// return whether the current context is being evaluated inside a hidden
+// (debugger internal) function.
+bool insideDebugHiddenFunction()
+{
+   RCNTXT* pRContext = r::getGlobalContext();
+   while (pRContext->callflag)
+   {
+      if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         if (isDebugHiddenContext(pRContext))
+            return true;
+      }
+      pRContext = pRContext->nextcontext;
+   }
+   return false;
+}
+
 Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
    return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
                             .call(pFunctionName);
 }
-
-SEXP getOriginalFunctionCallObject(const RCNTXT* pContext)
-{
-   SEXP callObject = pContext->callfun;
-   // enabling tracing on a function turns it into an S4 object with an
-   // 'original' slot that includes the function's original contents. use
-   // this instead if it's set up. (consider: is it safe to assume that S4
-   // objects here are always traced functions, or do we need to compare classes
-   // to be safe?)
-   if (Rf_isS4(callObject))
-   {
-      callObject = r::sexp::getAttrib(callObject, "original");
-   }
-   return callObject;
-}
-
-Error getFileNameFromContext(const RCNTXT* pContext,
-                             std::string* pFileName)
-{
-   SEXP srcref = pContext->srcref;
-   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
-                 .call(pFileName);
-}
-
-SEXP getFunctionSourceRefFromContext(const RCNTXT* pContext)
-{
-   return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
-}
-
 
 json::Array callFramesAsJson()
 {
@@ -163,7 +205,14 @@ json::Array callFramesAsJson()
 
    while (pRContext->callflag)
    {
-      if (isUserFunctionContext(pRContext))
+      // If this context is hidden from the debugger, we want to avoid
+      // delivering source refs for the context that invoked it. Pick up
+      // source refs from the next context in this case.
+      if (isDebugHiddenContext(pRContext))
+      {
+          pSrcContext = pRContext->nextcontext;
+      }
+      else if (isPrintableContext(pRContext))
       {
          json::Object varFrame;
          std::string functionName;
@@ -183,9 +232,7 @@ json::Array callFramesAsJson()
          std::string filename;
          error = getFileNameFromContext(pSrcContext, &filename);
          if (error)
-         {
             LOG_ERROR(error);
-         }
          varFrame["file_name"] = filename;
          sourceRefToJson(pSrcContext->srcref, &varFrame);
          pSrcContext = pRContext;
@@ -194,7 +241,7 @@ json::Array callFramesAsJson()
          // use this to compute the source location as an offset into the
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
-         SEXP srcRef = getFunctionSourceRefFromContext(pSrcContext);
+         SEXP srcRef = sourceRefsOfContext(pSrcContext);
          if (srcRef && TYPEOF(srcRef) != NILSXP)
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
@@ -269,16 +316,14 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
       return true;
    }
 
-   // next, look up the name of the source file that contains the file in
-   // question
-   std::string fileName;
-   SEXP srcRef = getFunctionSourceRefFromContext(pContext);
-   if (srcRef == NULL || TYPEOF(srcRef) == NILSXP)
+   // make sure the function has source references
+   if (!hasSourceRefs(pContext))
    {
       return true;
    }
 
-   return functionDiffersFromSource(srcRef, *pFunctionCode);
+   return functionDiffersFromSource(
+            sourceRefsOfContext(pContext), *pFunctionCode);
 }
 
 // create a JSON object that contains information about the current environment;
@@ -309,7 +354,7 @@ json::Value commonEnvironmentStateData(int depth)
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
-      if (isUserFunctionContext(pContext))
+      if ((pContext))
       {
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
@@ -378,7 +423,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    int depth = 0;
    SEXP environmentTop = NULL;
    RCNTXT* pRContext =
-         getFunctionContext(TOP_FUNCTION, &depth, &environmentTop);
+         getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
 
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
        depth != *pContextDepth ||
@@ -405,17 +450,21 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
-      enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
+      // we don't want to send linenumber updates if the current depth is inside
+      // a debug-hidden function
+      if (!insideDebugHiddenFunction())
+      {
+         enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
+      }
    }
 }
-
 
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, &contextDepth);
+   getFunctionContext(TOP_FUNCTION, true, &contextDepth);
    return commonEnvironmentStateData(contextDepth);
 }
 
@@ -428,7 +477,7 @@ Error initialize()
 
    // begin monitoring the environment
    SEXP environmentTop = NULL;
-   getFunctionContext(TOP_FUNCTION, pContextDepth.get(), &environmentTop);
+   getFunctionContext(TOP_FUNCTION, true, pContextDepth.get(), &environmentTop);
    s_environmentMonitor.setMonitoredEnvironment(environmentTop);
 
    // subscribe to events

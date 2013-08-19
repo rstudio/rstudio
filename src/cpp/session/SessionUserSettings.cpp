@@ -25,6 +25,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include "modules/SessionErrors.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -258,6 +259,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    json::Array spellingCustomDicts = readPref<core::json::Array>(prefs, "spelling_custom_dictionaries", core::json::Array());
    pSpellingCustomDicts_.reset(new json::Array(spellingCustomDicts));
+
+   bool handleErrorsInUserCodeOnly = readPref<bool>(prefs, "handle_errors_in_user_code_only", true);
+   pHandleErrorsInUserCodeOnly_.reset(new bool(handleErrorsInUserCodeOnly));
 }
 
 
@@ -296,6 +300,11 @@ bool UserSettings::alwaysEnableRnwCorcordance() const
 std::string UserSettings::spellingLanguage() const
 {
    return readUiPref<std::string>(pSpellingLanguage_);
+}
+
+bool UserSettings::handleErrorsInUserCodeOnly() const
+{
+   return readUiPref<bool>(pHandleErrorsInUserCodeOnly_);
 }
 
 std::vector<std::string> UserSettings::spellingCustomDictionaries() const
@@ -586,4 +595,15 @@ void UserSettings::setWorkingDirectoryValue(const std::string& key,
       settings_.set(key, filePath.absolutePath());
 }
 
-} // namespace session
+int UserSettings::errorHandlerType() const
+{
+   return settings_.getInt("errorHandlerType",
+                           modules::errors::ERRORS_TRACEBACK);
+}
+
+void UserSettings::setErrorHandlerType(int type)
+{
+   settings_.set("errorHandlerType", type);
+}
+
+}// namespace session

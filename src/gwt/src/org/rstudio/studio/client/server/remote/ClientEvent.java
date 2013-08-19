@@ -92,6 +92,8 @@ class ClientEvent extends JavaScriptObject
    public static final String PackageLoaded = "package_loaded";
    public static final String PackageUnloaded = "package_unloaded";
    public static final String PresentationPaneRequestCompleted = "presentation_pane_request_completed";
+   public static final String UnhandledError = "unhandled_error";
+   public static final String ErrorHandlerChanged = "error_handler_changed";
 
    protected ClientEvent()
    {

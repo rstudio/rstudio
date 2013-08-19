@@ -69,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
-import org.rstudio.studio.client.workbench.views.environment.view.CallFrameItem;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
@@ -495,7 +494,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       String file = currentBrowseFile_;
       
-      if (!CallFrameItem.isNavigableFilename(file))
+      if (!CallFrame.isNavigableFilename(file))
       {
          return;
       }

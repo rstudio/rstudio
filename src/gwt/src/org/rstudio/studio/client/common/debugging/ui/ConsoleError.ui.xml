@@ -1,0 +1,68 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+	
+   .consoleErrorBox {
+      position: relative;
+      overflow: hidden;
+      margin: 5px 5px 5px 0px;
+      padding: 5px 0px 5px 0px;
+   }
+
+   .consoleErrorCommands {
+      top: 5px;
+      float: right;
+      margin-right: 10px;
+      margin-bottom: 15px;
+      line-height: 80%;
+      position: relative;
+   }
+   
+   .errorCommandText {
+      font-family: proportionalFont;
+      font-size: 80%;
+      opacity: 0.50;
+      cursor: pointer;
+   }
+   
+   .errorCommandText:hover {
+      opacity: 1;
+   }
+   
+   .errorCommandImage {
+      cursor: pointer;
+   }
+   
+   .errorMessage {
+      display: inline;
+   }
+   
+   .framePanel {
+      margin-top: 1em;
+      margin-left: 0.5em;
+   }
+	</ui:style>
+   <ui:image src="traceback.png" field="traceback"></ui:image>
+   <ui:image src="rerun.png" field="rerun"></ui:image>
+	<g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
+	  <g:HTMLPanel styleName="{style.consoleErrorCommands}">
+	     <g:HTMLPanel>
+		     <g:Image resource="{traceback}" ui:field="showTracebackImage" styleName="{style.errorCommandImage}"></g:Image>
+		     <g:Anchor styleName="{style.errorCommandText}" ui:field="showTracebackText">
+		        Show Traceback
+		     </g:Anchor>
+	     </g:HTMLPanel>
+        <g:HTMLPanel>
+           <g:Image resource="{rerun}" ui:field="rerunImage" styleName="{style.errorCommandImage}"></g:Image>
+           <g:Anchor styleName="{style.errorCommandText}" ui:field="rerunText">
+              Rerun with Debug
+           </g:Anchor>
+        </g:HTMLPanel>
+	  </g:HTMLPanel>
+     <g:Label ui:field="errorMessage" styleName="{style.errorMessage}"></g:Label>
+	  <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
+	  </g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

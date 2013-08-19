@@ -103,14 +103,15 @@ public class CallFramePanel extends ResizeComposite
          CallFrame frame = frameList.get(idx);
          
          // hide the portion of the callstack containing our source-for-debug
-         // functions
-         if (frame.getFunctionName().contains(".rs.executeDebugSource") ||
+         // functions, and inline evaluations
+         if (frame.getFunctionName().equals(".rs.executeDebugSource") ||
+             frame.getFunctionName().equals("eval") || 
              frame.getFileName().contains("SessionBreakpoints.R"))
          {
             continue;
          }
          
-         if (CallFrameItem.isNavigableFilename(frame.getFileName())) 
+         if (frame.isNavigable())
          {
             encounteredUserCode = true;
          }
@@ -161,12 +162,9 @@ public class CallFramePanel extends ResizeComposite
       return isMinimized_;
    }
 
-   @UiField
-   HTMLPanel callFramePanel;
-   @UiField
-   CallFramePanelStyle style;
-   @UiField
-   LayoutPanel callFramePanelHeader;
+   @UiField HTMLPanel callFramePanel;
+   @UiField CallFramePanelStyle style;
+   @UiField LayoutPanel callFramePanelHeader;
    
    Observer observer_;
    CallFramePanelHost panelHost_;

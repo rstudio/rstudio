@@ -53,4 +53,8 @@ public interface DebuggingServerOperations
          int step, 
          int mode, 
          ServerRequestCallback<TopLevelLineData> requestCallback);
+   
+   public void setErrorManagementType(
+         int type,
+         ServerRequestCallback<Void> requestCallback);
 }

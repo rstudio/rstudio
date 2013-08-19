@@ -30,6 +30,9 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -65,7 +68,8 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleRestartRCompletedEvent.Handler,
                               ConsoleExecutePendingInputEvent.Handler,
                               SendToConsoleHandler,
-                              DebugModeChangedEvent.Handler
+                              DebugModeChangedEvent.Handler,
+                              RunCommandWithDebugEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -85,7 +89,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 GlobalDisplay globalDisplay,
                 Commands commands,
-                UIPrefs uiPrefs)
+                UIPrefs uiPrefs, 
+                ErrorManager errorManager)
    {
       super() ;
 
@@ -96,8 +101,10 @@ public class Shell implements ConsoleInputHandler,
       view_ = display ;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      errorManager_ = errorManager;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
+      prefs_ = uiPrefs;
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
@@ -123,6 +130,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(ConsoleExecutePendingInputEvent.TYPE, this);
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
+      eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -234,9 +242,31 @@ public class Shell implements ConsoleInputHandler,
       view_.consoleWriteOutput(event.getOutput()) ;
    }
 
-   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
+   public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
    {
-      view_.consoleWriteError(event.getError()) ;
+      // when writing an error, wait for event queue to empty -- if it contains
+      // a callstack emitted from our custom error handler, we'll want to wire 
+      // that up at once. 
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {         
+         @Override
+         public void execute()
+         {
+            UnhandledError err = errorManager_.consumeLastError();
+            if (err != null
+                && err.getErrorMessage().equals(event.getError()))
+            {
+               view_.consoleWriteExtendedError(
+                     event.getError(), err, 
+                     prefs_.autoExpandErrorTracebacks().getValue(),
+                     historyManager_.getHistoryEntry(-1));
+            }
+            else
+            {
+               view_.consoleWriteError(event.getError());
+            }
+         }
+      });
    }
    
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
@@ -365,6 +395,29 @@ public class Shell implements ConsoleInputHandler,
       {
          view_.ensureInputVisible();
       }
+   }
+   
+   @Override
+   public void onRunCommandWithDebug(final RunCommandWithDebugEvent event)
+   {
+      // Invoked from the "Rerun with Debug" command in the ConsoleError widget.
+      errorManager_.setDebugSessionHandlerType(
+            ErrorHandlerType.ERRORS_BREAK,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  eventBus_.fireEvent(new SendToConsoleEvent(
+                        event.getCommand(), true));
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  // if we failed to set debug mode, don't rerun the command
+               }
+            }); 
    }
 
    private final class InputKeyDownHandler implements KeyDownHandler,
@@ -536,12 +589,14 @@ public class Shell implements ConsoleInputHandler,
    private final Display view_ ;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
+   private final ErrorManager errorManager_;
    private final InputEditorDisplay input_ ;
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
+   private final UIPrefs prefs_;
 
    private final CommandLineHistory historyManager_;
    

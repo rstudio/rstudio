@@ -126,3 +126,4 @@ background-color:#E92E2E;
 .ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(49, 49, 49);}
 .ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: rgb(85, 85, 85);}
 .ace_marker-layer .ace_active_debug_line {position: absolute; z-index: -1; background-color: rgb(140, 123, 40);}
+.ace_console_error { background-color: rgb(49, 49, 49); }
