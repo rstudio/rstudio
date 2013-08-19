@@ -172,7 +172,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
       
-      add(checkboxPref("Handle only errors containing my code", 
+      add(checkboxPref(
+            "Use debug error handler only when errors contain my code", 
             prefs_.handleErrorsInUserCodeOnly()));
       add(checkboxPref("Automatically expand error tracebacks", 
             prefs_.autoExpandErrorTracebacks()));

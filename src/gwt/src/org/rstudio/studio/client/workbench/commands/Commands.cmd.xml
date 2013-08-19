@@ -1258,12 +1258,12 @@ well as menu structures (for main menu and popup menus).
         desc="Guide to debugging features"/>
    
    <cmd id="errorsMessage"
-        menuLabel="_Show Message Only"
+        menuLabel="_Message Only"
         desc="Print the error message when an unhandled error occurs"
         checkable="true"/>
    <cmd id="errorsTraceback"
-        menuLabel="Show _Traceback"
-        desc="Show a traceback when an unhandled error occurs"
+        menuLabel="_Error Inspector"
+        desc="Show the error inspector when an unhandled error occurs"
         checkable="true"/>
    <cmd id="errorsBreak"
         menuLabel="_Break in Code"
