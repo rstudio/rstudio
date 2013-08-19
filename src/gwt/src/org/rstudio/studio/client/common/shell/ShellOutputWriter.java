@@ -14,9 +14,14 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+
 public interface ShellOutputWriter 
 {
-   void consoleWriteError(String string) ;
+   void consoleWriteError(String string);
+   void consoleWriteExtendedError(
+         String string, UnhandledError traceInfo, 
+         boolean expand, String command);
    void consoleWriteOutput(String output) ;
    void consoleWritePrompt(String prompt);
 }

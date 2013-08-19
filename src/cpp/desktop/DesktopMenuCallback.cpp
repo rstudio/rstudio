@@ -112,7 +112,8 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 void MenuCallback::addCommand(QString commandId,
                               QString label,
                               QString tooltip,
-                              QString shortcut)
+                              QString shortcut,
+                              bool checkable)
 {
    shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromAscii("\n"));
 
@@ -138,6 +139,8 @@ void MenuCallback::addCommand(QString commandId,
                                             keySequence);
       pAction->setData(commandId);
       pAction->setToolTip(tooltip);
+      if (checkable)
+         pAction->setCheckable(true);
 
       MenuActionBinder* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),

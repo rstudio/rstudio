@@ -38,7 +38,8 @@ public slots:
     void addCommand(QString commandId,
                     QString label,
                     QString tooltip,
-                    QString shortcut);
+                    QString shortcut,
+                    bool isCheckable);
     void addSeparator();
     void endMenu();
     void endMainMenu();

@@ -173,45 +173,14 @@ public class Toolbar extends Composite
    
    public Widget addLeftPopupMenu(Label label, final ToolbarPopupMenu menu)
    {
-      return addLeftPopupMenu(label, new MenuSource() {
+      return addToolbarPopupMenu(label, menu, true);
+   }
 
-         @Override
-         public ToolbarPopupMenu getMenu()
-         {
-            return menu;
-         }
-      });
+   public Widget addRightPopupMenu(Label label, final ToolbarPopupMenu menu)
+   {
+      return addToolbarPopupMenu(label, menu, false);
    }
    
-   public Widget addLeftPopupMenu(final Label label, 
-                                  final MenuSource menuSource)
-   {
-      label.setStylePrimaryName("rstudio-StrongLabel") ;
-      label.setWordWrap(false);
-      label.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
-      label.getElement().getStyle().setOverflow(Overflow.HIDDEN);
-      addLeftWidget(label) ;
-      Image image = new Image(ThemeResources.INSTANCE.menuDownArrow());
-      image.getElement().getStyle().setMarginLeft(5, Unit.PX);
-      image.getElement().getStyle().setMarginRight(8, Unit.PX);
-      image.getElement().getStyle().setMarginBottom(2, Unit.PX);
-      addLeftWidget(image);
-
-      final ClickHandler clickHandler = new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            ToolbarPopupMenu menu = menuSource.getMenu();
-            menu.showRelativeTo(label);
-            menu.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
-         }
-      };
-      label.addClickHandler(clickHandler);
-      image.addClickHandler(clickHandler);
-      
-      return image;
-   }
-
    public Widget addLeftSeparator()
    {
       Image sep = new Image(ThemeResources.INSTANCE.toolbarSeparator());
@@ -261,8 +230,7 @@ public class Toolbar extends Composite
    {
       removeLeftWidgets();
       removeRightWidgets();
-   }
-   
+   }   
 
    public int getHeight()
    {
@@ -278,6 +246,57 @@ public class Toolbar extends Composite
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)
          panel.remove(i);
    }
+
+   private Widget addToolbarPopupMenu(
+         Label label, 
+         final ToolbarPopupMenu menu,
+         boolean left)
+   {
+      return addPopupMenu(label, new MenuSource() {
+         @Override
+         public ToolbarPopupMenu getMenu()
+         {
+            return menu;
+         }
+      }, left);
+   }
+
+   private Widget addPopupMenu(final Label label, 
+         final MenuSource menuSource,
+         boolean left)
+   {
+      label.setStylePrimaryName("rstudio-StrongLabel") ;
+      label.setWordWrap(false);
+      label.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
+      label.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+      if (left)
+         addLeftWidget(label);
+      else
+         addRightWidget(label);
+      Image image = new Image(ThemeResources.INSTANCE.menuDownArrow());
+      image.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      image.getElement().getStyle().setMarginRight(8, Unit.PX);
+      image.getElement().getStyle().setMarginBottom(2, Unit.PX);
+      if (left)
+         addLeftWidget(image);
+      else
+         addRightWidget(image);
+      
+      final ClickHandler clickHandler = new ClickHandler()
+      {
+         public void onClick(ClickEvent event)
+         {
+            ToolbarPopupMenu menu = menuSource.getMenu();
+            menu.showRelativeTo(label);
+            menu.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
+         }
+      };
+      label.addClickHandler(clickHandler);
+      image.addClickHandler(clickHandler);
+      
+      return image;
+   }
+   
 
    private HorizontalPanel horizontalPanel_ ;
    private HorizontalPanel leftToolbarPanel_ ;

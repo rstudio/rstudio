@@ -51,9 +51,7 @@ public class CommandLineHistory
 
    public void navigateHistory(int offset)
    {
-      int newPos = historyPos_ + offset;
-
-      newPos = Math.max(0, Math.min(newPos, history_.size()));
+      int newPos = getPositionAtOffset(offset);
 
       if (newPos == historyPos_)
          return; // no-op due to boundary limits
@@ -69,11 +67,23 @@ public class CommandLineHistory
             "");
       historyPos_ = newPos;
    }
+   
+   public String getHistoryEntry(int offset)
+   {
+      int pos = getPositionAtOffset(offset);
+      return history_.get(pos);
+   }
 
    public void resetPosition()
    {
       historyPos_ = history_.size();
       historyTail_ = "";
+   }
+   
+   private int getPositionAtOffset(int offset)
+   {
+      int pos = historyPos_ + offset;
+      return Math.max(0, Math.min(pos, history_.size()));
    }
 
    private final ArrayList<String> history_ = new ArrayList<String>() ;

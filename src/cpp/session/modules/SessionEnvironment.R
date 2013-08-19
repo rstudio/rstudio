@@ -114,7 +114,13 @@
 
 .rs.addFunction("sourceFileFromRef", function(srcref)
 {
-    return(capture.output(print(attr(srcref, "srcfile"))))
+   if (!is.null(srcref))
+   {
+      fileattr <- attr(srcref, "srcfile")
+      fileattr$filename
+   }
+   else
+      ""
 })
 
 .rs.addFunction("sourceCodeFromFunction", function(fun)

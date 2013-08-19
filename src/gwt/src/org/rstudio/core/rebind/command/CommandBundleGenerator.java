@@ -315,7 +315,9 @@ class CommandBundleGeneratorHelper
       setPropertyBool(writer, name, props.get(name), "enabled");
       setPropertyBool(writer, name, props.get(name),
                       "preventShortcutWhenDisabled");
-
+      setPropertyBool(writer, name, props.get(name), "checkable");
+      setPropertyBool(writer, name, props.get(name), "checked");
+      
       if (images.hasImage(name))
       {
          writer.println(name + "_.setImageResource("

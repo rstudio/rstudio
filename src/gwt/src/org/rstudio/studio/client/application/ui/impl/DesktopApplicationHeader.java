@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -66,7 +67,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           final Session session,
                           WorkbenchServerOperations server,
                           Provider<DesktopHooks> pDesktopHooks,
-                          Provider<CodeSearch> pCodeSearch)
+                          Provider<CodeSearch> pCodeSearch,
+                          ErrorManager errorManager)
    {
       session_ = session;
       eventBus_= events;

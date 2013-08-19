@@ -17,9 +17,12 @@
 .rs.Env <- attach(NULL,name="tools:rstudio")
 
 # add a function to the tools:rstudio environment
-assign( envir = .rs.Env, ".rs.addFunction", function(name, FN)
+assign( envir = .rs.Env, ".rs.addFunction", function(
+   name, FN, hideFromDebugger = FALSE)
 { 
    fullName = paste(".rs.", name, sep="")
+   if (hideFromDebugger)
+      attr(FN, "hideFromDebugger") <- TRUE
    assign(fullName, FN, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
@@ -445,7 +448,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 .rs.addFunction( "addJsonRpcHandler", function(name, FN)
 {
    fullName = paste("rpc.", name, sep="")
-   .rs.addFunction(fullName, FN)
+   .rs.addFunction(fullName, FN, TRUE)
 })
 
 # list all rpc handlers in the tools:rstudio environment
@@ -514,7 +517,30 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
   as.list(call)[-1]
 })
 
+.rs.addFunction("isTraced", function(fun) {
+   isS4(fun) && class(fun) == "functionWithTrace"
+})
 
+# when a function is traced, some data about the function (such as its original
+# body and source references) exist only on the untraced copy
+.rs.addFunction("untraced", function(fun) {
+   if (.rs.isTraced(fun)) 
+      fun@original
+   else
+      fun
+})
 
+.rs.addFunction("getSrcref", function(fun) {
+   attr(.rs.untraced(fun), "srcref")
+})
 
+# returns a list containing line data from the given source reference,
+# formatted for output to the client
+.rs.addFunction("lineDataList", function(srcref) {
+   list(
+      line_number = .rs.scalar(srcref[1]),
+      end_line_number = .rs.scalar(srcref[3]),
+      character_number = .rs.scalar(srcref[5]),
+      end_character_number = .rs.scalar(srcref[6]))
+})
 
