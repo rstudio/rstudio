@@ -217,6 +217,11 @@ public class ValidationTool {
   }
 
   public static boolean exec(String[] args, JavaCompiler compiler) throws IOException {
+    return exec(args, compiler, null);
+  }
+
+  public static boolean exec(String[] args, JavaCompiler compiler, Iterable<String> javacOpts)
+      throws IOException {
     if (args.length < 2) {
       System.err.println("java -cp requestfactory-client.jar:your_server-code.jar "
           + ValidationTool.class.getCanonicalName()
@@ -258,7 +263,7 @@ public class ValidationTool {
 
     // Create the compilation task
     CompilationTask task =
-        compiler.getTask(null, fileManager, null, null, null, Arrays
+        compiler.getTask(null, fileManager, null, javacOpts, null, Arrays
             .asList(new FakeJavaFileObject()));
     task.setProcessors(Arrays.asList(processor));
     if (!task.call()) {

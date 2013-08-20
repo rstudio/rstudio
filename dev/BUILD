@@ -137,6 +137,11 @@ java_library(
         ["core/src/**/*.java"],
         exclude = ["**/package-info.java"],
     ),
+    # Temporary workaround to ensure Java 6 compatible class files after Java
+    # 7 upgrade.
+    # TODO: only the requestfactory client should be required to be Android
+    # compatible.
+    constraints = ["android"],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
@@ -215,6 +220,7 @@ java_library(
             "**/package-info.java",
         ],
     ),
+    constraints = ["android"],
     javacopts = [
         "-encoding utf8",
         "-source 5",
