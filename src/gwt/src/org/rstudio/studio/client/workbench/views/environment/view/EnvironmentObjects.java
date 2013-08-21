@@ -162,7 +162,7 @@ public class EnvironmentObjects extends ResizeComposite
       // if the object is already in the environment, just update the value
       if (idx >= 0)
       {
-         RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
+         final RObjectEntry oldEntry = objectDataProvider_.getList().get(idx);
 
          if (oldEntry.rObject.getType().equals(obj.getType()))
          {
@@ -170,12 +170,34 @@ public class EnvironmentObjects extends ResizeComposite
             newEntry.expanded = oldEntry.expanded;
             objectDataProvider_.getList().set(idx, newEntry);
             added = true;
+            
+            // pulse the value by adding and then immediately removing a class
+            // that supplies a background color
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  oldEntry.getDescriptionElement().addClassName(
+                        style.valueColNew());
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        oldEntry.getDescriptionElement().removeClassName(
+                              style.valueColNew());
+                     }
+                  });
+               }
+            });
          }
          else
          {
             // types did change, do a full add/remove
             objectDataProvider_.getList().remove(idx);
          }
+         
       }
       if (!added)
       {
@@ -428,7 +450,7 @@ public class EnvironmentObjects extends ResizeComposite
                   public String getValue(RObjectEntry object)
                   {
                      String val = object.rObject.getValue();
-                     return val == "NO_VALUE" ?
+                     return val == RObjectEntry.NO_VALUE ?
                             object.rObject.getDescription() :
                             val;
                   }
@@ -665,10 +687,13 @@ public class EnvironmentObjects extends ResizeComposite
          {
             styleName += (" " + style.clickableCol());
          }
+         String size = rowValue.rObject.getSize() > 0 ?
+                              ", " + rowValue.rObject.getSize() + " bytes" :
+                              "";
          nameCol.className(styleName);
          nameCol.title(
                  rowValue.rObject.getName() +
-                 " (" + rowValue.rObject.getType() + ")");
+                 " (" + rowValue.rObject.getType() + size + ")");
          renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
       }
@@ -679,7 +704,7 @@ public class EnvironmentObjects extends ResizeComposite
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
-         if ((!title.equals("NO_VALUE")) &&
+         if ((!title.equals(RObjectEntry.NO_VALUE)) &&
              title != null)
          {
             if (rowValue.isPromise())
@@ -701,6 +726,7 @@ public class EnvironmentObjects extends ResizeComposite
                                  style.clickableCol());
          }
          descCol.className(descriptionStyle);
+         descCol.id(rowValue.getDescriptionId());
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
          descCol.endTD();
       }
