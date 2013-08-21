@@ -34,4 +34,16 @@ public class HtmlTableColBuilderTest extends ElementBuilderTestBase<TableColBuil
   protected TableColBuilder startElement(ElementBuilderBase<?> builder) {
     return builder.startCol();
   }
+
+  /**
+   * Test that colgroup elements can contain col elements.
+   */
+  public void testColgroupContainsCol() {
+    for (ElementBuilderFactory factory : getFactories()) {
+      TableColBuilder colgroup = factory.createColGroupBuilder();
+      colgroup.startCol();
+      colgroup.endCol();
+      colgroup.endColGroup();
+    }
+  }
 }

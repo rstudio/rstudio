@@ -21,8 +21,8 @@ package com.google.gwt.dom.builder.shared;
 public class HtmlTableColBuilder extends HtmlElementBuilderBase<TableColBuilder> implements
     TableColBuilder {
 
-  HtmlTableColBuilder(HtmlBuilderImpl delegate) {
-    super(delegate, true);
+  HtmlTableColBuilder(HtmlBuilderImpl delegate, boolean group) {
+    super(delegate, !group);
   }
 
   @Override

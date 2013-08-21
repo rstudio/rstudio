@@ -122,6 +122,7 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
   private final HtmlTableCellBuilder tableCellBuilder = new HtmlTableCellBuilder(this);
   private HtmlTableCaptionBuilder tableCaptionBuilder;
   private HtmlTableColBuilder tableColBuilder;
+  private HtmlTableColBuilder tableColGroupBuilder;
   private final HtmlTableRowBuilder tableRowBuilder = new HtmlTableRowBuilder(this);
   private HtmlTableSectionBuilder tableSectionBuilder;
   private HtmlTextAreaBuilder textAreaBuilder;
@@ -228,11 +229,19 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
   }
 
   public HtmlTableColBuilder startCol() {
-    return startTableCol(TableColElement.TAG_COL);
+    if (tableColBuilder == null) {
+      tableColBuilder = new HtmlTableColBuilder(this, false);
+    }
+    trustedStart(TableColElement.TAG_COL, tableColBuilder);
+    return tableColBuilder;
   }
 
   public HtmlTableColBuilder startColGroup() {
-    return startTableCol(TableColElement.TAG_COLGROUP);
+    if (tableColGroupBuilder == null) {
+      tableColGroupBuilder = new HtmlTableColBuilder(this, true);
+    }
+    trustedStart(TableColElement.TAG_COLGROUP, tableColGroupBuilder);
+    return tableColGroupBuilder;
   }
 
   public HtmlDivBuilder startDiv() {
@@ -723,17 +732,6 @@ class HtmlBuilderImpl extends ElementBuilderImpl {
     }
     trustedStart(tagName, quoteBuilder);
     return quoteBuilder;
-  }
-
-  /**
-   * Start a table col or colgroup.
-   */
-  private HtmlTableColBuilder startTableCol(String tagName) {
-    if (tableColBuilder == null) {
-      tableColBuilder = new HtmlTableColBuilder(this);
-    }
-    trustedStart(tagName, tableColBuilder);
-    return tableColBuilder;
   }
 
   /**

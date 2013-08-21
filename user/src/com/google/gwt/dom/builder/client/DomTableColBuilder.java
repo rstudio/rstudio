@@ -24,8 +24,8 @@ import com.google.gwt.dom.client.TableColElement;
 public class DomTableColBuilder extends DomElementBuilderBase<TableColBuilder, TableColElement>
     implements TableColBuilder {
 
-  DomTableColBuilder(DomBuilderImpl delegate) {
-    super(delegate, true);
+  DomTableColBuilder(DomBuilderImpl delegate, boolean group) {
+    super(delegate, !group);
   }
 
   @Override

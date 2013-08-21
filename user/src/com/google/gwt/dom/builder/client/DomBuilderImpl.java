@@ -25,7 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.QuoteElement;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.TableColElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.safehtml.shared.SafeHtml;
 
@@ -85,6 +84,7 @@ class DomBuilderImpl extends ElementBuilderImpl {
   private final DomTableCellBuilder tableCellBuilder = new DomTableCellBuilder(this);
   private DomTableCaptionBuilder tableCaptionBuilder;
   private DomTableColBuilder tableColBuilder;
+  private DomTableColBuilder tableColGroupBuilder;
   private final DomTableRowBuilder tableRowBuilder = new DomTableRowBuilder(this);
   private DomTableSectionBuilder tableSectionBuilder;
   private DomTextAreaBuilder textAreaBuilder;
@@ -171,11 +171,19 @@ class DomBuilderImpl extends ElementBuilderImpl {
   }
 
   public DomTableColBuilder startCol() {
-    return startTableCol(Document.get().createColElement());
+    if (tableColBuilder == null) {
+      tableColBuilder = new DomTableColBuilder(this, false);
+    }
+    start(Document.get().createColElement(), tableColBuilder);
+    return tableColBuilder;
   }
 
   public DomTableColBuilder startColGroup() {
-    return startTableCol(Document.get().createColGroupElement());
+    if (tableColGroupBuilder == null) {
+      tableColGroupBuilder = new DomTableColBuilder(this, true);
+    }
+    start(Document.get().createColGroupElement(), tableColGroupBuilder);
+    return tableColGroupBuilder;
   }
 
   public DomDivBuilder startDiv() {
@@ -683,17 +691,6 @@ class DomBuilderImpl extends ElementBuilderImpl {
     }
     start(quote, quoteBuilder);
     return quoteBuilder;
-  }
-
-  /**
-   * Start a table col or colgroup.
-   */
-  private DomTableColBuilder startTableCol(TableColElement element) {
-    if (tableColBuilder == null) {
-      tableColBuilder = new DomTableColBuilder(this);
-    }
-    start(element, tableColBuilder);
-    return tableColBuilder;
   }
 
   /**
