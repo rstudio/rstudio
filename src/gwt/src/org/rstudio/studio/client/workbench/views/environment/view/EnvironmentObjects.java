@@ -305,6 +305,7 @@ public class EnvironmentObjects extends ResizeComposite
    public void setFilterText (String filterText)
    {
       filterText_ = filterText;
+      boolean hasFilter = !filterText_.isEmpty();
 
       // Iterate over each entry in the list, and toggle its visibility based 
       // on whether it matches the current filter text.
@@ -313,10 +314,11 @@ public class EnvironmentObjects extends ResizeComposite
       {
          RObjectEntry entry = objects.get(i);
          boolean visible = matchesFilter(entry.rObject);
-         if (visible != entry.visible)
+         // Redraw the object if its visibility status has changed, or if it's
+         // visible and there's a filter (so we can show the search highlight)
+         if (visible != entry.visible ||
+             visible && hasFilter)
          {
-            // Entry has become hidden (or visible) as a result of a change to
-            // the filter--switch its flag and redraw it.
             entry.visible = visible;
             objectList_.redrawRow(i);
          }
@@ -438,9 +440,38 @@ public class EnvironmentObjects extends ResizeComposite
    // create each column for the data grid
    private void createColumns()
    {
+      AbstractSafeHtmlRenderer<String> filterRenderer = 
+            new AbstractSafeHtmlRenderer<String>()
+      {
+         @Override
+         public SafeHtml render(String str)
+         {
+            SafeHtmlBuilder sb = new SafeHtmlBuilder();
+            boolean hasMatch = false;
+            if (filterText_.length() > 0)
+            {
+               int idx = str.indexOf(filterText_);
+               if (idx >= 0)
+               {
+                  hasMatch = true;
+                  sb.appendEscaped(str.substring(0, idx));
+                  sb.appendHtmlConstant(
+                        "<span class=\"" + style.filterMatch() + "\">");
+                  sb.appendEscaped(str.substring(idx, 
+                        idx + filterText_.length()));
+                  sb.appendHtmlConstant("</span>");
+                  sb.appendEscaped(str.substring(idx + filterText_.length(), 
+                        str.length()));
+               }
+            }
+            if (!hasMatch)
+               sb.appendEscaped(str);
+            return sb.toSafeHtml();
+         }
+      };
       createExpandColumn();
-      createNameColumn();
-      createDescriptionColumn();
+      createNameColumn(filterRenderer);
+      createDescriptionColumn(filterRenderer);
    }
 
    // attaches a handler to a column that invokes the associated object
@@ -460,11 +491,11 @@ public class EnvironmentObjects extends ResizeComposite
       });
    }
 
-   private void createNameColumn()
+   private void createNameColumn(SafeHtmlRenderer<String> renderer)
    {
       // the name of the object (simple text column)
       objectNameColumn_ = new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+              new ClickableTextCell(renderer))
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -475,12 +506,12 @@ public class EnvironmentObjects extends ResizeComposite
       attachClickToInvoke(objectNameColumn_);
    }
 
-   private void createDescriptionColumn()
+   private void createDescriptionColumn(SafeHtmlRenderer<String> renderer)
    {
       // the description *or* value of the object; when clicked, we'll view
       // or edit the data inside the object.
       objectDescriptionColumn_ = new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+              new ClickableTextCell(renderer))
               {
                   @Override
                   public String getValue(RObjectEntry object)
