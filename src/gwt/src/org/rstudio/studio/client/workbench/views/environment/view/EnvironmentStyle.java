@@ -38,5 +38,6 @@ interface EnvironmentStyle extends CssResource
    String widthSettingRow();
    String dataFrameValueCol();
    String environmentPanel();
+   String filterMatch();
 }
 
