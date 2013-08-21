@@ -39,11 +39,13 @@ public class RObjectEntry
    }
 
    // make a new entry in the pane from an R object
-   RObjectEntry(RObject obj)
+   RObjectEntry(RObject obj, boolean isVisible)
    {
       rObject = obj;
       expanded = false;
       isCategoryLeader = false;
+      visible = isVisible;
+      isFirstObject = false;
    }
 
    // show expander for objects that have contents
@@ -104,4 +106,6 @@ public class RObjectEntry
    RObject rObject;
    boolean expanded;
    boolean isCategoryLeader;
+   boolean visible;
+   boolean isFirstObject;
 }

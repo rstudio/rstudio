@@ -17,11 +17,15 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SuggestOracle;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -89,11 +93,32 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
+
+      SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
+         }
+      });
+      searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            objects_.setFilterText(event.getValue());
+         }
+      });
+
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
       toolbar.addRightWidget(functionIndicator_);
       toolbar.addRightWidget(environmentName_);
-      toolbar.addRightWidget(commands_.refreshEnvironment().createToolbarButton());
+      toolbar.addRightWidget(searchWidget);
 
       return toolbar;
    }

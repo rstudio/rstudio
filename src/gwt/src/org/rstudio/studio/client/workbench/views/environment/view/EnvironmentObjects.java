@@ -156,7 +156,7 @@ public class EnvironmentObjects extends ResizeComposite
    public void addObject(RObject obj)
    {
       int idx = indexOfExistingObject(obj.getName());
-      RObjectEntry newEntry = new RObjectEntry(obj);
+      RObjectEntry newEntry = entryFromRObject(obj);
       boolean added = false;
 
       // if the object is already in the environment, just update the value
@@ -201,7 +201,7 @@ public class EnvironmentObjects extends ResizeComposite
       }
       if (!added)
       {
-         RObjectEntry entry = new RObjectEntry(obj);
+         RObjectEntry entry = entryFromRObject(obj);
          idx = indexOfNewObject(entry);
          objectDataProvider_.getList().add(idx, entry);
       }
@@ -233,7 +233,8 @@ public class EnvironmentObjects extends ResizeComposite
       ArrayList<RObjectEntry> objectEntryList = new ArrayList<RObjectEntry>();
       for (int i = 0; i < numObjects; i++)
       {
-         objectEntryList.add(new RObjectEntry(objects.get(i)));
+         RObjectEntry entry = entryFromRObject(objects.get(i));
+         objectEntryList.add(entry);
       }
       Collections.sort(objectEntryList, new RObjectEntrySort());
 
@@ -300,6 +301,29 @@ public class EnvironmentObjects extends ResizeComposite
    {
       callFramePanel_.updateLineNumber(newLineNumber);
    }
+   
+   public void setFilterText (String filterText)
+   {
+      filterText_ = filterText;
+
+      // Iterate over each entry in the list, and toggle its visibility based 
+      // on whether it matches the current filter text.
+      List<RObjectEntry> objects = objectDataProvider_.getList();
+      for (int i = 0; i < objects.size(); i++)
+      {
+         RObjectEntry entry = objects.get(i);
+         boolean visible = matchesFilter(entry.rObject);
+         if (visible != entry.visible)
+         {
+            // Entry has become hidden (or visible) as a result of a change to
+            // the filter--switch its flag and redraw it.
+            entry.visible = visible;
+            objectList_.redrawRow(i);
+         }
+      }
+
+      updateCategoryLeaders(true);
+   }
 
    // CallFramePanelHost implementation ---------------------------------------
 
@@ -365,10 +389,22 @@ public class EnvironmentObjects extends ResizeComposite
 
       // whether or not we've found a leader for each category
       Boolean[] leaders = { false, false, false };
+      boolean foundFirstObject = false;
 
       for (int i = 0; i < objects.size(); i++)
       {
          RObjectEntry entry = objects.get(i);
+         if (!entry.visible)
+            continue;
+         if (!foundFirstObject)
+         {
+            entry.isFirstObject = true;
+            foundFirstObject = true;
+         }
+         else
+         {
+            entry.isFirstObject = false;
+         }
          int category = entry.getCategory();
          Boolean leader = entry.isCategoryLeader;
          // if we haven't found a leader for this category yet, make this object
@@ -630,6 +666,19 @@ public class EnvironmentObjects extends ResizeComposite
    {
       return contextDepth_ == 0;
    }
+   
+   private boolean matchesFilter(RObject obj)
+   {
+      if (filterText_.isEmpty())
+         return true;
+      return obj.getName().contains(filterText_) ||
+             obj.getValue().contains(filterText_);
+   }
+   
+   private RObjectEntry entryFromRObject(RObject obj)
+   {
+      return new RObjectEntry(obj, matchesFilter(obj));
+   }
 
    // Private nested classes --------------------------------------------------
 
@@ -645,7 +694,10 @@ public class EnvironmentObjects extends ResizeComposite
       // (re)build the given row
       public void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
       {
-
+         // build nothing for invisible rows
+         if (!rowValue.visible)
+            return;
+         
          // build the header for the row (if any)
          buildRowHeader(rowValue, absRowIndex);
 
@@ -736,7 +788,7 @@ public class EnvironmentObjects extends ResizeComposite
          // if building the first row, we need to add a dummy row to the top.
          // since the grid uses a fixed table layout, the first row sets the
          // column widths, so we can't let the first row be a spanning header.
-         if (absRowIndex == 0)
+         if (rowValue.isFirstObject)
          {
             TableRowBuilder widthSettingRow = startRow().className(
                     style.widthSettingRow());
@@ -817,6 +869,7 @@ public class EnvironmentObjects extends ResizeComposite
    private Observer observer_;
    private int contextDepth_;
    private int callFramePanelHeight_;
+   private String filterText_ = ""; 
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
