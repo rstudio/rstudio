@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -133,6 +134,15 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (!Desktop.isDesktop())
          add(rProfileOnResume_);
            
+      add(checkboxPref(
+            "Use debug error handler only when errors contain my code", 
+            prefs_.handleErrorsInUserCodeOnly()));
+      CheckBox chkTracebacks = checkboxPref(
+            "Automatically expand tracebacks in error inspector", 
+            prefs_.autoExpandErrorTracebacks());
+      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
+      add(chkTracebacks);
+      
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
             "Default text encoding:",
@@ -171,11 +181,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       textBoxWithChooser(encoding_);
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
-      
-      add(checkboxPref("Handle only errors containing my code", 
-            prefs_.handleErrorsInUserCodeOnly()));
-      add(checkboxPref("Automatically expand error tracebacks", 
-            prefs_.autoExpandErrorTracebacks()));
             
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);

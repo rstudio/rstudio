@@ -58,14 +58,12 @@ public class ErrorManager
                        Binder binder, 
                        Commands commands, 
                        DebuggingServerOperations server,
-                       Session session,
-                       UIPrefs prefs)
+                       Session session)
    {
       events_ = events;
       server_ = server;
       commands_ = commands;
       session_ = session;
-      prefs_ = prefs;
       binder.bind(commands, this);
       
       events_.addHandler(UnhandledErrorEvent.TYPE, this);
@@ -171,11 +169,6 @@ public class ErrorManager
       });
    }
    
-   public boolean getExpandTraceback()
-   {
-      return prefs_.autoExpandErrorTracebacks().getGlobalValue();
-   }
-   
    // Private methods ---------------------------------------------------------
    
    private int getErrorHandlerType()
@@ -228,7 +221,6 @@ public class ErrorManager
    private final DebuggingServerOperations server_;
    private final Session session_;
    private final Commands commands_;
-   private final UIPrefs prefs_;
 
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
    private ErrorManagerState errorManagerState_; 

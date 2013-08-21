@@ -104,6 +104,7 @@ public class Shell implements ConsoleInputHandler,
       errorManager_ = errorManager;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
+      prefs_ = uiPrefs;
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
@@ -256,7 +257,8 @@ public class Shell implements ConsoleInputHandler,
                 && err.getErrorMessage().equals(event.getError()))
             {
                view_.consoleWriteExtendedError(
-                     event.getError(), err, errorManager_.getExpandTraceback(),
+                     event.getError(), err, 
+                     prefs_.autoExpandErrorTracebacks().getValue(),
                      historyManager_.getHistoryEntry(-1));
             }
             else
@@ -594,6 +596,7 @@ public class Shell implements ConsoleInputHandler,
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
+   private final UIPrefs prefs_;
 
    private final CommandLineHistory historyManager_;
    
