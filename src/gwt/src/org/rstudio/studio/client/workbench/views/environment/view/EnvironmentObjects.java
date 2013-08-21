@@ -304,7 +304,7 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setFilterText (String filterText)
    {
-      filterText_ = filterText;
+      filterText_ = filterText.toLowerCase();
       boolean hasFilter = !filterText_.isEmpty();
 
       // Iterate over each entry in the list, and toggle its visibility based 
@@ -450,7 +450,7 @@ public class EnvironmentObjects extends ResizeComposite
             boolean hasMatch = false;
             if (filterText_.length() > 0)
             {
-               int idx = str.indexOf(filterText_);
+               int idx = str.toLowerCase().indexOf(filterText_);
                if (idx >= 0)
                {
                   hasMatch = true;
@@ -702,8 +702,8 @@ public class EnvironmentObjects extends ResizeComposite
    {
       if (filterText_.isEmpty())
          return true;
-      return obj.getName().contains(filterText_) ||
-             obj.getValue().contains(filterText_);
+      return obj.getName().toLowerCase().contains(filterText_) ||
+             obj.getValue().toLowerCase().contains(filterText_);
    }
    
    private RObjectEntry entryFromRObject(RObject obj)
