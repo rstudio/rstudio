@@ -51,6 +51,7 @@ public class RObjectEntry
    {
       return rObject.getLength() > 0 &&
              rObject.getContents().length() > 0 &&
+             !rObject.getContents().get(0).equals(NO_VALUE) &&
              !hasTraceInfo();
    }
    
@@ -98,6 +99,8 @@ public class RObjectEntry
       return "robject_" + rObject.getName() + "_";
    }
    
+   public static final String NO_VALUE = "NO_VALUE";
+
    RObject rObject;
    boolean expanded;
    boolean isCategoryLeader;

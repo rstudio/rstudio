@@ -450,7 +450,7 @@ public class EnvironmentObjects extends ResizeComposite
                   public String getValue(RObjectEntry object)
                   {
                      String val = object.rObject.getValue();
-                     return val == "NO_VALUE" ?
+                     return val == RObjectEntry.NO_VALUE ?
                             object.rObject.getDescription() :
                             val;
                   }
@@ -687,10 +687,13 @@ public class EnvironmentObjects extends ResizeComposite
          {
             styleName += (" " + style.clickableCol());
          }
+         String size = rowValue.rObject.getSize() > 0 ?
+                              ", " + rowValue.rObject.getSize() + " bytes" :
+                              "";
          nameCol.className(styleName);
          nameCol.title(
                  rowValue.rObject.getName() +
-                 " (" + rowValue.rObject.getType() + ")");
+                 " (" + rowValue.rObject.getType() + size + ")");
          renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
       }
@@ -701,7 +704,7 @@ public class EnvironmentObjects extends ResizeComposite
          // build the column containing the description of the object
          TableCellBuilder descCol = row.startTD();
          String title = rowValue.rObject.getValue();
-         if ((!title.equals("NO_VALUE")) &&
+         if ((!title.equals(RObjectEntry.NO_VALUE)) &&
              title != null)
          {
             if (rowValue.isPromise())

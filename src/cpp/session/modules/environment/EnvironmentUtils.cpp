@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 #include <core/FileSerializer.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -32,38 +33,6 @@ namespace {
 // the string sent to the client when we're unable to get the display value
 // of a variable
 const char UNKNOWN_VALUE[] = "<unknown>";
-
-json::Value classOfVar(SEXP var)
-{
-   std::string value;
-   Error error = r::exec::RFunction(".rs.getSingleClass",
-                                    var).call(&value);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return json::Value(); // return null
-   }
-   else
-   {
-      return value;
-   }
-}
-
-json::Value valueOfVar(SEXP var)
-{
-   std::string value;
-   Error error = r::exec::RFunction(".rs.valueAsString",
-                                    var).call(&value);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return json::Value(); // return null
-   }
-   else
-   {
-      return value;
-   }
-}
 
 json::Value descriptionOfVar(SEXP var)
 {
@@ -81,21 +50,6 @@ json::Value descriptionOfVar(SEXP var)
    else
    {
       return value;
-   }
-}
-
-json::Array contentsOfVar(SEXP var)
-{
-   std::vector<std::string> value;
-   Error error = r::exec::RFunction(".rs.valueContents", var).call(&value);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return json::Array(); // return null
-   }
-   else
-   {
-      return json::toJsonArray(value);
    }
 }
 
@@ -129,50 +83,21 @@ json::Value languageVarToJson(SEXP env, std::string objectName)
    }
 }
 
-json::Object varToJson(SEXP env, const r::sexp::Variable& var)
+json::Value varToJson(SEXP env, const r::sexp::Variable& var)
 {
    json::Object varJson;
-   varJson["name"] = var.first;
    SEXP varSEXP = var.second;
 
-   // is this a type of object for which we can get something that looks like
-   // a value? if so, get the value appropriate to the object's class.
-   if ((varSEXP != R_UnboundValue) &&
-       (varSEXP != R_MissingArg) &&
-       !r::sexp::isLanguage(varSEXP) &&
-       !isUnevaluatedPromise(varSEXP) &&
-       TYPEOF(varSEXP) != SYMSXP)
+   // We can get a value from almost any object type from R, but there are
+   // a few cases in which attempting to inspect the object will lead to
+   // undesirable behavior. For these special value types, construct the
+   // object definition manually.
+   if ((varSEXP == R_UnboundValue) ||
+       (varSEXP == R_MissingArg) ||
+       isUnevaluatedPromise(varSEXP))
    {
-      json::Value varClass = classOfVar(varSEXP);
-      varJson["type"] = varClass;
-      varJson["value"] = valueOfVar(varSEXP);
-      varJson["description"] = descriptionOfVar(varSEXP);
-      varJson["length"] = r::sexp::length(varSEXP);
-      if (varClass == "data.frame" ||
-          varClass == "data.table" ||
-          varClass == "list" ||
-          varClass == "cast_df" ||
-          varClass == "xts" ||
-          Rf_isS4(varSEXP))
-      {
-         varJson["contents"] = contentsOfVar(varSEXP);
-      }
-      else
-      {
-         varJson["contents"] = json::Array();
-      }
-   }
-   // this is not a type of object for which we can get a value; describe
-   // what we can and stub out the rest.
-   else
-   {
-      if (r::sexp::isLanguage(varSEXP) ||
-          TYPEOF(varSEXP) == SYMSXP)
-      {
-         varJson["type"] = std::string("language");
-         varJson["value"] = languageVarToJson(env, var.first);
-      }
-      else if (isUnevaluatedPromise(varSEXP))
+      varJson["name"] = var.first;
+      if (isUnevaluatedPromise(varSEXP))
       {
          varJson["type"] = std::string("promise");
          varJson["value"] = descriptionOfVar(varSEXP);
@@ -180,18 +105,33 @@ json::Object varToJson(SEXP env, const r::sexp::Variable& var)
       else
       {
          varJson["type"] = std::string("unknown");
-         if (varSEXP == R_MissingArg)
-         {
-            varJson["value"] = descriptionOfVar(varSEXP);
-         }
-         else
-         {
-            varJson["value"] = UNKNOWN_VALUE;
-         }
+         varJson["value"] =  (varSEXP == R_MissingArg) ?
+                                 descriptionOfVar(varSEXP) :
+                                 UNKNOWN_VALUE;
       }
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
       varJson["length"] = 0;
+   }
+   // For all other value types, construct the definition normally.
+   else
+   {
+      SEXP description;
+      json::Value val;
+      r::sexp::Protect protect;
+      Error error = r::exec::RFunction(".rs.describeObject",
+                  env, var.first)
+                  .call(&description, &protect);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         error = r::json::jsonValueFromObject(description, &val);
+         if (error)
+            LOG_ERROR(error);
+         else
+            return val;
+      }
    }
    return varJson;
 }

@@ -53,7 +53,11 @@
       else
          return ("NO_VALUE")
    },
-   error = function(e) print(e))
+   error = function(e) 
+   { 
+      # Don't print errors--they'll appear in the R console. Instead, let the
+      # client deal with errors by handling the special value NO_VALUE.
+   })
 
    return ("NO_VALUE")
 })
@@ -68,7 +72,7 @@
       output <- capture.output(str(val))
       return (output[min(length(output), 2):min(length(output),100)])
    },
-   error = function(e) print(e))
+   error = function(e) { })
 
    return ("NO_VALUE")
 })
@@ -261,5 +265,60 @@
    tryCatch(className <- class(obj)[1],
             error = function(e) print(e))
    return (className)
+})
+
+.rs.addFunction("describeObject", function(env, objName)
+{
+   obj <- get(objName, env)
+   val <- "(unknown)"
+   desc <- ""
+   size <- object.size(obj)
+   len <- length(obj)
+   class <- .rs.getSingleClass(obj)
+   contents <- list()
+   # for language objects, don't evaluate, just show the expression
+   if (is.language(obj) || is.symbol(obj))
+   {
+      val <- deparse(obj)
+   }
+   else
+   {
+      # for large objects (> half MB), don't try to get the value, just show
+      # the size. Some functions (e.g. str()) can cause the object to be
+      # copied, which is slow for large objects.
+      if (size > 524288)
+      {
+         len <- if (len > 1) 
+                   paste0(len, " elements, ")
+                else 
+                   ""
+         val <- paste0("Large ", class, " (", len, 
+                       capture.output(print(size, units="auto")), ")")
+      }
+      else
+      {
+         val <- .rs.valueAsString(obj)
+         desc <- .rs.valueDescription(obj)
+
+         # expandable object--supply contents 
+         if (class == "data.frame" ||
+             class == "data.table" ||
+             class == "list" ||
+             class == "cast_df" ||
+             class == "xts" ||
+             isS4(obj))
+         {
+            contents <- .rs.valueContents(obj)
+         }
+      }
+   }
+   list (
+      name = .rs.scalar(objName),
+      type = .rs.scalar(class),
+      value = .rs.scalar(val),
+      description = .rs.scalar(desc),
+      size = .rs.scalar(size),
+      length = .rs.scalar(length(obj)),
+      contents = contents)
 })
 

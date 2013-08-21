@@ -47,5 +47,9 @@ public class RObject extends JavaScriptObject
    public final native int getLength() /*-{
       return this.length;
    }-*/;
+   
+   public final native int getSize() /*-{
+      return this.size;
+   }-*/;
 }
 
