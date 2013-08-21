@@ -170,6 +170,11 @@ public final class Character implements Comparable<Character>, Serializable {
     return count;
   }
 
+  public static int compare(char x, char y) {
+    // JLS specifies that the chars are promoted to int before subtraction.
+    return x - y;
+  }
+
   /*
    * TODO: correct Unicode handling.
    */
@@ -446,8 +451,7 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public int compareTo(Character c) {
-    // JLS specifies that the chars are promoted to int before subtraction.
-    return value - c.value;
+    return compare(value, c.value);
   }
 
   @Override

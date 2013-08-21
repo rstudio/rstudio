@@ -59,7 +59,13 @@ public final class Long extends Number implements Comparable<Long> {
   }
 
   public static int compare(long x, long y) {
-    return signum(x - y);
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else {
+      return 0;
+    }
   }
 
   public static Long decode(String s) throws NumberFormatException {

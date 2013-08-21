@@ -48,6 +48,7 @@ public class LongTest extends GWTTestCase {
     assertTrue("Long.compare failed for 1 < 2", Long.compare(1L, 2L) < 0);
     assertTrue("Long.compare failed for 2 > 1", Long.compare(2L, 1L) > 0);
     assertEquals(0, Long.compare(1L, 1L));
+    assertEquals(-1, Long.compare(Long.MIN_VALUE, 1L));
   }
 
   public void testConstants() {
