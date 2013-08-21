@@ -29,7 +29,9 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
+import com.google.gwt.dev.util.arg.ArgHandlerSource;
 import com.google.gwt.dev.util.arg.ArgHandlerStrict;
+import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -89,6 +91,7 @@ public class CompileModule {
         }
       });
       registerHandler(new ArgHandlerModuleName(options));
+      registerHandler(new ArgHandlerSource(options));
       registerHandler(new ArgHandlerStrict(options));
     }
 
@@ -103,6 +106,9 @@ public class CompileModule {
 
     private File outDir;
     private boolean strict = false;
+    // TODO(rluble): refactor. SourceLevel should only reside in one place possibly JJSOptions.
+    private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+
 
     public CompileModuleOptionsImpl() {
     }
@@ -123,6 +129,12 @@ public class CompileModule {
     }
 
     @Override
+    public SourceLevel getSourceLevel() {
+      // Source level ignored here for now.
+      return sourceLevel;
+    }
+
+    @Override
     public boolean isStrict() {
       return strict;
     }
@@ -130,6 +142,11 @@ public class CompileModule {
     @Override
     public void setOutDir(File outDir) {
       this.outDir = outDir;
+    }
+
+    @Override
+    public void setSourceLevel(SourceLevel sourceLevel) {
+      this.sourceLevel = sourceLevel;
     }
 
     @Override

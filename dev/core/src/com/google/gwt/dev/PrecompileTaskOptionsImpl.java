@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
 
@@ -76,6 +77,12 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public JsOutputOption getOutput() {
     return jjsOptions.getOutput();
+  }
+
+  @Override
+  public SourceLevel getSourceLevel()
+  {
+    return jjsOptions.getSourceLevel();
   }
 
   @Override
@@ -262,6 +269,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setRunAsyncEnabled(boolean enabled) {
     jjsOptions.setRunAsyncEnabled(enabled);
+  }
+
+  @Override
+  public void setSourceLevel(SourceLevel sourceLevel) {
+    jjsOptions.setSourceLevel(sourceLevel);
   }
 
   @Override

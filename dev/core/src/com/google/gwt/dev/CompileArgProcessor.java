@@ -17,14 +17,12 @@ package com.google.gwt.dev;
 
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
-import com.google.gwt.dev.util.arg.ArgHandlerSource;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirRequired;
 
 abstract class CompileArgProcessor extends ArgProcessorBase {
   public CompileArgProcessor(CompileTaskOptions options) {
     registerHandler(new ArgHandlerLogLevel(options));
     registerHandler(new ArgHandlerWorkDirRequired(options));
-    registerHandler(new ArgHandlerSource(options));
     registerHandler(new ArgHandlerModuleName(options) {
       @Override
       public String getPurpose() {
