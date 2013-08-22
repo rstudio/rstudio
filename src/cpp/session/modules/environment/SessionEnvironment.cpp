@@ -329,7 +329,7 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
 // create a JSON object that contains information about the current environment;
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
-json::Value commonEnvironmentStateData(int depth)
+json::Object commonEnvironmentStateData(int depth)
 {
    json::Object varJson;
    bool useProvidedSource = false;
@@ -465,7 +465,23 @@ json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, true, &contextDepth);
-   return commonEnvironmentStateData(contextDepth);
+   json::Object environmentState = commonEnvironmentStateData(contextDepth);
+
+   SEXP env = getEnvironment(contextDepth);
+   std::vector<std::string> environments;
+   Error error = r::exec::RFunction(".rs.environmentList", env)
+                                 .call(&environments);
+   if (error)
+   {
+      LOG_ERROR(error);
+      environmentState["environments"] = json::Array();
+   }
+   else
+   {
+      environmentState["environments"] =  json::toJsonArray(environments);
+   }
+
+   return environmentState;
 }
 
 Error initialize()

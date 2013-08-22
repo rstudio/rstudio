@@ -17,15 +17,18 @@ package org.rstudio.studio.client.workbench.views.environment;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -36,6 +39,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -56,7 +60,8 @@ public class EnvironmentPane extends WorkbenchPane
    public EnvironmentPane(Commands commands,
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
-                          EnvironmentServerOperations serverOperations)
+                          EnvironmentServerOperations serverOperations,
+                          Session session)
    {
       super("Environment");
       
@@ -68,6 +73,8 @@ public class EnvironmentPane extends WorkbenchPane
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
+      environments_ = 
+            session.getSessionInfo().getEnvironmentState().environments();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
 
@@ -120,6 +127,22 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addRightWidget(environmentName_);
       toolbar.addRightWidget(searchWidget);
 
+      return toolbar;
+   }
+
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar();
+      
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      for (int i = 0; i < environments_.length(); i++)
+      {
+         menu.addItem(new MenuItem(environments_.get(i), false, 
+               (Scheduler.ScheduledCommand)null));
+      }
+      toolbar.addLeftPopupMenu(new Label("Environment"), menu);
+      
       return toolbar;
    }
 
@@ -304,15 +327,17 @@ public class EnvironmentPane extends WorkbenchPane
 
    public final static String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
+   private final Commands commands_;
+   private final EventBus eventBus_;
+   private final GlobalDisplay globalDisplay_;
+   private final EnvironmentServerOperations server_;
+
    private ToolbarButton dataImportButton_;
    private Label environmentName_;
    private Image functionIndicator_;
    private EnvironmentObjects objects_;
-   private Commands commands_;
-   private EventBus eventBus_;
-   private GlobalDisplay globalDisplay_;
-   private EnvironmentServerOperations server_;
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
+   private JsArrayString environments_;
 }

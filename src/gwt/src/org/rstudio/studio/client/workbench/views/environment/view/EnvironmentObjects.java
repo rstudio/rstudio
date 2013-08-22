@@ -305,7 +305,6 @@ public class EnvironmentObjects extends ResizeComposite
    public void setFilterText (String filterText)
    {
       filterText_ = filterText.toLowerCase();
-      boolean hasFilter = !filterText_.isEmpty();
 
       // Iterate over each entry in the list, and toggle its visibility based 
       // on whether it matches the current filter text.

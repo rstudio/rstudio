@@ -322,3 +322,15 @@
       contents = contents)
 })
 
+.rs.addFunction("environmentList", function(startEnv = globalenv())
+{
+   env <- startEnv
+   envs <- character()
+   while (environmentName(env) != "R_EmptyEnv")
+   {
+      envs <- c(envs, environmentName(env))   
+      env <- parent.env(env)
+   }
+   envs
+})
+
