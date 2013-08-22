@@ -14,11 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.events;
 
-import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,77 +25,49 @@ import com.google.gwt.event.shared.GwtEvent;
 public class ContextDepthChangedEvent extends
       GwtEvent<ContextDepthChangedEvent.Handler>
 {
-   public static class ContextData extends JavaScriptObject
-   {
-      protected ContextData()
-      {
-      }
-      
-      public final native int getContextDepth() /*-{
-         return this.context_depth;
-      }-*/;
-      
-      public final native JsArray<RObject> getEnvironmentList() /*-{
-         return this.environment_list;
-      }-*/;
-
-      public final native String getFunctionName() /*-{
-         return this.function_name;
-      }-*/;
-
-      public final native JsArray<CallFrame> getCallFrames() /*-{
-         return this.call_frames;
-      }-*/;
-      
-      public final native boolean getUseProvidedSource() /*-{
-         return this.use_provided_source;
-      }-*/;
-      
-      public final native String getFunctionCode() /*-{
-         return this.function_code;
-      }-*/;
-   }
-
    public interface Handler extends EventHandler
    {
       void onContextDepthChanged(ContextDepthChangedEvent event);
    }
 
-   public ContextDepthChangedEvent(ContextData data)
+   public ContextDepthChangedEvent(EnvironmentContextData data)
    {
       contextData_ = data;
    }
    
    public int getContextDepth() 
    {
-      return contextData_.getContextDepth();
+      return contextData_.contextDepth();
    }
    
    public JsArray<RObject> getEnvironmentList()
    {
-      return contextData_.getEnvironmentList();
+      return contextData_.environmentList();
    }
 
    public JsArray<CallFrame> getCallFrames()
    {
-      return contextData_.getCallFrames();
+      return contextData_.callFrames();
    }
 
    public String getFunctionName()
    {
-      String functionName = contextData_.getFunctionName();
-      return functionName.length() > 0 && functionName != "NA" ?
-             contextData_.getFunctionName() : EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
+      return contextData_.functionName();
    }
    
    public String getFunctionCode()
    {
-      return contextData_.getFunctionCode();
+      return contextData_.functionCode();
    }
    
    public boolean useProvidedSource()
    {
-      return contextData_.getUseProvidedSource();
+      return contextData_.useProvidedSource();
+   }
+   
+   public String getEnvironmentName()
+   {
+      return contextData_.environmentName();
    }
 
    @Override
@@ -112,5 +83,5 @@ public class ContextDepthChangedEvent extends
    }
   
    public static final Type<Handler> TYPE = new Type<Handler>();
-   private final ContextData contextData_;
+   private final EnvironmentContextData contextData_;
 }

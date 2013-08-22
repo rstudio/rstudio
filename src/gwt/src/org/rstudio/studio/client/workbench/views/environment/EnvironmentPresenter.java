@@ -153,7 +153,7 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             loadNewContextState(event.getContextDepth(), 
-                  event.getFunctionName(),
+                  event.getEnvironmentName(),
                   event.getCallFrames(),
                   event.useProvidedSource(),
                   event.getFunctionCode());
@@ -387,10 +387,10 @@ public class EnvironmentPresenter extends BasePresenter
    public void initialize(EnvironmentState environmentState)
    {
       loadNewContextState(environmentState.contextDepth(),
-            environmentState.functionName(),
+            environmentState.environmentName(),
             environmentState.callFrames(),
-            environmentState.getUseProvidedSource(),
-            environmentState.getFunctionCode());
+            environmentState.useProvidedSource(),
+            environmentState.functionCode());
    }
    
    public void setContextDepth(int contextDepth)

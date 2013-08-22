@@ -370,6 +370,7 @@ json::Object commonEnvironmentStateData(int depth)
          LOG_ERROR(error);
       }
       varJson["function_name"] = functionName;
+      varJson["environment_name"] = functionName + "()";
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
@@ -383,6 +384,15 @@ json::Object commonEnvironmentStateData(int depth)
    else
    {
       varJson["function_name"] = "";
+
+      // emit the name of the environment we're currently working with
+      std::string environmentName;
+      Error error = r::exec::RFunction("environmentName",
+                                 s_environmentMonitor.getMonitoredEnvironment())
+                                 .call(&environmentName);
+      if (error)
+         LOG_ERROR(error);
+      varJson["environment_name"] = environmentName;
    }
 
    // always emit the code for the function, even if we don't think that the

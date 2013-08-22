@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -75,6 +74,8 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = false;
       environments_ = 
             session.getSessionInfo().getEnvironmentState().environments();
+      environmentName_ = 
+            session.getSessionInfo().getEnvironmentState().environmentName();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
 
@@ -86,15 +87,6 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      environmentName_ = new Label(GLOBAL_ENVIRONMENT_NAME);
-      environmentName_.setStyleName(
-              EnvironmentPaneResources.INSTANCE
-                      .environmentPaneStyle()
-                      .environmentNameLabel());
-      functionIndicator_ = new Image(
-            StandardIcons.INSTANCE.function());
-      functionIndicator_.setVisible(false);
-
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
@@ -123,8 +115,6 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
-      toolbar.addRightWidget(functionIndicator_);
-      toolbar.addRightWidget(environmentName_);
       toolbar.addRightWidget(searchWidget);
 
       return toolbar;
@@ -139,7 +129,9 @@ public class EnvironmentPane extends WorkbenchPane
       for (int i = 0; i < environments_.length(); i++)
       {
          final String environment = environments_.get(i);
-         menu.addItem(new MenuItem(environment, false, 
+         menu.addItem(new MenuItem(
+               friendlyNameOfEnvironment(environment), 
+               false,  // as HTML
                new Scheduler.ScheduledCommand()
                {
                   @Override
@@ -149,6 +141,12 @@ public class EnvironmentPane extends WorkbenchPane
                            new ServerRequestCallback<Void>()
                      {
                         @Override
+                        public void onResponseReceived(Void v)
+                        {
+                           setEnvironmentName(environment);
+                        }
+
+                        @Override
                         public void onError(ServerError error)
                         {
                            
@@ -157,7 +155,13 @@ public class EnvironmentPane extends WorkbenchPane
                   }
                }));
       }
-      toolbar.addLeftPopupMenu(new Label("Environment"), menu);
+      Label envLabel = new Label("Environment:");
+      envLabel.addStyleName(
+         EnvironmentPaneResources.INSTANCE.
+            environmentPaneStyle().environmentNameLabel());
+      toolbar.addLeftWidget(envLabel);
+      environmentLabel_ = new Label(friendlyEnvironmentName());
+      toolbar.addLeftPopupMenu(environmentLabel_, menu);
       
       return toolbar;
    }
@@ -203,8 +207,6 @@ public class EnvironmentPane extends WorkbenchPane
       commands_.importDatasetFromFile().setEnabled(commandsEnabled);
       commands_.importDatasetFromURL().setEnabled(commandsEnabled);
       dataImportButton_.setEnabled(commandsEnabled);
-
-      functionIndicator_.setVisible(contextDepth > 0);
    }
 
    @Override
@@ -219,8 +221,9 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void setEnvironmentName(String environmentName)
    {
-      environmentName_.setText(environmentName);
-      objects_.setEnvironmentName(environmentName);
+      environmentName_ = environmentName;
+      environmentLabel_.setText(friendlyEnvironmentName());
+      objects_.setEnvironmentName(friendlyEnvironmentName());
    }
 
    @Override
@@ -340,8 +343,19 @@ public class EnvironmentPane extends WorkbenchPane
       return dataImportButton_;
 
    }
-
-   public final static String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
+   
+   private String friendlyEnvironmentName()
+   {
+      return friendlyNameOfEnvironment(environmentName_);
+   }
+   
+   private String friendlyNameOfEnvironment(String name)
+   {
+      if (name.equals("R_GlobalEnv"))
+         return "Global";
+      else 
+         return name;
+   }
 
    private final Commands commands_;
    private final EventBus eventBus_;
@@ -349,11 +363,11 @@ public class EnvironmentPane extends WorkbenchPane
    private final EnvironmentServerOperations server_;
 
    private ToolbarButton dataImportButton_;
-   private Label environmentName_;
-   private Image functionIndicator_;
    private EnvironmentObjects objects_;
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
    private JsArrayString environments_;
+   private String environmentName_;
+   private Label environmentLabel_;
 }

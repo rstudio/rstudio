@@ -15,35 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.environment.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-public class EnvironmentState extends JavaScriptObject
+public class EnvironmentState extends EnvironmentContextData
 {
-   protected EnvironmentState()
-   {
-   }
-   
-   public final native int contextDepth() /*-{
-      return this.context_depth;
-   }-*/;
-
-   public final native String functionName() /*-{
-      return this.function_name;
-   }-*/;
-
-   public final native JsArray<CallFrame> callFrames() /*-{
-      return this.call_frames;
-   }-*/;
-   
-   public final native boolean getUseProvidedSource() /*-{
-      return this.use_provided_source;
-   }-*/;
-   
-   public final native String getFunctionCode() /*-{
-      return this.function_code;
-   }-*/;
+   protected EnvironmentState() { }
    
    public final native JsArrayString environments() /*-{
       return this.environments;
