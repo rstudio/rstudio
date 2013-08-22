@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -56,7 +57,8 @@ import java.util.ArrayList;
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjects.Observer,
-                                        PackageStatusChangedHandler
+                                        PackageStatusChangedHandler,
+                                        ContextDepthChangedEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -83,6 +85,7 @@ public class EnvironmentPane extends WorkbenchPane
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
       eventBus_.addHandler(PackageStatusChangedEvent.TYPE, this);
+      eventBus_.addHandler(ContextDepthChangedEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -287,16 +290,21 @@ public class EnvironmentPane extends WorkbenchPane
          @Override
          public void onResponseReceived(JsArrayString response)
          {
-            environments_ = response;
-            rebuildEnvironmentMenu();
+            setEnvironments(response);
          }
 
          @Override
          public void onError(ServerError error)
          {
-            
+            // Just live with a stale environment list
          }
       });
+   }
+
+   @Override
+   public void onContextDepthChanged(ContextDepthChangedEvent event)
+   {
+      setEnvironments(event.getEnvironments());
    }
 
    // EnviromentObjects.Observer implementation -------------------------------
@@ -358,6 +366,12 @@ public class EnvironmentPane extends WorkbenchPane
          return "Global";
       else 
          return name;
+   }
+   
+   private void setEnvironments(JsArrayString environments)
+   {
+      environments_ = environments;
+      rebuildEnvironmentMenu();
    }
    
    private void rebuildEnvironmentMenu()

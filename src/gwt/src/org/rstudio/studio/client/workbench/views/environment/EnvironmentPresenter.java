@@ -66,8 +66,8 @@ import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentO
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -384,7 +384,7 @@ public class EnvironmentPresenter extends BasePresenter
       }
    }
 
-   public void initialize(EnvironmentState environmentState)
+   public void initialize(EnvironmentContextData environmentState)
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.environmentName(),

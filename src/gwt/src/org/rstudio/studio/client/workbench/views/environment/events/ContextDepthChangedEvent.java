@@ -19,6 +19,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -68,6 +69,11 @@ public class ContextDepthChangedEvent extends
    public String getEnvironmentName()
    {
       return contextData_.environmentName();
+   }
+   
+   public JsArrayString getEnvironments()
+   {
+      return contextData_.environments();
    }
 
    @Override

@@ -340,6 +340,22 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
             sourceRefsOfContext(pContext), *pFunctionCode);
 }
 
+json::Array environmentNames(SEXP env)
+{
+   std::vector<std::string> environments;
+   Error error = r::exec::RFunction(".rs.environmentList", env)
+                                    .call(&environments);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+   else
+   {
+      return json::toJsonArray(environments);
+   }
+}
+
 // create a JSON object that contains information about the current environment;
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
@@ -389,6 +405,11 @@ json::Object commonEnvironmentStateData(int depth)
          LOG_ERROR(error);
       varJson["environment_name"] = environmentName;
    }
+
+   // list the environment stack at this context depth
+   varJson["environments"] = environmentNames(depth > 0 ?
+               s_environmentMonitor.getMonitoredEnvironment() :
+               R_GlobalEnv);
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
@@ -483,22 +504,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 }
 
-json::Array environmentNames(SEXP env)
-{
-   std::vector<std::string> environments;
-   Error error = r::exec::RFunction(".rs.environmentList", env)
-                                    .call(&environments);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return json::Array();
-   }
-   else
-   {
-      return json::toJsonArray(environments);
-   }
-}
-
 Error getEnvironmentNames(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -512,14 +517,7 @@ json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, true, &contextDepth);
-   json::Object environmentState = commonEnvironmentStateData(contextDepth);
-
-   environmentState["environments"] = environmentNames(
-            contextDepth > 0 ?
-               s_environmentMonitor.getMonitoredEnvironment() :
-               R_GlobalEnv);
-
-   return environmentState;
+   return commonEnvironmentStateData(contextDepth);
 }
 
 Error initialize()

@@ -322,10 +322,38 @@
       contents = contents)
 })
 
-.rs.addFunction("environmentList", function(startEnv = globalenv())
+.rs.addFunction("environmentList", function(startEnv)
 {
    env <- startEnv
    envs <- character()
+   # if starting above the global environment, the environments will be
+   # unnamed. to provide sensible names for them, look for a matching frame in
+   # the callstack.
+   if (environmentName(env) != "R_GlobalEnv")
+   {
+      calls <- sys.calls()
+      numCalls <- length(calls)
+      while (environmentName(env) != "R_GlobalEnv")
+      {
+         found <- FALSE
+         for (i in 1:numCalls)
+         {
+            if (identical(sys.frame(i), env))
+            {
+               envs <- c(envs, deparse(sys.call(i)))
+               found <- TRUE
+               break
+            }
+         }
+         if (!found)
+         {
+            envs <- c(envs, "unknown")
+         }
+         env <- parent.env(env)
+      }
+   }
+   # we're now at the global environment; proceed normally through the rest of
+   # the search path.
    while (environmentName(env) != "R_EmptyEnv")
    {
       envs <- c(envs, environmentName(env))   
