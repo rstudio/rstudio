@@ -555,11 +555,6 @@ public class Shell implements ConsoleInputHandler,
       return lastPromptText_ != null && (lastPromptText_.startsWith("Browse"));
    }
    
-   private boolean isInjectedBrowseCommand(String cmd)
-   {
-      return cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f";
-   }
-   
    private void resetHistoryPosition()
    {
       historyManager_.resetPosition();
@@ -569,14 +564,9 @@ public class Shell implements ConsoleInputHandler,
    private void addToHistory(String commandText)
    {
       if (isBrowsePrompt())
-      {
-         if (!isInjectedBrowseCommand(commandText))
-            browseHistoryManager_.addToHistory(commandText);
-      }
+         browseHistoryManager_.addToHistory(commandText);
       else
-      {
          historyManager_.addToHistory(commandText);
-      }
    }
    
    private String getHistoryEntry(int offset)
