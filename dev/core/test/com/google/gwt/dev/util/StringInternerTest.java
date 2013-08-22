@@ -50,37 +50,6 @@ public class StringInternerTest extends TestCase {
     }
   }
 
-  public void testShardsAreSomewhatBalanced() throws Exception {
-
-    // Simulate adding a million strings. We use the production algorithm to choose the shard,
-    // but increment a counter instead. This avoids the WeakHashMap's nondeterministic
-    // behavior due to garbage collection.
-    int meanShardSize = 1000;
-    int shardSizes[] = new int[StringInterner.SHARD_COUNT];
-    int stringsToAdd = StringInterner.SHARD_COUNT * meanShardSize;
-    for (int i = 0; i < stringsToAdd; i++) {
-      int shardId = interner.getShardId("foo" + i);
-      shardSizes[shardId]++;
-    }
-
-    // Verify that no shards are too big. (A shard that's oversized could create lock contention.)
-
-    int expectedMaxShardSize = meanShardSize * 2;
-    int maxShardSize = 0;
-    int tooBigShardCount = 0;
-    for (int shardSize : shardSizes) {
-      maxShardSize = Math.max(maxShardSize, shardSize);
-      if (shardSize > expectedMaxShardSize) {
-        tooBigShardCount++;
-      }
-    }
-
-    if (tooBigShardCount > 0) {
-      fail(tooBigShardCount + " of " + shardSizes.length + " shards are too big (more than " +
-          expectedMaxShardSize + " entries); largest shard has " + maxShardSize + " entries.");
-    }
-  }
-
   private static String repeat(char c, int length) {
     StringBuilder buffer = new StringBuilder(length);
     for (int i = 0; i < length; i++) {
