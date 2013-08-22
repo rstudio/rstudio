@@ -18,6 +18,9 @@
       margin-bottom: 15px;
       line-height: 80%;
       position: relative;
+      user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
    }
    
    .errorCommandText {

@@ -138,8 +138,24 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       for (int i = 0; i < environments_.length(); i++)
       {
-         menu.addItem(new MenuItem(environments_.get(i), false, 
-               (Scheduler.ScheduledCommand)null));
+         final String environment = environments_.get(i);
+         menu.addItem(new MenuItem(environment, false, 
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     server_.setEnvironment(environment, 
+                           new ServerRequestCallback<Void>()
+                     {
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           
+                        }
+                     });
+                  }
+               }));
       }
       toolbar.addLeftPopupMenu(new Label("Environment"), menu);
       

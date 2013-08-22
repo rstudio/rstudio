@@ -26,7 +26,7 @@ class EnvironmentMonitor : boost::noncopyable
 {
 public:
    EnvironmentMonitor();
-   void setMonitoredEnvironment(SEXP pEnvironment);
+   void setMonitoredEnvironment(SEXP pEnvironment, bool refresh = false);
    SEXP getMonitoredEnvironment();
    void checkForChanges();
 private:
@@ -38,6 +38,7 @@ private:
    std::vector<r::sexp::Variable> unevaledPromises_;
    r::sexp::PreservedSEXP environment_;
    bool initialized_;
+   bool refreshOnInit_;
 };
 
 } // namespace environment

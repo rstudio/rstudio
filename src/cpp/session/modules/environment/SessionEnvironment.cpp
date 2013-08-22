@@ -273,12 +273,12 @@ json::Array callFramesAsJson()
    return listFrames;
 }
 
-json::Array environmentListAsJson(int depth)
+json::Array environmentListAsJson()
 {
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    SEXP env = getEnvironment(depth);
+    SEXP env = s_environmentMonitor.getMonitoredEnvironment();
     listEnvironment(env, false, &rProtect, &vars);
 
     // get object details and transform to json
@@ -295,7 +295,26 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
                       json::JsonRpcResponse* pResponse)
 {
    // return list
-   pResponse->setResult(environmentListAsJson(*pContextDepth));
+   pResponse->setResult(environmentListAsJson());
+   return Success();
+}
+
+Error setEnvironment(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string environmentName;
+   Error error = json::readParam(request.params, 0, &environmentName);
+   if (error)
+      return error;
+
+   SEXP environment;
+   r::sexp::Protect protect;
+   error = r::exec::RFunction(".rs.getEnvironment", environmentName)
+            .call(&environment, &protect);
+   if (error)
+      return error;
+
+   s_environmentMonitor.setMonitoredEnvironment(environment, true);
    return Success();
 }
 
@@ -336,7 +355,7 @@ json::Object commonEnvironmentStateData(int depth)
    std::string functionCode;
 
    varJson["context_depth"] = depth;
-   varJson["environment_list"] = environmentListAsJson(depth);
+   varJson["environment_list"] = environmentListAsJson();
    varJson["call_frames"] = callFramesAsJson();
 
    // if we're in a debug context, add information about the function currently
@@ -515,6 +534,7 @@ Error initialize()
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
+      (bind(registerRpcMethod, "set_environment", setEnvironment))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

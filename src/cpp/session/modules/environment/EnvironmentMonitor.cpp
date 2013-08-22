@@ -70,7 +70,8 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 } // anonymous namespace
 
 EnvironmentMonitor::EnvironmentMonitor() :
-   initialized_(false)
+   initialized_(false),
+   refreshOnInit_(false)
 {}
 
 void EnvironmentMonitor::enqueRemovedEvent(const r::sexp::Variable& variable)
@@ -89,12 +90,14 @@ void EnvironmentMonitor::enqueAssignedEvent(const r::sexp::Variable& variable)
    module_context::enqueClientEvent(assignedEvent);
 }
 
-void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
+void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment,
+                                                 bool refresh)
 {
    environment_.set(pEnvironment);
 
    // init the environment by doing an initial check for changes
    initialized_ = false;
+   refreshOnInit_ = refresh;
    checkForChanges();
 }
 
@@ -135,12 +138,14 @@ void EnvironmentMonitor::checkForChanges()
    bool refreshEnqueued = false;
    if (!initialized_)
    {
-      if (getMonitoredEnvironment() == R_GlobalEnv)
+      if (refreshOnInit_ ||
+          getMonitoredEnvironment() == R_GlobalEnv)
       {
          enqueRefreshEvent();
          refreshEnqueued = true;
       }
       initialized_ = true;
+      refreshOnInit_ = false;
    }
    else
    {
