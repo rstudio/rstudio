@@ -104,6 +104,7 @@ public class Shell implements ConsoleInputHandler,
       errorManager_ = errorManager;
       input_ = view_.getInputEditorDisplay() ;
       historyManager_ = new CommandLineHistory(input_);
+      browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
@@ -259,7 +260,7 @@ public class Shell implements ConsoleInputHandler,
                view_.consoleWriteExtendedError(
                      event.getError(), err, 
                      prefs_.autoExpandErrorTracebacks().getValue(),
-                     historyManager_.getHistoryEntry(-1));
+                     getHistoryEntry(-1));
             }
             else
             {
@@ -300,7 +301,7 @@ public class Shell implements ConsoleInputHandler,
       }
 
       addToHistory_ = addToHistory;
-      historyManager_.resetPosition();
+      resetHistoryPosition();
       lastPromptText_ = prompt ;
 
       if (restoreFocus_)
@@ -328,7 +329,7 @@ public class Shell implements ConsoleInputHandler,
    {
       String commandText = view_.processCommandEntry() ;
       if (addToHistory_ && (commandText.length() > 0))
-         historyManager_.addToHistory(commandText);
+         addToHistory(commandText);
 
       // fire event 
       eventBus_.fireEvent(new ConsoleInputEvent(commandText));
@@ -548,10 +549,51 @@ public class Shell implements ConsoleInputHandler,
       @SuppressWarnings("unused")
       private boolean lastKeyCodeWasZero_;
    }
+   
+   private boolean isBrowsePrompt()
+   {
+      return lastPromptText_ != null && (lastPromptText_.startsWith("Browse"));
+   }
+   
+   private boolean isInjectedBrowseCommand(String cmd)
+   {
+      return cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f";
+   }
+   
+   private void resetHistoryPosition()
+   {
+      historyManager_.resetPosition();
+      browseHistoryManager_.resetPosition();
+   }
+   
+   private void addToHistory(String commandText)
+   {
+      if (isBrowsePrompt())
+      {
+         if (!isInjectedBrowseCommand(commandText))
+            browseHistoryManager_.addToHistory(commandText);
+      }
+      else
+      {
+         historyManager_.addToHistory(commandText);
+      }
+   }
+   
+   private String getHistoryEntry(int offset)
+   {
+      if (isBrowsePrompt())
+         return browseHistoryManager_.getHistoryEntry(offset);
+      else
+         return historyManager_.getHistoryEntry(offset);
+   }
 
    private void navigateHistory(int offset)
    {
-      historyManager_.navigateHistory(offset);
+      if (isBrowsePrompt())
+         browseHistoryManager_.navigateHistory(offset);
+      else
+         historyManager_.navigateHistory(offset);
+      
       view_.ensureInputVisible();
    }
 
@@ -566,6 +608,7 @@ public class Shell implements ConsoleInputHandler,
       for (int i = 0; i < history.length(); i++)
          historyList.add(history.get(i));
       historyManager_.setHistory(historyList);
+      browseHistoryManager_.resetPosition();
    }
 
    public void onBeforeUnselected()
@@ -599,6 +642,7 @@ public class Shell implements ConsoleInputHandler,
    private final UIPrefs prefs_;
 
    private final CommandLineHistory historyManager_;
+   private final CommandLineHistory browseHistoryManager_;
    
    private final ShellInputAnimator inputAnimator_;
 

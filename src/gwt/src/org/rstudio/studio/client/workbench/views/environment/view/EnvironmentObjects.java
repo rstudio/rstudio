@@ -178,6 +178,8 @@ public class EnvironmentObjects extends ResizeComposite
                @Override
                public void execute()
                {
+                  oldEntry.getNameElement().addClassName(
+                        style.valueColNew());
                   oldEntry.getDescriptionElement().addClassName(
                         style.valueColNew());
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -185,6 +187,8 @@ public class EnvironmentObjects extends ResizeComposite
                      @Override
                      public void execute()
                      {
+                        oldEntry.getNameElement().removeClassName(
+                              style.valueColNew());
                         oldEntry.getDescriptionElement().removeClassName(
                               style.valueColNew());
                      }
@@ -775,6 +779,7 @@ public class EnvironmentObjects extends ResizeComposite
          nameCol.title(
                  rowValue.rObject.getName() +
                  " (" + rowValue.rObject.getType() + size + ")");
+         nameCol.id(rowValue.getNameId());
          renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
       }
