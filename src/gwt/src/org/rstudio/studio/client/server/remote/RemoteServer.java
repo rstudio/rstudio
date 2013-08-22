@@ -1,5 +1,5 @@
 /*
-kS * RemoteServer.java
+ * RemoteServer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -2851,6 +2851,15 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getEnvironmentNames(
+         ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_ENVIRONMENT_NAMES,
+                  requestCallback);
+   }
+
+   @Override
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
@@ -3196,6 +3205,7 @@ public class RemoteServer implements Server
    private static final String LIST_ENVIRONMENT = "list_environment";
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
    private static final String SET_ENVIRONMENT = "set_environment";
+   private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";

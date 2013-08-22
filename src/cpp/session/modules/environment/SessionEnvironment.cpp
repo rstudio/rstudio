@@ -150,11 +150,6 @@ RCNTXT* getFunctionContext(const int depth,
    return pRContext;
 }
 
-SEXP getEnvironment(const int depth)
-{
-   return depth == 0 ? R_GlobalEnv : getFunctionContext(depth)->cloenv;
-}
-
 // return whether the context stack contains a pure (interactive) browser
 bool inBrowseContext()
 {
@@ -488,6 +483,29 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 }
 
+json::Array environmentNames(SEXP env)
+{
+   std::vector<std::string> environments;
+   Error error = r::exec::RFunction(".rs.environmentList", env)
+                                    .call(&environments);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
+   else
+   {
+      return json::toJsonArray(environments);
+   }
+}
+
+Error getEnvironmentNames(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(environmentNames(R_GlobalEnv));
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
@@ -496,19 +514,10 @@ json::Value environmentStateAsJson()
    getFunctionContext(TOP_FUNCTION, true, &contextDepth);
    json::Object environmentState = commonEnvironmentStateData(contextDepth);
 
-   SEXP env = getEnvironment(contextDepth);
-   std::vector<std::string> environments;
-   Error error = r::exec::RFunction(".rs.environmentList", env)
-                                 .call(&environments);
-   if (error)
-   {
-      LOG_ERROR(error);
-      environmentState["environments"] = json::Array();
-   }
-   else
-   {
-      environmentState["environments"] =  json::toJsonArray(environments);
-   }
+   environmentState["environments"] = environmentNames(
+            contextDepth > 0 ?
+               s_environmentMonitor.getMonitoredEnvironment() :
+               R_GlobalEnv);
 
    return environmentState;
 }
@@ -545,6 +554,7 @@ Error initialize()
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
       (bind(registerRpcMethod, "set_environment", setEnvironment))
+      (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

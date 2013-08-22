@@ -45,6 +45,8 @@ import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -53,7 +55,8 @@ import java.util.ArrayList;
 
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjects.Observer
+                                        EnvironmentObjects.Observer,
+                                        PackageStatusChangedHandler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -78,6 +81,8 @@ public class EnvironmentPane extends WorkbenchPane
             session.getSessionInfo().getEnvironmentState().environmentName();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+      
+      eventBus_.addHandler(PackageStatusChangedEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -125,43 +130,15 @@ public class EnvironmentPane extends WorkbenchPane
    {
       SecondaryToolbar toolbar = new SecondaryToolbar();
       
-      ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      for (int i = 0; i < environments_.length(); i++)
-      {
-         final String environment = environments_.get(i);
-         menu.addItem(new MenuItem(
-               friendlyNameOfEnvironment(environment), 
-               false,  // as HTML
-               new Scheduler.ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     server_.setEnvironment(environment, 
-                           new ServerRequestCallback<Void>()
-                     {
-                        @Override
-                        public void onResponseReceived(Void v)
-                        {
-                           setEnvironmentName(environment);
-                        }
-
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           
-                        }
-                     });
-                  }
-               }));
-      }
+      environmentMenu_ = new ToolbarPopupMenu();
+      rebuildEnvironmentMenu();
       Label envLabel = new Label("Environment:");
       envLabel.addStyleName(
          EnvironmentPaneResources.INSTANCE.
             environmentPaneStyle().environmentNameLabel());
       toolbar.addLeftWidget(envLabel);
       environmentLabel_ = new Label(friendlyEnvironmentName());
-      toolbar.addLeftPopupMenu(environmentLabel_, menu);
+      toolbar.addLeftPopupMenu(environmentLabel_, environmentMenu_);
       
       return toolbar;
    }
@@ -296,6 +273,32 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.updateLineNumber(range.getLine());
    }
 
+   // Event handlers ----------------------------------------------------------
+
+   @Override
+   public void onPackageStatusChanged(PackageStatusChangedEvent event)
+   {
+      // When a package is attached or detached, get the new list of 
+      // environments from the server. We can't do this in the attach/detach
+      // event itself since R runs the detach before actually removing the
+      // environment from the search path. 
+      server_.getEnvironmentNames(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString response)
+         {
+            environments_ = response;
+            rebuildEnvironmentMenu();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            
+         }
+      });
+   }
+
    // EnviromentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
@@ -356,6 +359,40 @@ public class EnvironmentPane extends WorkbenchPane
       else 
          return name;
    }
+   
+   private void rebuildEnvironmentMenu()
+   {
+      environmentMenu_.clearItems();
+      for (int i = 0; i < environments_.length(); i++)
+      {
+         final String environment = environments_.get(i);
+         environmentMenu_.addItem(new MenuItem(
+               friendlyNameOfEnvironment(environment), 
+               false,  // as HTML
+               new Scheduler.ScheduledCommand()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     server_.setEnvironment(environment, 
+                           new ServerRequestCallback<Void>()
+                     {
+                        @Override
+                        public void onResponseReceived(Void v)
+                        {
+                           setEnvironmentName(environment);
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           
+                        }
+                     });
+                  }
+               }));
+      }
+   }
 
    private final Commands commands_;
    private final EventBus eventBus_;
@@ -363,11 +400,13 @@ public class EnvironmentPane extends WorkbenchPane
    private final EnvironmentServerOperations server_;
 
    private ToolbarButton dataImportButton_;
+   private ToolbarPopupMenu environmentMenu_;
+   private Label environmentLabel_;
    private EnvironmentObjects objects_;
+
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
    private JsArrayString environments_;
    private String environmentName_;
-   private Label environmentLabel_;
 }
