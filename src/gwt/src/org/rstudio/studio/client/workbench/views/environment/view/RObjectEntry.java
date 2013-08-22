@@ -86,10 +86,21 @@ public class RObjectEntry
       return rObject.getType() == "promise";
    }
    
+   public String getNameId()
+   {
+      return getIdPrefix() + "name";
+   }
+   
    public String getDescriptionId()
    {
       return getIdPrefix() + "desc";
    }
+
+   public Element getNameElement()
+   {
+      return Document.get().getElementById(getNameId());
+   }
+
    
    public Element getDescriptionElement()
    {
