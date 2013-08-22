@@ -21,6 +21,7 @@
 #include <core/Exec.hpp>
 
 #define INTERNAL_R_FUNCTIONS
+#include <r/RJson.hpp>
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
@@ -294,6 +295,8 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
+// Sets an environment by name. Used when the environment can be reliably
+// identified by its name (e.g. package environments).
 Error setEnvironment(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -305,6 +308,27 @@ Error setEnvironment(const json::JsonRpcRequest& request,
    SEXP environment;
    r::sexp::Protect protect;
    error = r::exec::RFunction(".rs.getEnvironment", environmentName)
+            .call(&environment, &protect);
+   if (error)
+      return error;
+
+   s_environmentMonitor.setMonitoredEnvironment(environment, true);
+   return Success();
+}
+
+// Sets an environment by its frame number. Used for unnamed, transient
+// function environments.
+Error setEnvironmentFrame(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   int frameNumber = 0;
+   Error error = json::readParam(request.params, 0, &frameNumber);
+   if (error)
+      return error;
+
+   SEXP environment;
+   r::sexp::Protect protect;
+   error = r::exec::RFunction("sys.frame", frameNumber)
             .call(&environment, &protect);
    if (error)
       return error;
@@ -340,11 +364,12 @@ bool functionIsOutOfSync(const RCNTXT *pContext,
             sourceRefsOfContext(pContext), *pFunctionCode);
 }
 
-json::Array environmentNames(SEXP env)
+json::Value environmentNames(SEXP env)
 {
-   std::vector<std::string> environments;
+   SEXP environments;
+   r::sexp::Protect protect;
    Error error = r::exec::RFunction(".rs.environmentList", env)
-                                    .call(&environments);
+                                    .call(&environments, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -352,7 +377,14 @@ json::Array environmentNames(SEXP env)
    }
    else
    {
-      return json::toJsonArray(environments);
+      json::Value namesJson;
+      error = r::json::jsonValueFromObject(environments, &namesJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return json::Array();
+      }
+      return namesJson;
    }
 }
 
@@ -552,6 +584,7 @@ Error initialize()
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
       (bind(registerRpcMethod, "set_environment", setEnvironment))
+      (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
       (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 

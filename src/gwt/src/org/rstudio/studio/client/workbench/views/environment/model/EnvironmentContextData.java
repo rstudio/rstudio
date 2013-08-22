@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public class EnvironmentContextData extends JavaScriptObject
 {
@@ -50,7 +49,7 @@ public class EnvironmentContextData extends JavaScriptObject
       return this.environment_name;
    }-*/;
 
-   public final native JsArrayString environments() /*-{
+   public final native JsArray<EnvironmentFrame> environments() /*-{
       return this.environments;
    }-*/;
 }

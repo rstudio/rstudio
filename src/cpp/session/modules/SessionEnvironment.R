@@ -325,7 +325,7 @@
 .rs.addFunction("environmentList", function(startEnv)
 {
    env <- startEnv
-   envs <- character()
+   envs <- list()
    # if starting above the global environment, the environments will be
    # unnamed. to provide sensible names for them, look for a matching frame in
    # the callstack.
@@ -340,7 +340,9 @@
          {
             if (identical(sys.frame(i), env))
             {
-               envs <- c(envs, deparse(sys.call(i)))
+               envs[[length(envs)+1]] <- 
+                              list(name = .rs.scalar(deparse(sys.call(i))),
+                                   frame = .rs.scalar(i))
                found <- TRUE
                break
             }
@@ -356,7 +358,9 @@
    # the search path.
    while (environmentName(env) != "R_EmptyEnv")
    {
-      envs <- c(envs, environmentName(env))   
+      envs[[length(envs)+1]] <- 
+                     list (name = .rs.scalar(environmentName(env)),
+                           frame = .rs.scalar(0L))
       env <- parent.env(env)
    }
    envs

@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
@@ -285,20 +286,21 @@ public class EnvironmentPane extends WorkbenchPane
       // environments from the server. We can't do this in the attach/detach
       // event itself since R runs the detach before actually removing the
       // environment from the search path. 
-      server_.getEnvironmentNames(new ServerRequestCallback<JsArrayString>()
-      {
-         @Override
-         public void onResponseReceived(JsArrayString response)
-         {
-            setEnvironments(response);
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            // Just live with a stale environment list
-         }
-      });
+      server_.getEnvironmentNames(
+            new ServerRequestCallback<JsArray<EnvironmentFrame>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<EnvironmentFrame> response)
+               {
+                  setEnvironments(response);
+               }
+      
+               @Override
+               public void onError(ServerError error)
+               {
+                  // Just live with a stale environment list
+               }
+            });
    }
 
    @Override
@@ -364,11 +366,13 @@ public class EnvironmentPane extends WorkbenchPane
    {
       if (name.equals("R_GlobalEnv"))
          return "Global";
+      else if (name.equals("base"))
+         return "Base";
       else 
          return name;
    }
    
-   private void setEnvironments(JsArrayString environments)
+   private void setEnvironments(JsArray<EnvironmentFrame> environments)
    {
       environments_ = environments;
       rebuildEnvironmentMenu();
@@ -379,33 +383,44 @@ public class EnvironmentPane extends WorkbenchPane
       environmentMenu_.clearItems();
       for (int i = 0; i < environments_.length(); i++)
       {
-         final String environment = environments_.get(i);
-         environmentMenu_.addItem(new MenuItem(
-               friendlyNameOfEnvironment(environment), 
+         final EnvironmentFrame frame = environments_.get(i);
+         MenuItem item = new MenuItem(
+               friendlyNameOfEnvironment(frame.getName()), 
                false,  // as HTML
                new Scheduler.ScheduledCommand()
                {
                   @Override
                   public void execute()
                   {
-                     server_.setEnvironment(environment, 
-                           new ServerRequestCallback<Void>()
-                     {
-                        @Override
-                        public void onResponseReceived(Void v)
-                        {
-                           setEnvironmentName(environment);
-                        }
-
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           
-                        }
-                     });
+                     loadEnvironmentFrame(frame);
                   }
-               }));
+               });
+         environmentMenu_.addItem(item);
       }
+   }
+   
+   private void loadEnvironmentFrame(final EnvironmentFrame frame)
+   {
+      ServerRequestCallback<Void> callback = new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            setEnvironmentName(frame.getName());
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            
+         }
+      };
+      // If the frame's an active call frame, set it by its index 
+      if (frame.getFrame() > 0)
+         server_.setEnvironmentFrame(frame.getFrame(), callback);
+      // Otherwise, set it by its name
+      else
+         server_.setEnvironment(frame.getName(), callback);
    }
 
    private final Commands commands_;
@@ -421,6 +436,6 @@ public class EnvironmentPane extends WorkbenchPane
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
-   private JsArrayString environments_;
+   private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
 }

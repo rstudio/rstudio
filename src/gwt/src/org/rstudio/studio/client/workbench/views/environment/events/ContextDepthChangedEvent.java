@@ -16,10 +16,10 @@ package org.rstudio.studio.client.workbench.views.environment.events;
 
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -71,7 +71,7 @@ public class ContextDepthChangedEvent extends
       return contextData_.environmentName();
    }
    
-   public JsArrayString getEnvironments()
+   public JsArray<EnvironmentFrame> getEnvironments()
    {
       return contextData_.environments();
    }
