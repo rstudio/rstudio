@@ -315,9 +315,8 @@ public class EnvironmentObjects extends ResizeComposite
          RObjectEntry entry = objects.get(i);
          boolean visible = matchesFilter(entry.rObject);
          // Redraw the object if its visibility status has changed, or if it's
-         // visible and there's a filter (so we can show the search highlight)
-         if (visible != entry.visible ||
-             visible && hasFilter)
+         // visible (for visible entries we need to update the search highlight)
+         if (visible != entry.visible || visible)
          {
             entry.visible = visible;
             objectList_.redrawRow(i);
