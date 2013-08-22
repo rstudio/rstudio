@@ -150,7 +150,7 @@ public class JEnumTypeTest extends TestCase {
     JClassType aClass = (JClassType) constants[0].getType().isClass();
     {
       JMethod[] methods = aClass.getInheritableMethods();
-      assertEquals(12, methods.length);
+      assertEquals(11, methods.length);
       boolean found = false;
       for (JMethod method : methods) {
         if ("name".equals(method.getName())) {
@@ -162,7 +162,7 @@ public class JEnumTypeTest extends TestCase {
     }
     {
       JMethod[] methods = aClass.getOverridableMethods();
-      assertEquals(5, methods.length);
+      assertEquals(4, methods.length);
       // TODO(jat): verify getExtra is from A's anonymous subclass of
       // EnumInterface when/if that is implemented.
       boolean found = false;
