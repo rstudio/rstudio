@@ -39,6 +39,7 @@
    border: 1px solid #f0f0f0;
    border-left: none;
    background-color: #ffffff;
+   background-image: none;
    transition: background-color 10s;
 }
 
