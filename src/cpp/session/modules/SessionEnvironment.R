@@ -329,11 +329,12 @@
    # if starting above the global environment, the environments will be
    # unnamed. to provide sensible names for them, look for a matching frame in
    # the callstack.
-   if (environmentName(env) != "R_GlobalEnv")
+   if (!identical(env, globalenv()))
    {
       calls <- sys.calls()
       numCalls <- length(calls)
-      while (environmentName(env) != "R_GlobalEnv")
+      while (!identical(env, globalenv()) &&
+             !identical(env, emptyenv()))
       {
          found <- FALSE
          for (i in 1:numCalls)
@@ -356,7 +357,7 @@
    }
    # we're now at the global environment; proceed normally through the rest of
    # the search path.
-   while (environmentName(env) != "R_EmptyEnv")
+   while (!identical(env, emptyenv()))
    {
       envs[[length(envs)+1]] <- 
                      list (name = .rs.scalar(environmentName(env)),

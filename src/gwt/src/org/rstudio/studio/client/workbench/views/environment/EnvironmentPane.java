@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.Void;
@@ -59,7 +60,8 @@ public class EnvironmentPane extends WorkbenchPane
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjects.Observer,
                                         PackageStatusChangedHandler,
-                                        ContextDepthChangedEvent.Handler
+                                        ContextDepthChangedEvent.Handler,
+                                        RestartStatusEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -87,6 +89,7 @@ public class EnvironmentPane extends WorkbenchPane
       
       eventBus_.addHandler(PackageStatusChangedEvent.TYPE, this);
       eventBus_.addHandler(ContextDepthChangedEvent.TYPE, this);
+      eventBus_.addHandler(RestartStatusEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -282,31 +285,22 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void onPackageStatusChanged(PackageStatusChangedEvent event)
    {
-      // When a package is attached or detached, get the new list of 
-      // environments from the server. We can't do this in the attach/detach
-      // event itself since R runs the detach before actually removing the
-      // environment from the search path. 
-      server_.getEnvironmentNames(
-            new ServerRequestCallback<JsArray<EnvironmentFrame>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<EnvironmentFrame> response)
-               {
-                  setEnvironments(response);
-               }
-      
-               @Override
-               public void onError(ServerError error)
-               {
-                  // Just live with a stale environment list
-               }
-            });
+      refreshEnvironments();
    }
 
    @Override
    public void onContextDepthChanged(ContextDepthChangedEvent event)
    {
       setEnvironments(event.getEnvironments());
+   }
+
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         refreshEnvironments();
+      }
    }
 
    // EnviromentObjects.Observer implementation -------------------------------
@@ -365,7 +359,7 @@ public class EnvironmentPane extends WorkbenchPane
    private String friendlyNameOfEnvironment(String name)
    {
       if (name.equals("R_GlobalEnv"))
-         return "Global";
+         return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
          return "Base";
       else 
@@ -399,6 +393,7 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
+   // Called to load a new environment into the environment pane. 
    private void loadEnvironmentFrame(final EnvironmentFrame frame)
    {
       ServerRequestCallback<Void> callback = new ServerRequestCallback<Void>()
@@ -422,6 +417,33 @@ public class EnvironmentPane extends WorkbenchPane
       else
          server_.setEnvironment(frame.getName(), callback);
    }
+   
+   // Called when we need to refresh the environment list--package attach/
+   // detach, restart R, etc. 
+   private void refreshEnvironments()
+   {
+      // When a package is attached or detached, get the new list of 
+      // environments from the server. We can't do this in the attach/detach
+      // event itself since R runs the detach before actually removing the
+      // environment from the search path. 
+      server_.getEnvironmentNames(
+            new ServerRequestCallback<JsArray<EnvironmentFrame>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<EnvironmentFrame> response)
+               {
+                  setEnvironments(response);
+               }
+      
+               @Override
+               public void onError(ServerError error)
+               {
+                  // Just live with a stale environment list
+               }
+            });
+   }
+   
+   public static final String GLOBAL_ENVIRONMENT_NAME = "Global";
 
    private final Commands commands_;
    private final EventBus eventBus_;

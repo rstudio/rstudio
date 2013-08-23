@@ -44,6 +44,7 @@ import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
@@ -75,6 +76,7 @@ public class EnvironmentObjects extends ResizeComposite
    {
       observer_ = observer;
       contextDepth_ = 0;
+      environmentName_ = EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
 
       // initialize the data grid and hook it up to the list of R objects in
       // the environment pane
@@ -280,10 +282,12 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setEnvironmentName(String environmentName)
    {
-      environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
+      environmentNameLabel_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
-                                       EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
+                                       environmentName + 
+                                          " environment is empty");
+      environmentName_ = environmentName;
    }
 
    public int getScrollPosition()
@@ -608,11 +612,11 @@ public class EnvironmentObjects extends ResizeComposite
    {
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
-      environmentName_ = new Label("");
-      environmentName_.setStyleName(style.emptyEnvironmentName());
+      environmentNameLabel_ = new Label(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
+      environmentNameLabel_.setStyleName(style.emptyEnvironmentName());
       environmentEmptyMessage_ = new Label(EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
-      messagePanel.add(environmentName_);
+      messagePanel.add(environmentNameLabel_);
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
@@ -697,7 +701,7 @@ public class EnvironmentObjects extends ResizeComposite
    // level.
    private boolean useStatePersistence()
    {
-      return contextDepth_ == 0;
+      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
    }
    
    private boolean matchesFilter(RObject obj)
@@ -892,7 +896,7 @@ public class EnvironmentObjects extends ResizeComposite
 
    ScrollingDataGrid<RObjectEntry> objectList_;
    CallFramePanel callFramePanel_;
-   Label environmentName_;
+   Label environmentNameLabel_;
    Label environmentEmptyMessage_;
 
    private Column<RObjectEntry, String> objectExpandColumn_;
@@ -904,6 +908,7 @@ public class EnvironmentObjects extends ResizeComposite
    private int contextDepth_;
    private int callFramePanelHeight_;
    private String filterText_ = ""; 
+   private String environmentName_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
