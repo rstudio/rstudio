@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.view.client.ProvidesKey;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
@@ -85,33 +83,7 @@ public class RObjectEntry
    {
       return rObject.getType() == "promise";
    }
-   
-   public String getNameId()
-   {
-      return getIdPrefix() + "name";
-   }
-   
-   public String getDescriptionId()
-   {
-      return getIdPrefix() + "desc";
-   }
 
-   public Element getNameElement()
-   {
-      return Document.get().getElementById(getNameId());
-   }
-
-   
-   public Element getDescriptionElement()
-   {
-      return Document.get().getElementById(getDescriptionId());
-   }
-
-   private String getIdPrefix()
-   {
-      return "robject_" + rObject.getName() + "_";
-   }
-   
    public static final String NO_VALUE = "NO_VALUE";
 
    RObject rObject;
