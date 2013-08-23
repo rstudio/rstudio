@@ -171,8 +171,8 @@ bool inBrowseContext()
    return false;
 }
 
-// return whether the current context is being evaluated inside a hidden
-// (debugger internal) function.
+// Return whether the current context is being evaluated inside a hidden
+// (debugger internal) function at the top level.
 bool insideDebugHiddenFunction()
 {
    RCNTXT* pRContext = r::getGlobalContext();
@@ -180,8 +180,15 @@ bool insideDebugHiddenFunction()
    {
       if (pRContext->callflag & CTXT_FUNCTION)
       {
+         // If we find a debugger internal function before any user function,
+         // hide it from the user callstack.
          if (isDebugHiddenContext(pRContext))
             return true;
+
+         // If we find a user function before we encounter a debugger internal
+         // function, don't hide the user code it invokes.
+         if (hasSourceRefs(pRContext))
+             return false;
       }
       pRContext = pRContext->nextcontext;
    }
