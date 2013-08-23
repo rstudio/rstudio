@@ -198,14 +198,26 @@ public class EnvironmentObjects extends ResizeComposite
                
                private void safeAddClass(Element element, String className)
                {
-                  if (element != null)
-                     element.addClassName(className);
+                  try
+                  {
+                     if (element != null)
+                        element.addClassName(className);
+                  }
+                  catch(Throwable e)
+                  {
+                  }
                }
                
                private void safeRemoveClass(Element element, String className)
                {
-                  if (element != null)
-                     element.removeClassName(className);
+                  try
+                  {
+                     if (element != null)
+                        element.removeClassName(className);
+                  }
+                  catch(Throwable e)
+                  {
+                  }
                }
             });
          }
