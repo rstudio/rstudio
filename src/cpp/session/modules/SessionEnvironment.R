@@ -92,7 +92,7 @@
    # create a more friendly description for delay-loaded data
    if (substr(description, 1, 16) == "lazyLoadDBfetch(")
    {
-      description <- "Data (not yet loaded)"
+      description <- "<Promise>"
    }
    return (description)
 })
@@ -360,9 +360,16 @@
    # the search path.
    while (!identical(env, emptyenv()))
    {
-      envs[[length(envs)+1]] <- 
-                     list (name = .rs.scalar(environmentName(env)),
-                           frame = .rs.scalar(0L))
+      envName <- environmentName(env)
+      # hide the RStudio internal tools environment and the autoloads
+      # environment
+      if (envName != "tools:rstudio" &&
+          envName != "Autoloads")
+      {
+         envs[[length(envs)+1]] <-
+                        list (name = .rs.scalar(envName),
+                              frame = .rs.scalar(0L))
+      }
       env <- parent.env(env)
    }
    envs
