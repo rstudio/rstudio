@@ -621,6 +621,13 @@ bool consoleInputHook(const std::string& prompt,
    }
 }
 
+bool isInjectedBrowserCommand(const std::string& cmd)
+{
+   return browserContextActive() &&
+          (cmd == "c" || cmd == "Q" || cmd == "n" || cmd == "s" || cmd == "f");
+}
+
+
 int RReadConsole (const char *pmt,
                   CONSOLE_BUFFER_CHAR* buf,
                   int buflen,
@@ -707,7 +714,7 @@ int RReadConsole (const char *pmt,
             // we add the user's input rather than any tranformed input we
             // created as a result of a shell escape
             consoleActions().add(kConsoleActionInput, consoleInput.text);
-            if (addToHistory)
+            if (addToHistory && !isInjectedBrowserCommand(consoleInput.text))
                consoleHistory().add(consoleInput.text);
 
             // call console input hook and interrupt if the hook tells us to

@@ -24,6 +24,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -180,21 +181,33 @@ public class EnvironmentObjects extends ResizeComposite
                @Override
                public void execute()
                {
-                  oldEntry.getNameElement().addClassName(
-                        style.valueColNew());
-                  oldEntry.getDescriptionElement().addClassName(
-                        style.valueColNew());
+                  safeAddClass(oldEntry.getNameElement(), style.valueColNew());
+                  safeAddClass(oldEntry.getDescriptionElement(),
+                               style.valueColNew());
+                  
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
                   {
                      @Override
                      public void execute()
                      {
-                        oldEntry.getNameElement().removeClassName(
-                              style.valueColNew());
-                        oldEntry.getDescriptionElement().removeClassName(
-                              style.valueColNew());
+                        safeRemoveClass(oldEntry.getNameElement(),
+                                        style.valueColNew());
+                        safeRemoveClass(oldEntry.getDescriptionElement(),
+                                        style.valueColNew());
                      }
                   });
+               }
+               
+               private void safeAddClass(Element element, String className)
+               {
+                  if (element != null)
+                     element.addClassName(className);
+               }
+               
+               private void safeRemoveClass(Element element, String className)
+               {
+                  if (element != null)
+                     element.removeClassName(className);
                }
             });
          }
