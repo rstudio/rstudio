@@ -341,8 +341,9 @@
          {
             if (identical(sys.frame(i), env))
             {
+               calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
                envs[[length(envs)+1]] <- 
-                              list(name = .rs.scalar(deparse(sys.call(i))),
+                              list(name = .rs.scalar(calldesc),
                                    frame = .rs.scalar(i))
                found <- TRUE
                break

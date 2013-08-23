@@ -482,6 +482,9 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
 
    // set state for the new depth
    *pContextDepth = requestedDepth;
+   SEXP env = NULL;
+   getFunctionContext(requestedDepth, false, NULL, &env);
+   s_environmentMonitor.setMonitoredEnvironment(env);
 
    // populate the new state on the client
    enqueContextDepthChangedEvent(*pContextDepth);
