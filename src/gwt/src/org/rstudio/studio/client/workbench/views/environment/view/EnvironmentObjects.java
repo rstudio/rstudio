@@ -24,7 +24,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -171,55 +170,6 @@ public class EnvironmentObjects extends ResizeComposite
             newEntry.expanded = oldEntry.expanded;
             objectDataProvider_.getList().set(idx, newEntry);
             added = true;
-            
-            // pulse the value by adding and then immediately removing a class
-            // that supplies a background color
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  safeAddClass(oldEntry.getNameElement(), style.valueColNew());
-                  safeAddClass(oldEntry.getDescriptionElement(),
-                               style.valueColNew());
-                  
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
-                  {
-                     @Override
-                     public void execute()
-                     {
-                        safeRemoveClass(oldEntry.getNameElement(),
-                                        style.valueColNew());
-                        safeRemoveClass(oldEntry.getDescriptionElement(),
-                                        style.valueColNew());
-                     }
-                  });
-               }
-               
-               private void safeAddClass(Element element, String className)
-               {
-                  try
-                  {
-                     if (element != null)
-                        element.addClassName(className);
-                  }
-                  catch(Throwable e)
-                  {
-                  }
-               }
-               
-               private void safeRemoveClass(Element element, String className)
-               {
-                  try
-                  {
-                     if (element != null)
-                        element.removeClassName(className);
-                  }
-                  catch(Throwable e)
-                  {
-                  }
-               }
-            });
          }
          else
          {
@@ -334,7 +284,6 @@ public class EnvironmentObjects extends ResizeComposite
    public void setFilterText (String filterText)
    {
       filterText_ = filterText.toLowerCase();
-      boolean hasFilter = !filterText_.isEmpty();
 
       // Iterate over each entry in the list, and toggle its visibility based 
       // on whether it matches the current filter text.
@@ -805,7 +754,6 @@ public class EnvironmentObjects extends ResizeComposite
          nameCol.title(
                  rowValue.rObject.getName() +
                  " (" + rowValue.rObject.getType() + size + ")");
-         nameCol.id(rowValue.getNameId());
          renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
       }
@@ -838,7 +786,6 @@ public class EnvironmentObjects extends ResizeComposite
                                  style.clickableCol());
          }
          descCol.className(descriptionStyle);
-         descCol.id(rowValue.getDescriptionId());
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
          descCol.endTD();
       }
