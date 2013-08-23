@@ -79,7 +79,8 @@ public class ClearAllDialog extends ModalDialogBase
 
       // add message widget
       Label label = new MultiLineLabel(
-            "Are you sure you want to remove all objects from the workspace?");
+            "Are you sure you want to remove all objects " +
+            "from the global environment?");
       label.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
