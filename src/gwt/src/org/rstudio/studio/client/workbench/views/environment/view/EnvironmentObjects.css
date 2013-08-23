@@ -38,9 +38,7 @@
    overflow-x: hidden;
    border: 1px solid #f0f0f0;
    border-left: none;
-   background-color: #ffffff;
-   background-image: none;
-   transition: background-color 10s;
+   background: none;
 }
 
 .objectGrid td.expandCol
@@ -58,13 +56,6 @@
    overflow-x: hidden;
    padding-right: 20px;
    background-color: #ffffff;
-   transition: background-color 10s;
-}
-
-.objectGrid td.valueColNew
-{
-   background-color: #f0f0ff;
-   transition: background-color 0s;
 }
 
 .objectGrid td.clickableCol
