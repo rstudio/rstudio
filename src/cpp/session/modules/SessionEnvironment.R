@@ -375,13 +375,4 @@
    envs
 })
 
-.rs.addFunction("getEnvironment", function(envName)
-{
-   if (envName == "R_GlobalEnv")
-      return(globalenv())
-   else if (envName == "base")
-      return(baseenv())
-   else
-      return(as.environment(envName))
-})
 
