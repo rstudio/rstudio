@@ -314,6 +314,8 @@ public abstract class
    public abstract AppCommand debugContinue();
    public abstract AppCommand debugStop();
    public abstract AppCommand debugStep();
+   public abstract AppCommand debugStepInto();
+   public abstract AppCommand debugFinish();
    public abstract AppCommand debugHelp();   
    public abstract AppCommand errorsMessage();
    public abstract AppCommand errorsTraceback();

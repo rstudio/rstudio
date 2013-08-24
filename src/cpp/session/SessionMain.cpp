@@ -474,6 +474,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
 
    sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+
+   sessionInfo["have_advanced_step_commands"] =
+                        modules::breakpoints::haveAdvancedStepCommands();
    
    // initial working directory
    std::string initialWorkingDir = module_context::createAliasedPath(

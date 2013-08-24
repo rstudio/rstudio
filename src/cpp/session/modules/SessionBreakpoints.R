@@ -430,7 +430,7 @@
             .rs.lineDataList(srcref)))
 })
 
-.rs.addFunction("hasAdvancedSteppingCommands", function() {
+.rs.addFunction("haveAdvancedSteppingCommands", function() {
    if (getRversion() >= "3.1") {
       svnRev <- R.version$`svn rev`
       if (!is.null(svnRev)) {

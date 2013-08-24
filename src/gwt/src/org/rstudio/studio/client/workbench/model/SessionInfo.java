@@ -326,4 +326,8 @@ public class SessionInfo extends JavaScriptObject
    public final native ErrorManagerState getErrorState() /*-{
       return this.error_state;
    }-*/;
+   
+   public final native boolean getHaveAdvancedStepCommands() /*-{
+      return this.have_advanced_step_commands;
+   }-*/;
 }

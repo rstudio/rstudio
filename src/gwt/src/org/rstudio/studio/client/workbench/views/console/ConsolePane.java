@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
@@ -37,12 +38,14 @@ public class ConsolePane extends WorkbenchPane
    @Inject
    public ConsolePane(Provider<Shell> consoleProvider,
                       final EventBus events,
-                      Commands commands)
+                      Commands commands,
+                      Session session)
    {
       super("Console");
 
       consoleProvider_ = consoleProvider ;
       commands_ = commands;
+      session_ = session;
       debugMode_ = false;
 
       // console is interacted with immediately so we make sure it
@@ -90,7 +93,14 @@ public class ConsolePane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar(true);
-      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton());  
+      toolbar.addLeftWidget(commands_.debugStep().createToolbarButton()); 
+      if (session_.getSessionInfo().getHaveAdvancedStepCommands())
+      {
+         toolbar.addLeftSeparator();
+         toolbar.addLeftWidget(commands_.debugStepInto().createToolbarButton());
+         toolbar.addLeftSeparator();
+         toolbar.addLeftWidget(commands_.debugFinish().createToolbarButton());
+      }
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.debugContinue().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -149,6 +159,7 @@ public class ConsolePane extends WorkbenchPane
    private Provider<Shell> consoleProvider_ ;
    private final Commands commands_;
    private Shell shell_;
+   private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private boolean debugMode_;

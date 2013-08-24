@@ -222,6 +222,32 @@ public class DebugCommander
       }
    }
    
+   @Handler
+   void onDebugStepInto()
+   {
+      if (debugMode_ == DebugMode.Function)
+      {
+         eventBus_.fireEvent(new SendToConsoleEvent("s", true, true));
+      }
+      else if (debugMode_ == DebugMode.TopLevel)
+      {
+         // TODO: what's the right thing here?
+      }
+   }
+   
+   @Handler
+   void onDebugFinish()
+   {
+      if (debugMode_ == DebugMode.Function)
+      {
+         eventBus_.fireEvent(new SendToConsoleEvent("f", true, true));
+      }
+      else if (debugMode_ == DebugMode.TopLevel)
+      {
+         // TODO: what's the right thing here?
+      }
+   }
+   
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
@@ -268,6 +294,12 @@ public class DebugCommander
          enterDebugMode(DebugMode.TopLevel);
          setDebugging(true);
          highlightDebugPosition((LineData)debugState.cast(), false);
+      }
+      
+      if (!session_.getSessionInfo().getHaveAdvancedStepCommands())
+      {
+         commands_.debugStepInto().remove();
+         commands_.debugFinish().remove();
       }
    }
    
@@ -437,6 +469,9 @@ public class DebugCommander
       commands_.debugContinue().setEnabled(enabled);
       commands_.debugStep().setEnabled(enabled);
       commands_.debugStop().setEnabled(enabled);
+      commands_.debugStepInto().setEnabled(enabled);
+      commands_.debugFinish().setEnabled(enabled);
+      
    }
    
    // These values are understood by the server; if you change them, you'll need

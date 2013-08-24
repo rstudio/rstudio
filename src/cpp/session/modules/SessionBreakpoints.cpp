@@ -220,6 +220,16 @@ json::Value debugStateAsJson()
    return state;
 }
 
+bool haveAdvancedStepCommands()
+{
+   bool haveCommands = false;
+   Error error = r::exec::RFunction(".rs.haveAdvancedSteppingCommands")
+                                                      .call(&haveCommands);
+   if (error)
+       LOG_ERROR(error);
+   return haveCommands;
+}
+
 Error initialize()
 {
    // subscribe to events

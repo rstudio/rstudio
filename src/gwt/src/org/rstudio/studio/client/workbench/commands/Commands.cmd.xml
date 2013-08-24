@@ -264,7 +264,9 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="debugBreakpoint"/>
          <cmd refid="debugClearBreakpoints"/>
          <separator/>
-         <cmd refid="debugStep"/>         
+         <cmd refid="debugStep"/>   
+         <cmd refid="debugStepInto"/>
+         <cmd refid="debugFinish"/>      
          <cmd refid="debugContinue"/>
          <cmd refid="debugStop"/>
          <separator/>
@@ -1253,6 +1255,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="E_xecute Next Line"
         buttonLabel="Next"
         desc="Execute the next line of code"/>
+   <cmd id="debugStepInto"
+        menuLabel="Step _Into Function"
+        buttonLabel=""
+        desc="Step into the current function call"/>
+   <cmd id="debugFinish"
+        menuLabel="_Finish Function/Loop"
+        buttonLabel=""
+        desc="Execute the remainer of the current function or loop"/>
    <cmd id="debugHelp"
         menuLabel="Debugging _Help"
         desc="Guide to debugging features"/>
