@@ -50,7 +50,6 @@
 #include <core/ProgramStatus.hpp>
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/http/URL.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/UriHandler.hpp>
@@ -325,51 +324,6 @@ FilePath getInitialWorkingDirectory()
    }
 }
 
-std::string switchToProject(const http::Request& request)
-{
-   std::string referrer = request.headerValue("referer");
-   std::string baseURL, queryString;
-   http::URL(referrer).split(&baseURL, &queryString);
-   http::Fields fields;
-   http::util::parseQueryString(queryString, &fields);
-   std::string project = http::util::fieldValue(fields, "project");
-
-   if (!project.empty())
-   {
-      // resolve project
-      FilePath projectPath = module_context::resolveAliasedPath(project);
-      if ((projectPath.extensionLowerCase() != ".rproj") &&
-          projectPath.isDirectory())
-      {
-         FilePath discoveredPath = r_util::projectFromDirectory(projectPath);
-         if (!discoveredPath.empty())
-            projectPath = discoveredPath;
-      }
-      project = module_context::createAliasedPath(projectPath);
-
-      // check if we're already in this project
-      if (projects::projectContext().hasProject())
-      {
-         std::string currentProject = module_context::createAliasedPath(
-                                          projects::projectContext().file());
-         if (project != currentProject)
-            return project;
-         else
-            return std::string();
-      }
-      // no project active so need to switch
-      else
-      {
-         return project;
-      }
-   }
-   // no project in the query string
-   else
-   {
-      return std::string();
-   }
-}
-
 
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
@@ -575,9 +529,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
-
-   // check whether a switch project is required
-   sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
