@@ -373,7 +373,7 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
       
-      reloadWindowWithDelay();
+      reloadWindowWithDelay(false);
    }
    
    public void onQuit(QuitEvent event)
@@ -388,7 +388,7 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            reloadWindowWithDelay();
+            reloadWindowWithDelay(true);
          }
          else
          {
@@ -398,13 +398,16 @@ public class Application implements ApplicationEventHandlers
    }
    
    
-   private void reloadWindowWithDelay()
+   private void reloadWindowWithDelay(final boolean baseUrlOnly)
    {
       new Timer() {
          @Override
          public void run()
          { 
-            Window.Location.reload(); 
+            if (baseUrlOnly)
+               Window.Location.replace(GWT.getHostPageBaseURL());
+            else
+               Window.Location.reload(); 
          }
       }.schedule(100);
    }

@@ -53,8 +53,10 @@ void initializeHttpConnectionListener()
    else // mode == "server"
    {
       // create listener based on options
-      std::string userIdentity = options.userIdentity();
-      FilePath localStreamPath = local_streams::streamPath(userIdentity);
+      std::string streamFile =
+         options.userIdentity() + kProjectSessionDelimiter + options.project();
+      streamFile = http::util::urlEncode(streamFile);
+      FilePath localStreamPath = local_streams::streamPath(streamFile);
       s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            localStreamPath,
                                            core::system::EveryoneReadWriteMode,

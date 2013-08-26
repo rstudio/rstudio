@@ -60,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -148,10 +149,6 @@ public class Projects implements OpenProjectFileHandler,
                   commands.vcsCleanup().remove();
                }
             }
-            
-            // disable the open project in new window command in web mode
-            if (!Desktop.isDesktop())
-               commands.openProjectInNewWindow().remove();
             
             // maintain mru
             if (hasProject)
@@ -455,11 +452,23 @@ public class Projects implements OpenProjectFileHandler,
                if (input == null)
                   return;
                
-               // call the desktop to open the project (since it is
-               // a conventional foreground gui application it has
-               // less chance of running afowl of desktop app creation
-               // & activation restrictions)
-               Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               if (Desktop.isDesktop())
+               {
+                  // call the desktop to open the project (since it is
+                  // a conventional foreground gui application it has
+                  // less chance of running afowl of desktop app creation
+                  // & activation restrictions)
+                  Desktop.getFrame().openProjectInNewWindow(input.getPath());
+               }
+               else
+               {
+                  String url = server_.getApplicationURL("");
+                  String project = URL.encodeQueryString(
+                                                input.getParentPathString());
+                  project = project.replace("%2F", "/");
+                  url += "?project=" + project;
+                  globalDisplay_.openWindow(url);
+               }
             }   
          });
    }

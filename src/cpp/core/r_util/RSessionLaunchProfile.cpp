@@ -54,6 +54,7 @@ json::Object sessionLaunchProfileToJson(const SessionLaunchProfile& profile)
 {
    json::Object profileJson;
    profileJson["username"] = profile.username;
+   profileJson["project"] = profile.project;
    profileJson["executablePath"] = profile.executablePath;
    json::Object configJson;
    configJson["args"] = optionsAsJson(profile.config.args);
@@ -72,6 +73,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
    json::Object configJson;
    Error error = json::readObject(jsonProfile,
                                   "username", &profile.username,
+                                  "project", &profile.project,
                                   "executablePath", &profile.executablePath,
                                   "config", &configJson);
    if (error)

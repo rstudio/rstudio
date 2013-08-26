@@ -271,6 +271,11 @@ public:
    { 
       return std::string(userIdentity_.c_str()); 
    }
+
+   std::string project() const
+   {
+      return std::string(project_.c_str());
+   }
    
    core::FilePath userHomePath() const 
    { 
@@ -422,6 +427,7 @@ private:
 
    // user info
    std::string userIdentity_;
+   std::string project_;
    std::string userHomePath_;
    std::string userScratchPath_;   
 
