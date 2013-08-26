@@ -13,6 +13,8 @@
  *
  */
 
+#include <boost/bind.hpp>
+
 #include <core/FileUtils.hpp>
 #include <core/FilePath.hpp>
 
@@ -20,6 +22,34 @@
 
 namespace core {
 namespace file_utils {
+
+namespace {
+
+void copySourceFile(const FilePath& sourceDir,
+                    const FilePath& destDir,
+                    const FilePath& sourceFilePath)
+{
+   // compute the target path
+   std::string relativePath = sourceFilePath.relativePath(sourceDir);
+   FilePath targetPath = destDir.complete(relativePath);
+
+   // if the copy item is a directory just create it
+   if (sourceFilePath.isDirectory())
+   {
+      Error error = targetPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+   }
+   // otherwise copy it
+   else
+   {
+      Error error = sourceFilePath.copy(targetPath);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+} // anonymous namespace
 
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
 {
@@ -40,6 +70,20 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    // if we didn't succeed then return prefix + uuid
    return parent.childPath(prefix + core::system::generateUuid(false));
 }
+
+Error copyDirectory(const FilePath& sourceDirectory,
+                    const FilePath& targetDirectory)
+{
+   // create the target directory
+   Error error = targetDirectory.ensureDirectory();
+   if (error)
+      return error ;
+
+   // iterate over the source
+   return sourceDirectory.childrenRecursive(
+     boost::bind(copySourceFile, sourceDirectory, targetDirectory, _2));
+}
+
 
 } // namespace file_utils
 } // namespace core

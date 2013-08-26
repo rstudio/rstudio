@@ -32,6 +32,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileInfo.hpp>
+#include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/Exec.hpp>
 #include <core/DateTime.hpp>
@@ -284,32 +285,7 @@ core::Error deleteFiles(const core::json::JsonRpcRequest& request,
    return Success() ;
 }
    
-   
-void copySourceFile(const FilePath& sourceDir, 
-                    const FilePath& destDir,
-                    int level,
-                    const FilePath& sourceFilePath)
-{
-   // compute the target path
-   std::string relativePath = sourceFilePath.relativePath(sourceDir);
-   FilePath targetPath = destDir.complete(relativePath);
-   
-   // if the copy item is a directory just create it
-   if (sourceFilePath.isDirectory())
-   {
-      Error error = targetPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-   // otherwise copy it
-   else
-   {
-      Error error = sourceFilePath.copy(targetPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-   
+
 // IN: String sourcePath, String targetPath
 Error copyFile(const core::json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
@@ -350,14 +326,7 @@ Error copyFile(const core::json::JsonRpcRequest& request,
    Error copyError ;
    if (sourceFilePath.isDirectory())
    {
-      // create the target directory
-      Error error = targetFilePath.ensureDirectory();
-      if (error)
-         return error ;
-      
-      // iterate over the source
-      copyError = sourceFilePath.childrenRecursive(
-        boost::bind(copySourceFile, sourceFilePath, targetFilePath, _1, _2));
+      copyError = file_utils::copyDirectory(sourceFilePath, targetFilePath);
    }
    else
    {
