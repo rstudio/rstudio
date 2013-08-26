@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
@@ -60,7 +61,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -462,12 +462,8 @@ public class Projects implements OpenProjectFileHandler,
                }
                else
                {
-                  String url = server_.getApplicationURL("");
-                  String project = URL.encodeQueryString(
-                                                input.getParentPathString());
-                  project = project.replace("%2F", "/");
-                  url += "?project=" + project;
-                  globalDisplay_.openWindow(url);
+                  globalDisplay_.openWindow(
+                     URLUtils.getProjectURL(input.getParentPathString()));
                }
             }   
          });

@@ -257,7 +257,11 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 //      the idea being that they would route to the 'default' project.
 //      Unfortunately the default project might conincide with another browser
 //      window with an explicit project URL, thereby allowing two browsers
-//      into the same session.
+//      into the same session. NOTE: this has been changed so we attempt to
+//      redirect the url to the project, HOWEVER, we still need to chase
+//      down all of the edge cases related to the different ways that project
+//      URLs can be formed (i.e. Close Project, MRU switch, etc.). A bit
+//      of testing with the current code indicates there is plenty broken here
 //
 
 

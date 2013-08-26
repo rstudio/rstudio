@@ -27,16 +27,21 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.events.BarrierReleasedEvent;
+import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -44,6 +49,7 @@ import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.*;
@@ -51,6 +57,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -121,9 +128,9 @@ public class Application implements ApplicationEventHandlers
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
-  
-   
-   public void go(RootLayoutPanel rootPanel, final Command dismissLoadingProgress)
+     
+   public void go(final RootLayoutPanel rootPanel, 
+                  final Command dismissLoadingProgress)
    {
       Widget w = view_.getWidget();
       rootPanel.add(w);
@@ -143,9 +150,18 @@ public class Application implements ApplicationEventHandlers
                   dismissLoadingProgress.execute();
 
                   session_.setSessionInfo(sessionInfo);
-
-                  // configure workbench
+                  
+                  // hide the workbench if we are going to redirect anyway
+                  String projectRedirect = sessionInfo.getProjectRedirect();
+                  if (projectRedirect.length() > 0) 
+                     hideWorkbench(rootPanel);
+                  
+                  // initialize workbench
                   initializeWorkbench();
+                  
+                  // redirect to project if necessary
+                  if (projectRedirect.length() > 0)
+                     redirectToProject(projectRedirect);
                }
             }); 
          }
@@ -161,6 +177,30 @@ public class Application implements ApplicationEventHandlers
       }) ;
    }
    
+   private void redirectToProject(final String project)
+   {
+      // use a last chance save barrier since we typically call this very
+      // early in the lifetime of the application before client/server
+      // sync has occurred
+      Barrier barrier = new Barrier();
+      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler() {
+         @Override
+         public void onBarrierReleased(BarrierReleasedEvent event)
+         { 
+            reloadWindowWithDelay(project);
+         }
+      });
+      
+      Token token = barrier.acquire();
+      try
+      {
+         events_.fireEvent(new LastChanceSaveEvent(barrier));
+      }
+      finally
+      {
+         token.release();
+      }
+   }
    
    @Handler
    public void onShowToolbar()
@@ -373,7 +413,7 @@ public class Application implements ApplicationEventHandlers
    {
       cleanupWorkbench();
       
-      reloadWindowWithDelay(false);
+      reloadWindowWithDelay();
    }
    
    public void onQuit(QuitEvent event)
@@ -388,7 +428,7 @@ public class Application implements ApplicationEventHandlers
          // the R session to fully exit on the server)
          if (event.getSwitchProjects())
          {
-            reloadWindowWithDelay(true);
+            reloadWindowWithDelay();
          }
          else
          {
@@ -397,19 +437,23 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   private void reloadWindowWithDelay()
+   {
+      reloadWindowWithDelay(null);
+   }
    
-   private void reloadWindowWithDelay(final boolean baseUrlOnly)
+   private void reloadWindowWithDelay(final String project)
    {
       new Timer() {
          @Override
          public void run()
          { 
-            if (baseUrlOnly)
-               Window.Location.replace(GWT.getHostPageBaseURL());
+            if (project != null)
+               Window.Location.replace(URLUtils.getProjectURL(project));
             else
                Window.Location.reload(); 
          }
-      }.schedule(100);
+      }.schedule(250);
    }
    
    public void onSuicide(SuicideEvent event)
@@ -594,6 +638,17 @@ public class Application implements ApplicationEventHandlers
       commands_.showToolbar().setVisible(!showToolbar);
       commands_.hideToolbar().setVisible(showToolbar);
    }
+   
+   private void hideWorkbench(final RootLayoutPanel rootPanel)
+   {
+      final Label w = new Label();
+      w.getElement().getStyle().setBackgroundColor("#e1e2e5");
+      rootPanel.add(w);
+      rootPanel.setWidgetTopBottom(w, 0, Style.Unit.PX, 
+                                      0, Style.Unit.PX);
+      rootPanel.setWidgetLeftRight(w, 0, Style.Unit.PX, 
+                                      0, Style.Unit.PX);
+   }
       
    private void cleanupWorkbench()
    {
@@ -612,6 +667,13 @@ public class Application implements ApplicationEventHandlers
    {
       navigateWindowTo("auth-sign-in");
    }
+   
+   private boolean projectRedirectPending()
+   {
+      return !Desktop.isDesktop() && 
+             (Window.Location.getParameter("project") == null); 
+   }
+   
   
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;

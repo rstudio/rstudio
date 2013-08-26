@@ -306,6 +306,10 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getAllowRemovePublicFolder() /*-{
       return this.allow_remove_public_folder;
    }-*/;
+   
+   public final native String getProjectRedirect() /*-{
+      return this.project_redirect;
+   }-*/;
 
    public final native EnvironmentState getEnvironmentState() /*-{
       return this.environment_state;

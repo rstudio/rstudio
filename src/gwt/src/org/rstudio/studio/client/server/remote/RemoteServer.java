@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.JSONUtils;
+import org.rstudio.studio.client.common.URLUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -252,7 +253,7 @@ public class RemoteServer implements Server
       ensureListeningForEvents();
       
       // return the url
-      return GWT.getHostPageBaseURL() + pathName;
+      return URLUtils.getApplicationURL(pathName);
    }
    
    public void suspendForRestart(SuspendOptions options,
