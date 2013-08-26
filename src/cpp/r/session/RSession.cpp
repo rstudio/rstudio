@@ -1319,7 +1319,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
    FilePath scopedScratch = s_options.scopedScratchPath;
-   s_suspendedSessionPath = scopedScratch.complete("suspended-session");
+   s_suspendedSessionPath = scopedScratch.complete("suspended-session-data");
 
    // one time migration of global suspended to scoped suspended
    if (!s_suspendedSessionPath.exists() && oldSuspendedSessionPath.exists())
