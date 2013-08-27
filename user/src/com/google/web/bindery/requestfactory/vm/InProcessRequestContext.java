@@ -133,14 +133,14 @@ class InProcessRequestContext extends AbstractRequestContext {
         final int contentIdx = foundContent;
 
         data = new RequestData(operation, actualArgs, returnType, elementType);
-        for (int i = 0, j = args.length; i < j; i++) {
+        for (int i = 0, j = parameterNames.length; i < j; i++) {
           if (i != contentIdx) {
             data.setNamedParameter(parameterNames[i], args[i]);
           } else {
             data.setRequestContent(args[i]);
           }
-          data.setApiVersion(apiVersion);
         }
+        data.setApiVersion(apiVersion);
       }
 
       // Create the request, just filling in the RequestData details
