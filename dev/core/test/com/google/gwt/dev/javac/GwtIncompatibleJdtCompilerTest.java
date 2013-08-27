@@ -264,7 +264,7 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       code.append("package com.google.gwt;\n");
       code.append("public class GwtIncompatibleWithStaticInnerClassTest {\n");
       code.append("  void test() {\n");
-      code.append("    (new GwtIncompatibleWithStaticInnerClass()).new Child();\n");
+      code.append("    new GwtIncompatibleWithStaticInnerClass.Child();\n");
       code.append("  }\n");
       code.append("}\n");
       return code;

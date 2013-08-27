@@ -16,9 +16,11 @@
 package com.google.gwt.dev.javac;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
+import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedAllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -150,12 +152,17 @@ public class GwtIncompatiblePreprocessor {
     tyDecl.methods = new AbstractMethodDeclaration[0];
     tyDecl.memberTypes = new TypeDeclaration[0];
     tyDecl.fields = new FieldDeclaration[0];
-    // Create a default constructor so that the class is proper.
-    tyDecl.createDefaultConstructor(true, true);
-    // Mark only constructor as private so that it can not be instantiated.
-    tyDecl.methods[0].modifiers = ClassFileConstants.AccPrivate;
-    // Mark the class as final so that it can not be extended.
-    tyDecl.modifiers |= ClassFileConstants.AccFinal;
+    if (TypeDeclaration.kind(tyDecl.modifiers) != TypeDeclaration.INTERFACE_DECL) {
+      // Create a default constructor so that the class is proper.
+      ConstructorDeclaration constructor = tyDecl.createDefaultConstructor(true, true);
+      // Mark only constructor as private so that it can not be instantiated.
+      constructor.modifiers = ClassFileConstants.AccPrivate;
+      // Clear a bit that is used for marking the constructor as default as it makes JDT
+      // assume that the constructor is public.
+      constructor.bits &= ~ASTNode.IsDefaultConstructor;
+      // Mark the class as final so that it can not be extended.
+      tyDecl.modifiers |= ClassFileConstants.AccFinal;
+    }
   }
 
   /**
