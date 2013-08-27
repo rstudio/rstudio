@@ -62,7 +62,7 @@ public:
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
    // set a launch profile filter
-   typedef boost::function<core::Error(
+   typedef boost::function<void(
                            core::r_util::SessionLaunchProfile*)>
                                                   SessionLaunchProfileFilter;
    void setSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
