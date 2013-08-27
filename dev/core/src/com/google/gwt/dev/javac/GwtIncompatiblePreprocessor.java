@@ -122,8 +122,8 @@ public class GwtIncompatiblePreprocessor {
 
   /**
    * Process inner classes, methods and fields from all anonymous inner classes.
-   * <p>
-   * Anonymous inner classes are represented inside expressions. Traverse the JDT AST removing
+   *
+   * <p>Anonymous inner classes are represented inside expressions. Traverse the JDT AST removing
    * anonymous inner classes in one go.
    */
   private static void processAllAnonymousInnerClasses(CompilationUnitDeclaration cud) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2013 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,75 +15,68 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
-import com.google.gwt.dev.resource.Resource;
 
-import junit.framework.TestCase;
-
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * Test class for GwtIncompatible annotations in {@link com.google.gwt.dev.javac.JdtCompiler}.
  */
-public class GwtIncompatibleJdtTest extends TestCase {
+public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
 
   public void testCompileError() throws Exception {
     List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION,
         GWTINCOMPATIBLE_METHOD_MISSING_ANNOTATION);
-    assertOnlyLastUnitHasErrors(units);
+    assertOnlyLastUnitHasErrors(units,
+        "The method gwtIncompatibleMethod() is undefined for the type GwtIncompatibleTest");
   }
 
   public void testCompileGwtIncompatible() throws Exception {
-    List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION,
+    assertResourcesCompileSuccessfully(GWTINCOMPATIBLE_ANNOTATION,
         GWTINCOMPATIBLE_METHOD, GWTINCOMPATIBLE_FIELD, GWTINCOMPATIBLE_INNERCLASS,
         GWTINCOMPATIBLE_ANONYMOUS_INNERCLASS);
-    assertUnitsCompiled(units);
   }
 
   public void testCompileGwtIncompatibleClass() throws Exception {
-    List<CompilationUnit> units = compile( GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS);
-    assertUnitsCompiled(units);
+    assertResourcesCompileSuccessfully(GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS);
   }
 
   public void testCompileExtendsGwtIncompatibleClass() throws Exception {
-    List<CompilationUnit> units = compile( GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS,
+    List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS,
         EXTENDS_GWTINCOMPATIBLE);
-    assertOnlyLastUnitHasErrors(units);
+    assertOnlyLastUnitHasErrors(units, "The type ExtendsGwtIncompatibleClass cannot "
+        + "subclass the final class GwtIncompatibleClass");
   }
 
   public void testCompileInstantiateGwtIncompatibleClass() throws Exception {
-    List<CompilationUnit> units = compile( GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS,
+    List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_TOPCLASS,
         INSTANTIATES_GWTINCOMPATIBLE);
-    assertOnlyLastUnitHasErrors(units);
+    assertOnlyLastUnitHasErrors(units,
+        "The constructor GwtIncompatibleClass() is not visible");
   }
 
   public void testCompileGwtIncompatibleClassWithInnerClass() throws Exception {
-    List<CompilationUnit> units = compile( GWTINCOMPATIBLE_ANNOTATION,
-        GWTINCOMPATIBLE_WITH_INNERCLASS);
-    assertUnitsCompiled(units);
+    assertResourcesCompileSuccessfully(GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_WITH_INNERCLASS);
   }
 
   public void testCompileGwtIncompatibleClassWithInnerClassTest() throws Exception {
     List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION,
         GWTINCOMPATIBLE_WITH_INNERCLASS, GWTINCOMPATIBLE_WITH_INNERCLASS_TEST);
-    assertOnlyLastUnitHasErrors(units);
+    assertOnlyLastUnitHasErrors(units,
+        "The constructor GwtIncompatibleWithInnerClass() is not visible",
+        "GwtIncompatibleWithInnerClass.Child cannot be resolved to a type");
   }
 
   public void testCompileGwtIncompatibleClassWithStaticInnerClass() throws Exception {
-    List<CompilationUnit> units = compile( GWTINCOMPATIBLE_ANNOTATION,
+    assertResourcesCompileSuccessfully(GWTINCOMPATIBLE_ANNOTATION,
         GWTINCOMPATIBLE_WITH_STATIC_INNERCLASS);
-    assertUnitsCompiled(units);
   }
 
   public void testCompileGwtIncompatibleClassWithStaticInnerClassTest() throws Exception {
     List<CompilationUnit> units = compile(GWTINCOMPATIBLE_ANNOTATION,
         GWTINCOMPATIBLE_WITH_STATIC_INNERCLASS, GWTINCOMPATIBLE_WITH_STATIC_INNERCLASS_TEST);
-    assertOnlyLastUnitHasErrors(units);
+    assertOnlyLastUnitHasErrors(units,
+        "GwtIncompatibleWithStaticInnerClass.Child cannot be resolved to a type");
   }
 
   public static final MockJavaResource GWTINCOMPATIBLE_ANNOTATION = new MockJavaResource(
@@ -106,7 +99,9 @@ public class GwtIncompatibleJdtTest extends TestCase {
       StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt;\n");
       code.append("public class GwtIncompatibleTest {\n");
-      code.append("  int test() { return methodDoesNotExist(); }  \n");
+      code.append("  int test() { return gwtIncompatibleMethod(); }  \n");
+      code.append("  @GwtIncompatible(\" not compatible \") \n");
+      code.append("  int gwtIncompatibleMethod() { return -1; }  \n");
       code.append("}\n");
       return code;
     }
@@ -191,7 +186,7 @@ public class GwtIncompatibleJdtTest extends TestCase {
       StringBuilder code = new StringBuilder();
       code.append("package com.google.gwt;\n");
       code.append("public class InstantiatesGwtIncompatibleClass {\n");
-      code.append("    int test() { return new GwtIncompatibleClass() ; }  \n");
+      code.append("    Object test() { return new GwtIncompatibleClass(); }  \n");
       code.append("}\n");
       return code;
     }
@@ -254,7 +249,7 @@ public class GwtIncompatibleJdtTest extends TestCase {
       code.append("package com.google.gwt;\n");
       code.append("@GwtIncompatible(\" not compatible \") \n");
       code.append("public class GwtIncompatibleWithStaticInnerClass {\n");
-      code.append("  public class Child {\n");
+      code.append("  public static class Child {\n");
       code.append("  }\n");
       code.append("}\n");
       return code;
@@ -275,35 +270,5 @@ public class GwtIncompatibleJdtTest extends TestCase {
       return code;
     }
   };
-
-  static void assertUnitHasErrors(CompilationUnit unit, int numErrors) {
-    assertTrue(unit.isError());
-    assertEquals(numErrors, unit.getProblems().length);
-  }
-
-  static void assertUnitsCompiled(Collection<CompilationUnit> units) {
-    for (CompilationUnit unit : units) {
-      assertFalse(unit.isError());
-      assertTrue(unit.getCompiledClasses().size() > 0);
-    }
-  }
-
-  static void assertOnlyLastUnitHasErrors(List<CompilationUnit> units) {
-    assertUnitsCompiled(units.subList(0, units.size() - 1));
-    assertUnitHasErrors(units.get(units.size() - 1), 1);
-  }
-
-  private List<CompilationUnit> compile(Resource... sourceFiles) throws UnableToCompleteException {
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
-    addAll(builders, JavaResourceBase.getStandardResources());
-    addAll(builders, sourceFiles);
-    return JdtCompiler.compile(TreeLogger.NULL, builders);
-  }
-
-  private void addAll(Collection<CompilationUnitBuilder> units, Resource... sourceFiles) {
-    for (Resource sourceFile : sourceFiles) {
-      units.add(CompilationUnitBuilder.create(sourceFile));
-    }
-  }
-
 }
+

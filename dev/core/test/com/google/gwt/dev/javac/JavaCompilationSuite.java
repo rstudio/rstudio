@@ -50,7 +50,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JavaSourceParserTest.class);
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
-    suite.addTestSuite(JdtJava7Test.class);
+    suite.addTestSuite(Java7JdtCompilerTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(JsniCollectorTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);

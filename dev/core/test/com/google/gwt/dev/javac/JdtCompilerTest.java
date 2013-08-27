@@ -15,64 +15,31 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
-import com.google.gwt.dev.resource.Resource;
 
-import junit.framework.TestCase;
-
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
  * Test class for {@link JdtCompiler}.
  */
-public class JdtCompilerTest extends TestCase {
-
-  static void assertUnitHasErrors(CompilationUnit unit, int numErrors) {
-    assertTrue(unit.isError());
-    assertEquals(numErrors, unit.getProblems().length);
-  }
-
-  static void assertUnitsCompiled(Collection<CompilationUnit> units) {
-    for (CompilationUnit unit : units) {
-      assertFalse(unit.isError());
-      assertTrue(unit.getCompiledClasses().size() > 0);
-    }
-  }
+public class JdtCompilerTest extends JdtCompilerTestBase {
 
   public void testCompile() throws Exception {
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
-    addAll(builders, JavaResourceBase.getStandardResources());
-    addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    Collection<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
-    assertUnitsCompiled(units);
+    assertResourcesCompileSuccessfully(JavaResourceBase.FOO, JavaResourceBase.BAR);
   }
 
   public void testCompileError() throws Exception {
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
-    addAll(builders, JavaResourceBase.getStandardResources());
-    addAll(builders, JavaResourceBase.BAR);
-    List<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
-    assertUnitsCompiled(units.subList(0, units.size() - 1));
-    assertUnitHasErrors(units.get(units.size() - 1), 1);
+    List<CompilationUnit> units = compile(JavaResourceBase.BAR);
+    assertOnlyLastUnitHasErrors(units, "Foo cannot be resolved to a type");
   }
 
   public void testCompileIncremental() throws Exception {
-    List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
-    addAll(builders, JavaResourceBase.getStandardResources());
-    Collection<CompilationUnit> units = JdtCompiler.compile(TreeLogger.NULL, builders);
+    List<CompilationUnitBuilder> builders = buildersFor();
+    Collection<CompilationUnit> units = compile(builders);
     assertUnitsCompiled(units);
     addAll(builders, JavaResourceBase.FOO, JavaResourceBase.BAR);
-    JdtCompiler.compile(TreeLogger.NULL, builders);
+    units = compile(builders);
     assertUnitsCompiled(units);
-  }
-
-  private void addAll(Collection<CompilationUnitBuilder> units,
-      Resource... sourceFiles) {
-    for (Resource sourceFile : sourceFiles) {
-      units.add(CompilationUnitBuilder.create(sourceFile));
-    }
   }
 }
