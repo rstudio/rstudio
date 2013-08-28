@@ -916,10 +916,6 @@ public class SimpleFoo {
     return sum;
   }
 
-  public static void enumsUsedAsTypeParameter(List<SimpleEnum> values) {
-    // no op
-  }
-
   /**
    * Persist this entity and all child entities. This method can handle loops.
    * 

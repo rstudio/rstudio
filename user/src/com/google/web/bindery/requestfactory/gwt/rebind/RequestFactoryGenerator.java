@@ -244,13 +244,6 @@ public class RequestFactoryGenerator extends Generator {
         JEnumType asEnum = type.isEnum();
         if (asEnum != null) {
           toReturn.add(asEnum);
-        } else {
-          JParameterizedType parameterized = type.isParameterized();
-          if (parameterized != null) {
-            for (JClassType arg : parameterized.getTypeArgs()) {
-              maybeVisit(arg);
-            }
-          }
         }
       }
     });

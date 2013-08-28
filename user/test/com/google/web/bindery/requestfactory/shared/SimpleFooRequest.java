@@ -125,8 +125,6 @@ public interface SimpleFooRequest extends RequestContext {
 
   InstanceRequest<SimpleFooProxy, Integer> sum(List<Integer> values);
 
-  Request<Void> enumsUsedAsTypeParameter(List<SimpleEnum> values);
-
   Request<SimpleFooProxy> receiveEntityProxyId(EntityProxyId<SimpleFooProxy> value);
 
   Request<Void> receiveNullEntityProxyId(EntityProxyId<SimpleFooProxy> value);
