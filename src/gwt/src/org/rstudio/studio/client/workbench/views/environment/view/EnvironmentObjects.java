@@ -261,7 +261,7 @@ public class EnvironmentObjects extends ResizeComposite
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
                                        environmentName + 
-                                          " environment is empty");
+                                          " is empty");
       environmentName_ = environmentName;
    }
 

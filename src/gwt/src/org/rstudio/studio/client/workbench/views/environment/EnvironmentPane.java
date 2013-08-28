@@ -20,12 +20,14 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.ImageMenuLabel;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
@@ -48,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFr
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
@@ -104,7 +107,26 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
 
+      return toolbar;
+   }
+
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar();
+      
+      environmentMenu_ = new ToolbarPopupMenu();
+      rebuildEnvironmentMenu();
+      environmentLabel_ = new ImageMenuLabel(
+            imageOfEnvironment(environmentName_),
+            friendlyEnvironmentName());
+      toolbar.addLeftPopupMenu(environmentLabel_, environmentMenu_);
+      
       SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -123,30 +145,8 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
       toolbar.addRightWidget(searchWidget);
 
-      return toolbar;
-   }
-
-   @Override
-   protected SecondaryToolbar createSecondaryToolbar()
-   {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
-      
-      environmentMenu_ = new ToolbarPopupMenu();
-      rebuildEnvironmentMenu();
-      Label envLabel = new Label("Environment:");
-      envLabel.addStyleName(
-         EnvironmentPaneResources.INSTANCE.
-            environmentPaneStyle().environmentNameLabel());
-      toolbar.addLeftWidget(envLabel);
-      environmentLabel_ = new Label(friendlyEnvironmentName());
-      toolbar.addLeftPopupMenu(environmentLabel_, environmentMenu_);
-      
       return toolbar;
    }
 
@@ -207,6 +207,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = environmentName;
       environmentLabel_.setText(friendlyEnvironmentName());
+      environmentLabel_.setImage(imageOfEnvironment(environmentName));
       objects_.setEnvironmentName(friendlyEnvironmentName());
    }
 
@@ -361,9 +362,22 @@ public class EnvironmentPane extends WorkbenchPane
       if (name.equals("R_GlobalEnv"))
          return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
-         return "package:base";
+         return "Base Environment";
       else 
          return name;
+   }
+   
+   private ImageResource imageOfEnvironment(String name)
+   {
+      if (name.endsWith("()"))
+         return EnvironmentResources.INSTANCE.functionEnvironment();
+      else if (name.equals("R_GlobalEnv") || 
+               name.equals("base"))
+         return EnvironmentResources.INSTANCE.globalEnvironment();
+      else if (name.startsWith("package:"))
+         return EnvironmentResources.INSTANCE.packageEnvironment();
+      else 
+         return EnvironmentResources.INSTANCE.attachedEnvironment();
    }
    
    private void setEnvironments(JsArray<EnvironmentFrame> environments)
@@ -378,9 +392,16 @@ public class EnvironmentPane extends WorkbenchPane
       for (int i = 0; i < environments_.length(); i++)
       {
          final EnvironmentFrame frame = environments_.get(i);
+         ImageResource img = imageOfEnvironment(frame.getName());
+         SafeHtmlBuilder shb = new SafeHtmlBuilder();
+         shb.appendHtmlConstant("<img src=\"" +
+                                img.getSafeUri().asString() +
+                                "\" style=\"vertical-align: middle; " + 
+                                "margin-right: 4px;\" />");
+         shb.appendEscaped(friendlyNameOfEnvironment(frame.getName()));
+         
          MenuItem item = new MenuItem(
-               friendlyNameOfEnvironment(frame.getName()), 
-               false,  // as HTML
+               shb.toSafeHtml(),
                new Scheduler.ScheduledCommand()
                {
                   @Override
@@ -443,7 +464,7 @@ public class EnvironmentPane extends WorkbenchPane
             });
    }
    
-   public static final String GLOBAL_ENVIRONMENT_NAME = "Global";
+   public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
    private final EventBus eventBus_;
@@ -452,7 +473,7 @@ public class EnvironmentPane extends WorkbenchPane
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
-   private Label environmentLabel_;
+   private ImageMenuLabel environmentLabel_;
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;

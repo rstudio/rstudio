@@ -283,7 +283,8 @@ json::Array environmentListAsJson()
     Protect rProtect;
     std::vector<Variable> vars;
     SEXP env = s_environmentMonitor.getMonitoredEnvironment();
-    listEnvironment(env, false, &rProtect, &vars);
+    if (env != NULL)
+       listEnvironment(env, false, &rProtect, &vars);
 
     // get object details and transform to json
     json::Array listJson;
@@ -323,6 +324,7 @@ Error setEnvironmentName(std::string environmentName)
                .call(&environment, &protect);
       if (error)
       {
+         s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
          return error;
       }
    }
