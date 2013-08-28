@@ -28,6 +28,7 @@ public:
    EnvironmentMonitor();
    void setMonitoredEnvironment(SEXP pEnvironment, bool refresh = false);
    SEXP getMonitoredEnvironment();
+   bool hasEnvironment();
    void checkForChanges();
 private:
    void listEnv(std::vector<r::sexp::Variable>* pEnvironment);

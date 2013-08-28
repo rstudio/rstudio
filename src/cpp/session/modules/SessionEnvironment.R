@@ -175,7 +175,7 @@
       }
       else if (is.environment(obj))
       {
-         return(paste("Environment with ", length(obj), " object(s) "))
+         return("Environment")
       }
       else if (isS4(obj))
       {
@@ -301,11 +301,11 @@
          desc <- .rs.valueDescription(obj)
 
          # expandable object--supply contents 
-         if (class == "data.frame" ||
-             class == "data.table" ||
-             is.list(obj) || 
+         if (class == "data.table" ||
              class == "cast_df" ||
              class == "xts" ||
+             is.list(obj) || 
+             is.data.frame(obj) ||
              isS4(obj))
          {
             contents <- .rs.valueContents(obj)

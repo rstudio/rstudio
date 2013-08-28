@@ -161,9 +161,6 @@ public:
    int errorHandlerType() const;
    void setErrorHandlerType(int type);
 
-   std::string activeEnvironmentName() const;
-   void setActiveEnvironmentName(std::string environmentName);
-
 private:
 
    void onSettingsFileChanged(

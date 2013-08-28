@@ -28,7 +28,7 @@
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/SessionPersistentState.hpp>
 #include <boost/foreach.hpp>
 
 #include "EnvironmentUtils.hpp"
@@ -282,16 +282,21 @@ json::Array environmentListAsJson()
     using namespace r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
-    SEXP env = s_environmentMonitor.getMonitoredEnvironment();
-    if (env != NULL)
-       listEnvironment(env, false, &rProtect, &vars);
-
-    // get object details and transform to json
     json::Array listJson;
-    std::transform(vars.begin(),
-                   vars.end(),
-                   std::back_inserter(listJson),
-                   boost::bind(varToJson, env, _1));
+
+    if (s_environmentMonitor.hasEnvironment())
+    {
+       SEXP env = s_environmentMonitor.getMonitoredEnvironment();
+       if (env != NULL)
+          listEnvironment(env, false, &rProtect, &vars);
+
+       // get object details and transform to json
+       std::transform(vars.begin(),
+                      vars.end(),
+                      std::back_inserter(listJson),
+                      boost::bind(varToJson, env, _1));
+    }
+
     return listJson;
 }
 
@@ -345,7 +350,7 @@ Error setEnvironment(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   userSettings().setActiveEnvironmentName(environmentName);
+   persistentState().setActiveEnvironmentName(environmentName);
    return Success();
 }
 
@@ -465,11 +470,14 @@ json::Object commonEnvironmentStateData(int depth)
 
       // emit the name of the environment we're currently working with
       std::string environmentName;
-      Error error = r::exec::RFunction("environmentName",
-                                 s_environmentMonitor.getMonitoredEnvironment())
-                                 .call(&environmentName);
-      if (error)
-         LOG_ERROR(error);
+      if (s_environmentMonitor.hasEnvironment())
+      {
+         Error error = r::exec::RFunction("environmentName",
+                                    s_environmentMonitor.getMonitoredEnvironment())
+                                    .call(&environmentName);
+         if (error)
+            LOG_ERROR(error);
+      }
       varJson["environment_name"] = environmentName;
    }
 
@@ -591,7 +599,7 @@ void initEnvironmentMonitoring()
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
-      std::string envName = userSettings().activeEnvironmentName();
+      std::string envName = persistentState().activeEnvironmentName();
       if (!envName.empty())
       {
          setEnvironmentName(envName);

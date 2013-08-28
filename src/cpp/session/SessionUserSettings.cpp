@@ -606,14 +606,4 @@ void UserSettings::setErrorHandlerType(int type)
    settings_.set("errorHandlerType", type);
 }
 
-std::string UserSettings::activeEnvironmentName() const
-{
-   return settings_.get("activeEnvironmentName", "R_GlobalEnv");
-}
-
-void UserSettings::setActiveEnvironmentName(std::string environmentName)
-{
-   settings_.set("activeEnvironmentName", environmentName);
-}
-
 }// namespace session
