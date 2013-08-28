@@ -257,7 +257,7 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setEnvironmentName(String environmentName)
    {
-      environmentNameLabel_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
+      environmentNameLabel_.setText(environmentName);
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
                                        environmentName + 

@@ -303,7 +303,7 @@
          # expandable object--supply contents 
          if (class == "data.frame" ||
              class == "data.table" ||
-             class == "list" ||
+             is.list(obj) || 
              class == "cast_df" ||
              class == "xts" ||
              isS4(obj))

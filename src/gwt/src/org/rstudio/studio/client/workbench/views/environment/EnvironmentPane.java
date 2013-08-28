@@ -361,7 +361,7 @@ public class EnvironmentPane extends WorkbenchPane
       if (name.equals("R_GlobalEnv"))
          return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
-         return "Base";
+         return "package:base";
       else 
          return name;
    }
