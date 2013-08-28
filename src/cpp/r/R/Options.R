@@ -31,10 +31,12 @@ options(max.print = 10000)
 # set RStudio as the GUI
 local({
    platform = .Platform
-   platform$GUI = "RStudio"
-   unlockBinding(".Platform", asNamespace("base"))
-   assign(".Platform", platform, inherits=TRUE)
-   lockBinding(".Platform", asNamespace("base"))
+   if (platform$GUI != "RStudio") {
+      platform$GUI = "RStudio"
+      unlockBinding(".Platform", asNamespace("base"))
+      assign(".Platform", platform, inherits=TRUE)
+      lockBinding(".Platform", asNamespace("base"))
+   }
 })
 
 # set default x display (see below for comment on why we need to do this)
