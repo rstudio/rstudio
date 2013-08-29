@@ -38,7 +38,7 @@ import com.google.gwt.editor.client.LeafValueEditor;
  * @param <T> The type of data being managed
  * @param <E> The type of Editor
  */
-public class OptionalFieldEditor<T, E extends Editor<T>> implements
+public class OptionalFieldEditor<T, E extends Editor<? super T>> implements
     CompositeEditor<T, T, E>, LeafValueEditor<T> {
 
   /**
@@ -50,7 +50,7 @@ public class OptionalFieldEditor<T, E extends Editor<T>> implements
    *          hierarchy
    * @return a new instance of OptionalFieldEditor
    */
-  public static <T, E extends Editor<T>> OptionalFieldEditor<T, E> of(
+  public static <T, E extends Editor<? super T>> OptionalFieldEditor<T, E> of(
       E subEditor) {
     return new OptionalFieldEditor<T, E>(subEditor);
   }

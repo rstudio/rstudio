@@ -45,7 +45,7 @@ package com.google.gwt.editor.client;
  * @param <C> the component type to be edited
  * @param <E> the type of Editor that will edit the component type
  */
-public interface CompositeEditor<T, C, E extends Editor<C>> extends
+public interface CompositeEditor<T, C, E extends Editor<? super C>> extends
     ValueAwareEditor<T> {
   /**
    * Allows instances of the component type to be attached to the Editor
@@ -55,7 +55,7 @@ public interface CompositeEditor<T, C, E extends Editor<C>> extends
    * @param <E> the type of Editor
    * @see com.google.gwt.editor.client.testing.MockEditorChain
    */
-  public interface EditorChain<C, E extends Editor<C>> {
+  public interface EditorChain<C, E extends Editor<? super C>> {
     /**
      * Editors attached to the chain will be automatically flushed as if they
      * were a statically-defined sub-Editor.

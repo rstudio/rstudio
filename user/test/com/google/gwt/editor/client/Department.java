@@ -20,8 +20,8 @@ package com.google.gwt.editor.client;
  * {@link SimpleBeanEditorTest#testEditorWithGenericSubEditors()}.
  */
 public class Department {
-  private final Manager manager = new Manager();
-  private final Intern intern = new Intern();
+  Manager manager = new Manager();
+  Intern intern = new Intern();
 
   public Manager getManager() {
     return manager;
@@ -29,5 +29,13 @@ public class Department {
 
   public Intern getIntern() {
     return intern;
+  }
+
+  public void setManager(Manager manager) {
+    this.manager = manager;
+  }
+
+  public void setIntern(Intern intern) {
+    this.intern = intern;
   }
 }

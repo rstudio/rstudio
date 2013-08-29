@@ -31,7 +31,7 @@ import java.util.List;
  * @param <T> The type of data being managed
  * @param <E> The type of Editor
  */
-public class ListEditor<T, E extends Editor<T>> implements
+public class ListEditor<T, E extends Editor<? super T>> implements
     CompositeEditor<List<T>, T, E> {
 
   /**
@@ -42,7 +42,7 @@ public class ListEditor<T, E extends Editor<T>> implements
    * @param source the EditorSource which will create sub-Editors
    * @return a new instance of ListEditor
    */
-  public static <T, E extends Editor<T>> ListEditor<T, E> of(
+  public static <T, E extends Editor<? super T>> ListEditor<T, E> of(
       EditorSource<E> source) {
     return new ListEditor<T, E>(source);
   }

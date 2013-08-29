@@ -58,6 +58,32 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     }
   }
 
+  static class DepartmentWithList extends Department {
+    List<Intern> interns = new ArrayList<Intern>();
+
+    public List<Intern> getInterns() {
+      return interns;
+    }
+
+    public void setInterns(List<Intern> interns) {
+      this.interns = new ArrayList<Intern>(interns);
+    }
+  }
+
+  static class DepartmentWithListEditor implements Editor<DepartmentWithList> {
+    PersonEditor manager = new PersonEditor();
+    ListEditor<Intern, PersonEditor> interns = ListEditor.of(new EditorSource<PersonEditor>() {
+      @Override
+      public PersonEditor create(int index) {
+        return new PersonEditor();
+      }
+    });
+  }
+
+  interface DepartmentWithListEditorDriver extends
+      SimpleBeanEditorDriver<DepartmentWithList, DepartmentWithListEditor> {
+  }
+
   /**
    * See <a
    * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=6016"
@@ -377,6 +403,38 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     driver.edit(person);
 
     assertEquals("manager.name", editor.managerName.delegate.getPath());
+  }
+
+  /**
+   * See <a
+   * href="https://code.google.com/p/google-web-toolkit/issues/detail?id=6139"
+   * >issue 6139</a>
+   */
+  public void testEditorOfSuperclass() {
+    DepartmentWithList dpt = new DepartmentWithList();
+    Manager manager = new Manager();
+    manager.name = "manager";
+    dpt.setManager(manager);
+    Intern intern = new Intern();
+    intern.name = "intern";
+    dpt.interns.add(intern);
+
+    DepartmentWithListEditor editor = new DepartmentWithListEditor();
+    DepartmentWithListEditorDriver driver = GWT.create(DepartmentWithListEditorDriver.class);
+    driver.initialize(editor);
+
+    driver.edit(dpt);
+
+    assertEquals("manager", editor.manager.name.getValue());
+    assertEquals("intern", editor.interns.getEditors().get(0).name.getValue());
+
+    editor.manager.name.setValue("MANAGER");
+    editor.interns.getEditors().get(0).name.setValue("INTERN");
+
+    driver.flush();
+
+    assertEquals("MANAGER", manager.name);
+    assertEquals("INTERN", intern.name);
   }
 
   /**

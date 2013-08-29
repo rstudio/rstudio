@@ -28,7 +28,7 @@ import java.util.List;
  * @param <T> the type of data being edited
  * @param <E> the type of Editor
  */
-class ListEditorWrapper<T, E extends Editor<T>> extends AbstractList<T> {
+class ListEditorWrapper<T, E extends Editor<? super T>> extends AbstractList<T> {
   private final List<T> backing;
   private final CompositeEditor.EditorChain<T, E> chain;
   private final List<E> editors;
