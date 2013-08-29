@@ -30,7 +30,6 @@
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
 
-
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
 #undef TRUE
@@ -92,7 +91,7 @@ void listEnvironment(SEXP env,
    // we don't acutally return this list to the caller
    SEXP envVarsSEXP;
    Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
-   
+
    // get variables
    std::vector<std::string> vars;
    Error error = r::sexp::extract(envVarsSEXP, &vars);
@@ -105,7 +104,13 @@ void listEnvironment(SEXP env,
    // populate pVariables
    BOOST_FOREACH(const std::string& var, vars)
    {
-      SEXP varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
+      SEXP varSEXP = R_NilValue;
+      // Merely calling Rf_findVar on an active binding will fire the binding.
+      // Don't try to get the SEXP for the variable in this case; leave the
+      // value as nil.
+      if (!isActiveBinding(var, env))
+         varSEXP = Rf_findVar(Rf_install(var.c_str()), env);
+
       if (varSEXP != R_UnboundValue) // should never be unbound
       {
          pProtect->add(varSEXP);
