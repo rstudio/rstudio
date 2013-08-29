@@ -119,6 +119,11 @@ void listEnvironment(SEXP env,
    }
 }
 
+bool isActiveBinding(const std::string& name, const SEXP env)
+{
+   return R_BindingIsActive(Rf_install(name.c_str()), env);
+}
+
 SEXP findVar(const std::string &name, const SEXP env)
 {
    return Rf_findVar(Rf_install(name.c_str()), env);

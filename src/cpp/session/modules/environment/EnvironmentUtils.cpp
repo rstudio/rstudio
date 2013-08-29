@@ -94,13 +94,19 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
    // object definition manually.
    if ((varSEXP == R_UnboundValue) ||
        (varSEXP == R_MissingArg) ||
-       isUnevaluatedPromise(varSEXP))
+       isUnevaluatedPromise(varSEXP) ||
+       r::sexp::isActiveBinding(var.first, env))
    {
       varJson["name"] = var.first;
       if (isUnevaluatedPromise(varSEXP))
       {
          varJson["type"] = std::string("promise");
          varJson["value"] = descriptionOfVar(varSEXP);
+      }
+      else if (r::sexp::isActiveBinding(var.first, env))
+      {
+         varJson["type"] = std::string("active binding");
+         varJson["value"] = std::string("<Active binding>");
       }
       else
       {

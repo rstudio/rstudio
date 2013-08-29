@@ -35,7 +35,7 @@
 
 #define TOP_FUNCTION 1
 
-using namespace core ;
+using namespace core;
 
 namespace session {
 namespace modules { 
