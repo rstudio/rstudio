@@ -53,6 +53,7 @@
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
 #include "ServerInit.hpp"
+#include "ServerMeta.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
@@ -168,6 +169,9 @@ void httpServerAddHandlers()
 
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
+
+   // establish meta
+   uri_handlers::addBlocking("/meta", secureJsonRpcHandler(meta::handleMetaRequest));
 
    // establish progress handler
    FilePath wwwPath(server::options().wwwLocalPath());

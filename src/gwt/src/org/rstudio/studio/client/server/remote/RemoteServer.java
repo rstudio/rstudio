@@ -337,6 +337,13 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
+   public void getInitMessages(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(META_SCOPE,
+                  GET_INIT_MESSAGES,
+                  requestCallback);
+   }
+   
    public void searchCode(
          String term, 
          int maxResults,
@@ -2957,6 +2964,7 @@ public class RemoteServer implements Server
    private static final String GRAPHICS_SCOPE = "graphics";
    private static final String SOURCE_SCOPE = "source";
    private static final String LOG_SCOPE = "log";
+   private static final String META_SCOPE = "meta";
    private static final String FILE_SHOW = "file_show";
 
    // session methods
@@ -3191,4 +3199,6 @@ public class RemoteServer implements Server
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
+   
+   private static final String GET_INIT_MESSAGES = "get_init_messages";
 }
