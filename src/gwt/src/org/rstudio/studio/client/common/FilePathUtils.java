@@ -33,10 +33,10 @@ public class FilePathUtils
    public static String normalizePath (String path, String workingDirectory)
    {
       // Examine the path to see if it appears to be absolute. An absolute path
-	  // - begins with ~ , or 
-	  // - begins with / (Unix-like systems), or
-	  // - begins with F:/ (Windows systems), where F is an alphabetic drive 
-	  //   letter.
+      // - begins with ~ , or 
+      // - begins with / (Unix-like systems), or
+      // - begins with F:/ (Windows systems), where F is an alphabetic drive 
+      //   letter.
       if (path.startsWith(FileSystemItem.HOME_PREFIX) || 
           path.startsWith("/") ||                        
           path.matches("^[a-zA-Z]:\\/.*"))
