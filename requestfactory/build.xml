@@ -125,6 +125,7 @@
       <arg value="com.google.web.bindery.requestfactory.shared.MultipleFactoriesTest.Factory1" />
       <arg value="com.google.web.bindery.requestfactory.shared.MultipleFactoriesTest.Factory2" />
       <arg value="com.google.web.bindery.requestfactory.shared.ServiceInheritanceTest$Factory" />
+      <arg value="com.google.web.bindery.requestfactory.shared.SimpleJsonRpcRequestFactory" />
       <arg value="com.google.web.bindery.requestfactory.shared.SimpleRequestFactory" />
     </java>
     <java failonerror="true" fork="true"
