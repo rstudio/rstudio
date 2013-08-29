@@ -43,4 +43,13 @@ public interface EnvironmentServerOperations
 
    void setContextDepth(int newContextDepth,
                         ServerRequestCallback<Void> requestCallback);   
+   
+   void setEnvironment(String environmentName,
+                       ServerRequestCallback<Void> requestCallback);
+   
+   void setEnvironmentFrame(int frame, 
+                            ServerRequestCallback<Void> requestCallback);
+
+   void getEnvironmentNames(
+              ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback);
 }

@@ -65,7 +65,8 @@ int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
- 
+bool isActiveBinding(const std::string&, const SEXP);
+
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);

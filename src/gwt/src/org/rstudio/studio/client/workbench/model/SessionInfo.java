@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.debugging.model.DebugState;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -311,7 +311,7 @@ public class SessionInfo extends JavaScriptObject
       return this.switch_to_project;
    }-*/;
 
-   public final native EnvironmentState getEnvironmentState() /*-{
+   public final native EnvironmentContextData getEnvironmentState() /*-{
       return this.environment_state;
    }-*/;
    

@@ -47,6 +47,10 @@ public:
    bool hadAbend();
    void setAbend(bool abend);
 
+   // active environment
+   std::string activeEnvironmentName() const;
+   void setActiveEnvironmentName(std::string environmentName);
+
    // get underlying settings
    core::Settings& settings() { return settings_; }
 

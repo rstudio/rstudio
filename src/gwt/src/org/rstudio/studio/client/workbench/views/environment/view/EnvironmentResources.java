@@ -32,5 +32,17 @@ public interface EnvironmentResources extends ClientBundle
    
    @Source("TracedFunction.png")
    ImageResource tracedFunction();
+   
+   @Source("GlobalEnvironment.png")
+   ImageResource globalEnvironment();
+   
+   @Source("PackageEnvironment.png")
+   ImageResource packageEnvironment();
+   
+   @Source("AttachedEnvironment.png")
+   ImageResource attachedEnvironment();
+
+   @Source("FunctionEnvironment.png")
+   ImageResource functionEnvironment();
 }
 

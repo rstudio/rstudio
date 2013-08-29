@@ -1,5 +1,5 @@
 /*
-kS * RemoteServer.java
+ * RemoteServer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -2845,6 +2846,40 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void setEnvironment(String environmentName,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(environmentName));
+      sendRequest(RPC_SCOPE,
+                  SET_ENVIRONMENT,
+                  params,
+                  requestCallback);
+   }
+
+   @Override
+   public void setEnvironmentFrame(int frame,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(frame));
+      sendRequest(RPC_SCOPE,
+                  SET_ENVIRONMENT_FRAME,
+                  params,
+                  requestCallback);
+   }
+
+   @Override
+   public void getEnvironmentNames(
+         ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_ENVIRONMENT_NAMES,
+                  requestCallback);
+   }
+
+   @Override
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
@@ -3190,6 +3225,9 @@ public class RemoteServer implements Server
 
    private static final String LIST_ENVIRONMENT = "list_environment";
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
+   private static final String SET_ENVIRONMENT = "set_environment";
+   private static final String SET_ENVIRONMENT_FRAME = "set_environment_frame";
+   private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
