@@ -32,13 +32,18 @@ public class FilePathUtils
    
    public static String normalizePath (String path, String workingDirectory)
    {
-      // absolute paths don't need to be normalized
-      if (path.startsWith(FileSystemItem.HOME_PREFIX) ||
-          path.startsWith("/"))
+      // Examine the path to see if it appears to be absolute. An absolute path
+	  // - begins with ~ , or 
+	  // - begins with / (Unix-like systems), or
+	  // - begins with F:/ (Windows systems), where F is an alphabetic drive 
+	  //   letter.
+      if (path.startsWith(FileSystemItem.HOME_PREFIX) || 
+          path.startsWith("/") ||                        
+          path.matches("^[a-zA-Z]:\\/.*"))
       {
          return path;
       }
-      
+
       // if the path appears to be relative, prepend the working directory
       // (consider: should we try to handle ..-style relative notation here?)
       String prefix = new String(workingDirectory + 
