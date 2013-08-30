@@ -6,8 +6,11 @@ import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.C
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -19,17 +22,40 @@ import com.google.gwt.user.cellview.client.Column;
 
 public class EnvironmentObjectList extends EnvironmentObjectDisplay
 {
+   public interface Style extends CssResource
+   {
+      String categoryHeaderRow();
+      String expandIcon();
+      String unclickableIcon();
+      String unevaluatedPromise();
+      String widthSettingRow();
+      String expandCol();
+      String nameCol();
+      String valueCol();
+      String categoryHeaderText();
+      String clickableCol();
+      String dataFrameValueCol();
+      String detailRow();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("EnvironmentObjectList.css")
+      Style style();
+   }
+
    public EnvironmentObjectList(EnvironmentObjectDisplay.Host host,
                                 EnvironmentObjectsObserver observer)
    {
       super(host, observer);
-      style_ = EnvironmentStyle.INSTANCE;
       setTableBuilder(new EnvironmentObjectTableBuilder(this));
       createColumns();
       addColumn(objectExpandColumn_);
       addColumn(objectNameColumn_);
       addColumn(objectDescriptionColumn_);
       setSkipRowHoverCheck(true);
+      style_ = ((Resources)GWT.create(Resources.class)).style();
+      style_.ensureInjected();
    }
 
    private void createColumns()
@@ -189,11 +215,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
 
          TableRowBuilder row = startRow();
 
-         if (rowValue.getCategory() == RObjectEntry.Categories.Data)
-         {
-            row.className(ThemeStyles.INSTANCE.environmentDataFrameRow());
-         }
-
          // build the columns
          buildExpandColumn(rowValue, row);
          buildNameColumn(rowValue, row);
@@ -262,6 +283,11 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             descriptionStyle += (" " +
                                  style_.dataFrameValueCol() + " " +
                                  style_.clickableCol());
+         }
+         if (rowValue.getCategory() == RObjectEntry.Categories.Data)
+         {
+            descriptionStyle += (" " + 
+                                ThemeStyles.INSTANCE.environmentDataFrameCol());
          }
          descCol.className(descriptionStyle);
          renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
@@ -333,7 +359,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       }
    }
    
-   private EnvironmentStyle style_;
+   private Style style_;
 
    private Column<RObjectEntry, String> objectExpandColumn_;
    private Column<RObjectEntry, String> objectNameColumn_;

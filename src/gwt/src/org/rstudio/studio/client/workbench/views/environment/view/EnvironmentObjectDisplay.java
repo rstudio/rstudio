@@ -12,6 +12,7 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
    {
       public boolean enableClickableObjects();
       public boolean useStatePersistence();
+      public String getFilterText();
    }
 
    public EnvironmentObjectDisplay(Host host, 
@@ -21,6 +22,8 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
 
       observer_ = observer;
       host_ = host;
+      environmentStyle_ = EnvironmentResources.INSTANCE.environmentStyle();
+      environmentStyle_.ensureInjected();
       filterRenderer_ = new AbstractSafeHtmlRenderer<String>()
       {
          @Override
@@ -28,21 +31,22 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
          {
             SafeHtmlBuilder sb = new SafeHtmlBuilder();
             boolean hasMatch = false;
-            if (filterText_.length() > 0)
+            String filterText = host_.getFilterText();
+            if (filterText.length() > 0)
             {
-               int idx = str.toLowerCase().indexOf(filterText_);
+               int idx = str.toLowerCase().indexOf(filterText);
                if (idx >= 0)
                {
                   hasMatch = true;
                   sb.appendEscaped(str.substring(0, idx));
                   sb.appendHtmlConstant(
                         "<span class=\"" + 
-                        EnvironmentStyle.INSTANCE.filterMatch() + 
+                        environmentStyle_.filterMatch() + 
                         "\">");
                   sb.appendEscaped(str.substring(idx, 
-                        idx + filterText_.length()));
+                        idx + filterText.length()));
                   sb.appendHtmlConstant("</span>");
-                  sb.appendEscaped(str.substring(idx + filterText_.length(), 
+                  sb.appendEscaped(str.substring(idx + filterText.length(), 
                         str.length()));
                }
             }
@@ -56,6 +60,5 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;
    protected EnvironmentObjectsObserver observer_;
    protected Host host_;
-
-   private String filterText_ = "";
+   protected EnvironmentStyle environmentStyle_;
 }

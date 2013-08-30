@@ -332,6 +332,12 @@ public class EnvironmentObjects extends ResizeComposite
       return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
    }
    
+   @Override
+   public String getFilterText()
+   {
+      return filterText_;
+   }
+
    // Private methods: object management --------------------------------------
 
    private int indexOfExistingObject(String objectName)
