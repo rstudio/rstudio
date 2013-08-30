@@ -186,6 +186,11 @@ public class Toolbar extends Composite
       return addToolbarPopupMenu((MenuLabel) label, menu, false);
    }
    
+   public Widget addRightPopupMenu(MenuLabel label, final ToolbarPopupMenu menu)
+   {
+      return addToolbarPopupMenu(label, menu, false);
+   }
+
    public Widget addLeftSeparator()
    {
       Image sep = new Image(ThemeResources.INSTANCE.toolbarSeparator());

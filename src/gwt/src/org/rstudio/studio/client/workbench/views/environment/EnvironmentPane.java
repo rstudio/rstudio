@@ -15,15 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.MenuItem;
-import com.google.gwt.user.client.ui.SuggestOracle;
+import java.util.ArrayList;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
@@ -36,10 +28,11 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -50,18 +43,25 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFr
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import java.util.ArrayList;
-
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjects.Observer,
+                                        EnvironmentObjectsObserver,
                                         PackageStatusChangedHandler,
                                         ContextDepthChangedEvent.Handler,
                                         RestartStatusEvent.Handler
@@ -111,6 +111,14 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
+      
+      viewLabel_ = new ImageMenuLabel(
+            imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW));
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
+      menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
+      toolbar.addRightPopupMenu(viewLabel_, menu);
 
       return toolbar;
    }
@@ -393,24 +401,16 @@ public class EnvironmentPane extends WorkbenchPane
       {
          final EnvironmentFrame frame = environments_.get(i);
          ImageResource img = imageOfEnvironment(frame.getName());
-         SafeHtmlBuilder shb = new SafeHtmlBuilder();
-         shb.appendHtmlConstant("<img src=\"" +
-                                img.getSafeUri().asString() +
-                                "\" style=\"vertical-align: middle; " + 
-                                "margin-right: 4px;\" />");
-         shb.appendEscaped(friendlyNameOfEnvironment(frame.getName()));
-         
-         MenuItem item = new MenuItem(
-               shb.toSafeHtml(),
-               new Scheduler.ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
+         environmentMenu_.addItem(ImageMenuItem.create(img, 
+                  friendlyNameOfEnvironment(frame.getName()), 
+                  new Scheduler.ScheduledCommand()
                   {
-                     loadEnvironmentFrame(frame);
-                  }
-               });
-         environmentMenu_.addItem(item);
+                     @Override
+                     public void execute()
+                     {
+                        loadEnvironmentFrame(frame);
+                     }
+                  }));
       }
    }
    
@@ -464,6 +464,46 @@ public class EnvironmentPane extends WorkbenchPane
             });
    }
    
+   private String nameOfViewType(int type)
+   {
+      if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
+         return "List";
+      else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
+         return "Grid";
+      return "";
+   }
+   
+   private ImageResource imageOfViewType(int type)
+   {
+      if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
+         return EnvironmentResources.INSTANCE.objectListView();
+      else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
+         return EnvironmentResources.INSTANCE.objectGridView();
+      return null;
+   }
+   
+   private void setViewType(int type)
+   {
+      viewLabel_.setText(nameOfViewType(type));
+      viewLabel_.setImage(imageOfViewType(type));
+      objects_.setObjectDisplay(type);
+   }
+   
+   private MenuItem createViewMenuItem(final int type)
+   {
+      return ImageMenuItem.create(
+            imageOfViewType(type),
+            nameOfViewType(type),
+            new Scheduler.ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  setViewType(type);
+               }
+            });
+   }
+   
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
@@ -474,6 +514,7 @@ public class EnvironmentPane extends WorkbenchPane
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
    private ImageMenuLabel environmentLabel_;
+   private ImageMenuLabel viewLabel_;
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;

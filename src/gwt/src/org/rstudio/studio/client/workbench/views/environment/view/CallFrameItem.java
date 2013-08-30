@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
-import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
 public class CallFrameItem extends Composite
    implements ClickHandler
@@ -45,7 +44,7 @@ public class CallFrameItem extends Composite
       String hiddenFrame();
    }
 
-   public CallFrameItem(CallFrame frame, Observer observer, boolean hidden)
+   public CallFrameItem(CallFrame frame, EnvironmentObjectsObserver observer, boolean hidden)
    {
       isActive_ = false;
       isVisible_ = true;
@@ -134,7 +133,7 @@ public class CallFrameItem extends Composite
    @UiField Label functionName;
    @UiField Style style;
 
-   Observer observer_;
+   EnvironmentObjectsObserver observer_;
    CallFrame frame_;
    boolean isActive_;
    boolean isVisible_;
