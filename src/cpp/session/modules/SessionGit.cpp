@@ -450,8 +450,15 @@ public:
                           std::back_inserter(trackedPaths),
                           boost::bind(isUntracked, statusResult, _1));
 
-      // -f means don't fail on unmerged entries
-      return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+      if (!trackedPaths.empty())
+      {
+         // -f means don't fail on unmerged entries
+         return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+      }
+      else
+      {
+         return Success();
+      }
    }
 
    core::Error stage(const std::vector<FilePath> &filePaths)
@@ -525,8 +532,16 @@ public:
          args << "reset" << "HEAD" << "--" ;
       else
          args << "rm" << "--cached" << "--";
-      appendPathArgs(trackedPaths, &args);
-      return runGit(args);
+
+      if (!trackedPaths.empty())
+      {
+         appendPathArgs(trackedPaths, &args);
+         return runGit(args);
+      }
+      else
+      {
+         return Success();
+      }
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
