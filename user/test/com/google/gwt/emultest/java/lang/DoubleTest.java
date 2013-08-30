@@ -107,6 +107,7 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(fiveHundred.compareTo(fiveHundred) == 0);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void testDoubleConstants() {
     assertTrue(Double.isNaN(Double.NaN));
     assertTrue(Double.isInfinite(Double.NEGATIVE_INFINITY));

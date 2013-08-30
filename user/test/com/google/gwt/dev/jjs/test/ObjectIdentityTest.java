@@ -84,6 +84,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_MaybeNullFoo_MaybeNullFoo() {
     assertTrue(maybeNullFoo == maybeNullFoo);
     assertTrue(maybeNullFoo != maybeNullFooOther);
@@ -148,6 +149,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     assertTrue(maybeNullObjectIsUndefined == maybeNullFooIsUndefined);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_MaybeNullObject_MaybeNullObject() {
     assertTrue(maybeNullObject == maybeNullObject);
     assertTrue(maybeNullObject != maybeNullObjectOther);
@@ -211,6 +213,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     assertTrue(maybeNullStringIsUndefined == maybeNullObjectIsUndefined);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_MaybeNullString_MaybeNullString() {
     assertTrue(maybeNullString == maybeNullString);
     assertTrue(maybeNullString != maybeNullStringOther);
@@ -246,6 +249,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     assertTrue(maybeNullStringIsUndefined == null);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_NotNullFoo_NotNullFoo() {
     assertTrue(notNullFoo == notNullFoo);
     assertTrue(notNullFoo != notNullFooOther);
@@ -267,6 +271,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     assertTrue(notNullObject != notNullFoo);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_NotNullObject_NotNullObject() {
     assertTrue(notNullObject == notNullObject);
     assertTrue(notNullObject != notNullObjectOther);
@@ -288,6 +293,7 @@ public class ObjectIdentityTest extends GWTTestCase {
     assertTrue(notNullString != notNullObject);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void test_NotNullString_NotNullString() {
     assertTrue(notNullString == notNullString);
     assertTrue(notNullString != notNullStringOther);

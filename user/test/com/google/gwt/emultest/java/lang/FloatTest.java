@@ -80,6 +80,7 @@ public class FloatTest extends GWTTestCase {
     assertTrue(new Float(Float.POSITIVE_INFINITY).compareTo(new Float(Float.NaN)) < 0);
   }
 
+  @SuppressWarnings("SelfEquality")
   public void testFloatConstants() {
     assertTrue(Float.isNaN(Float.NaN));
     assertTrue(Float.isInfinite(Float.NEGATIVE_INFINITY));
