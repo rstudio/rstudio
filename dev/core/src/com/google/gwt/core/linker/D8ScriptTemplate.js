@@ -17,15 +17,23 @@
 
 // ---------------- D8 GLOBALS ----------------
 window = {};
+// Alias self as well since it is a magic var sometimes provided
+// by the webworker linker.
+self = window;
 document = {};
 window.document = document;
 window.__d8warning = function(funcName){
-  print("your code is calling " + funcName + " which does exists in d8");
+  print("your code is calling " + funcName + " which does not exist in d8");
 };
 window.setTimeout = function() { window.__d8warning("setTimeout")};
 window.clearTimeout = function() { window.__d8warning("clearTimeout")};
 window.clearInterval = function() { window.__d8warning("clearInterval");};
 window.setInterval = function() { window.__d8warning("setInterval"); };
+window.Object = Object;
+window.Array = Array;
+window.Function = Function;
+window.String = String;
+window.Number = Number;
 navigator = {};
 navigator.userAgent = {};
 navigator.userAgent.toLowerCase = function(){ return "webkit";};
