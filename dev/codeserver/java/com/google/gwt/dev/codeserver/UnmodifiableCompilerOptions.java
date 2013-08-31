@@ -153,12 +153,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public final void setOutDir(File outDir) {
-    throw new UnsupportedOperationException();
-  }
-
-
-  @Override
   public final void setOutput(JsOutputOption obfuscated) {
     throw new UnsupportedOperationException();
   }

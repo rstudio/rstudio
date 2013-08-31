@@ -46,7 +46,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.OptionDeployDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
-import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionWarDir;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -74,25 +73,16 @@ public class Link {
   /**
    * Options for Link.
    */
-  @Deprecated
-  public interface LegacyLinkOptions extends CompileTaskOptions, OptionOutDir {
-  }
-
-  /**
-   * Options for Link.
-   */
   public interface LinkOptions extends OptionExtraDir,
-      OptionWarDir, OptionDeployDir, LegacyLinkOptions {
+      OptionWarDir, OptionDeployDir, CompileTaskOptions {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
-    @SuppressWarnings("deprecation")
     public ArgProcessor(LinkOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerDeployDir(options));
-      registerHandler(new ArgHandlerOutDirDeprecated(options));
     }
 
     @Override
@@ -109,7 +99,6 @@ public class Link {
 
     private File deployDir;
     private File extraDir;
-    private File outDir;
     private File warDir;
 
     public LinkOptionsImpl() {
@@ -124,7 +113,6 @@ public class Link {
       setDeployDir(other.getDeployDir());
       setExtraDir(other.getExtraDir());
       setWarDir(other.getWarDir());
-      setOutDir(other.getOutDir());
     }
 
     @Override
@@ -136,12 +124,6 @@ public class Link {
     @Override
     public File getExtraDir() {
       return extraDir;
-    }
-
-    @Override
-    @Deprecated
-    public File getOutDir() {
-      return outDir;
     }
 
     @Override
@@ -160,34 +142,9 @@ public class Link {
     }
 
     @Override
-    @Deprecated
-    public void setOutDir(File outDir) {
-      this.outDir = outDir;
-    }
-
-    @Override
     public void setWarDir(File warDir) {
       this.warDir = warDir;
     }
-  }
-
-  public static void legacyLink(TreeLogger logger, ModuleDef module,
-      ArtifactSet generatedArtifacts, Permutation[] permutations,
-      List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
-      JJSOptions precompileOptions) throws UnableToCompleteException,
-      IOException {
-    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-        module, precompileOptions);
-    ArtifactSet artifacts = doSimulatedShardingLink(logger, module,
-        linkerContext, generatedArtifacts, permutations, resultFiles);
-    OutputFileSet outFileSet = chooseOutputFileSet(outDir, module.getName()
-        + "/");
-    OutputFileSet deployFileSet = chooseOutputFileSet(outDir, module.getName()
-        + "-deploy/");
-    OutputFileSet extraFileSet = chooseOutputFileSet(outDir, module.getName()
-        + "-aux/");
-    doProduceOutput(logger, artifacts, linkerContext, outFileSet, deployFileSet,
-        extraFileSet);
   }
 
   public static void link(TreeLogger logger, ModuleDef module,

@@ -267,17 +267,7 @@ public class JUnitShell extends DevMode {
       // Hard code the server.
       options.setServletContainerLauncher(shell.new MyJettyLauncher());
       // DISABLE: ArgHandlerStartupURLs
-      registerHandler(new com.google.gwt.dev.ArgHandlerOutDirDeprecated(options));
-      registerHandler(new ArgHandlerWarDir(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          // If an outDir was already specified, don't clobber it.
-          if (options.getOutDir() != null) {
-            return null;
-          }
-          return super.getDefaultArgs();
-        }
-      });
+      registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));

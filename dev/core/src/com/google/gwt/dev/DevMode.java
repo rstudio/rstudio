@@ -238,11 +238,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return localWorkers;
     }
 
-    @Deprecated
-    public File getOutDir() {
-      return warDir;
-    }
-
     public ServletContainerLauncher getServletContainerLauncher() {
       return scl;
     }

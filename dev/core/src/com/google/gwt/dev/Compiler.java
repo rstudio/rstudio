@@ -105,12 +105,6 @@ public class Compiler {
     }
 
     @Override
-    @Deprecated
-    public File getOutDir() {
-      return linkOptions.getOutDir();
-    }
-
-    @Override
     public File getWarDir() {
       return linkOptions.getWarDir();
     }
@@ -128,12 +122,6 @@ public class Compiler {
     @Override
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
-    }
-
-    @Override
-    @Deprecated
-    public void setOutDir(File outDir) {
-      linkOptions.setOutDir(outDir);
     }
 
     @Override

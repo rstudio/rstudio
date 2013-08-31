@@ -94,11 +94,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public File getOutDir() {
-    return null; // unused?
-  }
-
-  @Override
   public JsOutputOption getOutput() {
     return JsOutputOption.PRETTY;
   }
