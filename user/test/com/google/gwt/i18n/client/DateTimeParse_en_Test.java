@@ -363,64 +363,79 @@ public class DateTimeParse_en_Test extends GWTTestCase {
   public void testHourParsingFkk() {
     Date date = new Date();
     assertTrue(parse("kkmm", "0022", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmm", "1122", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmm", "1222", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmm", "2322", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmm", "2422", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "0022am", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "1122am", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "1222am", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "2322am", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "2422am", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "0022pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "1122pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "1222pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "2322pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("kkmma", "2422pm", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
+
+    DateTimeFormat dtf = DateTimeFormat.getFormat("yyyy-MM-dd kk:mm:ss.SZ");
+    long time = Date.UTC(2013 - 1900, 1 - 1, 1, 0, 34, 56);
+    date = dtf.parse("2013-01-01 24:34:56.000-0000");
+    assertEquals(time, date.getTime());
+    // Should succeed to parse
+    date = dtf.parseStrict("2013-01-01 24:34:56.000-0000");
+    assertEquals(time, date.getTime());
+
+    try {
+      dtf.parseStrict("2013-01-01 00:34:56.000-0000");
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
   }
 
   public void testHourParsingFKK() {
@@ -502,7 +517,7 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     }
     try {
       fmt.parseStrict("01/22/1999");
-      // success
+      // Success
     } catch (IllegalArgumentException e) {
       fail("Should succeed to parse");
     }

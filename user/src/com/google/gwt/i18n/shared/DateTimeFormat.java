@@ -1876,12 +1876,14 @@ public class DateTimeFormat {
           return false;
         }
         cal.setHours(value);
+        cal.setMidnightIs24(false);
         return true;
       case 'k': // hour (1..24)
         if (value < 0) {
           return false;
         }
         cal.setHours(value);
+        cal.setMidnightIs24(true);
         return true;
       case 'm': // minute
         if (value < 0) {

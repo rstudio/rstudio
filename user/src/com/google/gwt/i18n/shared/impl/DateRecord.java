@@ -46,6 +46,7 @@ public class DateRecord extends Date {
   private int month;
   private int dayOfMonth;
   private int ampm;
+  private boolean midnightIs24;
   private int hours;
   private int minutes;
   private int seconds;
@@ -66,6 +67,7 @@ public class DateRecord extends Date {
     month = -1;
     dayOfMonth = -1;
     ampm = -1;
+    midnightIs24 = false;
     hours = -1;
     minutes = -1;
     seconds = -1;
@@ -137,7 +139,7 @@ public class DateRecord extends Date {
         this.hours += 12;
       }
     }
-    date.setHours(this.hours);
+    date.setHours(this.hours == 24 && this.midnightIs24 ? 0 : this.hours);
 
     if (this.minutes >= 0) {
       date.setMinutes(this.minutes);
@@ -169,7 +171,13 @@ public class DateRecord extends Date {
         return false;
       }
       // Times have well defined maximums
-      if (this.hours >= 24) {
+      if (this.hours == 24 && this.midnightIs24) {
+        if (this.ampm > 0) {
+          return false;
+        }
+      } else if (this.hours >= 24) {
+        return false;
+      } else if (this.hours == 0 && this.midnightIs24) {
         return false;
       }
       if (this.minutes >= 60) {
@@ -284,6 +292,15 @@ public class DateRecord extends Date {
   @Override
   public void setHours(int hours) {
     this.hours = hours;
+  }
+
+  /**
+   * Set midnightIs24 field.
+   *
+   * @param midnightIs24 whether an hour value of 24 signifies midnight.
+   */
+  public void setMidnightIs24(boolean midnightIs24) {
+    this.midnightIs24 = midnightIs24;
   }
 
   /**

@@ -131,6 +131,17 @@ public class DateTimeFormat_en_Test extends DateTimeFormatTestBase {
         date));
   }
 
+  public void test_k() {
+    DateTimeFormat dtf = DateTimeFormat.getFormat("yyyy-MM-dd kk:mm:ss");
+    Date date;
+    TimeZone utc = TimeZone.createTimeZone(0);
+
+    date = new Date(Date.UTC(2013 - 1900, 1 - 1, 1, 0, 34, 56));
+    assertEquals("2013-01-01 24:34:56", dtf.format(date, utc));
+    date = new Date(Date.UTC(2013 - 1900, 1 - 1, 1, 1, 34, 56));
+    assertEquals("2013-01-01 01:34:56", dtf.format(date, utc));
+  }
+
   public void test_LL() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("07", DateTimeFormat.getFormat("LL").format(date));
