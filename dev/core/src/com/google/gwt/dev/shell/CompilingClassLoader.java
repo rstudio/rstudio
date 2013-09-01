@@ -45,7 +45,9 @@ import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.primitives.Primitives;
 import com.google.gwt.util.tools.Utility;
 
 import java.beans.Beans;
@@ -747,18 +749,14 @@ public final class CompilingClassLoader extends ClassLoader implements
    */
   private static byte[] javaScriptHostBytes;
 
-  private static final Map<String, Class<?>> primitiveTypes = new HashMap<String, Class<?>>();
+  private static final Map<String, Class<?>> primitiveTypes;
 
   static {
-    primitiveTypes.put(boolean.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(byte.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(char.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(double.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(float.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(int.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(long.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(short.class.getSimpleName(), boolean.class);
-    primitiveTypes.put(void.class.getSimpleName(), boolean.class);
+    ImmutableMap.Builder<String, Class<?>> builder = ImmutableMap.builder();
+    for (Class<?> klass : Primitives.allPrimitiveTypes()) {
+      builder.put(klass.getSimpleName(), klass);
+    }
+    primitiveTypes = builder.build();
   }
 
   static {
