@@ -23,35 +23,6 @@ import java.util.Properties;
  * About information for GWT.
  */
 public class About {
-
-  // TODO(zundel): These public constants should be removed some day.
-  // Java inlines static final constants in compiled classes, leading to
-  // version incompatibility warnings.
-  /**
-   * @deprecated use {@link #getGwtName()} instead.
-   */
-  @Deprecated
-  public static String GWT_NAME;
-
-  /**
-   * @deprecated use {@link #getGwtSvnRev()} instead.
-   */
-  @Deprecated
-  public static String GWT_SVNREV;
-
-  /**
-   * @deprecated use {@link #getGwtVersion()} instead.
-   */
-  @Deprecated
-  public static String GWT_VERSION;
-
-  /**
-   * @deprecated use {@link #getGwtVersionObject()} or
-   *             {@link #getGwtVersionNum()} instead.
-   */
-  @Deprecated
-  public static String GWT_VERSION_NUM;
-
   /**
    * Tag used for text replacement of the SVN version (split up to avoid
    * replacing it here).
@@ -93,12 +64,6 @@ public class About {
     } else {
       gwtVersion = new GwtVersion(tmp);
     }
-
-    // Initialize deprecated constants
-    GWT_NAME = getGwtName();
-    GWT_VERSION = getGwtVersion();
-    GWT_VERSION_NUM = getGwtVersionNum();
-    GWT_SVNREV = getGwtSvnRev();
   }
 
   /**
