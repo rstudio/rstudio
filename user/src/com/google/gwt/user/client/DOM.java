@@ -429,7 +429,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if ALT was depressed when the event occurred
+   * @deprecated Use {@link Event#getAltKey()} instead.
    */
+  @Deprecated
   public static boolean eventGetAltKey(Event evt) {
     return evt.getAltKey();
   }
@@ -440,7 +442,9 @@ public class DOM {
    * @param evt the event to be tested
    * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
    *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
+   * @deprecated Use {@link Event#getButton()} instead.
    */
+  @Deprecated
   public static int eventGetButton(Event evt) {
     return evt.getButton();
   }
@@ -450,7 +454,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse x-position
+   * @deprecated Use {@link Event#getClientX()} instead.
    */
+  @Deprecated
   public static int eventGetClientX(Event evt) {
     return evt.getClientX();
   }
@@ -460,7 +466,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse y-position
+   * @deprecated Use {@link Event#getClientY()} instead.
    */
+  @Deprecated
   public static int eventGetClientY(Event evt) {
     return evt.getClientY();
   }
@@ -470,7 +478,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if CTRL was depressed when the event occurred
+   * @deprecated Use {@link Event#getCtrlKey()} instead.
    */
+  @Deprecated
   public static boolean eventGetCtrlKey(Event evt) {
     return evt.getCtrlKey();
   }
@@ -505,7 +515,6 @@ public class DOM {
    * @param evt the event to be tested
    * @return the element from which the mouse pointer was moved
    */
-
   public static Element eventGetFromElement(Event evt) {
     return impl.eventGetFromElement(evt);
   }
@@ -522,7 +531,9 @@ public class DOM {
    * @param evt the event to be tested
    * @return the Unicode character or key code.
    * @see com.google.gwt.user.client.ui.KeyboardListener
+   * @deprecated Use {@link Event#getKeyCode()} instead.
    */
+  @Deprecated
   public static int eventGetKeyCode(Event evt) {
     return evt.getKeyCode();
   }
@@ -532,7 +543,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if META was depressed when the event occurred
+   * @deprecated Use {@link Event#getMetaKey()} instead.
    */
+  @Deprecated
   public static boolean eventGetMetaKey(Event evt) {
     return evt.getMetaKey();
   }
@@ -551,7 +564,9 @@ public class DOM {
    * 
    * @param evt the event to be examined.
    * @return The velocity of the mouse wheel.
+   * @deprecated Use {@link Event#getMouseWheelVelocityY()} instead.
    */
+  @Deprecated
   public static int eventGetMouseWheelVelocityY(Event evt) {
     return evt.getMouseWheelVelocityY();
   }
@@ -573,7 +588,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse x-position
+   * @deprecated Use {@link Event#getScreenX()} instead.
    */
+  @Deprecated
   public static int eventGetScreenX(Event evt) {
     return evt.getScreenX();
   }
@@ -583,7 +600,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse y-position
+   * @deprecated Use {@link Event#getScreenY()} instead.
    */
+  @Deprecated
   public static int eventGetScreenY(Event evt) {
     return evt.getScreenY();
   }
@@ -593,7 +612,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if shift was depressed when the event occurred
+   * @deprecated Use {@link Event#getShiftKey()} instead.
    */
+  @Deprecated
   public static boolean eventGetShiftKey(Event evt) {
     return evt.getShiftKey();
   }
@@ -615,7 +636,6 @@ public class DOM {
    * @param evt the event to be tested
    * @return the element to which the mouse pointer was moved
    */
-
   public static Element eventGetToElement(Event evt) {
     return impl.eventGetToElement(evt);
   }
@@ -635,7 +655,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the event's type name
+   * @deprecated Use {@link Event#getType()} instead.
    */
+  @Deprecated
   public static String eventGetTypeString(Event evt) {
     return evt.getType();
   }
@@ -644,7 +666,9 @@ public class DOM {
    * Prevents the browser from taking its default action for the given event.
    * 
    * @param evt the event whose default action is to be prevented
+   * @deprecated Use {@link Event#preventDefault()} instead.
    */
+  @Deprecated
   public static void eventPreventDefault(Event evt) {
     evt.preventDefault();
   }
@@ -668,7 +692,9 @@ public class DOM {
    * 
    * @param evt the event to stringize
    * @return a string form of the event
+   * @deprecated Use {@link Event#getString()} instead.
    */
+  @Deprecated
   public static String eventToString(Event evt) {
     return evt.getString();
   }
@@ -679,7 +705,9 @@ public class DOM {
    * 
    * @param elem the element to be measured
    * @return the element's absolute left coordinate
+   * @deprecated Use {@link Element#getAbsoluteLeft()} instead.
    */
+  @Deprecated
   public static int getAbsoluteLeft(Element elem) {
     return elem.getAbsoluteLeft();
   }
@@ -690,19 +718,21 @@ public class DOM {
    * 
    * @param elem the element to be measured
    * @return the element's absolute top coordinate
+   * @deprecated Use {@link Element#getAbsoluteTop()} instead.
    */
+  @Deprecated
   public static int getAbsoluteTop(Element elem) {
     return elem.getAbsoluteTop();
   }
 
   /**
-   * Gets any named attribute from an element, as a string.
-   * 
-   * @param elem the element whose attribute is to be retrieved
-   * @param attr the name of the attribute
-   * @return the attribute's value
+   * Gets any named property from an element, as a string.
+   *
+   * @param elem the element whose property is to be retrieved
+   * @param attr the name of the property
+   * @return the property's value
    * @deprecated Use the more appropriately named
-   *             {@link #getElementProperty(Element, String)} instead.
+   *             {@link Element#getPropertyString(String)} instead.
    */
   @Deprecated
   public static String getAttribute(Element elem, String attr) {
@@ -710,13 +740,13 @@ public class DOM {
   }
 
   /**
-   * Gets a boolean attribute on the given element.
-   * 
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @return the attribute's value as a boolean
+   * Gets a boolean property on the given element.
+   *
+   * @param elem the element whose property is to be set
+   * @param attr the name of the property to be set
+   * @return the property's value as a boolean
    * @deprecated Use the more appropriately named
-   *             {@link #getElementPropertyBoolean(Element, String)} instead.
+   *             {@link Element#getPropertyBoolean(String)} instead.
    */
   @Deprecated
   public static boolean getBooleanAttribute(Element elem, String attr) {
@@ -772,7 +802,9 @@ public class DOM {
    * @param elem the element whose property is to be retrieved
    * @param attr the name of the attribute
    * @return the value of the attribute
+   * @deprecated Use {@link Element#getAttribute(String)} instead.
    */
+  @Deprecated
   public static String getElementAttribute(Element elem, String attr) {
     return elem.getAttribute(attr);
   }
@@ -794,7 +826,9 @@ public class DOM {
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value
+   * @deprecated Use {@link Element#getProperty(String)} instead.
    */
+  @Deprecated
   public static String getElementProperty(Element elem, String prop) {
     return elem.getPropertyString(prop);
   }
@@ -805,7 +839,9 @@ public class DOM {
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value as a boolean
+   * @deprecated Use {@link Element#getPropertyBoolean(String)} instead.
    */
+  @Deprecated
   public static boolean getElementPropertyBoolean(Element elem, String prop) {
     return elem.getPropertyBoolean(prop);
   }
@@ -816,7 +852,9 @@ public class DOM {
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value as an int
+   * @deprecated Use {@link Element#getPropertyInt(String)} instead.
    */
+  @Deprecated
   public static int getElementPropertyInt(Element elem, String prop) {
     return elem.getPropertyInt(prop);
   }
@@ -870,7 +908,9 @@ public class DOM {
    * 
    * @param elem the element whose HTML is to be retrieved
    * @return the HTML representation of the element's children
+   * @deprecated Use {@link Element#getInnerHTML()} instead.
    */
+  @Deprecated
   public static String getInnerHTML(Element elem) {
     return elem.getInnerHTML();
   }
@@ -881,19 +921,21 @@ public class DOM {
    * 
    * @param elem the element whose inner text is to be retrieved
    * @return the text inside this element
+   * @deprecated Use {@link Element#getInnerText()} instead.
    */
+  @Deprecated
   public static String getInnerText(Element elem) {
     return elem.getInnerText();
   }
 
   /**
-   * Gets an integer attribute on a given element.
-   * 
-   * @param elem the element whose attribute is to be retrieved
-   * @param attr the name of the attribute to be retrieved
-   * @return the attribute's value as an integer
+   * Gets an integer property on a given element.
+   *
+   * @param elem the element whose property is to be retrieved
+   * @param attr the name of the property to be retrieved
+   * @return the property's value as an integer
    * @deprecated Use the more appropriately named
-   *             {@link #getElementPropertyInt(Element, String)} instead.
+   *             {@link Element#getPropertyInt(String)} instead.
    */
   @Deprecated
   public static int getIntAttribute(Element elem, String attr) {
@@ -937,7 +979,10 @@ public class DOM {
    * @param elem the element whose style attribute is to be retrieved
    * @param attr the name of the style attribute to be retrieved
    * @return the style attribute's value
+   * @deprecated Use {@link Element#getStyle()} and
+   *             {@link Style#getProperty(String)} instead.
    */
+  @Deprecated
   public static String getStyleAttribute(Element elem, String attr) {
     return elem.getStyle().getProperty(attr);
   }
@@ -1021,7 +1066,9 @@ public class DOM {
    * @param parent the potential parent element
    * @param child the potential child element
    * @return <code>true</code> if the relationship holds
+   * @deprecated Use {@link Element#isOrHasChild(Element)} instead.
    */
+  @Deprecated
   public static boolean isOrHasChild(Element parent, Element child) {
     return parent.isOrHasChild(child);
   }
@@ -1046,7 +1093,9 @@ public class DOM {
    * 
    * @param parent the parent element
    * @param child the child element to be removed
+   * @deprecated Use {@link Element#removeChild(Element)} instead.
    */
+  @Deprecated
   public static void removeChild(Element parent, Element child) {
     parent.removeChild(child);
   }
@@ -1056,7 +1105,9 @@ public class DOM {
    * 
    * @param elem the element whose attribute is to be removed
    * @param attr the name of the element to remove
+   * @deprecated Use {@link Element#removeAttribute(String)} instead.
    */
+  @Deprecated
   public static void removeElementAttribute(Element elem, String attr) {
     elem.removeAttribute(attr);
   }
@@ -1086,39 +1137,41 @@ public class DOM {
    * </p>
    * 
    * @param elem the element to be made visible
+   * @deprecated Use {@link Element#scrollIntoView()} instead.
    */
+  @Deprecated
   public static void scrollIntoView(Element elem) {
     elem.scrollIntoView();
   }
 
   /**
-   * Sets an attribute on the given element.
-   * 
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the new attribute value
+   * Sets a property on the given element.
+   *
+   * @param elem the element whose property is to be set
+   * @param attr the name of the property to be set
+   * @param value the new property value
    * @deprecated Use the more appropriately named
-   *             {@link #setElementProperty(Element, String, String)} instead.
+   *             {@link Element#setPropertyString(String, String)} instead.
    */
   @Deprecated
   public static void setAttribute(Element elem, String attr, String value) {
-    setElementProperty(elem, attr, value);
+    elem.setPropertyString(attr, value);
   }
 
   /**
-   * Sets a boolean attribute on the given element.
-   * 
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the attribute's new boolean value
+   * Sets a boolean property on the given element.
+   *
+   * @param elem the element whose property is to be set
+   * @param attr the name of the property to be set
+   * @param value the property's new boolean value
    * @deprecated Use the more appropriately named
-   *             {@link #setElementPropertyBoolean(Element, String, boolean)}
+   *             {@link Element#setPropertyBoolean(String, boolean)}
    *             instead.
    */
   @Deprecated
   public static void setBooleanAttribute(Element elem, String attr,
       boolean value) {
-    setElementPropertyBoolean(elem, attr, value);
+    elem.setPropertyBoolean(attr, value);
   }
 
   /**
@@ -1139,7 +1192,9 @@ public class DOM {
    * @param elem element whose attribute is to be set
    * @param attr the name of the attribute
    * @param value the value to which the attribute should be set
+   * @deprecated Use {@link Element#setAttribute(String, String)} instead.
    */
+  @Deprecated
   public static void setElementAttribute(Element elem, String attr, String value) {
     elem.setAttribute(attr, value);
   }
@@ -1150,7 +1205,9 @@ public class DOM {
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value
+   * @deprecated Use {@link Element#setPropertyString(String, String)} instead.
    */
+  @Deprecated
   public static void setElementProperty(Element elem, String prop, String value) {
     elem.setPropertyString(prop, value);
   }
@@ -1161,7 +1218,9 @@ public class DOM {
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value as a boolean
+   * @deprecated Use {@link Element#setPropertyBoolean(String, boolean)} instead.
    */
+  @Deprecated
   public static void setElementPropertyBoolean(Element elem, String prop,
       boolean value) {
     elem.setPropertyBoolean(prop, value);
@@ -1173,7 +1232,9 @@ public class DOM {
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value as an int
+   * @deprecated Use {@link Element#setPropertyInt(String, int)} instead.
    */
+  @Deprecated
   public static void setElementPropertyInt(Element elem, String prop, int value) {
     elem.setPropertyInt(prop, value);
   }
@@ -1205,7 +1266,9 @@ public class DOM {
    * 
    * @param elem the element whose inner HTML is to be set
    * @param html the new html
+   * @deprecated Use {@link Element#setInnerHTML(String)} instead.
    */
+  @Deprecated
   public static void setInnerHTML(Element elem, String html) {
     elem.setInnerHTML(html);
   }
@@ -1216,23 +1279,25 @@ public class DOM {
    * 
    * @param elem the element whose inner text is to be set
    * @param text the new text
+   * @deprecated Use {@link Element#setInnerText(String)} instead.
    */
+  @Deprecated
   public static void setInnerText(Element elem, String text) {
     elem.setInnerText(text);
   }
 
   /**
-   * Sets an integer attribute on the given element.
-   * 
-   * @param elem the element whose attribute is to be set
-   * @param attr the name of the attribute to be set
-   * @param value the attribute's new integer value
+   * Sets an integer property on the given element.
+   *
+   * @param elem the element whose property is to be set
+   * @param attr the name of the property to be set
+   * @param value the property's new integer value
    * @deprecated Use the more appropriately named
-   *             {@link #setElementPropertyInt(Element, String, int)} instead.
+   *             {@link Element#setPropertyInt(String, int)} instead.
    */
   @Deprecated
   public static void setIntAttribute(Element elem, String attr, int value) {
-    setElementPropertyInt(elem, attr, value);
+    elem.setPropertyInt(attr, value);
   }
 
   /**
@@ -1263,7 +1328,10 @@ public class DOM {
    * @param elem the element whose style attribute is to be set
    * @param attr the name of the style attribute to be set
    * @param value the style attribute's new value
+   * @deprecated Use {@link Element#getStyle()} and
+   *             {@link Style#setProperty(String, String)} instead.
    */
+  @Deprecated
   public static void setStyleAttribute(Element elem, String attr, String value) {
     elem.getStyle().setProperty(attr, value);
   }
@@ -1298,7 +1366,9 @@ public class DOM {
    * 
    * @param elem the element to stringize
    * @return a string form of the element
+   * @deprecated Use {@link Element#getString()} instead.
    */
+  @Deprecated
   public static String toString(Element elem) {
     return elem.getString();
   }
