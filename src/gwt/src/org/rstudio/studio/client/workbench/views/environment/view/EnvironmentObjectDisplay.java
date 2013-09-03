@@ -13,6 +13,8 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
       public boolean enableClickableObjects();
       public boolean useStatePersistence();
       public String getFilterText();
+      public int getSortColumn();
+      public void setSortColumn(int col);
    }
 
    public EnvironmentObjectDisplay(Host host, 

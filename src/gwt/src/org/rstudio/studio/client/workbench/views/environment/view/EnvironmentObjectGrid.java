@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.shared.GWT;
@@ -43,7 +44,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       style_.ensureInjected();
       selection_ = new MultiSelectionModel<RObjectEntry>(
               RObjectEntry.KEY_PROVIDER);
-   
+      
       createColumns();
       setTableBuilder(new EnvironmentObjectGridBuilder(this));
       setHeaderBuilder(new GridHeaderBuilder(this, false));
@@ -57,7 +58,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    {
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(filterRenderer_), "Name", 20, 
-              ObjectGridColumn.COLUMN_NAME)
+              ObjectGridColumn.COLUMN_NAME, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -67,7 +68,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
               });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(), "Type", 15, 
-              ObjectGridColumn.COLUMN_TYPE)
+              ObjectGridColumn.COLUMN_TYPE, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -77,7 +78,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
               });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(), "Length", 10, 
-              ObjectGridColumn.COLUMN_LENGTH)
+              ObjectGridColumn.COLUMN_LENGTH, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -87,7 +88,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
               });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(), "Size", 15, 
-              ObjectGridColumn.COLUMN_SIZE)
+              ObjectGridColumn.COLUMN_SIZE, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -97,7 +98,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
               });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(filterRenderer_), "Value", 35, 
-              ObjectGridColumn.COLUMN_VALUE)
+              ObjectGridColumn.COLUMN_VALUE, host_)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -128,19 +129,25 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                                boolean isFooter)
       {
          super(table, isFooter);
+         setSortIconStartOfLine(false);
       }
 
       @Override
       protected boolean buildHeaderOrFooterImpl()
       {
          TableRowBuilder row = startRow();
+         // Render an empty header cell for the check column
          row.startTD().className(style_.objectGridHeader()).end();
-         for (ObjectGridColumn col: columns_)
+
+         for (int i = 0; i < columns_.size(); i++)
          {
+            ObjectGridColumn col = columns_.get(i);
             TableCellBuilder cell = row.startTD();
             cell.className(style_.objectGridHeader());
             cell.style().width(col.getWidth(), Unit.PCT);
-            cell.text(col.getName());
+            Cell.Context context = new Cell.Context(0, i, null);
+            renderSortableHeader(cell, context, col.getHeader(), 
+                  i == host_.getSortColumn(), false);
             cell.endTD();
          }
          row.end();

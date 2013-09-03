@@ -15,19 +15,40 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
 
 public abstract class ObjectGridColumn extends Column<RObjectEntry, String>
 {
    public ObjectGridColumn(Cell<String> cell, 
                            String columnName, 
                            int columnWidth,
-                           int columnType)
+                           int columnType,
+                           final EnvironmentObjectDisplay.Host host)
    {
       super(cell);
       columnName_ = columnName;
       columnWidth_ = columnWidth;
       columnType_ = columnType;
+      setSortable(true);
+      header_ = new Header<String>(new ClickableTextCell())
+      {
+         @Override
+         public String getValue()
+         {
+            return columnName_;
+         }
+      };
+      header_.setUpdater(new ValueUpdater<String>()
+      {
+         @Override
+         public void update(String value)
+         {
+            host.setSortColumn(columnType_);
+         }
+      });
    }
    
    public String getName()
@@ -45,6 +66,11 @@ public abstract class ObjectGridColumn extends Column<RObjectEntry, String>
       return columnType_;
    }
    
+   public Header<String> getHeader()
+   {
+      return header_;
+   }
+   
    public static final int COLUMN_NAME = 0;
    public static final int COLUMN_TYPE = 1;
    public static final int COLUMN_LENGTH = 2;
@@ -54,4 +80,5 @@ public abstract class ObjectGridColumn extends Column<RObjectEntry, String>
    private String columnName_;
    private int columnWidth_;
    private int columnType_;
+   private Header<String> header_;
 }

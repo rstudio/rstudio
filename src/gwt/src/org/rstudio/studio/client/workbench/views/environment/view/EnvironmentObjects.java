@@ -24,9 +24,12 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
+import com.google.gwt.user.cellview.client.ColumnSortEvent.ListHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
@@ -57,6 +60,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectDisplayType_ = OBJECT_LIST_VIEW;
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
       objectSort_ = new RObjectEntrySort();
+      sortHandler_ = new ObjectSortHandler(objectDataProvider_.getList());
 
       // set up the call frame panel
       callFramePanel_ = new CallFramePanel(observer_, this);
@@ -281,6 +285,7 @@ public class EnvironmentObjects extends ResizeComposite
       {
          objectDisplay_ = new EnvironmentObjectGrid(this, observer_);
          objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+         objectDisplay_.addColumnSortHandler(sortHandler_);
       }
 
       objectDisplayType_ = type;
@@ -342,6 +347,20 @@ public class EnvironmentObjects extends ResizeComposite
    public String getFilterText()
    {
       return filterText_;
+   }
+   
+   @Override
+   public int getSortColumn()
+   {
+      return sortColumn_;
+   }
+   
+   @Override
+   public void setSortColumn(int col)
+   {
+      sortColumn_ = col;
+      objectSort_.setSortColumn(col);
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
 
    // Private methods: object management --------------------------------------
@@ -540,6 +559,22 @@ public class EnvironmentObjects extends ResizeComposite
       return new RObjectEntry(obj, matchesFilter(obj));
    }
    
+   private class ObjectSortHandler 
+           extends ColumnSortEvent.ListHandler<RObjectEntry>
+   {
+      public ObjectSortHandler(List<RObjectEntry> list)
+      {
+         super(list);
+      }
+      
+      @Override
+      public void onColumnSort(ColumnSortEvent event)
+      {
+         Debug.log("Sorting on " + event.toString());
+      }
+   }
+
+   
    private final static String EMPTY_GLOBAL_ENVIRONMENT_MESSAGE =
            "Environment is empty";
    private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
@@ -558,11 +593,13 @@ public class EnvironmentObjects extends ResizeComposite
 
    private ListDataProvider<RObjectEntry> objectDataProvider_;
    private RObjectEntrySort objectSort_;
+   private ListHandler<RObjectEntry> sortHandler_;
 
    private EnvironmentObjectsObserver observer_;
    private int contextDepth_;
    private int callFramePanelHeight_;
    private int objectDisplayType_ = OBJECT_LIST_VIEW;
+   private int sortColumn_ = ObjectGridColumn.COLUMN_NAME;
    private String filterText_ = ""; 
    private String environmentName_;
 
