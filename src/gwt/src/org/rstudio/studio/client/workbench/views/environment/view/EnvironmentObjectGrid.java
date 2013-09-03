@@ -8,6 +8,7 @@ import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
@@ -42,8 +43,9 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
    private void createColumns()
    {
-      columns_.add(new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+      columns_.add(new ObjectGridColumn(
+              new ClickableTextCell(), "Name", 20, 
+              ObjectGridColumn.COLUMN_NAME)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -51,8 +53,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return object.rObject.getName();
                   }
               });
-      columns_.add(new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+      columns_.add(new ObjectGridColumn(
+              new ClickableTextCell(), "Type", 15, ObjectGridColumn.COLUMN_TYPE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -60,8 +62,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return object.rObject.getType();
                   }
               });
-      columns_.add(new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+      columns_.add(new ObjectGridColumn(
+              new ClickableTextCell(), "Length", 10, ObjectGridColumn.COLUMN_LENGTH)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -69,8 +71,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return (new Integer(object.rObject.getLength())).toString();
                   }
               });
-      columns_.add(new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+      columns_.add(new ObjectGridColumn(
+              new ClickableTextCell(), "Size", 15, ObjectGridColumn.COLUMN_SIZE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -78,8 +80,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return StringUtil.formatFileSize(object.rObject.getSize());
                   }
               });
-      columns_.add(new Column<RObjectEntry, String>(
-              new ClickableTextCell())
+      columns_.add(new ObjectGridColumn(
+              new ClickableTextCell(), "Value", 40, ObjectGridColumn.COLUMN_VALUE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -106,11 +108,14 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       protected boolean buildHeaderOrFooterImpl()
       {
          TableRowBuilder row = startRow();
-         row.startTD().className(style_.objectGridHeader()).text("Name").endTD();
-         row.startTD().className(style_.objectGridHeader()).text("Type").endTD();
-         row.startTD().className(style_.objectGridHeader()).text("Length").endTD();
-         row.startTD().className(style_.objectGridHeader()).text("Size").endTD();
-         row.startTD().className(style_.objectGridHeader()).text("Value").endTD();
+         for (ObjectGridColumn col: columns_)
+         {
+            TableCellBuilder cell = row.startTD();
+            cell.className(style_.objectGridHeader());
+            cell.style().width(col.getWidth(), Unit.PCT);
+            cell.text(col.getName());
+            cell.endTD();
+         }
          row.end();
          return true;
       }
@@ -137,9 +142,11 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
          for (int i = 0; i < columns_.size(); i++)
          {
+            ObjectGridColumn col = columns_.get(i);
             TableCellBuilder nameCol = row.startTD();
             nameCol.className(style_.objectGridColumn());
-            renderCell(nameCol, createContext(i), columns_.get(i), rowValue);
+            nameCol.style().width(col.getWidth(), Unit.PCT);
+            renderCell(nameCol, createContext(i), col, rowValue);
             nameCol.endTD();
          }
          
@@ -147,7 +154,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       }
    }
    
-   private ArrayList<Column<RObjectEntry, String>> columns_ = 
-         new ArrayList<Column<RObjectEntry, String>>();
+   private ArrayList<ObjectGridColumn> columns_ = 
+         new ArrayList<ObjectGridColumn>();
    private Style style_;
 }

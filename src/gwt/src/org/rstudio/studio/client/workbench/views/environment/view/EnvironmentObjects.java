@@ -58,6 +58,7 @@ public class EnvironmentObjects extends ResizeComposite
 
       objectDisplayType_ = OBJECT_LIST_VIEW;
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
+      objectSort_ = new RObjectEntrySort();
 
       // set up the call frame panel
       callFramePanel_ = new CallFramePanel(observer_, this);
@@ -161,7 +162,7 @@ public class EnvironmentObjects extends ResizeComposite
          RObjectEntry entry = entryFromRObject(objects.get(i));
          objectEntryList.add(entry);
       }
-      Collections.sort(objectEntryList, new RObjectEntrySort());
+      Collections.sort(objectEntryList, objectSort_);
 
       // push the list into the UI and update category leaders
       objectDataProvider_.getList().addAll(objectEntryList);
@@ -269,10 +270,17 @@ public class EnvironmentObjects extends ResizeComposite
       }
       // create the new object display and wire it to the data source
       if (type == OBJECT_LIST_VIEW)
+      {
          objectDisplay_ = new EnvironmentObjectList(this, observer_);
+         objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+      }
       else if (type == OBJECT_GRID_VIEW)
+      {
          objectDisplay_ = new EnvironmentObjectGrid(this, observer_);
+         objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+      }
 
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
       objectDataProvider_.addDataDisplay(objectDisplay_);
 
       // disable persistent and transient row selection (currently necessary
@@ -365,13 +373,12 @@ public class EnvironmentObjects extends ResizeComposite
    private int indexOfNewObject(RObjectEntry obj)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
-      RObjectEntrySort sort = new RObjectEntrySort();
       int numObjects = objects.size();
       int idx;
       // consider: can we use binary search here?
       for (idx = 0; idx < numObjects; idx++)
       {
-         if (sort.compare(obj, objects.get(idx)) < 0)
+         if (objectSort_.compare(obj, objects.get(idx)) < 0)
          {
             break;
          }
@@ -547,6 +554,7 @@ public class EnvironmentObjects extends ResizeComposite
    Label environmentEmptyMessage_;
 
    private ListDataProvider<RObjectEntry> objectDataProvider_;
+   private RObjectEntrySort objectSort_;
 
    private EnvironmentObjectsObserver observer_;
    private int contextDepth_;
