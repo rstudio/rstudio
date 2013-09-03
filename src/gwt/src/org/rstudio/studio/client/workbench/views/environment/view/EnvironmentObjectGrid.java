@@ -44,7 +44,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    private void createColumns()
    {
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Name", 20, 
+              new ClickableTextCell(filterRenderer_), "Name", 20, 
               ObjectGridColumn.COLUMN_NAME)
               {
                   @Override
@@ -54,7 +54,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Type", 15, ObjectGridColumn.COLUMN_TYPE)
+              new ClickableTextCell(), "Type", 15, 
+              ObjectGridColumn.COLUMN_TYPE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -63,7 +64,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Length", 10, ObjectGridColumn.COLUMN_LENGTH)
+              new ClickableTextCell(), "Length", 10, 
+              ObjectGridColumn.COLUMN_LENGTH)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -72,7 +74,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Size", 15, ObjectGridColumn.COLUMN_SIZE)
+              new ClickableTextCell(), "Size", 15, 
+              ObjectGridColumn.COLUMN_SIZE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -81,7 +84,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Value", 40, ObjectGridColumn.COLUMN_VALUE)
+              new ClickableTextCell(filterRenderer_), "Value", 40, 
+              ObjectGridColumn.COLUMN_VALUE)
               {
                   @Override
                   public String getValue(RObjectEntry object)
@@ -135,19 +139,19 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       @Override
       protected void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
       {
-         TableRowBuilder row = startRow();
-
          if (!rowValue.visible)
             return;
+
+         TableRowBuilder row = startRow();
 
          for (int i = 0; i < columns_.size(); i++)
          {
             ObjectGridColumn col = columns_.get(i);
-            TableCellBuilder nameCol = row.startTD();
-            nameCol.className(style_.objectGridColumn());
-            nameCol.style().width(col.getWidth(), Unit.PCT);
-            renderCell(nameCol, createContext(i), col, rowValue);
-            nameCol.endTD();
+            TableCellBuilder td = row.startTD();
+            td.className(style_.objectGridColumn());
+            td.style().width(col.getWidth(), Unit.PCT);
+            renderCell(td, createContext(i), col, rowValue);
+            td.endTD();
          }
          
          row.end();
