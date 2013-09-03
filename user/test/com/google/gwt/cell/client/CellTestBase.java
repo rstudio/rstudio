@@ -259,7 +259,7 @@ public abstract class CellTestBase<T> extends GWTTestCase {
   protected Element testOnBrowserEvent(final Cell<T> cell, String startHtml, NativeEvent event,
       final T value, T expectedValue, boolean dispatchToFirstChild) {
     // Setup the parent element.
-    final com.google.gwt.user.client.Element parent = Document.get().createDivElement().cast();
+    final Element parent = Document.get().createDivElement();
     parent.setInnerHTML(startHtml);
     Document.get().getBody().appendChild(parent);
 

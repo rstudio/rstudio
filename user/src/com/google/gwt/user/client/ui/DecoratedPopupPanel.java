@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.Element;
-
 import java.util.Iterator;
 
 /**
@@ -186,7 +184,7 @@ public class DecoratedPopupPanel extends PopupPanel {
    * @param cell the cell index
    * @return the Element at the given row and cell
    */
-  protected Element getCellElement(int row, int cell) {
-    return decPanel.getCellElement(row, cell);
+  protected com.google.gwt.user.client.Element getCellElement(int row, int cell) {
+    return decPanel.getCellElement(row, cell).cast();
   }
 }

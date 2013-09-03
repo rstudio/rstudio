@@ -97,8 +97,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    * @param toReplace the element to be replaced by the widget
    */
   public final void addAndReplaceElement(Widget widget, Element toReplace) {
-    com.google.gwt.user.client.Element clientElem = toReplace.cast();
-    addAndReplaceElement(widget, clientElem);
+    addAndReplaceElement(widget, toReplace.<com.google.gwt.user.client.Element>cast());
   }
 
   /**

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * IE6-specific implementation of

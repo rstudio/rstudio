@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
@@ -201,20 +201,42 @@ public abstract class CellPanel extends ComplexPanel {
     table.setPropertyInt("cellSpacing", spacing);
   }
 
-  protected Element getBody() {
-    return body;
+  protected com.google.gwt.user.client.Element getBody() {
+    return body.cast();
   }
 
-  protected Element getTable() {
-    return table;
+  protected com.google.gwt.user.client.Element getTable() {
+    return table.cast();
   }
 
+  @SuppressWarnings("deprecation")
   protected void setCellHorizontalAlignment(Element td,
+      HorizontalAlignmentConstant align) {
+    setCellHorizontalAlignment(td.<com.google.gwt.user.client.Element>cast(), align);
+  }
+
+  /**
+   * @deprecated Call and override {@link #setCellHorizontalAlignment(Element,
+   *             HorizontalAlignmentConstant)} instead.
+   */
+  @Deprecated
+  protected void setCellHorizontalAlignment(com.google.gwt.user.client.Element td,
       HorizontalAlignmentConstant align) {
     td.setPropertyString("align", align.getTextAlignString());
   }
 
+  @SuppressWarnings("deprecation")
   protected void setCellVerticalAlignment(Element td,
+      VerticalAlignmentConstant align) {
+    setCellVerticalAlignment(td.<com.google.gwt.user.client.Element>cast(), align);
+  }
+
+  /**
+   * @deprecated Call and override {@link #setCellVerticalAlignment(Element,
+   *             VerticalAlignmentConstant)} instead.
+   */
+  @Deprecated
+  protected void setCellVerticalAlignment(com.google.gwt.user.client.Element td,
       VerticalAlignmentConstant align) {
     td.getStyle().setProperty("verticalAlign", align.getVerticalAlignString());
   }

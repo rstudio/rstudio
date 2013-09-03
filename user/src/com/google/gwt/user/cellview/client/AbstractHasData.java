@@ -347,7 +347,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
   /**
    * The temporary element use to convert HTML to DOM.
    */
-  private static com.google.gwt.user.client.Element tmpElem;
+  private static Element tmpElem;
 
   /**
    * Convenience method to convert the specified HTML into DOM elements and
@@ -357,8 +357,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    * @param tmpElem a temporary element
    * @return the parent element
    */
-  static Element convertToElements(Widget widget, com.google.gwt.user.client.Element tmpElem,
-      SafeHtml html) {
+  static Element convertToElements(Widget widget, Element tmpElem, SafeHtml html) {
     // Attach an event listener so we can catch synchronous load events from
     // cached images.
     DOM.setEventListener(tmpElem, widget);
@@ -432,9 +431,9 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
   /**
    * Return the temporary element used to create elements.
    */
-  private static com.google.gwt.user.client.Element getTmpElem() {
+  private static Element getTmpElem() {
     if (tmpElem == null) {
-      tmpElem = Document.get().createDivElement().cast();
+      tmpElem = Document.get().createDivElement();
     }
     return tmpElem;
   }
@@ -1156,10 +1155,9 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
   protected void setFocusable(Element elem, boolean focusable) {
     if (focusable) {
       FocusImpl focusImpl = FocusImpl.getFocusImplForWidget();
-      com.google.gwt.user.client.Element rowElem = elem.cast();
-      focusImpl.setTabIndex(rowElem, getTabIndex());
+      focusImpl.setTabIndex(elem, getTabIndex());
       if (accessKey != 0) {
-        focusImpl.setAccessKey(rowElem, accessKey);
+        focusImpl.setAccessKey(elem, accessKey);
       }
     } else {
       // Chrome: Elements remain focusable after removing the tabIndex, so set

@@ -449,8 +449,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    */
   private static class Impl {
 
-    private final com.google.gwt.user.client.Element tmpElem = Document.get().createDivElement()
-        .cast();
+    private final Element tmpElem = Document.get().createDivElement();
 
     /**
      * Convert the rowHtml into Elements wrapped by the specified table section.

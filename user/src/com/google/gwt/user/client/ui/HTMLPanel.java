@@ -167,27 +167,13 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Adds a child widget to the panel, contained within an HTML
-   * element.  It is up to the caller to ensure that the given element
-   * is a child of this panel's root element.
-   *
-   * @param widget the widget to be added
-   * @param elem the element within which it will be contained
-   */
-  public void add(Widget widget, Element elem) {
-    com.google.gwt.user.client.Element clientElem = elem.cast();
-    super.add(widget, clientElem);
-  }
-
-  /**
    * Adds a child widget to the panel, replacing the HTML element.
    *
    * @param widget the widget to be added
    * @param toReplace the element to be replaced by the widget
    */
   public final void addAndReplaceElement(Widget widget, Element toReplace) {
-    com.google.gwt.user.client.Element clientElem = toReplace.cast();
-    addAndReplaceElement(widget, clientElem);
+    addAndReplaceElement(widget, toReplace.<com.google.gwt.user.client.Element>cast());
   }
 
   /**

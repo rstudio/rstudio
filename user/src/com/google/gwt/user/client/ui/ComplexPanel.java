@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 import java.util.Iterator;
 
@@ -84,6 +84,14 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
    * @param container the element within which the child will be contained
    */
   protected void add(Widget child, Element container) {
+    add(child, container.<com.google.gwt.user.client.Element>cast());
+  }
+
+  /**
+   * @deprecated Call and override {@link #add(Widget, Element)} instead.
+   */
+  @Deprecated
+  protected void add(Widget child, com.google.gwt.user.client.Element container) {
     // Detach new child.
     child.removeFromParent();
 
@@ -155,24 +163,6 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
   }
 
   /**
-   * This method was used by subclasses to insert a new child Widget. It is now
-   * deprecated because it was ambiguous whether the <code>child</code> should
-   * be appended to <code>container</code> element versus inserted into
-   * <code>container</code> at <code>beforeIndex</code>. Use
-   * {@link #insert(Widget, Element, int, boolean)}, which clarifies this
-   * ambiguity.
-   * 
-   * @deprecated Use {@link #insert(Widget, Element, int, boolean)} instead
-   */
-  @Deprecated
-  protected void insert(Widget child, Element container, int beforeIndex) {
-    if (container == null) {
-      throw new NullPointerException("container may not be null");
-    }
-    insert(child, container, beforeIndex, false);
-  }
-
-  /**
    * Insert a new child Widget into this Panel at a specified index, attaching
    * its Element to the specified container Element. The child Element will
    * either be attached to the container at the same index, or simply appended
@@ -189,6 +179,16 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
    */
   protected void insert(Widget child, Element container, int beforeIndex,
       boolean domInsert) {
+    insert(child, container.<com.google.gwt.user.client.Element>cast(), beforeIndex,
+        domInsert);
+  }
+
+  /**
+   * @deprecated Call and override {@link insert(Widget, Element, int, boolean)} instead.
+   */
+  @Deprecated
+  protected void insert(Widget child, com.google.gwt.user.client.Element container,
+      int beforeIndex, boolean domInsert) {
     // Validate index; adjust if the widget is already a child of this panel.
     beforeIndex = adjustIndex(child, beforeIndex);
 

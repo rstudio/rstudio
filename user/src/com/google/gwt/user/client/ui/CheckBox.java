@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.Style.WhiteSpace;
@@ -32,9 +33,7 @@ import com.google.gwt.i18n.shared.DirectionEstimator;
 import com.google.gwt.i18n.shared.HasDirectionEstimator;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 
 /**
  * A standard check box widget.
@@ -506,7 +505,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    */
   @Override
   protected void onLoad() {
-    setEventListener(inputElem, this);
+    DOM.setEventListener(inputElem, this);
   }
 
   /**
@@ -518,7 +517,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
   protected void onUnload() {
     // Clear out the inputElem's event listener (breaking the circular
     // reference between it and the widget).
-    setEventListener(asOld(inputElem), null);
+    DOM.setEventListener(inputElem, null);
     setValue(getValue());
   }
 
@@ -530,6 +529,14 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * @param elem the new input element
    */
   protected void replaceInputElement(Element elem) {
+    replaceInputElement(elem.<com.google.gwt.user.client.Element>cast());
+  }
+
+  /**
+   * @deprecated Call and use {@link replaceInputElement(Element)} instead.
+   */
+  @Deprecated
+  protected void replaceInputElement(com.google.gwt.user.client.Element elem) {
     InputElement newInputElem = InputElement.as(elem);
     // Collect information we need to set
     int tabIndex = getTabIndex();
@@ -541,7 +548,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
     int sunkEvents = Event.getEventsSunk(inputElem);
 
     // Clear out the old input element
-    setEventListener(asOld(inputElem), null);
+    DOM.setEventListener(inputElem, null);
 
     getElement().replaceChild(newInputElem, inputElem);
 
@@ -563,17 +570,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
 
     // Set the event listener
     if (isAttached()) {
-      setEventListener(asOld(inputElem), this);
+      DOM.setEventListener(inputElem, this);
     }
-  }
-
-  private Element asOld(com.google.gwt.dom.client.Element elem) {
-    Element oldSchool = elem.cast();
-    return oldSchool;
-  }
-
-  private void setEventListener(com.google.gwt.dom.client.Element e,
-      EventListener listener) {
-    DOM.setEventListener(asOld(e), listener);
   }
 }

@@ -98,7 +98,7 @@ public class CompositeCellTest extends CellTestBase<String> {
   @SuppressWarnings("unchecked")
   public void testOnBrowserEventCell() {
     // Setup the parent element.
-    final com.google.gwt.user.client.Element parent = Document.get().createDivElement().cast();
+    final Element parent = Document.get().createDivElement();
     parent.setInnerHTML(getExpectedInnerHtml());
     Document.get().getBody().appendChild(parent);
 

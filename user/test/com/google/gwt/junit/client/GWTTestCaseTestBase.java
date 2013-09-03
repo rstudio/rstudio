@@ -47,7 +47,7 @@ abstract class GWTTestCaseTestBase extends GWTTestCase {
       }
     };
 
-    DOM.setEventListener(btn.<com.google.gwt.user.client.Element>cast(), listener);
+    DOM.setEventListener(btn, listener);
     try {
       btn.click();
     } catch (JavaScriptException ignored) {

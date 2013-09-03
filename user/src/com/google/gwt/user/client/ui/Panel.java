@@ -15,9 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-
 import java.util.Iterator;
 
 /**
@@ -125,44 +122,6 @@ public abstract class Panel extends Widget implements HasWidgets.ForIsWidget {
   protected final void adopt(Widget child) {
     assert (child.getParent() == null);
     child.setParent(this);
-  }
-
-  /**
-   * This method was formerly part of the process of adding a Widget to a Panel
-   * but has been deprecated in favor of {@link #adopt(Widget)}.
-   * 
-   * @deprecated Use {@link #adopt(Widget)}.
-   */
-  @Deprecated
-  protected void adopt(Widget w, Element container) {
-    // Remove the widget from its current parent, if any.
-    w.removeFromParent();
-
-    // Attach it at the DOM and GWT levels.
-    if (container != null) {
-      DOM.appendChild(container, w.getElement());
-    }
-    w.setParent(this);
-  }
-
-  /**
-   * This method was formerly part of the process of removing a Widget from a
-   * Panel but has been deprecated in favor of {@link #orphan(Widget)}.
-   * 
-   * @deprecated Use {@link #orphan(Widget)}.
-   */
-  @Deprecated
-  protected void disown(Widget w) {
-    // Only disown it if it's actually contained in this panel.
-    if (w.getParent() != this) {
-      throw new IllegalArgumentException("w is not a child of this panel");
-    }
-
-    // setParent() must be called before removeChild() to ensure that the
-    // element is still attached when onDetach()/onUnload() are called.
-    Element elem = w.getElement();
-    w.setParent(null);
-    DOM.getParent(elem).removeChild(elem);
   }
 
   @Override

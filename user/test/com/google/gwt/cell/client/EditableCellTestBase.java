@@ -82,7 +82,7 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
   protected Element testOnBrowserEvent(String startHtml, NativeEvent event,
       final T value, V viewData, T expectedValue, V expectedViewData) {
     // Setup the parent element.
-    final com.google.gwt.user.client.Element parent = Document.get().createDivElement().cast();
+    final Element parent = Document.get().createDivElement();
     parent.setInnerHTML(startHtml);
     Document.get().getBody().appendChild(parent);
 

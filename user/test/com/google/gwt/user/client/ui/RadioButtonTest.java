@@ -124,7 +124,7 @@ public class RadioButtonTest extends GWTTestCase {
     RadioButton radio = new RadioButton("myName", "myLabel");
 
     // We need to replace the input element so we can keep a handle to it
-    com.google.gwt.user.client.Element newInput = DOM.createInputRadio("MyName");
+    Element newInput = DOM.createInputRadio("MyName");
     radio.replaceInputElement(newInput);
 
     radio.ensureDebugId("myRadio");

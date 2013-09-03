@@ -48,7 +48,7 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
     if (!Element.is(eventTarget)) {
       return;
     }
-    com.google.gwt.user.client.Element target = eventTarget.cast();
+    Element target = eventTarget.cast();
 
     // Get the event listener, which is the first widget that handles the
     // specified event type.

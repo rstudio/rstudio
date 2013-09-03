@@ -168,7 +168,7 @@ public class HTMLPanelTest extends GWTTestCase {
   public void testAddAndReplaceElementForUserElement() {
     HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
-    com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
+    Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
 
     hp.addAndReplaceElement(button, placeholder);
@@ -179,13 +179,13 @@ public class HTMLPanelTest extends GWTTestCase {
 
   /**
    * Ensures that overloaded version of
-   * {@link HTMLPanel#addAndReplaceElement(IsWidget, com.google.gwt.user.client.Element)}
+   * {@link HTMLPanel#addAndReplaceElement(IsWidget, Element)}
    * for IsWidget puts the widget in exactly the right place in the DOM.
    */
   public void testAddAndReplaceElementForUserElementAsIsWidget() {
     HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
     RootPanel.get().add(hp);
-    com.google.gwt.user.client.Element placeholder = hp.getElementById("placeholder");
+    Element placeholder = hp.getElementById("placeholder");
     Button button = new Button("my button");
     // IsWidget reference to call the overloaded version
     IsWidget isWidget = button;

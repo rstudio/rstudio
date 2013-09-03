@@ -38,7 +38,7 @@ public class RootPanelTest extends GWTTestCase {
     rootPanel.add(new Button("a"));
     rootPanel.add(new Button("b"));
 
-    com.google.gwt.user.client.Element newDiv = DOM.createDiv();
+    Element newDiv = DOM.createDiv();
     newDiv.setInnerText("c");
     rootPanel.getElement().appendChild(newDiv);
 
@@ -55,7 +55,7 @@ public class RootPanelTest extends GWTTestCase {
     rootPanel.add(new Button("a"));
     rootPanel.add(new Button("b"));
 
-    com.google.gwt.user.client.Element newDiv = DOM.createDiv();
+    Element newDiv = DOM.createDiv();
     newDiv.setInnerText("c");
     rootPanel.getElement().appendChild(newDiv);
 
@@ -185,7 +185,7 @@ public class RootPanelTest extends GWTTestCase {
 
   private RootPanel createDOM(String id) {
     // create our own part in the document
-    com.google.gwt.user.client.Element div = DOM.createDiv();
+    Element div = DOM.createDiv();
     div.setId(id);
     Document.get().getBody().appendChild(div);
 

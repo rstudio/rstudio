@@ -38,7 +38,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   private static native void injectGlobalHandler() /*-{
     $wnd.__gwt_transparentImgHandler = function (elem) {
       elem.onerror = null;
-      @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(elem, @com.google.gwt.core.client.GWT::getModuleBaseURL()() + "clear.cache.gif");
+      @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/dom/client/Element;Ljava/lang/String;)(elem, @com.google.gwt.core.client.GWT::getModuleBaseURL()() + "clear.cache.gif");
     };
   }-*/;
 

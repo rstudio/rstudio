@@ -297,7 +297,7 @@ public class RootPanel extends AbsolutePanel {
   }
 
   private RootPanel(Element elem) {
-    super(elem.<com.google.gwt.user.client.Element> cast());
+    super(elem);
     onAttach();
   }
 
@@ -317,7 +317,7 @@ public class RootPanel extends AbsolutePanel {
     clear();
 
     if (clearDom) {
-      com.google.gwt.user.client.Element containerElement = getElement();
+      Element containerElement = getElement();
       while (containerElement.hasChildNodes()) {
         containerElement.removeChild(containerElement.getFirstChild());
       }

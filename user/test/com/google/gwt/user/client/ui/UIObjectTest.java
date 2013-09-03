@@ -18,11 +18,11 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.aria.client.State;
 import com.google.gwt.debug.client.DebugInfo;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * Tests UIObject. Currently, focuses on style name behaviors.

@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Mozilla implementation of StandardBrowser.

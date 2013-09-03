@@ -16,7 +16,7 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * IE9 implementation of {@link com.google.gwt.user.client.impl.DOMImplStandardBase}.
