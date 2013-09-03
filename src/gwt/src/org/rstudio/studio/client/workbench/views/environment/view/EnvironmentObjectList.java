@@ -19,6 +19,7 @@ import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.NoSelectionModel;
 
 public class EnvironmentObjectList extends EnvironmentObjectDisplay
 {
@@ -49,6 +50,14 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    {
       super(host, observer);
       setTableBuilder(new EnvironmentObjectTableBuilder(this));
+
+      // disable persistent and transient row selection (currently necessary
+      // because we emit more than one row per object and the DataGrid selection
+      // behaviors aren't designed to work that way)
+      setSelectionModel(new NoSelectionModel<RObjectEntry>(
+              RObjectEntry.KEY_PROVIDER));
+      setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+
       createColumns();
       addColumn(objectExpandColumn_);
       addColumn(objectNameColumn_);

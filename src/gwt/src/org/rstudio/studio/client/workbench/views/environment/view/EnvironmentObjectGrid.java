@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
 
+import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
@@ -15,6 +16,9 @@ import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.DefaultSelectionEventManager;
+import com.google.gwt.view.client.MultiSelectionModel;
+import com.google.gwt.view.client.SelectionModel;
 
 public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 {
@@ -22,6 +26,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    {
       String objectGridColumn();
       String objectGridHeader();
+      String checkColumn();
    }
 
    public interface Resources extends ClientBundle
@@ -36,9 +41,16 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       super(host, observer);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
+      selection_ = new MultiSelectionModel<RObjectEntry>(
+              RObjectEntry.KEY_PROVIDER);
+   
       createColumns();
       setTableBuilder(new EnvironmentObjectGridBuilder(this));
       setHeaderBuilder(new GridHeaderBuilder(this, false));
+      setSkipRowHoverCheck(true);
+      setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
+      setSelectionModel(selection_, 
+         DefaultSelectionEventManager.<RObjectEntry>createCheckboxManager(0));
    }
 
    private void createColumns()
@@ -84,7 +96,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), "Value", 40, 
+              new ClickableTextCell(filterRenderer_), "Value", 35, 
               ObjectGridColumn.COLUMN_VALUE)
               {
                   @Override
@@ -93,6 +105,16 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return object.rObject.getValue();
                   }
               });
+      checkColumn_ = new Column<RObjectEntry, Boolean>(
+            new CheckboxCell(true, true))
+            {
+               @Override
+               public Boolean getValue(RObjectEntry value)
+               {
+                  return selection_.isSelected(value); 
+               }
+            };
+      addColumn(checkColumn_);
       for (Column<RObjectEntry, String> column: columns_)
       {
          addColumn(column);
@@ -112,6 +134,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       protected boolean buildHeaderOrFooterImpl()
       {
          TableRowBuilder row = startRow();
+         row.startTD().className(style_.objectGridHeader()).end();
          for (ObjectGridColumn col: columns_)
          {
             TableCellBuilder cell = row.startTD();
@@ -144,13 +167,18 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
          TableRowBuilder row = startRow();
 
+         TableCellBuilder check = row.startTD();
+         check.className(style_.checkColumn());
+         renderCell(check, createContext(0), checkColumn_, rowValue);
+         check.endTD();
+
          for (int i = 0; i < columns_.size(); i++)
          {
             ObjectGridColumn col = columns_.get(i);
             TableCellBuilder td = row.startTD();
             td.className(style_.objectGridColumn());
             td.style().width(col.getWidth(), Unit.PCT);
-            renderCell(td, createContext(i), col, rowValue);
+            renderCell(td, createContext(i+1), col, rowValue);
             td.endTD();
          }
          
@@ -158,7 +186,9 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       }
    }
    
+   private Column<RObjectEntry, Boolean> checkColumn_;
    private ArrayList<ObjectGridColumn> columns_ = 
          new ArrayList<ObjectGridColumn>();
    private Style style_;
+   private SelectionModel<RObjectEntry> selection_;
 }

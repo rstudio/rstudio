@@ -1,5 +1,10 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
+.checkColumn
+{
+	text-align: center;
+}
+
 .objectGridColumn,
 .objectGridHeader
 {

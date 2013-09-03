@@ -24,10 +24,8 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.NoSelectionModel;
 
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
@@ -285,15 +283,11 @@ public class EnvironmentObjects extends ResizeComposite
          objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
       }
 
+      objectDisplayType_ = type;
       Collections.sort(objectDataProvider_.getList(), objectSort_);
+      updateCategoryLeaders(false);
       objectDataProvider_.addDataDisplay(objectDisplay_);
 
-      // disable persistent and transient row selection (currently necessary
-      // because we emit more than one row per object and the DataGrid selection
-      // behaviors aren't designed to work that way)
-      objectDisplay_.setSelectionModel(new NoSelectionModel<RObjectEntry>(
-              RObjectEntry.KEY_PROVIDER));
-      objectDisplay_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       objectDisplay_.getScrollPanel().addScrollHandler(new ScrollHandler()
       {
          @Override
@@ -310,7 +304,6 @@ public class EnvironmentObjects extends ResizeComposite
       objectDisplay_.setEmptyTableWidget(buildEmptyGridMessage());
       objectDisplay_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
       splitPanel.add(objectDisplay_);
-      objectDisplayType_ = type;
    }
 
    // CallFramePanelHost implementation ---------------------------------------
@@ -394,6 +387,11 @@ public class EnvironmentObjects extends ResizeComposite
    // after adds or removes, we need to tag the new category-leading objects
    private void updateCategoryLeaders(boolean redrawUpdatedRows)
    {
+      // no need to do these model updates if we're not in the mode that 
+      // displays them
+      if (objectDisplayType_ != OBJECT_LIST_VIEW)
+         return;
+      
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
@@ -543,7 +541,7 @@ public class EnvironmentObjects extends ResizeComposite
    }
    
    private final static String EMPTY_GLOBAL_ENVIRONMENT_MESSAGE =
-           "Global environment is empty";
+           "Environment is empty";
    private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
            "Function environment is empty";
 
