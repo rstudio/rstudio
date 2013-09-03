@@ -53,7 +53,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     if (name == null) {
       throw new NullPointerException();
     }
-    throw new IllegalArgumentException();
+    throw new IllegalArgumentException("Enum constant undefined: " + name);
   }
 
   private static native <T extends Enum<T>> T get0(JavaScriptObject map,
