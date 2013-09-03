@@ -336,7 +336,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       executeFunctionForObject("View", objectName);
    }
-
+   
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)
@@ -482,11 +482,17 @@ public class EnvironmentPane extends WorkbenchPane
       return null;
    }
    
-   private void setViewType(int type)
+   public void setObjectDisplayType(int type)
    {
       viewLabel_.setText(nameOfViewType(type));
       viewLabel_.setImage(imageOfViewType(type));
       objects_.setObjectDisplay(type);
+      isClientStateDirty_ = true;
+   }
+   
+   public int getObjectDisplayType()
+   {
+      return objects_.getObjectDisplay();
    }
    
    private MenuItem createViewMenuItem(final int type)
@@ -499,7 +505,7 @@ public class EnvironmentPane extends WorkbenchPane
                @Override
                public void execute()
                {
-                  setViewType(type);
+                  setObjectDisplayType(type);
                }
             });
    }

@@ -95,6 +95,8 @@ public class EnvironmentPresenter extends BasePresenter
       void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
+      void setObjectDisplayType(int type);
+      int getObjectDisplayType();
       void setExpandedObjects(JsArrayString objects);
       String[] getExpandedObjects();
       boolean clientStateDirty();
@@ -198,7 +200,7 @@ public class EnvironmentPresenter extends BasePresenter
       
       new JSObjectStateValue(
               "environment-pane",
-              "environmentPaneState",
+              "environmentPane",
               ClientState.TEMPORARY,
               session.getSessionInfo().getClientState(),
               false)
@@ -211,6 +213,7 @@ public class EnvironmentPresenter extends BasePresenter
                EnvironmentClientState clientState = value.cast();
                view_.setScrollPosition(clientState.getScrollPosition());
                view_.setExpandedObjects(clientState.getExpandedObjects());
+               view_.setObjectDisplayType(clientState.getDisplayType());
             }
          }
 
@@ -221,7 +224,8 @@ public class EnvironmentPresenter extends BasePresenter
             // our state is clean until the user makes more changes.
             view_.setClientStateClean();
             return EnvironmentClientState.create(view_.getScrollPosition(),
-                                                 view_.getExpandedObjects())
+                                                 view_.getExpandedObjects(),
+                                                 view_.getObjectDisplayType())
                                          .cast();
          }
 

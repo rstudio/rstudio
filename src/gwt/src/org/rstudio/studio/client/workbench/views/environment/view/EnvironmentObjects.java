@@ -253,6 +253,11 @@ public class EnvironmentObjects extends ResizeComposite
       updateCategoryLeaders(true);
    }
    
+   public int getObjectDisplay()
+   {
+      return objectDisplayType_;
+   }
+
    public void setObjectDisplay(int type)
    {
       // if we already have an active display of this type, do nothing
