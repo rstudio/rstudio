@@ -352,15 +352,27 @@ public class EnvironmentObjects extends ResizeComposite
    @Override
    public int getSortColumn()
    {
-      return sortColumn_;
+      return objectSort_.getSortColumn();
    }
    
    @Override
    public void setSortColumn(int col)
    {
-      sortColumn_ = col;
       objectSort_.setSortColumn(col);
       Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+   
+   @Override
+   public void toggleAscendingSort()
+   {
+      objectSort_.setAscending(!objectSort_.getAscending());
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+   
+   @Override
+   public boolean isAscendingSort()
+   {
+      return objectSort_.getAscending();
    }
 
    // Private methods: object management --------------------------------------
@@ -599,7 +611,6 @@ public class EnvironmentObjects extends ResizeComposite
    private int contextDepth_;
    private int callFramePanelHeight_;
    private int objectDisplayType_ = OBJECT_LIST_VIEW;
-   private int sortColumn_ = ObjectGridColumn.COLUMN_NAME;
    private String filterText_ = ""; 
    private String environmentName_;
 

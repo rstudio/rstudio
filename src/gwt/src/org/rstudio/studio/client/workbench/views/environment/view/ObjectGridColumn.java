@@ -46,7 +46,14 @@ public abstract class ObjectGridColumn extends Column<RObjectEntry, String>
          @Override
          public void update(String value)
          {
-            host.setSortColumn(columnType_);
+            if (host.getSortColumn() == columnType_)
+            {
+               host.toggleAscendingSort();
+            }
+            else
+            {
+               host.setSortColumn(columnType_);
+            }
          }
       });
    }

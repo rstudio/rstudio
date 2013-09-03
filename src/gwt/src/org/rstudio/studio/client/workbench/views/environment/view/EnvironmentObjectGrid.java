@@ -147,7 +147,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             cell.style().width(col.getWidth(), Unit.PCT);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
-                  i == host_.getSortColumn(), false);
+                  i == host_.getSortColumn(), 
+                  host_.isAscendingSort());
             cell.endTD();
          }
          row.end();

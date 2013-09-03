@@ -15,6 +15,8 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
       public String getFilterText();
       public int getSortColumn();
       public void setSortColumn(int col);
+      public void toggleAscendingSort();
+      boolean isAscendingSort();
    }
 
    public EnvironmentObjectDisplay(Host host, 

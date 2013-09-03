@@ -23,6 +23,7 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
    {
       sortType_ = SORT_AUTO;
       sortColumn_ = ObjectGridColumn.COLUMN_NAME;
+      ascending_ = true;
    }
    
    public void setSortType(int sortType)
@@ -33,9 +34,33 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
    public void setSortColumn(int sortColumn)
    {
       sortColumn_ = sortColumn;
+      ascending_ = true;
+   }
+   
+   public int getSortColumn()
+   {
+      return sortColumn_;
+   }
+   
+   public boolean getAscending()
+   {
+      return ascending_;
+   }
+   
+   public void setAscending(boolean ascending)
+   {
+      ascending_ = ascending;
    }
 
    public int compare(RObjectEntry first, RObjectEntry second)
+   {
+      if (ascending_)
+         return compareAscending(first, second);
+      else
+         return compareAscending(second, first);
+   }
+
+   public int compareAscending(RObjectEntry first, RObjectEntry second)
    {
       int result = 0;
       if (sortType_ == SORT_AUTO)
@@ -83,4 +108,5 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
    
    private int sortType_;
    private int sortColumn_;
+   private boolean ascending_;
 }
