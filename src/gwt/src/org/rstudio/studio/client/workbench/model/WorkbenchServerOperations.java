@@ -71,7 +71,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    BuildServerOperations,
                                                    PresentationServerOperations,
                                                    EnvironmentServerOperations,
-                                                   DebuggingServerOperations
+                                                   DebuggingServerOperations,
+                                                   MetaServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

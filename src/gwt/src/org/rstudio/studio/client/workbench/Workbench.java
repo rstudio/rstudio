@@ -130,6 +130,10 @@ public class Workbench implements BusyHandler,
             session_.getSessionInfo().getActiveProjectDir();
       if (defaultDialogDir != null)
          workbenchContext_.setDefaultFileDialogDir(defaultDialogDir);
+      
+      // check for init messages
+      checkForInitMessages();
+      
    }
    
    public void onBusy(BusyEvent event)
@@ -330,6 +334,24 @@ public class Workbench implements BusyHandler,
    {
       if (Desktop.isDesktop() && Desktop.getFrame().supportsFullscreenMode())
          Desktop.getFrame().toggleFullscreenMode();
+   }
+   
+   private void checkForInitMessages()
+   {
+      server_.getInitMessages(new ServerRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String message) 
+         {
+            if (message != null)
+               globalDisplay_.showWarningBar(false, message);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            // ignore
+         }
+      });
    }
     
 

@@ -60,12 +60,20 @@ class WorkbenchTabPanel
 
             if (getSelectedIndex() >= 0)
             {
-               WorkbenchTab lastTab = tabs_.get(getSelectedIndex());
-               lastTab.onBeforeUnselected();
+               int unselectedTab = getSelectedIndex();
+               if (unselectedTab < tabs_.size())
+               {
+                  WorkbenchTab lastTab = tabs_.get(unselectedTab);
+                  lastTab.onBeforeUnselected();
+               }
             }
 
-            WorkbenchTab tab = tabs_.get(event.getItem().intValue());
-            tab.onBeforeSelected();
+            int selectedTab = event.getItem().intValue();
+            if (selectedTab < tabs_.size())
+            {  
+               WorkbenchTab tab = tabs_.get(selectedTab);
+               tab.onBeforeSelected();
+            }
          }
       }));
       releaseOnUnload_.add(tabPanel_.addSelectionHandler(new SelectionHandler<Integer>()

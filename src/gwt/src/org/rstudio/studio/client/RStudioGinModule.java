@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.MetaServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
@@ -291,6 +292,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(PresentationServerOperations.class).to(RemoteServer.class);
       bind(EnvironmentServerOperations.class).to(RemoteServer.class);
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
+      bind(MetaServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -64,6 +64,14 @@ bool validateUser(const std::string& username, const std::string& requiredGroup)
       }
       else
       {
+         // log a warning whenever a user doesn't belong to a required group
+         if (!belongsToGroup)
+         {
+            LOG_WARNING_MESSAGE(
+             "User " + username + " could not be authenticated because they "
+             "do not belong to the required group (" + requiredGroup + ")");
+         }
+
          // return belongs status
          return belongsToGroup;
       }
