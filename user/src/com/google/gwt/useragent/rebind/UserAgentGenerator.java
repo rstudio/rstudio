@@ -17,7 +17,6 @@
 package com.google.gwt.useragent.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
-import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -33,12 +32,10 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 
 /**
- * Generator for {@link com.google.gwt.useragent.client.UserAgentAsserter}.
+ * Generator for {@link com.google.gwt.useragent.client.UserAgent}.
  */
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
-
-  static final String PROPERTY_USER_AGENT_RUNTIME_WARNING = "user.agent.runtimeWarning";
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
@@ -63,19 +60,6 @@ public class UserAgentGenerator extends Generator {
 
     PropertyOracle propertyOracle = context.getPropertyOracle();
 
-    boolean userAgentRuntimeWarning = true;
-    try {
-      ConfigurationProperty property = propertyOracle.getConfigurationProperty(PROPERTY_USER_AGENT_RUNTIME_WARNING);
-      userAgentRuntimeWarning = Boolean.valueOf(property.getValues().get(0));
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.WARN, "Unable to find value for '"
-          + PROPERTY_USER_AGENT_RUNTIME_WARNING + "'", e);
-    }
-
-    if (!userAgentRuntimeWarning) {
-      return "com.google.gwt.useragent.client.UserAgentAsserter.UserAgentPropertyDisabled";
-    }
-
     String userAgentValue;
     SelectionProperty selectionProperty;
     try {
@@ -97,14 +81,6 @@ public class UserAgentGenerator extends Generator {
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       SourceWriter sw = composerFactory.createSourceWriter(context, pw);
-
-      sw.println();
-      sw.println("public boolean getUserAgentRuntimeWarning() {");
-      sw.indent();
-      sw.println("return " + userAgentRuntimeWarning + ";");
-      sw.outdent();
-      sw.println("}");
-      sw.println();
 
       sw.println();
       sw.println("public native String getRuntimeValue() /*-{");

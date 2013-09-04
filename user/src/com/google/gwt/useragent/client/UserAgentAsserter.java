@@ -29,44 +29,16 @@ import com.google.gwt.core.client.GWT;
 public class UserAgentAsserter implements EntryPoint {
 
   /**
-   * Interface to provide both the compile time and runtime
-   * <code>user.agent</code> selection property value.
+   * Replacement for UserAgentAsserter to disable it.
    */
-  interface UserAgentProperty {
-    String getCompileTimeValue();
-
-    String getRuntimeValue();
-
-    boolean getUserAgentRuntimeWarning();
-  }
-
-  /**
-   * Default {@link UserAgentProperty} implementation used when
-   * {@code user.agent.runtimeWarning} is {@code false}.
-   */
-  static class UserAgentPropertyDisabled implements UserAgentProperty {
+  public static class UserAgentAsserterDisabled implements EntryPoint {
     @Override
-    public String getCompileTimeValue() {
-      return null;
-    }
-
-    @Override
-    public String getRuntimeValue() {
-      return null;
-    }
-
-    @Override
-    public boolean getUserAgentRuntimeWarning() {
-      return false;
-    }
+    public void onModuleLoad() { /* Empty - no assertions */}
   }
 
   @Override
   public void onModuleLoad() {
-    UserAgentProperty impl = GWT.create(UserAgentProperty.class);
-    if (!impl.getUserAgentRuntimeWarning()) {
-      return;
-    }
+    UserAgent impl = GWT.create(UserAgent.class);
     
     String compileTimeValue = impl.getCompileTimeValue();
     String runtimeValue = impl.getRuntimeValue();

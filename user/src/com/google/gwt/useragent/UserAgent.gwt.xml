@@ -43,11 +43,15 @@
   <set-property name="webApiUsage" value="modern"/>
 
   <!-- Asserts that the compile time user.agent value matches the runtime -->
-  <!-- user.agent value -->
+  <!-- user.agent value if user.agent.runtimeWarning is true -->
   <entry-point class="com.google.gwt.useragent.client.UserAgentAsserter" />
 
+  <generate-with class="com.google.gwt.useragent.rebind.UserAgentAsserterGenerator">
+    <when-type-is class="com.google.gwt.useragent.client.UserAgentAsserter" />
+  </generate-with>
+
   <generate-with class="com.google.gwt.useragent.rebind.UserAgentGenerator">
-    <when-type-assignable class="com.google.gwt.useragent.client.UserAgentAsserter.UserAgentProperty" />
+    <when-type-assignable class="com.google.gwt.useragent.client.UserAgent" />
   </generate-with>
 
   <!-- Deferred binding to optimize JRE classes based on user agent. -->

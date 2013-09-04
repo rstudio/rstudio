@@ -136,7 +136,7 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
             + value + "', possibly due to UserAgent.gwt.xml and "
             + UserAgentPropertyGenerator.class.getName()
             + " being out of sync." + " Use <set-configuration-property name=\""
-            + UserAgentGenerator.PROPERTY_USER_AGENT_RUNTIME_WARNING
+            + UserAgentAsserterGenerator.PROPERTY_USER_AGENT_RUNTIME_WARNING
             + "\" value=\"false\"/> to suppress this warning message.");
       }
     }
