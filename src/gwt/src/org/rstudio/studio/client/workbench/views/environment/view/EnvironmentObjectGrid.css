@@ -1,10 +1,5 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
-.checkColumn
-{
-	text-align: center;
-}
-
 .objectGridColumn,
 .objectGridHeader
 {
@@ -31,4 +26,10 @@ th.objectGridHeader
 .objectGrid table
 {
 	border-collapse: separate;
+}
+
+.checkColumn, 
+th.checkColumn
+{
+	text-align: center;
 }

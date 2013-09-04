@@ -8,6 +8,7 @@ import org.rstudio.core.client.StringUtil;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.builder.shared.TableCellBuilder;
 import com.google.gwt.dom.builder.shared.TableRowBuilder;
@@ -18,6 +19,7 @@ import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
 import com.google.gwt.user.cellview.client.AbstractHeaderOrFooterBuilder;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionModel;
@@ -57,24 +59,70 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       addStyleName(style_.objectGrid());
    }
 
+   // Returns the objects that should be considered selected. 
+   // - If one or more objects are manually selected, that set of objects is 
+   //   returned. 
+   // - If no objects are manually selected but the list is filtered, the
+   //   the objects that match the filter are returned.
+   // - If no selection or filter is present, an empty list is returned
+   //   (generally this causes operations to act on the whole list) 
    @Override
    public List<String> getSelectedObjects()
    {
-      // In list view, everything visible is selected
-      ArrayList<String> objectNames = new ArrayList<String>();
+      boolean hasFilter = !host_.getFilterText().isEmpty();
+      ArrayList<String> selectedObjectNames = new ArrayList<String>();
+      ArrayList<String> filteredObjectNames = new ArrayList<String>();
       List<RObjectEntry> objects = getVisibleItems();
       for (RObjectEntry object: objects)
       {
-         if (object.visible && selection_.isSelected(object))
+         if (object.visible)
          {
-            objectNames.add(object.rObject.getName());
+            if (hasFilter)
+            {
+               filteredObjectNames.add(object.rObject.getName());
+            }
+            if (selection_.isSelected(object))
+            {
+               selectedObjectNames.add(object.rObject.getName());
+            }
          }
       }
-      return objectNames;
+      return selectedObjectNames.size() == 0 ? filteredObjectNames :
+                                               selectedObjectNames;
    }
 
    private void createColumns()
    {
+      checkColumn_ = new Column<RObjectEntry, Boolean>(
+            new CheckboxCell(false, false))
+            {
+               @Override
+               public Boolean getValue(RObjectEntry value)
+               {
+                  return selection_.isSelected(value); 
+               }
+            };
+      addColumn(checkColumn_);
+      checkHeader_ = new Header<Boolean>(new CheckboxCell())
+      {
+         @Override
+         public Boolean getValue()
+         {
+            return selectAll_;
+         }
+      };
+      checkHeader_.setUpdater(new ValueUpdater<Boolean>()
+      {
+         @Override
+         public void update(Boolean value)
+         {
+            if (selectAll_ != value)
+            {
+               setSelectAll(value);
+               selectAll_ = value;
+            }
+         }
+      });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(filterRenderer_), "Name", 20, 
               ObjectGridColumn.COLUMN_NAME, host_)
@@ -125,19 +173,21 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return object.rObject.getValue();
                   }
               });
-      checkColumn_ = new Column<RObjectEntry, Boolean>(
-            new CheckboxCell(false, false))
-            {
-               @Override
-               public Boolean getValue(RObjectEntry value)
-               {
-                  return selection_.isSelected(value); 
-               }
-            };
-      addColumn(checkColumn_);
       for (Column<RObjectEntry, String> column: columns_)
       {
          addColumn(column);
+      }
+   }
+   
+   private void setSelectAll(boolean selected)
+   {
+      List<RObjectEntry> objects = getVisibleItems();
+      for (RObjectEntry object: objects)
+      {
+         if (object.visible)
+         {
+            selection_.setSelected(object, selected);
+         }
       }
    }
 
@@ -156,7 +206,11 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          TableRowBuilder row = startRow();
          // Render an empty header cell for the check column
-         row.startTH().className(style_.objectGridHeader()).end();
+         TableCellBuilder selectAll = row.startTH();
+         selectAll.className(style_.objectGridHeader() + " " +
+                             style_.checkColumn());
+         renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
+         selectAll.end();
 
          for (int i = 0; i < columns_.size(); i++)
          {
@@ -214,8 +268,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    }
    
    private Column<RObjectEntry, Boolean> checkColumn_;
+   private Header<Boolean> checkHeader_;
    private ArrayList<ObjectGridColumn> columns_ = 
          new ArrayList<ObjectGridColumn>();
    private Style style_;
    private SelectionModel<RObjectEntry> selection_;
+   private boolean selectAll_ = false;
 }

@@ -74,7 +74,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    public List<String> getSelectedObjects()
    {
       // If the view is unfiltered, remove everything.
-      if (host_.getFilterText() == "")
+      if (host_.getFilterText().isEmpty())
       {
          return new ArrayList<String>();
       }
