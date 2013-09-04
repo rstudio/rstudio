@@ -173,7 +173,7 @@ public class Toolbar extends Composite
    
    public Widget addLeftPopupMenu(Label label, final ToolbarPopupMenu menu)
    {
-      return addToolbarPopupMenu((MenuLabel) label, menu, true);
+      return addToolbarPopupMenu(new SimpleMenuLabel(label), menu, true);
    }
    
    public Widget addLeftPopupMenu(MenuLabel label, final ToolbarPopupMenu menu)
@@ -181,11 +181,6 @@ public class Toolbar extends Composite
       return addToolbarPopupMenu(label, menu, true);
    }
 
-   public Widget addRightPopupMenu(Label label, final ToolbarPopupMenu menu)
-   {
-      return addToolbarPopupMenu((MenuLabel) label, menu, false);
-   }
-   
    public Widget addRightPopupMenu(MenuLabel label, final ToolbarPopupMenu menu)
    {
       return addToolbarPopupMenu(label, menu, false);

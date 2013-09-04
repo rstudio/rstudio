@@ -92,6 +92,13 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                                                selectedObjectNames;
    }
 
+   @Override
+   public void clearSelection()
+   {
+      setSelectAll(false);
+      redrawHeaders();
+   }
+
    private void createColumns()
    {
       checkColumn_ = new Column<RObjectEntry, Boolean>(
@@ -120,7 +127,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             if (selectAll_ != value)
             {
                setSelectAll(value);
-               selectAll_ = value;
             }
          }
       });
@@ -190,6 +196,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             selection_.setSelected(object, selected);
          }
       }
+      selectAll_ = selected;
    }
 
    private class GridHeaderBuilder 

@@ -90,6 +90,7 @@ public class EnvironmentPresenter extends BasePresenter
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
+      void clearSelection();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name);
@@ -266,6 +267,7 @@ public class EnvironmentPresenter extends BasePresenter
                            @Override
                            public void onSuccess()
                            {
+                              view_.clearSelection();
                               view_.clearObjects();
                            }
                        });
@@ -278,6 +280,7 @@ public class EnvironmentPresenter extends BasePresenter
                            @Override
                            public void onSuccess()
                            {
+                              view_.clearSelection();
                               for (String obj: objectNames)
                               {
                                  view_.removeObject(obj);

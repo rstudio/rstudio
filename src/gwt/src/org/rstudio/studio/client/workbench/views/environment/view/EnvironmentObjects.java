@@ -148,6 +148,11 @@ public class EnvironmentObjects extends ResizeComposite
    {
       objectDataProvider_.getList().clear();
    }
+   
+   public void clearSelection()
+   {
+      objectDisplay_.clearSelection();
+   }
 
    // bulk add for objects--used on init or environment switch
    public void addObjects(JsArray<RObject> objects)

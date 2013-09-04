@@ -65,6 +65,7 @@ public abstract class EnvironmentObjectDisplay
    }
    
    public abstract List<String> getSelectedObjects();
+   public abstract void clearSelection();
    
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;
    protected EnvironmentObjectsObserver observer_;

@@ -266,6 +266,12 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   public void clearSelection()
+   {
+      objects_.clearSelection();
+   }
+
+   @Override
    public void changeContextDepth(int newDepth)
    {
       server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()

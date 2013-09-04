@@ -94,6 +94,12 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       return objectNames;
    }
 
+   @Override
+   public void clearSelection()
+   {
+      // No selection to clear in list view
+   }
+
    private void createColumns()
    {
       createExpandColumn();
