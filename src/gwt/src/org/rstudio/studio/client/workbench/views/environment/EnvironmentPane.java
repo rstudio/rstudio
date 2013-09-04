@@ -377,7 +377,7 @@ public class EnvironmentPane extends WorkbenchPane
       if (name.equals("R_GlobalEnv"))
          return GLOBAL_ENVIRONMENT_NAME;
       else if (name.equals("base"))
-         return "Base Environment";
+         return "package:base";
       else 
          return name;
    }
@@ -386,10 +386,10 @@ public class EnvironmentPane extends WorkbenchPane
    {
       if (name.endsWith("()"))
          return EnvironmentResources.INSTANCE.functionEnvironment();
-      else if (name.equals("R_GlobalEnv") || 
-               name.equals("base"))
+      else if (name.equals("R_GlobalEnv"))
          return EnvironmentResources.INSTANCE.globalEnvironment();
-      else if (name.startsWith("package:"))
+      else if (name.startsWith("package:") ||
+               name.equals("base"))
          return EnvironmentResources.INSTANCE.packageEnvironment();
       else 
          return EnvironmentResources.INSTANCE.attachedEnvironment();
