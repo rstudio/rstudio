@@ -54,9 +54,9 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
 
    public int compare(RObjectEntry first, RObjectEntry second)
    {
-      if (ascending_)
+      if (ascending_ || sortType_ == SORT_AUTO)
          return compareAscending(first, second);
-      else
+      else 
          return compareAscending(second, first);
    }
 
@@ -85,10 +85,12 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
                                    second.rObject.getType());
             break;
          case ObjectGridColumn.COLUMN_LENGTH:
-            result = first.rObject.getLength() - second.rObject.getLength();
+            result = new Long(first.rObject.getLength())
+                              .compareTo(new Long(second.rObject.getLength()));
             break;
          case ObjectGridColumn.COLUMN_SIZE:
-            result = first.rObject.getSize() - second.rObject.getSize();
+            result = new Long(first.rObject.getSize())
+                              .compareTo(new Long(second.rObject.getSize()));
             break;
          case ObjectGridColumn.COLUMN_VALUE:
             result = localeCompare(first.rObject.getValue(), 

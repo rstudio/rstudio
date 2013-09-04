@@ -76,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNaviga
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileHandler
@@ -103,6 +104,7 @@ public class EnvironmentPresenter extends BasePresenter
       void setClientStateClean();
       void resize();
       void setBrowserRange(DebugFilePosition filePosition);
+      List<String> getSelectedObjects();
    }
    
    @Inject
@@ -246,8 +248,10 @@ public class EnvironmentPresenter extends BasePresenter
    void onClearWorkspace()
    {
       view_.bringToFront();
+      List<String> objectNames = view_.getSelectedObjects();
 
-      new ClearAllDialog(new ProgressOperationWithInput<Boolean>() {
+      new ClearAllDialog(objectNames.size(), 
+                         new ProgressOperationWithInput<Boolean>() {
 
          @Override
          public void execute(Boolean includeHidden, ProgressIndicator indicator)

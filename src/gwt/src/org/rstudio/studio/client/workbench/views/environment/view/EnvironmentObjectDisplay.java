@@ -1,12 +1,15 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import java.util.List;
+
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
 
-public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
+public abstract class EnvironmentObjectDisplay 
+                      extends ScrollingDataGrid<RObjectEntry>
 {
    public interface Host
    {
@@ -60,6 +63,8 @@ public class EnvironmentObjectDisplay extends ScrollingDataGrid<RObjectEntry>
          }
       };
    }
+   
+   public abstract List<String> getSelectedObjects();
    
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;
    protected EnvironmentObjectsObserver observer_;

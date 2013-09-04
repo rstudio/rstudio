@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 
@@ -28,6 +29,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       String objectGridColumn();
       String objectGridHeader();
       String checkColumn();
+      String objectGrid();
    }
 
    public interface Resources extends ClientBundle
@@ -52,6 +54,23 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       setSelectionModel(selection_, 
          DefaultSelectionEventManager.<RObjectEntry>createCheckboxManager(0));
+      addStyleName(style_.objectGrid());
+   }
+
+   @Override
+   public List<String> getSelectedObjects()
+   {
+      // In list view, everything visible is selected
+      ArrayList<String> objectNames = new ArrayList<String>();
+      List<RObjectEntry> objects = getVisibleItems();
+      for (RObjectEntry object: objects)
+      {
+         if (object.visible && selection_.isSelected(object))
+         {
+            objectNames.add(object.rObject.getName());
+         }
+      }
+      return objectNames;
    }
 
    private void createColumns()
@@ -137,19 +156,19 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          TableRowBuilder row = startRow();
          // Render an empty header cell for the check column
-         row.startTD().className(style_.objectGridHeader()).end();
+         row.startTH().className(style_.objectGridHeader()).end();
 
          for (int i = 0; i < columns_.size(); i++)
          {
             ObjectGridColumn col = columns_.get(i);
-            TableCellBuilder cell = row.startTD();
+            TableCellBuilder cell = row.startTH();
             cell.className(style_.objectGridHeader());
             cell.style().width(col.getWidth(), Unit.PCT);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
                   i == host_.getSortColumn(), 
                   host_.isAscendingSort());
-            cell.endTD();
+            cell.endTH();
          }
          row.end();
          return true;

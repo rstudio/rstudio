@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.environment;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
@@ -252,6 +253,12 @@ public class EnvironmentPane extends WorkbenchPane
    public String[] getExpandedObjects()
    {
       return expandedObjects_.toArray(new String[0]);
+   }
+
+   @Override
+   public List<String> getSelectedObjects()
+   {
+      return objects_.getSelectedObjects();
    }
 
    @Override

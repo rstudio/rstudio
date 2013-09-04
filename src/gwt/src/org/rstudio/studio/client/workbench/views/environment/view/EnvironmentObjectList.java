@@ -1,5 +1,8 @@
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
@@ -65,6 +68,28 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       setSkipRowHoverCheck(true);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
+   }
+
+   @Override
+   public List<String> getSelectedObjects()
+   {
+      // If the view is unfiltered, remove everything.
+      if (host_.getFilterText() == "")
+      {
+         return new ArrayList<String>();
+      }
+
+      // If the view is filtered, remove items that are visible.
+      ArrayList<String> objectNames = new ArrayList<String>();
+      List<RObjectEntry> objects = getVisibleItems();
+      for (RObjectEntry object: objects)
+      {
+         if (object.visible)
+         {
+            objectNames.add(object.rObject.getName());
+         }
+      }
+      return objectNames;
    }
 
    private void createColumns()

@@ -607,6 +607,24 @@ void initEnvironmentMonitoring()
    }
 }
 
+// Remove the given objects from the currently monitored environment.
+Error removeObjects(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   json::Array objectNames;
+   Error error = json::readParam(request.params, 0, &objectNames);
+   if (error)
+      return error;
+
+   error = r::exec::RFunction(".rs.removeObjects",
+                        objectNames,
+                        s_environmentMonitor.getMonitoredEnvironment()).call();
+   if (error)
+      return error;
+
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
@@ -646,6 +664,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_environment", setEnvironment))
       (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
       (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
+      (bind(registerRpcMethod, "remove_objects", removeObjects))
       (bind(sourceModuleRFile, "SessionEnvironment.R")),
       (bind(initEnvironmentMonitoring));
 

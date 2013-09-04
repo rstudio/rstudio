@@ -175,6 +175,11 @@ public class EnvironmentObjects extends ResizeComposite
          setDeferredState();
       }
    }
+   
+   public List<String> getSelectedObjects()
+   {
+      return objectDisplay_.getSelectedObjects();
+   }
 
    public void setCallFrames(JsArray<CallFrame> frameList)
    {

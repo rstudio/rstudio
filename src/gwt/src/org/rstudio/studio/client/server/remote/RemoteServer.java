@@ -491,6 +491,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
+   @Override
+   public void removeObjects(ArrayList<String> objectNames,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONUtils.toJSONStringArray(objectNames));
+      sendRequest(RPC_SCOPE,
+                  REMOVE_OBJECTS,
+                  params,
+                  requestCallback);
+   }
+
    public void downloadDataFile(
                   String dataFileUrl,
                   ServerRequestCallback<DownloadInfo> requestCallback)
@@ -3030,6 +3042,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
+   private static final String REMOVE_OBJECTS = "remove_objects";
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";

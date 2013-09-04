@@ -13,7 +13,7 @@
 	text-overflow: ellipsis;
 }
 
-.objectGridHeader
+th.objectGridHeader
 {
    font-family: proportionalFont;
    border-bottom: 1px solid #d6dadc;
@@ -23,4 +23,12 @@
 	padding: 1px 2px;
 	color: #3c474d;
 	background-color: #eeeff1;
+	font-weight: normal;
+	text-align: left;
+	border-collapse: separate;
+}
+
+.objectGrid table
+{
+	border-collapse: separate;
 }
