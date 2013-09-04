@@ -83,6 +83,14 @@ public class RObjectEntry
    {
       return rObject.getType() == "promise";
    }
+   
+   public String getDisplayValue()
+   {
+      String val = rObject.getValue();
+      return val == RObjectEntry.NO_VALUE ?
+                      rObject.getDescription() :
+                      val;
+   }
 
    public static final String NO_VALUE = "NO_VALUE";
 

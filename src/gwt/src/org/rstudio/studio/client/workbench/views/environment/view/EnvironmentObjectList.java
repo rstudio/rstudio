@@ -40,6 +40,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       String clickableCol();
       String dataFrameValueCol();
       String detailRow();
+      String objectList();
    }
 
    public interface Resources extends ClientBundle
@@ -68,6 +69,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       setSkipRowHoverCheck(true);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
+      addStyleName(style_.objectList());
    }
 
    @Override
@@ -141,10 +143,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     String val = object.rObject.getValue();
-                     return val == RObjectEntry.NO_VALUE ?
-                            object.rObject.getDescription() :
-                            val;
+                     return object.getDisplayValue();
                   }
               };
       attachClickToInvoke(objectDescriptionColumn_);

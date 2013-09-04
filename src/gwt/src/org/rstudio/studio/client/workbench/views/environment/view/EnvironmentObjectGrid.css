@@ -23,6 +23,11 @@ th.objectGridHeader
 	border-collapse: separate;
 }
 
+.valueColumn
+{
+	padding-right: 15px;
+}
+
 .objectGrid table
 {
 	border-collapse: separate;

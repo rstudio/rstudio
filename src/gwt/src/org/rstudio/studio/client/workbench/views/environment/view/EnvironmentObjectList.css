@@ -98,3 +98,8 @@ td.dataFrameValueCol
    text-overflow: ellipsis;
 }
 
+.objectList table,
+.objectList td
+{
+   border-collapse: collapse;
+}

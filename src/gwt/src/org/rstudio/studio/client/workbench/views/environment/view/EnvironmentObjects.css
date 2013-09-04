@@ -20,12 +20,6 @@
    width: 100%;
 }
 
-.objectGrid table,
-.objectGrid td
-{
-   border-collapse: collapse;
-}
-
 .objectGrid td:focus
 {
    outline: none;

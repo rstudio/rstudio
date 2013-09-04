@@ -32,6 +32,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       String objectGridHeader();
       String checkColumn();
       String objectGrid();
+      String valueColumn();
    }
 
    public interface Resources extends ClientBundle
@@ -170,7 +171,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     return object.rObject.getValue();
+                     return object.getDisplayValue();
                   }
               });
       for (Column<RObjectEntry, String> column: columns_)
@@ -257,7 +258,17 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          {
             ObjectGridColumn col = columns_.get(i);
             TableCellBuilder td = row.startTD();
-            td.className(style_.objectGridColumn());
+            String className = style_.objectGridColumn();
+            if (col.getType() == ObjectGridColumn.COLUMN_VALUE)
+            {
+               className += " " + style_.valueColumn();
+               td.title(rowValue.getDisplayValue());
+            }
+            if (col.getType() == ObjectGridColumn.COLUMN_NAME)
+            {
+               td.title(rowValue.rObject.getName());
+            }
+            td.className(className);
             td.style().width(col.getWidth(), Unit.PCT);
             renderCell(td, createContext(i+1), col, rowValue);
             td.endTD();

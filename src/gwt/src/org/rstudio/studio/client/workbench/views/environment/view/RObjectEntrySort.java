@@ -93,8 +93,8 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
                               .compareTo(new Long(second.rObject.getSize()));
             break;
          case ObjectGridColumn.COLUMN_VALUE:
-            result = localeCompare(first.rObject.getValue(), 
-                                   second.rObject.getValue());
+            result = localeCompare(first.getDisplayValue(),
+                                   second.getDisplayValue());
             break;
          }
       }

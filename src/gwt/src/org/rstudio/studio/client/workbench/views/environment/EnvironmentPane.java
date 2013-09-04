@@ -217,6 +217,11 @@ public class EnvironmentPane extends WorkbenchPane
       environmentLabel_.setText(friendlyEnvironmentName());
       environmentLabel_.setImage(imageOfEnvironment(environmentName));
       objects_.setEnvironmentName(friendlyEnvironmentName());
+      if (environmentName.startsWith("package:") ||
+          environmentName.equals("base"))
+         commands_.clearWorkspace().setEnabled(false);
+      else
+         commands_.clearWorkspace().setEnabled(true); 
    }
 
    @Override
