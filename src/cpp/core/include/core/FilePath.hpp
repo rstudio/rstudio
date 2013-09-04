@@ -57,6 +57,8 @@ public:
    static bool exists(const std::string& path);
 
    static bool isRootPath(const std::string& path);
+
+   static Error tempFilePath(FilePath* pFilePath);
    
 public:
    FilePath() ;

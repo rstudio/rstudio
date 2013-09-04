@@ -237,7 +237,7 @@ void stripMetadata(std::string* pInput)
    if (hasFrontMatter)
    {
       bool inFrontMatter = false;
-      boost::regex frontMatterFieldRegex("^[^:]+: .*$");
+      boost::regex frontMatterFieldRegex("^[^:]+:.*$");
       boost::regex frontMatterContinuationRegex("^\\s+[^\\s].*$");
 
       for(std::size_t i=0; i<lines.size(); i++)
