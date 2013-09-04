@@ -139,6 +139,7 @@ public class EnvironmentPresenter extends BasePresenter
       currentBrowsePosition_ = null;
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
+      session_ = session;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -371,11 +372,13 @@ public class EnvironmentPresenter extends BasePresenter
    {
       super.onBeforeSelected();
 
-      // if the view isn't yet initialized, refresh it to get the initial list
-      // of objects in the environment
+      // if the view isn't yet initialized, initialize it with the list of 
+      // objects in the environment
       if (!initialized_)
       {
-         refreshView();
+         setViewFromEnvironmentList(
+            session_.getSessionInfo().getEnvironmentState().environmentList());
+         initialized_ = true;
       }
    }
 
@@ -399,6 +402,8 @@ public class EnvironmentPresenter extends BasePresenter
             environmentState.callFrames(),
             environmentState.useProvidedSource(),
             environmentState.functionCode());
+      setViewFromEnvironmentList(environmentState.environmentList());
+      initialized_ = true;
    }
    
    public void setContextDepth(int contextDepth)
@@ -574,16 +579,17 @@ public class EnvironmentPresenter extends BasePresenter
       // start showing the progress spinner and initiate the request
       view_.setProgress(true);
       refreshingView_ = true;
-      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
+      server_.getEnvironmentState(
+            new ServerRequestCallback<EnvironmentContextData>()
       {
 
          @Override
-         public void onResponseReceived(JsArray<RObject> objects)
+         public void onResponseReceived(EnvironmentContextData data)
          {
-            setViewFromEnvironmentList(objects);
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
 
          @Override
@@ -682,6 +688,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final EventBus eventBus_;
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
+   private final Session session_;
    
    private int contextDepth_;
    private boolean refreshingView_;

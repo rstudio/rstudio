@@ -71,6 +71,7 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
@@ -2883,6 +2884,15 @@ public class RemoteServer implements Server
                   GET_ENVIRONMENT_NAMES,
                   requestCallback);
    }
+   
+   @Override
+   public void getEnvironmentState(
+         ServerRequestCallback<EnvironmentContextData> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_ENVIRONMENT_STATE,
+                  requestCallback);
+   }
 
    @Override
    public void getFunctionSteps(
@@ -3233,6 +3243,7 @@ public class RemoteServer implements Server
    private static final String SET_ENVIRONMENT = "set_environment";
    private static final String SET_ENVIRONMENT_FRAME = "set_environment_frame";
    private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
+   private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";

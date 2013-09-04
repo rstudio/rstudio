@@ -40,6 +40,7 @@ private:
    r::sexp::PreservedSEXP environment_;
    bool initialized_;
    bool refreshOnInit_;
+   bool firstInit_;
 };
 
 } // namespace environment

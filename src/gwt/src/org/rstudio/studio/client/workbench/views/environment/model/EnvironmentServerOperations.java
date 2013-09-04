@@ -58,4 +58,7 @@ public interface EnvironmentServerOperations
    void getEnvironmentNames(
               ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback);
    
+   void getEnvironmentState(
+              ServerRequestCallback<EnvironmentContextData> requestCallback);
+   
 }

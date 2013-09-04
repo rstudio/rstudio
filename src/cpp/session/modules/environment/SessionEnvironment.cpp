@@ -535,6 +535,14 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    return Success();
 }
 
+Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
+                          const json::JsonRpcRequest&,
+                          json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(commonEnvironmentStateData(*pContextDepth));
+   return Success();
+}
+
 void onDetectChanges(module_context::ChangeSource source)
 {
    s_environmentMonitor.checkForChanges();
@@ -653,6 +661,8 @@ Error initialize()
          boost::bind(listEnvironment, pContextDepth, _1, _2);
    json::JsonRpcFunction setCtxDepth =
          boost::bind(setContextDepth, pContextDepth, _1, _2);
+   json::JsonRpcFunction getEnv =
+         boost::bind(getEnvironmentState, pContextDepth, _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -665,8 +675,8 @@ Error initialize()
       (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
       (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
       (bind(registerRpcMethod, "remove_objects", removeObjects))
-      (bind(sourceModuleRFile, "SessionEnvironment.R")),
-      (bind(initEnvironmentMonitoring));
+      (bind(registerRpcMethod, "get_environment_state", getEnv))
+      (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();
 }
