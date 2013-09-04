@@ -196,7 +196,6 @@ public class EnvironmentPane extends WorkbenchPane
       Boolean commandsEnabled = contextDepth == 0;
       commands_.loadWorkspace().setEnabled(commandsEnabled);
       commands_.saveWorkspace().setEnabled(commandsEnabled);
-      commands_.clearWorkspace().setEnabled(commandsEnabled);
       commands_.importDatasetFromFile().setEnabled(commandsEnabled);
       commands_.importDatasetFromURL().setEnabled(commandsEnabled);
       dataImportButton_.setEnabled(commandsEnabled);

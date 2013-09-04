@@ -126,7 +126,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       checkColumn_ = new Column<RObjectEntry, Boolean>(
-            new CheckboxCell(true, true))
+            new CheckboxCell(false, false))
             {
                @Override
                public Boolean getValue(RObjectEntry value)

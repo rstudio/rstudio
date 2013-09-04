@@ -249,7 +249,7 @@ public class EnvironmentPresenter extends BasePresenter
    void onClearWorkspace()
    {
       view_.bringToFront();
-      List<String> objectNames = view_.getSelectedObjects();
+      final List<String> objectNames = view_.getSelectedObjects();
 
       new ClearAllDialog(objectNames.size(), 
                          new ProgressOperationWithInput<Boolean>() {
@@ -258,15 +258,33 @@ public class EnvironmentPresenter extends BasePresenter
          public void execute(Boolean includeHidden, ProgressIndicator indicator)
          {
             indicator.onProgress("Removing objects...");
-            server_.removeAllObjects(
-                    includeHidden,
-                    new VoidServerRequestCallback(indicator) {
-                        @Override
-                        public void onSuccess()
-                        {
-                           view_.clearObjects();
-                        }
-                    });
+            if (objectNames.size() == 0)
+            {
+               server_.removeAllObjects(
+                       includeHidden,
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              view_.clearObjects();
+                           }
+                       });
+            }
+            else
+            {
+               server_.removeObjects(
+                       objectNames, 
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              for (String obj: objectNames)
+                              {
+                                 view_.removeObject(obj);
+                              }
+                           }
+                       });
+            }
          }
       }).showModal();
    }

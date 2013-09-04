@@ -493,7 +493,7 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void removeObjects(ArrayList<String> objectNames,
+   public void removeObjects(List<String> objectNames,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
