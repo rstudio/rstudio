@@ -371,8 +371,13 @@ private:
                                  &code);
          if (error)
          {
-            error.addProperty("src-file", filePath.absolutePath());
-            LOG_ERROR(error);
+            // log if not path not found error (this can happen if the
+            // file was removed after entering the indexing queue)
+            if (!core::isPathNotFoundError(error))
+            {
+               error.addProperty("src-file", filePath.absolutePath());
+               LOG_ERROR(error);
+            }
             return;
          }
 
