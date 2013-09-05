@@ -3,38 +3,38 @@
 .objectGridColumn,
 .objectGridHeader
 {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 th.objectGridHeader
 {
    font-family: proportionalFont;
    border-bottom: 1px solid #d6dadc;
-	border-right: 1px solid #d6dadc;
-	border-top: 1px solid white;
-	border-left: 1px solid white;
-	padding: 1px 2px;
-	color: #3c474d;
-	background-color: #eeeff1;
-	font-weight: normal;
-	text-align: left;
-	border-collapse: separate;
+   border-right: 1px solid #d6dadc;
+   border-top: 1px solid white;
+   border-left: 1px solid white;
+   padding: 1px 2px;
+   color: #3c474d;
+   background-color: #eeeff1;
+   font-weight: normal;
+   text-align: left;
+   border-collapse: separate;
 }
 
 .valueColumn
 {
-	padding-right: 15px;
+   padding-right: 15px;
 }
 
 .objectGrid table
 {
-	border-collapse: separate;
+   border-collapse: separate;
 }
 
 .checkColumn, 
 th.checkColumn
 {
-	text-align: center;
+   text-align: center;
 }

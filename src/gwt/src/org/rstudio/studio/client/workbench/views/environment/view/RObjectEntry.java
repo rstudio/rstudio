@@ -86,9 +86,9 @@ public class RObjectEntry
    
    public String getDisplayValue()
    {
-      String val = rObject.getValue();
+      String val = rObject.getValue().trim();
       return val == RObjectEntry.NO_VALUE ?
-                      rObject.getDescription() :
+                      rObject.getDescription().trim() :
                       val;
    }
 

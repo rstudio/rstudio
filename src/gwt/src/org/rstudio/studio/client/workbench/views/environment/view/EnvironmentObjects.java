@@ -213,8 +213,7 @@ public class EnvironmentObjects extends ResizeComposite
       environmentNameLabel_.setText(environmentName);
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
-                                       environmentName + 
-                                          " is empty");
+                                       EMPTY_ENVIRONMENT_MESSAGE);
       environmentName_ = environmentName;
    }
 
@@ -483,7 +482,7 @@ public class EnvironmentObjects extends ResizeComposite
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
       environmentNameLabel_ = new Label(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
       environmentNameLabel_.setStyleName(style.emptyEnvironmentName());
-      environmentEmptyMessage_ = new Label(EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
+      environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
       messagePanel.add(environmentNameLabel_);
       messagePanel.add(environmentEmptyMessage_);
@@ -574,7 +573,7 @@ public class EnvironmentObjects extends ResizeComposite
       return new RObjectEntry(obj, matchesFilter(obj));
    }
    
-   private final static String EMPTY_GLOBAL_ENVIRONMENT_MESSAGE =
+   private final static String EMPTY_ENVIRONMENT_MESSAGE =
            "Environment is empty";
    private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
            "Function environment is empty";

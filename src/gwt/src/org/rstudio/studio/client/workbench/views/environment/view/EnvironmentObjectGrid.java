@@ -1,3 +1,17 @@
+/*
+ * EnvironmentObjectGrid.java
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.workbench.views.environment.view;
 
 import java.util.ArrayList;
@@ -212,14 +226,15 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       @Override
       protected boolean buildHeaderOrFooterImpl()
       {
+         // Render the "select all" checkbox header cell
          TableRowBuilder row = startRow();
-         // Render an empty header cell for the check column
          TableCellBuilder selectAll = row.startTH();
          selectAll.className(style_.objectGridHeader() + " " +
                              style_.checkColumn());
          renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
          selectAll.end();
 
+         // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
             ObjectGridColumn col = columns_.get(i);

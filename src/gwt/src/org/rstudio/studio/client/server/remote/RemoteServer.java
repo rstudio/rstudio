@@ -501,7 +501,7 @@ public class RemoteServer implements Server
 
    @Override
    public void removeObjects(List<String> objectNames,
-         ServerRequestCallback<Void> requestCallback)
+                             ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, JSONUtils.toJSONStringArray(objectNames));
