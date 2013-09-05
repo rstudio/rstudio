@@ -77,6 +77,9 @@ public class StringBufferTest extends GWTTestCase {
     x = new StringBuffer();
     x.append("abcde", 2, 3);
     assertEquals("c", x.toString());
+    x = new StringBuffer("k");
+    x.append(new StringBuffer("lm"));
+    assertEquals("klm", x.toString());
   }
 
   /**
@@ -516,6 +519,10 @@ public class StringBufferTest extends GWTTestCase {
 
     bld = new StringBuilder("01234");
     assertEquals("23", bld.substring(2, 4));
+
+    bld = new StringBuilder("k");
+    bld.append(new StringBuilder("lm"));
+    assertEquals("klm", bld.toString());
   }
 
   /**
