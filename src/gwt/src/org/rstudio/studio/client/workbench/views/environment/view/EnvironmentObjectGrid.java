@@ -231,6 +231,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          TableCellBuilder selectAll = row.startTH();
          selectAll.className(style_.objectGridHeader() + " " +
                              style_.checkColumn());
+         selectAll.style().width(5, Unit.PCT);
          renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
          selectAll.end();
 
@@ -273,6 +274,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
          TableCellBuilder check = row.startTD();
          check.className(style_.checkColumn());
+         check.style().width(5, Unit.PCT);
          renderCell(check, createContext(0), checkColumn_, rowValue);
          check.endTD();
 

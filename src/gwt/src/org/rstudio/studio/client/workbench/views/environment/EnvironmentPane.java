@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.widget.ImageMenuLabel;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
@@ -52,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusCh
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -113,13 +113,14 @@ public class EnvironmentPane extends WorkbenchPane
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
       
-      viewLabel_ = new ImageMenuLabel(
-            imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
-            nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW));
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
-      toolbar.addRightPopupMenu(viewLabel_, menu);
+      viewButton_ = new ToolbarButton(
+            nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            menu);
+      toolbar.addRightWidget(viewButton_);
 
       return toolbar;
    }
@@ -131,10 +132,11 @@ public class EnvironmentPane extends WorkbenchPane
       
       environmentMenu_ = new ToolbarPopupMenu();
       rebuildEnvironmentMenu();
-      environmentLabel_ = new ImageMenuLabel(
+      environmentButton_ = new ToolbarButton(
+            friendlyEnvironmentName(),
             imageOfEnvironment(environmentName_),
-            friendlyEnvironmentName());
-      toolbar.addLeftPopupMenu(environmentLabel_, environmentMenu_);
+            environmentMenu_);
+      toolbar.addLeftWidget(environmentButton_);
       
       SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
          @Override
@@ -154,6 +156,7 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
+      searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
       toolbar.addRightWidget(searchWidget);
 
       return toolbar;
@@ -214,8 +217,8 @@ public class EnvironmentPane extends WorkbenchPane
    public void setEnvironmentName(String environmentName)
    {
       environmentName_ = environmentName;
-      environmentLabel_.setText(friendlyEnvironmentName());
-      environmentLabel_.setImage(imageOfEnvironment(environmentName));
+      environmentButton_.setText(friendlyEnvironmentName());
+      environmentButton_.setLeftImage(imageOfEnvironment(environmentName));
       objects_.setEnvironmentName(friendlyEnvironmentName());
       if (environmentName.startsWith("package:") ||
           environmentName.equals("base"))
@@ -501,8 +504,8 @@ public class EnvironmentPane extends WorkbenchPane
    
    public void setObjectDisplayType(int type)
    {
-      viewLabel_.setText(nameOfViewType(type));
-      viewLabel_.setImage(imageOfViewType(type));
+      viewButton_.setText(nameOfViewType(type));
+      viewButton_.setLeftImage(imageOfViewType(type));
       objects_.setObjectDisplay(type);
       isClientStateDirty_ = true;
    }
@@ -536,8 +539,8 @@ public class EnvironmentPane extends WorkbenchPane
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
-   private ImageMenuLabel environmentLabel_;
-   private ImageMenuLabel viewLabel_;
+   private ToolbarButton environmentButton_;
+   private ToolbarButton viewButton_;
    private EnvironmentObjects objects_;
 
    private ArrayList<String> expandedObjects_;

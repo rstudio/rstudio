@@ -34,7 +34,12 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
    public void setSortColumn(int sortColumn)
    {
       sortColumn_ = sortColumn;
-      ascending_ = true;
+      // default to descending sort for size (largest objects on top--the most
+      // likely desired ordering)
+      if (sortColumn == ObjectGridColumn.COLUMN_SIZE)
+         ascending_ = false;
+      else
+         ascending_ = true;
    }
    
    public int getSortColumn()

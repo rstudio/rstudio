@@ -21,6 +21,7 @@ th.objectGridHeader
    font-weight: normal;
    text-align: left;
    border-collapse: separate;
+   font-size: 11px;
 }
 
 .valueColumn
@@ -37,4 +38,9 @@ th.objectGridHeader
 th.checkColumn
 {
    text-align: center;
+}
+
+.checkColumn input
+{
+	margin: 0px;
 }
