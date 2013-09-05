@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -95,26 +95,26 @@ import java.util.regex.Pattern;
 /**
  * This class is responsible for hosting JUnit test case execution. There are
  * three main pieces to the JUnit system.
- * 
+ *
  * <ul>
  * <li>Test environment</li>
  * <li>Client classes</li>
  * <li>Server classes</li>
  * </ul>
- * 
+ *
  * <p>
  * The test environment consists of this class and the non-translatable version
  * of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
  * integrate directly into the real JUnit test process.
  * </p>
- * 
+ *
  * <p>
  * The client classes consist of the translatable version of
  * {@link com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes,
  * and the user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived
  * class. The client communicates to the server via RPC.
  * </p>
- * 
+ *
  * <p>
  * The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl}, an
  * RPC servlet which communicates back to the test environment through a
@@ -174,7 +174,7 @@ public class JUnitShell extends DevMode {
 
       addTagValue("-notHeadless", true);
     }
-    
+
     @Override
     public String getPurposeSnippet() {
       return "Causes the log window and browser windows to be displayed; useful for debugging.";
@@ -267,7 +267,26 @@ public class JUnitShell extends DevMode {
       // Hard code the server.
       options.setServletContainerLauncher(shell.new MyJettyLauncher());
       // DISABLE: ArgHandlerStartupURLs
-      registerHandler(new ArgHandlerWarDir(options));
+      registerHandler(new ArgHandlerWarDir(options) {
+        private static final String OUT_TAG = "-out";
+
+        @Override
+        public String[] getTags() {
+          return new String[] {getTag(), OUT_TAG};
+        }
+
+        @Override
+        public int handle(String[] args, int tagIndex) {
+          if (OUT_TAG.equals(args[tagIndex])) {
+            // -out is deprecated. Print a warning message
+            System.err.println("The -out option is deprecated. This option will be removed in " +
+                "future GWT release and will throw an error if it is still used. Please use -war " +
+                "option instead.");
+          }
+          return super.handle(args, tagIndex);
+        }
+      });
+
       registerHandler(new ArgHandlerDeployDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
@@ -614,7 +633,7 @@ public class JUnitShell extends DevMode {
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
    * interface into the test process.
-   * 
+   *
    * @return The {@link JUnitMessageQueue} interface that belongs to the
    *         singleton {@link JUnitShell}, or <code>null</code> if no such
    *         singleton exists.
@@ -629,7 +648,7 @@ public class JUnitShell extends DevMode {
   /**
    * Get the list of remote user agents to compile. This method returns null
    * until all clients have connected.
-   * 
+   *
    * @return the list of remote user agents
    */
   public static String[] getRemoteUserAgents() {
@@ -654,7 +673,7 @@ public class JUnitShell extends DevMode {
   /**
    * Checks if a testCase should not be executed. Currently, a test is either
    * executed on all clients (mentioned in this test) or on no clients.
-   * 
+   *
    * @param testInfo the test info to check
    * @return true iff the test should not be executed on any of the specified
    *         clients.
@@ -748,7 +767,7 @@ public class JUnitShell extends DevMode {
 
   /**
    * Returns the set of banned {@code Platform} for a test method.
-   * 
+   *
    * @param testClass the testClass
    * @param methodName the name of the test method
    */
@@ -1111,7 +1130,7 @@ public class JUnitShell extends DevMode {
     }
     return url;
   }
-  
+
   void maybeCompileForWebMode(ModuleDef module, String... userAgents)
       throws UnableToCompleteException {
     // Load any declared servlets.
@@ -1166,7 +1185,7 @@ public class JUnitShell extends DevMode {
 
   /**
    * Create the specified (or default) runStyle.
-   * 
+   *
    * @param runStyleName the argument passed to -runStyle
    * @return the number of clients, or -1 if initialization was unsuccessful
    */
