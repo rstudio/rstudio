@@ -121,18 +121,25 @@ RCNTXT* getFunctionContext(const int depth,
                            SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   RCNTXT* pSrcContext = pRContext;
    int currentDepth = 0;
    while (pRContext->callflag)
    {
-      if (isPrintableContext(pRContext))
+      if (isDebugHiddenContext(pRContext))
+      {
+          pSrcContext = pRContext->nextcontext;
+      }
+      else if (isPrintableContext(pRContext))
       {
          // if the caller asked us to find user code, don't stop unless the
          // context we're examining has a source file attached
          if (++currentDepth >= depth &&
-             !(findUserCode && !hasSourceRefs(pRContext)))
+             !(findUserCode && (pSrcContext->srcref == NULL ||
+                                TYPEOF(pSrcContext->srcref) == NILSXP)))
          {
              break;
          }
+         pSrcContext = pRContext;
       }
       pRContext = pRContext->nextcontext;
    }
