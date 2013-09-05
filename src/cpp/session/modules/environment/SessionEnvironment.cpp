@@ -198,8 +198,19 @@ bool insideDebugHiddenFunction()
 Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
-   return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
-                            .call(pFunctionName);
+   SEXP functionName;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
+                            .call(&functionName, &protect);
+   if (!error && r::sexp::length(functionName) > 0)
+   {
+      return r::sexp::extract(functionName, pFunctionName);
+   }
+   else
+   {
+      pFunctionName->clear();
+   }
+   return error;
 }
 
 json::Array callFramesAsJson()
