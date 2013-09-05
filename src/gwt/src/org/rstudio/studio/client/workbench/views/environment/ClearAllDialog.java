@@ -88,8 +88,8 @@ public class ClearAllDialog extends ModalDialogBase
       else
          objects = numObjects_ + " objects";
       Label label = new MultiLineLabel(
-            "Remove "  + objects + " from the environment? " +
-            "This can't be undone.");
+            "Are you sure you want to remove "  + objects + " from the " +
+            "environment? This operation cannot be undone.");
       label.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);

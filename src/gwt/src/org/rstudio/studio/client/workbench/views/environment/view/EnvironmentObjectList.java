@@ -121,23 +121,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       createDescriptionColumn(filterRenderer_);
    }
 
-   // attaches a handler to a column that invokes the associated object
-   private void attachClickToInvoke(Column<RObjectEntry, String> column)
-   {
-      column.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            if (object.getCategory() == RObjectEntry.Categories.Data &&
-                host_.enableClickableObjects())
-            {
-               observer_.viewObject(object.rObject.getName());
-            }
-         }
-      });
-   }
-
    private void createNameColumn(SafeHtmlRenderer<String> renderer)
    {
       // the name of the object (simple text column)

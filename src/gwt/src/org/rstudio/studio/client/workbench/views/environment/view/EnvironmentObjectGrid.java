@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
@@ -47,6 +49,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       String checkColumn();
       String objectGrid();
       String valueColumn();
+      String dataFrameValueCol();
    }
 
    public interface Resources extends ClientBundle
@@ -145,7 +148,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          }
       });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), "Name", 20, 
+              new ClickableTextCell(filterRenderer_),  "Name", 20, 
               ObjectGridColumn.COLUMN_NAME, host_)
               {
                   @Override
@@ -175,7 +178,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Size", 15, 
+              new ClickableTextCell(), "Size", 12, 
               ObjectGridColumn.COLUMN_SIZE, host_)
               {
                   @Override
@@ -185,7 +188,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), "Value", 35, 
+              new ClickableTextCell(filterRenderer_), 
+              "Value", 38, 
               ObjectGridColumn.COLUMN_VALUE, host_)
               {
                   @Override
@@ -194,8 +198,12 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                      return object.getDisplayValue();
                   }
               });
-      for (Column<RObjectEntry, String> column: columns_)
+      for (ObjectGridColumn column: columns_)
       {
+         if (column.getType() == ObjectGridColumn.COLUMN_VALUE)
+         {
+            attachClickToInvoke(column);
+         }
          addColumn(column);
       }
    }
@@ -286,6 +294,13 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             if (col.getType() == ObjectGridColumn.COLUMN_VALUE)
             {
                className += " " + style_.valueColumn();
+               if (host_.enableClickableObjects() && 
+                   rowValue.getCategory() == Categories.Data)
+               {
+                  className += " " + style_.dataFrameValueCol() +
+                               " " +
+                               ThemeStyles.INSTANCE.environmentDataFrameCol();
+               }
                td.title(rowValue.getDisplayValue());
             }
             if (col.getType() == ObjectGridColumn.COLUMN_NAME)

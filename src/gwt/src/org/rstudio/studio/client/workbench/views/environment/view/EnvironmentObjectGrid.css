@@ -44,3 +44,9 @@ th.checkColumn
 {
 	margin: 0px;
 }
+
+.dataFrameValueCol
+{
+	padding-right: 35px;
+	cursor: pointer;
+}

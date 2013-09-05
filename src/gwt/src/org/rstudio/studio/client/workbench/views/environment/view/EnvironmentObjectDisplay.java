@@ -19,9 +19,11 @@ import java.util.List;
 
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
 
+import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
+import com.google.gwt.user.cellview.client.Column;
 
 public abstract class EnvironmentObjectDisplay 
                       extends ScrollingDataGrid<RObjectEntry>
@@ -82,6 +84,23 @@ public abstract class EnvironmentObjectDisplay
    public abstract List<String> getSelectedObjects();
    public abstract void clearSelection();
    
+   // attaches a handler to a column that invokes the associated object
+   protected void attachClickToInvoke(Column<RObjectEntry, String> column)
+   {
+      column.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
+      {
+         @Override
+         public void update(int index, RObjectEntry object, String value)
+         {
+            if (object.getCategory() == RObjectEntry.Categories.Data &&
+                host_.enableClickableObjects())
+            {
+               observer_.viewObject(object.rObject.getName());
+            }
+         }
+      });
+   }
+
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;
    protected EnvironmentObjectsObserver observer_;
    protected Host host_;
