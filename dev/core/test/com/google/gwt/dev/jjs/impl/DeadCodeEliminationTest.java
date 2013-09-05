@@ -179,6 +179,12 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     // String.hashCode: never optimized
     optimize("int", "return \"abc\".hashCode();").intoString("return \"abc\".hashCode();");
     optimize("int", "return s.hashCode();").intoString("return EntryPoint.s.hashCode();");
+
+    // String.equals
+    optimize("boolean", "return \"a\".equals(\"a\");").intoString("return true;");
+    optimize("boolean", "return \"a\".equals(\"b\");").intoString("return false;");
+    optimize("boolean", "return s.equals(\"a\");")
+        .intoString("return EntryPoint.s.equals(\"a\");");
   }
 
   public void testSubtractFromZero() throws Exception {
