@@ -210,7 +210,6 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setEnvironmentName(String environmentName)
    {
-      environmentNameLabel_.setText(environmentName);
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
                                        EMPTY_ENVIRONMENT_MESSAGE);
@@ -494,11 +493,8 @@ public class EnvironmentObjects extends ResizeComposite
    {
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
-      environmentNameLabel_ = new Label(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
-      environmentNameLabel_.setStyleName(style.emptyEnvironmentName());
       environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
-      messagePanel.add(environmentNameLabel_);
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
@@ -600,7 +596,6 @@ public class EnvironmentObjects extends ResizeComposite
 
    EnvironmentObjectDisplay objectDisplay_;
    CallFramePanel callFramePanel_;
-   Label environmentNameLabel_;
    Label environmentEmptyMessage_;
 
    private ListDataProvider<RObjectEntry> objectDataProvider_;
