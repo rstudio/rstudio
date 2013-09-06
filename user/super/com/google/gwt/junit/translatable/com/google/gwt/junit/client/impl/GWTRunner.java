@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.junit.client.impl.GWTRunnerProxy.TestAccessor;
 import com.google.gwt.junit.client.impl.JUnitHost.ClientInfo;
 import com.google.gwt.junit.client.impl.JUnitHost.InitialResponse;
 import com.google.gwt.junit.client.impl.JUnitHost.TestBlock;
@@ -29,6 +28,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.useragent.client.UserAgent;
 
 import java.util.HashMap;
 
@@ -193,7 +193,7 @@ public class GWTRunner implements EntryPoint {
    */
   private boolean serverless = false;
 
-  private TestAccessor testAccessor;
+  private GWTTestAccessor testAccessor;
 
   // TODO(FINDBUGS): can this be a private constructor to avoid multiple
   // instances?
@@ -210,11 +210,8 @@ public class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    GWTRunnerProxy proxy = GWT.create(GWTRunnerProxy.class);
-    testAccessor = proxy.createTestAccessor();
-
-    clientInfo = new ClientInfo(parseQueryParamInteger(
-        SESSIONID_QUERY_PARAM, -1), proxy.getUserAgentProperty());
+    testAccessor = new GWTTestAccessor();
+    clientInfo = new ClientInfo(parseQueryParamInteger(SESSIONID_QUERY_PARAM, -1), getUserAgent());
     maxRetryCount = parseQueryParamInteger(RETRYCOUNT_QUERY_PARAM, 3);
     currentBlock = checkForQueryParamTestToRun();
     if (currentBlock != null) {
@@ -230,6 +227,11 @@ public class GWTRunner implements EntryPoint {
        */
       syncToServer();
     }
+  }
+
+  private String getUserAgent() {
+    UserAgent userAgentProperty = GWT.create(UserAgent.class);
+    return userAgentProperty.getCompileTimeValue();
   }
 
   public void reportResultsAndGetNextMethod(JUnitResult result) {

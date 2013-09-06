@@ -24,8 +24,8 @@
 
   <source path="client"/>
 
-  <generate-with class="com.google.gwt.junit.rebind.GWTRunnerProxyGenerator">
-    <when-type-is class="com.google.gwt.junit.client.impl.GWTRunnerProxy"/>
+  <generate-with class="com.google.gwt.junit.rebind.GWTTestMetadataGenerator">
+    <when-type-is class="com.google.gwt.junit.client.impl.GWTTestMetadata"/>
   </generate-with>
 
   <!-- We want to provide consistent stack traces across all browsers. -->

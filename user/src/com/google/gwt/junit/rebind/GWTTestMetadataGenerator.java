@@ -15,11 +15,11 @@
  */
 package com.google.gwt.junit.rebind;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
@@ -31,8 +31,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.GWTTestCase.TestModuleInfo;
-import com.google.gwt.junit.client.impl.GWTRunnerProxy;
-import com.google.gwt.junit.client.impl.GWTRunnerProxy.JsniTestAccessor;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.junit.client.impl.MissingTestPlaceHolder;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -44,19 +42,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class generates a JSNI based {@link GWTRunnerProxy} implementation.
- * <p>
- * For each gwt module following classes will be generated:
- * <li>GwtRunnerProxyImpl abstract class that implements createTestAccessor using JSNI</li>
- * <li>GwtRunnerProxyImplXyz (e.g. GwtRunnerProxyImplSafari) that extends GwtRunnerProxyImpl and
- * implements getUserAgentPropery</li>
+ * A generator that generates {@code GWTTestMetadata}.
  */
-public class GWTRunnerProxyGenerator extends Generator {
+public class GWTTestMetadataGenerator extends Generator {
 
-  private static final String PROXY = GWTRunnerProxy.class.getCanonicalName();
-  private static final String JSNI_TEST_ACCESSOR = JsniTestAccessor.class.getCanonicalName();
-  private static final String MISSING_TEST = MissingTestPlaceHolder.class.getCanonicalName();
-
+  private static final String BASE_CLASS = "com.google.gwt.junit.client.impl.GWTTestMetadata";
   private static final JType[] NO_PARAMS = new JType[0];
 
   private static String getPackagePrefix(JClassType classType) {
@@ -70,8 +60,8 @@ public class GWTRunnerProxyGenerator extends Generator {
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
       throws UnableToCompleteException {
-    if (!PROXY.equals(typeName)) {
-      logger.log(TreeLogger.ERROR, "This generator may only be used with " + PROXY, null);
+    if (!BASE_CLASS.equals(typeName)) {
+      logger.log(TreeLogger.ERROR, "This generator may only be used with " + BASE_CLASS, null);
       throw new UnableToCompleteException();
     }
     JClassType requestedClass;
@@ -98,43 +88,21 @@ public class GWTRunnerProxyGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    String userAgent;
-    try {
-      SelectionProperty prop = context.getPropertyOracle().getSelectionProperty(
-          logger, "user.agent");
-      userAgent = prop.getCurrentValue();
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.ERROR, "Could not resolve user.agent property", e);
-      throw new UnableToCompleteException();
-    }
-
     String packageName = requestedClass.getPackage().getName();
+    String generatedClass = requestedClass.getName() + "Impl";
 
-    // Generate the base class shared across different permutations:
-    String generatedBaseClass = requestedClass.getName().replace('.', '_') + "Impl";
-    SourceWriter sourceWriter =
-        getSourceWriter(logger, context, packageName, generatedBaseClass, null, null);
+    SourceWriter sourceWriter = getSourceWriter(logger, context, packageName, generatedClass);
     if (sourceWriter != null) {
-      writeMethodCreateTestAccessor(sourceWriter, getTestClasses(logger, context, moduleName));
+      writeCreateMethod(sourceWriter, getTestClasses(logger, context, moduleName));
       sourceWriter.commit(logger);
     }
-
-    // Generate the actual class for each permutation"
-    String generatedClass = generatedBaseClass + userAgent;
-    sourceWriter =
-        getSourceWriter(logger, context, packageName, generatedClass, generatedBaseClass, PROXY);
-    if (sourceWriter != null) {
-      writeGetUserAgentPropertyMethod(userAgent, sourceWriter);
-      sourceWriter.commit(logger);
-    }
-
     return packageName + "." + generatedClass;
   }
 
   /**
    * Will generate following:
    * <pre>
-   * public native final JsniTestAccessor createTestAccessor() /*-{
+   * public native final JavaScriptObject get() /*-{
    *   return {
    *     'a.b.c.X' = {
    *       'new' : function(test) {
@@ -157,8 +125,8 @@ public class GWTRunnerProxyGenerator extends Generator {
    * }-{@literal*}/;
    * </pre>
    */
-  private void writeMethodCreateTestAccessor(SourceWriter sw, Map<String, JClassType> testClasses) {
-    sw.println("public native final %s createTestAccessor() /*-{", JSNI_TEST_ACCESSOR);
+  private void writeCreateMethod(SourceWriter sw, Map<String, JClassType> testClasses) {
+    sw.println("public native final %s get() /*-{", JavaScriptObject.class.getCanonicalName());
     sw.indent();
     sw.println("return {");
     for (Map.Entry<String, JClassType> entry : testClasses.entrySet()) {
@@ -184,12 +152,6 @@ public class GWTRunnerProxyGenerator extends Generator {
     String call = object + method.getJsniSignature();
     String methodName = isConstructor ? "new" : method.getName();
     sw.println("'%s' : function(test) { return %s(); },", methodName, call);
-  }
-
-  private void writeGetUserAgentPropertyMethod(String userAgent, SourceWriter sw) {
-    sw.println("public final String getUserAgentProperty() {");
-    sw.indentln("return \"" + userAgent + "\";");
-    sw.println("}");
   }
 
   private Map<String, JClassType> getTestClasses(
@@ -220,15 +182,12 @@ public class GWTRunnerProxyGenerator extends Generator {
    */
   private JClassType getTestClass(TypeOracle typeOracle, String testClassName) {
     JClassType type = typeOracle.findType(testClassName);
-    return type != null ? type : typeOracle.findType(MISSING_TEST);
+    return type != null ? type
+        : typeOracle.findType(MissingTestPlaceHolder.class.getCanonicalName());
   }
 
-  private SourceWriter getSourceWriter(TreeLogger logger,
-      GeneratorContext ctx,
-      String packageName,
-      String className,
-      String superclassName,
-      String interfaceName) {
+  private SourceWriter getSourceWriter(
+      TreeLogger logger, GeneratorContext ctx, String packageName, String className) {
     PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
     if (printWriter == null) {
       return null;
@@ -236,12 +195,7 @@ public class GWTRunnerProxyGenerator extends Generator {
 
     ClassSourceFileComposerFactory composerFactory =
         new ClassSourceFileComposerFactory(packageName, className);
-    if (superclassName != null) {
-      composerFactory.setSuperclass(superclassName);
-    }
-    if (interfaceName != null) {
-      composerFactory.addImplementedInterface(interfaceName);
-    }
+    composerFactory.setSuperclass(BASE_CLASS);
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
