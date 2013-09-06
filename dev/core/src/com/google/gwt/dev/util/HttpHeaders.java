@@ -113,7 +113,7 @@ public final class HttpHeaders {
    * Converts a GMT into a local date.
    * 
    * @param date the date in GMT
-   * @return the the local time zone version
+   * @return the local time zone version
    */
   private static Date gmtToDate(Date date) {
     Calendar cal = Calendar.getInstance();

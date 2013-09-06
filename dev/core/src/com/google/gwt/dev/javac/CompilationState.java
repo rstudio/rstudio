@@ -86,7 +86,7 @@ public class CompilationState {
   /**
    * Compiles the given source files (unless cached) and adds them to the
    * CompilationState.
-   * If the the compiler aborts, logs the error and throws UnableToCompleteException.
+   * If the compiler aborts, logs the error and throws UnableToCompleteException.
    */
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Collection<GeneratedUnit> generatedUnits) throws UnableToCompleteException {

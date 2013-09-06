@@ -1018,7 +1018,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
    * Get the element that represents the specified index.
    * 
    * @param index the index of the row value
-   * @return the the child element, or null if it does not exist
+   * @return the child element, or null if it does not exist
    */
   protected Element getChildElement(int index) {
     Element childContainer = getChildContainer();

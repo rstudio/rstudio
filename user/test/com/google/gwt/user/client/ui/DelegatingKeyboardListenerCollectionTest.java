@@ -183,7 +183,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
   }
 
   /**
-   * Handle an event from the ownerOfEvents by verifying the the event the the
+   * Handle an event from the ownerOfEvents by verifying the event and the
    * source are correct.
    * 
    * @param sender the Widget that fired the event

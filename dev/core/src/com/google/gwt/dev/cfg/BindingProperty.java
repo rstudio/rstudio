@@ -204,7 +204,7 @@ public class BindingProperty extends Property {
   }
 
   /**
-   * @return the the provider generator class, or null if none.
+   * @return the provider generator class, or null if none.
    */
   public Class<? extends PropertyProviderGenerator> getProviderGenerator() {
     return providerGenerator;

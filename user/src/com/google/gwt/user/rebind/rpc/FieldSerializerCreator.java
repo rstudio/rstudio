@@ -456,11 +456,11 @@ public class FieldSerializerCreator {
   /**
    * Returns true if we will need a get/set method pair for a field.
    * 
-   * @return true if the the field requires accessor methods
+   * @return true if the field requires accessor methods
    */
   private boolean needsAccessorMethods(JField field) {
     /*
-     * Field serializers are always emitted into the the same package as the
+     * Field serializers are always emitted into the same package as the
      * class that they serialize. This enables the serializer class to access
      * all fields except those that are private.
      * 

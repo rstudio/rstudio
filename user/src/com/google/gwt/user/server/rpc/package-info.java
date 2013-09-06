@@ -36,7 +36,7 @@
  * 
  * <p>
  * Note that the default RemoteServiceServlet implementation never throws
- * exceptions to the servlet container.  All exceptions that escape the the 
+ * exceptions to the servlet container.  All exceptions that escape the
  * {@link com.google.gwt.user.server.rpc.RemoteServiceServlet#processCall(String) RemoteServiceServlet.processCall(String)}
  * method will be caught, logged in the servlet context, and will cause a generic 
  * failure message to be sent to the GWT client -- with a 500 status code.  To 

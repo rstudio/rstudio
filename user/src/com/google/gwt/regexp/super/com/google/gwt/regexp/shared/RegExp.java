@@ -156,7 +156,7 @@ public class RegExp extends JavaScriptObject {
    * an empty string, the results are not well defined.
    *
    * @param input the string to be split.
-   * @param limit the the maximum number of strings to split off and return,
+   * @param limit the maximum number of strings to split off and return,
    *          ignoring the rest of the input string. If negative, there is no
    *          limit.
    *

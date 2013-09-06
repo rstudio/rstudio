@@ -54,7 +54,7 @@ import java.util.Set;
  *
  * <B>Fixture Methods</B><P>
  *
- * Fixtures are used to verify that the the operation results in correct state
+ * Fixtures are used to verify that the operation results in correct state
  * for the collection.  Basically, the operation is performed against your
  * collection implementation, and an identical operation is performed against a
  * <I>confirmed</I> collection implementation.  A confirmed collection

@@ -100,7 +100,7 @@ class BitLevel {
   }
 
   /**
-   * Performs a flipBit on the BigInteger, returning a BigInteger with the the
+   * Performs a flipBit on the BigInteger, returning a BigInteger with the
    * specified bit flipped.
    * 
    * @param val BigInteger to operate on

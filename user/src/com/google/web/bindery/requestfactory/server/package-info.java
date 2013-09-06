@@ -15,10 +15,10 @@
  */
 
 /**
- * Server side classes for mediating between the client side and the persistent
+ * Server-side classes for mediating between the client-side and the persistent
  * datastore.
  * 
- * This package contains classes that can receive client side read and write
+ * This package contains classes that can receive client-side read and write
  * requests in the JSON format, perform the necessary operations on the
  * persistent datastore, and return the results in JSON format.
  * 

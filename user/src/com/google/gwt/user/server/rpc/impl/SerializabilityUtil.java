@@ -435,7 +435,7 @@ public class SerializabilityUtil {
   }
 
   /**
-   * Remove all of the actual types that arose from the the given type.
+   * Remove all of the actual types that arose from the given type.
    *
    * This method should always be called after a corresponding call to
    * resolveTypes.
@@ -562,7 +562,7 @@ public class SerializabilityUtil {
       }
     }
 
-    // Look for client side serializers.
+    // Look for client-side serializers.
     String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
     Class<?> customSerializer = getCustomFieldSerializer(classLoader, simpleSerializerName);
     if (customSerializer != null) {

@@ -24,7 +24,7 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * Server side object that handles log messages sent by
+ * Server-side object that handles log messages sent by
  * {@link com.google.web.bindery.requestfactory.gwt.client.RequestFactoryLogHandler}
  * .
  */
@@ -54,7 +54,7 @@ public class Logging {
   }
 
   /**
-   * This function is only for server side use which is why it's not in the
+   * This function is only for server-side use which is why it's not in the
    * LoggingRequest interface.
    * 
    * @param dir a directory, specified as a String

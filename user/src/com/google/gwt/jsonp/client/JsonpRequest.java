@@ -121,7 +121,7 @@ public class JsonpRequest<T> {
    * @param expectInteger Should be true if T is {@link Integer}, false
    *          otherwise
    * @param callbackParam Name of the url param of the callback function name
-   * @param failureCallbackParam Name of the url param containing the the
+   * @param failureCallbackParam Name of the url param containing the
    *          failure callback function name, or null for no failure callback
    */
   JsonpRequest(AsyncCallback<T> callback, int timeout, boolean expectInteger,
@@ -148,7 +148,7 @@ public class JsonpRequest<T> {
    * @param expectInteger Should be true if T is {@link Integer}, false
    *          otherwise
    * @param callbackParam Name of the url param of the callback function name
-   * @param failureCallbackParam Name of the url param containing the the
+   * @param failureCallbackParam Name of the url param containing the
    *          failure callback function name, or null for no failure callback
    * @param id unique id for the resource that is being fetched
    */

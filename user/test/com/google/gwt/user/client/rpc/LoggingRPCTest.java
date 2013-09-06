@@ -167,7 +167,7 @@ public class LoggingRPCTest extends GWTTestCase {
                   }
                   String methodName = "throwException";
                   assertTrue("Method name mismatch, expected = " + methodName
-                      + " vs actual = " + e.getMethodName(),
+                      + " vs. actual = " + e.getMethodName(),
                       e.getMethodName().contains(methodName));
                   String className = "com.google.gwt.user.client.rpc.LoggingRPCTest";
                   assertTrue("Class name mismatch, expected = " + className

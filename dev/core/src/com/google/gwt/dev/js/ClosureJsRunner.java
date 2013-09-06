@@ -153,7 +153,7 @@ public class ClosureJsRunner {
   private Set<String> globalVars = Sets.newHashSet();
 
   /**
-   * Whether AST validation should be performed on the the generated
+   * Whether AST validation should be performed on the generated
    * Closure Compiler AST.
    */
   private final boolean validate = true;

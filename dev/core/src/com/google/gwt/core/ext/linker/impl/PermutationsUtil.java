@@ -34,7 +34,7 @@ import java.util.TreeMap;
 /**
  * A utility class to help linkers generate a list of permutation mappings and
  * and then either output them to javascript code which selects the correct
- * permutation, or to a file which can be parsed by server side code.
+ * permutation, or to a file which can be parsed by server-side code.
  */
 public class PermutationsUtil {
   

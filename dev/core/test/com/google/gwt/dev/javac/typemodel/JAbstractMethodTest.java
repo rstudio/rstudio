@@ -126,7 +126,7 @@ public class JAbstractMethodTest extends TestCase {
         oracle.getType(Serializable.class.getName()));
 
     // Now look at the second type parameter on the generic method. It should
-    // be identical to the type argument of the the first type parameter
+    // be identical to the type argument of the first type parameter
     // (remember, the first type parameter was a paramaterized type).
 
     JTypeParameter secondTypeParameter = typeParameters[1];

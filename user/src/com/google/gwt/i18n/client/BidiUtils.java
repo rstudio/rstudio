@@ -82,7 +82,7 @@ public class BidiUtils {
       
       case DEFAULT: {
         if (getDirectionOnElement(elem) != HasDirection.Direction.DEFAULT) {
-          // only clear out the the dir property if it has already been set to something
+          // only clear out the dir property if it has already been set to something
           // explicitly
           elem.setPropertyString(DIR_PROPERTY_NAME, "");
         }

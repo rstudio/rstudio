@@ -861,7 +861,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     sb.append("Each repository is specified by the following four properties:\n");
     sb.append("name             specifies how the api should be refered to in the output\n");
     sb.append("dirRoot          optional argument that specifies the base directory of all other file/directory names\n");
-    sb.append("sourceFiles      a colon-separated list of files/directories that specify the roots of the the filesystem trees to be included.\n");
+    sb.append("sourceFiles      a colon-separated list of files/directories that specify the roots of the filesystem trees to be included.\n");
     sb.append("excludeFiles     a colon-separated lists of ant patterns to exclude");
     sb.append("sourceLevel      Java source level compatibility");
 

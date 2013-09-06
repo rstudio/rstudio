@@ -334,7 +334,7 @@ public final class RPC {
    * @param cause the {@link Throwable} that was thrown
    * @return a string that encodes the exception
    * 
-   * @throws NullPointerException if the the cause is <code>null</code>
+   * @throws NullPointerException if the cause is <code>null</code>
    * @throws SerializationException if the result cannot be serialized
    * @throws UnexpectedException if the result was an unexpected exception (a
    *           checked exception not declared in the serviceMethod's signature)
@@ -363,7 +363,7 @@ public final class RPC {
    * @param serializationPolicy determines the serialization policy to be used
    * @return a string that encodes the exception
    * 
-   * @throws NullPointerException if the the cause or the serializationPolicy
+   * @throws NullPointerException if the cause or the serializationPolicy
    *           are <code>null</code>
    * @throws SerializationException if the result cannot be serialized
    * @throws UnexpectedException if the result was an unexpected exception (a

@@ -18,7 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.RecursiveClassTestService;
 
 /**
- * The server side implementation of the RPC service.
+ * The server-side implementation of the RPC service.
  *
  */
 public class RecursiveClassTestServiceImpl extends RemoteServiceServlet

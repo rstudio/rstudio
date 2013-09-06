@@ -49,7 +49,7 @@ public class RemoteLoggingServiceUtil {
    *        cause deobfuscation to fail.
    * @param loggerNameOverride logger name for messages logged on server. May be
    *        null, in which case, messages will be logged to a logger
-   *        corresponding to the client side logger which triggered them.
+   *        corresponding to the client-side logger which triggered them.
    */
   public static void logOnServer(LogRecord lr, String strongName,
       StackTraceDeobfuscator deobfuscator, String loggerNameOverride) throws

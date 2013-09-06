@@ -31,7 +31,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 /**
- * The server side service class.
+ * The server-side service class.
  */
 public class SchoolCalendarService implements Filter {
 

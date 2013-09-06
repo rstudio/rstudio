@@ -95,7 +95,7 @@ public abstract class Event<H> {
 
   /**
    * The toString() for abstract event is overridden to avoid accidently
-   * including class literals in the the compiled output. Use {@link Event}
+   * including class literals in the compiled output. Use {@link Event}
    * #toDebugString to get more information about the event.
    */
   @Override

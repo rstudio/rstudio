@@ -56,10 +56,10 @@ public class ModifiedBerghelRoachEditDistance implements GeneralEditDistance {
    *                      : 1           // substitution ) )
    * </pre>
    *
-   * Ukknonen observed that each diagonal of the matrix must increase
+   * Ukkonen observed that each diagonal of the matrix must increase
    * by either 0 or 1 from row to row.  If D[i,j] = p, then the
-   * then the matching rule requires that D[i+x,j+x] = p for all
-   * x where string1[i..i+x) matches string2[j..j+j+x).  Ukkonen
+   * matching rule requires that D[i+x,j+x] = p for all x
+   * where string1[i..i+x) matches string2[j..j+j+x). Ukkonen
    * defined a function f(k,p) as the highest row number in which p
    * appears on the k-th diagonal (those D[i,j] where k=(i-j), noting
    * that k may be negative).  The final result of the edit

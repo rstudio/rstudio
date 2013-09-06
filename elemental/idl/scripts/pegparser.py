@@ -86,7 +86,7 @@ class _PegParserRule(object):
         _logger.debug('Try:   pos=%s char=%s rule=%s' % \
           (pos, state.text[pos:pos + 1], self))
 
-    # Delegate the matching logic to the the specialized function.
+    # Delegate the matching logic to the specialized function.
     res = self._match_impl(state, pos)
 
     if not state.is_whitespace_mode \
@@ -365,7 +365,7 @@ class MANY(_PegParserRule):
 
 
 class TOKEN(_PegParserRule):
-  """The matched rule will not appear in the the output.
+  """The matched rule will not appear in the output.
   Usage example: ['A', TOKEN('.'), 'B']
   When matching 'A.B', will return the sequence ['A', 'B'].
   """

@@ -56,7 +56,7 @@ public final class IncompatibleRemoteServiceException extends RuntimeException
       + "date, please click the refresh button on your browser.";
 
   /**
-   * Constructor used by RPC serialization. Note that the client side code will
+   * Constructor used by RPC serialization. Note that the client-side code will
    * always get a generic error message.
    */
   public IncompatibleRemoteServiceException() {

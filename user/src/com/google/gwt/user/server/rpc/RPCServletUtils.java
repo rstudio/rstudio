@@ -302,12 +302,12 @@ public class RPCServletUtils {
   }
 
   /**
-   * Returns <code>true</code> if the request accepts gzip encoding and the the
+   * Returns <code>true</code> if the request accepts gzip encoding and the
    * response content's estimated UTF-8 byte length exceeds 256 bytes.
    *
    * @param request the request associated with the response content
    * @param responseContent a string that will be
-   * @return <code>true</code> if the request accepts gzip encoding and the the
+   * @return <code>true</code> if the request accepts gzip encoding and the
    *         response content's estimated UTF-8 byte length exceeds 256 bytes
    */
   public static boolean shouldGzipResponseContent(HttpServletRequest request,

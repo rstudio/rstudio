@@ -214,7 +214,7 @@ public class BigDecimalArithmeticTest extends EmulTestBase {
   }
 
   /**
-   * Test the the approximate scale is computed correctly.
+   * Test the approximate scale is computed correctly.
    * <p>
    * See https://issues.apache.org/jira/browse/HARMONY-6406
    */

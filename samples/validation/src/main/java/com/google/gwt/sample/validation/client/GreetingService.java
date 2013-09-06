@@ -25,7 +25,7 @@ import org.hibernate.validator.engine.ValidationSupport;
 import javax.validation.ConstraintViolationException;
 
 /**
- * The client side stub for the RPC service.
+ * The client-side stub for the RPC service.
  */
 @RemoteServiceRelativePath("greet")
 public interface GreetingService extends RemoteService {

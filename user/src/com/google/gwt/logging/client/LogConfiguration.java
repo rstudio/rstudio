@@ -27,7 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Configures client side logging using the query params and gwt.xml settings.
+ * Configures client-side logging using the query params and gwt.xml settings.
  */
 public class LogConfiguration implements EntryPoint {
 

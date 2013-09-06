@@ -661,7 +661,7 @@ public class JUnitShell extends DevMode {
   /**
    * Get the compiler options
    *
-   * @return the the compiler options that have been set.
+   * @return the compiler options that have been set.
    */
   public static CompilerOptions getCompilerOptions() {
     if (unitTestShell == null) {

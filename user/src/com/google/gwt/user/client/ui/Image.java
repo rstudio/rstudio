@@ -549,7 +549,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
   /**
    * Creates a clipped image with a specified URL and visibility rectangle. The
-   * visibility rectangle is declared relative to the the rectangle which
+   * visibility rectangle is declared relative to the rectangle which
    * encompasses the entire image, which has an upper-left vertex of (0,0). The
    * load event will be fired immediately after the object has been constructed
    * (i.e. potentially before the image has been loaded in the browser). Since
@@ -571,7 +571,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
   /**
    * Creates a clipped image with a specified URL and visibility rectangle. The
-   * visibility rectangle is declared relative to the the rectangle which
+   * visibility rectangle is declared relative to the rectangle which
    * encompasses the entire image, which has an upper-left vertex of (0,0). The
    * load event will be fired immediately after the object has been constructed
    * (i.e. potentially before the image has been loaded in the browser). Since
@@ -946,7 +946,7 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
 
   /**
    * Sets the visibility rectangle of an image. The visibility rectangle is
-   * declared relative to the the rectangle which encompasses the entire image,
+   * declared relative to the rectangle which encompasses the entire image,
    * which has an upper-left vertex of (0,0). Provided that any of the left,
    * top, width, and height parameters are different than the those values that
    * are currently set for the image, a load event will be fired. If the image

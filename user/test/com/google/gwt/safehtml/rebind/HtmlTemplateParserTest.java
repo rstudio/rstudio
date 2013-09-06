@@ -111,7 +111,7 @@ public final class HtmlTemplateParserTest extends TestCase {
             + "L(</span>)]"),
         "<span>foo&amp;bar<b>{1}</b><![CDATA[foo-cdata <baz>]]>{0}</span>");
 
-    // Check correct handling of ATTRIBUTE_VALUE vs URL_ATTRIBUTE_START and
+    // Check correct handling of ATTRIBUTE_VALUE vs. URL_ATTRIBUTE_START and
     // URL_ATTRIBUTE_ENTIRE context.
     assertParseTemplateResult(("[L(<a href=\"), P((URL_ATTRIBUTE_ENTIRE,a,href),0), "
         + "L(\">), P((TEXT,null,null),1), L(</a>)]"),

@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation on Request classes specifying the server side implementations that
+ * Annotation on Request classes specifying the server-side implementations that
  * back them.
  * 
  * @see ServiceName

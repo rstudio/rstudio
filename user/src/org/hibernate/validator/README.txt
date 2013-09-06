@@ -1,6 +1,6 @@
 The Hibernate Validator module is used to:
 
-1) generate client side validators.
+1) generate client-side validators.
 2) super source hibernate specific constraints
 3) super source hibernate classes needed to return ConstraintViolations from the server to the client.
 

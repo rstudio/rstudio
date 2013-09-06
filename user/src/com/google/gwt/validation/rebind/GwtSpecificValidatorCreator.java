@@ -1404,7 +1404,7 @@ public final class GwtSpecificValidatorCreator extends AbstractCreator {
    * If the constraint is annotated as
    * {@link javax.validation.ReportAsSingleViolation ReportAsSingleViolation},
    * then is called recursively and the {@code violationsVar} is changed to
-   * match the the {@code constraintDescriptorVar}.
+   * match the {@code constraintDescriptorVar}.
    *
    * @param sw the Source Writer
    * @param p the property

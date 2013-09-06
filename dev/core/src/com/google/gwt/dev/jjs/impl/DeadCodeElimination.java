@@ -1254,7 +1254,7 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Replace me only if the the updated expression is different.
+     * Replace me only if the updated expression is different.
      */
     private void maybeReplaceMe(JExpression x, JExpression updated, Context ctx) {
       if (updated != x) {

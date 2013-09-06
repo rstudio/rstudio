@@ -293,7 +293,7 @@ final class HtmlTemplateParser {
         Preconditions.checkState(lookBehind == '"' || lookBehind == '\'',
             "At the start of a quoted attribute, lookBehind should be a quote character; at %s",
             getTemplateParsedSoFar());
-        // If the the character immediately succeeding the template parameter is
+        // If the character immediately succeeding the template parameter is
         // a quote that matches the one that started the attribute, we know
         // that the parameter comprises the entire attribute.
         if (lookAhead == lookBehind) {

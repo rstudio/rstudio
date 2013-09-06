@@ -16,7 +16,7 @@
 package com.google.web.bindery.requestfactory.server.impl;
 
 /**
- * Server side service to support a generic find method.
+ * Server-side service to support a generic find method.
  */
 public class FindService {
 

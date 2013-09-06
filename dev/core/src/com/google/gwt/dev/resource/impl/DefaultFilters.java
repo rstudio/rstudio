@@ -389,7 +389,7 @@ public class DefaultFilters {
 
   /**
    * @param list patterns to add to the filter.
-   * @param isInclude Only used if the the array is empty. If <code>true</code>
+   * @param isInclude Only used if the array is empty. If <code>true</code>
    *          treat this as an include. Otherwise, assume this is an excludes
    *          filter and exclude all files.
    * @return

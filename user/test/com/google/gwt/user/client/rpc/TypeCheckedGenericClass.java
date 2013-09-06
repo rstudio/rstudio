@@ -24,7 +24,7 @@ import java.util.HashMap;
  * does include type checking instantiate and deserialize methods.
  * 
  * This class has the ability to record a marker field. Its intended use is for
- * a server side instantiate/deserialize to set the marker to verify that the
+ * a server-side instantiate/deserialize to set the marker to verify that the
  * instantiate/deserialize was invoked correctly.
  * 
  * @param <X> the key type for the hash map field

@@ -272,7 +272,7 @@ public class SimplePager extends AbstractPager {
    * @param location the location of the text relative to the buttons
    * @param showFastForwardButton if true, show a fast-forward button that
    *          advances by a larger increment than a single page
-   * @param showLastPageButton if true, show a button to go the the last page
+   * @param showLastPageButton if true, show a button to go to the last page
    */
   public SimplePager(TextLocation location, boolean showFastForwardButton,
       boolean showLastPageButton) {
@@ -287,7 +287,7 @@ public class SimplePager extends AbstractPager {
    * @param showFastForwardButton if true, show a fast-forward button that
    *          advances by a larger increment than a single page
    * @param fastForwardRows the number of rows to jump when fast forwarding
-   * @param showLastPageButton if true, show a button to go the the last page
+   * @param showLastPageButton if true, show a button to go to the last page
    */
   public SimplePager(TextLocation location, boolean showFastForwardButton,
       final int fastForwardRows, boolean showLastPageButton) {
@@ -443,7 +443,7 @@ public class SimplePager extends AbstractPager {
    * @param showFastForwardButton if true, show a fast-forward button that
    *          advances by a larger increment than a single page
    * @param fastForwardRows the number of rows to jump when fast forwarding
-   * @param showLastPageButton if true, show a button to go the the last page
+   * @param showLastPageButton if true, show a button to go to the last page
    */
   public SimplePager(TextLocation location, Resources resources,
       boolean showFastForwardButton, final int fastForwardRows,

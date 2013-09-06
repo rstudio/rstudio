@@ -16,7 +16,7 @@ package @sharedPackage;
  * When creating a class that is used on both the client and the server, be sure
  * that all code is translatable and does not use native JavaScript. Code that
  * is not translatable (such as code that interacts with a database or the file
- * system) cannot be compiled into client side JavaScript. Code that uses native
+ * system) cannot be compiled into client-side JavaScript. Code that uses native
  * JavaScript (such as Widgets) cannot be run on the server.
  * </p>
  */

@@ -34,7 +34,7 @@ import javax.validation.Validator;
 import javax.validation.groups.Default;
 
 /**
- * The server side implementation of the RPC service.
+ * The server-side implementation of the RPC service.
  */
 @SuppressWarnings("serial")
 public class GreetingServiceImpl extends RemoteServiceServlet implements

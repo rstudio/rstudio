@@ -2,7 +2,7 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
   <g:HTMLPanel styleName='oneArea'>
     <table><tr><td class='centered'>
-    GWT logging is configured separately from server side logging.
+    GWT logging is configured separately from server-side logging.
     Clicking this button will trigger a method on the server, which
     uses loggers and handlers which are set up on the server.
     <br/>

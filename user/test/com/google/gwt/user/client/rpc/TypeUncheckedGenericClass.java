@@ -25,7 +25,7 @@ package com.google.gwt.user.client.rpc;
  * that expects type information (when deserializing the type checked member).
  * 
  * This class has the ability to record a marker field. Its intended use is for
- * a server side instantiate/deserialize to set the marker to verify that the
+ * a server-side instantiate/deserialize to set the marker to verify that the
  * instantiate/deserialize was invoked correctly.
  * 
  * @param <X> the key type for the hash map field of the checkedField member

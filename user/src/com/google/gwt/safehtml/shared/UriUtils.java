@@ -239,7 +239,7 @@ public final class UriUtils {
    * Sanitizes a URI.
    *
    * <p>
-   * This method returns the URI provided if it is safe to use as the the value
+   * This method returns the URI provided if it is safe to use as the value
    * of a URI-valued HTML attribute according to {@link #isSafeUri}, or the URI
    * "{@code #}" otherwise.
    *

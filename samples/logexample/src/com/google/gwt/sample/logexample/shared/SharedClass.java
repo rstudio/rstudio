@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 /**
  * Shared code which does a simple logging call. Used to demonstrate how
  * shared code will log to different handlers depending on whether it is called
- * from server or client side code.
+ * from server-side or client-side code.
  */
 public class SharedClass {
   private static Logger logger = Logger.getLogger(SharedClass.class.getName());

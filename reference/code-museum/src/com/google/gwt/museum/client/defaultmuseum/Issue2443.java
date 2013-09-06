@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Dragging a {@link DialogBox} to the right edge of the screen creates a
- * horizontal scroll bar. The {@link DialogBox} should wrap the the text in
+ * horizontal scroll bar. The {@link DialogBox} should wrap the text in
  * order to avoid creating the scroll bar.
  */
 public class Issue2443 extends AbstractIssue {

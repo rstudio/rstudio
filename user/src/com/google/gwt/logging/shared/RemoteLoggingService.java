@@ -22,7 +22,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import java.util.logging.LogRecord;
 
 /**
- * The client side stub for the logging RPC service.
+ * The client-side stub for the logging RPC service.
  */
 @RemoteServiceRelativePath("remote_logging")
 public interface RemoteLoggingService extends RemoteService {

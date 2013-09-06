@@ -191,7 +191,7 @@ public class ViewerServiceClient {
    * supports: adding a log, adding a log branch, adding a log entry, and
    * disconnecting a log.
    * 
-   * TODO: Should we be checking the specific capability of the the
+   * TODO: Should we be checking the specific capability of the
    * ViewerService to support logs of type MAIN, SERVER, and MODULE? Right now,
    * we assume that if they can support the addition of logs, they can handle
    * the addition of any types of logs that we throw at them.

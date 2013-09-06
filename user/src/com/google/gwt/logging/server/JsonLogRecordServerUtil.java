@@ -27,7 +27,7 @@ import java.util.logging.LogRecord;
  * A set of functions to convert standard JSON strings into
  * LogRecords. The corresponding functions to create the JSON
  * strings are in JsonLogRecordClientUtil.java. This class should only be used
- * in server side code since it imports org.json classes.
+ * in server-side code since it imports org.json classes.
  * TODO(unnurg) once there is a unified JSON GWT library, combine this with
  * JsonLogRecordClientUtil.
  */

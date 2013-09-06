@@ -1363,7 +1363,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     Roles.getTreeitemRole().setAriaLevelProperty(curSelectionContentElem, curSelectionLevel + 1);
 
     // Set the 'aria-setsize' and 'aria-posinset' states. To do this, we need to
-    // compute the the number of siblings that the currently selected item has,
+    // compute the number of siblings that the currently selected item has,
     // and the item's position among its siblings.
 
     TreeItem curSelectionParent = curSelection.getParentItem();

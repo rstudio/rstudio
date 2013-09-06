@@ -36,7 +36,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
  * type.</p>
  *
  * <p>TODO(skybrian): it's unclear whether this should really be a cycle. The 'A' in the second
- * deduction annotates the the PtrPtr object (HELLO) and the 'A' in the last deduction is for the
+ * deduction annotates the PtrPtr object (HELLO) and the 'A' in the last deduction is for the
  * SimplePtr object (HELLO.ptr) so perhaps they are two type variables of the same name in different
  * scopes? Currently the algorithm in SerializabilityUtil doesn't have scopes so this might
  * just be a false alias. It doesn't affect the conclusion for this example, though.</p>

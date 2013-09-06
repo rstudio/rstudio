@@ -260,7 +260,7 @@ public class SvnInfo extends Task {
    * Find the GIT working directory.
    * 
    * First checks for the presence of the env variable GIT_DIR, then, looks up
-   * the the tree for a directory named '.git'.
+   * the tree for a directory named '.git'.
    * 
    * @param dir Current working directory
    * @return An object representing the .git directory. Returns

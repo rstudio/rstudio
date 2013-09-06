@@ -79,7 +79,7 @@ public final class BeanHelper {
   }
 
   /*
-   * The server side validator needs an actual class.
+   * The server-side validator needs an actual class.
    */
   public Class<?> getClazz() {
     return clazz;

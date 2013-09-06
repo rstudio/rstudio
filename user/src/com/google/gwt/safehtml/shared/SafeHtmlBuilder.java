@@ -197,7 +197,7 @@ public final class SafeHtmlBuilder {
    * values.
    *
    * <p>
-   * When executing client-side in Development Mode, or server side with
+   * When executing client-side in Development Mode, or server-side with
    * assertions enabled, the argument is HTML-parsed and validated to satisfy
    * the second constraint (the server-side check can also be enabled
    * programmatically, see

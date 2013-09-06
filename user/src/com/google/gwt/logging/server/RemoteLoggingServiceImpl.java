@@ -26,7 +26,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
- * Server side code for the remote log handler.
+ * Server-side code for the remote log handler.
  */
 public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements RemoteLoggingService {
 
@@ -64,7 +64,7 @@ public class RemoteLoggingServiceImpl extends RemoteServiceServlet implements Re
   
   /**
    * By default, this service does not do any deobfuscation. In order to do
-   * server side deobfuscation, you must copy the symbolMaps files to a
+   * server-side deobfuscation, you must copy the symbolMaps files to a
    * directory visible to the server and set the directory using this method.
    */
   public void setSymbolMapsDirectory(String symbolMapsDir) {

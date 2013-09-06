@@ -164,7 +164,7 @@ public class GlobalInformation {
   }
 
   /**
-   * Gets the the descriptors associated with a
+   * Gets the descriptors associated with a
    * fragment.
    *
    * @param fragment the fragment number

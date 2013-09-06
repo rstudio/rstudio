@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation on Request classes specifying the server side implementations that
+ * Annotation on Request classes specifying the server-side implementations that
  * back them.This annotation can be used in place of {@link Service} if the
  * service type is not available to the GWT compiler or DevMode runtime.
  */

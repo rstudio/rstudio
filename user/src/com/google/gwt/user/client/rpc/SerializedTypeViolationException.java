@@ -37,7 +37,7 @@ public class SerializedTypeViolationException extends SerializationException
     implements IsSerializable {
 
   /**
-   * Constructor used by RPC serialization. Note that the client side code will
+   * Constructor used by RPC serialization. Note that the client-side code will
    * always get a generic error message.
    */
   public SerializedTypeViolationException() {

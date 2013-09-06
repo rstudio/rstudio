@@ -98,7 +98,7 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
   }
 
   /**
-   * Prevent further modification of the the ArtifactSet. Any attempts to alter
+   * Prevent further modification of the ArtifactSet. Any attempts to alter
    * the ArtifactSet after invoking this method will result in an
    * UnsupportedOperationException.
    */

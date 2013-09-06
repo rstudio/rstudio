@@ -385,7 +385,7 @@ public class JsInliner {
      */
 
     /**
-     * Retains the the functions that we know have been called.
+     * Retains the functions that we know have been called.
      */
     private final Set<JsFunction> called;
     private final JsProgram program;
@@ -1772,7 +1772,7 @@ public class JsInliner {
    * When attempting to inline an invocation, this constant determines the
    * maximum allowable ratio of potential inlined complexity to initial
    * complexity. This acts as a brake on very large expansions from bloating the
-   * the generated output. Increasing this number will allow larger sections of
+   * generated output. Increasing this number will allow larger sections of
    * code to be inlined, but at a cost of larger JS output.
    */
   private static final double MAX_COMPLEXITY_INCREASE = Double.parseDouble(System.getProperty(

@@ -23,7 +23,7 @@ import java.util.Iterator;
 
 /**
  * A class which can be substituted in for the BasicLoggingPopup in the
- * the gwt.xml file to disable the default popup log handler.
+ * gwt.xml file to disable the default popup log handler.
  */
 public class NullLoggingPopup implements HasWidgets {
 

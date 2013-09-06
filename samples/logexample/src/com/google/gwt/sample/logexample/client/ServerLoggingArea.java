@@ -29,8 +29,8 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Panel;
 
 /**
- * A section allowing the user to experiment with server side logging and
- * shared library logging when it is called from server vs client side code.
+ * A section allowing the user to experiment with server-side logging and
+ * shared library logging when it is called from server-side vs. client-side code.
  */
 public class ServerLoggingArea {
   interface MyUiBinder extends UiBinder<HTMLPanel, ServerLoggingArea> { }

@@ -328,7 +328,7 @@ public class RegExp {
    * A major difference is that IE will exclude empty strings in the result.
    *
    * @param input the string to be split.
-   * @param limit the the maximum number of strings to split off and return,
+   * @param limit the maximum number of strings to split off and return,
    *        ignoring the rest of the input string. If negative, there is no
    *        limit.
    * @return the strings split off, any of which may be empty.

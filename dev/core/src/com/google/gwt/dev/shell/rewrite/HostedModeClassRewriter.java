@@ -50,7 +50,7 @@ import java.util.SortedSet;
  * instance methods are reimplemented as statics.</li>
  * <li>Calls sites to JSO types rewritten to dispatch to impl types. Any virtual
  * calls are also made static. Static field references to JSO types reference
- * static fields in the the impl class.</li>
+ * static fields in the impl class.</li>
  * <li>JavaScriptObject$ implements all the interface types and is the only
  * instantiable type.</li>
  * </ol>

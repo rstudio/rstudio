@@ -572,7 +572,7 @@ public class ListDataProvider<T> extends AbstractDataProvider<T> {
    * This is a shortcut for calling {@link List#set(int, Object)} on every item
    * that you modify, but note that calling {@link List#set(int, Object)}
    * performs better because the data provider knows which rows were modified
-   * and can push only the modified rows the the displays.
+   * and can push only the modified rows the displays.
    */
   public void refresh() {
     updateRowData(0, listWrapper);

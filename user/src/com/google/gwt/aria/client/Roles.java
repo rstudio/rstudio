@@ -447,7 +447,7 @@ public final class Roles {
   /**
    * Returns the WAI-ARIA role for the {@code element}. If no 'role' attribute is set to the
    * {@code element} or if the set role tokens do not include a WAI-ARIA role,
-   * null is returned. Otherwise, if a WAI_ARIA role is among the role tokens in the the 'role'
+   * null is returned. Otherwise, if a WAI_ARIA role is among the role tokens in the 'role'
    * attribute token list, a {@link Role} corresponding the WAI-ARIA role is returned.
    */
   public static Role roleOf(Element element) {

@@ -106,7 +106,7 @@ public class IsRenderableIntegrationTest extends GWTTestCase {
      * speed up, since the things will still have to be instantiated before the
      * user sees them, and it seems guaranteed to be a source of confusion.
      * 
-     * Hmm. What keeps the object that fills in the the fields at attach time
+     * Hmm. What keeps the object that fills in the fields at attach time
      * from being gc'd? And are we sure it's not leaking?
      * 
      * Although I suppose we have no choice with dom children. Interesting
