@@ -29,7 +29,9 @@ using namespace core;
 namespace server {
 namespace auth {
 
-bool validateUser(const std::string& username, const std::string& requiredGroup)
+bool validateUser(const std::string& username,
+                  const std::string& requiredGroup,
+                  bool groupFailureWarning)
 {
    // short circuit if we aren't validating users
    if (!server::options().authValidateUsers())
@@ -65,7 +67,7 @@ bool validateUser(const std::string& username, const std::string& requiredGroup)
       else
       {
          // log a warning whenever a user doesn't belong to a required group
-         if (!belongsToGroup)
+         if (!belongsToGroup && groupFailureWarning)
          {
             LOG_WARNING_MESSAGE(
              "User " + username + " could not be authenticated because they "
