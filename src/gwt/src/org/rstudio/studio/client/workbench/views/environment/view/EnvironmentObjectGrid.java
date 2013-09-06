@@ -253,7 +253,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
                   i == host_.getSortColumn(), 
-                  host_.isAscendingSort());
+                  host_.getAscendingSort());
             cell.endTH();
          }
          row.end();

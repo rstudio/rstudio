@@ -36,7 +36,7 @@ public abstract class EnvironmentObjectDisplay
       public int getSortColumn();
       public void setSortColumn(int col);
       public void toggleAscendingSort();
-      boolean isAscendingSort();
+      boolean getAscendingSort();
    }
 
    public EnvironmentObjectDisplay(Host host, 

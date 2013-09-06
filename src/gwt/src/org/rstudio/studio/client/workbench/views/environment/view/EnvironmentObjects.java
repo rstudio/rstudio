@@ -364,20 +364,34 @@ public class EnvironmentObjects extends ResizeComposite
    public void setSortColumn(int col)
    {
       objectSort_.setSortColumn(col);
+      observer_.setViewDirty();
       Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
    
    @Override
    public void toggleAscendingSort()
    {
-      objectSort_.setAscending(!objectSort_.getAscending());
-      Collections.sort(objectDataProvider_.getList(), objectSort_);
+      setAscendingSort(!objectSort_.getAscending());
    }
    
    @Override
-   public boolean isAscendingSort()
+   public boolean getAscendingSort()
    {
       return objectSort_.getAscending();
+   }
+   
+   public void setAscendingSort(boolean ascending)
+   {
+      objectSort_.setAscending(ascending);
+      observer_.setViewDirty();
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+   
+   public void setSort(int column, boolean ascending)
+   {
+      objectSort_.setSortColumn(column);
+      objectSort_.setAscending(ascending);
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
 
    // Private methods: object management --------------------------------------

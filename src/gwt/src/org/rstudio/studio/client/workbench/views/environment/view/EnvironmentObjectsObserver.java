@@ -7,4 +7,5 @@ public interface EnvironmentObjectsObserver
    void setObjectCollapsed(String objectName);
    void setPersistedScrollPosition(int scrollPosition);
    void changeContextDepth(int newDepth);
+   void setViewDirty();
 }

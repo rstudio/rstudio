@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -99,6 +100,9 @@ public class EnvironmentPresenter extends BasePresenter
       void setScrollPosition(int scrollPosition);
       void setObjectDisplayType(int type);
       int getObjectDisplayType();
+      int getSortColumn();
+      boolean getAscendingSort();
+      void setSort(int sortColumn, boolean sortAscending);
       void setExpandedObjects(JsArrayString objects);
       String[] getExpandedObjects();
       boolean clientStateDirty();
@@ -203,8 +207,8 @@ public class EnvironmentPresenter extends BasePresenter
       });
       
       new JSObjectStateValue(
-              "environment-pane",
-              "environmentPane",
+              "environment-panel",
+              "environmentPanelSettings",
               ClientState.TEMPORARY,
               session.getSessionInfo().getClientState(),
               false)
@@ -217,7 +221,8 @@ public class EnvironmentPresenter extends BasePresenter
                EnvironmentClientState clientState = value.cast();
                view_.setScrollPosition(clientState.getScrollPosition());
                view_.setExpandedObjects(clientState.getExpandedObjects());
-               view_.setObjectDisplayType(clientState.getDisplayType());
+               view_.setSort(clientState.getSortColumn(), 
+                             clientState.getAscendingSort());
             }
          }
 
@@ -229,7 +234,8 @@ public class EnvironmentPresenter extends BasePresenter
             view_.setClientStateClean();
             return EnvironmentClientState.create(view_.getScrollPosition(),
                                                  view_.getExpandedObjects(),
-                                                 view_.getObjectDisplayType())
+                                                 view_.getSortColumn(),
+                                                 view_.getAscendingSort())
                                          .cast();
          }
 
@@ -237,6 +243,28 @@ public class EnvironmentPresenter extends BasePresenter
          protected boolean hasChanged()
          {
             return view_.clientStateDirty();
+         }
+      };
+      
+      // Store the object display type more permanently than the other 
+      // client state settings; it's likely to be a user preference. 
+      new IntStateValue(
+              "environment-grid",
+              "objectDisplayType",
+              ClientState.PERSISTENT,
+              session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value != null)
+               view_.setObjectDisplayType(value);
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return view_.getObjectDisplayType();
          }
       };
    }

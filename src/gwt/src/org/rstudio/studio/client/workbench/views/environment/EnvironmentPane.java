@@ -309,6 +309,44 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.updateLineNumber(range.getLine());
    }
 
+   @Override
+   public void setObjectDisplayType(int type)
+   {
+      viewButton_.setText(nameOfViewType(type));
+      viewButton_.setLeftImage(imageOfViewType(type));
+      objects_.setObjectDisplay(type);
+   }
+   
+   @Override
+   public int getObjectDisplayType()
+   {
+      return objects_.getObjectDisplay();
+   }
+   
+   @Override
+   public int getSortColumn()
+   {
+      return objects_.getSortColumn();
+   }
+
+   @Override
+   public boolean getAscendingSort()
+   {
+      return objects_.getAscendingSort();
+   }
+
+   @Override
+   public void setSort(int sortColumn, boolean sortAscending)
+   {
+      objects_.setSort(sortColumn, sortAscending);
+   }
+
+   @Override
+   public void setViewDirty()
+   {
+      isClientStateDirty_ = true;
+   }
+
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -500,19 +538,6 @@ public class EnvironmentPane extends WorkbenchPane
       else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
          return EnvironmentResources.INSTANCE.objectGridView();
       return null;
-   }
-   
-   public void setObjectDisplayType(int type)
-   {
-      viewButton_.setText(nameOfViewType(type));
-      viewButton_.setLeftImage(imageOfViewType(type));
-      objects_.setObjectDisplay(type);
-      isClientStateDirty_ = true;
-   }
-   
-   public int getObjectDisplayType()
-   {
-      return objects_.getObjectDisplay();
    }
    
    private MenuItem createViewMenuItem(final int type)
