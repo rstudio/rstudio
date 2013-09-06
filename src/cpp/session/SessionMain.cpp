@@ -1984,6 +1984,13 @@ void rShowMessage(const std::string& message)
    ClientEvent event = showErrorMessageEvent("R Error", message);
    session::clientEventQueue().add(event);
 }
+
+void logExitEvent(const monitor::Event& precipitatingEvent)
+{
+   using namespace monitor;
+   client().logEvent(precipitatingEvent);
+   client().logEvent(Event(kSessionScope, kSessionExitEvent));
+}
    
 void rSuspended(const r::session::RSuspendOptions& options)
 {
@@ -1992,7 +1999,7 @@ void rSuspended(const r::session::RSuspendOptions& options)
    std::string data;
    if (s_suspendedFromTimeout)
       data = safe_convert::numberToString(session::options().timeoutMinutes());
-   client().logEvent(Event(kSessionScope, kSessionSuspendEvent, data));
+   logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
@@ -2035,7 +2042,7 @@ void rQuit()
 
    // log to monitor
    using namespace monitor;
-   client().logEvent(Event(kSessionScope, kSessionQuitEvent));
+   logExitEvent(Event(kSessionScope, kSessionQuitEvent));
 
    // notify modules
    module_context::events().onQuit();
@@ -2056,7 +2063,7 @@ void rSuicide(const std::string& message)
 
    // log to monitor
    using namespace monitor;
-   client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+   logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
@@ -2824,7 +2831,7 @@ int main (int argc, char * const argv[])
       if (error)
       {
           // this is logically equivilant to R_Suicide
-          client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+          logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
           // return failure
           return sessionExitFailure(error, ERROR_LOCATION);

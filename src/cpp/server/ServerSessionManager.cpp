@@ -95,12 +95,6 @@ core::system::ProcessConfig sessionProcessConfig(
 
 void onProcessExit(const std::string& username, PidType pid)
 {
-   using namespace monitor;
-   client().logEvent(Event(kSessionScope,
-                           kSessionExitEvent,
-                           "",
-                           username,
-                           pid));
 }
 
 } // anonymous namespace
