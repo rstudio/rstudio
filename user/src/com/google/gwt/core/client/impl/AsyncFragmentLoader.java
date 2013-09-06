@@ -262,7 +262,7 @@ public class AsyncFragmentLoader {
    * of GWT generated JavaScript (i.e our vanilla JUnit tests, or if referenced
    * in a server context), this field is {@code null}. When compiled to
    * JavaScript, the parameters to this call are rewritten by
-   * {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}. So this must be a
+   * {@link com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs}. So this must be a
    * method call of exactly two arguments to succeed when invoked in web mode.
    */
   public static AsyncFragmentLoader BROWSER_LOADER = makeBrowserLoader(1, new int[]{});
@@ -319,7 +319,7 @@ public class AsyncFragmentLoader {
    * The sequence of fragments to load initially, before anything else can be
    * loaded. This array will hold the initial sequence of bases followed by the
    * leftovers fragment. It is filled in by
-   * {@link com.google.gwt.dev.jjs.impl.CodeSplitter} modifying the initializer
+   * {@link com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter} modifying the initializer
    * to {@link #BROWSER_LOADER}. The list does <em>not</em> include the
    * leftovers fragment, which must be loaded once all of these are finished.
    */

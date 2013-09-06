@@ -20,9 +20,11 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
-import com.google.gwt.dev.jjs.impl.CodeSplitter;
-import com.google.gwt.dev.jjs.impl.CodeSplitter2.FragmentPartitioningResult;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.Collections2;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -42,10 +44,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 /**
  * Root for the AST representing an entire Java program.
  */
 public class JProgram extends JNode {
+
+  private List<Integer> initialFragmentIdSequence = Lists.newArrayList();
+
+  public List<Integer> getInitialFragmentIdSequence() {
+    return initialFragmentIdSequence;
+  }
+
+  public void setInitialFragmentIdSequence(List<Integer> initialFragmentIdSequence) {
+    this.initialFragmentIdSequence = initialFragmentIdSequence;
+  }
 
   private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
     public int compare(JArrayType o1, JArrayType o2) {
@@ -210,6 +224,10 @@ public class JProgram extends JNode {
     return types;
   }
 
+  public static String getFullName(JMethod method) {
+    return method.getEnclosingType().getName() + "." + getJsniSig(method);
+  }
+
   public static String getJsniSig(JMethod method) {
     return getJsniSig(method, true);
   }
@@ -262,16 +280,12 @@ public class JProgram extends JNode {
     }
     return latest;
   }
-  
+
   public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
       int numSps, int firstFragment, int... restFragments) {
-    int latest = firstFragment;
-    for (int frag : restFragments) {
-      latest = pairwiseLastFragmentLoadingBefore(initialSeq, null, numSps, latest, frag);
-    }
-    return latest;
-  }
 
+    return lastFragmentLoadingBefore(initialSeq, null, numSps, firstFragment, restFragments);
+  }
 
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
       throws IOException {
@@ -312,8 +326,8 @@ public class JProgram extends JNode {
 
     // If there were some fragment merging.
     if (result != null) {
-      sp1 = result.getSplitPointFromFragment(sp1);
-      sp2 = result.getSplitPointFromFragment(sp2);
+      sp1 = result.getRunAsyncIdForFragment(sp1);
+      sp2 = result.getRunAsyncIdForFragment(sp2);
     }
     
     int initPos1 = initialSeq.indexOf(sp1);
@@ -338,11 +352,14 @@ public class JProgram extends JNode {
     assert (initPos1 < 0 && initPos2 < 0);
     assert (frag1 != frag2);
 
-    if (result != null) {
-      return result.getLeftoverFragmentIndex();
-    } else {
-      return CodeSplitter.getLeftoversFragmentNumber(numSps);
+    // TODO(rluble): there should always be a fragmentPartitionResult; temporary hack.
+    // assert result != null;
+
+    if (result == null) {
+      return numSps + 1;
     }
+
+    return result.getLeftoverFragmentIndex();
   }
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
@@ -376,9 +393,9 @@ public class JProgram extends JNode {
   /**
    * Filled in by ReplaceRunAsync, once the numbers are known.
    */
-  private List<JRunAsync> runAsyncs = Lists.create();
+  private List<JRunAsync> runAsyncs = Lists.newArrayList();
 
-  private List<Integer> splitPointInitialSequence = Lists.create();
+  private LinkedHashSet<JRunAsync> initialAsyncSequence = new LinkedHashSet<JRunAsync>();
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -404,14 +421,6 @@ public class JProgram extends JNode {
   
   private FragmentPartitioningResult fragmentPartitioninResult;
 
-  /**
-   * Constructor.
-   * 
-   * @param correlator Controls whether or not SourceInfo nodes created via the
-   *          JProgram will record descendant information. Enabling this feature
-   *          will collect extra data during the compilation cycle, but at a
-   *          cost of memory and object allocations.
-   */
   public JProgram() {
     super(SourceOrigin.UNKNOWN);
   }
@@ -817,8 +826,8 @@ public class JProgram extends JNode {
     return runAsyncs;
   }
 
-  public List<Integer> getSplitPointInitialSequence() {
-    return splitPointInitialSequence;
+  public LinkedHashSet<JRunAsync> getInitialAsyncSequence() {
+    return initialAsyncSequence;
   }
 
   public JMethod getStaticImpl(JMethod method) {
@@ -962,7 +971,7 @@ public class JProgram extends JNode {
    * supplied fragments, or it might be a common predecessor.
    */
   public int lastFragmentLoadingBefore(int firstFragment, int... restFragments) {
-    return lastFragmentLoadingBefore(splitPointInitialSequence, fragmentPartitioninResult,
+    return lastFragmentLoadingBefore(initialFragmentIdSequence, fragmentPartitioninResult,
         runAsyncs.size(), firstFragment, restFragments);
   }
 
@@ -1002,12 +1011,22 @@ public class JProgram extends JNode {
   }
 
   public void setRunAsyncs(List<JRunAsync> runAsyncs) {
-    this.runAsyncs = Lists.normalizeUnmodifiable(runAsyncs);
+    this.runAsyncs = ImmutableList.copyOf(runAsyncs);
   }
 
-  public void setSplitPointInitialSequence(List<Integer> list) {
-    assert splitPointInitialSequence.isEmpty();
-    splitPointInitialSequence = new ArrayList<Integer>(list);
+  public void setInitialAsyncSequence(LinkedHashSet<JRunAsync> initialAsyncSequence) {
+    assert this.initialAsyncSequence.isEmpty();
+    initialFragmentIdSequence = Lists.newArrayList();
+    // TODO(rluble): hack for now the initial fragments correspond to the initial runAsyncIds.
+    initialFragmentIdSequence.addAll(
+        Collections2.transform(initialAsyncSequence,
+            new Function<JRunAsync, Integer>() {
+              @Override
+              public Integer apply(@Nullable JRunAsync runAsync) {
+                return runAsync.getRunAsyncId();
+              }
+            }));
+    this.initialAsyncSequence = initialAsyncSequence;
   }
 
   /**

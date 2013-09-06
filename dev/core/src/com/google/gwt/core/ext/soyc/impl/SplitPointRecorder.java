@@ -18,7 +18,7 @@ package com.google.gwt.core.ext.soyc.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
-import com.google.gwt.dev.jjs.impl.CodeSplitter2.FragmentPartitioningResult;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
 import com.google.gwt.dev.util.HtmlTextOutput;
 import com.google.gwt.util.tools.Utility;
 
@@ -63,9 +63,9 @@ public class SplitPointRecorder {
         htmlOut.indentIn();
         htmlOut.indentIn();
         for (JRunAsync runAsync : runAsyncs) {
-          int sp = runAsync.getSplitPoint();
+          int sp = runAsync.getRunAsyncId();
           if (partitionResult != null) {
-            sp = partitionResult.getFragmentFromSplitPoint(sp);
+            sp = partitionResult.getFragmentForRunAsync(sp);
           }
           String name = runAsync.getName();
           curLine = "<splitpoint id=\"" + sp + "\" location=\"" + name + "\"/>";
@@ -82,15 +82,15 @@ public class SplitPointRecorder {
         htmlOut.newline();
       }
 
-      if (!jprogram.getSplitPointInitialSequence().isEmpty()) {
+      if (!jprogram.getInitialFragmentIdSequence().isEmpty()) {
         curLine = "<initialseq>";
         htmlOut.printRaw(curLine);
         htmlOut.newline();
         htmlOut.indentIn();
 
-        for (int sp : jprogram.getSplitPointInitialSequence()) {
+        for (int sp : jprogram.getInitialFragmentIdSequence()) {
           if (partitionResult != null) {
-            sp = partitionResult.getFragmentFromSplitPoint(sp);
+            sp = partitionResult.getFragmentForRunAsync(sp);
           }
           curLine = "<splitpointref id=\"" + sp + "\"/>";
           htmlOut.printRaw(curLine);

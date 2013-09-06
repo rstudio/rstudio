@@ -11,7 +11,7 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.impl;
+package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.Correlation.Axis;
@@ -23,8 +23,11 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.impl.FragmentExtractor.LivenessPredicate;
-import com.google.gwt.dev.jjs.impl.FragmentExtractor.NothingAlivePredicate;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor.LivenessPredicate;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor.NothingAlivePredicate;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
@@ -39,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Unit tests for {@link FragmentExtractor}.
+ * Unit tests for {@link com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor}.
  */
 public class FragmentExtractorTest extends JJSTestBase {
 

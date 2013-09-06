@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -315,7 +316,8 @@ public class MakeCallsStatic {
 
     @Override
     public boolean visit(JProgram x, Context ctx) {
-      initiallyLive = CodeSplitter2.computeInitiallyLive(x);
+      // TODO(rluble): This needs to be abstracted out the CodeSplitter.
+      initiallyLive = CodeSplitter.computeInitiallyLive(x);
       return true;
     }
   }

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.impl;
+package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -30,7 +30,15 @@ import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
+import com.google.gwt.dev.jjs.impl.CastNormalizer;
+import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
+import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.JJSTestBase;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.MethodCallTightener;
+import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -43,9 +51,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Unit test for {@link CodeSplitter2}.
+ * Unit test for {@link com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter}.
  */
-public class CodeSplitter2Test extends JJSTestBase {
+public class CodeSplitterTest extends JJSTestBase {
 
   /**
    * A {@link MultipleDependencyGraphRecorder} that does nothing.
@@ -84,6 +92,9 @@ public class CodeSplitter2Test extends JJSTestBase {
   private JProgram jProgram = null;
   private JsProgram jsProgram = null;
 
+  public int leftOverMergeSize = 0;
+  public int expectedFragmentCount = 0;
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -112,7 +123,9 @@ public class CodeSplitter2Test extends JJSTestBase {
     // Fragment #2
     code.append(createRunAsync("functionC();"));
     code.append("  }\n");
-    code.append("}\n");    
+    code.append("}\n");
+
+    expectedFragmentCount = 4;
     compileSnippet(code.toString());
     
     // init + 2 fragments + leftover.
@@ -145,6 +158,8 @@ public class CodeSplitter2Test extends JJSTestBase {
     code.append("    " + createRunAsync("(RunAsyncCallback)", "functionB();"));
     code.append("  }\n");
     code.append("}\n");
+
+    expectedFragmentCount = 4;
     compileSnippet(code.toString());
 
     // init + 2 fragments + leftover.
@@ -176,8 +191,10 @@ public class CodeSplitter2Test extends JJSTestBase {
     code.append(createRunAsync("functionC();"));
     code.append("  }\n");
     code.append("}\n");
-    compileSnippetWithLeftoverMerge(code.toString(),
-        10 * 1024 /* 10k minumum */);
+
+    expectedFragmentCount = 2;
+    leftOverMergeSize = 100 * 1024 /* 100k minumum */;
+    this.compileSnippet(code.toString());
 
     // init + leftover.
     assertFragmentCount(2);
@@ -185,6 +202,18 @@ public class CodeSplitter2Test extends JJSTestBase {
     assertInFragment("functionB", 1);
     assertInFragment("functionC", 1);
   }
+
+  /**
+   * Tests that everything in the magic Array class is considered initially
+   * live.
+   */
+  public void testArrayIsInitial() throws UnableToCompleteException {
+    JProgram program = compileSnippet("void", "");
+    ControlFlowAnalyzer cfa = CodeSplitter.computeInitiallyLive(program);
+
+    assertTrue(cfa.getInstantiatedTypes().contains(findType(program, "com.google.gwt.lang.Array")));
+  }
+
 
   public void testDontMergeLeftOvers() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
@@ -204,10 +233,13 @@ public class CodeSplitter2Test extends JJSTestBase {
     code.append(createRunAsync("functionC();"));
     code.append("  }\n");
     code.append("}\n");
-    // we want don't want them to be merged
-    compileSnippetWithLeftoverMerge(code.toString(), 10);
 
-    // init + leftover.
+    // we want don't want them to be merged
+    leftOverMergeSize = 10;
+    expectedFragmentCount = 5;
+    this.compileSnippet(code.toString());
+
+    // init + 3 exlclusive fragments + leftover.
     assertFragmentCount(5);
     assertNotInFragment("functionA", 4);
     assertNotInFragment("functionB", 4);
@@ -231,9 +263,13 @@ public class CodeSplitter2Test extends JJSTestBase {
     // Fragment #3
     code.append(createRunAsync("functionA();"));
     code.append("  }\n");
-    code.append("}\n");    
+    code.append("}\n");
+
+    expectedFragmentCount = 2;
     compileSnippet(code.toString());
-    
+
+    // There is no common code shared between any pair.
+
     // init + 3 fragments + leftover.
     assertFragmentCount(5);
   }
@@ -257,9 +293,11 @@ public class CodeSplitter2Test extends JJSTestBase {
     // Fragment #2
     code.append(createRunAsync("functionB(); functionC();"));
     code.append("  }\n");
-    code.append("}\n");    
+    code.append("}\n");
+
+    expectedFragmentCount = 4;
     compileSnippet(code.toString());
-    
+
     // init + 2 fragments + leftover.
     assertFragmentCount(4);
     assertInFragment("functionA", 1);
@@ -304,6 +342,7 @@ public class CodeSplitter2Test extends JJSTestBase {
    * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it.
    */
   protected void compileSnippet(final String code) throws UnableToCompleteException {
+    // By default expects 4 fragments and don't merge leftovers.
     addMockIntrinsic();
     sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
       @Override
@@ -324,43 +363,12 @@ public class CodeSplitter2Test extends JJSTestBase {
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);
     Map<StandardSymbolData, JsName> symbolTable =
-      new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
-    JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
-            new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, NULL_RECORDER, 0);
-  }
-
-  /**
-   * Compiles a Java class <code>test.EntryPoint</code> and use the code splitter on it
-   * with leftover merge enabled.
-   */
-  protected void compileSnippetWithLeftoverMerge(final String code,
-      int mergeLimit) throws UnableToCompleteException {
-    addMockIntrinsic();
-    sourceOracle.addOrReplace(new MockJavaResource("test.EntryPoint") {
-      @Override
-      public CharSequence getContent() {
-        return code;
-      }
-    });
-    addBuiltinClasses(sourceOracle);
-    CompilationState state =
-        CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
-            getAdditionalTypeProviderDelegate(), sourceLevel);
-    jProgram =
-        JavaAstConstructor.construct(logger, state, "test.EntryPoint",
-            "com.google.gwt.lang.Exceptions");
-    jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
-    CastNormalizer.exec(jProgram, false);
-    ArrayNormalizer.exec(jProgram);
-    Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
         jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
         new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
-    CodeSplitter2.exec(logger, jProgram, jsProgram, map, 4, NULL_RECORDER,
-        mergeLimit);
+    CodeSplitter.exec(logger, jProgram, jsProgram, map, expectedFragmentCount, leftOverMergeSize,
+        NULL_RECORDER);
   }
 
   private static String createRunAsync(String cast, String body) {

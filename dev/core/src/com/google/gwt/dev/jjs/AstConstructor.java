@@ -25,7 +25,7 @@ import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
-import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
+import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.js.ast.JsProgram;
 

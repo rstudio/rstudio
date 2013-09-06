@@ -34,7 +34,7 @@ import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
-import com.google.gwt.dev.jjs.impl.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.NullOutputFileSet;
 import com.google.gwt.dev.util.OutputFileSet;
@@ -476,7 +476,7 @@ public class Link {
     }
 
     // TODO(acleung): This is broken for CodeSplitter2.
-    int totalSize = CodeSplitter.totalScriptSize(jsLengths);
+    int totalSize = CodeSplitter.computeTotalSize(jsLengths);
 
     if (logger.isLoggable(TreeLogger.TRACE)) {
       logger.log(TreeLogger.TRACE, "Permutation " + permId + " (strong name "

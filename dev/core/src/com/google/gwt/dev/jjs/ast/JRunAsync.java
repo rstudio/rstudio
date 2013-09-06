@@ -25,12 +25,12 @@ public class JRunAsync extends JExpression {
   private final String name;
   private JExpression onSuccessCall;
   private JExpression runAsyncCall;
-  private final int splitPoint;
+  private final int runAsyncId;
 
-  public JRunAsync(SourceInfo info, int splitPoint, String name, JExpression runAsyncCall,
+  public JRunAsync(SourceInfo info, int runAsyncId, String name, JExpression runAsyncCall,
       JExpression onSuccessCall) {
     super(info);
-    this.splitPoint = splitPoint;
+    this.runAsyncId = runAsyncId;
     assert name != null;
     this.name = name;
     this.runAsyncCall = runAsyncCall;
@@ -66,10 +66,17 @@ public class JRunAsync extends JExpression {
   }
 
   /**
-   * Returns the split point number, 1-based.
+   * Returns a unique id for each runAsync, 1-based.
+   *
+   * <p>ReplaceRunAsyncs embeds these ids into the Java AST as parameter
+   * for a call to {@code }RunAsync.forSplitPointNumber}</p>
+   *
+   * TODO(rluble): these ids used to be splitpoint/fragment ids back when there was 1-to-1
+   * mapping from RunAsyncs to fragment id. This code and the runtime code need to be
+   * refactored so that its less coupled and cleaner.
    */
-  public int getSplitPoint() {
-    return splitPoint;
+  public int getRunAsyncId() {
+    return runAsyncId;
   }
 
   @Override

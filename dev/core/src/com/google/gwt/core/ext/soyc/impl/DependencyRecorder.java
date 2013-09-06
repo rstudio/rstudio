@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
-import com.google.gwt.dev.jjs.impl.CodeSplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.util.tools.Utility;
 
@@ -37,7 +37,7 @@ import java.util.zip.GZIPOutputStream;
 public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
    * DependencyRecorder is not allowed to throw checked exceptions, because if
-   * it did then {@link com.google.gwt.dev.jjs.impl.CodeSplitter} and
+   * it did then {@link com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter} and
    * {@link ControlFlowAnalyzer} would throw exceptions all over the place.
    * Instead, this class throws NestedIOExceptions that wrap them.
    */

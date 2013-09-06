@@ -16,7 +16,7 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.CodeSplitter2.FragmentPartitioningResult;
+import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
@@ -214,7 +214,7 @@ public class ClosureJsRunner {
 
   private void computeFragmentMap(JProgram jprogram, JsProgram jsProgram) {
     int fragments = jsProgram.getFragmentCount();
-    List<Integer> initSeq = jprogram.getSplitPointInitialSequence();
+    List<Integer> initSeq = jprogram.getInitialFragmentIdSequence();
     FragmentPartitioningResult partitionResult = jprogram.getFragmentPartitioningResult();
 
     //
@@ -240,7 +240,7 @@ public class ClosureJsRunner {
     for (int i = 0; i < initSeq.size(); i++) {
       int initSeqNum = initSeq.get(i);
       if (partitionResult != null) {
-        initSeqNum = partitionResult.getFragmentFromSplitPoint(initSeqNum);
+        initSeqNum = partitionResult.getFragmentForRunAsync(initSeqNum);
       }
       closureModuleSequenceMap[initSeqNum] = module++;
     }

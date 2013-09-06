@@ -96,6 +96,10 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     // Disposition is not cached because we can be set final later.
   }
 
+  public String getFullName() {
+    return getEnclosingType().getName() + "." + getName();
+  }
+
   public JDeclaredType getEnclosingType() {
     return enclosingType;
   }

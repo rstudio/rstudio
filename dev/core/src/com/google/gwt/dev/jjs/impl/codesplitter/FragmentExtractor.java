@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.impl;
+package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -22,6 +22,9 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
+import com.google.gwt.dev.jjs.impl.JavaAndJavaScript;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsHoister.Cloner;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
@@ -69,7 +72,7 @@ public class FragmentExtractor {
 
   /**
    * A {@link LivenessPredicate} that bases liveness on a single
-   * {@link ControlFlowAnalyzer}.
+   * {@link com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer}.
    */
   public static class CfaLivenessPredicate implements LivenessPredicate {
     private final ControlFlowAnalyzer cfa;
@@ -183,7 +186,7 @@ public class FragmentExtractor {
    * {@link FragmentExtractor#setStatementLogger(StatementLogger)} .
    */
   public static interface StatementLogger {
-    void logStatement(JsStatement stat, boolean isIncluded);
+    void log(JsStatement statement, boolean include);
   }
 
   /**
@@ -245,7 +248,7 @@ public class FragmentExtractor {
 
   private static class NullStatementLogger implements StatementLogger {
     @Override
-    public void logStatement(JsStatement method, boolean isIncluded) {
+    public void log(JsStatement statement, boolean include) {
     }
   }
 
@@ -357,7 +360,7 @@ public class FragmentExtractor {
         keep = isLive(statement, livenessPredicate) && !isLive(statement, alreadyLoadedPredicate);
       }
 
-      statementLogger.logStatement(statement, keep);
+      statementLogger.log(statement, keep);
 
       if (keep) {
         if (vtableTypeAssigned != null) {
