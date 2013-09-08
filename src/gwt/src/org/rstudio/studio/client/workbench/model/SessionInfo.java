@@ -326,4 +326,8 @@ public class SessionInfo extends JavaScriptObject
    public final native ErrorManagerState getErrorState() /*-{
       return this.error_state;
    }-*/;
+   
+   public final native boolean getDisableCheckForUpdates() /*-{
+      return this.disable_check_for_updates;
+   }-*/;
 }

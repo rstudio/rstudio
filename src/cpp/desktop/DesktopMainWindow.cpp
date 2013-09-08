@@ -169,8 +169,11 @@ void MainWindow::onWorkbenchInitialized()
 
    avoidMoveCursorIfNecessary();
 
-   // check for updates
-   updateChecker_.performCheck(false);
+   // check for updates if requested
+   bool check = webView()->page()->mainFrame()->evaluateJavaScript(
+      QString::fromAscii("window.desktopHooks.getCheckForUpdates()")).toBool();
+   if (check)
+      updateChecker_.performCheck(false);
 }
 
 void MainWindow::resetMargins()

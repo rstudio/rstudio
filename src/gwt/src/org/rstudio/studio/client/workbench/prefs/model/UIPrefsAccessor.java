@@ -288,6 +288,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("auto_expand_error_tracebacks", false);
    }
    
+   public PrefValue<Boolean> checkForUpdates()
+   {
+      return bool("check_for_updates", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
