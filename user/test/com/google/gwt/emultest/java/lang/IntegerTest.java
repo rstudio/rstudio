@@ -144,6 +144,8 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, Integer.decode(
         String.valueOf(Integer.MIN_VALUE)).intValue());
     assertEquals(12345, Integer.decode("12345").intValue());
+    assertEquals(12345, Integer.decode("+12345").intValue());
+    assertEquals(-12345, Integer.decode("-12345").intValue());
     assertEquals(31, Integer.decode("0x1f").intValue());
     assertEquals(-31, Integer.decode("-0X1F").intValue());
     assertEquals(31, Integer.decode("#1f").intValue());
@@ -272,6 +274,8 @@ public class IntegerTest extends GWTTestCase {
 
   public void testParseInt() {
     assertEquals(12345, Integer.parseInt("12345"));
+    assertEquals(12345, Integer.parseInt("+12345"));
+    assertEquals(-12345, Integer.parseInt("-12345"));
     assertEquals(1865, Integer.parseInt("12345", 6));
     assertEquals(0, Integer.parseInt("0"));
     assertEquals(Integer.MAX_VALUE,

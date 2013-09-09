@@ -156,6 +156,9 @@ public abstract class Number implements Serializable {
       s = s.substring(1);
     } else {
       negative = false;
+      if (s.startsWith("+")) {
+        s = s.substring(1);
+      }
     }
 
     final int radix;
@@ -206,7 +209,7 @@ public abstract class Number implements Serializable {
     }
 
     int length = s.length();
-    int startIndex = (length > 0) && (s.charAt(0) == '-') ? 1 : 0;
+    int startIndex = (length > 0) && (s.charAt(0) == '-' || s.charAt(0) == '+') ? 1 : 0;
 
     for (int i = startIndex; i < length; i++) {
       if (Character.digit(s.charAt(i), radix) == -1) {
@@ -244,10 +247,14 @@ public abstract class Number implements Serializable {
     final String orig = s;
 
     int length = s.length();
-    boolean negative = (length > 0) && (s.charAt(0) == '-');
-    if (negative) {
-      s = s.substring(1);
-      length--;
+    boolean negative = false;
+    if (length > 0) {
+      char c = s.charAt(0);
+      if (c == '-' || c == '+') {
+        s = s.substring(1);
+        length--;
+        negative = (c == '-');
+      }
     }
     if (length == 0) {
       throw NumberFormatException.forInputString(orig);

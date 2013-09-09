@@ -98,6 +98,7 @@ public class LongTest extends GWTTestCase {
   public void testParse() {
     assertEquals(0L, Long.parseLong("0"));
     assertEquals(100000000000L, Long.parseLong("100000000000"));
+    assertEquals(100000000000L, Long.parseLong("+100000000000"));
     assertEquals(-100000000000L, Long.parseLong("-100000000000"));
     assertEquals(10L, Long.parseLong("010"));
     assertEquals(Long.MAX_VALUE, Long.parseLong("" + Long.MAX_VALUE));
