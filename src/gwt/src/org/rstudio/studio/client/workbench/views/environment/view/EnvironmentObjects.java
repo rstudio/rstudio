@@ -15,44 +15,30 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
-import com.google.gwt.cell.client.ClickableTextCell;
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.builder.shared.TableCellBuilder;
-import com.google.gwt.dom.builder.shared.TableRowBuilder;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.text.shared.AbstractSafeHtmlRenderer;
-import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.cellview.client.AbstractCellTableBuilder;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.NoSelectionModel;
 
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
-import org.rstudio.core.client.cellview.ScrollingDataGrid;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
-import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import java.util.*;
 
 public class EnvironmentObjects extends ResizeComposite
-   implements CallFramePanelHost
+   implements CallFramePanelHost,
+              EnvironmentObjectDisplay.Host
 {
    // Public interfaces -------------------------------------------------------
 
@@ -60,68 +46,27 @@ public class EnvironmentObjects extends ResizeComposite
    {
    }
 
-   public interface Observer
-   {
-      void viewObject(String objectName);
-      void setObjectExpanded(String objectName);
-      void setObjectCollapsed(String objectName);
-      void setPersistedScrollPosition(int scrollPosition);
-      void changeContextDepth(int newDepth);
-   }
-
    // Constructor -------------------------------------------------------------
 
-   public EnvironmentObjects(Observer observer)
+   public EnvironmentObjects(EnvironmentObjectsObserver observer)
    {
       observer_ = observer;
       contextDepth_ = 0;
+      environmentName_ = EnvironmentPane.GLOBAL_ENVIRONMENT_NAME;
 
-      // initialize the data grid and hook it up to the list of R objects in
-      // the environment pane
-      objectList_ = new ScrollingDataGrid<RObjectEntry>(
-              1024,
-              RObjectEntry.KEY_PROVIDER);
+      objectDisplayType_ = OBJECT_LIST_VIEW;
       objectDataProvider_ = new ListDataProvider<RObjectEntry>();
-      objectDataProvider_.addDataDisplay(objectList_);
-      createColumns();
-      objectList_.addColumn(objectExpandColumn_);
-      objectList_.addColumn(objectNameColumn_);
-      objectList_.addColumn(objectDescriptionColumn_);
-      objectList_.setTableBuilder(new EnvironmentObjectTableBuilder());
-      objectList_.setSkipRowHoverCheck(true);
-
-      // disable persistent and transient row selection (currently necessary
-      // because we emit more than one row per object and the DataGrid selection
-      // behaviors aren't designed to work that way)
-      objectList_.setSelectionModel(new NoSelectionModel<RObjectEntry>(
-              RObjectEntry.KEY_PROVIDER));
-      objectList_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      objectList_.getScrollPanel().addScrollHandler(new ScrollHandler()
-      {
-         @Override
-         public void onScroll(ScrollEvent event)
-         {
-            if (useStatePersistence())
-            {
-               deferredScrollPosition_ = getScrollPosition();
-               observer_.setPersistedScrollPosition(deferredScrollPosition_);
-            }
-         }
-      });
+      objectSort_ = new RObjectEntrySort();
 
       // set up the call frame panel
       callFramePanel_ = new CallFramePanel(observer_, this);
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
-      // these need to be done post-initWidget since they reference objects
-      // created by initWidget
-      objectList_.setEmptyTableWidget(buildEmptyGridMessage());
-      objectList_.setStyleName(style.objectGrid() + " " + style.environmentPanel());
-
       splitPanel.addSouth(callFramePanel_, 150);
       splitPanel.setWidgetMinSize(callFramePanel_, style.headerRowHeight());
-      splitPanel.add(objectList_);
+      
+      setObjectDisplay(objectDisplayType_);
       
       FontSizer.applyNormalFontSize(this);
    }
@@ -185,7 +130,7 @@ public class EnvironmentObjects extends ResizeComposite
          objectDataProvider_.getList().add(idx, entry);
       }
       updateCategoryLeaders(true);
-      objectList_.getRowElement(idx).scrollIntoView();
+      objectDisplay_.getRowElement(idx).scrollIntoView();
    }
 
    public void removeObject(String objName)
@@ -203,6 +148,11 @@ public class EnvironmentObjects extends ResizeComposite
    {
       objectDataProvider_.getList().clear();
    }
+   
+   public void clearSelection()
+   {
+      objectDisplay_.clearSelection();
+   }
 
    // bulk add for objects--used on init or environment switch
    public void addObjects(JsArray<RObject> objects)
@@ -215,7 +165,7 @@ public class EnvironmentObjects extends ResizeComposite
          RObjectEntry entry = entryFromRObject(objects.get(i));
          objectEntryList.add(entry);
       }
-      Collections.sort(objectEntryList, new RObjectEntrySort());
+      Collections.sort(objectEntryList, objectSort_);
 
       // push the list into the UI and update category leaders
       objectDataProvider_.getList().addAll(objectEntryList);
@@ -225,6 +175,11 @@ public class EnvironmentObjects extends ResizeComposite
       {
          setDeferredState();
       }
+   }
+   
+   public List<String> getSelectedObjects()
+   {
+      return objectDisplay_.getSelectedObjects();
    }
 
    public void setCallFrames(JsArray<CallFrame> frameList)
@@ -255,15 +210,15 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setEnvironmentName(String environmentName)
    {
-      environmentName_.setText(contextDepth_ > 0 ? environmentName + "()" : "");
       environmentEmptyMessage_.setText(contextDepth_ > 0 ?
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
-                                       EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
+                                       EMPTY_ENVIRONMENT_MESSAGE);
+      environmentName_ = environmentName;
    }
 
    public int getScrollPosition()
    {
-      return objectList_.getScrollPanel().getVerticalScrollPosition();
+      return objectDisplay_.getScrollPanel().getVerticalScrollPosition();
    }
 
    public void setScrollPosition(int scrollPosition)
@@ -297,11 +252,67 @@ public class EnvironmentObjects extends ResizeComposite
          if (visible != entry.visible || visible)
          {
             entry.visible = visible;
-            objectList_.redrawRow(i);
+            objectDisplay_.redrawRow(i);
          }
       }
 
       updateCategoryLeaders(true);
+   }
+   
+   public int getObjectDisplay()
+   {
+      return objectDisplayType_;
+   }
+
+   public void setObjectDisplay(int type)
+   {
+      // if we already have an active display of this type, do nothing
+      if (type == objectDisplayType_ && 
+          objectDisplay_ != null)
+      {
+         return;
+      }
+      
+      // clean up previous object display, if we had one
+      if (objectDisplay_ != null)
+      {
+         objectDataProvider_.removeDataDisplay(objectDisplay_);
+         splitPanel.remove(objectDisplay_);
+      }
+      // create the new object display and wire it to the data source
+      if (type == OBJECT_LIST_VIEW)
+      {
+         objectDisplay_ = new EnvironmentObjectList(this, observer_);
+         objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+      }
+      else if (type == OBJECT_GRID_VIEW)
+      {
+         objectDisplay_ = new EnvironmentObjectGrid(this, observer_);
+         objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+      }
+
+      objectDisplayType_ = type;
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
+      updateCategoryLeaders(false);
+      objectDataProvider_.addDataDisplay(objectDisplay_);
+
+      objectDisplay_.getScrollPanel().addScrollHandler(new ScrollHandler()
+      {
+         @Override
+         public void onScroll(ScrollEvent event)
+         {
+            if (useStatePersistence())
+            {
+               deferredScrollPosition_ = getScrollPosition();
+               observer_.setPersistedScrollPosition(deferredScrollPosition_);
+            }
+         }
+      });
+
+      objectDisplay_.setEmptyTableWidget(buildEmptyGridMessage());
+      objectDisplay_.addStyleName(style.objectGrid());
+      objectDisplay_.addStyleName(style.environmentPanel());
+      splitPanel.add(objectDisplay_);
    }
 
    // CallFramePanelHost implementation ---------------------------------------
@@ -318,6 +329,68 @@ public class EnvironmentObjects extends ResizeComposite
    {
       splitPanel.setWidgetSize(callFramePanel_, callFramePanelHeight_);
       callFramePanel_.onResize();
+   }
+
+   // EnvironmentObjectsDisplay.Host implementation ---------------------------
+
+   @Override
+   public boolean enableClickableObjects()
+   {
+      return contextDepth_ < 2;
+   }
+   
+   // we currently only set and/or get persisted state at the root context
+   // level.
+   @Override
+   public boolean useStatePersistence()
+   {
+      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
+   }
+   
+   @Override
+   public String getFilterText()
+   {
+      return filterText_;
+   }
+   
+   @Override
+   public int getSortColumn()
+   {
+      return objectSort_.getSortColumn();
+   }
+   
+   @Override
+   public void setSortColumn(int col)
+   {
+      objectSort_.setSortColumn(col);
+      observer_.setViewDirty();
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+   
+   @Override
+   public void toggleAscendingSort()
+   {
+      setAscendingSort(!objectSort_.getAscending());
+   }
+   
+   @Override
+   public boolean getAscendingSort()
+   {
+      return objectSort_.getAscending();
+   }
+   
+   public void setAscendingSort(boolean ascending)
+   {
+      objectSort_.setAscending(ascending);
+      observer_.setViewDirty();
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+   
+   public void setSort(int column, boolean ascending)
+   {
+      objectSort_.setSortColumn(column);
+      objectSort_.setAscending(ascending);
+      Collections.sort(objectDataProvider_.getList(), objectSort_);
    }
 
    // Private methods: object management --------------------------------------
@@ -347,13 +420,12 @@ public class EnvironmentObjects extends ResizeComposite
    private int indexOfNewObject(RObjectEntry obj)
    {
       List<RObjectEntry> objects = objectDataProvider_.getList();
-      RObjectEntrySort sort = new RObjectEntrySort();
       int numObjects = objects.size();
       int idx;
       // consider: can we use binary search here?
       for (idx = 0; idx < numObjects; idx++)
       {
-         if (sort.compare(obj, objects.get(idx)) < 0)
+         if (objectSort_.compare(obj, objects.get(idx)) < 0)
          {
             break;
          }
@@ -364,6 +436,11 @@ public class EnvironmentObjects extends ResizeComposite
    // after adds or removes, we need to tag the new category-leading objects
    private void updateCategoryLeaders(boolean redrawUpdatedRows)
    {
+      // no need to do these model updates if we're not in the mode that 
+      // displays them
+      if (objectDisplayType_ != OBJECT_LIST_VIEW)
+         return;
+      
       List<RObjectEntry> objects = objectDataProvider_.getList();
 
       // whether or not we've found a leader for each category
@@ -407,196 +484,21 @@ public class EnvironmentObjects extends ResizeComposite
          if (leader != entry.isCategoryLeader
              && redrawUpdatedRows)
          {
-            objectList_.redrawRow(i);
+            objectDisplay_.redrawRow(i);
          }
       }
-   }
-
-   // Private methods: DataGrid setup -----------------------------------------
-
-   // create each column for the data grid
-   private void createColumns()
-   {
-      AbstractSafeHtmlRenderer<String> filterRenderer = 
-            new AbstractSafeHtmlRenderer<String>()
-      {
-         @Override
-         public SafeHtml render(String str)
-         {
-            SafeHtmlBuilder sb = new SafeHtmlBuilder();
-            boolean hasMatch = false;
-            if (filterText_.length() > 0)
-            {
-               int idx = str.toLowerCase().indexOf(filterText_);
-               if (idx >= 0)
-               {
-                  hasMatch = true;
-                  sb.appendEscaped(str.substring(0, idx));
-                  sb.appendHtmlConstant(
-                        "<span class=\"" + style.filterMatch() + "\">");
-                  sb.appendEscaped(str.substring(idx, 
-                        idx + filterText_.length()));
-                  sb.appendHtmlConstant("</span>");
-                  sb.appendEscaped(str.substring(idx + filterText_.length(), 
-                        str.length()));
-               }
-            }
-            if (!hasMatch)
-               sb.appendEscaped(str);
-            return sb.toSafeHtml();
-         }
-      };
-      createExpandColumn();
-      createNameColumn(filterRenderer);
-      createDescriptionColumn(filterRenderer);
-   }
-
-   // attaches a handler to a column that invokes the associated object
-   private void attachClickToInvoke(Column<RObjectEntry, String> column)
-   {
-      column.setFieldUpdater(new FieldUpdater<RObjectEntry, String>()
-      {
-         @Override
-         public void update(int index, RObjectEntry object, String value)
-         {
-            if (object.getCategory() == RObjectEntry.Categories.Data &&
-                enableClickableObjects())
-            {
-               observer_.viewObject(object.rObject.getName());
-            }
-         }
-      });
-   }
-
-   private void createNameColumn(SafeHtmlRenderer<String> renderer)
-   {
-      // the name of the object (simple text column)
-      objectNameColumn_ = new Column<RObjectEntry, String>(
-              new ClickableTextCell(renderer))
-              {
-                  @Override
-                  public String getValue(RObjectEntry object)
-                  {
-                     return object.rObject.getName();
-                  }
-              };
-      attachClickToInvoke(objectNameColumn_);
-   }
-
-   private void createDescriptionColumn(SafeHtmlRenderer<String> renderer)
-   {
-      // the description *or* value of the object; when clicked, we'll view
-      // or edit the data inside the object.
-      objectDescriptionColumn_ = new Column<RObjectEntry, String>(
-              new ClickableTextCell(renderer))
-              {
-                  @Override
-                  public String getValue(RObjectEntry object)
-                  {
-                     String val = object.rObject.getValue();
-                     return val == RObjectEntry.NO_VALUE ?
-                            object.rObject.getDescription() :
-                            val;
-                  }
-              };
-      attachClickToInvoke(objectDescriptionColumn_);
-   }
-
-   private void createExpandColumn()
-   {
-      // the column containing the expand command; available only on objects
-      // with contents (such as lists and data frames).
-      SafeHtmlRenderer<String> expanderRenderer =
-         new AbstractSafeHtmlRenderer<String>()
-         {
-            @Override
-            public SafeHtml render(String object)
-            {
-               SafeHtmlBuilder sb = new SafeHtmlBuilder();
-               sb.appendHtmlConstant(object);
-               return sb.toSafeHtml();
-            }
-         };
-      objectExpandColumn_ = new Column<RObjectEntry, String>(
-         new ClickableTextCell(expanderRenderer))
-         {
-            @Override
-            public String getValue(RObjectEntry object)
-            {
-               String imageUri = "";
-               String imageStyle = style.expandIcon();
-               if (object.canExpand())
-               {
-                  ImageResource expandImage = object.expanded ?
-                      EnvironmentResources.INSTANCE.collapseIcon() :
-                      EnvironmentResources.INSTANCE.expandIcon();
-
-                  imageUri = expandImage.getSafeUri().asString();
-               }
-               else if (object.hasTraceInfo())
-               {
-                  imageUri = EnvironmentResources.INSTANCE
-                        .tracedFunction().getSafeUri().asString();
-                  imageStyle += (" " + style.unclickableIcon());
-               }
-               if (imageUri.length() > 0)
-               {
-                  return "<input type=\"image\" src=\"" + imageUri + "\" " +
-                         "class=\"" + imageStyle + "\" />";                        
-               }
-               return "";
-            }
-         };
-      objectExpandColumn_.setFieldUpdater(
-              new FieldUpdater<RObjectEntry, String>()
-              {
-                 @Override
-                 public void update(int index,
-                                    RObjectEntry object,
-                                    String value)
-                 {
-                    if (object.canExpand())
-                    {
-                       object.expanded = !object.expanded;
-                       // tell the observer this happened, so it can persist
-                       // the state
-                       if (useStatePersistence())
-                       {
-                          if (object.expanded)
-                          {
-                             observer_.setObjectExpanded(object.rObject
-                                                                 .getName());
-                          }
-                          else
-                          {
-                             observer_.setObjectCollapsed(object.rObject
-                                                                  .getName());
-                          }
-                       }
-                       objectList_.redrawRow(index);
-                    }
-                 }
-              });
    }
 
    private Widget buildEmptyGridMessage()
    {
       HTMLPanel messagePanel = new HTMLPanel("");
       messagePanel.setStyleName(style.emptyEnvironmentPanel());
-      environmentName_ = new Label("");
-      environmentName_.setStyleName(style.emptyEnvironmentName());
-      environmentEmptyMessage_ = new Label(EMPTY_GLOBAL_ENVIRONMENT_MESSAGE);
+      environmentEmptyMessage_ = new Label(EMPTY_ENVIRONMENT_MESSAGE);
       environmentEmptyMessage_.setStyleName(style.emptyEnvironmentMessage());
-      messagePanel.add(environmentName_);
       messagePanel.add(environmentEmptyMessage_);
       return messagePanel;
    }
 
-   private boolean enableClickableObjects()
-   {
-      return contextDepth_ < 2;
-   }
-   
    private void autoSizeCallFramePanel()
    {
       // after setting the frames, resize the call frame panel to neatly 
@@ -623,7 +525,7 @@ public class EnvironmentObjects extends ResizeComposite
          splitPanel.setWidgetSize(
                callFramePanel_, desiredCallFramePanelSize);
          callFramePanel_.onResize();
-         objectList_.onResize();
+         objectDisplay_.onResize();
       }
       
       pendingCallFramePanelSize_ = false;
@@ -654,27 +556,20 @@ public class EnvironmentObjects extends ResizeComposite
                          deferredExpandedObjects_.get(idxExpanded))
                      {
                         objects.get(idxObj).expanded = true;
-                        objectList_.redrawRow(idxObj);
+                        objectDisplay_.redrawRow(idxObj);
                      }
                   }
                }
             }
 
             // set the cached scroll position
-            objectList_.getScrollPanel().setVerticalScrollPosition(
+            objectDisplay_.getScrollPanel().setVerticalScrollPosition(
                     deferredScrollPosition_);
 
          }
       });
    }
 
-   // we currently only set and/or get persisted state at the root context
-   // level.
-   private boolean useStatePersistence()
-   {
-      return contextDepth_ == 0;
-   }
-   
    private boolean matchesFilter(RObject obj)
    {
       if (filterText_.isEmpty())
@@ -687,200 +582,34 @@ public class EnvironmentObjects extends ResizeComposite
    {
       return new RObjectEntry(obj, matchesFilter(obj));
    }
-
-   // Private nested classes --------------------------------------------------
-
-   // builds individual rows of the object table
-   private class EnvironmentObjectTableBuilder
-           extends AbstractCellTableBuilder<RObjectEntry>
-   {
-      public EnvironmentObjectTableBuilder()
-      {
-         super(objectList_);
-      }
-
-      // (re)build the given row
-      public void buildRowImpl(RObjectEntry rowValue, int absRowIndex)
-      {
-         // build nothing for invisible rows
-         if (!rowValue.visible)
-            return;
-         
-         // build the header for the row (if any)
-         buildRowHeader(rowValue, absRowIndex);
-
-         TableRowBuilder row = startRow();
-
-         if (rowValue.getCategory() == RObjectEntry.Categories.Data)
-         {
-            row.className(ThemeStyles.INSTANCE.environmentDataFrameRow());
-         }
-
-         // build the columns
-         buildExpandColumn(rowValue, row);
-         buildNameColumn(rowValue, row);
-         buildDescriptionColumn(rowValue, row);
-
-         row.endTR();
-
-         // if the row is expanded, draw its content
-         if (rowValue.expanded)
-         {
-            buildExpandedContentRow(rowValue);
-         }
-      }
-
-      private void buildExpandColumn(RObjectEntry rowValue, TableRowBuilder row)
-      {
-         TableCellBuilder expandCol = row.startTD();
-         expandCol.className(style.expandCol());
-         renderCell(expandCol, createContext(0), objectExpandColumn_, rowValue);
-         expandCol.endTD();
-      }
-
-      private void buildNameColumn(RObjectEntry rowValue, TableRowBuilder row)
-      {
-         TableCellBuilder nameCol = row.startTD();
-         String styleName = style.nameCol();
-         if (rowValue.getCategory() == Categories.Data &&
-             enableClickableObjects())
-         {
-            styleName += (" " + style.clickableCol());
-         }
-         String size = rowValue.rObject.getSize() > 0 ?
-                              ", " + rowValue.rObject.getSize() + " bytes" :
-                              "";
-         nameCol.className(styleName);
-         nameCol.title(
-                 rowValue.rObject.getName() +
-                 " (" + rowValue.rObject.getType() + size + ")");
-         renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
-         nameCol.endTD();
-      }
-
-      private void buildDescriptionColumn(RObjectEntry rowValue,
-                                          TableRowBuilder row)
-      {
-         // build the column containing the description of the object
-         TableCellBuilder descCol = row.startTD();
-         String title = rowValue.rObject.getValue();
-         if ((!title.equals(RObjectEntry.NO_VALUE)) &&
-             title != null)
-         {
-            if (rowValue.isPromise())
-            {
-               title += " (unevaluated promise)";
-            }
-            descCol.title(title);
-         }
-         String descriptionStyle = style.valueCol();
-         if (rowValue.isPromise())
-         {
-            descriptionStyle += (" " + style.unevaluatedPromise());
-         }
-         else if (rowValue.getCategory() == RObjectEntry.Categories.Data &&
-             enableClickableObjects())
-         {
-            descriptionStyle += (" " +
-                                 style.dataFrameValueCol() + " " +
-                                 style.clickableCol());
-         }
-         descCol.className(descriptionStyle);
-         renderCell(descCol, createContext(2), objectDescriptionColumn_, rowValue);
-         descCol.endTD();
-      }
-
-      private void buildRowHeader(RObjectEntry rowValue, int absRowIndex)
-      {
-         // if building the first row, we need to add a dummy row to the top.
-         // since the grid uses a fixed table layout, the first row sets the
-         // column widths, so we can't let the first row be a spanning header.
-         if (rowValue.isFirstObject)
-         {
-            TableRowBuilder widthSettingRow = startRow().className(
-                    style.widthSettingRow());
-            widthSettingRow.startTD().className(style.expandCol()).endTD();
-            widthSettingRow.startTD().className(style.nameCol()).endTD();
-            widthSettingRow.startTD().className(style.valueCol()).endTD();
-            widthSettingRow.endTR();
-         }
-
-         // if this row is the first of its category, draw the category header
-         if (rowValue.isCategoryLeader)
-         {
-            String categoryTitle;
-            switch (rowValue.getCategory())
-            {
-               case RObjectEntry.Categories.Data:
-                  categoryTitle = "Data";
-                  break;
-               case RObjectEntry.Categories.Function:
-                  categoryTitle = "Functions";
-                  break;
-               default:
-                  categoryTitle = "Values";
-                  break;
-            }
-            TableRowBuilder leaderRow = startRow().className(
-                    style.categoryHeaderRow());
-            TableCellBuilder objectHeader = leaderRow.startTD();
-            objectHeader.colSpan(3)
-                    .className(style.categoryHeaderText())
-                    .text(categoryTitle)
-                    .endTD();
-            leaderRow.endTR();
-         }
-      }
-
-      // draw additional rows when the row has been expanded
-      private void buildExpandedContentRow(RObjectEntry rowValue)
-      {
-         JsArrayString contents = rowValue.rObject.getContents();
-
-         for (int idx = 0; idx < contents.length(); idx++)
-         {
-            TableRowBuilder detail = startRow().className(style.detailRow());
-            detail.startTD().endTD();
-            TableCellBuilder objectDetail = detail.startTD();
-            String content = contents.get(idx);
-            // ignore the first two characters of output
-            // ("$ value:" becomes "value:")
-            content = content.substring(2, content.length()).trim();
-            objectDetail.colSpan(2)
-                    .title(content)
-                    .text(content)
-                    .endTD();
-            detail.endTR();
-         }
-      }
-   }
-
-   private final static String EMPTY_GLOBAL_ENVIRONMENT_MESSAGE =
-           "Global environment is empty";
+   
+   private final static String EMPTY_ENVIRONMENT_MESSAGE =
+           "Environment is empty";
    private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
            "Function environment is empty";
+
+   public static final int OBJECT_LIST_VIEW = 0;
+   public static final int OBJECT_GRID_VIEW = 1;
 
    @UiField EnvironmentStyle style;
    @UiField AutoHidingSplitLayoutPanel splitPanel;
 
-   ScrollingDataGrid<RObjectEntry> objectList_;
+   EnvironmentObjectDisplay objectDisplay_;
    CallFramePanel callFramePanel_;
-   Label environmentName_;
    Label environmentEmptyMessage_;
 
-   private Column<RObjectEntry, String> objectExpandColumn_;
-   private Column<RObjectEntry, String> objectNameColumn_;
-   private Column<RObjectEntry, String> objectDescriptionColumn_;
    private ListDataProvider<RObjectEntry> objectDataProvider_;
+   private RObjectEntrySort objectSort_;
 
-   private Observer observer_;
+   private EnvironmentObjectsObserver observer_;
    private int contextDepth_;
    private int callFramePanelHeight_;
+   private int objectDisplayType_ = OBJECT_LIST_VIEW;
    private String filterText_ = ""; 
+   private String environmentName_;
 
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
-
 }

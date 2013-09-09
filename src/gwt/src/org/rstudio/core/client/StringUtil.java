@@ -65,10 +65,7 @@ public class StringUtil
    {
       if (size < 1024)
       {
-         if (size == 1)
-            return size + " byte";
-         else
-            return size + " bytes";
+         return size + " B";
       }
 
       int i = Arrays.binarySearch(SIZES, size);

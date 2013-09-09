@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -444,7 +445,7 @@ public class ClientEventDispatcher
             eventBus_.fireEvent(new UiPrefsChangedEvent(data));
          }
          else if (type.equals(ClientEvent.ContextDepthChanged)) {
-            ContextDepthChangedEvent.ContextData data = event.getData();
+            EnvironmentContextData data = event.getData();
             eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
