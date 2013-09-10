@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -66,8 +67,8 @@ import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentO
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
@@ -76,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNaviga
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileHandler
@@ -89,18 +91,25 @@ public class EnvironmentPresenter extends BasePresenter
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
+      void clearSelection();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
       void setEnvironmentName(String name);
       void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
+      void setObjectDisplayType(int type);
+      int getObjectDisplayType();
+      int getSortColumn();
+      boolean getAscendingSort();
+      void setSort(int sortColumn, boolean sortAscending);
       void setExpandedObjects(JsArrayString objects);
       String[] getExpandedObjects();
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
       void setBrowserRange(DebugFilePosition filePosition);
+      List<String> getSelectedObjects();
    }
    
    @Inject
@@ -135,6 +144,7 @@ public class EnvironmentPresenter extends BasePresenter
       currentBrowsePosition_ = null;
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
+      session_ = session;
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -153,7 +163,7 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             loadNewContextState(event.getContextDepth(), 
-                  event.getFunctionName(),
+                  event.getEnvironmentName(),
                   event.getCallFrames(),
                   event.useProvidedSource(),
                   event.getFunctionCode());
@@ -197,8 +207,8 @@ public class EnvironmentPresenter extends BasePresenter
       });
       
       new JSObjectStateValue(
-              "environment-pane",
-              "environmentPaneState",
+              "environment-panel",
+              "environmentPanelSettings",
               ClientState.TEMPORARY,
               session.getSessionInfo().getClientState(),
               false)
@@ -211,6 +221,8 @@ public class EnvironmentPresenter extends BasePresenter
                EnvironmentClientState clientState = value.cast();
                view_.setScrollPosition(clientState.getScrollPosition());
                view_.setExpandedObjects(clientState.getExpandedObjects());
+               view_.setSort(clientState.getSortColumn(), 
+                             clientState.getAscendingSort());
             }
          }
 
@@ -221,7 +233,9 @@ public class EnvironmentPresenter extends BasePresenter
             // our state is clean until the user makes more changes.
             view_.setClientStateClean();
             return EnvironmentClientState.create(view_.getScrollPosition(),
-                                                 view_.getExpandedObjects())
+                                                 view_.getExpandedObjects(),
+                                                 view_.getSortColumn(),
+                                                 view_.getAscendingSort())
                                          .cast();
          }
 
@@ -229,6 +243,28 @@ public class EnvironmentPresenter extends BasePresenter
          protected boolean hasChanged()
          {
             return view_.clientStateDirty();
+         }
+      };
+      
+      // Store the object display type more permanently than the other 
+      // client state settings; it's likely to be a user preference. 
+      new IntStateValue(
+              "environment-grid",
+              "objectDisplayType",
+              ClientState.PERSISTENT,
+              session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value != null)
+               view_.setObjectDisplayType(value);
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return view_.getObjectDisplayType();
          }
       };
    }
@@ -242,22 +278,44 @@ public class EnvironmentPresenter extends BasePresenter
    void onClearWorkspace()
    {
       view_.bringToFront();
+      final List<String> objectNames = view_.getSelectedObjects();
 
-      new ClearAllDialog(new ProgressOperationWithInput<Boolean>() {
+      new ClearAllDialog(objectNames.size(), 
+                         new ProgressOperationWithInput<Boolean>() {
 
          @Override
          public void execute(Boolean includeHidden, ProgressIndicator indicator)
          {
             indicator.onProgress("Removing objects...");
-            server_.removeAllObjects(
-                    includeHidden,
-                    new VoidServerRequestCallback(indicator) {
-                        @Override
-                        public void onSuccess()
-                        {
-                           view_.clearObjects();
-                        }
-                    });
+            if (objectNames.size() == 0)
+            {
+               server_.removeAllObjects(
+                       includeHidden,
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              view_.clearSelection();
+                              view_.clearObjects();
+                           }
+                       });
+            }
+            else
+            {
+               server_.removeObjects(
+                       objectNames, 
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              view_.clearSelection();
+                              for (String obj: objectNames)
+                              {
+                                 view_.removeObject(obj);
+                              }
+                           }
+                       });
+            }
          }
       }).showModal();
    }
@@ -363,11 +421,13 @@ public class EnvironmentPresenter extends BasePresenter
    {
       super.onBeforeSelected();
 
-      // if the view isn't yet initialized, refresh it to get the initial list
-      // of objects in the environment
+      // if the view isn't yet initialized, initialize it with the list of 
+      // objects in the environment
       if (!initialized_)
       {
-         refreshView();
+         setViewFromEnvironmentList(
+            session_.getSessionInfo().getEnvironmentState().environmentList());
+         initialized_ = true;
       }
    }
 
@@ -384,13 +444,15 @@ public class EnvironmentPresenter extends BasePresenter
       }
    }
 
-   public void initialize(EnvironmentState environmentState)
+   public void initialize(EnvironmentContextData environmentState)
    {
       loadNewContextState(environmentState.contextDepth(),
-            environmentState.functionName(),
+            environmentState.environmentName(),
             environmentState.callFrames(),
-            environmentState.getUseProvidedSource(),
-            environmentState.getFunctionCode());
+            environmentState.useProvidedSource(),
+            environmentState.functionCode());
+      setViewFromEnvironmentList(environmentState.environmentList());
+      initialized_ = true;
    }
    
    public void setContextDepth(int contextDepth)
@@ -424,7 +486,8 @@ public class EnvironmentPresenter extends BasePresenter
       environmentName_ = environmentName;
       view_.setEnvironmentName(environmentName_);
       if (callFrames != null && 
-          callFrames.length() > 0)
+          callFrames.length() > 0 &&
+          contextDepth > 0)
       {
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
@@ -566,16 +629,17 @@ public class EnvironmentPresenter extends BasePresenter
       // start showing the progress spinner and initiate the request
       view_.setProgress(true);
       refreshingView_ = true;
-      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
+      server_.getEnvironmentState(
+            new ServerRequestCallback<EnvironmentContextData>()
       {
 
          @Override
-         public void onResponseReceived(JsArray<RObject> objects)
+         public void onResponseReceived(EnvironmentContextData data)
          {
-            setViewFromEnvironmentList(objects);
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
 
          @Override
@@ -674,6 +738,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final EventBus eventBus_;
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
+   private final Session session_;
    
    private int contextDepth_;
    private boolean refreshingView_;

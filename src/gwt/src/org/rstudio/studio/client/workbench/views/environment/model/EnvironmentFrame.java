@@ -1,5 +1,5 @@
 /*
- * EnvironmentState.java
+ * EnvironmentFrame.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -16,31 +16,16 @@
 package org.rstudio.studio.client.workbench.views.environment.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class EnvironmentState extends JavaScriptObject
+public class EnvironmentFrame extends JavaScriptObject
 {
-   protected EnvironmentState()
-   {
-   }
+   protected EnvironmentFrame() { }
    
-   public final native int contextDepth() /*-{
-      return this.context_depth;
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
 
-   public final native String functionName() /*-{
-      return this.function_name;
-   }-*/;
-
-   public final native JsArray<CallFrame> callFrames() /*-{
-      return this.call_frames;
-   }-*/;
-   
-   public final native boolean getUseProvidedSource() /*-{
-      return this.use_provided_source;
-   }-*/;
-   
-   public final native String getFunctionCode() /*-{
-      return this.function_code;
+   public final native int getFrame() /*-{
+      return this.frame;
    }-*/;
 }

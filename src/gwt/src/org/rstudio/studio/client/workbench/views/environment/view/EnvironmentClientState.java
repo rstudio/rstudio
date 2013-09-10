@@ -26,18 +26,30 @@ public class EnvironmentClientState extends JavaScriptObject
 
    public static final native EnvironmentClientState create(
            int scrollPosition,
-           String[] expandedObjects) /*-{
+           String[] expandedObjects, 
+           int sortColumn,
+           boolean ascendingSort) /*-{
        var options = new Object();
        options.scroll_position = scrollPosition;
        options.expanded_objects = expandedObjects;
-       return options ;
+       options.sort_column = sortColumn;
+       options.ascending_sort = ascendingSort;
+       return options;
    }-*/;
 
    public final native int getScrollPosition() /*-{
-       return this.scroll_position;
+      return this.scroll_position;
    }-*/;
 
    public final native JsArrayString getExpandedObjects() /*-{
-       return this.expanded_objects ? this.expanded_objects : [];
+      return this.expanded_objects ? this.expanded_objects : [];
+   }-*/;
+   
+   public final native int getSortColumn() /*-{
+      return this.sort_column;
+   }-*/;
+
+   public final native boolean getAscendingSort() /*-{
+      return this.ascending_sort;
    }-*/;
 }

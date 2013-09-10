@@ -16,6 +16,9 @@ package org.rstudio.studio.client.application;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.BaseExpression;
@@ -31,6 +34,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 /**
@@ -49,6 +53,7 @@ public class DesktopHooks
                        EventBus events,
                        Session session,
                        GlobalDisplay globalDisplay,
+                       Provider<UIPrefs> pUIPrefs,
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
@@ -58,6 +63,7 @@ public class DesktopHooks
       events_ = events;
       session_ = session;
       globalDisplay_ = globalDisplay;
+      pUIPrefs_ = pUIPrefs;
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
@@ -94,6 +100,24 @@ public class DesktopHooks
          return workbenchContext_.getActiveProjectDir().getPath();
       else
          return "";
+   }
+   
+   boolean getCheckForUpdates()
+   {
+      // adding late in the cycle of v0.98 so defend against any 
+      // order of initialization problems
+      // TODO: remove the try/catch once we get on the v0.99 branch
+      try
+      {
+         return !session_.getSessionInfo().getDisableCheckForUpdates() &&
+                pUIPrefs_.get().checkForUpdates().getValue();
+      }
+      catch(Throwable e)
+      {
+         Debug.logToConsole("Error reading check for updates status: " +
+                            e.getMessage());
+         return false;
+      }
    }
 
    void invokeCommand(String cmdId)
@@ -173,6 +197,7 @@ public class DesktopHooks
    private final EventBus events_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
+   private final Provider<UIPrefs> pUIPrefs_;
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;

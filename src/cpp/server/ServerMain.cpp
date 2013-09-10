@@ -333,10 +333,9 @@ int main(int argc, char * const argv[])
       const char * const kProgramIdentity = "rserver";
       initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
 
-      // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
-      if (error)
-         LOG_ERROR(error);
+      // ignore SIGPIPE (don't log error because we should never call
+      // syslog prior to daemonizing)
+      core::system::ignoreSignal(core::system::SigPipe);
 
       // read program options 
       Options& options = server::options();
@@ -379,7 +378,7 @@ int main(int argc, char * const argv[])
       }
 
       // set working directory
-      error = FilePath(options.serverWorkingDir()).makeCurrentPath();
+      Error error = FilePath(options.serverWorkingDir()).makeCurrentPath();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

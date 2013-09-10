@@ -92,7 +92,7 @@
    # create a more friendly description for delay-loaded data
    if (substr(description, 1, 16) == "lazyLoadDBfetch(")
    {
-      description <- "Data (not yet loaded)"
+      description <- "<Promise>"
    }
    return (description)
 })
@@ -175,7 +175,7 @@
       }
       else if (is.environment(obj))
       {
-         return(paste("Environment with ", length(obj), " object(s) "))
+         return("Environment")
       }
       else if (isS4(obj))
       {
@@ -253,12 +253,6 @@
 })
 
 
-.rs.addJsonRpcHandler("remove_all_objects", function(includeHidden)
-{
-   env = globalenv()
-   rm(list=ls(envir=env, all.names=includeHidden), envir=env)
-})
-
 .rs.addFunction("getSingleClass", function(obj)
 {
    className <- "(unknown)"
@@ -301,11 +295,11 @@
          desc <- .rs.valueDescription(obj)
 
          # expandable object--supply contents 
-         if (class == "data.frame" ||
-             class == "data.table" ||
-             class == "list" ||
+         if (class == "data.table" ||
              class == "cast_df" ||
              class == "xts" ||
+             is.list(obj) || 
+             is.data.frame(obj) ||
              isS4(obj))
          {
             contents <- .rs.valueContents(obj)
@@ -320,5 +314,69 @@
       size = .rs.scalar(size),
       length = .rs.scalar(length(obj)),
       contents = contents)
+})
+
+.rs.addFunction("environmentList", function(startEnv)
+{
+   env <- startEnv
+   envs <- list()
+   # if starting above the global environment, the environments will be
+   # unnamed. to provide sensible names for them, look for a matching frame in
+   # the callstack.
+   if (!identical(env, globalenv()))
+   {
+      calls <- sys.calls()
+      numCalls <- length(calls)
+      while (!identical(env, globalenv()) &&
+             !identical(env, emptyenv()))
+      {
+         found <- FALSE
+         for (i in 1:numCalls)
+         {
+            if (identical(sys.frame(i), env))
+            {
+               calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
+               envs[[length(envs)+1]] <- 
+                              list(name = .rs.scalar(calldesc),
+                                   frame = .rs.scalar(i))
+               found <- TRUE
+               break
+            }
+         }
+         if (!found)
+         {
+            envs <- c(envs, "unknown")
+         }
+         env <- parent.env(env)
+      }
+   }
+   # we're now at the global environment; proceed normally through the rest of
+   # the search path.
+   while (!identical(env, emptyenv()))
+   {
+      envName <- environmentName(env)
+      # hide the RStudio internal tools environment and the autoloads
+      # environment
+      if (envName != "tools:rstudio" &&
+          envName != "Autoloads")
+      {
+         envs[[length(envs)+1]] <-
+                        list (name = .rs.scalar(envName),
+                              frame = .rs.scalar(0L))
+      }
+      env <- parent.env(env)
+   }
+   envs
+})
+
+
+.rs.addFunction("removeObjects", function(objNames, env)
+{
+   remove(list=unlist(objNames), envir=env)
+})
+
+.rs.addFunction("removeAllObjects", function(includeHidden, env)
+{
+   rm(list=ls(envir=env, all.names=includeHidden), envir=env)
 })
 

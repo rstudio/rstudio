@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
@@ -51,6 +52,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  UIPrefs prefs,
+                                 Session session,
                                  final GlobalDisplay globalDisplay,
                                  SourceServerOperations server)
    {
@@ -181,7 +183,16 @@ public class GeneralPreferencesPane extends PreferencesPane
       textBoxWithChooser(encoding_);
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
-            
+      
+      // provide check for updates option in desktop mode when not
+      // already globally disabled
+      if (Desktop.isDesktop() && 
+          !session.getSessionInfo().getDisableCheckForUpdates())
+      {
+         add(checkboxPref("Automatically notify me of updates to RStudio",
+                          prefs_.checkForUpdates()));
+      }
+      
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);

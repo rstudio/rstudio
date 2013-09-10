@@ -998,7 +998,7 @@ body.ubuntu_mono .searchBox {
    cursor: pointer;
 }
 
-@sprite tr.environmentDataFrameRow td+td {
+@sprite td.environmentDataFrameCol {
    gwt-image: 'zoomDataset';
    background-position: right center; 
 }
