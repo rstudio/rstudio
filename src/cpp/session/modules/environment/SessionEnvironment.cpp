@@ -123,18 +123,25 @@ RCNTXT* getFunctionContext(const int depth,
                            SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   RCNTXT* pSrcContext = pRContext;
    int currentDepth = 0;
    while (pRContext->callflag)
    {
-      if (isPrintableContext(pRContext))
+      if (isDebugHiddenContext(pRContext))
+      {
+          pSrcContext = pRContext->nextcontext;
+      }
+      else if (isPrintableContext(pRContext))
       {
          // if the caller asked us to find user code, don't stop unless the
          // context we're examining has a source file attached
          if (++currentDepth >= depth &&
-             !(findUserCode && !hasSourceRefs(pRContext)))
+             !(findUserCode && (pSrcContext->srcref == NULL ||
+                                TYPEOF(pSrcContext->srcref) == NILSXP)))
          {
              break;
          }
+         pSrcContext = pRContext;
       }
       pRContext = pRContext->nextcontext;
    }
@@ -195,8 +202,19 @@ bool insideDebugHiddenFunction()
 Error functionNameFromContext(const RCNTXT* pContext,
                               std::string* pFunctionName)
 {
-   return r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
-                            .call(pFunctionName);
+   SEXP functionName;
+   r::sexp::Protect protect;
+   Error error = r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
+                            .call(&functionName, &protect);
+   if (!error && r::sexp::length(functionName) > 0)
+   {
+      return r::sexp::extract(functionName, pFunctionName);
+   }
+   else
+   {
+      pFunctionName->clear();
+   }
+   return error;
 }
 
 json::Array callFramesAsJson()
@@ -603,7 +621,8 @@ void initEnvironmentMonitoring()
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, false, &contextDepth);
-   if (contextDepth == 0)
+   if (contextDepth == 0 ||
+       !inBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
@@ -656,6 +675,10 @@ json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, true, &contextDepth);
+   // If there's no browser on the stack, stay at the top level even if
+   // there are functions on the stack--this is not a user debug session.
+   if (!inBrowseContext())
+      contextDepth = 0;
    return commonEnvironmentStateData(contextDepth);
 }
 

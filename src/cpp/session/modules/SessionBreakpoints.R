@@ -110,7 +110,13 @@
 
   for (idx in 1:length(funBody))
   {
-    if (is.null(funBody[[idx]]) || is.pairlist(funBody[[idx]])) next
+    # check to see if this is one of the several types of objects we can't do
+    # equality testing for. Note that these object types are all leaf nodes in
+    # the parse tree, so it's safe to stop recursion here.
+    if (is.null(funBody[[idx]]) || 
+        identical(funBody[[idx]], NA) || 
+        is.pairlist(funBody[[idx]])) 
+       next
 
     # if this expression was replaced by trace(), copy the source references
     # from the original expression over each expression injected by trace()
