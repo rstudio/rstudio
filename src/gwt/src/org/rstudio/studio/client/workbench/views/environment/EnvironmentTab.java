@@ -25,7 +25,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import com.google.inject.Inject;
 
 public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
@@ -47,7 +47,7 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
       @Handler
       public abstract void onClearWorkspace();
 
-      abstract void initialize(EnvironmentState environmentState);
+      abstract void initialize(EnvironmentContextData environmentState);
    }
 
    @Inject
@@ -66,7 +66,7 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
          
          public void onSessionInit(SessionInitEvent sie)
          {
-            EnvironmentState environmentState = 
+            EnvironmentContextData environmentState = 
                   session_.getSessionInfo().getEnvironmentState();
             shim.initialize(environmentState);
          }

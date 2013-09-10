@@ -32,7 +32,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
-import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,7 +48,7 @@ public class CallFramePanel extends ResizeComposite
       void restoreCallFramePanel();
    }
    
-   public CallFramePanel(Observer observer, CallFramePanelHost panelHost)
+   public CallFramePanel(EnvironmentObjectsObserver observer, CallFramePanelHost panelHost)
    {
       final ThemeStyles globalStyles = ThemeResources.INSTANCE.themeStyles();
       panelHost_ = panelHost;
@@ -166,7 +165,7 @@ public class CallFramePanel extends ResizeComposite
    @UiField CallFramePanelStyle style;
    @UiField LayoutPanel callFramePanelHeader;
    
-   Observer observer_;
+   EnvironmentObjectsObserver observer_;
    CallFramePanelHost panelHost_;
    ArrayList<CallFrameItem> callFrameItems_;
    boolean isMinimized_ = false;

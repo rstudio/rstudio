@@ -70,7 +70,10 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 } // anonymous namespace
 
 EnvironmentMonitor::EnvironmentMonitor() :
-   initialized_(false)
+   environment_(NULL),
+   initialized_(false),
+   refreshOnInit_(false),
+   firstInit_(true)
 {}
 
 void EnvironmentMonitor::enqueRemovedEvent(const r::sexp::Variable& variable)
@@ -89,18 +92,25 @@ void EnvironmentMonitor::enqueAssignedEvent(const r::sexp::Variable& variable)
    module_context::enqueClientEvent(assignedEvent);
 }
 
-void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment)
+void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment,
+                                                 bool refresh)
 {
    environment_.set(pEnvironment);
 
    // init the environment by doing an initial check for changes
    initialized_ = false;
+   refreshOnInit_ = refresh;
    checkForChanges();
 }
 
 SEXP EnvironmentMonitor::getMonitoredEnvironment()
 {
    return environment_.get();
+}
+
+bool EnvironmentMonitor::hasEnvironment()
+{
+   return getMonitoredEnvironment() != NULL;
 }
 
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
@@ -135,12 +145,25 @@ void EnvironmentMonitor::checkForChanges()
    bool refreshEnqueued = false;
    if (!initialized_)
    {
-      if (getMonitoredEnvironment() == R_GlobalEnv)
+      if (refreshOnInit_ ||
+          getMonitoredEnvironment() == R_GlobalEnv)
       {
-         enqueRefreshEvent();
+         if (firstInit_)
+         {
+            // On the first initialization of the environment monitor, the
+            // refresh (initial list) is built in to the initial environment
+            // state (see environmentStateAsJson in SessionEnvironment.cpp),
+            // so the client already has it and we don't need to re-emit.
+            firstInit_ = false;
+         }
+         else
+         {
+            enqueRefreshEvent();
+         }
          refreshEnqueued = true;
       }
       initialized_ = true;
+      refreshOnInit_ = false;
    }
    else
    {
@@ -216,7 +239,6 @@ void EnvironmentMonitor::checkForChanges()
    unevaledPromises_ = currentPromises;
    lastEnv_ = currentEnv;
 }
-
 
 } // namespace environment
 } // namespace modules

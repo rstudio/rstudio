@@ -115,7 +115,7 @@ public interface ThemeStyles extends CssResource
    String sessionAbendMessage();
    String applicationHeaderStrong();
           
-   String environmentDataFrameRow();
+   String environmentDataFrameCol();
 
    String odd();
    

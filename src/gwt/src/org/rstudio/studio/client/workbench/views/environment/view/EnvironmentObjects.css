@@ -18,12 +18,7 @@
 {
    height: 100%;
    width: 100%;
-}
-
-.objectGrid table,
-.objectGrid td
-{
-   border-collapse: collapse;
+   cursor: default;
 }
 
 .objectGrid td:focus
@@ -100,11 +95,6 @@
 {
    text-align: center;
    margin-top: 30%;
-}
-
-.emptyEnvironmentName
-{
-   font-size: 110%;
 }
 
 .emptyEnvironmentMessage

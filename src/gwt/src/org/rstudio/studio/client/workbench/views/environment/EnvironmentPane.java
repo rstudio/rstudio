@@ -15,48 +15,64 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SuggestOracle;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
+import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import java.util.ArrayList;
-
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjects.Observer
+                                        EnvironmentObjectsObserver,
+                                        PackageStatusChangedHandler,
+                                        ContextDepthChangedEvent.Handler,
+                                        RestartStatusEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
-                          EnvironmentServerOperations serverOperations)
+                          EnvironmentServerOperations serverOperations,
+                          Session session)
    {
       super("Environment");
       
@@ -68,8 +84,16 @@ public class EnvironmentPane extends WorkbenchPane
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
+      environments_ = 
+            session.getSessionInfo().getEnvironmentState().environments();
+      environmentName_ = 
+            session.getSessionInfo().getEnvironmentState().environmentName();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+      
+      eventBus_.addHandler(PackageStatusChangedEvent.TYPE, this);
+      eventBus_.addHandler(ContextDepthChangedEvent.TYPE, this);
+      eventBus_.addHandler(RestartStatusEvent.TYPE, this);
 
       ensureWidget();
    }
@@ -79,21 +103,41 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      environmentName_ = new Label(GLOBAL_ENVIRONMENT_NAME);
-      environmentName_.setStyleName(
-              EnvironmentPaneResources.INSTANCE
-                      .environmentPaneStyle()
-                      .environmentNameLabel());
-      functionIndicator_ = new Image(
-            StandardIcons.INSTANCE.function());
-      functionIndicator_.setVisible(false);
-
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(createImportMenu());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
+      
+      ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
+      menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
+      viewButton_ = new ToolbarButton(
+            nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            menu);
+      toolbar.addRightWidget(viewButton_);
 
+      return toolbar;
+   }
+
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar();
+      
+      environmentMenu_ = new ToolbarPopupMenu();
+      rebuildEnvironmentMenu();
+      environmentButton_ = new ToolbarButton(
+            friendlyEnvironmentName(),
+            imageOfEnvironment(environmentName_),
+            environmentMenu_);
+      toolbar.addLeftWidget(environmentButton_);
+      
       SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -112,12 +156,7 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.clearWorkspace().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.refreshEnvironment().createToolbarButton());
-      toolbar.addRightWidget(functionIndicator_);
-      toolbar.addRightWidget(environmentName_);
+      searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
       toolbar.addRightWidget(searchWidget);
 
       return toolbar;
@@ -160,12 +199,9 @@ public class EnvironmentPane extends WorkbenchPane
       Boolean commandsEnabled = contextDepth == 0;
       commands_.loadWorkspace().setEnabled(commandsEnabled);
       commands_.saveWorkspace().setEnabled(commandsEnabled);
-      commands_.clearWorkspace().setEnabled(commandsEnabled);
       commands_.importDatasetFromFile().setEnabled(commandsEnabled);
       commands_.importDatasetFromURL().setEnabled(commandsEnabled);
       dataImportButton_.setEnabled(commandsEnabled);
-
-      functionIndicator_.setVisible(contextDepth > 0);
    }
 
    @Override
@@ -180,8 +216,15 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void setEnvironmentName(String environmentName)
    {
-      environmentName_.setText(environmentName);
-      objects_.setEnvironmentName(environmentName);
+      environmentName_ = environmentName;
+      environmentButton_.setText(friendlyEnvironmentName());
+      environmentButton_.setLeftImage(imageOfEnvironment(environmentName));
+      objects_.setEnvironmentName(friendlyEnvironmentName());
+      if (environmentName.startsWith("package:") ||
+          environmentName.equals("base"))
+         commands_.clearWorkspace().setEnabled(false);
+      else
+         commands_.clearWorkspace().setEnabled(true); 
    }
 
    @Override
@@ -220,6 +263,18 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
+   public List<String> getSelectedObjects()
+   {
+      return objects_.getSelectedObjects();
+   }
+
+   @Override
+   public void clearSelection()
+   {
+      objects_.clearSelection();
+   }
+
+   @Override
    public void changeContextDepth(int newDepth)
    {
       server_.setContextDepth(newDepth, new ServerRequestCallback<Void>()
@@ -254,6 +309,67 @@ public class EnvironmentPane extends WorkbenchPane
       objects_.updateLineNumber(range.getLine());
    }
 
+   @Override
+   public void setObjectDisplayType(int type)
+   {
+      viewButton_.setText(nameOfViewType(type));
+      viewButton_.setLeftImage(imageOfViewType(type));
+      objects_.setObjectDisplay(type);
+   }
+   
+   @Override
+   public int getObjectDisplayType()
+   {
+      return objects_.getObjectDisplay();
+   }
+   
+   @Override
+   public int getSortColumn()
+   {
+      return objects_.getSortColumn();
+   }
+
+   @Override
+   public boolean getAscendingSort()
+   {
+      return objects_.getAscendingSort();
+   }
+
+   @Override
+   public void setSort(int sortColumn, boolean sortAscending)
+   {
+      objects_.setSort(sortColumn, sortAscending);
+   }
+
+   @Override
+   public void setViewDirty()
+   {
+      isClientStateDirty_ = true;
+   }
+
+   // Event handlers ----------------------------------------------------------
+
+   @Override
+   public void onPackageStatusChanged(PackageStatusChangedEvent event)
+   {
+      refreshEnvironments();
+   }
+
+   @Override
+   public void onContextDepthChanged(ContextDepthChangedEvent event)
+   {
+      setEnvironments(event.getEnvironments());
+   }
+
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      {
+         refreshEnvironments();
+      }
+   }
+
    // EnviromentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
@@ -278,7 +394,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       executeFunctionForObject("View", objectName);
    }
-
+   
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)
@@ -301,18 +417,160 @@ public class EnvironmentPane extends WorkbenchPane
       return dataImportButton_;
 
    }
+   
+   private String friendlyEnvironmentName()
+   {
+      return friendlyNameOfEnvironment(environmentName_);
+   }
+   
+   private String friendlyNameOfEnvironment(String name)
+   {
+      if (name.equals("R_GlobalEnv"))
+         return GLOBAL_ENVIRONMENT_NAME;
+      else if (name.equals("base"))
+         return "package:base";
+      else 
+         return name;
+   }
+   
+   private ImageResource imageOfEnvironment(String name)
+   {
+      if (name.endsWith("()"))
+         return EnvironmentResources.INSTANCE.functionEnvironment();
+      else if (name.equals("R_GlobalEnv"))
+         return EnvironmentResources.INSTANCE.globalEnvironment();
+      else if (name.startsWith("package:") ||
+               name.equals("base"))
+         return EnvironmentResources.INSTANCE.packageEnvironment();
+      else 
+         return EnvironmentResources.INSTANCE.attachedEnvironment();
+   }
+   
+   private void setEnvironments(JsArray<EnvironmentFrame> environments)
+   {
+      environments_ = environments;
+      rebuildEnvironmentMenu();
+   }
+   
+   private void rebuildEnvironmentMenu()
+   {
+      environmentMenu_.clearItems();
+      for (int i = 0; i < environments_.length(); i++)
+      {
+         final EnvironmentFrame frame = environments_.get(i);
+         ImageResource img = imageOfEnvironment(frame.getName());
+         environmentMenu_.addItem(ImageMenuItem.create(img, 
+                  friendlyNameOfEnvironment(frame.getName()), 
+                  new Scheduler.ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        loadEnvironmentFrame(frame);
+                     }
+                  }));
+      }
+   }
+   
+   // Called to load a new environment into the environment pane. 
+   private void loadEnvironmentFrame(final EnvironmentFrame frame)
+   {
+      ServerRequestCallback<Void> callback = new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            setEnvironmentName(frame.getName());
+         }
 
-   public final static String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
+         @Override
+         public void onError(ServerError error)
+         {
+            
+         }
+      };
+      // If the frame's an active call frame, set it by its index 
+      if (frame.getFrame() > 0)
+         server_.setEnvironmentFrame(frame.getFrame(), callback);
+      // Otherwise, set it by its name
+      else
+         server_.setEnvironment(frame.getName(), callback);
+   }
+   
+   // Called when we need to refresh the environment list--package attach/
+   // detach, restart R, etc. 
+   private void refreshEnvironments()
+   {
+      // When a package is attached or detached, get the new list of 
+      // environments from the server. We can't do this in the attach/detach
+      // event itself since R runs the detach before actually removing the
+      // environment from the search path. 
+      server_.getEnvironmentNames(
+            new ServerRequestCallback<JsArray<EnvironmentFrame>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<EnvironmentFrame> response)
+               {
+                  setEnvironments(response);
+               }
+      
+               @Override
+               public void onError(ServerError error)
+               {
+                  // Just live with a stale environment list
+               }
+            });
+   }
+   
+   private String nameOfViewType(int type)
+   {
+      if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
+         return "List";
+      else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
+         return "Grid";
+      return "";
+   }
+   
+   private ImageResource imageOfViewType(int type)
+   {
+      if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
+         return EnvironmentResources.INSTANCE.objectListView();
+      else if (type == EnvironmentObjects.OBJECT_GRID_VIEW)
+         return EnvironmentResources.INSTANCE.objectGridView();
+      return null;
+   }
+   
+   private MenuItem createViewMenuItem(final int type)
+   {
+      return ImageMenuItem.create(
+            imageOfViewType(type),
+            nameOfViewType(type),
+            new Scheduler.ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  setObjectDisplayType(type);
+               }
+            });
+   }
+   
+   public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
+
+   private final Commands commands_;
+   private final EventBus eventBus_;
+   private final GlobalDisplay globalDisplay_;
+   private final EnvironmentServerOperations server_;
 
    private ToolbarButton dataImportButton_;
-   private Label environmentName_;
-   private Image functionIndicator_;
+   private ToolbarPopupMenu environmentMenu_;
+   private ToolbarButton environmentButton_;
+   private ToolbarButton viewButton_;
    private EnvironmentObjects objects_;
-   private Commands commands_;
-   private EventBus eventBus_;
-   private GlobalDisplay globalDisplay_;
-   private EnvironmentServerOperations server_;
+
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
+   private JsArray<EnvironmentFrame> environments_;
+   private String environmentName_;
 }
