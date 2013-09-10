@@ -62,6 +62,10 @@ public class StatusCodeException extends InvocationException {
 
   /**
    * Returns the status code associated with the failed request.
+   * <p>
+   * The value will be 0 if the request failed (e.g. network error, or the
+   * server <a href="http://www.w3.org/TR/cors">disallowed the request</a>) or
+   * has been aborted (this will generally be the case when leaving the page).
    */
   public int getStatusCode() {
     return statusCode;

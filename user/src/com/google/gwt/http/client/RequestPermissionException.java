@@ -20,13 +20,19 @@ package com.google.gwt.http.client;
  * to a URL which violates the <a
  * href="http://en.wikipedia.org/wiki/Same_origin_policy">Same-Origin Security
  * Policy</a>.
+ * <p>
+ * Note: this exception will only be thrown by browsers that do not support
+ * <a href="http://www.w3.org/TR/cors">CORS</a>, i.e. Internet Explorer up to
+ * version 9. All other browsers will instead return a
+ * {@link Response#getStatusCode() status code} of 0. Internet Explorer can
+ * also be configured to allow such cross-origin requests without error and
+ * without using CORS.
  * 
  * <h3>Required Module</h3>
  * Modules that use this class should inherit
  * <code>com.google.gwt.http.HTTP</code>.
  * 
  * {@gwt.include com/google/gwt/examples/http/InheritsExample.gwt.xml}
- * 
  */
 public class RequestPermissionException extends RequestException {
 

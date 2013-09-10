@@ -96,8 +96,12 @@ public abstract class Response {
 
   /**
    * Returns the HTTP status code that is part of this response.
+   * <p>
+   * The value will be 0 if the request failed (e.g. network error, or the
+   * server <a href="http://www.w3.org/TR/cors">disallowed the request</a>) or
+   * has been aborted (this will generally be the case when leaving the page).
    * 
-   * @return the HTTP status code
+   * @return the HTTP status code or 0
    */
   public abstract int getStatusCode();
 
