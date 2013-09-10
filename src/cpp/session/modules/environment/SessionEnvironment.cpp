@@ -621,7 +621,8 @@ void initEnvironmentMonitoring()
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, false, &contextDepth);
-   if (contextDepth == 0)
+   if (contextDepth == 0 ||
+       !inBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to
       // begin monitoring.
@@ -674,6 +675,10 @@ json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
    getFunctionContext(TOP_FUNCTION, true, &contextDepth);
+   // If there's no browser on the stack, stay at the top level even if
+   // there are functions on the stack--this is not a user debug session.
+   if (!inBrowseContext())
+      contextDepth = 0;
    return commonEnvironmentStateData(contextDepth);
 }
 
