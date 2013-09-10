@@ -499,11 +499,6 @@ json::Object commonEnvironmentStateData(int depth)
       varJson["environment_name"] = environmentName;
    }
 
-   // list the environment stack at this context depth
-   varJson["environments"] = environmentNames(depth > 0 ?
-               s_environmentMonitor.getMonitoredEnvironment() :
-               R_GlobalEnv);
-
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
    // above; the client may be aware of local/unsaved changes to the function,
@@ -608,10 +603,16 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 }
 
-Error getEnvironmentNames(const json::JsonRpcRequest& request,
+Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
+                          const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(environmentNames(R_GlobalEnv));
+   // If looking at a non-toplevel context, start from there; otherwise, start
+   // from the global environment.
+   SEXP env = *pContextDepth > 0 ?
+                  s_environmentMonitor.getMonitoredEnvironment() :
+                  R_GlobalEnv;
+   pResponse->setResult(environmentNames(env));
    return Success();
 }
 
@@ -703,6 +704,8 @@ Error initialize()
          boost::bind(setContextDepth, pContextDepth, _1, _2);
    json::JsonRpcFunction getEnv =
          boost::bind(getEnvironmentState, pContextDepth, _1, _2);
+   json::JsonRpcFunction getEnvNames =
+         boost::bind(getEnvironmentNames, pContextDepth, _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -713,7 +716,7 @@ Error initialize()
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
       (bind(registerRpcMethod, "set_environment", setEnvironment))
       (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
-      (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
+      (bind(registerRpcMethod, "get_environment_names", getEnvNames))
       (bind(registerRpcMethod, "remove_objects", removeObjects))
       (bind(registerRpcMethod, "remove_all_objects", removeAllObjects))
       (bind(registerRpcMethod, "get_environment_state", getEnv))
