@@ -83,6 +83,11 @@ public abstract class EnvironmentObjectDisplay
    
    public abstract List<String> getSelectedObjects();
    public abstract void clearSelection();
+
+   public void setEnvironmentName(String environmentName)
+   {
+      environmentName_ = environmentName;
+   }
    
    // attaches a handler to a column that invokes the associated object
    protected void attachClickToInvoke(Column<RObjectEntry, String> column)
@@ -100,9 +105,20 @@ public abstract class EnvironmentObjectDisplay
          }
       });
    }
+   
+   protected boolean selectionEnabled()
+   {
+      if (environmentName_.equals("base") ||
+          environmentName_.startsWith("package:"))
+      {
+         return false;
+      }
+      return true;
+   }
 
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;
    protected EnvironmentObjectsObserver observer_;
    protected Host host_;
    protected EnvironmentStyle environmentStyle_;
+   protected String environmentName_ = "";
 }

@@ -214,6 +214,7 @@ public class EnvironmentObjects extends ResizeComposite
                                        EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
                                        EMPTY_ENVIRONMENT_MESSAGE);
       environmentName_ = environmentName;
+      objectDisplay_.setEnvironmentName(environmentName);
    }
 
    public int getScrollPosition()

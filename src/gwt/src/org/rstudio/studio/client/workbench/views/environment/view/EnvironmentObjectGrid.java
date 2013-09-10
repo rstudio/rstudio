@@ -115,40 +115,61 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       setSelectAll(false);
       redrawHeaders();
    }
+   
+   @Override
+   public void setEnvironmentName(String environmentName)
+   {
+      // When the environment changes, we need to redraw the headers to 
+      // (possibly) adjust for the presence or absence of the selection
+      // column.
+      super.setEnvironmentName(environmentName);
+      if (columns_.size() > 0) 
+      {
+         columns_.get(0).setWidth(selectionEnabled() ? 20 : 25);
+      }
+      redrawHeaders();
+   }
+   
+   // Private methods ---------------------------------------------------------
 
    private void createColumns()
    {
-      checkColumn_ = new Column<RObjectEntry, Boolean>(
-            new CheckboxCell(false, false))
-            {
-               @Override
-               public Boolean getValue(RObjectEntry value)
+      if (selectionEnabled())
+      {
+         checkColumn_ = new Column<RObjectEntry, Boolean>(
+               new CheckboxCell(false, false))
                {
-                  return selection_.isSelected(value); 
-               }
-            };
-      addColumn(checkColumn_);
-      checkHeader_ = new Header<Boolean>(new CheckboxCell())
-      {
-         @Override
-         public Boolean getValue()
+                  @Override
+                  public Boolean getValue(RObjectEntry value)
+                  {
+                     return selection_.isSelected(value); 
+                  }
+               };
+         addColumn(checkColumn_);
+         checkHeader_ = new Header<Boolean>(new CheckboxCell())
          {
-            return selectAll_;
-         }
-      };
-      checkHeader_.setUpdater(new ValueUpdater<Boolean>()
-      {
-         @Override
-         public void update(Boolean value)
-         {
-            if (selectAll_ != value)
+            @Override
+            public Boolean getValue()
             {
-               setSelectAll(value);
+               return selectAll_;
             }
-         }
-      });
+         };
+         checkHeader_.setUpdater(new ValueUpdater<Boolean>()
+         {
+            @Override
+            public void update(Boolean value)
+            {
+               if (selectAll_ != value)
+               {
+                  setSelectAll(value);
+               }
+            }
+         });
+      }
+
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_),  "Name", 20, 
+              new ClickableTextCell(filterRenderer_), "Name", 
+              selectionEnabled() ? 20 : 25,
               ObjectGridColumn.COLUMN_NAME, host_)
               {
                   @Override
@@ -236,13 +257,17 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          // Render the "select all" checkbox header cell
          TableRowBuilder row = startRow();
-         TableCellBuilder selectAll = row.startTH();
-         selectAll.className(style_.objectGridHeader() + " " +
-                             style_.checkColumn());
-         selectAll.style().width(5, Unit.PCT);
-         renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
-         selectAll.end();
-
+         
+         if (selectionEnabled())
+         {
+            TableCellBuilder selectAll = row.startTH();
+            selectAll.className(style_.objectGridHeader() + " " +
+                                style_.checkColumn());
+            selectAll.style().width(5, Unit.PCT);
+            renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
+            selectAll.end();
+         }
+   
          // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
@@ -280,11 +305,14 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
          TableRowBuilder row = startRow();
 
-         TableCellBuilder check = row.startTD();
-         check.className(style_.checkColumn());
-         check.style().width(5, Unit.PCT);
-         renderCell(check, createContext(0), checkColumn_, rowValue);
-         check.endTD();
+         if (selectionEnabled())
+         {
+            TableCellBuilder check = row.startTD();
+            check.className(style_.checkColumn());
+            check.style().width(5, Unit.PCT);
+            renderCell(check, createContext(0), checkColumn_, rowValue);
+            check.endTD();
+         }
 
          for (int i = 0; i < columns_.size(); i++)
          {
