@@ -486,7 +486,8 @@ public class EnvironmentPresenter extends BasePresenter
       environmentName_ = environmentName;
       view_.setEnvironmentName(environmentName_);
       if (callFrames != null && 
-          callFrames.length() > 0)
+          callFrames.length() > 0 &&
+          contextDepth > 0)
       {
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
