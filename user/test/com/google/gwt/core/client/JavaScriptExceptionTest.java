@@ -54,6 +54,10 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     throw e;
   }-*/;
 
+  private static native void throwTypeError(Object e) /*-{
+    e.notExistsWillThrowTypeError();
+  }-*/;
+
   private static void throwSandwichJava(Object e) {
     throwNative(e);
   }
@@ -111,25 +115,10 @@ public class JavaScriptExceptionTest extends GWTTestCase {
       assertDescription(e, "myDescription");
       assertTrue(e.isThrownSet());
       assertSame(jso, e.getThrown());
-      assertTrue(e.getMessage().contains("myName"));
-      assertTrue(e.getMessage().contains(e.getDescription()));
-      if (extraPropertiesShouldBePresent) {
-        assertTrue(
-            "message does not contain 'extraField', but should: "
-                + e.getMessage(), e.getMessage().contains("extraField"));
-        assertTrue(
-            "message does not contain 'extraData', but should:"
-                + e.getMessage(), e.getMessage().contains("extraData"));
-      } else {
-        assertFalse(
-            "message contains 'extraField', but shouldn't: " + e.getMessage(),
-            e.getMessage().contains("extraField"));
-        // CHECKSTYLE_OFF
-        assertFalse(
-            "message contains 'extraData', but shouldn't:" + e.getMessage(),
-            e.getMessage().contains("extraData"));
-        // CHECKSTYLE_ON
-      }
+      assertMessage(e, "myName", true /* should always contain */);
+      assertMessage(e, "extraData", extraPropertiesShouldBePresent);
+      assertMessage(e, "extraField", extraPropertiesShouldBePresent);
+      assertMessage(e, "__gwt$exception: <skipped>", extraPropertiesShouldBePresent);
     }
   }
 
@@ -320,6 +309,25 @@ public class JavaScriptExceptionTest extends GWTTestCase {
     }
   }
 
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testTypeError() {
+    try {
+      throwTypeError("myobj");
+      fail();
+    } catch (JavaScriptException e) {
+      assertTypeError(e);
+      e = (JavaScriptException) javaNativeJavaSandwich(e);
+      assertTypeError(e);
+    }
+  }
+
+  private static void assertTypeError(JavaScriptException e) {
+    assertEquals("TypeError", e.getName());
+    assertTrue(e.getDescription().contains("notExistsWillThrowTypeError"));
+    assertTrue(e.isThrownSet());
+    assertTrue(e.getMessage().contains(e.getDescription()));
+  }
+
   private static void assertDescription(JavaScriptException e, String description) {
     if (!GWT.isScript()) {
       assertTrue("Should start with method name",
@@ -327,7 +335,18 @@ public class JavaScriptExceptionTest extends GWTTestCase {
               "@com.google.gwt.core.client.JavaScriptExceptionTest::"
                   + "throwNative(Ljava/lang/Object;)"));
     }
-    assertTrue("Should end with " + description,
+    assertTrue("Should end with " + e.getDescription(),
         e.getDescription().endsWith(description));
+  }
+
+  private static void assertMessage(JavaScriptException e, String partOfMessage, boolean contains) {
+    String msg = e.getMessage();
+    if (contains) {
+      assertTrue("message contains '" + partOfMessage + "', but shouldn't: " + msg,
+          msg.contains(partOfMessage));
+    } else {
+      assertFalse("message does not contain '" + partOfMessage + "', but should: " + msg,
+          msg.contains(partOfMessage));
+    }
   }
 }

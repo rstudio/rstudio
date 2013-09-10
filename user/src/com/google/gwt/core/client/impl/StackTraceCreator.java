@@ -103,7 +103,8 @@ public class StackTraceCreator {
         for (var prop in e) {
           if (prop != "name" && prop != "message" && prop != "toString") {
             try {
-              result += "\n " + prop + ": " + e[prop];
+              var propValue = (prop != "__gwt$exception") ? e[prop] : "<skipped>";
+              result += "\n " + prop + ": " + propValue;
             } catch (ignored) {
               // Skip the property if it threw an exception.
             }
