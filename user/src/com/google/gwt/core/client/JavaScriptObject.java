@@ -35,6 +35,17 @@ public class JavaScriptObject {
   }-*/;
 
   /**
+   * Returns a new array with a given size.
+   *
+   * <p>Consider using this method in performance critical code instead of using
+   * {@link #createArray()}, since this gives more hints to the underlying
+   * JavaScript VM for optimizations.
+   */
+  public static native JavaScriptObject createArray(int size) /*-{
+    return new Array(size);
+  }-*/;
+
+  /**
    * Returns an empty function.
    */
   public static native JavaScriptObject createFunction() /*-{

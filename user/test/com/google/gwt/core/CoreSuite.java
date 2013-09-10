@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWTTest;
 import com.google.gwt.core.client.GwtServletBaseTest;
 import com.google.gwt.core.client.HttpThrowableReporterTest;
 import com.google.gwt.core.client.JavaScriptExceptionTest;
+import com.google.gwt.core.client.JavaScriptObjectTest;
 import com.google.gwt.core.client.JsArrayMixedTest;
 import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.core.client.JsIdentityTest;
@@ -47,6 +48,7 @@ public class CoreSuite {
     suite.addTestSuite(GWTTest.class);
     suite.addTestSuite(HttpThrowableReporterTest.class);
     suite.addTestSuite(JavaScriptExceptionTest.class);
+    suite.addTestSuite(JavaScriptObjectTest.class);
     suite.addTestSuite(JsIdentityTest.class);
     suite.addTestSuite(JsArrayTest.class);
     suite.addTestSuite(JsArrayMixedTest.class);
