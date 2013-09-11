@@ -43,7 +43,7 @@ else()
       # ask R for the home path
       if(NOT LIBR_HOME)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home())"
+            COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
                       OUTPUT_VARIABLE LIBR_HOME
          )
          if(LIBR_HOME)
