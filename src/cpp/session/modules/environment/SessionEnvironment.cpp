@@ -343,8 +343,13 @@ Error setEnvironmentName(std::string environmentName)
    else
    {
       r::sexp::Protect protect;
-      Error error = r::exec::RFunction("as.environment", environmentName)
-               .call(&environment, &protect);
+      // This would be better wrapped in an R function, but this code may
+      // run during session init when tools:rstudio isn't yet attached to the
+      // search path.
+      std::string eval = "as.environment(\"";
+      eval += environmentName;
+      eval += "\")";
+      Error error = r::exec::evaluateString(eval, &environment, &protect);
       if (error)
       {
          s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
@@ -643,7 +648,14 @@ void initEnvironmentMonitoring()
       std::string envName = persistentState().activeEnvironmentName();
       if (!envName.empty())
       {
-         setEnvironmentName(envName);
+         // It's possible for this to fail if the environment we were
+         // monitoring doesn't exist any more. If this is the case, reset
+         // the monitor to the global environment.
+         Error error = setEnvironmentName(envName);
+         if (error)
+         {
+            persistentState().setActiveEnvironmentName("R_GlobalEnv");
+         }
       }
    }
 }

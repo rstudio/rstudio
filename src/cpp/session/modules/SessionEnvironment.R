@@ -383,7 +383,6 @@
    envs
 })
 
-
 .rs.addFunction("removeObjects", function(objNames, env)
 {
    remove(list=unlist(objNames), envir=env)
