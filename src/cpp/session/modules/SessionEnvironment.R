@@ -316,6 +316,38 @@
       contents = contents)
 })
 
+# returns the name and frame number of an environment from a call frame
+.rs.addFunction("environmentCallFrameName", function(env)
+{
+   numCalls <- length(sys.calls())
+   result <- list()
+   for (i in 1:numCalls)
+   {
+      if (identical(sys.frame(i), env))
+      {
+         calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
+         result <- list(name = .rs.scalar(calldesc), frame = .rs.scalar(i))
+         break
+      }
+   }
+   if (identical(result, list()))
+      list(name = "unknown", frame = 0)
+   else
+      result
+})
+
+.rs.addFunction("environmentName", function(env)
+{
+   # look for the environment's given name; if it doesn't have a name, check
+   # the callstack to see if it matches the environment in one of the call 
+   # frames.
+   result <- environmentName(env)
+   if (nchar(result) == 0)
+      .rs.environmentCallFrameName(env)$name
+   else
+      result
+})
+
 .rs.addFunction("environmentList", function(startEnv)
 {
    env <- startEnv
@@ -325,28 +357,10 @@
    # the callstack.
    if (!identical(env, globalenv()))
    {
-      calls <- sys.calls()
-      numCalls <- length(calls)
       while (!identical(env, globalenv()) &&
              !identical(env, emptyenv()))
       {
-         found <- FALSE
-         for (i in 1:numCalls)
-         {
-            if (identical(sys.frame(i), env))
-            {
-               calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
-               envs[[length(envs)+1]] <- 
-                              list(name = .rs.scalar(calldesc),
-                                   frame = .rs.scalar(i))
-               found <- TRUE
-               break
-            }
-         }
-         if (!found)
-         {
-            envs <- c(envs, "unknown")
-         }
+         envs[[length(envs)+1]] <- .rs.environmentCallFrameName(env)
          env <- parent.env(env)
       }
    }

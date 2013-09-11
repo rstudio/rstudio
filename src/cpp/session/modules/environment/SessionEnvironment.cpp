@@ -454,6 +454,7 @@ json::Object commonEnvironmentStateData(int depth)
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
+   bool inFunctionEnvironment = false;
 
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson();
@@ -471,11 +472,19 @@ json::Object commonEnvironmentStateData(int depth)
          LOG_ERROR(error);
       }
       varJson["function_name"] = functionName;
-      varJson["environment_name"] = functionName + "()";
+
+      // If the environment currently monitored is the function's environment,
+      // return that environment
+      if (s_environmentMonitor.getMonitoredEnvironment() ==
+          pContext->cloenv)
+      {
+         varJson["environment_name"] = functionName + "()";
+         inFunctionEnvironment = true;
+      }
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
-      if ((pContext))
+      if (pContext)
       {
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
@@ -485,12 +494,15 @@ json::Object commonEnvironmentStateData(int depth)
    else
    {
       varJson["function_name"] = "";
+   }
 
+   if (!inFunctionEnvironment)
+   {
       // emit the name of the environment we're currently working with
       std::string environmentName;
       if (s_environmentMonitor.hasEnvironment())
       {
-         Error error = r::exec::RFunction("environmentName",
+         Error error = r::exec::RFunction(".rs.environmentName",
                                     s_environmentMonitor.getMonitoredEnvironment())
                                     .call(&environmentName);
          if (error)
@@ -604,13 +616,14 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 }
 
 Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
+                          boost::shared_ptr<RCNTXT*> pCurrentContext,
                           const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
    // If looking at a non-toplevel context, start from there; otherwise, start
    // from the global environment.
    SEXP env = *pContextDepth > 0 ?
-                  s_environmentMonitor.getMonitoredEnvironment() :
+                  (*pCurrentContext)->cloenv :
                   R_GlobalEnv;
    pResponse->setResult(environmentNames(env));
    return Success();
@@ -705,7 +718,8 @@ Error initialize()
    json::JsonRpcFunction getEnv =
          boost::bind(getEnvironmentState, pContextDepth, _1, _2);
    json::JsonRpcFunction getEnvNames =
-         boost::bind(getEnvironmentNames, pContextDepth, _1, _2);
+         boost::bind(getEnvironmentNames, pContextDepth, pCurrentContext,
+                     _1, _2);
 
    initEnvironmentMonitoring();
 
