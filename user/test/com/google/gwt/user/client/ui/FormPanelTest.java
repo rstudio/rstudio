@@ -314,8 +314,8 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
         // Attempt to wrap it, requesting that an iframe be created.
         FormPanel.wrap(container.getFirstChildElement(), true);
         fail("Assertion expected wrapping a form with the target set");
-      } catch (Throwable e) {
-        // ok.
+      } catch (AssertionError e) {
+        assertTrue(e.getMessage().contains("target is already set"));
       }
     }
   }

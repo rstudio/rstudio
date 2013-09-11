@@ -77,7 +77,7 @@ public class JsArrayTest extends GWTTestCase {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     }
 
@@ -104,7 +104,7 @@ public class JsArrayTest extends GWTTestCase {
       try {
         jsArray.get(3);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     }
 
@@ -121,7 +121,7 @@ public class JsArrayTest extends GWTTestCase {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     } else {
       // Keep the length of the array sane for the remainer of the test
@@ -158,7 +158,7 @@ public class JsArrayTest extends GWTTestCase {
       try {
         jsArray.get(3);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     }
 
@@ -175,7 +175,7 @@ public class JsArrayTest extends GWTTestCase {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     } else {
       // Keep the length of the array sane for the remainer of the test
@@ -212,7 +212,7 @@ public class JsArrayTest extends GWTTestCase {
       try {
         jsArray.get(3);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     }
 
@@ -229,7 +229,7 @@ public class JsArrayTest extends GWTTestCase {
         jsArray.<JsArrayString> cast().set(4, "bubba");
         jsArray.get(4);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     } else {
       // Keep the length of the array sane for the remainer of the test
@@ -280,7 +280,7 @@ public class JsArrayTest extends GWTTestCase {
         jsArray.<JsArrayBoolean> cast().set(4, true);
         jsArray.get(4);
         fail("Expected an exception getting an invalid value in Development Mode");
-      } catch (Throwable e) {
+      } catch (Exception e) {
       }
     } else {
       // Keep the length of the array sane for the remainer of the test
