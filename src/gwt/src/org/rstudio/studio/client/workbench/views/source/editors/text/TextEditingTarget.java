@@ -2162,10 +2162,39 @@ public class TextEditingTarget implements EditingTarget
       if (code.length() == 0)
          code = "\n";
       
+      // strip roxygen off the beginning of lines
+      if (isRoxygenExampleRange(range))
+      {
+         code = code.replaceFirst("^#' ", "");
+         code = code.replaceAll("\n#' ", "\n");
+      }
+      
+      // send to console
       events_.fireEvent(new SendToConsoleEvent(
                                   code, 
                                   true, 
                                   prefs_.focusConsoleAfterExec().getValue()));
+   }
+   
+   private boolean isRoxygenExampleRange(Range range)
+   {
+      // scan backwards and look for @example (or other lines of roxygen)
+      int row = range.getStart().getRow();
+      while (--row >= 0)
+      {
+         String line = docDisplay_.getLine(row);
+         
+         // must be within roxygen
+         if (!line.startsWith("#' "))
+            return false;
+         
+         // if we are in an example block return true
+         if (line.matches("^#'\\s+@example"))
+            return true;
+      }
+      
+      // didn't find the example block
+      return false;
    }
 
    private void setLastExecuted(Position start, Position end)
