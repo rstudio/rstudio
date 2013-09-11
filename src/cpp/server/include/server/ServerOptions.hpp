@@ -18,6 +18,7 @@
 
 #include <string>
 #include <map>
+#include <iosfwd>
 
 #include <boost/utility.hpp>
 
@@ -44,7 +45,9 @@ private:
    
 public:
    virtual ~Options() {}
-   core::ProgramStatus read(int argc, char * const argv[]);
+   core::ProgramStatus read(int argc,
+                            char * const argv[],
+                            std::ostream& osWarnings);
    
    bool verifyInstallation() const
    {
@@ -178,7 +181,7 @@ private:
                           boost::program_options::options_description* pAuth,
                           boost::program_options::options_description* pMonitor);
 
-   bool validateOverlayOptions(std::string* pErrMsg);
+   bool validateOverlayOptions(std::string* pErrMsg, std::ostream& osWarnings);
 
    void resolveOverlayOptions();
 
