@@ -221,6 +221,11 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
    
+   @Override
+   public void ensureCursorVisible()
+   {
+   }
+   
    @Override 
    public boolean isAtSourceRow(SourcePosition position)
    {

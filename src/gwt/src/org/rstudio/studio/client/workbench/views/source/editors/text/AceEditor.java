@@ -1374,6 +1374,14 @@ public class AceEditor implements DocDisplay,
       moveCursorNearTop(7);
    }
    
+   @Override
+   public void ensureCursorVisible()
+   {
+      int screenRow = getSession().documentToScreenRow(getCursorPosition());     
+      if (!widget_.getEditor().isRowFullyVisible(screenRow))
+         moveCursorNearTop();
+   }
+   
    public void scrollToBottom()
    { 
       SourcePosition pos = SourcePosition.create(getCurrentLineCount() - 1, 0);

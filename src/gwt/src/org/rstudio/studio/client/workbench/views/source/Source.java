@@ -799,7 +799,10 @@ public class Source implements InsertSourceHandler,
    {
       ensureVisible(false);
       if (activeEditor_ != null)
+      {
          activeEditor_.focus();
+         activeEditor_.ensureCursorVisible();
+      }
    }
 
    @Handler

@@ -458,6 +458,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void ensureCursorVisible()
+   {
+      docDisplay_.ensureCursorVisible();
+   }
+   
+   @Override
    public void forceLineHighlighting()
    {
       docDisplay_.setHighlightSelectedLine(true);
