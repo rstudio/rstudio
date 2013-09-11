@@ -8,6 +8,6 @@
         <classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar" sourcepath="/GWT_TOOLS/lib/tomcat/commons-collections-3.1-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-10.0.1/guava-10.0.1-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-15.0/guava-15.0-rebased.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
