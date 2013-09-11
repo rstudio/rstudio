@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -81,7 +82,6 @@ import java.util.List;
 
 public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileHandler
-
 {
    public interface Binder
            extends CommandBinder<Commands, EnvironmentPresenter> {}
@@ -156,6 +156,19 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
       
+      eventBus.addHandler(RestartStatusEvent.TYPE, 
+                          new RestartStatusEvent.Handler()
+      {
+         @Override
+         public void onRestartStatus(RestartStatusEvent event)
+         {
+            if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+            {
+               refreshView();
+            }
+         }
+      });
+
       eventBus.addHandler(ContextDepthChangedEvent.TYPE, 
                           new ContextDepthChangedEvent.Handler()
       {
