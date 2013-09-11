@@ -30,6 +30,16 @@ import org.rstudio.core.client.command.BaseMenuBar;
 
 public class ToolbarPopupMenu extends ThemedPopupPanel
 {
+   // Extensibility point for dynamically constructed popup menus. The default
+   // implementation returns itself, but extensions can do some work to build
+   // the menu and return the built menu. Callers can use this in combination
+   // with getDynamicPopupMenu() when an up-to-date instance of the object is
+   // required.
+   public interface DynamicPopupMenuCallback
+   {
+      public void onPopupMenu(ToolbarPopupMenu menu);
+   }
+
    public ToolbarPopupMenu()
    {
       super(true);
@@ -104,6 +114,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+
+   public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)
+   {
+      callback.onPopupMenu(this);
    }
 
    private class ToolbarPopupMenuCommand implements ScheduledCommand

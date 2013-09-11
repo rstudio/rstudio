@@ -115,40 +115,61 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       setSelectAll(false);
       redrawHeaders();
    }
+   
+   @Override
+   public void setEnvironmentName(String environmentName)
+   {
+      // When the environment changes, we need to redraw the headers to 
+      // (possibly) adjust for the presence or absence of the selection
+      // column.
+      super.setEnvironmentName(environmentName);
+      if (columns_.size() > 0) 
+      {
+         columns_.get(0).setWidth(selectionEnabled() ? 20 : 25);
+      }
+      setColumnWidths();
+   }
+   
+   // Private methods ---------------------------------------------------------
 
    private void createColumns()
    {
-      checkColumn_ = new Column<RObjectEntry, Boolean>(
-            new CheckboxCell(false, false))
-            {
-               @Override
-               public Boolean getValue(RObjectEntry value)
+      if (selectionEnabled())
+      {
+         checkColumn_ = new Column<RObjectEntry, Boolean>(
+               new CheckboxCell(false, false))
                {
-                  return selection_.isSelected(value); 
-               }
-            };
-      addColumn(checkColumn_);
-      checkHeader_ = new Header<Boolean>(new CheckboxCell())
-      {
-         @Override
-         public Boolean getValue()
+                  @Override
+                  public Boolean getValue(RObjectEntry value)
+                  {
+                     return selection_.isSelected(value); 
+                  }
+               };
+         addColumn(checkColumn_);
+         checkHeader_ = new Header<Boolean>(new CheckboxCell())
          {
-            return selectAll_;
-         }
-      };
-      checkHeader_.setUpdater(new ValueUpdater<Boolean>()
-      {
-         @Override
-         public void update(Boolean value)
-         {
-            if (selectAll_ != value)
+            @Override
+            public Boolean getValue()
             {
-               setSelectAll(value);
+               return selectAll_;
             }
-         }
-      });
+         };
+         checkHeader_.setUpdater(new ValueUpdater<Boolean>()
+         {
+            @Override
+            public void update(Boolean value)
+            {
+               if (selectAll_ != value)
+               {
+                  setSelectAll(value);
+               }
+            }
+         });
+      }
+
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_),  "Name", 20, 
+              new ClickableTextCell(filterRenderer_), "Name", 
+              selectionEnabled() ? 20 : 25,
               ObjectGridColumn.COLUMN_NAME, host_)
               {
                   @Override
@@ -206,6 +227,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          }
          addColumn(column);
       }
+      setColumnWidths();
    }
    
    private void setSelectAll(boolean selected)
@@ -236,20 +258,22 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          // Render the "select all" checkbox header cell
          TableRowBuilder row = startRow();
-         TableCellBuilder selectAll = row.startTH();
-         selectAll.className(style_.objectGridHeader() + " " +
-                             style_.checkColumn());
-         selectAll.style().width(5, Unit.PCT);
-         renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
-         selectAll.end();
-
+         
+         if (selectionEnabled())
+         {
+            TableCellBuilder selectAll = row.startTH();
+            selectAll.className(style_.objectGridHeader() + " " +
+                                style_.checkColumn());
+            renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
+            selectAll.end();
+         }
+   
          // Render a header for each column
          for (int i = 0; i < columns_.size(); i++)
          {
             ObjectGridColumn col = columns_.get(i);
             TableCellBuilder cell = row.startTH();
             cell.className(style_.objectGridHeader());
-            cell.style().width(col.getWidth(), Unit.PCT);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
                   i == host_.getSortColumn(), 
@@ -258,6 +282,27 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          }
          row.end();
          return true;
+      }
+   }
+   
+   private void setColumnWidths()
+   {
+      int start = 0;
+      if (selectionEnabled())
+      {
+         setColumnWidth(start++, "5%");
+      }
+      else
+      {
+         // Clear the width of the last column (it's going to go away entirely 
+         // if we're dropping the selection column). 
+         clearColumnWidth(columns_.size());
+      }
+      for (int i = 0; i < columns_.size(); i++)
+      {
+         setColumnWidth(
+               start + i,
+               new Integer(columns_.get(i).getWidth()).toString() + "%");
       }
    }
 
@@ -280,11 +325,14 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
          TableRowBuilder row = startRow();
 
-         TableCellBuilder check = row.startTD();
-         check.className(style_.checkColumn());
-         check.style().width(5, Unit.PCT);
-         renderCell(check, createContext(0), checkColumn_, rowValue);
-         check.endTD();
+         if (selectionEnabled())
+         {
+            TableCellBuilder check = row.startTD();
+            check.className(style_.checkColumn());
+            check.style().width(5, Unit.PCT);
+            renderCell(check, createContext(0), checkColumn_, rowValue);
+            check.endTD();
+         }
 
          for (int i = 0; i < columns_.size(); i++)
          {
@@ -308,7 +356,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                td.title(rowValue.rObject.getName());
             }
             td.className(className);
-            td.style().width(col.getWidth(), Unit.PCT);
             renderCell(td, createContext(i+1), col, rowValue);
             td.endTD();
          }

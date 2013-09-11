@@ -26,7 +26,6 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
@@ -45,8 +43,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentResources;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
-import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedHandler;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -62,10 +58,7 @@ import com.google.inject.Inject;
 
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjectsObserver,
-                                        PackageStatusChangedHandler,
-                                        ContextDepthChangedEvent.Handler,
-                                        RestartStatusEvent.Handler
+                                        EnvironmentObjectsObserver
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -84,17 +77,12 @@ public class EnvironmentPane extends WorkbenchPane
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
-      environments_ = 
-            session.getSessionInfo().getEnvironmentState().environments();
+      environments_ = null;
       environmentName_ = 
             session.getSessionInfo().getEnvironmentState().environmentName();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
-      eventBus_.addHandler(PackageStatusChangedEvent.TYPE, this);
-      eventBus_.addHandler(ContextDepthChangedEvent.TYPE, this);
-      eventBus_.addHandler(RestartStatusEvent.TYPE, this);
-
       ensureWidget();
    }
 
@@ -130,8 +118,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       SecondaryToolbar toolbar = new SecondaryToolbar();
       
-      environmentMenu_ = new ToolbarPopupMenu();
-      rebuildEnvironmentMenu();
+      environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarButton(
             friendlyEnvironmentName(),
             imageOfEnvironment(environmentName_),
@@ -347,29 +334,6 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   // Event handlers ----------------------------------------------------------
-
-   @Override
-   public void onPackageStatusChanged(PackageStatusChangedEvent event)
-   {
-      refreshEnvironments();
-   }
-
-   @Override
-   public void onContextDepthChanged(ContextDepthChangedEvent event)
-   {
-      setEnvironments(event.getEnvironments());
-   }
-
-   @Override
-   public void onRestartStatus(RestartStatusEvent event)
-   {
-      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-      {
-         refreshEnvironments();
-      }
-   }
-
    // EnviromentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
@@ -455,6 +419,10 @@ public class EnvironmentPane extends WorkbenchPane
    private void rebuildEnvironmentMenu()
    {
       environmentMenu_.clearItems();
+      if (environments_ == null)
+      {
+         return;
+      }
       for (int i = 0; i < environments_.length(); i++)
       {
          final EnvironmentFrame frame = environments_.get(i);
@@ -497,31 +465,6 @@ public class EnvironmentPane extends WorkbenchPane
          server_.setEnvironment(frame.getName(), callback);
    }
    
-   // Called when we need to refresh the environment list--package attach/
-   // detach, restart R, etc. 
-   private void refreshEnvironments()
-   {
-      // When a package is attached or detached, get the new list of 
-      // environments from the server. We can't do this in the attach/detach
-      // event itself since R runs the detach before actually removing the
-      // environment from the search path. 
-      server_.getEnvironmentNames(
-            new ServerRequestCallback<JsArray<EnvironmentFrame>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<EnvironmentFrame> response)
-               {
-                  setEnvironments(response);
-               }
-      
-               @Override
-               public void onError(ServerError error)
-               {
-                  // Just live with a stale environment list
-               }
-            });
-   }
-   
    private String nameOfViewType(int type)
    {
       if (type == EnvironmentObjects.OBJECT_LIST_VIEW)
@@ -553,6 +496,34 @@ public class EnvironmentPane extends WorkbenchPane
                   setObjectDisplayType(type);
                }
             });
+   }
+   
+   // An extension of the toolbar popup menu that gets environment names from
+   // the server when the menu is invoked. 
+   private class EnvironmentPopupMenu extends ToolbarPopupMenu
+   {
+      @Override
+      public void getDynamicPopupMenu 
+         (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+      {
+         server_.getEnvironmentNames(
+               new ServerRequestCallback<JsArray<EnvironmentFrame>>()
+               {
+                  @Override
+                  public void onResponseReceived(JsArray<EnvironmentFrame> response)
+                  {
+                     setEnvironments(response);
+                     callback.onPopupMenu(environmentMenu_);
+                  }
+         
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // Just live with a stale list.
+                     callback.onPopupMenu(environmentMenu_);
+                  }
+               });
+      }
    }
    
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
