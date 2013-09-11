@@ -127,7 +127,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       {
          columns_.get(0).setWidth(selectionEnabled() ? 20 : 25);
       }
-      redrawHeaders();
+      setColumnWidths();
    }
    
    // Private methods ---------------------------------------------------------
@@ -227,6 +227,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          }
          addColumn(column);
       }
+      setColumnWidths();
    }
    
    private void setSelectAll(boolean selected)
@@ -263,7 +264,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             TableCellBuilder selectAll = row.startTH();
             selectAll.className(style_.objectGridHeader() + " " +
                                 style_.checkColumn());
-            selectAll.style().width(5, Unit.PCT);
             renderHeader(selectAll, new Cell.Context(0, 0, null), checkHeader_);
             selectAll.end();
          }
@@ -274,7 +274,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
             ObjectGridColumn col = columns_.get(i);
             TableCellBuilder cell = row.startTH();
             cell.className(style_.objectGridHeader());
-            cell.style().width(col.getWidth(), Unit.PCT);
             Cell.Context context = new Cell.Context(0, i, null);
             renderSortableHeader(cell, context, col.getHeader(), 
                   i == host_.getSortColumn(), 
@@ -283,6 +282,27 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          }
          row.end();
          return true;
+      }
+   }
+   
+   private void setColumnWidths()
+   {
+      int start = 0;
+      if (selectionEnabled())
+      {
+         setColumnWidth(start++, "5%");
+      }
+      else
+      {
+         // Clear the width of the last column (it's going to go away entirely 
+         // if we're dropping the selection column). 
+         clearColumnWidth(columns_.size());
+      }
+      for (int i = 0; i < columns_.size(); i++)
+      {
+         setColumnWidth(
+               start + i,
+               new Integer(columns_.get(i).getWidth()).toString() + "%");
       }
    }
 
@@ -336,7 +356,6 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                td.title(rowValue.rObject.getName());
             }
             td.className(className);
-            td.style().width(col.getWidth(), Unit.PCT);
             renderCell(td, createContext(i+1), col, rowValue);
             td.endTD();
          }
