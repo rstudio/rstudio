@@ -3262,7 +3262,9 @@ public class TextEditingTarget implements EditingTarget
                      globalDisplay_.showYesNoMessage(
                            GlobalDisplay.MSG_WARNING,
                            "File Deleted",
-                           "The file " + name_.getValue() + " has been " +
+                           "The file " + 
+                           StringUtil.notNull(docUpdateSentinel_.getPath()) + 
+                           " has been " +
                            "deleted. Do you want to close this file now?",
                            false,
                            new Operation()
