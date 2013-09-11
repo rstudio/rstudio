@@ -20,8 +20,12 @@ import com.google.gwt.core.ext.DefaultConfigurationProperty;
 import com.google.gwt.core.ext.DefaultSelectionProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.TreeSet;
 
 /**
@@ -30,7 +34,7 @@ import java.util.TreeSet;
  */
 public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
-  private final ConfigurationProperty[] configProps;
+  private final Map<String, ConfigurationProperty> configPropertiesByName;
 
   private final BindingProperty[] orderedProps;
 
@@ -47,8 +51,9 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
       String[] orderedPropValues, ConfigurationProperty[] configProps) {
     this.orderedProps = orderedProps;
     this.orderedPropValues = orderedPropValues;
-    this.configProps = configProps;
-    
+    this.configPropertiesByName =
+        Maps.uniqueIndex(Arrays.asList(configProps), getConfigNameExtractor());
+
     // Reject illegal values at construction time
     int len = orderedProps.length;
     for (int i = 0; i < len; i++) {
@@ -61,15 +66,14 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     }
   }
 
-  public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(
-      String propertyName) throws BadPropertyValueException {
-    for (final ConfigurationProperty prop : configProps) {
-      if (prop.getName().equals(propertyName)) {
-        return new DefaultConfigurationProperty(prop.getName(),
-            prop.getValues());
-      }
+  @Override
+  public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(String propertyName)
+      throws BadPropertyValueException {
+    ConfigurationProperty config = configPropertiesByName.get(propertyName);
+    if (config == null) {
+      throw new BadPropertyValueException(propertyName);
     }
-    throw new BadPropertyValueException(propertyName);
+    return new DefaultConfigurationProperty(config.getName(), config.getValues());
   }
 
   /**
@@ -106,15 +110,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
       }
     }
 
-    for (ConfigurationProperty configProp : configProps) {
-      if (configProp.getName().equals(propertyName)) {
-        return configProp.getValue();
-      }
-    }
-
-    // Didn't find it.
-    //
-    throw new BadPropertyValueException(propertyName);
+    return getConfigurationProperty(propertyName).getValues().get(0);
   }
 
   @Deprecated
@@ -170,5 +166,14 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
           orderedPropValues[i]).append(" ");
     }
     return sb.toString();
+  }
+
+  private static Function<ConfigurationProperty, String> getConfigNameExtractor() {
+    return new Function<ConfigurationProperty, String>() {
+      @Override
+      public String apply(ConfigurationProperty config) {
+        return config.getName();
+      }
+    };
   }
 }
