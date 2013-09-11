@@ -21,10 +21,8 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEvent;
-import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -38,8 +36,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ErrorManager
-             implements UnhandledErrorEvent.Handler,
-                        DebugModeChangedEvent.Handler,
+             implements DebugModeChangedEvent.Handler,
                         ErrorHandlerChangedEvent.Handler,
                         SessionInitHandler
 {
@@ -65,24 +62,12 @@ public class ErrorManager
       session_ = session;
       binder.bind(commands, this);
       
-      events_.addHandler(UnhandledErrorEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(ErrorHandlerChangedEvent.TYPE, this);
       events_.addHandler(SessionInitEvent.TYPE, this);
    }
 
    // Event and command handlers ----------------------------------------------
-
-   @Override
-   public void onUnhandledError(UnhandledErrorEvent event)
-   {
-      // Don't record errors that happen during debugging; presumably the user
-      // is actively inspecting those
-      if (!debugMode_)
-      {
-         lastError_ = event.getError();
-      }
-   }
 
    @Override
    public void onDebugModeChanged(DebugModeChangedEvent event)
@@ -95,7 +80,6 @@ public class ErrorManager
          setErrorManagementType(previousHandlerType_);
       }
       debugHandlerState_ = DebugHandlerState.None;
-      debugMode_ = event.debugging();
    }
 
    @Override
@@ -136,13 +120,6 @@ public class ErrorManager
    
    // Public methods ----------------------------------------------------------
 
-   public UnhandledError consumeLastError()
-   {
-      UnhandledError err = lastError_;
-      lastError_ = null;
-      return err;
-   }
-   
    public void setDebugSessionHandlerType(
          int type, 
          final ServerRequestCallback<Void> callback)
@@ -224,6 +201,4 @@ public class ErrorManager
    private DebugHandlerState debugHandlerState_ = DebugHandlerState.None;
    private ErrorManagerState errorManagerState_; 
    private int previousHandlerType_;
-   private UnhandledError lastError_;
-   private boolean debugMode_ = false;
 }
