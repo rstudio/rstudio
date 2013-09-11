@@ -224,19 +224,31 @@ public:
             kHelpLocation);
 
       // fixup hard-coded hrefs
-      Characters tempDest;
+      Characters tempDest1;
       boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest),
+            std::back_inserter(tempDest1),
             boost::make_iterator_range(src.begin(), src.end()),
             "href=\"/",
             "href=\"" + baseUrl + "/");
+      Characters tempDest2;
+      boost::algorithm::replace_all_copy(
+            std::back_inserter(tempDest2),
+            boost::make_iterator_range(tempDest1.begin(), tempDest1.end()),
+            "href='/",
+            "href='" + baseUrl + "/");
       
       // fixup hard-coded src=
+      Characters tempDest3;
       boost::algorithm::replace_all_copy(
-            std::back_inserter(dest),
-            boost::make_iterator_range(tempDest.begin(), tempDest.end()),
+            std::back_inserter(tempDest3),
+            boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
             "src=\"/",
             "src=\"" + baseUrl + "/");
+      boost::algorithm::replace_all_copy(
+            std::back_inserter(dest),
+            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
+            "src='/",
+            "src='" + baseUrl + "/");
       
       // append javascript callbacks
       std::string js(kJsCallbacks);
@@ -789,7 +801,16 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();
-   pResponse->setCacheableFile(tempFilePath, request);
+   if (tempFilePath.mimeContentType() == "text/html")
+   {
+      pResponse->setCacheableFile(tempFilePath,
+                                  request,
+                                  HelpContentsFilter(request));
+   }
+   else
+   {
+      pResponse->setCacheableFile(tempFilePath, request);
+   }
 }
 
 // the ShowHelp event will result in the Help pane requesting the specified
