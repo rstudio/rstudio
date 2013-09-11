@@ -557,7 +557,9 @@ public class EnvironmentPresenter extends BasePresenter
    {
       String file = currentBrowseFile_;
       
-      if (!CallFrame.isNavigableFilename(file))
+      // if we have no file and no source code, we can do no navigation 
+      if (!CallFrame.isNavigableFilename(file) &&
+          !useCurrentBrowseSource_)
       {
          return;
       }
