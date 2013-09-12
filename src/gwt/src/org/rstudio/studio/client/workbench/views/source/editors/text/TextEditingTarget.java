@@ -2165,8 +2165,8 @@ public class TextEditingTarget implements EditingTarget
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
       {
-         code = code.replaceFirst("^#' ", "");
-         code = code.replaceAll("\n#' ", "\n");
+         code = code.replaceFirst("^\\s*#'\\s*", "");
+         code = code.replaceAll("\n\\s*#'\\s*", "\n");
       }
       
       // send to console
@@ -2178,23 +2178,38 @@ public class TextEditingTarget implements EditingTarget
    
    private boolean isRoxygenExampleRange(Range range)
    {
-      // scan backwards and look for @example (or other lines of roxygen)
-      int row = range.getStart().getRow();
+      // ensure all of the lines in the selection are within roxygen
+      int selStartRow = range.getStart().getRow();
+      int selEndRow = range.getEnd().getRow();
+      for (int i=selStartRow; i<=selEndRow; i++)
+      {
+         if (!isRoxygenLine(docDisplay_.getLine(i)))
+            return false;
+      }
+      
+      // scan backwards and look for @example
+      int row = selStartRow;
       while (--row >= 0)
       {
          String line = docDisplay_.getLine(row);
          
-         // must be within roxygen
-         if (!line.startsWith("#' "))
+         // must still be within roxygen
+         if (!isRoxygenLine(line))
             return false;
          
          // if we are in an example block return true
-         if (line.matches("^#'\\s+@example"))
+         if (line.matches("^\\s*#'\\s*@example.*$"))
             return true;
       }
       
       // didn't find the example block
       return false;
+   }
+   
+   private boolean isRoxygenLine(String line)
+   {
+      String trimmedLine = line.trim();
+      return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
    }
 
    private void setLastExecuted(Position start, Position end)
