@@ -32,7 +32,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ConsoleError extends Composite
 {
-
    private static ConsoleErrorUiBinder uiBinder = GWT
          .create(ConsoleErrorUiBinder.class);
 

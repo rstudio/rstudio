@@ -140,10 +140,11 @@ public class ToolbarButton extends FocusWidget
       addStyleName(styles_.toolbarButtonMenu());
    }
    
-   private void addMenuHandlers(final ToolbarPopupMenu menu, 
+   
+   private void addMenuHandlers(final ToolbarPopupMenu popupMenu, 
                                 final boolean rightAlign)
    {
-      menu_ = menu;
+      menu_ = popupMenu;
       /*
        * We want clicks on this button to toggle the visibility of the menu,
        * as well as having the menu auto-hide itself as it normally does.
@@ -162,36 +163,48 @@ public class ToolbarButton extends FocusWidget
          {
             event.preventDefault();
             event.stopPropagation();
-            if (menuShowing[0])
-               menu.hide();
-            else
+            addStyleName(styles_.toolbarButtonPushed());
+            // Some menus are rebuilt on every invocation. Ask the menu for 
+            // the most up-to-date version before proceeding.
+            popupMenu.getDynamicPopupMenu(
+               new ToolbarPopupMenu.DynamicPopupMenuCallback()
             {
-               if (rightAlign)
+               @Override
+               public void onPopupMenu(final ToolbarPopupMenu menu)
                {
-                  menu.setPopupPositionAndShow(new PositionCallback() {
-                     @Override
-                     public void setPosition(int offsetWidth, int offsetHeight)
+                  if (menuShowing[0])
+                     menu.hide();
+                  else
+                  {
+                     if (rightAlign)
                      {
-                        menu.setPopupPosition(
-                           (rightImageWidget_ != null ?
-                                 rightImageWidget_.getAbsoluteLeft() :
-                                 leftImageWidget_.getAbsoluteLeft())
-                           + 20 - offsetWidth, 
-                           ToolbarButton.this.getAbsoluteTop() +
-                           ToolbarButton.this.getOffsetHeight());
-                     } 
-                  });
+                        menu.setPopupPositionAndShow(new PositionCallback() 
+                        {
+                           @Override
+                           public void setPosition(int offsetWidth, 
+                                                   int offsetHeight)
+                           {
+                              menu.setPopupPosition(
+                                 (rightImageWidget_ != null ?
+                                       rightImageWidget_.getAbsoluteLeft() :
+                                       leftImageWidget_.getAbsoluteLeft())
+                                 + 20 - offsetWidth, 
+                                 ToolbarButton.this.getAbsoluteTop() +
+                                 ToolbarButton.this.getOffsetHeight());
+                           } 
+                        });
+                     }
+                     else
+                     {
+                        menu.showRelativeTo(ToolbarButton.this);
+                     }
+                     menuShowing[0] = true;
+                  }
                }
-               else
-               {
-                  menu.showRelativeTo(ToolbarButton.this);
-               }
-               menuShowing[0] = true;
-               addStyleName(styles_.toolbarButtonPushed());
-            }
+            });
          }
       });
-      menu.addCloseHandler(new CloseHandler<PopupPanel>()
+      popupMenu.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {

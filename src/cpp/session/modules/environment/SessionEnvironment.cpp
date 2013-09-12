@@ -329,7 +329,9 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
 
 // Sets an environment by name. Used when the environment can be reliably
 // identified by its name (e.g. package environments).
-Error setEnvironmentName(std::string environmentName)
+Error setEnvironmentName(int contextDepth,
+                         RCNTXT* pContext,
+                         std::string environmentName)
 {
    SEXP environment;
    if (environmentName == "R_GlobalEnv")
@@ -343,9 +345,34 @@ Error setEnvironmentName(std::string environmentName)
    else
    {
       r::sexp::Protect protect;
-      Error error = r::exec::RFunction("as.environment", environmentName)
-               .call(&environment, &protect);
-      if (error)
+      // We need to traverse the search path manually looking for an environment
+      // whose name matches the one the caller requested, because R's
+      // as.environment() function only searches the global search path, and
+      // we may wish to set an environment whose name only exists in a private
+      // environment chain.
+      //
+      // This would be better wrapped in an R function, but this code may
+      // run during session init when tools:rstudio isn't yet attached to the
+      // search path.
+      SEXP env = contextDepth > 0 ?
+                        pContext->cloenv :
+                        R_GlobalEnv;
+      std::string candidateEnv;
+      Error error;
+      while (env != R_EmptyEnv)
+      {
+         error = r::exec::RFunction("environmentName", env).call(&candidateEnv);
+         if (error)
+            break;
+         if (candidateEnv == environmentName)
+         {
+            environment = env;
+            break;
+         }
+         // Proceed to the parent of the environment
+         env = ENCLOS(env);
+      }
+      if (error || env == R_EmptyEnv)
       {
          s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
          return error;
@@ -356,7 +383,9 @@ Error setEnvironmentName(std::string environmentName)
    return Success();
 }
 
-Error setEnvironment(const json::JsonRpcRequest& request,
+Error setEnvironment(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext,
+                     const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string environmentName;
@@ -364,7 +393,9 @@ Error setEnvironment(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = setEnvironmentName(environmentName);
+   error = setEnvironmentName(*pContextDepth,
+                              *pCurrentContext,
+                              environmentName);
    if (error)
       return error;
 
@@ -454,6 +485,7 @@ json::Object commonEnvironmentStateData(int depth)
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
+   bool inFunctionEnvironment = false;
 
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson();
@@ -471,11 +503,19 @@ json::Object commonEnvironmentStateData(int depth)
          LOG_ERROR(error);
       }
       varJson["function_name"] = functionName;
-      varJson["environment_name"] = functionName + "()";
+
+      // If the environment currently monitored is the function's environment,
+      // return that environment
+      if (s_environmentMonitor.getMonitoredEnvironment() ==
+          pContext->cloenv)
+      {
+         varJson["environment_name"] = functionName + "()";
+         inFunctionEnvironment = true;
+      }
 
       // see if the function to be debugged is out of sync with its saved
       // sources (if available).
-      if ((pContext))
+      if (pContext)
       {
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
@@ -485,12 +525,15 @@ json::Object commonEnvironmentStateData(int depth)
    else
    {
       varJson["function_name"] = "";
+   }
 
+   if (!inFunctionEnvironment)
+   {
       // emit the name of the environment we're currently working with
       std::string environmentName;
       if (s_environmentMonitor.hasEnvironment())
       {
-         Error error = r::exec::RFunction("environmentName",
+         Error error = r::exec::RFunction(".rs.environmentName",
                                     s_environmentMonitor.getMonitoredEnvironment())
                                     .call(&environmentName);
          if (error)
@@ -498,11 +541,6 @@ json::Object commonEnvironmentStateData(int depth)
       }
       varJson["environment_name"] = environmentName;
    }
-
-   // list the environment stack at this context depth
-   varJson["environments"] = environmentNames(depth > 0 ?
-               s_environmentMonitor.getMonitoredEnvironment() :
-               R_GlobalEnv);
 
    // always emit the code for the function, even if we don't think that the
    // client's going to need it. we only checked the saved copy of the function
@@ -608,10 +646,17 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 }
 
-Error getEnvironmentNames(const json::JsonRpcRequest& request,
+Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
+                          boost::shared_ptr<RCNTXT*> pCurrentContext,
+                          const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(environmentNames(R_GlobalEnv));
+   // If looking at a non-toplevel context, start from there; otherwise, start
+   // from the global environment.
+   SEXP env = *pContextDepth > 0 ?
+                  (*pCurrentContext)->cloenv :
+                  R_GlobalEnv;
+   pResponse->setResult(environmentNames(env));
    return Success();
 }
 
@@ -620,7 +665,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, false, &contextDepth);
+   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, false, &contextDepth);
    if (contextDepth == 0 ||
        !inBrowseContext())
    {
@@ -629,7 +674,14 @@ void initEnvironmentMonitoring()
       std::string envName = persistentState().activeEnvironmentName();
       if (!envName.empty())
       {
-         setEnvironmentName(envName);
+         // It's possible for this to fail if the environment we were
+         // monitoring doesn't exist any more. If this is the case, reset
+         // the monitor to the global environment.
+         Error error = setEnvironmentName(contextDepth, pContext, envName);
+         if (error)
+         {
+            persistentState().setActiveEnvironmentName("R_GlobalEnv");
+         }
       }
    }
 }
@@ -703,6 +755,12 @@ Error initialize()
          boost::bind(setContextDepth, pContextDepth, _1, _2);
    json::JsonRpcFunction getEnv =
          boost::bind(getEnvironmentState, pContextDepth, _1, _2);
+   json::JsonRpcFunction getEnvNames =
+         boost::bind(getEnvironmentNames, pContextDepth, pCurrentContext,
+                     _1, _2);
+   json::JsonRpcFunction setEnvName =
+         boost::bind(setEnvironment, pContextDepth, pCurrentContext,
+                     _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -711,9 +769,9 @@ Error initialize()
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
-      (bind(registerRpcMethod, "set_environment", setEnvironment))
+      (bind(registerRpcMethod, "set_environment", setEnvName))
       (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
-      (bind(registerRpcMethod, "get_environment_names", getEnvironmentNames))
+      (bind(registerRpcMethod, "get_environment_names", getEnvNames))
       (bind(registerRpcMethod, "remove_objects", removeObjects))
       (bind(registerRpcMethod, "remove_all_objects", removeAllObjects))
       (bind(registerRpcMethod, "get_environment_state", getEnv))

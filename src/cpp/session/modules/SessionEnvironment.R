@@ -316,6 +316,38 @@
       contents = contents)
 })
 
+# returns the name and frame number of an environment from a call frame
+.rs.addFunction("environmentCallFrameName", function(env)
+{
+   numCalls <- length(sys.calls())
+   result <- list()
+   for (i in 1:numCalls)
+   {
+      if (identical(sys.frame(i), env))
+      {
+         calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
+         result <- list(name = .rs.scalar(calldesc), frame = .rs.scalar(i))
+         break
+      }
+   }
+   if (identical(result, list()))
+      list(name = .rs.scalar("unknown"), frame = .rs.scalar(0L))
+   else
+      result
+})
+
+.rs.addFunction("environmentName", function(env)
+{
+   # look for the environment's given name; if it doesn't have a name, check
+   # the callstack to see if it matches the environment in one of the call 
+   # frames.
+   result <- environmentName(env)
+   if (nchar(result) == 0)
+      .rs.environmentCallFrameName(env)$name
+   else
+      result
+})
+
 .rs.addFunction("environmentList", function(startEnv)
 {
    env <- startEnv
@@ -325,33 +357,23 @@
    # the callstack.
    if (!identical(env, globalenv()))
    {
-      calls <- sys.calls()
-      numCalls <- length(calls)
       while (!identical(env, globalenv()) &&
              !identical(env, emptyenv()))
       {
-         found <- FALSE
-         for (i in 1:numCalls)
+         frame <- .rs.environmentCallFrameName(env)
+         # if this frame is from the callstack, store it and proceed
+         if (frame$frame > 0)
          {
-            if (identical(sys.frame(i), env))
-            {
-               calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
-               envs[[length(envs)+1]] <- 
-                              list(name = .rs.scalar(calldesc),
-                                   frame = .rs.scalar(i))
-               found <- TRUE
-               break
-            }
+            envs[[length(envs)+1]] <- frame 
+            env <- parent.env(env)
          }
-         if (!found)
-         {
-            envs <- c(envs, "unknown")
-         }
-         env <- parent.env(env)
+         # otherwise, stop here and get names normally
+         else
+            break
       }
    }
-   # we're now at the global environment; proceed normally through the rest of
-   # the search path.
+   # we're now past the call-frame portion of the stack; proceed normally
+   # through the rest of the search path.
    while (!identical(env, emptyenv()))
    {
       envName <- environmentName(env)
@@ -368,7 +390,6 @@
    }
    envs
 })
-
 
 .rs.addFunction("removeObjects", function(objNames, env)
 {

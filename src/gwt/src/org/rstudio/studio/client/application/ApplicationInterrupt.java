@@ -39,6 +39,11 @@ public class ApplicationInterrupt
 {
    public interface Binder extends CommandBinder<Commands, ApplicationInterrupt> {}
    
+   public interface InterruptHandler
+   {
+      public void onInterruptFinished();
+   }
+   
    @Inject
    public ApplicationInterrupt(GlobalDisplay globalDisplay,
                                EventBus eventBus,
@@ -58,9 +63,8 @@ public class ApplicationInterrupt
 
    }
    
-   @Handler
-   void onInterruptR()
-   {  
+   public void interruptR(final InterruptHandler handler)
+   {
       if (interruptRequestCounter_ == 0)
       {
          interruptRequestCounter_ = 1;
@@ -77,15 +81,13 @@ public class ApplicationInterrupt
             @Override
             public void onSuccess()
             {
-               interruptRequestCounter_ = 0;
-               interruptUnresponsiveTimer_.cancel();
+               finishInterrupt(handler);
             }
             
             @Override
             public void onFailure()
             {
-               interruptRequestCounter_ = 0;
-               interruptUnresponsiveTimer_.cancel(); 
+               finishInterrupt(handler);
             }
          });
       }
@@ -99,6 +101,12 @@ public class ApplicationInterrupt
             showInterruptUnresponsiveDialog();
          }
       }
+   }
+   
+   @Handler
+   void onInterruptR()
+   {  
+      interruptR(null);
    }
    
    
@@ -176,6 +184,15 @@ public class ApplicationInterrupt
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
+   private void finishInterrupt(InterruptHandler handler)
+   {
+      interruptRequestCounter_ = 0;
+      interruptUnresponsiveTimer_.cancel(); 
+      if (handler != null)
+      {
+         handler.onInterruptFinished();
+      }
+   }
    
    private int interruptRequestCounter_ = 0;
    private Timer interruptUnresponsiveTimer_ = null;
