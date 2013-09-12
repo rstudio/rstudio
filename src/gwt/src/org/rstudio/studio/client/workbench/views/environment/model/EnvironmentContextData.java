@@ -48,8 +48,4 @@ public class EnvironmentContextData extends JavaScriptObject
    public final native String environmentName() /*-{
       return this.environment_name;
    }-*/;
-
-   public final native JsArray<EnvironmentFrame> environments() /*-{
-      return this.environments;
-   }-*/;
 }

@@ -210,10 +210,8 @@ public class EnvironmentObjects extends ResizeComposite
    
    public void setEnvironmentName(String environmentName)
    {
-      environmentEmptyMessage_.setText(contextDepth_ > 0 ?
-                                       EMPTY_FUNCTION_ENVIRONMENT_MESSAGE :
-                                       EMPTY_ENVIRONMENT_MESSAGE);
       environmentName_ = environmentName;
+      objectDisplay_.setEnvironmentName(environmentName);
    }
 
    public int getScrollPosition()
@@ -585,8 +583,6 @@ public class EnvironmentObjects extends ResizeComposite
    
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
            "Environment is empty";
-   private final static String EMPTY_FUNCTION_ENVIRONMENT_MESSAGE =
-           "Function environment is empty";
 
    public static final int OBJECT_LIST_VIEW = 0;
    public static final int OBJECT_GRID_VIEW = 1;

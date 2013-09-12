@@ -22,6 +22,7 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -36,6 +37,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -59,7 +62,8 @@ public class DebugCommander
          implements ConsoleWriteInputHandler,
                     SessionInitHandler,
                     BreakpointsSavedEvent.Handler,
-                    RestartStatusEvent.Handler
+                    RestartStatusEvent.Handler,
+                    BusyHandler
 {
    public interface Binder
       extends CommandBinder<Commands, DebugCommander> {}
@@ -79,7 +83,8 @@ public class DebugCommander
          Session session,
          BreakpointManager breakpointManager,
          DebuggingServerOperations debugServer,
-         WorkbenchContext workbench)
+         WorkbenchContext workbench,
+         ApplicationInterrupt interrupt)
    {
       eventBus_ = eventBus;
       session_ = session;
@@ -87,11 +92,13 @@ public class DebugCommander
       breakpointManager_ = breakpointManager;
       workbench_ = workbench;
       commands_ = commands;
+      interrupt_ = interrupt;
       
       eventBus_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       eventBus_.addHandler(SessionInitEvent.TYPE, this);
       eventBus_.addHandler(BreakpointsSavedEvent.TYPE, this);
       eventBus_.addHandler(RestartStatusEvent.TYPE, this);
+      eventBus_.addHandler(BusyEvent.TYPE, this);
       
       binder.bind(commands, this);
      
@@ -195,18 +202,23 @@ public class DebugCommander
    @Handler
    void onDebugStop()
    {
-      if (debugMode_ == DebugMode.Function)
+      // If R is busy when a debug stop is requested, interrupt it and wait
+      // for the interrupt to complete before killing the debugger.
+      if (busy_)
       {
-         eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));
-         if (topDebugMode_ == DebugMode.TopLevel)
+         interrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
          {
-            haltingTopLevelDebug_ = true;
-         }
+            @Override
+            public void onInterruptFinished()
+            {
+               stopDebugging();
+            }
+         });
       }
-      else if (debugMode_ == DebugMode.TopLevel)
+      else
       {
-         executeDebugStep(STEP_STOP);
-      }      
+         stopDebugging();
+      }
    }
 
    @Handler
@@ -287,6 +299,12 @@ public class DebugCommander
          }
       }
    }         
+
+   @Override
+   public void onBusy(BusyEvent event)
+   {
+      busy_ = event.isBusy();
+   }
 
    // Public methods ----------------------------------------------------------
 
@@ -439,6 +457,22 @@ public class DebugCommander
       commands_.debugStop().setEnabled(enabled);
    }
    
+   private void stopDebugging()
+   { 
+      if (debugMode_ == DebugMode.Function)
+      {
+         eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));
+         if (topDebugMode_ == DebugMode.TopLevel)
+         {
+            haltingTopLevelDebug_ = true;
+         }
+      }
+      else if (debugMode_ == DebugMode.TopLevel)
+      {
+         executeDebugStep(STEP_STOP);
+      }      
+   }
+   
    // These values are understood by the server; if you change them, you'll need
    // to update the server's understanding in SessionBreakpoints.R. 
    private static final int STEP_SINGLE = 0;
@@ -453,6 +487,7 @@ public class DebugCommander
    private final Session session_;
    private final WorkbenchContext workbench_;
    private final Commands commands_;
+   private final ApplicationInterrupt interrupt_;
    
    private DebugMode debugMode_ = DebugMode.Normal;
    private DebugMode topDebugMode_ = DebugMode.Normal;
@@ -463,4 +498,5 @@ public class DebugCommander
    private String debugFile_ = "";
    private LineData previousLineData_ = null;
    private boolean debugging_ = false;
+   private boolean busy_ = false;
 }
