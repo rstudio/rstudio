@@ -45,6 +45,11 @@ EnvironmentMonitor s_environmentMonitor;
 
 namespace {
 
+bool isValidSrcref(SEXP srcref)
+{
+   return srcref && TYPEOF(srcref) != NILSXP;
+}
+
 bool handleRBrowseEnv(const core::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
@@ -77,8 +82,17 @@ Error getFileNameFromContext(const RCNTXT* pContext,
                              std::string* pFileName)
 {
    SEXP srcref = pContext->srcref;
-   return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
-                 .call(pFileName);
+   if (isValidSrcref(srcref))
+   {
+      return r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+                    .call(pFileName);
+   }
+   else
+   {
+      // If no source references, that's OK--just set an empty filename.
+      pFileName->clear();
+      return Success();
+   }
 }
 
 SEXP sourceRefsOfContext(const RCNTXT* pContext)
@@ -88,8 +102,7 @@ SEXP sourceRefsOfContext(const RCNTXT* pContext)
 
 bool hasSourceRefs(const RCNTXT* pContext)
 {
-   SEXP srcref = sourceRefsOfContext(pContext);
-   return srcref != NULL && TYPEOF(srcref) != NILSXP;
+   return isValidSrcref(sourceRefsOfContext(pContext));
 }
 
 bool isDebugHiddenContext(RCNTXT* pContext)
@@ -136,8 +149,7 @@ RCNTXT* getFunctionContext(const int depth,
          // if the caller asked us to find user code, don't stop unless the
          // context we're examining has a source file attached
          if (++currentDepth >= depth &&
-             !(findUserCode && (pSrcContext->srcref == NULL ||
-                                TYPEOF(pSrcContext->srcref) == NILSXP)))
+             !(findUserCode && !isValidSrcref(pSrcContext->srcref)))
          {
              break;
          }
@@ -264,7 +276,7 @@ json::Array callFramesAsJson()
          // function rather than as an absolute file position (useful when
          // we need to debug a copy of the function rather than the real deal).
          SEXP srcRef = sourceRefsOfContext(pSrcContext);
-         if (srcRef && TYPEOF(srcRef) != NILSXP)
+         if (isValidSrcref(srcRef))
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
          }
