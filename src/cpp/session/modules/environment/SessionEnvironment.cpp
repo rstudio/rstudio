@@ -329,7 +329,9 @@ Error listEnvironment(boost::shared_ptr<int> pContextDepth,
 
 // Sets an environment by name. Used when the environment can be reliably
 // identified by its name (e.g. package environments).
-Error setEnvironmentName(std::string environmentName)
+Error setEnvironmentName(int contextDepth,
+                         RCNTXT* pContext,
+                         std::string environmentName)
 {
    SEXP environment;
    if (environmentName == "R_GlobalEnv")
@@ -343,14 +345,34 @@ Error setEnvironmentName(std::string environmentName)
    else
    {
       r::sexp::Protect protect;
+      // We need to traverse the search path manually looking for an environment
+      // whose name matches the one the caller requested, because R's
+      // as.environment() function only searches the global search path, and
+      // we may wish to set an environment whose name only exists in a private
+      // environment chain.
+      //
       // This would be better wrapped in an R function, but this code may
       // run during session init when tools:rstudio isn't yet attached to the
       // search path.
-      std::string eval = "as.environment(\"";
-      eval += environmentName;
-      eval += "\")";
-      Error error = r::exec::evaluateString(eval, &environment, &protect);
-      if (error)
+      SEXP env = contextDepth > 0 ?
+                        pContext->cloenv :
+                        R_GlobalEnv;
+      std::string candidateEnv;
+      Error error;
+      while (env != R_EmptyEnv)
+      {
+         error = r::exec::RFunction("environmentName", env).call(&candidateEnv);
+         if (error)
+            break;
+         if (candidateEnv == environmentName)
+         {
+            environment = env;
+            break;
+         }
+         // Proceed to the parent of the environment
+         env = ENCLOS(env);
+      }
+      if (error || env == R_EmptyEnv)
       {
          s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
          return error;
@@ -361,7 +383,9 @@ Error setEnvironmentName(std::string environmentName)
    return Success();
 }
 
-Error setEnvironment(const json::JsonRpcRequest& request,
+Error setEnvironment(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext,
+                     const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string environmentName;
@@ -369,7 +393,9 @@ Error setEnvironment(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   error = setEnvironmentName(environmentName);
+   error = setEnvironmentName(*pContextDepth,
+                              *pCurrentContext,
+                              environmentName);
    if (error)
       return error;
 
@@ -639,7 +665,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, false, &contextDepth);
+   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, false, &contextDepth);
    if (contextDepth == 0 ||
        !inBrowseContext())
    {
@@ -651,7 +677,7 @@ void initEnvironmentMonitoring()
          // It's possible for this to fail if the environment we were
          // monitoring doesn't exist any more. If this is the case, reset
          // the monitor to the global environment.
-         Error error = setEnvironmentName(envName);
+         Error error = setEnvironmentName(contextDepth, pContext, envName);
          if (error)
          {
             persistentState().setActiveEnvironmentName("R_GlobalEnv");
@@ -732,6 +758,9 @@ Error initialize()
    json::JsonRpcFunction getEnvNames =
          boost::bind(getEnvironmentNames, pContextDepth, pCurrentContext,
                      _1, _2);
+   json::JsonRpcFunction setEnvName =
+         boost::bind(setEnvironment, pContextDepth, pCurrentContext,
+                     _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -740,7 +769,7 @@ Error initialize()
       (bind(registerRBrowseFileHandler, handleRBrowseEnv))
       (bind(registerRpcMethod, "list_environment", listEnv))
       (bind(registerRpcMethod, "set_context_depth", setCtxDepth))
-      (bind(registerRpcMethod, "set_environment", setEnvironment))
+      (bind(registerRpcMethod, "set_environment", setEnvName))
       (bind(registerRpcMethod, "set_environment_frame", setEnvironmentFrame))
       (bind(registerRpcMethod, "get_environment_names", getEnvNames))
       (bind(registerRpcMethod, "remove_objects", removeObjects))
