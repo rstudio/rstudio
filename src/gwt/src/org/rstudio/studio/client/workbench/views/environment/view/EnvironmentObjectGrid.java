@@ -349,6 +349,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                                " " +
                                ThemeStyles.INSTANCE.environmentDataFrameCol();
                }
+               if (rowValue.isPromise())
+               {
+                  className += " " + environmentStyle_.unevaluatedPromise();
+               }
                td.title(rowValue.getDisplayValue());
             }
             if (col.getType() == ObjectGridColumn.COLUMN_NAME)
