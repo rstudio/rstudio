@@ -3299,8 +3299,8 @@ public class TextEditingTarget implements EditingTarget
                            "File Deleted",
                            "The file " + 
                            StringUtil.notNull(docUpdateSentinel_.getPath()) + 
-                           " has been " +
-                           "deleted. Do you want to close this file now?",
+                           " has been deleted or moved. " +
+                           "Do you want to close this file now?",
                            false,
                            new Operation()
                            {
@@ -3319,7 +3319,7 @@ public class TextEditingTarget implements EditingTarget
                                  dirtyState_.markDirty(false);
                               }
                            },
-                           false
+                           true
                      );
                   }
                   else if (response.isModified())
