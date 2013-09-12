@@ -231,27 +231,46 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       clearPendingInput();
       output(error, getErrorClass(), false);
+      lastErrorMessage_ = error;
+      // Pick up the last element emitted to the console. If we get extended
+      // information for this error, we'll need to swap out the simple error
+      // element for the extended error element. (Note that this presumes that
+      // all errors are represented by a simple, single node, and that node is
+      // the last one output to the console by output() above).
+      Element outputElement = output_.getElement();
+      lastErrorNode_ = outputElement.getChild(
+            outputElement.getChildCount() - 1);
    }
    
    public void consoleWriteExtendedError(
          final String error, UnhandledError traceInfo, 
          boolean expand, String command)
    {
-      clearPendingInput();
-      ConsoleError errorWidget = new ConsoleError(
-            traceInfo, getErrorClass(), this, command);
+      if (lastErrorMessage_.equals(error) &&
+          lastErrorNode_ != null)
+      {
+         clearPendingInput();
+         ConsoleError errorWidget = new ConsoleError(
+               traceInfo, getErrorClass(), this, command);
+   
+         if (expand)
+            errorWidget.setTracebackVisible(true);
+         
+         // The widget must be added to the root panel to have its event handlers
+         // wired properly, but this isn't an ideal structure; consider showing
+         // console output as cell widgets in a virtualized scrolling CellTable
+         // so we can easily add arbitrary controls. 
+         RootPanel.get().add(errorWidget);
+         output_.getElement().replaceChild(errorWidget.getElement(), 
+                                           lastErrorNode_);
+         
+         scrollPanel_.onContentSizeChanged();
 
-      if (expand)
-         errorWidget.setTracebackVisible(true);
-      
-      // The widget must be added to the root panel to have its event handlers
-      // wired properly, but this isn't an ideal structure; consider showing
-      // console output as cell widgets in a virtualized scrolling CellTable
-      // so we can easily add arbitrary controls. 
-      RootPanel.get().add(errorWidget);
-      output_.getElement().appendChild(errorWidget.getElement());
-      
-      scrollPanel_.onContentSizeChanged();
+         // Clean out state so we don't match two errors with a single 
+         // extended error
+         lastErrorMessage_ = "";
+         lastErrorNode_ = null;
+      }
    }
    
    @Override
@@ -756,6 +775,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final TimeBufferedCommand scrollToBottomCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
+   
+   // Keep track of the last error message that occurred and which node contains
+   // it, so we can swap that node for an extended error message if we get one.
+   private String lastErrorMessage_ = "";
+   private Node lastErrorNode_ = null;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }

@@ -76,7 +76,7 @@ public class CallFrame extends JavaScriptObject
    
    public final boolean isNavigable()
    {
-      return isNavigableFilename(getFileName());
+      return getLineNumber() > 0;
    }
    
    public final static boolean isNavigableFilename(String fileName)

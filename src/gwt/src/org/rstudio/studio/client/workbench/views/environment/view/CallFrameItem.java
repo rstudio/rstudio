@@ -89,17 +89,6 @@ public class CallFrameItem extends Composite
       }
    }
 
-   public static boolean isNavigableFilename(String fileName)
-   {
-      if (fileName.length() > 0 &&
-          !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>"))
-      {
-         return true;
-      }
-      return false;
-   }
-
    // Private functions -------------------------------------------------------
 
    private void setDisplayText(int lineNumber)
@@ -127,7 +116,7 @@ public class CallFrameItem extends Composite
 
    private boolean hasFileLocation()
    {
-      return frame_.isNavigable();
+      return CallFrame.isNavigableFilename(frame_.getFileName());
    }
 
    @UiField Label functionName;

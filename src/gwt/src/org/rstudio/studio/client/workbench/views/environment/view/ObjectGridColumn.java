@@ -68,6 +68,11 @@ public abstract class ObjectGridColumn extends Column<RObjectEntry, String>
       return columnWidth_;
    }
    
+   public void setWidth(int width)
+   {
+      columnWidth_ = width;
+   }
+   
    public int getType()
    {
       return columnType_;
