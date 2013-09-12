@@ -2165,8 +2165,8 @@ public class TextEditingTarget implements EditingTarget
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
       {
-         code = code.replaceFirst("^\\s*#'\\s*", "");
-         code = code.replaceAll("\n\\s*#'\\s*", "\n");
+         code = code.replaceFirst("^\\s*#'\\s?", "");
+         code = code.replaceAll("\n\\s*#'\\s?", "\n");
       }
       
       // send to console
