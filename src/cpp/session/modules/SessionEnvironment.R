@@ -331,7 +331,7 @@
       }
    }
    if (identical(result, list()))
-      list(name = "unknown", frame = 0)
+      list(name = .rs.scalar("unknown"), frame = .rs.scalar(0L))
    else
       result
 })
@@ -360,12 +360,20 @@
       while (!identical(env, globalenv()) &&
              !identical(env, emptyenv()))
       {
-         envs[[length(envs)+1]] <- .rs.environmentCallFrameName(env)
-         env <- parent.env(env)
+         frame <- .rs.environmentCallFrameName(env)
+         # if this frame is from the callstack, store it and proceed
+         if (frame$frame > 0)
+         {
+            envs[[length(envs)+1]] <- frame 
+            env <- parent.env(env)
+         }
+         # otherwise, stop here and get names normally
+         else
+            break
       }
    }
-   # we're now at the global environment; proceed normally through the rest of
-   # the search path.
+   # we're now past the call-frame portion of the stack; proceed normally
+   # through the rest of the search path.
    while (!identical(env, emptyenv()))
    {
       envName <- environmentName(env)
