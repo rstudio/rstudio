@@ -64,9 +64,10 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    }
 
    public EnvironmentObjectList(EnvironmentObjectDisplay.Host host,
-                                EnvironmentObjectsObserver observer)
+                                EnvironmentObjectsObserver observer,
+                                String environmentName)
    {
-      super(host, observer);
+      super(host, observer, environmentName);
       setTableBuilder(new EnvironmentObjectTableBuilder(this));
 
       // disable persistent and transient row selection (currently necessary

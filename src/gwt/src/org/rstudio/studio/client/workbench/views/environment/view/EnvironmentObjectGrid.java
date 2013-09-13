@@ -59,9 +59,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    }
 
    public EnvironmentObjectGrid(EnvironmentObjectDisplay.Host host,
-                                EnvironmentObjectsObserver observer)
+                                EnvironmentObjectsObserver observer,
+                                String environmentName)
    {
-      super(host, observer);
+      super(host, observer, environmentName);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
       selection_ = new MultiSelectionModel<RObjectEntry>(

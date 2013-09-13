@@ -85,7 +85,7 @@ Error setErrHandlerType(int type,
 
 Error setErrHandlerType(boost::shared_ptr<SEXP> pErrorHandler,
                         const json::JsonRpcRequest& request,
-                            json::JsonRpcResponse* pResponse)
+                        json::JsonRpcResponse* pResponse)
 {
    int type = 0;
    Error error = json::readParams(request.params, &type);

@@ -103,7 +103,9 @@ public class ErrorManager
       }
       else
       {
-         // If we don't have source references, hide these.
+         // If we don't have source references, disable the commands that 
+         // set error handlers (these generally work on user code only, and
+         // we can't reliably distinguish user code without source refs)
          commands_.errorsMessage().setEnabled(false);
          commands_.errorsTraceback().setEnabled(false);
          commands_.errorsBreak().setEnabled(false);

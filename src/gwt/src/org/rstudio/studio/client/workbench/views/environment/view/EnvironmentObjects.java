@@ -280,12 +280,14 @@ public class EnvironmentObjects extends ResizeComposite
       // create the new object display and wire it to the data source
       if (type == OBJECT_LIST_VIEW)
       {
-         objectDisplay_ = new EnvironmentObjectList(this, observer_);
+         objectDisplay_ = new EnvironmentObjectList(
+                                 this, observer_, environmentName_);
          objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
       }
       else if (type == OBJECT_GRID_VIEW)
       {
-         objectDisplay_ = new EnvironmentObjectGrid(this, observer_);
+         objectDisplay_ = new EnvironmentObjectGrid(
+                                 this, observer_, environmentName_);
          objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
       }
 
