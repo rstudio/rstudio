@@ -220,6 +220,16 @@ json::Value debugStateAsJson()
    return state;
 }
 
+bool haveBreakpoints()
+{
+   // check whether this is R 2.14 or greater
+   bool haveBP = false;
+   Error error = r::exec::evaluateString("getRversion() >= '2.14.0'", &haveBP);
+   if (error)
+      LOG_ERROR(error);
+   return haveBP;
+}
+
 Error initialize()
 {
    // subscribe to events

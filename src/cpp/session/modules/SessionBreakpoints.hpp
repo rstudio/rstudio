@@ -28,6 +28,7 @@ namespace breakpoints {
 
 core::Error initialize();
 core::json::Value debugStateAsJson();
+bool haveBreakpoints();
 
 } // namespace breakpoints
 } // namepace modules
