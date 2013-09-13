@@ -72,8 +72,7 @@ void removeVarFromList(std::vector<r::sexp::Variable>* pEnv,
 EnvironmentMonitor::EnvironmentMonitor() :
    environment_(NULL),
    initialized_(false),
-   refreshOnInit_(false),
-   firstInit_(true)
+   refreshOnInit_(false)
 {}
 
 void EnvironmentMonitor::enqueRemovedEvent(const r::sexp::Variable& variable)
@@ -148,18 +147,7 @@ void EnvironmentMonitor::checkForChanges()
       if (refreshOnInit_ ||
           getMonitoredEnvironment() == R_GlobalEnv)
       {
-         if (firstInit_)
-         {
-            // On the first initialization of the environment monitor, the
-            // refresh (initial list) is built in to the initial environment
-            // state (see environmentStateAsJson in SessionEnvironment.cpp),
-            // so the client already has it and we don't need to re-emit.
-            firstInit_ = false;
-         }
-         else
-         {
-            enqueRefreshEvent();
-         }
+         enqueRefreshEvent();
          refreshEnqueued = true;
       }
       initialized_ = true;
