@@ -50,6 +50,8 @@
       }
       else if (.rs.isFunction(val))
          return (.rs.getSignature(val))
+      else if (is(val, "Date"))
+         return (format(val))
       else
          return ("NO_VALUE")
    },
