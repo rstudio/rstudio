@@ -283,11 +283,11 @@
       if (size > 524288)
       {
          len <- if (len > 1) 
-                   paste0(len, " elements, ")
+                   paste(len, " elements, ", sep="")
                 else 
                    ""
-         val <- paste0("Large ", class, " (", len, 
-                       capture.output(print(size, units="auto")), ")")
+         val <- paste("Large ", class, " (", len, 
+                      capture.output(print(size, units="auto")), ")", sep="")
       }
       else
       {
@@ -325,7 +325,7 @@
    {
       if (identical(sys.frame(i), env))
       {
-         calldesc <- paste0(deparse(sys.call(i)[[1]]), "()")
+         calldesc <- paste(deparse(sys.call(i)[[1]]), "()", sep="")
          result <- list(name = .rs.scalar(calldesc), frame = .rs.scalar(i))
          break
       }
