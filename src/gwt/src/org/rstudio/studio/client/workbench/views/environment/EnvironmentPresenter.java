@@ -438,8 +438,23 @@ public class EnvironmentPresenter extends BasePresenter
       // objects in the environment
       if (!initialized_)
       {
-         setViewFromEnvironmentList(
-            session_.getSessionInfo().getEnvironmentState().environmentList());
+         // we may have a cached list of objects in the session info--if
+         // we do, use that list; otherwise, refresh the view to get a new one.
+         // (the list may be empty e.g. on cold session startup when the 
+         // environment was loaded from .RData and therefore not available 
+         // during session init; we also want to fetch a fresh list in this
+         // case).
+         JsArray<RObject> environmentList = 
+              session_.getSessionInfo().getEnvironmentState().environmentList();
+         if (environmentList == null ||
+             environmentList.length() == 0)
+         {
+            refreshView();
+         }
+         else
+         {
+            setViewFromEnvironmentList(environmentList);
+         }
          initialized_ = true;
       }
    }
