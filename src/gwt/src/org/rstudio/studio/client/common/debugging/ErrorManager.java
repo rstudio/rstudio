@@ -97,7 +97,17 @@ public class ErrorManager
    public void onSessionInit(SessionInitEvent sie)
    {
       errorManagerState_ = session_.getSessionInfo().getErrorState();
-      syncHandlerCommandsCheckedState();
+      if (session_.getSessionInfo().getHaveSrcrefAttribute())
+      {
+         syncHandlerCommandsCheckedState();
+      }
+      else
+      {
+         // If we don't have source references, hide these.
+         commands_.errorsMessage().setEnabled(false);
+         commands_.errorsTraceback().setEnabled(false);
+         commands_.errorsBreak().setEnabled(false);
+      }
    }
 
    @Handler

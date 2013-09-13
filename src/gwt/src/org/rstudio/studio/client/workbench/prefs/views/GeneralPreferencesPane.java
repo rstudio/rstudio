@@ -14,14 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -46,6 +38,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+import com.google.inject.Inject;
+
 public class GeneralPreferencesPane extends PreferencesPane
 {
    @Inject
@@ -60,6 +60,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       server_ = server;
+      session_ = session;
 
       if (Desktop.isDesktop())
       {
@@ -136,14 +137,19 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (!Desktop.isDesktop())
          add(rProfileOnResume_);
            
-      add(checkboxPref(
-            "Use debug error handler only when errors contain my code", 
-            prefs_.handleErrorsInUserCodeOnly()));
-      CheckBox chkTracebacks = checkboxPref(
-            "Automatically expand tracebacks in error inspector", 
-            prefs_.autoExpandErrorTracebacks());
-      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
-      add(chkTracebacks);
+      // The error handler features require source references; if this R
+      // version doesn't support them, don't show these options. 
+      if (session_.getSessionInfo().getHaveSrcrefAttribute())
+      {
+	      add(checkboxPref(
+	            "Use debug error handler only when errors contain my code", 
+	            prefs_.handleErrorsInUserCodeOnly()));
+	      CheckBox chkTracebacks = checkboxPref(
+	            "Automatically expand tracebacks in error inspector", 
+	            prefs_.autoExpandErrorTracebacks());
+	      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
+	      add(chkTracebacks);
+      }
       
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
@@ -334,4 +340,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+   private final Session session_;
 }
