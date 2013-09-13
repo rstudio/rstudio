@@ -135,38 +135,35 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
    private void createColumns()
    {
-      if (selectionEnabled())
-      {
-         checkColumn_ = new Column<RObjectEntry, Boolean>(
-               new CheckboxCell(false, false))
-               {
-                  @Override
-                  public Boolean getValue(RObjectEntry value)
-                  {
-                     return selection_.isSelected(value); 
-                  }
-               };
-         addColumn(checkColumn_);
-         checkHeader_ = new Header<Boolean>(new CheckboxCell())
-         {
-            @Override
-            public Boolean getValue()
+      checkColumn_ = new Column<RObjectEntry, Boolean>(
+            new CheckboxCell(false, false))
             {
-               return selectAll_;
-            }
-         };
-         checkHeader_.setUpdater(new ValueUpdater<Boolean>()
-         {
-            @Override
-            public void update(Boolean value)
-            {
-               if (selectAll_ != value)
+               @Override
+               public Boolean getValue(RObjectEntry value)
                {
-                  setSelectAll(value);
+                  return selection_.isSelected(value); 
                }
+            };
+      addColumn(checkColumn_);
+      checkHeader_ = new Header<Boolean>(new CheckboxCell())
+      {
+         @Override
+         public Boolean getValue()
+         {
+            return selectAll_;
+         }
+      };
+      checkHeader_.setUpdater(new ValueUpdater<Boolean>()
+      {
+         @Override
+         public void update(Boolean value)
+         {
+            if (selectAll_ != value)
+            {
+               setSelectAll(value);
             }
-         });
-      }
+         }
+      });
 
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(filterRenderer_), "Name", 
