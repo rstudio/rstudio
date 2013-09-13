@@ -146,10 +146,21 @@ RCNTXT* getFunctionContext(const int depth,
       }
       else if (isPrintableContext(pRContext))
       {
-         // if the caller asked us to find user code, don't stop unless the
-         // context we're examining has a source file attached
+         // If the caller asked us to find user code, don't stop unless the
+         // context we're examining meets the following criteria:
+         // 1) has a valid source ref (i.e. we have the user code associated
+         //    with the context
+         // 2) source ref is not a duplicate of the source ref from the
+         //    previous frame.  R <= 2.15.0 appears to have a bug wherein error
+         //    handlers have a srcref that points not to the handler itself but
+         //    to the error, so the error source reference appears twice
+         //    consecutively on the stack.  This duplicate reference should not
+         //    be considered real user code since we don't want to break into
+         //    the error handler.
          if (++currentDepth >= depth &&
-             !(findUserCode && !isValidSrcref(pSrcContext->srcref)))
+             !(findUserCode && (!isValidSrcref(pSrcContext->srcref) ||
+                                 (pRContext != pSrcContext &&
+                                  pRContext->srcref == pSrcContext->srcref))))
          {
              break;
          }
