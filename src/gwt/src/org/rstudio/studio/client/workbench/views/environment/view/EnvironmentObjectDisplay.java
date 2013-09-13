@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import java.util.List;
 
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
+import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -40,7 +41,8 @@ public abstract class EnvironmentObjectDisplay
    }
 
    public EnvironmentObjectDisplay(Host host, 
-                                   EnvironmentObjectsObserver observer)
+                                   EnvironmentObjectsObserver observer,
+                                   String environmentName)
    {
       super(1024, RObjectEntry.KEY_PROVIDER);
 
@@ -48,6 +50,7 @@ public abstract class EnvironmentObjectDisplay
       host_ = host;
       environmentStyle_ = EnvironmentResources.INSTANCE.environmentStyle();
       environmentStyle_.ensureInjected();
+      environmentName_ = environmentName;
       filterRenderer_ = new AbstractSafeHtmlRenderer<String>()
       {
          @Override
@@ -108,12 +111,7 @@ public abstract class EnvironmentObjectDisplay
    
    protected boolean selectionEnabled()
    {
-      if (environmentName_.equals("base") ||
-          environmentName_.startsWith("package:"))
-      {
-         return false;
-      }
-      return true;
+      return environmentName_.equals(EnvironmentPane.GLOBAL_ENVIRONMENT_NAME);
    }
 
    protected AbstractSafeHtmlRenderer<String> filterRenderer_;

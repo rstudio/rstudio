@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include "SessionErrors.hpp"
+#include "SessionBreakpoints.hpp"
 
 using namespace core;
 
@@ -48,6 +49,11 @@ Error setErrHandler(int type, bool inMyCode,
 {
    // when setting the error handler to "custom", just leave it as it was
    if (type == ERRORS_CUSTOM)
+      return Success();
+
+   // this feature requires the source reference attribute; don't try to set
+   // the error handler if we don't have that.
+   if (!breakpoints::haveSrcrefAttribute())
       return Success();
 
    // clear the previous error handler; if we don't do this, the error handler
