@@ -197,8 +197,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                     indicator.onCompleted();
                     
                     // update default
-                    ExportPlot.setDefaultSaveDirectory(defaultDirectory_,
-                                                       input);
+                    ExportPlot.setDefaultSaveDirectory(input);
                     
                     // set display
                     setDirectory(input);  

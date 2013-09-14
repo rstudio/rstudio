@@ -90,8 +90,7 @@ public class SavePlotAsTargetEditor extends Composite implements CanFocus
                     indicator.onCompleted();
                     
                     // update default
-                    ExportPlot.setDefaultSaveDirectory(context_.getDirectory(),
-                                                       input);
+                    ExportPlot.setDefaultSaveDirectory(input);
                     
                     // set display
                     setDirectory(input);  
