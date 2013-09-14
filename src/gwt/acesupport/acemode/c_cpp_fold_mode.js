@@ -39,7 +39,7 @@ oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
 
-    this.embeddedRComment = /^\s*\/\*{3,}\s*[Rr]\s*$/ 
+    this.embeddedRComment = /^\s*\/\*{3,}\s+[Rr]\s*$/ 
     this.foldingStartMarker = /(\{|\[)[^\}\]]*$|^\s*(\/\*)/;
     this.foldingStopMarker = /^[^\[\{]*(\}|\])|^[\s\*]*(\*\/)/;
 
