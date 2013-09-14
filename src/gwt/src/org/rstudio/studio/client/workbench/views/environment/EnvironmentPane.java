@@ -207,11 +207,10 @@ public class EnvironmentPane extends WorkbenchPane
       environmentButton_.setText(friendlyEnvironmentName());
       environmentButton_.setLeftImage(imageOfEnvironment(environmentName));
       objects_.setEnvironmentName(friendlyEnvironmentName());
-      if (environmentName.startsWith("package:") ||
-          environmentName.equals("base"))
-         commands_.clearWorkspace().setEnabled(false);
-      else
+      if (environmentName.equals("R_GlobalEnv"))
          commands_.clearWorkspace().setEnabled(true); 
+      else
+         commands_.clearWorkspace().setEnabled(false);
    }
 
    @Override

@@ -323,6 +323,10 @@ public class SessionInfo extends JavaScriptObject
       return this.debug_state;
    }-*/;
    
+   public final native boolean getHaveSrcrefAttribute() /*-{
+      return this.have_srcref_attribute;
+   }-*/;
+   
    public final native ErrorManagerState getErrorState() /*-{
       return this.error_state;
    }-*/;
