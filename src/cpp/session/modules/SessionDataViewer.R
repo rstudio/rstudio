@@ -29,8 +29,10 @@
    if (missing(title))
       title <- deparse(substitute(x))[1]
    
-   # make sure we are dealing with a data frame
-   if (!is.data.frame(x))
+   # make sure we are dealing with a data frame (cast explicity both
+   # for the case of it not being a data frame or for the case of
+   # more than one class)
+   if (!is.data.frame(x) || (length(class(x)) > 1))
       x <- as.data.frame(x)
 
    # add a column for custom row names if necessary

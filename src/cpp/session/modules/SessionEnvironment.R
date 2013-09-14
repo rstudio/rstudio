@@ -309,6 +309,7 @@
    list (
       name = .rs.scalar(objName),
       type = .rs.scalar(class),
+      is_data = .rs.scalar(is.data.frame(obj)),
       value = .rs.scalar(val),
       description = .rs.scalar(desc),
       size = .rs.scalar(size),

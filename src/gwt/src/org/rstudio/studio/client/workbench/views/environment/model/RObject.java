@@ -31,6 +31,10 @@ public class RObject extends JavaScriptObject
    public final native String getType() /*-{
       return this.type;
    }-*/;
+   
+   public final native boolean isData() /*-{
+      return this.is_data;
+   }-*/;
 
    public final native String getValue() /*-{
       return this.value;
