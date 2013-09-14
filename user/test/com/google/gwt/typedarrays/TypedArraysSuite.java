@@ -28,28 +28,17 @@ import com.google.gwt.typedarrays.client.GwtUint32ArrayTest;
 import com.google.gwt.typedarrays.client.GwtUint8ArrayTest;
 import com.google.gwt.typedarrays.client.GwtUint8ClampedArrayTest;
 import com.google.gwt.typedarrays.client.StringArrayBufferTest;
-import com.google.gwt.typedarrays.shared.DataViewTest;
-import com.google.gwt.typedarrays.shared.Float32ArrayTest;
-import com.google.gwt.typedarrays.shared.Float64ArrayTest;
-import com.google.gwt.typedarrays.shared.Int16ArrayTest;
-import com.google.gwt.typedarrays.shared.Int32ArrayTest;
-import com.google.gwt.typedarrays.shared.Int8ArrayTest;
-import com.google.gwt.typedarrays.shared.Uint16ArrayTest;
-import com.google.gwt.typedarrays.shared.Uint32ArrayTest;
-import com.google.gwt.typedarrays.shared.Uint8ArrayTest;
-import com.google.gwt.typedarrays.shared.Uint8ClampedArrayTest;
 
 import junit.framework.Test;
 
 /**
- * All TypedArray tests.
+ * TypedArray tests for client code running as a GWT test.
  */
 public class TypedArraysSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite("All TypedArray tests");
+    GWTTestSuite suite = new GWTTestSuite("TypedArray client tests");
 
     // $JUnit-BEGIN$
-    // Client tests
     suite.addTestSuite(ClientSupportTest.class);
     suite.addTestSuite(GwtDataViewTest.class);
     suite.addTestSuite(GwtFloat32ArrayTest.class);
@@ -62,19 +51,6 @@ public class TypedArraysSuite {
     suite.addTestSuite(GwtUint8ArrayTest.class);
     suite.addTestSuite(GwtUint8ClampedArrayTest.class);
     suite.addTestSuite(StringArrayBufferTest.class);
-
-    // Pure Java tests
-    suite.addTestSuite(DataViewTest.class);
-    suite.addTestSuite(Float32ArrayTest.class);
-    suite.addTestSuite(Float64ArrayTest.class);
-    suite.addTestSuite(Int16ArrayTest.class);
-    suite.addTestSuite(Int32ArrayTest.class);
-    suite.addTestSuite(Int8ArrayTest.class);
-    suite.addTestSuite(Uint16ArrayTest.class);
-    suite.addTestSuite(Uint32ArrayTest.class);
-    suite.addTestSuite(Uint8ArrayTest.class);
-    suite.addTestSuite(Uint8ClampedArrayTest.class);
-
     // $JUnit-END$
 
     return suite;
