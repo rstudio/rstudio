@@ -66,7 +66,8 @@ public class RObjectEntry
       if (type.equals("data.frame") ||
           type.equals("matrix") ||
           type.equals("data.table") ||
-          type.equals("cast_df"))
+          type.equals("cast_df") ||
+          type.equals("xts"))
       {
          return Categories.Data;
       }
