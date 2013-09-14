@@ -266,6 +266,11 @@ public:
       return allowRemovePublicFolder_;
    }
 
+   bool allowRpubsPublish() const
+   {
+      return allowRpubsPublish_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -419,6 +424,7 @@ private:
    bool allowCRANReposEdit_;
    bool allowVcsExecutableEdit_;
    bool allowRemovePublicFolder_;
+   bool allowRpubsPublish_;
 
    // user info
    std::string userIdentity_;

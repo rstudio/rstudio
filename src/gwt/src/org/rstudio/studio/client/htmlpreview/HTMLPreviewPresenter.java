@@ -117,6 +117,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       
       binder.bind(commands, this);  
       
+      // disable rpubs if requested
+      if (!session.getSessionInfo().getAllowRpubsPublish())
+      {
+         commands.publishHTML().remove();
+      }
+      
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
          @Override
@@ -200,7 +206,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
-                  isMarkdownFile(result.getSourceFile()),
+                  isMarkdownFile(result.getSourceFile()) &&
+                  session_.getSessionInfo().getAllowRpubsPublish(),
                   result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
 
