@@ -3,8 +3,12 @@
 # errors shouldn't cause script to exit
 set +e 
 
-# remove softlink to rstudio
-rm -f /usr/bin/rstudio
+# make sure this is the last version installed
+if [ $1 == "0" ]
+then
+   # remove softlink to rstudio
+   rm -f /usr/bin/rstudio
+fi
 
 # clear error termination state
 set -e
