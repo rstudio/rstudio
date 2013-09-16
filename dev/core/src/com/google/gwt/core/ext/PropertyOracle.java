@@ -35,39 +35,6 @@ public interface PropertyOracle {
       throws BadPropertyValueException;
 
   /**
-   * Attempts to get a named deferred binding property or configuration
-   * property. Throws <code>BadPropertyValueException</code> if the property is
-   * either undefined or has a value that is unsupported. The result of invoking
-   * this method with the same <code>propertyName</code> must be stable.
-   * 
-   * @param logger the current logger
-   * @param propertyName the name of the property
-   * @return a value for the property
-   * @throws BadPropertyValueException if the property is unknown or not of the
-   *     right type
-   */
-  @Deprecated
-  String getPropertyValue(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException;
-
-  /**
-   * Attempts to get a named deferred binding property and returns the list of
-   * possible values. Throws <code>BadPropertyValueException</code> if the
-   * property is a configuration property or is undefined. The result of
-   * invoking this method with the same <code>propertyName</code> must be
-   * stable.
-   * 
-   * @param logger the current logger
-   * @param propertyName the name of the property
-   * @return the possible values for the property
-   * @throws BadPropertyValueException if the property is unknown or not of the
-   *     right type 
-   */
-  @Deprecated
-  String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException;
-
-  /**
    * Attempts to get a named deferred binding property. Throws
    * <code>BadPropertyValueException</code> if the property is either undefined
    * or has a value that is unsupported. The result of invoking this method with

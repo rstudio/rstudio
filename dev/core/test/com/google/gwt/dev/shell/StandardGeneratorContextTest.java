@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -34,11 +33,9 @@ import com.google.gwt.dev.util.Util;
 
 import junit.framework.TestCase;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -60,20 +57,12 @@ public class StandardGeneratorContextTest extends TestCase {
   }
 
   private static class MockPropertyOracle implements PropertyOracle {
+    @Override
     public ConfigurationProperty getConfigurationProperty(String name) {
       return null;
     }
 
-    public String getPropertyValue(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      return "";
-    }
-
-    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      return new String[] {};
-    }
-
+    @Override
     public SelectionProperty getSelectionProperty(TreeLogger logger, String name) {
       return null;
     }

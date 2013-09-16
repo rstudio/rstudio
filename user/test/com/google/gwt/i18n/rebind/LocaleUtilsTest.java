@@ -61,14 +61,12 @@ public class LocaleUtilsTest extends TestCase {
     private final Map<String, ConfigurationProperty> configProperties;
     private final Map<String, SelectionProperty> selectionProperties;
     
-    /**
-     * 
-     */
     public MockPropertyOracle() {
       configProperties = new TreeMap<String, ConfigurationProperty>();
       selectionProperties = new TreeMap<String, SelectionProperty>();
     }
 
+    @Override
     public ConfigurationProperty getConfigurationProperty(String propertyName)
         throws BadPropertyValueException {
       ConfigurationProperty prop = configProperties.get(propertyName);
@@ -78,21 +76,7 @@ public class LocaleUtilsTest extends TestCase {
       return prop;
     }
 
-    @Deprecated
-    public String getPropertyValue(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-     SelectionProperty prop = getSelectionProperty(logger, propertyName);
-     return prop.getCurrentValue();
-    }
-
-    @Deprecated
-    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      SelectionProperty prop = getSelectionProperty(logger, propertyName);
-      SortedSet<String> possibleValues = prop.getPossibleValues();
-      return possibleValues.toArray(new String[possibleValues.size()]);
-    }
-
+    @Override
     public SelectionProperty getSelectionProperty(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
       SelectionProperty prop = selectionProperties.get(propertyName);

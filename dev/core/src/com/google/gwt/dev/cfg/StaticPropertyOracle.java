@@ -90,46 +90,6 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     return orderedPropValues;
   }
 
-  @Deprecated
-  public String getPropertyValue(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException {
-    // In practice there will probably be so few properties that a linear
-    // search is at least as fast as a map lookup by name would be.
-    // If that turns out not to be the case, the ctor could build a
-    // name-to-index map.
-    //
-    for (int i = 0; i < orderedProps.length; i++) {
-      BindingProperty prop = orderedProps[i];
-      if (prop.getName().equals(propertyName)) {
-        String value = orderedPropValues[i];
-        if (prop.isAllowedValue(value)) {
-          return value;
-        } else {
-          throw new BadPropertyValueException(propertyName, value);
-        }
-      }
-    }
-
-    return getConfigurationProperty(propertyName).getValues().get(0);
-  }
-
-  @Deprecated
-  public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException {
-    for (int i = 0; i < orderedProps.length; i++) {
-      BindingProperty prop = orderedProps[i];
-      if (prop.getName().equals(propertyName)) {
-        return prop.getDefinedValues();
-      }
-    }
-
-    // Configuration properties throw exception per javadoc.
-
-    // Didn't find it.
-    //
-    throw new BadPropertyValueException(propertyName);
-  }
-
   public com.google.gwt.core.ext.SelectionProperty getSelectionProperty(
       TreeLogger logger, String propertyName)
       throws BadPropertyValueException {

@@ -67,23 +67,13 @@ public class JsCoerceIntShiftTest extends TestCase {
       userAgent = createSelectionProperty(userAgentName);
     }
 
+    @Override
     public ConfigurationProperty getConfigurationProperty(String propertyName)
         throws BadPropertyValueException {
       throw new BadPropertyValueException("no config properties");
     }
 
-    @Deprecated
-    public String getPropertyValue(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      throw new BadPropertyValueException("no deprecated api");
-    }
-
-    @Deprecated
-    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
-      throw new BadPropertyValueException("no deprecated api");
-    }
-
+    @Override
     public SelectionProperty getSelectionProperty(TreeLogger logger,
         String propertyName) throws BadPropertyValueException {
       if (userAgent != null && "user.agent".equals(propertyName)) {

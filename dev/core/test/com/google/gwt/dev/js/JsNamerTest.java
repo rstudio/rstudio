@@ -89,18 +89,6 @@ public class JsNamerTest extends OptimizerTestBase {
           }
 
           @Override
-          public String getPropertyValue(TreeLogger logger,
-              String propertyName) throws BadPropertyValueException {
-            return null;
-          }
-
-          @Override
-          public String[] getPropertyValueSet(TreeLogger logger,
-              String propertyName) throws BadPropertyValueException {
-            return new String[0];
-          }
-
-          @Override
           public SelectionProperty getSelectionProperty(TreeLogger logger,
               String propertyName) throws BadPropertyValueException {
             return null;

@@ -61,6 +61,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     this.props = props;
   }
 
+  @Override
   public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(
       String propertyName) throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
@@ -74,49 +75,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     }
   }
 
-  /**
-   * Executes JavaScript to find the property value.
-   */
-  @Deprecated
-  public String getPropertyValue(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException {
-    Property prop = getProperty(propertyName);
-
-    // Check if this property has already been queried for; if so, return
-    // the same answer. This is necessary to match Production Mode behavior
-    // since property providers are only called once. We cache even values that
-    // cause exceptions to be thrown to make sure we are consistent even
-    // in throwing exceptions for the same property.
-    if (prevAnswers.containsKey(propertyName)) {
-      return prevAnswers.get(propertyName);
-    } else {
-      String value;
-      if (prop instanceof ConfigurationProperty) {
-        value = ((ConfigurationProperty) prop).getValue();
-      } else if (prop instanceof BindingProperty) {
-        value = computePropertyValue(logger, propertyName,
-            (BindingProperty) prop);
-      } else {
-        throw new BadPropertyValueException(propertyName);
-      }
-      prevAnswers.put(propertyName, value);
-      return value;
-    }
-  }
-
-  /**
-   * Returns the list of possible values for a property.
-   */
-  @Deprecated
-  public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
-      throws BadPropertyValueException {
-    Property prop = getProperty(propertyName);
-    if (prop instanceof BindingProperty) {
-      return ((BindingProperty) prop).getDefinedValues();
-    }
-    throw new BadPropertyValueException(propertyName);
-  }
-
+  @Override
   public SelectionProperty getSelectionProperty(TreeLogger logger,
       String propertyName) throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
