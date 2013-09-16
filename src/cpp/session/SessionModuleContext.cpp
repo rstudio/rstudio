@@ -790,7 +790,7 @@ bool isTextFile(const FilePath& targetPath)
 #ifndef _WIN32
    core::shell_utils::ShellCommand cmd("file");
    cmd << "--dereference";
-   cmd << "--mime-type";
+   cmd << "--mime";
    cmd << "--brief";
    cmd << targetPath;
    core::system::ProcessResult result;
@@ -803,7 +803,11 @@ bool isTextFile(const FilePath& targetPath)
       return error;
    }
 
+   // strip encoding
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
+   fileType = fileType.substr(0, fileType.find(';'));
+
+   // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
