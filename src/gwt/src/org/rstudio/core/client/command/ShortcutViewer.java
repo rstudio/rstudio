@@ -16,6 +16,7 @@
 package org.rstudio.core.client.command;
 
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -41,8 +42,25 @@ public class ShortcutViewer
    @Handler
    public void onViewShortcuts()
    {
-      ShortcutInfoPanel shortcutInfo = new ShortcutInfoPanel();
-      RootLayoutPanel.get().add(shortcutInfo);
+      // prevent reentry
+      if (shortcutInfo_ != null)
+      {
+         return;
+      }
+      shortcutInfo_ = new ShortcutInfoPanel();
+      shortcutInfo_.addCloseHandler(new Operation()
+      {
+         @Override
+         public void execute()
+         {
+            if (shortcutInfo_ != null)
+               RootLayoutPanel.get().remove(shortcutInfo_);
+            shortcutInfo_ = null;
+         }
+      });
+      RootLayoutPanel.get().add(shortcutInfo_);
+      shortcutInfo_.getElement().focus();
    }
    
+   ShortcutInfoPanel shortcutInfo_ = null;
 }

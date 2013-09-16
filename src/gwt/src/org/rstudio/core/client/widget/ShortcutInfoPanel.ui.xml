@@ -29,7 +29,11 @@
 	  color: rgb(236, 210, 46);
 	  font-family: fixedWidthFont;
 	}
-
+	
+	.shortcutPanel td
+	{
+	  vertical-align: top;
+	}
 	</ui:style>
 	<g:FocusPanel ui:field="focusPanel">
 		<g:HTMLPanel styleName="{style.shortcutPanel}">
