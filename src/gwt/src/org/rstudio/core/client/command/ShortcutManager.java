@@ -22,7 +22,10 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -90,6 +93,22 @@ public class ShortcutManager implements NativePreviewHandler,
          if (handleKeyDown(event.getNativeEvent()))
             event.cancel();
       }
+   }
+   
+   public List<ShortcutInfo> getActiveShortcutInfo()
+   {
+      List<ShortcutInfo> info = new ArrayList<ShortcutInfo>();
+      Set<KeyboardShortcut> shortcuts = commands_.keySet();
+      for (KeyboardShortcut shortcut: shortcuts)
+      {
+         AppCommand command = commands_.get(shortcut);
+         if (command.isEnabled() && 
+             command.isVisible())
+         {
+            info.add(new ShortcutInfo(shortcut, command));
+         }
+      }
+      return info;
    }
 
    private boolean handleKeyDown(NativeEvent e)

@@ -265,6 +265,7 @@ public abstract class
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
+   public abstract AppCommand viewShortcuts();
 
    // Application
    public abstract AppCommand quitSession();

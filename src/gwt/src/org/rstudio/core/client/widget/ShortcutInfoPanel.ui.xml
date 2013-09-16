@@ -1,0 +1,42 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+	.shortcutHeader
+	{
+	  font-size: 150%;
+	  margin-bottom: 50px;
+	}
+
+   .shortcutPanel
+   {
+	  font-size: 110%;
+	  height: 80%;
+	  width: 80%;
+	  position: absolute;
+	  top: 10%;
+	  left: 10%;
+	  background-color: rgba(20, 20, 20, 0.7);
+	  color: white;
+	  padding: 20px;
+	  z-index: 1000;
+	}
+	
+	.shortcutPanel strong
+	{
+	  color: rgb(236, 210, 46);
+	  font-family: fixedWidthFont;
+	}
+
+	</ui:style>
+	<g:FocusPanel ui:field="focusPanel">
+		<g:HTMLPanel styleName="{style.shortcutPanel}">
+		   <g:Label styleName="{style.shortcutHeader}" 
+		            text="RStudio Keyboard Shortcuts"></g:Label>
+			<g:HTMLPanel ui:field="shortcutPanel">
+			</g:HTMLPanel>
+		</g:HTMLPanel>
+	</g:FocusPanel>
+</ui:UiBinder> 

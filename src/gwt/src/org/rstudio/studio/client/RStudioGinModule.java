@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 
+import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationView;
@@ -169,8 +170,8 @@ public class RStudioGinModule extends AbstractGinModule
    @Override
    protected void configure()
    {
-      bind(EventBus.class).in(Singleton.class) ;
-      bind(Session.class).in(Singleton.class) ;
+      bind(EventBus.class).in(Singleton.class);
+      bind(Session.class).in(Singleton.class);
       bind(Projects.class).in(Singleton.class);
       bind(Satellite.class).in(Singleton.class);
       bind(SatelliteManager.class).in(Singleton.class);
@@ -193,6 +194,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreview.class).in(Singleton.class);      
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
+      bind(ShortcutViewer.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
