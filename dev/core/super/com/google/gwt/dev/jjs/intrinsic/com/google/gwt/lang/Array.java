@@ -263,8 +263,8 @@ public final class Array {
       for ( var i = 0; i < length; ++i) {
         array[i] = {l: 0, m: 0, h:0};
       }
-    } else if (seedType > 0) {
-      var value = [null, 0, false][seedType];
+    } else if (seedType > 0 && seedType < 3) {
+      var value = seedType == 1 ? 0 : false;
       for ( var i = 0; i < length; ++i) {
         array[i] = value;
       }
