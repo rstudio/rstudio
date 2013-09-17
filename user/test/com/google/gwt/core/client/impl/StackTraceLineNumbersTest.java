@@ -47,8 +47,11 @@ public class StackTraceLineNumbersTest extends GWTTestCase {
 
     // Check breakups in for-in statements
     var c = null;
-    for (a in [0, 1, 2]) {
-      c = a;
+    var array = [0, 1, 2]
+    for (a in array) {
+      if (Object.prototype.hasOwnProperty.call(array, a)) {
+        c = a;
+      }
     }
     assertTrue("for-in", c==2);
 
