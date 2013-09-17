@@ -303,7 +303,22 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       returnVal.setJsObject(new JsObjectRef(refId));
       return returnVal;
     }
+    if (value instanceof Number) {
+      return new Value(convertNumberFromJsval(((Number) value)));
+    }
     return new Value(value);
+  }
+
+  /**
+   * HtmlUnit can return non-js types for numerical values e.g. long for TypedArrays. This method
+   * mimics the type conversion for numeric values in other devmode plugins so that we will have
+   * similar behavior in HtmlUnit as well.
+   */
+  private Object convertNumberFromJsval(Number number) {
+    if (number instanceof Byte || number instanceof Short || number instanceof Integer) {
+      return number.intValue();
+    }
+    return number.doubleValue();
   }
 
   public void setSessionData(SessionData sessionData) {
