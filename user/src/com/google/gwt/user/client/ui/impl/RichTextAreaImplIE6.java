@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -22,6 +23,14 @@ import com.google.gwt.user.client.Element;
  * IE6-specific implementation of rich-text editing.
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
+
+  /**
+   * Helper method to allow {@link #insertHTML(String)} code to invoke
+   * {@link Node#isOrHasChild(Node)}, which is a JSO instance method.
+   */
+  private static boolean isOrHasChild(Node parent, Node child) {
+    return parent.isOrHasChild(child);
+  }
 
   @Override
   public Element createElement() {
@@ -70,7 +79,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       if (tr == null) {
         return;
       }
-      if (!@com.google.gwt.user.client.DOM::isOrHasChild(Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/Element;)(doc.body, tr.parentElement())) {
+      if (!@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::isOrHasChild(*)(doc.body, tr.parentElement)) {
         return;
       }
       tr.pasteHTML(html);
