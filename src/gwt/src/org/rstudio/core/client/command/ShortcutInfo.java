@@ -6,6 +6,7 @@ public class ShortcutInfo
    {
       shortcut_ = shortcut.toString(true);
       description_ = command.getMenuLabel(false);
+      groupName_ = shortcut.getGroupName();
    }
 
    public String getDescription()
@@ -18,6 +19,12 @@ public class ShortcutInfo
       return shortcut_;
    }
    
+   public String getGroupName()
+   {
+      return groupName_;
+   }
+   
    private String shortcut_;
    private String description_;
+   private String groupName_;
 }

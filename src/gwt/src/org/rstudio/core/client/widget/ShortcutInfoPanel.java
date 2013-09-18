@@ -48,9 +48,9 @@ public class ShortcutInfoPanel extends Composite
          sb.appendHtmlConstant("<strong>");
          sb.appendHtmlConstant(info.getShortcut());
          sb.appendHtmlConstant("</strong>: ");
-         sb.appendEscaped(info.getDescription());
+         sb.appendEscaped(info.getGroupName() + " - " + info.getDescription());
          sb.appendHtmlConstant("</br>");
-         if (i == Math.floor(shortcuts.size() / 2))
+         if ((i + 1) % Math.floor(shortcuts.size() / 3) == 0)
             sb.appendHtmlConstant("</td><td>");
       }
       sb.appendHtmlConstant("</td></tr></table>");

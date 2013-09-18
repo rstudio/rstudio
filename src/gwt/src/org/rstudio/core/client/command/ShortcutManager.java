@@ -64,12 +64,16 @@ public class ShortcutManager implements NativePreviewHandler,
       };
    }
 
-   public void register(int modifiers, int keyCode, AppCommand command)
+   public void register(int modifiers, 
+                        int keyCode, 
+                        AppCommand command, 
+                        String groupName)
    {
       if (!BrowseCap.hasMetaKey() && (modifiers & KeyboardShortcut.META) != 0)
          return;
       
-      KeyboardShortcut shortcut = new KeyboardShortcut(modifiers, keyCode);
+      KeyboardShortcut shortcut = 
+            new KeyboardShortcut(modifiers, keyCode, groupName);
       commands_.put(shortcut, command);
       command.setShortcut(shortcut);
    }

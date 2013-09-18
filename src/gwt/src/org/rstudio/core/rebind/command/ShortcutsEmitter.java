@@ -31,10 +31,12 @@ import java.io.StringWriter;
 public class ShortcutsEmitter
 {
    public ShortcutsEmitter(TreeLogger logger,
+                           String groupName, 
                            Element shortcutsEl) throws UnableToCompleteException
    {
       logger_ = logger;
       shortcutsEl_ = shortcutsEl;
+      groupName_ = groupName;
    }
 
    public void generate(SourceWriter writer) throws UnableToCompleteException
@@ -67,14 +69,15 @@ public class ShortcutsEmitter
             throw new UnableToCompleteException();
          }
 
-         printShortcut(writer, condition, shortcutValue, commandId);
+         printShortcut(writer, condition, shortcutValue, commandId, groupName_);
       }
    }
 
    private void printShortcut(SourceWriter writer,
                               String condition,
                               String shortcutValue,
-                              String commandId) throws UnableToCompleteException
+                              String commandId,
+                              String shortcutGroup) throws UnableToCompleteException
    {
       String[] chunks = shortcutValue.split("\\+");
       int modifiers = KeyboardShortcut.NONE;
@@ -120,18 +123,21 @@ public class ShortcutsEmitter
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.CTRL) + ", " +
                         key + ", " +
-                        commandId + "());");
+                        commandId + "(), " +
+                        "\"" + shortcutGroup + "\");");
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.META) + ", " +
                         key + ", " +
-                        commandId + "());");
+                        commandId + "(), " +
+                        "\"" + shortcutGroup + "\");");
       }
       else
       {
          writer.println("ShortcutManager.INSTANCE.register(" +
                         modifiers + ", " +
                         key + ", " +
-                        commandId + "());");
+                        commandId + "(), " +
+                        "\"" + shortcutGroup + "\");");
       }
 
       if (!condition.isEmpty())
@@ -221,4 +227,5 @@ public class ShortcutsEmitter
 
    private final TreeLogger logger_;
    private final Element shortcutsEl_;
+   private final String groupName_;
 }
