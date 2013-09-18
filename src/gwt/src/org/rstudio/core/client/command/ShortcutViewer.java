@@ -16,17 +16,20 @@
 package org.rstudio.core.client.command;
 
 
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShortcutViewer 
+public class ShortcutViewer implements NativePreviewHandler
 {
    public interface Binder extends CommandBinder<Commands, ShortcutViewer> {}
 
@@ -48,19 +51,28 @@ public class ShortcutViewer
          return;
       }
       shortcutInfo_ = new ShortcutInfoPanel();
-      shortcutInfo_.addCloseHandler(new Operation()
-      {
-         @Override
-         public void execute()
-         {
-            if (shortcutInfo_ != null)
-               RootLayoutPanel.get().remove(shortcutInfo_);
-            shortcutInfo_ = null;
-         }
-      });
       RootLayoutPanel.get().add(shortcutInfo_);
-      shortcutInfo_.getElement().focus();
+      preview_ = Event.addNativePreviewHandler(this);
    }
    
-   ShortcutInfoPanel shortcutInfo_ = null;
+   @Override
+   public void onPreviewNativeEvent(NativePreviewEvent event)
+   {
+      if (event.isCanceled())
+         return;
+
+      if (event.getTypeInt() == Event.ONKEYDOWN || 
+          event.getTypeInt() == Event.ONMOUSEDOWN)
+      {
+         if (shortcutInfo_ != null)
+            RootLayoutPanel.get().remove(shortcutInfo_);
+         shortcutInfo_ = null;
+         if (preview_ != null)
+            preview_.removeHandler();
+         preview_ = null;
+      }
+   }
+
+   private ShortcutInfoPanel shortcutInfo_ = null;
+   private HandlerRegistration preview_;
 }

@@ -20,9 +20,9 @@
 	  background-color: rgba(20, 20, 20, 0.8);
 	  color: white;
 	  padding: 20px;
-	  -webkit-box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
-	  -moz-box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
-	  box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
+	  -webkit-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
+	  -moz-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
+	  box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.66);
 	}
 	
 	.shortcutOuterPanel

@@ -393,6 +393,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="goToFileFunction" value="Ctrl+."/>
          <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="jumpToMatching" value="Ctrl+P"/>
       </shortcutgroup>
       <shortcutgroup name="Tabs/Panes">
@@ -406,8 +408,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateEnvironment" value="Ctrl+8"/>
          <shortcut refid="activateVcs" value="Ctrl+9"/>
          <shortcut refid="activateBuild" value="Ctrl+0"/>
-         <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
          <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>

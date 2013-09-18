@@ -77,36 +77,6 @@ public class ShortcutInfoPanel extends Composite
       shortcutPanel.add(panel);
    }
    
-   public void addCloseHandler(final Operation operation)
-   {
-      focusPanel.addKeyPressHandler(new KeyPressHandler()
-      {
-         @Override
-         public void onKeyPress(KeyPressEvent event)
-         {
-            operation.execute();
-         }
-      });
-      
-      focusPanel.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            operation.execute();
-         }
-      });
-      
-      focusPanel.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            operation.execute();
-         }
-      });
-   }
-
    @UiField HTMLPanel shortcutPanel;
    @UiField FocusPanel focusPanel;
 }
