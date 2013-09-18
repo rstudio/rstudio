@@ -619,14 +619,8 @@ public class BrowserChannelServer extends BrowserChannel
       case DOUBLE:
         jsval.setDouble(val.getDouble());
         break;
-      case FLOAT:
-        jsval.setDouble(val.getFloat());
-        break;
       case INT:
         jsval.setInt(val.getInt());
-        break;
-      case LONG:
-        jsval.setDouble(val.getLong());
         break;
       case SHORT:
         jsval.setShort(val.getShort());

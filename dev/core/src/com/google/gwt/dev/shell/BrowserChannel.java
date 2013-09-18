@@ -32,7 +32,7 @@ import java.net.Socket;
 import java.util.Set;
 
 /**
- * 
+ * A base class for communication between Dev-mode client and server.
  */
 public abstract class BrowserChannel {
 
@@ -257,8 +257,8 @@ public abstract class BrowserChannel {
       /**
        * Primitive values.
        */
-      NULL(0), BOOLEAN(1), BYTE(2), CHAR(3), SHORT(4), INT(5), LONG(6),
-      FLOAT(7), DOUBLE(8), STRING(9),
+      NULL(0), BOOLEAN(1), BYTE(2), CHAR(3), SHORT(4), INT(5), LONG_UNUSED(6),
+      FLOAT_UNUSED(7), DOUBLE(8), STRING(9),
 
       /**
        * Representations of Java or JS objects, sent as an index into a table
@@ -316,12 +316,8 @@ public abstract class BrowserChannel {
         type = ValueType.CHAR;
       } else if (obj instanceof Double) {
         type = ValueType.DOUBLE;
-      } else if (obj instanceof Float) {
-        type = ValueType.FLOAT;
       } else if (obj instanceof Integer) {
         type = ValueType.INT;
-      } else if (obj instanceof Long) {
-        type = ValueType.LONG;
       } else if (obj instanceof Short) {
         type = ValueType.SHORT;
       } else if (obj instanceof String) {
@@ -333,8 +329,7 @@ public abstract class BrowserChannel {
         // TODO: exception handling?
         type = ValueType.JAVA_OBJECT;
       } else {
-        throw new RuntimeException(
-            "Unexpected Java type in convertFromJavaValue: " + obj);
+        throw new IllegalArgumentException("Unexpected type: " + obj.getClass());
       }
       value = obj;
     }
@@ -406,11 +401,6 @@ public abstract class BrowserChannel {
       return ((Double) value).doubleValue();
     }
 
-    public float getFloat() {
-      assert type == ValueType.FLOAT;
-      return ((Float) value).floatValue();
-    }
-
     public int getInt() {
       assert type == ValueType.INT;
       return ((Integer) value).intValue();
@@ -424,11 +414,6 @@ public abstract class BrowserChannel {
     public JsObjectRef getJsObject() {
       assert type == ValueType.JS_OBJECT;
       return (JsObjectRef) value;
-    }
-
-    public long getLong() {
-      assert type == ValueType.LONG;
-      return ((Long) value).longValue();
     }
 
     public short getShort() {
@@ -465,10 +450,6 @@ public abstract class BrowserChannel {
       return type == ValueType.DOUBLE;
     }
 
-    public boolean isFloat() {
-      return type == ValueType.FLOAT;
-    }
-
     public boolean isInt() {
       return type == ValueType.INT;
     }
@@ -481,10 +462,6 @@ public abstract class BrowserChannel {
       return type == ValueType.JS_OBJECT;
     }
 
-    public boolean isLong() {
-      return type == ValueType.LONG;
-    }
-
     public boolean isNull() {
       return type == ValueType.NULL;
     }
@@ -494,9 +471,7 @@ public abstract class BrowserChannel {
         case BYTE:
         case CHAR:
         case DOUBLE:
-        case FLOAT:
         case INT:
-        case LONG:
         case SHORT:
           return true;
         default:
@@ -510,9 +485,7 @@ public abstract class BrowserChannel {
         case BYTE:
         case CHAR:
         case DOUBLE:
-        case FLOAT:
         case INT:
-        case LONG:
         case SHORT:
           return true;
         default:
@@ -550,11 +523,6 @@ public abstract class BrowserChannel {
     public void setDouble(double val) {
       type = ValueType.DOUBLE;
       value = Double.valueOf(val);
-    }
-
-    public void setFloat(float val) {
-      type = ValueType.FLOAT;
-      value = Float.valueOf(val);
     }
 
     public void setInt(int val) {
@@ -1523,12 +1491,6 @@ public abstract class BrowserChannel {
     stream.writeDouble(value);
   }
 
-  protected static void writeTaggedFloat(DataOutputStream stream, float value)
-      throws IOException {
-    stream.writeByte(ValueType.FLOAT.getTag());
-    stream.writeFloat(value);
-  }
-
   protected static void writeTaggedInt(DataOutputStream stream, int value)
       throws IOException {
     stream.writeByte(ValueType.INT.getTag());
@@ -1643,14 +1605,8 @@ public abstract class BrowserChannel {
       case CHAR:
         value.setChar(stream.readChar());
         break;
-      case FLOAT:
-        value.setFloat(stream.readFloat());
-        break;
       case INT:
         value.setInt(stream.readInt());
-        break;
-      case LONG:
-        value.setLong(stream.readLong());
         break;
       case DOUBLE:
         value.setDouble(stream.readDouble());
@@ -1668,6 +1624,8 @@ public abstract class BrowserChannel {
         value.setJavaObject(objectRefFactory.getJavaObjectRef(
             stream.readInt()));
         break;
+      default:
+        throw new IllegalArgumentException("Unexpected type: " + tag);
     }
     return value;
   }
@@ -1705,14 +1663,12 @@ public abstract class BrowserChannel {
       writeTaggedShort(stream, value.getShort());
     } else if (value.isDouble()) {
       writeTaggedDouble(stream, value.getDouble());
-    } else if (value.isFloat()) {
-      writeTaggedFloat(stream, value.getFloat());
     } else if (value.isInt()) {
       writeTaggedInt(stream, value.getInt());
     } else if (value.isString()) {
       writeTaggedString(stream, value.getString());
     } else {
-      assert false;
+      throw new IllegalArgumentException("Unexpected type: " + value.getType());
     }
   }
 }

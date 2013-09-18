@@ -346,8 +346,6 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
         return new Short(value.getShort());
       case INT:
         return new Integer(value.getInt());
-      case FLOAT:
-        return new Float(value.getFloat());
       case DOUBLE:
         return new Double(value.getDouble());
       case STRING:
