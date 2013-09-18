@@ -37,30 +37,40 @@ public class ShortcutInfoPanel extends Composite
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
-      String[] groupNames = { "IDE", "Source Editor", "Build/Execute", "Other" };
+      String[][] groupNames = { 
+            new String[] { "Tabs/Panes", "Files" },
+            new String[] { "Source Navigation", "Source Editor" },
+            new String[] { "Execute", "Debug", "Build" }, 
+            new String[] { "Source Control", "Other" }
+      };
       sb.appendHtmlConstant("<table><tr>");
-      for (String groupName: groupNames)
+      for (String[] colGroupNames: groupNames)
       {
-         sb.appendHtmlConstant("<td><h2>");
-         sb.appendEscaped(groupName);
-         sb.appendHtmlConstant("</h2><table>");
-         for (int i = 0; i < shortcuts.size(); i++)
+         sb.appendHtmlConstant("<td>");
+         for (String colGroupName: colGroupNames)
          {
-            ShortcutInfo info = shortcuts.get(i);
-            if (info.getDescription() == null ||
-                info.getShortcuts().size() == 0 || 
-                !info.getGroupName().equals(groupName))
+            sb.appendHtmlConstant("<h2>");
+            sb.appendEscaped(colGroupName);
+            sb.appendHtmlConstant("</h2><table>");
+            for (int i = 0; i < shortcuts.size(); i++)
             {
-               continue;
+               ShortcutInfo info = shortcuts.get(i);
+               if (info.getDescription() == null ||
+                   info.getShortcuts().size() == 0 || 
+                   !info.getGroupName().equals(colGroupName))
+               {
+                  continue;
+               }
+               sb.appendHtmlConstant("<tr><td><strong>");
+               sb.appendHtmlConstant(
+                     StringUtil.joinStrings(info.getShortcuts(), ", "));
+               sb.appendHtmlConstant("</strong></td><td>");
+               sb.appendEscaped(info.getDescription());
+               sb.appendHtmlConstant("</td></tr>");
             }
-            sb.appendHtmlConstant("<tr><td><strong>");
-            sb.appendHtmlConstant(
-                  StringUtil.joinStrings(info.getShortcuts(), ", "));
-            sb.appendHtmlConstant("</strong></td><td>");
-            sb.appendEscaped(info.getDescription());
-            sb.appendHtmlConstant("</td></tr>");
+            sb.appendHtmlConstant("</table>");
          }
-         sb.appendHtmlConstant("</table></td>");
+         sb.appendHtmlConstant("</td>");
       }
       sb.appendHtmlConstant("</td></tr></table>");
       HTMLPanel panel = new HTMLPanel(sb.toSafeHtml());
