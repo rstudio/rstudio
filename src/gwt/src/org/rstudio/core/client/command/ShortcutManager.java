@@ -24,6 +24,8 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -106,6 +108,8 @@ public class ShortcutManager implements NativePreviewHandler,
       HashMap<Command, ShortcutInfo> infoMap = 
             new HashMap<Command, ShortcutInfo>();
       Set<KeyboardShortcut> shortcuts = commands_.keySet();
+      // Create a ShortcutInfo for each command (a command may have multiple
+      // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
       {
          AppCommand command = commands_.get(shortcut);
@@ -120,6 +124,16 @@ public class ShortcutManager implements NativePreviewHandler,
             infoMap.put(command, shortcutInfo);
          }
       }
+      // Sort the commands back into the order in which they were created 
+      // (reading them out of the keyset mangles the original order)
+      Collections.sort(info, new Comparator<ShortcutInfo>()
+      {
+         @Override
+         public int compare(ShortcutInfo o1, ShortcutInfo o2)
+         {
+            return o1.getOrder() - o2.getOrder();
+         }
+      });
       return info;
    }
 

@@ -14,13 +14,22 @@
 	  position: absolute;
 	  top: 5%;
 	  left: 5%;
-	  height: 90%;
-	  width: 90%;
+	  height: 85%;
+	  width: 85%;
 	  overflow: auto;
-	  background-color: rgba(20, 20, 20, 0.7);
+	  background-color: rgba(20, 20, 20, 0.8);
 	  color: white;
 	  padding: 20px;
+	  -webkit-box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
+	  -moz-box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
+	  box-shadow: 0px 0px 20px rgba(50, 50, 50, 0.8);
+	}
+	
+	.shortcutOuterPanel
+	{
 	  z-index: 1000;
+	  height: 100%;
+	  width: 100%;
 	}
 	
 	.shortcutPanel strong
@@ -34,12 +43,14 @@
 	  vertical-align: top;
 	}
 	</ui:style>
-	<g:FocusPanel ui:field="focusPanel" styleName="{style.shortcutPanel}">
-		<g:HTMLPanel>
-		   <g:Label styleName="{style.shortcutHeader}" 
-		            text="RStudio Keyboard Shortcuts"></g:Label>
-			<g:HTMLPanel ui:field="shortcutPanel">
+	<g:FocusPanel styleName="{style.shortcutOuterPanel}">
+		<g:FocusPanel ui:field="focusPanel" styleName="{style.shortcutPanel}">
+			<g:HTMLPanel>
+			   <g:Label styleName="{style.shortcutHeader}" 
+			            text="RStudio Keyboard Shortcuts"></g:Label>
+				<g:HTMLPanel ui:field="shortcutPanel">
+				</g:HTMLPanel>
 			</g:HTMLPanel>
-		</g:HTMLPanel>
+		</g:FocusPanel>
 	</g:FocusPanel>
 </ui:UiBinder> 

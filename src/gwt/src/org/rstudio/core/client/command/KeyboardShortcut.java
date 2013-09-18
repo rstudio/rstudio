@@ -40,6 +40,7 @@ public class KeyboardShortcut
       modifiers_ = modifiers;
       keycode_ = keycode;
       groupName_ = groupName;
+      order_ = ORDER++;
    }
 
    @Override
@@ -90,6 +91,11 @@ public class KeyboardShortcut
    public String getGroupName()
    {
       return groupName_;
+   }
+   
+   public int getOrder()
+   {
+      return order_;
    }
 
    private String getKeyName(boolean pretty)
@@ -148,6 +154,9 @@ public class KeyboardShortcut
    private final int modifiers_;
    private final int keycode_;
    private String groupName_;
+   private int order_ = 0;
+
+   private static int ORDER = 0;
    
    public static final int NONE = 0;
    public static final int ALT = 1;

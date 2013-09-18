@@ -417,7 +417,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
          <shortcut refid="consoleClear" value="Ctrl+L"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
-         <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
@@ -451,7 +451,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showRequestLog" value="Ctrl+`" />
          <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
          <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
-         <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" />
+         <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" title="Diff Files"/>
          <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
          <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />

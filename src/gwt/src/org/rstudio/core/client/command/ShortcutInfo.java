@@ -11,6 +11,7 @@ public class ShortcutInfo
       description_ = command.getMenuLabel(false);
       groupName_ = shortcut.getGroupName();
       isActive_ = command.isEnabled() && command.isVisible();
+      order_ = shortcut.getOrder();
       addShortcut(shortcut);
    }
 
@@ -39,8 +40,14 @@ public class ShortcutInfo
       return isActive_;
    }
    
+   public int getOrder()
+   {
+      return order_;
+   }
+   
    private List<String> shortcuts_;
    private String description_;
    private String groupName_;
    private boolean isActive_;
+   private int order_;
 }
