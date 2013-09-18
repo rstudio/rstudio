@@ -359,7 +359,7 @@ public class CodeSplitterTest extends JJSTestBase {
             "com.google.gwt.lang.Exceptions");
     jProgram.addEntryMethod(findMethod(jProgram, "onModuleLoad"));
     CastNormalizer.exec(jProgram, false);
-    ArrayNormalizer.exec(jProgram);
+    ArrayNormalizer.exec(jProgram, false);
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);
     Map<StandardSymbolData, JsName> symbolTable =

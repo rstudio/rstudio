@@ -341,7 +341,7 @@ public class JavaToJavaScriptCompiler {
       LongCastNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
       CastNormalizer.exec(jprogram, options.isCastCheckingDisabled());
-      ArrayNormalizer.exec(jprogram);
+      ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       EqualityNormalizer.exec(jprogram);
 
       // (6) Perform further post-normalization optimizations

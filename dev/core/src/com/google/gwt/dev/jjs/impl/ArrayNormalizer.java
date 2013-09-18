@@ -62,14 +62,15 @@ public class ArrayNormalizer {
          * See if we need to do a checked store. Primitives and (effectively)
          * final are statically correct.
          */
-        if (elementType instanceof JReferenceType) {
-          if (!((JReferenceType) elementType).isFinal()
-              || !program.typeOracle.canTriviallyCast((JReferenceType) x.getRhs().getType(),
-                  (JReferenceType) elementType)) {
-            // replace this assignment with a call to setCheck()
-            JMethodCall call = new JMethodCall(x.getSourceInfo(), null, setCheckMethod);
-            call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(), x.getRhs());
-            ctx.replaceMe(call);
+        if (!disableCastChecking) {
+          if (elementType instanceof JReferenceType) {
+            if (!((JReferenceType) elementType).isFinal() || !program.typeOracle.canTriviallyCast(
+                (JReferenceType) x.getRhs().getType(), (JReferenceType) elementType)) {
+              // replace this assignment with a call to setCheck()
+              JMethodCall call = new JMethodCall(x.getSourceInfo(), null, setCheckMethod);
+              call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(), x.getRhs());
+              ctx.replaceMe(call);
+            }
           }
         }
       }
@@ -210,19 +211,22 @@ public class ArrayNormalizer {
     }
   }
 
-  public static void exec(JProgram program) {
-    new ArrayNormalizer(program).execImpl();
+  public static void exec(JProgram program, boolean disableCastChecking) {
+    new ArrayNormalizer(program, disableCastChecking).execImpl();
   }
 
+  private final boolean disableCastChecking;
   private final JMethod initDim;
   private final JMethod initDims;
   private final JMethod initValues;
   private final JProgram program;
   private final JMethod setCheckMethod;
 
-  private ArrayNormalizer(JProgram program) {
+  private ArrayNormalizer(JProgram program, boolean disableCastChecking) {
     this.program = program;
+    this.disableCastChecking = disableCastChecking;
     setCheckMethod = program.getIndexedMethod("Array.setCheck");
+
     initDim = program.getIndexedMethod("Array.initDim");
     initDims = program.getIndexedMethod("Array.initDims");
     initValues = program.getIndexedMethod("Array.initValues");
