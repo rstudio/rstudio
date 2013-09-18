@@ -30,6 +30,7 @@ public class FakeCssMakerTest extends TestCase {
   
   public void testCreate() {
     MyCss css = FakeCssMaker.create(MyCss.class);
+    css.ensureInjected();
     assertEquals("myFirstStyleName", css.myFirstStyleName());
     assertEquals("mySecondStyleName", css.mySecondStyleName());
   }

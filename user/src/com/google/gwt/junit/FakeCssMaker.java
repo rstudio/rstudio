@@ -24,7 +24,8 @@ import java.lang.reflect.Proxy;
 /**
  * Helper to make a fake implementation of any {@link CssResource} interface via
  * reflection, for use in JUnit tests. (This will not work in GWTTestCase.) All
- * calls to the returned object return the method name.
+ * calls to the returned object (other than ensureInjected) return the method
+ * name.
  * <p>
  * Sample use:
  *
@@ -47,6 +48,10 @@ public class FakeCssMaker implements InvocationHandler {
 
   public Object invoke(Object proxy, Method method, Object[] args)
       throws Throwable {
+    if (method.getName().equals("ensureInjected")
+        && method.getParameterTypes().length == 0) {
+      return false;
+    }
     return method.getName();
   }
 }
