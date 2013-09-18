@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -102,14 +103,21 @@ public class ShortcutManager implements NativePreviewHandler,
    public List<ShortcutInfo> getActiveShortcutInfo()
    {
       List<ShortcutInfo> info = new ArrayList<ShortcutInfo>();
+      HashMap<Command, ShortcutInfo> infoMap = 
+            new HashMap<Command, ShortcutInfo>();
       Set<KeyboardShortcut> shortcuts = commands_.keySet();
       for (KeyboardShortcut shortcut: shortcuts)
       {
          AppCommand command = commands_.get(shortcut);
-         if (command.isEnabled() && 
-             command.isVisible())
+         if (infoMap.containsKey(command))
          {
-            info.add(new ShortcutInfo(shortcut, command));
+            infoMap.get(command).addShortcut(shortcut);
+         }
+         else
+         {
+            ShortcutInfo shortcutInfo = new ShortcutInfo(shortcut, command);
+            info.add(shortcutInfo);
+            infoMap.put(command, shortcutInfo);
          }
       }
       return info;

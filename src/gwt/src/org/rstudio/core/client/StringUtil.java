@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 public class StringUtil
 {
@@ -447,6 +448,20 @@ public class StringUtil
       });
       val = Pattern.create("[-_]").replaceAll(val, " ");
       return val;
+   }
+   
+   public static String joinStrings(List<String> strings, String separator)
+   {
+      String result = "";
+      // GWT's exposed Strings.join often makes the compiler barf; do this 
+      // manually 
+      for (int i = 0; i < strings.size(); i++)
+      {
+         result += strings.get(i);
+         if (i < strings.size() - 1)
+            result += separator;
+      }
+      return result;
    }
 
    private static final long[] SIZES = {

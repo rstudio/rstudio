@@ -2,6 +2,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
@@ -36,22 +37,30 @@ public class ShortcutInfoPanel extends Composite
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
-      sb.appendHtmlConstant("<table><tr><td>");
-      for (int i = 0; i < shortcuts.size(); i++)
+      String[] groupNames = { "IDE", "Source Editor", "Build/Execute", "Other" };
+      sb.appendHtmlConstant("<table><tr>");
+      for (String groupName: groupNames)
       {
-         ShortcutInfo info = shortcuts.get(i);
-         if (info.getDescription() == null ||
-             info.getShortcut() == null)
+         sb.appendHtmlConstant("<td><h2>");
+         sb.appendEscaped(groupName);
+         sb.appendHtmlConstant("</h2><table>");
+         for (int i = 0; i < shortcuts.size(); i++)
          {
-            continue;
+            ShortcutInfo info = shortcuts.get(i);
+            if (info.getDescription() == null ||
+                info.getShortcuts().size() == 0 || 
+                !info.getGroupName().equals(groupName))
+            {
+               continue;
+            }
+            sb.appendHtmlConstant("<tr><td><strong>");
+            sb.appendHtmlConstant(
+                  StringUtil.joinStrings(info.getShortcuts(), ", "));
+            sb.appendHtmlConstant("</strong></td><td>");
+            sb.appendEscaped(info.getDescription());
+            sb.appendHtmlConstant("</td></tr>");
          }
-         sb.appendHtmlConstant("<strong>");
-         sb.appendHtmlConstant(info.getShortcut());
-         sb.appendHtmlConstant("</strong>: ");
-         sb.appendEscaped(info.getGroupName() + " - " + info.getDescription());
-         sb.appendHtmlConstant("</br>");
-         if ((i + 1) % Math.floor(shortcuts.size() / 3) == 0)
-            sb.appendHtmlConstant("</td><td>");
+         sb.appendHtmlConstant("</table></td>");
       }
       sb.appendHtmlConstant("</td></tr></table>");
       HTMLPanel panel = new HTMLPanel(sb.toSafeHtml());

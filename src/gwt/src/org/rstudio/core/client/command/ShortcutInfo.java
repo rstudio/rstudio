@@ -1,12 +1,17 @@
 package org.rstudio.core.client.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ShortcutInfo
 {
    public ShortcutInfo (KeyboardShortcut shortcut, AppCommand command)
    {
-      shortcut_ = shortcut.toString(true);
+      shortcuts_ = new ArrayList<String>(); 
       description_ = command.getMenuLabel(false);
       groupName_ = shortcut.getGroupName();
+      isActive_ = command.isEnabled() && command.isVisible();
+      addShortcut(shortcut);
    }
 
    public String getDescription()
@@ -14,9 +19,14 @@ public class ShortcutInfo
       return description_;
    }
 
-   public String getShortcut()
+   public List<String> getShortcuts()
    {
-      return shortcut_;
+      return shortcuts_;
+   }
+   
+   public void addShortcut(KeyboardShortcut shortcut)
+   {
+      shortcuts_.add(shortcut.toString(true));
    }
    
    public String getGroupName()
@@ -24,7 +34,13 @@ public class ShortcutInfo
       return groupName_;
    }
    
-   private String shortcut_;
+   public boolean isActive()
+   {
+      return isActive_;
+   }
+   
+   private List<String> shortcuts_;
    private String description_;
    private String groupName_;
+   private boolean isActive_;
 }
