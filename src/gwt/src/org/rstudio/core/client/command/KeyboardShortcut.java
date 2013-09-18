@@ -27,20 +27,22 @@ public class KeyboardShortcut
 
    public KeyboardShortcut(int keycode, String groupName)
    {
-      this(KeyboardShortcut.NONE, keycode, groupName);
+      this(KeyboardShortcut.NONE, keycode, groupName, "");
    }
    
    public KeyboardShortcut(int modifiers, int keycode)
    {
-      this(modifiers, keycode, "");
+      this(modifiers, keycode, "", "");
    }
 
-   public KeyboardShortcut(int modifiers, int keycode, String groupName)
+   public KeyboardShortcut(int modifiers, int keycode, 
+                           String groupName, String title)
    {
       modifiers_ = modifiers;
       keycode_ = keycode;
       groupName_ = groupName;
       order_ = ORDER++;
+      title_ = title;
    }
 
    @Override
@@ -96,6 +98,11 @@ public class KeyboardShortcut
    public int getOrder()
    {
       return order_;
+   }
+   
+   public String getTitle()
+   {
+      return title_;
    }
 
    private String getKeyName(boolean pretty)
@@ -155,6 +162,7 @@ public class KeyboardShortcut
    private final int keycode_;
    private String groupName_;
    private int order_ = 0;
+   private String title_ = "";
 
    private static int ORDER = 0;
    

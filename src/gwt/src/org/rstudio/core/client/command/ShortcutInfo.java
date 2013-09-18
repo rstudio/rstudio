@@ -8,7 +8,9 @@ public class ShortcutInfo
    public ShortcutInfo (KeyboardShortcut shortcut, AppCommand command)
    {
       shortcuts_ = new ArrayList<String>(); 
-      description_ = command.getMenuLabel(false);
+      description_ = shortcut.getTitle().length() > 0 ?
+                        shortcut.getTitle() :
+                        command.getMenuLabel(false);
       groupName_ = shortcut.getGroupName();
       isActive_ = command.isEnabled() && command.isVisible();
       order_ = shortcut.getOrder();

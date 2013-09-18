@@ -57,6 +57,7 @@ public class ShortcutsEmitter
          String condition = childEl.getAttribute("if");
          String commandId = childEl.getAttribute("refid");
          String shortcutValue = childEl.getAttribute("value");
+         String title = childEl.getAttribute("title");
 
          if (commandId.length() == 0)
          {
@@ -69,7 +70,8 @@ public class ShortcutsEmitter
             throw new UnableToCompleteException();
          }
 
-         printShortcut(writer, condition, shortcutValue, commandId, groupName_);
+         printShortcut(writer, condition, shortcutValue, 
+                       commandId, groupName_, title);
       }
    }
 
@@ -77,7 +79,8 @@ public class ShortcutsEmitter
                               String condition,
                               String shortcutValue,
                               String commandId,
-                              String shortcutGroup) throws UnableToCompleteException
+                              String shortcutGroup,
+                              String title) throws UnableToCompleteException
    {
       String[] chunks = shortcutValue.split("\\+");
       int modifiers = KeyboardShortcut.NONE;
@@ -124,12 +127,14 @@ public class ShortcutsEmitter
                         (modifiers| KeyboardShortcut.CTRL) + ", " +
                         key + ", " +
                         commandId + "(), " +
-                        "\"" + shortcutGroup + "\");");
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.META) + ", " +
                         key + ", " +
                         commandId + "(), " +
-                        "\"" + shortcutGroup + "\");");
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
       }
       else
       {
@@ -137,7 +142,8 @@ public class ShortcutsEmitter
                         modifiers + ", " +
                         key + ", " +
                         commandId + "(), " +
-                        "\"" + shortcutGroup + "\");");
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
       }
 
       if (!condition.isEmpty())
