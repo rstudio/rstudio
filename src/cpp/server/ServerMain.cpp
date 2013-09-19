@@ -167,6 +167,10 @@ void httpServerAddHandlers()
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
    uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
 
+   // proxy localhost if requested
+   if (server::options().wwwProxyLocalhost())
+      uri_handlers::add("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
+
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
 

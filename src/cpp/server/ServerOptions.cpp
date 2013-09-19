@@ -148,7 +148,10 @@ ProgramStatus Options::read(int argc,
        "use gwt emulated stack")
       ("www-thread-pool-size",
          value<int>(&wwwThreadPoolSize_)->default_value(2),
-         "thread pool size");
+         "thread pool size")
+      ("www-proxy-localhost",
+         value<bool>(&wwwProxyLocalhost_)->default_value(true),
+         "proxy requests to localhost ports over main server port");
 
    // rsession
    Deprecated dep;

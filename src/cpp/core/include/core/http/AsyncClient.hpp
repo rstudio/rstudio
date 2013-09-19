@@ -35,6 +35,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/ResponseParser.hpp>
+#include <core/http/Socket.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
 
@@ -61,6 +62,7 @@ typedef boost::function<void(const core::Error&)> ErrorHandler;
 template <typename SocketService>
 class AsyncClient :
    public boost::enable_shared_from_this<AsyncClient<SocketService> >,
+   public Socket,
    boost::noncopyable
 {
 public:
@@ -113,10 +115,28 @@ public:
       errorHandler_ = ErrorHandler();
    }
 
+   // satisfy lower-level http::Socket interface (used when the client
+   // is upgraded to a websocket connection and no longer conforms to
+   // the request/response protocol used by the class in the ordinary
+   // course of business)
+
+   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+                              Handler handler)
+   {
+      socket().async_read_some(buffer, handler);
+   }
+
+   virtual void asyncWrite(
+                     const std::vector<boost::asio::const_buffer>& buffers,
+                     Handler handler)
+   {
+      boost::asio::async_write(socket(), buffers, handler);
+   }
+
    void close()
    {
       Error error = closeSocket(socket().lowest_layer());
-      if (error)
+      if (error && !core::http::isConnectionTerminatedError(error))
          logError(error);
    }
 
@@ -345,6 +365,11 @@ private:
       return false;
    }
 
+   virtual bool keepConnectionAlive()
+   {
+      return false;
+   }
+
    void handleReadHeaders(const boost::system::error_code& ec)
    {
       try
@@ -401,7 +426,8 @@ private:
 
    void closeAndRespond()
    {
-      close();
+      if (!keepConnectionAlive())
+         close();
 
       if (responseHandler_)
          responseHandler_(response_);

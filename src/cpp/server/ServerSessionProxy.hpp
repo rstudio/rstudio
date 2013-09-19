@@ -42,6 +42,10 @@ void proxyRpcRequest(
 void proxyEventsRequest(
       const std::string& username,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+
+void proxyLocalhostRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
    
 } // namespace session_proxy
 } // namespace server

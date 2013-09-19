@@ -114,6 +114,11 @@ public:
       return wwwThreadPoolSize_;
    }
 
+   bool wwwProxyLocalhost() const
+   {
+      return wwwProxyLocalhost_;
+   }
+
    // auth
    bool authValidateUsers()
    {
@@ -215,6 +220,7 @@ private:
    std::string wwwSymbolMapsPath_;
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
+   bool wwwProxyLocalhost_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;
    std::string authPamHelperPath_;

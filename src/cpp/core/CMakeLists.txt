@@ -66,6 +66,7 @@ set (CORE_SOURCE_FILES
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
+   http/SocketProxy.cpp
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
