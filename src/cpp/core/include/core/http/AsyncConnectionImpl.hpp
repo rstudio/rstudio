@@ -143,7 +143,7 @@ public:
    virtual void close()
    {
       Error error = closeSocket(socket_);
-      if (error)
+      if (error && !core::http::isConnectionTerminatedError(error))
          LOG_ERROR(error);
    }
    
