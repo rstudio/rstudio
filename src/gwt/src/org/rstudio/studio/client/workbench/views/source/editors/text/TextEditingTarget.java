@@ -191,6 +191,14 @@ public class TextEditingTarget implements EditingTarget
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
             name_.fireChangeEvent();
+
+            // If we were dirty prior to saving, clean up the debug state so
+            // we don't continue highlighting after saving. (There are cases
+            // in which we want to restore highlighting after the dirty state
+            // is marked clean--i.e. when unwinding the undo stack.)
+            if (dirtyState_.getValue())
+               endDebugHighlighting();
+
             dirtyState_.markClean();
          }
 
