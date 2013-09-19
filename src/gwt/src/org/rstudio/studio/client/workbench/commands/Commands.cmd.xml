@@ -362,7 +362,8 @@ well as menu structures (for main menu and popup menus).
       <!-- "Cmd" means Ctrl OR Meta -->
       <shortcut refid="saveSourceDoc" value="Cmd+S"/>
       <shortcut refid="openSourceDoc" value="Cmd+O"/>
-      <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
+      <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()"/>
+      <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()"/>
       <shortcut refid="closeSourceDoc" value="Cmd+W"/>
       <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
       <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
