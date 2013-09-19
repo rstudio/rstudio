@@ -15,13 +15,16 @@
  */
 package com.google.gwt.media.client;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.MediaElement;
 import com.google.gwt.dom.client.SourceElement;
+import com.google.gwt.event.dom.client.LoadedMetadataEvent;
+import com.google.gwt.event.dom.client.LoadedMetadataHandler;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.media.dom.client.MediaError;
-import com.google.gwt.user.client.Timer;
 
 import junit.framework.Assert;
 
@@ -148,49 +151,33 @@ public abstract class MediaTest extends GWTTestCase {
         "currentSrc should be set in these tests.", media.getCurrentSrc());
   }
 
-  public void testCurrentTime() {
+  public void testPlayAndSeek() {
     final MediaBase media = getMedia();
     if (media == null) {
       return; // don't continue if not supported
     }
 
-    delayTestFinish(25 * 1000);
-
-    // wait a little, then make sure it played and seek to a previous time
-    new Timer() {
+    assertAfterLoad(new RepeatingCommand() {
+      boolean afterSeek = false;
       @Override
-      public void run() {
-        MediaError error = media.getError();
-        if (error != null) {
-          fail("Media error (" + error.getCode() + ")");
+      public boolean execute() {
+        if (media.getCurrentTime() >= 1) {
+          assertFalse(afterSeek);
+          media.setCurrentTime(0); // seek to a previous time
+          afterSeek = true;
+          // In the next loop we will assert the time to check if the seek is successful
+          return true;
         }
 
-        // make sure it's playing
-        assertTrue("Media should have played", media.getCurrentTime() > 0);
-
-        // make sure it played enough
-        assertTrue(
-            "Did not play enough", 1000 * media.getCurrentTime() >= 6 * 1000);
-
-        // seek to a previous time
-        media.setCurrentTime(0.0);
-      }
-    }.schedule(15 * 1000);
-
-    // wait an additional 5000ms, then check that the seek was successful
-    new Timer() {
-      @Override
-      public void run() {
-        MediaError error = media.getError();
-        if (error != null) {
-          fail("Media error (" + error.getCode() + ")");
+        if (afterSeek) {
+          assertTrue(media.getCurrentTime() < 1);
+          return false;
         }
 
-        assertTrue(1000 * media.getCurrentTime() < 6 * 1000);
-        finishTest();
+        // Need more time to complete 1 second of play
+        return true;
       }
-    }.schedule(20 * 1000);
-
+    });
     media.play();
   }
 
@@ -200,21 +187,13 @@ public abstract class MediaTest extends GWTTestCase {
       return; // don't continue if not supported
     }
 
-    // the media resource needs time to load
-    delayTestFinish(20 * 1000);
-
-    // wait a little, then make sure it loaded
-    new Timer() {
+    assertAfterLoad(new RepeatingCommand() {
       @Override
-      public void run() {
-        MediaError error = media.getError();
-        if (error != null) {
-          fail("Media error (" + error.getCode() + ")");
-        }
-        finishTest();
+      public boolean execute() {
+        assertNoErrors(media);
+        return false;
       }
-    }.schedule(15 * 1000);
-
+    });
     media.load();
   }
 
@@ -255,32 +234,6 @@ public abstract class MediaTest extends GWTTestCase {
         || state == MediaElement.NETWORK_NO_SOURCE);
   }
 
-  public void testPlay() {
-    final MediaBase media = getMedia();
-    if (media == null) {
-      return; // don't continue if not supported
-    }
-
-    // the media resource needs time to play
-    delayTestFinish(20 * 1000);
-
-    // wait a little, then make sure it played
-    new Timer() {
-      @Override
-      public void run() {
-        MediaError error = media.getError();
-        if (error != null) {
-          fail("Media error (" + error.getCode() + ")");
-        }
-
-        assertTrue(media.getCurrentTime() > 0);
-        finishTest();
-      }
-    }.schedule(15 * 1000);
-
-    media.play();
-  }
-
   public void testPlaybackRate() {
     final MediaBase media = getMedia();
     if (media == null) {
@@ -290,17 +243,10 @@ public abstract class MediaTest extends GWTTestCase {
     assertEquals("Default playback rate should be 1.0", 1.0,
         media.getDefaultPlaybackRate());
 
-    // the media resource needs time to play
-    delayTestFinish(20 * 1000);
-
-    // wait a little, then change the playback rate
-    new Timer() {
+    assertAfterLoad(new RepeatingCommand() {
       @Override
-      public void run() {
-        MediaError error = media.getError();
-        if (error != null) {
-          fail("Media error (" + error.getCode() + ")");
-        }
+      public boolean execute() {
+        assertNoErrors(media);
 
         // set rate to 2.0
         double rate = 2.0;
@@ -314,10 +260,9 @@ public abstract class MediaTest extends GWTTestCase {
         assertEquals("Should be able to change playback rate", rate,
             media.getPlaybackRate());
 
-        finishTest();
+        return false;
       }
-    }.schedule(15 * 1000);
-
+    });
     media.play();
   }
 
@@ -389,5 +334,40 @@ public abstract class MediaTest extends GWTTestCase {
     media.setVolume(0.75);
     assertEquals("Volume should be at three-quarters loudness.", 0.75,
         media.getVolume());
+  }
+
+  private void assertAfterLoad(final RepeatingCommand command) {
+    // the media resource needs time to load
+    delayTestFinish(5 * 1000);
+
+    getMedia().addLoadedMetadataHandler(new LoadedMetadataHandler() {
+
+      @Override
+      public void onLoadedMetadata(LoadedMetadataEvent event) {
+        assertNoErrors(getMedia());
+
+        Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+
+          @Override
+          public boolean execute() {
+            assertNoErrors(getMedia());
+
+            boolean finished = !command.execute();
+            if (finished) {
+              finishTest();
+              return false;
+            }
+            return true;
+          }
+        }, 100);
+      }
+    });
+  }
+
+  private static void assertNoErrors(final MediaBase media) {
+    MediaError error = media.getError();
+    if (error != null) {
+      fail("Media error (" + error.getCode() + ")");
+    }
   }
 }
