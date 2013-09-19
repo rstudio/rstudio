@@ -35,7 +35,7 @@
 	
 	.shortcutPanel strong
 	{
-	  color: rgb(236, 210, 46);
+	  color: #c0c0ff;
 	  font-family: fixedWidthFont;
 	}
 	

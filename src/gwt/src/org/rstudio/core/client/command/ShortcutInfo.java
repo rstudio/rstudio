@@ -29,6 +29,7 @@ public class ShortcutInfo
    
    public void addShortcut(KeyboardShortcut shortcut)
    {
+      shortcuts_.clear();
       shortcuts_.add(shortcut.toString(true));
    }
    
