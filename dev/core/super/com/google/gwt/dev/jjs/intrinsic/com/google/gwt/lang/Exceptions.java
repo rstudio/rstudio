@@ -48,8 +48,8 @@ final class Exceptions {
     return jse;
   }-*/;
 
-  static boolean throwAssertionError() {
-    throw new AssertionError();
+  static AssertionError makeAssertionError() {
+    return new AssertionError();
   }
 
   /*
@@ -57,32 +57,32 @@ final class Exceptions {
    * method names based on primitive type name.
    */
   // CHECKSTYLE_OFF
-  static boolean throwAssertionError_boolean(boolean message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_boolean(boolean message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_char(char message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_char(char message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_double(double message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_double(double message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_float(float message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_float(float message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_int(int message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_int(int message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_long(long message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_long(long message) {
+    return new AssertionError(message);
   }
 
-  static boolean throwAssertionError_Object(Object message) {
-    throw new AssertionError(message);
+  static AssertionError makeAssertionError_Object(Object message) {
+    return new AssertionError(message);
   }
 
   /**

@@ -17,22 +17,38 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
-import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JUnaryOperation;
+import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 /**
- * Removes all assertion statements from the AST.
+ * Replaces all assertion statements in the AST with if statements.
+ *
+ * <p>
+ * The code will look something like:
+ * <pre>
+ * if (!x) {
+ *   GWT.debugger();
+ *   throw Exceptions.makeAssertionError();
+ * }
+ * </pre>
+ *
+ * If the assertion has a message, it will be passed in the call to the Exceptions method.
  */
 public class AssertionNormalizer {
 
@@ -43,17 +59,23 @@ public class AssertionNormalizer {
 
     @Override
     public void endVisit(JAssertStatement x, Context ctx) {
-      JExpression lhs = x.getTestExpr();
-      String methodName = "Exceptions.throwAssertionError" + getAssertMethodSuffix(x.getArg());
+      JBlock then = new JBlock(x.getSourceInfo());
+
+      then.addStmt(new JDebuggerStatement(x.getSourceInfo()));
+
+      String methodName = "Exceptions.makeAssertionError" + getAssertMethodSuffix(x.getArg());
       JMethod method = program.getIndexedMethod(methodName);
-      JMethodCall rhs = new JMethodCall(x.getSourceInfo(), null, method);
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
       if (x.getArg() != null) {
-        rhs.addArg(x.getArg());
+        call.addArg(x.getArg());
       }
-      JBinaryOperation binOp =
-          new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-              JBinaryOperator.OR, lhs, rhs);
-      ctx.replaceMe(binOp.makeStatement());
+      then.addStmt(new JThrowStatement(x.getSourceInfo(), call));
+
+      JUnaryOperation notX =
+          new JPrefixOperation(x.getSourceInfo(), JUnaryOperator.NOT, x.getTestExpr());
+      JIfStatement cond =
+          new JIfStatement(x.getSourceInfo(), notX, then, null);
+      ctx.replaceMe(cond);
     }
   }
 

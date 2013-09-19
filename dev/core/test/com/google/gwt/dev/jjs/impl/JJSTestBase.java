@@ -271,7 +271,7 @@ public abstract class JJSTestBase extends TestCase {
         return ""
             + "package com.google.gwt.lang;"
             + "public class Exceptions { "
-            + "  static boolean throwAssertionError() { throw new RuntimeException(); }"
+            + "  static RuntimeException makeAssertionError() { return new RuntimeException(); }"
             + "  static Throwable safeClose(AutoCloseable resource, Throwable mainException) {"
             + "    return mainException;"
             + "  } "
