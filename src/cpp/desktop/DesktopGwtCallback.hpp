@@ -142,7 +142,6 @@ public slots:
 
    bool supportsFullscreenMode();
    void toggleFullscreenMode();
-   void showKeyboardShortcutHelp();
 
    void launchSession(bool reload);
 

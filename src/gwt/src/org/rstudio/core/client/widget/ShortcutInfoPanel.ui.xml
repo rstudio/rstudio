@@ -23,6 +23,7 @@
 	  -webkit-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
 	  -moz-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
 	  box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.66);
+	  border-radius: 10px;
 	}
 	
 	.shortcutOuterPanel

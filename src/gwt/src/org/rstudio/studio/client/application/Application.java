@@ -249,15 +249,6 @@ public class Application implements ApplicationEventHandlers
          globalDisplay_.openRStudioLink("docs");
    }
    
-   @Handler
-   public void onHelpKeyboardShortcuts()
-   {
-      if (Desktop.isDesktop())
-         Desktop.getFrame().showKeyboardShortcutHelp();
-      else
-         openApplicationURL("docs/keyboard.htm");
-   }
-   
    private void showAgreement()
    {
       globalDisplay_.openWindow(server_.getApplicationURL("agreement"));

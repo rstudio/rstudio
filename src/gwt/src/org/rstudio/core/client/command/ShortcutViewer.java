@@ -43,7 +43,7 @@ public class ShortcutViewer implements NativePreviewHandler
    }
    
    @Handler
-   public void onViewShortcuts()
+   public void onHelpKeyboardShortcuts()
    {
       // prevent reentry
       if (shortcutInfo_ != null)
@@ -70,6 +70,7 @@ public class ShortcutViewer implements NativePreviewHandler
          if (preview_ != null)
             preview_.removeHandler();
          preview_ = null;
+         event.cancel();
       }
    }
 
