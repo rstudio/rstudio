@@ -377,6 +377,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="foldAll" value="Cmd+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="unfoldAll" value="Shift+Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
+         <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -456,6 +457,11 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
       </shortcutgroup>
       <shortcutgroup name="Other">
+         <shortcut value="F1" title="Show Function Help" />
+         <shortcut value="F2" title="Show Function Code" />
+         <shortcut value="Tab" title="Complete Code" />
+         <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="restartR" value="Cmd+Shift+0"/>
          <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
          <shortcut refid="showRequestLog" value="Ctrl+`" />
@@ -464,9 +470,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />
          <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
-         <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="restartR" value="Cmd+Shift+0"/>
-         <shortcut refid="helpKeyboardShortcuts" value="Cmd+K"/>
+         <shortcut refid="helpKeyboardShortcuts" value="Cmd+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
