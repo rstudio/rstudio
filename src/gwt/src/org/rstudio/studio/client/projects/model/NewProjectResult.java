@@ -26,6 +26,7 @@ public class NewProjectResult
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
+      openInNewWindow_ = false;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
       newPackageOptions_ = newPackageOptions;
@@ -39,6 +40,16 @@ public class NewProjectResult
    public boolean getCreateGitRepo()
    {
       return createGitRepo_;
+   }
+   
+   public boolean getOpenInNewWindow()
+   {
+      return openInNewWindow_;
+   }
+   
+   public void setOpenInNewWindow(boolean openInNewWindow)
+   {
+      openInNewWindow_ = openInNewWindow;
    }
    
    public String getNewDefaultProjectLocation()
@@ -58,6 +69,7 @@ public class NewProjectResult
    
    
    private final boolean createGitRepo_;
+   private boolean openInNewWindow_;
    private final String projectFile_;
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;

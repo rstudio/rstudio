@@ -7,12 +7,6 @@ import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -38,7 +32,7 @@ public class ShortcutInfoPanel extends Composite
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
       String[][] groupNames = { 
-            new String[] { "Tabs/Panes", "Files" },
+            new String[] { "Tabs/Panes", "Files", "Console" },
             new String[] { "Source Navigation", "Source Editor" },
             new String[] { "Execute", "Debug", "Build" }, 
             new String[] { "Source Control", "Other" }

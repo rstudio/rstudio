@@ -50,28 +50,28 @@ struct Deprecated
    bool authPamRequiresPriv;
 };
 
-void printDeprecationWarning(const std::string& option)
+void reportDeprecationWarning(const std::string& option, std::ostream& os)
 {
-   program_options::reportWarning("The option '" + option + "' is deprecated "
-                                  "and will be discarded.",
-                                  ERROR_LOCATION);
+   os << "The option '" << option << "' is deprecated and will be discarded."
+      << std::endl;
 }
 
-void printDeprecationWarnings(const Deprecated& userOptions)
+void reportDeprecationWarnings(const Deprecated& userOptions,
+                               std::ostream& os)
 {
    Deprecated defaultOptions;
 
    if (userOptions.memoryLimitMb != defaultOptions.memoryLimitMb)
-      printDeprecationWarning("rsession-memory-limit-mb");
+      reportDeprecationWarning("rsession-memory-limit-mb", os);
 
    if (userOptions.stackLimitMb != defaultOptions.stackLimitMb)
-      printDeprecationWarning("rsession-stack-limit-mb");
+      reportDeprecationWarning("rsession-stack-limit-mb", os);
 
    if (userOptions.userProcessLimit != defaultOptions.userProcessLimit)
-      printDeprecationWarning("rsession-process-limit");
+      reportDeprecationWarning("rsession-process-limit", os);
 
    if (userOptions.authPamRequiresPriv != defaultOptions.authPamRequiresPriv)
-      printDeprecationWarning("auth-pam-requires-priv");
+      reportDeprecationWarning("auth-pam-requires-priv", os);
 }
 
 } // anonymous namespace
@@ -83,7 +83,9 @@ Options& options()
 }
 
 
-ProgramStatus Options::read(int argc, char * const argv[])
+ProgramStatus Options::read(int argc,
+                            char * const argv[],
+                            std::ostream& osWarnings)
 {
    using namespace boost::program_options ;
 
@@ -146,7 +148,10 @@ ProgramStatus Options::read(int argc, char * const argv[])
        "use gwt emulated stack")
       ("www-thread-pool-size",
          value<int>(&wwwThreadPoolSize_)->default_value(2),
-         "thread pool size");
+         "thread pool size")
+      ("www-proxy-localhost",
+         value<bool>(&wwwProxyLocalhost_)->default_value(true),
+         "proxy requests to localhost ports over main server port");
 
    // rsession
    Deprecated dep;
@@ -223,13 +228,13 @@ ProgramStatus Options::read(int argc, char * const argv[])
    if (help)
       return ProgramStatus::exitSuccess();
 
-   // print deprecation warnings
-   printDeprecationWarnings(dep);
+   // report deprecation warnings
+   reportDeprecationWarnings(dep, osWarnings);
 
    // call overlay hooks
    resolveOverlayOptions();
    std::string errMsg;
-   if (!validateOverlayOptions(&errMsg))
+   if (!validateOverlayOptions(&errMsg, osWarnings))
    {
       program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();

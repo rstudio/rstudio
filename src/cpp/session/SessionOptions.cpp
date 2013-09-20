@@ -155,7 +155,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "allow file downloads from the files pane")
       ("allow-remove-public-folder",
          value<bool>(&allowRemovePublicFolder_)->default_value(true),
-         "allow removal of the user public folder");
+         "allow removal of the user public folder")
+      ("allow-rpubs-publish",
+         value<bool>(&allowRpubsPublish_)->default_value(true),
+        "allow publishing to rpubs");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any

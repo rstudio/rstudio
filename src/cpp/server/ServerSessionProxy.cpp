@@ -19,6 +19,8 @@
 #include <sstream>
 #include <map>
 
+#include <boost/regex.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <boost/thread/mutex.hpp>
@@ -34,9 +36,11 @@
 #include <core/WaitUtils.hpp>
 
 #include <core/http/SocketUtils.hpp>
+#include <core/http/SocketProxy.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamAsyncClient.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
@@ -87,6 +91,60 @@ void handleProxyResponse(
 
    // write the response
    ptrConnection->writeResponse(response);
+}
+
+class LocalhostAsyncClient : public http::TcpIpAsyncClient
+{
+public:
+   LocalhostAsyncClient(boost::asio::io_service& ioService,
+                        const std::string& address,
+                        const std::string& port)
+      : http::TcpIpAsyncClient(ioService, address, port)
+   {
+   }
+
+private:
+   // detect when we've got the whole response and force a response and a
+   // close of the socket (this is because the current version of httpuv
+   // expects a close from the client end of the socket)
+   virtual bool stopReadingAndRespond()
+   {
+      return response_.body().length() >= response_.contentLength();
+   }
+
+   // ensure that we don't close the connection when a websockets
+   // upgrade is taking place
+   virtual bool keepConnectionAlive()
+   {
+      return response_.statusCode() == http::status::SwitchingProtocols;
+   }
+};
+
+void handleLocalhostResponse(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
+      const http::Response& response)
+{
+   // check for upgrade to websockets
+   if (response.statusCode() == http::status::SwitchingProtocols)
+   {
+      // write the response but don't close the connection
+      ptrConnection->writeResponse(response, false);
+
+      // cast to generic socket types
+      boost::shared_ptr<http::Socket> ptrClient =
+         boost::static_pointer_cast<http::Socket>(ptrConnection);
+      boost::shared_ptr<http::Socket> ptrServer =
+         boost::static_pointer_cast<http::Socket>(ptrLocalhost);
+
+      // connect the sockets
+      http::SocketProxy::create(ptrClient, ptrServer);
+   }
+   // normal response, write and close
+   else
+   {
+      ptrConnection->writeResponse(response);
+   }
 }
 
 
@@ -305,6 +363,58 @@ void proxyEventsRequest(
    proxyRequest(username,
                 ptrConnection,
                 boost::bind(handleEventsError, ptrConnection, _1));
+}
+
+void proxyLocalhostRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   // make a copy of the request for forwarding
+   http::Request request;
+   request.assign(ptrConnection->request());
+
+   // extract the port
+   boost::regex re("/p/(\\d+)/");
+   boost::smatch match;
+   if (!boost::regex_search(request.uri(), match, re))
+   {
+      ptrConnection->response().setError(http::status::NotFound,
+                                         request.uri() + " not found");
+      return;
+   }
+   std::string port = match[1];
+
+   // strip the port part of the uri
+   using namespace boost::algorithm;
+   std::string portPath = match[0];
+   std::string uri = replace_first_copy(request.uri(), portPath, "/");
+   request.setUri(uri);
+
+   // remove headers to be a correctly behaving proxy
+   request.removeHeader("Keep-Alive");
+   request.removeHeader("Proxy-Authenticate");
+   request.removeHeader("Proxy-Authorization");
+   request.removeHeader("Trailers");
+   // spec says we should drop these but we're not sure if that's
+   // true for our use case
+   //request.removeHeader("TE");
+   //request.removeHeader("Transfer-Encoding");
+
+   // specify closing of the connection after the request unless this is
+   // an attempt to upgrade to websockets
+   if (!boost::algorithm::iequals(request.headerValue("Connection"), "Upgrade"))
+      request.setHeader("Connection", "close");
+
+   // create async tcp/ip client and assign request
+   boost::shared_ptr<LocalhostAsyncClient> pClient(
+      new LocalhostAsyncClient(ptrConnection->ioService(), "localhost", port));
+   pClient->request().assign(request);
+
+   // execute request
+   pClient->execute(
+         boost::bind(handleLocalhostResponse, ptrConnection, pClient, _1),
+         boost::bind(&core::http::AsyncConnection::writeError,
+                     ptrConnection, _1));
 }
 
 } // namespace session_proxy

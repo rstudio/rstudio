@@ -416,7 +416,8 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
-         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
          <shortcut refid="closeSourceDoc" value="Cmd+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
@@ -467,7 +468,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="restartR" value="Cmd+Shift+0"/>
          <shortcut refid="helpKeyboardShortcuts" value="Cmd+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+      </shortcutgroup>
+      <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L"/>
+         <shortcut value="Ctrl+Up" title="Popup Command History"/>
       </shortcutgroup>
    </shortcuts>
 

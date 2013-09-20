@@ -73,6 +73,7 @@ public interface EditingTarget extends IsWidget,
    void forceLineHighlighting();
    
    void setCursorPosition(Position position);
+   void ensureCursorVisible();
    
    Position search(String regex);
    Position search(Position startPos, String regex);

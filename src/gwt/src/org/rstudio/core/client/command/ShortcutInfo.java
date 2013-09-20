@@ -10,9 +10,13 @@ public class ShortcutInfo
       shortcuts_ = new ArrayList<String>(); 
       description_ = shortcut.getTitle().length() > 0 ?
                         shortcut.getTitle() :
-                        command.getMenuLabel(false);
+                        command != null ? 
+                           command.getMenuLabel(false) :
+                           "";
       groupName_ = shortcut.getGroupName();
-      isActive_ = command.isEnabled() && command.isVisible();
+      isActive_ = command != null ? 
+                     (command.isEnabled() && command.isVisible()) :
+                     true;
       order_ = shortcut.getOrder();
       addShortcut(shortcut);
    }

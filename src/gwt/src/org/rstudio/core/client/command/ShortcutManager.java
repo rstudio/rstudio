@@ -78,8 +78,15 @@ public class ShortcutManager implements NativePreviewHandler,
       
       KeyboardShortcut shortcut = 
             new KeyboardShortcut(modifiers, keyCode, groupName, title);
-      commands_.put(shortcut, command);
-      command.setShortcut(shortcut);
+      if (command == null)
+      {
+         unboundShortcuts_.add(shortcut);
+      }
+      else
+      {
+         commands_.put(shortcut, command);
+         command.setShortcut(shortcut);
+      }
    }
 
    public void onKeyDown(NativeKeyDownEvent evt)
@@ -106,9 +113,17 @@ public class ShortcutManager implements NativePreviewHandler,
    public List<ShortcutInfo> getActiveShortcutInfo()
    {
       List<ShortcutInfo> info = new ArrayList<ShortcutInfo>();
+      
       HashMap<Command, ShortcutInfo> infoMap = 
             new HashMap<Command, ShortcutInfo>();
       Set<KeyboardShortcut> shortcuts = commands_.keySet();
+      
+      // Create a ShortcutInfo for each unbound shortcut
+      for (KeyboardShortcut shortcut: unboundShortcuts_)
+      {
+         info.add(new ShortcutInfo(shortcut, null));
+      }
+
       // Create a ShortcutInfo for each command (a command may have multiple
       // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
@@ -166,5 +181,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private int disableCount_ = 0;
    private final HashMap<KeyboardShortcut, AppCommand> commands_
                                   = new HashMap<KeyboardShortcut, AppCommand>();
+   private ArrayList<KeyboardShortcut> unboundShortcuts_
+                                  = new ArrayList<KeyboardShortcut>();
 
 }

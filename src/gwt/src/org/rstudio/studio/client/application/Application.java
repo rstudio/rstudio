@@ -581,6 +581,13 @@ public class Application implements ApplicationEventHandlers
          commands_.exportFiles().remove();
       }
       
+      // disable rpubs if requested
+      if (!sessionInfo.getAllowRpubsPublish())
+      {
+         commands_.publishHTML().remove();
+         commands_.presentationPublishToRpubs().remove();
+      }
+      
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);

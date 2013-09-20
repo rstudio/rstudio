@@ -581,6 +581,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
+   sessionInfo["allow_rpubs_publish"] = options.allowRpubsPublish();
 
    // check whether a switch project is required
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());

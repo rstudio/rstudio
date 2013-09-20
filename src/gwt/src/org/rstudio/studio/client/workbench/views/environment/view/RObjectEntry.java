@@ -63,10 +63,11 @@ public class RObjectEntry
    public int getCategory()
    {
       String type = rObject.getType();
-      if (type.equals("data.frame") ||
+      if (rObject.isData() ||
           type.equals("matrix") ||
           type.equals("data.table") ||
-          type.equals("cast_df"))
+          type.equals("cast_df") ||
+          type.equals("xts"))
       {
          return Categories.Data;
       }

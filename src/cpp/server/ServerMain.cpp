@@ -167,6 +167,10 @@ void httpServerAddHandlers()
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
    uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
 
+   // proxy localhost if requested
+   if (server::options().wwwProxyLocalhost())
+      uri_handlers::add("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
+
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
 
@@ -338,10 +342,17 @@ int main(int argc, char * const argv[])
       core::system::ignoreSignal(core::system::SigPipe);
 
       // read program options 
+      std::ostringstream osWarnings;
       Options& options = server::options();
-      ProgramStatus status = options.read(argc, argv); 
+      ProgramStatus status = options.read(argc, argv, osWarnings);
+      std::string optionsWarnings = osWarnings.str();
       if ( status.exit() )
+      {
+         if (!optionsWarnings.empty())
+            program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
+
          return status.exitCode() ;
+      }
       
       // daemonize if requested
       if (options.serverDaemonize())
@@ -357,6 +368,11 @@ int main(int argc, char * const argv[])
          // set file creation mask to 022 (might have inherted 0 from init)
          setUMask(core::system::OthersNoWriteMask);
       }
+
+      // wait until now to output options warnings (we need to wait for our
+      // first call to logging functions until after daemonization)
+      if (!optionsWarnings.empty())
+         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       // detect R environment variables (calls R (and this forks) so must
       // happen after daemonize so that upstart script can correctly track us

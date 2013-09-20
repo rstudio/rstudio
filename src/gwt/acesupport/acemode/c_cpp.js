@@ -51,10 +51,10 @@ var Mode = function(suppressHighlighting, doc, session) {
     this.$r_outdent = {};
     oop.implement(this.$r_outdent, RMatchingBraceOutdent);
     this.$behaviour = new CstyleBehaviour();
-    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s*[Rr]\s*$/);
+    this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
     this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
         session,
-        /^\s*\/\*{3,}\s*[Rr]\s*$/,
+        /^\s*\/\*{3,}\s+[Rr]\s*$/,
         /^\*\/$/,
         true);
     this.foldingRules = new CppStyleFoldMode();
@@ -177,7 +177,7 @@ oop.inherits(Mode, TextMode);
             else if (text === "R") {
                 // If newline to start and embedded R chunk complete the chunk
                 var pos = editor.getSelectionRange().start;
-                var match = /^(\s*\/\*{3,}\s*)/.exec(session.doc.getLine(pos.row));
+                var match = /^(\s*\/\*{3,}\s+)/.exec(session.doc.getLine(pos.row));
                 if (match && editor.getSelectionRange().start.column >= match[1].length) {
                     return {text: "R\n\n*/\n",
                             selection: [1,0,1,0]};

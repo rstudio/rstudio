@@ -336,8 +336,11 @@ Error getSavePlotContext(const json::JsonRpcRequest& request,
    formats.push_back(plotExportFormat("EPS", kPostscriptFormat));
    contextJson["formats"] = formats;
 
-   // get directory path
+   // get directory path -- if it doesn't exist revert to the current
+   // working directory
    FilePath directoryPath = module_context::resolveAliasedPath(directory);
+   if (!directoryPath.exists())
+      directoryPath = module_context::safeCurrentPath();
 
    // reflect directory back to caller
    contextJson["directory"] = module_context::createFileSystemItem(directoryPath);

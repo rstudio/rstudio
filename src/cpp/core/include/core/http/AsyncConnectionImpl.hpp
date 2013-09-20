@@ -87,11 +87,12 @@ public:
       return response_;
    }
 
-   virtual void writeResponse()
+   virtual void writeResponse(bool close = true)
    {
       // add extra response headers
       response_.setHeader("Date", util::httpDate());
-      response_.setHeader("Connection", "close");
+      if (close)
+         response_.setHeader("Connection", "close");
 
       // call the response filter if we have one
       if (responseFilter_)
@@ -104,20 +105,46 @@ public:
           boost::bind(
                &AsyncConnectionImpl<ProtocolType>::handleWrite,
                AsyncConnectionImpl<ProtocolType>::shared_from_this(),
-               boost::asio::placeholders::error)
+               boost::asio::placeholders::error,
+               close)
       );
    }
 
-   virtual void writeResponse(const http::Response& response)
+   virtual void writeResponse(const http::Response& response, bool close = true)
    {
       response_.assign(response);
-      writeResponse();
+      writeResponse(close);
    }
 
    virtual void writeError(const Error& error)
    {
       response_.setError(error);
       writeResponse();
+   }
+
+   // satisfy lower-level http::Socket interface (used when the connection
+   // is upgraded to a websocket connection and no longer conforms to the
+   // request/response protocol used by the class in the ordinary course
+   // of business)
+
+   virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffer,
+                              Socket::Handler handler)
+   {
+      socket().async_read_some(buffer, handler);
+   }
+
+   virtual void asyncWrite(
+                     const std::vector<boost::asio::const_buffer>& buffers,
+                     Socket::Handler handler)
+   {
+      boost::asio::async_write(socket(), buffers, handler);
+   }
+
+   virtual void close()
+   {
+      Error error = closeSocket(socket_);
+      if (error && !core::http::isConnectionTerminatedError(error))
+         LOG_ERROR(error);
    }
    
 private:
@@ -177,7 +204,7 @@ private:
    }
    
 
-   void handleWrite(const boost::system::error_code& e)
+   void handleWrite(const boost::system::error_code& e, bool close)
    {
       try
       {
@@ -190,10 +217,13 @@ private:
          }
          
          // close the socket
-         Error error = closeSocket(socket_);
-         if (error)
-            LOG_ERROR(error);
-         
+         if (close)
+         {
+            Error error = closeSocket(socket_);
+            if (error)
+               LOG_ERROR(error);
+         }
+
          //
          // no more async operations are initiated here so the shared_ptr to 
          // this connection no more references and is automatically destroyed

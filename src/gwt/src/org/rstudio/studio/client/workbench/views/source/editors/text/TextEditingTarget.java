@@ -191,6 +191,14 @@ public class TextEditingTarget implements EditingTarget
             name_.setValue(file_.getName(), true);
             // Make sure tooltip gets updated, even if name hasn't changed
             name_.fireChangeEvent();
+
+            // If we were dirty prior to saving, clean up the debug state so
+            // we don't continue highlighting after saving. (There are cases
+            // in which we want to restore highlighting after the dirty state
+            // is marked clean--i.e. when unwinding the undo stack.)
+            if (dirtyState_.getValue())
+               endDebugHighlighting();
+
             dirtyState_.markClean();
          }
 
@@ -489,6 +497,12 @@ public class TextEditingTarget implements EditingTarget
    public void setCursorPosition(Position position)
    {
       docDisplay_.setCursorPosition(position);
+   }
+   
+   @Override
+   public void ensureCursorVisible()
+   {
+      docDisplay_.ensureCursorVisible();
    }
    
    @Override
@@ -2164,10 +2178,54 @@ public class TextEditingTarget implements EditingTarget
       if (code.length() == 0)
          code = "\n";
       
+      // strip roxygen off the beginning of lines
+      if (isRoxygenExampleRange(range))
+      {
+         code = code.replaceFirst("^\\s*#'\\s?", "");
+         code = code.replaceAll("\n\\s*#'\\s?", "\n");
+      }
+      
+      // send to console
       events_.fireEvent(new SendToConsoleEvent(
                                   code, 
                                   true, 
                                   prefs_.focusConsoleAfterExec().getValue()));
+   }
+   
+   private boolean isRoxygenExampleRange(Range range)
+   {
+      // ensure all of the lines in the selection are within roxygen
+      int selStartRow = range.getStart().getRow();
+      int selEndRow = range.getEnd().getRow();
+      for (int i=selStartRow; i<=selEndRow; i++)
+      {
+         if (!isRoxygenLine(docDisplay_.getLine(i)))
+            return false;
+      }
+      
+      // scan backwards and look for @example
+      int row = selStartRow;
+      while (--row >= 0)
+      {
+         String line = docDisplay_.getLine(row);
+         
+         // must still be within roxygen
+         if (!isRoxygenLine(line))
+            return false;
+         
+         // if we are in an example block return true
+         if (line.matches("^\\s*#'\\s*@example.*$"))
+            return true;
+      }
+      
+      // didn't find the example block
+      return false;
+   }
+   
+   private boolean isRoxygenLine(String line)
+   {
+      String trimmedLine = line.trim();
+      return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
    }
 
    private void setLastExecuted(Position start, Position end)
@@ -3270,8 +3328,10 @@ public class TextEditingTarget implements EditingTarget
                      globalDisplay_.showYesNoMessage(
                            GlobalDisplay.MSG_WARNING,
                            "File Deleted",
-                           "The file " + name_.getValue() + " has been " +
-                           "deleted. Do you want to close this file now?",
+                           "The file " + 
+                           StringUtil.notNull(docUpdateSentinel_.getPath()) + 
+                           " has been deleted or moved. " +
+                           "Do you want to close this file now?",
                            false,
                            new Operation()
                            {
@@ -3290,7 +3350,7 @@ public class TextEditingTarget implements EditingTarget
                                  dirtyState_.markDirty(false);
                               }
                            },
-                           false
+                           true
                      );
                   }
                   else if (response.isModified())
