@@ -174,6 +174,28 @@ bool handleLocalHttpUrl(const std::string& url)
       return true;
    }
 
+   // other localhost URLs can benefit from port mapping -- we map them
+   // all since if we don't do any mapping they'll just fail hard
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      // extract the port
+      boost::regex re("http[s]?://localhost:([0-9]+)(/.*)?");
+      boost::smatch match;
+      if (boost::regex_search(url, match, re))
+      {
+         // calculate the path
+         std::string path = match[2];
+         if (path.empty())
+            path = "/";
+         path = "p/" + match[1] + path;
+
+         // enque client event
+         module_context::enqueClientEvent(browseUrlEvent(path));
+
+         return true;
+      }
+   }
+
    // wasn't a url of interest
    return false;
 }
