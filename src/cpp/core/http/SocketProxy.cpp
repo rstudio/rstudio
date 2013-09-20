@@ -13,6 +13,11 @@
  *
  */
 
+// boost requires that winsock2.h must be included before windows.h
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 #include <core/http/SocketProxy.hpp>
 
 #include <iostream>
