@@ -525,26 +525,35 @@ public class AceEditorWidget extends Composite
       // breakpoint and attempt to set it on the server)
       else
       {
-         // move the breakpoint down to the first line that has a
-         // non-whitespace, non-comment token
-         if (editor_.getSession().getMode().getCodeModel() != null)
+         try
          {
-            Position tokenPos = editor_.getSession().getMode().getCodeModel()
-               .findNextSignificantToken(pos);
-            if (tokenPos != null)
+            // move the breakpoint down to the first line that has a
+            // non-whitespace, non-comment token
+            if (editor_.getSession().getMode().getCodeModel() != null)
             {
-               lineNumber = lineFromRow(tokenPos.getRow());
-               if (getBreakpointIdxByLine(lineNumber) >= 0)
+               Position tokenPos = editor_.getSession().getMode().getCodeModel()
+                  .findNextSignificantToken(pos);
+               if (tokenPos != null)
                {
+                  lineNumber = lineFromRow(tokenPos.getRow());
+                  if (getBreakpointIdxByLine(lineNumber) >= 0)
+                  {
+                     return;
+                  }
+               }
+               else
+               {
+                  // if there are no tokens anywhere after the line, don't
+                  // set a breakpoint
                   return;
                }
             }
-            else
-            {
-               // if there are no tokens anywhere after the line, don't
-               // set a breakpoint
-               return;
-            }
+         }
+         catch (Exception e)
+         {
+            // If we failed at any point to fast-forward to the next line with
+            // a statement, we'll try to set a breakpoint on the line the user
+            // originally clicked. 
          }
 
          fireEvent(new BreakpointSetEvent(

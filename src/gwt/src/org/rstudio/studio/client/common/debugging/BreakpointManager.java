@@ -141,7 +141,7 @@ public class BreakpointManager
          final String path,
          final String functionName,
          int lineNumber, 
-         boolean immediately)
+         final boolean immediately)
    {
       // create the new breakpoint and arguments for the server call
       final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
@@ -164,7 +164,7 @@ public class BreakpointManager
          breakpoint.setPendingDebugCompletion(true);
          markInactiveBreakpoint(breakpoint);
       }      
-      else if (immediately)
+      else 
       {
          server_.getFunctionState(functionName, path,
                new ServerRequestCallback<FunctionState>()
@@ -176,6 +176,11 @@ public class BreakpointManager
                {
                   breakpoint.markAsPackageBreakpoint(state.getPackageName());
                }
+               
+               // If the breakpoint is not to be set immediately, 
+               // stop processing now
+               if (!immediately)
+                  return;
                
                // if the function lines up with the version on the server, set
                // the breakpoint now
