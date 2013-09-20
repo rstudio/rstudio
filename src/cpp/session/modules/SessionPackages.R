@@ -414,7 +414,8 @@
    }
    else {
       avail <- available.packages()
-      deps <- suppressMessages(utils:::getDependencies(pkgs, available=avail))
+      deps <- suppressMessages(suppressWarnings(
+         utils:::getDependencies(pkgs, available=avail)))
       return(.rs.packagesLoaded(deps))
    }
 })
