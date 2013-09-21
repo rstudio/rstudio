@@ -190,19 +190,27 @@ public final class DefaultCalendarView extends CalendarView {
 
     if (firstDisplayed.getDate() == 1) {
       // show one empty week if date is Monday is the first in month.
-      CalendarUtil.addDaysToDate(firstDisplayed, -7);
+      addDays(firstDisplayed, -7);
     }
 
     lastDisplayed.setTime(firstDisplayed.getTime());
 
     for (int i = 0; i < grid.getNumCells(); i++) {
       if (i != 0) {
-        CalendarUtil.addDaysToDate(lastDisplayed, 1);
+        addDays(lastDisplayed, 1);
       }
       DateCell cell = (DateCell) grid.getCell(i);
       cell.update(lastDisplayed);
     }
     setAriaSelectedCell(null);
+  }
+
+  private static void addDays(Date date, int days) {
+    CalendarUtil.addDaysToDate(date, days);
+    if (date.getHours() != 0) {
+      // We hit DST transition, try reseting back so follow up days continue showing midnight:
+      date.setHours(0);
+    }
   }
 
   @Override

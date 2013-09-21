@@ -161,19 +161,17 @@ public class CalendarUtil {
   }
 
   /**
-   * Resets the date to have no time modifiers.
-   * 
+   * Resets the date to have no time modifiers. Note that the hour might not be zero if the time
+   * hits a DST transition date.
+   *
    * @param date the date
    */
   @SuppressWarnings("deprecation") // GWT requires Date
-  private static void resetTime(Date date) {
+  public static void resetTime(Date date) {
     long msec = date.getTime();
     msec = (msec / 1000) * 1000;
     date.setTime(msec);
-
-    // Daylight savings time occurs at midnight in some time zones, so we reset
-    // the time to noon instead.
-    date.setHours(12);
+    date.setHours(0);
     date.setMinutes(0);
     date.setSeconds(0);
   }
