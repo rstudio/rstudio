@@ -44,14 +44,16 @@ public class RObjectEntry
       isCategoryLeader = false;
       visible = isVisible;
       isFirstObject = false;
+      isExpanding = false;
    }
 
-   // show expander for objects that have contents
+   // show expander for objects that have contents 
    public boolean canExpand()
    {
       return rObject.getLength() > 0 &&
-             rObject.getContents().length() > 0 &&
-             !rObject.getContents().get(0).equals(NO_VALUE) &&
+             (rObject.getContentsDeferred() || 
+                 (rObject.getContents().length() > 0 &&
+                  !rObject.getContents().get(0).equals(NO_VALUE))) &&
              !hasTraceInfo();
    }
    
@@ -100,4 +102,5 @@ public class RObjectEntry
    boolean isCategoryLeader;
    boolean visible;
    boolean isFirstObject;
+   boolean isExpanding;
 }
