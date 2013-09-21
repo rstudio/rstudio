@@ -31,7 +31,6 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
-#include <core/FileSerializer.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -42,6 +41,8 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionHistoryArchive.hpp"
+
 using namespace core;
 
 namespace session {
@@ -50,17 +51,6 @@ namespace history {
 
 namespace {   
 
-struct HistoryEntry
-{
-   HistoryEntry() : index(0), timestamp(0) {}
-   HistoryEntry(int index, double timestamp, const std::string& command)
-      : index(index), timestamp(timestamp), command(command)
-   {
-   }
-   int index;
-   double timestamp;
-   std::string command;
-};
 
 void historyEntriesAsJson(const std::vector<HistoryEntry>& entries,
                           json::Object* pEntriesJson)
@@ -81,157 +71,6 @@ void historyEntriesAsJson(const std::vector<HistoryEntry>& entries,
    pEntriesJson->operator[]("index") = indexArray;
    pEntriesJson->operator[]("timestamp") = timestampArray;
    pEntriesJson->operator[]("command") = commandArray;
-}
-   
-
-// simple reader for parsing lines of history file
-class HistoryEntryReader
-{
-public:
-   HistoryEntryReader() : nextIndex_(0) {}
-   
-   ReadCollectionAction operator()(const std::string& line, 
-                                   HistoryEntry* pEntry)
-   {
-      // if the line doesn't have a ':' then ignore it
-      if (line.find(':') == std::string::npos)
-         return ReadCollectionIgnoreLine;
-
-      pEntry->index = nextIndex_++; 
-      std::istringstream istr(line);
-      istr >> pEntry->timestamp ;
-      istr.ignore(1, ':');
-      std::getline(istr, pEntry->command);
-      
-      // if we had a read failure log it and return ignore state
-      if (!istr.fail())
-      {
-         return ReadCollectionAddLine;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE("unexpected io error reading history line: " + 
-                           line);
-         return ReadCollectionIgnoreLine;  
-      }
-   }
-private:
-   int nextIndex_;
-};
-   
-   
-class History : boost::noncopyable
-{
-private:
-   History() : entryCacheLastWriteTime_(-1) {}
-   friend History& historyArchive();
-   
-public:
-   
-   Error add(const std::string& command)
-   {
-      // reset the cache (since this write will invalidate the current one,
-      // no sense in keeping our cache around in memory)
-      entries_.clear();
-      entryCacheLastWriteTime_ = -1;
-
-      // write the entry to the file
-      std::ostringstream ostrEntry ;
-      double currentTime = core::date_time::millisecondsSinceEpoch();
-      writeEntry(currentTime, command, &ostrEntry);
-      ostrEntry << std::endl;
-      return appendToFile(historyDatabaseFilePath(), ostrEntry.str());
-   }
-
-   const std::vector<HistoryEntry>& entries() const
-   {
-      // calculate path to history db
-      FilePath historyDBPath = historyDatabaseFilePath();
-
-      // if the file doesn't exist then clear the collection
-      if (!historyDBPath.exists())
-      {
-         entries_.clear();
-      }
-
-      // otherwise check for divergent lastWriteTime and read the file
-      // if our internal list isn't up to date
-      else if (historyDBPath.lastWriteTime() != entryCacheLastWriteTime_)
-      {
-         entries_.clear();
-         Error error = readCollectionFromFile<std::vector<HistoryEntry> >(
-                                                      historyDBPath,
-                                                      &entries_,
-                                                      HistoryEntryReader());
-         if (error)
-         {
-            LOG_ERROR(error);
-         }
-         else
-         {
-            entryCacheLastWriteTime_ = historyDBPath.lastWriteTime();
-         }
-
-      }
-      
-      // return entries
-      return entries_;
-   }
-
-   static void migrateRhistoryIfNecessary()
-   {
-      // if the history database doesn't exist see if we can migrate the
-      // old .Rhistory file
-      FilePath historyDBPath = historyDatabaseFilePath();
-      if (!historyDBPath.exists())
-         attemptRhistoryMigration() ;
-   }
-
-   
-private:
-
-   static void writeEntry(double timestamp, 
-                          const std::string& command, 
-                          std::ostream* pOS) 
-   {
-      *pOS << std::fixed << std::setprecision(0) 
-           << timestamp << ":" << command;
-   }
-   
-   static std::string migratedHistoryEntry(const std::string& command)
-   {
-      std::ostringstream ostr ;
-      writeEntry(0, command, &ostr);
-      return ostr.str();
-   }
-   
-   static void attemptRhistoryMigration() 
-   {
-      Error error = writeCollectionToFile<r::session::ConsoleHistory>(
-                                                   historyDatabaseFilePath(),
-                                                   r::session::consoleHistory(),
-                                                   migratedHistoryEntry);  
-      
-      // log any error which occurs
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   static FilePath historyDatabaseFilePath()
-   {
-      return module_context::userScratchPath().complete("history_database");
-   }
-   
-   
-private:
-   mutable std::time_t entryCacheLastWriteTime_;
-   mutable std::vector<HistoryEntry> entries_;
-};
-   
-History& historyArchive()
-{
-   static History instance;
-   return instance;
 }
 
 Error setJsonResultFromHistory(int startIndex,
@@ -536,7 +375,7 @@ SEXP rs_timestamp(SEXP dateSEXP)
 Error initialize()
 {
    // migrate .Rhistory if necessary
-   History::migrateRhistoryIfNecessary();
+   HistoryArchive::migrateRhistoryIfNecessary();
    
    // connect to console history add event
    r::session::consoleHistory().connectOnAdd(onHistoryAdd);   
