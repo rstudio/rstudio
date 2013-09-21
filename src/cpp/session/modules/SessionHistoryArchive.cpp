@@ -27,6 +27,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
+
+#define kHistoryDatabase "history_database"
+#define kHistoryMaxBytes (750*1024)  // rotate/remove every 750K
+
 using namespace core;
 
 namespace session {
@@ -37,7 +41,27 @@ namespace {
 
 FilePath historyDatabaseFilePath()
 {
-   return module_context::userScratchPath().complete("history_database");
+   return module_context::userScratchPath().complete(kHistoryDatabase);
+}
+
+FilePath historyDatabaseRotatedFilePath()
+{
+   return module_context::userScratchPath().complete(kHistoryDatabase ".1");
+}
+
+void rotateHistoryDatabase()
+{
+   FilePath historyDB = historyDatabaseFilePath();
+   if (historyDB.exists() && (historyDB.size() > kHistoryMaxBytes))
+   {
+      // first remove the rotated file if it exists (ignore errors because
+      // there's nothing we can do with them at this level)
+      FilePath rotatedHistoryDB = historyDatabaseRotatedFilePath();
+      rotatedHistoryDB.removeIfExists();
+
+      // now rotate the file
+      historyDB.move(rotatedHistoryDB);
+   }
 }
 
 void writeEntry(double timestamp, const std::string& command, std::ostream* pOS)
@@ -66,40 +90,32 @@ void attemptRhistoryMigration()
 }
 
 // simple reader for parsing lines of history file
-class HistoryEntryReader
+ReadCollectionAction readHistoryEntry(const std::string& line,
+                                      HistoryEntry* pEntry,
+                                      int* pNextIndex)
 {
-public:
-   HistoryEntryReader() : nextIndex_(0) {}
+   // if the line doesn't have a ':' then ignore it
+   if (line.find(':') == std::string::npos)
+      return ReadCollectionIgnoreLine;
 
-   ReadCollectionAction operator()(const std::string& line,
-                                   HistoryEntry* pEntry)
+   pEntry->index = (*pNextIndex)++;
+   std::istringstream istr(line);
+   istr >> pEntry->timestamp ;
+   istr.ignore(1, ':');
+   std::getline(istr, pEntry->command);
+
+   // if we had a read failure log it and return ignore state
+   if (!istr.fail())
    {
-      // if the line doesn't have a ':' then ignore it
-      if (line.find(':') == std::string::npos)
-         return ReadCollectionIgnoreLine;
-
-      pEntry->index = nextIndex_++;
-      std::istringstream istr(line);
-      istr >> pEntry->timestamp ;
-      istr.ignore(1, ':');
-      std::getline(istr, pEntry->command);
-
-      // if we had a read failure log it and return ignore state
-      if (!istr.fail())
-      {
-         return ReadCollectionAddLine;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE("unexpected io error reading history line: " +
-                           line);
-         return ReadCollectionIgnoreLine;
-      }
+      return ReadCollectionAddLine;
    }
-private:
-   int nextIndex_;
-};
-
+   else
+   {
+      LOG_ERROR_MESSAGE("unexpected io error reading history line: " +
+                        line);
+      return ReadCollectionIgnoreLine;
+   }
+}
 
 } // anonymous namespace
 
@@ -115,6 +131,9 @@ Error HistoryArchive::add(const std::string& command)
    // no sense in keeping our cache around in memory)
    entries_.clear();
    entryCacheLastWriteTime_ = -1;
+
+   // rotate if necessary
+   rotateHistoryDatabase();
 
    // write the entry to the file
    std::ostringstream ostrEntry ;
@@ -140,16 +159,39 @@ const std::vector<HistoryEntry>& HistoryArchive::entries() const
    else if (historyDBPath.lastWriteTime() != entryCacheLastWriteTime_)
    {
       entries_.clear();
+
+      // establish a next index counter
+      int nextIndex = 0;
+
+      // first read from rotated file if it exists
+      FilePath rotatedHistoryDBPath = historyDatabaseRotatedFilePath();
+      if (rotatedHistoryDBPath.exists())
+      {
+         Error error = readCollectionFromFile<std::vector<HistoryEntry> >(
+                           rotatedHistoryDBPath,
+                           &entries_,
+                           boost::bind(readHistoryEntry, _1, _2, &nextIndex));
+         if (error)
+            LOG_ERROR(error);
+      }
+
+
+      // now read from main history db
+      std::vector<HistoryEntry> entries;
       Error error = readCollectionFromFile<std::vector<HistoryEntry> >(
-                                                   historyDBPath,
-                                                   &entries_,
-                                                   HistoryEntryReader());
+                           historyDBPath,
+                           &entries,
+                           boost::bind(readHistoryEntry, _1, _2, &nextIndex));
       if (error)
       {
          LOG_ERROR(error);
       }
       else
       {
+         std::copy(entries.begin(),
+                   entries.end(),
+                   std::back_inserter(entries_));
+
          entryCacheLastWriteTime_ = historyDBPath.lastWriteTime();
       }
 
