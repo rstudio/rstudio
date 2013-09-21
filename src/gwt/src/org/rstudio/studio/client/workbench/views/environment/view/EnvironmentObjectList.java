@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
@@ -179,9 +180,12 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                String imageStyle = style_.expandIcon();
                if (object.canExpand())
                {
-                  ImageResource expandImage = object.expanded ?
-                      EnvironmentResources.INSTANCE.collapseIcon() :
-                      EnvironmentResources.INSTANCE.expandIcon();
+                  ImageResource expandImage = 
+                      object.isExpanding ? 
+                         CoreResources.INSTANCE.progress() :
+                         object.expanded ?
+                            EnvironmentResources.INSTANCE.collapseIcon() :
+                            EnvironmentResources.INSTANCE.expandIcon();
 
                   imageUri = expandImage.getSafeUri().asString();
                }
@@ -222,6 +226,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       {
          // Prevent reentry
          object.isExpanding = true;
+         redrawRow(index);
          
          // If the contents are deferred, we'll need to go to the server to
          // get them. 
@@ -233,9 +238,6 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                object.expanded = true;
                object.isExpanding = false;
                redrawRow(index);
-               
-               // Don't persist the expanded state for deferred-content objects;
-               // we don't want to have to repopulate them on init.
             }
          });
       }
@@ -243,9 +245,11 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
       {
          object.expanded = !object.expanded;
          
-         // tell the observer this happened, so it can persist
-         // the state
-         if (host_.useStatePersistence())
+         // Tell the observer this happened, so it can persist. Don't persist
+         // expansion state for deferred-content objects, since we don't want
+         // those to try to expand at app init.
+         if (host_.useStatePersistence() &&
+             !object.contentsAreDeferred)
          {
             if (object.expanded)
                observer_.setObjectExpanded(object.rObject.getName());

@@ -45,6 +45,7 @@ public class RObjectEntry
       visible = isVisible;
       isFirstObject = false;
       isExpanding = false;
+      contentsAreDeferred = obj.getContentsDeferred();
    }
 
    // show expander for objects that have contents 
@@ -103,4 +104,5 @@ public class RObjectEntry
    boolean visible;
    boolean isFirstObject;
    boolean isExpanding;
+   boolean contentsAreDeferred;
 }
