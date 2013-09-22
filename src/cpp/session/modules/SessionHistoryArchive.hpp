@@ -59,7 +59,7 @@ public:
    const std::vector<HistoryEntry>& entries() const;
 
 private:
-   mutable std::time_t entryCacheLastWriteTime_;
+   mutable time_t entryCacheLastWriteTime_;
    mutable std::vector<HistoryEntry> entries_;
 };
                        
