@@ -38,8 +38,8 @@ public abstract class EnvironmentObjectDisplay
       public void setSortColumn(int col);
       public void toggleAscendingSort();
       boolean getAscendingSort();
-      boolean getHideInternalFunctions();
-      void setHideInternalFunctions(boolean hide);
+      boolean getShowInternalFunctions();
+      void setShowInternalFunctions(boolean hide);
    }
 
    public EnvironmentObjectDisplay(Host host, 

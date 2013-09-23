@@ -49,8 +49,8 @@ public class CallFramePanel extends ResizeComposite
    {
       void minimizeCallFramePanel();
       void restoreCallFramePanel();
-      boolean getHideInternalFunctions();
-      void setHideInternalFunctions(boolean hide);
+      boolean getShowInternalFunctions();
+      void setShowInternalFunctions(boolean hide);
    }
    
    public CallFramePanel(EnvironmentObjectsObserver observer, CallFramePanelHost panelHost)
@@ -87,30 +87,30 @@ public class CallFramePanel extends ResizeComposite
       
       callFramePanelHeader.addStyleName(globalStyles.windowframe());
       callFramePanelHeader.add(tracebackTitle);
-      CheckBox hideInternals = new CheckBox("Hide internals");
-      hideInternals.setValue(panelHost_.getHideInternalFunctions());
-      hideInternals.addValueChangeHandler(
+      CheckBox showInternals = new CheckBox("Show internals");
+      showInternals.setValue(panelHost_.getShowInternalFunctions());
+      showInternals.addValueChangeHandler(
             new ValueChangeHandler<Boolean>()
             {
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
-                  panelHost_.setHideInternalFunctions(event.getValue());
+                  panelHost_.setShowInternalFunctions(event.getValue());
                   for (CallFrameItem item: callFrameItems_)
                   {
                      if (!item.isNavigable())
                      {
-                        item.setVisible(!event.getValue());
+                        item.setVisible(event.getValue());
                      }
                   }
                }
             }
       );
-      hideInternals.setStylePrimaryName(style.toggleHide());
+      showInternals.setStylePrimaryName(style.toggleHide());
             
-      callFramePanelHeader.add(hideInternals);
+      callFramePanelHeader.add(showInternals);
       callFramePanelHeader.setWidgetRightWidth(
-                     hideInternals, 28, Style.Unit.PX, 
+                     showInternals, 28, Style.Unit.PX, 
                                     30, Style.Unit.PCT);
       callFramePanelHeader.add(minimize);
       callFramePanelHeader.setWidgetRightWidth(minimize, 14, Style.Unit.PX, 
@@ -130,7 +130,7 @@ public class CallFramePanel extends ResizeComposite
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
-               panelHost_.getHideInternalFunctions() && !frame.isNavigable());
+               !panelHost_.getShowInternalFunctions() && !frame.isNavigable());
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();

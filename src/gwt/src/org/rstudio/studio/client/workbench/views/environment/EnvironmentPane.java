@@ -362,16 +362,17 @@ public class EnvironmentPane extends WorkbenchPane
    }
    
    @Override
-   public boolean getHideInternalFunctions()
+   public boolean getShowInternalFunctions()
    {
-      return prefs_.hideInternalFunctionsInTraceback().getValue();
+      return prefs_.showInternalFunctionsInTraceback().getValue();
    }
 
    @Override
-   public void setHideInternalFunctions(boolean hide)
+   public void setShowInternalFunctions(boolean show)
    {
-      prefs_.hideInternalFunctionsInTraceback().setProjectValue(hide);
+      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
    }
+
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)

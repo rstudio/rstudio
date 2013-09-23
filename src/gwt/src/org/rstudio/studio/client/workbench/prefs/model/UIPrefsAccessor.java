@@ -293,9 +293,9 @@ public class UIPrefsAccessor extends Prefs
       return bool("check_for_updates", true);
    }
    
-   public PrefValue<Boolean> hideInternalFunctionsInTraceback()
+   public PrefValue<Boolean> showInternalFunctionsInTraceback()
    {
-      return bool("hide_internal_functions", true);
+      return bool("show_internal_functions", false);
    }
    
    private String getDefaultPdfPreview()

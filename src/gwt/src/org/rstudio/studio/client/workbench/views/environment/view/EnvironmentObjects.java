@@ -332,15 +332,15 @@ public class EnvironmentObjects extends ResizeComposite
    }
 
    @Override
-   public boolean getHideInternalFunctions()
+   public boolean getShowInternalFunctions()
    {
-      return observer_.getHideInternalFunctions();
+      return observer_.getShowInternalFunctions();
    }
 
    @Override
-   public void setHideInternalFunctions(boolean hide)
+   public void setShowInternalFunctions(boolean show)
    {
-      observer_.setHideInternalFunctions(hide);
+      observer_.setShowInternalFunctions(show);
    }
 
    // EnvironmentObjectsDisplay.Host implementation ---------------------------
