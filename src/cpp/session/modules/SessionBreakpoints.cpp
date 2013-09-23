@@ -56,6 +56,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
 {
    json::Object response;
    std::string functionName, fileName;
+   bool inSync = false;
    Error error = json::readParams(request.params, &functionName, &fileName);
    if (error)
    {
@@ -71,29 +72,25 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    // get the source refs and code for the function
    SEXP srcRefs = NULL;
    Protect protect;
+   std::string functionCode;
    error = r::exec::RFunction(".rs.getFunctionSourceRefs",
                               functionName,
                               fileName,
                               packageName)
          .call(&srcRefs, &protect);
-   if (error)
+   if (!error)
    {
-      return error;
+      error = r::exec::RFunction(".rs.getFunctionSourceCode",
+                                 functionName,
+                                 fileName,
+                                 packageName)
+            .call(&functionCode);
    }
 
-   std::string functionCode;
-   error = r::exec::RFunction(".rs.getFunctionSourceCode",
-                              functionName,
-                              fileName,
-                              packageName)
-         .call(&functionCode);
-   if (error)
-   {
-      return error;
-   }
-
-   // compare with the disk
-   bool inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
+   // compare with the disk if we were able to get the source code;
+   // otherwise, assume it's out of sync
+   if (!error)
+      inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
    response["sync_state"] = inSync;
    pResponse->setResult(response);
 
