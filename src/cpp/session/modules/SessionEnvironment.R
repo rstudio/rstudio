@@ -144,7 +144,8 @@
     return(paste(lapply(args, function(arg) {
         if (is.language(arg))
             capture.output(print(arg))
-        else if (is.environment(arg))
+        else if (is.environment(arg) || 
+                 is.function(arg))
             deparse(substitute(arg))
         else
             as.character(arg)

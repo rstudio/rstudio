@@ -20,8 +20,11 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -46,6 +49,8 @@ public class CallFramePanel extends ResizeComposite
    {
       void minimizeCallFramePanel();
       void restoreCallFramePanel();
+      boolean getHideInternalFunctions();
+      void setHideInternalFunctions(boolean hide);
    }
    
    public CallFramePanel(EnvironmentObjectsObserver observer, CallFramePanelHost panelHost)
@@ -82,6 +87,31 @@ public class CallFramePanel extends ResizeComposite
       
       callFramePanelHeader.addStyleName(globalStyles.windowframe());
       callFramePanelHeader.add(tracebackTitle);
+      CheckBox hideInternals = new CheckBox("Hide internals");
+      hideInternals.setValue(panelHost_.getHideInternalFunctions());
+      hideInternals.addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  panelHost_.setHideInternalFunctions(event.getValue());
+                  for (CallFrameItem item: callFrameItems_)
+                  {
+                     if (!item.isNavigable())
+                     {
+                        item.setVisible(!event.getValue());
+                     }
+                  }
+               }
+            }
+      );
+      hideInternals.setStylePrimaryName(style.toggleHide());
+            
+      callFramePanelHeader.add(hideInternals);
+      callFramePanelHeader.setWidgetRightWidth(
+                     hideInternals, 28, Style.Unit.PX, 
+                                    30, Style.Unit.PCT);
       callFramePanelHeader.add(minimize);
       callFramePanelHeader.setWidgetRightWidth(minimize, 14, Style.Unit.PX, 
                                                          14, Style.Unit.PX);
@@ -94,32 +124,13 @@ public class CallFramePanel extends ResizeComposite
    {
       clearCallFrames();
       
-      // walk backwards through the call frames so we can figure out when 
-      // user code was first encountered on the callstack. 
-      boolean encounteredUserCode = false;
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
-         
-         // hide the portion of the callstack containing our source-for-debug
-         // functions, and inline evaluations
-         if (frame.getFunctionName().equals(".rs.executeDebugSource") ||
-             frame.getFunctionName().equals("eval") || 
-             frame.getFileName().contains("SessionBreakpoints.R"))
-         {
-            continue;
-         }
-         
-         if (frame.isNavigable())
-         {
-            encounteredUserCode = true;
-         }
-         // hide the frame if it isn't the top frame and we haven't yet 
-         // encountered user code
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
-               !encounteredUserCode && idx > 0);
+               panelHost_.getHideInternalFunctions() && !frame.isNavigable());
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();

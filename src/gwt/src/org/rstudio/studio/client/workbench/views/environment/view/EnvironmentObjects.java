@@ -331,6 +331,18 @@ public class EnvironmentObjects extends ResizeComposite
       callFramePanel_.onResize();
    }
 
+   @Override
+   public boolean getHideInternalFunctions()
+   {
+      return observer_.getHideInternalFunctions();
+   }
+
+   @Override
+   public void setHideInternalFunctions(boolean hide)
+   {
+      observer_.setHideInternalFunctions(hide);
+   }
+
    // EnvironmentObjectsDisplay.Host implementation ---------------------------
 
    @Override

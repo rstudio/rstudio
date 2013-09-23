@@ -293,6 +293,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("check_for_updates", true);
    }
    
+   public PrefValue<Boolean> hideInternalFunctionsInTraceback()
+   {
+      return bool("hide_internal_functions", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
