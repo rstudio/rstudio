@@ -140,6 +140,12 @@ public class StringTest extends GWTTestCase {
     sb.append('a');
     sb.append('t');
     assertEquals("cat", new String(sb));
+    sb = new StringBuilder();
+    sb.appendCodePoint(0x21);
+    assertEquals("\u0021", new String(sb));
+    sb = new StringBuilder();
+    sb.appendCodePoint(0x10400);
+    assertEquals("\uD801\uDC00", new String(sb));
   }
 
   public void testConstructorBytes() {

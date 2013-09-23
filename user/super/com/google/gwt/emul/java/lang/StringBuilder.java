@@ -121,6 +121,11 @@ public class StringBuilder implements CharSequence, Appendable {
     return this;
   }
 
+  public StringBuilder appendCodePoint(int x) {
+    impl.appendNonNull(data, new String(Character.toChars(x)));
+    return this;
+  }
+
   /**
    * This implementation does not track capacity; always returns
    * {@link Integer#MAX_VALUE}.
