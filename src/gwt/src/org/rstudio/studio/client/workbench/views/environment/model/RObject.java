@@ -55,5 +55,14 @@ public class RObject extends JavaScriptObject
    public final native int getSize() /*-{
       return this.size;
    }-*/;
+   
+   public final native boolean getContentsDeferred() /*-{
+      return this.contents_deferred;
+   }-*/;
+   
+   public final native void setDeferredContents(JsArrayString contents) /*-{
+      this.contents_deferred = false;
+      this.contents = contents;
+   }-*/;
 }
 

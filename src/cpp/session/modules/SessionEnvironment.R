@@ -272,6 +272,7 @@
    len <- length(obj)
    class <- .rs.getSingleClass(obj)
    contents <- list()
+   contents_deferred <- FALSE
    # for language objects, don't evaluate, just show the expression
    if (is.language(obj) || is.symbol(obj))
    {
@@ -290,6 +291,7 @@
                    ""
          val <- paste("Large ", class, " (", len, 
                       capture.output(print(size, units="auto")), ")", sep="")
+         contents_deferred <- TRUE
       }
       else
       {
@@ -316,7 +318,8 @@
       description = .rs.scalar(desc),
       size = .rs.scalar(size),
       length = .rs.scalar(length(obj)),
-      contents = contents)
+      contents = contents,
+      contents_deferred = .rs.scalar(contents_deferred))
 })
 
 # returns the name and frame number of an environment from a call frame
@@ -402,5 +405,10 @@
 .rs.addFunction("removeAllObjects", function(includeHidden, env)
 {
    rm(list=ls(envir=env, all.names=includeHidden), envir=env)
+})
+
+.rs.addFunction("getObjectContents", function(objName, env)
+{
+   .rs.valueContents(get(objName, env));
 })
 

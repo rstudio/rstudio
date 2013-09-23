@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewRe
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -2902,6 +2903,19 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getObjectContents(
+                 String objectName,
+                 ServerRequestCallback<ObjectContents> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(objectName));
+      sendRequest(RPC_SCOPE,
+                  GET_OBJECT_CONTENTS,
+                  params,
+                  requestCallback);
+   }
+   
+   @Override
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
@@ -3252,6 +3266,7 @@ public class RemoteServer implements Server
    private static final String SET_ENVIRONMENT_FRAME = "set_environment_frame";
    private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
    private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
+   private static final String GET_OBJECT_CONTENTS = "get_object_contents";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";

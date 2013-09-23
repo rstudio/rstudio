@@ -29,6 +29,7 @@ import com.google.gwt.view.client.ListDataProvider;
 
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -391,6 +392,12 @@ public class EnvironmentObjects extends ResizeComposite
       objectSort_.setSortColumn(column);
       objectSort_.setAscending(ascending);
       Collections.sort(objectDataProvider_.getList(), objectSort_);
+   }
+
+   @Override
+   public void fillObjectContents(RObject object, Operation onCompleted)
+   {
+      observer_.fillObjectContents(object, onCompleted);
    }
 
    // Private methods: object management --------------------------------------

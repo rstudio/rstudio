@@ -60,5 +60,8 @@ public interface EnvironmentServerOperations
    
    void getEnvironmentState(
               ServerRequestCallback<EnvironmentContextData> requestCallback);
-   
+
+   void getObjectContents(
+              String objectName,
+              ServerRequestCallback<ObjectContents> requestCallback);
 }
