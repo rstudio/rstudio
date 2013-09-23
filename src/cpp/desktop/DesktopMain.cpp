@@ -204,6 +204,13 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
+#ifdef __APPLE__
+      // font substituion for OSX Mavericks
+      // see: https://bugreports.qt-project.org/browse/QTBUG-32789
+      QFont::insertSubstitution(QString::fromUtf8(".Lucida Grande UI"),
+                                QString::fromUtf8("Lucida Grande"));
+#endif
+
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromAscii("RStudio"),
