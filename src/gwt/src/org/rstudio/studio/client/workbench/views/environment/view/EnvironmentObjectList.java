@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.ClickableTextCell;
@@ -178,9 +180,12 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                String imageStyle = style_.expandIcon();
                if (object.canExpand())
                {
-                  ImageResource expandImage = object.expanded ?
-                      EnvironmentResources.INSTANCE.collapseIcon() :
-                      EnvironmentResources.INSTANCE.expandIcon();
+                  ImageResource expandImage = 
+                      object.isExpanding ? 
+                         CoreResources.INSTANCE.progress() :
+                         object.expanded ?
+                            EnvironmentResources.INSTANCE.collapseIcon() :
+                            EnvironmentResources.INSTANCE.expandIcon();
 
                   imageUri = expandImage.getSafeUri().asString();
                }
@@ -206,28 +211,53 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                                     RObjectEntry object,
                                     String value)
                  {
-                    if (object.canExpand())
-                    {
-                       object.expanded = !object.expanded;
-                       // tell the observer this happened, so it can persist
-                       // the state
-                       if (host_.useStatePersistence())
-                       {
-                          if (object.expanded)
-                          {
-                             observer_.setObjectExpanded(object.rObject
-                                                                 .getName());
-                          }
-                          else
-                          {
-                             observer_.setObjectCollapsed(object.rObject
-                                                                  .getName());
-                          }
-                       }
-                       redrawRow(index);
-                    }
+                    if (!object.canExpand())
+                       return;
+                    expandObject(index, object);
                  }
               });
+   }
+   
+   private void expandObject(final int index, final RObjectEntry object)
+   {
+      if (!object.expanded && 
+          !object.isExpanding && 
+          object.rObject.getContentsDeferred())
+      {
+         // Prevent reentry
+         object.isExpanding = true;
+         redrawRow(index);
+         
+         // If the contents are deferred, we'll need to go to the server to
+         // get them. 
+         host_.fillObjectContents(object.rObject, new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               object.expanded = true;
+               object.isExpanding = false;
+               redrawRow(index);
+            }
+         });
+      }
+      else if (!object.rObject.getContentsDeferred())
+      {
+         object.expanded = !object.expanded;
+         
+         // Tell the observer this happened, so it can persist. Don't persist
+         // expansion state for deferred-content objects, since we don't want
+         // those to try to expand at app init.
+         if (host_.useStatePersistence() &&
+             !object.contentsAreDeferred)
+         {
+            if (object.expanded)
+               observer_.setObjectExpanded(object.rObject.getName());
+            else
+               observer_.setObjectCollapsed(object.rObject.getName());
+         }
+         redrawRow(index);
+      }
    }
 
    // builds individual rows of the object table
