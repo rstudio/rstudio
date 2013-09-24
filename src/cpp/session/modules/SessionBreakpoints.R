@@ -436,6 +436,11 @@
             .rs.lineDataList(srcref)))
 })
 
+.rs.addFunction("registerExprFunction", function(expr, fun)
+{
+   .Call(rs_registerExprFunction(expr, fun))
+})
+
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,
    fileName,
@@ -459,4 +464,5 @@
       step,
       mode)
 })
+
 

@@ -34,6 +34,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
+#include <r/Rinternals.h>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -48,6 +49,8 @@ namespace modules {
 namespace breakpoints {
 namespace
 {
+
+std::vector<SEXP> s_wpShinyFunctions;
 
 // Called by the client to ascertain whether the given function in the given
 // file is in sync with the corresponding R object
@@ -190,7 +193,26 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    return Success();
 }
 
+void unregisterExprFunction(SEXP s)
+{
+   std::cerr << "finalizer called on " << s << std::endl;
+   std::vector<SEXP>::iterator exprFunPos =
+         std::find(s_wpShinyFunctions.begin(), s_wpShinyFunctions.end(), s);
+   if (exprFunPos != s_wpShinyFunctions.end())
+   {
+      s_wpShinyFunctions.erase(exprFunPos);
+   }
+}
+
 } // anonymous namespace
+
+void rs_registerExprFunction(SEXP exprRef)
+{
+   s_wpShinyFunctions.push_back(exprRef);
+   std::cerr << "registering " << exprRef << ", now "
+             << s_wpShinyFunctions.size() << std::endl;
+   r::sexp::registerFinalizer(exprRef, &unregisterExprFunction);
+}
 
 json::Value debugStateAsJson()
 {

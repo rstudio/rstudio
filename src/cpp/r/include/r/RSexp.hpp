@@ -86,6 +86,10 @@ bool asLogical(SEXP object);
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 
+// reference object references and finalizers
+SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
+void registerFinalizer(SEXP s, R_CFinalizer_t fun);
+
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);
 core::Error extract(SEXP valueSEXP, bool* pBool);
@@ -243,11 +247,15 @@ core::Error setNamedListElement(SEXP listSEXP,
 }
 
 
-
-class PreservedSEXP : boost::noncopyable
+// PreservedSEXP acts like a unique_ptr for SEXPs; only one PreservedSEXP
+// should be active for a given SEXP. Copying or assigning a PreservedSEXP
+// causes ownership of the SEXP to transfer to the operation's target.
+class PreservedSEXP
 {
 public:
    PreservedSEXP();
+   PreservedSEXP(PreservedSEXP& other);
+   PreservedSEXP& operator= (PreservedSEXP& other);
    explicit PreservedSEXP(SEXP sexp);
    virtual ~PreservedSEXP();
 
@@ -269,6 +277,7 @@ public:
    void releaseNow();
 
 private:
+   void releaseOwnership();
    SEXP sexp_;
 };
 

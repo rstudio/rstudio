@@ -64,6 +64,7 @@
 
 #include <session/SessionContentUrls.hpp>
 
+#include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
@@ -444,6 +445,13 @@ Error initialize()
    methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
    methodDef12.numArgs = 1;
    r::routines::addCallMethod(methodDef12);
+
+   // register rs_packageUnloaded
+   R_CallMethodDef methodDef13;
+   methodDef13.name = "rs_registerExprFunction" ;
+   methodDef13.fun = (DL_FUNC) modules::breakpoints::rs_registerExprFunction;
+   methodDef13.numArgs = 1;
+   r::routines::addCallMethod(methodDef13);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

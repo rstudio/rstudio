@@ -29,6 +29,7 @@ namespace breakpoints {
 core::Error initialize();
 core::json::Value debugStateAsJson();
 bool haveSrcrefAttribute();
+void rs_registerExprFunction(SEXP exprRef);
 
 } // namespace breakpoints
 } // namepace modules

@@ -237,6 +237,16 @@ SEXP getAttrib(SEXP object, const std::string& attrib)
    return getAttrib(object, Rf_install(attrib.c_str()));
 }
 
+SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
+{
+   return R_MakeWeakRefC(key, val, fun, onexit);
+}
+
+void registerFinalizer(SEXP s, R_CFinalizer_t fun)
+{
+   R_RegisterCFinalizer(s, fun);
+}
+
 Error extract(SEXP valueSEXP, int* pInt)
 {
    if (TYPEOF(valueSEXP) != INTSXP)
@@ -577,6 +587,24 @@ PreservedSEXP::PreservedSEXP(SEXP sexp)
    : sexp_(R_NilValue)
 {
    set(sexp);
+}
+
+PreservedSEXP::PreservedSEXP(PreservedSEXP& other)
+{
+   sexp_ = other.get();
+   other.releaseOwnership();
+}
+
+PreservedSEXP& PreservedSEXP::operator= (PreservedSEXP& rhs)
+{
+   sexp_ = rhs.get();
+   rhs.releaseOwnership();
+   return *this;
+}
+
+void PreservedSEXP::releaseOwnership()
+{
+   sexp_ = R_NilValue;
 }
 
 void PreservedSEXP::set(SEXP sexp)
