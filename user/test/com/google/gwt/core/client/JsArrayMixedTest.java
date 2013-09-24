@@ -204,6 +204,49 @@ public class JsArrayMixedTest extends GWTTestCase {
     assertEquals("kiwi", mixedArray.getString(0));
   }
 
+  public void testEdgeCases() {
+    JsArrayMixed weirdArray = makeEdgeCaseArray();
+
+    // boolean values
+    assertFalse(weirdArray.getBoolean(0));
+    assertTrue(weirdArray.getBoolean(1));
+    assertTrue(weirdArray.getBoolean(2));
+    assertTrue(weirdArray.getBoolean(3));
+    assertFalse(weirdArray.getBoolean(4));
+    assertTrue(weirdArray.getBoolean(5));
+    assertFalse(weirdArray.getBoolean(6));
+    assertTrue(weirdArray.getBoolean(7));
+    assertTrue(weirdArray.getBoolean(8));
+    assertTrue(weirdArray.getBoolean(9));
+    assertTrue(weirdArray.getBoolean(10));
+
+    // number values
+    assertEquals(0.0, weirdArray.getNumber(0));
+    assertEquals(0.0, weirdArray.getNumber(1));
+    assertEquals(1.0, weirdArray.getNumber(2));
+    assertTrue(Double.isNaN(weirdArray.getNumber(3)));
+    assertEquals(0.0, weirdArray.getNumber(4));
+    assertEquals(1.0, weirdArray.getNumber(5));
+    assertTrue(Double.isNaN(weirdArray.getNumber(6)));
+    assertEquals(Double.POSITIVE_INFINITY, weirdArray.getNumber(7));
+    assertEquals(0.0, weirdArray.getNumber(8));
+    assertEquals(0.0, weirdArray.getNumber(9));
+    assertEquals(1.0, weirdArray.getNumber(10));
+
+    // String values
+    assertEquals("", weirdArray.getString(0));
+    assertEquals("0", weirdArray.getString(1));
+    assertEquals("1", weirdArray.getString(2));
+    assertEquals("NaN", weirdArray.getString(3));
+    assertEquals("0", weirdArray.getString(4));
+    assertEquals("1", weirdArray.getString(5));
+    assertEquals("NaN", weirdArray.getString(6));
+    assertEquals("Infinity", weirdArray.getString(7));
+    assertEquals("", weirdArray.getString(8));
+    assertEquals("0", weirdArray.getString(9));
+    assertEquals("1", weirdArray.getString(10));
+  }
+
   private native boolean compareObjects(JavaScriptObject expected,
       JavaScriptObject actual) /*-{
     for (key in expected) {
@@ -218,8 +261,11 @@ public class JsArrayMixedTest extends GWTTestCase {
     return [true, 2.5, 1, {kind: "pear"}, "orange"];
   }-*/;
 
+  private native JsArrayMixed makeEdgeCaseArray() /*-{
+    return ['', '0', '1', 'NaN', 0, 1, NaN, Infinity, [], [0], [1]];
+  }-*/;
+
   private native JsTestFruit makeObject(String theKind) /*-{
     return {kind: theKind};
   }-*/;
-
 }
