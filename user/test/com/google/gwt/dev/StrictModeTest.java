@@ -40,7 +40,7 @@ public class StrictModeTest extends TestCase {
 
   private TreeLogger logger = TreeLogger.NULL;
 
-  private JJSOptions options = new Compiler.CompilerOptionsImpl();
+  private JJSOptions options = new CompilerOptionsImpl();
 
   /**
    * A normal compile with a bad file should still succeed.

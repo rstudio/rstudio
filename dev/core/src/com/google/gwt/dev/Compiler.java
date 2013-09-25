@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -67,66 +66,6 @@ public class Compiler {
     @Override
     protected String getName() {
       return Compiler.class.getName();
-    }
-  }
-
-  static class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements
-      CompilerOptions {
-
-    private LinkOptionsImpl linkOptions = new LinkOptionsImpl();
-    private int localWorkers;
-
-    public CompilerOptionsImpl() {
-    }
-
-    public CompilerOptionsImpl(CompilerOptions other) {
-      copyFrom(other);
-    }
-
-    public void copyFrom(CompilerOptions other) {
-      super.copyFrom(other);
-      linkOptions.copyFrom(other);
-      localWorkers = other.getLocalWorkers();
-    }
-
-    @Override
-    public File getDeployDir() {
-      return linkOptions.getDeployDir();
-    }
-
-    @Override
-    public File getExtraDir() {
-      return linkOptions.getExtraDir();
-    }
-
-    @Override
-    public int getLocalWorkers() {
-      return localWorkers;
-    }
-
-    @Override
-    public File getWarDir() {
-      return linkOptions.getWarDir();
-    }
-
-    @Override
-    public void setDeployDir(File extraDir) {
-      linkOptions.setDeployDir(extraDir);
-    }
-
-    @Override
-    public void setExtraDir(File extraDir) {
-      linkOptions.setExtraDir(extraDir);
-    }
-
-    @Override
-    public void setLocalWorkers(int localWorkers) {
-      this.localWorkers = localWorkers;
-    }
-
-    @Override
-    public void setWarDir(File outDir) {
-      linkOptions.setWarDir(outDir);
     }
   }
 
