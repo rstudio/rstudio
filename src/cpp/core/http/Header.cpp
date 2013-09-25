@@ -15,6 +15,7 @@
 
 #include <core/http/Header.hpp>
 
+#include <iostream>
 #include <algorithm>
 
 #include <boost/algorithm/string.hpp>

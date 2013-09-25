@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -231,24 +234,28 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       clearPendingInput();
       output(error, getErrorClass(), false);
-      lastErrorMessage_ = error;
+
       // Pick up the last element emitted to the console. If we get extended
       // information for this error, we'll need to swap out the simple error
-      // element for the extended error element. (Note that this presumes that
-      // all errors are represented by a simple, single node, and that node is
-      // the last one output to the console by output() above).
+      // element for the extended error element. 
       Element outputElement = output_.getElement();
-      lastErrorNode_ = outputElement.getChild(
+      Node errorNode = outputElement.getChild(
             outputElement.getChildCount() - 1);
+      if (clearErrors_)
+      {
+         errorNodes_.clear();
+         clearErrors_ = false;
+      }
+      errorNodes_.put(error, errorNode);
    }
    
    public void consoleWriteExtendedError(
          final String error, UnhandledError traceInfo, 
          boolean expand, String command)
    {
-      if (lastErrorMessage_.equals(error) &&
-          lastErrorNode_ != null)
+      if (errorNodes_.containsKey(error))
       {
+         Node errorNode = errorNodes_.get(error);
          clearPendingInput();
          ConsoleError errorWidget = new ConsoleError(
                traceInfo, getErrorClass(), this, command);
@@ -262,14 +269,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
          // so we can easily add arbitrary controls. 
          RootPanel.get().add(errorWidget);
          output_.getElement().replaceChild(errorWidget.getElement(), 
-                                           lastErrorNode_);
+                                           errorNode);
          
          scrollPanel_.onContentSizeChanged();
-
-         // Clean out state so we don't match two errors with a single 
-         // extended error
-         lastErrorMessage_ = "";
-         lastErrorNode_ = null;
+         errorNodes_.remove(error);
       }
    }
    
@@ -315,6 +318,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWritePrompt(final String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false);
+      clearErrors_ = true;
    }
 
    public void consolePrompt(String prompt, boolean showInput)
@@ -332,6 +336,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                    Unit.PX);
       
       input_.setPasswordMode(!showInput);
+      clearErrors_ = true;
    }
 
    public void ensureInputVisible()
@@ -776,10 +781,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean suppressPendingInput_;
    private final EventBus events_;
    
-   // Keep track of the last error message that occurred and which node contains
-   // it, so we can swap that node for an extended error message if we get one.
-   private String lastErrorMessage_ = "";
-   private Node lastErrorNode_ = null;
+   // A list of errors that have occurred between console prompts. 
+   private Map<String, Node> errorNodes_ = new TreeMap<String, Node>();
+   private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }

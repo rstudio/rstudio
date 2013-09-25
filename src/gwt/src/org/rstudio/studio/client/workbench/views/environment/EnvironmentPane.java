@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
@@ -373,6 +375,27 @@ public class EnvironmentPane extends WorkbenchPane
       prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
    }
 
+   public void fillObjectContents(final RObject object, 
+                                  final Operation onCompleted)
+   {
+      server_.getObjectContents(object.getName(), 
+            new ServerRequestCallback<ObjectContents>()
+      {
+         @Override
+         public void onResponseReceived(ObjectContents contents)
+         {
+            object.setDeferredContents(contents.getContents());
+            onCompleted.execute();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            onCompleted.execute();
+         }
+      });
+   }
+   
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)

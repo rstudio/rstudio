@@ -18,7 +18,9 @@ package org.rstudio.studio.client.workbench.views.environment.view;
 import java.util.List;
 
 import org.rstudio.core.client.cellview.ScrollingDataGrid;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
+import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -40,6 +42,7 @@ public abstract class EnvironmentObjectDisplay
       boolean getAscendingSort();
       boolean getShowInternalFunctions();
       void setShowInternalFunctions(boolean hide);
+      public void fillObjectContents(RObject object, Operation onCompleted);
    }
 
    public EnvironmentObjectDisplay(Host host, 

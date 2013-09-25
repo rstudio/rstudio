@@ -744,6 +744,38 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+// Return the contents of the given object. Called on-demand by the client when
+// the object is large enough that we don't want to get its contents
+// immediately (i.e. as part of environmentListAsJson)
+Error getObjectContents(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+
+{
+   std::string objectName;
+   r::sexp::Protect protect;
+   SEXP objContents;
+   json::Value contents;
+   Error error = json::readParam(request.params, 0, &objectName);
+   if (error)
+      return error;
+   error = r::exec::RFunction(".rs.getObjectContents",
+                              objectName,
+                              s_environmentMonitor.getMonitoredEnvironment())
+                              .call(&objContents, &protect);
+   if (error)
+      return error;
+
+   error = r::json::jsonValueFromObject(objContents, &contents);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["contents"] = contents;
+   pResponse->setResult(result);
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
@@ -798,6 +830,7 @@ Error initialize()
       (bind(registerRpcMethod, "remove_objects", removeObjects))
       (bind(registerRpcMethod, "remove_all_objects", removeAllObjects))
       (bind(registerRpcMethod, "get_environment_state", getEnv))
+      (bind(registerRpcMethod, "get_object_contents", getObjectContents))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();
