@@ -150,7 +150,7 @@ public abstract class JsNamer {
   protected abstract void visit(JsScope scope);
 
   protected boolean isAvailableIdent(String newIdent) {
-    if (JsKeywords.isKeyword(newIdent)) {
+    if (!JsProtectedNames.isLegalName(newIdent)) {
       return false;
     }
     String lcIdent = newIdent.toLowerCase();

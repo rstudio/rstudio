@@ -671,7 +671,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         if (labelExpr instanceof JsStringLiteral) {
           String propName = ((JsStringLiteral) labelExpr).getValue();
           if (VALID_NAME_PATTERN.matcher(propName).matches()
-              && !JsKeywords.isKeyword(propName)) {
+              && !JsProtectedNames.isKeyword(propName)) {
             p.print(propName);
             break printLabel;
           }

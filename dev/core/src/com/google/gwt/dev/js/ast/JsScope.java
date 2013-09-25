@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import com.google.gwt.dev.js.JsKeywords;
+import com.google.gwt.dev.js.JsProtectedNames;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.io.Serializable;
@@ -47,7 +47,7 @@ public abstract class JsScope implements Serializable {
    * Prevents the client from programmatically creating an illegal ident.
    */
   private static String maybeMangleKeyword(String ident) {
-    if (JsKeywords.isKeyword(ident)) {
+    if (JsProtectedNames.isKeyword(ident)) {
       ident = ident + "_$";
     }
     return StringInterner.get().intern(ident);
