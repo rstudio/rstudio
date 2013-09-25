@@ -238,6 +238,14 @@ void ClientState::putProjectPersistent(const std::string& scope,
    putProjectPersistent(stateContainer);
 }
 
+json::Value ClientState::getProjectPersistent(std::string scope,
+                                               std::string name)
+{
+   json::Value& scopeValue = projectPersistentState_[scope];
+   json::Object& scopeObject = scopeValue.get_obj();
+   return scopeObject[name];
+}
+
 void ClientState::putProjectPersistent(
                               const json::Object& projectPersistentState)
 {

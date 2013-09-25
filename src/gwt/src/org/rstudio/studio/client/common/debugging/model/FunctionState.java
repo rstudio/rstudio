@@ -32,4 +32,12 @@ public class FunctionState extends JavaScriptObject
    public final native String getPackageName() /*-{
       return this.package_name;
    }-*/;
+   
+   public final native boolean isShinyFunction() /*-{
+      return this.is_shiny_function;
+   }-*/;
+
+   public final native boolean getShinyFunctionId() /*-{
+      return this.shiny_function_id;
+   }-*/;
 }

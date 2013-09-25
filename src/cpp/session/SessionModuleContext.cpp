@@ -446,7 +446,7 @@ Error initialize()
    methodDef12.numArgs = 1;
    r::routines::addCallMethod(methodDef12);
 
-   // register rs_packageUnloaded
+   // register rs_registerExprFunction
    R_CallMethodDef methodDef13;
    methodDef13.name = "rs_registerExprFunction" ;
    methodDef13.fun = (DL_FUNC) modules::breakpoints::rs_registerExprFunction;

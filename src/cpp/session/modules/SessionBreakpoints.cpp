@@ -34,6 +34,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
+#include <r/session/RClientState.hpp>
 #include <r/Rinternals.h>
 
 #include <session/SessionModuleContext.hpp>
@@ -63,46 +64,84 @@ public:
       function(functionIn),
       id(s_maxShinyFunctionId++)
    {}
-};
-
-std::vector<ShinyFunction*> s_wpShinyFunctions;
-
-ShinyFunction* findShinyFunction(std::string filename, int line)
-{
-   BOOST_FOREACH(ShinyFunction* psf, s_wpShinyFunctions)
+   bool contains(std::string filename, int line)
    {
       // Extract from the expression its location in the source file and see if
       // the line number given is in range.
-      SEXP srcref = r::sexp::getAttrib(psf->expr, "srcref");
+      SEXP srcref = r::sexp::getAttrib(expr, "srcref");
       if (srcref == NULL || TYPEOF(srcref) == NILSXP)
-         continue;
+         return false;
 
       if (!(line >= INTEGER(srcref)[0] &&
             line <= INTEGER(srcref)[2]))
-         continue;
+         return false;
 
       // Extract from the expression the source file in which it resides and
       // see if it matches the source file given.
       SEXP srcfile = r::sexp::getAttrib(srcref, "srcfile");
       if (srcfile == NULL || TYPEOF(srcfile) == NILSXP)
-         continue;
+         return false;
 
       SEXP file = r::sexp::findVar("filename", srcfile);
       if (file == NULL || TYPEOF(file) == NILSXP)
-         continue;
+         return false;
 
       std::string srcfilename;
       Error error = r::sexp::extract(file, &srcfilename);
       if (error)
-         continue;
+         return false;
 
-      // Found a match
-      if (srcfilename == filename)
+      return srcfilename == filename;
+   }
+};
+
+// A list of the Shiny functions we know about (see notes in
+// rs_registerExprFunction for an explanation of how this memory is managed)
+std::vector<ShinyFunction*> s_wpShinyFunctions;
+
+class Breakpoint
+{
+public:
+   int type;
+   int lineNumber;
+   int id;
+   std::string path;
+   Breakpoint(int typeIn, int lineNumberIn, int idIn, std::string pathIn):
+      type(typeIn),
+      lineNumber(lineNumberIn),
+      id(idIn),
+      path(pathIn)
+   {
+      std::cerr << "recorded a breakpoint, id " << idIn << std::endl;
+   }
+};
+
+// A list of the breakpoints we know about. Note that this is a slave list;
+// the client maintains the master copy and is responsible for synchronizing
+// with this list.
+std::vector<boost::shared_ptr<Breakpoint> > s_breakpoints;
+bool s_breakpointsInSync = false;
+
+ShinyFunction* findShinyFunction(std::string filename, int line)
+{
+   BOOST_FOREACH(ShinyFunction* psf, s_wpShinyFunctions)
+   {
+      if (psf->contains(filename, line))
          return psf;
    }
 
    // Didn't find a match
    return NULL;
+}
+
+boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
+{
+   return boost::make_shared<Breakpoint>(
+            Breakpoint(obj["type"].get_int(),
+                       obj["line_number"].get_int(),
+                       obj["id"].get_int(),
+                       obj["path"].get_str()));
+
 }
 
 // Runs a series of pre-flight checks to determine whether we can set a
@@ -122,6 +161,8 @@ Error getFunctionState(const json::JsonRpcRequest& request,
        return error;
    }
 
+   // check whether the function belongs to an expression in a running
+   // Shiny application
    ShinyFunction* psf = findShinyFunction(fileName, lineNumber);
    if (psf)
    {
@@ -260,6 +301,44 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error setBreakpointsDirty(const json::JsonRpcRequest& ,
+                          json::JsonRpcResponse* )
+{
+   std::cerr << "marking breakpoint list dirty" << std::endl;
+   s_breakpointsInSync = false;
+   return Success();
+}
+
+void syncClientBreakpoints()
+{
+   try
+   {
+      json::Value breakpointStateValue =
+         r::session::clientState().getProjectPersistent("debug-breakpoints",
+                                                        "debugBreakpointsState");
+      json::Object breakpointState = breakpointStateValue.get_obj();
+      json::Array breakpointArray = breakpointState["breakpoints"].get_array();
+
+      s_breakpoints.clear();
+      BOOST_FOREACH(json::Value bp, breakpointArray)
+      {
+         s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+      }
+   }
+   catch (...)
+   {
+      // OK if we fail to get the breakpoints here--the client may have not set
+      // any yet
+   }
+   s_breakpointsInSync = true;
+}
+
+Error initBreakpoints()
+{
+   syncClientBreakpoints();
+   return Success();
+}
+
 void unregisterShinyFunction(SEXP extptr)
 {
    ShinyFunction* psf =
@@ -287,6 +366,20 @@ SEXP rs_registerExprFunction(SEXP expr, SEXP fun)
    ShinyFunction* psf = new ShinyFunction(expr, fun);
    s_wpShinyFunctions.push_back(psf);
    std::cerr << "registered Shiny function " << psf->id << std::endl;
+
+   // Look over the list of breakpoints we know about and see if any of them
+   // are unbound breakpoints in the region of the file just identified.
+   if (s_breakpointsInSync)
+      syncClientBreakpoints();
+
+   BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
+   {
+      if (psf->contains(pbp->path, pbp->lineNumber))
+      {
+         std::cerr << "  contains breakpoint " << pbp->id << std::endl;
+      }
+   }
+
    return r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
 }
 
@@ -327,7 +420,6 @@ bool haveSrcrefAttribute()
 
 Error initialize()
 {
-   // subscribe to events
    using boost::bind;
    using namespace module_context;
 
@@ -335,7 +427,9 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
-      (bind(sourceModuleRFile, "SessionBreakpoints.R"));
+      (bind(registerRpcMethod, "set_breakpoints_dirty", setBreakpointsDirty))
+      (bind(sourceModuleRFile, "SessionBreakpoints.R"))
+      (bind(initBreakpoints));
 
    return initBlock.execute();
 }

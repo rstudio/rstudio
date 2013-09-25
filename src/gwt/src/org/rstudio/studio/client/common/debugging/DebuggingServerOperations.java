@@ -58,4 +58,7 @@ public interface DebuggingServerOperations
    public void setErrorManagementType(
          int type,
          ServerRequestCallback<Void> requestCallback);
+   
+   public void setBreakpointsDirty(
+         ServerRequestCallback<Void> requestCallback);
 }

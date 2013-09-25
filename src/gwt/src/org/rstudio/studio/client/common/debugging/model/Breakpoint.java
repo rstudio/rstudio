@@ -57,7 +57,9 @@ public class Breakpoint extends JavaScriptObject
          needs_updated_steps: false,
          type: type,
          is_package_breakpoint: false,
-         package_name: ""
+         package_name: "",
+         is_shiny_breakpoint: false,
+         shiny_breakpoint_id: 0
       };
    }-*/;
       
@@ -184,5 +186,10 @@ public class Breakpoint extends JavaScriptObject
    public final native void markAsPackageBreakpoint(String packageName) /*-{
       this.is_package_breakpoint = true;
       this.package_name = packageName;
+   }-*/;
+   
+   public final native void markAsShinyBreakpoint(int shinyFunctionId) /*-{
+      this.is_shiny_breakpoint = true;
+      this.shiny_function_id = shinyFunctionId;
    }-*/;
 }

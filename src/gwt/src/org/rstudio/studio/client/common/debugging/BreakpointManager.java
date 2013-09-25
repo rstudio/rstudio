@@ -279,6 +279,9 @@ public class BreakpointManager
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
+      // Establish a persistent object for the breakpoints. Note that this 
+      // object is read by the server on init, so the scope/name pair here 
+      // needs to match the pair on the server. 
       new JSObjectStateValue(
             "debug-breakpoints",
             "debugBreakpointsState",
@@ -328,6 +331,16 @@ public class BreakpointManager
                 state.addPersistedBreakpoint(breakpoint);
              }
              breakpointStateDirty_ = false;
+
+             // Let the server know we've updated the breakpoint list. 
+             server_.setBreakpointsDirty(new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        // nothing we can do here
+                     }
+                  });
              return state.cast();
           }
    

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -3000,6 +3001,14 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void setBreakpointsDirty(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            SET_BREAKPOINTS_DIRTY, 
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3260,9 +3269,11 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
+   private static final String SET_BREAKPOINTS_DIRTY = "set_breakpoints_dirty";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
+
 }
