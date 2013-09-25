@@ -50,51 +50,118 @@ namespace breakpoints {
 namespace
 {
 
-std::vector<SEXP> s_wpShinyFunctions;
+int s_maxShinyFunctionId = 0;
 
-// Called by the client to ascertain whether the given function in the given
-// file is in sync with the corresponding R object
+class ShinyFunction
+{
+public:
+   SEXP expr;
+   SEXP function;
+   int id;
+   ShinyFunction(SEXP exprIn, SEXP functionIn):
+      expr(exprIn),
+      function(functionIn),
+      id(s_maxShinyFunctionId++)
+   {}
+};
+
+std::vector<ShinyFunction*> s_wpShinyFunctions;
+
+ShinyFunction* findShinyFunction(std::string filename, int line)
+{
+   BOOST_FOREACH(ShinyFunction* psf, s_wpShinyFunctions)
+   {
+      // Extract from the expression its location in the source file and see if
+      // the line number given is in range.
+      SEXP srcref = r::sexp::getAttrib(psf->expr, "srcref");
+      if (srcref == NULL || TYPEOF(srcref) == NILSXP)
+         continue;
+
+      if (!(line >= INTEGER(srcref)[0] &&
+            line <= INTEGER(srcref)[2]))
+         continue;
+
+      // Extract from the expression the source file in which it resides and
+      // see if it matches the source file given.
+      SEXP srcfile = r::sexp::getAttrib(srcref, "srcfile");
+      if (srcfile == NULL || TYPEOF(srcfile) == NILSXP)
+         continue;
+
+      SEXP file = r::sexp::findVar("filename", srcfile);
+      if (file == NULL || TYPEOF(file) == NILSXP)
+         continue;
+
+      std::string srcfilename;
+      Error error = r::sexp::extract(file, &srcfilename);
+      if (error)
+         continue;
+
+      // Found a match
+      if (srcfilename == filename)
+         return psf;
+   }
+
+   // Didn't find a match
+   return NULL;
+}
+
+// Runs a series of pre-flight checks to determine whether we can set a
+// breakpoint at the given location, and, if we can, what kind of breakpoint
+// we should set.
 Error getFunctionState(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+                       json::JsonRpcResponse* pResponse)
 {
    json::Object response;
-   std::string functionName, fileName;
-   bool inSync = false;
-   Error error = json::readParams(request.params, &functionName, &fileName);
+   std::string functionName, fileName, packageName;
+   int lineNumber = 0, shinyFunctionId = 0;
+   bool inSync = false, isShinyFunction = false;
+   Error error = json::readParams(
+            request.params, &functionName, &fileName, &lineNumber);
    if (error)
    {
        return error;
    }
 
-   // check whether the function is in a package
-   std::string packageName(module_context::packageNameForSourceFile(
-               module_context::resolveAliasedPath(fileName)));
-   response["is_package_function"] = packageName.length() > 0;
-   response["package_name"] = packageName;
-
-   // get the source refs and code for the function
-   SEXP srcRefs = NULL;
-   Protect protect;
-   std::string functionCode;
-   error = r::exec::RFunction(".rs.getFunctionSourceRefs",
-                              functionName,
-                              fileName,
-                              packageName)
-         .call(&srcRefs, &protect);
-   if (!error)
+   ShinyFunction* psf = findShinyFunction(fileName, lineNumber);
+   if (psf)
    {
-      error = r::exec::RFunction(".rs.getFunctionSourceCode",
+      isShinyFunction = true;
+      shinyFunctionId = psf->id;
+   }
+   else
+   {
+      // check whether the function is in a package
+      packageName = module_context::packageNameForSourceFile(
+                       module_context::resolveAliasedPath(fileName));
+
+      // get the source refs and code for the function
+      SEXP srcRefs = NULL;
+      Protect protect;
+      std::string functionCode;
+      error = r::exec::RFunction(".rs.getFunctionSourceRefs",
                                  functionName,
                                  fileName,
                                  packageName)
-            .call(&functionCode);
+            .call(&srcRefs, &protect);
+      if (!error)
+      {
+         error = r::exec::RFunction(".rs.getFunctionSourceCode",
+                                    functionName,
+                                    fileName,
+                                    packageName)
+               .call(&functionCode);
+      }
+      // compare with the disk if we were able to get the source code;
+      // otherwise, assume it's out of sync
+      if (!error)
+         inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
    }
 
-   // compare with the disk if we were able to get the source code;
-   // otherwise, assume it's out of sync
-   if (!error)
-      inSync = !environment::functionDiffersFromSource(srcRefs, functionCode);
    response["sync_state"] = inSync;
+   response["package_name"] = packageName;
+   response["is_package_function"] = packageName.length() > 0;
+   response["is_shiny_function"] = isShinyFunction;
+   response["shiny_function_id"] = shinyFunctionId;
    pResponse->setResult(response);
 
    return Success();
@@ -193,25 +260,34 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void unregisterExprFunction(SEXP s)
+void unregisterShinyFunction(SEXP extptr)
 {
-   std::cerr << "finalizer called on " << s << std::endl;
-   std::vector<SEXP>::iterator exprFunPos =
-         std::find(s_wpShinyFunctions.begin(), s_wpShinyFunctions.end(), s);
+   ShinyFunction* psf =
+         static_cast<ShinyFunction*>(r::sexp::getExternalPtrAddr(extptr));
+   if (!psf)
+      return;
+   std::cerr << "finalizer called Shiny function " << psf->id << std::endl;
+   std::vector<ShinyFunction*>::iterator exprFunPos =
+         std::find(s_wpShinyFunctions.begin(), s_wpShinyFunctions.end(), psf);
    if (exprFunPos != s_wpShinyFunctions.end())
    {
       s_wpShinyFunctions.erase(exprFunPos);
    }
+   delete psf;
+   r::sexp::clearExternalPtr(extptr);
 }
 
 } // anonymous namespace
 
-void rs_registerExprFunction(SEXP exprRef)
+SEXP rs_registerExprFunction(SEXP expr, SEXP fun)
 {
-   s_wpShinyFunctions.push_back(exprRef);
-   std::cerr << "registering " << exprRef << ", now "
-             << s_wpShinyFunctions.size() << std::endl;
-   r::sexp::registerFinalizer(exprRef, &unregisterExprFunction);
+   // The memory allocated here is attached to the SEXP "fun" as an attribute
+   // of type EXTPTRSXP. When the function is cleaned up by the garbage
+   // collector, R calls the finalizer, wherein the memory is freed.
+   ShinyFunction* psf = new ShinyFunction(expr, fun);
+   s_wpShinyFunctions.push_back(psf);
+   std::cerr << "registered Shiny function " << psf->id << std::endl;
+   return r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
 }
 
 json::Value debugStateAsJson()

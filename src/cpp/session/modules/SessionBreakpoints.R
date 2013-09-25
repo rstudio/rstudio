@@ -438,7 +438,9 @@
 
 .rs.addFunction("registerExprFunction", function(expr, fun)
 {
-   .Call(rs_registerExprFunction(expr, fun))
+   attr(fun, "_rs_exprFunction") <-
+      .Call("rs_registerExprFunction", expr, fun)
+   return(fun)
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(

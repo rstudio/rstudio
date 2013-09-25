@@ -2953,11 +2953,13 @@ public class RemoteServer implements Server
    public void getFunctionState(
          String functionName,
          String fileName,
+         int lineNumber,
          ServerRequestCallback<FunctionState> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
+      params.set(2, new JSONNumber(lineNumber));
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STATE,
                   params,

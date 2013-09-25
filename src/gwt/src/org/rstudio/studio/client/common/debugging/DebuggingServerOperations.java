@@ -44,6 +44,7 @@ public interface DebuggingServerOperations
    public void getFunctionState(
          String functionName,
          String fileName,
+         int lineNumber,
          ServerRequestCallback<FunctionState> requestCallback);
    
    public void executeDebugSource(

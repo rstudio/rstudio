@@ -166,7 +166,7 @@ public class BreakpointManager
       }      
       else 
       {
-         server_.getFunctionState(functionName, path,
+         server_.getFunctionState(functionName, path, lineNumber,
                new ServerRequestCallback<FunctionState>()
          {
             @Override

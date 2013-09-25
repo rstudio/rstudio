@@ -247,6 +247,24 @@ void registerFinalizer(SEXP s, R_CFinalizer_t fun)
    R_RegisterCFinalizer(s, fun);
 }
 
+SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun)
+{
+   SEXP s = R_MakeExternalPtr(ptr, R_NilValue, R_NilValue);
+   Protect protect(s);
+   registerFinalizer(s, fun);
+   return s;
+}
+
+void* getExternalPtrAddr(SEXP extptr)
+{
+   return R_ExternalPtrAddr(extptr);
+}
+
+void clearExternalPtr(SEXP extptr)
+{
+   R_ClearExternalPtr(extptr);
+}
+
 Error extract(SEXP valueSEXP, int* pInt)
 {
    if (TYPEOF(valueSEXP) != INTSXP)
