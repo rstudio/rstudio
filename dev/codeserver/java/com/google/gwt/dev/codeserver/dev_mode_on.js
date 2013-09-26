@@ -88,10 +88,12 @@
     dialog.style.position = 'fixed';
     dialog.style.top = '20pt';
     dialog.style.left = '20pt';
+    dialog.style.right = '20pt';
     dialog.style.backgroundColor = 'white';
     dialog.style.border = '4px solid #ccc';
     dialog.style.padding = '1em';
     dialog.style.borderRadius = '5px';
+    dialog.style.wordWrap = 'break-word';
     return dialog;
   }
 
