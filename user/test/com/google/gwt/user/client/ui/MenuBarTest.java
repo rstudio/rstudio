@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.junit.DoNotRunWith;
@@ -229,6 +230,58 @@ public class MenuBarTest extends WidgetTestBase {
     menu.getElement().dispatchEvent(event);
     assertNull(menu.getSelectedItem());
   }
+
+  @DoNotRunWith({Platform.HtmlUnitBug})
+  public void testSetFocusOnHoverEnabled() {
+    TextBox focusOwner = new TextBox();
+    RootPanel.get().add(focusOwner);
+    focusOwner.setFocus(true);
+    assertFocused(focusOwner.getElement());
+
+    MenuBar menu = new MenuBar();
+    MenuItem item0 = menu.addItem("item0", BLANK_COMMAND);
+    RootPanel.get().add(menu);
+
+    assertFocused(focusOwner.getElement());
+    menu.itemOver(item0, true);
+    assertFocused(menu.getElement());
+  }
+
+  @DoNotRunWith({Platform.HtmlUnitBug})
+  public void testSetFocusOnHoverDisabled() {
+    TextBox focusOwner = new TextBox();
+    RootPanel.get().add(focusOwner);
+    focusOwner.setFocus(true);
+    assertFocused(focusOwner.getElement());
+
+    // Create a menu bar with children.
+    MenuBar menu = new MenuBar();
+    menu.setAutoOpen(true);
+    menu.setFocusOnHoverEnabled(false);
+    MenuItem item0 = menu.addItem("item0", BLANK_COMMAND);
+    MenuBar subMenu = new MenuBar();
+    subMenu.setFocusOnHoverEnabled(false);
+    MenuItem item1 = menu.addItem("item1", subMenu);
+    RootPanel.get().add(menu);
+
+    menu.itemOver(item0, true);
+    assertFocused(focusOwner.getElement());
+
+    menu.itemOver(item1, true);
+    assertFocused(focusOwner.getElement());
+
+    // Cause item1 to hide
+    menu.itemOver(item0, true);
+    assertFocused(focusOwner.getElement());
+  }
+
+  private static void assertFocused(Element element) {
+    assertTrue(isFocused(element));
+  }
+
+  private static native boolean isFocused(Element element) /*-{
+    return $doc.activeElement == element;
+  }-*/;
 
   public void testDebugId() {
     // Create a sub menu
