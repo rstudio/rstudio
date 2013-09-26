@@ -194,7 +194,7 @@ Error readStringFromFile(const FilePath& filePath,
                int lineLength = line.length();
                content += line.substr(
                         currentLine == startLine ?
-                           std::min(startCharacter - 1, lineLength) :
+                           std::min(startCharacter, lineLength) :
                            0,
                         currentLine == endLine ?
                            std::min(endCharacter, lineLength) :

@@ -176,6 +176,10 @@ public class BreakpointManager
                {
                   breakpoint.markAsPackageBreakpoint(state.getPackageName());
                }
+               else if (state.isShinyFunction())
+               {
+                  breakpoint.markAsShinyBreakpoint(state.getShinyFunctionId());
+               }
                
                // If the breakpoint is not to be set immediately, 
                // stop processing now

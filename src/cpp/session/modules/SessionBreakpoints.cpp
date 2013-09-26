@@ -91,7 +91,8 @@ public:
       if (error)
          return false;
 
-      return srcfilename == filename;
+      return module_context::resolveAliasedPath(srcfilename) ==
+             module_context::resolveAliasedPath(filename);
    }
 };
 

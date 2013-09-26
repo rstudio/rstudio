@@ -37,7 +37,7 @@ public class FunctionState extends JavaScriptObject
       return this.is_shiny_function;
    }-*/;
 
-   public final native boolean getShinyFunctionId() /*-{
+   public final native int getShinyFunctionId() /*-{
       return this.shiny_function_id;
    }-*/;
 }

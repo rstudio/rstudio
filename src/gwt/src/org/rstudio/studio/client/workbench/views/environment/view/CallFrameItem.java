@@ -126,19 +126,26 @@ public class CallFrameItem extends Composite
                            lineNumber;
          }
          functionName.setText(
-                 frame_.getFunctionName() +
+                 getFunctionName() +
                  "(" + frame_.getArgumentList() + ")" +
                  fileLocation);
       }
       else
       {
-         functionName.setText(frame_.getFunctionName());
+         functionName.setText(getFunctionName());
       }
    }
 
    private boolean hasFileLocation()
    {
       return CallFrame.isNavigableFilename(frame_.getFileName());
+   }
+   
+   private String getFunctionName()
+   {
+      return frame_.isShinyFunction() ? "[Shiny Expression]" :
+                                        frame_.getFunctionName();
+         
    }
 
    @UiField Label functionName;

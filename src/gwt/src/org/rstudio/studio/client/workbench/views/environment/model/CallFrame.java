@@ -65,6 +65,10 @@ public class CallFrame extends JavaScriptObject
        return this.function_character_number;
    }-*/;
    
+   public final native boolean isShinyFunction() /*-{
+       return this.is_shiny_function;
+   }-*/;
+
    public final DebugFilePosition getRange() 
    {
       return DebugFilePosition.create(

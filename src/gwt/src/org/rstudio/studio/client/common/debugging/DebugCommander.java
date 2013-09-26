@@ -52,6 +52,7 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.gwt.user.client.Timer;
 
 
 // DebugCommander is responsible for managing top-level metadata concerning
@@ -191,7 +192,8 @@ public class DebugCommander
    {
       if (debugMode_ == DebugMode.Function)
       {
-         eventBus_.fireEvent(new SendToConsoleEvent("c", true, true));
+         eventBus_.fireEvent(new SendToConsoleEvent(
+               CONTINUE_COMMAND, true, true));
       }
       else if (debugMode_ == DebugMode.TopLevel)
       {
@@ -226,7 +228,7 @@ public class DebugCommander
    {
       if (debugMode_ == DebugMode.Function)
       {
-         eventBus_.fireEvent(new SendToConsoleEvent("n", true, true));
+         eventBus_.fireEvent(new SendToConsoleEvent(NEXT_COMMAND, true, true));
       }
       else if (debugMode_ == DebugMode.TopLevel)
       {
@@ -461,7 +463,7 @@ public class DebugCommander
    { 
       if (debugMode_ == DebugMode.Function)
       {
-         eventBus_.fireEvent(new SendToConsoleEvent("Q", true, true));
+         eventBus_.fireEvent(new SendToConsoleEvent(STOP_COMMAND, true, true));
          if (topDebugMode_ == DebugMode.TopLevel)
          {
             haltingTopLevelDebug_ = true;
@@ -479,6 +481,10 @@ public class DebugCommander
    private static final int STEP_RUN = 1;
    private static final int STEP_STOP = 2;
    private static final int STEP_RESUME = 3;
+   
+   public static final String STOP_COMMAND = "Q";
+   public static final String NEXT_COMMAND = "n";
+   public static final String CONTINUE_COMMAND = "c";
 
    private final DebuggingServerOperations debugServer_;
    private final ServerRequestCallback<TopLevelLineData> debugStepCallback_;

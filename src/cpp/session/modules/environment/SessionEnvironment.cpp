@@ -100,6 +100,13 @@ SEXP sourceRefsOfContext(const RCNTXT* pContext)
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
+bool isShinyContext(const RCNTXT* pContext)
+{
+   SEXP s = r::sexp::getAttrib(
+            getOriginalFunctionCallObject(pContext), "_rs_shinyDebugInfo");
+   return s != NULL && TYPEOF(s) != NILSXP;
+}
+
 bool hasSourceRefs(const RCNTXT* pContext)
 {
    return isValidSrcref(sourceRefsOfContext(pContext));
@@ -310,6 +317,7 @@ json::Array callFramesAsJson()
             LOG_ERROR(error);
          }
          varFrame["argument_list"] = error ? "" : argList;
+         varFrame["is_shiny_function"] = isShinyContext(pRContext);
 
          listFrames.push_back(varFrame);
       }
@@ -618,7 +626,8 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(commonEnvironmentStateData(*pContextDepth));
+   pResponse->setResult(commonEnvironmentStateData(
+                           inBrowseContext() ? *pContextDepth : 0));
    return Success();
 }
 
