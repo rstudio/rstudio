@@ -486,11 +486,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
+      sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
    }
    else
    {
       sessionInfo["active_project_file"] = json::Value();
       sessionInfo["project_ui_prefs"] = json::Value();
+      sessionInfo["project_open_docs"] = json::Value();
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));

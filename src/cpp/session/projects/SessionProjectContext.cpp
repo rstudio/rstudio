@@ -30,6 +30,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionProjectFirstRun.hpp"
+
 using namespace core;
 
 namespace session {
@@ -255,6 +257,7 @@ void ProjectContext::augmentRbuildignore()
       }
    }
 }
+
 
 Error ProjectContext::initialize()
 {
@@ -564,6 +567,17 @@ json::Object ProjectContext::uiPrefs() const
    return uiPrefs;
 }
 
+json::Array ProjectContext::openDocs() const
+{
+   json::Array openDocsJson;
+   std::vector<std::string> docs = projects::collectFirstRunDocs(file());
+   BOOST_FOREACH(const std::string& doc, docs)
+   {
+      FilePath docPath = directory().childPath(doc);
+      openDocsJson.push_back(module_context::createAliasedPath(docPath));
+   }
+   return openDocsJson;
+}
 
 r_util::RProjectConfig ProjectContext::defaultConfig()
 {

@@ -28,6 +28,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
 
 using namespace core;
@@ -195,14 +196,20 @@ Error createProject(const json::JsonRpcRequest& request,
          return error;
 
       // copy ui.R and server.R into the project
+      const char * const kUI = "ui.R";
+      const char * const kServer = "server.R";
       FilePath shinyDir = session::options().rResourcesPath().childPath(
                                                          "templates/shiny");
-      error = shinyDir.childPath("ui.R").copy(appDir.childPath("ui.R"));
+      error = shinyDir.childPath(kUI).copy(appDir.childPath(kUI));
       if (error)
          LOG_ERROR(error);
-      error = shinyDir.childPath("server.R").copy(appDir.childPath("server.R"));
+      error = shinyDir.childPath(kServer).copy(appDir.childPath(kServer));
       if (error)
          LOG_ERROR(error);
+
+      // add first run actions for the source files
+      addFirstRunDoc(projectFilePath, kUI);
+      addFirstRunDoc(projectFilePath, kServer);
 
       // create the project file
       return r_util::writeProjectFile(projectFilePath,
