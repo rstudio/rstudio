@@ -30,8 +30,8 @@
     </any>
   </set-property>
 
-  <replace-with class="com.google.gwt.event.dom.TouchEvent.TouchSupportDetectorNo">
-    <when-type-is class="com.google.gwt.event.dom.TouchEvent.TouchSupportDetector" />
+  <replace-with class="com.google.gwt.event.dom.client.TouchEvent.TouchSupportDetectorNo">
+    <when-type-is class="com.google.gwt.event.dom.client.TouchEvent.TouchSupportDetector" />
     <when-property-is name="touchEventSupport" value="no" />
   </replace-with>
 </module>

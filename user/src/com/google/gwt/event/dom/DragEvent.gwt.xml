@@ -31,8 +31,8 @@
     </any>
   </set-property>
 
-  <replace-with class="com.google.gwt.event.dom.DragDropEventBase.DragSupportDetectorNo">
-    <when-type-is class="com.google.gwt.event.dom.DragDropEventBase.DragSupportDetector" />
+  <replace-with class="com.google.gwt.event.dom.client.DragDropEventBase.DragSupportDetectorNo">
+    <when-type-is class="com.google.gwt.event.dom.client.DragDropEventBase.DragSupportDetector" />
     <when-property-is name="dragEventSupport" value="no" />
   </replace-with>
 </module>
