@@ -85,6 +85,7 @@ bool asLogical(SEXP object);
 
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
+SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
 
 // weak/external pointers and finalizers
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);

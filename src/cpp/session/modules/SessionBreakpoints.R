@@ -447,16 +447,17 @@
 .rs.addFunction("setShinyBreakpoints", function(name, env, lines)
 {
    steps <- .rs.getFunctionSteps(get(name, env), name, lines)
-   .rs.setFunctionBreakpoints(name, env, steps)
+   .rs.setFunctionBreakpoints(
+         name, env, lapply(steps, function(step) { step$at } ))
 })
 
 .rs.addFunction("registerExprFunction", function(params)
 {
    # Copy the source references of the expression over to the function (so we
    # can inject breakpoints as though it were an ordinary function)
-   attr(params$fun, "srcref") < attr(params$expr, "wholeSrcref")
+   attr(params$fun, "srcref") <- attr(params$expr, "wholeSrcref")
 
-   # Register the function with RStudio (may invoke breakpoints)
+   # Register the function with RStudio (may set breakpoints)
    .Call("rs_registerExprFunction", params)
 })
 

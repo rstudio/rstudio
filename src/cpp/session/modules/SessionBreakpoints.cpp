@@ -358,7 +358,7 @@ void unregisterShinyFunction(SEXP extptr)
 
 } // anonymous namespace
 
-SEXP rs_registerExprFunction(SEXP params)
+void rs_registerExprFunction(SEXP params)
 {
    SEXP expr = r::sexp::findVar("expr", params);
    SEXP fun = r::sexp::findVar("fun", params);
@@ -381,6 +381,7 @@ SEXP rs_registerExprFunction(SEXP params)
       if (psf->contains(pbp->path, pbp->lineNumber))
       {
          lines.push_back(pbp->lineNumber);
+         std::cerr << "   contains breakpoint on line " << pbp->lineNumber << std::endl;
       }
    }
 
@@ -389,12 +390,13 @@ SEXP rs_registerExprFunction(SEXP params)
    if (lines.size() > 0)
    {
       r::exec::RFunction(".rs.setShinyBreakpoints",
-                         std::string("name"),
+                         std::string("fun"),
                          params,
                          lines).call();
    }
 
-   return r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
+   SEXP extptr = r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
+   r::sexp::setAttrib(fun, "_rs_shinyDebugInfo", extptr);
 }
 
 json::Value debugStateAsJson()
