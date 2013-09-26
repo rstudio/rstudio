@@ -53,6 +53,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
+import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -1002,12 +1003,15 @@ public class RemoteServer implements Server
    
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
+                             NewShinyAppOptions newShinyAppOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(projectFile));
       params.set(1, newPackageOptions != null ?
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
+      params.set(2, newShinyAppOptions != null ?
+            new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    

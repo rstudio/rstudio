@@ -69,36 +69,17 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   json::Value newPackageJson;
+   json::Value newPackageJson, newShinyAppJson;
    Error error = json::readParams(request.params,
                                   &projectFile,
-                                  &newPackageJson);
+                                  &newPackageJson,
+                                  &newShinyAppJson);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // default project
-   if (newPackageJson.is_null())
-   {
-      // create the project directory if necessary
-      error = projectFilePath.parent().ensureDirectory();
-      if (error)
-         return error;
-
-      // create the project file
-      if (!projectFilePath.exists())
-      {
-         return r_util::writeProjectFile(projectFilePath,
-                                         ProjectContext::defaultConfig());
-      }
-      else
-      {
-         return Success();
-      }
-   }
-
    // package project
-   else
+   if (!newPackageJson.is_null())
    {
       // build list of code files
       bool usingRcpp;
@@ -199,6 +180,53 @@ Error createProject(const json::JsonRpcRequest& request,
       // to setup the package build type & default options)
       r_util::RProjectConfig projConfig = ProjectContext::defaultConfig();
       return r_util::writeProjectFile(projectFilePath, projConfig);
+   }
+
+   else if (!newShinyAppJson.is_null())
+   {
+      // error if the shiny app dir already exists
+      FilePath appDir = projectFilePath.parent();
+      if (appDir.exists())
+         return core::fileExistsError(ERROR_LOCATION);
+
+      // now create it
+      Error error = appDir.ensureDirectory();
+      if (error)
+         return error;
+
+      // copy ui.R and server.R into the project
+      FilePath shinyDir = session::options().rResourcesPath().childPath(
+                                                         "templates/shiny");
+      error = shinyDir.childPath("ui.R").copy(appDir.childPath("ui.R"));
+      if (error)
+         LOG_ERROR(error);
+      error = shinyDir.childPath("server.R").copy(appDir.childPath("server.R"));
+      if (error)
+         LOG_ERROR(error);
+
+      // create the project file
+      return r_util::writeProjectFile(projectFilePath,
+                                      ProjectContext::defaultConfig());
+   }
+
+   // default project
+   else
+   {
+      // create the project directory if necessary
+      error = projectFilePath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      // create the project file
+      if (!projectFilePath.exists())
+      {
+         return r_util::writeProjectFile(projectFilePath,
+                                         ProjectContext::defaultConfig());
+      }
+      else
+      {
+         return Success();
+      }
    }
 }
 
