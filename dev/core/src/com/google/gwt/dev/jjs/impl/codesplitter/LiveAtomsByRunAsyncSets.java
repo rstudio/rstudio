@@ -62,7 +62,7 @@ class LiveAtomsByRunAsyncSets {
 
     @Override
     public int compareTo(SubsetWithSize o) {
-      return Integer.compare(o.size, size);
+      return Integer.valueOf(o.size).compareTo(Integer.valueOf(size));
     }
   }
 
