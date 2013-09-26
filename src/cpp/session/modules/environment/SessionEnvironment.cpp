@@ -626,8 +626,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(commonEnvironmentStateData(
-                           inBrowseContext() ? *pContextDepth : 0));
+   pResponse->setResult(commonEnvironmentStateData(*pContextDepth));
    return Success();
 }
 
@@ -785,6 +784,17 @@ Error getObjectContents(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// Called by the client to force a re-query of the currently monitored
+// context depth and environment.
+Error requeryContext(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext,
+                     const json::JsonRpcRequest&,
+                     json::JsonRpcResponse*)
+{
+   onConsolePrompt(pContextDepth, pCurrentContext);
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
@@ -825,6 +835,9 @@ Error initialize()
    json::JsonRpcFunction setEnvName =
          boost::bind(setEnvironment, pContextDepth, pCurrentContext,
                      _1, _2);
+   json::JsonRpcFunction requeryCtx =
+         boost::bind(requeryContext, pContextDepth, pCurrentContext,
+                     _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -840,6 +853,7 @@ Error initialize()
       (bind(registerRpcMethod, "remove_all_objects", removeAllObjects))
       (bind(registerRpcMethod, "get_environment_state", getEnv))
       (bind(registerRpcMethod, "get_object_contents", getObjectContents))
+      (bind(registerRpcMethod, "requery_context", requeryCtx))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

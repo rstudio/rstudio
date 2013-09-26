@@ -251,15 +251,10 @@ core::Error setNamedListElement(SEXP listSEXP,
 }
 
 
-// PreservedSEXP acts like a unique_ptr for SEXPs; only one PreservedSEXP
-// should be active for a given SEXP. Copying or assigning a PreservedSEXP
-// causes ownership of the SEXP to transfer to the operation's target.
-class PreservedSEXP
+class PreservedSEXP : boost::noncopyable
 {
 public:
    PreservedSEXP();
-   PreservedSEXP(PreservedSEXP& other);
-   PreservedSEXP& operator= (PreservedSEXP& other);
    explicit PreservedSEXP(SEXP sexp);
    virtual ~PreservedSEXP();
 
@@ -281,7 +276,6 @@ public:
    void releaseNow();
 
 private:
-   void releaseOwnership();
    SEXP sexp_;
 };
 

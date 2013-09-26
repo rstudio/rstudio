@@ -64,4 +64,6 @@ public interface EnvironmentServerOperations
    void getObjectContents(
               String objectName,
               ServerRequestCallback<ObjectContents> requestCallback);
+   
+   void requeryContext(ServerRequestCallback<Void> requestCallback);
 }

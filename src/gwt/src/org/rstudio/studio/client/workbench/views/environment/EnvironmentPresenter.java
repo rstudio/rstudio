@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -153,7 +154,13 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void run()
          {
-            refreshView();
+            server_.requeryContext(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            });
          }
       };
 

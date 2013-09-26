@@ -52,7 +52,6 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.gwt.user.client.Timer;
 
 
 // DebugCommander is responsible for managing top-level metadata concerning

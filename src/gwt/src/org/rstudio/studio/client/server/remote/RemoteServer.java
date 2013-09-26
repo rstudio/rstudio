@@ -2904,6 +2904,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void requeryContext(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  REQUERY_CONTEXT,
+                  requestCallback);
+   }
+
+   @Override
    public void getObjectContents(
                  String objectName,
                  ServerRequestCallback<ObjectContents> requestCallback)
@@ -3278,6 +3286,7 @@ public class RemoteServer implements Server
    private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
    private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
    private static final String GET_OBJECT_CONTENTS = "get_object_contents";
+   private static final String REQUERY_CONTEXT = "requery_context";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
@@ -3290,5 +3299,6 @@ public class RemoteServer implements Server
    private static final String LOG_EXCEPTION = "log_exception";
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
+
 
 }

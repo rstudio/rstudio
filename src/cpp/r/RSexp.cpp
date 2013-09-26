@@ -612,24 +612,6 @@ PreservedSEXP::PreservedSEXP(SEXP sexp)
    set(sexp);
 }
 
-PreservedSEXP::PreservedSEXP(PreservedSEXP& other)
-{
-   sexp_ = other.get();
-   other.releaseOwnership();
-}
-
-PreservedSEXP& PreservedSEXP::operator= (PreservedSEXP& rhs)
-{
-   sexp_ = rhs.get();
-   rhs.releaseOwnership();
-   return *this;
-}
-
-void PreservedSEXP::releaseOwnership()
-{
-   sexp_ = R_NilValue;
-}
-
 void PreservedSEXP::set(SEXP sexp)
 {
    releaseNow();

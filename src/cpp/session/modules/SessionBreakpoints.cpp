@@ -97,8 +97,8 @@ public:
 };
 
 // A list of the Shiny functions we know about (see notes in
-// rs_registerExprFunction for an explanation of how this memory is managed)
-std::vector<ShinyFunction*> s_wpShinyFunctions;
+// rs_registerShinyFunction for an explanation of how this memory is managed)
+std::vector<boost::shared_ptr<ShinyFunction> > s_shinyFunctions;
 
 class Breakpoint
 {
@@ -112,9 +112,7 @@ public:
       lineNumber(lineNumberIn),
       id(idIn),
       path(pathIn)
-   {
-      std::cerr << "recorded a breakpoint, id " << idIn << std::endl;
-   }
+   {}
 };
 
 // A list of the breakpoints we know about. Note that this is a slave list;
@@ -125,10 +123,10 @@ bool s_breakpointsInSync = false;
 
 ShinyFunction* findShinyFunction(std::string filename, int line)
 {
-   BOOST_FOREACH(ShinyFunction* psf, s_wpShinyFunctions)
+   BOOST_FOREACH(boost::shared_ptr<ShinyFunction> psf, s_shinyFunctions)
    {
       if (psf->contains(filename, line))
-         return psf;
+         return psf.get();
    }
 
    // Didn't find a match
@@ -137,11 +135,10 @@ ShinyFunction* findShinyFunction(std::string filename, int line)
 
 boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
 {
-   return boost::make_shared<Breakpoint>(
-            Breakpoint(obj["type"].get_int(),
-                       obj["line_number"].get_int(),
-                       obj["id"].get_int(),
-                       obj["path"].get_str()));
+   return boost::make_shared<Breakpoint>(obj["type"].get_int(),
+                                         obj["line_number"].get_int(),
+                                         obj["id"].get_int(),
+                                         obj["path"].get_str());
 
 }
 
@@ -305,11 +302,13 @@ Error setBreakpoints(const json::JsonRpcRequest& request,
 Error setBreakpointsDirty(const json::JsonRpcRequest& ,
                           json::JsonRpcResponse* )
 {
-   std::cerr << "marking breakpoint list dirty" << std::endl;
    s_breakpointsInSync = false;
    return Success();
 }
 
+// Called on init and when we need an up-to-date list of breakpoints from the
+// client--just slurps information from the client's persisted store of
+// breakpoints.
 void syncClientBreakpoints()
 {
    try
@@ -340,36 +339,49 @@ Error initBreakpoints()
    return Success();
 }
 
+// Called by the R garbage collector when a Shiny function is cleaned up;
+// we use this as a trigger to clean up our own references to the function.
 void unregisterShinyFunction(SEXP extptr)
 {
+   // Extract the raw pointer from the EXTPTRSXP
    ShinyFunction* psf =
          static_cast<ShinyFunction*>(r::sexp::getExternalPtrAddr(extptr));
    if (!psf)
       return;
-   std::cerr << "finalizer called Shiny function " << psf->id << std::endl;
-   std::vector<ShinyFunction*>::iterator exprFunPos =
-         std::find(s_wpShinyFunctions.begin(), s_wpShinyFunctions.end(), psf);
-   if (exprFunPos != s_wpShinyFunctions.end())
+
+   // Look over each Shiny function we know about; if this was a function
+   // we were tracking, release it.
+   for (std::vector<boost::shared_ptr<ShinyFunction> >::iterator psfi =
+               s_shinyFunctions.begin();
+        psfi != s_shinyFunctions.end();
+        psfi++)
    {
-      s_wpShinyFunctions.erase(exprFunPos);
+      if (psfi->get() == psf)
+      {
+         s_shinyFunctions.erase(psfi);
+         break;
+      }
    }
-   delete psf;
    r::sexp::clearExternalPtr(extptr);
 }
 
 } // anonymous namespace
 
-void rs_registerExprFunction(SEXP params)
+void rs_registerShinyFunction(SEXP params)
 {
    SEXP expr = r::sexp::findVar("expr", params);
    SEXP fun = r::sexp::findVar("fun", params);
 
    // The memory allocated here is attached to the SEXP "fun" as an attribute
    // of type EXTPTRSXP. When the function is cleaned up by the garbage
-   // collector, R calls the finalizer, wherein the memory is freed.
-   ShinyFunction* psf = new ShinyFunction(expr, fun);
-   s_wpShinyFunctions.push_back(psf);
-   std::cerr << "registered Shiny function " << psf->id << std::endl;
+   // collector, R calls the finalizer.
+   boost::shared_ptr<ShinyFunction> psf =
+            boost::make_shared<ShinyFunction>(expr, fun);
+   s_shinyFunctions.push_back(psf);
+
+   // Attach the information we just created to the Shiny function.
+   SEXP extptr = r::sexp::makeExternalPtr(psf.get(), unregisterShinyFunction);
+   r::sexp::setAttrib(fun, "_rs_shinyDebugInfo", extptr);
 
    // Look over the list of breakpoints we know about and see if any of them
    // are unbound breakpoints in the region of the file just identified.
@@ -380,10 +392,7 @@ void rs_registerExprFunction(SEXP params)
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
       if (psf->contains(pbp->path, pbp->lineNumber))
-      {
          lines.push_back(pbp->lineNumber);
-         std::cerr << "   contains breakpoint on line " << pbp->lineNumber << std::endl;
-      }
    }
 
    // If we found breakpoint lines in this Shiny function, set breakpoints
@@ -395,9 +404,6 @@ void rs_registerExprFunction(SEXP params)
                          params,
                          lines).call();
    }
-
-   SEXP extptr = r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
-   r::sexp::setAttrib(fun, "_rs_shinyDebugInfo", extptr);
 }
 
 json::Value debugStateAsJson()
