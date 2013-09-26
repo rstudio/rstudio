@@ -138,16 +138,8 @@
   return(funBody)
 })
 
-# this function is used to get the steps in the given function that are
-# associated with the given line number, using the function's source
-# references.
-.rs.addFunction("getFunctionSteps", function(
-   functionName,
-   fileName,
-   packageName,
-   lineNumbers)
+.rs.addFunction("getFunctionSteps", function(fun, functionName, lineNumbers)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    funBody <- body(fun)
 
    # attempt to find the end line of the function
@@ -192,6 +184,22 @@
          line=.rs.scalar(lineNumber),
          at=.rs.scalar(paste(steps, collapse=",")))
    })
+
+})
+
+# this function is used to get the steps in the given function that are
+# associated with the given line number, using the function's source
+# references.
+.rs.addFunction("getSteps", function(
+   functionName,
+   fileName,
+   packageName,
+   lineNumbers)
+{
+   .rs.getFunctionSteps(
+                  .rs.getUntracedFunction(functionName, fileName, packageName),
+                  functionName,
+                  lineNumbers)
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(
@@ -436,11 +444,20 @@
             .rs.lineDataList(srcref)))
 })
 
-.rs.addFunction("registerExprFunction", function(expr, fun)
+.rs.addFunction("setShinyBreakpoints", function(name, env, lines)
 {
-   attr(fun, "_rs_exprFunction") <-
-      .Call("rs_registerExprFunction", expr, fun)
-   return(fun)
+   steps <- .rs.getFunctionSteps(get(name, env), name, lines)
+   .rs.setFunctionBreakpoints(name, env, steps)
+})
+
+.rs.addFunction("registerExprFunction", function(params)
+{
+   # Copy the source references of the expression over to the function (so we
+   # can inject breakpoints as though it were an ordinary function)
+   attr(params$fun, "srcref") < attr(params$expr, "wholeSrcref")
+
+   # Register the function with RStudio (may invoke breakpoints)
+   .Call("rs_registerExprFunction", params)
 })
 
 .rs.addJsonRpcHandler("get_function_steps", function(
@@ -449,7 +466,7 @@
    packageName,
    lineNumbers)
 {
-   .rs.getFunctionSteps(functionName, fileName, packageName, lineNumbers)
+   .rs.getSteps(functionName, fileName, packageName, lineNumbers)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(

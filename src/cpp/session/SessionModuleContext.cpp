@@ -450,7 +450,7 @@ Error initialize()
    R_CallMethodDef methodDef13;
    methodDef13.name = "rs_registerExprFunction" ;
    methodDef13.fun = (DL_FUNC) modules::breakpoints::rs_registerExprFunction;
-   methodDef13.numArgs = 2;
+   methodDef13.numArgs = 1;
    r::routines::addCallMethod(methodDef13);
 
    // initialize monitored scratch dir

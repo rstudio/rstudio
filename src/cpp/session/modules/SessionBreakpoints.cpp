@@ -68,7 +68,7 @@ public:
    {
       // Extract from the expression its location in the source file and see if
       // the line number given is in range.
-      SEXP srcref = r::sexp::getAttrib(expr, "srcref");
+      SEXP srcref = r::sexp::getAttrib(function, "srcref");
       if (srcref == NULL || TYPEOF(srcref) == NILSXP)
          return false;
 
@@ -358,8 +358,11 @@ void unregisterShinyFunction(SEXP extptr)
 
 } // anonymous namespace
 
-SEXP rs_registerExprFunction(SEXP expr, SEXP fun)
+SEXP rs_registerExprFunction(SEXP params)
 {
+   SEXP expr = r::sexp::findVar("expr", params);
+   SEXP fun = r::sexp::findVar("fun", params);
+
    // The memory allocated here is attached to the SEXP "fun" as an attribute
    // of type EXTPTRSXP. When the function is cleaned up by the garbage
    // collector, R calls the finalizer, wherein the memory is freed.
@@ -369,15 +372,26 @@ SEXP rs_registerExprFunction(SEXP expr, SEXP fun)
 
    // Look over the list of breakpoints we know about and see if any of them
    // are unbound breakpoints in the region of the file just identified.
-   if (s_breakpointsInSync)
+   if (!s_breakpointsInSync)
       syncClientBreakpoints();
 
+   std::vector<int> lines;
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
       if (psf->contains(pbp->path, pbp->lineNumber))
       {
-         std::cerr << "  contains breakpoint " << pbp->id << std::endl;
+         lines.push_back(pbp->lineNumber);
       }
+   }
+
+   // If we found breakpoint lines in this Shiny function, set breakpoints
+   // on it.
+   if (lines.size() > 0)
+   {
+      r::exec::RFunction(".rs.setShinyBreakpoints",
+                         std::string("name"),
+                         params,
+                         lines).call();
    }
 
    return r::sexp::makeExternalPtr(psf, unregisterShinyFunction);
