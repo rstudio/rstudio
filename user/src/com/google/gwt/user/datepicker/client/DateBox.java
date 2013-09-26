@@ -37,6 +37,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasEnabled;
 import com.google.gwt.user.client.ui.HasValue;
@@ -71,7 +72,7 @@ public class DateBox extends Composite implements HasEnabled, HasValue<Date>,
   /**
    * Default {@link DateBox.Format} class. The date is first parsed using the
    * {@link DateTimeFormat} supplied by the user, or
-   * {@link DateTimeFormat#getMediumDateFormat()} by default.
+   * {@link PredefinedFormat#DATE_TIME_MEDIUM} by default.
    * <p>
    * If that fails, we then try to parse again using the default browser date
    * parsing.
@@ -93,7 +94,7 @@ public class DateBox extends Composite implements HasEnabled, HasValue<Date>,
      */
     @SuppressWarnings("deprecation")
     public DefaultFormat() {
-      dateTimeFormat = DateTimeFormat.getMediumDateTimeFormat();
+      dateTimeFormat = DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_MEDIUM);
     }
 
     /**
@@ -133,6 +134,8 @@ public class DateBox extends Composite implements HasEnabled, HasValue<Date>,
       } catch (IllegalArgumentException exception) {
         try {
           date = new Date(dateText);
+          // We have parsed the text at higher resolution so do a round trip to get rid of extra:
+          date = dateTimeFormat.parse(dateTimeFormat.format(date));
         } catch (IllegalArgumentException e) {
           if (reportError) {
             dateBox.addStyleName(DATE_BOX_FORMAT_ERROR);
@@ -230,10 +233,17 @@ public class DateBox extends Composite implements HasEnabled, HasValue<Date>,
     }
 
     public void onValueChange(ValueChangeEvent<Date> event) {
-      setValue(parseDate(false), event.getValue(), true, true);
+      setValue(parseDate(false), normalize(event.getValue()), true, true);
       hideDatePicker();
       preventDatePickerPopup();
       box.setFocus(true);
+    }
+
+    // Round trips on render & parse to convert the date to our interpretation based on the format
+    // See issue https://code.google.com/p/google-web-toolkit/issues/detail?id=4785
+    private Date normalize(Date date) {
+      DateBox dateBox = DateBox.this;
+      return getFormat().parse(dateBox, getFormat().format(dateBox, date), false);
     }
   }
 

@@ -19,22 +19,27 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.i18n.shared.DateTimeFormat;
+import com.google.gwt.i18n.shared.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.gwt.user.datepicker.client.DateBox;
+import com.google.gwt.user.datepicker.client.DateBox.Format;
+import com.google.gwt.user.datepicker.client.DatePicker;
 
 import java.util.Date;
 
 /**
  * Tests {@link DateBox}.
  */
+@DoNotRunWith({Platform.HtmlUnitBug})
 public class DateBoxTest extends WidgetTestBase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
 
-  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testAccessors() {
     DateBox db = new DateBox();
     assertFalse(db.isDatePickerShowing());
@@ -44,38 +49,116 @@ public class DateBoxTest extends WidgetTestBase {
     assertFalse(db.isDatePickerShowing());
   }
 
-  @DoNotRunWith({Platform.HtmlUnitBug})
-  public void testValueChangeEvent() {
+  private static class MillisStrippedValueChangeTester extends DateValueChangeTester {
 
-    // Checks setValue(date, true);
-    DateBox db = new DateBox();
+    public MillisStrippedValueChangeTester(DateBox subject) {
+      super(subject);
+      subject.setValue(null); // reset to default
+    }
+
+    @Override
+    protected void normalizeTime(Date highResolutionDate) {
+      highResolutionDate.setTime((highResolutionDate.getTime() / 1000) * 1000);
+    }
+  }
+
+  public void testValueChangeEvent() {
+    final DateBox db = new DateBox();
     RootPanel.get().add(db);
+
+    // Checks setValue(date, true). Should preserve precision so getValue returns the exact value
+    // passed by setValue.
     new DateValueChangeTester(db).run();
 
     // Check setting the text directly in the text box.
-    final DateBox db2 = new DateBox();
-    RootPanel.get().add(db2);
-    new DateValueChangeTester(db2) {
+    new MillisStrippedValueChangeTester(db) {
       @Override
-      protected void fire(java.util.Date d) {
-        db2.getTextBox().setText(db2.getFormat().format(db2, d));
-        NativeEvent e = Document.get().createBlurEvent();
-        db2.getTextBox().getElement().dispatchEvent(e);
+      protected void fire(Date d) {
+        enterViaTextBox(db, d);
+      }
+    }.run();
+
+    // Checks that selecting a date from date picker works correctly.
+    new MillisStrippedValueChangeTester(db) {
+      @Override
+      protected void fire(Date d) {
+        selectViaDatePicker(db, d);
       }
     }.run();
 
     // Checks that setting the date picker's date works correctly.
-    final DateBox db3 = new DateBox();
-    RootPanel.get().add(db3);
-    new DateValueChangeTester(db3) {
+    new MillisStrippedValueChangeTester(db) {
       @Override
-      protected void fire(java.util.Date d) {
-        db3.getDatePicker().setValue(d, true);
+      protected void fire(Date d) {
+        setViaDatePicker(db, d);
       }
     }.run();
   }
   
-  @DoNotRunWith({Platform.HtmlUnitBug})
+  private static class TimeStrippedValueChangeTester extends DateValueChangeTester {
+
+    public TimeStrippedValueChangeTester(DateBox subject) {
+      super(subject);
+      subject.setValue(null); // reset to default
+    }
+
+    @Override
+    protected void normalizeTime(Date highResolutionDate) {
+      CalendarUtil.resetTime(highResolutionDate);
+    }
+  }
+
+  public void testValueChangeEventWithCustomFormat() {
+    Format format = new DateBox.DefaultFormat(DateTimeFormat.getFormat("dd/MM/yyyy"));
+    final DateBox db = new DateBox(new DatePicker(), null, format);
+    RootPanel.get().add(db);
+
+    // Checks setValue(date, true). Should preserve precision so getValue returns the exact value
+    // passed by setValue.
+    new DateValueChangeTester(db).run();
+
+    // Check setting the text directly in the text box.
+    new TimeStrippedValueChangeTester(db) {
+      @Override
+      protected void fire(Date d) {
+        enterViaTextBox(db, d);
+      }
+    }.run();
+
+    // Checks that setting the date picker's date works correctly.
+    new TimeStrippedValueChangeTester(db) {
+      @Override
+      protected void fire(Date d) {
+        setViaDatePicker(db, d);
+      }
+    }.run();
+
+    // Checks that selecting a date from date picker works correctly.
+    new TimeStrippedValueChangeTester(db) {
+      @Override
+      protected void fire(Date d) {
+        selectViaDatePicker(db, d);
+      }
+    }.run();
+  }
+
+
+  private static void enterViaTextBox(DateBox db, Date d) {
+    // Intended use of higher resolution formatter to test normalization
+    db.getTextBox().setText(DateTimeFormat.getFormat(PredefinedFormat.DATE_TIME_LONG).format(d));
+    db.getTextBox().getElement().dispatchEvent(Document.get().createBlurEvent());
+  }
+
+  private static void selectViaDatePicker(final DateBox db, Date d) {
+    // To mimic selection first show the picker
+    db.showDatePicker();
+    db.getDatePicker().setValue(d, true);
+  }
+
+  private static void setViaDatePicker(DateBox db, Date d) {
+    db.getDatePicker().setValue(d, true);
+  }
+
   public void testFireNullValues() {
     DateBox db = new DateBox();
     db.setFireNullValues(true);

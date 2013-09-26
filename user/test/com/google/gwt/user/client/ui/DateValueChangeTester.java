@@ -18,24 +18,38 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 
-import junit.framework.TestCase;
+import junit.framework.Assert;
 
 import java.util.Date;
+import java.util.LinkedList;
+
 
 /**
  * Handy tool for testing classes that implement {@link HasValue} of
  * {@link Date}.
  */
-public class DateValueChangeTester {
+public class DateValueChangeTester extends Assert {
   static class Handler implements ValueChangeHandler<Date> {
-    Date received = null;
+    private LinkedList<Date> received = new LinkedList<Date>();
 
+    @Override
     public void onValueChange(ValueChangeEvent<Date> event) {
-      received = event.getValue();
+      received.addLast(event.getValue());
+    }
+
+    private void assertSingleEvent(Date date) {
+      Date receivedEvent = received.removeFirst();
+      assertEquals(date, receivedEvent);
+      assertNotSame(date, receivedEvent);
+      assertNoEvents();
+    }
+
+    private void assertNoEvents() {
+      assertTrue(received.isEmpty());
     }
   }
 
-  protected final HasValue<Date> subject;
+  private final HasValue<Date> subject;
 
   /**
    * The HasValue<Date> to be tested. It should have been freshly created before
@@ -54,49 +68,54 @@ public class DateValueChangeTester {
   public void run() {
 
     // Negative test cases.
-    TestCase.assertNull(subject.getValue());
+    assertNull(subject.getValue());
 
     DateValueChangeTester.Handler h = new Handler();
     subject.addValueChangeHandler(h);
 
     subject.setValue(null);
-    TestCase.assertNull(subject.getValue());
-    TestCase.assertNull(h.received);
+    assertNull(subject.getValue());
+    h.assertNoEvents();
 
     Date able = new Date(1999, 5, 15);
     subject.setValue(able);
-    TestCase.assertEquals(able, subject.getValue());
-    TestCase.assertNull(h.received);
+    assertEquals(able, subject.getValue());
+    h.assertNoEvents();
 
     subject.setValue(able);
-    TestCase.assertNull(h.received);
+    h.assertNoEvents();
 
     Date baker = new Date(1965, 12, 7);
     subject.setValue(baker);
-    TestCase.assertNull(h.received);
+    h.assertNoEvents();
 
     // Positive test cases.
 
     // Value has not changed, so should not fire a change event even though
     // fire event is true.
     fire(baker);
-    TestCase.assertNull(h.received);
+    h.assertNoEvents();
     fire(able);
-    TestCase.assertEquals(able, h.received);
-    TestCase.assertNotSame(able, h.received);
+    h.assertSingleEvent(able);
 
     fire(baker);
-    TestCase.assertEquals(baker, h.received);
-    TestCase.assertNotSame(baker, h.received);
-    
-    h.received = null;
+    h.assertSingleEvent(baker);
+
     // Value has changed, but boolean is false.
     subject.setValue(baker, false);
-    TestCase.assertNull(h.received);
+    h.assertNoEvents();
+
+    Date highResolutionDate = new Date(); // Date 'now' includes milliseconds
+    fire(highResolutionDate);
+    normalizeTime(highResolutionDate);
+    h.assertSingleEvent(highResolutionDate);
+  }
+
+  protected void normalizeTime(Date highResolutionDate) {
+    // no-op by default but may be overridden to decrease precision of the time w.r.t format
   }
 
   protected void fire(Date d) {
     subject.setValue(d, true);
   }
-
 }
