@@ -153,7 +153,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         int relRow = event.getIndex() - display.getPageStart();
         if (display.getKeyboardSelectedRow() != relRow) {
           // Do not steal focus as this was a focus event.
-          display.setKeyboardSelectedRow(event.getIndex(), false);
+          display.setKeyboardSelectedRow(relRow, false);
 
           // Do not cancel the event as the click may have occurred on a Cell.
           return;
