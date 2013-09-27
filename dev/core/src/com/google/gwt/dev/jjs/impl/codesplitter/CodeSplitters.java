@@ -61,7 +61,7 @@ public class CodeSplitters {
    *
    * @throws UnableToCompleteException If the module specifies a bad load order
    */
-  public static LinkedHashSet<JRunAsync> pickInitialLoadSequence(TreeLogger logger,
+  public static void pickInitialLoadSequence(TreeLogger logger,
       JProgram program, Properties properties) throws UnableToCompleteException {
     SpeedTracerLogger.Event codeSplitterEvent =
         SpeedTracerLogger
@@ -94,9 +94,8 @@ public class CodeSplitters {
 
     logInitialLoadSequence(logger, asyncsInInitialLoadSequence);
     installInitialLoadSequenceField(program, asyncsInInitialLoadSequence);
-    codeSplitterEvent.end();
     program.setInitialAsyncSequence(asyncsInInitialLoadSequence);
-    return asyncsInInitialLoadSequence;
+    codeSplitterEvent.end();
   }
 
   /**
@@ -183,7 +182,11 @@ public class CodeSplitters {
     return expectedFragmentCount - 2;
   }
 
-  public static final String PROP_INITIAL_SEQUENCE = "compiler.splitpoint.initial.sequence";
+  /**
+   * A Java property that causes the fragment map to be logged.
+   */
+  static String PROP_LOG_FRAGMENT_MAP = "gwt.jjs.logFragmentMap";
+  static final String PROP_INITIAL_SEQUENCE = "compiler.splitpoint.initial.sequence";
   public static final String MIN_FRAGMENT_SIZE = "compiler.splitpoint.leftovermerge.size";
 
   private static void logInitialLoadSequence(TreeLogger logger,
@@ -231,8 +234,11 @@ public class CodeSplitters {
     JArrayType arrayType = program.getTypeArray(JPrimitiveType.INT);
     assert ((JNewArray) arg1).getArrayType() == arrayType;
     List<JExpression> initializers = new ArrayList<JExpression>(initialLoadSequence.size());
-    // TODO(rluble): this should be done after codesplitting but for now it relies on the
-    // fact that runAsync.splitPoint() == fragmentNumber for the initial sequence.
+
+    // RunAsyncFramentIndex will later be replaced by the fragment the async is in.
+    // TODO(rluble): this approach is not very clean, ideally the load sequence should be
+    // installed AFTER code splitting when the fragment ids are known; rather than inserting
+    // a placeholder in the AST and patching the ast later.
     for (JRunAsync runAsync : initialLoadSequence) {
       initializers.add(new JNumericEntry(call.getSourceInfo(), "RunAsyncFragmentIndex",
           runAsync.getRunAsyncId()));

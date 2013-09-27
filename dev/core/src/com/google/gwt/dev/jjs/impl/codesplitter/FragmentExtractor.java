@@ -303,13 +303,13 @@ public class FragmentExtractor {
   /**
    * Create a call to {@link AsyncFragmentLoader#onLoad}.
    */
-  public List<JsStatement> createOnLoadedCall(int splitPoint) {
+  public List<JsStatement> createOnLoadedCall(int fragmentId) {
     JMethod loadMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.onLoad");
     JsName loadMethodName = map.nameForMethod(loadMethod);
     SourceInfo sourceInfo = jsprogram.getSourceInfo();
     JsInvocation call = new JsInvocation(sourceInfo);
     call.setQualifier(wrapWithEntry(loadMethodName.makeRef(sourceInfo)));
-    call.getArguments().add(new JsNumberLiteral(sourceInfo, splitPoint));
+    call.getArguments().add(new JsNumberLiteral(sourceInfo, fragmentId));
     List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
     return newStats;
   }

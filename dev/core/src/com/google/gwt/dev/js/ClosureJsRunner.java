@@ -249,7 +249,7 @@ public class ClosureJsRunner {
     if (fragments > 1) {
       int leftoverIndex = fragments - 1;
       if (partitionResult != null) {
-        leftoverIndex = partitionResult.getLeftoverFragmentIndex();
+        leftoverIndex = partitionResult.getLeftoverFragmentId();
       }
       closureModuleSequenceMap[leftoverIndex] = module++;
     }

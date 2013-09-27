@@ -51,16 +51,6 @@ import javax.annotation.Nullable;
  */
 public class JProgram extends JNode {
 
-  private List<Integer> initialFragmentIdSequence = Lists.newArrayList();
-
-  public List<Integer> getInitialFragmentIdSequence() {
-    return initialFragmentIdSequence;
-  }
-
-  public void setInitialFragmentIdSequence(List<Integer> initialFragmentIdSequence) {
-    this.initialFragmentIdSequence = initialFragmentIdSequence;
-  }
-
   private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
     public int compare(JArrayType o1, JArrayType o2) {
       int comp = o1.getDims() - o2.getDims();
@@ -261,32 +251,6 @@ public class JProgram extends JNode {
     return traceMethods.size() > 0;
   }
 
-  /**
-   * The same as {@link #lastFragmentLoadingBefore(int, int...)}, except that
-   * all of the parameters must be passed explicitly. The instance method should
-   * be preferred whenever a JProgram instance is available.
-   * 
-   * @param initialSeq The initial split point sequence of the program
-   * @param result The fragment partitioning result, null if it hasn't be partitioned.
-   * @param numSps The number of split points in the program
-   * @param firstFragment The first fragment to consider
-   * @param restFragments The rest of the fragments to consider
-   */
-  public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
-      FragmentPartitioningResult result, int numSps, int firstFragment, int... restFragments) {
-    int latest = firstFragment;
-    for (int frag : restFragments) {
-      latest = pairwiseLastFragmentLoadingBefore(initialSeq, result, numSps, latest, frag);
-    }
-    return latest;
-  }
-
-  public static int lastFragmentLoadingBefore(List<Integer> initialSeq,
-      int numSps, int firstFragment, int... restFragments) {
-
-    return lastFragmentLoadingBefore(initialSeq, null, numSps, firstFragment, restFragments);
-  }
-
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
       throws IOException {
     stream.writeObject(types);
@@ -296,70 +260,6 @@ public class JProgram extends JNode {
     for (JDeclaredType type : types) {
       type.writeMethodBodies(stream);
     }
-  }
-
-  /**
-   * The main logic behind {@link #lastFragmentLoadingBefore(int, int...)} and
-   * {@link #lastFragmentLoadingBefore(List, int, int, int...)}.
-   */
-  private static int pairwiseLastFragmentLoadingBefore(List<Integer> initialSeq,
-      FragmentPartitioningResult result, int numSps, int frag1, int frag2) {
-
-    if (frag1 == frag2) {
-      return frag1;
-    }
-
-    if (frag1 == 0) {
-      return 0;
-    }
-
-    if (frag2 == 0) {
-      return 0;
-    }
-
-    // TODO(acleung): While the logic for this is correct, the terminology used
-    // in the code is not correct when fragment partitioning is on.
-    // Once the new code splitter is the default. This function needs to be
-    // rewritten.
-    int sp1 = frag1;
-    int sp2 = frag2;
-
-    // If there were some fragment merging.
-    if (result != null) {
-      sp1 = result.getRunAsyncIdForFragment(sp1);
-      sp2 = result.getRunAsyncIdForFragment(sp2);
-    }
-    
-    int initPos1 = initialSeq.indexOf(sp1);
-    int initPos2 = initialSeq.indexOf(sp2);
-    
-    // If both are in the initial sequence, then pick the earlier
-    if (initPos1 >= 0 && initPos2 >= 0) {
-      if (initPos1 < initPos2) {
-        return frag1;
-      }
-      return frag2;
-    }
-
-    // If exactly one is in the initial sequence, then it's the earlier one
-    if (initPos1 >= 0) {
-      return frag1;
-    }
-    if (initPos2 >= 0) {
-      return frag2;
-    }
-
-    assert (initPos1 < 0 && initPos2 < 0);
-    assert (frag1 != frag2);
-
-    // TODO(rluble): there should always be a fragmentPartitionResult; temporary hack.
-    // assert result != null;
-
-    if (result == null) {
-      return numSps + 1;
-    }
-
-    return result.getLeftoverFragmentIndex();
   }
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
@@ -396,6 +296,8 @@ public class JProgram extends JNode {
   private List<JRunAsync> runAsyncs = Lists.newArrayList();
 
   private LinkedHashSet<JRunAsync> initialAsyncSequence = new LinkedHashSet<JRunAsync>();
+
+  private List<Integer> initialFragmentIdSequence = Lists.newArrayList();
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -759,12 +661,16 @@ public class JProgram extends JNode {
     return type;
   }
 
-  public JClassType getJavaScriptObject() {
-    return typeSpecialJavaScriptObject;
+  public LinkedHashSet<JRunAsync> getInitialAsyncSequence() {
+    return initialAsyncSequence;
   }
 
-  public JExpression getLiteralAbsentArrayDimension() {
-    return JAbsentArrayDimension.INSTANCE;
+  public List<Integer> getInitialFragmentIdSequence() {
+    return initialFragmentIdSequence;
+  }
+
+  public JClassType getJavaScriptObject() {
+    return typeSpecialJavaScriptObject;
   }
 
   public JBooleanLiteral getLiteralBoolean(boolean value) {
@@ -826,8 +732,8 @@ public class JProgram extends JNode {
     return runAsyncs;
   }
 
-  public LinkedHashSet<JRunAsync> getInitialAsyncSequence() {
-    return initialAsyncSequence;
+  public int getCommonAncestorFragmentId(int thisFragmentId, int thatFragmentId) {
+    return fragmentPartitioninResult.getCommonAncestorFragmentId(thisFragmentId, thatFragmentId);
   }
 
   public JMethod getStaticImpl(JMethod method) {
@@ -965,16 +871,6 @@ public class JProgram extends JNode {
     return staticToInstanceMap.containsKey(method);
   }
 
-  /**
-   * Given a sequence of fragment numbers, return the latest fragment number
-   * possible that does not load later than any of these. It might be one of the
-   * supplied fragments, or it might be a common predecessor.
-   */
-  public int lastFragmentLoadingBefore(int firstFragment, int... restFragments) {
-    return lastFragmentLoadingBefore(initialFragmentIdSequence, fragmentPartitioninResult,
-        runAsyncs.size(), firstFragment, restFragments);
-  }
-
   public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
     // Make it into a source type name.
     String srcTypeName = qualifiedBinaryName.replace('$', '.');
@@ -1008,6 +904,10 @@ public class JProgram extends JNode {
 
   public void setFragmentPartitioningResult(FragmentPartitioningResult result) {
     fragmentPartitioninResult = result;
+  }
+
+  public void setInitialFragmentIdSequence(List<Integer> initialFragmentIdSequence) {
+    this.initialFragmentIdSequence = initialFragmentIdSequence;
   }
 
   public void setRunAsyncs(List<JRunAsync> runAsyncs) {

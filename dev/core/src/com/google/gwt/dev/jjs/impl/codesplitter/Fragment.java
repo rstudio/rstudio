@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
@@ -39,29 +40,34 @@ class Fragment {
    *         contained in the fragment are activated</li>
    *   <li>- NOT_EXCLUSIVE fragments (only one at this stage) contains all the atoms that are not
    *         part of INITIAL or EXCLUSIVE fragments</li>
-   *   <li>- DELETED fragments are fragments whose contents have been merged to a different
-   *         fragment</li>
    * </ul>
    */
   enum Type {
-    INITIAL, EXCLUSIVE, NOT_EXCLUSIVE, DELETED
+    INITIAL, EXCLUSIVE, NOT_EXCLUSIVE
   };
 
-  public Fragment(Type type) {
+  public Fragment(Type type, Fragment... ancestorFragments) {
     this.type = type;
+    this.addImmediateAncestors(ancestorFragments);
   }
 
   /**
    * Assign a runAsync to this fragment.
    */
   public void addRunAsync(JRunAsync runAsync) {
-    assert !runAsyncs.contains(runAsync);
+    Preconditions.checkArgument(!this.runAsyncs.contains(runAsync), "Fragment %n already contains "
+        + "runAsync %n", runAsync.getRunAsyncId());
     runAsyncs.add(runAsync);
   }
 
   public void addRunAsyncs(Collection<JRunAsync> runAsyncs) {
-    assert !this.runAsyncs.contains(runAsyncs);
     this.runAsyncs.addAll(runAsyncs);
+  }
+
+  public void addImmediateAncestors(Fragment... ancestorFragments) {
+    for (Fragment ancestorFragment : ancestorFragments) {
+      this.immediateAncestors.add(ancestorFragment);
+    }
   }
 
   public void addStatements(List<JsStatement> statements) {
@@ -69,7 +75,7 @@ class Fragment {
   }
 
   public int getFragmentId() {
-    assert fragmentId != -1;
+    assert fragmentId >= 0;
     return fragmentId;
   }
 
@@ -88,10 +94,6 @@ class Fragment {
     return type;
   }
 
-  public boolean isDeleted() {
-    return type == Type.DELETED;
-  }
-
   public boolean isExclusive() {
     return type == Type.EXCLUSIVE;
   }
@@ -100,10 +102,10 @@ class Fragment {
     return type == Type.INITIAL;
   }
 
-  public void setDeleted() {
-    this.type = Type.DELETED;
-  }
   public void setFragmentId(int fragmentId) {
+    Preconditions.checkArgument(fragmentId >= 0, "Fragment id  %s is not >= 0", fragmentId);
+    Preconditions.checkArgument(fragmentId > 0 || type == Type.INITIAL,
+        "Fragment 0 is not INITIAL");
     this.fragmentId = fragmentId;
   }
 
@@ -115,4 +117,5 @@ class Fragment {
   private Set<JRunAsync> runAsyncs = Sets.newHashSet();
   private List<JsStatement> statements;
   private Type type;
+  private Set<Fragment> immediateAncestors = Sets.newHashSet();
 }

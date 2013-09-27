@@ -103,11 +103,6 @@ import javax.annotation.Nullable;
 public class CodeSplitter {
   // TODO(rluble): This class needs a serious refactor to be able to add significant unit tests.
 
-  /**
-   * A Java property that causes the fragment map to be logged.
-   */
-  private static String PROP_LOG_FRAGMENT_MAP = "gwt.jjs.logFragmentMap";
-
   public static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram) {
     return computeInitiallyLive(jprogram, MultipleDependencyGraphRecorder.NULL_RECORDER);
   }
@@ -228,7 +223,6 @@ public class CodeSplitter {
   private final JavaToJavaScriptMap map;
   private final Set<JMethod> methodsInJavaScript;
 
-  private int nextFragmentIdToAssign = 0;
   private final List<Fragment> fragments = Lists.newArrayList();
 
   private final FragmentPartitionStrategy partitionStrategy;
@@ -244,7 +238,7 @@ public class CodeSplitter {
     this.initialLoadSequence = jprogram.getInitialAsyncSequence();
     assert initialLoadSequence != null;
 
-    logFragmentMap = Boolean.getBoolean(PROP_LOG_FRAGMENT_MAP);
+    logFragmentMap = Boolean.getBoolean(CodeSplitters.PROP_LOG_FRAGMENT_MAP);
     fragmentExtractor = new FragmentExtractor(jprogram, jsprogram, map);
 
     initiallyLiveCfa = computeInitiallyLive(jprogram, dependencyRecorder);
@@ -377,6 +371,11 @@ public class CodeSplitter {
    */
   private void execImpl() {
 
+    Fragment lastInitialFragment = null;
+
+    // Fragments are numbered from 0.
+    int nextFragmentIdToAssign = 0;
+
     // Step #1: Decide how to map splitpoints to fragments.
     {
       /*
@@ -391,6 +390,7 @@ public class CodeSplitter {
       List<JsStatement> statementsForFragment = statementsForFragment(fragment.getFragmentId(),
           alreadyLoaded, liveNow);
       fragment.setStatements(statementsForFragment);
+      lastInitialFragment = fragment;
       fragments.add(fragment);
     }
 
@@ -414,7 +414,7 @@ public class CodeSplitter {
 
       LivenessPredicate liveNow = new CfaLivenessPredicate(liveAfterSp);
 
-      Fragment fragment = new Fragment(Fragment.Type.INITIAL);
+      Fragment fragment = new Fragment(Fragment.Type.INITIAL, lastInitialFragment);
       fragment.setFragmentId(nextFragmentIdToAssign++);
       // TODO(rluble): RunAsyncIds are assumed to be the fragment number in some places.
       // refactor and cleanup that later.
@@ -422,9 +422,10 @@ public class CodeSplitter {
       fragment.addRunAsync(runAsync);
       List<JsStatement> statements = statementsForFragment(fragment.getFragmentId(),
           alreadyLoaded, liveNow);
-      statements.addAll(fragmentExtractor.createOnLoadedCall(runAsync.getRunAsyncId()));
+      statements.addAll(fragmentExtractor.createOnLoadedCall(fragment.getFragmentId()));
       fragment.setStatements(statements);
       fragments.add(fragment);
+      lastInitialFragment = fragment;
 
       initialFragmentNumberSequence.add(fragment.getFragmentId());
       initialSequenceCfa = liveAfterSp;
@@ -443,10 +444,15 @@ public class CodeSplitter {
               }
             }));
 
+    Fragment leftOverFragment =
+        new Fragment(Fragment.Type.NOT_EXCLUSIVE, lastInitialFragment);
+
+
     int firstExclusiveFragmentNumber = nextFragmentIdToAssign;
     // Assign fragment numbers to exclusive fragments.
     for (Fragment fragment : exclusiveFragments) {
       fragment.setFragmentId(nextFragmentIdToAssign++);
+      fragment.addImmediateAncestors(leftOverFragment);
     }
 
     // From here numbers are unchanged,
@@ -478,14 +484,12 @@ public class CodeSplitter {
     {
       LivenessPredicate alreadyLoaded = new CfaLivenessPredicate(initialSequenceCfa);
       LivenessPredicate liveNow = exclusivityMap.getLivenessPredicate(ExclusivityMap.NOT_EXCLUSIVE);
-      Fragment fragment =
-          new Fragment(Fragment.Type.NOT_EXCLUSIVE);
-      fragment.setFragmentId(nextFragmentIdToAssign++);
-      List<JsStatement> statements = statementsForFragment(fragment.getFragmentId(),
+      leftOverFragment.setFragmentId(nextFragmentIdToAssign++);
+      List<JsStatement> statements = statementsForFragment(leftOverFragment.getFragmentId(),
           alreadyLoaded, liveNow);
-      statements.addAll(fragmentExtractor.createOnLoadedCall(fragment.getFragmentId()));
-      fragment.setStatements(statements);
-      fragments.add(fragment);
+      statements.addAll(fragmentExtractor.createOnLoadedCall(leftOverFragment.getFragmentId()));
+      leftOverFragment.setStatements(statements);
+      fragments.add(leftOverFragment);
     }
 
     // now install the new statements in the program fragments
@@ -496,10 +500,9 @@ public class CodeSplitter {
       fragBlock.getStatements().addAll(fragments.get(i).getStatements());
     }
 
-    // Lastly pass the fragmenting information to JProgram.
-    // TODO(rluble): Make the information uniform.
+    // Pass the fragment partitioning information to JProgram.
     jprogram.setFragmentPartitioningResult(
-        new FragmentPartitioningResult(fragments, jprogram));
+        new FragmentPartitioningResult(fragments, jprogram.getRunAsyncs().size()));
 
     // Lastly patch up the JavaScript AST
     replaceFragmentId();
@@ -520,15 +523,19 @@ public class CodeSplitter {
    * </p>
    */
   private void replaceFragmentId() {
+    // TODO(rluble): this approach where the ast is patched  is not very clean. Maybe the fragment
+    // information should be data instead of code in the ast.
     final FragmentPartitioningResult result = jprogram.getFragmentPartitioningResult();
     (new JsModVisitor() {
       @Override
       public void endVisit(JsNumericEntry x, JsContext ctx) {
         if (x.getKey().equals("RunAsyncFragmentIndex")) {
-          x.setValue(result.getFragmentForRunAsync(x.getValue()));
+          int fragmentId = result.getFragmentForRunAsync(x.getValue());
+          x.setValue(fragmentId);
         }
+        // this is actually the fragmentId for the leftovers fragment.
         if (x.getKey().equals("RunAsyncFragmentCount")) {
-          x.setValue(jsprogram.getFragmentCount() - 1);
+         x.setValue(jsprogram.getFragmentCount() - 1);
         }
       }
     }).accept(jsprogram);

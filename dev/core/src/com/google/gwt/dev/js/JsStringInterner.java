@@ -33,6 +33,7 @@ import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -260,13 +261,14 @@ public class JsStringInterner {
 
       } else if (currentAssignment != currentFragment) {
         // See if we need to move the assignment to a common ancestor
-        assert program != null : "JsStringInterner cannot be used with "
-            + "fragmented JsProgram without an accompanying JProgram";
+        Preconditions.checkState(program != null, "JsStringInterner cannot be used with "
+            + "fragmented JsProgram without an accompanying JProgram");
 
-        int newAssignment = program.lastFragmentLoadingBefore(currentFragment,
-            currentAssignment);
+        // TODO(rluble): assumes only one leftovers. Needs to change to accommodate multiple
+        // leftovers.
+        int newAssignment = program.getCommonAncestorFragmentId(currentAssignment, currentFragment);
         if (newAssignment != currentAssignment) {
-          // Assign the JsName to the common ancestor
+          // Assign the JsName to the common ancestor.
           fragmentAssignment.put(x, newAssignment);
         }
       }
@@ -287,11 +289,12 @@ public class JsStringInterner {
 
   public static final String PREFIX = "$intern_";
 
-  private static final Comparator<JsStringLiteral> LITERAL_COMPARATOR = new Comparator<JsStringLiteral>() {
-    public int compare(JsStringLiteral o1, JsStringLiteral o2) {
-      return o1.getValue().compareTo(o2.getValue());
-    }
-  };
+  private static final Comparator<JsStringLiteral> LITERAL_COMPARATOR =
+      new Comparator<JsStringLiteral>() {
+        public int compare(JsStringLiteral o1, JsStringLiteral o2) {
+          return o1.getValue().compareTo(o2.getValue());
+        }
+      };
 
   /**
    * Apply interning of String literals to a JsProgram. The symbol names for the
