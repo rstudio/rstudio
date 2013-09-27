@@ -640,8 +640,21 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 {
    int depth = 0;
    SEXP environmentTop = NULL;
-   RCNTXT* pRContext =
-         getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
+   RCNTXT* pRContext = NULL;
+
+   // If we were debugging but there's no longer a browser on the context stack,
+   // switch back to the top level; otherwise, examine the stack find the
+   // first function there running user code.
+   if (*pContextDepth > 0 && !inBrowseContext())
+   {
+      pRContext = r::getGlobalContext();
+      environmentTop = R_GlobalEnv;
+   }
+   else
+   {
+       pRContext =
+             getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
+   }
 
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
        depth != *pContextDepth ||
