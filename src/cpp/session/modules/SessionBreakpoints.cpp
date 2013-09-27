@@ -56,44 +56,52 @@ int s_maxShinyFunctionId = 0;
 class ShinyFunction
 {
 public:
-   SEXP expr;
-   SEXP function;
-   int id;
    ShinyFunction(SEXP exprIn, SEXP functionIn):
-      expr(exprIn),
-      function(functionIn),
-      id(s_maxShinyFunctionId++)
-   {}
+      expr_(exprIn),
+      id_(s_maxShinyFunctionId++),
+      firstLine_(0),
+      lastLine_(0)
+   {
+      // If the srcref attribute is present on the expression, use it to
+      // compute the first and last lines of the function in the original
+      // source file.
+      SEXP srcref = r::sexp::getAttrib(expr_, "srcref");
+      if (srcref != NULL && TYPEOF(srcref) != NILSXP)
+      {
+         SEXP firstRef = VECTOR_ELT(srcref, 0);
+         firstLine_ = INTEGER(firstRef)[0];
+         SEXP lastRef = VECTOR_ELT(srcref, r::sexp::length(srcref) - 1);
+         lastLine_ = INTEGER(lastRef)[2];
+      }
+      // If the srcfile attribute is present, extract it
+      SEXP srcfile = r::sexp::getAttrib(expr_, "srcfile");
+      if (srcfile != NULL && TYPEOF(srcfile) != NILSXP)
+      {
+         SEXP file = r::sexp::findVar("filename", srcfile);
+         r::sexp::extract(file, &srcfilename_);
+      }
+   }
+
    bool contains(std::string filename, int line)
    {
-      // Extract from the expression its location in the source file and see if
-      // the line number given is in range.
-      SEXP srcref = r::sexp::getAttrib(function, "srcref");
-      if (srcref == NULL || TYPEOF(srcref) == NILSXP)
+      if (!(line >= firstLine_ && line <= lastLine_))
          return false;
 
-      if (!(line >= INTEGER(srcref)[0] &&
-            line <= INTEGER(srcref)[2]))
-         return false;
-
-      // Extract from the expression the source file in which it resides and
-      // see if it matches the source file given.
-      SEXP srcfile = r::sexp::getAttrib(srcref, "srcfile");
-      if (srcfile == NULL || TYPEOF(srcfile) == NILSXP)
-         return false;
-
-      SEXP file = r::sexp::findVar("filename", srcfile);
-      if (file == NULL || TYPEOF(file) == NILSXP)
-         return false;
-
-      std::string srcfilename;
-      Error error = r::sexp::extract(file, &srcfilename);
-      if (error)
-         return false;
-
-      return module_context::resolveAliasedPath(srcfilename) ==
+      return module_context::resolveAliasedPath(srcfilename_) ==
              module_context::resolveAliasedPath(filename);
    }
+
+   int getId()
+   {
+      return id_;
+   }
+
+private:
+   SEXP expr_;
+   int id_;
+   int firstLine_;
+   int lastLine_;
+   std::string srcfilename_;
 };
 
 // A list of the Shiny functions we know about (see notes in
@@ -165,7 +173,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
    if (psf)
    {
       isShinyFunction = true;
-      shinyFunctionId = psf->id;
+      shinyFunctionId = psf->getId();
    }
    else
    {
