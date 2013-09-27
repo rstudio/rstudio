@@ -61,4 +61,11 @@ public interface DebuggingServerOperations
    
    public void setBreakpointsDirty(
          ServerRequestCallback<Void> requestCallback);
+   
+   public void setShinyBreakpoint(
+         String fileName,
+         int lineNumber,
+         int id,
+         boolean set, 
+         ServerRequestCallback<Void> requestCallback);
 }

@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -128,13 +129,38 @@ public class BreakpointManager
          final String path,
          final int lineNumber)
    {
-      return addBreakpoint(Breakpoint.create(
+      final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
             currentBreakpointId_++, 
             path, 
             "toplevel", 
             lineNumber, 
             Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
+      
+      // A top-level breakpoint might need to be a Shiny breakpoint. Ask the
+      // server if it should.
+      server_.getFunctionState("toplevel", path, lineNumber,
+            new ServerRequestCallback<FunctionState>()
+      {
+         @Override
+         public void onResponseReceived(FunctionState state)
+         {
+            if (state.isShinyFunction())
+            {
+               breakpoint.markAsShinyBreakpoint(state.getShinyFunctionId());
+               // Shiny breakpoints are managed on the server--if this is a
+               // Shiny breakpoint, set it immediately
+               setShinyBreakpoint(breakpoint, true);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
+
+      return breakpoint;
    }
    
    public Breakpoint setBreakpoint(
@@ -176,11 +202,6 @@ public class BreakpointManager
                {
                   breakpoint.markAsPackageBreakpoint(state.getPackageName());
                }
-               else if (state.isShinyFunction())
-               {
-                  breakpoint.markAsShinyBreakpoint(state.getShinyFunctionId());
-               }
-               
                // If the breakpoint is not to be set immediately, 
                // stop processing now
                if (!immediately)
@@ -225,6 +246,10 @@ public class BreakpointManager
          if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
          {
             setFunctionBreakpoints(new FileFunction(breakpoint));
+         }
+         if (breakpoint.isShinyBreakpoint())
+         {
+            setShinyBreakpoint(breakpoint, false);
          }
       }
       onBreakpointAddOrRemove();
@@ -758,6 +783,15 @@ public class BreakpointManager
    {
       breakpointStateDirty_ = true;
       commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
+   }
+   
+   private void setShinyBreakpoint(Breakpoint breakpoint, boolean set)
+   {
+      server_.setShinyBreakpoint(breakpoint.getPath(),
+                                 breakpoint.getLineNumber(),
+                                 breakpoint.getBreakpointId(),
+                                 set,
+                                 new VoidServerRequestCallback());
    }
      
    // Private classes ---------------------------------------------------------

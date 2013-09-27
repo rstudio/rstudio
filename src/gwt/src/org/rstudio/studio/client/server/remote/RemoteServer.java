@@ -3031,6 +3031,22 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void setShinyBreakpoint(String fileName, int lineNumber, int id,
+         boolean set, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(fileName));
+      params.set(1, new JSONNumber(lineNumber));
+      params.set(2, new JSONNumber(id));
+      params.set(3, JSONBoolean.getInstance(set));
+
+      sendRequest(RPC_SCOPE, 
+            SET_SHINY_BREAKPOINT,
+            params, 
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3294,6 +3310,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
    private static final String SET_BREAKPOINTS_DIRTY = "set_breakpoints_dirty";
+   private static final String SET_SHINY_BREAKPOINT = "set_shiny_breakpoint";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
