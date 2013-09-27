@@ -34,8 +34,8 @@ public class NewPackagePage extends NewDirectoryPage
       super("R Package", 
             "Create a new R package",
             "Create R Package",
-            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
-            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
+            NewProjectResources.INSTANCE.packageIcon(),
+            NewProjectResources.INSTANCE.packageIconLarge());
    }
     
    @Override 

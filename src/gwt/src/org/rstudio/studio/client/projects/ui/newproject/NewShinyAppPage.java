@@ -27,8 +27,8 @@ public class NewShinyAppPage extends NewDirectoryPage
       super("Shiny Web Application", 
             "Create a new Shiny web application",
             "Create Shiny Web Application",
-            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
-            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
+            NewProjectResources.INSTANCE.shinyAppIcon(),
+            NewProjectResources.INSTANCE.shinyAppIconLarge());
    }
     
    @Override 
