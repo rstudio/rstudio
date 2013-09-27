@@ -98,6 +98,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp

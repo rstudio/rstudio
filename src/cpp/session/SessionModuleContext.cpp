@@ -216,10 +216,16 @@ SEXP rs_sourceDiagnostics()
 SEXP rs_packageLoaded(SEXP pkgnameSEXP)
 {
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
+
+   // fire server event
+   events().onPackageLoaded(pkgname);
+
+   // fire client event
    ClientEvent packageLoadedEvent(
             client_events::kPackageLoaded,
             json::Value(pkgname));
    enqueClientEvent(packageLoadedEvent);
+
    return R_NilValue;
 }
 

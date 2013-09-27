@@ -124,6 +124,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/shiny/SessionShiny.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -1528,6 +1529,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::rpubs::initialize)
+      (modules::shiny::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
