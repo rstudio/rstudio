@@ -103,6 +103,8 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.Interner;
+
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
@@ -2926,7 +2928,7 @@ public class GwtAstBuilder {
   private static final char[] NEXT = "next".toCharArray();
   private static final TypeBinding[] NO_TYPES = new TypeBinding[0];
   private static final char[] ORDINAL = "ordinal".toCharArray();
-  private static final StringInterner stringInterner = StringInterner.get();
+  private static final Interner<String> stringInterner = StringInterner.get();
   private static final char[] VALUE = "Value".toCharArray();
   private static final char[] VALUE_OF = "valueOf".toCharArray();
   private static final char[] VALUES = "values".toCharArray();

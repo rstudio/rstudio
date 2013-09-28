@@ -31,6 +31,7 @@ import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.EventType;
+import com.google.gwt.thirdparty.guava.common.collect.Interner;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -100,7 +101,7 @@ public class CompilationStateBuilder {
           MethodArgNamesLookup methodArgs = MethodParamCollector.collect(cud,
               builder.getSourceMapPath());
 
-          StringInterner interner = StringInterner.get();
+          Interner<String> interner = StringInterner.get();
           String packageName = interner.intern(Shared.getPackageName(builder.getTypeName()));
           List<String> unresolvedQualified = new ArrayList<String>();
           List<String> unresolvedSimple = new ArrayList<String>();

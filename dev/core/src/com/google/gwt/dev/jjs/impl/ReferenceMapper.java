@@ -33,6 +33,8 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.collect.Interner;
+
 
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
@@ -60,7 +62,7 @@ public class ReferenceMapper {
   private final Map<String, JField> sourceFields = new HashMap<String, JField>();
   private final Map<String, JMethod> sourceMethods = new HashMap<String, JMethod>();
   private final Map<String, JReferenceType> sourceTypes = new HashMap<String, JReferenceType>();
-  private final StringInterner stringInterner = StringInterner.get();
+  private final Interner<String> stringInterner = StringInterner.get();
   private final Map<String, JType> types = new HashMap<String, JType>();
 
   {
