@@ -29,7 +29,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNopNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgUtil;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgWriteNode;
-import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Kill assignment. Leave rhs expression evaluation if it has side effects.

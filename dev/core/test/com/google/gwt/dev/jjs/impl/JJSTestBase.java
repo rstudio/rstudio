@@ -31,10 +31,10 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.util.Strings;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import junit.framework.TestCase;
 
@@ -180,7 +180,7 @@ public abstract class JJSTestBase extends TestCase {
    * {@link #compileSnippet(String, String)}.
    */
   protected void addSnippetClassDecl(String...decl) {
-    snippetClassDecls.add(Strings.join(decl, "\n"));
+    snippetClassDecls.add(Joiner.on("\n").join(decl));
   }
 
   /**

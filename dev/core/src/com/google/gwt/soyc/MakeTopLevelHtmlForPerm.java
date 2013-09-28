@@ -20,11 +20,11 @@ import com.google.gwt.core.ext.linker.CompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
-import com.google.gwt.dev.util.Strings;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.soyc.io.OutputDirectory;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -269,8 +269,7 @@ public class MakeTopLevelHtmlForPerm {
           escapedFragmentDescriptors[i] =
               escapeJSString(fragmentDescriptors.get(i));
         }
-        outFile.println("        '" + Strings.join(escapedFragmentDescriptors, ",")
-            + "',");
+        outFile.println("        '" + Joiner.on(",").join(escapedFragmentDescriptors) + "',");
       }
       outFile.println("  ];");
       
@@ -1304,7 +1303,7 @@ public class MakeTopLevelHtmlForPerm {
               escapeXml(fragmentDescriptors.get(i));
         }
 
-        String fragmentDescription = Strings.join(escapedFragmentDescriptors, "<BR>");
+        String fragmentDescription = Joiner.on("<BR>").join(escapedFragmentDescriptors);
 
         int size = breakdown.sizeAllCode;
         float perc = (float) size / (float) maxSize;

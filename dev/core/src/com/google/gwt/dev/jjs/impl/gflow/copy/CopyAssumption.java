@@ -18,8 +18,8 @@ package com.google.gwt.dev.jjs.impl.gflow.copy;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.impl.gflow.Assumption;
-import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;

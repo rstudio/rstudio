@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.util;
 
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,7 +110,7 @@ public class PerfCounter {
     }
     
     Preconditions.checkNotNull(startTime);
-    
+
     synchronized (operationStats) {
       OperationStats stats = getStats(operation);
       

@@ -9,7 +9,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
-import com.google.gwt.dev.util.Strings;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.Map;
 
@@ -24,8 +24,7 @@ public abstract class CfgAnalysisTestBase<A extends Assumption<A>>
 
   protected AnalysisResult analyzeWithParams(String returnType, String params,
       String... codeSnippet) throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, params, Strings.join(
-        codeSnippet, "\n"));
+    JProgram program = compileSnippet(returnType, params, Joiner.on("\n").join(codeSnippet));
     JMethodBody body = (JMethodBody) findMainMethod(program).getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
 
@@ -49,7 +48,7 @@ public abstract class CfgAnalysisTestBase<A extends Assumption<A>>
 
     public void into(String... expected) {
       String actual = new AssumptionsPrinter<A>(graph, assumptions).print();
-      assertEquals(Strings.join(expected, "\n"), actual);
+      assertEquals(Joiner.on("\n").join(expected), actual);
     }
   }
 }

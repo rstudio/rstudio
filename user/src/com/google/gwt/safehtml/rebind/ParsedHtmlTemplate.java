@@ -15,7 +15,7 @@
  */
 package com.google.gwt.safehtml.rebind;
 
-import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.Collections;
 import java.util.LinkedList;

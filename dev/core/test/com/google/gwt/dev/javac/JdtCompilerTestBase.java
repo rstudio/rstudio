@@ -21,8 +21,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.Strings;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
@@ -93,7 +93,7 @@ public abstract class JdtCompilerTestBase extends TestCase {
         for (CategorizedProblem pb : unit.getProblems()) {
           messages[i] = pb.getMessage();
         }
-        fail(Strings.join(messages, "\n"));
+        fail(Joiner.on("\n").join(messages));
       }
       assertTrue(unit.getCompiledClasses().size() > 0);
     }

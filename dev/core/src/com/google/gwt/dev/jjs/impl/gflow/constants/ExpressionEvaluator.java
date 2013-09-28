@@ -27,7 +27,7 @@ import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Evaluate expression based on current assumptions.

@@ -17,9 +17,9 @@ package com.google.gwt.safehtml.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.HtmlContext;
 import com.google.gwt.safehtml.rebind.ParsedHtmlTemplate.ParameterChunk;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.streamhtmlparser.HtmlParser;
 import com.google.gwt.thirdparty.streamhtmlparser.HtmlParserFactory;
 import com.google.gwt.thirdparty.streamhtmlparser.ParseException;

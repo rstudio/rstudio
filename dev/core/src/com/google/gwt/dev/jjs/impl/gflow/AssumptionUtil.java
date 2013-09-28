@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow;
 
-import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.List;
 

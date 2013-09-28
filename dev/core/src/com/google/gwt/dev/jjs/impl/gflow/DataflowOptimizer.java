@@ -33,10 +33,10 @@ import com.google.gwt.dev.jjs.impl.gflow.constants.ConstantsAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.liveness.LivenessAnalysis;
 import com.google.gwt.dev.jjs.impl.gflow.unreachable.UnreachableAnalysis;
-import com.google.gwt.dev.util.Preconditions;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  */

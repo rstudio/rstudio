@@ -34,8 +34,8 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.util.Preconditions;
-import com.google.gwt.dev.util.Strings;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.regex.Pattern;
 
@@ -64,9 +64,8 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     public void into(String... expected) throws UnableToCompleteException {
       // We can't compile expected code into non-main method.
       Preconditions.checkState(methodName.equals(MAIN_METHOD_NAME));
-      JProgram program = compileSnippet(returnType,
-          Strings.join(expected, "\n"));
-      String expectedSource = 
+      JProgram program = compileSnippet(returnType, Joiner.on("\n").join(expected));
+      String expectedSource =
         OptimizerTestBase.findMethod(program, methodName).getBody().toSource();
       String actualSource = 
         OptimizerTestBase.findMethod(optimizedProgram, methodName).
@@ -75,7 +74,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     }
 
     public void intoString(String... expected) {
-      String expectedSource = Strings.join(expected, "\n");
+      String expectedSource = Joiner.on("\n").join(expected);
       String actualSource = 
         OptimizerTestBase.findMethod(optimizedProgram, methodName).
         getBody().toSource();
@@ -206,7 +205,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
       expressionSnippets[expressionSnippets.length - 1] =
           "return " + expressionSnippets[expressionSnippets.length - 1];
     }
-    String snippet = Strings.join(expressionSnippets, ";\n") + ";\n";
+    String snippet = Joiner.on(";\n").join(expressionSnippets) + ";\n";
     final JProgram program = compileSnippet(returnType, snippet);
     JMethod method = findMethod(program, MAIN_METHOD_NAME);
     JMethodBody body = (JMethodBody) method.getBody();
@@ -260,7 +259,7 @@ public abstract class OptimizerTestBase extends JJSTestBase {
   protected final Result optimizeMethod(final String methodName,
       final String mainMethodReturnType, final String... mainMethodSnippet)
       throws UnableToCompleteException {
-    String snippet = Strings.join(mainMethodSnippet, "\n");
+    String snippet = Joiner.on("\n").join(mainMethodSnippet);
     JProgram program = compileSnippet(mainMethodReturnType, snippet);
     JMethod method = findMethod(program, methodName);
     boolean madeChanges = optimizeMethod(program, method);

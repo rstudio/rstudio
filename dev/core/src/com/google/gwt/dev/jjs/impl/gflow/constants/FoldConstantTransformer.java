@@ -26,7 +26,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgReadNode;
 import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
-import com.google.gwt.dev.util.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 /**
  * Replace variable read by its constant value.

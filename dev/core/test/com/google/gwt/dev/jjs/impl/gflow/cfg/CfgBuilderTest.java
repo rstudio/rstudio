@@ -4,11 +4,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgBuilder;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgEdge;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.Cfg;
-import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgNode;
-import com.google.gwt.dev.util.Strings;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 import java.util.List;
 
@@ -1680,8 +1676,7 @@ public class CfgBuilderTest extends JJSTestBase {
 
   private CfgBuilderResult assertCfg(String returnType, String ...codeSnippet)
       throws UnableToCompleteException {
-    JProgram program = compileSnippet(returnType, 
-        Strings.join(codeSnippet, "\n"));
+    JProgram program = compileSnippet(returnType, Joiner.on("\n").join(codeSnippet));
     JMethodBody body = (JMethodBody) findMainMethod(program).getBody();
     Cfg cfgGraph = CfgBuilder.build(program, body.getBlock());
     return new CfgBuilderResult(cfgGraph);
@@ -1723,7 +1718,7 @@ public class CfgBuilderTest extends JJSTestBase {
     }
 
     public void is(String... expected) {
-      assertEquals(Strings.join(expected, "\n"), cfg.print());
+      assertEquals(Joiner.on("\n").join(expected), cfg.print());
     }
   }
 }
