@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -240,7 +241,7 @@ public abstract class JJSTestBase extends TestCase {
         CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
             getAdditionalTypeProviderDelegate(), sourceLevel);
     JProgram program =
-        JavaAstConstructor.construct(logger, state, "test.EntryPoint",
+        JavaAstConstructor.construct(logger, state, null, "test.EntryPoint",
             "com.google.gwt.lang.Exceptions");
     return program;
   }

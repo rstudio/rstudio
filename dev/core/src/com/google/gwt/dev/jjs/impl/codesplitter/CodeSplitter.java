@@ -88,7 +88,7 @@ import javax.annotation.Nullable;
  * Whenever this second stage is changed  <code>AsyncFragmentLoader</code> must be updated
  * in tandem.
  * </p>
- * 
+ *
  * <p>
  * The fragment for a runAsync point contains different things depending on whether
  * it is in the initial load sequence or not. If it's in the initial load
@@ -250,7 +250,7 @@ public class CodeSplitter {
     partitionStrategy = expectedFragmentCount > 0 ?
         new MergeBySimilarityFragmentPartitionStrategy(
             CodeSplitters.getNumberOfExclusiveFragmentFromExpectedFragmentCount(
-                expectedFragmentCount), minFragmentSize) :
+                initialLoadSequence.size(), expectedFragmentCount), minFragmentSize) :
         new OneToOneFragmentPartitionStrategy();
   }
 
@@ -416,9 +416,6 @@ public class CodeSplitter {
 
       Fragment fragment = new Fragment(Fragment.Type.INITIAL, lastInitialFragment);
       fragment.setFragmentId(nextFragmentIdToAssign++);
-      // TODO(rluble): RunAsyncIds are assumed to be the fragment number in some places.
-      // refactor and cleanup that later.
-      assert runAsync.getRunAsyncId() == fragment.getFragmentId();
       fragment.addRunAsync(runAsync);
       List<JsStatement> statements = statementsForFragment(fragment.getFragmentId(),
           alreadyLoaded, liveNow);

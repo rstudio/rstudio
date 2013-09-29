@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -213,11 +214,11 @@ public class JavaAstConstructor {
     }
   };
 
-  public static JProgram construct(TreeLogger logger, CompilationState state, String... entryPoints)
-      throws UnableToCompleteException {
+  public static JProgram construct(TreeLogger logger, CompilationState state, Properties properties,
+      String... entryPoints) throws UnableToCompleteException {
     JJSOptionsImpl options = new JJSOptionsImpl();
     options.setEnableAssertions(true);
-    JProgram jprogram = AstConstructor.construct(logger, state, options);
+    JProgram jprogram = AstConstructor.construct(logger, state, options, properties);
 
     // Add entry methods for entry points.
     for (String entryPoint : entryPoints) {

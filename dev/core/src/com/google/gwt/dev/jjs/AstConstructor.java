@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -25,6 +26,7 @@ import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
+import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
 import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -40,7 +42,7 @@ public class AstConstructor {
    * {@link JavaToJavaScriptCompiler}.
    */
   public static JProgram construct(TreeLogger logger, final CompilationState state,
-      JJSOptions options) throws UnableToCompleteException {
+      JJSOptions options, Properties properties) throws UnableToCompleteException {
 
     InternalCompilerException.preload();
 
@@ -89,6 +91,9 @@ public class AstConstructor {
 
     if (options.isRunAsyncEnabled()) {
       ReplaceRunAsyncs.exec(logger, jprogram);
+      if (properties != null) {
+        CodeSplitters.pickInitialLoadSequence(logger, jprogram, properties);
+      }
     }
 
     ImplementClassLiteralsAsFields.exec(jprogram);
