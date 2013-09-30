@@ -393,6 +393,11 @@
    while (!identical(env, emptyenv()))
    {
       envName <- environmentName(env)
+
+      # show "unknown" if the environment is unnamed
+      if (nchar(envName) == 0)
+         envName <- "unknown"
+
       # hide the RStudio internal tools environment and the autoloads
       # environment
       if (envName != "tools:rstudio" &&
