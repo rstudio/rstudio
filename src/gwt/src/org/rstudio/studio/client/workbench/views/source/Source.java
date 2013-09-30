@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -169,7 +170,7 @@ public class Source implements InsertSourceHandler,
                  FileDialogs fileDialogs,
                  RemoteFileSystemContext fileContext,
                  EventBus events,
-                 Session session,
+                 final Session session,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
@@ -395,6 +396,15 @@ public class Source implements InsertSourceHandler,
       manageCommands();
       // Same with this event
       fireDocTabsChanged();
+      
+      // open project docs (but delay it so we are fully initialized)
+      new Timer() {
+         @Override
+         public void run()
+         {
+            openProjectDocs(session);  
+         } 
+      }.schedule(10);
    }
 
    /**
@@ -429,6 +439,38 @@ public class Source implements InsertSourceHandler,
       for (int i = 0; i < docs.length(); i++)
       {
          addTab(docs.get(i));
+      }
+   }
+   
+   private void openProjectDocs(final Session session)
+   {
+      JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
+      if (openDocs.length() > 0)
+      {
+         // record the first doc for reactivation
+         FileSystemItem firstDoc = FileSystemItem.createFile(openDocs.get(0));
+         
+         for (int i=0; i<openDocs.length(); i++)
+         {
+            // get the file
+            FileSystemItem fsi = FileSystemItem.createFile(openDocs.get(i));
+             
+            // if this is the last doc then activate the first doc when done
+            final FileSystemItem activateDoc = 
+                           (i == openDocs.length() - 1) ? firstDoc : null;
+            
+            // open the file
+            openFile(fsi, 
+                     fileTypeRegistry_.getTextTypeForFile(fsi), 
+                     new CommandWithArg<EditingTarget>() {
+                        @Override
+                        public void execute(EditingTarget arg)
+                        {
+                           if (activateDoc != null)
+                              openFile(activateDoc);
+                        }
+                     });
+         }
       }
    }
    
@@ -1363,6 +1405,24 @@ public class Source implements InsertSourceHandler,
    }
    
 
+   private void openFile(FileSystemItem file)
+   {
+      openFile(file, fileTypeRegistry_.getTextTypeForFile(file));
+   }
+   
+   private void openFile(FileSystemItem file,  TextFileType fileType)
+   {
+      openFile(file, 
+               fileType, 
+               new CommandWithArg<EditingTarget>() {
+                  @Override
+                  public void execute(EditingTarget arg)
+                  {
+                     
+                  }
+               });
+   }
+   
    private void openFile(final FileSystemItem file,
                          final TextFileType fileType,
                          final CommandWithArg<EditingTarget> executeOnSuccess)

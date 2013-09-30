@@ -219,6 +219,12 @@ public class SessionInfo extends JavaScriptObject
          this.project_ui_prefs = {};
       return this.project_ui_prefs;
    }-*/;
+   
+   public final native JsArrayString getProjectOpenDocs() /*-{
+      if (!this.project_open_docs)
+         this.project_open_docs = {};
+      return this.project_open_docs;
+   }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
       return this.console_processes;

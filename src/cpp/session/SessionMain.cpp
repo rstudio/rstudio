@@ -124,6 +124,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/shiny/SessionShiny.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -486,11 +487,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
+      sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
    }
    else
    {
       sessionInfo["active_project_file"] = json::Value();
       sessionInfo["project_ui_prefs"] = json::Value();
+      sessionInfo["project_open_docs"] = json::Value();
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
@@ -1526,6 +1529,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::plots::initialize)
       (modules::packages::initialize)
       (modules::rpubs::initialize)
+      (modules::shiny::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)

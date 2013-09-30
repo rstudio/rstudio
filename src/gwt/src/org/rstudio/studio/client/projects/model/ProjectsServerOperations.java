@@ -26,6 +26,7 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void createProject(String projectFile,
                       NewPackageOptions newPackageOptions,
+                      NewShinyAppOptions newShinyAppOptions,
                       ServerRequestCallback<Void> callback);
     
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);
