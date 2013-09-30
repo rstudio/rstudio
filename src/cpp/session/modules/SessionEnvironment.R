@@ -290,8 +290,17 @@
                    paste(len, " elements, ", sep="")
                 else 
                    ""
-         val <- paste("Large ", class, " (", len, 
-                      capture.output(print(size, units="auto")), ")", sep="")
+         # data frames are likely to be large, but a summary is still helpful
+         if (is.data.frame(obj))
+         {
+            val <- "NO_VALUE"
+            desc <- .rs.valueDescription(obj)
+         }
+         else
+         {
+            val <- paste("Large ", class, " (", len, 
+                         capture.output(print(size, units="auto")), ")", sep="")
+         }
          contents_deferred <- TRUE
       }
       else
