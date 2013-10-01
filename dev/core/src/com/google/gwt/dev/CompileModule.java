@@ -101,7 +101,7 @@ public class CompileModule {
     }
   }
 
-  static class CompileModuleOptionsImpl extends CompileTaskOptionsImpl implements
+  static class CompileModuleOptionsImpl extends PrecompileTaskOptionsImpl implements
       CompileModuleOptions {
 
     private File outDir;
@@ -217,6 +217,8 @@ public class CompileModule {
       return false;
     }
 
+    CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
+
     // TODO(zundel): There is an optimal order to compile these modules in.
     // Modify ModuleDefLoader to be able to figure that out and sort them for
     // us.
@@ -227,7 +229,7 @@ public class CompileModule {
       // written out.
       Set<String> currentModuleArchivedUnits = new HashSet<String>();
       try {
-        module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, false);
+        module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, compilerContext, false);
       } catch (Throwable e) {
         CompilationProblemReporter.logAndTranslateException(logger, e);
         return false;

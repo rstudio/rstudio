@@ -16,13 +16,18 @@
 
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
 
-class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements PrecompileTaskOptions {
+/**
+ * Concrete class to implement both precompile and compile task options.
+ */
+public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
+    implements PrecompileTaskOptions {
   private boolean disableUpdateCheck;
   private boolean enableGeneratingOnShards = true;
   private File genDir;
@@ -33,8 +38,20 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   public PrecompileTaskOptionsImpl() {
   }
 
+  public PrecompileTaskOptionsImpl(CompileTaskOptions other) {
+    copyFrom(other);
+  }
+
+  public PrecompileTaskOptionsImpl(JJSOptions other) {
+    copyFrom(other);
+  }
+
   public PrecompileTaskOptionsImpl(PrecompileTaskOptions other) {
     copyFrom(other);
+  }
+
+  public void copyFrom(JJSOptions other) {
+    jjsOptions.copyFrom(other);
   }
 
   public void copyFrom(PrecompileTaskOptions other) {
@@ -50,10 +67,15 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   }
 
   @Override
+  public boolean enforceStrictResources() {
+    return jjsOptions.enforceStrictResources();
+  }
+
+  @Override
   public int getFragmentCount() {
     return jjsOptions.getFragmentCount();
   }
-  
+
   @Override
   public int getFragmentsMerge() {
     return jjsOptions.getFragmentsMerge();
@@ -209,6 +231,11 @@ class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl implements Precom
   @Override
   public void setEnabledGeneratingOnShards(boolean enabled) {
     enableGeneratingOnShards = enabled;
+  }
+
+  @Override
+  public void setEnforceStrictResources(boolean strictResources) {
+    jjsOptions.setEnforceStrictResources(strictResources);
   }
 
   @Override

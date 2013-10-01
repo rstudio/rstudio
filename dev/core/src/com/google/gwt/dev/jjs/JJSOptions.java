@@ -36,6 +36,7 @@ import com.google.gwt.dev.util.arg.OptionSoycDetailed;
 import com.google.gwt.dev.util.arg.OptionSoycEnabled;
 import com.google.gwt.dev.util.arg.OptionSoycHtmlDisabled;
 import com.google.gwt.dev.util.arg.OptionStrict;
+import com.google.gwt.dev.util.arg.OptionStrictResources;
 
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
@@ -45,6 +46,6 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionEnableAssertions, OptionInlineLiteralParameters, OptionOptimizeDataflow,
     OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
     OptionOptimizePrecompile, OptionOrdinalizeEnums, OptionRemoveDuplicateFunctions, OptionStrict,
-    OptionSoycHtmlDisabled, OptionEnableClosureCompiler, OptionFragmentsMerge, OptionFragmentCount,
-    OptionSource {
+    OptionStrictResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
+    OptionFragmentsMerge, OptionFragmentCount, OptionSource {
 }

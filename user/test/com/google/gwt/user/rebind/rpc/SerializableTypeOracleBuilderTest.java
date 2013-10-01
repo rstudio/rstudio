@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -67,7 +68,7 @@ import java.util.TreeSet;
  * Used to test the {@link SerializableTypeOracleBuilder}.
  */
 public class SerializableTypeOracleBuilderTest extends TestCase {
-  
+
   /**
    * Just enough of a {@code GeneratorContext} to satisfy
    * {@code SerializableTypeOracleBuilder}.
@@ -134,7 +135,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   private static TypeOracle sTypeOracle;
 
   /**
-   * Mocks the source of the {@link GwtTransient} type in this package. 
+   * Mocks the source of the {@link GwtTransient} type in this package.
    */
   private static void addCustomGwtTransient(Set<Resource> resources) {
     StringBuffer code = new StringBuffer();
@@ -240,7 +241,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
           ModuleDefLoader.createSyntheticModule(logger,
               "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit", new String[] {
                   "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
-                  "com.google.gwt.junit.JUnit"}, true);
+                  "com.google.gwt.junit.JUnit"}, new CompilerContext(), true);
       sTypeOracle = moduleDef.getCompilationState(logger).getTypeOracle();
     }
     return sTypeOracle;
@@ -289,7 +290,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Test with a generic class whose type parameter is exposed only in certain
    * subclasses.
-   * 
+   *
    * NOTE: This test has been disabled because it requires a better pruner in
    * STOB. See SerializableTypeOracleBuilder.pruneUnreachableTypes().
    */
@@ -349,7 +350,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests abstract root types that are field serializable.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -641,7 +642,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests the rules that govern whether a type qualifies for serialization.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -801,7 +802,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests that both the generic and raw forms of type that has a type parameter
    * that erases to object are not serializable.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testClassWithTypeParameterThatErasesToObject() throws NotFoundException,
@@ -827,7 +828,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Test the situation where an abstract class has an unconstrained type
    * parameter but all of its concrete subclasses add helpful constraints to it.
-   * 
+   *
    * @throws NotFoundException
    * @throws UnableToCompleteException
    */
@@ -959,7 +960,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * If the query type extends a raw type, be sure to pick up the parameters of
    * the raw subertype.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -1030,7 +1031,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    * If a subtype of a root type extends from the raw version of that root type,
    * then when visiting the fields of the raw version, take advantage of
    * information from the original root type.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -1693,7 +1694,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests that adding a raw collection as a root type pulls in the world.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -1748,7 +1749,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests that raw type with type parameters that are instantiable are
    * themselves instantiable.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -1792,7 +1793,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests that a type paramter that occurs within its bounds will not result in
    * infinite recursion.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -1969,7 +1970,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests subtypes that introduce new instantiable type parameters.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -2021,7 +2022,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests subtypes that introduce new uninstantiable type parameters as
    * compared to an implemented interface, where the root type is the interface.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -2088,7 +2089,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests subtypes that introduce new uninstantiable type parameters.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -2192,7 +2193,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Miscellaneous direct tests of {@link TypeConstrainer}.
-   * 
+   *
    * @throws NotFoundException
    */
   public void testTypeConstrainer() throws NotFoundException {
@@ -2301,7 +2302,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests root types that have type parameters.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
@@ -2356,7 +2357,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests root types that <em>are</em> type parameters.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */

@@ -37,10 +37,12 @@ public class GetJreEmulation {
    */
   private static final class FilterImplementation implements
       SignatureDumper.Filter {
+    @Override
     public boolean shouldPrint(JAbstractMethod method) {
       return method.isPublic() || method.isProtected();
     }
 
+    @Override
     public boolean shouldPrint(JClassType type) {
       if (type.isMemberType()) {
         if (!shouldPrint(type.getEnclosingType())) {
@@ -51,6 +53,7 @@ public class GetJreEmulation {
           && (type.isPublic() || type.isProtected());
     }
 
+    @Override
     public boolean shouldPrint(JField field) {
       return field.isPublic() || field.isProtected();
     }
@@ -64,8 +67,8 @@ public class GetJreEmulation {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
           System.err, true));
       logger.setMaxDetail(TreeLogger.WARN);
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
-          "com.google.gwt.core.Core");
+      ModuleDef module = ModuleDefLoader.loadFromClassPath(
+          logger, "com.google.gwt.core.Core", new CompilerContext());
       CompilationState compilationState = module.getCompilationState(logger);
       TypeOracle typeOracle = compilationState.getTypeOracle();
       SignatureDumper.dumpSignatures(typeOracle, System.out,

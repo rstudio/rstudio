@@ -88,6 +88,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public final void setEnforceStrictResources(boolean strictResources) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setExtraDir(File extraDir) {
     throw new UnsupportedOperationException();
   }

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Concrete class to implement compiler task options.
+ * Concrete class to implement compile task options.
  */
 class CompileTaskOptionsImpl implements CompileTaskOptions {
 

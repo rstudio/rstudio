@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
@@ -41,7 +42,8 @@ public class PublicTagTest extends TestCase {
   public PublicTagTest() throws UnableToCompleteException {
     // Module has the same name as this class.
     String moduleName = getClass().getCanonicalName();
-    moduleDef = ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName);
+    moduleDef =
+        ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName, new CompilerContext());
   }
 
   public void testPublicTag() {

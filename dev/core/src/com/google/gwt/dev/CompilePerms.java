@@ -341,8 +341,10 @@ public class CompilePerms {
       throws UnableToCompleteException {
     precompilationOptions.setOptimizePrecompile(false);
     precompilationOptions.setGenDir(null);
+    CompilerContext compilerContext =
+        new CompilerContext.Builder().options(precompilationOptions).build();
 
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
     PropertyPermutations allPermutations = new PropertyPermutations(
         module.getProperties(), module.getActiveLinkerNames());
     List<PropertyPermutations> collapsedPermutations = allPermutations.collapseProperties();

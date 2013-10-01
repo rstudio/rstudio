@@ -116,9 +116,7 @@ public class CodeServer {
     for (String moduleName : options.getModuleNames()) {
       AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
 
-      Recompiler recompiler = new Recompiler(appSpace, moduleName, options.getSourcePath(),
-          options.getPreferredHost() + ":" + options.getPort(), options.getRecompileListener(),
-          options.isCompileTest(), options.getSourceLevel(), logger);
+      Recompiler recompiler = new Recompiler(appSpace, moduleName, options, logger);
       modules.addModuleState(new ModuleState(recompiler, logger, options.getNoPrecompile()));
     }
     return modules;

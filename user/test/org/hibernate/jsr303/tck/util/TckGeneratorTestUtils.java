@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,7 @@ package org.hibernate.jsr303.tck.util;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -46,7 +47,7 @@ public class TckGeneratorTestUtils {
 
   static StandardGeneratorContext createGeneratorContext(String moduleName,
       TreeLogger logger) throws UnableToCompleteException {
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, new CompilerContext());
     File genDir = new File(System.getProperty("java.io.tmpdir"));
 
     ArtifactSet allGenreatedArtifacts = new ArtifactSet();
@@ -70,7 +71,7 @@ public class TckGeneratorTestUtils {
   /**
    * Creates the fully qualified GWT module name using the package of
    * {@code clazz} and the {@code simpleName}
-   * 
+   *
    * @param clazz the class whose package the module is in.
    * @param simpleName the module name.
    * @return the fully qualified module name.

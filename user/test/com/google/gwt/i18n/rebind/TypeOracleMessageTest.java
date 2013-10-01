@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,7 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
@@ -38,7 +39,7 @@ public class TypeOracleMessageTest extends MessageInterfaceTestBase {
     TreeLogger logger = new FailErrorLogger();
     try {
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
-          Child.class.getPackage().getName() + ".Testing");
+          Child.class.getPackage().getName() + ".Testing", new CompilerContext());
       CompilationState compilationState = module.getCompilationState(logger);
       TypeOracle typeOracle = compilationState.getTypeOracle();
       classType = typeOracle.findType(TEST_CLASS.getCanonicalName());

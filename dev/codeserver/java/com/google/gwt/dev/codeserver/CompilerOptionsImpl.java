@@ -20,9 +20,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,13 +31,21 @@ import java.util.List;
  */
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
-  private final String moduleName;
+  private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
+  private final boolean strictResources;
 
-  CompilerOptionsImpl(CompileDir compileDir, String moduleName, SourceLevel sourceLevel) {
+  CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
+      boolean strictResources) {
     this.compileDir = compileDir;
-    this.moduleName = moduleName;
+    this.moduleNames = Lists.newArrayList(moduleNames);
     this.sourceLevel = sourceLevel;
+    this.strictResources = strictResources;
+  }
+
+  @Override
+  public boolean enforceStrictResources() {
+    return strictResources;
   }
 
   @Override
@@ -85,7 +93,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public List<String> getModuleNames() {
-    return Arrays.asList(moduleName);
+    return moduleNames;
   }
 
   @Override

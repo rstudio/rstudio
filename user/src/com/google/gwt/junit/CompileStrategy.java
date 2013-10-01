@@ -162,8 +162,9 @@ public abstract class CompileStrategy {
      * Synthesize a synthetic module that derives from the user-specified module
      * but also includes JUnit support.
      */
-    ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(treeLogger,
-        syntheticModuleName, new String[] {moduleName, "com.google.gwt.junit.JUnit"}, false);
+    ModuleDef moduleDef = ModuleDefLoader.createSyntheticModule(
+        treeLogger, syntheticModuleName, new String[] {moduleName, "com.google.gwt.junit.JUnit"},
+        junitShell.getCompilerContext(), false);
 
     // Replace any user entry points with our test runner.
     moduleDef.clearEntryPoints();
@@ -176,8 +177,7 @@ public abstract class CompileStrategy {
 
     strategy.processModule(moduleDef);
 
-    junitShell.maybeCompileForWebMode(moduleDef,
-        JUnitShell.getRemoteUserAgents());
+    junitShell.maybeCompileForWebMode(moduleDef, JUnitShell.getRemoteUserAgents());
 
     return moduleDef;
   }

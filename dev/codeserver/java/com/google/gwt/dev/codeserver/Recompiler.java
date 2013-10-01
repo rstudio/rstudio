@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.Linker;
@@ -22,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.linker.CrossSiteIframeLinker;
 import com.google.gwt.core.linker.IFrameLinker;
 import com.google.gwt.dev.Compiler;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -33,18 +33,14 @@ import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
-import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -53,13 +49,9 @@ import java.util.concurrent.atomic.AtomicReference;
 class Recompiler {
   private final AppSpace appSpace;
   private final String originalModuleName;
-  private final List<File> sourcePath;
-  private final RecompileListener listener;
-  private final boolean failIfListenerFails;
   private final TreeLogger logger;
   private String serverPrefix;
   private int compilesDone = 0;
-  private SourceLevel sourceLevel;
 
   // after renaming
   private AtomicReference<String> moduleName = new AtomicReference<String>(null);
@@ -67,18 +59,16 @@ class Recompiler {
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
   private final AtomicReference<ResourceLoader> resourceLoader =
       new AtomicReference<ResourceLoader>();
+  private final CompilerContext compilerContext = new CompilerContext();
+  private Options options;
 
-  Recompiler(AppSpace appSpace, String moduleName, List<File> sourcePath,
-      String serverPrefix, RecompileListener listener, boolean failIfListenerFails,
-      SourceLevel sourceLevel, TreeLogger logger) {
+  Recompiler(AppSpace appSpace, String moduleName, Options options,
+      TreeLogger logger) {
     this.appSpace = appSpace;
     this.originalModuleName = moduleName;
-    this.sourcePath = sourcePath;
-    this.listener = listener;
-    this.failIfListenerFails = failIfListenerFails;
+    this.options = options;
     this.logger = logger;
-    this.serverPrefix = serverPrefix;
-    this.sourceLevel = sourceLevel;
+    this.serverPrefix = options.getPreferredHost() + ":" + options.getPort();
   }
 
   synchronized CompileDir compile(Map<String, String> bindingProperties)
@@ -99,7 +89,7 @@ class Recompiler {
 
     boolean listenerFailed = false;
     try {
-      listener.startedCompile(originalModuleName, compileId, compileDir);
+      options.getRecompileListener().startedCompile(originalModuleName, compileId, compileDir);
     } catch (Exception e) {
       compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
       listenerFailed = true;
@@ -107,19 +97,25 @@ class Recompiler {
 
     boolean success = false;
     try {
+      CompilerOptions compilerOptions = new CompilerOptionsImpl(
+          compileDir, options.getModuleNames(), options.getSourceLevel(),
+          options.enforceStrictResources());
+      compilerContext.setOptions(compilerOptions);
       ModuleDef module = loadModule(compileLogger, bindingProperties);
-      String newModuleName = module.getName(); // includes any rename
+
+      // Propagates module rename.
+      String newModuleName = module.getName();
       moduleName.set(newModuleName);
+      compilerOptions = new CompilerOptionsImpl(
+          compileDir, Lists.newArrayList(newModuleName), options.getSourceLevel(),
+          options.enforceStrictResources());
+      compilerContext.setOptions(compilerOptions);
 
-
-      CompilerOptions options = new CompilerOptionsImpl(compileDir, newModuleName, sourceLevel);
-
-      success = new Compiler(options).run(compileLogger, module);
+      success = new Compiler(compilerOptions).run(compileLogger, module);
       lastBuild.set(compileDir); // makes compile log available over HTTP
-
     } finally {
       try {
-        listener.finishedCompile(originalModuleName, compileId, success);
+        options.getRecompileListener().finishedCompile(originalModuleName, compileId, success);
       } catch (Exception e) {
         compileLogger.log(TreeLogger.Type.WARN, "listener threw exception", e);
         listenerFailed = true;
@@ -134,7 +130,7 @@ class Recompiler {
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Compile completed in " + elapsedTime + " ms");
 
-    if (failIfListenerFails && listenerFailed) {
+    if (options.isCompileTest() && listenerFailed) {
       throw new UnableToCompleteException();
     }
 
@@ -211,11 +207,11 @@ class Recompiler {
     ModuleDefLoader.clearModuleCache();
 
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
-    resources = ResourceLoaders.forPathAndFallback(sourcePath, resources);
+    resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
     this.resourceLoader.set(resources);
 
-    ModuleDef moduleDef =
-        ModuleDefLoader.loadFromResources(logger, originalModuleName, resources, true);
+    ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
+        logger, originalModuleName, compilerContext, resources, true);
 
     // We need a cross-site linker. Automatically replace the default linker.
     if (IFrameLinker.class.isAssignableFrom(moduleDef.getActivePrimaryLinker())) {

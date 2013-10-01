@@ -568,13 +568,17 @@ public class Link {
 
   private final LinkOptionsImpl options;
 
+  private final CompilerContext compilerContext = new CompilerContext();
+
   public Link(LinkOptions options) {
     this.options = new LinkOptionsImpl(options);
+    compilerContext.setOptions(new PrecompileTaskOptionsImpl(options));
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     loop_modules : for (String moduleName : options.getModuleNames()) {
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+      ModuleDef module =
+          ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
 
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 

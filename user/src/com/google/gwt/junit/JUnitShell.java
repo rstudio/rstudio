@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.shared.SerializableThrowable;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.DevMode;
 import com.google.gwt.dev.cfg.BindingProperty;
@@ -944,6 +945,10 @@ public class JUnitShell extends DevMode {
     // TODO(jat): consider using DevModeBase.processUrl instead
     String localhost = runStyle.getLocalHostName();
     return getModuleUrl(localhost, getPort(), moduleName, codeServerPort);
+  }
+
+  public CompilerContext getCompilerContext() {
+    return compilerContext;
   }
 
   /**

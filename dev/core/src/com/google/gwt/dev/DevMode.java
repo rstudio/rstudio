@@ -351,7 +351,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
   @Override
   protected HostedModeBaseOptions createOptions() {
-    return new HostedModeOptionsImpl();
+    HostedModeOptionsImpl hostedModeOptions = new HostedModeOptionsImpl();
+    compilerContext.setOptions(hostedModeOptions);
+    return hostedModeOptions;
   }
 
   @Override

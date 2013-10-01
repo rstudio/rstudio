@@ -19,7 +19,10 @@ import com.google.gwt.dev.Link.LinkOptionsImpl;
 
 import java.io.File;
 
-class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements CompilerOptions {
+/**
+ * Concrete class to implement compiler process, precompile task and compile task options.
+ */
+public class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements CompilerOptions {
 
   private LinkOptionsImpl linkOptions = new LinkOptionsImpl();
   private int localWorkers;

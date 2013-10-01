@@ -42,11 +42,12 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean removeDuplicateFunctions = true;
   private boolean runAsyncEnabled = true;
+  private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
   private boolean soycEnabled = false;
   private boolean soycExtra = false;
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
-  private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+  private boolean strictResources = false;
 
   public JJSOptionsImpl() {
   }
@@ -76,7 +77,13 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setSoycExtra(other.isSoycExtra());
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
+    setEnforceStrictResources(other.enforceStrictResources());
     setSourceLevel(other.getSourceLevel());
+  }
+
+  @Override
+  public boolean enforceStrictResources() {
+    return strictResources;
   }
 
   @Override
@@ -202,6 +209,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setEnableAssertions(boolean enabled) {
     enableAssertions = enabled;
+  }
+
+  @Override
+  public void setEnforceStrictResources(boolean strictResources) {
+    this.strictResources = strictResources;
   }
 
   @Override

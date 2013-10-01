@@ -51,6 +51,7 @@ public class Options {
   private RecompileListener recompileListener = RecompileListener.NONE;
   // Use the same default as the GWT compiler.
   private SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+  private boolean strictResources = false;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -151,6 +152,13 @@ public class Options {
     return port;
   }
 
+  /**
+   * Whether to implicitly import client and public directories when no explicit imports exist.
+   */
+  boolean enforceStrictResources() {
+    return strictResources;
+  }
+
   List<File> getSourcePath() {
     return sourcePath;
   }
@@ -166,6 +174,7 @@ public class Options {
       registerHandler(new AllowMissingSourceDirFlag());
       registerHandler(new SourceFlag());
       registerHandler(new ModuleNameArgument());
+      registerHandler(new StrictResourcesFlag());
       registerHandler(new ArgHandlerSource(new OptionSource() {
         @Override
         public SourceLevel getSourceLevel() {
@@ -312,6 +321,40 @@ public class Options {
     @Override
     public void setDir(File newValue) {
       workDir = newValue;
+    }
+  }
+
+  private class StrictResourcesFlag extends ArgHandlerFlag {
+
+    public StrictResourcesFlag() {
+      addTagValue("-XstrictResources", true);
+    }
+
+    @Override
+    public boolean isExperimental() {
+      return true;
+    }
+
+    @Override
+    public String getLabel() {
+      return "enforceStrictResources";
+    }
+
+    @Override
+    public String getPurposeSnippet() {
+      return "Avoid adding implicit dependencies on \"client\" and \"public\" for "
+          + "modules that don't define any dependencies.";
+    }
+
+    @Override
+    public boolean setFlag(boolean value) {
+      strictResources = value;
+      return true;
+    }
+
+    @Override
+    public boolean getDefaultValue() {
+      return false;
     }
   }
 

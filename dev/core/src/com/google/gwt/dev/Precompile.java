@@ -393,8 +393,11 @@ public class Precompile {
 
   private final PrecompileTaskOptionsImpl options;
 
+  private final CompilerContext compilerContext;
+
   public Precompile(PrecompileTaskOptions options) {
     this.options = new PrecompileTaskOptionsImpl(options);
+    compilerContext = new CompilerContext.Builder().options(options).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -411,7 +414,8 @@ public class Precompile {
 
       File precompilationFile = new File(compilerWorkDir, PRECOMPILE_FILENAME);
 
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+      ModuleDef module =
+          ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
 
       StandardLinkerContext linkerContext =
           new StandardLinkerContext(TreeLogger.NULL, module, options);

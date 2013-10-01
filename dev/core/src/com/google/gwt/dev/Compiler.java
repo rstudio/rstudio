@@ -110,17 +110,19 @@ public class Compiler {
     System.exit(1);
   }
 
+  private final CompilerContext compilerContext;
   private final CompilerOptionsImpl options;
 
-  public Compiler(CompilerOptions options) {
-    this.options = new CompilerOptionsImpl(options);
+  public Compiler(CompilerOptions compilerOptions) {
+    this.options = new CompilerOptionsImpl(compilerOptions);
+    this.compilerContext = new CompilerContext.Builder().options(options).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
-      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
+      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext, true);
     }
     return run(logger, modules);
   }

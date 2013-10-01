@@ -776,6 +776,8 @@ public abstract class DevModeBase implements DoneCallback {
 
   protected final HostedModeBaseOptions options;
 
+  protected final CompilerContext compilerContext = new CompilerContext();
+
   protected DevModeUI ui = null;
 
   private final Semaphore blockUntilDone = new Semaphore(0);
@@ -1022,7 +1024,8 @@ public abstract class DevModeBase implements DoneCallback {
    */
   protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
-    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName, refresh);
+    ModuleDef moduleDef =
+        ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext, refresh);
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;
   }

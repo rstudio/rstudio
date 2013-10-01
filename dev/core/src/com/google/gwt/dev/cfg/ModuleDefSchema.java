@@ -444,7 +444,7 @@ public class ModuleDefSchema extends Schema {
 
     @SuppressWarnings("unused") // called reflectively
     protected Schema __extend_property_begin(BindingProperty property,
-        PropertyValue[] values, PropertyFallbackValue fallbackValue) 
+        PropertyValue[] values, PropertyFallbackValue fallbackValue)
         throws UnableToCompleteException {
       for (int i = 0; i < values.length; i++) {
         property.addDefinedValue(property.getRootCondition(), values[i].token);
@@ -455,14 +455,14 @@ public class ModuleDefSchema extends Schema {
         if (!property.isDefinedValue(fallbackValue.token)) {
         logger.log(TreeLogger.ERROR, "The property " + property.name
             + " fallback-value was not defined");
-        throw new UnableToCompleteException(); 
+        throw new UnableToCompleteException();
         }
         // add fallback map to the property
         for (int i = 0; i < values.length; i++) {
           property.addFallbackValue(values[i].token, fallbackValue.token);
         }
       }
-     
+
       // No children.
       return null;
     }
@@ -1206,7 +1206,7 @@ public class ModuleDefSchema extends Schema {
       this.token = token;
     }
   }
-  
+
   /**
    * Converts a comma-separated string into an array of property value tokens.
    */
@@ -1428,16 +1428,18 @@ public class ModuleDefSchema extends Schema {
   }
 
   protected void __module_end(NullableName renameTo) {
-    // Maybe infer source and public.
-    //
-    if (!foundExplicitSourceOrSuperSource) {
-      bodySchema.addSourcePackage(modulePackageAsPath, "client", Empty.STRINGS,
-          Empty.STRINGS, Empty.STRINGS, true, true, false);
-    }
+    if (!loader.enforceStrictResources()) {
+      // If we're not being strict about resources and no dependencies have been added, go ahead and
+      // implicitly add "client" and "public" resource dependencies.
+      if (!foundExplicitSourceOrSuperSource) {
+        bodySchema.addSourcePackage(modulePackageAsPath, "client", Empty.STRINGS,
+            Empty.STRINGS, Empty.STRINGS, true, true, false);
+      }
 
-    if (!foundAnyPublic) {
-      bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
-          Empty.STRINGS, Empty.STRINGS, true, true);
+      if (!foundAnyPublic) {
+        bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
+            Empty.STRINGS, Empty.STRINGS, true, true);
+      }
     }
 
     // We do this in __module_end so this value is never inherited

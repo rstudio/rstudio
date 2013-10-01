@@ -44,6 +44,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerSource;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerStrict;
+import com.google.gwt.dev.util.arg.ArgHandlerStrictResources;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 
 class PrecompileTaskArgProcessor extends CompileArgProcessor {
@@ -76,6 +77,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerSoyc(options));
     registerHandler(new ArgHandlerSoycDetailed(options));
     registerHandler(new ArgHandlerStrict(options));
+    registerHandler(new ArgHandlerStrictResources(options));
     registerHandler(new ArgHandlerValidateOnlyFlag(options));
     registerHandler(new ArgHandlerSource(options));
   }

@@ -172,8 +172,11 @@ public class PrecompileOnePerm {
 
   private final PrecompileOnePermOptionsImpl options;
 
+  private final CompilerContext compilerContext;
+
   public PrecompileOnePerm(PrecompileOnePermOptions options) {
     this.options = new PrecompileOnePermOptionsImpl(options);
+    compilerContext = new CompilerContext.Builder().options(options).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -192,7 +195,7 @@ public class PrecompileOnePerm {
     String moduleName = moduleNames.get(0);
     File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
     StandardLinkerContext linkerContext = new StandardLinkerContext(
         TreeLogger.NULL, module, options);
 
