@@ -444,18 +444,49 @@
             .rs.lineDataList(srcref)))
 })
 
-.rs.addFunction("setShinyBreakpoints", function(name, env, lines)
+.rs.addFunction("getShinyFunction", function(name, where)
 {
-   steps <- .rs.getFunctionSteps(get(name, env), name, lines)
-   .rs.setFunctionBreakpoints(
-         name, env, lapply(steps, function(step) { step$at } ))
+   if (is(where, "refClass"))
+      where$field(name)
+   else 
+      get(name, where)
 })
 
-.rs.addFunction("registerShinyFunction", function(params)
+.rs.addFunction("setShinyFunction", function(name, where, val)
 {
-   # Copy the source references of the expression over to the function (so we
-   # can inject breakpoints as though it were an ordinary function)
-   attr(params$fun, "srcref") <- attr(params$expr, "wholeSrcref")
+   if (is(where, "refClass"))
+      where$field(name, val)
+   else
+      assign(name, val, where)
+})
+
+.rs.addFunction("setShinyBreakpoints", function(name, where, lines)
+{
+   # Create a blank environment and load the function into it
+   env <- new.env(parent = emptyenv())
+   env$fun <- .rs.getShinyFunction(name, where) 
+
+   # Get the steps of the function corresponding to the lines on
+   # which breakpoints are to be set, and set breakpoints there
+   steps <- .rs.getFunctionSteps(env$fun, "fun", lines)
+   suppressWarnings(.rs.setFunctionBreakpoints(
+         "fun", env, lapply(steps, function(step) { step$at } )))
+
+   # Store the updated copy of the function back into Shiny
+   .rs.setShinyFunction(name, where, env$fun)
+})
+
+# Parameters expected to be in environment:
+# where - environment or reference object 
+# name - name of function or reference field name
+# label - friendly label for function to show in callstack
+.rs.addGlobalFunction("registerShinyDebugHook", function(params)
+{
+   # Copy source refs to the body of the function 
+   fun <- .rs.getShinyFunction(params$name, params$where)
+   params$expr <- body(fun)
+   attr(fun, "srcref") <- attr(body(fun), "wholeSrcref")
+   params$fun <- fun
 
    # Register the function with RStudio (may set breakpoints)
    .Call("rs_registerShinyFunction", params)

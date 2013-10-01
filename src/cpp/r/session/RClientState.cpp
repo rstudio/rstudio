@@ -25,6 +25,8 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
+#include "../json/spirit/json_spirit_utils.h"
+
 using namespace core;
 
 namespace r {
@@ -239,11 +241,18 @@ void ClientState::putProjectPersistent(const std::string& scope,
 }
 
 json::Value ClientState::getProjectPersistent(std::string scope,
-                                               std::string name)
+                                              std::string name)
 {
-   json::Value& scopeValue = projectPersistentState_[scope];
-   json::Object& scopeObject = scopeValue.get_obj();
-   return scopeObject[name];
+   json::Object::iterator i = projectPersistentState_.find(scope);
+   if (i == projectPersistentState_.end())
+   {
+      return json::Value();
+   }
+   else
+   {
+      json::Object& scopeObject = (i->second).get_obj();
+      return scopeObject[name];
+   }
 }
 
 void ClientState::putProjectPersistent(

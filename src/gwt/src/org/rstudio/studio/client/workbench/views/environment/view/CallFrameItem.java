@@ -126,13 +126,12 @@ public class CallFrameItem extends Composite
                            lineNumber;
          }
          functionName.setText(
-                 getFunctionName() +
-                 "(" + frame_.getArgumentList() + ")" +
+                 getFrameLabel() + 
                  fileLocation);
       }
       else
       {
-         functionName.setText(getFunctionName());
+         functionName.setText(getFrameLabel());
       }
    }
 
@@ -141,10 +140,17 @@ public class CallFrameItem extends Composite
       return CallFrame.isNavigableFilename(frame_.getFileName());
    }
    
-   private String getFunctionName()
+   private String getFrameLabel()
    {
-      return frame_.isShinyFunction() ? "[Shiny Expression]" :
-                                        frame_.getFunctionName();
+      if (frame_.getShinyFunctionLabel().isEmpty())
+      {
+         return frame_.getFunctionName() +
+                "(" + frame_.getArgumentList() + ")";
+      }
+      else
+      {
+         return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
+      }
          
    }
 

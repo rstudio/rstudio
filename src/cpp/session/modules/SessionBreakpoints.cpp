@@ -56,17 +56,17 @@ int s_maxShinyFunctionId = 0;
 class ShinyFunction
 {
 public:
-   ShinyFunction(SEXP exprIn, SEXP functionIn, SEXP envIn):
-      expr_(exprIn),
-      env_(envIn),
+   ShinyFunction(SEXP expr, const std::string& name, SEXP where):
       id_(s_maxShinyFunctionId++),
       firstLine_(0),
-      lastLine_(0)
+      lastLine_(0),
+      name_(name),
+      where_(where)
    {
       // If the srcref attribute is present on the expression, use it to
       // compute the first and last lines of the function in the original
       // source file.
-      SEXP srcref = r::sexp::getAttrib(expr_, "srcref");
+      SEXP srcref = r::sexp::getAttrib(expr, "srcref");
       if (srcref != NULL && TYPEOF(srcref) != NILSXP)
       {
          SEXP firstRef = VECTOR_ELT(srcref, 0);
@@ -75,7 +75,7 @@ public:
          lastLine_ = INTEGER(lastRef)[2];
       }
       // If the srcfile attribute is present, extract it
-      SEXP srcfile = r::sexp::getAttrib(expr_, "srcfile");
+      SEXP srcfile = r::sexp::getAttrib(expr, "srcfile");
       if (srcfile != NULL && TYPEOF(srcfile) != NILSXP)
       {
          SEXP file = r::sexp::findVar("filename", srcfile);
@@ -97,18 +97,23 @@ public:
       return id_;
    }
 
-   SEXP getEnv()
+   std::string getName()
    {
-      return env_;
+      return name_;
+   }
+
+   SEXP getWhere()
+   {
+      return where_;
    }
 
 private:
-   SEXP expr_;
-   SEXP env_;
    int id_;
    int firstLine_;
    int lastLine_;
+   std::string name_;
    std::string srcfilename_;
+   SEXP where_;
 };
 
 // A list of the Shiny functions we know about (see notes in
@@ -386,8 +391,8 @@ Error setShinyBreakpoint(const json::JsonRpcRequest& request,
    {
       std::vector<int> lines = getShinyBreakpointLines(*psf);
       r::exec::RFunction(".rs.setShinyBreakpoints",
-                         std::string("func"),
-                         psf->getEnv(),
+                         psf->getName(),
+                         psf->getWhere(),
                          lines).call();
 
    }
@@ -404,13 +409,15 @@ void syncClientBreakpoints()
       json::Value breakpointStateValue =
          r::session::clientState().getProjectPersistent("debug-breakpoints",
                                                         "debugBreakpointsState");
-      json::Object breakpointState = breakpointStateValue.get_obj();
-      json::Array breakpointArray = breakpointState["breakpoints"].get_array();
-
-      s_breakpoints.clear();
-      BOOST_FOREACH(json::Value bp, breakpointArray)
+      if (!breakpointStateValue.is_null())
       {
-         s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+         json::Object breakpointState = breakpointStateValue.get_obj();
+         json::Array breakpointArray = breakpointState["breakpoints"].get_array();
+         s_breakpoints.clear();
+         BOOST_FOREACH(json::Value bp, breakpointArray)
+         {
+            s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+         }
       }
    }
    catch (...)
@@ -429,14 +436,8 @@ Error initBreakpoints()
 
 // Called by the R garbage collector when a Shiny function is cleaned up;
 // we use this as a trigger to clean up our own references to the function.
-void unregisterShinyFunction(SEXP extptr)
+void unregisterShinyFunction(SEXP where)
 {
-   // Extract the raw pointer from the EXTPTRSXP
-   ShinyFunction* psf =
-         static_cast<ShinyFunction*>(r::sexp::getExternalPtrAddr(extptr));
-   if (!psf)
-      return;
-
    // Look over each Shiny function we know about; if this was a function
    // we were tracking, release it.
    for (std::vector<boost::shared_ptr<ShinyFunction> >::iterator psfi =
@@ -444,49 +445,60 @@ void unregisterShinyFunction(SEXP extptr)
         psfi != s_shinyFunctions.end();
         psfi++)
    {
-      if (psfi->get() == psf)
+      if ((*psfi)->getWhere() == where)
       {
+         std::cerr << "unregistered " << (*psfi)->getId() << std::endl;
          s_shinyFunctions.erase(psfi);
          break;
       }
    }
-   r::sexp::clearExternalPtr(extptr);
 }
 
 } // anonymous namespace
 
 void rs_registerShinyFunction(SEXP params)
 {
+   Protect protect;
    SEXP expr = r::sexp::findVar("expr", params);
    SEXP fun = r::sexp::findVar("fun", params);
-   SEXP env = r::sexp::findVar("env", params);
+   SEXP name = r::sexp::findVar("name", params);
+   SEXP where = r::sexp::findVar("where", params);
 
-   // The memory allocated here is attached to the SEXP "fun" as an attribute
-   // of type EXTPTRSXP. When the function is cleaned up by the garbage
-   // collector, R calls the finalizer.
+   std::string objName;
+   Error error = r::sexp::extract(name, &objName);
+   if (error)
+      return;
+
    boost::shared_ptr<ShinyFunction> psf =
-            boost::make_shared<ShinyFunction>(expr, fun, env);
+            boost::make_shared<ShinyFunction>(expr, objName, where);
    s_shinyFunctions.push_back(psf);
 
    // Attach the information we just created to the Shiny function.
-   SEXP extptr = r::sexp::makeExternalPtr(psf.get(), unregisterShinyFunction);
-   r::sexp::setAttrib(fun, "_rs_shinyDebugInfo", extptr);
+   SEXP sid = r::sexp::create(psf->getId(), &protect);
+   r::sexp::setAttrib(fun, "_rs_shinyDebugPtr",
+                      r::sexp::makeExternalPtr(psf.get(),
+                                               unregisterShinyFunction,
+                                               &protect));
+   r::sexp::setAttrib(fun, "_rs_shinyDebugId", sid);
+   r::sexp::setAttrib(fun, "_rs_shinyDebugLabel",
+                      r::sexp::findVar("label", params));
 
    // Look over the list of breakpoints we know about and see if any of them
    // are unbound breakpoints in the region of the file just identified.
    if (!s_breakpointsInSync)
       syncClientBreakpoints();
 
+   r::exec::RFunction(".rs.setShinyFunction", name, where, fun).call();
    // If we found breakpoint lines in this Shiny function, set breakpoints
    // on it.
    std::vector<int> lines = getShinyBreakpointLines(*psf);
    if (lines.size() > 0)
    {
-      r::exec::RFunction(".rs.setShinyBreakpoints",
-                         std::string("fun"),
-                         params,
-                         lines).call();
+      // Copy the function into the Shiny object first
+      r::exec::RFunction(".rs.setShinyBreakpoints", name, where, lines).call();
    }
+
+   std::cerr << "registered " << objName << ": " << psf->getId() << std::endl;
 }
 
 json::Value debugStateAsJson()

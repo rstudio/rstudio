@@ -100,11 +100,14 @@ SEXP sourceRefsOfContext(const RCNTXT* pContext)
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
-bool isShinyContext(const RCNTXT* pContext)
+void getShinyFunctionLabel(const RCNTXT* pContext, std::string* label)
 {
    SEXP s = r::sexp::getAttrib(
-            getOriginalFunctionCallObject(pContext), "_rs_shinyDebugInfo");
-   return s != NULL && TYPEOF(s) != NILSXP;
+            getOriginalFunctionCallObject(pContext), "_rs_shinyDebugLabel");
+   if (s != NULL && TYPEOF(s) != NILSXP)
+   {
+      r::sexp::extract(s, label);
+   }
 }
 
 bool hasSourceRefs(const RCNTXT* pContext)
@@ -317,7 +320,11 @@ json::Array callFramesAsJson()
             LOG_ERROR(error);
          }
          varFrame["argument_list"] = error ? "" : argList;
-         varFrame["is_shiny_function"] = isShinyContext(pRContext);
+
+         // If this is a Shiny function, provide its label
+         std::string shinyLabel;
+         getShinyFunctionLabel(pRContext, &shinyLabel);
+         varFrame["shiny_function_label"] = shinyLabel;
 
          listFrames.push_back(varFrame);
       }
