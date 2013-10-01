@@ -1824,13 +1824,6 @@ public class GenerateJavaScriptAST {
         generateToStringAlias(x, globalStmts);
         // special: setup the identifying typeMarker field
         generateTypeMarker(globalStmts);
-
-        // setup Array.proto
-        JsFunction patchFunc = indexedFunctions.get("Array$ExpandoWrapper.patchArrayPrototype");
-        JsName patchFuncName = patchFunc.getName();
-        JsInvocation callPatchFunc = new JsInvocation(x.getSourceInfo());
-        callPatchFunc.setQualifier(patchFuncName.makeRef(x.getSourceInfo()));
-        globalStmts.add(callPatchFunc.makeStmt());
       }
     }
 
