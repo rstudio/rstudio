@@ -16,5 +16,6 @@
 
 <!-- Includes the source files for the Clean theme. -->
 <module>
+  <public path="public" />
   <stylesheet src="gwt/clean/clean.css"/>
 </module>

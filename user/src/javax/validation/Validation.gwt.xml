@@ -20,4 +20,5 @@
     <exclude name="super/"/>
   </source>
   <super-source path="super"/>
+  <public path="public" />
 </module>

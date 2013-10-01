@@ -21,5 +21,6 @@
   locales with RTL languages.
 -->
 <module>
+  <public path="public" />
   <stylesheet src="gwt/clean/clean_rtl.css"/>
 </module>

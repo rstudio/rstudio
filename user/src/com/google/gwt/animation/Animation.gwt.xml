@@ -19,9 +19,11 @@
 <module>
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
-  
+
   <!-- Include User module to inherit Timer -->
   <inherits name="com.google.gwt.user.User"/>
+  <source path="client" />
+  <public path="public" />
 
   <!-- Fallback implementation, based on a timer -->
   <replace-with class="com.google.gwt.animation.client.AnimationSchedulerImplTimer">

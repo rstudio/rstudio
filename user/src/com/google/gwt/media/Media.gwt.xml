@@ -16,6 +16,7 @@
 <module>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.media.dom.DOM"/>
+  <public path="public" />
 
   <!-- Define the support property for Video and Audio-->
   <define-property name="videoElementSupport" values="maybe,no" />

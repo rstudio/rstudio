@@ -20,6 +20,7 @@
   <inherits name="javax.validation.Validation" />
   <source path="client" />
   <super-source path="super" />
+  <public path="public" />
 
   <replace-with
     class="com.google.gwt.validation.client.GwtConstraintValidatorFactory">

@@ -18,6 +18,7 @@
   <inherits name="com.google.gwt.logging.LogImpl"/>
   <source path="client" />
   <source path="shared" />
+  <public path="public" />
 
   <replace-with class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplRegular">
     <when-type-is class="com.google.gwt.logging.client.LogConfiguration.LogConfigurationImplNull"/>

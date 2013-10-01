@@ -14,13 +14,14 @@
   the License.
 -->
 <module>
-   <inherits name="com.google.gwt.aria.Aria"/>
-   <inherits name="com.google.gwt.user.User"/>
-   <inherits name="com.google.gwt.cell.Cell"/>
-   <inherits name="com.google.gwt.editor.Editor"/>
-   <inherits name="com.google.gwt.view.View"/>
-   <inherits name="com.google.gwt.user.UserAgent"/>
-   <source path="client"/>
+  <inherits name="com.google.gwt.aria.Aria"/>
+  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.cell.Cell"/>
+  <inherits name="com.google.gwt.editor.Editor"/>
+  <inherits name="com.google.gwt.view.View"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
+  <source path="client"/>
+  <public path="public" />
 
   <!-- Standard CellBasedWidgetImpl implementation. -->
   <replace-with class="com.google.gwt.user.cellview.client.CellBasedWidgetImplStandard">

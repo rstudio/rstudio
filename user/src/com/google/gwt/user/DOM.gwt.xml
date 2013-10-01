@@ -18,7 +18,7 @@
 <!--                                                                        -->
 <module>
   <inherits name="com.google.gwt.core.Core"/>
-    <inherits name="com.google.gwt.dom.DOM"/>
+  <inherits name="com.google.gwt.dom.DOM"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
   <replace-with class="com.google.gwt.user.client.impl.DOMImplOpera">

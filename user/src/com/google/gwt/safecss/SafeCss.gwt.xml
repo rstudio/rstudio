@@ -19,6 +19,7 @@
 <module>
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
+  <public path="public" />
 
   <replace-with class="com.google.gwt.safecss.shared.SafeStylesUtils.ImplIE6To8">
     <when-type-is class="com.google.gwt.safecss.shared.SafeStylesUtils.Impl" />

@@ -4,4 +4,5 @@
   <inherits name="com.google.gwt.event.dom.DragEvent" />
   <inherits name="com.google.gwt.event.dom.TouchEvent" />
   <source path="client"/>
+  <public path="public" />
 </module>

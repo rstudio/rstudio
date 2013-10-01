@@ -16,4 +16,5 @@
 <module>
   <source path="client"/>
   <inherits name="com.google.gwt.dom.DOM"/>
+  <public path="public" />
 </module>

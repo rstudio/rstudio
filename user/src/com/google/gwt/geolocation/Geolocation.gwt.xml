@@ -15,6 +15,8 @@
 <module>
   <inherits name="com.google.gwt.core.Core" />
   <inherits name="com.google.gwt.user.UserAgent" />
+  <source path="client" />
+  <public path="public" />
 
   <!-- Define the Geolocation support property. -->
   <define-property name="geolocationSupport" values="maybe,no" />

@@ -18,6 +18,7 @@
 
   <source path="client"/>
   <source path="resources"/>
+  <public path="public" />
 
   <!-- By default UiBinder implementations are generated to use SafeHtmlTemplates
     to help protect against the introduction of cross-site scripting (XSS) attacks.

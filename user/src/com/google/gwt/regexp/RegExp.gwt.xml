@@ -17,4 +17,5 @@
   <inherits name="com.google.gwt.core.Core" />
   <source path="shared" />
   <super-source path="super" />
+  <public path="public" />
 </module>

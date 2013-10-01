@@ -20,4 +20,6 @@
 <module>
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.typedarrays.TypedArrays"/>
+  <source path="client" />
+  <public path="public" />
 </module>

@@ -14,6 +14,8 @@
 
 <module>
   <inherits name="com.google.gwt.user.User" />
+  <source path="client" />
+  <public path="public" />
 
   <!-- Define the storage support property -->
   <define-property name="storageSupport" values="maybe,no" />

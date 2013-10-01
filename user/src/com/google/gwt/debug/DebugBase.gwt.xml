@@ -15,6 +15,8 @@
 <!-- Base module for Debug code.                                            -->
 <module>
   <inherits name="com.google.gwt.core.Core" />
+  <source path="client" />
+  <public path="public" />
   
   <!-- Enable or disable the UIObject.ensureDebugID method -->
   <define-property name="gwt.enableDebugId" values="true, false"/>

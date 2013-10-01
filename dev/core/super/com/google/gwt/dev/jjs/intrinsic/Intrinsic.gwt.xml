@@ -18,6 +18,7 @@
 <!-- Types from this module are not visible to nor imported into user code. -->
 <!--                                                                        -->
 <module>
-   <inherits name="com.google.gwt.lang.LongLib"/>
-   <super-source/>
+  <inherits name="com.google.gwt.lang.LongLib"/>
+  <super-source/>
+  <public path="public" />
 </module>

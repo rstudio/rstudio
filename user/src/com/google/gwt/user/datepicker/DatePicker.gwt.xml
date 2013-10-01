@@ -1,3 +1,5 @@
-<module>  
+<module>
+  <source path="client" />
+  <public path="public" />
 </module>
 

@@ -17,8 +17,8 @@
   <inherits name="com.google.gwt.validation.Validation" />
 
   <source path="client"/>
-  <source path="shared"/>
   <source path="ui/client"/>
+  <public path="public" />
 
   <generate-with class="com.google.gwt.editor.rebind.SimpleBeanEditorDriverGenerator">
     <when-type-assignable class="com.google.gwt.editor.client.SimpleBeanEditorDriver" />

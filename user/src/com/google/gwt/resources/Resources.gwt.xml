@@ -23,6 +23,8 @@
   <!-- Used by ExternalTextResource -->
   <inherits name="com.google.gwt.http.HTTP" />
   <inherits name="com.google.gwt.jsonp.Jsonp" />
+  <source path="client" />
+  <public path="public" />
 
   <!--  This acts as a switch to disable the use of data: URLs -->
   <define-property name="ClientBundle.enableInlining" values="true,false" />

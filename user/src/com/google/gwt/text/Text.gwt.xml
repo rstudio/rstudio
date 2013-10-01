@@ -14,7 +14,8 @@
   the License.
 -->
 <module>
-   <inherits name="com.google.gwt.core.Core"/>
-   <source path="shared"/>
-   <source path="client"/>
+  <inherits name="com.google.gwt.core.Core"/>
+  <source path="shared"/>
+  <source path="client"/>
+  <public path="public" />
 </module>

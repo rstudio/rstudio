@@ -18,5 +18,6 @@
 <!-- Types from this module are not visible to nor imported into user code. -->
 <!--                                                                        -->
 <module>
-   <source path=""/>
+  <source path=""/>
+  <public path="public" />
 </module>

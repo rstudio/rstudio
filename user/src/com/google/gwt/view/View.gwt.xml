@@ -14,6 +14,7 @@
   the License.
 -->
 <module>
-   <inherits name="com.google.gwt.user.User"/>
-   <source path="client"/>
+  <inherits name="com.google.gwt.user.User"/>
+  <source path="client"/>
+  <public path="public" />
 </module>

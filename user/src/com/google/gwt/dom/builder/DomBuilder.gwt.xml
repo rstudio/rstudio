@@ -37,4 +37,5 @@
 
   <source path="client"/>
   <source path="shared"/>
+  <public path="public" />
 </module>

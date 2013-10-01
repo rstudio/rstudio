@@ -20,6 +20,7 @@
   <source path="client" />
   <source path="shared" />
   <super-source path="super" />
+  <public path="public" />
 
   <!-- IE10+ will support typed arrays, but not before then -->
   <replace-with class="com.google.gwt.typedarrays.client.NoSupportImpl">

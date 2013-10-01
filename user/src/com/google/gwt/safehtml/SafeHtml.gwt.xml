@@ -21,6 +21,7 @@
   <source path="client"/>
   <source path="shared"/>
   <super-source path="super"/>
+  <public path="public" />
   <generate-with class="com.google.gwt.safehtml.rebind.SafeHtmlTemplatesGenerator">
     <when-type-assignable class="com.google.gwt.safehtml.client.SafeHtmlTemplates"/>
   </generate-with>
