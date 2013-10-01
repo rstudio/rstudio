@@ -76,7 +76,7 @@ public class TreeTest extends GWTTestCase {
    */
   public void testAddItemIsTreeItem() {
     Tree t = createTree();
-    TreeItem item = new TreeItem("hello");
+    TreeItem item = new TreeItem(SafeHtmlUtils.fromSafeConstant("hello"));
     t.addItem((IsTreeItem) item);
     assertEquals(1, t.getItemCount());
     assertSame(item, t.getItem(0));
@@ -109,9 +109,9 @@ public class TreeTest extends GWTTestCase {
     Tree t = createTree();
     // Adding widget to end of tree, widgets still have their parents set
     // correctly.
-    TreeItem a = new TreeItem("a");
-    TreeItem b = new TreeItem("b");
-    TreeItem c = new TreeItem("c");
+    TreeItem a = new TreeItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem b = new TreeItem(SafeHtmlUtils.fromSafeConstant("b"));
+    TreeItem c = new TreeItem(SafeHtmlUtils.fromSafeConstant("c"));
     TreeItem d = new TreeItem();
     TreeItem e = new TreeItem();
     Label dLabel = new Label("d");
@@ -122,7 +122,7 @@ public class TreeTest extends GWTTestCase {
     b.addItem(c);
     a.addItem(b);
     t.addItem(a);
-    t.addItem("hello");
+    t.addItem(SafeHtmlUtils.fromSafeConstant("hello"));
     t.addItem(eLabel);
     t.clear();
     assertFalse(t.treeItemIterator().hasNext());
@@ -131,13 +131,13 @@ public class TreeTest extends GWTTestCase {
 
   public void testDebugId() {
     Tree tree = createTree();
-    TreeItem top0 = tree.addItem("top0");
-    TreeItem top1 = tree.addItem("top1");
-    TreeItem top2 = tree.addItem("top2");
-    TreeItem top3 = tree.addItem("top3");
-    TreeItem bottom0 = top3.addItem("bottom0");
-    TreeItem bottom1 = top3.addItem("bottom1");
-    TreeItem bottom2 = top3.addItem("bottom2");
+    TreeItem top0 = tree.addItem(SafeHtmlUtils.fromSafeConstant("top0"));
+    TreeItem top1 = tree.addItem(SafeHtmlUtils.fromSafeConstant("top1"));
+    TreeItem top2 = tree.addItem(SafeHtmlUtils.fromSafeConstant("top2"));
+    TreeItem top3 = tree.addItem(SafeHtmlUtils.fromSafeConstant("top3"));
+    TreeItem bottom0 = top3.addItem(SafeHtmlUtils.fromSafeConstant("bottom0"));
+    TreeItem bottom1 = top3.addItem(SafeHtmlUtils.fromSafeConstant("bottom1"));
+    TreeItem bottom2 = top3.addItem(SafeHtmlUtils.fromSafeConstant("bottom2"));
 
     // Check tree items deep
     tree.ensureDebugId("myTree");
@@ -195,9 +195,9 @@ public class TreeTest extends GWTTestCase {
     Tree tree = createTree();
     Iterator<TreeItem> iter = tree.treeItemIterator();
     assertFalse(iter.hasNext());
-    TreeItem a = tree.addItem("a");
-    TreeItem b = tree.addItem("b");
-    TreeItem c = tree.addItem("c");
+    TreeItem a = tree.addItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem b = tree.addItem(SafeHtmlUtils.fromSafeConstant("b"));
+    TreeItem c = tree.addItem(SafeHtmlUtils.fromSafeConstant("c"));
 
     Iterator<TreeItem> iter2 = tree.treeItemIterator();
     assertEquals(a, iter2.next());
@@ -205,9 +205,9 @@ public class TreeTest extends GWTTestCase {
     assertEquals(c, iter2.next());
     assertFalse(iter2.hasNext());
 
-    TreeItem a_a = a.addItem("a_a");
-    TreeItem a_a_a = a_a.addItem("a_a_a");
-    TreeItem a_a_b = a_a.addItem("a_a_b");
+    TreeItem a_a = a.addItem(SafeHtmlUtils.fromSafeConstant("a_a"));
+    TreeItem a_a_a = a_a.addItem(SafeHtmlUtils.fromSafeConstant("a_a_a"));
+    TreeItem a_a_b = a_a.addItem(SafeHtmlUtils.fromSafeConstant("a_a_b"));
 
     Iterator<TreeItem> iter3 = tree.treeItemIterator();
     assertEquals(a, iter3.next());
@@ -226,7 +226,7 @@ public class TreeTest extends GWTTestCase {
     item.setWidget(null);
     t.clear();
 
-    TreeItem a = t.addItem("");
+    TreeItem a = t.addItem(SafeHtmlUtils.fromSafeConstant(""));
     TreeItem b = t.addItem(new Label("b"));
     a.setWidget(null);
     b.setWidget(null);
@@ -234,8 +234,8 @@ public class TreeTest extends GWTTestCase {
 
   public void testRemove() {
     Tree t = createTree();
-    TreeItem item = t.addItem("a");
-    TreeItem itemb = t.addItem("b");
+    TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem itemb = t.addItem(SafeHtmlUtils.fromSafeConstant("b"));
     t.setSelectedItem(item);
     assertEquals(item, t.getSelectedItem());
     item.remove();
@@ -255,8 +255,8 @@ public class TreeTest extends GWTTestCase {
    */
   public void testRemoveIsTreeItem() {
     Tree t = createTree();
-    TreeItem itemA = t.addItem("a");
-    TreeItem itemB = t.addItem("b");
+    TreeItem itemA = t.addItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem itemB = t.addItem(SafeHtmlUtils.fromSafeConstant("b"));
     // initial state
     assertEquals(2, t.getItemCount());
     assertSame(itemA, t.getItem(0));
@@ -274,8 +274,8 @@ public class TreeTest extends GWTTestCase {
    */
   public void testRemoveItems() {
     Tree t = createTree();
-    TreeItem itemA = t.addItem("a");
-    TreeItem itemB = t.addItem("b");
+    TreeItem itemA = t.addItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem itemB = t.addItem(SafeHtmlUtils.fromSafeConstant("b"));
     // initial state
     assertEquals(2, t.getItemCount());
     assertSame(itemA, t.getItem(0));
@@ -294,12 +294,12 @@ public class TreeTest extends GWTTestCase {
 
   public void testRootInsert() {
     Tree t = createTree();
-    TreeItem b = t.addItem("b");
+    TreeItem b = t.addItem(SafeHtmlUtils.fromSafeConstant("b"));
     assertEquals(1, t.getItemCount());
     assertEquals(b, t.getItem(0));
 
     // Insert at zero.
-    TreeItem a = t.insertItem(0, "a");
+    TreeItem a = t.insertItem(0, SafeHtmlUtils.fromSafeConstant("a"));
     assertEquals(2, t.getItemCount());
     assertEquals(a, t.getItem(0));
     assertEquals(b, t.getItem(1));
@@ -314,7 +314,7 @@ public class TreeTest extends GWTTestCase {
     assertEquals(b.getElement().getNextSiblingElement(), d.getElement());
 
     // Insert in the middle.
-    TreeItem c = new TreeItem("c");
+    TreeItem c = new TreeItem(SafeHtmlUtils.fromSafeConstant("c"));
     t.insertItem(2, c);
     assertEquals(4, t.getItemCount());
     assertEquals(a, t.getItem(0));
@@ -326,13 +326,13 @@ public class TreeTest extends GWTTestCase {
 
   public void testRootInsertInvalidIndex() {
     Tree t = createTree();
-    t.addItem("a");
-    t.addItem("b");
-    t.addItem("c");
+    t.addItem(SafeHtmlUtils.fromSafeConstant("a"));
+    t.addItem(SafeHtmlUtils.fromSafeConstant("b"));
+    t.addItem(SafeHtmlUtils.fromSafeConstant("c"));
 
     // Insert at -1.
     try {
-      t.insertItem(-1, "illegal");
+      t.insertItem(-1, SafeHtmlUtils.fromSafeConstant("illegal"));
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected.
@@ -340,7 +340,7 @@ public class TreeTest extends GWTTestCase {
 
     // Insert past the end.
     try {
-      t.insertItem(4, "illegal");
+      t.insertItem(4, SafeHtmlUtils.fromSafeConstant("illegal"));
       fail("Expected IndexOutOfBoundsException");
     } catch (IndexOutOfBoundsException e) {
       // Expected.
@@ -399,8 +399,8 @@ public class TreeTest extends GWTTestCase {
   public void testSwap() {
     Tree t = createTree();
 
-    // Start with text.
-    TreeItem item = t.addItem("hello");
+    // Start with html.
+    TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant("hello"));
     String inner = DOM.getInnerHTML(item.getContentElem());
     assertTrue(inner.indexOf("hello") >= 0);
     t.addItem(item);
@@ -457,9 +457,9 @@ public class TreeTest extends GWTTestCase {
 
     // Adding widget to end of tree, widgets still have their parents set
     // correctly.
-    TreeItem a = new TreeItem("a");
-    TreeItem b = new TreeItem("b");
-    TreeItem c = new TreeItem("c");
+    TreeItem a = new TreeItem(SafeHtmlUtils.fromSafeConstant("a"));
+    TreeItem b = new TreeItem(SafeHtmlUtils.fromSafeConstant("b"));
+    TreeItem c = new TreeItem(SafeHtmlUtils.fromSafeConstant("c"));
     TreeItem d = new TreeItem();
     TreeItem e = new TreeItem();
     Label dLabel = new Label("d");

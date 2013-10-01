@@ -289,21 +289,10 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    * Constructs a tree item with the given HTML.
    *
    * @param html the item's HTML
-   * @deprecated use {@link #TreeItem(SafeHtml)} instead
-   */
-  @Deprecated
-  public TreeItem(String html) {
-    this();
-    setHTML(html);
-  }
-
-  /**
-   * Constructs a tree item with the given HTML.
-   *
-   * @param html the item's HTML
    */
   public TreeItem(SafeHtml html) {
-    this(html.asString());
+    this();
+    setHTML(html);
   }
 
   /**
@@ -332,20 +321,6 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     if (isRoot) {
       initChildren();
     }
-  }
-
-  /**
-   * Adds a child tree item containing the specified html.
-   *
-   * @param itemHtml the text to be added
-   * @return the item that was added
-   * @deprecated use {@link #addItem(SafeHtml)} instead
-   */
-  @Deprecated
-  public TreeItem addItem(String itemHtml) {
-    TreeItem ret = new TreeItem(itemHtml);
-    addItem(ret);
-    return ret;
   }
 
   /**
@@ -512,24 +487,6 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
    */
   public Widget getWidget() {
     return widget;
-  }
-
-  /**
-   * Inserts a child tree item at the specified index containing the specified
-   * html.
-   *
-   * @param beforeIndex the index where the item will be inserted
-   * @param itemHtml the html that the item will contain
-   * @return the item that was added
-   * @throws IndexOutOfBoundsException if the index is out of range
-   * @deprecated use {@link #insertItem(int, SafeHtml)} instead
-   */
-  @Deprecated
-  public TreeItem insertItem(int beforeIndex, String itemHtml)
-      throws IndexOutOfBoundsException {
-    TreeItem ret = new TreeItem(itemHtml);
-    insertItem(beforeIndex, ret);
-    return ret;
   }
 
   /**

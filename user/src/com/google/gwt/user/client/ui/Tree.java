@@ -298,18 +298,6 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   /**
    * Adds a simple tree item containing the specified html.
    *
-   * @param itemHtml the text of the item to be added
-   * @return the item that was added
-   * @deprecated use {@link #addItem(SafeHtml)} instead
-   */
-  @Deprecated
-  public TreeItem addItem(String itemHtml) {
-    return root.addItem(itemHtml);
-  }
-
-  /**
-   * Adds a simple tree item containing the specified html.
-   *
    * @param itemHtml the html of the item to be added
    * @return the item that was added
    */
@@ -515,21 +503,6 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   @Override
   public int getTabIndex() {
     return FocusPanel.impl.getTabIndex(focusable);
-  }
-
-  /**
-   * Inserts a child tree item at the specified index containing the specified
-   * html.
-   *
-   * @param beforeIndex the index where the item will be inserted
-   * @param itemHtml the html to be added
-   * @return the item that was added
-   * @throws IndexOutOfBoundsException if the index is out of range
-   * @deprecated use {@link #insertItem(int, SafeHtml)} instead
-   */
-  @Deprecated
-  public TreeItem insertItem(int beforeIndex, String itemHtml) {
-    return root.insertItem(beforeIndex, itemHtml);
   }
 
   /**
