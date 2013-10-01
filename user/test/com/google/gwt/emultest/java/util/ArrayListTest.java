@@ -64,6 +64,39 @@ public class ArrayListTest extends ListTestBase {
       Integer elem = (Integer) l.get(i);
       assertEquals(i + 2, elem.intValue());
     }
+    l.removeRange(0, 8);
+
+    // Tests on empty ArrayList
+    assertEquals(0, l.size());
+    // removeRange(0, 0) is a special case in Java; it is always a no-op
+    l.removeRange(0, 0);
+
+    try {
+      // (1, 1) is not a special case and undergoes bounds checking
+      l.removeRange(1, 1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      l.removeRange(0, 1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    // Tests on 1-element ArrayList
+    l.add(new Integer(1));
+    assertEquals(1, l.size());
+    l.removeRange(0, 0); // in-bounds no-op
+    l.removeRange(1, 1); // in-bounds no-op
+    try {
+      l.removeRange(2, 2); // out-of-bounds no-op
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    l.removeRange(0, 1);
+    assertEquals(0, l.size());
   }
 
   @Override
