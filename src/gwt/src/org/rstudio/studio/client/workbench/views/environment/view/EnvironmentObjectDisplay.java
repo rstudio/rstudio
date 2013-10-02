@@ -40,6 +40,8 @@ public abstract class EnvironmentObjectDisplay
       public void setSortColumn(int col);
       public void toggleAscendingSort();
       boolean getAscendingSort();
+      boolean getShowInternalFunctions();
+      void setShowInternalFunctions(boolean hide);
       public void fillObjectContents(RObject object, Operation onCompleted);
    }
 

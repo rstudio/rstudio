@@ -1,16 +1,17 @@
 @def callFramePanelMargin 12px;
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 .frameList
 {
-    box-sizing: border-box;
-    padding-left: 15px;
-    padding-right: 15px;
+   box-sizing: border-box;
+   padding-left: 15px;
+   padding-right: 15px;
 }
 
 .framePanel
 {
-    padding-bottom: callFramePanelMargin;
-    padding-top: 3px;
+   padding-bottom: callFramePanelMargin;
+   padding-top: 3px;
 }
 
 .executionArrow
@@ -24,4 +25,12 @@
 {
 	margin-top: 2px;
 	margin-left: 10px;
+}
+
+.toggleHide
+{
+	font-family: proportionalFont;
+	text-align: right;
+	font-weight: normal;
+	margin-right: 10px;
 }

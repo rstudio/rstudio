@@ -144,7 +144,8 @@
     return(paste(lapply(args, function(arg) {
         if (is.language(arg))
             capture.output(print(arg))
-        else if (is.environment(arg))
+        else if (is.environment(arg) || 
+                 is.function(arg))
             deparse(substitute(arg))
         else
             as.character(arg)
@@ -289,8 +290,17 @@
                    paste(len, " elements, ", sep="")
                 else 
                    ""
-         val <- paste("Large ", class, " (", len, 
-                      capture.output(print(size, units="auto")), ")", sep="")
+         # data frames are likely to be large, but a summary is still helpful
+         if (is.data.frame(obj))
+         {
+            val <- "NO_VALUE"
+            desc <- .rs.valueDescription(obj)
+         }
+         else
+         {
+            val <- paste("Large ", class, " (", len, 
+                         capture.output(print(size, units="auto")), ")", sep="")
+         }
          contents_deferred <- TRUE
       }
       else
@@ -383,9 +393,11 @@
    while (!identical(env, emptyenv()))
    {
       envName <- environmentName(env)
+
       # hide the RStudio internal tools environment and the autoloads
-      # environment
-      if (envName != "tools:rstudio" &&
+      # environment, and any environment that doesn't have a name
+      if (nchar(envName) > 0 &&
+          envName != "tools:rstudio" &&
           envName != "Autoloads")
       {
          envs[[length(envs)+1]] <-

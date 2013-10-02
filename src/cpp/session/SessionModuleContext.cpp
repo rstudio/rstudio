@@ -64,6 +64,7 @@
 
 #include <session/SessionContentUrls.hpp>
 
+#include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
