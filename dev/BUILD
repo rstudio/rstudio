@@ -177,8 +177,14 @@ java_library(
             "core/src/com/google/gwt/core/ext/**/*.java",
             "core/src/com/google/gwt/core/linker/**/*.java",
             "core/src/com/google/gwt/dev/About.java",
+            "core/src/com/google/gwt/dev/CompilerContext.java",
+            "core/src/com/google/gwt/dev/CompileTaskOptions.java",
+            "core/src/com/google/gwt/dev/CompileTaskOptionsImpl.java",
             "core/src/com/google/gwt/dev/GwtVersion.java",
             "core/src/com/google/gwt/dev/Permutation.java",
+            "core/src/com/google/gwt/dev/PrecompileTaskOptions.java",
+            "core/src/com/google/gwt/dev/PrecompileTaskOptionsImpl.java",
+            "core/src/com/google/gwt/dev/PrecompilationResult.java",
             "core/src/com/google/gwt/dev/asm/**/*.java",
             "core/src/com/google/gwt/dev/cfg/**/*.java",
             "core/src/com/google/gwt/dev/javac/**/*.java",
@@ -271,7 +277,7 @@ java_library(
 genrule(
     name = "interop-annotations-gwtxml",
     outs = ["Gwt-dev-interop-annotations.gwt.xml"],
-    cmd = "$(ECHO) '<module></module>' > $(@)",
+    cmd = "$(ECHO) '<module><source path=\"client\" /></module>' > $(@)",
 )
 
 # All test code in dev.
