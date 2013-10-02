@@ -252,11 +252,11 @@ void registerFinalizer(SEXP s, R_CFinalizer_t fun)
    R_RegisterCFinalizer(s, fun);
 }
 
-SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect)
+SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* pProtect)
 {
    SEXP s = R_MakeExternalPtr(ptr, R_NilValue, R_NilValue);
-   if (protect)
-      protect->add(s);
+   if (pProtect)
+      pProtect->add(s);
    registerFinalizer(s, fun);
    return s;
 }

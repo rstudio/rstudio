@@ -248,6 +248,8 @@ json::Value ClientState::getProjectPersistent(std::string scope,
    }
    else
    {
+      if (!json::isType<core::json::Object>(i->second))
+         return json::Value();
       json::Object& scopeObject = (i->second).get_obj();
       return scopeObject[name];
    }

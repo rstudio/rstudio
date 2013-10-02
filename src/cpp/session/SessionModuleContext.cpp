@@ -452,13 +452,6 @@ Error initialize()
    methodDef12.numArgs = 1;
    r::routines::addCallMethod(methodDef12);
 
-   // register rs_registerShinyFunction
-   R_CallMethodDef methodDef13;
-   methodDef13.name = "rs_registerShinyFunction" ;
-   methodDef13.fun = (DL_FUNC) modules::breakpoints::rs_registerShinyFunction;
-   methodDef13.numArgs = 1;
-   r::routines::addCallMethod(methodDef13);
-
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
 

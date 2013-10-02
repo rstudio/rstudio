@@ -54,7 +54,7 @@ namespace
 int s_maxShinyFunctionId = 0;
 
 // Represents a currently running Shiny function.
-class ShinyFunction
+class ShinyFunction : boost::noncopyable
 {
 public:
    ShinyFunction(SEXP expr, const std::string& name, SEXP where):
@@ -84,7 +84,7 @@ public:
       }
    }
 
-   bool contains(std::string filename, int line)
+   bool contains(std::string filename, int line) const
    {
       if (!(line >= firstLine_ && line <= lastLine_))
          return false;
@@ -126,7 +126,7 @@ private:
 // rs_registerShinyFunction for an explanation of how this memory is managed)
 std::vector<boost::shared_ptr<ShinyFunction> > s_shinyFunctions;
 
-class Breakpoint
+class Breakpoint : boost::noncopyable
 {
 public:
    int type;
@@ -150,9 +150,10 @@ std::vector<boost::shared_ptr<Breakpoint> > s_breakpoints;
 // Returns the Shiny function that contains the given line, if any.
 // Finds the smallest (innermost) function in the case where more than one
 // expression encloses the line.
-ShinyFunction* findShinyFunction(std::string filename, int line)
+boost::shared_ptr<ShinyFunction> findShinyFunction(std::string filename,
+                                                   int line)
 {
-   ShinyFunction* ps = NULL;
+   boost::shared_ptr<ShinyFunction> bestPsf;
    int bestSize = INT_MAX;
    BOOST_FOREACH(boost::shared_ptr<ShinyFunction> psf, s_shinyFunctions)
    {
@@ -160,11 +161,11 @@ ShinyFunction* findShinyFunction(std::string filename, int line)
           psf->getSize() < bestSize)
       {
          bestSize = psf->getSize();
-         ps = psf.get();
+         bestPsf = psf;
       }
    }
 
-   return ps;
+   return bestPsf;
 }
 
 boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
@@ -176,7 +177,7 @@ boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
 
 }
 
-std::vector<int> getShinyBreakpointLines(ShinyFunction& sf)
+std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)
 {
    std::vector<int> lines;
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
@@ -344,34 +345,6 @@ std::vector<boost::shared_ptr<Breakpoint> >::iterator posOfBreakpointId(int id)
    return psbi;
 }
 
-// Initializes the set of breakpoints the server knows about by populating it
-// from client state.
-Error initBreakpoints()
-{
-   try
-   {
-      json::Value breakpointStateValue =
-         r::session::clientState().getProjectPersistent("debug-breakpoints",
-                                                        "debugBreakpointsState");
-      if (!breakpointStateValue.is_null())
-      {
-         json::Object breakpointState = breakpointStateValue.get_obj();
-         json::Array breakpointArray = breakpointState["breakpoints"].get_array();
-         s_breakpoints.clear();
-         BOOST_FOREACH(json::Value bp, breakpointArray)
-         {
-            s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
-         }
-      }
-   }
-   catch (...)
-   {
-      // OK if we fail to get the breakpoints here--the client may have not set
-      // any yet
-   }
-   return Success();
-}
-
 // Called by the R garbage collector when a Shiny function is cleaned up;
 // we use this as a trigger to clean up our own references to the function.
 void unregisterShinyFunction(SEXP ptr)
@@ -397,51 +370,6 @@ void unregisterShinyFunction(SEXP ptr)
    }
    r::sexp::clearExternalPtr(ptr);
 }
-
-// Called by the client whenever a top-level breakpoint is set or cleared;
-// updates breakpoints on the corresponding Shiny functions, if any.
-Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse*)
-{
-   json::Array breakpointArr;
-   bool set = false;
-   Error error = json::readParams(request.params, &breakpointArr, &set);
-   if (error)
-      return error;
-
-   BOOST_FOREACH(json::Value bp, breakpointArr)
-   {
-      boost::shared_ptr<Breakpoint> breakpoint
-            (breakpointFromJson(bp.get_obj()));
-      std::vector<boost::shared_ptr<Breakpoint> >::iterator psbi =
-            posOfBreakpointId(breakpoint->id);
-
-      // Erase anything we already know about this breakpoint
-      if (psbi != s_breakpoints.end())
-         s_breakpoints.erase(psbi);
-
-      // If setting or updating the brekapoint, reintroduce it
-      if (set)
-         s_breakpoints.push_back(breakpoint);
-
-      // Is this breakpoint associated with a running Shiny function?
-      ShinyFunction* psf = findShinyFunction(breakpoint->path,
-                                             breakpoint->lineNumber);
-      if (psf != NULL)
-      {
-         // Collect all the breakpoints associated with this function and
-         // update the function's state
-         std::vector<int> lines = getShinyBreakpointLines(*psf);
-         r::exec::RFunction(".rs.setShinyBreakpoints", psf->getName(),
-                                                       psf->getWhere(),
-                                                       lines).call();
-      }
-   }
-
-   return Success();
-}
-
-} // anonymous namespace
 
 // Called by Shiny (through a debug hook set up in tools:rstudio) to register
 // a Shiny function for debugging.
@@ -494,6 +422,87 @@ void rs_registerShinyFunction(SEXP params)
       r::exec::RFunction(".rs.setShinyBreakpoints", name, where, lines).call();
    }
 }
+
+// Initializes the set of breakpoints the server knows about by populating it
+// from client state (any of these may become a Shiny breakpoint at app boot);
+// registers the callback from Shiny into RStudio to register a running function
+Error initBreakpoints()
+{
+   // Register rs_registerShinyFunction; called from registerShinyDebugHook
+   R_CallMethodDef registerShiny;
+   registerShiny.name = "rs_registerShinyFunction" ;
+   registerShiny.fun = (DL_FUNC)rs_registerShinyFunction;
+   registerShiny.numArgs = 1;
+   r::routines::addCallMethod(registerShiny);
+
+   // Load breakpoints from client state
+   json::Value breakpointStateValue =
+      r::session::clientState().getProjectPersistent("debug-breakpoints",
+                                                     "debugBreakpointsState");
+   if (!breakpointStateValue.is_null() &&
+       json::isType<core::json::Object>(breakpointStateValue))
+   {
+      json::Object breakpointState = breakpointStateValue.get_obj();
+      json::Array breakpointArray = breakpointState["breakpoints"].get_array();
+      s_breakpoints.clear();
+      BOOST_FOREACH(json::Value bp, breakpointArray)
+      {
+         if (json::isType<core::json::Object>(bp))
+         {
+            s_breakpoints.push_back(breakpointFromJson(bp.get_obj()));
+         }
+      }
+   }
+
+   return Success();
+}
+
+
+// Called by the client whenever a top-level breakpoint is set or cleared;
+// updates breakpoints on the corresponding Shiny functions, if any.
+Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse*)
+{
+   json::Array breakpointArr;
+   bool set = false;
+   Error error = json::readParams(request.params, &breakpointArr, &set);
+   if (error)
+      return error;
+
+   BOOST_FOREACH(json::Value bp, breakpointArr)
+   {
+      boost::shared_ptr<Breakpoint> breakpoint
+            (breakpointFromJson(bp.get_obj()));
+      std::vector<boost::shared_ptr<Breakpoint> >::iterator psbi =
+            posOfBreakpointId(breakpoint->id);
+
+      // Erase anything we already know about this breakpoint
+      if (psbi != s_breakpoints.end())
+         s_breakpoints.erase(psbi);
+
+      // If setting or updating the brekapoint, reintroduce it
+      if (set)
+         s_breakpoints.push_back(breakpoint);
+
+      // Is this breakpoint associated with a running Shiny function?
+      boost::shared_ptr<ShinyFunction> psf =
+            findShinyFunction(breakpoint->path, breakpoint->lineNumber);
+      if (psf)
+      {
+         // Collect all the breakpoints associated with this function and
+         // update the function's state
+         std::vector<int> lines = getShinyBreakpointLines(*psf);
+         r::exec::RFunction(".rs.setShinyBreakpoints", psf->getName(),
+                                                       psf->getWhere(),
+                                                       lines).call();
+      }
+   }
+
+   return Success();
+}
+
+} // anonymous namespace
+
 
 json::Value debugStateAsJson()
 {
