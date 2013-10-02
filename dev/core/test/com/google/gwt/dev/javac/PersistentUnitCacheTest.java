@@ -248,7 +248,8 @@ public class PersistentUnitCacheTest extends TestCase {
      * Create a cache file that has the right filename, but the wrong kind of
      * object in it.
      */
-    File errorFile = new File(unitCacheDir, PersistentUnitCache.CACHE_FILE_PREFIX + "12345");
+    File errorFile = new File(unitCacheDir,
+        PersistentUnitCache.CURRENT_VERSION_CACHE_FILE_PREFIX + "12345");
     ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(errorFile));
     os.writeObject(toSerialize);
     os.close();
