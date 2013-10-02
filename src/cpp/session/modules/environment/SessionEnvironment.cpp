@@ -650,7 +650,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    RCNTXT* pRContext = NULL;
 
    // If we were debugging but there's no longer a browser on the context stack,
-   // switch back to the top level; otherwise, examine the stack find the
+   // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
    if (*pContextDepth > 0 && !inBrowseContext())
    {
@@ -667,8 +667,6 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
        depth != *pContextDepth ||
        pRContext != *pCurrentContext)
    {
-      json::Object varJson;
-
       // if we appear to be switching into debug mode, make sure there's a
       // browser call somewhere on the stack. if there isn't, then we're
       // probably just waiting for user input inside a function (e.g. scan());

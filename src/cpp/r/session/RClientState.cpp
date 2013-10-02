@@ -25,8 +25,6 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
-#include "../json/spirit/json_spirit_utils.h"
-
 using namespace core;
 
 namespace r {

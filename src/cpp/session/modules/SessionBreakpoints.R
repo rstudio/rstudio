@@ -469,6 +469,23 @@
    # Get the steps of the function corresponding to the lines on
    # which breakpoints are to be set, and set breakpoints there
    steps <- .rs.getFunctionSteps(env$fun, "fun", lines)
+
+   # The Shiny server function gets special treatment. In this specific
+   # function, we don't want to set any breakpoints in sub-expressions, so
+   # remove any steps above that include substeps
+   isShinyServer <- attr(env$fun, "shinyServerFunction")
+   if (!is.null(isShinyServer) && isShinyServer)
+   {
+      for (i in length(steps):1)
+      {
+         # getFunctionSteps returns a comma-delimited list of sub-steps, so if
+         # the steps contains a comma, it contains a substep.
+         if (length(grep(",", steps[[i]]$at, fixed = TRUE)) > 0)
+         {
+            steps[[i]] <- NULL
+         }
+      }
+   }
    suppressWarnings(.rs.setFunctionBreakpoints(
          "fun", env, lapply(steps, function(step) { step$at } )))
 

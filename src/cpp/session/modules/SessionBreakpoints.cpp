@@ -128,13 +128,11 @@ public:
    int lineNumber;
    int id;
    std::string path;
-   bool bound;
    Breakpoint(int typeIn, int lineNumberIn, int idIn, std::string pathIn):
       type(typeIn),
       lineNumber(lineNumberIn),
       id(idIn),
-      path(pathIn),
-      bound(false)
+      path(pathIn)
    {}
 };
 
@@ -171,10 +169,7 @@ std::vector<int> getShinyBreakpointLines(ShinyFunction& sf)
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
       if (sf.contains(pbp->path, pbp->lineNumber))
-      {
          lines.push_back(pbp->lineNumber);
-         pbp->bound = true;
-      }
    }
    return lines;
 }
@@ -336,10 +331,9 @@ std::vector<boost::shared_ptr<Breakpoint> >::iterator posOfBreakpointId(int id)
    return psbi;
 }
 
-// Called on init and when we need an up-to-date list of breakpoints from the
-// client--just slurps information from the client's persisted store of
-// breakpoints.
-void syncClientBreakpoints()
+// Initializes the set of breakpoints the server knows about by populating it
+// from client state.
+Error initBreakpoints()
 {
    try
    {
@@ -362,11 +356,6 @@ void syncClientBreakpoints()
       // OK if we fail to get the breakpoints here--the client may have not set
       // any yet
    }
-}
-
-Error initBreakpoints()
-{
-   syncClientBreakpoints();
    return Success();
 }
 
@@ -396,6 +385,8 @@ void unregisterShinyFunction(SEXP ptr)
    r::sexp::clearExternalPtr(ptr);
 }
 
+// Called by the client whenever a top-level breakpoint is set or cleared;
+// updates breakpoints on the corresponding Shiny functions, if any.
 Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse*)
 {
