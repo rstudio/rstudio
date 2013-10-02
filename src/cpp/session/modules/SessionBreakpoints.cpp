@@ -98,6 +98,11 @@ public:
       return id_;
    }
 
+   int getSize()
+   {
+      return lastLine_ - firstLine_;
+   }
+
    std::string getName()
    {
       return name_;
@@ -142,16 +147,24 @@ public:
 // synchronously when Shiny creates an anonymous function object.
 std::vector<boost::shared_ptr<Breakpoint> > s_breakpoints;
 
+// Returns the Shiny function that contains the given line, if any.
+// Finds the smallest (innermost) function in the case where more than one
+// expression encloses the line.
 ShinyFunction* findShinyFunction(std::string filename, int line)
 {
+   ShinyFunction* ps = NULL;
+   int bestSize = INT_MAX;
    BOOST_FOREACH(boost::shared_ptr<ShinyFunction> psf, s_shinyFunctions)
    {
-      if (psf->contains(filename, line))
-         return psf.get();
+      if (psf->contains(filename, line) &&
+          psf->getSize() < bestSize)
+      {
+         bestSize = psf->getSize();
+         ps = psf.get();
+      }
    }
 
-   // Didn't find a match
-   return NULL;
+   return ps;
 }
 
 boost::shared_ptr<Breakpoint> breakpointFromJson(json::Object& obj)
