@@ -293,7 +293,10 @@ bool isalpha(wchar_t c)
 
 bool isalnum(wchar_t c)
 {
-   static std::vector<bool> lookup = initAlnumLookupTable();
+   static std::vector<bool> lookup;
+   if (lookup.empty())
+      lookup = initAlnumLookupTable();
+
    if (c > 0xFFFF)
       return false; // This function only supports BMP
    return lookup.at(c);
