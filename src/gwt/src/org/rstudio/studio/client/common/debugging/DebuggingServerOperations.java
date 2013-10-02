@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.JsArray;
 
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -59,13 +60,8 @@ public interface DebuggingServerOperations
          int type,
          ServerRequestCallback<Void> requestCallback);
    
-   public void setBreakpointsDirty(
-         ServerRequestCallback<Void> requestCallback);
-   
-   public void setShinyBreakpoint(
-         String fileName,
-         int lineNumber,
-         int id,
+   public void updateShinyBreakpoints(
+         ArrayList<Breakpoint> breakpoints,
          boolean set, 
          ServerRequestCallback<Void> requestCallback);
 }

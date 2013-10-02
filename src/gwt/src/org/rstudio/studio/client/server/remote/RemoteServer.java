@@ -39,6 +39,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -3028,25 +3029,20 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void setBreakpointsDirty(ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, 
-            SET_BREAKPOINTS_DIRTY, 
-            requestCallback);
-   }
-
-   @Override
-   public void setShinyBreakpoint(String fileName, int lineNumber, int id,
+   public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
          boolean set, ServerRequestCallback<Void> requestCallback)
    {
+      JSONArray bps = new JSONArray();
+      for (int i = 0; i < breakpoints.size(); i++)
+      {
+         bps.set(i, new JSONObject(breakpoints.get(i)));
+      }
+      
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(fileName));
-      params.set(1, new JSONNumber(lineNumber));
-      params.set(2, new JSONNumber(id));
-      params.set(3, JSONBoolean.getInstance(set));
-
+      params.set(0, bps);
+      params.set(1, JSONBoolean.getInstance(set));
       sendRequest(RPC_SCOPE, 
-            SET_SHINY_BREAKPOINT,
+            UPDATE_SHINY_BREAKPOINTS,
             params, 
             requestCallback);
    }
@@ -3313,13 +3309,13 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
-   private static final String SET_BREAKPOINTS_DIRTY = "set_breakpoints_dirty";
-   private static final String SET_SHINY_BREAKPOINT = "set_shiny_breakpoint";
+   private static final String UPDATE_SHINY_BREAKPOINTS = "update_shiny_breakpoints";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
+
 
 
 }

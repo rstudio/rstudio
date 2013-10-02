@@ -137,28 +137,9 @@ public class BreakpointManager
             Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
       
-      // A top-level breakpoint might need to be a Shiny breakpoint. Ask the
-      // server if it should.
-      server_.getFunctionState("toplevel", path, lineNumber,
-            new ServerRequestCallback<FunctionState>()
-      {
-         @Override
-         public void onResponseReceived(FunctionState state)
-         {
-            if (state.isShinyFunction())
-            {
-               breakpoint.markAsShinyBreakpoint(state.getShinyFunctionId());
-               // Shiny breakpoints are managed on the server--if this is a
-               // Shiny breakpoint, set it immediately
-               setShinyBreakpoint(breakpoint, true);
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
+      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      bps.add(breakpoint);
+      server_.updateShinyBreakpoints(bps, true, new VoidServerRequestCallback());
 
       return breakpoint;
    }
@@ -243,13 +224,17 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoints_.remove(breakpoint);
-         if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
+         if (breakpoint.getState() == Breakpoint.STATE_ACTIVE &&
+             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
          {
             setFunctionBreakpoints(new FileFunction(breakpoint));
          }
-         if (breakpoint.isShinyBreakpoint())
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
          {
-            setShinyBreakpoint(breakpoint, false);
+            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+            bps.add(breakpoint);
+            server_.updateShinyBreakpoints(
+                  bps, false, new VoidServerRequestCallback());
          }
       }
       onBreakpointAddOrRemove();
@@ -360,16 +345,6 @@ public class BreakpointManager
                 state.addPersistedBreakpoint(breakpoint);
              }
              breakpointStateDirty_ = false;
-
-             // Let the server know we've updated the breakpoint list. 
-             server_.setBreakpointsDirty(new ServerRequestCallback<Void>()
-                  {
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        // nothing we can do here
-                     }
-                  });
              return state.cast();
           }
    
@@ -785,15 +760,6 @@ public class BreakpointManager
       commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
    }
    
-   private void setShinyBreakpoint(Breakpoint breakpoint, boolean set)
-   {
-      server_.setShinyBreakpoint(breakpoint.getPath(),
-                                 breakpoint.getLineNumber(),
-                                 breakpoint.getBreakpointId(),
-                                 set,
-                                 new VoidServerRequestCallback());
-   }
-     
    // Private classes ---------------------------------------------------------
    
    class FileFunction implements Comparable<FileFunction>
