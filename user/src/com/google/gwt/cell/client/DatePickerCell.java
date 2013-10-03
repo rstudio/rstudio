@@ -170,6 +170,13 @@ public class DatePickerCell extends AbstractEditableCell<Date, Date> {
     });
   }
 
+  /**
+   * Returns the underlying {@link DatePicker} widget used by this cell.
+   */
+  public DatePicker getDatePicker() {
+    return datePicker;
+  }
+
   @Override
   public boolean isEditing(Context context, Element parent, Date value) {
     return lastKey != null && lastKey.equals(context.getKey());
