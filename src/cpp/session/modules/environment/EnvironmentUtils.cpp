@@ -118,6 +118,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
       varJson["length"] = 0;
+      varJson["contents_deferred"] = false;
    }
    // For all other value types, construct the definition normally.
    else

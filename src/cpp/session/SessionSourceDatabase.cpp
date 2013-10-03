@@ -159,6 +159,46 @@ Error getProperties(const std::string& path, json::Object* pProperties)
    return Success();
 }
 
+json::Value pathToProjectPath(const std::string& path)
+{
+   // no project
+   projects::ProjectContext& projectContext = projects::projectContext();
+   if (!projectContext.hasProject())
+      return json::Value();
+
+   // no path
+   if (path.empty())
+      return json::Value();
+
+   // return relative path if we are within the project directory
+   FilePath filePath = module_context::resolveAliasedPath(path);
+   if (filePath.isWithin(projectContext.directory()))
+      return filePath.relativePath(projectContext.directory());
+   else
+      return json::Value();
+}
+
+std::string pathFromProjectPath(json::Value projPathJson)
+{
+   // no project
+   projects::ProjectContext& projectContext = projects::projectContext();
+   if (!projectContext.hasProject())
+      return std::string();
+
+   // no proj path
+   std::string projPath = !projPathJson.is_null() ? projPathJson.get_str() :
+                                                    std::string();
+   if (projPath.empty())
+      return std::string();
+
+   // interpret path relative to project directory
+   FilePath filePath = projectContext.directory().childPath(projPath);
+   if (filePath.exists())
+      return module_context::createAliasedPath(filePath);
+   else
+      return std::string();
+}
+
 }  // anonymous namespace
 
 SourceDocument::SourceDocument(const std::string& type)
@@ -320,6 +360,12 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value path = docJson["path"];
       path_ = !path.is_null() ? path.get_str() : std::string();
 
+      // if we have a project_path field then it supercedes the path field
+      // (since it would correctly survive a moved project folder)
+      std::string projPath = pathFromProjectPath(docJson["project_path"]);
+      if (!projPath.empty())
+         path_ = projPath;
+
       json::Value type = docJson["type"];
       type_ = !type.is_null() ? type.get_str() : std::string();
 
@@ -358,6 +404,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
    jsonDoc["path"] = !path().empty() ? path_ : json::Value();
+   jsonDoc["project_path"] = pathToProjectPath(path_);
    jsonDoc["type"] = !type().empty() ? type_ : json::Value();
    jsonDoc["hash"] = hash();
    jsonDoc["contents"] = contents();

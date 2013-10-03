@@ -100,6 +100,16 @@ SEXP sourceRefsOfContext(const RCNTXT* pContext)
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
 }
 
+void getShinyFunctionLabel(const RCNTXT* pContext, std::string* label)
+{
+   SEXP s = r::sexp::getAttrib(
+            getOriginalFunctionCallObject(pContext), "_rs_shinyDebugLabel");
+   if (s != NULL && TYPEOF(s) != NILSXP)
+   {
+      r::sexp::extract(s, label);
+   }
+}
+
 bool hasSourceRefs(const RCNTXT* pContext)
 {
    return isValidSrcref(sourceRefsOfContext(pContext));
@@ -310,6 +320,11 @@ json::Array callFramesAsJson()
             LOG_ERROR(error);
          }
          varFrame["argument_list"] = error ? "" : argList;
+
+         // If this is a Shiny function, provide its label
+         std::string shinyLabel;
+         getShinyFunctionLabel(pRContext, &shinyLabel);
+         varFrame["shiny_function_label"] = shinyLabel;
 
          listFrames.push_back(varFrame);
       }
@@ -632,15 +647,26 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 {
    int depth = 0;
    SEXP environmentTop = NULL;
-   RCNTXT* pRContext =
-         getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
+   RCNTXT* pRContext = NULL;
+
+   // If we were debugging but there's no longer a browser on the context stack,
+   // switch back to the top level; otherwise, examine the stack and find the
+   // first function there running user code.
+   if (*pContextDepth > 0 && !inBrowseContext())
+   {
+      pRContext = r::getGlobalContext();
+      environmentTop = R_GlobalEnv;
+   }
+   else
+   {
+       pRContext =
+             getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
+   }
 
    if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        pRContext != *pCurrentContext)
    {
-      json::Object varJson;
-
       // if we appear to be switching into debug mode, make sure there's a
       // browser call somewhere on the stack. if there isn't, then we're
       // probably just waiting for user input inside a function (e.g. scan());
@@ -744,6 +770,49 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+// Return the contents of the given object. Called on-demand by the client when
+// the object is large enough that we don't want to get its contents
+// immediately (i.e. as part of environmentListAsJson)
+Error getObjectContents(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+
+{
+   std::string objectName;
+   r::sexp::Protect protect;
+   SEXP objContents;
+   json::Value contents;
+   Error error = json::readParam(request.params, 0, &objectName);
+   if (error)
+      return error;
+   error = r::exec::RFunction(".rs.getObjectContents",
+                              objectName,
+                              s_environmentMonitor.getMonitoredEnvironment())
+                              .call(&objContents, &protect);
+   if (error)
+      return error;
+
+   error = r::json::jsonValueFromObject(objContents, &contents);
+   if (error)
+      return error;
+
+   json::Object result;
+   result["contents"] = contents;
+   pResponse->setResult(result);
+   return Success();
+}
+
+// Called by the client to force a re-query of the currently monitored
+// context depth and environment.
+Error requeryContext(boost::shared_ptr<int> pContextDepth,
+                     boost::shared_ptr<RCNTXT*> pCurrentContext,
+                     const json::JsonRpcRequest&,
+                     json::JsonRpcResponse*)
+{
+   onConsolePrompt(pContextDepth, pCurrentContext);
+   return Success();
+}
+
 } // anonymous namespace
 
 json::Value environmentStateAsJson()
@@ -784,6 +853,9 @@ Error initialize()
    json::JsonRpcFunction setEnvName =
          boost::bind(setEnvironment, pContextDepth, pCurrentContext,
                      _1, _2);
+   json::JsonRpcFunction requeryCtx =
+         boost::bind(requeryContext, pContextDepth, pCurrentContext,
+                     _1, _2);
 
    initEnvironmentMonitoring();
 
@@ -798,6 +870,8 @@ Error initialize()
       (bind(registerRpcMethod, "remove_objects", removeObjects))
       (bind(registerRpcMethod, "remove_all_objects", removeAllObjects))
       (bind(registerRpcMethod, "get_environment_state", getEnv))
+      (bind(registerRpcMethod, "get_object_contents", getObjectContents))
+      (bind(registerRpcMethod, "requery_context", requeryCtx))
       (bind(sourceModuleRFile, "SessionEnvironment.R"));
 
    return initBlock.execute();

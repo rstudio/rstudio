@@ -42,6 +42,7 @@
 
 .console .prompt {
    white-space: pre;
+   -webkit-user-select: text;
 }
 
 .completionPopup {

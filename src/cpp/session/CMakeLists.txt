@@ -64,6 +64,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionGit.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
+   modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
@@ -97,6 +98,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
@@ -109,6 +111,7 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
+   projects/SessionProjectFirstRun.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
 )
 

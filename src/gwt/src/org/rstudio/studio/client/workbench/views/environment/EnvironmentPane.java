@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
@@ -34,11 +35,13 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjectsObserver;
@@ -65,7 +68,8 @@ public class EnvironmentPane extends WorkbenchPane
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
-                          Session session)
+                          Session session,
+                          UIPrefs prefs)
    {
       super("Environment");
       
@@ -73,6 +77,7 @@ public class EnvironmentPane extends WorkbenchPane
       eventBus_ = eventBus;
       server_ = serverOperations;
       globalDisplay_ = globalDisplay;
+      prefs_ = prefs;
 
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
@@ -358,6 +363,39 @@ public class EnvironmentPane extends WorkbenchPane
       executeFunctionForObject("View", objectName);
    }
    
+   @Override
+   public boolean getShowInternalFunctions()
+   {
+      return prefs_.showInternalFunctionsInTraceback().getValue();
+   }
+
+   @Override
+   public void setShowInternalFunctions(boolean show)
+   {
+      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
+   }
+
+   public void fillObjectContents(final RObject object, 
+                                  final Operation onCompleted)
+   {
+      server_.getObjectContents(object.getName(), 
+            new ServerRequestCallback<ObjectContents>()
+      {
+         @Override
+         public void onResponseReceived(ObjectContents contents)
+         {
+            object.setDeferredContents(contents.getContents());
+            onCompleted.execute();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            onCompleted.execute();
+         }
+      });
+   }
+   
    // Private methods ---------------------------------------------------------
 
    private void executeFunctionForObject(String function, String objectName)
@@ -531,6 +569,7 @@ public class EnvironmentPane extends WorkbenchPane
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
+   private final UIPrefs prefs_;
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;

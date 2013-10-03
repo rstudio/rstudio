@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -54,11 +55,14 @@ import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
@@ -145,6 +149,20 @@ public class EnvironmentPresenter extends BasePresenter
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
       session_ = session;
+      requeryContextTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            server_.requeryContext(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            });
+         }
+      };
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -181,6 +199,7 @@ public class EnvironmentPresenter extends BasePresenter
                   event.useProvidedSource(),
                   event.getFunctionCode());
             setViewFromEnvironmentList(event.getEnvironmentList());
+            requeryContextTimer_.cancel();
          }
       });
       
@@ -215,6 +234,27 @@ public class EnvironmentPresenter extends BasePresenter
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
                openOrUpdateFileBrowsePoint(true);
+            }
+            requeryContextTimer_.cancel();
+         }
+      });
+      
+      eventBus.addHandler(ConsoleWriteInputEvent.TYPE,
+            new ConsoleWriteInputHandler()
+      {
+         @Override
+         public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+         {
+            String input = event.getInput().trim();
+            if (input.equals(DebugCommander.STOP_COMMAND) || 
+                input.equals(DebugCommander.NEXT_COMMAND) || 
+                input.equals(DebugCommander.CONTINUE_COMMAND))
+            {
+               // When a debug command is issued, we expect to hear back from
+               // the server--either a context depth change or browser line
+               // change event. If neither has occurred after some reasonable
+               // time, poll the server once for its current status.
+               requeryContextTimer_.schedule(500);
             }
          }
       });
@@ -779,4 +819,5 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean useCurrentBrowseSource_;
    private String currentBrowseSource_;
    private String environmentName_;
+   private Timer requeryContextTimer_;
 }

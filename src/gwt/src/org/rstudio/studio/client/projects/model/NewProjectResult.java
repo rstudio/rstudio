@@ -22,7 +22,8 @@ public class NewProjectResult
                            boolean createGitRepo,
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions,
-                           NewPackageOptions newPackageOptions)
+                           NewPackageOptions newPackageOptions,
+                           NewShinyAppOptions newShinyAppOptions)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
@@ -30,6 +31,7 @@ public class NewProjectResult
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
       newPackageOptions_ = newPackageOptions;
+      newShinyAppOptions_ = newShinyAppOptions;
    }
    
    public String getProjectFile()
@@ -67,6 +69,10 @@ public class NewProjectResult
       return newPackageOptions_;
    }
    
+   public NewShinyAppOptions getNewShinyAppOptions()
+   {
+      return newShinyAppOptions_;
+   }
    
    private final boolean createGitRepo_;
    private boolean openInNewWindow_;
@@ -74,4 +80,5 @@ public class NewProjectResult
    private final String newDefaultProjectLocation_;
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;
+   private final NewShinyAppOptions newShinyAppOptions_;
 }

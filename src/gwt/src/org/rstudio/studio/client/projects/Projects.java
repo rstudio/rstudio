@@ -346,6 +346,7 @@ public class Projects implements OpenProjectFileHandler,
             server_.createProject(
                   newProject.getProjectFile(),
                   newProject.getNewPackageOptions(),
+                  newProject.getNewShinyAppOptions(),
                   new VoidServerRequestCallback(indicator)
                   {
                      @Override

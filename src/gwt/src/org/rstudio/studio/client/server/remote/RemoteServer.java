@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -53,6 +55,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
+import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
@@ -73,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewRe
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -1001,12 +1005,15 @@ public class RemoteServer implements Server
    
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
+                             NewShinyAppOptions newShinyAppOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(projectFile));
       params.set(1, newPackageOptions != null ?
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
+      params.set(2, newShinyAppOptions != null ?
+            new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    
@@ -2902,6 +2909,27 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void requeryContext(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  REQUERY_CONTEXT,
+                  requestCallback);
+   }
+
+   @Override
+   public void getObjectContents(
+                 String objectName,
+                 ServerRequestCallback<ObjectContents> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(objectName));
+      sendRequest(RPC_SCOPE,
+                  GET_OBJECT_CONTENTS,
+                  params,
+                  requestCallback);
+   }
+   
+   @Override
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
@@ -2953,11 +2981,13 @@ public class RemoteServer implements Server
    public void getFunctionState(
          String functionName,
          String fileName,
+         int lineNumber,
          ServerRequestCallback<FunctionState> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
+      params.set(2, new JSONNumber(lineNumber));
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STATE,
                   params,
@@ -2998,6 +3028,25 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
+         boolean set, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray bps = new JSONArray();
+      for (int i = 0; i < breakpoints.size(); i++)
+      {
+         bps.set(i, new JSONObject(breakpoints.get(i)));
+      }
+      
+      JSONArray params = new JSONArray();
+      params.set(0, bps);
+      params.set(1, JSONBoolean.getInstance(set));
+      sendRequest(RPC_SCOPE, 
+            UPDATE_SHINY_BREAKPOINTS,
+            params, 
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3252,15 +3301,21 @@ public class RemoteServer implements Server
    private static final String SET_ENVIRONMENT_FRAME = "set_environment_frame";
    private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
    private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
+   private static final String GET_OBJECT_CONTENTS = "get_object_contents";
+   private static final String REQUERY_CONTEXT = "requery_context";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
+   private static final String UPDATE_SHINY_BREAKPOINTS = "update_shiny_breakpoints";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
+
+
+
 }

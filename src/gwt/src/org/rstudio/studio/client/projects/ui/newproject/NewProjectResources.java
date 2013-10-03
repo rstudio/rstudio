@@ -30,6 +30,10 @@ public interface NewProjectResources extends ClientBundle
    
    ImageResource newProjectDirectoryIcon();
    ImageResource newProjectDirectoryIconLarge();
+   ImageResource packageIcon();
+   ImageResource packageIconLarge();
+   ImageResource shinyAppIcon();
+   ImageResource shinyAppIconLarge();
    ImageResource existingDirectoryIcon();
    ImageResource existingDirectoryIconLarge();
    ImageResource projectFromRepositoryIcon();

@@ -46,7 +46,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       openInNewWindow_.setVisible(false);
       
       
-      addPage(new NewDirectoryPage());
+      addPage(new NewDirectoryNavigationPage(sessionInfo));
       addPage(new ExistingDirectoryPage());
 
       if (sessionInfo.getAllowVcs())

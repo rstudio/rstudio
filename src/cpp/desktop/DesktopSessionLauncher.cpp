@@ -320,6 +320,19 @@ QString SessionLauncher::launchFailedErrorMessage() const
 
    // check for abend log
    QString abendLogMessage = collectAbendLogMessage();
+
+   // check for R version mismatch
+   if (abendLogMessage.contains(
+                    QString::fromUtf8("arguments passed to .Internal")))
+   {
+      errMsg.append(QString::fromUtf8("\n\nThis error was very likely caused "
+                    "by R attempting to load packages from a different "
+                    "incompatible version of R on your system. Please remove "
+                    "other versions of R and/or remove environment variables "
+                    "that reference libraries from other versions of R "
+                    "before proceeding."));
+   }
+
    if (!abendLogMessage.isEmpty())
       errMsg.append(QString::fromAscii("\n\n").append(abendLogMessage));
 

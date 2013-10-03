@@ -138,16 +138,8 @@
   return(funBody)
 })
 
-# this function is used to get the steps in the given function that are
-# associated with the given line number, using the function's source
-# references.
-.rs.addFunction("getFunctionSteps", function(
-   functionName,
-   fileName,
-   packageName,
-   lineNumbers)
+.rs.addFunction("getFunctionSteps", function(fun, functionName, lineNumbers)
 {
-   fun <- .rs.getUntracedFunction(functionName, fileName, packageName)
    funBody <- body(fun)
 
    # attempt to find the end line of the function
@@ -192,6 +184,22 @@
          line=.rs.scalar(lineNumber),
          at=.rs.scalar(paste(steps, collapse=",")))
    })
+
+})
+
+# this function is used to get the steps in the given function that are
+# associated with the given line number, using the function's source
+# references.
+.rs.addFunction("getSteps", function(
+   functionName,
+   fileName,
+   packageName,
+   lineNumbers)
+{
+   .rs.getFunctionSteps(
+                  .rs.getUntracedFunction(functionName, fileName, packageName),
+                  functionName,
+                  lineNumbers)
 })
 
 .rs.addFunction("setFunctionBreakpoints", function(
@@ -436,13 +444,78 @@
             .rs.lineDataList(srcref)))
 })
 
+.rs.addFunction("getShinyFunction", function(name, where)
+{
+   if (is(where, "refClass"))
+      where$field(name)
+   else 
+      get(name, where)
+})
+
+.rs.addFunction("setShinyFunction", function(name, where, val)
+{
+   if (is(where, "refClass"))
+      where$field(name, val)
+   else
+      assign(name, val, where)
+})
+
+.rs.addFunction("setShinyBreakpoints", function(name, where, lines)
+{
+   # Create a blank environment and load the function into it
+   env <- new.env(parent = emptyenv())
+   env$fun <- .rs.getShinyFunction(name, where) 
+
+   # Get the steps of the function corresponding to the lines on
+   # which breakpoints are to be set, and set breakpoints there
+   steps <- .rs.getFunctionSteps(env$fun, "fun", lines)
+
+   # The Shiny server function gets special treatment. In this specific
+   # function, we don't want to set any breakpoints in sub-expressions, so
+   # remove any steps above that include substeps
+   isShinyServer <- attr(env$fun, "shinyServerFunction")
+   if (!is.null(isShinyServer) && isShinyServer)
+   {
+      for (i in length(steps):1)
+      {
+         # getFunctionSteps returns a comma-delimited list of sub-steps, so if
+         # the steps contains a comma, it contains a substep.
+         if (length(grep(",", steps[[i]]$at, fixed = TRUE)) > 0)
+         {
+            steps[[i]] <- NULL
+         }
+      }
+   }
+   suppressWarnings(.rs.setFunctionBreakpoints(
+         "fun", env, lapply(steps, function(step) { step$at } )))
+
+   # Store the updated copy of the function back into Shiny
+   .rs.setShinyFunction(name, where, env$fun)
+})
+
+# Parameters expected to be in environment:
+# where - environment or reference object 
+# name - name of function or reference field name
+# label - friendly label for function to show in callstack
+.rs.addGlobalFunction("registerShinyDebugHook", function(params)
+{
+   # Copy source refs to the body of the function 
+   fun <- .rs.getShinyFunction(params$name, params$where)
+   params$expr <- body(fun)
+   attr(fun, "srcref") <- attr(body(fun), "wholeSrcref")
+   params$fun <- fun
+
+   # Register the function with RStudio (may set breakpoints)
+   .Call("rs_registerShinyFunction", params)
+})
+
 .rs.addJsonRpcHandler("get_function_steps", function(
    functionName,
    fileName,
    packageName,
    lineNumbers)
 {
-   .rs.getFunctionSteps(functionName, fileName, packageName, lineNumbers)
+   .rs.getSteps(functionName, fileName, packageName, lineNumbers)
 })
 
 .rs.addJsonRpcHandler("execute_debug_source", function(
@@ -459,4 +532,5 @@
       step,
       mode)
 })
+
 

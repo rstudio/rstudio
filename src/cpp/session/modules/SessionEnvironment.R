@@ -144,7 +144,8 @@
     return(paste(lapply(args, function(arg) {
         if (is.language(arg))
             capture.output(print(arg))
-        else if (is.environment(arg))
+        else if (is.environment(arg) || 
+                 is.function(arg))
             deparse(substitute(arg))
         else
             as.character(arg)
@@ -272,6 +273,7 @@
    len <- length(obj)
    class <- .rs.getSingleClass(obj)
    contents <- list()
+   contents_deferred <- FALSE
    # for language objects, don't evaluate, just show the expression
    if (is.language(obj) || is.symbol(obj))
    {
@@ -288,8 +290,18 @@
                    paste(len, " elements, ", sep="")
                 else 
                    ""
-         val <- paste("Large ", class, " (", len, 
-                      capture.output(print(size, units="auto")), ")", sep="")
+         # data frames are likely to be large, but a summary is still helpful
+         if (is.data.frame(obj))
+         {
+            val <- "NO_VALUE"
+            desc <- .rs.valueDescription(obj)
+         }
+         else
+         {
+            val <- paste("Large ", class, " (", len, 
+                         capture.output(print(size, units="auto")), ")", sep="")
+         }
+         contents_deferred <- TRUE
       }
       else
       {
@@ -316,7 +328,8 @@
       description = .rs.scalar(desc),
       size = .rs.scalar(size),
       length = .rs.scalar(length(obj)),
-      contents = contents)
+      contents = contents,
+      contents_deferred = .rs.scalar(contents_deferred))
 })
 
 # returns the name and frame number of an environment from a call frame
@@ -380,9 +393,11 @@
    while (!identical(env, emptyenv()))
    {
       envName <- environmentName(env)
+
       # hide the RStudio internal tools environment and the autoloads
-      # environment
-      if (envName != "tools:rstudio" &&
+      # environment, and any environment that doesn't have a name
+      if (nchar(envName) > 0 &&
+          envName != "tools:rstudio" &&
           envName != "Autoloads")
       {
          envs[[length(envs)+1]] <-
@@ -402,5 +417,10 @@
 .rs.addFunction("removeAllObjects", function(includeHidden, env)
 {
    rm(list=ls(envir=env, all.names=includeHidden), envir=env)
+})
+
+.rs.addFunction("getObjectContents", function(objName, env)
+{
+   .rs.valueContents(get(objName, env));
 })
 
