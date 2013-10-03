@@ -35,7 +35,7 @@
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
-#include <r/Rinternals.h>
+#include <r/RInternal.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
