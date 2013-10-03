@@ -147,8 +147,9 @@ public class BrowserLauncher {
   private static class UnixExecBrowserLauncher implements Launcher {
     
     private static final String[] browsers = {
-      "firefox", "opera", "konqueror", "chrome", "chromium", "epiphany",
-      "seamonkey", "mozilla", "netscape", "galeon", "kazehakase",
+      "xdg-open", "gvfs-open", "gnome-open", "firefox", "opera", "konqueror",
+      "chrome", "chromium", "epiphany", "seamonkey", "mozilla", "netscape",
+      "galeon", "kazehakase",
     };
     
     private String browserExecutable;
