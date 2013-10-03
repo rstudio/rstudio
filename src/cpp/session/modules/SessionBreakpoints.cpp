@@ -399,6 +399,17 @@ void rs_registerShinyFunction(SEXP params)
 
    boost::shared_ptr<ShinyFunction> psf =
             boost::make_shared<ShinyFunction>(expr, objName, where);
+
+   // The Shiny server function itself is always the first one registered when
+   // a Shiny session starts. If we had other functions "running", they
+   // likely simply haven't been GC'ed yet--forcefully clean them up.
+   SEXP isShinyServer = r::sexp::getAttrib(fun, "shinyServerFunction");
+   if (isShinyServer != NULL &&
+       TYPEOF(isShinyServer) != NILSXP)
+   {
+      s_shinyFunctions.clear();
+   }
+
    s_shinyFunctions.push_back(psf);
 
    // Attach the information we just created to the Shiny function.
