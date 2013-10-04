@@ -378,6 +378,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="unfoldAll" value="Shift+Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut value="Alt+Up" title="Move Lines Up" />
+         <shortcut value="Alt+Down" title="Move Lines Down" />
+         <shortcut value="Ctrl+U" title="Yank Line Up to Cursor" />
+         <shortcut value="Ctrl+K" title="Yank Line After Cursor" />
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
