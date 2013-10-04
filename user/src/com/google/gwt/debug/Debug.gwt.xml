@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Adds debug ID support for UIObjects.                                   -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.debug.DebugBase" />
   
   <!-- Enable debug IDs -->

@@ -20,7 +20,7 @@
   the future.  Specifically, the RTL version will be automatically selected in
   locales with RTL languages.
 -->
-<module>
+<module type="fileset">
   <public path="public" />
   <stylesheet src="gwt/clean/clean_rtl.css"/>
 </module>

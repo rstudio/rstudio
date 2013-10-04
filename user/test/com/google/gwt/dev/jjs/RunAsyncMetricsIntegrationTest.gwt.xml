@@ -16,7 +16,7 @@
 <!-- and checks that the right lightweight metrics are signalled.       -->
 <!-- If this were combined with other tests that call runAsync, the     -->
 <!-- order of those events could change.                                -->
-<module>
+<module type="fileset">
     <inherits name="com.google.gwt.dev.jjs.CompilerSuite"/>
     <script src="empty-gwt-stats.js" />
 </module>

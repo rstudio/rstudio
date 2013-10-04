@@ -14,7 +14,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Defines support for emulating the JS stack -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core" />
 
   <!-- Legacy property. Do NOT use. See 'compiler.stackMode' instead. -->

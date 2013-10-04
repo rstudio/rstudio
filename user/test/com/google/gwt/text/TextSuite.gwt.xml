@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Could not determine the version of your GWT SDK; using the module DTD from GWT 1.6.4. You may want to change this. -->
-<module>
+<module type="fileset">
 	<inherits name="com.google.gwt.text.Text" />
 	<source path="client"/>
 </module>

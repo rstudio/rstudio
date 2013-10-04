@@ -18,7 +18,7 @@
 <!-- Every module should directly or indirectly inherit this module.        -->
 <!--                                                                        -->
 
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core" />
 
   <set-configuration-property name="compiler.emulatedStack.recordLineNumbers"

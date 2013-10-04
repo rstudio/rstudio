@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Defines the cross-site iframe linker and it's subclasses  -->
-<module>
+<module type="fileset">
   <define-linker name="xsiframe" class="com.google.gwt.core.linker.CrossSiteIframeLinker" />
   <define-linker name="direct_install" class="com.google.gwt.core.linker.DirectInstallLinker" />
   <define-configuration-property name="xsiframe.failIfScriptTag" is-multi-valued="FALSE"/>

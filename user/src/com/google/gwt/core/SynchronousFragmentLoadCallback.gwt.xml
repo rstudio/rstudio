@@ -17,7 +17,7 @@
 
 <!-- TODO(goktug): remove after 2.6 is released                             -->
 
-<module>
+<module type="fileset">
   <replace-with class="com.google.gwt.core.client.impl.SynchronousOnSuccessExecutor">
     <when-type-is class="com.google.gwt.core.client.impl.OnSuccessExecutor"/>
   </replace-with>

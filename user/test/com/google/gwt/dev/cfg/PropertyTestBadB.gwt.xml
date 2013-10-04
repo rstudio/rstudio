@@ -12,7 +12,7 @@
 <!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
-<module>
+<module type="fileset">
  <set-configuration-property name="testProp" value="bad" />
  <define-property name="testProp" values="a,b,c" />
 </module>

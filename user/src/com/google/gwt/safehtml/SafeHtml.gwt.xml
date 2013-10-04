@@ -16,7 +16,7 @@
 
 <!-- SafeHtml - facilities for avoiding XSS attacks                        -->
 <!--                                                                       -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.regexp.RegExp"/>
   <source path="client"/>
   <source path="shared"/>

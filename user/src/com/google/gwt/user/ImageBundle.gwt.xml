@@ -14,7 +14,7 @@
 
 <!-- ImageBundle support.                                                   -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
   <!-- Inherit ClippedImage, because ImageBundleGerator uses                -->
   <!-- ClippedImagePrototype, which depends on ClippedImage                 -->
   <inherits name="com.google.gwt.user.ClippedImage" />

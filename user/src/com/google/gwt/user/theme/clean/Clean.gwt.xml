@@ -16,6 +16,7 @@
 
 <!-- Includes the source files for the Clean theme. -->
 <module>
+  <inherits name='com.google.gwt.user.User'/>
   <public path="public" />
   <stylesheet src="gwt/clean/clean.css"/>
 </module>

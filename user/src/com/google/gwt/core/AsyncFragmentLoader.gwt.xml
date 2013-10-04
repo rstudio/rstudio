@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Types associated with GWT.runAsync() and its fragment loader           -->
-<module>
+<module type="fileset">
 
   <replace-with class="com.google.gwt.core.client.impl.XhrLoadingStrategy">
     <when-type-is

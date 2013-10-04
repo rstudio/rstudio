@@ -14,6 +14,6 @@
 
 <!-- JSON parsing support.                                                  -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
 	<inherits name="com.google.gwt.core.Core"/>
 </module>

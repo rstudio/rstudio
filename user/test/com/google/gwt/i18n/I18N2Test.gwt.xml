@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module type="fileset">
 	<inherits name="com.google.gwt.i18n.I18N"/>
 	<extend-property name = "locale" values ="piglatin,piglatin_UK, piglatin_UK_WINDOWS,aa,bb,bb_CC,bb_CC_DDDDD"/>
 	<set-property name="locale" value="bb_CC_DDDDD" />

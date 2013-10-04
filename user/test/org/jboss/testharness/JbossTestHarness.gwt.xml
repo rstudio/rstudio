@@ -3,7 +3,7 @@
 This is a HACK, is not a general solution for using JBoss Test Harness.
 It is only enough to run the tests in the GWT Validation TCK.
 -->
-<module>
+<module type="fileset">
   <inherits name="org.testng.TestNg" />
   <source path="api">
     <include name="DeploymentException.java"/>

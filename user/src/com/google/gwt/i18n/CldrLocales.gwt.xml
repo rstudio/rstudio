@@ -15,7 +15,6 @@
 <!-- List of all locales imported into GWT from CLDR, as runtime locales -->
 <module>
   <inherits name="com.google.gwt.user.User"/>
-  <inherits name="com.google.gwt.i18n.I18N"/>
   <extend-configuration-property name="runtime.locales" value="aa"/>
   <extend-configuration-property name="runtime.locales" value="aa_DJ"/>
   <extend-configuration-property name="runtime.locales" value="aa_ER"/>

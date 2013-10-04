@@ -15,7 +15,7 @@
   the License.
 -->
 <!-- Includes the javax.validation classes from the source jar  -->
-<module>
+<module type="fileset">
   <source path="">
     <exclude name="super/"/>
   </source>

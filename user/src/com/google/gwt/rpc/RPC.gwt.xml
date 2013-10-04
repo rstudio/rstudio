@@ -1,4 +1,4 @@
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core" />
   <!-- Inherits standard RPC, c.g.g.user.RemoteService is not standalone. -->
   <inherits name="com.google.gwt.user.User" />

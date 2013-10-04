@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module type="fileset">
   <!-- We inherit another script here, and we must wait on both -->
   <inherits name="com.google.gwt.module.SingleScriptInjectionTest"/>
 

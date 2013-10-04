@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Deferred binding rules for optimized JRE implementations based on user agent. -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.emul.Emulation"/>
 
   <!-- If the user agent is known, use Append as the default StringBuffer implementation. -->

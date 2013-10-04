@@ -1,4 +1,4 @@
-<module>
+<module type="fileset">
   <inherits name='com.google.gwt.junit.JUnit'/>
   <entry-point class='com.google.gwt.dev.strict.bad.client.Entry'/>
 </module>

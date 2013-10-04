@@ -11,7 +11,7 @@
 <!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User"/>
 
   <!-- Replaces HistoryImpl with one that is disabled and does not -->

@@ -13,7 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
+<module type="fileset">
   <source path="client"/>
   <public path="public" />
 </module>

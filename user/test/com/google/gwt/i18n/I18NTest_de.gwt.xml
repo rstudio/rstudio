@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module type="fileset">
 	<!-- Inherit the JUnit support -->
 	<inherits name='com.google.gwt.junit.JUnit'/>
 	<inherits name = 'com.google.gwt.i18n.I18N'/>

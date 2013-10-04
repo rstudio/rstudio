@@ -17,7 +17,7 @@
 <!-- Any user application that wishes to use the types declared in the http -->
 <!-- package must inherit this module.                                      -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.typedarrays.TypedArrays"/>
   <source path="client" />

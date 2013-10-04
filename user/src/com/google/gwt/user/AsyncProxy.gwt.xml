@@ -11,7 +11,7 @@
     governing permissions and limitations under the License.
   -->
 
-<module>
+<module type="fileset">
   <generate-with class="com.google.gwt.user.rebind.AsyncProxyGenerator">
     <when-type-assignable class="com.google.gwt.user.client.AsyncProxy" />
   </generate-with>

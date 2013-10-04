@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module type="fileset">
 	<inherits name="com.google.gwt.i18n.I18N"/>
         <inherits name="com.google.gwt.i18n.CldrLocales"/>
 	<extend-property name = "locale" values ="en,es,es_419"/>

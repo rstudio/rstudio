@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Deferred binding rules for Tree.                                       -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 

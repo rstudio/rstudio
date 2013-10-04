@@ -19,7 +19,7 @@ Normally you don't need to inherit this module. It isn't necessary when using
 GWTTestCase, and these classes shouldn't be used in production web apps. But
 you might need it if you're writing testing tools. -->
 
-<module>
+<module type="fileset">
   <super-source path="translatable">
     <include name="junit/**/*.java"/>
   </super-source> 

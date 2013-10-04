@@ -14,7 +14,7 @@
 
 <!-- XML parsing support.                                                   -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User"/>
   
   <!-- Fall through to this rule for all other browsers -->

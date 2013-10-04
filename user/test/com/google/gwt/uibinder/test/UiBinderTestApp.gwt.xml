@@ -12,7 +12,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Allows the test app to be run directly.                                -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.debug.Debug"/>
   <entry-point class="com.google.gwt.uibinder.test.client.UiBinderTestApp" />

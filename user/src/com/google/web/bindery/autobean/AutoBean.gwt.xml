@@ -12,7 +12,7 @@
 -->
 
 <!-- AutoBean framework -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User" />
   <source path="gwt/client" />
   <source path="shared" />

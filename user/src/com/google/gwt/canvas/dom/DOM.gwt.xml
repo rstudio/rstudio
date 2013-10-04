@@ -13,7 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
+<module type="fileset">
   <source path="client"/>
   <inherits name="com.google.gwt.dom.DOM"/>
   <public path="public" />

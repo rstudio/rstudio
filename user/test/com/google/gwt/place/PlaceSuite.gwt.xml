@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module>
+<module type="fileset">
   <inherits name='com.google.gwt.place.Place'/>
 
   <source path="testplaces"/>

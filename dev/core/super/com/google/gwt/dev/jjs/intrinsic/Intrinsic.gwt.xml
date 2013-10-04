@@ -17,7 +17,7 @@
 <!--                                                                        -->
 <!-- Types from this module are not visible to nor imported into user code. -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.lang.LongLib"/>
   <super-source/>
   <public path="public" />

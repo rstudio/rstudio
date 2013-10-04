@@ -12,6 +12,6 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.safehtml.SafeHtml"/>
 </module>

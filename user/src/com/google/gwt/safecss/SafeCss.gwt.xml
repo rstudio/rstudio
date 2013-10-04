@@ -16,7 +16,7 @@
 
 <!-- SafeCss - facilities for avoiding XSS attacks                         -->
 <!--                                                                       -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
   <public path="public" />

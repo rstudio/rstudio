@@ -20,7 +20,7 @@
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
 
-<module>
+<module type="fileset">
   <define-linker name="precompress" class="com.google.gwt.precompress.linker.PrecompressLinker" />
   <add-linker name="precompress" />
   

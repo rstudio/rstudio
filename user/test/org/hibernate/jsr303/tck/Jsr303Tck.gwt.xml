@@ -3,7 +3,7 @@
 This is a HACK, is not a complete Validation TCK solution. 
 It is only enough to run the tests in the GWT Validation TCK. 
 -->
-<module>
+<module type="fileset">
   <inherits name='com.google.gwt.validation.Validation' />
   <inherits name='org.jboss.test.audit.JbossTestAudit' />
   <inherits name='org.jboss.testharness.JbossTestHarness' />

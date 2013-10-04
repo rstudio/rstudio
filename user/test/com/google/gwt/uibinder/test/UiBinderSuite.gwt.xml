@@ -12,7 +12,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- UiBinder integration tests                                             -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.debug.Debug"/>
 </module>

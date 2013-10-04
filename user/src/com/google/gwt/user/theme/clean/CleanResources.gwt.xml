@@ -19,5 +19,6 @@
   inject a style sheet into the application.
 -->
 <module>
+  <inherits name='com.google.gwt.user.User'/>
   <public path="public" />
 </module>

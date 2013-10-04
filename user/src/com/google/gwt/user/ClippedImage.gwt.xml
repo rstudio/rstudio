@@ -23,7 +23,7 @@
 <!-- This module is interited by the User module, so it will be available   -->
 <!-- to all GWT applications.                                               -->
 
-<module>
+<module type="fileset">
 	<inherits name="com.google.gwt.core.Core" />
 	<inherits name="com.google.gwt.user.UserAgent" />
 

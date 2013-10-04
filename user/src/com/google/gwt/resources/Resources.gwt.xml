@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- ClientBundle supports renaming files with strong names at compile time  -->
-<module>
+<module type="fileset">
   <!-- Pull in the necessary base support, including user.agent detection -->
   <inherits name="com.google.gwt.core.Core" />
   <!-- Pull in SafeUri and SafeUriUtils -->

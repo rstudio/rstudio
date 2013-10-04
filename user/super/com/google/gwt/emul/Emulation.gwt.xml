@@ -14,7 +14,7 @@
 
 <!-- A JavaScript-based emulation of the Java Runtime library.              -->
 <!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.logging.LogImpl"/>
   <public path="public" />
 

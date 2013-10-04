@@ -12,7 +12,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Tests that rely on the useLazyWidgetBuilders switch                    -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.user.User" />
   <inherits name="com.google.gwt.debug.Debug"/>
   <set-configuration-property name="UiBinder.useLazyWidgetBuilders" value="true"/>

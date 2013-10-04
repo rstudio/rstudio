@@ -1,4 +1,4 @@
-<module>
+<module type="fileset">
   <source path="impl" />
   
   <!-- Set up and handle the gwt.logging property

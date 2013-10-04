@@ -14,7 +14,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
+<module type="fileset">
   <!--  specifically don't inherit hibernate -->
   <inherits name="com.google.gwt.user.User" />
   <inherits name="org.hibernate.jsr303.tck.Jsr303Tck" />

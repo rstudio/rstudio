@@ -13,7 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.aria.Aria"/>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.cell.Cell"/>

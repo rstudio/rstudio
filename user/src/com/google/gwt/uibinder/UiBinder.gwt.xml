@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- GWT UI Binder support.                                                 -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.resources.Resources" />
 
   <source path="client"/>

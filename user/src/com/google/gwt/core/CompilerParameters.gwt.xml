@@ -14,7 +14,7 @@
 
 <!-- Compiler parameters that can be overridden .    -->
 <!--                                                                        -->
-<module>
+<module type="fileset">
   <!--
     A user-specified initial load sequence for the runAsync calls. Each entry should specify the
     surrounding method immediately enclosing the call, using a full JSNI reference.

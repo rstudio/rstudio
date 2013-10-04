@@ -1,4 +1,4 @@
-<module>
+<module type="fileset">
   <source path="client" />
   <public path="public" />
 </module>

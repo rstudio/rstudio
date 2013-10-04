@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Contains tests for breaking out of the client source path  -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.core.Core" />
   <super-source path='super' />
 </module>

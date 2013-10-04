@@ -19,6 +19,6 @@
 <!-- The way in which RTL-specific versions of CSS styles are included  -->
 <!-- is subject to change in the future.  Specifically, the RTL version -->
 <!-- will be automatically selected in locales with RTL languages.      -->
-<module>
+<module type="fileset">
       <stylesheet src="gwt/dark/dark_rtl.css"/>
 </module>

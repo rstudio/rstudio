@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Module used to test Animation API usage.                               -->
-<module>
+<module type="fileset">
   <inherits name="com.google.gwt.animation.Animation"/>
   <set-property name="webApiUsage" value="stable"/>
 </module>
