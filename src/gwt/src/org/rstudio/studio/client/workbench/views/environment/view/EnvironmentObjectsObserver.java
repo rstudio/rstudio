@@ -25,5 +25,7 @@ public interface EnvironmentObjectsObserver
    void setPersistedScrollPosition(int scrollPosition);
    void changeContextDepth(int newDepth);
    void setViewDirty();
+   boolean getShowInternalFunctions();
+   void setShowInternalFunctions(boolean show);
    void fillObjectContents(RObject object, Operation onCompleted);
 }

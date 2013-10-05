@@ -44,7 +44,8 @@ public class CallFrameItem extends Composite
       String hiddenFrame();
    }
 
-   public CallFrameItem(CallFrame frame, EnvironmentObjectsObserver observer, boolean hidden)
+   public CallFrameItem(CallFrame frame, 
+                        EnvironmentObjectsObserver observer, boolean hidden)
    {
       isActive_ = false;
       isVisible_ = true;
@@ -88,6 +89,27 @@ public class CallFrameItem extends Composite
          observer_.changeContextDepth(frame_.getContextDepth());
       }
    }
+   
+   public void setVisible(boolean visible)
+   {
+      if (visible != isVisible_)
+      {
+         if (visible)
+         {
+            functionName.removeStyleName(style.hiddenFrame());
+         }
+         else
+         {
+            functionName.addStyleName(style.hiddenFrame());
+         }
+         isVisible_ = visible;
+      }
+   }
+
+   public boolean isNavigable()
+   {
+      return frame_.isNavigable();
+   }
 
    // Private functions -------------------------------------------------------
 
@@ -104,19 +126,32 @@ public class CallFrameItem extends Composite
                            lineNumber;
          }
          functionName.setText(
-                 frame_.getFunctionName() +
-                 "(" + frame_.getArgumentList() + ")" +
+                 getFrameLabel() + 
                  fileLocation);
       }
       else
       {
-         functionName.setText(frame_.getFunctionName());
+         functionName.setText(getFrameLabel());
       }
    }
 
    private boolean hasFileLocation()
    {
       return CallFrame.isNavigableFilename(frame_.getFileName());
+   }
+   
+   private String getFrameLabel()
+   {
+      if (frame_.getShinyFunctionLabel().isEmpty())
+      {
+         return frame_.getFunctionName() +
+                "(" + frame_.getArgumentList() + ")";
+      }
+      else
+      {
+         return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
+      }
+         
    }
 
    @UiField Label functionName;

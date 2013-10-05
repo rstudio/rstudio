@@ -67,7 +67,9 @@ public:
                              const core::json::Value& value);
 
    void putProjectPersistent(const core::json::Object& projectPersistentState);
-                  
+   core::json::Value getProjectPersistent(std::string scope,
+                                          std::string name);
+
    core::Error commit(ClientStateCommitType commitType,
                       const core::FilePath& stateDir,
                       const core::FilePath& projectStateDir);

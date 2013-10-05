@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -67,7 +68,8 @@ public class EnvironmentPane extends WorkbenchPane
                           EventBus eventBus,
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
-                          Session session)
+                          Session session,
+                          UIPrefs prefs)
    {
       super("Environment");
       
@@ -75,6 +77,7 @@ public class EnvironmentPane extends WorkbenchPane
       eventBus_ = eventBus;
       server_ = serverOperations;
       globalDisplay_ = globalDisplay;
+      prefs_ = prefs;
 
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
@@ -360,6 +363,18 @@ public class EnvironmentPane extends WorkbenchPane
       executeFunctionForObject("View", objectName);
    }
    
+   @Override
+   public boolean getShowInternalFunctions()
+   {
+      return prefs_.showInternalFunctionsInTraceback().getValue();
+   }
+
+   @Override
+   public void setShowInternalFunctions(boolean show)
+   {
+      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
+   }
+
    public void fillObjectContents(final RObject object, 
                                   final Operation onCompleted)
    {
@@ -554,6 +569,7 @@ public class EnvironmentPane extends WorkbenchPane
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
+   private final UIPrefs prefs_;
 
    private ToolbarButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
