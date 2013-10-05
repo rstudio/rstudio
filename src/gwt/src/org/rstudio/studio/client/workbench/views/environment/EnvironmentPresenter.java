@@ -450,10 +450,10 @@ public class EnvironmentPresenter extends BasePresenter
    {
       final String dataFilePath = event.getFile().getPath();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-           "Confirm Load Workspace",
+           "Confirm Load RData",
 
            "Do you want to load the R data file \"" + dataFilePath + "\" " +
-           "into your workspace?",
+           "into the global environment?",
 
            new ProgressOperation() {
               public void execute(ProgressIndicator indicator)

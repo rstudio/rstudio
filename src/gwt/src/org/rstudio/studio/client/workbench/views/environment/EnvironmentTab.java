@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.events.OpenDataFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenDataFileHandler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -59,6 +60,7 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
    {
       super("Environment", shim);
       binder.bind(commands, shim);
+      events.addHandler(OpenDataFileEvent.TYPE, shim);
     
       session_ = session;
       
