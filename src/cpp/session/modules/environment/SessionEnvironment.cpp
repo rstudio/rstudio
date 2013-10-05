@@ -41,7 +41,10 @@ namespace session {
 namespace modules { 
 namespace environment {
 
-EnvironmentMonitor s_environmentMonitor;
+// allocate on the heap so we control timing of destruction (if we leave it
+// to the destructor we might release the underlying environment SEXP after
+// R has already shut down)
+EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 
 namespace {
 
@@ -340,9 +343,9 @@ json::Array environmentListAsJson()
     std::vector<Variable> vars;
     json::Array listJson;
 
-    if (s_environmentMonitor.hasEnvironment())
+    if (s_pEnvironmentMonitor->hasEnvironment())
     {
-       SEXP env = s_environmentMonitor.getMonitoredEnvironment();
+       SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
        if (env != NULL)
           listEnvironment(env, false, &rProtect, &vars);
 
@@ -412,12 +415,12 @@ Error setEnvironmentName(int contextDepth,
       }
       if (error || env == R_EmptyEnv)
       {
-         s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
+         s_pEnvironmentMonitor->setMonitoredEnvironment(R_GlobalEnv, true);
          return error;
       }
    }
 
-   s_environmentMonitor.setMonitoredEnvironment(environment, true);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(environment, true);
    return Success();
 }
 
@@ -458,7 +461,7 @@ Error setEnvironmentFrame(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   s_environmentMonitor.setMonitoredEnvironment(environment, true);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(environment, true);
    return Success();
 }
 
@@ -544,7 +547,7 @@ json::Object commonEnvironmentStateData(int depth)
 
       // If the environment currently monitored is the function's environment,
       // return that environment
-      if (s_environmentMonitor.getMonitoredEnvironment() ==
+      if (s_pEnvironmentMonitor->getMonitoredEnvironment() ==
           pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
@@ -569,10 +572,10 @@ json::Object commonEnvironmentStateData(int depth)
    {
       // emit the name of the environment we're currently working with
       std::string environmentName;
-      if (s_environmentMonitor.hasEnvironment())
+      if (s_pEnvironmentMonitor->hasEnvironment())
       {
          Error error = r::exec::RFunction(".rs.environmentName",
-                                    s_environmentMonitor.getMonitoredEnvironment())
+                                    s_pEnvironmentMonitor->getMonitoredEnvironment())
                                     .call(&environmentName);
          if (error)
             LOG_ERROR(error);
@@ -621,7 +624,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    *pContextDepth = requestedDepth;
    SEXP env = NULL;
    getFunctionContext(requestedDepth, false, NULL, &env);
-   s_environmentMonitor.setMonitoredEnvironment(env);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
    enqueContextDepthChangedEvent(*pContextDepth);
@@ -639,7 +642,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   s_environmentMonitor.checkForChanges();
+   s_pEnvironmentMonitor->checkForChanges();
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
@@ -663,7 +666,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
              getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
    }
 
-   if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
+   if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        pRContext != *pCurrentContext)
    {
@@ -678,7 +681,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       }
 
       // start monitoring the enviroment at the new depth
-      s_environmentMonitor.setMonitoredEnvironment(environmentTop);
+      s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = pRContext;
       enqueContextDepthChangedEvent(depth);
@@ -746,7 +749,7 @@ Error removeObjects(const json::JsonRpcRequest& request,
 
    error = r::exec::RFunction(".rs.removeObjects",
                         objectNames,
-                        s_environmentMonitor.getMonitoredEnvironment()).call();
+                        s_pEnvironmentMonitor->getMonitoredEnvironment()).call();
    if (error)
       return error;
 
@@ -764,7 +767,7 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
 
    error = r::exec::RFunction(".rs.removeAllObjects",
                         includeHidden,
-                        s_environmentMonitor.getMonitoredEnvironment()).call();
+                        s_pEnvironmentMonitor->getMonitoredEnvironment()).call();
    if (error)
       return error;
 
@@ -787,7 +790,7 @@ Error getObjectContents(const json::JsonRpcRequest& request,
       return error;
    error = r::exec::RFunction(".rs.getObjectContents",
                               objectName,
-                              s_environmentMonitor.getMonitoredEnvironment())
+                              s_pEnvironmentMonitor->getMonitoredEnvironment())
                               .call(&objContents, &protect);
    if (error)
       return error;
@@ -828,6 +831,11 @@ json::Value environmentStateAsJson()
 
 Error initialize()
 {
+   // store on the heap so that the destructor is never called (so we
+   // don't end up releasing the underlying environment SEXP after
+   // R has already shut down / deinitialized)
+   s_pEnvironmentMonitor = new EnvironmentMonitor();
+
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
    boost::shared_ptr<RCNTXT*> pCurrentContext =
