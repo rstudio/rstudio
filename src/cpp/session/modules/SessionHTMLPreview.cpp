@@ -198,9 +198,6 @@ private:
          return;
       }
 
-      // determine whether knitr supports an encoding param
-      bool hasEncoding = hasEncodingParam();
-
       // args
       std::vector<std::string> args;
       args.push_back("--silent");
@@ -210,17 +207,10 @@ private:
       if (!knitrOutputFile_.empty())
       {
          boost::format fmt;
-         if (hasEncoding)
-         {
-            fmt = boost::format("require(knitr); "
-                                "knit('%2%', encoding='%1%');");
-         }
-         else
-         {
-            fmt = boost::format("options(encoding='%1%'); "
-                                "require(knitr); "
-                                "knit('%2%');");
-         }
+
+         fmt = boost::format("require(knitr); "
+                              "knit('%2%', encoding='%1%');");
+
          std::string cmd = boost::str(fmt % encoding % targetFile_.filename());
          args.push_back(cmd);
       }
@@ -229,19 +219,9 @@ private:
          std::string tempFilePath = string_utils::utf8ToSystem(
                                            outputFileTempFile.absolutePath());
          boost::format fmt;
-         if (hasEncoding)
-         {
-            fmt = boost::format("require(knitr); "
-                                "knit('%2%', encoding='%1%'); "
-                                "cat(o, file='%3%');");
-         }
-         else
-         {
-            fmt = boost::format("options(encoding='%1%'); "
-                                "require(knitr); "
-                                "o <- knit('%2%'); "
-                                "cat(o, file='%3%');");
-         }
+         fmt = boost::format("require(knitr); "
+                             "knit('%2%', encoding='%1%'); "
+                             "cat(o, file='%3%');");
          std::string cmd = boost::str(fmt % encoding
                                           % targetFile_.filename()
                                           % tempFilePath);
@@ -271,17 +251,6 @@ private:
                                                      args,
                                                      options,
                                                      cb);
-   }
-
-   bool hasEncodingParam() const
-   {
-      bool hasEncoding = false;
-      Error error = r::exec::RFunction(".rs.knitrHasEncodingParam").call(
-                                                                  &hasEncoding);
-      if (error)
-         LOG_ERROR(error);
-
-      return hasEncoding;
    }
 
    bool targetIsRMarkdown()
