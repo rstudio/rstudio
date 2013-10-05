@@ -235,7 +235,7 @@ public class BuildPresenter extends BasePresenter
    
    private void sendLoadCommandToConsole(String loadCommand)
    {
-      eventBus_.fireEvent(new SendToConsoleEvent(loadCommand, true));
+      eventBus_.fireEvent(new SendToConsoleEvent(loadCommand, true, true));
    }
    
   
