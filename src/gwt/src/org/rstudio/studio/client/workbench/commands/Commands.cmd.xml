@@ -433,10 +433,10 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="foldAll" value="Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="foldAll" value="Cmd+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfoldAll" value="Shift+Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
+      <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
       <shortcut refid="jumpToMatching" value="Ctrl+P"/>
       <shortcut refid="buildAll" value="Cmd+Shift+B"/>
       <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
