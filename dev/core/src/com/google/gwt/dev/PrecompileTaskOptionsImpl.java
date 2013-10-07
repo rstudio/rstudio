@@ -33,6 +33,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   private File genDir;
   private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
   private int maxPermsPerPrecompile;
+  private boolean saveSource;
   private boolean validateOnly;
 
   public PrecompileTaskOptionsImpl() {
@@ -61,6 +62,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
 
     setDisableUpdateCheck(other.isUpdateCheckDisabled());
     setGenDir(other.getGenDir());
+    setSaveSource(other.shouldSaveSource());
     setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
     setValidateOnly(other.isValidateOnly());
     setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
@@ -99,6 +101,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public JsOutputOption getOutput() {
     return jjsOptions.getOutput();
+  }
+
+  @Override
+  public boolean shouldSaveSource() {
+    return saveSource;
   }
 
   @Override
@@ -296,6 +303,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setRunAsyncEnabled(boolean enabled) {
     jjsOptions.setRunAsyncEnabled(enabled);
+  }
+
+  @Override
+  public void setSaveSource(boolean enabled) {
+    saveSource = enabled;
   }
 
   @Override

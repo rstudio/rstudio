@@ -107,6 +107,16 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public boolean shouldSaveSource() {
+    return false; // handling this a different way
+  }
+
+  @Override
+  public File getSaveSourceOutput() {
+    return null;
+  }
+
+  @Override
   public SourceLevel getSourceLevel() {
     return sourceLevel;
   }

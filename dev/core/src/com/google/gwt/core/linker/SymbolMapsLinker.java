@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
+import java.util.regex.Pattern;
 
 /**
  * This Linker exports the symbol maps associated with each compilation result as a private file.
@@ -165,6 +166,9 @@ public class SymbolMapsLinker extends AbstractLinker {
    */
   public static class SourceMapArtifact extends SyntheticArtifact {
 
+    // This pattern should match sourceMapFilenameForFragment.
+    public static final Pattern isSourceMapFile = Pattern.compile("sourceMap[0-9]+\\.json$");
+
     private int permutationId;
     private int fragment;
     private byte[] js;
@@ -185,7 +189,8 @@ public class SymbolMapsLinker extends AbstractLinker {
     }
 
     public static String sourceMapFilenameForFragment(int fragment) {
-             return "sourceMap" + fragment + ".json";
+      // If this changes, update isSourceMapFile.
+      return "sourceMap" + fragment + ".json";
     }
   }
 

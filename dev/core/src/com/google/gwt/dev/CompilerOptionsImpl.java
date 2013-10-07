@@ -56,6 +56,11 @@ public class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements Co
   }
 
   @Override
+  public File getSaveSourceOutput() {
+    return linkOptions.getSaveSourceOutput();
+  }
+
+  @Override
   public File getWarDir() {
     return linkOptions.getWarDir();
   }
@@ -73,6 +78,11 @@ public class CompilerOptionsImpl extends PrecompileTaskOptionsImpl implements Co
   @Override
   public void setLocalWorkers(int localWorkers) {
     this.localWorkers = localWorkers;
+  }
+
+  @Override
+  public void setSaveSourceOutput(File dest) {
+    linkOptions.setSaveSourceOutput(dest);
   }
 
   @Override

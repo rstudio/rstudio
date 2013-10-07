@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -392,13 +393,28 @@ public class StandardGeneratorContext implements GeneratorContext {
   @Override
   public final void commit(TreeLogger logger, PrintWriter pw) {
     Generated gcup = uncommittedGeneratedCupsByPrintWriter.get(pw);
-    if (gcup != null) {
-      gcup.commit(logger);
-      uncommittedGeneratedCupsByPrintWriter.remove(pw);
-      committedGeneratedCups.put(gcup.getTypeName(), gcup);
-    } else {
+    if (gcup == null) {
       logger.log(TreeLogger.WARN, "Generator attempted to commit an unknown PrintWriter", null);
+      return;
     }
+    gcup.commit(logger);
+    uncommittedGeneratedCupsByPrintWriter.remove(pw);
+    committedGeneratedCups.put(gcup.getTypeName(), gcup);
+
+    // Write as a source artifact so that a debugger can use it.
+    // TODO: if we're not generating sourcemaps then we should probably skip this entirely
+    // since the data will be written to the shard's jar file and never read.
+    // (But how do we check that?)
+
+    if (currentGenerator == null) {
+      return; // probably a test.
+    }
+
+    GeneratedResource debuggerSource =
+        new StandardGeneratedResource(currentGenerator, gcup.getSourceMapPath(),
+            gcup.getSourceToken());
+    debuggerSource.setVisibility(Visibility.Source);
+    commitArtifact(logger, debuggerSource);
   }
 
   /**

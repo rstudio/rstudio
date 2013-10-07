@@ -80,7 +80,14 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
         }
       }
     },
-    
+
+    /**
+     * A Source artifact is a file intended for source-level debugging
+     * in a browser. It should be served to clients while developing but
+     * not in production unless the app is open source.
+     */
+    Source,
+
     /**
      * For legacy use only - used for artifacts that were previously marked as
      * private because they should not be delivered to the client, but actually

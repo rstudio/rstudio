@@ -15,7 +15,11 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.Util;
 
@@ -126,5 +130,19 @@ public class Precompilation implements PrecompilationResult {
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     Util.writeObjectToStream(stream, generatedArtifacts);
+  }
+
+  /**
+   * Removes saved source code from the generated artifacts.
+   * (This reduces I/O when we're not doing that.)
+   */
+  public void removeSourceArtifacts(TreeLogger logger) {
+    logger.log(Type.DEBUG, "removing source artifacts");
+
+    for (EmittedArtifact artifact : generatedArtifacts.find(EmittedArtifact.class)) {
+      if (artifact.getVisibility() == Visibility.Source) {
+        generatedArtifacts.remove(artifact);
+      }
+    }
   }
 }

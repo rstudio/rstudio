@@ -372,6 +372,10 @@ public class CompilePerms {
       if (precompilation == null) {
         return false;
       }
+      // TODO: move to precompile() after params are refactored
+      if (!options.shouldSaveSource()) {
+        precompilation.removeSourceArtifacts(logger);
+      }
 
       // Choose which permutations go with this precompilation
       Permutation[] subPerms = selectPermutationsForPrecompilation(

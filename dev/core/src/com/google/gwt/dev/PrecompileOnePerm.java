@@ -249,6 +249,12 @@ public class PrecompileOnePerm {
       branch.log(TreeLogger.ERROR, "Precompilation failed");
       return false;
     }
+
+    // TODO: precompile should do this after we get the parameter passing refactored.
+    if (!options.shouldSaveSource()) {
+      precompilation.removeSourceArtifacts(logger);
+    }
+
     File precompilationFile = new File(compilerWorkDir,
         getPrecompileFilename(permId));
     Util.writeObjectAsFile(logger, precompilationFile, precompilation);

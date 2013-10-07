@@ -163,6 +163,10 @@ public class Compiler {
           if (precompilation == null) {
             return false;
           }
+          // TODO: move to precompile() after params are refactored
+          if (!options.shouldSaveSource()) {
+            precompilation.removeSourceArtifacts(logger);
+          }
 
           Event compilePermutationsEvent = SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
           Permutation[] allPerms = precompilation.getPermutations();
@@ -189,8 +193,8 @@ public class Compiler {
             logMessage += "; Writing extras to " + absExtrasPath;
           }
           Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
-              generatedArtifacts, allPerms, resultFiles, options.getWarDir(),
-              options.getDeployDir(), options.getExtraDir(), precompileOptions);
+              generatedArtifacts, allPerms, resultFiles, precompileOptions, options
+          );
 
           linkEvent.end();
           long compileDone = System.currentTimeMillis();

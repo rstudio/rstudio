@@ -223,46 +223,52 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private File warDir;
     private File deployDir;
 
-    /**
-     * @return the deploy directory.
-     */
+    @Override
     public File getDeployDir() {
       return (deployDir == null) ? new File(warDir, "WEB-INF/deploy") : deployDir;
     }
 
+    @Override
     public File getExtraDir() {
       return extraDir;
     }
 
+    @Override
     public int getLocalWorkers() {
       return localWorkers;
     }
 
+    @Override
+    public File getSaveSourceOutput() {
+      return null;
+    }
+
+    @Override
     public ServletContainerLauncher getServletContainerLauncher() {
       return scl;
     }
 
+    @Override
     public String getServletContainerLauncherArgs() {
       return sclArgs;
     }
 
+    @Override
     public File getWarDir() {
       return warDir;
     }
 
-    /**
-     * Set the deploy directory.
-     * 
-     * @param deployDir the deployDir to set
-     */
+    @Override
     public void setDeployDir(File deployDir) {
       this.deployDir = deployDir;
     }
 
+    @Override
     public void setExtraDir(File extraDir) {
       this.extraDir = extraDir;
     }
 
+    @Override
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
     }
@@ -272,14 +278,22 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       this.warDir = outDir;
     }
 
+    @Override
+    public void setSaveSourceOutput(File debugDir) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
       this.scl = scl;
     }
 
+    @Override
     public void setServletContainerLauncherArgs(String args) {
       sclArgs = args;
     }
 
+    @Override
     public void setWarDir(File warDir) {
       this.warDir = warDir;
     }
