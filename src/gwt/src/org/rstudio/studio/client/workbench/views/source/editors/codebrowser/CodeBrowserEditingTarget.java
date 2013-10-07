@@ -346,7 +346,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
    }
    

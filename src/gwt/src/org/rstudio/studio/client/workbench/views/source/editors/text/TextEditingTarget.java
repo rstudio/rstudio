@@ -1213,7 +1213,7 @@ public class TextEditingTarget implements EditingTarget
    
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
       // NOTE: will be a no-op for non-c/c++ file types
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);

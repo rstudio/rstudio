@@ -551,7 +551,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target)
                {
-                  target.verifyPrerequisites(); 
+                  target.verifyCppPrerequisites(); 
                }
              }
          );
@@ -563,7 +563,7 @@ public class Source implements InsertSourceHandler,
                    @Override
                    public void onSuccess(EditingTarget target)
                    {
-                      target.verifyPrerequisites();
+                      target.verifyCppPrerequisites();
                    }
                 });
       }

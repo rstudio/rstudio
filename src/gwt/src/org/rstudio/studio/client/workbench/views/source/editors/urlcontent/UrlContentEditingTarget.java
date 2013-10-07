@@ -125,7 +125,7 @@ public class UrlContentEditingTarget implements EditingTarget
    
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
    }
       
