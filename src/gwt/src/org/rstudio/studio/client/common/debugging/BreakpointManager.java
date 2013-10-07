@@ -725,11 +725,17 @@ public class BreakpointManager
    private void clearAllBreakpoints()
    {
       Set<FileFunction> functions = new TreeSet<FileFunction>();
+      ArrayList<Breakpoint> topLevelBPs = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          breakpoint.setState(Breakpoint.STATE_REMOVING);
-         functions.add(new FileFunction(breakpoint));
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+            topLevelBPs.add(breakpoint);
+         else
+            functions.add(new FileFunction(breakpoint));
       }
+      // Remove the breakpoints from each unique function that had breakpoints
+      // set previously
       for (FileFunction function: functions)
       {
          server_.setFunctionBreakpoints(
@@ -749,6 +755,13 @@ public class BreakpointManager
                   }
                });
       }
+      // Let the server know that top-level breakpoints were cleared (if any)
+      if (topLevelBPs.size() > 0)
+      {
+         server_.updateShinyBreakpoints(topLevelBPs, false, 
+                                        new VoidServerRequestCallback());
+      }
+      
       notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
       breakpoints_.clear();
       onBreakpointAddOrRemove();
