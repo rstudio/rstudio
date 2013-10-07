@@ -16,6 +16,7 @@
 #include "SessionShiny.hpp"
 
 #include <core/Error.hpp>
+#include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
 
@@ -59,15 +60,30 @@ void onPackageLoaded(const std::string& pkgname)
    }
 }
 
+Error getShinyCapabilities(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   json::Object capsJson;
+   capsJson["installed"] = module_context::isPackageInstalled("shiny");
+   pResponse->setResult(capsJson);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 
 
 Error initialize()
 {
-   module_context::events().onPackageLoaded.connect(onPackageLoaded);
+   using namespace module_context;
+   events().onPackageLoaded.connect(onPackageLoaded);
 
-   return Success();
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities));
+
+   return initBlock.execute();
 }
 
 

@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.common.shiny.model.ShinyCapabilities;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
@@ -1269,6 +1270,13 @@ public class RemoteServer implements Server
                               ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, "is_read_only_file", path, requestCallback);
+   }
+   
+   @Override
+   public void getShinyCapabilities(
+         ServerRequestCallback<ShinyCapabilities> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_shiny_capabilities", requestCallback);
    }
 
    public void getRecentHistory(
