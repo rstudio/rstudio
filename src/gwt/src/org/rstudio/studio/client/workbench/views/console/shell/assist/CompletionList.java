@@ -139,7 +139,10 @@ class CompletionList<TItem> extends Composite
 
    public int getItemCount()
    {
-      return grid_.getRowCount() ;
+      if (grid_ != null)
+         return grid_.getRowCount() ;
+      else
+         return 0;
    }
    
    public TItem getSelectedItem()
