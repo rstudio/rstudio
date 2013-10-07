@@ -48,6 +48,20 @@ EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 
 namespace {
 
+// The environment monitor and friends do work in reponse to events in R.
+// In rare cases, this work can trigger the same events in R that are
+// being responded to, leading to unwanted recursion. This simple guard
+// increments the given counter on construction (and decrements on destruction)
+// so vulnerable event handlers below can prevent reentrancy.
+class EventRecursionGuard
+{
+public:
+   EventRecursionGuard(int& counter): counter_(counter) { counter_++; }
+   ~EventRecursionGuard() { counter_--; }
+private:
+   int& counter_;
+};
+
 bool isValidSrcref(SEXP srcref)
 {
    return srcref && TYPEOF(srcref) != NILSXP;
@@ -642,12 +656,28 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   // Prevent recursive calls to this function (see notes in
+   // EventRecursionGuard)
+   static int inDetectChanges = 0;
+   if (inDetectChanges > 0)
+      return;
+
+   EventRecursionGuard guard(inDetectChanges);
+
    s_pEnvironmentMonitor->checkForChanges();
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
+   // Prevent recursive calls to this function (see notes in
+   // EventRecursionGuard)
+   static int inConsolePrompt = 0;
+   if (inConsolePrompt > 0)
+      return;
+
+   EventRecursionGuard guard(inConsolePrompt);
+
    int depth = 0;
    SEXP environmentTop = NULL;
    RCNTXT* pRContext = NULL;
