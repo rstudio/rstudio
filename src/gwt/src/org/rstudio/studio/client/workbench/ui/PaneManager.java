@@ -139,8 +139,8 @@ public class PaneManager
       initPanes(config);
 
       panes_ = createPanes(config);
-      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left");
-      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right");
+      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4);
+      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right", 0.6);
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
@@ -309,7 +309,8 @@ public class PaneManager
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
                                                    LogicalWindow bottom,
-                                                   String name)
+                                                   String name,
+                                                   double bottomDefaultPct)
    {
       return new DualWindowLayoutPanel(
             eventBus_,
@@ -318,7 +319,7 @@ public class PaneManager
             session_,
             name,
             WindowState.NORMAL,
-            (int) (Window.getClientHeight()*0.6));
+            (int) (Window.getClientHeight()*bottomDefaultPct));
    }
 
    private LogicalWindow createConsole()
