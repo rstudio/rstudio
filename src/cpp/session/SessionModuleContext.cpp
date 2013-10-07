@@ -45,6 +45,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <core/r_util/RPackageInfo.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
@@ -895,7 +897,7 @@ std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
    // check whether we are in a package
    FilePath sourceDir = sourceFilePath.parent();
    if (sourceDir.filename() == "R" &&
-       sourceDir.parent().childPath("DESCRIPTION").exists())
+       r_util::isPackageDirectory(sourceDir.parent()))
    {
       r_util::RPackageInfo pkgInfo;
       Error error = pkgInfo.read(sourceDir.parent());

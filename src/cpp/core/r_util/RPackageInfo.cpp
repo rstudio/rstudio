@@ -26,6 +26,8 @@ namespace r_util {
 
 namespace {
 
+const char * const kPackageType = "Package";
+
 Error fieldNotFoundError(const FilePath& descFilePath,
                          const std::string& fieldName,
                          const ErrorLocation& location)
@@ -71,6 +73,13 @@ Error RPackageInfo::read(const FilePath& packageDir)
    if (it != fields.end())
       linkingTo_ = it->second;
 
+   // Type field
+   it = fields.find("Type");
+   if (it != fields.end())
+      type_ = it->second;
+   else
+      type_ = kPackageType;
+
    return Success();
 }
 
@@ -85,6 +94,27 @@ std::string RPackageInfo::packageFilename(const std::string& extension) const
    boost::format fmt("%1%_%2%.%3%");
    return boost::str(fmt % name() % version() % extension);
 }
+
+bool isPackageDirectory(const FilePath& dir)
+{
+   if (dir.childPath("DESCRIPTION").exists())
+   {
+      RPackageInfo pkgInfo;
+      Error error = pkgInfo.read(dir);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+
+      return pkgInfo.type() == kPackageType;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 
 } // namespace r_util
 } // namespace core 

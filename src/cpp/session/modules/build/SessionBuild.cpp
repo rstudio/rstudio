@@ -287,9 +287,8 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      // validate that there is a DESCRIPTION file
-      FilePath descFilePath = packagePath.childPath("DESCRIPTION");
-      if (!descFilePath.exists())
+      // validate that this is a package
+      if (!r_util::isPackageDirectory(packagePath))
       {
          boost::format fmt ("ERROR: The build directory does "
                             "not contain a DESCRIPTION\n"
