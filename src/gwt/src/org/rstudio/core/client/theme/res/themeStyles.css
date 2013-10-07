@@ -341,6 +341,7 @@ pre {
 
 .gwt-SuggestBoxPopup {
    z-index: 1002;	
+   cursor: default;
 }
 
 .gwt-DialogBox .dialogTopLeft, .miniDialogPopupPanel .popupTopLeft {
