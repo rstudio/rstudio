@@ -28,6 +28,6 @@ viewApp <- function(url, maximize = TRUE) {
    if (!is.character(url) || (length(url) != 1))
       stop("url must be a single element character vector.")
    
-   invisible(.Call(getNativeSymbolInfo("rs_browserInternal", PACKAGE=""), 
+   invisible(.Call(getNativeSymbolInfo("rs_viewApp", PACKAGE=""), 
                    url, maximize))     
 }

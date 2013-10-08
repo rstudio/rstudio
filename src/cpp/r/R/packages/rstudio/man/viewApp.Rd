@@ -16,7 +16,7 @@ viewApp(url, maximize = TRUE)
 }
 
 \details{
-RStudio also sets the global \code{browser.internal.app} option to the \code{rstudio::viewApp} function so that it can be invoked in front-end independent manner.
+RStudio also sets the global \code{viewapp} option to the \code{rstudio::viewApp} function so that it can be invoked in front-end independent manner.
 
 Applications displayed within the Viewer pane must be served from the local system (i.e. they cannot come from an arbitrary URL on the internet).
 }
@@ -24,12 +24,12 @@ Applications displayed within the Viewer pane must be served from the local syst
 \examples{
 \dontrun{
 
-# run an application in the Viewer pane
+# run an application inside the IDE
 rstudio::viewApp("http://localhost:8100")
 
 # attempt to run an application inside the IDE and fall back
 # if it isn't available
-appBrowser <- getOption("browser.internal.app", utils::browseURL)
+appBrowser <- getOption("viewapp", utils::browseURL)
 appBrowser("http://localhost:8100")
 }
 }

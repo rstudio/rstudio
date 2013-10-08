@@ -19,11 +19,13 @@ options(browser = function(url)
    .Call("rs_browseURL", url) ;
 })
 
-# implementation of browser.internal.app option
-options(browser.internal.app = function(url, maximize = TRUE)
-{
-   invisible(.Call("rs_browserInternal", url, maximize))  
-})
+# default viewapp option if not already set
+if (is.null(getOption("viewapp"))) {
+   options(viewapp = function(url, maximize = TRUE)
+   {
+      invisible(.Call("rs_viewApp", url, maximize))  
+   })   
+}
 
 # custom pager implementation
 options(pager = .rs.pager)

@@ -56,8 +56,7 @@ void viewerNavigate(const std::string& url, bool maximize = TRUE)
    module_context::enqueClientEvent(event);
 }
 
-// show error message from R
-SEXP rs_browserInternal(SEXP urlSEXP, SEXP maximizeSEXP)
+SEXP rs_viewApp(SEXP urlSEXP, SEXP maximizeSEXP)
 {
    try
    {
@@ -89,12 +88,11 @@ void onClientInit()
 
 Error initialize()
 {
-   // register rs_askForPassword with R
-   R_CallMethodDef methodDefBrowserInternal ;
-   methodDefBrowserInternal.name = "rs_browserInternal" ;
-   methodDefBrowserInternal.fun = (DL_FUNC) rs_browserInternal ;
-   methodDefBrowserInternal.numArgs = 2;
-   r::routines::addCallMethod(methodDefBrowserInternal);
+   R_CallMethodDef methodDefViewApp ;
+   methodDefViewApp.name = "rs_viewApp" ;
+   methodDefViewApp.fun = (DL_FUNC) rs_viewApp ;
+   methodDefViewApp.numArgs = 2;
+   r::routines::addCallMethod(methodDefViewApp);
 
    // install event handlers
    using namespace module_context;
