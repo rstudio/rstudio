@@ -19,10 +19,10 @@ options(browser = function(url)
    .Call("rs_browseURL", url) ;
 })
 
-# implementation of browser.internal option
-options(browser.internal = function(url, fullHeight = FALSE)
+# implementation of browser.internal.app option
+options(browser.internal.app = function(url, maximize = TRUE)
 {
-   .Call("rs_browserInternal", url, fullHeight)   
+   invisible(.Call("rs_browserInternal", url, maximize))  
 })
 
 # custom pager implementation

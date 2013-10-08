@@ -30,8 +30,8 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
          return this.url;
       }-*/;
       
-      public native final boolean getFullHeight() /*-{
-         return this.full_height;
+      public native final boolean getMaximize() /*-{
+         return this.maximize;
       }-*/;
       
       
@@ -52,9 +52,9 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       return data_.getURL();
    }
    
-   public boolean getFullHeight()
+   public boolean getMaximize()
    {
-      return data_.getFullHeight();
+      return data_.getMaximize();
    }
    
    @Override

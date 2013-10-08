@@ -43,7 +43,7 @@ Error viewerStopped(const json::JsonRpcRequest& request,
 }
 
 
-void viewerNavigate(const std::string& url, bool fullHeight = FALSE)
+void viewerNavigate(const std::string& url, bool maximize = TRUE)
 {
    // record the url (for reloads)
    s_currentUrl = url;
@@ -51,18 +51,18 @@ void viewerNavigate(const std::string& url, bool fullHeight = FALSE)
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
-   dataJson["full_height"] = fullHeight;
+   dataJson["maximize"] = maximize;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
 
 // show error message from R
-SEXP rs_browserInternal(SEXP urlSEXP, SEXP fullHeightSEXP)
+SEXP rs_browserInternal(SEXP urlSEXP, SEXP maximizeSEXP)
 {
    try
    {
       viewerNavigate(r::sexp::safeAsString(urlSEXP),
-                     r::sexp::asLogical(fullHeightSEXP));
+                     r::sexp::asLogical(maximizeSEXP));
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -75,7 +75,7 @@ void onSuspend(const r::session::RSuspendOptions&, Settings*)
 
 void onResume(const Settings&)
 {
-   viewerNavigate("about:blank");
+   viewerNavigate("", false);
 }
 
 void onClientInit()

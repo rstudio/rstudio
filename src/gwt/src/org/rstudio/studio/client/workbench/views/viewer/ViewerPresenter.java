@@ -71,12 +71,19 @@ public class ViewerPresenter extends BasePresenter
    {
       enableCommands(true);
       
-      display_.bringToFront();
+      if (event.getURL().length() > 0)
+      {
+         display_.bringToFront();
       
-      if (event.getFullHeight())
-         display_.maximize();
-      
-      navigate(event.getURL());
+         if (event.getMaximize())
+            display_.maximize();
+         
+         navigate(event.getURL());
+      }
+      else
+      {
+         navigate("about:blank");
+      }
    }
    
    @Handler
