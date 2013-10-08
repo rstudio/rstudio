@@ -31,6 +31,9 @@ if ($wnd) {
     // to session storage.
     var devModeUrl = $wnd.sessionStorage[devModeKey];
 
+    // Apply validation for devModeUrl, if any.
+    __DEV_MODE_URL_VALIDATION__
+
     if (devModeUrl && !$wnd[devModeKey]) {
       $wnd[devModeKey] = true; // Don't try to redirect more than once,
 

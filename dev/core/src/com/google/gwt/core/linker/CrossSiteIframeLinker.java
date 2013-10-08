@@ -96,8 +96,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     includeJs(ss, logger, getJsLoadExternalStylesheets(context), "__LOAD_STYLESHEETS__");
     includeJs(ss, logger, getJsRunAsync(context), "__RUN_ASYNC__");
     includeJs(ss, logger, getJsDevModeRedirectHook(context), "__DEV_MODE_REDIRECT_HOOK__");
+
+    // Must go after __DEV_MODE_REDIRECT_HOOK__ because they're found in DevModeRedirectHook.js.
     includeJs(ss, logger, getJsDevModeRedirectHookPermitted(context),
-        "__DEV_MODE_REDIRECT_HOOK_PERMITTED__"); // must be after DEV_MODE_REDIRECT_HOOK
+        "__DEV_MODE_REDIRECT_HOOK_PERMITTED__");
+    includeJs(ss, logger, getJsDevModeUrlValidation(context), "__DEV_MODE_URL_VALIDATION__");
 
     // This Linker does not support <script> tags in the gwt.xml
     SortedSet<ScriptReference> scripts = artifacts.find(ScriptReference.class);
@@ -236,6 +239,28 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     } else {
       return "";
     }
+  }
+
+  /**
+   * Returns a JavaScript fragment that validates "devModeUrl"&mdash;the URL that Super Dev Mode's
+   * JavaScript is loaded from&mdash;before it's used.  The variable may be modified to change what
+   * what URL is loaded, or it maybe be set to "" to disable completely.
+   * (May return either the JavaScript itself or the name of a Java resource ending with ".js".)
+   */
+  protected String getJsDevModeUrlValidation(LinkerContext context) {
+    // As a default, if the user provides devModeUrlWhitelistRegexp, then we verify that it
+    // matches devModeUrl.
+    String regexp = getStringConfigurationProperty(context, "devModeUrlWhitelistRegexp", "");
+    if (!regexp.isEmpty()) {
+      return ""
+          + "if (!/^" + regexp.replace("/", "\\/") + "$/.test(devModeUrl)) {\n"
+          + "  if (window.console && console.log) {\n"
+          + "    console.log('Ignoring non-whitelisted Dev Mode URL: ' + devModeUrl);\n"
+          + "  }\n"
+          + "  devModeUrl = '';"
+          + "}";
+    }
+    return "";
   }
 
   /**
