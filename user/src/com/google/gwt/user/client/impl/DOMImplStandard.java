@@ -130,13 +130,15 @@ abstract class DOMImplStandard extends DOMImpl {
   @Override
   public void releaseCapture(Element elem) {
     maybeInitializeEventSystem();
-    releaseCaptureImpl(elem);
+    if (captureElem == elem) {
+      captureElem = null;
+    }
   }
 
   @Override
   public void setCapture(Element elem) {
     maybeInitializeEventSystem();
-    setCaptureImpl(elem);
+    captureElem = elem;
   }
 
   @Override
@@ -345,15 +347,5 @@ abstract class DOMImplStandard extends DOMImpl {
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x4000000) elem.ongestureend    = (bits & 0x4000000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
-  }-*/;
-
-  private native void releaseCaptureImpl(Element elem) /*-{
-    if (elem === @com.google.gwt.user.client.impl.DOMImplStandard::captureElem) {
-      @com.google.gwt.user.client.impl.DOMImplStandard::captureElem = null;
-    }
-  }-*/;
-
-  private native void setCaptureImpl(Element elem) /*-{
-    @com.google.gwt.user.client.impl.DOMImplStandard::captureElem = elem;
   }-*/;
 }
