@@ -37,11 +37,11 @@ public class RObject extends JavaScriptObject
    }-*/;
 
    public final native String getValue() /*-{
-      return this.value;
+      return this.value ? this.value : "NO_VALUE";
    }-*/;
 
    public final native String getDescription() /*-{
-       return this.description;
+       return this.description ? this.description : "";
    }-*/;
 
    public final native JsArrayString getContents() /*-{
