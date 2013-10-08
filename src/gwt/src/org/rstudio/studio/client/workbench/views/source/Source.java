@@ -397,14 +397,8 @@ public class Source implements InsertSourceHandler,
       // Same with this event
       fireDocTabsChanged();
       
-      // open project docs (but delay it so we are fully initialized)
-      new Timer() {
-         @Override
-         public void run()
-         {
-            openProjectDocs(session);  
-         } 
-      }.schedule(10);
+      // open project docs
+      openProjectDocs(session);    
    }
 
    /**
@@ -447,30 +441,50 @@ public class Source implements InsertSourceHandler,
       JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
       if (openDocs.length() > 0)
       {
-         // record the first doc for reactivation
-         FileSystemItem firstDoc = FileSystemItem.createFile(openDocs.get(0));
+         // set new tab pending for the duration of the continuation
+         newTabPending_++;
+                 
+         // create a continuation for opening the source docs
+         SerializedCommandQueue openCommands = new SerializedCommandQueue();
          
          for (int i=0; i<openDocs.length(); i++)
          {
-            // get the file
-            FileSystemItem fsi = FileSystemItem.createFile(openDocs.get(i));
-             
-            // if this is the last doc then activate the first doc when done
-            final FileSystemItem activateDoc = 
-                           (i == openDocs.length() - 1) ? firstDoc : null;
-            
-            // open the file
-            openFile(fsi, 
-                     fileTypeRegistry_.getTextTypeForFile(fsi), 
-                     new CommandWithArg<EditingTarget>() {
-                        @Override
-                        public void execute(EditingTarget arg)
-                        {
-                           if (activateDoc != null)
-                              openFile(activateDoc);
-                        }
-                     });
+            String doc = openDocs.get(i);
+            final FileSystemItem fsi = FileSystemItem.createFile(doc);
+              
+            openCommands.addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  openFile(fsi, 
+                           fileTypeRegistry_.getTextTypeForFile(fsi), 
+                           new CommandWithArg<EditingTarget>() {
+                              @Override
+                              public void execute(EditingTarget arg)
+                              {  
+                                 continuation.execute();
+                              }
+                           });
+               }
+            });
          }
+         
+         // decrement newTabPending and select first tab when done
+         openCommands.addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               newTabPending_--;
+               onFirstTab();
+               continuation.execute();
+            }
+            
+         });
+         
+         // execute the continuation
+         openCommands.run();
       }
    }
    
