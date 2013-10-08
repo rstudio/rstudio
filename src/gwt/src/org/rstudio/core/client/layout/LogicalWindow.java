@@ -30,12 +30,14 @@ import static org.rstudio.core.client.layout.WindowState.*;
  * logical window in the DualWindowLayoutPanel.
  */
 public class LogicalWindow implements HasWindowStateChangeHandlers,
-                                      WindowStateChangeHandler
+                                      WindowStateChangeHandler,
+                                      WindowFrame.LogicalContext
 {
    public LogicalWindow(WindowFrame normal,
                         MinimizedWindowFrame minimized)
    {
       normal_ = normal;
+      normal_.setLogicalContext(this);
       minimized_ = minimized;
 
       normal_.addWindowStateChangeHandler(this);
@@ -112,6 +114,12 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    public WindowState getState()
    {
       return state_;
+   }
+   
+   @Override
+   public boolean isMaximized()
+   {
+      return state_ == MAXIMIZE;
    }
 
    private HandlerManager events_ = new HandlerManager(this);

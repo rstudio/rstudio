@@ -35,6 +35,11 @@ public class WindowFrame extends Composite
               EnsureVisibleHandler,
               EnsureMaximizedHandler
 {
+   public interface LogicalContext
+   {
+      boolean isMaximized();
+   }
+   
    public WindowFrame(Widget mainWidget)
    {
       this();
@@ -96,6 +101,11 @@ public class WindowFrame extends Composite
                                  14, Style.Unit.PX);
 
       initWidget(frame_);
+   }
+   
+   public void setLogicalContext(LogicalContext context)
+   {
+      context_ = context;
    }
 
    @Override
@@ -318,7 +328,8 @@ public class WindowFrame extends Composite
    @Override
    public void onEnsureMaximized(EnsureMaximizedEvent event)
    {
-      maximize();
+      if ((context_ != null) && !context_.isMaximized())
+         maximize();
    }
 
    public void onBeforeShow()
@@ -334,6 +345,7 @@ public class WindowFrame extends Composite
       return fill_;
    }
 
+   private LogicalContext context_;
    private final LayoutPanel frame_;
    private final ShadowBorder border_;
    private final SimplePanel borderPositioner_;
