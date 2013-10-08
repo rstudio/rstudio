@@ -164,6 +164,9 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPane;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresenter;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerTab;
 
 public class RStudioGinModule extends AbstractGinModule
 {
@@ -225,6 +228,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
+      bind(ViewerPresenter.Display.class).to(ViewerPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(CompilePdfOutputPresenter.Display.class).to(CompilePdfOutputPane.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
@@ -239,6 +243,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Build", BuildTab.class);
       bindTab("Presentation", PresentationTab.class);
       bindTab("Environment", EnvironmentTab.class);
+      bindTab("Viewer", ViewerTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);

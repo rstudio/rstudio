@@ -48,6 +48,7 @@ public class PaneConfig extends JavaScriptObject
       tabSet2.push("Plots");
       tabSet2.push("Packages");
       tabSet2.push("Help");
+      tabSet2.push("Viewer");
 
       return create(panes, tabSet1, tabSet2);
    }
@@ -60,13 +61,14 @@ public class PaneConfig extends JavaScriptObject
    public static String[] getAllTabs()
    {
       return new String[] {"Environment", "History", "Files", "Plots",
-                           "Packages", "Help", "Build", "VCS", "Presentation"};
+                           "Packages", "Help", "Build", "VCS", "Presentation",
+                           "Viewer"};
    }
 
    public static String[] getAlwaysVisibleTabs()
    {
       return new String[] {"Environment", "History", "Files", "Plots",
-                           "Help"};
+                           "Help", "Viewer"};
    }
 
    public static String[] getHideableTabs()
@@ -77,7 +79,7 @@ public class PaneConfig extends JavaScriptObject
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation" };
+      return new String[] {"Build", "VCS", "Presentation", "Viewer" };
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -183,12 +185,15 @@ public class PaneConfig extends JavaScriptObject
       if (baseTabs.size() > 0)
          return false;
 
-      // Were any addable tabs missing? Add them to ts1.
+      // Were any addable tabs missing? Add them the appropriate tabset
       // (Iterate over original array instead of addableTabs set so that order
       // is well-defined)
       for (String tab : getAddableTabs())
          if (addableTabs.contains(tab))
-            ts1.push(tab);
+            if (tab.equals("Viewer"))
+               ts2.push(tab);
+            else
+               ts1.push(tab);
 
       // These tabs can be hidden sometimes; they can't stand alone in a tabset
       Set<String> hideableTabs = makeSet(getHideableTabs());
