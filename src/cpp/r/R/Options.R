@@ -19,6 +19,12 @@ options(browser = function(url)
    .Call("rs_browseURL", url) ;
 })
 
+# implementation of browser.internal option
+options(browser.internal = function(url, fullHeight = FALSE)
+{
+   .Call("rs_browserInternal", url, fullHeight)   
+})
+
 # custom pager implementation
 options(pager = .rs.pager)
 

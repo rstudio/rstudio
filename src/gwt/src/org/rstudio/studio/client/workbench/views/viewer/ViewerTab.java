@@ -14,20 +14,25 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 import com.google.inject.Inject;
 
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 
 public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
 {
    public abstract static class Shim 
-        extends DelayLoadTabShim<ViewerPresenter, ViewerTab> {}
+        extends DelayLoadTabShim<ViewerPresenter, ViewerTab>
+        implements ViewerNavigateEvent.Handler {}
 
    @Inject
-   public ViewerTab(Shim shim, Session session)
+   public ViewerTab(Shim shim, Session session, EventBus eventBus)
    {
       super("Viewer", shim);
       session_ = session;
+      
+      eventBus.addHandler(ViewerNavigateEvent.TYPE, shim);
    }
    
    @SuppressWarnings("unused")

@@ -12,12 +12,12 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.viewer.ui.ViewerFrame;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
@@ -38,10 +38,19 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override 
    protected Widget createMainWidget()
    {
-      Label label = new Label("Under Construction");
-      label.getElement().getStyle().setColor("#888");
-      return new HorizontalCenterPanel(label, 100);
+      frame_ = new ViewerFrame() ;
+      frame_.setUrl("about:blank");
+      frame_.setSize("100%", "100%");
+      return new AutoGlassPanel(frame_);
+   }
+   
+   @Override
+   public void navigate(String url)
+   {
+      frame_.navigate(url);
    }
 
+   
+   private ViewerFrame frame_;
    
 }

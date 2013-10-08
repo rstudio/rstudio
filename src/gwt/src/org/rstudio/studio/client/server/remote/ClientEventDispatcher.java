@@ -102,6 +102,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 
 import java.util.ArrayList;
 
@@ -509,6 +510,11 @@ public class ClientEventDispatcher
          {
             ErrorHandlerType handlerType = event.getData();
             eventBus_.fireEvent(new ErrorHandlerChangedEvent(handlerType));
+         }
+         else if (type.equals(ClientEvent.ViewerNavigate))
+         {
+            ViewerNavigateEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ViewerNavigateEvent(data));
          }
          else
          {

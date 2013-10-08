@@ -16,12 +16,13 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 
 public class ViewerPresenter extends BasePresenter 
 {
    public interface Display extends WorkbenchView
    {
-     
+      void navigate(String url);
    }
    
    @Inject
@@ -31,9 +32,11 @@ public class ViewerPresenter extends BasePresenter
       display_ = display;
    }
    
-  
+   public void onViewerNavigate(ViewerNavigateEvent event)
+   {
+      display_.navigate(event.getURL());
+   }
    
-   @SuppressWarnings("unused")
    private final Display display_ ;
 
    
