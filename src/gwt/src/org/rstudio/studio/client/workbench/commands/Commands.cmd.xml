@@ -1136,22 +1136,17 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Refresh"
         desc="Refresh topic"/>
         
-    <cmd id="viewerBack"
-        buttonLabel=""
-        desc="Previous page"/>
-   <cmd id="viewerForward"
-        buttonLabel=""
-        desc="Next page"/>
    <cmd id="viewerPrint"
         buttonLabel=""
         desc="Print page"/>
-   <cmd id="viewerClearHistory"
-        desc="Clear viewer history"/>
    <cmd id="viewerPopout"
         buttonLabel=""
         desc="Show in new window"/>
    <cmd id="viewerRefresh"
-        desc="Refresh page"/>     
+        desc="Refresh page"/> 
+    <cmd id="viewerStop"
+        buttonLabel=""
+        desc="Stop viewer"/>    
         
    <cmd id="raiseException"
         menuLabel="Raise Exception"/>

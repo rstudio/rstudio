@@ -167,6 +167,7 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.dialog.SVNReviewPresent
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerTab;
+import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class RStudioGinModule extends AbstractGinModule
 {
@@ -300,6 +301,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EnvironmentServerOperations.class).to(RemoteServer.class);
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
       bind(MetaServerOperations.class).to(RemoteServer.class);
+      bind(ViewerServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -14,8 +14,11 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -28,8 +31,6 @@ public class ViewerPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void navigate(String url);
-      void back();
-      void forward();
       void print();
       void popout();
       void refresh();
@@ -37,34 +38,34 @@ public class ViewerPresenter extends BasePresenter
    
    @Inject
    public ViewerPresenter(Display display, 
+                          EventBus eventBus,
                           Commands commands,
                           Binder binder)
    {
       super(display);
       display_ = display;
+      commands_ = commands;
       
       binder.bind(commands, this);
-   }
-   
-   @Handler
-   public void onViewerBack() { display_.back(); }
-   @Handler
-   public void onViewerForward() { display_.forward(); }
-   @Handler
-   public void onViewerPrint() { display_.print(); }
-   @Handler
-   public void onViewerPopout() { display_.popout(); }
-   @Handler
-   public void onViewerRefresh() { display_.refresh(); }
-        
-   @Handler
-   public void onViewerClearHistory()
-   {
       
+      enableCommands(false);
+      
+      // show a stop button when the console is busy
+      commands_.viewerStop().setVisible(commands_.interruptR().isEnabled());
+      commands_.interruptR().addEnabledChangedHandler(
+                                                new EnabledChangedHandler() {
+         @Override
+         public void onEnabledChanged(AppCommand command)
+         {
+            commands_.viewerStop().setVisible(command.isEnabled());
+         }
+      });
    }
    
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
+      enableCommands(true);
+      
       display_.bringToFront();
       
       if (event.getFullHeight())
@@ -73,7 +74,31 @@ public class ViewerPresenter extends BasePresenter
       display_.navigate(event.getURL());
    }
    
-   private final Display display_ ;
-
+   @Handler
+   public void onViewerPrint() { display_.print(); }
+   @Handler
+   public void onViewerPopout() { display_.popout(); }
+   @Handler
+   public void onViewerRefresh() { display_.refresh(); }
+        
+   @Handler
+   public void onViewerStop()
+   {
+      enableCommands(false);
+      
+      display_.navigate("about:blank");
+      
+      commands_.interruptR().execute();
+   }
+ 
    
+   private void enableCommands(boolean enable)
+   {
+      commands_.viewerPopout().setEnabled(enable);
+      commands_.viewerPrint().setEnabled(enable);
+      commands_.viewerRefresh().setEnabled(enable);
+   }
+   
+   private final Display display_ ;
+   private final Commands commands_;
 }

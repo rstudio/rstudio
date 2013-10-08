@@ -1,6 +1,7 @@
 package org.rstudio.studio.client.workbench.views.viewer.ui;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -53,6 +54,18 @@ public class ViewerFrame extends Frame
 
       if (navigateCommand.execute())
          Scheduler.get().scheduleFixedDelay(navigateCommand, 100);      
+   }
+   
+
+   public void print()
+   {
+      getContentWindow().focus() ;
+      getContentWindow().print() ;
+   }
+
+   private WindowEx getContentWindow()
+   {
+      return getIFrameEx() != null ? getIFrameEx().getContentWindow() : null ;
    }
    
    private IFrameElementEx getIFrameEx()

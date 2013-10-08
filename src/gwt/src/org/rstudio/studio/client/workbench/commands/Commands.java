@@ -267,12 +267,10 @@ public abstract class
    public abstract AppCommand refreshSuperDevMode();
    
    // Viewer
-   public abstract AppCommand viewerBack();
-   public abstract AppCommand viewerForward();
    public abstract AppCommand viewerPrint();
-   public abstract AppCommand viewerClearHistory();
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerRefresh();
+   public abstract AppCommand viewerStop();
 
    // Application
    public abstract AppCommand quitSession();
