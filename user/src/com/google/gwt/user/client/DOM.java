@@ -867,7 +867,7 @@ public class DOM {
    * @return the element's event listener
    */
   public static EventListener getEventListener(Element elem) {
-    return impl.getEventListener(elem);
+    return DOMImpl.getEventListener(elem);
   }
 
   /**
@@ -1247,7 +1247,7 @@ public class DOM {
    * @param listener the listener to receive {@link Event events}
    */
   public static void setEventListener(Element elem, EventListener listener) {
-    impl.setEventListener(elem, listener);
+    DOMImpl.setEventListener(elem, listener);
   }
 
   /**
@@ -1397,7 +1397,7 @@ public class DOM {
    * @param listener the listener associated with the element that received the
    *          event.
    */
-  static void dispatchEvent(Event evt, Element elem, EventListener listener) {
+  public static void dispatchEvent(Event evt, Element elem, EventListener listener) {
     // Preserve the current event in case we are in a reentrant event dispatch.
     Event prevCurrentEvent = currentEvent;
     currentEvent = evt;
@@ -1405,6 +1405,23 @@ public class DOM {
     dispatchEventImpl(evt, elem, listener);
 
     currentEvent = prevCurrentEvent;
+  }
+
+  /**
+   * This method is a similar to {@link #dispatchEvent(Event, Element, EventListener)} but only
+   * dispatches if an event listener is set to element.
+   *
+   * @param evt the handle to the event being fired.
+   * @param elem the handle to the element that received the event.
+   * @return {@code true} if the event was dispatched
+   */
+  public static boolean dispatchEvent(Event evt, Element elem) {
+    EventListener eventListener = getEventListener(elem);
+    if (eventListener == null) {
+      return false;
+    }
+    dispatchEvent(evt, elem, eventListener);
+    return true;
   }
 
   /**

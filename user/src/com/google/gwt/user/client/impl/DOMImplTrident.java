@@ -122,15 +122,15 @@ public abstract class DOMImplTrident extends DOMImpl {
         }
       }
 
+      var getEventListener = @com.google.gwt.user.client.impl.DOMImpl::getEventListener(*);
+
       var listener, curElem = this;
-      while (curElem && !(listener = curElem.__listener)) {
+      while (curElem && !(listener = getEventListener(curElem))) {
         curElem = curElem.parentElement;
       }
 
       if (listener) {
-        if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(listener)) {
-          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
-        }
+        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
       }
 
       @com.google.gwt.dom.client.DOMImplTrident::currentEventTarget = oldEventTarget;

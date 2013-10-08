@@ -93,14 +93,6 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   }
 
   /**
-   * Dispatch an event through the normal GWT mechanism.
-   */
-  private static native void dispatchEvent(Event evt, Element elem,
-      EventListener listener) /*-{
-    @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, elem, listener);
-  }-*/;
-
-  /**
    * Get the value of an element that has a value or checked state.
    *
    * @param elem the input element
@@ -181,7 +173,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
       Event blurEvent = Document.get().createFocusEvent().cast();
       dispatchCellEvent(widget, target, Event.ONBLUR, null);
     } else if (BrowserEvents.LOAD.equals(type) || BrowserEvents.ERROR.equals(type)) {
-      dispatchEvent(event, widget.getElement(), listener);
+      DOM.dispatchEvent(event, widget.getElement(), listener);
     }
   }
 

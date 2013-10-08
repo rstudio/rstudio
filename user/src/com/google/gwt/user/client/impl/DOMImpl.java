@@ -50,21 +50,41 @@ public abstract class DOMImpl {
     for (int i = 0; i < allElements.getLength(); i++) {
       com.google.gwt.dom.client.Element elem = allElements.getItem(i);
       Element userElem = (Element) elem;
-      EventListener listener = dom.getEventListener(userElem);
+      EventListener listener = getEventListener(userElem);
       if (GWT.isScript() && listener != null) {
         dom.sinkEvents(userElem, 0);
-        dom.setEventListener(userElem, null);
+        setEventListener(userElem, null);
       }
       // cleans up DOM-style addEventListener registered handlers
       maybeRemoveDisposableEvent(elem);
     }
   }
 
+  public static native EventListener getEventListener(Element elem) /*-{
+    // Return elem.__listener if and only if it was assigned from our module
+    var maybeListener = elem.__listener;
+    return @com.google.gwt.user.client.impl.DOMImpl::isMyListener(*)(maybeListener) ? maybeListener : null;
+  }-*/;
+
+  public static native void setEventListener(Element elem, EventListener listener) /*-{
+    elem.__listener = listener;
+  }-*/;
+
   /**
    * Returns <code>true</code>if the object is an instance of EventListener and
    * the object belongs to this module.
+   * <p>
+   * Note that this method should only be called from JSNI, otherwise it can be inlined and compiler
+   * can remove instanceOf checks. E.g.
+   * <pre>
+   * EventListener listener = getEventListenerFromSomeJsniCode();
+   * if (isMyListener(listener)) {
+   *   // This block will always be executed because the compiler proves that the instance of checks
+   *   // are not required after inlining isMyListener.
+   * }
+   * </pre>
    */
-  protected static boolean isMyListener(Object object) {
+  private static boolean isMyListener(Object object) {
     /*
      * The first test ensures the Object belongs to this module in Production
      * Mode by ensuring this is not a JavaScriptObject. In Production Mode,
@@ -150,12 +170,6 @@ public abstract class DOMImpl {
 
   public abstract int getChildIndex(Element parent, Element child);
 
-  public native EventListener getEventListener(Element elem) /*-{
-    // Return elem.__listener if and only if it was assigned from our module
-    var maybeListener = elem.__listener;
-    return @com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(maybeListener) ? maybeListener : null;
-  }-*/;
-
   public native int getEventsSunk(Element elem) /*-{
     return elem.__eventBits || 0;
   }-*/;
@@ -179,10 +193,6 @@ public abstract class DOMImpl {
   public abstract void releaseCapture(Element elem);
 
   public abstract void setCapture(Element elem);
-
-  public native void setEventListener(Element elem, EventListener listener) /*-{
-    elem.__listener = listener;
-  }-*/;
 
   public abstract void sinkBitlessEvent(Element elem, String eventTypeName);
 
