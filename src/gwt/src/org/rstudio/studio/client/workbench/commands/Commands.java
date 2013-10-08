@@ -265,6 +265,14 @@ public abstract class
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
+   
+   // Viewer
+   public abstract AppCommand viewerBack();
+   public abstract AppCommand viewerForward();
+   public abstract AppCommand viewerPrint();
+   public abstract AppCommand viewerClearHistory();
+   public abstract AppCommand viewerPopout();
+   public abstract AppCommand viewerRefresh();
 
    // Application
    public abstract AppCommand quitSession();
