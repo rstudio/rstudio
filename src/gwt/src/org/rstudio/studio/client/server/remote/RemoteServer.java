@@ -2506,6 +2506,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
+   @Override
+   public void viewerStopped(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_stopped", requestCallback);
+   }
+
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
@@ -3323,7 +3330,4 @@ public class RemoteServer implements Server
    private static final String LOG_EXCEPTION = "log_exception";
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
-
-
-
 }

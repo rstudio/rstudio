@@ -57,6 +57,7 @@ public:
    explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL);
 
    void setBaseUrl(const QUrl& baseUrl);
+   void setViewerUrl(const QString& viewerUrl) { viewerUrl_ = viewerUrl; }
 
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
@@ -74,6 +75,7 @@ protected:
 
 private:
    QUrl baseUrl_;
+   QString viewerUrl_;
    bool navigated_;
    PendingSatelliteWindow pendingSatelliteWindow_;
 };

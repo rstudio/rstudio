@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer.model;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
+
 public interface ViewerServerOperations
 {
+   void viewerStopped(ServerRequestCallback<Void> requestCallback);
 }

@@ -117,4 +117,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showKeyboardShortcutHelp();
    
    void reloadZoomWindow();
+   
+   void setViewerUrl(String url);
 }

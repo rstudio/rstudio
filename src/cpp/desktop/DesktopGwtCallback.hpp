@@ -148,6 +148,8 @@ public slots:
 
    void reloadZoomWindow();
 
+   void setViewerUrl(QString url);
+
 private:
    Synctex& synctex();
 

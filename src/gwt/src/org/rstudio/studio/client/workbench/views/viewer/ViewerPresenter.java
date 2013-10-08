@@ -18,11 +18,14 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
+import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class ViewerPresenter extends BasePresenter 
 {
@@ -40,11 +43,13 @@ public class ViewerPresenter extends BasePresenter
    public ViewerPresenter(Display display, 
                           EventBus eventBus,
                           Commands commands,
-                          Binder binder)
+                          Binder binder,
+                          ViewerServerOperations server)
    {
       super(display);
       display_ = display;
       commands_ = commands;
+      server_ = server;
       
       binder.bind(commands, this);
       
@@ -71,7 +76,7 @@ public class ViewerPresenter extends BasePresenter
       if (event.getFullHeight())
          display_.maximize();
       
-      display_.navigate(event.getURL());
+      navigate(event.getURL());
    }
    
    @Handler
@@ -86,11 +91,19 @@ public class ViewerPresenter extends BasePresenter
    {
       enableCommands(false);
       
-      display_.navigate("about:blank");
+      navigate("about:blank");
       
       commands_.interruptR().execute();
+      
+      server_.viewerStopped(new VoidServerRequestCallback());
    }
  
+   private void navigate(String url)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setViewerUrl(url);
+      display_.navigate(url);
+   }
    
    private void enableCommands(boolean enable)
    {
@@ -101,4 +114,5 @@ public class ViewerPresenter extends BasePresenter
    
    private final Display display_ ;
    private final Commands commands_;
+   private final ViewerServerOperations server_;
 }

@@ -175,6 +175,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame*,
       navigated_ = true;
       return true;
    }
+   // allow local viewer urls to be handled internally by Qt
+   else if (isLocal && !viewerUrl_.isEmpty() &&
+            url.toString().startsWith(viewerUrl_))
+   {
+      navigated_ = true;
+      return true;
+   }
    else
    {
       desktop::openUrl(url);

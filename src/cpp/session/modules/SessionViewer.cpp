@@ -31,21 +31,57 @@ namespace viewer {
 
 namespace {
 
+// track the current viewed url
+std::string s_currentUrl;
+
+// viewer stopped means clear the url
+Error viewerStopped(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   s_currentUrl.clear();
+   return Success();
+}
+
+
+void viewerNavigate(const std::string& url, bool fullHeight = FALSE)
+{
+   // record the url (for reloads)
+   s_currentUrl = url;
+
+   // enque the event
+   json::Object dataJson;
+   dataJson["url"] = s_currentUrl;
+   dataJson["full_height"] = fullHeight;
+   ClientEvent event(client_events::kViewerNavigate, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
 // show error message from R
 SEXP rs_browserInternal(SEXP urlSEXP, SEXP fullHeightSEXP)
 {
    try
    {
-      json::Object dataJson;
-      dataJson["url"] = r::sexp::safeAsString(urlSEXP);
-      dataJson["full_height"] = r::sexp::asLogical(fullHeightSEXP);
-
-      ClientEvent event(client_events::kViewerNavigate, dataJson);
-      module_context::enqueClientEvent(event);
+      viewerNavigate(r::sexp::safeAsString(urlSEXP),
+                     r::sexp::asLogical(fullHeightSEXP));
    }
    CATCH_UNEXPECTED_EXCEPTION
 
    return R_NilValue;
+}
+
+void onSuspend(const r::session::RSuspendOptions&, Settings*)
+{
+}
+
+void onResume(const Settings&)
+{
+   viewerNavigate("about:blank");
+}
+
+void onClientInit()
+{
+   if (!s_currentUrl.empty())
+      viewerNavigate(s_currentUrl);
 }
 
 } // anonymous namespace
@@ -60,12 +96,16 @@ Error initialize()
    methodDefBrowserInternal.numArgs = 2;
    r::routines::addCallMethod(methodDefBrowserInternal);
 
+   // install event handlers
+   using namespace module_context;
+   events().onClientInit.connect(onClientInit);
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
    // install rpc methods
    using boost::bind;
-   using namespace module_context;
    ExecBlock initBlock ;
-   //initBlock.addFunctions()
-   //   (bind(registerRpcMethod, "get_public_key", getPublicKey));
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "viewer_stopped", viewerStopped));
    return initBlock.execute();
 }
 

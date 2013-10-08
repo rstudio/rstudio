@@ -944,4 +944,9 @@ void GwtCallback::reloadZoomWindow()
    }
 }
 
+void GwtCallback::setViewerUrl(QString url)
+{
+   pOwner_->webPage()->setViewerUrl(url);
+}
+
 } // namespace desktop
