@@ -224,7 +224,7 @@ public class SimpleCheckBox extends FocusWidget implements HasName,
       value = Boolean.FALSE;
     }
 
-    Boolean oldValue = getValue();
+    Boolean oldValue = fireEvents ? getValue() : null;
     getInputElement().setChecked(value);
     getInputElement().setDefaultChecked(value);
     if (fireEvents) {
