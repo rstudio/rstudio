@@ -25,6 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
+import org.rstudio.core.client.events.EnsureMaximizedEvent;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -103,6 +105,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    {
       handlers_.fireEvent(new EnsureHiddenEvent());
    }
+   
+   public void ensureMaximized()
+   {
+      handlers_.fireEvent(new EnsureMaximizedEvent());
+   }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
@@ -112,6 +119,11 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    public HandlerRegistration addEnsureHiddenHandler(EnsureHiddenHandler handler)
    {
       return handlers_.addHandler(EnsureHiddenEvent.TYPE, handler);
+   }
+   
+   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
+   {
+      return handlers_.addHandler(EnsureMaximizedEvent.TYPE, handler);
    }
 
    protected void setInternalCallbacks(InternalCallbacks callbacks)

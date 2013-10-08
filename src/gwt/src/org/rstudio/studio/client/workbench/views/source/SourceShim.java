@@ -27,8 +27,11 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.EnsureMaximizedEvent;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.HasEnsureMaximizedHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
@@ -44,7 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 
 @Singleton
 public class SourceShim extends Composite
-   implements IsWidget, HasEnsureVisibleHandlers, BeforeShowCallback,
+   implements IsWidget, HasEnsureVisibleHandlers, HasEnsureMaximizedHandlers, BeforeShowCallback,
               ProvidesResize, RequiresResize, RequiresVisibilityChanged
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
@@ -124,6 +127,18 @@ public class SourceShim extends Composite
                      }
                   });
          }
+         if (child instanceof HasEnsureMaximizedHandlers)
+         {
+            ((HasEnsureMaximizedHandlers)child).addEnsureMaximizedHandler(
+                  new EnsureMaximizedHandler() {
+
+                     @Override
+                     public void onEnsureMaximized(EnsureMaximizedEvent event)
+                     {
+                        parent_.fireEvent(new EnsureMaximizedEvent());
+                     }
+                  });
+         }
          child.setSize("100%", "100%");
          parent_.panel_.add(child);
          parent_.panel_.setWidgetTopBottom(child, 0, Unit.PX, 0, Unit.PX);
@@ -174,6 +189,11 @@ public class SourceShim extends Composite
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+   
+   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
+   {
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
    }
 
    public void forceLoad()

@@ -36,7 +36,8 @@ class WorkbenchTabPanel
       implements RequiresResize,
                  ProvidesResize,
                  HasSelectionHandlers<Integer>,
-                 HasEnsureVisibleHandlers
+                 HasEnsureVisibleHandlers,
+                 HasEnsureMaximizedHandlers
 {
    public WorkbenchTabPanel(WindowFrame owner)
    {
@@ -165,6 +166,15 @@ class WorkbenchTabPanel
                tabPanel_.selectTab(widget);
          }
       });
+      
+      tab.addEnsureMaximizedHandler(new EnsureMaximizedHandler() {
+
+         @Override
+         public void onEnsureMaximized(EnsureMaximizedEvent event)
+         {
+            fireEvent(new EnsureMaximizedEvent());
+         }
+      });
    }
 
    public void selectTab(int tabIndex)
@@ -234,6 +244,13 @@ class WorkbenchTabPanel
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
+   @Override
+   public HandlerRegistration addEnsureMaximizedHandler(
+         EnsureMaximizedHandler handler)
+   {
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
+   }
 
    public void clear()
    {
@@ -247,4 +264,5 @@ class WorkbenchTabPanel
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
+   
 }

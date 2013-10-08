@@ -24,6 +24,9 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.events.EnsureMaximizedEvent;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
@@ -434,6 +437,13 @@ public class TextEditingTargetWidget
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
+   @Override
+   public HandlerRegistration addEnsureMaximizedHandler(
+         EnsureMaximizedHandler handler)
+   {
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
+   }
 
    public void onVisibilityChanged(boolean visible)
    {
@@ -462,4 +472,5 @@ public class TextEditingTargetWidget
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
    private Label srcOnSaveLabel_;
+
 }

@@ -1,5 +1,5 @@
 /*
- * WorkbenchView.java
+ * EnsureMaximizedHandler.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,15 +12,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench;
+package org.rstudio.core.client.events;
 
+import com.google.gwt.event.shared.EventHandler;
 
-public interface WorkbenchView
+public interface EnsureMaximizedHandler extends EventHandler
 {
-   void bringToFront();
-   void maximize();
-   void setProgress(boolean showProgress);
-   void onBeforeUnselected();
-   void onBeforeSelected();
-   void onSelected();
+   void onEnsureMaximized(EnsureMaximizedEvent event);
 }

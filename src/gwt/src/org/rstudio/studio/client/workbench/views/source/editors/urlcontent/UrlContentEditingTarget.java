@@ -29,6 +29,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -332,6 +333,16 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   {
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+         }
+      };
+   }
+   
+   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
    {
       return new HandlerRegistration()
       {

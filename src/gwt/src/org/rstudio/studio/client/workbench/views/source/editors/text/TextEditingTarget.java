@@ -42,7 +42,9 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.HasEnsureMaximizedHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -137,7 +139,8 @@ public class TextEditingTarget implements EditingTarget
 
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
-                                    HasEnsureVisibleHandlers
+                                    HasEnsureVisibleHandlers,
+                                    HasEnsureMaximizedHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
@@ -1236,6 +1239,11 @@ public class TextEditingTarget implements EditingTarget
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
+   }
+   
+   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
+   {
+      return view_.addEnsureMaximizedHandler(handler);
    }
 
    public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)

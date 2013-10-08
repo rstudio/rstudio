@@ -34,6 +34,11 @@ public class ViewerPresenter extends BasePresenter
    
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
+      display_.bringToFront();
+      
+      if (event.getFullHeight())
+         display_.maximize();
+      
       display_.navigate(event.getURL());
    }
    

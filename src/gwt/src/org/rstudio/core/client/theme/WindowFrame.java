@@ -32,7 +32,8 @@ public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
               ProvidesResize,
               RequiresResize,
-              EnsureVisibleHandler
+              EnsureVisibleHandler,
+              EnsureMaximizedHandler
 {
    public WindowFrame(Widget mainWidget)
    {
@@ -146,6 +147,12 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_.removeHandler();
             ensureVisibleRegistration_ = null;
          }
+         
+         if (ensureMaximizedRegistration_ != null)
+         {
+            ensureMaximizedRegistration_.removeHandler();
+            ensureMaximizedRegistration_ = null;
+         }
       }
 
       main_ = widget;
@@ -156,6 +163,12 @@ public class WindowFrame extends Composite
          {
             ensureVisibleRegistration_ =
                 ((HasEnsureVisibleHandlers)main_).addEnsureVisibleHandler(this);
+         }
+         
+         if (main_ instanceof HasEnsureMaximizedHandlers)
+         {
+            ensureMaximizedRegistration_ =
+               ((HasEnsureMaximizedHandlers)main_).addEnsureMaximizedHandler(this);
          }
 
          frame_.add(main_);
@@ -222,6 +235,12 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_.removeHandler();
             ensureVisibleRegistration_ = null;
          }
+         
+         if (ensureMaximizedRegistration_ != null)
+         {
+            ensureMaximizedRegistration_.removeHandler();
+            ensureMaximizedRegistration_ = null;
+         }
       }
 
       fill_ = widget;
@@ -232,6 +251,12 @@ public class WindowFrame extends Composite
          {
             ensureVisibleRegistration_ =
                 ((HasEnsureVisibleHandlers)fill_).addEnsureVisibleHandler(this);
+         }
+         
+         if (fill_ instanceof HasEnsureMaximizedHandlers)
+         {
+            ensureMaximizedRegistration_ =
+               ((HasEnsureMaximizedHandlers)fill_).addEnsureMaximizedHandler(this);
          }
 
          frame_.add(fill_);
@@ -289,6 +314,12 @@ public class WindowFrame extends Composite
       if (!isVisible())
          fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
    }
+   
+   @Override
+   public void onEnsureMaximized(EnsureMaximizedEvent event)
+   {
+      maximize();
+   }
 
    public void onBeforeShow()
    {
@@ -311,5 +342,7 @@ public class WindowFrame extends Composite
    private Widget fill_;
    private Widget contextButton_;
    private HandlerRegistration ensureVisibleRegistration_;
+   private HandlerRegistration ensureMaximizedRegistration_;
    private Widget previousHeader_;
+   
 }
