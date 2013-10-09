@@ -87,6 +87,9 @@ core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
 core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
+// get the R local help port
+std::string rLocalHelpPort();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 

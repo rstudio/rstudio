@@ -15,11 +15,17 @@
 
 #include "SessionViewer.hpp"
 
+#include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RUtil.hpp>
+
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -60,8 +66,37 @@ SEXP rs_viewApp(SEXP urlSEXP, SEXP maximizeSEXP)
 {
    try
    {
-      viewerNavigate(r::sexp::safeAsString(urlSEXP),
-                     r::sexp::asLogical(maximizeSEXP));
+      // get the maximize parameter
+      bool maximize = r::sexp::asLogical(maximizeSEXP);
+
+      // transform the url to a localhost:<port>/session one if it's
+      // a path to a file within the R session temporary directory
+      std::string url = r::sexp::safeAsString(urlSEXP);
+      if (!boost::algorithm::starts_with(url, "http"))
+      {
+         // get the path to the tempdir and the file
+         FilePath tempDir = r::session::utils::tempDir();
+         FilePath filePath(url);
+
+         // if it's in the temp dir and we're running R >= 2.14 then
+         // we can serve it via the help server, otherwise we need
+         // to show it in an external browser
+         if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
+         {
+            std::string path = filePath.relativePath(tempDir);
+            boost::format fmt("http://localhost:%1%/session/%2%");
+            url = boost::str(fmt % module_context::rLocalHelpPort() % path);
+            viewerNavigate(url, maximize);
+         }
+         else
+         {
+            module_context::showFile(filePath);
+         }
+      }
+      else
+      {
+         viewerNavigate(url, maximize);
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 

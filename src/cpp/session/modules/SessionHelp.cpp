@@ -76,15 +76,6 @@ bool s_provideHeaders = false;
 // show in an external browser
 bool s_handleCustom = false;
 
-std::string rLocalHelpPort()
-{
-   std::string port;
-   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
-   if (error)
-      LOG_ERROR(error);
-   return port;
-}
-
 std::string localURL(const std::string& address, const std::string& port)
 {
    return "http://" + address + ":" + port + "/";
@@ -102,7 +93,7 @@ bool isLocalURL(const std::string& url,
                 std::string* pLocalURLPath)
 {
    // first look for local ip prefix
-   std::string rPort = rLocalHelpPort();
+   std::string rPort = module_context::rLocalHelpPort();
    std::string urlPrefix = localURL("127.0.0.1", rPort);
    size_t pos = url.find(urlPrefix + scope);
    if (pos != std::string::npos)

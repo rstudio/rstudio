@@ -2,23 +2,22 @@
 \alias{viewApp}
 
 \title{
-View an R web application within RStudio
+View a local web application within RStudio
 }
 \description{
-View an R web application within the RStudio IDE. This is useful for running \link[shiny:shiny-package]{Shiny}, \link[Rook:Rook-package]{Rook}, \link[opencpu:opencpu]{OpenCPU}, or any other type of local web application. Applications are displayed within the Viewer pane.
+View a local web application within the RStudio IDE. This is useful for running \link[shiny:shiny-package]{Shiny}, \link[Rook:Rook-package]{Rook}, \link[opencpu:opencpu]{OpenCPU}, or any other type of local web application, including ones served from static files in the R session temporary directory.
 }
 \usage{
-viewApp(url, maximize = TRUE)
+viewApp(url)
 }
 \arguments{
-  \item{url}{Application URL}
-  \item{maximize}{Request that the application occupy the full height of the IDE}
+  \item{url}{Application URL. This can be either a localhost URL or a path to a file within the R session temporary directory (i.e. a path returned by \code{\link[base:tempfile]{tempfile}})}
 }
 
 \details{
 RStudio also sets the global \code{viewapp} option to the \code{rstudio::viewApp} function so that it can be invoked in front-end independent manner.
 
-Applications displayed within the Viewer pane must be served from the local system (i.e. they cannot come from an arbitrary URL on the internet).
+Applications are displayed within the Viewer pane. The application URL must either be served from localhost or be a path to a file within the R session temporary directory.
 }
 
 \examples{
@@ -28,8 +27,8 @@ Applications displayed within the Viewer pane must be served from the local syst
 rstudio::viewApp("http://localhost:8100")
 
 # attempt to run an application inside the IDE and fall back
-# if it isn't available
-appBrowser <- getOption("viewapp", utils::browseURL)
-appBrowser("http://localhost:8100")
+# to utils::browseURL if it isn't available
+viewer <- getOption("viewapp", utils::browseURL)
+viewer("http://localhost:8100")
 }
 }

@@ -21,10 +21,13 @@ options(browser = function(url)
 
 # default viewapp option if not already set
 if (is.null(getOption("viewapp"))) {
-   options(viewapp = function(url, maximize = TRUE)
+   options(viewapp = function(url)
    {
-      invisible(.Call("rs_viewApp", url, maximize))  
-   })   
+      if (!is.character(url) || (length(url) != 1))
+         stop("url must be a single element character vector.")
+      
+      invisible(.Call("rs_viewApp", url, TRUE))  
+   })
 }
 
 # custom pager implementation

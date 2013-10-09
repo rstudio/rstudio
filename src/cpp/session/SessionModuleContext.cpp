@@ -881,6 +881,16 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+// get the R local help port
+std::string rLocalHelpPort()
+{
+   std::string port;
+   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
+   if (error)
+      LOG_ERROR(error);
+   return port;
+}
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {

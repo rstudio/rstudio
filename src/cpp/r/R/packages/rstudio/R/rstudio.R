@@ -23,11 +23,10 @@ previewRd <- function(rdFile) {
   invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
 }
 
-viewApp <- function(url, maximize = TRUE) {
-   
-   if (!is.character(url) || (length(url) != 1))
-      stop("url must be a single element character vector.")
-   
-   invisible(.Call(getNativeSymbolInfo("rs_viewApp", PACKAGE=""), 
-                   url, maximize))     
+viewApp <- function(url) {
+  
+  if (!is.character(url) || (length(url) != 1))
+    stop("url must be a single element character vector.")
+  
+  invisible(.Call(getNativeSymbolInfo("rs_viewApp", PACKAGE=""), url, TRUE))     
 }
