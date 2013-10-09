@@ -55,14 +55,17 @@ public class ViewerPresenter extends BasePresenter
       
       enableCommands(false);
       
-      // show a stop button when the console is busy
+      // show a stop button when the console is busy (the stop and 
+      // clear commands are mutually exclusive)
       commands_.viewerStop().setVisible(commands_.interruptR().isEnabled());
+      commands_.viewerClear().setVisible(!commands_.viewerStop().isVisible());
       commands_.interruptR().addEnabledChangedHandler(
                                                 new EnabledChangedHandler() {
          @Override
          public void onEnabledChanged(AppCommand command)
          {
             commands_.viewerStop().setVisible(command.isEnabled());
+            commands_.viewerClear().setVisible(!command.isEnabled());
          }
       });
    }
@@ -93,16 +96,17 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerRefresh() { display_.refresh(); }
         
+   
+   @Handler 
+   public void onViewerClear()
+   {
+      stop(false);
+   }
+   
    @Handler
    public void onViewerStop()
    {
-      enableCommands(false);
-      
-      navigate("about:blank");
-      
-      commands_.interruptR().execute();
-      
-      server_.viewerStopped(new VoidServerRequestCallback());
+      stop(true);
    }
  
    private void navigate(String url)
@@ -112,11 +116,22 @@ public class ViewerPresenter extends BasePresenter
       display_.navigate(url);
    }
    
+   private void stop(boolean interruptR)
+   {
+      enableCommands(false);
+      navigate("about:blank");
+      if (interruptR)
+         commands_.interruptR().execute();
+      server_.viewerStopped(new VoidServerRequestCallback());
+      
+   }
+   
    private void enableCommands(boolean enable)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerPrint().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
+      commands_.viewerClear().setEnabled(enable);
    }
    
    private final Display display_ ;

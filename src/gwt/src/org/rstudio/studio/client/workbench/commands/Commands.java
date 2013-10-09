@@ -271,6 +271,7 @@ public abstract class
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerRefresh();
    public abstract AppCommand viewerStop();
+   public abstract AppCommand viewerClear();
 
    // Application
    public abstract AppCommand quitSession();

@@ -1144,9 +1144,12 @@ well as menu structures (for main menu and popup menus).
         desc="Show in new window"/>
    <cmd id="viewerRefresh"
         desc="Refresh page"/> 
-    <cmd id="viewerStop"
+   <cmd id="viewerStop"
         buttonLabel=""
-        desc="Stop viewer"/>    
+        desc="Stop application"/>  
+   <cmd id="viewerClear"
+        buttonLabel=""
+        desc="Clear viewer"/>  
         
    <cmd id="raiseException"
         menuLabel="Raise Exception"/>
