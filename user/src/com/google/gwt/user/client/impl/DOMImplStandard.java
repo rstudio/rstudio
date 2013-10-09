@@ -17,6 +17,7 @@ package com.google.gwt.user.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
@@ -27,7 +28,7 @@ import com.google.gwt.user.client.Event;
  */
 abstract class DOMImplStandard extends DOMImpl {
 
-  private static JavaScriptObject captureElem;
+  private static Element captureElem;
 
   private static JavaScriptObject dispatchCapturedEvent;
 
@@ -180,54 +181,25 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   protected native void initEventSystem() /*-{
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = $entry(function(evt) {
-      if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)(evt)) {
-        evt.stopPropagation();
-        evt.preventDefault();
-        return false;
-      }
-      return true;
-    });
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent = $entry(
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent(*)
+    );
 
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent = $entry(function(evt) {
-      var getEventListener = @com.google.gwt.user.client.impl.DOMImpl::getEventListener(*);
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent = $entry(
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent(*)
+    );
 
-      var listener, curElem = this;
-      while (curElem && !(listener = getEventListener(curElem))) {
-        curElem = curElem.parentNode;
-      }
-      if (curElem && curElem.nodeType != 1) {
-        curElem = null;
-      }
-      if (listener) {
-        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, curElem, listener);
-      }
-    });
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent = $entry(
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent(*)
+    );
 
-    // Some drag events must call preventDefault to prevent native text selection.
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent = $entry(function(evt) {
-      evt.preventDefault();
-      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
-    });
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = $entry(
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent(*)
+    );
 
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent = $entry(function(evt) {
-      this.__gwtLastUnhandledEvent = evt.type;
-      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent.call(this, evt);
-    });
-
-    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent = $entry(function(evt) {
-      var dispatchCapturedEventFn = @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent;
-      if (dispatchCapturedEventFn(evt)) {
-        var cap = @com.google.gwt.user.client.impl.DOMImplStandard::captureElem;
-        if (cap) {
-          var listener = @com.google.gwt.user.client.impl.DOMImpl::getEventListener(*)(cap);
-          if (listener) {
-            @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, cap, listener);
-            evt.stopPropagation();
-          }
-        }
-      }
-    });
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent = $entry(
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*)
+    );
 
     $wnd.addEventListener('click', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('dblclick', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
@@ -349,4 +321,46 @@ abstract class DOMImplStandard extends DOMImpl {
     if (chMask & 0x4000000) elem.ongestureend    = (bits & 0x4000000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
+
+  private static void dispatchEvent(Event evt) {
+    Element element = getFirstAncestorWithListener(evt);
+    if (element == null) {
+      return;
+    }
+    DOM.dispatchEvent(evt, element.getNodeType() != 1 ? null : element, getEventListener(element));
+  }
+
+  private static Element getFirstAncestorWithListener(Event evt) {
+    Element curElem = evt.getCurrentEventTarget().cast();
+    while (curElem != null && getEventListener(curElem) == null) {
+      curElem = curElem.getParentNode().cast();
+    }
+    return curElem;
+  }
+
+  private static void dispatchDragEvent(Event evt) {
+    // Some drag events must call preventDefault to prevent native text selection.
+    evt.preventDefault();
+    dispatchEvent(evt);
+  }
+
+  private static void dispatchUnhandledEvent(Event evt) {
+    Element element = evt.getCurrentEventTarget().cast();
+    element.setPropertyString("__gwtLastUnhandledEvent", evt.getType());
+    dispatchEvent(evt);
+  }
+
+  private static void dispatchCapturedEvent(Event evt) {
+    DOM.previewEvent(evt);
+  }
+
+  private static void dispatchCapturedMouseEvent(Event evt) {
+    boolean cancelled = !DOM.previewEvent(evt);
+    if (cancelled || captureElem == null) {
+      return;
+    }
+    if (DOM.dispatchEvent(evt, captureElem)) {
+      evt.stopPropagation();
+    }
+  }
 }

@@ -1438,15 +1438,15 @@ public class DOM {
    * @param evt a handle to the event being previewed
    * @return <code>false</code> to cancel the event
    */
-  static boolean previewEvent(Event evt) {
+  public static boolean previewEvent(Event evt) {
     // Fire a NativePreviewEvent to NativePreviewHandlers
     boolean ret = Event.fireNativePreviewEvent(evt);
 
     // If the preview cancels the event, stop it from bubbling and performing
     // its default action. Check for a null evt to allow unit tests to run.
     if (!ret && evt != null) {
-      eventCancelBubble(evt, true);
-      eventPreventDefault(evt);
+      evt.stopPropagation();
+      evt.preventDefault();
     }
 
     return ret;
