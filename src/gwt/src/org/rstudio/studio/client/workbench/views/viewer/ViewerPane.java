@@ -62,6 +62,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       frame_.navigate(url);
    }
    
+   
+   @Override
+   public String getUrl()
+   {
+      return frame_.getUrl();
+   }
+   
    @Override
    public void print()
    {

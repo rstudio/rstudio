@@ -34,6 +34,7 @@ public class ViewerPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void navigate(String url);
+      String getUrl();
       void print();
       void popout();
       void refresh();
@@ -68,6 +69,8 @@ public class ViewerPresenter extends BasePresenter
             commands_.viewerClear().setVisible(!command.isEnabled());
          }
       });
+      
+      initializeEvents();
    }
    
    public void onViewerNavigate(ViewerNavigateEvent event)
@@ -132,6 +135,35 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerPrint().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
+   }
+   
+ 
+   
+   private native void initializeEvents() /*-{  
+      var thiz = this;   
+      $wnd.addEventListener(
+            "message",
+            $entry(function(e) {
+               thiz.@org.rstudio.studio.client.workbench.views.viewer.ViewerPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
+            }),
+            true);
+   }-*/;
+   
+   private void onMessage(String data, String origin)
+   {
+      if ("disconnected".equals(data) &&
+          normalizeUrl(display_.getUrl()).equals(normalizeUrl(origin)))
+      {
+         onViewerClear();
+      }
+   }
+   
+   private String normalizeUrl(String url)
+   {
+      if (url.endsWith("/"))
+         return url.substring(0, url.length()-1);
+      else
+         return url;
    }
    
    private final Display display_ ;
