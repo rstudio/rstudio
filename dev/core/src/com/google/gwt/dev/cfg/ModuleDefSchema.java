@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
+import com.google.gwt.dev.cfg.ModuleDef.ModuleType;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -470,7 +471,7 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     protected Schema __fail_begin() {
       RuleFail rule = new RuleFail();
-      moduleDef.getRules().prepend(rule);
+      moduleDef.addRule(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
 
@@ -483,6 +484,9 @@ public class ModuleDefSchema extends Schema {
         throw new UnableToCompleteException();
       }
       RuleGenerateWith rule = new RuleGenerateWith(generator);
+      // Generator rebind rules for even distant dependencies are always considered primary since
+      // knowing whether they should be run is more complicated and is expected to be analyzed later
+      // during compilation.
       moduleDef.getRules().prepend(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
@@ -564,7 +568,7 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     protected Schema __replace_with_begin(String className) {
       RuleReplaceWith rule = new RuleReplaceWith(className);
-      moduleDef.getRules().prepend(rule);
+      moduleDef.addRule(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
 
@@ -1371,6 +1375,7 @@ public class ModuleDefSchema extends Schema {
   }
 
   protected final String __module_1_rename_to = "";
+  protected final String __module_2_type = "library";
   private final PropertyAttrCvt bindingPropAttrCvt = new PropertyAttrCvt(
       BindingProperty.class);
   private final BodySchema bodySchema;
@@ -1423,11 +1428,12 @@ public class ModuleDefSchema extends Schema {
   }
 
   @SuppressWarnings("unused")
-  protected Schema __module_begin(NullableName renameTo) {
+  protected Schema __module_begin(NullableName renameTo, String type) {
+    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase()));
     return bodySchema;
   }
 
-  protected void __module_end(NullableName renameTo) {
+  protected void __module_end(NullableName renameTo, String type) {
     if (!loader.enforceStrictResources()) {
       // If we're not being strict about resources and no dependencies have been added, go ahead and
       // implicitly add "client" and "public" resource dependencies.
@@ -1444,6 +1450,7 @@ public class ModuleDefSchema extends Schema {
 
     // We do this in __module_end so this value is never inherited
     moduleDef.setNameOverride(renameTo.token);
+    moduleDef.exitModule();
   }
 
   /**
@@ -1479,6 +1486,5 @@ public class ModuleDefSchema extends Schema {
     JsFunction fn = (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
     return fn;
   }
-
 }
 // CHECKSTYLE_NAMING_ON

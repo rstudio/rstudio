@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,6 +37,8 @@ import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
 import java.net.URL;
@@ -45,6 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -59,6 +62,37 @@ import java.util.Set;
  * XML for unit tests.
  */
 public class ModuleDef {
+
+  /**
+   * Marks a module in a way that can be used to calculate the effective bounds of a library module
+   * in a module tree.
+   */
+  public enum ModuleType {
+    /**
+     * A module that acts as just a bundle of source code to be included in a referencing library.
+     * The contained code may form circular references with other source within the contiguous chunk
+     * of modules made up of a library and it's subtree of filesets. As a result a fileset can not
+     * be compiled on it's own and must be compiled as part of a library.
+     */
+    FILESET,
+    /**
+     * The default type of module. Libraries should be independently compilable and are expected to
+     * explicitly declare all of their immediate dependencies and include paths and none of their
+     * contained source should be part of a circular reference with any source outside the effective
+     * bounds of the library.
+     */
+    LIBRARY
+  }
+
+  /**
+   * When walking a module tree of mixed library and fileset modules, attributes are accumulated and
+   * stored. But when compiling separately, some attributes should only be collected from the
+   * effective target module. AttributeSource is used to classify these "in target module" and "out
+   * of target module" times.
+   */
+  private enum AttributeSource {
+    TARGET_LIBRARY, EXTERNAL_LIBRARY
+  }
 
   private static final ResourceFilter NON_JAVA_RESOURCES = new ResourceFilter() {
     @Override
@@ -101,7 +135,7 @@ public class ModuleDef {
   /**
    * A set of URLs for <module>.gwtar files found on the classpath that correspond
    * to <module>.gwt.xml files loaded as a part of this module's nested load.
-   * 
+   *
    * @see com.google.gwt.dev.CompileModule
    */
   private final List<URL> archiveURLs = new ArrayList<URL>();
@@ -139,6 +173,12 @@ public class ModuleDef {
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
+  /**
+   * Whether the module tree is being considered to be one contiguous compilable whole as opposed to
+   * a tree of independently compilable library modules.
+   */
+  private final boolean monolithic;
+
   private final String name;
   private final ResourceLoader resources;
 
@@ -147,6 +187,13 @@ public class ModuleDef {
    * get called every time a module is inherited, but only the last one matters.
    */
   private String nameOverride;
+
+  /**
+   * Used to keep track of the current category of attribute source. When the attribute source is
+   * TARGET_LIBRARY all attributes are accumulated but when it is EXTERNAL_LIBRARY there are some
+   * attributes that are not collected.
+   */
+  private Deque<AttributeSource> currentAttributeSource = Lists.newLinkedList();
 
   private boolean needsRefresh;
 
@@ -169,12 +216,20 @@ public class ModuleDef {
   }
 
   public ModuleDef(String name, ResourceLoader resources) {
+    this(name, resources, true);
+  }
+
+  public ModuleDef(String name, ResourceLoader resources, boolean monolithic) {
     this.name = name;
     this.resources = resources;
+    this.monolithic = monolithic;
     defaultFilters = new DefaultFilters();
   }
 
   public synchronized void addEntryPointTypeName(String typeName) {
+    if (!attributeIsForTargetLibrary()) {
+      return;
+    }
     entryPointTypeNames.add(typeName);
   }
 
@@ -199,12 +254,21 @@ public class ModuleDef {
 
   public synchronized void addPublicPackage(String publicPackage, String[] includeList,
       String[] excludeList, String[] skipList, boolean defaultExcludes, boolean caseSensitive) {
-
     if (lazyPublicOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
+    if (!attributeIsForTargetLibrary()) {
+      return;
+    }
     publicPrefixSet.add(new PathPrefix(publicPackage, defaultFilters.customResourceFilter(
         includeList, excludeList, skipList, defaultExcludes, caseSensitive), true, excludeList));
+  }
+
+  public void addRule(Rule rule) {
+    if (!attributeIsForTargetLibrary()) {
+      return;
+    }
+    getRules().prepend(rule);
   }
 
   public void addSourcePackage(String sourcePackage, String[] includeList, String[] excludeList,
@@ -218,6 +282,9 @@ public class ModuleDef {
       boolean isSuperSource) {
     if (lazySourceOracle != null) {
       throw new IllegalStateException("Already normalized");
+    }
+    if (!attributeIsForTargetLibrary()) {
+      return;
     }
     PathPrefix pathPrefix =
         new PathPrefix(sourcePackage, defaultFilters.customJavaFilter(includeList, excludeList,
@@ -278,6 +345,54 @@ public class ModuleDef {
     linkerTypesByName.put(name, linker);
   }
 
+  /**
+   * Called as module tree parsing enters and exits individual module file of various types and so
+   * provides the ModuleDef with an opportunity to keep track of what context it is currently
+   * operating.<br />
+   *
+   * At the moment the ModuleDef uses it's monolithic property in combination with the entering
+   * modules ModuleType to updates its idea of attribute source.
+   */
+  public void enterModule(ModuleType moduleType) {
+    if (monolithic) {
+      // When you're monolithic the module tree is all effectively one giant library.
+      currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+      return;
+    }
+
+    // When compiling separately it's not legal to have a fileset module at the root.
+    Preconditions.checkArgument(
+        !(currentAttributeSource.isEmpty() && moduleType == ModuleType.FILESET));
+
+    // The compilation target always starts at the root of the graph so if there is a library type
+    // module at the root of the graph.
+    if (currentAttributeSource.isEmpty() && moduleType == ModuleType.LIBRARY) {
+      // Then any attributes you see are your own.
+      currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+      return;
+    }
+
+    // If at the moment any attributes you see are your own.
+    if (currentAttributeSource.peek() == AttributeSource.TARGET_LIBRARY) {
+      // And you enter a fileset module
+      if (moduleType == ModuleType.FILESET) {
+        // Then any attributes you see are still your own.
+        currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+      } else {
+        // But if you enter a library module then any attributes you see are external.
+        currentAttributeSource.push(AttributeSource.EXTERNAL_LIBRARY);
+      }
+    } else if (currentAttributeSource.peek() == AttributeSource.EXTERNAL_LIBRARY) {
+      // If your current attribute source is an external library then regardless of whether you
+      // enter another fileset or library your attribute source is still external.
+      currentAttributeSource.push(AttributeSource.EXTERNAL_LIBRARY);
+    }
+  }
+
+  public void exitModule() {
+    currentAttributeSource.pop();
+  }
+
   public synchronized Resource findPublicFile(String partialPath) {
     doRefresh();
     return lazyPublicOracle.getResourceMap().get(partialPath);
@@ -293,7 +408,7 @@ public class ModuleDef {
       /*
        * Ensure that URLs that match the servlet mapping, including those that
        * have additional path_info, get routed to the correct servlet.
-       * 
+       *
        * See "Inside Servlets", Second Edition, pg. 208
        */
       if (actual.equals(mapping) || actual.startsWith(mapping + "/")) {
@@ -306,7 +421,7 @@ public class ModuleDef {
   /**
    * Returns the Resource for a source file if it is found; <code>null</code>
    * otherwise.
-   * 
+   *
    * @param partialPath the partial path of the source file
    * @return the resource for the requested source file
    */
@@ -335,7 +450,7 @@ public class ModuleDef {
 
   /**
    * Returns URLs to fetch archives of precompiled compilation units.
-   * 
+   *
    * @see com.google.gwt.dev.CompileModule
    */
   public Collection<URL> getAllCompilationUnitArchiveURLs() {
@@ -471,7 +586,7 @@ public class ModuleDef {
    * For convenience in unit tests, servlets can be automatically loaded and
    * mapped in the embedded web server. If a servlet is already mapped to the
    * specified path, it is replaced.
-   * 
+   *
    * @param path the url path at which the servlet resides
    * @param servletClassName the name of the servlet to publish
    */
@@ -510,7 +625,7 @@ public class ModuleDef {
    * The final method to call when everything is setup. Before calling this
    * method, several of the getter methods may not be called. After calling this
    * method, the add methods may not be called.
-   * 
+   *
    * @param logger Logs the activity.
    */
   synchronized void normalize(TreeLogger logger) {
@@ -599,5 +714,10 @@ public class ModuleDef {
     }
     moduleDefEvent.end();
     needsRefresh = false;
+  }
+
+  private boolean attributeIsForTargetLibrary() {
+    return currentAttributeSource.isEmpty()
+        || currentAttributeSource.peek() == AttributeSource.TARGET_LIBRARY;
   }
 }

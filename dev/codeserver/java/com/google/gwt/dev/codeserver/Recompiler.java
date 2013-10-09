@@ -211,7 +211,7 @@ class Recompiler {
     this.resourceLoader.set(resources);
 
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
-        logger, originalModuleName, compilerContext, resources, true);
+        logger, originalModuleName, compilerContext, resources, true, true);
 
     // We need a cross-site linker. Automatically replace the default linker.
     if (IFrameLinker.class.isAssignableFrom(moduleDef.getActivePrimaryLinker())) {

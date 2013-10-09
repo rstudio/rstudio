@@ -113,33 +113,33 @@ public class ModuleDefLoader {
   }
 
   /**
-   * Loads a new module from the class path and defers scanning associated directories for
-   * resources.
+   * Loads a new (assumed monolithic) module from the class path and defers scanning associated
+   * directories for resources.
    */
   public static ModuleDef loadFromClassPath(
       TreeLogger logger, String moduleName, CompilerContext compilerContext)
       throws UnableToCompleteException {
-    return loadFromClassPath(logger, moduleName, compilerContext, false);
+    return loadFromClassPath(logger, moduleName, compilerContext, false, true);
   }
 
   /**
    * Loads a new module from the class path and may or may not immediately scan associated
-   * directories for resources, depending on parameters.
+   * directories for resources or consider it monolithic, depending on parameters.
    */
-  public static ModuleDef loadFromClassPath(
-      TreeLogger logger, String moduleName, CompilerContext compilerContext, boolean refresh)
+  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName,
+      CompilerContext compilerContext, boolean refresh, boolean monolithic)
       throws UnableToCompleteException {
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
-    return loadFromResources(logger, moduleName, compilerContext, resources, refresh);
+    return loadFromResources(logger, moduleName, compilerContext, resources, refresh, monolithic);
   }
 
   /**
    * Loads a new module from the given ResourceLoader and may or may not immediately scan associated
-   * directories for resources, depending on parameters.
+   * directories for resources or consider it monolithic, depending on parameters.
    */
   public static ModuleDef loadFromResources(TreeLogger logger, String moduleName,
-      CompilerContext compilerContext, ResourceLoader resources, boolean refresh)
-      throws UnableToCompleteException {
+      CompilerContext compilerContext, ResourceLoader resources, boolean refresh,
+      boolean monolithic) throws UnableToCompleteException {
 
     Event moduleDefLoadFromClassPathEvent = SpeedTracerLogger.start(
         CompilerEventType.MODULE_DEF, "phase", "loadFromClassPath", "moduleName", moduleName);
@@ -155,14 +155,14 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(resources, compilerContext);
-      return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources);
+      return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, monolithic);
     } finally {
       moduleDefLoadFromClassPathEvent.end();
     }
   }
 
   /**
-   * This method loads a module.
+   * This method loads a module while assuming it is monolithic.
    *
    * @param loader the loader to use
    * @param logger used to log the loading process
@@ -174,8 +174,25 @@ public class ModuleDefLoader {
   private static ModuleDef doLoadModule(ModuleDefLoader loader, TreeLogger logger,
       String moduleName, ResourceLoader resources)
       throws UnableToCompleteException {
+    return doLoadModule(loader, logger, moduleName, resources, true);
+  }
 
-    ModuleDef moduleDef = new ModuleDef(moduleName, resources);
+  /**
+   * This method loads a module.
+   *
+   * @param loader the loader to use
+   * @param logger used to log the loading process
+   * @param moduleName the name of the module
+   * @param resources where to load source code from
+   * @param monolithic whether to encapsulate the entire module tree
+   * @return the module returned -- cannot be null
+   * @throws UnableToCompleteException if module loading failed
+   */
+  private static ModuleDef doLoadModule(ModuleDefLoader loader, TreeLogger logger,
+      String moduleName, ResourceLoader resources, boolean monolithic)
+      throws UnableToCompleteException {
+
+    ModuleDef moduleDef = new ModuleDef(moduleName, resources, monolithic);
     Event moduleLoadEvent = SpeedTracerLogger.start(CompilerEventType.MODULE_DEF,
         "phase", "strategy.load()");
     loader.load(logger, moduleName, moduleDef);
@@ -250,7 +267,6 @@ public class ModuleDefLoader {
    */
   void nestedLoad(TreeLogger parentLogger, String moduleName, ModuleDef moduleDef)
       throws UnableToCompleteException {
-
     if (moduleDef.isInherited(moduleName)) {
       // No need to parse module again.
       return;

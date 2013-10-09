@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -104,7 +104,7 @@ public abstract class DevModeBase implements DoneCallback {
         assert (moduleDef != null);
 
         ArchivePreloader.preloadArchives(logger, moduleDef);
-        
+
         CompilationState compilationState =
             moduleDef.getCompilationState(logger, !options.isStrict(), options.getSourceLevel());
         ShellModuleSpaceHost host =
@@ -628,7 +628,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * Controls whether and where to log data to file.
-   * 
+   *
    */
   protected interface OptionLogDir {
     boolean alsoLogToFile();
@@ -642,7 +642,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * Controls whether to run a server or not.
-   * 
+   *
    */
   protected interface OptionNoServer {
     boolean isNoServer();
@@ -652,7 +652,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * Controls what port to use.
-   * 
+   *
    */
   protected interface OptionPort {
     int getPort();
@@ -741,17 +741,17 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * Produce a random string that has low probability of collisions.
-   * 
+   *
    * <p>
    * In this case, we use 16 characters, each drawn from a pool of 94, so the
    * number of possible values is 94^16, leading to an expected number of values
    * used before a collision occurs as sqrt(pi/2) * 94^8 (treated the same as a
    * birthday attack), or a little under 10^16.
-   * 
+   *
    * <p>
    * This algorithm is also implemented in hosted.html, though it is not
    * technically important that they match.
-   * 
+   *
    * @return a random string
    */
   protected static String randomString() {
@@ -807,7 +807,7 @@ public abstract class DevModeBase implements DoneCallback {
    * Gets the base log level recommended by the UI for INFO-level messages. This
    * method can only be called once {@link #createUI()} has been called. Please
    * do not depend on this method, as it is subject to change.
-   * 
+   *
    * @return the log level to use for INFO-level messages
    */
   public TreeLogger.Type getBaseLogLevelForUI() {
@@ -877,7 +877,7 @@ public abstract class DevModeBase implements DoneCallback {
    * Creates an instance of ShellModuleSpaceHost (or a derived class) using the
    * specified constituent parts. This method is made to be overridden for
    * subclasses that need to change the behavior of ShellModuleSpaceHost.
-   * 
+   *
    * @param logger TreeLogger to use
    * @param compilationState
    * @param moduleDef
@@ -896,7 +896,7 @@ public abstract class DevModeBase implements DoneCallback {
    * Perform any slower startup tasks, such as loading modules. This is separate
    * from {@link #doStartup()} so that the UI can be updated as soon as possible
    * and the web server can be started earlier.
-   * 
+   *
    * @return false if startup failed
    */
   protected boolean doSlowStartup() {
@@ -909,11 +909,11 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Perform any startup tasks, including initializing the UI (if any) and the
    * logger, updates checker, and the development mode code server.
-   * 
+   *
    * <p>
    * Subclasses that override this method should be careful what facilities are
    * used before the super implementation is called.
-   * 
+   *
    * @return true if startup was successful
    */
   protected boolean doStartup(File persistentCacheDir) {
@@ -984,7 +984,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * By default we will open the application window.
-   * 
+   *
    * @return true if we are running in headless mode
    */
   protected final boolean isHeadless() {
@@ -994,7 +994,7 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Perform an initial hosted mode link, without overwriting newer or
    * unmodified files in the output folder.
-   * 
+   *
    * @param logger the logger to use
    * @param module the module to link
    * @throws UnableToCompleteException
@@ -1015,7 +1015,7 @@ public abstract class DevModeBase implements DoneCallback {
 
   /**
    * Load a module.
-   * 
+   *
    * @param moduleName name of the module to load
    * @param logger TreeLogger to use
    * @param refresh if <code>true</code>, refresh the module from disk
@@ -1025,7 +1025,7 @@ public abstract class DevModeBase implements DoneCallback {
   protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
     ModuleDef moduleDef =
-        ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext, refresh);
+        ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext, refresh, true);
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;
   }
@@ -1218,7 +1218,7 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Perform hosted mode relink when new artifacts are generated, without
    * overwriting newer or unmodified files in the output folder.
-   * 
+   *
    * @param logger the logger to use
    * @param module the module to link
    * @param newlyGeneratedArtifacts the set of new artifacts
@@ -1239,7 +1239,7 @@ public abstract class DevModeBase implements DoneCallback {
    * attempt to launch the URLs until
    * {@link DevModeUI#moduleLoadComplete(boolean)} is called, and should not
    * automatically launch any URLs if they
-   * 
+   *
    * @param logger TreeLogger instance to use
    */
   private void setStartupUrls(final TreeLogger logger) {

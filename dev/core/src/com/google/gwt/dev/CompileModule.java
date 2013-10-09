@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,36 +47,36 @@ import java.util.Set;
 
 /**
  * Compiles a GWT module into a form that can be re-used by subsequent builds.
- * 
+ *
  * Takes all compilation units specified on the module source path and write out
  * CachedCompilationUnits for each one into a file named <module>.gwtar (rhymes
  * with the musical instrument). This will reduce compile and dev mode startup
  * time if a .gwtar file is up to date and doesn't need to be re-built.
- * 
+ *
  * Most developers using the GWT SDK won't need to invoke this tool to get
  * performance improvements. The built-in PersistentUnitCache already saves
  * compiled modules between builds.
- * 
+ *
  * This tool is of use to library authors for bundling up a pre-compiled gwt
  * library for distributions. Projects that include the library will never incur
  * the penalty of recompiling the library.
- * 
+ *
  * It can also be useful in a distributed or multi-process build environment, as
  * separate instances of CompileModule could be invoked in parallel.
- * 
+ *
  * CompileModule is meant to be used in conjunction with a build tool such as
  * Apache Ant which can do gross level dependency checking of the inputs and
  * compute the staleness of a .gwtar file. If the .gwtar file is up to date, the
  * assumption is that this tool won't be invoked at all.
- * 
+ *
  * If there are dependent modules that already have their own .gwtar files, they
  * are assumed good and loaded first. CachedCompilationUnits that already exist
  * will not be re-written into the <module>.gwtar files.
- * 
+ *
  * Note: Currently, the order the modules are passed in is the order in which
  * they will be compiled. This means you should be careful to pass in modules
  * that depend on other modules in the same list last.
- * 
+ *
  * TODO(zundel): remove the manual ordering of dependencies.
  */
 public class CompileModule {
@@ -192,7 +192,7 @@ public class CompileModule {
 
   /**
    * Main loop.
-   * 
+   *
    * For each module passed on the command line, populates the compilation state
    * with compilation units from other archives, compiles all resources in this
    * module, and writes out all the compilation units that are not already
@@ -205,7 +205,7 @@ public class CompileModule {
     // for the archive.
     Map<String, Set<String>> unitsInArchives = new HashMap<String, Set<String>>();
     // Modules archived by this invocation of CompileModule.  Once a compiled module is
-    // written out as an archive file, it may or may not appear on the classpath 
+    // written out as an archive file, it may or may not appear on the classpath
     // and come back with module.getAllCompilationUnitArchiveURLs().  Thus, use a second check
     // so that the tool doesn't redundantly write the same compilation units into
     // multiple archives.
@@ -229,7 +229,7 @@ public class CompileModule {
       // written out.
       Set<String> currentModuleArchivedUnits = new HashSet<String>();
       try {
-        module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, compilerContext, false);
+        module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, compilerContext);
       } catch (Throwable e) {
         CompilationProblemReporter.logAndTranslateException(logger, e);
         return false;
