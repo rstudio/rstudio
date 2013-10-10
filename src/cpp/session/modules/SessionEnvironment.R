@@ -342,7 +342,9 @@
       if (identical(sys.frame(i), env))
       {
          calldesc <- paste(deparse(sys.call(i)[[1]]), "()", sep="")
-         result <- list(name = .rs.scalar(calldesc), frame = .rs.scalar(i))
+         result <- list(name = .rs.scalar(calldesc), 
+                        frame = .rs.scalar(i),
+                        local = .rs.scalar(TRUE))
          break
       }
    }
@@ -350,6 +352,21 @@
       list(name = .rs.scalar("unknown"), frame = .rs.scalar(0L))
    else
       result
+})
+
+# indicate whether the given environment is local (i.e. it comes before the
+# global environment in the search path)
+.rs.addFunction("environmentIsLocal", function(env)
+{
+   while (!identical(env, emptyenv())) 
+   {
+      # if one of this environment's parents is the global environment, it's
+      # local
+      env = parent.env(env)
+      if (identical(env, globalenv())) 
+         return(TRUE)
+   }
+   return(FALSE)
 })
 
 .rs.addFunction("environmentName", function(env)
@@ -368,6 +385,7 @@
 {
    env <- startEnv
    envs <- list()
+   local <- TRUE
    # if starting above the global environment, the environments will be
    # unnamed. to provide sensible names for them, look for a matching frame in
    # the callstack.
@@ -392,6 +410,11 @@
    # through the rest of the search path.
    while (!identical(env, emptyenv()))
    {
+      # mark all environments as local until we reach the global 
+      # environment
+      if (identical(env, globalenv())) 
+         local <- FALSE
+
       envName <- environmentName(env)
 
       # hide the RStudio internal tools environment and the autoloads
@@ -402,7 +425,8 @@
       {
          envs[[length(envs)+1]] <-
                         list (name = .rs.scalar(envName),
-                              frame = .rs.scalar(0L))
+                              frame = .rs.scalar(0L),
+                              local = .rs.scalar(local))
       }
       env <- parent.env(env)
    }

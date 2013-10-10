@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
@@ -83,8 +84,10 @@ public class EnvironmentPane extends WorkbenchPane
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
       environments_ = null;
-      environmentName_ = 
-            session.getSessionInfo().getEnvironmentState().environmentName();
+      EnvironmentContextData environmentState = 
+            session.getSessionInfo().getEnvironmentState();
+      environmentName_ = environmentState.environmentName();
+      environmentIsLocal_ = environmentState.environmentIsLocal();
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -126,7 +129,7 @@ public class EnvironmentPane extends WorkbenchPane
       environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarButton(
             friendlyEnvironmentName(),
-            imageOfEnvironment(environmentName_),
+            imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
       toolbar.addLeftWidget(environmentButton_);
       
@@ -206,11 +209,12 @@ public class EnvironmentPane extends WorkbenchPane
    }
 
    @Override
-   public void setEnvironmentName(String environmentName)
+   public void setEnvironmentName(String environmentName, boolean local)
    {
       environmentName_ = environmentName;
       environmentButton_.setText(friendlyEnvironmentName());
-      environmentButton_.setLeftImage(imageOfEnvironment(environmentName));
+      environmentButton_.setLeftImage(imageOfEnvironment(environmentName, 
+                                                         local));
       objects_.setEnvironmentName(friendlyEnvironmentName());
       if (environmentName.equals("R_GlobalEnv"))
          commands_.clearWorkspace().setEnabled(true); 
@@ -434,14 +438,15 @@ public class EnvironmentPane extends WorkbenchPane
          return name;
    }
    
-   private ImageResource imageOfEnvironment(String name)
+   private ImageResource imageOfEnvironment(String name, boolean local)
    {
       if (name.endsWith("()"))
          return EnvironmentResources.INSTANCE.functionEnvironment();
       else if (name.equals("R_GlobalEnv"))
          return EnvironmentResources.INSTANCE.globalEnvironment();
       else if (name.startsWith("package:") ||
-               name.equals("base"))
+               name.equals("base") || 
+               local)
          return EnvironmentResources.INSTANCE.packageEnvironment();
       else 
          return EnvironmentResources.INSTANCE.attachedEnvironment();
@@ -463,7 +468,8 @@ public class EnvironmentPane extends WorkbenchPane
       for (int i = 0; i < environments_.length(); i++)
       {
          final EnvironmentFrame frame = environments_.get(i);
-         ImageResource img = imageOfEnvironment(frame.getName());
+         ImageResource img = imageOfEnvironment(frame.getName(), 
+                                                frame.isLocal());
          environmentMenu_.addItem(ImageMenuItem.create(img, 
                   friendlyNameOfEnvironment(frame.getName()), 
                   new Scheduler.ScheduledCommand()
@@ -485,7 +491,7 @@ public class EnvironmentPane extends WorkbenchPane
          @Override
          public void onResponseReceived(Void v)
          {
-            setEnvironmentName(frame.getName());
+            setEnvironmentName(frame.getName(), frame.isLocal());
          }
 
          @Override
@@ -582,4 +588,5 @@ public class EnvironmentPane extends WorkbenchPane
    private boolean isClientStateDirty_;
    private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
+   private boolean environmentIsLocal_;
 }

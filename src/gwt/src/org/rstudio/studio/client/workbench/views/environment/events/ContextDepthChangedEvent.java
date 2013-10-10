@@ -70,6 +70,11 @@ public class ContextDepthChangedEvent extends
       return contextData_.environmentName();
    }
    
+   public boolean environmentIsLocal()
+   {
+      return contextData_.environmentIsLocal();
+   }
+   
    @Override
    public Type<Handler> getAssociatedType()
    {

@@ -565,6 +565,7 @@ json::Object commonEnvironmentStateData(int depth)
           pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
+         varJson["environment_is_local"] = true;
          inFunctionEnvironment = true;
       }
 
@@ -586,6 +587,7 @@ json::Object commonEnvironmentStateData(int depth)
    {
       // emit the name of the environment we're currently working with
       std::string environmentName;
+      bool local = false;
       if (s_pEnvironmentMonitor->hasEnvironment())
       {
          Error error = r::exec::RFunction(".rs.environmentName",
@@ -593,8 +595,15 @@ json::Object commonEnvironmentStateData(int depth)
                                     .call(&environmentName);
          if (error)
             LOG_ERROR(error);
+
+         error = r::exec::RFunction(".rs.environmentIsLocal",
+                                    s_pEnvironmentMonitor->getMonitoredEnvironment())
+                                    .call(&local);
+         if (error)
+            LOG_ERROR(error);
       }
       varJson["environment_name"] = environmentName;
+      varJson["environment_is_local"] = local;
    }
 
    // always emit the code for the function, even if we don't think that the
