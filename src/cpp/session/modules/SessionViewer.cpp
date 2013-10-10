@@ -24,6 +24,7 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
+#include <r/ROptions.hpp>
 
 #include <r/session/RSessionUtils.hpp>
 
@@ -144,6 +145,13 @@ Error initialize()
    using namespace module_context;
    events().onClientInit.connect(onClientInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   // set ggvis.renderer to svg in desktop mode
+   if ((session::options().programMode() == kSessionProgramModeDesktop) &&
+       r::options::getOption<std::string>("ggvis.renderer").empty())
+   {
+      r::options::setOption("ggvis.renderer", "svg");
+   }
 
    // install rpc methods
    using boost::bind;
