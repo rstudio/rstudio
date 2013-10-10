@@ -520,7 +520,7 @@ public class Link {
   /**
    * Prefix an artifact's partial path with the linker name and make sure it is
    * a relative pathname.
-   * 
+   *
    * @param art
    * @param linkerContext
    * @return prefixed path
@@ -653,10 +653,9 @@ public class Link {
 
         // Check that all files are present
         for (FileBackedObject<PermutationResult> file : resultFiles) {
-          if (!file.getFile().exists()) {
-            logger.log(TreeLogger.ERROR, "File not found '"
-                + file.getFile().getAbsolutePath()
-                + "'; please compile all permutations");
+          if (!file.exists()) {
+            logger.log(TreeLogger.ERROR,
+                "File not found '" + file.getPath() + "'; please compile all permutations");
             return false;
           }
         }
