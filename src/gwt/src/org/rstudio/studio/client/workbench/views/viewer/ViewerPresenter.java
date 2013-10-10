@@ -150,11 +150,12 @@ public class ViewerPresenter extends BasePresenter
    }-*/;
    
    private void onMessage(String data, String origin)
-   {
-      if ("disconnected".equals(data) &&
-          normalizeUrl(display_.getUrl()).equals(normalizeUrl(origin)))
+   {  
+      if ("disconnected".equals(data))
       {
-         onViewerClear();
+         // ensure the frame url starts with the specified origin
+         if (display_.getUrl().startsWith(origin))
+            onViewerClear();
       }
    }
    

@@ -1275,6 +1275,28 @@ std::string resourceFileAsString(const std::string& fileName)
    return fileContents;
 }
 
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
+{
+   // extract the port
+   boost::regex re("http[s]?://localhost:([0-9]+)(/.*)?");
+   boost::smatch match;
+   if (boost::regex_search(url, match, re))
+   {
+      // calculate the path
+      std::string path = match[2];
+      if (path.empty())
+         path = "/";
+      path = "p/" + match[1] + path;
+      *pPath = path;
+
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 
 void activatePane(const std::string& pane)
 {

@@ -340,6 +340,8 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 
 std::string resourceFileAsString(const std::string& fileName);
 
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();
