@@ -87,8 +87,9 @@ public class RunStyleHtmlUnit extends RunStyle {
     }
 
     public void notify(String message, Object origin) {
-      if ("Obsolete content type encountered: 'text/javascript'.".equals(message)) {
-        // silently eat warning about text/javascript MIME type
+      if ("Obsolete content type encountered: 'text/javascript'.".equals(message) ||
+          "Obsolete content type encountered: 'application/x-javascript'.".equals(message)) {
+        // silently eat warning about text/javascript MIME type and application/x-javascript
         return;
       }
       treeLogger.log(TreeLogger.WARN, message);
