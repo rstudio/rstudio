@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -71,11 +71,6 @@ public class ResourceOracleImpl implements ResourceOracle {
     public RerootedResource(AbstractResource resource, PathPrefix pathPrefix) {
       this.path = pathPrefix.getRerootedPath(resource.getPath());
       this.resource = resource;
-    }
-
-    @Override
-    public ClassPathEntry getClassPathEntry() {
-      return resource.getClassPathEntry();
     }
 
     @Override
@@ -153,7 +148,7 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   private static final Map<ResourceLoader, List<ClassPathEntry>> classPathCache =
       new MapMaker().weakKeys().makeMap();
-  
+
   public static void clearCache() {
     classPathCache.clear();
   }
@@ -221,10 +216,10 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   /**
    * Rescans the associated paths to recompute the available resources.
-   * 
+   *
    * TODO(conroy,scottb): This synchronization could be improved upon to allow
    * disjoint sets of oracles to be refreshed simultaneously.
-   * 
+   *
    * @param logger status and error details are written here
    * @param first At least one ResourceOracleImpl must be passed to refresh
    * @param rest Callers may optionally pass several oracles
@@ -262,7 +257,7 @@ public class ResourceOracleImpl implements ResourceOracle {
      * a resource that has already been added to the new map under construction
      * to create the effect that resources founder earlier on the classpath take
      * precedence.
-     * 
+     *
      * Exceptions: super has priority over non-super; and if there are two super
      * resources with the same path, the one with the higher-priority path
      * prefix wins.

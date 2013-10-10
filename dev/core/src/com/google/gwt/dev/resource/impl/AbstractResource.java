@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,14 +18,12 @@ package com.google.gwt.dev.resource.impl;
 import com.google.gwt.dev.resource.Resource;
 
 /**
- * TODO(bruce): write me.
+ * Provides common behavior for Resource implementations.
  */
 public abstract class AbstractResource extends Resource {
 
-  /**
-   * Accesses the path root under which this resource was found. Only available
-   * within this package.
-   */
-  public abstract ClassPathEntry getClassPathEntry();
+  @Override
+  public boolean wasRerooted() {
+    return false;
+  }
 }
-

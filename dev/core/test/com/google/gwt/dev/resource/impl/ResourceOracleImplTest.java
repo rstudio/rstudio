@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ import java.util.Set;
 
 /**
  * Tests {@link ResourceOracleImpl}.
- * 
+ *
  * <pre>
  * Important states to test:
  * - No class path entries
@@ -103,15 +103,20 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     /**
-     * Asserts that a resource having the specified path is present and that it
-     * was contributed by the specified classpath entry.
+     * Asserts that a resource having the specified path is present and that it was contributed by
+     * the specified classpath entry.
      */
-    public void assertPathIncluded(String expectedPath,
-        ClassPathEntry expectedCpe) {
-      AbstractResource r = findResourceWithPath(expectedPath);
-      assertNotNull(r);
-      ClassPathEntry actualCpe = r.getClassPathEntry();
-      assertEquals(expectedCpe.getLocation(), actualCpe.getLocation());
+    public void assertPathIncluded(String expectedPath, ClassPathEntry expectedCpe) {
+      AbstractResource resource = findResourceWithPath(expectedPath);
+      assertNotNull(resource);
+      if (resource instanceof HasClassPathEntry) {
+        HasClassPathEntry resourceWithClassPath = (HasClassPathEntry) resource;
+        ClassPathEntry actualCpe = resourceWithClassPath.getClassPathEntry();
+        assertEquals(expectedCpe.getLocation(), actualCpe.getLocation());
+      } else {
+        fail("expected to find a FileResource but found " + resource.getClass().getName()
+            + " instead.");
+      }
     }
 
     public void assertPathNotIncluded(String path) {
@@ -248,7 +253,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
   /**
    * Test that ResourceOracleImpl preserves the order in which the same logical
    * resource is occurs in multiple ClassPathEntries.
-   * 
+   *
    * @throws URISyntaxException
    * @throws IOException
    */
@@ -283,7 +288,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * <p>
    * cpe1 contains org/example/bar/client/BarClient1.txt and cpe2 contains
    * org/example/foo/client/BarClient1.txt
-   * 
+   *
    * @throws URISyntaxException
    * @throws IOException
    */
@@ -315,7 +320,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
   /**
    * Tests the actual reading of resources.
-   * 
+   *
    * @throws URISyntaxException
    * @throws IOException
    */
@@ -345,7 +350,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * Verify that duplicate entries are removed from the classpath, and that
    * multiple ResourceOracleImpls created from the same classloader return the
    * same list of ClassPathEntries.
-   * 
+   *
    */
   public void testRemoveDuplicates() {
     TreeLogger logger = createTestTreeLogger();
