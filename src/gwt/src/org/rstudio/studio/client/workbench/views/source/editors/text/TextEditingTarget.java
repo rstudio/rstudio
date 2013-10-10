@@ -2205,6 +2205,11 @@ public class TextEditingTarget implements EditingTarget
       // ensure all of the lines in the selection are within roxygen
       int selStartRow = range.getStart().getRow();
       int selEndRow = range.getEnd().getRow();
+      
+      // ignore the last row if it's column 0
+      if (range.getEnd().getColumn() == 0)
+         selEndRow = Math.max(selEndRow-1, selStartRow);
+      
       for (int i=selStartRow; i<=selEndRow; i++)
       {
          if (!isRoxygenLine(docDisplay_.getLine(i)))
