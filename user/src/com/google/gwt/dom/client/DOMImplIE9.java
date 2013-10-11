@@ -22,16 +22,16 @@ class DOMImplIE9 extends DOMImplStandardBase {
 
   @Override
   public int getAbsoluteLeft(Element elem) {
-    int left = getBoundingClientRectLeft(elem) + getDocumentScrollLeftImpl();
+    double left = getBoundingClientRectLeft(elem) + getDocumentScrollLeftImpl();
     if (isRTL(elem)) { // in RTL, account for the scroll bar shift if present
       left += getParentOffsetDelta(elem);
     }
-    return left;
+    return toInt32(left);
   }
 
   @Override
   public int getAbsoluteTop(Element elem) {
-    return getBoundingClientRectTop(elem) + getDocumentScrollTopImpl();
+    return toInt32(getBoundingClientRectTop(elem) + getDocumentScrollTopImpl());
   }
 
   /**
@@ -45,12 +45,12 @@ class DOMImplIE9 extends DOMImplStandardBase {
 
   @Override
   public int getScrollLeft(Document doc) {
-    return getDocumentScrollLeftImpl();
+    return toInt32(getDocumentScrollLeftImpl());
   }
 
   @Override
   public int getScrollLeft(Element elem) {
-    int left = getScrollLeftImpl(elem);
+    int left = toInt32(getScrollLeftImpl(elem));
     if (isRTL(elem)) {
       left = -left;
     }
@@ -59,7 +59,7 @@ class DOMImplIE9 extends DOMImplStandardBase {
 
   @Override
   public int getScrollTop(Document doc) {
-    return getDocumentScrollTopImpl();
+    return toInt32(getDocumentScrollTopImpl());
   }
 
   @Override
@@ -96,9 +96,9 @@ class DOMImplIE9 extends DOMImplStandardBase {
     setScrollLeft(doc.getDocumentElement(), left);
   }
 
-  protected native int getBoundingClientRectLeft(Element elem) /*-{
-  // getBoundingClientRect() throws a JS exception if the elem is not attached
-  // to the document, so we wrap it in a try/catch block
+  private native double getBoundingClientRectLeft(Element elem) /*-{
+    // getBoundingClientRect() throws a JS exception if the elem is not attached
+    // to the document, so we wrap it in a try/catch block
     try {
       return elem.getBoundingClientRect().left;
     } catch (e) {
@@ -107,7 +107,7 @@ class DOMImplIE9 extends DOMImplStandardBase {
     }
   }-*/;
 
-  protected native int getBoundingClientRectTop(Element elem) /*-{
+  private native double getBoundingClientRectTop(Element elem) /*-{
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
     try {
@@ -118,15 +118,15 @@ class DOMImplIE9 extends DOMImplStandardBase {
     }
   }-*/;
 
-  private native int getDocumentScrollLeftImpl() /*-{
+  private native double getDocumentScrollLeftImpl() /*-{
     return $wnd.pageXOffset;
   }-*/;
 
-  private native int getDocumentScrollTopImpl() /*-{
+  private native double getDocumentScrollTopImpl() /*-{
     return $wnd.pageYOffset;
   }-*/;
 
-  private native int getParentOffsetDelta(Element elem) /*-{
+  private native double getParentOffsetDelta(Element elem) /*-{
     var offsetParent = elem.offsetParent;
     if (offsetParent) {
       return offsetParent.offsetWidth - offsetParent.clientWidth;
@@ -134,7 +134,7 @@ class DOMImplIE9 extends DOMImplStandardBase {
     return 0;
   }-*/;
 
-  private native int getScrollLeftImpl(Element elem) /*-{
+  private native double getScrollLeftImpl(Element elem) /*-{
     return elem.scrollLeft || 0;
   }-*/; 
 

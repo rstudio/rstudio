@@ -27,16 +27,24 @@ class DOMImplStandardBase extends DOMImplStandard {
     protected ClientRect() {
     }
 
-    public final native int getLeft() /*-{
+    public final int getLeft() {
+      return toInt32(getSubPixelLeft());
+    }
+
+    public final int getTop() {
+      return toInt32(getSubPixelTop());
+    }
+
+    private final native double getSubPixelLeft() /*-{
       return this.left;
     }-*/;
 
-    public final native int getTop() /*-{
+    private final native double getSubPixelTop() /*-{
       return this.top;
     }-*/;
   }
 
-  private static native int getAbsoluteLeftUsingOffsets(Element elem) /*-{
+  private static native double getAbsoluteLeftUsingOffsets(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetLeft.
     if (elem.offsetLeft == null) {
@@ -89,7 +97,7 @@ class DOMImplStandardBase extends DOMImplStandard {
     return left;
   }-*/;
 
-  private static native int getAbsoluteTopUsingOffsets(Element elem) /*-{
+  private static native double getAbsoluteTopUsingOffsets(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetTop.
     if (elem.offsetTop == null) {
@@ -201,17 +209,19 @@ class DOMImplStandardBase extends DOMImplStandard {
   @Override
   public int getAbsoluteLeft(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
-    return rect != null ? rect.getLeft()
+    double left = rect != null ? rect.getSubPixelLeft()
         + elem.getOwnerDocument().getBody().getScrollLeft()
         : getAbsoluteLeftUsingOffsets(elem);
+    return toInt32(left);
   }
 
   @Override
   public int getAbsoluteTop(Element elem) {
     ClientRect rect = getBoundingClientRect(elem);
-    return rect != null ? rect.getTop()
+    double top = rect != null ? rect.getSubPixelTop()
         + elem.getOwnerDocument().getBody().getScrollTop()
         : getAbsoluteTopUsingOffsets(elem);
+    return toInt32(top);
   }
 
   @Override
