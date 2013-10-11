@@ -51,6 +51,10 @@ void showWarning(QWidget *parent, const QString &title, const QString& text);
 
 void showInfo(QWidget* parent, const QString& title, const QString& text);
 
+void showFileError(const QString& action,
+                   const QString& file,
+                   const QString& error);
+
 void launchProjectInNewInstance(QString projectFilename);
 
 bool isFixedWidthFont(const QFont& font);

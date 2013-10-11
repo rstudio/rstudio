@@ -74,10 +74,14 @@ protected:
                                 NavigationType type);
 
 private:
+   void handleBase64Download(QWebFrame* pWebFrame, QUrl url);
+
+private:
    QUrl baseUrl_;
    QString viewerUrl_;
    bool navigated_;
    PendingSatelliteWindow pendingSatelliteWindow_;
+   QDir defaultSaveDir_;
 };
 
 } // namespace desktop
