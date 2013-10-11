@@ -9,6 +9,7 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.jar"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.5.jar"/>
+        <classpathentry kind="var" path="GWT_TOOLS/lib/jsr305/jsr305.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpclient-4.1.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpcore-4.1.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/http/httpmime-4.1.2.jar"/>
