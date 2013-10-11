@@ -70,7 +70,7 @@
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core ;
 

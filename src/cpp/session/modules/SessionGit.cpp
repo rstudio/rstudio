@@ -62,7 +62,7 @@
 #include "vcs/SessionVCSCore.hpp"
 #include "vcs/SessionVCSUtils.hpp"
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core;
 using namespace core::shell_utils;

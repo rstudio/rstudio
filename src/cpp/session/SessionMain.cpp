@@ -137,7 +137,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionHttpConnectionListener.hpp>
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core; 
 using namespace session;
