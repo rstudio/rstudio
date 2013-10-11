@@ -29,6 +29,9 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -141,7 +144,7 @@ public class JSON {
       }
     } else if ((jsonString = jsonValue.isString()) != null) {
       // Use stringValue instead of toString() because we don't want escaping
-      treeItem.addItem(jsonString.stringValue());
+      treeItem.addItem(SafeHtmlUtils.fromString(jsonString.stringValue()));
     } else {
       // JSONBoolean, JSONNumber, and JSONNull work well with toString().
       treeItem.addItem(getChildText(jsonValue.toString()));
@@ -151,8 +154,8 @@ public class JSON {
   private void displayError(String errorType, String errorMessage) {
     jsonTree.removeItems();
     jsonTree.setVisible(true);
-    TreeItem treeItem = jsonTree.addItem(errorType);
-    treeItem.addItem(errorMessage);
+    TreeItem treeItem = jsonTree.addItem(SafeHtmlUtils.fromString(errorType));
+    treeItem.addItem(SafeHtmlUtils.fromString(errorMessage));
     treeItem.setStyleName("JSON-JSONResponseObject");
     treeItem.setState(true);
   }
@@ -163,7 +166,7 @@ public class JSON {
   private void displayJSONObject(JSONValue jsonValue) {
     jsonTree.removeItems();
     jsonTree.setVisible(true);
-    TreeItem treeItem = jsonTree.addItem("JSON Response");
+    TreeItem treeItem = jsonTree.addItem(SafeHtmlUtils.fromString("JSON Response"));
     addChildren(treeItem, jsonValue);
     treeItem.setStyleName("JSON-JSONResponseObject");
     treeItem.setState(true);
@@ -197,8 +200,12 @@ public class JSON {
   /*
    * Causes the text of child elements to wrap.
    */
-  private String getChildText(String text) {
-    return "<span style='white-space:normal'>" + text + "</span>";
+  private SafeHtml getChildText(String text) {
+    return new SafeHtmlBuilder()
+        .appendHtmlConstant("<span style='white-space:normal'>")
+        .appendEscaped(text)
+        .appendHtmlConstant("</span>")
+        .toSafeHtml();
   }
 
   /**
