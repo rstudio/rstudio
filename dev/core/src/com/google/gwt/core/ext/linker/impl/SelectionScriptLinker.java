@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.AbstractLinker;
 import com.google.gwt.core.ext.linker.Artifact;
@@ -356,7 +357,16 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String prefix = getDeferredFragmentPrefix(logger, context, fragment);
     b.append(prefix);
     b.append(js);
-    b.append(getDeferredFragmentSuffix(logger, context, fragment));
+    String suffix = getDeferredFragmentSuffix(logger, context, fragment);
+    if (suffix == null) {
+      suffix = getDeferredFragmentSuffix2(logger, context, fragment, strongName);
+      if (suffix == null) {
+        logger.log(Type.ERROR, "Neither getDeferredFragmentSuffix nor getDeferredFragmentSuffix2 "
+            + "were overridden in linker: " + getClass().getName());
+        throw new UnableToCompleteException();
+      }
+    }
+    b.append(suffix);
     SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
         = new SymbolMapsLinker.ScriptFragmentEditsArtifact(strongName, fragment);
     editsArtifact.prefixLines(prefix);
@@ -394,7 +404,16 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     artifacts.add(editsArtifact);
     b.append(modulePrefix);
     b.append(js);
-    b.append(getModuleSuffix(logger, context));
+    String suffix = getModuleSuffix(logger, context);
+    if (suffix == null) {
+      suffix = getModuleSuffix2(logger, context, strongName);
+      if (suffix == null) {
+        logger.log(Type.ERROR, "Neither getModuleSuffix nor getModuleSuffix2 were overridden in "
+            + "linker: " + getClass().getName());
+        throw new UnableToCompleteException();
+      }
+    }
+    b.append(suffix);
     return wrapPrimaryFragment(logger, context, b.toString(), artifacts, result);
   }
 
@@ -424,8 +443,26 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return "";
   }
 
+  /**
+   * Returns the suffix at the end of a JavaScript fragment other than the initial fragment
+   * (deprecated version). The default version returns null, which will cause
+   * {@link #getDeferredFragmentSuffix2} to be called instead. Subclasses should switch to
+   * extending getDeferredFragmentSuffix2.
+   */
+  @Deprecated
   protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
       int fragment) {
+    return null;
+  }
+
+  /**
+   * Returns the suffix at the end of a JavaScript fragment other than the initial fragment
+   * (new version). This method won't be called if {@link #getDeferredFragmentSuffix} is overridden
+   * to return non-null. Subclasses should stop implementing getDeferredFramgnentSuffix and
+   * implement getDeferredFragmentSuffix2 instead.
+   */
+  protected String getDeferredFragmentSuffix2(TreeLogger logger, LinkerContext context,
+      int fragment, String strongName) {
     return "";
   }
 
@@ -476,8 +513,26 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return getModulePrefix(logger, context, strongName);
   }
 
-  protected abstract String getModuleSuffix(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
+  /**
+   * Returns the suffix for the initial JavaScript fragment (deprecated version).
+   * The default returns null, which will cause {@link #getModuleSuffix2} to be called instead.
+   * Subclasses should switch to extending getModuleSuffix2.
+   */
+  @Deprecated
+  protected String getModuleSuffix(TreeLogger logger,
+      LinkerContext context) throws UnableToCompleteException {
+    return null;
+  }
+
+  /**
+   * Returns the suffix for the initial JavaScript fragment (new version). This version
+   * will not be called if {@link #getModuleSuffix} is overridden so that it doesn't return null.
+   * Subclasses should stop implementing getModuleSuffix and implmenet getModuleSuffix2 instead.
+   */
+  protected String getModuleSuffix2(TreeLogger logger,
+      LinkerContext context, String strongName) throws UnableToCompleteException {
+    return null;
+  }
 
   /**
    * Some subclasses support "chunking" of the primary fragment. If chunking will be supported, this

@@ -192,9 +192,13 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     return ".cache.js";
   }
 
-   protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
-      int fragment) {
-    return "\n//@ sourceURL=" + context.getModuleName() + "-" + fragment + ".js\n";
+  @Override
+  protected String getDeferredFragmentSuffix2(TreeLogger logger, LinkerContext context,
+      int fragment, String strongName) {
+
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
+    writeMagicComments(out, context, fragment, strongName);
+    return out.toString();
   }
 
   @Override
@@ -442,7 +446,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModuleSuffix(TreeLogger logger, LinkerContext context) {
+  protected String getModuleSuffix2(TreeLogger logger, LinkerContext context,
+      String strongName) {
+
+    // Note: this method won't be called if getModuleSuffix() is overridden and returns non-null.
+
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("$sendStats('moduleStartup', 'moduleEvalEnd');");
@@ -452,20 +460,8 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
         + "__gwtModuleFunction.__computePropValue);");
     out.newlineOpt();
     out.print("$sendStats('moduleStartup', 'end');");
-    String includeSourceMapUrl = getStringConfigurationProperty(context, "includeSourceMapUrl", "false");
-    if (!"false".equalsIgnoreCase(includeSourceMapUrl)) {
-      String sourceMapUrl = SymbolMapsLinker.SourceMapArtifact.sourceMapFilenameForFragment(0);
-      if (!"true".equalsIgnoreCase(includeSourceMapUrl)) {
-        sourceMapUrl = includeSourceMapUrl;
-      }
-      // The sourceURL magic comment can cause browsers to ignore the X-SourceMap header
-      // This magic comment ensures that they can still locate them in that case
-      out.print("\n//@ sourceMappingURL=" + sourceMapUrl + " ");
-    }
-    // Magic comment serves several purposes:
-    // 1. renames strongName to a stable name in browser debugger
-    // 2. provides name to scripts installed via eval()
-    out.print("\n//@ sourceURL=" + context.getModuleName() + "-0.js\n");
+
+    writeMagicComments(out, context, 0, strongName);
     return out.toString();
   }
 
@@ -477,6 +473,27 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/linker/CrossSiteIframeTemplate.js";
+  }
+
+  /**
+   * Returns the sourcemap URL that will be put in the comment at the end of a JavaScript
+   * fragment, or null if the comment should be omitted. The default implementation uses
+   * the includeSourceMapUrl config property.
+   */
+  protected String getSourceMapUrl(LinkerContext context, String strongName, int fragmentId) {
+    String val = getStringConfigurationProperty(context, "includeSourceMapUrl",  "false");
+
+    if ("false".equalsIgnoreCase(val)) {
+      return null;
+    }
+
+    if ("true".equalsIgnoreCase(val)) {
+      return SymbolMapsLinker.SourceMapArtifact.sourceMapFilenameForFragment(fragmentId);
+    }
+
+    return val.replaceAll("__HASH__", strongName)
+        .replaceAll("__FRAGMENT__", String.valueOf(fragmentId))
+        .replaceAll("__MODULE__", context.getModuleName());
   }
 
   protected String getStringConfigurationProperty(LinkerContext context,
@@ -645,5 +662,25 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
       out.append("}\n");
     }
     return out.toString();
+  }
+
+  private void writeMagicComments(DefaultTextOutput out, LinkerContext context, int fragmentId,
+      String strongName) {
+    String sourceMapUrl = getSourceMapUrl(context, strongName, fragmentId);
+    if (sourceMapUrl != null) {
+      // This magic comment determines where a browser debugger looks for a sourcemap,
+      // except that it may be overridden by a "SourceMap" header in the HTTP response when
+      // loading the JavaScript.
+      // (Note: even if you're using the HTTP header, you still have to set this to an arbitrary
+      // value, or Chrome won't enable sourcemaps.)
+      out.print("\n//# sourceMappingURL=" + sourceMapUrl + " ");
+    }
+
+    // This magic comment determines the name of the JavaScript fragment in a browser debugger.
+    // (In Chrome it typically shows up under "(no domain)".)
+    // We need to set it explicitly because the JavaScript code may be installed via an "eval"
+    // statement and even if we're not using an eval, the filename contains the strongname which
+    // isn't stable across recompiles.
+    out.print("\n//# sourceURL=" + context.getModuleName() + "-" + fragmentId + ".js\n");
   }
 }

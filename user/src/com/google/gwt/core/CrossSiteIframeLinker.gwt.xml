@@ -30,9 +30,16 @@
      - debugging in browsers.
      - Specification: http://goo.gl/ZQ3V3
      - Takes on the following values:
-     - if false, no sourcemap URL declarations are included at the end of the primary fragment script
-     - if true, a relative URL to the standard sourcemap for the primary fragment is included
-     - else the value is assumed to be a custom URL -->
+     - if "false":
+     -   no sourcemap URL declarations are included at the end of the primary fragment script
+     - if "true":
+     -    a relative URL to the standard sourcemap for the primary fragment is included.
+     - Otherwise:
+     -   The value is assumed to be a custom URL. The following tokens will be substituted:
+     -   __MODULE__ is replaced with the module name
+     -   __FRAGMENT__ is replaced with the fragment id, which will be 0 for the initial fragment.
+     -   __HASH__ is replaced with the strong name of the fragment.
+   -->
   <define-configuration-property name="includeSourceMapUrl" is-multi-valued="false"/>
   <set-configuration-property name="includeSourceMapUrl" value="false"/>
   <set-configuration-property name="xsiframe.failIfScriptTag" value="TRUE"/> 
