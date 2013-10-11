@@ -17,6 +17,7 @@
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
 
 #include <QWidget>
 #include <QtDebug>
@@ -27,6 +28,8 @@
 #include "DesktopMainWindow.hpp"
 
 #include "DesktopUtils.hpp"
+
+using namespace core;
 
 extern QString sharedSecret;
 
@@ -261,6 +264,15 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
                                             standardFileDialogOptions());
    if (!filename.isEmpty())
    {
+      // see if we need to force the extension
+      FilePath defaultFilePath(defaultFilename.toUtf8().constData());
+      FilePath chosenFilePath(filename.toUtf8().constData());
+      if (chosenFilePath.extension().empty() &&
+          !defaultFilePath.extension().empty())
+      {
+         filename += QString::fromStdString(defaultFilePath.extension());
+      }
+
       // write the file
       QFile file(filename);
       if (file.open(QIODevice::WriteOnly))
