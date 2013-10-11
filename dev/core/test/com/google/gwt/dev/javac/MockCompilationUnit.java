@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 
@@ -34,6 +35,7 @@ public class MockCompilationUnit extends CompilationUnit {
   private final long lastModified;
   private final String resourceLocation;
   private final String typeName;
+  private final List<CompiledClass> emptyCompiledClasses = Lists.newArrayList();
 
   public MockCompilationUnit(String typeName, String source) {
     this(typeName, source, "/mock/" + Shared.toPath(typeName));
@@ -55,7 +57,7 @@ public class MockCompilationUnit extends CompilationUnit {
 
   @Override
   public Collection<CompiledClass> getCompiledClasses() {
-    return null;
+    return emptyCompiledClasses;
   }
 
   @Override
