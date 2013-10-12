@@ -83,7 +83,7 @@ public class ViewerPresenter extends BasePresenter
          display_.bringToFront();
       
          if (event.getMaximize())
-            display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
+            display_.maximize();
          
          navigate(event.getURL());
       }

@@ -147,6 +147,11 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
    {
       fireEvent(new EnsureHeightEvent(height));
    }
+   
+   public void maximize()
+   {
+      fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
+   }
 
    public boolean isMainToolbarVisible()
    {
