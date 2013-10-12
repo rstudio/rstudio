@@ -21,6 +21,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
 import org.rstudio.core.client.js.JsObject;
@@ -32,6 +34,11 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import static org.rstudio.core.client.layout.WindowState.*;
+
+// TODO: subscribe to events on logical window
+// TODO: call setSplitterPos then layout(windowA, windowB) in
+//       response to the event
+
 
 /**
  * This class implements the minimizing/maximizing behavior between two
@@ -474,6 +481,27 @@ public class DualWindowLayoutPanel extends SimplePanel
             windowA_.addWindowStateChangeHandler(topWindowStateChangeManager_));
       registrations_.add(
             windowB_.addWindowStateChangeHandler(bottomWindowStateChangeManager_));
+      
+      registrations_.add(
+         windowA_.addEnsureHeightHandler(new EnsureHeightHandler() {
+            @Override
+            public void onEnsureHeight(EnsureHeightEvent event)
+            {
+               
+               
+            }
+            
+         }));
+      
+      registrations_.add(
+         windowB_.addEnsureHeightHandler(new EnsureHeightHandler() {
+            @Override
+            public void onEnsureHeight(EnsureHeightEvent event)
+            {
+               
+               
+            }
+         }));
    }
 
    private void unhookEvents()

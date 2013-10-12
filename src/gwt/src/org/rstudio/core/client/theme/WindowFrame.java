@@ -34,12 +34,7 @@ public class WindowFrame extends Composite
               RequiresResize,
               EnsureVisibleHandler,
               EnsureHeightHandler
-{
-   public interface LogicalContext
-   {
-      boolean isMaximized();
-   }
-   
+{  
    public WindowFrame(Widget mainWidget)
    {
       this();
@@ -102,11 +97,6 @@ public class WindowFrame extends Composite
 
       initWidget(frame_);
    }
-   
-   public void setLogicalContext(LogicalContext context)
-   {
-      context_ = context;
-   }
 
    @Override
    public void setVisible(boolean visible)
@@ -135,6 +125,12 @@ public class WindowFrame extends Composite
          WindowStateChangeHandler handler)
    {
       return addHandler(handler, WindowStateChangeEvent.TYPE);
+   }
+   
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
    /**
@@ -328,18 +324,7 @@ public class WindowFrame extends Composite
    @Override
    public void onEnsureHeight(EnsureHeightEvent event)
    {
-      if (context_ == null)
-         return;
-      
-      if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
-      {
-         if (!context_.isMaximized())
-            maximize();
-      }
-      else
-      {
-         // TODO
-      }
+      fireEvent(event);
    }
 
    public void onBeforeShow()
@@ -355,7 +340,6 @@ public class WindowFrame extends Composite
       return fill_;
    }
 
-   private LogicalContext context_;
    private final LayoutPanel frame_;
    private final ShadowBorder border_;
    private final SimplePanel borderPositioner_;

@@ -17,6 +17,9 @@ package org.rstudio.core.client.layout;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
@@ -31,17 +34,17 @@ import static org.rstudio.core.client.layout.WindowState.*;
  */
 public class LogicalWindow implements HasWindowStateChangeHandlers,
                                       WindowStateChangeHandler,
-                                      WindowFrame.LogicalContext
+                                      EnsureHeightHandler
 {
    public LogicalWindow(WindowFrame normal,
                         MinimizedWindowFrame minimized)
    {
       normal_ = normal;
-      normal_.setLogicalContext(this);
       minimized_ = minimized;
 
       normal_.addWindowStateChangeHandler(this);
-      minimized_.addWindowStateChangeHandler(this);
+      normal_.addEnsureHeightHandler(this);
+      minimized_.addWindowStateChangeHandler(this);   
    }
 
    public WindowFrame getNormal()
@@ -82,7 +85,13 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    {
       return events_.addHandler(WindowStateChangeEvent.TYPE, handler);
    }
-
+   
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return events_.addHandler(EnsureHeightEvent.TYPE, handler);
+   }
+   
    public void onWindowStateChange(WindowStateChangeEvent event)
    {
       WindowState newState = event.getNewState();
@@ -117,9 +126,17 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
    }
    
    @Override
-   public boolean isMaximized()
+   public void onEnsureHeight(EnsureHeightEvent event)
    {
-      return state_ == MAXIMIZE;
+      if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
+      {
+         if (getState() != WindowState.MAXIMIZE)
+            events_.fireEvent(new WindowStateChangeEvent(WindowState.MAXIMIZE));
+      }
+      else
+      {
+         events_.fireEvent(event);
+      }
    }
 
    private HandlerManager events_ = new HandlerManager(this);
