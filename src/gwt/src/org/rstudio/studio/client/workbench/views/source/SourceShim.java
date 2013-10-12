@@ -27,11 +27,11 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.EnsureHeightHandler;
+import org.rstudio.core.client.events.EnsureMaximizedEvent;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.core.client.events.HasEnsureHeightHandlers;
+import org.rstudio.core.client.events.HasEnsureMaximizedHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
@@ -47,7 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 
 @Singleton
 public class SourceShim extends Composite
-   implements IsWidget, HasEnsureVisibleHandlers, HasEnsureHeightHandlers, BeforeShowCallback,
+   implements IsWidget, HasEnsureVisibleHandlers, HasEnsureMaximizedHandlers, BeforeShowCallback,
               ProvidesResize, RequiresResize, RequiresVisibilityChanged
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
@@ -127,15 +127,15 @@ public class SourceShim extends Composite
                      }
                   });
          }
-         if (child instanceof HasEnsureHeightHandlers)
+         if (child instanceof HasEnsureMaximizedHandlers)
          {
-            ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(
-                  new EnsureHeightHandler() {
+            ((HasEnsureMaximizedHandlers)child).addEnsureMaximizedHandler(
+                  new EnsureMaximizedHandler() {
 
                      @Override
-                     public void onEnsureHeight(EnsureHeightEvent event)
+                     public void onEnsureMaximized(EnsureMaximizedEvent event)
                      {
-                        parent_.fireEvent(event);
+                        parent_.fireEvent(new EnsureMaximizedEvent());
                      }
                   });
          }
@@ -191,9 +191,9 @@ public class SourceShim extends Composite
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
    
-   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
    {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
    }
 
    public void forceLoad()

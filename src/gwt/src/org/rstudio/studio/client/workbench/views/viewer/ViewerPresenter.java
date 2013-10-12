@@ -18,7 +18,6 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.EnabledChangedHandler;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -83,7 +82,7 @@ public class ViewerPresenter extends BasePresenter
          display_.bringToFront();
       
          if (event.getMaximize())
-            display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
+            display_.maximize();
          
          navigate(event.getURL());
       }

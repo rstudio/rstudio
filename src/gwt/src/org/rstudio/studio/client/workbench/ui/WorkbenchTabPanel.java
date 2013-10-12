@@ -37,7 +37,7 @@ class WorkbenchTabPanel
                  ProvidesResize,
                  HasSelectionHandlers<Integer>,
                  HasEnsureVisibleHandlers,
-                 HasEnsureHeightHandlers
+                 HasEnsureMaximizedHandlers
 {
    public WorkbenchTabPanel(WindowFrame owner)
    {
@@ -167,12 +167,12 @@ class WorkbenchTabPanel
          }
       });
       
-      tab.addEnsureHeightHandler(new EnsureHeightHandler() {
+      tab.addEnsureMaximizedHandler(new EnsureMaximizedHandler() {
 
          @Override
-         public void onEnsureHeight(EnsureHeightEvent event)
+         public void onEnsureMaximized(EnsureMaximizedEvent event)
          {
-            fireEvent(event);
+            fireEvent(new EnsureMaximizedEvent());
          }
       });
    }
@@ -246,10 +246,10 @@ class WorkbenchTabPanel
    }
    
    @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureMaximizedHandler(
+         EnsureMaximizedHandler handler)
    {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
    }
 
    public void clear()

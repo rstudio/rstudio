@@ -18,7 +18,7 @@ package org.rstudio.studio.client.workbench;
 public interface WorkbenchView
 {
    void bringToFront();
-   void ensureHeight(int height);
+   void maximize();
    void setProgress(boolean showProgress);
    void onBeforeUnselected();
    void onBeforeSelected();

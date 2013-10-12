@@ -25,8 +25,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.events.EnsureHeightEvent;
-import org.rstudio.core.client.events.EnsureHeightHandler;
+import org.rstudio.core.client.events.EnsureMaximizedEvent;
+import org.rstudio.core.client.events.EnsureMaximizedHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
@@ -439,10 +439,10 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureMaximizedHandler(
+         EnsureMaximizedHandler handler)
    {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
    }
 
    public void onVisibilityChanged(boolean visible)

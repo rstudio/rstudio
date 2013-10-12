@@ -45,7 +45,7 @@ import java.util.ArrayList;
 
 public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
-                                                     HasEnsureHeightHandlers,
+                                                     HasEnsureMaximizedHandlers,
                                                      RequiresResize,
                                                      ProvidesResize,
                                                      BeforeShowCallback,
@@ -231,10 +231,10 @@ public class SourcePane extends Composite implements Display,
    }
    
    @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureMaximizedHandler(
+         EnsureMaximizedHandler handler)
    {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
+      return addHandler(handler, EnsureMaximizedEvent.TYPE);
    }
 
    public void onResize()
