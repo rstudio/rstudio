@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.AutoGlassPanel;
 
 public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
                                                                HasEnsureVisibleHandlers,
-                                                               HasEnsureMaximizedHandlers
+                                                               HasEnsureHeightHandlers
 {
    public Widget asWidget()
    {
@@ -128,9 +128,9 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       return addHandler(handler, EnsureHiddenEvent.TYPE);
    }
    
-   public HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler)
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
    {
-      return addHandler(handler, EnsureMaximizedEvent.TYPE);
+      return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
    public void ensureVisible()
@@ -143,9 +143,9 @@ public abstract class ToolbarPane extends LazyPanel implements RequiresResize,
       fireEvent(new EnsureHiddenEvent());
    }
    
-   public void maximize()
+   public void ensureHeight(int height)
    {
-      fireEvent(new EnsureMaximizedEvent());
+      fireEvent(new EnsureHeightEvent(height));
    }
 
    public boolean isMainToolbarVisible()

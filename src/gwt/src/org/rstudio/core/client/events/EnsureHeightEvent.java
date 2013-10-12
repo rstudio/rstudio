@@ -1,5 +1,5 @@
 /*
- * EnsureMaximizedEvent.java
+ * EnsureHeightEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,24 +16,34 @@ package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EnsureMaximizedEvent extends GwtEvent<EnsureMaximizedHandler>
+public class EnsureHeightEvent extends GwtEvent<EnsureHeightHandler>
 {
-   public static final Type<EnsureMaximizedHandler> TYPE
-         = new Type<EnsureMaximizedHandler>();
+   public static final Type<EnsureHeightHandler> TYPE
+         = new Type<EnsureHeightHandler>();
 
-   public EnsureMaximizedEvent()
+   public static final int MAXIMIZED = -1;
+   
+   public EnsureHeightEvent(int height)
    {
+      height_ = height;
+   }
+   
+   public int getHeight()
+   {
+      return height_;
    }
 
    @Override
-   public Type<EnsureMaximizedHandler> getAssociatedType()
+   public Type<EnsureHeightHandler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(EnsureMaximizedHandler handler)
+   protected void dispatch(EnsureHeightHandler handler)
    {
-      handler.onEnsureMaximized(this);
+      handler.onEnsureHeight(this);
    }
+   
+   private final int height_;
 }

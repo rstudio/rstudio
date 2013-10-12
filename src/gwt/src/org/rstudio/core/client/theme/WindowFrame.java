@@ -33,7 +33,7 @@ public class WindowFrame extends Composite
               ProvidesResize,
               RequiresResize,
               EnsureVisibleHandler,
-              EnsureMaximizedHandler
+              EnsureHeightHandler
 {
    public interface LogicalContext
    {
@@ -158,10 +158,10 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_ = null;
          }
          
-         if (ensureMaximizedRegistration_ != null)
+         if (ensureHeightRegistration_ != null)
          {
-            ensureMaximizedRegistration_.removeHandler();
-            ensureMaximizedRegistration_ = null;
+            ensureHeightRegistration_.removeHandler();
+            ensureHeightRegistration_ = null;
          }
       }
 
@@ -175,10 +175,10 @@ public class WindowFrame extends Composite
                 ((HasEnsureVisibleHandlers)main_).addEnsureVisibleHandler(this);
          }
          
-         if (main_ instanceof HasEnsureMaximizedHandlers)
+         if (main_ instanceof HasEnsureHeightHandlers)
          {
-            ensureMaximizedRegistration_ =
-               ((HasEnsureMaximizedHandlers)main_).addEnsureMaximizedHandler(this);
+            ensureHeightRegistration_ =
+               ((HasEnsureHeightHandlers)main_).addEnsureHeightHandler(this);
          }
 
          frame_.add(main_);
@@ -246,10 +246,10 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_ = null;
          }
          
-         if (ensureMaximizedRegistration_ != null)
+         if (ensureHeightRegistration_ != null)
          {
-            ensureMaximizedRegistration_.removeHandler();
-            ensureMaximizedRegistration_ = null;
+            ensureHeightRegistration_.removeHandler();
+            ensureHeightRegistration_ = null;
          }
       }
 
@@ -263,10 +263,10 @@ public class WindowFrame extends Composite
                 ((HasEnsureVisibleHandlers)fill_).addEnsureVisibleHandler(this);
          }
          
-         if (fill_ instanceof HasEnsureMaximizedHandlers)
+         if (fill_ instanceof HasEnsureHeightHandlers)
          {
-            ensureMaximizedRegistration_ =
-               ((HasEnsureMaximizedHandlers)fill_).addEnsureMaximizedHandler(this);
+            ensureHeightRegistration_ =
+               ((HasEnsureHeightHandlers)fill_).addEnsureHeightHandler(this);
          }
 
          frame_.add(fill_);
@@ -326,10 +326,20 @@ public class WindowFrame extends Composite
    }
    
    @Override
-   public void onEnsureMaximized(EnsureMaximizedEvent event)
+   public void onEnsureHeight(EnsureHeightEvent event)
    {
-      if ((context_ != null) && !context_.isMaximized())
-         maximize();
+      if (context_ == null)
+         return;
+      
+      if (event.getHeight() == EnsureHeightEvent.MAXIMIZED)
+      {
+         if (!context_.isMaximized())
+            maximize();
+      }
+      else
+      {
+         // TODO
+      }
    }
 
    public void onBeforeShow()
@@ -354,7 +364,7 @@ public class WindowFrame extends Composite
    private Widget fill_;
    private Widget contextButton_;
    private HandlerRegistration ensureVisibleRegistration_;
-   private HandlerRegistration ensureMaximizedRegistration_;
+   private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
    
 }

@@ -52,15 +52,15 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
          });
       }
       
-      if (child instanceof HasEnsureMaximizedHandlers)
+      if (child instanceof HasEnsureHeightHandlers)
       {
-         ((HasEnsureMaximizedHandlers)child).addEnsureMaximizedHandler(
-               new EnsureMaximizedHandler()
+         ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(
+               new EnsureHeightHandler()
          {
             @Override
-            public void onEnsureMaximized(EnsureMaximizedEvent event)
+            public void onEnsureHeight(EnsureHeightEvent event)
             {
-               parentTab_.ensureMaximized();     
+               parentTab_.ensureHeight(event.getHeight());     
             }
          });
       }

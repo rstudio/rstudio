@@ -1,5 +1,5 @@
 /*
- * EnsureMaximizedHandler.java
+ * EnsureHeightHandler.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,7 +16,7 @@ package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.EventHandler;
 
-public interface EnsureMaximizedHandler extends EventHandler
+public interface EnsureHeightHandler extends EventHandler
 {
-   void onEnsureMaximized(EnsureMaximizedEvent event);
+   void onEnsureHeight(EnsureHeightEvent event);
 }
