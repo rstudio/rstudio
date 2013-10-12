@@ -50,7 +50,7 @@ Error viewerStopped(const json::JsonRpcRequest& request,
 }
 
 
-void viewerNavigate(const std::string& url, bool maximize = TRUE)
+void viewerNavigate(const std::string& url, int height = 0)
 {
    // if we are in server mode then we need to do port mapping
    std::string mappedUrl = url;
@@ -69,17 +69,19 @@ void viewerNavigate(const std::string& url, bool maximize = TRUE)
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
-   dataJson["maximize"] = maximize;
+   dataJson["height"] = height;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_viewApp(SEXP urlSEXP, SEXP maximizeSEXP)
+SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 {
    try
    {
-      // get the maximize parameter
-      bool maximize = r::sexp::asLogical(maximizeSEXP);
+      // get the height parameter (0 if null)
+      int height = 0;
+      if (!r::sexp::isNull(heightSEXP))
+         height = r::sexp::asInteger(heightSEXP);
 
       // transform the url to a localhost:<port>/session one if it's
       // a path to a file within the R session temporary directory
@@ -98,7 +100,7 @@ SEXP rs_viewApp(SEXP urlSEXP, SEXP maximizeSEXP)
             std::string path = filePath.relativePath(tempDir);
             boost::format fmt("http://localhost:%1%/session/%2%");
             url = boost::str(fmt % module_context::rLocalHelpPort() % path);
-            viewerNavigate(url, maximize);
+            viewerNavigate(url, height);
          }
          else
          {
@@ -107,7 +109,7 @@ SEXP rs_viewApp(SEXP urlSEXP, SEXP maximizeSEXP)
       }
       else
       {
-         viewerNavigate(url, maximize);
+         viewerNavigate(url, height);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -135,11 +137,11 @@ void onClientInit()
 
 Error initialize()
 {
-   R_CallMethodDef methodDefViewApp ;
-   methodDefViewApp.name = "rs_viewApp" ;
-   methodDefViewApp.fun = (DL_FUNC) rs_viewApp ;
-   methodDefViewApp.numArgs = 2;
-   r::routines::addCallMethod(methodDefViewApp);
+   R_CallMethodDef methodDefViewer ;
+   methodDefViewer.name = "rs_viewer" ;
+   methodDefViewer.fun = (DL_FUNC) rs_viewer ;
+   methodDefViewer.numArgs = 2;
+   r::routines::addCallMethod(methodDefViewer);
 
    // install event handlers
    using namespace module_context;

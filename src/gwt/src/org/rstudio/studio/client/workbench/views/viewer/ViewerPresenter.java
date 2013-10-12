@@ -81,11 +81,9 @@ public class ViewerPresenter extends BasePresenter
       {
          display_.bringToFront();
       
-         if (event.getMaximize())
-            display_.maximize();
-         
-         // for explicit heights 400 is the sweet spot for fitting on
-         // 800 pixel high monitors and still leaving 160 pixels above
+         int ensureHeight = event.getHeight();
+         if (ensureHeight > 0)
+            display_.ensureHeight(ensureHeight);
          
          navigate(event.getURL());
       }
