@@ -17,13 +17,13 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
-import org.rstudio.core.client.events.HasEnsureMaximizedHandlers;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 
 public interface WorkbenchTab extends IsWidget,
                                       HasEnsureVisibleHandlers,
                                       HasEnsureHiddenHandlers,
-                                      HasEnsureMaximizedHandlers
+                                      HasEnsureHeightHandlers
 {
    String getTitle();
    void onBeforeUnselected();

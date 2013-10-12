@@ -1,5 +1,5 @@
 /*
- * HasEnsureMaximizedHandlers.java
+ * HasEnsureHeightHandlers.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,7 +16,7 @@ package org.rstudio.core.client.events;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 
-public interface HasEnsureMaximizedHandlers
+public interface HasEnsureHeightHandlers
 {
-   HandlerRegistration addEnsureMaximizedHandler(EnsureMaximizedHandler handler);
+   HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler);
 }
