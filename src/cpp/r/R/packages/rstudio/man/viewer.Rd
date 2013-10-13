@@ -2,10 +2,10 @@
 \alias{viewer}
 
 \title{
-View a local web application within RStudio
+View local web content within RStudio
 }
 \description{
-View a local web application within the RStudio IDE. This is useful for running \link[shiny:shiny-package]{Shiny}, \link[Rook:Rook-package]{Rook}, \link[opencpu:opencpu]{OpenCPU}, or any other type of local web application or resource, including content served from static files in the R session temporary directory.
+View local web content within RStudio. Content can be served from static files in the R session temporary directory or can be a \link[shiny:shiny-package]{Shiny}, \link[Rook:Rook-package]{Rook}, \link[opencpu:opencpu]{OpenCPU}, or any other type of localhost web application.
 }
 \usage{
 rstudio::viewer(url, height = NULL)
