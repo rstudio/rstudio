@@ -25,7 +25,7 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.io.LimitInputStream;
+import com.google.gwt.thirdparty.guava.common.io.ByteStreams;
 import com.google.gwt.thirdparty.javascript.jscomp.CheckLevel;
 import com.google.gwt.thirdparty.javascript.jscomp.Compiler;
 import com.google.gwt.thirdparty.javascript.jscomp.CompilerInput;
@@ -112,7 +112,7 @@ public class ClosureJsRunner {
     Map<String, JSSourceFile> externsMap = Maps.newHashMap();
     for (ZipEntry entry = null; (entry = zip.getNextEntry()) != null;) {
       BufferedInputStream entryStream =
-          new BufferedInputStream(new LimitInputStream(zip, entry.getSize()));
+          new BufferedInputStream(ByteStreams.limit(zip, entry.getSize()));
       externsMap.put(entry.getName(), JSSourceFile.fromInputStream(
       // Give the files an odd prefix, so that they do not conflict
       // with the user's files.
