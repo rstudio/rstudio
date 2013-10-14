@@ -123,6 +123,7 @@ private:
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
+      const std::string& port,
       const http::Response& response)
 {
    // check for upgrade to websockets
@@ -140,10 +141,23 @@ void handleLocalhostResponse(
       // connect the sockets
       http::SocketProxy::create(ptrClient, ptrServer);
    }
-   // normal response, write and close
+   // normal response, write and close (handle redirects if necessary)
    else
-   {
-      ptrConnection->writeResponse(response);
+   {   
+      // re-write location headers if necessary
+      std::string location = response.headerValue("Location");
+      if (!location.empty())
+      {
+         location = "/p/" + port + location;
+         http::Response redirectResponse;
+         redirectResponse.assign(response);
+         redirectResponse.setHeader(http::Header("Location", location));
+         ptrConnection->writeResponse(redirectResponse);
+      }
+      else
+      {
+         ptrConnection->writeResponse(response);
+      }
    }
 }
 
@@ -412,7 +426,7 @@ void proxyLocalhostRequest(
 
    // execute request
    pClient->execute(
-         boost::bind(handleLocalhostResponse, ptrConnection, pClient, _1),
+         boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
          boost::bind(&core::http::AsyncConnection::writeError,
                      ptrConnection, _1));
 }
