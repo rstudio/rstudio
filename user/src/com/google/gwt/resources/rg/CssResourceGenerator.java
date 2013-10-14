@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
@@ -66,7 +65,6 @@ import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssStylesheet;
 import com.google.gwt.resources.css.ast.CssSubstitution;
 import com.google.gwt.resources.css.ast.HasNodes;
-import com.google.gwt.resources.ext.AbstractResourceGenerator;
 import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
@@ -98,7 +96,7 @@ import java.util.zip.Adler32;
 /**
  * Provides implementations of CSSResources.
  */
-public class CssResourceGenerator extends AbstractResourceGenerator
+public class CssResourceGenerator extends AbstractCssResourceGenerator
     implements SupportsGeneratorResultCaching {
 
   @SuppressWarnings("serial")
@@ -643,14 +641,6 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     }
   }
 
-  protected void writeGetName(JMethod method, SourceWriter sw) {
-    sw.println("public String getName() {");
-    sw.indent();
-    sw.println("return \"" + method.getName() + "\";");
-    sw.outdent();
-    sw.println("}");
-  }
-
   /**
    * Write all of the user-defined methods in the CssResource subtype.
    */
@@ -957,10 +947,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
         operableTypes);
   }
 
-  private boolean isReturnTypeString(JClassType classReturnType) {
-    return (classReturnType != null
-        && String.class.getName().equals(classReturnType.getQualifiedSourceName()));
-  }
+
 
   /**
    * Check for the presence of the NotStrict annotation on the method. This will
@@ -987,6 +974,12 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     }
 
     return strict;
+  }
+
+  @Override
+  protected String getCssExpression(TreeLogger logger, ResourceContext context,
+      JMethod method) throws UnableToCompleteException {
+    return makeExpression(logger, context, stylesheetMap.get(method));
   }
 
   /**
@@ -1062,7 +1055,6 @@ public class CssResourceGenerator extends AbstractResourceGenerator
         new Comparator<JMethod>() {
           @Override
           public int compare(JMethod o1, JMethod o2) {
-            String qualifiedName = source(o1);
             int result = source(o1).compareTo(source(o2));
             if (result == 0) {
               result = o1.getName().compareTo(o2.getName());
@@ -1137,12 +1129,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
     assert replacement != null : "Missing replacement for "
         + toImplement.getName();
 
-    sw.println(toImplement.getReadableDeclaration(false, true, true, true, true)
-        + "{");
-    sw.indent();
-    sw.println("return \"" + replacement + "\";");
-    sw.outdent();
-    sw.println("}");
+    writeSimpleGetter(toImplement, "\"" + replacement + "\"", sw);
   }
 
   private void writeDefAssignment(TreeLogger logger, SourceWriter sw,
@@ -1196,38 +1183,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator
         throw new UnableToCompleteException();
       }
     }
-    sw.print(toImplement.getReadableDeclaration(false, false, false, false,
-        true));
-    sw.println(" {");
-    sw.indent();
-    sw.println("return " + returnExpr + ";");
-    sw.outdent();
-    sw.println("}");
-  }
 
-  private void writeEnsureInjected(SourceWriter sw) {
-    sw.println("private boolean injected;");
-    sw.println("public boolean ensureInjected() {");
-    sw.indent();
-    sw.println("if (!injected) {");
-    sw.indentln("injected = true;");
-    sw.indentln(StyleInjector.class.getName() + ".inject(getText());");
-    sw.indentln("return true;");
-    sw.println("}");
-    sw.println("return false;");
-    sw.outdent();
-    sw.println("}");
-  }
-
-  private void writeGetText(TreeLogger logger,
-      ResourceContext context, JMethod method, SourceWriter sw)
-      throws UnableToCompleteException {
-    sw.println("public String getText() {");
-    sw.indent();
-    String cssExpression = makeExpression(logger, context,
-        stylesheetMap.get(method));
-    sw.println("return " + cssExpression + ";");
-    sw.outdent();
-    sw.println("}");
+    writeSimpleGetter(toImplement, returnExpr, sw);
   }
 }

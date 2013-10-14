@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -27,14 +27,6 @@ import com.google.gwt.resources.css.ast.CssNoFlip;
 import com.google.gwt.resources.css.ast.CssNode;
 import com.google.gwt.resources.css.ast.CssPageRule;
 import com.google.gwt.resources.css.ast.CssProperty;
-import com.google.gwt.resources.css.ast.CssRule;
-import com.google.gwt.resources.css.ast.CssSelector;
-import com.google.gwt.resources.css.ast.CssSprite;
-import com.google.gwt.resources.css.ast.CssStylesheet;
-import com.google.gwt.resources.css.ast.CssUnknownAtRule;
-import com.google.gwt.resources.css.ast.CssUrl;
-import com.google.gwt.resources.css.ast.HasNodes;
-import com.google.gwt.resources.css.ast.HasProperties;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
 import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
 import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
@@ -43,6 +35,15 @@ import com.google.gwt.resources.css.ast.CssProperty.NumberValue;
 import com.google.gwt.resources.css.ast.CssProperty.StringValue;
 import com.google.gwt.resources.css.ast.CssProperty.TokenValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
+import com.google.gwt.resources.css.ast.CssRule;
+import com.google.gwt.resources.css.ast.CssSelector;
+import com.google.gwt.resources.css.ast.CssSprite;
+import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.resources.css.ast.CssUnknownAtRule;
+import com.google.gwt.resources.css.ast.CssUrl;
+import com.google.gwt.resources.css.ast.HasNodes;
+import com.google.gwt.resources.css.ast.HasProperties;
+import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import org.w3c.css.sac.AttributeCondition;
 import org.w3c.css.sac.CSSException;
@@ -109,7 +110,7 @@ public class GenerateCssAst {
 
     /**
      * Constructor.
-     * 
+     *
      * @param parentLogger the TreeLogger that should be branched to produce the
      *          CSS parsing messages.
      */
@@ -696,34 +697,13 @@ public class GenerateCssAst {
   public static CssStylesheet exec(TreeLogger logger, URL... stylesheets)
       throws UnableToCompleteException {
 
-    long mtime = 0;
-    for (URL url : stylesheets) {
-      long lastModified;
-      try {
-        lastModified = url.openConnection().getLastModified();
-      } catch (IOException e) {
-        // Non-fatal, assuming we can re-open the stream later
-        logger.log(TreeLogger.DEBUG, "Could not determine cached time", e);
-        lastModified = 0;
-      }
-      if (lastModified == 0) {
-        /*
-         * We have to refresh, since the modification date can't be determined,
-         * either due to IOException or getLastModified() not providing useful
-         * data.
-         */
-        mtime = Long.MAX_VALUE;
-        break;
-      } else {
-        mtime = Math.max(mtime, lastModified);
-      }
-    }
+    long mtime = ResourceGeneratorUtil.getLastModified(stylesheets, logger);
 
     List<URL> sheets = Arrays.asList(stylesheets);
     SoftReference<CachedStylesheet> ref = SHEETS.get(sheets);
     CachedStylesheet toReturn = ref == null ? null : ref.get();
     if (toReturn != null) {
-      if (mtime <= toReturn.getTimestamp()) {
+      if (mtime != 0 && mtime <= toReturn.getTimestamp()) {
         logger.log(TreeLogger.DEBUG, "Using cached result");
         return toReturn.getCopyOfStylesheet();
       } else {
@@ -758,7 +738,7 @@ public class GenerateCssAst {
       throw new UnableToCompleteException();
     }
 
-    toReturn = new CachedStylesheet(g.css, mtime == Long.MAX_VALUE ? 0 : mtime);
+    toReturn = new CachedStylesheet(g.css, mtime);
     SHEETS.put(new ArrayList<URL>(sheets), new SoftReference<CachedStylesheet>(
         toReturn));
     return toReturn.getCopyOfStylesheet();
@@ -766,7 +746,7 @@ public class GenerateCssAst {
 
   /**
    * Expresses an rgb function as a hex expression.
-   * 
+   *
    * @param colors a sequence of LexicalUnits, assumed to be
    *          <code>(VAL COMMA VAL COMMA VAL)</code> where VAL can be an INT or
    *          a PERCENT (which is then converted to INT)
@@ -867,7 +847,7 @@ public class GenerateCssAst {
 
   /**
    * Return an integer value from 0-255 for a component of an RGB color.
-   * 
+   *
    * @param color typed value from the CSS parser, which may be an INTEGER or a
    *          PERCENTAGE
    * @return integer value from 0-255

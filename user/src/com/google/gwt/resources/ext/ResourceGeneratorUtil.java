@@ -33,6 +33,7 @@ import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.resources.client.ClientBundle.Source;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -290,6 +291,38 @@ public final class ResourceGeneratorUtil {
     URL[] toReturn = findResources(logger, locators, context, method,
         defaultSuffixes);
     return toReturn;
+  }
+
+  /**
+   * Returns the most recent value of the <code>last-modified</code> header fields of all the Urls
+   * in the <code>resources</code> array.
+   * The result is the number of milliseconds since January 1, 1970 GMT.
+   *
+   * Returns 0 if the <code>last-modified</code> header field of one of the resources cannot
+   * be determined.
+   *
+   * @return  the most recent modification date of the resources present in
+   *          <code>resources</code> or 0 if not known.
+   */
+  public static long getLastModified(URL[] resources, TreeLogger logger) {
+    long lastModificationDate = 0;
+    for (URL url : resources) {
+      long lastModified = 0;
+      try {
+        lastModified = url.openConnection().getLastModified();
+      } catch (IOException e) {
+        // Non-fatal, assuming we can re-open the stream later
+        logger.log(TreeLogger.DEBUG, "Could not determine cached time", e);
+      }
+      if (lastModified == 0) {
+        // either we cannot open the stream either the last modification date is not known
+        return 0;
+      } else {
+        lastModificationDate = Math.max(lastModificationDate, lastModified);
+      }
+    }
+
+    return lastModificationDate;
   }
 
   /**
