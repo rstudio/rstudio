@@ -121,6 +121,10 @@ public abstract class AbstractSerializationStreamWriter extends
 
     // Serialize the type signature
     String typeSignature = getObjectTypeSignature(instance);
+    if (typeSignature == null) {
+      throw new SerializationException(
+          "could not get type signature for " + instance.getClass());
+    }
     writeString(typeSignature);
     // Now serialize the rest of the object
     serialize(instance, typeSignature);
