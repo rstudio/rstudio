@@ -112,6 +112,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
@@ -1529,6 +1530,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::presentation::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::profiler::initialize)
       (modules::viewer::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
