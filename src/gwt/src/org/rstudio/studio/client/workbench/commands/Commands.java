@@ -240,6 +240,11 @@ public abstract class
    public abstract AppCommand versionControlShowRsaKey();
    public abstract AppCommand versionControlProjectSetup();
    
+   // Profiler
+   public abstract AppCommand showProfiler();
+   public abstract AppCommand startProfiler();
+   public abstract AppCommand stopProfiler();
+   
    // Tools
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();

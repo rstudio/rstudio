@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class Workbench implements BusyHandler,
@@ -77,7 +78,8 @@ public class Workbench implements BusyHandler,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
-                    HTMLPreview htmlPreview) // required to force gin to create
+                    HTMLPreview htmlPreview, // required to force gin to create
+                    ProfilerPresenter prof)  // required to force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;

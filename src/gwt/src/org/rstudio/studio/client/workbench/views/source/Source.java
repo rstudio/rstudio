@@ -79,6 +79,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -529,6 +531,37 @@ public class Source implements InsertSourceHandler,
             null,
             (JsObject) data.cast(),
             new SimpleRequestCallback<SourceDocument>("Show Data Frame")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument response)
+               {
+                  addTab(response);
+               }
+            });
+   }
+   
+   @Handler
+   public void onShowProfiler()
+   {
+      // first try to activate existing
+      for (int idx = 0; idx < editors_.size(); idx++)
+      {
+         String path = editors_.get(idx).getPath();
+         if (ProfilerEditingTarget.PATH.equals(path))
+         {
+            ensureVisible(false);
+            view_.selectTab(idx);
+            return;
+         }
+      }
+      
+      // create new profiler 
+      ensureVisible(true);
+      server_.newDocument(
+            FileTypeRegistry.PROFILER.getTypeId(),
+            null,
+            (JsObject) ProfilerContents.createDefault().cast(),
+            new SimpleRequestCallback<SourceDocument>("Show Profiler")
             {
                @Override
                public void onResponseReceived(SourceDocument response)

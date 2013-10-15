@@ -21,6 +21,7 @@ import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -39,13 +40,15 @@ public interface EditingTargetSource
                   Provider<TextEditingTarget> pTextEditingTarget,
                   Provider<DataEditingTarget> pDataEditingTarget,
                   Provider<UrlContentEditingTarget> pUrlContentEditingTarget,
-                  Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget)
+                  Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget,
+                  Provider<ProfilerEditingTarget> pProfilerEditingTarget)
       {
          registry_ = registry;
          pTextEditingTarget_ = pTextEditingTarget;
          pDataEditingTarget_ = pDataEditingTarget;
          pUrlContentEditingTarget_ = pUrlContentEditingTarget;
          pCodeBrowserEditingTarget_ = pCodeBrowserEditingTarget;
+         pProfilerEditingTarget_ = pProfilerEditingTarget;
       }
 
       public EditingTarget getEditingTarget(FileType type)
@@ -58,6 +61,8 @@ public interface EditingTargetSource
             return pUrlContentEditingTarget_.get();
          else if (type instanceof CodeBrowserType)
             return pCodeBrowserEditingTarget_.get();
+         else if (type instanceof ProfilerType)
+            return pProfilerEditingTarget_.get();
          else
             return null;
       }
@@ -86,5 +91,6 @@ public interface EditingTargetSource
       private final Provider<DataEditingTarget> pDataEditingTarget_;
       private final Provider<UrlContentEditingTarget> pUrlContentEditingTarget_;
       private final Provider<CodeBrowserEditingTarget> pCodeBrowserEditingTarget_;
+      private final Provider<ProfilerEditingTarget> pProfilerEditingTarget_;
    }
 }

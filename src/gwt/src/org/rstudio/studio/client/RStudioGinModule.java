@@ -145,6 +145,8 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -180,6 +182,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Satellite.class).in(Singleton.class);
       bind(SatelliteManager.class).in(Singleton.class);
       bind(AskPassManager.class).in(Singleton.class);
+      bind(ProfilerPresenter.class).asEagerSingleton();
       bind(WorkbenchContext.class).asEagerSingleton();
       bind(WorkbenchListManager.class).asEagerSingleton();
       bind(ApplicationQuit.class).asEagerSingleton();
@@ -302,6 +305,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
       bind(MetaServerOperations.class).to(RemoteServer.class);
       bind(ViewerServerOperations.class).to(RemoteServer.class);
+      bind(ProfilerServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
