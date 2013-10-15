@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -96,28 +96,28 @@ import java.util.Set;
 
 /**
  * Take independently-compiled types and merge them into a single AST.
- * 
+ *
  * Works kind of like {@link ControlFlowAnalyzer} in terms of reachability,
  * except that in some cases it's easier to be conservative and visit relatively
  * more nodes than CFA would.
- * 
+ *
  * Operates based on a work-queue to prevent recursion sickness.
- * 
+ *
  * Must handle:
- * 
+ *
  * - Type reference resolution
- * 
+ *
  * - Field and method reference resolution
- * 
+ *
  * - General code flow like ControlFlowAnalyzer
- * 
+ *
  * - GWT.create(), GWT.runAsync(), Impl.getNameOf()
- * 
+ *
  * - Stitch native methods into JsProgram
- * 
+ *
  * - Class.desiredAssertionStatus, Class.isClassMetaDataEnabled, GWT.isClient,
  * GWT.isProdMode, GWT.isScript.
- * 
+ *
  * TODO: SOYC correlations.
  */
 public class UnifyAst {
@@ -475,7 +475,7 @@ public class UnifyAst {
   private static final String CLASS_IS_CLASS_METADATA_ENABLED =
       "java.lang.Class.isClassMetadataEnabled()Z";
 
-  private static final String GWT_CREATE =
+  public static final String GWT_CREATE =
       "com.google.gwt.core.shared.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
 
   private static final String GWT_DEBUGGER_SHARED = "com.google.gwt.core.shared.GWT.debugger()V";
@@ -492,7 +492,7 @@ public class UnifyAst {
   private static final String IMPL_GET_NAME_OF =
       "com.google.gwt.core.client.impl.Impl.getNameOf(Ljava/lang/String;)Ljava/lang/String;";
 
-  private static final String OLD_GWT_CREATE =
+  public static final String OLD_GWT_CREATE =
       "com.google.gwt.core.client.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
 
   private static final String OLD_GWT_IS_CLIENT = "com.google.gwt.core.client.GWT.isClient()Z";
