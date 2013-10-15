@@ -616,6 +616,12 @@ PidType currentProcessId()
 Error executablePath(int argc, char * const argv[],
                      FilePath* pExecutablePath)
 {
+   return executablePath(argv[0], pExecutablePath);
+}
+
+Error executablePath(const char * argv0,
+                     FilePath* pExecutablePath)
+{
    std::string executablePath;
 
 #if defined(__APPLE__)
@@ -646,7 +652,7 @@ Error executablePath(int argc, char * const argv[],
 
    // use argv[0] and initial path
    FilePath initialPath = FilePath::initialPath();
-   executablePath = initialPath.complete(argv[0]).absolutePath();
+   executablePath = initialPath.complete(argv0).absolutePath();
 
 #endif
 
@@ -656,12 +662,12 @@ Error executablePath(int argc, char * const argv[],
 
 // installation path
 Error installPath(const std::string& relativeToExecutable,
-                  int argc, char * const argv[],
+                  const char * argv0,
                   FilePath* pInstallPath)
 {
    // get executable path
    FilePath executablePath;
-   Error error = system::executablePath(argc, argv, &executablePath);
+   Error error = system::executablePath(argv0, &executablePath);
    if (error)
       return error;
 

@@ -55,7 +55,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // compute the resource path
    FilePath resourcePath;
-   Error error = core::system::installPath("..", argc, argv, &resourcePath);
+   Error error = core::system::installPath("..", argv[0], &resourcePath);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());

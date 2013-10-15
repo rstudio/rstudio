@@ -90,7 +90,7 @@ ProgramStatus Options::read(int argc,
    using namespace boost::program_options ;
 
    // compute install path
-   Error error = core::system::installPath("..", argc, argv, &installPath_);
+   Error error = core::system::installPath("..", argv[0], &installPath_);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
