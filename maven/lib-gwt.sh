@@ -136,27 +136,23 @@ function maven-gwt() {
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
     gwtPomFile=$pomDir/gwt/gwt-$i/pom.xml
-    maven-deploy-file $mavenRepoUrl $mavenRepoId "$CUR_FILE" $gwtPomFile || die
-    maven-deploy-file $mavenRepoUrl $mavenRepoId "$JAVADOC_FILE_PATH" $gwtPomFile javadoc || warnJavaDoc "gwt-${i}"
-    
     SOURCES_FILE=gwt-${i}-sources.jar
-    curExpandDir=$jarExpandDir-${i}
-    if [ -f $curExpandDir/$SOURCES_FILE ]; then
-      maven-deploy-file $mavenRepoUrl $mavenRepoId "$curExpandDir/$SOURCES_FILE" $gwtPomFile sources || die
+    SOURCES_PATH_FILE=$jarExpandDir-${i}/$SOURCES_FILE
+    if [ ! -f $SOURCES_PATH_FILE ]; then
+      SOURCES_PATH_FILE=""
     fi
-  done
 
-  # HACK: Deploy user sources jar as servlet sources even though it's a superset of the needed sources
-  maven-deploy-file $mavenRepoUrl $mavenRepoId "$jarExpandDir-user/gwt-user-sources.jar" $pomDir/gwt/gwt-servlet/pom.xml sources || die
+    maven-deploy-file $mavenRepoUrl $mavenRepoId "$CUR_FILE" $gwtPomFile "$JAVADOC_FILE_PATH" "$SOURCES_PATH_FILE" || die
+  done
 
   # Deploy RequestFactory jars
   maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/requestfactory/pom.xml $pomDir/requestfactory/pom.xml || die
 
   for i in client server apt
   do
-    maven-deploy-file $mavenRepoUrl $mavenRepoId $GWT_EXTRACT_DIR/requestfactory-${i}.jar $pomDir/requestfactory/${i}/pom.xml || die
-    maven-deploy-file $mavenRepoUrl $mavenRepoId $GWT_EXTRACT_DIR/requestfactory-${i}-src.jar $pomDir/requestfactory/${i}/pom.xml sources || die
-    maven-deploy-file $mavenRepoUrl $mavenRepoId $JAVADOC_FILE_PATH $pomDir/requestfactory/${i}/pom.xml javadoc || warnJavaDoc "requestfactory-${i}"
+    maven-deploy-file $mavenRepoUrl $mavenRepoId $GWT_EXTRACT_DIR/requestfactory-${i}.jar $pomDir/requestfactory/${i}/pom.xml \
+        $JAVADOC_FILE_PATH $GWT_EXTRACT_DIR/requestfactory-${i}-src.jar \
+         || die
   done
 
   finishAndCleanup
