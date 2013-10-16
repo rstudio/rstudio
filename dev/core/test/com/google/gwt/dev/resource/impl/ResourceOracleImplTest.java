@@ -109,14 +109,8 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     public void assertPathIncluded(String expectedPath, ClassPathEntry expectedCpe) {
       AbstractResource resource = findResourceWithPath(expectedPath);
       assertNotNull(resource);
-      if (resource instanceof HasClassPathEntry) {
-        HasClassPathEntry resourceWithClassPath = (HasClassPathEntry) resource;
-        ClassPathEntry actualCpe = resourceWithClassPath.getClassPathEntry();
-        assertEquals(expectedCpe.getLocation(), actualCpe.getLocation());
-      } else {
-        fail("expected to find a FileResource but found " + resource.getClass().getName()
-            + " instead.");
-      }
+      ClassPathEntry actualCpe = resource.getClassPathEntry();
+      assertEquals(expectedCpe.getLocation(), actualCpe.getLocation());
     }
 
     public void assertPathNotIncluded(String path) {

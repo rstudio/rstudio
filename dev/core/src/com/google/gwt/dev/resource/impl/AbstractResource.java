@@ -22,6 +22,11 @@ import com.google.gwt.dev.resource.Resource;
  */
 public abstract class AbstractResource extends Resource {
 
+  /**
+   * Accesses the path root under which this resource was found. Only available within this package.
+   */
+  public abstract ClassPathEntry getClassPathEntry();
+
   @Override
   public boolean wasRerooted() {
     return false;

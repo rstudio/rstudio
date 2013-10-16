@@ -74,6 +74,11 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     @Override
+    public ClassPathEntry getClassPathEntry() {
+      return resource.getClassPathEntry();
+    }
+
+    @Override
     public long getLastModified() {
       return resource.getLastModified();
     }

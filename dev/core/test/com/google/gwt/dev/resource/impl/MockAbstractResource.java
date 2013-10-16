@@ -19,7 +19,7 @@ import junit.framework.Assert;
 
 import java.io.InputStream;
 
-public final class MockAbstractResource extends AbstractResource implements HasClassPathEntry {
+public final class MockAbstractResource extends AbstractResource {
 
   private final MockClassPathEntry mockClassPathEntry;
   private final String path;

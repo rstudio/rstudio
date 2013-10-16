@@ -164,8 +164,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         // Skip META-INF since classloaders normally make this invisible.
         continue;
       }
-      ZipFileResource zipResource =
-          new ZipFileResource(zipFile, location, lastModified, zipEntry.getName());
+      ZipFileResource zipResource = new ZipFileResource(this, zipEntry.getName());
       results.add(zipResource);
       Messages.READ_ZIP_ENTRY.log(logger, zipEntry.getName(), null);
     }

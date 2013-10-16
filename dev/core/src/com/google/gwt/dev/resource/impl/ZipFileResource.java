@@ -26,14 +26,15 @@ import java.util.zip.ZipFile;
  */
 public class ZipFileResource extends AbstractResource {
 
-  private final long lastModified;
-  private final String filePath;
-  private final String[] pathParts;
+  private ZipFileClassPathEntry classPathEntry;
   private final String entryName;
+  private String filePath;
+  private final long lastModified;
+  private final String[] pathParts;
   private final ZipFile zipFile;
 
   /**
-   * Constructs a ZipFileResource.<br />
+   * Constructs a ZipFileResource from a zip file and entry name.<br />
    *
    * File path and modification time stamp parameters may seem redundant but are necessary because
    * ZipFile can not provide them.
@@ -44,6 +45,24 @@ public class ZipFileResource extends AbstractResource {
     this.lastModified = lastModified;
     this.entryName = StringInterner.get().intern(entryName);
     this.pathParts = entryName.split("/");
+  }
+
+  /**
+   * Constructs a ZipFileResource from a jar class path entry and a zip entry name.<br />
+   */
+  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String entryName) {
+    this.classPathEntry = classPathEntry;
+    this.entryName = StringInterner.get().intern(entryName);
+    this.pathParts = entryName.split("/");
+
+    this.zipFile = classPathEntry.getZipFile();
+    this.filePath = classPathEntry.getLocation();
+    this.lastModified = classPathEntry.lastModified();
+  }
+
+  @Override
+  public ZipFileClassPathEntry getClassPathEntry() {
+    return classPathEntry;
   }
 
   @Override

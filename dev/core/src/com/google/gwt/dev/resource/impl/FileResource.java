@@ -23,7 +23,7 @@ import java.io.InputStream;
 /**
  * Represents a resource contained in directory on a file system.
  */
-public class FileResource extends AbstractResource implements HasClassPathEntry {
+public class FileResource extends AbstractResource {
 
   private final String abstractPathName;
   private final DirectoryClassPathEntry classPathEntry;
