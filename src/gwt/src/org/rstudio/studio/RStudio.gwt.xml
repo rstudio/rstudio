@@ -19,6 +19,7 @@
    <set-property name="user.agent" value="safari">
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
+   <collapse-property name="rstudio.desktop" values="*"/>
 
    <!--
    <define-property name="rstudio.debug" values="true,false"/>
