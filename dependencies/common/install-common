@@ -21,6 +21,7 @@ set -e
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
+./install-node-webkit
 
 if [ -e install-overlay ]
 then
