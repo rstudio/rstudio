@@ -295,6 +295,15 @@ else()
       ${APPLICATION_SERVICES_LIBRARY}
       ${COCOA_LIBRARY})
 
+   # we also copy the node-webkit platform files into the appropriate spot
+   set(NODE_WEBKIT "${RSTUDIO_DEPENDENCIES_DIR}/common/node-webkit/0.7.5/node-webkit.app/Contents")
+   file(COPY "${NODE_WEBKIT}/Frameworks"
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+   file(COPY "${NODE_WEBKIT}/Libraries"
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+   file(COPY "${NODE_WEBKIT}/MacOS"
+        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+
 endif()
 
 # install target (OSX install goes into the bundle)
