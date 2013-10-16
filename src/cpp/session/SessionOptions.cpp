@@ -250,7 +250,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
        value<std::string>(&userIdentity_)->default_value(currentUsername),
-       "user identity" );
+       "user identity" )
+      (kShowUserIdentitySessionOption,
+       value<bool>(&showUserIdentity_)->default_value(true),
+       "show the user identity");
 
    // overlay options
    options_description overlay("overlay");

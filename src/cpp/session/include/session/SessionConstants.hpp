@@ -26,6 +26,7 @@
 #define kSessionProgramModeDesktop        "desktop"
 #define kSessionProgramModeServer         "server"
 
+#define kShowUserIdentitySessionOption    "show-user-identity"
 #define kUserIdentitySessionOption        "user-identity"
 #define kUserIdentitySessionOptionShort   "u"
 

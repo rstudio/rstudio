@@ -62,6 +62,10 @@ core::system::ProcessConfig sessionProcessConfig(
    args.push_back(std::make_pair("-" kUserIdentitySessionOptionShort,
                                  username));
 
+   // pass flag to hide user identity if needed
+   if (server::options().authNone())
+      args.push_back(std::make_pair("--" kShowUserIdentitySessionOption, "0"));
+
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())

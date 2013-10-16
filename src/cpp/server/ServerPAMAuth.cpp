@@ -146,7 +146,10 @@ std::string applicationSignInURL(const http::Request& request,
 
 std::string getUserIdentifier(const core::http::Request& request)
 {
-   return auth::secure_cookie::readSecureCookie(request, kUserId);
+   if (server::options().authNone())
+      return core::system::username();
+   else
+      return auth::secure_cookie::readSecureCookie(request, kUserId);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)

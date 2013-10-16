@@ -277,6 +277,11 @@ public:
       return std::string(userIdentity_.c_str()); 
    }
    
+   bool showUserIdentity() const
+   {
+      return showUserIdentity_;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -427,6 +432,7 @@ private:
    bool allowRpubsPublish_;
 
    // user info
+   bool showUserIdentity_;
    std::string userIdentity_;
    std::string userHomePath_;
    std::string userScratchPath_;   

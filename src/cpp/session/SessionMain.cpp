@@ -595,6 +595,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
 
+   // send whether we should show the user identity
+   sessionInfo["show_identity"] =
+           (options.programMode() == kSessionProgramModeServer) &&
+           options.showUserIdentity();
+
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
    json::JsonRpcResponse jsonRpcResponse ;

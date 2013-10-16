@@ -157,7 +157,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             SessionInfo sessionInfo = session.getSessionInfo();
             
             // only show the user identity if we are in server mode
-           if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
+           if (sessionInfo.getShowIdentity())
                initCommandsPanel(sessionInfo);
             
             // complete toolbar initialization
