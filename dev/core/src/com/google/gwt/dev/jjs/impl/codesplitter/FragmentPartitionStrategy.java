@@ -20,13 +20,12 @@ import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * A fragmentation strategy constructs an injective mapping from noninitial splitpoints to
  * fragments.
  */
 public interface FragmentPartitionStrategy {
-  List<Fragment> partitionIntoFragments(TreeLogger logger, ControlFlowAnalyzer initiallyLive,
-      Collection<JRunAsync> nonInitialRunAsyncs);
+  Collection<Fragment> partitionIntoFragments(TreeLogger logger, ControlFlowAnalyzer initiallyLive,
+      Collection<Collection<JRunAsync>> groupedNonInitialRunAsyncs);
 }

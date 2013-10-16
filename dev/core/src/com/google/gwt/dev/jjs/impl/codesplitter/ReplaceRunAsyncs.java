@@ -71,6 +71,7 @@ public class ReplaceRunAsyncs {
         x.setVolatile();
         return;
       }
+      boolean explicitClassLiteral = false;
       if (isRunAsyncMethod(method)) {
         JExpression asyncCallback;
         String name;
@@ -87,6 +88,7 @@ public class ReplaceRunAsyncs {
               return;
             }
             name = nameFromClassLiteral((JClassLiteral) arg0);
+            explicitClassLiteral = true;
             asyncCallback = x.getArgs().get(1);
             break;
           default:
@@ -119,7 +121,8 @@ public class ReplaceRunAsyncs {
         }
         JMethodCall onSuccessCall = new JMethodCall(info, asyncCallback, callbackMethod);
 
-        JRunAsync runAsyncNode = new JRunAsync(info, splitPoint, name, runAsyncCall, onSuccessCall);
+        JRunAsync runAsyncNode = new JRunAsync(info, splitPoint, name, explicitClassLiteral,
+            runAsyncCall, onSuccessCall);
         runAsyncs.add(runAsyncNode);
         ctx.replaceMe(runAsyncNode);
       }

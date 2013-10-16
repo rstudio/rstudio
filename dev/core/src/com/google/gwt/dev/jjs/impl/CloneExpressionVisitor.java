@@ -230,8 +230,8 @@ public class CloneExpressionVisitor extends JVisitor {
     // Only the runAsync call itself needs cloning, the onSuccess can be shared.
     JExpression runAsyncCall = cloneExpression(x.getRunAsyncCall());
     expression =
-        new JRunAsync(x.getSourceInfo(), x.getRunAsyncId(), x.getName(), runAsyncCall, x
-            .getOnSuccessCall());
+        new JRunAsync(x.getSourceInfo(), x.getRunAsyncId(), x.getName(), x.hasExplicitClassLiteral(),
+            runAsyncCall, x.getOnSuccessCall());
     return false;
   }
 

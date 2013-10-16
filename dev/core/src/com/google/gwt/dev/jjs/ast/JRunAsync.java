@@ -23,16 +23,22 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JRunAsync extends JExpression {
 
   private final String name;
+  private final boolean explicitClassLiteral;
   private JExpression onSuccessCall;
   private JExpression runAsyncCall;
   private final int runAsyncId;
 
-  public JRunAsync(SourceInfo info, int runAsyncId, String name, JExpression runAsyncCall,
-      JExpression onSuccessCall) {
+  /**
+   * Constructs a runAsync call node; explicitClassLiteral is set if the corresponding
+   * GWT.runAsync() call has a class literal.
+   */
+  public JRunAsync(SourceInfo info, int runAsyncId, String name, boolean explicitClassLiteral,
+      JExpression runAsyncCall, JExpression onSuccessCall) {
     super(info);
     this.runAsyncId = runAsyncId;
     assert name != null;
     this.name = name;
+    this.explicitClassLiteral = explicitClassLiteral;
     this.runAsyncCall = runAsyncCall;
     this.onSuccessCall = onSuccessCall;
   }
@@ -106,5 +112,12 @@ public class JRunAsync extends JExpression {
    */
   public void traverseOnSuccess(JVisitor visitor) {
     onSuccessCall = visitor.accept(onSuccessCall);
+  }
+
+  /**
+   * Returns true if the corresponding GWT.runAsync call had a class literal.
+   */
+  public boolean hasExplicitClassLiteral() {
+    return explicitClassLiteral;
   }
 }

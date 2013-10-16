@@ -29,16 +29,18 @@ import java.util.List;
 */
 class OneToOneFragmentPartitionStrategy implements FragmentPartitionStrategy {
   @Override
-  public List<Fragment> partitionIntoFragments(TreeLogger logger, ControlFlowAnalyzer initiallyLive,
-      Collection<JRunAsync> nonInitialRunAsyncs) {
+  public Collection<Fragment> partitionIntoFragments(TreeLogger logger, ControlFlowAnalyzer initiallyLive,
+      Collection<Collection<JRunAsync>> groupedNonInitialRunAsyncs) {
     /**
      * Create the exclusive fragments according to a one-to-one assignment.
      */
     List<Fragment> fragments = new ArrayList<Fragment>();
-    for (JRunAsync runAsync : nonInitialRunAsyncs) {
+    for (Collection<JRunAsync> runAsyncGroup : groupedNonInitialRunAsyncs) {
       Fragment fragment =
           new Fragment(Fragment.Type.EXCLUSIVE);
-      fragment.addRunAsync(runAsync);
+      for (JRunAsync runAsync : runAsyncGroup) {
+        fragment.addRunAsync(runAsync);
+      }
       fragments.add(fragment);
     }
     return fragments;

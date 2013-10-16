@@ -72,6 +72,41 @@ public class RunAsyncContentTest extends GWTTestCase {
     });
   }
 
+  public void testManualGrouping() {
+    delayTestFinish(RUNASYNC_TIMEOUT);
+
+    GWT.runAsync(RunAsyncContentTest.class, new RunAsyncCallback() {
+      @Override
+      public void onFailure(Throwable caught) {
+        reportUncaughtException(caught);
+      }
+
+      @Override
+      public void onSuccess() {
+        String sharedContent = "Same String in multiple asyncs but ends not in the leftovers.";
+        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        // Doesn't matter which one finishes first since that is not taken into account in code
+        // splitting logic.
+        finishTest();
+      }
+    });
+    GWT.runAsync(RunAsyncContentTest.class,  new RunAsyncCallback() {
+      @Override
+      public void onFailure(Throwable caught) {
+        reportUncaughtException(caught);
+      }
+
+      @Override
+      public void onSuccess() {
+        String sharedContent = "Same String in multiple asyncs but ends not in the leftovers.";
+        assertFalse(LoggingXhrLoadingStrategy.getLeftOverFragmentText().contains(sharedContent));
+        // Doesn't matter which one finishes first since that is not taken into account in code
+        // splitting logic.
+        finishTest();
+      }
+    });
+  }
+
   public void testUniqueContent() {
     delayTestFinish(RUNASYNC_TIMEOUT);
     GWT.runAsync(new RunAsyncCallback() {

@@ -107,7 +107,7 @@ public class CodeSplitters {
     SpeedTracerLogger.Event codeSplitterEvent =
         SpeedTracerLogger.start(CompilerEventType.CODE_SPLITTER, "phase", "findRunAsync");
     Multimap<String, JRunAsync> splitPointsByRunAsyncName =
-        computeRunAsyncsByName(program.getRunAsyncs());
+        computeRunAsyncsByName(program.getRunAsyncs(), false);
 
     if (refString.startsWith("@")) {
       JsniRef jsniRef = JsniRef.parse(refString);
@@ -168,6 +168,19 @@ public class CodeSplitters {
     codeSplitterEvent.end();
 
     return result;
+  }
+
+  /**
+   * Returns the collection of asyncs as a collection of singleton collections containing one
+   * async each.
+   */
+  static Collection<Collection<JRunAsync>> getListOfLists(Collection<JRunAsync> runAsyncs) {
+    return Collections2.transform(runAsyncs, new Function<JRunAsync, Collection<JRunAsync>>() {
+      @Override
+      public Collection<JRunAsync> apply(JRunAsync runAsync) {
+        return Lists.newArrayList(runAsync);
+      }
+    });
   }
 
   /**
@@ -246,11 +259,12 @@ public class CodeSplitters {
     call.setArg(1, newArray);
   }
 
-  private static Multimap<String, JRunAsync> computeRunAsyncsByName(List<JRunAsync> runAsyncs) {
+  static Multimap<String, JRunAsync> computeRunAsyncsByName(Collection<JRunAsync> runAsyncs,
+      boolean onlyExplicitNames) {
     Multimap<String, JRunAsync> runAsyncsByName = LinkedListMultimap.create();
     for (JRunAsync runAsync : runAsyncs) {
       String name = runAsync.getName();
-      if (name == null) {
+      if (name == null || (onlyExplicitNames && !runAsync.hasExplicitClassLiteral())) {
         continue;
       }
       runAsyncsByName.put(name, runAsync);

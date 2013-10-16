@@ -21,19 +21,17 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
-
-import javax.annotation.Nullable;
 
 /**
  * Maps an atom to a set of runAsyncs that can be live (NOT necessary exclusively) when that
@@ -129,6 +127,7 @@ class LiveAtomsByRunAsyncSets {
   private final Multiset<BitSet> payloadSizeBySubset = HashMultiset.create();
   private final Map<Integer, JRunAsync> runAsyncForId = Maps.newHashMap();
   private final TreeLogger logger;
+  private Collection<Collection<JRunAsync>> groupedRunAsyncs;
 
   public int getRunAsyncCount() {
     return idForRunAsync.size();
@@ -139,10 +138,24 @@ class LiveAtomsByRunAsyncSets {
    * accumulating the pairs of runAsyncs that together result in the largest payload, while
    * referencing each runAsync only once.
    */
-  public List<List<JRunAsync>> mergeSimilarPairs(int pairCount) {
-    List<List<JRunAsync>> fragmentRunAsyncLists = Lists.newArrayList();
+  public Collection<Collection<JRunAsync>> mergeSimilarPairs(int pairCount) {
+    Collection<Collection<JRunAsync>> fragmentRunAsyncLists = Lists.newArrayList();
     BitSet mergedSubset = new BitSet();
     PriorityQueue<SubsetWithSize> subsetsDescending = computeSubsetsDescending();
+
+    // Exclude the groupings prespecified by the user.
+    // TODO(rluble): we could do better and treat a prespecified grouping as one runAsync for
+    // merging purpose. For now prespecified groupings are excluded from merge by similarity.
+    // will be treated better in v3.
+    for (Collection<JRunAsync> runAsyncGroup : groupedRunAsyncs) {
+      if (runAsyncGroup.size() <=  1) {
+        continue;
+      }
+      // Premptively add them to the output.
+      fragmentRunAsyncLists.add(runAsyncGroup);
+      // And mark them as used.
+      mergedSubset.or(asBitSet(runAsyncGroup));
+    }
 
     // While there are still combinations to examine
     while (fragmentRunAsyncLists.size() < pairCount && !subsetsDescending.isEmpty()) {
@@ -165,7 +178,7 @@ class LiveAtomsByRunAsyncSets {
     // Get the ones that are not merged
     BitSet notMergedSubset = computeComplement(mergedSubset, getRunAsyncCount());
 
-    fragmentRunAsyncLists.addAll(getListOfLists(asRunAsyncList(notMergedSubset)));
+    fragmentRunAsyncLists.addAll(CodeSplitters.getListOfLists(asRunAsyncList(notMergedSubset)));
     return fragmentRunAsyncLists;
   }
 
@@ -173,13 +186,13 @@ class LiveAtomsByRunAsyncSets {
    * Modifies a provided list of lists of runAsyncs (each of which represents a fragment) by
    * combining sets of runAsyncs whose output size is too small.
    */
-  public List<List<JRunAsync>> mergeSmallFragments(
-      List<List<JRunAsync>> fragmentRunAsyncLists, int minSize) {
+  public Collection<Collection<JRunAsync>> mergeSmallFragments(
+      Collection<Collection<JRunAsync>> fragmentRunAsyncLists, int minSize) {
     List<JRunAsync> smallFragmentRunAsyncs = Lists.newArrayList();
 
-    Iterator<List<JRunAsync>> fragmentIterator = fragmentRunAsyncLists.iterator();
+    Iterator<Collection<JRunAsync>> fragmentIterator = fragmentRunAsyncLists.iterator();
     while (fragmentIterator.hasNext()) {
-      List<JRunAsync> fragmentRunAsyncs = fragmentIterator.next();
+      Collection<JRunAsync> fragmentRunAsyncs = fragmentIterator.next();
       if (isFragmentTooSmall(fragmentRunAsyncs, minSize)) {
         smallFragmentRunAsyncs.addAll(fragmentRunAsyncs);
         fragmentIterator.remove();
@@ -206,11 +219,14 @@ class LiveAtomsByRunAsyncSets {
    * atoms and finally compute the payload size for each subset.
    */
   public void recordLiveSubsetsAndEstimateTheirSizes(
-      ControlFlowAnalyzer initialSequenceCfa, Iterable<JRunAsync> runAsyncs) {
-    for (JRunAsync runAsync : runAsyncs) {
-      ControlFlowAnalyzer withRunAsyncCfa = new ControlFlowAnalyzer(initialSequenceCfa);
-      withRunAsyncCfa.traverseFromRunAsync(runAsync);
-      recordLiveSubset(withRunAsyncCfa, runAsync);
+      ControlFlowAnalyzer initialSequenceCfa, Collection<Collection<JRunAsync>> groupedRunAsyncs) {
+    this.groupedRunAsyncs = groupedRunAsyncs;
+    for (Collection<JRunAsync> runAsyncGroup : groupedRunAsyncs) {
+      for (JRunAsync runAsync : runAsyncGroup) {
+        ControlFlowAnalyzer withRunAsyncCfa = new ControlFlowAnalyzer(initialSequenceCfa);
+        withRunAsyncCfa.traverseFromRunAsync(runAsync);
+        recordLiveSubset(withRunAsyncCfa, runAsync);
+      }
     }
     accumulatePayloadSizes();
   }
@@ -235,6 +251,14 @@ class LiveAtomsByRunAsyncSets {
     int runAsyncId = nextRunAsyncId++;
     idForRunAsync.put(runAsync, runAsyncId);
     runAsyncForId.put(runAsyncId, runAsync);
+  }
+
+  private BitSet asBitSet(Collection<JRunAsync> runAsyncs) {
+    BitSet result = new BitSet();
+    for (JRunAsync runAsync : runAsyncs) {
+      result.set(getIdForRunAsync(runAsync));
+    }
+    return result;
   }
 
   private List<JRunAsync> asRunAsyncList(BitSet subset) {
@@ -272,20 +296,8 @@ class LiveAtomsByRunAsyncSets {
     return idForRunAsync.get(runAsync);
   }
 
-  private List<List<JRunAsync>> getListOfLists(List<JRunAsync> runAsyncs) {
-    return Lists.transform(runAsyncs, new Function<JRunAsync, List<JRunAsync>>() {
-        @Override
-      public List<JRunAsync> apply(@Nullable JRunAsync runAsync) {
-        return Lists.newArrayList(runAsync);
-      }
-    });
-  }
-
-  private boolean isFragmentTooSmall(List<JRunAsync> fragmentRunAsyncs, int minSize) {
-    BitSet fragmentSubset = new BitSet();
-    for (JRunAsync runAsync : fragmentRunAsyncs) {
-      fragmentSubset.set(getIdForRunAsync(runAsync));
-    }
+  private boolean isFragmentTooSmall(Collection<JRunAsync> fragmentRunAsyncs, int minSize) {
+    BitSet fragmentSubset = asBitSet(fragmentRunAsyncs);
 
     int size = 0;
     // TODO(rluble): This might be quite inefficient as it compare to all possible (non trivially

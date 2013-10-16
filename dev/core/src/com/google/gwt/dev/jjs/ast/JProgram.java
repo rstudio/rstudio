@@ -44,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
 /**
  * Root for the AST representing an entire Java program.
  */
@@ -922,7 +920,7 @@ public class JProgram extends JNode {
         Collections2.transform(initialAsyncSequence,
             new Function<JRunAsync, Integer>() {
               @Override
-              public Integer apply(@Nullable JRunAsync runAsync) {
+              public Integer apply(JRunAsync runAsync) {
                 return runAsync.getRunAsyncId();
               }
             }));

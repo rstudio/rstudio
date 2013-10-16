@@ -53,13 +53,14 @@ class MergeBySimilarityFragmentPartitionStrategy implements FragmentPartitionStr
   }
 
   @Override
-  public List<Fragment> partitionIntoFragments(TreeLogger logger,
-      ControlFlowAnalyzer initialSequenceCfa, Collection<JRunAsync> nonInitialRunAsyncs) {
-    List<List<JRunAsync>> fragmentRunAsyncLists =
-        mergeRunAsyncs(logger, initialSequenceCfa, nonInitialRunAsyncs);
+  public Collection<Fragment> partitionIntoFragments(TreeLogger logger,
+      ControlFlowAnalyzer initialSequenceCfa, Collection<Collection<JRunAsync>>
+      groupedNonInitialRunAsyncs) {
+    Collection<Collection<JRunAsync>> fragmentRunAsyncLists =
+        mergeRunAsyncs(logger, initialSequenceCfa, groupedNonInitialRunAsyncs);
 
     List<Fragment> fragments = new ArrayList<Fragment>();
-    for (List<JRunAsync> fragmentRunAsyncs : fragmentRunAsyncLists) {
+    for (Collection<JRunAsync> fragmentRunAsyncs : fragmentRunAsyncLists) {
       Fragment fragment = new Fragment(Fragment.Type.EXCLUSIVE);
       fragment.addRunAsyncs(fragmentRunAsyncs);
       fragments.add(fragment);
@@ -67,16 +68,17 @@ class MergeBySimilarityFragmentPartitionStrategy implements FragmentPartitionStr
     return fragments;
   }
 
-  private List<List<JRunAsync>> mergeRunAsyncs(TreeLogger logger,
-      ControlFlowAnalyzer initialSequenceCfa, Collection<JRunAsync> runAsyncs) {
+  private Collection<Collection<JRunAsync>> mergeRunAsyncs(TreeLogger logger,
+      ControlFlowAnalyzer initialSequenceCfa, Collection<Collection<JRunAsync>> groupedRunAsyncs) {
     LiveAtomsByRunAsyncSets liveAtomsByRunAsyncSets = new LiveAtomsByRunAsyncSets(logger);
 
     // Compute the under-approximate liveset map.
-    liveAtomsByRunAsyncSets.recordLiveSubsetsAndEstimateTheirSizes(initialSequenceCfa, runAsyncs);
+    liveAtomsByRunAsyncSets.recordLiveSubsetsAndEstimateTheirSizes(initialSequenceCfa,
+        groupedRunAsyncs);
 
     // Merge by similarity.
     int mergeCount = liveAtomsByRunAsyncSets.getRunAsyncCount() - targetNumberOfFragments;
-    List<List<JRunAsync>> fragmentRunAsyncLists =
+    Collection<Collection<JRunAsync>> fragmentRunAsyncLists =
         liveAtomsByRunAsyncSets.mergeSimilarPairs(mergeCount);
 
     // Merge by size if specified

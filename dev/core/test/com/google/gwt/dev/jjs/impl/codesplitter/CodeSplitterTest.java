@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl.codesplitter;
 
 import com.google.gwt.core.ext.PropertyOracle;
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
@@ -37,7 +36,6 @@ import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -155,8 +153,70 @@ public class CodeSplitterTest extends JJSTestBase {
     assertInFragment("functionC", 0);
   }
 
+
+  public void testPredefinedAsyncGrouping() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("package test;\n");
+    code.append("import com.google.gwt.core.client.GWT;\n");
+    code.append("import com.google.gwt.core.client.RunAsyncCallback;\n");
+    code.append("public class EntryPoint {\n");
+    code.append(functionA);
+    code.append(functionB);
+    code.append(functionC);
+    code.append(functionD);
+    code.append(createNamedRunAsyncCallback("RunAsyncCallBack1", "functionA(); functionD();"));
+    code.append(createNamedRunAsyncCallback("RunAsyncCallBack2", "functionB(); functionD();"));
+    code.append(createNamedRunAsyncCallback("RunAsyncCallBack3", "functionC();"));
+
+    code.append("  public static void onModuleLoad() {\n");
+    // Fragment #1
+    code.append("createCallBack1();");
+    // Fragment #2
+    code.append("createCallBack2();");
+    code.append("createCallBack3();");
+
+    code.append("  }\n");
+    code.append("  private static void createCallBack1() {\n");
+    code.append("    GWT.runAsync( new RunAsyncCallBack1() );");
+    code.append("  }\n");
+    code.append("  private static void createCallBack2() {\n");
+    code.append("    GWT.runAsync(RunAsyncCallBack2.class, new RunAsyncCallBack2() );");
+    code.append("  }\n");
+    code.append("  private static void createCallBack3() {\n");
+    code.append("    GWT.runAsync(RunAsyncCallBack2.class, new RunAsyncCallBack3() );");
+    code.append("  }\n");
+    code.append("}\n");
+
+    // Use 1 to 1 merging.
+    expectedFragmentCount = -1;
+    compileSnippet(code.toString());
+
+    // 1 initial + 2 fragments + leftover.
+    assertFragmentCount(4);
+    // TODO(rluble): using fragment numbers here is kind of tricky as the ordering is not
+    // guaranteed.
+
+    // functionB must be in the fragment #2. As first are all the user specified merges.
+    assertInFragment("functionA", 2);
+
+    // Verify that functionA isn't duplicated else where.
+    assertNotInFragment("functionA", 0);
+    assertNotInFragment("functionA", 1);
+    assertNotInFragment("functionA", 3);
+
+    // functionB must be in the fragment #1.
+    assertInFragment("functionB", 1);
+
+    // functionC must be in the fragment #1.
+    assertInFragment("functionC", 1);
+
+    // functionC must be in the leftover.
+    assertInFragment("functionD", 3);
+  }
+
+
   public void testSimpleWithInitialSequence() throws UnableToCompleteException {
-    // Set up comfiguration property.
+    // Set up configuration property.
     initialSequenceProp.addValue("@test.EntryPoint::createInitialCallBack1()");
     initialSequenceProp.addValue("@test.EntryPoint::createInitialCallBack2()");
 
@@ -170,8 +230,8 @@ public class CodeSplitterTest extends JJSTestBase {
     code.append(functionC);
     code.append(initialA);
     code.append(initialB);
-    code.append(createInitialRunAsyncCallback("InitialRunAsyncCallBack1", "initialA();"));
-    code.append(createInitialRunAsyncCallback("InitialRunAsyncCallBack2", "initialB();"));
+    code.append(createNamedRunAsyncCallback("InitialRunAsyncCallBack1", "initialA();"));
+    code.append(createNamedRunAsyncCallback("InitialRunAsyncCallBack2", "initialB();"));
 
     code.append("  public static void onModuleLoad() {\n");
     code.append("functionC();");
@@ -475,7 +535,7 @@ public class CodeSplitterTest extends JJSTestBase {
     return code.toString();
   }
 
-  private static String createInitialRunAsyncCallback(String className, String body) {
+  private static String createNamedRunAsyncCallback(String className, String body) {
     StringBuffer code = new StringBuffer();
     code.append("private static class " + className + " extends RunAsyncCallback {\n");
     code.append("  public void onFailure(Throwable reason) {}\n");
@@ -592,7 +652,8 @@ public class CodeSplitterTest extends JJSTestBase {
       @Override
       public CharSequence getContent() {
         return "package com.google.gwt.core.client; public class GWT {" +
-            "public static void runAsync(RunAsyncCallback cb){}}";
+            "public static void runAsync(RunAsyncCallback cb){}"+
+            "public static void runAsync(Class<?> clazz, RunAsyncCallback cb){}}";
       }
     });
     
