@@ -297,12 +297,16 @@ else()
 
    # we also copy the node-webkit platform files into the appropriate spot
    set(NODE_WEBKIT "${RSTUDIO_DEPENDENCIES_DIR}/common/node-webkit/0.7.5/node-webkit.app/Contents")
+   set(NODE_WEBKIT_DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents")
    file(COPY "${NODE_WEBKIT}/Frameworks"
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+        DESTINATION ${NODE_WEBKIT_DESTINATION})
    file(COPY "${NODE_WEBKIT}/Libraries"
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+        DESTINATION ${NODE_WEBKIT_DESTINATION})
    file(COPY "${NODE_WEBKIT}/MacOS"
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents)
+        DESTINATION ${NODE_WEBKIT_DESTINATION})
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.node-webkit.in
+                  ${NODE_WEBKIT_DESTINATION}/Info.plist)
+
 
 endif()
 
