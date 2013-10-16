@@ -1,0 +1,11 @@
+{
+  "name": "RStudio",
+  "main": "index.html",
+  "window": {
+  	"title": "RStudio",
+  	"toolbar": false,
+  	"width": 1024,
+  	"height": 768,
+  	"position": "mouse"
+  }
+}
