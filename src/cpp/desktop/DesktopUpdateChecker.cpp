@@ -29,7 +29,7 @@
 
 #include "DesktopUtils.hpp"
 
-#include "config.h"
+#include "desktop-config.h"
 
 using namespace core;
 

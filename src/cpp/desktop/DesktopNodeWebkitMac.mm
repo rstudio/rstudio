@@ -40,6 +40,8 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+#include "desktop-config.h"
+
 // TODO: quit protection
 
 /*
@@ -53,8 +55,6 @@ win.on('close', function() {
 */
 
 // TODO: RStudioIDE app showing up in spotlight
-
-// TODO: updating server (stays in memory)
 
 using namespace core;
 
@@ -83,8 +83,9 @@ int sessionPort()
       return -1;
    }
 
-   // compute a port from it
-   return (sessionId % 40000) + 8080;
+   // compute a port from it (include patch versions so updates listen
+   // on a new port)
+   return (sessionId % 40000) + 8080 + RSTUDIO_VERSION_PATCH;
 }
 
 bool isServerRunning(int port)

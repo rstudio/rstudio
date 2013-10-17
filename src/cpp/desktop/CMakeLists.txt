@@ -78,7 +78,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopGwtCallbackOwner.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNodeWebkit.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 )
 
 if(WIN32)
@@ -98,8 +98,8 @@ if(NOT WIN32)
    )
 endif()
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/desktop-config.h)
 
 # source files
 set(DESKTOP_SOURCE_FILES
