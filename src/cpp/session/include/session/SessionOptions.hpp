@@ -124,6 +124,8 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
+
    bool createPublicFolder() const { return createPublicFolder_; }
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
@@ -390,6 +392,7 @@ private:
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
+   int disconnectedTimeoutMinutes_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
 

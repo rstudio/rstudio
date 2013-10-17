@@ -1096,14 +1096,33 @@ bool canSuspend(const std::string& prompt)
 
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 {
+   using namespace boost::posix_time;
+
    // never time out in desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
       return false;
 
+   // check for an client disconnection based timeout
+   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
+   if (disconnectedTimeoutMinutes > 0)
+   {
+      ptime lastEventConnection =
+         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
+      if (!lastEventConnection.is_not_a_date_time())
+      {
+         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
+               < second_clock::universal_time()) )
+         {
+            return true;
+         }
+      }
+   }
+
+   // check for a foreground inactivity based timeout
    if (timeoutTime.is_not_a_date_time())
       return false;
    else
-      return boost::posix_time::second_clock::universal_time() > timeoutTime;
+      return second_clock::universal_time() > timeoutTime;
 }
 
 boost::posix_time::ptime timeoutTimeFromNow()

@@ -49,6 +49,10 @@ boost::shared_ptr<HttpConnection> HttpConnectionQueue::doDequeConnection()
          boost::shared_ptr<HttpConnection> next = queue_.front();
          queue_.pop();
 
+         // note last connection time
+         lastConnectionTime_ =
+                     boost::posix_time::second_clock::universal_time();
+
          // return it
          return next;
       }
@@ -118,6 +122,18 @@ bool HttpConnectionQueue::waitForConnection(
       LOG_ERROR(waitError);
       return false ;
    }
+}
+
+boost::posix_time::ptime HttpConnectionQueue::lastConnectionTime()
+{
+    LOCK_MUTEX(*pMutex_)
+    {
+      return lastConnectionTime_;
+    }
+    END_LOCK_MUTEX
+
+    // keep compiler happy
+    return boost::posix_time::ptime();
 }
 
 } // namespace session

@@ -122,6 +122,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("session-timeout-minutes",
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      ("session-disconnected-timeout-minutes",
+         value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
+         "session disconnected timeout (minutes)" )
       ("session-preflight-script",
          value<std::string>(&preflightScript_)->default_value(""),
          "session preflight script")
