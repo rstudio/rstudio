@@ -1,6 +1,7 @@
 {
   "name": "RStudio",
   "main": "index.html",
+  "node-remote": "<local>",
   "window": {
   	"title": "RStudio",
   	"toolbar": false,
