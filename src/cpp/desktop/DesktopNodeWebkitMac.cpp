@@ -21,6 +21,7 @@
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/Thread.hpp>
+#include <core/system/System.hpp>
 
 #include <mach-o/dyld.h>
 #include <Security/AuthSession.h>
@@ -36,13 +37,18 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-// TODO: OS detection (and manual invoke)
+// TODO: OS detection
 
 // TODO: code signing of embedded executable?
 
-// TODO: no session suspend
-// TODO: quit protection or suspend on no events (idle only?)
+// TODO: install node-webkit on build server
 
+
+// TODO: add node-webkit to NOTICE and show in about dialog
+
+// TODO: don't suspend session
+// TODO: quit protection or suspend on no events (idle only?)
+// TODO: test multi-session within OS (user switch)
 
 
 using namespace core;
@@ -138,7 +144,10 @@ QString nodeWebkitPath()
 
 bool useNodeWebkit()
 {
-   return true;
+   FilePath appSupportPath =
+       system::userHomePath().childPath("Library/Application Support/RStudio");
+   FilePath useServerModePath = appSupportPath.childPath("use-server-mode");
+   return useServerModePath.exists();
 }
 
 
