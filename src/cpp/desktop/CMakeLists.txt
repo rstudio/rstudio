@@ -305,14 +305,14 @@ else()
 
    # we also copy the node-webkit platform files into the appropriate spot
    set(NODE_WEBKIT "${RSTUDIO_DEPENDENCIES_DIR}/common/node-webkit/0.7.5/node-webkit.app/Contents")
-   set(NODE_WEBKIT_DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app/Contents")
+   set(NODE_WEBKIT_DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app/Contents")
    file(COPY "${NODE_WEBKIT}/Frameworks"
         DESTINATION ${NODE_WEBKIT_DESTINATION})
    file(COPY "${NODE_WEBKIT}/Libraries"
         DESTINATION ${NODE_WEBKIT_DESTINATION})
    file(COPY "${NODE_WEBKIT}/MacOS"
         DESTINATION ${NODE_WEBKIT_DESTINATION})
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.node-webkit.in
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/Info.plist.in
                   ${NODE_WEBKIT_DESTINATION}/Info.plist)
 
 
@@ -439,7 +439,7 @@ endif()
 
 # install node-webkit on apple
 if(APPLE)
-   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app"
+   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app"
            DESTINATION RStudio.app/Contents/Frameworks
            USE_SOURCE_PERMISSIONS)
 endif()

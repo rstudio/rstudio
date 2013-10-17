@@ -124,7 +124,7 @@ QString nodeWebkitPath()
 {
    FilePath exePath = executablePath();
    FilePath frameworksPath = exePath.parent().parent().childPath("Frameworks");
-   FilePath nodewebkitPath = frameworksPath.childPath("node-webkit.app");
+   FilePath nodewebkitPath = frameworksPath.childPath("RStudioIDE.app");
    if (nodewebkitPath.exists())
    {
       return QString::fromStdString(nodewebkitPath.absolutePath());
@@ -133,7 +133,7 @@ QString nodeWebkitPath()
    {
       FilePath srcPath = exePath.complete("../../../../../..");
       return QString::fromStdString(
-            srcPath.complete("cpp/desktop/node-webkit.app").absolutePath());
+            srcPath.complete("cpp/desktop/node-webkit/RStudioIDE.app").absolutePath());
    }
 }
 
