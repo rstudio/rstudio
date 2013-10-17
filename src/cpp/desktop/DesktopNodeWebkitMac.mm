@@ -52,8 +52,9 @@ win.on('close', function() {
 });
 */
 
-// TODO: test multi-session within OS (user switch)
+// TODO: RStudioIDE app showing up in spotlight
 
+// TODO: updating server (stays in memory)
 
 using namespace core;
 
