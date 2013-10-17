@@ -28,10 +28,11 @@
 #include <mach-o/dyld.h>
 #include <Security/AuthSession.h>
 #include <CoreServices/CoreServices.h>
+#include <Foundation/NSString.h>
+#include <Foundation/NSDictionary.h>
 
 #include <QProcess>
 #include <QTcpSocket>
-#include <QApplication>
 #include <QDir>
 #include <QFileInfo>
 
@@ -40,8 +41,6 @@
 #endif
 
 // TODO: code signing of embedded executable?
-
-// TODO: name of application in dock (node-webkit)
 
 // TODO: don't suspend session
 // TODO: quit protection or suspend on no events (idle only?)
