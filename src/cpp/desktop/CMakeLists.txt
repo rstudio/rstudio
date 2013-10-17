@@ -164,7 +164,7 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
-    DesktopNodeWebkitMac.cpp
+    DesktopNodeWebkitMac.mm
   )
 else()
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}

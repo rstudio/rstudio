@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
@@ -37,17 +39,13 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-// TODO: OS detection
-
 // TODO: code signing of embedded executable?
 
-// TODO: install node-webkit on build server
-
-
-// TODO: add node-webkit to NOTICE and show in about dialog
+// TODO: mavericks window positioning
 
 // TODO: don't suspend session
 // TODO: quit protection or suspend on no events (idle only?)
+
 // TODO: test multi-session within OS (user switch)
 
 
@@ -139,15 +137,37 @@ QString nodeWebkitPath()
    }
 }
 
+bool isOSXMavericks()
+{
+   NSDictionary *systemVersionDictionary =
+       [NSDictionary dictionaryWithContentsOfFile:
+           @"/System/Library/CoreServices/SystemVersion.plist"];
+
+   NSString *systemVersion =
+       [systemVersionDictionary objectForKey:@"ProductVersion"];
+
+   std::string version(
+         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
+
+   return boost::algorithm::starts_with(version, "10.9");
+}
+
 } // anonymous namespace
 
 
 bool useNodeWebkit()
 {
-   FilePath appSupportPath =
-       system::userHomePath().childPath("Library/Application Support/RStudio");
-   FilePath useServerModePath = appSupportPath.childPath("use-server-mode");
-   return useServerModePath.exists();
+   if (isOSXMavericks())
+   {
+      return true;
+   }
+   else
+   {
+      FilePath appSupportPath =
+        system::userHomePath().childPath("Library/Application Support/RStudio");
+      FilePath useServerModePath = appSupportPath.childPath("use-server-mode");
+      return useServerModePath.exists();
+   }
 }
 
 
