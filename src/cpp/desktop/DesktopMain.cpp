@@ -38,6 +38,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "DesktopNodeWebkit.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -210,6 +211,10 @@ int main(int argc, char* argv[])
       QFont::insertSubstitution(QString::fromUtf8(".Lucida Grande UI"),
                                 QString::fromUtf8("Lucida Grande"));
 #endif
+
+      // run with node webkit if necessary
+      if (useNodeWebkit())
+         return runWithNodeWebkit();
 
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;

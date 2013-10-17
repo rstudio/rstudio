@@ -77,6 +77,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopGwtCallbackOwner.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNodeWebkit.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 )
 
@@ -163,6 +164,11 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
+    DesktopNodeWebkitMac.cpp
+  )
+else()
+  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+    DesktopNodeWebkit.cpp
   )
 endif()
 
@@ -228,6 +234,7 @@ if(WIN32)
 elseif(APPLE)
    find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
    find_library(COCOA_LIBRARY NAMES Cocoa)
+   find_library(SECURITY_LIBRARY NAMES Security)
 endif(WIN32)
 
 
@@ -293,7 +300,8 @@ else()
       ${QT_LIBRARIES}
       rstudio-core
       ${APPLICATION_SERVICES_LIBRARY}
-      ${COCOA_LIBRARY})
+      ${COCOA_LIBRARY}
+      ${SECURITY_LIBRARY})
 
    # we also copy the node-webkit platform files into the appropriate spot
    set(NODE_WEBKIT "${RSTUDIO_DEPENDENCIES_DIR}/common/node-webkit/0.7.5/node-webkit.app/Contents")
@@ -429,6 +437,12 @@ if(APPLE)
                     DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
+# install node-webkit on apple
+if(APPLE)
+   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit.app"
+           DESTINATION RStudio.app/Contents/Frameworks
+           USE_SOURCE_PERMISSIONS)
+endif()
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)
