@@ -139,7 +139,10 @@ ProgramStatus Options::read(int argc,
          "run program as daemon")
       ("server-app-armor-enabled",
          value<bool>(&serverAppArmorEnabled_)->default_value(1),
-         "is app armor enabled for this session");
+         "is app armor enabled for this session")
+      ("server-on-desktop",
+         value<bool>(&serverOnDesktop_)->default_value(false),
+         "server for desktop client");
 
    // www - web server options
    options_description www("www") ;
@@ -265,6 +268,10 @@ ProgramStatus Options::read(int argc,
    if (status.exit())
       return status;
     
+   // automatically disable auth for server-on-desktop
+   if (serverOnDesktop_)
+      authNone_ = true;
+
    // rationalize auth settings
    if (authNone_)
       authValidateUsers_ = false;

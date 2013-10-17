@@ -40,10 +40,17 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-// TODO: code signing of embedded executable?
+// TODO: quit protection
 
-// TODO: don't suspend session
-// TODO: quit protection or suspend on no events (idle only?)
+/*
+var gui = require('nw.gui');
+var win = gui.Window.get();
+win.on('close', function() {
+  this.hide(); // Pretend to be closed already
+  console.log("We're closing...");
+  this.close(true);
+});
+*/
 
 // TODO: test multi-session within OS (user switch)
 
@@ -188,7 +195,7 @@ int runWithNodeWebkit()
    if (!isServerRunning(port))
    {
       QStringList args;
-      args.push_back(QString::fromUtf8("--auth-none=1"));
+      args.push_back(QString::fromUtf8("--server-on-desktop=1"));
       args.push_back(QString::fromUtf8("--www-port"));
       args.push_back(QString::number(port));
       QString exePath = rserverPath();

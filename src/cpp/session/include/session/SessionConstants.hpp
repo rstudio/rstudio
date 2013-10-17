@@ -33,6 +33,7 @@
 #define kVerifyInstallationSessionOption  "verify-installation"
 
 #define kTimeoutSessionOption             "session-timeout-minutes"
+#define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

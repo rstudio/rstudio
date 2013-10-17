@@ -119,10 +119,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // session options
    options_description session("session") ;
    session.add_options()
-      ("session-timeout-minutes",
+      (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
-      ("session-disconnected-timeout-minutes",
+      (kDisconnectedTimeoutSessionOption,
          value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
          "session disconnected timeout (minutes)" )
       ("session-preflight-script",
