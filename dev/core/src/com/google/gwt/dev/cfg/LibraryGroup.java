@@ -64,7 +64,7 @@ public class LibraryGroup {
    * Factory function that constructs and returns a library group from a list of libraries.
    */
   public static LibraryGroup fromLibraries(
-      List<Library> libraries, boolean verifyLibraryReferences) {
+      List<? extends Library> libraries, boolean verifyLibraryReferences) {
     LibraryGroup libraryGroup = new LibraryGroup();
     for (Library library : libraries) {
       libraryGroup.libraries.add(library);

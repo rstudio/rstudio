@@ -43,7 +43,7 @@ public class LibraryGroupTest extends TestCase {
 
   public void testGetReboundTypeNames() {
     // Build a large random acyclic library graph.
-    List<Library> libraries = MockLibrary.createRandomLibraryGraph(210, 3);
+    List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(210, 3);
     // Stick the libraries into a library group.
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(libraries, true);
 
@@ -61,7 +61,7 @@ public class LibraryGroupTest extends TestCase {
 
   public void testLibraryLinkOrder() {
     // Build a large random acyclic library graph.
-    List<Library> libraries = MockLibrary.createRandomLibraryGraph(210, 3);
+    List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(210, 3);
 
     // Stick it in a LibraryGroup.
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(libraries, true);

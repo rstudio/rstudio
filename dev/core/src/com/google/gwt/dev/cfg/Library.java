@@ -31,7 +31,7 @@ import java.util.Set;
  *
  * Implementers are encouraged to load their contents lazily to minimize work.
  */
-interface Library {
+public interface Library {
 
   /**
    * Returns a resource handle or null for the provided path.

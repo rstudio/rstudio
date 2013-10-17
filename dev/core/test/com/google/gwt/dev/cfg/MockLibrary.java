@@ -19,23 +19,29 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-class MockLibrary implements Library {
+/**
+ * A mock and in memory library for setting up test situations.
+ */
+public class MockLibrary implements Library {
 
-  static List<Library> createRandomLibraryGraph(int libraryCount, int maxParentsPerChild) {
+  public static List<MockLibrary> createRandomLibraryGraph(
+      int libraryCount, int maxParentsPerChild) {
     Random rng = new Random();
-    List<Library> libraries = Lists.newArrayList();
+    List<MockLibrary> libraries = Lists.newArrayList();
     libraries.add(new MockLibrary("RootLibrary"));
     for (int libraryIndex = 0; libraryIndex < libraryCount; libraryIndex++) {
-      Library childLibrary = new MockLibrary("Library-" + libraryIndex);
+      MockLibrary childLibrary = new MockLibrary("Library-" + libraryIndex);
       int parentCount = rng.nextInt(maxParentsPerChild) + 1;
 
       for (int parentIndex = 0; parentIndex < parentCount; parentIndex++) {
@@ -49,14 +55,28 @@ class MockLibrary implements Library {
   }
 
   private Set<String> buildResourcePaths = Sets.newHashSet();
+  private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
+  private Set<String> compilationUnitTypeNames = Sets.newHashSet();
   private Set<String> dependencyLibraryNames = Sets.newLinkedHashSet();
   private String libraryName;
   private Multimap<String, String> newBindingPropertyValuesByName = ArrayListMultimap.create();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
   private Set<String> reboundTypeNames = Sets.newHashSet();
+  private Set<String> superSourceCompilationUnitTypeNames = Sets.newHashSet();
 
   public MockLibrary(String libraryName) {
     this.libraryName = libraryName;
+  }
+
+  public void addCompilationUnit(CompilationUnit compilationUnit) {
+    compilationUnitsByTypeName.put(compilationUnit.getTypeName(), compilationUnit);
+    compilationUnitTypeNames.add(compilationUnit.getTypeName());
+  }
+
+  public void addSuperSourceCompilationUnit(CompilationUnit superSourceCompilationUnit) {
+    compilationUnitsByTypeName.put(
+        superSourceCompilationUnit.getTypeName(), superSourceCompilationUnit);
+    superSourceCompilationUnitTypeNames.add(superSourceCompilationUnit.getTypeName());
   }
 
   @Override
@@ -81,12 +101,12 @@ class MockLibrary implements Library {
 
   @Override
   public CompilationUnit getCompilationUnitByTypeName(String typeName) {
-    return null;
+    return compilationUnitsByTypeName.get(typeName);
   }
 
   @Override
   public Set<String> getCompilationUnitTypeNames() {
-    return null;
+    return compilationUnitTypeNames;
   }
 
   @Override
@@ -141,7 +161,7 @@ class MockLibrary implements Library {
 
   @Override
   public Set<String> getSuperSourceCompilationUnitTypeNames() {
-    return null;
+    return superSourceCompilationUnitTypeNames;
   }
 
   @Override

@@ -28,7 +28,7 @@ public class CombinedResourceOracleTest extends TestCase {
 
   private static LibraryGroupBuildResourceOracle createLibraryGroupBuildResourceOracle() {
     // Create random libraries with some build resources.
-    List<Library> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
+    List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
     libraries.get(0).getBuildResourcePaths().add("User.gwt.xml");
     libraries.get(0).getBuildResourcePaths().add("Tab.ui.xml");
     libraries.get(3).getBuildResourcePaths().add("Core.gwt.xml");
