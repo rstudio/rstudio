@@ -79,6 +79,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNodeWebkit.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app/Contents/Resources/app.nw/index.html
 )
 
 if(WIN32)

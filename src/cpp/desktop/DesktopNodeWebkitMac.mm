@@ -54,8 +54,6 @@ win.on('close', function() {
 });
 */
 
-// TODO: RStudioIDE app showing up in spotlight
-
 using namespace core;
 
 namespace desktop {
