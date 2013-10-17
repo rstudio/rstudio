@@ -42,18 +42,6 @@
 
 #include "desktop-config.h"
 
-// TODO: quit protection
-
-/*
-var gui = require('nw.gui');
-var win = gui.Window.get();
-win.on('close', function() {
-  this.hide(); // Pretend to be closed already
-  console.log("We're closing...");
-  this.close(true);
-});
-*/
-
 using namespace core;
 
 namespace desktop {
