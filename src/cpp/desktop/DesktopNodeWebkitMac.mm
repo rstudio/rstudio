@@ -157,16 +157,23 @@ bool isOSXMavericks()
 
 bool useNodeWebkit()
 {
-   if (isOSXMavericks())
+   // check configuration
+   FilePath appSupportPath =
+     system::userHomePath().childPath("Library/Application Support/RStudio");
+   bool useServerMode = appSupportPath.childPath("use-server-mode").exists();
+   bool useDesktopMode = appSupportPath.childPath("use-desktop-mode").exists();
+
+   if (useServerMode)
+   {
+      return true;
+   }
+   else if (isOSXMavericks() && !useDesktopMode)
    {
       return true;
    }
    else
    {
-      FilePath appSupportPath =
-        system::userHomePath().childPath("Library/Application Support/RStudio");
-      FilePath useServerModePath = appSupportPath.childPath("use-server-mode");
-      return useServerModePath.exists();
+      return false;
    }
 }
 
