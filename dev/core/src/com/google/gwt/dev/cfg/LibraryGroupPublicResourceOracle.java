@@ -41,9 +41,7 @@ public class LibraryGroupPublicResourceOracle implements ResourceOracle {
 
   @Override
   public void clear() {
-    pathNames = null;
-    publicResources = null;
-    publicResourcesByPath = null;
+    throw new UnsupportedOperationException("A clear/refresh life cycle is not supported.");
   }
 
   @Override
