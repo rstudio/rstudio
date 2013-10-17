@@ -41,7 +41,7 @@
 
 // TODO: code signing of embedded executable?
 
-// TODO: mavericks window positioning
+// TODO: name of application in dock (node-webkit)
 
 // TODO: don't suspend session
 // TODO: quit protection or suspend on no events (idle only?)
