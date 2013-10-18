@@ -262,8 +262,9 @@ public final class GWT {
   /**
    * The same as {@link #runAsync(RunAsyncCallback)}, except with an extra
    * parameter to provide a name for the call. The name parameter should be
-   * supplied with a class literal. No two runAsync calls in the same program
-   * should use the same name.
+   * supplied with a class literal. If two GWT.runAsync calls  use the same
+   * class literal, the codesplitter will put the corresponding code in
+   * the same code fragment.
    */
   @SuppressWarnings("unused") // parameter will be used following replacement
   public static void runAsync(Class<?> name, final RunAsyncCallback callback) {

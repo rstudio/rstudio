@@ -101,7 +101,6 @@ import java.util.Set;
  * </p>
  */
 public class CodeSplitter {
-  // TODO(rluble): This class needs a serious refactor to be able to add significant unit tests.
 
   public static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram) {
     return computeInitiallyLive(jprogram, MultipleDependencyGraphRecorder.NULL_RECORDER);
@@ -200,6 +199,28 @@ public class CodeSplitter {
         }
       }
     }
+  }
+
+  /**
+   * Group run asyncs that have the same class literal as the first parameter in the two parameter
+   * GWT.runAsync call.
+   */
+  private static Collection<Collection<JRunAsync>> groupAsyncsByClassLiteral(
+      Collection<JRunAsync> runAsyncs) {
+    Collection<Collection<JRunAsync>> result = Lists.newArrayList();
+    Multimap<String, JRunAsync> asyncsGroupedByName =
+        CodeSplitters.computeRunAsyncsByName(runAsyncs, true);
+    // Add runAsyncs that have class literals in groups.
+    result.addAll(asyncsGroupedByName.asMap().values());
+    // Add all the rest.
+    result.addAll(CodeSplitters.getListOfLists(Collections2.filter(runAsyncs,
+        new Predicate<JRunAsync>() {
+          @Override
+          public boolean apply(JRunAsync runAsync) {
+            return !runAsync.hasExplicitClassLiteral();
+          }
+        })));
+    return result;
   }
 
   private final MultipleDependencyGraphRecorder dependencyRecorder;
@@ -332,28 +353,6 @@ public class CodeSplitter {
     } else {
       return "sp" + Iterables.getLast(initialLoadSequence).getRunAsyncId();
     }
-  }
-
-  /**
-   * Group run asyncs that have the same class literal as the first parameter in the two parameter
-   * GWT.runAsync call.
-   */
-  private Collection<Collection<JRunAsync>> groupAsyncsByClassLiteral(
-      Collection<JRunAsync> runAsyncs) {
-    Collection<Collection<JRunAsync>> result = Lists.newArrayList();
-    Multimap<String, JRunAsync> asyncsGroupedByName =
-        CodeSplitters.computeRunAsyncsByName(runAsyncs, true);
-    // Add runAsyncs that have class literals in groups.
-    result.addAll(asyncsGroupedByName.asMap().values());
-    // Add all the rest.
-    result.addAll(CodeSplitters.getListOfLists(Collections2.filter(runAsyncs,
-        new Predicate<JRunAsync>() {
-          @Override
-          public boolean apply(JRunAsync runAsync) {
-            return !runAsync.hasExplicitClassLiteral();
-          }
-        })));
-    return result;
   }
 
   /**
