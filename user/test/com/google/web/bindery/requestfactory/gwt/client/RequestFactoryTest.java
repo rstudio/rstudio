@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -50,10 +50,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.validation.ConstraintViolation;
@@ -65,7 +63,7 @@ import javax.validation.ConstraintViolation;
 public class RequestFactoryTest extends RequestFactoryTestBase {
   /*
    * DO NOT USE finishTest(). Instead, call finishTestAndReset();
-   *
+   * 
    * When possible, pass any returned proxies to checkSerialization() and use
    * the return value in the place of the returned object.
    */
@@ -160,7 +158,7 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     public void onSuccess(T response) {
       /*
        * Make sure your class path includes:
-       *
+       * 
        * tools/lib/apache/log4j/log4j-1.2.16.jar
        * tools/lib/hibernate/validator/hibernate-validator-4.1.0.Final.jar
        * tools/lib/slf4j/slf4j-api/slf4j-api-1.6.1.jar
@@ -260,21 +258,9 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     final SimpleFooProxy foo = context.create(SimpleFooProxy.class);
     final SimpleBarProxy bar0 = context.create(SimpleBarProxy.class);
     final SimpleBarProxy bar1 = context.create(SimpleBarProxy.class);
-    final SimpleBarProxy bar2 = context.create(SimpleBarProxy.class);
-    final SimpleBarProxy bar3 = context.create(SimpleBarProxy.class);
-    final SimpleBarProxy bar4 = context.create(SimpleBarProxy.class);
     List<SimpleBarProxy> bars = new ArrayList<SimpleBarProxy>();
     bars.add(bar0);
     bars.add(bar1);
-
-    Map<SimpleBarProxy, Integer> barAsKeyMap = new HashMap<SimpleBarProxy, Integer>();
-    barAsKeyMap.put(bar2, 4);
-    barAsKeyMap.put(bar3, 21);
-
-    Map<Integer, SimpleBarProxy> barAsValueMap = new HashMap<Integer, SimpleBarProxy>();
-    barAsValueMap.put(41, bar2);
-    barAsValueMap.put(141, bar3);
-    barAsValueMap.put(43, bar4);
 
     final SimpleFooEventHandler<SimpleBarProxy> handler =
         new SimpleFooEventHandler<SimpleBarProxy>();
@@ -283,17 +269,14 @@ public class RequestFactoryTest extends RequestFactoryTestBase {
     Request<SimpleFooProxy> request = context.persistCascadingAndReturnSelf().using(foo);
     SimpleFooProxy editFoo = context.edit(foo);
     editFoo.setOneToManyField(bars);
-    editFoo.setSimpleBarKeyMap(barAsKeyMap);
-    editFoo.setSimpleBarValueMap(barAsValueMap);
-
     request.fire(new Receiver<SimpleFooProxy>() {
       @Override
       public void onSuccess(SimpleFooProxy response) {
         response = checkSerialization(response);
         assertFalse(((SimpleEntityProxyId<SimpleFooProxy>) response.stableId()).isEphemeral());
-        assertEquals(5, handler.persistEventCount); // four bars persisted.
-        assertEquals(5, handler.updateEventCount); // updates to editFoo
-        assertEquals(10, handler.totalEventCount);
+        assertEquals(2, handler.persistEventCount); // two bars persisted.
+        assertEquals(2, handler.updateEventCount); // two bars persisted.
+        assertEquals(4, handler.totalEventCount);
         finishTestAndReset();
       }
     });

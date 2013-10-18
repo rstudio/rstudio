@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -124,7 +124,7 @@ public class SimpleFoo {
     foo3.persist();
     return Arrays.asList(foo1, foo2, foo3);
   }
-
+  
   public static SimpleFoo getLongChain() {
     SimpleFoo foo0 = new SimpleFoo();
     SimpleFoo foo1 = new SimpleFoo();
@@ -132,7 +132,7 @@ public class SimpleFoo {
     SimpleFoo foo3 = new SimpleFoo();
     SimpleFoo foo4 = new SimpleFoo();
     SimpleFoo foo5 = new SimpleFoo();
-
+    
     foo0.setSelfOneToManyField(Arrays.asList(foo1, foo2));
     foo0.setFooField(foo1);
     foo1.setFooField(foo2);
@@ -140,17 +140,17 @@ public class SimpleFoo {
     foo3.setFooField(foo4);
     foo4.setFooField(foo5);
     foo5.setFooField(foo5);
-
+    
     foo0.persist();
     foo1.persist();
     foo2.persist();
     foo3.persist();
     foo4.persist();
     foo5.persist();
-
+    
     return foo0;
   }
-
+  
   public static SimpleFoo getNullInEntityList() {
     SimpleFoo foo0 = new SimpleFoo();
     SimpleFoo foo1 = new SimpleFoo();
@@ -164,7 +164,7 @@ public class SimpleFoo {
     foo2.setSelfOneToManyField(Arrays.asList(foo0));
     foo2.setFooField(foo2FooField);
     foo2FooField.setFooField(foo0);
-
+    
     foo0.persist();
     foo1.persist();
     foo2.persist();
@@ -400,8 +400,6 @@ public class SimpleFoo {
   public static synchronized Map<Long, SimpleFoo> resetImpl() {
     // NOTE: Must be reset before instantiating new SimpleFoos.
     SimpleBar.reset();
-    MapKey.reset();
-    MapValue.reset();
 
     Map<Long, SimpleFoo> instance = new HashMap<Long, SimpleFoo>();
     // fixtures
@@ -533,14 +531,6 @@ public class SimpleFoo {
   private SimpleValue simpleValueField;
   private List<SimpleValue> simpleValuesField;
 
-  private Map<String, Integer> valueMap;
-
-  private Map<SimpleBar, Integer> simpleBarKeyMap;
-
-  private Map<Integer, SimpleBar> simpleBarValueMap;
-
-  private Map<MapKey, MapValue> entityKeyAndValueMap;
-
   /*
    * isChanged is just a quick-and-dirty way to get version-ing for now.
    * Currently, only set by setUserName and setIntId. TODO for later: Use a
@@ -573,16 +563,6 @@ public class SimpleFoo {
     barNullField = null;
     pleaseCrash = 0;
     isChanged = false;
-    valueMap = new HashMap<String, Integer>();
-    valueMap.put("foo", 3);
-    valueMap.put("bar", 7);
-    valueMap.put("baz", null);
-    simpleBarKeyMap = new HashMap<SimpleBar, Integer>();
-    simpleBarKeyMap.put(barField, 5);
-    simpleBarValueMap = new HashMap<Integer, SimpleBar>();
-    simpleBarValueMap.put(141, barField);
-    entityKeyAndValueMap = new HashMap<MapKey, MapValue>();
-    entityKeyAndValueMap.put(MapKey.getSingleton(), MapValue.getSingleton());
   }
 
   public Long countSimpleFooWithUserNameSideEffect() {
@@ -738,22 +718,6 @@ public class SimpleFoo {
 
   public Integer getVersion() {
     return unpersisted ? null : version;
-  }
-
-  public Map<SimpleBar, Integer> getSimpleBarKeyMap() {
-    return simpleBarKeyMap;
-  }
-
-  public Map<Integer, SimpleBar> getSimpleBarValueMap() {
-    return simpleBarValueMap;
-  }
-
-  public Map<MapKey, MapValue> getEntityKeyAndValueMap() {
-    return entityKeyAndValueMap;
-  }
-
-  public Map<String, Integer> getValueMap() {
-    return valueMap;
   }
 
   public String hello(SimpleBar bar) {
@@ -933,22 +897,6 @@ public class SimpleFoo {
     this.unpersisted = unpersisted;
   }
 
-  public void setValueMap(Map<String, Integer> valueMap) {
-    this.valueMap = valueMap;
-  }
-
-  public void setSimpleBarKeyMap(Map<SimpleBar, Integer> simpleValueMap) {
-    this.simpleBarKeyMap = simpleValueMap;
-  }
-
-  public void setSimpleBarValueMap(Map<Integer, SimpleBar> simpleBarValueMap) {
-    this.simpleBarValueMap = simpleBarValueMap;
-  }
-
-  public void setEntityKeyAndValueMap(Map<MapKey, MapValue> entityKeyAndValueMap) {
-    this.entityKeyAndValueMap = entityKeyAndValueMap;
-  }
-
   public void setUserName(String userName) {
     if (!this.userName.equals(userName)) {
       this.userName = userName;
@@ -974,7 +922,7 @@ public class SimpleFoo {
 
   /**
    * Persist this entity and all child entities. This method can handle loops.
-   *
+   * 
    * @param processed the entities that have been processed
    */
   private void persistCascadingAndReturnSelfImpl(Set<SimpleFoo> processed) {
@@ -1019,18 +967,6 @@ public class SimpleFoo {
         if (child != null) {
           child.persistCascadingAndReturnSelfImpl(processed);
         }
-      }
-    }
-
-    if (simpleBarKeyMap != null) {
-      for (SimpleBar child : simpleBarKeyMap.keySet()) {
-        child.persist();
-      }
-    }
-
-    if (simpleBarValueMap != null) {
-      for (SimpleBar child : simpleBarValueMap.values()) {
-        child.persist();
       }
     }
   }

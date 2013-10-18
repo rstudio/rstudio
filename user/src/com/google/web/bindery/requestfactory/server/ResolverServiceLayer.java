@@ -29,7 +29,6 @@ import com.google.web.bindery.requestfactory.vm.impl.OperationKey;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -72,9 +71,6 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
     if (Set.class.isAssignableFrom(domainClass)) {
       return Set.class.asSubclass(clientClass);
     }
-    if (Map.class.isAssignableFrom(domainClass)) {
-      return Map.class.asSubclass(clientClass);
-    }
     if (TypeUtils.isValueType(domainClass)) {
       return domainClass.asSubclass(clientClass);
     }
@@ -103,8 +99,6 @@ final class ResolverServiceLayer extends ServiceLayerDecorator {
       return List.class;
     } else if (Set.class.equals(clazz)) {
       return Set.class;
-    } else if (Map.class.equals(clazz)) {
-      return Map.class;
     } else if (BaseProxy.class.isAssignableFrom(clazz)) {
       ProxyFor pf = clazz.getAnnotation(ProxyFor.class);
       if (pf != null) {
