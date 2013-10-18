@@ -434,7 +434,10 @@ public class Application implements ApplicationEventHandlers
          }
          else
          {
-            view_.showApplicationQuit();
+            if (NodeWebkit.isNodeWebkit())
+               NodeWebkit.closeWindow();
+            else
+               view_.showApplicationQuit();
          }
       }
    }

@@ -1,5 +1,5 @@
 /*
- * GwtFileHandler.hpp
+ * NodeWebkit.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,17 @@
  *
  */
 
-#ifndef CORE_GWT_FILE_HANDLER_HPP
-#define CORE_GWT_FILE_HANDLER_HPP
+package org.rstudio.studio.client.application;
 
-#include <core/http/UriHandler.hpp>
 
-namespace core {
-namespace gwt {
-      
-http::UriHandlerFunction fileHandlerFunction(
-      const std::string& wwwLocalPath,
-      const std::string& baseUri = std::string(),
-      http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
-      const std::string& initJs = std::string(),
-      bool useEmulatedStack = false);
+public class NodeWebkit
+{
+   public static native boolean isNodeWebkit() /*-{
+      return !!$wnd.NodeWebkit;
+   }-*/;
    
-} // namespace gwt
-} // namespace core
-
-#endif // CORE_GWT_FILE_HANDLER_HPP
-
+   public static native void closeWindow() /*-{
+      var win = $wnd.NodeWebkit.Window.get();
+      win.close(true);
+   }-*/;
+}

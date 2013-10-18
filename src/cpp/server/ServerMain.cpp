@@ -88,9 +88,16 @@ bool mainPageFilter(const core::http::Request& request,
 http::UriHandlerFunction blockingFileHandler()
 {
    Options& options = server::options();
+
+   // determine initJs
+   std::string initJs;
+   if (options.serverOnDesktop())
+      initJs = "if (window.require) window.NodeWebkit = require('nw.gui');";
+
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
                                    mainPageFilter,
+                                   initJs,
                                    options.wwwUseEmulatedStack());
 }
 
