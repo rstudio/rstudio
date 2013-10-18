@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -47,6 +47,12 @@ public class ConditionWhenPropertyIs extends Condition {
   }
 
   @Override
+  public String toSource() {
+    return String.format(
+        "BindingPropertiesProvider.getPropertyValue(\"%s\").equals(\"%s\")", propName, value);
+  }
+
+  @Override
   public String toString() {
     return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }
@@ -72,7 +78,7 @@ public class ConditionWhenPropertyIs extends Condition {
       if (testValue.equals(value)) {
         return true;
       } else {
-        // no exact match was found, see if any fall back 
+        // no exact match was found, see if any fall back
         // value would satisfy the condition
         try {
           SelectionProperty prop = propertyOracle.getSelectionProperty(logger,

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,10 +31,10 @@ import java.util.Set;
  * Test the {@link Condition} class.
  */
 public class ConditionTest extends TestCase {
-  private PropertyOracle propertyOracle;
-  private CompilationState compilationState;
   private static Set<String> activeLinkerNames = new LinkedHashSet<String>(
       Arrays.asList("linker1", "linker2", "xs"));
+  private CompilationState compilationState;
+  private PropertyOracle propertyOracle;
 
   @Override
   public void setUp() {
@@ -102,6 +102,31 @@ public class ConditionTest extends TestCase {
       assertFalse(isTrue(none, "java.lang.Object"));
       assertFalse(isTrue(none, "java.lang.String"));
     }
+  }
+
+  public void testToSource() {
+    // Linker assertions are not supported.
+    try {
+      new ConditionWhenLinkerAdded("com.some.Linker").toSource();
+      fail("expected linker condition source conversion to fail.");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior.
+    }
+
+    // Compound conditions collapse effectively empty slots.
+    assertEquals("((requestTypeName.equals(\"com.google.gwt.Foo\")))", new ConditionAll(
+        new ConditionAny(), new ConditionWhenTypeIs("com.google.gwt.Foo")).toSource());
+
+    // Exercise it all.
+    assertEquals(
+        "!(((((requestTypeName.equals(\"com.google.gwt.Foo\")) && (BindingPropertiesProvider."
+        + "getPropertyValue(\"user.agent\").equals(\"webkit\")))) || (((requestTypeName.equals"
+        + "(\"com.google.gwt.HasFocus\")) && (BindingPropertiesProvider.getPropertyValue("
+        + "\"user.agent\").equals(\"ie9\"))))))", new ConditionNone(new ConditionAll(
+        new ConditionWhenTypeIs("com.google.gwt.Foo"),
+        new ConditionWhenPropertyIs("user.agent", "webkit")), new ConditionAll(
+        new ConditionWhenTypeIs("com.google.gwt.HasFocus"),
+        new ConditionWhenPropertyIs("user.agent", "ie9"))).toSource());
   }
 
   private boolean isTrue(Condition cond, String testType)

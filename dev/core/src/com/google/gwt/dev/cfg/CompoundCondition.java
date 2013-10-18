@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,8 +16,12 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -27,6 +31,12 @@ import java.util.Set;
 public abstract class CompoundCondition extends Condition {
 
   private final Conditions conditions = new Conditions();
+
+  public CompoundCondition(Condition... conditions) {
+    for (Condition condition : conditions) {
+      this.conditions.add(condition);
+    }
+  }
 
   public Conditions getConditions() {
     return conditions;
@@ -40,4 +50,27 @@ public abstract class CompoundCondition extends Condition {
     }
     return toReturn;
   }
+
+  @Override
+  public String toSource() {
+    List<String> conditionSources = Lists.newArrayList();
+
+    // Translate all the contained conditions.
+    for (Condition condition : getConditions()) {
+      String conditionSource = condition.toSource();
+      if (Strings.isNullOrEmpty(conditionSource)) {
+        continue;
+      }
+      conditionSources.add("(" + conditionSource + ")");
+    }
+
+    // If we still have something then wrap it and return.
+    if (!conditionSources.isEmpty()) {
+      return "(" + Joiner.on(" " + getBinaryOperator() + " ").join(conditionSources) + ")";
+    }
+    // When there are no contained conditions, the whole thing is a NOP.
+    return "";
+  }
+
+  protected abstract String getBinaryOperator();
 }

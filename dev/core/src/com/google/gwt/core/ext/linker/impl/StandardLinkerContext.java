@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -97,11 +97,12 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
   }
 
-  static final Comparator<ConfigurationProperty> CONFIGURATION_PROPERTY_COMPARATOR = new Comparator<ConfigurationProperty>() {
-    public int compare(ConfigurationProperty o1, ConfigurationProperty o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  public static final Comparator<ConfigurationProperty> CONFIGURATION_PROPERTY_COMPARATOR =
+      new Comparator<ConfigurationProperty>() {
+        public int compare(ConfigurationProperty o1, ConfigurationProperty o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      };
 
   static final Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
     public int compare(SelectionProperty o1, SelectionProperty o2) {
@@ -474,7 +475,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   /**
    * Emit EmittedArtifacts artifacts onto <code>out</code>. Does not close
    * <code>out</code>.
-   * 
+   *
    * @param logger where to log progress
    * @param artifacts the artifacts to emit
    * @param visibility the level of visibility of artifacts to output
