@@ -203,7 +203,7 @@
     </copy>
 
     <!-- Files with hardcoded version information must be filtered -->
-    <gwt.getsvninfo />
+    <gwt.getgitinfo />
     <condition property="filter.uptodate">
       <and>
         <available file="${filter.sentinel}" />

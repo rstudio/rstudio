@@ -27,7 +27,7 @@ public class About {
    * Tag used for text replacement of the SVN version (split up to avoid
    * replacing it here).
    */ 
-  private static final String GWT_SVNREV_TAG = "@GWT_" + "SVNREV@";
+  private static final String GWT_GITREV_TAG = "@GWT_" + "GITREV@";
 
   /**
    * Tag used for text replacement of the GWT version (split up to avoid
@@ -36,7 +36,7 @@ public class About {
   private static final String GWT_VERSION_TAG = "@GWT_" + "VERSION@";
 
   private static final String gwtName = "Google Web Toolkit";
-  private static final String gwtSvnRev;
+  private static final String gwtGitRev;
   private static final GwtVersion gwtVersion;
 
   static {
@@ -49,12 +49,12 @@ public class About {
     }
 
     String tmp;
-    tmp = props.getProperty("gwt.svnrev");
+    tmp = props.getProperty("gwt.gitrev");
     // Check for null or sentinel value
-    if (tmp == null || tmp.equals(GWT_SVNREV_TAG)) {
-      gwtSvnRev = "unknown";
+    if (tmp == null || tmp.equals(GWT_GITREV_TAG)) {
+      gwtGitRev = "unknown";
     } else {
-      gwtSvnRev = tmp;
+      gwtGitRev = tmp;
     }
 
     tmp = props.getProperty("gwt.version");
@@ -74,13 +74,24 @@ public class About {
   }
 
   /**
-   * Returns the Subversion repository revision number.
+   * Deprecated as GWT is no longer hosted in Subversion, see {@link #getGwtGitRev}.
    * 
    * @return the subversion revision or 'unknown' if the value couldn't be
    *         determined at build time.
+   * @deprecated See {@link #getGwtGitRev()}.
    */
   public static String getGwtSvnRev() {
-    return gwtSvnRev;
+    return gwtGitRev;
+  }
+
+  /**
+   * Returns the Git repository commit id.
+   * 
+   * @return the Git commit id or 'unknown' if the value couldn't be
+   *         determined at build time.
+   */
+  public static String getGwtGitRev() {
+    return gwtGitRev;
   }
 
   /**

@@ -281,20 +281,18 @@
     </sequential>
   </macrodef>
 
-  <macrodef name="gwt.getsvninfo" description="Identifies the SVN info of a workspace">
+  <macrodef name="gwt.getgitinfo" description="Identifies the GIT info of a workspace">
     <sequential>
-      <taskdef name="svninfo"
-         classname="com.google.gwt.ant.taskdefs.SvnInfo"
-         classpath="${gwt.build.lib}/ant-gwt.jar" />
-      <svninfo directory="${gwt.root}" outputproperty="gwt.svnrev"
-          outputfileproperty="gwt.svnrev.filename" />
-      <!-- Generally, filtering requires a sentinel file so that changes to svn rev will
+      <exec executable="git" searchpath="true" outputproperty="gwt.gitrev">
+        <arg line="rev-parse --short HEAD"/>
+      </exec>
+      <!-- Generally, filtering requires a sentinel file so that changes to git rev will
          be noticed as invalidating the previously-generated filter output.  This property
          names where such a sentinel lives; it is tested with <available/> and created
          with <touch/> -->
       <mkdir dir="${project.build}/sentinels" /> 
       <property name="filter.sentinel" 
-          location="${project.build}/sentinels/gwt-${gwt.version}-svn-${gwt.svnrev.filename}" /> 
+          location="${project.build}/sentinels/gwt-${gwt.version}-git-${gwt.gitrev}" />
     </sequential>
   </macrodef>
   
@@ -305,13 +303,13 @@
       description="Source for the filtered copy"/>
     <sequential>
       <!-- These files must be filtered for versioning -->
-      <echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
+      <echo message="Branding as GWT version ${gwt.version}, GIT commit ${gwt.gitrev}"/>
       <mkdir dir="@{todir}" />
       <copy todir="@{todir}" overwrite="true">
         <src.fileset/>
         <filterset>
           <filter token="GWT_VERSION" value="${gwt.version}" />
-          <filter token="GWT_SVNREV" value="${gwt.svnrev}" />
+          <filter token="GWT_GITREV" value="${gwt.gitrev}" />
         </filterset>
       </copy>
     </sequential>

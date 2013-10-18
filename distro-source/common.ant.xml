@@ -16,7 +16,7 @@
   </patternset>
 
   <target name="filter" description="Filters distro files for versioning">
-    <gwt.getsvninfo />
+    <gwt.getgitinfo />
     <condition property="filter.uptodate">
       <and>
         <available file="${filter.sentinel}" />
