@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -50,11 +50,11 @@ public class BindingProperty extends Property {
   private List<SortedSet<String>> collapsedValues = Lists.create();
   private final Map<Condition, SortedSet<String>> conditionalValues = new LinkedHashMap<Condition, SortedSet<String>>();
   private final SortedSet<String> definedValues = new TreeSet<String>();
-  private PropertyProvider provider;
-  private Class<? extends PropertyProviderGenerator> providerGenerator;
   private String fallback;
   private HashMap<String,LinkedList<LinkedHashSet<String>>> fallbackValueMap;
   private HashMap<String,LinkedList<String>> fallbackValues = new HashMap<String,LinkedList<String>>();
+  private PropertyProvider provider;
+  private Class<? extends PropertyProviderGenerator> providerGenerator;
   private final ConditionAll rootCondition = new ConditionAll();
 
   {
@@ -99,7 +99,7 @@ public class BindingProperty extends Property {
   }
 
   /**
-   * Adds fall back value to given property name. 
+   * Adds fall back value to given property name.
    * @param value the property value.
    * @param fallbackValue the fall back value for given property value.
    */
@@ -156,7 +156,7 @@ public class BindingProperty extends Property {
 
   /**
    * Returns the fallback value for this property, or the empty string if none.
-   * 
+   *
    * @return the fallback value
    */
   public String getFallback() {
@@ -198,7 +198,19 @@ public class BindingProperty extends Property {
     }
     return fallbackValueMap;
   }
-  
+
+  /**
+   * Returns the first legal value for this property that can be found.
+   */
+  public String getFirstLegalValue() {
+    if (getConstrainedValue() != null) {
+      return getConstrainedValue();
+    } else if (getDefinedValues().length > 0) {
+      return getDefinedValues()[0];
+    }
+    return fallback;
+  }
+
   public PropertyProvider getProvider() {
     return provider;
   }
@@ -259,7 +271,7 @@ public class BindingProperty extends Property {
   /**
    * Set the currently allowed values. The values provided must be a subset of
    * the currently-defined values.
-   * 
+   *
    * @throws IllegalArgumentException if any of the provided values were not
    *     provided to {@link #addDefinedValue(Condition,String)}.
    */
@@ -296,7 +308,7 @@ public class BindingProperty extends Property {
 
   /**
    * Set a provider generator for this property.
-   * 
+   *
    * @param generator
    */
   public void setProviderGenerator(Class<? extends PropertyProviderGenerator> generator) {
