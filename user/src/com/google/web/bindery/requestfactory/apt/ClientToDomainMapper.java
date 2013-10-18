@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.web.bindery.requestfactory.apt;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.lang.model.element.ElementKind;
@@ -98,6 +99,13 @@ class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
       // Convert Set,List<FooProxy> to Set,List<FooDomain>
       TypeMirror param = convertSingleParamType(x, state.findType(Collection.class), 0, state);
       return state.types.getDeclaredType((TypeElement) state.types.asElement(x), param);
+    }
+    final DeclaredType mapType = state.findType(Map.class);
+    if (state.types.isAssignable(x, mapType)) {
+      // Convert Map<FooProxy, BarProxy> to Map<FooDomain, BarDomain>
+      TypeMirror keyParam = convertSingleParamType(x, mapType, 0, state);
+      TypeMirror valueParam = convertSingleParamType(x, mapType, 1, state);
+      return state.types.getDeclaredType((TypeElement) state.types.asElement(x), keyParam, valueParam);
     }
     return defaultAction(x, state);
   }

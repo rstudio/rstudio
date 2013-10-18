@@ -16,28 +16,11 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * A simple entity used for testing. Has an int field and date field. Add other
- * data types as their support gets built in.
+ * Do nothing test interface.
  */
-@ProxyForName("com.google.web.bindery.requestfactory.server.SimpleBar")
-public interface SimpleBarProxy extends EntityProxy {
+@ServiceName("com.google.web.bindery.requestfactory.server.MapValue")
+public interface MapValueRequest extends RequestContext {
 
-  Boolean getFindFails();
+  Request<MapValueProxy> findMapValueById(String id);
 
-  Boolean getUnpersisted();
-
-  /*
-   * NB: The lack of a getId() here is intentional, to ensure that the system
-   * does not assume that the id property is available to the client.
-   */
-
-  String getUserName();
-
-  void setFindFails(Boolean fails);
-
-  void setUnpersisted(Boolean b);
-
-  void setUserName(String userName);
-
-  EntityProxyId<SimpleBarProxy> stableId();
 }

@@ -16,28 +16,17 @@
 package com.google.web.bindery.requestfactory.shared;
 
 /**
- * A simple entity used for testing. Has an int field and date field. Add other
- * data types as their support gets built in.
+ * Used to test entity proxies as map keys
  */
-@ProxyForName("com.google.web.bindery.requestfactory.server.SimpleBar")
-public interface SimpleBarProxy extends EntityProxy {
+@ProxyForName("com.google.web.bindery.requestfactory.server.MapKey")
+public interface MapKeyProxy extends EntityProxy {
 
-  Boolean getFindFails();
+  void setId(String id);
 
-  Boolean getUnpersisted();
+  String getId();
 
-  /*
-   * NB: The lack of a getId() here is intentional, to ensure that the system
-   * does not assume that the id property is available to the client.
-   */
+  void setSimple(SimpleValueProxy simple);
 
-  String getUserName();
+  SimpleValueProxy getSimple();
 
-  void setFindFails(Boolean fails);
-
-  void setUnpersisted(Boolean b);
-
-  void setUserName(String userName);
-
-  EntityProxyId<SimpleBarProxy> stableId();
 }

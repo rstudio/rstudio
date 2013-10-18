@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,6 +37,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -45,10 +46,50 @@ import java.util.TreeSet;
  * Responsible for converting between domain and client entities. This class has
  * a small amount of temporary state used to handle graph cycles and assignment
  * of synthetic ids.
- * 
+ *
  * @see RequestState#getResolver()
  */
 class Resolver {
+  /**
+   * A parameterized type with key and value parameters.
+   */
+  private static class MapType implements ParameterizedType {
+    private final Class<?> keyType;
+    private final Class<?> valueType;
+
+    public MapType(Class<?> keyType, Class<?> valueType) {
+      this.keyType = keyType;
+      this.valueType = valueType;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof MapType)) {
+        return false;
+      }
+      MapType other = (MapType) o;
+      return keyType.equals(other.keyType) && valueType.equals(other.valueType);
+    }
+
+    public Type[] getActualTypeArguments() {
+      return new Type[] {keyType, valueType};
+    }
+
+    public Type getOwnerType() {
+      return null;
+    }
+
+    @Override
+    public Type getRawType() {
+      return Map.class;
+    }
+
+    @Override
+    public int hashCode() {
+      return valueType.hashCode() * 13 + keyType.hashCode() * 7;
+    }
+  }
+
   /**
    * A parameterized type with a single parameter.
    */
@@ -111,14 +152,27 @@ class Resolver {
         PropertyContext ctx) {
       /*
        * Send the property if the enclosing type is a ValueProxy, if the owner
-       * requested the property, or if the property is a list of values.
+       * requested the property, if the property is a list of values, or a map
+       * whose keys and values are both value types.
        */
-      Class<?> elementType =
-          ctx instanceof CollectionPropertyContext ? ((CollectionPropertyContext) ctx)
-              .getElementType() : null;
+      Class<?> elementType = null;
+      if (ctx instanceof CollectionPropertyContext) {
+        elementType = ((CollectionPropertyContext) ctx).getElementType();
+      }
+
+      Class<?> keyType = null;
+      Class<?> valueType = null;
+      if (ctx instanceof MapPropertyContext) {
+        MapPropertyContext mapCtx = (MapPropertyContext) ctx;
+        keyType = mapCtx.getKeyType();
+        valueType = mapCtx.getValueType();
+      }
+
       boolean shouldSend =
           isOwnerValueProxy || matchesPropertyRef(propertyRefs, propertyName)
-              || elementType != null && ValueCodex.canDecode(elementType);
+              || (elementType != null && ValueCodex.canDecode(elementType))
+              || (keyType != null && ValueCodex.canDecode(keyType) &&
+                  valueType != null && ValueCodex.canDecode(valueType));
 
       if (!shouldSend) {
         return false;
@@ -132,10 +186,12 @@ class Resolver {
 
       // Turn the domain object into something usable on the client side
       Type type;
-      if (elementType == null) {
-        type = ctx.getType();
-      } else {
+      if (elementType != null) {
         type = new CollectionType(ctx.getType(), elementType);
+      } else if (keyType != null && valueType != null) {
+        type = new MapType(keyType, valueType);
+      } else {
+        type = ctx.getType();
       }
       Resolution resolution = resolveClientValue(domainValue, type);
       addPathsToResolution(resolution, propertyName, propertyRefs);
@@ -203,7 +259,7 @@ class Resolver {
         // No point trying to follow paths past a null value
         return;
       }
-      
+
       // Identity comparison intentional
       if (toResolve == EMPTY) {
         toResolve = new TreeSet<String>();
@@ -318,9 +374,9 @@ class Resolver {
    * references.
    */
   static boolean matchesPropertyRef(Set<String> propertyRefs, String newPrefix) {
-    /* 
+    /*
      * Match all fields for a wildcard
-     * 
+     *
      * Also, remove list index suffixes. Not actually used, was in anticipation
      * of OGNL type schemes. That said, Editor will slip in such things.
      */
@@ -390,7 +446,7 @@ class Resolver {
 
   /**
    * Given a domain object, return a value that can be encoded by the client.
-   * 
+   *
    * @param domainValue the domain object to be converted into a client-side
    *          value
    * @param assignableTo the type in the client to which the resolved value
@@ -420,7 +476,7 @@ class Resolver {
 
   /**
    * Convert a client-side value into a domain value.
-   * 
+   *
    * @param maybeEntityProxy the client object to resolve
    * @param detectDeadEntities if <code>true</code> this method will throw a
    *          ReportableException containing a {@link DeadEntityException} if an
@@ -449,6 +505,14 @@ class Resolver {
         accumulator.add(resolveDomainValue(o, detectDeadEntities));
       }
       return accumulator;
+    } else if (maybeEntityProxy instanceof Map<?, ?>) {
+      Map<Object, Object> accumulator = new HashMap<Object, Object>();
+      for (Entry<?, ?> entry : ((Map<?, ?>) maybeEntityProxy).entrySet()) {
+        accumulator.put(
+            resolveDomainValue(entry.getKey(), detectDeadEntities),
+            resolveDomainValue(entry.getValue(), detectDeadEntities));
+      }
+      return accumulator;
     }
     return maybeEntityProxy;
   }
@@ -456,7 +520,7 @@ class Resolver {
   /**
    * Calls {@link Resolution#addPaths(String, Collection)}, enqueuing
    * {@code key} if {@link Resolution#hasWork()} returns {@code true}. This
-   * method will also expand paths on the members of Collections.
+   * method will also expand paths on the members of Collections and Maps.
    */
   private void addPathsToResolution(Resolution resolution, String prefix, Set<String> propertyRefs) {
     if (propertyRefs.isEmpty()) {
@@ -481,6 +545,20 @@ class Resolver {
         // subResolution will be null for List<Integer>, etc.
         if (subResolution != null) {
           addPathsToResolution(subResolution, prefix, propertyRefs);
+        }
+      }
+      return;
+    }
+    if (resolution.getClientObject() instanceof Map) {
+      Map<?, ?> map = (Map<?, ?>) resolution.getClientObject();
+      for (Map.Entry<?, ?> entry : map.entrySet()) {
+        Resolution keyResolution = clientObjectsToResolutions.get(entry.getKey());
+        if (keyResolution != null) {
+          addPathsToResolution(keyResolution, prefix + ".keys", propertyRefs);
+        }
+        Resolution valueResolution = clientObjectsToResolutions.get(entry.getValue());
+        if (valueResolution != null) {
+          addPathsToResolution(valueResolution, prefix + ".values", propertyRefs);
         }
       }
       return;
@@ -635,11 +713,26 @@ class Resolver {
       Type elementType = TypeUtils.getSingleParameterization(Collection.class, clientType);
       for (Object o : (Collection<?>) domainValue) {
         Resolution resolution = resolveClientValue(o, elementType);
-        accumulator.add(resolution == null ? null : resolution.getClientObject());
+        accumulator.add(getClientObject(resolution));
+      }
+      return makeResolution(accumulator);
+    }
+
+    if (Map.class.isAssignableFrom(returnClass)) {
+      Map<Object, Object> accumulator = new HashMap<Object, Object>();
+      Type[] entryTypes = TypeUtils.getParameterization(Map.class, clientType);
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>) domainValue).entrySet()) {
+        accumulator.put(
+            getClientObject(resolveClientValue(entry.getKey(), entryTypes[0])),
+            getClientObject(resolveClientValue(entry.getValue(), entryTypes[1])));
       }
       return makeResolution(accumulator);
     }
 
     throw new ReportableException("Unsupported domain type " + returnClass.getCanonicalName());
+  }
+
+  private Object getClientObject(Resolution resolution) {
+    return resolution == null ? null : resolution.getClientObject();
   }
 }
