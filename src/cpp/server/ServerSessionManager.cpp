@@ -66,7 +66,7 @@ core::system::ProcessConfig sessionProcessConfig(
    if (server::options().serverOnDesktop())
    {
       args.push_back(std::make_pair("--" kTimeoutSessionOption, "0"));
-      args.push_back(std::make_pair("--" kDisconnectedTimeoutSessionOption, "2"));
+      args.push_back(std::make_pair("--" kDisconnectedTimeoutSessionOption, "0"));
       args.push_back(std::make_pair("--" kShowUserIdentitySessionOption, "0"));
    }
 
