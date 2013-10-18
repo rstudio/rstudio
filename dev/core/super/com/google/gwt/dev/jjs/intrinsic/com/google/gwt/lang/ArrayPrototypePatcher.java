@@ -54,5 +54,12 @@ public class ArrayPrototypePatcher {
         Array.prototype[name] = value;
       }
     }
+
+    // make sure Array is rescued by setting up a call to the constructor
+    // Note: the Array call would fail since the ArrayPrototypePatcher is placed
+    // very early in the resulting JS and Array has not been defined yet.
+    if (false) {
+      @com.google.gwt.lang.Array::new()();
+    }
   }-*/;
 }
