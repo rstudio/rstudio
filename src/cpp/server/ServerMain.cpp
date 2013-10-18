@@ -92,7 +92,13 @@ http::UriHandlerFunction blockingFileHandler()
    // determine initJs
    std::string initJs;
    if (options.serverOnDesktop())
-      initJs = "if (window.require) window.NodeWebkit = require('nw.gui');";
+   {
+      initJs = "if (window.require) {";
+      initJs +=   "window.NodeWebkit = require('nw.gui'); ";
+      initJs +=   "var win = window.NodeWebkit.Window.get(); ";
+      initJs +=   "win.on('close', function() { window.NodeWebkitClose(); }); ";
+      initJs += "}";
+   }
 
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",

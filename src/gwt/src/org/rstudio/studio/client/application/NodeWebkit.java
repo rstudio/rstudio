@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.application;
 
+import org.rstudio.studio.client.RStudioGinjector;
+
 
 public class NodeWebkit
 {
@@ -26,4 +28,23 @@ public class NodeWebkit
       var win = $wnd.NodeWebkit.Window.get();
       win.close(true);
    }-*/;
+   
+   public static native void raiseWindow() /*-{
+      var win = $wnd.NodeWebkit.Window.get();
+      win.requestAttention(true);
+   }-*/;
+   
+   public static native void registerCloseHandler() /*-{
+      $wnd.NodeWebkitClose = $entry(
+         function() {
+            @org.rstudio.studio.client.application.NodeWebkit::quitSession()();
+         }
+       );
+   }-*/;
+   
+   private static void quitSession()
+   {
+      RStudioGinjector.INSTANCE.getCommands().quitSession().execute();
+   }
+   
 }

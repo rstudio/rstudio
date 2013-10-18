@@ -614,6 +614,10 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
+      // register for close event for NodeWebkit
+      if (NodeWebkit.isNodeWebkit())
+         NodeWebkit.registerCloseHandler();
+      
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
       showToolbar( uiPrefs_.get().toolbarVisible().getValue());
