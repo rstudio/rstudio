@@ -318,6 +318,13 @@ public class Application implements ApplicationEventHandlers
          }
       });
    }
+   
+   @Handler
+   public void onShowWebkitDevtools()
+   {
+      if (NodeWebkit.isNodeWebkit())
+         NodeWebkit.showDevtools();
+   }
 
    @Handler
    public void onLogFocusedElement()
@@ -603,7 +610,11 @@ public class Application implements ApplicationEventHandlers
       // hide the agreement menu item if we don't have one
       if (!session_.getSessionInfo().hasAgreement())
          commands_.rstudioAgreement().setVisible(false);
-         
+        
+      // only show webkit devtols for node webkit
+      if (!NodeWebkit.isNodeWebkit())
+         commands_.showWebkitDevtools().remove();
+      
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       

@@ -24,6 +24,11 @@ public class NodeWebkit
       return !!$wnd.NodeWebkit;
    }-*/;
    
+   public static native void showDevtools() /*-{
+      var win = $wnd.NodeWebkit.Window.get();
+      win.showDevTools();
+   }-*/;
+   
    public static native void closeWindow() /*-{
       var win = $wnd.NodeWebkit.Window.get();
       win.close(true);
