@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.NodeWebkit;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
@@ -225,8 +226,16 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
       viewAfterSaveCheckBox_.setStylePrimaryName(
                                        styles.savePdfViewAfterCheckbox());
-      viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
-      grid.setWidget(6, 1, viewAfterSaveCheckBox_);
+      
+      if (!NodeWebkit.isNodeWebkit())
+      {
+         viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
+         grid.setWidget(6, 1, viewAfterSaveCheckBox_);
+      }
+      else
+      {
+         viewAfterSaveCheckBox_.setValue(false);
+      }
       
       // set default value
       if (options_.getPortrait())
