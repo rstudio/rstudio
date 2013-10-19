@@ -625,9 +625,18 @@ public class Application implements ApplicationEventHandlers
          commands_.zoomOut().remove();
       }
       
-      // register for close event for NodeWebkit
+      // NodeWebkit specific initialization
       if (NodeWebkit.isNodeWebkit())
+      {
+         // remove inappropriate commands
+         commands_.uploadFile().remove();
+         commands_.exportFiles().remove();
+         commands_.updateCredentials().remove();
+         commands_.copyPlotToClipboard().remove();
+         
+         // close handler for quit prompting
          NodeWebkit.registerCloseHandler();
+      }
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
