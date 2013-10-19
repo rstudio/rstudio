@@ -311,8 +311,8 @@ else()
         DESTINATION ${NODE_WEBKIT_DESTINATION})
    file(COPY "${NODE_WEBKIT}/Libraries"
         DESTINATION ${NODE_WEBKIT_DESTINATION})
-   file(COPY "${NODE_WEBKIT}/MacOS"
-        DESTINATION ${NODE_WEBKIT_DESTINATION})
+   file(COPY "${NODE_WEBKIT}/MacOS/node-webkit"
+        DESTINATION ${NODE_WEBKIT_DESTINATION}/MacOS)
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/Info.plist.in
                   ${NODE_WEBKIT_DESTINATION}/Info.plist)
 

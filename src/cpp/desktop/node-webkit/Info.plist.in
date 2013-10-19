@@ -22,7 +22,7 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>node-webkit</string>
+	<string>RStudioIDE</string>
 	<key>CFBundleGetInfoString</key>
    <string>RStudio ${CPACK_PACKAGE_VERSION}, © 2009-2012 RStudio, Inc.</string>
 	<key>CFBundleIconFile</key>

@@ -24,6 +24,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #include <mach-o/dyld.h>
 #include <Security/AuthSession.h>
@@ -198,6 +199,11 @@ int runWithNodeWebkit()
       // sleep to give the server a chance to start
       boost::this_thread::sleep(boost::posix_time::milliseconds(200));
    }
+
+   // set the RSTUDIO_NODE_WEBKIT environment variable. This allows the script
+   // within the RStudioIDE.app to distinguish between calls from the main
+   // app and user initiated calls e.g. from the dock or spotlight
+   core::system::setenv("RSTUDIO_NODE_WEBKIT", "1");
 
    // launch the client (will do a reactivation if it's already running)
    QStringList args;
