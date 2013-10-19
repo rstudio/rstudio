@@ -51,6 +51,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.NodeWebkit;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -218,7 +219,15 @@ public class HelpPane extends WorkbenchPane
          if (href.contains(":") || href.endsWith(".pdf"))
          {
             // external links
-            ((AnchorElement)a.cast()).setTarget("_blank") ;
+            AnchorElement aElement = a.cast();
+            aElement.setTarget("_blank") ;
+            if (NodeWebkit.isNodeWebkit())
+            {
+               a.setAttribute(
+                  "onclick",
+                  "window.parent.NodeWebkit.Shell.openExternal(this.href);" +
+                  "return false;") ;
+            }
          }
          else
          {
