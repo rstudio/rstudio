@@ -39,6 +39,11 @@ public class NodeWebkit
       win.requestAttention(true);
    }-*/;
    
+   public static native void browseURL(String url) /*-{
+      var shell = $wnd.NodeWebkit.Shell;
+      shell.openExternal(url);
+   }-*/;
+   
    public static native void registerCloseHandler() /*-{
       $wnd.NodeWebkitClose = $entry(
          function() {

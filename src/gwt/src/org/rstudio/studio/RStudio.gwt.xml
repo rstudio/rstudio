@@ -20,6 +20,12 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </set-property>
    <collapse-property name="rstudio.desktop" values="*"/>
+   
+   <define-property name="rstudio.nodewebkit" values="true,false"/>
+   <property-provider name="rstudio.nodewebkit"><![CDATA[
+      return window.NodeWebkit ? "true" : "false";
+   ]]></property-provider>
+   <collapse-property name="rstudio.nodewebkit" values="*"/>
 
    <!--
    <define-property name="rstudio.debug" values="true,false"/>
@@ -55,6 +61,10 @@
    <replace-with class="org.rstudio.studio.client.common.impl.DesktopWindowOpener">
       <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
       <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.impl.NodeWebkitWindowOpener">
+      <when-type-is class="org.rstudio.studio.client.common.WindowOpener" />
+      <when-property-is name="rstudio.nodewebkit" value="true"/>
    </replace-with>
 
    <replace-with class="org.rstudio.studio.client.common.impl.WebFileDialogs">

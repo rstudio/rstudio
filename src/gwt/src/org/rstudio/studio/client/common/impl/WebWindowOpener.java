@@ -79,6 +79,16 @@ public class WebWindowOpener implements WindowOpener
       return true;
    }
    
+   protected boolean hasProtocol(String url)
+   {
+      return Pattern.create("^([a-zA-Z]+:)").match(url, 0) != null;
+   }
+   
+   protected boolean isAppUrl(String url)
+   {
+      return url.startsWith(GWT.getHostPageBaseURL());
+   }
+   
    // enable callers to prevent subclass implementations from taking
    // the open window by calling this directly
    private void webOpenMinimalWindow(GlobalDisplay globalDisplay,
