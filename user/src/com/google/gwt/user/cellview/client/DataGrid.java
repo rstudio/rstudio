@@ -713,6 +713,15 @@ public class DataGrid<T> extends AbstractCellTable<T> implements RequiresResize 
     tableData.removeColumnStyleName(index, styleName);
   }
 
+  /**
+   * Sets whether this grid always shows its scroll bars, or only when necessary.
+   * 
+   * @param alwaysShowScrollBars <code>true</code> to show scroll bars at all times
+   */
+  public void setAlwaysShowScrollBars(boolean alwaysShowScrollBars) {
+      tableDataScroller.setAlwaysShowScrollBars(alwaysShowScrollBars);
+  }
+
   @Override
   public void setEmptyTableWidget(Widget widget) {
     emptyTableWidgetContainer.setWidget(0, 0, widget);
