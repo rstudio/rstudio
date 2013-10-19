@@ -66,7 +66,12 @@ namespace {
 
 void launchSessionRecovery(const std::string& username)
 {
-   Error error = sessionManager().launchSession(username);
+   // recreate streams dir if necessary
+   Error error = session::local_streams::ensureStreamsDir();
+   if (error)
+      LOG_ERROR(error);
+
+   error = sessionManager().launchSession(username);
    if (error)
       LOG_ERROR(error);
 }
@@ -315,7 +320,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 
 Error initialize()
 { 
-   return session::local_streams::createStreamsDir();
+   return session::local_streams::ensureStreamsDir();
 }
 
 Error runVerifyInstallationSession()
