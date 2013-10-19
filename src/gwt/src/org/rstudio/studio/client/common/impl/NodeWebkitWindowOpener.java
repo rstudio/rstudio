@@ -18,6 +18,8 @@ import org.rstudio.studio.client.application.NodeWebkit;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 
+import com.google.gwt.core.client.GWT;
+
 public class NodeWebkitWindowOpener extends WebWindowOpener
 {
    @Override
@@ -25,11 +27,23 @@ public class NodeWebkitWindowOpener extends WebWindowOpener
                           String url,
                           NewWindowOptions options)
    {   
-      // open externally if we have a protocol and aren't an app url
-      if (hasProtocol(url) && !isAppUrl(url))
+      // attempt to open windows externally -- this protects against
+      // file downloads as well as browser content that might link to 
+      // external pages. exceptions:
+      //   (1) minimal windows (e.g. plot zoom window) a
+      //   (2) windows with open callbacks
+      if (options.getCallback() == null)
       {
+         // if this is a relative url then prepend the host page base
+         // url (so node sebkit correctly navigates)
+         if (!hasProtocol(url))
+         {
+            if (url.startsWith("/"))
+               url = url.substring(1);
+            url = GWT.getHostPageBaseURL() + url;
+         }
+         
          NodeWebkit.browseURL(url);
-         assert options.getCallback() == null;
       }
       else
       {
