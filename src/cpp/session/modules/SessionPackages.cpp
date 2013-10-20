@@ -199,7 +199,7 @@ void initializeRStudioPackages(bool newSession)
    bool force = false;
 #endif
    
-   if (newSession)
+   if (newSession || (options().programMode() == kSessionProgramModeServer))
    {
       std::string libDir = core::string_utils::utf8ToSystem(
                               options().sessionLibraryPath().absolutePath());
