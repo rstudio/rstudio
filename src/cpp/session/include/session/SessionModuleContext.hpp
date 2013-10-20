@@ -353,8 +353,13 @@ bool haveRcppAttributes();
 
 #ifdef __APPLE__
 bool isOSXMavericks();
+bool hasOSXMavericksDeveloperTools();
 #else
 inline bool isOSXMavericks()
+{
+   return false;
+}
+inline bool hasOSXMavericksDeveloperTools()
 {
    return false;
 }

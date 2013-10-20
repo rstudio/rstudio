@@ -17,6 +17,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/system/Process.hpp>
+
 #include <Foundation/NSString.h>
 #include <Foundation/NSDictionary.h>
 
@@ -38,6 +40,25 @@ bool isOSXMavericks()
          [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
 
    return boost::algorithm::starts_with(version, "10.9");
+}
+
+bool hasOSXMavericksDeveloperTools()
+{
+   if (isOSXMavericks())
+   {
+      core::system::ProcessResult result;
+      Error error = core::system::runCommand("xcode-select -p",
+                                             core::system::ProcessOptions(),
+                                             &result);
+      if (!error && (result.exitStatus == EXIT_SUCCESS))
+         return true;
+      else
+         return false;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 } // namespace module_context
