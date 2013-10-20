@@ -933,9 +933,11 @@ SEXP rs_browseURL(SEXP urlSEXP)
       std::string filePrefix("file://");
       if (URL.find(filePrefix) == 0)
       {
-         // also look for more complete prefix
+         // also look for file:///c: style urls on windows
+#ifdef _WIN32
          if (URL.find(filePrefix + "/") == 0)
              filePrefix = filePrefix + "/";
+#endif
 
          // transform into FilePath
          std::string path = URL.substr(filePrefix.length());
