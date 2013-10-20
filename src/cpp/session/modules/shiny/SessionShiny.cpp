@@ -50,11 +50,9 @@ void onPackageLoaded(const std::string& pkgname)
          if (!hasRequiredVersion)
          {
             module_context::consoleWriteError("\nWARNING: To run Shiny "
-              "applications with RStudio Server you need to install the "
-              "latest version of the Shiny package from Github. You can "
-              "do this using the devtools package as follows:\n\n  "
-              "install.packages('devtools'); "
-              "devtools::install_github('shiny', 'rstudio')\n\n");
+              "applications with RStudio you need to install the "
+              "latest version of the Shiny package from CRAN (version 0.8 "
+              "or higher is required).\n\n");
          }
       }
    }
