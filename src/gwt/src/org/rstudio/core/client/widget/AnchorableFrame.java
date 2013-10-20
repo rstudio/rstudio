@@ -15,14 +15,10 @@
 
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.dom.WindowEx;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.user.client.ui.Frame;
 
-public class AnchorableFrame extends Frame
+public class AnchorableFrame extends RStudioFrame
 {
    public AnchorableFrame()
    {
@@ -78,13 +74,6 @@ public class AnchorableFrame extends Frame
          Scheduler.get().scheduleFixedDelay(navigateCommand, 50);      
    }
    
-   public WindowEx getWindow()
-   {
-      return getIFrame().getContentWindow();
-   }
-   
-
-   
    private boolean isBasePageOfCurrentAnchor(String newUrl)
    {
       // make sure there is an existing url to compare to
@@ -103,11 +92,6 @@ public class AnchorableFrame extends Frame
          return false;      
       
       return stripAnchor(newUrl).equals(stripAnchor(existingUrl));
-   }
-   
-   private IFrameElementEx getIFrame()
-   {
-      return getElement().cast();
    }
    
    private String stripAnchor(String url)

@@ -173,7 +173,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
 
       // check for initJs
-      if (!initJs.empty() && request.queryParamValue("view").empty())
+      if (!initJs.empty())
          vars["head_tags"] = "<script>" + initJs + "</script>";
       else
          vars["head_tags"] = std::string();

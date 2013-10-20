@@ -96,7 +96,12 @@ http::UriHandlerFunction blockingFileHandler()
       initJs = "if (window.require) {";
       initJs +=   "window.NodeWebkit = require('nw.gui'); ";
       initJs +=   "var win = window.NodeWebkit.Window.get(); ";
-      initJs +=   "win.on('close', function() { window.NodeWebkitClose(); }); ";
+      initJs +=   "win.on('close', function() { ";
+      initJs +=   "  if (window.NodeWebkitClose) ";
+      initJs +=   "    window.NodeWebkitClose(); ";
+      initJs +=   "  else ";
+      initJs +=   "    this.close(true);";
+      initJs +=   "}); ";
       initJs += "}";
    }
 

@@ -2,10 +2,10 @@ package org.rstudio.studio.client.workbench.views.viewer.ui;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.RStudioFrame;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.user.client.ui.Frame;
 
 /*
  * ViewerFrame.java
@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Frame;
  *
  */
 
-public class ViewerFrame extends Frame
+public class ViewerFrame extends RStudioFrame
 {
    public void navigate(final String url)
    {

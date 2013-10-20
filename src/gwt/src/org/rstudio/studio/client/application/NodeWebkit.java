@@ -15,7 +15,12 @@
 
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.studio.client.RStudioGinjector;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
 
 
 public class NodeWebkit
@@ -43,6 +48,26 @@ public class NodeWebkit
       var shell = $wnd.NodeWebkit.Shell;
       shell.openExternal(url);
    }-*/;
+   
+   public static void fixupIFrameLinks(Document doc)
+   {
+      NodeList<Element> elements = doc.getElementsByTagName("a") ;
+      for (int i = 0; i < elements.getLength(); i++)
+      {
+         ElementEx a = (ElementEx) elements.getItem(i) ;
+         String href = a.getAttribute("href", 2) ;
+         if (href == null)
+            continue ;
+
+         if (href.contains(":") || href.endsWith(".pdf"))
+         {
+            a.setAttribute(
+               "onclick",
+               "window.parent.NodeWebkit.Shell.openExternal(this.href);" +
+               "return false;") ;        
+         }
+      }
+   }
    
    public static native void registerCloseHandler() /*-{
       $wnd.NodeWebkitClose = $entry(
