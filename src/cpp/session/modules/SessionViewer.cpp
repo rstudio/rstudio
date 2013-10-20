@@ -98,8 +98,8 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
          {
             std::string path = filePath.relativePath(tempDir);
-            boost::format fmt("http://localhost:%1%/session/%2%");
-            url = boost::str(fmt % module_context::rLocalHelpPort() % path);
+            boost::format fmt("session/%1%");
+            url = boost::str(fmt % path);
             viewerNavigate(url, height);
          }
          else
