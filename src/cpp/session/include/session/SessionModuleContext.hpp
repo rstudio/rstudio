@@ -351,6 +351,15 @@ std::string libPathsString();
 bool canBuildCpp();
 bool haveRcppAttributes();
 
+#ifdef __APPLE__
+bool isOSXMavericks();
+#else
+inline bool isOSXMavericks()
+{
+   return false;
+}
+#endif
+
 struct VcsContext
 {
    std::string detectedVcs;

@@ -127,6 +127,11 @@ if(UNIX)
          modules/SessionCrypto.cpp
       )
    endif()
+   if(APPLE)
+      set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
+         SessionModuleContext.mm
+      )
+   endif()
 else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
