@@ -18,11 +18,9 @@ package com.google.gwt.dev.jjs.impl.codesplitter;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
-import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.JavaAndJavaScript;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.js.JsHoister.Cloner;
@@ -70,118 +68,7 @@ import java.util.Set;
  */
 public class FragmentExtractor {
 
-  /**
-   * A {@link LivenessPredicate} that bases liveness on a single
-   * {@link com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer}.
-   */
-  public static class CfaLivenessPredicate implements LivenessPredicate {
-    private final ControlFlowAnalyzer cfa;
-
-    public CfaLivenessPredicate(ControlFlowAnalyzer cfa) {
-      this.cfa = cfa;
-    }
-
-    @Override
-    public boolean isLive(JDeclaredType type) {
-      return cfa.getInstantiatedTypes().contains(type);
-    }
-
-    @Override
-    public boolean isLive(JField field) {
-      return cfa.getLiveFieldsAndMethods().contains(field)
-          || cfa.getFieldsWritten().contains(field);
-    }
-
-    @Override
-    public boolean isLive(JMethod method) {
-      return cfa.getLiveFieldsAndMethods().contains(method);
-    }
-
-    @Override
-    public boolean isLive(String string) {
-      return cfa.getLiveStrings().contains(string);
-    }
-
-    @Override
-    public boolean miscellaneousStatementsAreLive() {
-      return true;
-    }
-  }
-
-  /**
-   * <p>
-   * A predicate on whether statements and variables should be considered live.
-   * </p>
-   * 
-   * 
-   * <p>
-   * Any supplied predicate must satisfy load-order dependencies. For any atom
-   * considered live, the atoms it depends on at load time should also be live.
-   * The following load-order dependencies exist:
-   * </p>
-   * 
-   * <ul>
-   * <li>A class literal depends on the strings contained in its instantiation
-   * instruction.</li>
-   * 
-   * <li>Types depend on their supertype.</li>
-   * 
-   * <li>Instance methods depend on their enclosing type.</li>
-   * 
-   * <li>Static fields that are initialized to strings depend on the string they
-   * are initialized to.</li>
-   * </ul>
-   */
-  public static interface LivenessPredicate {
-    boolean isLive(JDeclaredType type);
-
-    boolean isLive(JField field);
-
-    boolean isLive(JMethod method);
-
-    boolean isLive(String literal);
-
     /**
-     * Whether miscellelaneous statements should be considered live.
-     * Miscellaneous statements are any that the fragment extractor does not
-     * recognize as being in any particular category. This method should almost
-     * always return <code>true</code>, but does return <code>false</code> for
-     * {@link NothingAlivePredicate}.
-     */
-    boolean miscellaneousStatementsAreLive();
-  }
-
-  /**
-   * A {@link LivenessPredicate} where nothing is alive.
-   */
-  public static class NothingAlivePredicate implements LivenessPredicate {
-    @Override
-    public boolean isLive(JDeclaredType type) {
-      return false;
-    }
-
-    @Override
-    public boolean isLive(JField field) {
-      return false;
-    }
-
-    @Override
-    public boolean isLive(JMethod method) {
-      return false;
-    }
-
-    @Override
-    public boolean isLive(String string) {
-      return false;
-    }
-
-    @Override
-    public boolean miscellaneousStatementsAreLive() {
-      return false;
-    }
-  }
-
-  /**
    * A logger for statements that the fragment extractor encounters. Install one using
    * {@link FragmentExtractor#setStatementLogger(StatementLogger)} .
    */

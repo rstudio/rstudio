@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.dev.jjs.impl.codesplitter.FragmentExtractor.LivenessPredicate;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
@@ -130,7 +129,7 @@ class ExclusivityMap {
   /**
    * Gets the liveness predicate for fragment.
    */
-  FragmentExtractor.LivenessPredicate getLivenessPredicate(Fragment fragment) {
+  LivenessPredicate getLivenessPredicate(Fragment fragment) {
     return new ExclusivityMapLivenessPredicate(fragment);
   }
 
@@ -235,7 +234,7 @@ class ExclusivityMap {
   /**
    * <p>
    * Patch up the fragment map to satisfy load-order dependencies, as described
-   * in the comment of {@link FragmentExtractor.LivenessPredicate}.
+   * in the comment of {@link LivenessPredicate}.
    * Load-order dependencies can be
    * violated when an atom is mapped to 0 as a leftover, but it has some
    * load-order dependency on an atom that was put in an exclusive fragment.
