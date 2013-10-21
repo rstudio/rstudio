@@ -35,7 +35,6 @@ public class ViewerPresenter extends BasePresenter
    {
       void navigate(String url);
       String getUrl();
-      void print();
       void popout();
       void refresh();
    }
@@ -94,8 +93,6 @@ public class ViewerPresenter extends BasePresenter
    }
    
    @Handler
-   public void onViewerPrint() { display_.print(); }
-   @Handler
    public void onViewerPopout() { display_.popout(); }
    @Handler
    public void onViewerRefresh() { display_.refresh(); }
@@ -133,7 +130,6 @@ public class ViewerPresenter extends BasePresenter
    private void enableCommands(boolean enable)
    {
       commands_.viewerPopout().setEnabled(enable);
-      commands_.viewerPrint().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
    }

@@ -14,12 +14,13 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.viewer.ui.ViewerFrame;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
@@ -37,8 +38,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.viewerPrint().createToolbarButton());
       
       toolbar.addRightWidget(commands_.viewerClear().createToolbarButton());
       toolbar.addRightWidget(commands_.viewerStop().createToolbarButton());
@@ -50,7 +49,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new ViewerFrame() ;
+      frame_ = new RStudioFrame() ;
       frame_.setUrl("about:blank");
       frame_.setSize("100%", "100%");
       return new AutoGlassPanel(frame_);
@@ -59,7 +58,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
-      frame_.navigate(url);
+      frame_.setUrl(url);
    }
    
    
@@ -69,12 +68,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       return frame_.getUrl();
    }
    
-   @Override
-   public void print()
-   {
-      frame_.print();
-   }
-
    @Override
    public void popout()
    {
@@ -91,7 +84,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          navigate(url);
    }
    
-   private ViewerFrame frame_;
+   private RStudioFrame frame_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
 }

@@ -273,7 +273,6 @@ public abstract class
    public abstract AppCommand refreshSuperDevMode();
    
    // Viewer
-   public abstract AppCommand viewerPrint();
    public abstract AppCommand viewerPopout();
    public abstract AppCommand viewerRefresh();
    public abstract AppCommand viewerStop();
