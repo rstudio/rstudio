@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -43,7 +43,8 @@ public class CompilationState {
   /**
    * Classes mapped by source name.
    */
-  protected final Map<String, CompiledClass> classFileMapBySource = new HashMap<String, CompiledClass>();
+  protected final Map<String, CompiledClass> classFileMapBySource =
+      new HashMap<String, CompiledClass>();
 
   /**
    * All my compilation units.
@@ -55,12 +56,14 @@ public class CompilationState {
   /**
    * Unmodifiable view of {@link #classFileMap}.
    */
-  private final Map<String, CompiledClass> exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
+  private final Map<String, CompiledClass> exposedClassFileMap =
+      Collections.unmodifiableMap(classFileMap);
 
   /**
    * Unmodifiable view of {@link #classFileMapBySource}.
    */
-  private final Map<String, CompiledClass> exposedClassFileMapBySource = Collections.unmodifiableMap(classFileMapBySource);
+  private final Map<String, CompiledClass> exposedClassFileMapBySource =
+      Collections.unmodifiableMap(classFileMapBySource);
 
   /**
    * Unmodifiable view of {@link #unitMap}.
@@ -70,12 +73,19 @@ public class CompilationState {
   /**
    * Unmodifiable view of all units.
    */
-  private final Collection<CompilationUnit> exposedUnits = Collections.unmodifiableCollection(unitMap.values());
+  private final Collection<CompilationUnit> exposedUnits =
+      Collections.unmodifiableCollection(unitMap.values());
 
   /**
-   * Controls our type oracle.
+   * Our type oracle.
    */
-  private final TypeOracleMediatorFromSource mediator = new TypeOracleMediatorFromSource();
+  private final TypeOracle typeOracle = new TypeOracle();
+
+  /**
+   * Updates our type oracle.
+   */
+  private final CompilationUnitTypeOracleUpdater typeOracleUpdater =
+      new CompilationUnitTypeOracleUpdater(typeOracle);
 
   CompilationState(TreeLogger logger, Collection<CompilationUnit> units,
       CompileMoreLater compileMoreLater) {
@@ -134,7 +144,7 @@ public class CompilationState {
   }
 
   public TypeOracle getTypeOracle() {
-    return mediator.getTypeOracle();
+    return typeOracle;
   }
 
   /**
@@ -152,8 +162,8 @@ public class CompilationState {
   /**
    * For testing.
    */
-  TypeOracleMediator getMediator() {
-    return mediator;
+  CompilationUnitTypeOracleUpdater getTypeOracleUpdater() {
+    return typeOracleUpdater;
   }
 
   private void assimilateUnits(TreeLogger logger,
@@ -167,6 +177,6 @@ public class CompilationState {
     }
     CompilationUnitInvalidator.retainValidUnits(logger, units,
         compileMoreLater.getValidClasses());
-    mediator.addNewUnits(logger, units);
+    typeOracleUpdater.addNewUnits(logger, units);
   }
 }

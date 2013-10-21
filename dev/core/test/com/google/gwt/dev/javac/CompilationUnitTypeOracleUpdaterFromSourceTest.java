@@ -1,14 +1,11 @@
 
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import java.io.IOException;
 
-public class TypeOracleMediatorFromSourceTest extends
-    TypeOracleMediatorTestBase {
+public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUpdaterTestBase {
 
   protected CheckedJavaResource CU_HasSyntaxErrors = new CheckedJavaResource(
       "test", "HasSyntaxErrors", "NoSyntaxErrors") {
@@ -68,9 +65,6 @@ public class TypeOracleMediatorFromSourceTest extends
    * old units which did not have errors. This ensures that the correct units
    * are pruned from the type oracle in the case where we encounter units with
    * errors.
-   *
-   * @throws UnableToCompleteException
-   * @throws IOException
    */
   public void testRefreshWithErrors() throws TypeOracleException {
     // Add Object

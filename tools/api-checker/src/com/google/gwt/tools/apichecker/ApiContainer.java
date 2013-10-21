@@ -25,8 +25,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompilationUnitBuilder;
+import com.google.gwt.dev.javac.CompilationUnitTypeOracleUpdater;
 import com.google.gwt.dev.javac.JdtCompiler;
-import com.google.gwt.dev.javac.TypeOracleMediatorFromSource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -216,11 +216,13 @@ public final class ApiContainer {
       throw new UnableToCompleteException();
     }
 
-    TypeOracleMediatorFromSource mediator = new TypeOracleMediatorFromSource();
-    mediator.addNewUnits(logger, units);
+    CompilationUnitTypeOracleUpdater typeOracleBuilder =
+        new CompilationUnitTypeOracleUpdater(
+            new com.google.gwt.dev.javac.typemodel.TypeOracle());
+    typeOracleBuilder.addNewUnits(logger, units);
     logger.log(TreeLogger.INFO, "API " + name + ", Finished with building typeOracle, added "
         + units.size() + " files", null);
-    return mediator.getTypeOracle();
+    return typeOracleBuilder.getTypeOracle();
   }
 
   private boolean hasPublicOrProtectedConstructor(JClassType classType) {

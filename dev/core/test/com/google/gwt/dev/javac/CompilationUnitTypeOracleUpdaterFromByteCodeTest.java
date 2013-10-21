@@ -16,7 +16,8 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
+import com.google.gwt.dev.javac.CompilationUnitTypeOracleUpdater.TypeData;
+import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.resource.Resource;
 
 import java.io.IOException;
@@ -31,12 +32,12 @@ import java.util.Collection;
  * When reporting a bug, make sure to report which JDK was used to compile the
  * tests.
  */
-public class TypeOracleMediatorFromByteCodeTest extends
-    TypeOracleMediatorTestBase {
+public class CompilationUnitTypeOracleUpdaterFromByteCodeTest extends TypeOracleUpdaterTestBase {
 
   @Override
   protected synchronized void buildTypeOracle() throws TypeOracleException {
-    Collection<TypeOracleMediator.TypeData> typeDataList = new ArrayList<TypeOracleMediator.TypeData>();
+    Collection<CompilationUnitTypeOracleUpdater.TypeData> typeDataList =
+        new ArrayList<CompilationUnitTypeOracleUpdater.TypeData>();
     for (Resource resource : resources) {
       if (resource instanceof MutableJavaResource) {
         MutableJavaResource javaResource = (MutableJavaResource) resource;
@@ -50,9 +51,10 @@ public class TypeOracleMediatorFromByteCodeTest extends
         }
       }
     }
-    TypeOracleMediator mediator = new TypeOracleMediator();
-    mediator.addNewTypes(createTreeLogger(), typeDataList);
-    typeOracle = mediator.getTypeOracle();
+    CompilationUnitTypeOracleUpdater typeOracleUpdater =
+        new CompilationUnitTypeOracleUpdater(new TypeOracle());
+    typeOracleUpdater.addNewTypes(createTreeLogger(), typeDataList);
+    this.typeOracle = typeOracleUpdater.getTypeOracle();
     checkTypes(typeOracle.getTypes());
   }
 }

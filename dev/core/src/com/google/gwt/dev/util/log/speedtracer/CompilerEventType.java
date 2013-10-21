@@ -48,7 +48,7 @@ public enum CompilerEventType implements EventType {
   OPTIMIZE_JS("OptimizeJs", "#8b8bab"), //
   PRECOMPILE("Precompile", "CornflowerBlue"), //
   RESOURCE_ORACLE("ResourceOracle", "GoldenRod"), //
-  TYPE_ORACLE_MEDIATOR("TypeOracleMediator", "LightSteelBlue"), //
+  TYPE_ORACLE_UPDATER("TypeOracleUpdater", "LightSteelBlue"), //
   PRECOMPILE_CORE("CoreCompiler", "Crimson"), //
   WRITE_OBJECT_AS_FILE("WriteObjectAsFile", "Magenta"), //
   BUILD_AST("BuildAST", "DarkGoldenRod"), //
@@ -70,7 +70,7 @@ public enum CompilerEventType implements EventType {
   CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"), //
   GRAPHICS_INIT("Graphics2D.createGraphics()", "Blue"), //
   ANALYZE_MODULE("AnalyzeModule", "LightBlue"), //
-  COMPILE_MODULE("CompileModule", "LightBlue"), 
+  COMPILE_MODULE("CompileModule", "LightBlue"),
   LOAD_ARCHIVE("LoadArchive", "DarkSlateBlue"); //
 
   final String cssColor;

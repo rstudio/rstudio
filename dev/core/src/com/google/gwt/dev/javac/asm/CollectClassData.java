@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -75,7 +75,7 @@ public class CollectClassData extends EmptyVisitor {
        * classes inside a static method will not have one and AFAICT there is no
        * way to distinguish these cases without looking up the declaring method.
        * However, since we are dropping any classes for which
-       * hasNoExternalName() returns true in TypeOracleMediator.addNewUnits, it
+       * hasNoExternalName() returns true in TypeOracleUpdater.addNewUnits, it
        * doesn't matter if we leave the synthetic argument in the list.
        */
 
@@ -110,7 +110,7 @@ public class CollectClassData extends EmptyVisitor {
 
     /**
      * Construct the value of an Enum-valued annotation.
-     * 
+     *
      * @param desc type descriptor of this enum
      * @param value actual value in this enum
      */
@@ -275,7 +275,7 @@ public class CollectClassData extends EmptyVisitor {
 
   /**
    * Called at the beginning of visiting the class.
-   * 
+   *
    * @param version classfile version (ie, Opcodes.V1_5 etc)
    * @param access access flags (ie, bitwise or of Opcodes.ACC_*)
    * @param name internal name of this class (ie, com/google/Foo)
@@ -303,7 +303,7 @@ public class CollectClassData extends EmptyVisitor {
 
   /**
    * Called for each field.
-   * 
+   *
    * @param access access flags for field
    * @param name field name
    * @param desc type descriptor (ie, Ljava/lang/String;)
@@ -329,7 +329,7 @@ public class CollectClassData extends EmptyVisitor {
 
   /**
    * Called once for every inner class of this class.
-   * 
+   *
    * @param name internal name of inner class (ie, com/google/Foo$1)
    * @param outerName internal name of enclosing class (null if not a member
    *          class or anonymous)
@@ -393,7 +393,7 @@ public class CollectClassData extends EmptyVisitor {
 
   /**
    * If compiled with debug, visit the source information.
-   * 
+   *
    * @param source unqualified filename containing source (ie, Foo.java)
    * @param debug additional debug information (may be null)
    */

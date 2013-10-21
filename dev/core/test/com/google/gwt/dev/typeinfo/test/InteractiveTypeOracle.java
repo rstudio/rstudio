@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,7 +16,6 @@
 package com.google.gwt.dev.typeinfo.test;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.BadTypeArgsException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
@@ -27,7 +26,6 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -49,7 +47,7 @@ public class InteractiveTypeOracle {
     /**
      * Executes the command given the specified args, writing the results or an
      * error.
-     * 
+     *
      * @return <code>false</code> if there was a problem, in which case the
      *         error description will have been written to results
      */
@@ -58,7 +56,7 @@ public class InteractiveTypeOracle {
     boolean requiresCurrentType();
   }
 
-  public static void main(String[] args) throws UnableToCompleteException {
+  public static void main(String[] args) {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
 
     // See if we should create a gui logger.
@@ -82,8 +80,7 @@ public class InteractiveTypeOracle {
 
     // Build an oracle.
     //
-    TypeOracleMediator mediator = new TypeOracleMediator();
-    TypeOracle oracle = mediator.getTypeOracle();
+    TypeOracle oracle = new com.google.gwt.dev.javac.typemodel.TypeOracle();
     // TODO: add compilation units
 
     // Create an interactive wrapper around the oracle.
@@ -152,7 +149,7 @@ public class InteractiveTypeOracle {
 
   /**
    * Registers a command handler.
-   * 
+   *
    * @return if not <code>null</code>, the previous handler for the same
    *         command token
    */

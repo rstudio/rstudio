@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,18 +21,22 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 
 /**
- * Constructs a new {@link TypeOracle}. This class provides package-level access
- * to a TypeOracle that is under construction. Once the TypeOracle is built, new
- * classes can be added later, but should never be removed.
- * 
- * This class's API is an implementation detail and should not be considered
- * stable. It is subject to change.
+ * Updates an existing {@link TypeOracle}. This class provides package-level access to a TypeOracle
+ * that is under construction. New classes can be added at any time, but should never be removed.
+ *
+ * This class's API is an implementation detail and should not be considered stable. It is subject
+ * to change.
  */
-public class TypeOracleBuilder {
+public class TypeOracleUpdater {
+
   /**
-   * The TypeOracle being built.
+   * The TypeOracle being updated.
    */
-  protected final TypeOracle typeOracle = new TypeOracle();
+  protected final TypeOracle typeOracle;
+
+  public TypeOracleUpdater(TypeOracle typeOracle) {
+    this.typeOracle = typeOracle;
+  }
 
   protected void addAnnotations(JPackage pkg,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
@@ -138,5 +142,4 @@ public class TypeOracleBuilder {
   protected void setVarArgs(JAbstractMethod method) {
     method.setVarArgs();
   }
-
 }

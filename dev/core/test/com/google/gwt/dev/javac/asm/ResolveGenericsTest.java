@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,9 +20,9 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.signature.SignatureReader;
+import com.google.gwt.dev.javac.CompilationUnitTypeOracleUpdater;
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.asm.CollectClassData.ClassType;
@@ -153,7 +153,7 @@ public class ResolveGenericsTest extends AsmTestCase {
   private static final String OUTER2_CLASS_SIG = "Lcom/google/gwt/dev/javac/asm/TestOuter1<Ljava/lang/String;>;";
   private static final String OUTER2_METHOD_SIG = "(Lcom/google/gwt/dev/javac/asm/TestHandler1<Ljava/lang/String;>;)V";
 
-  private final TypeOracleMediator mediator;
+  private final CompilationUnitTypeOracleUpdater typeOracleUpdater;
 
   private final TypeOracle oracle;
 
@@ -178,9 +178,9 @@ public class ResolveGenericsTest extends AsmTestCase {
   private final JRealClassType testType;
 
   public ResolveGenericsTest() {
-    mediator = TypeOracleTestingUtils.buildStandardMediatorWith(failTreeLogger);
-    resolver = new MockResolver(mediator.getMockResolver());
-    oracle = mediator.getTypeOracle();
+    typeOracleUpdater = TypeOracleTestingUtils.buildStandardUpdaterWith(failTreeLogger);
+    resolver = new MockResolver(typeOracleUpdater.getMockResolver());
+    oracle = typeOracleUpdater.getTypeOracle();
     createUnresolvedClass(String.class, null);
     testHandler = createUnresolvedClass(TestHandler.class, null);
     testHandler1 = createUnresolvedClass(TestHandler1.class, null);
@@ -196,7 +196,7 @@ public class ResolveGenericsTest extends AsmTestCase {
         "dispatch", TestHandler.class);
     for (JClassType type : oracle.getTypes()) {
       if (type instanceof JRealClassType) {
-        mediator.getBinaryMapper().put(
+        typeOracleUpdater.getBinaryMapper().put(
             type.getQualifiedBinaryName().replace('.', '/'),
             (JRealClassType) type);
       }

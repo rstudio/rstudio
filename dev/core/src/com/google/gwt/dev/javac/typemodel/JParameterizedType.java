@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -278,7 +278,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
    * event that we have generic subtypes and we cannot resolve the all of the
    * type arguments, we need to wildcard types in place of the arguments that we
    * cannot resolve.
-   * 
+   *
    * Algorithm: - Ask generic type for its subtypes - Filter subtypes of the
    * generic which cannot be our subtype.
    */
@@ -374,7 +374,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
    * type is a class, its own methods are not added. If this type is an
    * interface, its own methods are added. Used internally by
    * {@link #getOverridableMethods()}.
-   * 
+   *
    * @param methodsBySignature
    */
   @Override
@@ -435,8 +435,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
   /**
    * Initialize a map of substitutions for {@link JTypeParameter}s to
    * corresponding {@link JClassType}s. This can only be initialized after the
-   * {@link com.google.gwt.dev.javac.TypeOracleMediator TypeOracleMediator} has
-   * fully resolved all of the {@link JClassType}s.
+   * TypeOracleUpdater has fully resolved all of the {@link JClassType}s.
    */
   void maybeInitializeTypeParameterSubstitutionMap() {
     if (lazySubstitutionMap != null) {

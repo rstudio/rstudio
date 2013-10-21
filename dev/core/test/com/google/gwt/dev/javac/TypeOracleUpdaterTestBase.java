@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.javac.TypeOracleMediator.TypeData;
+import com.google.gwt.dev.javac.CompilationUnitTypeOracleUpdater.TypeData;
 import com.google.gwt.dev.javac.mediatortest.AfterAssimilate;
 import com.google.gwt.dev.javac.mediatortest.BaseInterface;
 import com.google.gwt.dev.javac.mediatortest.BeforeAssimilate;
@@ -80,13 +80,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Test TypeOracleMediator.
- * 
+ * Test TypeOracleUpdater.
+ *
  * NOTE: These tests require the test source code to be on the classpath. In
  * Eclipse, make sure your launch configuration includes the 'core/test'
  * directory on the classpath tab.
  */
-public abstract class TypeOracleMediatorTestBase extends TestCase {
+public abstract class TypeOracleUpdaterTestBase extends TestCase {
 
   protected static abstract class CheckedJavaResource extends MutableJavaResource {
     private final String[] shortTypeNames;
@@ -152,7 +152,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * This method is used to pull sample source from inside the test case. By
      * default, return <code>null</code> to indicate that source should be on
      * the classpath.
-     * 
+     *
      * @return
      */
     public String getSource() {
@@ -1101,7 +1101,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
      * This test fails for OpenJDK compiled classes compared to JDT classes. The
      * reason is that the superclass of this type doesn't contain a type
      * signature for OpenJDK byte code.
-     * 
+     *
      * Commenting out this code for the tests: I'm not sure any generators
      * depend on this subtle difference.
      */
@@ -1211,11 +1211,9 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
 
   /**
    * Test that modifying a type will cause any types that depend on it to be
-   * rebuilt by the TypeOracleBuilder during a refresh.
-   * 
-   * @throws UnableToCompleteException
+   * rebuilt by the TypeOracleUpdater during a refresh.
+   *
    * @throws NotFoundException
-   * @throws IOException
    */
   public void testRefresh() throws TypeOracleException {
     addTestResource(CU_Object);
@@ -1271,7 +1269,7 @@ public abstract class TypeOracleMediatorTestBase extends TestCase {
 
   /**
    * Creates a {@link Resource} and adds it the set of resources.
-   * 
+   *
    * @throws UnableToCompleteException
    */
   protected void addResource(String qualifiedTypeName, CharSequence source) {

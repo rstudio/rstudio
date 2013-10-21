@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -54,7 +54,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
 
   /**
    * Resolve a parameterized type.
-   * 
+   *
    * @param resolver
    * @param binaryMapper
    * @param logger
@@ -204,21 +204,21 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
   /**
    * Merge the bounds from the declared type parameters into the type arguments
    * for this type if necessary.
-   * 
+   *
    * <pre>
    * Example:
    * class Foo<T extends Bar> ...
-   * 
+   *
    * Foo<?> foo
-   * 
+   *
    * foo needs to have bounds ? extends Bar.
    * </pre>
-   * 
+   *
    * <p>
    * Currently we only deal with unbound wildcards as above, which matches
-   * existing TypeOracleMediator behavior. However, this may need to be
+   * existing TypeOracleUpdater behavior. However, this may need to be
    * extended.
-   * 
+   *
    * @param typeParams
    * @param typeArgs
    */
@@ -228,7 +228,7 @@ public class ResolveTypeSignature extends EmptySignatureVisitor {
     for (int i = 0; i < n; ++i) {
       JWildcardType wildcard = typeArgs[i].isWildcard();
       // right now we only replace Foo<?> with the constraints defined on the
-      // definition (which appears to match the existing TypeOracleMediator)
+      // definition (which appears to match the existing TypeOracleUpdater)
       // but other cases may need to be handled.
       if (wildcard != null
           && wildcard.getBoundType() == BoundType.UNBOUND
