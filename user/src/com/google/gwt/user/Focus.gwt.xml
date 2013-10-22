@@ -36,11 +36,14 @@
   <!-- IE's implementation traps exceptions on invalid setFocus() -->
   <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplIE6">
     <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
-    <any>
-      <when-property-is name="user.agent" value="ie6"/>
-      <when-property-is name="user.agent" value="ie8"/>
-      <when-property-is name="user.agent" value="ie9"/>
-      <when-property-is name="user.agent" value="ie10"/>
-    </any>
+    <all>
+      <any>
+        <when-property-is name="user.agent" value="ie6"/>
+        <when-property-is name="user.agent" value="ie8"/>
+      </any>
+      <none>
+        <when-property-is name="user.agent" value="ie9"/>
+      </none>
+    </all>
   </replace-with>
 </module>
