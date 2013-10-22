@@ -737,6 +737,31 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
 }
 
+void onBeforeExecute()
+{
+   // The client tracks busy state based on whether a console prompt has
+   // been issued (because R doesn't reliably deliver non-busy state) --
+   // i.e. when a console prompt occurs the client leaves busy state.
+   // During debugging the busy state is therefore exited as soon as a
+   // Browse> prompt is hit. This is often not a problem as the debug
+   // stop command will interrupt R if necessary. However, in the case
+   // where the Next or Continue command results in R running without
+   // hitting another breakpoint we've essentially lost the busy state.
+   //
+   // This handler (which executes right before console input is returned
+   // to R) checks whether we are in the Browser and if so re-raises the
+   // busy event to indicate that R is now back in a busy state. The busy
+   // state will be immediately cleared if another Browse> prompt is hit
+   // however if R continues running then the client will properly restore
+   // the state of the interruptR command
+
+   if (inBrowseContext())
+   {
+      ClientEvent event(client_events::kBusy, true);
+      module_context::enqueClientEvent(event);
+   }
+}
+
 Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
                           boost::shared_ptr<RCNTXT*> pCurrentContext,
                           const json::JsonRpcRequest&,
@@ -887,6 +912,7 @@ Error initialize()
    events().onConsolePrompt.connect(bind(onConsolePrompt,
                                          pContextDepth,
                                          pCurrentContext));
+   events().onBeforeExecute.connect(onBeforeExecute);
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);
