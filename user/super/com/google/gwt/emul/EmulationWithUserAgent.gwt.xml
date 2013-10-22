@@ -21,16 +21,10 @@
     <when-type-is class="com.google.gwt.core.client.impl.StringBufferImpl"/>
   </replace-with>
 
-  <!--  Append is awful on IE.  Use Array instead. -->
+  <!--  Append is awful on IE6/7.  Use Array instead. -->
   <replace-with class="com.google.gwt.core.client.impl.StringBufferImplArray">
     <when-type-is class="com.google.gwt.core.client.impl.StringBufferImpl"/>
-    <any>
-      <when-property-is name="user.agent" value="ie6"/>
-      <when-property-is name="user.agent" value="ie8"/>
-      <when-property-is name="user.agent" value="ie9"/>
-      <!--  Not actually tested whether this is still needed -->
-      <when-property-is name="user.agent" value="ie10"/>
-    </any>
+    <when-property-is name="user.agent" value="ie6"/>
   </replace-with>
 
   <super-source/>
