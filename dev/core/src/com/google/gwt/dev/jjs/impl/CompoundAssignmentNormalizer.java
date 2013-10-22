@@ -34,7 +34,6 @@ import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
@@ -55,22 +54,12 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
  * parts of the same tree. Instead, the node must be cloned before each
  * insertion into a tree other than the first.
  * </p>
- * 
- * <p>
- * If the <code>reuseTemps</code> constructor parameter is set to
- * <code>true</code>, then temps of the correct type will be reused once they
- * become available. To determine when a temp can be reused, the current
- * implementation uses a notion of "temp usage scopes". Every time a temporary
- * variable is allocated, it is recorded in the current temp usage scope. Once
- * the current temp usage scope is exited, all of its temps become available for
- * use for other purposes.
- * </p>
  */
 public abstract class CompoundAssignmentNormalizer {
   /**
    * Breaks apart certain complex assignments.
    */
-  private class BreakupAssignOpsVisitor extends JModVisitor {
+  private class BreakupAssignOpsVisitor extends JModVisitorWithTemporaryVariableCreation {
 
     /**
      * Replaces side effects in lvalue.
@@ -145,6 +134,11 @@ public abstract class CompoundAssignmentNormalizer {
     }
 
     @Override
+    protected String newTemporaryLocalName(SourceInfo info, JType type, JMethodBody methodBody) {
+      return CompoundAssignmentNormalizer.this.newTemporaryLocalName(info, type, methodBody);
+    }
+
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       JBinaryOperator op = x.getOp();
       if (op.getNonAssignmentOf() == null) {
@@ -183,12 +177,6 @@ public abstract class CompoundAssignmentNormalizer {
         multiExpr.addExpressions(asg);
         ctx.replaceMe(multiExpr);
       }
-    }
-
-    @Override
-    public void endVisit(JMethodBody body, Context ctx) {
-      assert currentMethodBody == body;
-      currentMethodBody = null;
     }
 
     @Override
@@ -277,20 +265,6 @@ public abstract class CompoundAssignmentNormalizer {
               .cloneExpression(arg), one);
       return asg;
     }
-
-    @Override
-    public boolean visit(JMethodBody body, Context ctx) {
-      assert currentMethodBody == null;
-      currentMethodBody = body;
-      return true;
-    }
-
-    private JMethodBody currentMethodBody = null;
-
-    private JLocal createTempLocal(SourceInfo info, JType type) {
-      assert currentMethodBody != null;
-      return CompoundAssignmentNormalizer.this.createTempLocal(info, type, currentMethodBody);
-    }
   }
 
   private final CloneExpressionVisitor cloner = new CloneExpressionVisitor();
@@ -308,13 +282,14 @@ public abstract class CompoundAssignmentNormalizer {
   private static final String TEMP_LOCAL_NAME = "$tmp";
 
   /**
-   * Create a temporary local variable in {@code methodBody}. Locals might have duplicate names as they are always
-   * referred to by reference; {@link GenerateJavaScriptAST} will attempt coalesce variables of same name.
+   * Gets a new temporary local variable name in {@code methodBody}. Locals might have duplicate
+   * names as they are always referred to by reference.
+   * {@link GenerateJavaScriptAST} will attempt coalesce variables of same name.
    *
-   * <p> Subclasses might decide on different approaches to creating local temporaries.
+   * <p> Subclasses might decide on different approaches to naming local temporaries.
    */
-  protected JLocal createTempLocal(SourceInfo info, JType type, JMethodBody methodBody) {
-    return JProgram.createLocal(info, TEMP_LOCAL_NAME, type, false, methodBody);
+  protected String newTemporaryLocalName(SourceInfo info, JType type, JMethodBody methodBody) {
+    return TEMP_LOCAL_NAME;
   }
 
   /**
