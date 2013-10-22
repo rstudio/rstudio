@@ -43,6 +43,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -1354,6 +1355,9 @@ public class Source implements InsertSourceHandler,
                         endPosition = SourcePosition.create(
                               filePos.getEndLine() - 1,
                               filePos.getEndColumn() + 1);
+                        
+                        if (Desktop.isDesktop())
+                           Desktop.getFrame().bringMainFrameToFront();
                      }
                      navigate(target, 
                               SourcePosition.create(position.getLine() - 1,
