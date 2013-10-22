@@ -191,13 +191,26 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum1 = create(PAST);
     int a1 = accum1.getDate();
-    assertEquals(4, a1);
+    int expectedValue = 5;
+    if (needsToChangeDate(accum1, 0)) {
+      expectedValue--;
+    }
+    assertEquals(expectedValue, a1);
     // /////////////////////////////
     // Future
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     int a2 = accum2.getDate();
-    assertEquals(29, a2);
+    expectedValue = 30;
+    if (needsToChangeDate(accum2, 3 * 60 + 4)) {
+      expectedValue--;
+    }
+    assertEquals(expectedValue, a2);
+  }
+
+  private boolean needsToChangeDate(Date d, int minuteOffset) {
+    int timezoneOffset = d.getTimezoneOffset();
+    return timezoneOffset > minuteOffset;
   }
 
   /** Testing for public int java.util.Date.getDay(). */
@@ -762,100 +775,104 @@ public class DateTest extends GWTTestCase {
     d.setTime(d.getTime() - 60 * 60 * 1000);
     assertEquals(hour, d.getHours());
   }
-  
+
   public void testClockForwardTime() {
     int[] monthDayHour = new int[3];
     if (!findClockForwardTime(2009, monthDayHour)) {
       return;
     }
-    
+
     Date d;
     int month = monthDayHour[0];
     int day = monthDayHour[1];
     int hour = monthDayHour[2];
-    
+
     d = new Date(2009 - 1900, month, day, hour, 0, 0);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test year change -- assume the previous year changes on a different day
     d = new Date(2008 - 1900, month, day, hour, 0, 0);
     assertEquals(hour, d.getHours());
     d.setYear(2009 - 1900);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test month change
     d = new Date(2009 - 1900, month + 1, day, hour, 0, 0);
     assertEquals(hour, d.getHours());
     d.setMonth(month);
-    assertEquals(3, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test day change
     d = new Date(2009 - 1900, month, day + 1, hour, 0, 0);
     assertEquals(hour, d.getHours());
     d.setDate(day);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test hour setting
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
-    assertEquals(hour + 2, d.getHours());
+    assertEquals(normalizeHour(hour + 2), d.getHours());
     d.setHours(hour);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test changing hour by minutes = +- 60
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
-    assertEquals(hour + 2, d.getHours());
+    assertEquals(normalizeHour(hour + 2), d.getHours());
     d.setMinutes(-60);
-    assertEquals(hour + 1, d.getHours());
+    assertEquals(normalizeHour(hour + 1), d.getHours());
 
     d = new Date(2009 - 1900, month, day, hour - 1, 0, 0);
-    assertEquals(hour - 1, d.getHours());
+    assertEquals(normalizeHour(hour - 1), d.getHours());
     d.setMinutes(60);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test changing hour by minutes = +- 120
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
-    assertEquals(hour + 2, d.getHours());
+    assertEquals(normalizeHour(hour + 2), d.getHours());
     d.setMinutes(-120);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     d = new Date(2009 - 1900, month, day, hour - 2, 0, 0);
-    assertEquals(hour - 2, d.getHours());
+    assertEquals(normalizeHour(hour - 2), d.getHours());
     d.setMinutes(120);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test changing hour by seconds = +- 3600
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
-    assertEquals(hour + 2, d.getHours());
+    assertEquals(normalizeHour(hour + 2), d.getHours());
     d.setSeconds(-3600);
-    assertEquals(hour + 1, d.getHours());
+    assertEquals(normalizeHour(hour + 1), d.getHours());
 
     d = new Date(2009 - 1900, month, day, hour - 1, 0, 0);
-    assertEquals(hour - 1, d.getHours());
+    assertEquals(normalizeHour(hour - 1), d.getHours());
     d.setSeconds(3600);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     // Test changing hour by seconds = +- 7200
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
-    assertEquals(hour + 2, d.getHours());
+    assertEquals(normalizeHour(hour + 2), d.getHours());
     d.setSeconds(-7200);
-    assertEquals(hour + 1, d.getHours());
+    assertEquals(normalizeHour(hour + 1), d.getHours());
 
     d = new Date(2009 - 1900, month, day, hour - 2, 0, 0);
-    assertEquals(hour - 2, d.getHours());
+    assertEquals(normalizeHour(hour - 2), d.getHours());
     d.setSeconds(7200);
-    assertEquals(hour + 1, d.getHours());
-    
+    assertEquals(normalizeHour(hour + 1), d.getHours());
+
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
     d.setHours(hour);
     d.setMinutes(30);
-    assertEquals(hour + 1, d.getHours());
+    assertEquals(normalizeHour(hour + 1), d.getHours());
     assertEquals(30, d.getMinutes());
-    
+
     d = new Date(2009 - 1900, month, day, hour + 2, 0, 0);
     d.setMinutes(30);
     d.setHours(hour);
-    assertEquals(hour + 1, d.getHours());
+    assertEquals(normalizeHour(hour + 1), d.getHours());
     assertEquals(30, d.getMinutes());
+  }
+
+  int normalizeHour(int i) {
+    return (i + 24) % 24;
   }
 
   Date create() {
