@@ -286,15 +286,10 @@ public abstract class CompoundAssignmentNormalizer {
     }
 
     private JMethodBody currentMethodBody = null;
-    // Name to assign to temporaries. All temporaries are created with the same name, which is
-    // not a problem as they are referred to by reference.
-    // {@link GenerateJavaScriptAst.FixNameClashesVisitor} will resolve into unique names when
-    // needed.
-    private static final String TEMP_LOCAL_NAME = "$t";
 
     private JLocal createTempLocal(SourceInfo info, JType type) {
       assert currentMethodBody != null;
-      return JProgram.createLocal(info, TEMP_LOCAL_NAME, type, false, currentMethodBody);
+      return CompoundAssignmentNormalizer.this.createTempLocal(info, type, currentMethodBody);
     }
   }
 
@@ -303,6 +298,23 @@ public abstract class CompoundAssignmentNormalizer {
   public void accept(JNode node) {
     BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
     breaker.accept(node);
+  }
+
+
+  // Name to assign to temporaries. All temporaries are created with the same name, which is
+  // not a problem as they are referred to by reference.
+  // {@link GenerateJavaScriptAst.FixNameClashesVisitor} will resolve into unique names when
+  // needed.
+  private static final String TEMP_LOCAL_NAME = "$tmp";
+
+  /**
+   * Create a temporary local variable in {@code methodBody}. Locals might have duplicate names as they are always
+   * referred to by reference; {@link GenerateJavaScriptAST} will attempt coalesce variables of same name.
+   *
+   * <p> Subclasses might decide on different approaches to creating local temporaries.
+   */
+  protected JLocal createTempLocal(SourceInfo info, JType type, JMethodBody methodBody) {
+    return JProgram.createLocal(info, TEMP_LOCAL_NAME, type, false, methodBody);
   }
 
   /**
