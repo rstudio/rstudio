@@ -2277,8 +2277,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
    * @param subrow the index of the subrow beneath the row.
    * @return the row element, or null if not found
    */
-  // Visible for testing.
-  TableRowElement getSubRowElement(int absRow, int subrow) {
+  protected TableRowElement getSubRowElement(int absRow, int subrow) {
     int relRow = absRow - getPageStart();
     checkRowBounds(relRow);
 
