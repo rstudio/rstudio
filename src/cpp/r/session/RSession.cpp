@@ -496,9 +496,13 @@ Error initialize()
    // server specific R options options
    if (s_options.serverMode)
    {
+#ifndef __APPLE__
       FilePath serverOptionsFilePath =  s_options.rSourcePath.complete(
                                                          "ServerOptions.R");
       return r::sourceManager().sourceLocal(serverOptionsFilePath);
+#else
+      return Success();
+#endif
    }
    else
    {
