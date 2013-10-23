@@ -1,0 +1,130 @@
+#!/bin/bash
+
+#
+# install-pandoc
+#
+# Copyright (C) 2009-12 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# install system level dependencies
+if [ -x /usr/bin/apt-get ]
+then 
+  sudo apt-get -y install libglc-dev
+  sudo apt-get -y install freeglut3-dev
+fi
+
+# establish pandoc directory and work there
+PANDOC_DIR=${INSTALL_DIR}/pandoc
+mkdir -p ${PANDOC_DIR}
+cd $PANDOC_DIR
+
+# get ghc
+GHC_VERSION=7.6.3
+GHC_DIR=${PANDOC_DIR}/ghc-${GHC_VERSION}
+if [ ! -d ${GHC_DIR} ]
+then
+  # remove existing ghc artifacts
+  rm -rf $HOME/.ghc
+
+  GHC_ARCH=`uname -m`
+  GHC_NAME=ghc-${GHC_VERSION}-${GHC_ARCH}-unknown-linux
+  GHC_TARBALL=${GHC_NAME}.tar.bz2
+  wget http://www.haskell.org/ghc/dist/${GHC_VERSION}/${GHC_TARBALL} -O ${GHC_TARBALL}
+  tar --bzip2 -xf ${GHC_TARBALL}
+  rm ${GHC_TARBALL}
+
+  # build it
+  GHC_SRC=ghc-${GHC_VERSION}-src
+  mv ghc-${GHC_VERSION} ${GHC_SRC}
+  cd ${GHC_SRC}
+  ./configure --prefix=${GHC_DIR}
+  make install
+  cd ..
+  rm -rf ${GHC_SRC}
+else
+  echo "GHC ${GHC_VERSION} already installed"
+fi
+
+# build the haskell platform
+HASKELL_PLATFORM_VERSION=2013.2.0.0
+HASKELL_PLATFORM_NAME=haskell-platform-${HASKELL_PLATFORM_VERSION}
+HASKELL_PLATFORM_DIR=${PANDOC_DIR}/${HASKELL_PLATFORM_NAME}
+if [ ! -d ${HASKELL_PLATFORM_DIR} ]
+then
+
+  # remove existing packages
+  rm -rf $HOME/.cabal
+
+  HASKELL_PLATFORM_TARBALL=${HASKELL_PLATFORM_NAME}.tar.gz
+  wget http://lambda.haskell.org/platform/download/${HASKELL_PLATFORM_VERSION}/${HASKELL_PLATFORM_TARBALL} -O ${HASKELL_PLATFORM_TARBALL}
+  tar xf ${HASKELL_PLATFORM_TARBALL}
+  rm ${HASKELL_PLATFORM_TARBALL}
+  
+  # build it 
+  HASKELL_PLATFORM_SRC=${HASKELL_PLATFORM_NAME}-src
+  mv ${HASKELL_PLATFORM_NAME} ${HASKELL_PLATFORM_SRC}
+  cd ${HASKELL_PLATFORM_SRC}
+  ./configure --prefix=${HASKELL_PLATFORM_DIR} \
+       --with-hsc2hs=${GHC_DIR}/bin/hsc2hs \
+       --with-ghc=${GHC_DIR}/bin/ghc \
+       --with-ghc-pkg=${GHC_DIR}/bin/ghc-pkg
+  make
+  make install
+  cd ..
+  rm -rf ${HASKELL_PLATFORM_SRC}
+
+else
+  echo "Haskell Platform ${HASKELL_PLATFORM_VERSION} already installed"
+fi
+
+# get pandoc
+PANDOC_VERSION=1.12.1
+PANDOC_NAME=pandoc-${PANDOC_VERSION}
+PANDOC_INSTALL_DIR=${PANDOC_DIR}/${PANDOC_NAME}
+if [ ! -d ${PANDOC_INSTALL_DIR} ]
+then
+  PANDOC_TARBALL=${PANDOC_NAME}.tar.gz
+  wget http://pandoc.googlecode.com/files/${PANDOC_TARBALL} \
+       -O ${PANDOC_TARBALL} 
+  tar xf ${PANDOC_TARBALL}
+  rm ${PANDOC_TARBALL}
+
+  # build it
+  PANDOC_SRC=${PANDOC_NAME}-src
+  mv ${PANDOC_NAME} ${PANDOC_SRC}
+  cd ${PANDOC_SRC}
+
+  PATH=${GHC_DIR}/bin:$HOME/.cabal/bin:${PATH}
+  CABAL=${HASKELL_PLATFORM_DIR}/bin/cabal
+  $CABAL update
+  $CABAL install --only-dependencies
+  $CABAL install hsb2hs
+  $CABAL install --flags="embed_data_files" citeproc-hs
+  $CABAL install alex happy
+  $CABAL configure --flags="embed_data_files"
+  $CABAL build
+  mkdir -p ${PANDOC_INSTALL_DIR} 
+  cp dist/build/pandoc/pandoc ${PANDOC_INSTALL_DIR}
+
+  cd ..
+  rm -rf ${PANDOC_SRC}
+else
+  echo "Pandoc ${PANDOC_VERSION} already installed"
+fi
+
+cd $INSTALL_DIR
+
