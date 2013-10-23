@@ -69,6 +69,21 @@
       <arg line="${gwt.args}"/>
       <arg value="@moduleName"/>
     </java>
+  </target>
+
+  <target name="superdevmode" depends="javac" description="Run Super Dev Mode">
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.codeserver.CodeServer">
+      <classpath>
+        <pathelement location="@gwtCodeServerPath" />
+        <path refid="project.class.path"/>
+        <pathelement location="@gwtValidationPath" />
+        <pathelement location="@gwtValidationSourcesPath" />
+      </classpath>
+      <jvmarg value="-Xmx256M"/>
+      <arg value="-src"/>
+      <arg value="@srcFolder"/>
+      <arg value="@moduleName"/>
+    </java>
   </target>@antEclipseRule
 @testTargetsBegin
   <target name="javac.tests" depends="javac" description="Compiles test code">

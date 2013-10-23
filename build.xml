@@ -105,6 +105,7 @@
 
   <target name="samples" description="[subdir] Builds (or runs ${target} if set) the samples">
     <call-subproject subproject="user" subtarget="build" />
+    <call-subproject subproject="codeserver" subtarget="build" />
     <gwt.ant dir="samples" />
   </target>
 

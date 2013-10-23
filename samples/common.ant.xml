@@ -16,6 +16,7 @@
 
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
+  <property.ensure name="gwt.codeserver.jar" location="${gwt.build.lib}/gwt-codeserver.jar" />
 
   <!-- Mirror directory for scripts; makes building distro easier -->
   <property name="samples.scripts" value="${gwt.build.out}/samples-scripts" />

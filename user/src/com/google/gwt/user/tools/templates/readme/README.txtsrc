@@ -47,6 +47,9 @@ line path.
 
 To run development mode, just type 'ant devmode'.
 
+To use Super Dev Mode, you will need to run two commands in separate
+windows. Run 'ant devmode' and also 'ant superdevmode'.
+
 To compile your project for deployment, just type 'ant'.
 
 To compile and also bundle into a .war file, type 'ant war'.
