@@ -377,10 +377,12 @@ public abstract class ContentWidget extends SimpleLayoutPanel implements
    * Send a request for source code.
    * 
    * @param callback the {@link RequestCallback} to send
-   * @param url the URL to target
+   * @param urlSuffix the URL to target, relative to the Showcase module's base URL.
    */
-  private void sendSourceRequest(RequestCallback callback, String url) {
-    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, GWT.getModuleBaseURL() + url);
+  private void sendSourceRequest(RequestCallback callback, String urlSuffix) {
+    // When Super Dev Mode is on, we will load it from the code server, not the original server.
+    String url = GWT.getModuleBaseForStaticFiles() + urlSuffix;
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
     builder.setCallback(callback);
     try {
       builder.send();

@@ -28,4 +28,8 @@
   <set-property-fallback name="locale" value="en"/>
   <set-configuration-property name="locale.cookie" value="SHOWCASE_LOCALE"/>
   <set-configuration-property name="locale.useragent" value="Y"/>
+
+  <!-- allow Super Dev Mode -->
+  <add-linker name="xsiframe"/>
+  <set-configuration-property name="devModeRedirectEnabled" value="true"/>
 </module>

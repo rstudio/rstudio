@@ -20,4 +20,8 @@
   <set-configuration-property name="CssResource.obfuscationPrefix" value="M" />
 
   <entry-point class='com.google.gwt.sample.mail.client.Mail' />
+
+  <!-- allow Super Dev Mode -->
+  <add-linker name="xsiframe"/>
+  <set-configuration-property name="devModeRedirectEnabled" value="true"/>
 </module>

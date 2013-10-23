@@ -40,4 +40,8 @@
     <when-type-is
       class="com.google.gwt.validation.client.UserValidationMessagesResolver" />
   </replace-with>
+
+  <!-- allow Super Dev Mode -->
+  <add-linker name="xsiframe"/>
+  <set-configuration-property name="devModeRedirectEnabled" value="true"/>
 </module>
