@@ -793,6 +793,14 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    if (!uri.compare(0, sessionPrefix.length(), sessionPrefix))
       uri = uri.substr(sessionPrefix.length());
 
+   // remove query parameters and anchor
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+   pos = uri.find("#");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+
    // ensure that this path does not contain ..
    if (uri.find("..") != std::string::npos)
    {

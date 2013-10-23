@@ -50,15 +50,47 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    protected Widget createMainWidget()
    {
       frame_ = new RStudioFrame() ;
-      frame_.setUrl("about:blank");
       frame_.setSize("100%", "100%");
+      navigate(ABOUT_BLANK);
       return new AutoGlassPanel(frame_);
    }
    
    @Override
    public void navigate(String url)
    {
-      frame_.setUrl(url);
+      // save the unmodified URL for pop-out
+      unmodifiedUrl_ = url;
+      
+      // append the viewer_pane query parameter
+      if ((unmodifiedUrl_ != null) && !unmodifiedUrl_.equals(ABOUT_BLANK))
+      {
+         // first split into base and anchor
+         String base = new String(unmodifiedUrl_);
+         String anchor = new String();
+         int anchorPos = base.indexOf('#');
+         if (anchorPos != -1)
+         {
+            anchor = base.substring(anchorPos);
+            base = base.substring(0, anchorPos);
+         }
+         
+         // add the query param
+         if (!base.contains("?"))
+            base = base + "?";
+         else
+            base = base + "&";
+         base = base + "viewer_pane=1";
+        
+         // add the anchor back on
+         String viewerUrl = base + anchor;
+         
+         // set the url
+         frame_.setUrl(viewerUrl);
+      }
+      else
+      {
+         frame_.setUrl(unmodifiedUrl_);
+      }
    }
    
    
@@ -71,9 +103,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void popout()
    {
-      String url = frame_.getUrl();
-      if (url != null)
-         globalDisplay_.openWindow(url);
+      if (unmodifiedUrl_ != null)
+         globalDisplay_.openWindow(unmodifiedUrl_);
    }
 
    @Override
@@ -81,10 +112,12 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       String url = frame_.getUrl();
       if (url != null)
-         navigate(url);
+         frame_.setUrl(url);
    }
    
    private RStudioFrame frame_;
+   private String unmodifiedUrl_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private static final String ABOUT_BLANK = "about:blank";
 }

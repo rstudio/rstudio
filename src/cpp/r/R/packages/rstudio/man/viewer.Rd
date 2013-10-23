@@ -22,7 +22,25 @@ RStudio also sets the global \code{viewer} option to the \code{rstudio::viewer} 
 
 Applications are displayed within the Viewer pane. The application URL must either be served from localhost or be a path to a file within the R session temporary directory. If the URL doesn't conform to these requirements it is displayed within a standard browser window.
 
-The \code{height} paramater specifies a desired height, however it's possible the Viewer pane will end up smaller if the request can't be fulfuilled (RStudio ensures that the pane paired with the Viewer maintains a minimum height). A height of 400 pixels or lower is likely to succeed in a large proportion of configurations. A very large height (e.g. 2000 pixels) will allocate the maximum allowable space for the Viewer.
+The \code{height} parameter specifies a desired height, however it's possible the Viewer pane will end up smaller if the request can't be fulfilled (RStudio ensures that the pane paired with the Viewer maintains a minimum height). A height of 400 pixels or lower is likely to succeed in a large proportion of configurations. A very large height (e.g. 2000 pixels) will allocate the maximum allowable space for the Viewer.
+
+}
+
+\section{Viewer Detection}{
+
+When a page is displayed within the Viewer it's possible that the user will choose to pop it out into a standalone browser window. When rendering inside a standard browser you may want to make different choices about how content is laid out or scaled. Web pages can detect that they are running inside the Viewer pane by looking for the \code{viewer_pane} query parameter, which is automatically injected into URLs when they are shown in the Viewer. For example, the following URL:
+
+\preformatted{
+http://localhost:8100
+}
+
+When rendered in the Viewer pane is transformed to:
+
+\preformatted{
+http://localhost:8100?viewer_pane=1
+}
+
+To provide a good user experience it's strongly recommended that callers take advantage of this to automatically scale their content to the current size of the Viewer pane. For example, re-rendering a JavaScript plot with new dimensions when the size of the pane changes.
 
 }
 
