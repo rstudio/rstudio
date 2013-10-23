@@ -138,7 +138,7 @@ public abstract class CompoundAssignmentNormalizer {
         JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
         JBinaryOperation asg =
             new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef, x);
-        multi.exprs.add(asg);
+        multi.addExpressions(asg);
         // Update me with the temp
         return cloner.cloneExpression(tempRef);
       }
@@ -175,12 +175,12 @@ public abstract class CompoundAssignmentNormalizer {
               .cloneExpression(newLhs), operation);
 
       JMultiExpression multiExpr = replacer.getMultiExpr();
-      if (multiExpr.exprs.isEmpty()) {
+      if (multiExpr.isEmpty()) {
         // just use the split assignment expression
         ctx.replaceMe(asg);
       } else {
         // add the assignment as the last item in the multi
-        multiExpr.exprs.add(asg);
+        multiExpr.addExpressions(asg);
         ctx.replaceMe(multiExpr);
       }
     }
@@ -219,16 +219,16 @@ public abstract class CompoundAssignmentNormalizer {
       JBinaryOperation asg =
           new JBinaryOperation(x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, tempRef,
               expressionReturn);
-      multi.exprs.add(asg);
+      multi.addExpressions(asg);
 
       // x += 1
       asg = createAsgOpFromUnary(newArg, op);
       // Break the resulting asg op before adding to multi.
-      multi.exprs.add(accept(asg));
+      multi.addExpressions(accept(asg));
 
       // t
       tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
-      multi.exprs.add(tempRef);
+      multi.addExpressions(tempRef);
 
       ctx.replaceMe(multi);
     }

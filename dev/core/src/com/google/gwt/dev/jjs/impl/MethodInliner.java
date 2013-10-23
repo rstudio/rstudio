@@ -198,13 +198,13 @@ public class MethodInliner {
 
       // Any instance expression goes first (this can happen even with statics).
       if (x.getInstance() != null) {
-        multi.exprs.add(x.getInstance());
+        multi.addExpressions(x.getInstance());
       }
 
       // If we need a clinit call, add it first
       JMethodCall clinit = createClinitCall(x);
       if (clinit != null) {
-        multi.exprs.add(clinit);
+        multi.addExpressions(clinit);
       }
       return multi;
     }
@@ -229,7 +229,7 @@ public class MethodInliner {
           JExpressionStatement exprStmt = (JExpressionStatement) stmt;
           JExpression expr = exprStmt.getExpr();
           JExpression clone = cloner.cloneExpression(expr);
-          multi.exprs.add(clone);
+          multi.addExpressions(clone);
         } else if (stmt instanceof JReturnStatement) {
           JReturnStatement returnStatement = (JReturnStatement) stmt;
           JExpression expr = returnStatement.getExpr();
@@ -237,7 +237,7 @@ public class MethodInliner {
             if (!ignoringReturnValue || expr.hasSideEffects()) {
               JExpression clone = cloner.cloneExpression(expr);
               clone = maybeCast(clone, body.getMethod().getType());
-              multi.exprs.add(clone);
+              multi.addExpressions(clone);
             }
           }
           // We hit an unconditional return; no need to evaluate anything else.
@@ -265,7 +265,7 @@ public class MethodInliner {
         analyzer.accept(arg);
 
         if (analyzer.hasAssignment() || analyzer.canThrowException()) {
-          multi.exprs.add(arg);
+          multi.addExpressions(arg);
         }
       }
       return multi;
@@ -292,7 +292,7 @@ public class MethodInliner {
        * 
        * TODO: add an expression complexity analyzer.
        */
-      if (targetExpr.exprs.size() > 2) {
+      if (targetExpr.getNumberOfExpressions() > 2) {
         return false;
       }
 
@@ -347,7 +347,7 @@ public class MethodInliner {
        */
       if (orderVisitor.checkResults() == SideEffectCheck.NO_REFERENCES) {
         JMultiExpression multi = createMultiExpressionIncludingArgs(x);
-        multi.exprs.add(targetExpr);
+        multi.addExpressions(targetExpr);
         replaceWithMulti(ctx, multi);
         return true;
       }
@@ -381,7 +381,7 @@ public class MethodInliner {
       ParameterReplacer replacer = new ParameterReplacer(x);
       replacer.accept(targetExpr);
 
-      multi.exprs.add(targetExpr);
+      multi.addExpressions(targetExpr);
       replaceWithMulti(ctx, multi);
       return true;
     }

@@ -525,8 +525,8 @@ public class CfgBuilder {
       CfgForNode cond = null;
       int testPos = nodes.size();
       
-      if (x.getTestExpr() != null) {
-        accept(x.getTestExpr());
+      if (x.getCondition() != null) {
+        accept(x.getCondition());
         cond = addNode(new CfgForNode(parent, x));
         addNormalExit(cond, CfgConditionalNode.THEN);
       }
@@ -535,7 +535,9 @@ public class CfgBuilder {
         accept(x.getBody());
       }
       int incrementsPos = nodes.size();
-      accept(x.getIncrements());
+      if (x.getIncrements() != null) {
+        accept(x.getIncrements());
+      }
 
       List<Exit> thenExits = removeNormalExits();
       for (Exit e : thenExits) {

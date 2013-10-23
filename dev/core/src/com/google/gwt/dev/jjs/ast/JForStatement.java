@@ -16,57 +16,75 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.List;
 
 /**
- * Java for statement.
+ * AST node representing a Java {@code for} statement.
  */
 public class JForStatement extends JStatement {
 
   private JStatement body;
-  private List<JExpressionStatement> increments;
   private List<JStatement> initializers;
-  private JExpression testExpr;
+  private JExpression condition;
+  private JExpression increments;
 
-  public JForStatement(SourceInfo info, List<JStatement> initializers, JExpression testExpr,
-      List<JExpressionStatement> increments, JStatement body) {
+  /**
+   * Creates an AST node that represents a Java for statement. {@code condition} and
+   * {@code increments} can be null to denote an empty component.
+   */
+  public JForStatement(SourceInfo info, List<JStatement> initializers, JExpression condition,
+      JExpression increments, JStatement body) {
     super(info);
-    this.initializers = Lists.normalize(initializers);
-    this.testExpr = testExpr;
-    this.increments = Lists.normalize(increments);
+    this.initializers = Lists.newArrayList(initializers);
+    this.condition = condition;
+    this.increments = increments;
     this.body = body;
   }
 
+  /**
+   * Returns the {@code for} statement body.
+   */
   public JStatement getBody() {
     return body;
   }
 
-  public List<JExpressionStatement> getIncrements() {
+  /**
+   * Returns the increments (3rd component) expression.
+   */
+  public JExpression getIncrements() {
     return increments;
   }
 
+  /**
+   * Returns the initializer (1st component) statements.
+   */
   public List<JStatement> getInitializers() {
     return initializers;
   }
 
-  public JExpression getTestExpr() {
-    return testExpr;
+  /**
+   * Returns the condition (2nd component) expression.
+   */
+  public JExpression getCondition() {
+    return condition;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       initializers = visitor.acceptWithInsertRemoveImmutable(initializers);
-      if (testExpr != null) {
-        testExpr = visitor.accept(testExpr);
+      if (condition != null) {
+        condition = visitor.accept(condition);
       }
-      increments = visitor.acceptWithInsertRemoveImmutable(increments);
+      if (increments != null) {
+        increments = visitor.accept(increments);
+      }
       if (body != null) {
         body = visitor.accept(body);
       }
     }
     visitor.endVisit(this, ctx);
   }
-
 }

@@ -123,8 +123,8 @@ public class Simplifier {
       // (T)(a,b,c) -> a,b,(T) c
       JMultiExpression expMulti = (JMultiExpression) exp;
       JMultiExpression newMulti = new JMultiExpression(info);
-      newMulti.exprs.addAll(allButLast(expMulti.exprs));
-      newMulti.exprs.add(castImpl(null, info, type, last(expMulti.exprs)));
+      newMulti.addExpressions(allButLast(expMulti.getExpressions()));
+      newMulti.addExpressions(castImpl(null, info, type, last(expMulti.getExpressions())));
       // TODO(rluble): immediately simplify the resulting multi.
       // TODO(rluble): refactor common outward JMultiExpression movement.
       return newMulti;
@@ -192,9 +192,9 @@ public class Simplifier {
       // TODO(spoon): do this outward multi movement for all AST nodes
       JMultiExpression condMulti = (JMultiExpression) condExpr;
       JMultiExpression newMulti = new JMultiExpression(info);
-      newMulti.exprs.addAll(allButLast(condMulti.exprs));
-      newMulti.exprs.add(conditionalImpl(null, info, type, last(condMulti.exprs), thenExpr,
-          elseExpr));
+      newMulti.addExpressions(allButLast(condMulti.getExpressions()));
+      newMulti.addExpressions(conditionalImpl(null, info, type, last(condMulti.getExpressions()),
+          thenExpr, elseExpr));
       // TODO(spoon): immediately simplify the resulting multi
       return newMulti;
     }
@@ -269,11 +269,11 @@ public class Simplifier {
       // if(a,b,c) d else e -> {a; b; if(c) d else e; }
       JMultiExpression condMulti = (JMultiExpression) condExpr;
       JBlock newBlock = new JBlock(info);
-      for (JExpression expr : allButLast(condMulti.exprs)) {
+      for (JExpression expr : allButLast(condMulti.getExpressions())) {
         newBlock.addStmt(expr.makeStatement());
       }
-      newBlock.addStmt(ifStatementImpl(null, info, last(condMulti.exprs), thenStmt, elseStmt,
-          currentMethod));
+      newBlock.addStmt(ifStatementImpl(null, info, last(condMulti.getExpressions()), thenStmt,
+          elseStmt, currentMethod));
       // TODO(spoon): immediately simplify the resulting block
       return newBlock;
     }
@@ -341,8 +341,8 @@ public class Simplifier {
       // !(a,b,c) -> (a,b,!c)
       JMultiExpression argMulti = (JMultiExpression) arg;
       JMultiExpression newMulti = new JMultiExpression(info);
-      newMulti.exprs.addAll(allButLast(argMulti.exprs));
-      newMulti.exprs.add(notImpl(null, info, last(argMulti.exprs)));
+      newMulti.addExpressions(allButLast(argMulti.getExpressions()));
+      newMulti.addExpressions(notImpl(null, info, last(argMulti.getExpressions())));
       // TODO(spoon): immediately simplify the newMulti
       return newMulti;
     }
@@ -424,8 +424,8 @@ public class Simplifier {
       // (a,b,c)&&d -> a,b,(c&&d)
       JMultiExpression lhsMulti = (JMultiExpression) lhs;
       JMultiExpression newMulti = new JMultiExpression(info);
-      newMulti.exprs.addAll(allButLast(lhsMulti.exprs));
-      newMulti.exprs.add(andImpl(null, info, last(lhsMulti.exprs), rhs));
+      newMulti.addExpressions(allButLast(lhsMulti.getExpressions()));
+      newMulti.addExpressions(andImpl(null, info, last(lhsMulti.getExpressions()), rhs));
       // TODO(rluble): immediately simplify the resulting multi.
       // TODO(rluble): refactor common outward JMultiExpression movement.
       return newMulti;
@@ -482,8 +482,8 @@ public class Simplifier {
       // (a,b,c)|| d -> a,b,(c||d)
       JMultiExpression lhsMulti = (JMultiExpression) lhs;
       JMultiExpression newMulti = new JMultiExpression(info);
-      newMulti.exprs.addAll(allButLast(lhsMulti.exprs));
-      newMulti.exprs.add(orImpl(null, info, last(lhsMulti.exprs), rhs));
+      newMulti.addExpressions(allButLast(lhsMulti.getExpressions()));
+      newMulti.addExpressions(orImpl(null, info, last(lhsMulti.getExpressions()), rhs));
       // TODO(rluble): immediately simplify the resulting multi.
       // TODO(rluble): refactor common outward JMultiExpression movement.
       return newMulti;

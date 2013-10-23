@@ -134,7 +134,7 @@ final class AssumptionDeducer extends JVisitor {
   public boolean visit(JMultiExpression x, Context ctx) {
     // Knowing the value multi expression, we know the value of its last 
     // expression only.
-    accept(x.exprs.get(x.exprs.size() - 1));
+    accept(x.getExpression(x.getNumberOfExpressions() - 1));
     return false;
   }
 

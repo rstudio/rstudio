@@ -240,7 +240,7 @@ public class DeadCodeElimination {
             x.removeStmt(i);
             int start = i;
             JMultiExpression multi = ((JMultiExpression) stmtExpr.getExpr());
-            for (JExpression expr : multi.exprs) {
+            for (JExpression expr : multi.getExpressions()) {
               x.addStmt(i++, expr.makeStatement());
             }
             i = start - 1;
@@ -328,15 +328,15 @@ public class DeadCodeElimination {
 
       JExpression instance = x.getInstance();
       if (instance != null) {
-        multi.exprs.add(instance);
+        multi.addExpressions(instance);
       }
 
       if (x.hasClinit()) {
-        multi.exprs.add(createClinitCall(x.getSourceInfo(), x.getField().getEnclosingType()));
+        multi.addExpressions(createClinitCall(x.getSourceInfo(), x.getField().getEnclosingType()));
       }
 
       if (literal != null) {
-        multi.exprs.add(literal);
+        multi.addExpressions(literal);
       }
 
       ctx.replaceMe(this.accept(multi));
@@ -347,7 +347,7 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JForStatement x, Context ctx) {
-      JExpression expression = x.getTestExpr();
+      JExpression expression = x.getCondition();
       if (expression instanceof JBooleanLiteral) {
         JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
 
@@ -442,7 +442,7 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JMultiExpression x, Context ctx) {
-      List<JExpression> exprs = x.exprs;
+      List<JExpression> exprs = x.getExpressions();
       if (exprs.size() > 0) {
         if (ignoringExpressionOutput.contains(x)) {
           // Remove all my children we previously added.
@@ -456,9 +456,9 @@ public class DeadCodeElimination {
 
       HashSet<JDeclaredType> clinitsCalled = new HashSet<JDeclaredType>();
       for (int i = 0; i < numRemovableExpressions(x); ++i) {
-        JExpression expr = x.exprs.get(i);
+        JExpression expr = x.getExpression(i);
         if (!expr.hasSideEffects()) {
-          x.exprs.remove(i);
+          x.removeExpression(i);
           --i;
           madeChanges();
           continue;
@@ -466,8 +466,8 @@ public class DeadCodeElimination {
 
         // Remove nested JMultiExpressions
         if (expr instanceof JMultiExpression) {
-          x.exprs.remove(i);
-          x.exprs.addAll(i, ((JMultiExpression) expr).exprs);
+          x.removeExpression(i);
+          x.addExpressions(i, ((JMultiExpression) expr).getExpressions());
           i--;
           madeChanges();
           continue;
@@ -480,7 +480,7 @@ public class DeadCodeElimination {
           // called as part of this JMultiExpression then this clinit call is noop at runtime
           // and can be statically removed.
           if (enclosingType.findSubtype(clinitsCalled) != null) {
-            x.exprs.remove(i);
+            x.removeExpression(i);
             --i;
             madeChanges();
             continue;
@@ -490,8 +490,8 @@ public class DeadCodeElimination {
         }
       }
 
-      if (x.exprs.size() == 1) {
-        maybeReplaceMe(x, x.exprs.get(0), ctx);
+      if (x.getNumberOfExpressions() == 1) {
+        maybeReplaceMe(x, x.getExpressions().get(0), ctx);
       }
     }
 
@@ -507,9 +507,10 @@ public class DeadCodeElimination {
           return;
         }
         JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
-        multi.exprs.addAll(x.getArgs());
+        multi.addExpressions(x.getArgs());
         if (x.hasClinit()) {
-          multi.exprs.add(createClinitCall(x.getSourceInfo(), x.getTarget().getEnclosingType()));
+          multi.addExpressions(
+              createClinitCall(x.getSourceInfo(), x.getTarget().getEnclosingType()));
         }
         ignoringExpressionOutput.add(multi);
         ctx.replaceMe(this.accept(multi));
@@ -689,7 +690,7 @@ public class DeadCodeElimination {
 
     @Override
     public boolean visit(JMultiExpression x, Context ctx) {
-      List<JExpression> exprs = x.exprs;
+      List<JExpression> exprs = x.getExpressions();
       if (exprs.size() > 0) {
         if (ignoringExpressionOutput.contains(x)) {
           // None of my children matter.
@@ -1271,10 +1272,10 @@ public class DeadCodeElimination {
     private int numRemovableExpressions(JMultiExpression x) {
       if (ignoringExpressionOutput.contains(x)) {
         // The result doesn't matter: all expressions can be removed.
-        return x.exprs.size();
+        return x.getNumberOfExpressions();
       } else {
         // The last expression cannot be removed.
-        return x.exprs.size() - 1;
+        return x.getNumberOfExpressions() - 1;
       }
     }
 

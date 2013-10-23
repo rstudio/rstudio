@@ -120,7 +120,7 @@ public class JTypeOracle implements Serializable {
 
     @Override
     public boolean visit(JMultiExpression x, Context ctx) {
-      for (JExpression expr : x.exprs) {
+      for (JExpression expr : x.getExpressions()) {
         // Only a JMultiExpression or JMethodCall can contain clinit calls.
         if (mightBeDeadCode(expr)) {
           accept(expr);

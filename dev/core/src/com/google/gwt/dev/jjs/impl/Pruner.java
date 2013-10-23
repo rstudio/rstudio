@@ -276,16 +276,16 @@ public class Pruner {
         JFieldRef fieldRef = (JFieldRef) variableRef;
         JExpression instance = fieldRef.getInstance();
         if (instance != null) {
-          multi.exprs.add(instance);
+          multi.addExpressions(instance);
         }
       }
 
       // If there is an rhs, evaluate it second.
       if (rhs != null) {
-        multi.exprs.add(rhs);
+        multi.addExpressions(rhs);
       }
-      if (multi.exprs.size() == 1) {
-        return multi.exprs.get(0);
+      if (multi.getNumberOfExpressions() == 1) {
+        return multi.getExpression(0);
       } else {
         return multi;
       }
@@ -305,7 +305,7 @@ public class Pruner {
         if (param != null && referencedNonTypes.contains(param)) {
           // If there is an existing multi, terminate it.
           if (currentMulti != null) {
-            currentMulti.exprs.add(arg);
+            currentMulti.addExpressions(arg);
             newCall.addArg(currentMulti);
             currentMulti = null;
           } else {
@@ -316,7 +316,7 @@ public class Pruner {
           if (currentMulti == null) {
             currentMulti = new JMultiExpression(x.getSourceInfo());
           }
-          currentMulti.exprs.add(arg);
+          currentMulti.addExpressions(arg);
         }
       }
 

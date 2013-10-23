@@ -89,6 +89,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -103,8 +104,12 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Interner;
-
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
@@ -205,10 +210,7 @@ import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -346,7 +348,7 @@ public class GwtAstBuilder {
 
     private final Stack<MethodInfo> methodStack = new Stack<MethodInfo>();
 
-    private final ArrayList<JNode> nodeStack = new ArrayList<JNode>();
+    private final List<JNode> nodeStack = Lists.newArrayList();
 
     @Override
     public void endVisit(AllocationExpression x, BlockScope scope) {
@@ -379,7 +381,7 @@ public class GwtAstBuilder {
           // handled by ArrayInitializer.
         } else {
           // Annoyingly, JDT only visits non-null dims, so we can't popList().
-          List<JExpression> dims = new ArrayList<JExpression>();
+          List<JExpression> dims = Lists.newArrayList();
           for (int i = x.dimensions.length - 1; i >= 0; --i) {
             JExpression dimension = pop(x.dimensions[i]);
             // can be null if index expression was empty
@@ -919,7 +921,7 @@ public class GwtAstBuilder {
               JProgram.createLocal(info, elementVarName + "$max", JPrimitiveType.INT, true,
                   curMethod.body);
 
-          List<JStatement> initializers = new ArrayList<JStatement>(3);
+          List<JStatement> initializers = Lists.newArrayListWithCapacity(3);
           // T[] i$array = arr
           initializers.add(makeDeclaration(info, arrayVar, collection));
           // int i$index = 0
@@ -934,9 +936,8 @@ public class GwtAstBuilder {
                   info, indexVar), new JLocalRef(info, maxVar));
 
           // ++i$index
-          List<JExpressionStatement> increments = new ArrayList<JExpressionStatement>(1);
-          increments.add(new JPrefixOperation(info, JUnaryOperator.INC, new JLocalRef(info,
-              indexVar)).makeStatement());
+          JExpression increments = new JPrefixOperation(info, JUnaryOperator.INC,
+              new JLocalRef(info, indexVar));
 
           // T elementVar = i$array[i$index];
           elementDecl.initializer =
@@ -963,7 +964,7 @@ public class GwtAstBuilder {
               JProgram.createLocal(info, (elementVarName + "$iterator"), typeMap
                   .get(javaUtilIterator), false, curMethod.body);
 
-          List<JStatement> initializers = new ArrayList<JStatement>(1);
+          List<JStatement> initializers = Lists.newArrayListWithCapacity(1);
           // Iterator<T> i$iterator = collection.iterator()
           initializers.add(makeDeclaration(info, iteratorVar, new JMethodCall(info, collection,
               typeMap.get(iterator))));
@@ -987,9 +988,8 @@ public class GwtAstBuilder {
 
           body.addStmt(0, elementDecl);
 
-          result =
-              new JForStatement(info, initializers, condition, Collections
-                  .<JExpressionStatement> emptyList(), body);
+          result = new JForStatement(info, initializers, condition,
+              null, body);
         }
 
         // May need to box or unbox the element assignment.
@@ -1006,10 +1006,26 @@ public class GwtAstBuilder {
       try {
         SourceInfo info = makeSourceInfo(x);
         JStatement action = pop(x.action);
-        List<JExpressionStatement> increments = pop(x.increments);
+
+        // JDT represents the 3rd for component (increments) as a list of statements. These
+        // statements are always expression statements as per JLS 14.14.1
+        // Here the List<JExpressionStatement> is transformed into a more adequate List<Expression>.
+        List<JExpression> incrementsExpressions = Lists.transform(pop(x.increments),
+            new Function<JStatement, JExpression>() {
+              @Override
+              public JExpression apply(JStatement statement) {
+                Preconditions.checkArgument(statement instanceof JExpressionStatement);
+                return ((JExpressionStatement) statement).getExpr();
+              }
+            });
+
+        // And turned into a single expression (possibly null if empty).
+        JExpression incrementsExpression =
+            singleExpressionFromExpressionList(info, incrementsExpressions);
+
         JExpression condition = pop(x.condition);
         List<JStatement> initializations = pop(x.initializations);
-        push(new JForStatement(info, initializations, condition, increments, action));
+        push(new JForStatement(info, initializations, condition, incrementsExpression, action));
       } catch (Throwable e) {
         throw translateException(x, e);
       }
@@ -1431,14 +1447,13 @@ public class GwtAstBuilder {
         if (x.resources.length > 0) {
           tryBlock = normalizeTryWithResources(info, x, tryBlock, scope);
         }
-        List<JTryStatement.CatchClause> catchClauses =
-            new ArrayList<JTryStatement.CatchClause>();
+        List<JTryStatement.CatchClause> catchClauses = Lists.newArrayList();
         if (x.catchBlocks != null) {
           for (int i = 0; i < x.catchArguments.length; i++) {
             Argument argument = x.catchArguments[i];
             JLocal local = (JLocal) curMethod.locals.get(argument.binding);
 
-            List<JType> catchTypes = new ArrayList<JType>();
+            List<JType> catchTypes = Lists.newArrayList();
             if (argument.type instanceof UnionTypeReference) {
               // This is a multiexception
               for (TypeReference type : ((UnionTypeReference) argument.type).typeReferences) {
@@ -1490,7 +1505,7 @@ public class GwtAstBuilder {
 
       JBlock innerBlock = new JBlock(info);
       // add resource variables
-      List<JLocal> resourceVariables = new ArrayList<JLocal>();
+      List<JLocal> resourceVariables = Lists.newArrayList();
       for (int i = x.resources.length - 1; i >= 0; i--) {
         // Needs to iterate back to front to be inline with the contents of the stack.
 
@@ -1508,9 +1523,9 @@ public class GwtAstBuilder {
       innerBlock.addStmt(makeDeclaration(info, exceptionVar, JNullLiteral.INSTANCE));
 
       // create catch block
-      List<JTryStatement.CatchClause> catchClauses = new ArrayList<JTryStatement.CatchClause>(1);
+      List<JTryStatement.CatchClause> catchClauses = Lists.newArrayListWithCapacity(1);
 
-      List<JType> clauseTypes = new ArrayList<JType>(1);
+      List<JType> clauseTypes = Lists.newArrayListWithCapacity(1);
       clauseTypes.add(javaLangThrowable);
 
       //     add catch exception variable.
@@ -2187,7 +2202,7 @@ public class GwtAstBuilder {
           enumArrayType, true, Disposition.FINAL);
       type.addField(valuesField);
       SourceInfo info = type.getSourceInfo();
-      List<JExpression> initializers = new ArrayList<JExpression>();
+      List<JExpression> initializers = Lists.newArrayList();
       for (JEnumField field : type.getEnumList()) {
         JFieldRef fieldRef = new JFieldRef(info, null, field, type);
         initializers.add(fieldRef);
@@ -2426,7 +2441,7 @@ public class GwtAstBuilder {
       // Handle the odd var-arg case.
       if (jdtArgs == null) {
         // Get writable collection (args is currently Collections.emptyList()).
-        args = new ArrayList<JExpression>(1);
+        args = Lists.newArrayListWithCapacity(1);
       }
 
       TypeBinding[] params = binding.parameters;
@@ -2442,7 +2457,7 @@ public class GwtAstBuilder {
 
       // Need to synthesize an appropriately-typed array.
       List<JExpression> tail = args.subList(varArg, args.size());
-      ArrayList<JExpression> initializers = new ArrayList<JExpression>(tail);
+      List<JExpression> initializers = Lists.newArrayList(tail);
       tail.clear();
       JArrayType lastParamType = (JArrayType) typeMap.get(params[varArg]);
       JNewArray newArray = JNewArray.createInitializers(info, lastParamType, initializers);
@@ -2453,7 +2468,7 @@ public class GwtAstBuilder {
     private List<? extends JNode> popList(int count) {
       List<JNode> tail = nodeStack.subList(nodeStack.size() - count, nodeStack.size());
       // Make a copy.
-      List<JNode> result = new ArrayList<JNode>(tail);
+      List<JNode> result = Lists.newArrayList(tail);
       // Causes the tail to be removed.
       tail.clear();
       return result;
@@ -2895,7 +2910,7 @@ public class GwtAstBuilder {
 
   static class MethodInfo {
     public final JMethodBody body;
-    public final Map<String, JLabel> labels = new HashMap<String, JLabel>();
+    public final Map<String, JLabel> labels = Maps.newHashMap();
     public final Map<LocalVariableBinding, JVariable> locals =
         new IdentityHashMap<LocalVariableBinding, JVariable>();
     public final JMethod method;
@@ -3090,7 +3105,7 @@ public class GwtAstBuilder {
     this.artificialRescues = artificialRescues;
     this.jsniRefs = jsniRefs;
     this.jsniMethods = jsniMethods;
-    newTypes = new ArrayList<JDeclaredType>();
+    newTypes = Lists.newArrayList();
     curCud = new CudInfo(cud);
 
     for (TypeDeclaration typeDecl : cud.types) {
@@ -3264,7 +3279,7 @@ public class GwtAstBuilder {
     SourceInfo info = makeSourceInfo(x);
     MethodBinding b = x.binding;
     ReferenceBinding declaringClass = (ReferenceBinding) b.declaringClass.erasure();
-    Set<String> alreadyNamedVariables = new HashSet<String>();
+    Set<String> alreadyNamedVariables = Sets.newHashSet();
     JDeclaredType enclosingType = (JDeclaredType) typeMap.get(declaringClass);
     assert !enclosingType.isExternal();
     JMethod method;
@@ -3455,6 +3470,22 @@ public class GwtAstBuilder {
       x.printHeader(0, sb);
       ice.addNode(x.getClass().getName(), sb.toString(), type.getSourceInfo());
       throw ice;
+    }
+  }
+
+  /**
+   * Returns the list of expressions as a single expression; returns {@code null} if the list
+   * is empty.
+   */
+  private static JExpression singleExpressionFromExpressionList(SourceInfo info,
+      List<JExpression> incrementsExpressions) {
+    switch (incrementsExpressions.size()) {
+      case 0:
+        return null;
+      case 1:
+        return incrementsExpressions.get(0);
+      default:
+        return new JMultiExpression(info, incrementsExpressions);
     }
   }
 }

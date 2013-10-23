@@ -366,7 +366,6 @@ public class CfgBuilderTest extends JJSTestBase {
             "BLOCK -> [*]",
             "STMT -> [*]",
             "READWRITE(j, null) -> [*]",
-            "STMT -> [*]",
             "READWRITE(i, null) -> [1]",
             "2: STMT -> [*]",
             "READ(j) -> [*]",
@@ -633,7 +632,6 @@ public class CfgBuilderTest extends JJSTestBase {
             "GOTO -> [3]",
             "2: STMT -> [*]",
             "READWRITE(i, null) -> [*]",
-            "STMT -> [*]",
             "READWRITE(i, null) -> [1]",
             "3: END");
   }
@@ -656,8 +654,7 @@ public class CfgBuilderTest extends JJSTestBase {
             "GOTO -> [3]",
             "2: STMT -> [*]",
             "READWRITE(i, null) -> [*]",
-            "3: STMT -> [*]",
-            "READWRITE(i, null) -> [1]",
+            "3: READWRITE(i, null) -> [1]",
             "4: END");
   }
 
@@ -685,7 +682,6 @@ public class CfgBuilderTest extends JJSTestBase {
             "STMT -> [*]",
             "READ(i) -> [*]",
             "WRITE(j, i) -> [*]",
-            "STMT -> [*]",
             "READWRITE(i, null) -> [3]",
             "4: STMT -> [*]",
             "READ(j) -> [*]",
@@ -717,7 +713,6 @@ public class CfgBuilderTest extends JJSTestBase {
             "STMT -> [*]",
             "READ(i) -> [*]",
             "WRITE(j, i) -> [*]",
-            "STMT -> [*]",
             "READWRITE(i, null) -> [3]",
             "4: STMT -> [*]",
             "READ(j) -> [*]",

@@ -33,7 +33,7 @@ public class CfgForNode extends CfgConditionalNode<JForStatement> {
 
   @Override
   public JExpression getCondition() {
-    return getJNode().getTestExpr();
+    return getJNode().getCondition();
   }
 
   @Override

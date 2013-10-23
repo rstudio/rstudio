@@ -343,10 +343,10 @@ public class MakeCallsStatic {
     // (a, b).foo() --> (a, foo(b))
     if (x.getInstance() instanceof JMultiExpression) {
       JMultiExpression multi = (JMultiExpression) x.getInstance();
-      int lastIndex = multi.exprs.size() - 1;
-      newCall.addArg(multi.exprs.get(lastIndex));
+      int lastIndex = multi.getNumberOfExpressions() - 1;
+      newCall.addArg(multi.getExpression(lastIndex));
       newCall.addArgs(x.getArgs());
-      multi.exprs.set(lastIndex, newCall);
+      multi.setExpression(lastIndex, newCall);
       return multi;
     } else {
       // The qualifier becomes the first arg

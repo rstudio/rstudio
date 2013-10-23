@@ -237,9 +237,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JMultiExpression x, Context ctx) {
-    JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
-    multi.exprs.addAll(cloneExpressions(x.exprs));
-    expression = multi;
+    expression = new JMultiExpression(x.getSourceInfo(), cloneExpressions(x.getExpressions()));
     return false;
   }
 
