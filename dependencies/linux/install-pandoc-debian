@@ -21,14 +21,11 @@ set -e
 INSTALL_DIR=`pwd`
 
 # install system level dependencies
-if [ -x /usr/bin/apt-get ]
-then 
-  sudo apt-get -y install build-essential
-  sudo apt-get -y install libglc-dev
-  sudo apt-get -y install freeglut3-dev
-  sudo apt-get -y install libedit-dev 
-  sudo apt-get -y install libgmp3-dev
-fi
+sudo apt-get -y install build-essential
+sudo apt-get -y install libglc-dev
+sudo apt-get -y install freeglut3-dev
+sudo apt-get -y install libedit-dev 
+sudo apt-get -y install libgmp3-dev
 
 # establish pandoc directory and work there
 PANDOC_DIR=${INSTALL_DIR}/pandoc

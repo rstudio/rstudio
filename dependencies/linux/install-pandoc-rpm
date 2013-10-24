@@ -15,8 +15,6 @@
 #
 #
 
-# http://justhub.org/download
-
 set -e
 
 # install dir
@@ -27,22 +25,18 @@ PANDOC_DIR=${INSTALL_DIR}/pandoc
 mkdir -p ${PANDOC_DIR}
 cd $PANDOC_DIR
 
-# download justhub bootstrap rpm 
-JUSTHUB=justhub-release-2.0-4.0.el5.x86_64.rpm
-wget http://sherkin.justhub.org/el5/RPMS/x86_64/${JUSTHUB}
-sudo rpm -ivh ${JUSTHUB} || true
-rm ${JUSTHUB}
-
-# install haskell platform
-sudo yum install -y haskell
+# install haskell dependencies
+sudo yum install -y gmp-devel
+sudo yum install -y haskell-platform
 
 # wipe out existing state
-rm -rf ~/.ghc
 rm -rf ~/.cabal
+rm -rf ~/.ghc
 
-# install pandoc
-CABAL=/usr/bin/cabal
+# install latest version of pandoc
 cabal update
 cabal install crypto-cipher-types-0.0.7
-. ../install-pandoc-src
+cabal install --flags="embed_data_files" pandoc pandoc-citeproc
+
+
 
