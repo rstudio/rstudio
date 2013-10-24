@@ -23,8 +23,11 @@ INSTALL_DIR=`pwd`
 # install system level dependencies
 if [ -x /usr/bin/apt-get ]
 then 
+  sudo apt-get -y install build-essential
   sudo apt-get -y install libglc-dev
   sudo apt-get -y install freeglut3-dev
+  sudo apt-get -y install libedit-dev 
+  sudo apt-get -y install libgmp3-dev
 fi
 
 # establish pandoc directory and work there
@@ -35,12 +38,19 @@ cd $PANDOC_DIR
 # get ghc
 GHC_VERSION=7.6.3
 GHC_DIR=${PANDOC_DIR}/ghc-${GHC_VERSION}
+ARCH=`uname -m`
+if [ $ARCH == "x86_64" ]
+then
+  GHC_ARCH=$ARCH
+else
+  GHC_ARCH=i386
+fi
+
 if [ ! -d ${GHC_DIR} ]
 then
   # remove existing ghc artifacts
   rm -rf $HOME/.ghc
 
-  GHC_ARCH=`uname -m`
   GHC_NAME=ghc-${GHC_VERSION}-${GHC_ARCH}-unknown-linux
   GHC_TARBALL=${GHC_NAME}.tar.bz2
   wget http://www.haskell.org/ghc/dist/${GHC_VERSION}/${GHC_TARBALL} -O ${GHC_TARBALL}
