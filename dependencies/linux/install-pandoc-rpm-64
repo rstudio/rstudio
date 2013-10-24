@@ -1,0 +1,42 @@
+#!/bin/bash
+
+#
+# install-pandoc-yum
+#
+# Copyright (C) 2009-12 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# http://justhub.org/download
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# establish pandoc directory and work there
+PANDOC_DIR=${INSTALL_DIR}/pandoc
+mkdir -p ${PANDOC_DIR}
+cd $PANDOC_DIR
+
+# download justhub bootstrap rpm 
+JUSTHUB=justhub-release-2.0-4.0.el5.x86_64.rpm
+wget http://sherkin.justhub.org/el5/RPMS/x86_64/${JUSTHUB}
+sudo rpm -ivh ${JUSTHUB} || true
+rm ${JUSTHUB}
+
+# install haskell platform
+sudo yum install -y haskell
+
+# install pandoc
+CABAL=/usr/bin/cabal
+. ../install-pandoc-src
+
