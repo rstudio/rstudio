@@ -236,7 +236,8 @@ public abstract class UIObject implements HasVisibility {
   }-*/;
 
   /**
-   * Shows or hides the given element. Also updates the "aria-hidden" attribute.
+   * Shows or hides the given element. Also updates the "aria-hidden" attribute
+   * by setting it to true when it is hidden and removing it when it is shown.
    *
    * <p>
    * Warning: implemented with a heuristic based on the "display" style:
@@ -248,7 +249,11 @@ public abstract class UIObject implements HasVisibility {
    */
   public static native void setVisible(Element elem, boolean visible) /*-{
     elem.style.display = visible ? '' : 'none';
-    elem.setAttribute('aria-hidden', String(!visible));
+    if (visible) {
+      elem.removeAttribute('aria-hidden');
+    } else {
+      elem.setAttribute('aria-hidden', 'true');
+    }
   }-*/;
 
   /**
