@@ -33,23 +33,26 @@
                                           defer: NO] autorelease];   
    [window setDelegate: self];
    [window setTitle: @"RStudio"];
-
-   // create web view, save it as a member, and register as it's delegate,
-   webView_ = [[WebView alloc] initWithFrame: frameRect];
-   [webView_ setUIDelegate: self];
-   [webView_ setFrameLoadDelegate: self];
    
-   // load the request
-   [[webView_ mainFrame] loadRequest: request];
+   // initialize superclass then continue
+   if (self = [super initWithWindow: window])
+   {
+      // create web view, save it as a member, and register as it's delegate,
+      webView_ = [[WebView alloc] initWithFrame: frameRect];
+      [webView_ setUIDelegate: self];
+      [webView_ setFrameLoadDelegate: self];
+      
+      // load the request
+      [[webView_ mainFrame] loadRequest: request];
+      
+      // add the webview to the window
+      [window setContentView: webView_];
+      
+      // bring the window to the front
+      [window makeKeyAndOrderFront: nil];
+   }
    
-   // add the webview to the window
-   [window setContentView: webView_];
-   
-   // bring the window to the front
-   [window makeKeyAndOrderFront: nil];
-   
-   // call super
-   return [super initWithWindow: window];
+   return self;
 }
 
 // WebViewController is a self-freeing object so free it when the window closes
