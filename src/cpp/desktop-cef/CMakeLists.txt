@@ -41,6 +41,7 @@ include_directories(
 
 find_library(APPKIT_LIBRARY NAMES AppKit)
 find_library(OPENGL_LIBRARY NAMES OpenGL)
+find_library(WEBKIT_LIBRARY NAMES WebKit)
 
 # configure Info.plist
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
@@ -64,7 +65,8 @@ add_executable(RStudio MACOSX_BUNDLE
 target_link_libraries(RStudio
    rstudio-core
    ${APPKIT_LIBRARY}
-   ${OPENGL_LIBRARY})
+   ${OPENGL_LIBRARY}
+   ${WEBKIT_LIBRARY})
 
 # install target (OSX install goes into the bundle)
 set_target_properties(RStudio PROPERTIES
