@@ -599,15 +599,6 @@ public class CodeSplitterTest extends JJSTestBase {
       }      
     });
 
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.ArrayPrototypePatcher") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.lang; public class ArrayPrototypePatcher {" +
-               " public static void patch() { }" +
-               "}";
-      }
-    });
-
     sourceOracle.addOrReplace(new MockJavaResource("java.lang.CharSequence") {
       @Override
       public CharSequence getContent() {
