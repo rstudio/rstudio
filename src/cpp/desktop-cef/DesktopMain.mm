@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
    NSWindowController * windowController =
    [[NSWindowController alloc] initWithWindow:window];
    [windowController autorelease];
+   [windowController setWindowFrameAutosaveName: @"RStudio"];
 
    // App Delegate
    AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
