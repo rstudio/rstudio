@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
    NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
   
    WebViewController * windowController = [[WebViewController alloc] initWithURLRequest: requestObj];
-   // TODO: this seems to work but it seems like it's too late?
+   
    [windowController setWindowFrameAutosaveName: @"RStudio"];
    
 
