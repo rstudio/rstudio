@@ -51,7 +51,7 @@
 {
    if (self = [super init])
    {
-      theValue = 0;
+      theValue = 14;
       return self;
    }
    else
@@ -162,6 +162,9 @@
    GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
    [win setValue: gwtCallbacks forKey:@"Desktop"];
 
+   // now call it
+   NSString *href = [[webView windowScriptObject] evaluateWebScript:@"Desktop.getTheValue()"];
+   NSLog(@"href: %@",href);
    
 }
 
