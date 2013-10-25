@@ -32,6 +32,59 @@
    return YES;
 }
 
+
+
+@end
+
+// https://developer.apple.com/library/mac/documentation/AppleApplications/Conceptual/SafariJSProgTopics/Tasks/ObjCFromJavaScript.html
+// https://developer.apple.com/library/mac/samplecode/CallJS/Introduction/Intro.html#//apple_ref/doc/uid/DTS10004241
+@interface GwtCallbacks : NSObject {
+   int theValue;
+}
+- (void) setTheValue:(int)value;
+- (int)getTheValue;
+@end
+
+@implementation GwtCallbacks
+
+- (id)init
+{
+   if (self = [super init])
+   {
+      theValue = 0;
+      return self;
+   }
+   else
+   {
+      return nil;
+   }
+}
+
+- (void) setTheValue:(int)value
+{
+   theValue = value;
+}
+
+- (int)getTheValue
+{
+   return theValue;
+}
+
++ (NSString *) webScriptNameForSelector:(SEL)sel
+{
+   if (sel == @selector(setTheValue:))
+      return @"setTheValue";
+   
+   return nil;
+}
+
++ (BOOL)isSelectorExcludedFromWebScript:(SEL)sel
+{
+   return NO;
+}
+
+
+
 @end
 
 
@@ -83,9 +136,12 @@
    
    WebView *webView = [[[WebView alloc] initWithFrame:NSMakeRect(100,100,1024,768)] autorelease];
    
+   [webView setUIDelegate: self];
+   [webView setFrameLoadDelegate: self];
+   
    [[webView mainFrame] loadRequest:request];
    
-   [webView setUIDelegate: self];
+   
    
    [window setContentView:webView];
    
@@ -98,11 +154,25 @@
    
 }
 
+- (void)webView:(WebView *)webView windowScriptObjectAvailable:(WebScriptObject *)windowScriptObject {
+   NSLog(@"%@ received %@", self, NSStringFromSelector(_cmd));
+   
+   // register objective c with webkit
+   id win = [webView windowScriptObject];
+   GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
+   [win setValue: gwtCallbacks forKey:@"Desktop"];
+
+   
+}
+
+
+
 
 
 @end
 
-
+// TODO: figure out how to do this locally
+// defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
 
 
 int main(int argc, char* argv[])
@@ -147,17 +217,23 @@ int main(int argc, char* argv[])
    
 
    // Load content view
-   NSString *urlAddress = @"http://www.google.com";
+   NSString *urlAddress = @"http://localhost:8787/webkit.nocache.html";
    NSURL *url = [NSURL URLWithString:urlAddress];
    NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
    WebView *webView = [[[WebView alloc] initWithFrame:NSMakeRect(100,100,1024,768)] autorelease];
 
-   [[webView mainFrame] loadRequest:requestObj];
-   [window setContentView:webView];
-   
+  
    // WebUIDelegate
    WebViewDelegate* webViewDelegate = [[[WebViewDelegate alloc] init] autorelease];
    [webView setUIDelegate: webViewDelegate];
+   [webView setFrameLoadDelegate: webViewDelegate];
+   
+   
+   [[webView mainFrame] loadRequest:requestObj];
+   [window setContentView:webView];
+   
+   
+   
    
   
    id menubar = [[NSMenu new] autorelease];
