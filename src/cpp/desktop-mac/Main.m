@@ -4,6 +4,10 @@
 
 #import "WebViewController.h"
 
+// TODO: figure out how to do this locally
+// defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+
+
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
 }
@@ -11,12 +15,12 @@
 
 @implementation AppDelegate
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+- (void) applicationDidFinishLaunching: (NSNotification *) aNotification
 {
 
 }
 
-- (void)applicationWillTerminate:(NSNotification *)notification
+- (void) applicationWillTerminate: (NSNotification *) notification
 {
 
 }
@@ -26,7 +30,7 @@
     return YES;
 }
 
-- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)inSender
+- (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication*) s
 {
    return YES;
 }
@@ -35,59 +39,51 @@
 
 @end
 
-// TODO: figure out how to do this locally
-// defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
-
-
 int main(int argc, char* argv[])
 {
-   // Autorelease Pool:
-   // Objects declared in this scope will be automatically
-   // released at the end of it, when the pool is "drained".
+   // initialize autorelease pool and application instance
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-
-   // Create a shared app instance.
-   // This will initialize the global variable
-   // 'NSApp' with the application instance.
    [NSApplication sharedApplication];
    
-   // App Delegate
+   // create our app delegate
    AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
    [NSApp setDelegate: appDelegate];
-   
    
    // create menubar
    id menubar = [[NSMenu new] autorelease];
    id appMenuItem = [[NSMenuItem new] autorelease];
-   [menubar addItem:appMenuItem];
-   [NSApp setMainMenu:menubar];
+   [menubar addItem: appMenuItem];
+   [NSApp setMainMenu: menubar];
    id appMenu = [[NSMenu new] autorelease];
    id appName = [[NSProcessInfo processInfo] processName];
    id quitTitle = [@"Quit " stringByAppendingString:appName];
    id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
-                                                 action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
-   [appMenu addItem:quitMenuItem];
-   [appMenuItem setSubmenu:appMenu];
+                                          action:@selector(terminate:)
+                                          keyEquivalent:@"q"] autorelease];
+   [appMenu addItem: quitMenuItem];
+   [appMenuItem setSubmenu: appMenu];
 
    
-   // Load content view
-   NSString *urlAddress = @"http://localhost:8787/webkit.nocache.html";
-   //NSString *urlAddress = @"http://www.google.com";
-   NSURL *url = [NSURL URLWithString:urlAddress];
-   NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
-  
-   WebViewController * windowController = [[WebViewController alloc] initWithURLRequest: requestObj];
+   // load the main window
+   NSString *urlAddress = @"http://localhost:8787";
+   NSURL *url = [NSURL URLWithString: urlAddress];
+   NSURLRequest *request = [NSURLRequest requestWithURL: url];
+   WebViewController * windowController =
+                 [[WebViewController alloc] initWithURLRequest: request];
    
+   // remember size and position accross sessions
    [windowController setWindowFrameAutosaveName: @"RStudio"];
    
-
+   // activate the app
    [NSApp activateIgnoringOtherApps: YES];
   
+   // run the event loop
    [NSApp run];
 
+   // free the autorelease pool
    [pool drain];
 
-   return (0);
+   return EXIT_SUCCESS;
 }
 
 

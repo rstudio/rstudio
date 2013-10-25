@@ -15,51 +15,68 @@
    return webView_;
 }
 
+- (void) dealloc
+{
+   [webView_ release];
+   [super dealloc];
+}
+
 - (id)initWithURLRequest: (NSURLRequest*) request
 {
-   
-   // Style flags
-   NSUInteger windowStyle =
-     (NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask);
-   
-   // Window bounds (x, y, width, height)
-   NSRect windowRect = NSMakeRect(100, 100, 1024, 768);
-   
-   NSWindow * window = [[[NSWindow alloc] initWithContentRect:windowRect
-                                                   styleMask:windowStyle
-                                                     backing:NSBackingStoreBuffered
-                                                       defer:NO] autorelease];   
+   // create window and become it's delegate
+   NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
+   NSWindow * window = [[[NSWindow alloc] initWithContentRect: frameRect
+                                          styleMask: NSTitledWindowMask |
+                                                     NSClosableWindowMask |
+                                                     NSResizableWindowMask
+                                          backing: NSBackingStoreBuffered
+                                          defer: NO] autorelease];   
    [window setDelegate: self];
+   [window setTitle: @"RStudio"];
 
-   
-   webView_ = [[[WebView alloc] initWithFrame:NSMakeRect(100,100,1024,768)] autorelease];
+   // create web view, save it as a member, and register as it's delegate,
+   webView_ = [[WebView alloc] initWithFrame: frameRect];
    [webView_ setUIDelegate: self];
    [webView_ setFrameLoadDelegate: self];
    
+   // load the request
+   [[webView_ mainFrame] loadRequest: request];
    
-   [[webView_ mainFrame] loadRequest:request];
-   [window setContentView:webView_];
+   // add the webview to the window
+   [window setContentView: webView_];
    
-   [window setTitle: @"RStudio"];
+   // bring the window to the front
    [window makeKeyAndOrderFront: nil];
    
+   // call super
    return [super initWithWindow: window];
 }
 
-- (void)windowWillClose:(NSNotification *)notification
+// WebViewController is a self-freeing object so free it when the window closes
+- (void)windowWillClose:(NSNotification *) notification
 {
    [self autorelease];
 }
 
-- (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request
+// Handle new window request by creating another controller
+- (WebView *) webView: (WebView *) sender
+              createWebViewWithRequest:(NSURLRequest *)request
 {
-   WebViewController * windowController = [[WebViewController alloc] initWithURLRequest: request];   
-   return [windowController webView];
+   // self-freeing so don't auto-release
+   WebViewController * webViewController =
+            [[WebViewController alloc] initWithURLRequest: request];
+   return [webViewController webView];
 }
 
 
-- (void)webView:(WebView *)webView windowScriptObjectAvailable:(WebScriptObject *)windowScriptObject {
-   NSLog(@"%@ received %@", self, NSStringFromSelector(_cmd));
+// Inject our script ojbect when the window object becomes available
+- (void) webView:(WebView *) webView
+         windowScriptObjectAvailable:(WebScriptObject *)windowScriptObject
+{
+   
+   // TODO: this seems to fire multiple times for our page - perhaps
+   // for embedded iframes as well as the main frame?
+   
    
    // register objective c with webkit
    id win = [webView windowScriptObject];
@@ -67,9 +84,8 @@
    [win setValue: gwtCallbacks forKey:@"Desktop"];
    
    // now call it
-   NSString *href = [[webView windowScriptObject] evaluateWebScript:@"Desktop.getTheValue()"];
+   NSString *href = [win evaluateWebScript:@"Desktop.getTheValue()"];
    NSLog(@"href: %@",href);
-   
 }
 
 @end
