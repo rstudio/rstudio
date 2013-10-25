@@ -105,14 +105,6 @@
    [self autorelease];
 }
 
-@end
-
-@interface WebViewDelegate  : NSObject<NSWindowDelegate> {
-}
-@end
-
-@implementation WebViewDelegate
-
 - (WebView *)webView:(WebView *)sender createWebViewWithRequest:(NSURLRequest *)request
 {
    // Style flags
@@ -147,7 +139,7 @@
    
    [window setTitle: @"RStudio Popup"];
    [window makeKeyAndOrderFront: nil];
-
+   
    
    
    return webView;
@@ -161,7 +153,7 @@
    id win = [webView windowScriptObject];
    GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
    [win setValue: gwtCallbacks forKey:@"Desktop"];
-
+   
    // now call it
    NSString *href = [[webView windowScriptObject] evaluateWebScript:@"Desktop.getTheValue()"];
    NSLog(@"href: %@",href);
@@ -170,9 +162,8 @@
 
 
 
-
-
 @end
+
 
 // TODO: figure out how to do this locally
 // defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
@@ -190,6 +181,12 @@ int main(int argc, char* argv[])
    // 'NSApp' with the application instance.
    [NSApplication sharedApplication];
 
+   
+   // App Delegate
+   AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
+   [NSApp setDelegate: appDelegate];
+   
+   
    // Create a window:
 
    // Style flags
@@ -208,29 +205,22 @@ int main(int argc, char* argv[])
    [window autorelease];
 
   
-  WebViewController * windowController = [[WebViewController alloc] initWithWindow:window];
+   WebViewController * windowController = [[WebViewController alloc] initWithWindow:window];
    [window setDelegate: windowController];
    [windowController setWindowFrameAutosaveName: @"RStudio"];
    
-
-   // App Delegate
-   AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
-   [NSApp setDelegate: appDelegate];
-   
+ 
    
 
    // Load content view
    NSString *urlAddress = @"http://localhost:8787/webkit.nocache.html";
    NSURL *url = [NSURL URLWithString:urlAddress];
    NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
-   WebView *webView = [[[WebView alloc] initWithFrame:NSMakeRect(100,100,1024,768)] autorelease];
-
-  
-   // WebUIDelegate
-   WebViewDelegate* webViewDelegate = [[[WebViewDelegate alloc] init] autorelease];
-   [webView setUIDelegate: webViewDelegate];
-   [webView setFrameLoadDelegate: webViewDelegate];
    
+   WebView *webView = [[[WebView alloc] initWithFrame:NSMakeRect(100,100,1024,768)] autorelease];
+   [webView setUIDelegate: windowController];
+   [webView setFrameLoadDelegate: windowController];
+
    
    [[webView mainFrame] loadRequest:requestObj];
    [window setContentView:webView];
