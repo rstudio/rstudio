@@ -258,6 +258,7 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script
