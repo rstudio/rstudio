@@ -27,7 +27,9 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 
 # source files
 set(DESKTOP_MAC_SOURCE_FILES
-   DesktopMain.mm
+   Main.m
+   GwtCallbacks.m
+   WebViewController.m
 )
 
 
