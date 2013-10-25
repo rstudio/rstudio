@@ -13,20 +13,20 @@
 #
 #
 
-project(DESKTOP_CEF)
+project(DESKTOP_MAC)
 
 # configure NOTICE file into build directory so it can be read at dev time
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
                ${CMAKE_CURRENT_BINARY_DIR}/.. COPYONLY)
 
 # include files
-file(GLOB_RECURSE DESKTOP_CEF_HEADER_FILES "*.h*")
+file(GLOB_RECURSE DESKTOP_MAC_HEADER_FILES "*.h*")
 
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
                 ${CMAKE_CURRENT_BINARY_DIR}/desktop-config.h)
 
 # source files
-set(DESKTOP_CEF_SOURCE_FILES
+set(DESKTOP_MAC_SOURCE_FILES
    DesktopMain.mm
 )
 
@@ -59,7 +59,7 @@ set_source_files_properties(${ICNS_FILES}
 set(MACOSX_BUNDLE_BUNDLE_NAME "RStudio")
 
 add_executable(RStudio MACOSX_BUNDLE
-   ${DESKTOP_CEF_SOURCE_FILES}
+   ${DESKTOP_MAC_SOURCE_FILES}
    ${ICNS_FILES})
 
 target_link_libraries(RStudio
