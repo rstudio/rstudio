@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
    
    // load the main window
-   NSString *urlAddress = @"http://localhost:8787";
+   NSString *urlAddress = @"http://localhost:8787/webkit.nocache.html";
    NSURL *url = [NSURL URLWithString: urlAddress];
    NSURLRequest *request = [NSURLRequest requestWithURL: url];
    WebViewController * windowController =

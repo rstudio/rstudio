@@ -80,23 +80,24 @@
 
 
 // Inject our script ojbect when the window object becomes available
-- (void) webView:(WebView *) webView
-         windowScriptObjectAvailable:(WebScriptObject *)windowScriptObject
+- (void) webView: (WebView*) webView
+         didClearWindowObject:(WebScriptObject *)windowObject
+         forFrame:(WebFrame *)frame
 {
-   
-   // TODO: this seems to fire multiple times for our page - perhaps
-   // for embedded iframes as well as the main frame?
-   
-   
-   // register objective c with webkit
-   id win = [webView windowScriptObject];
-   GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
-   [win setValue: gwtCallbacks forKey:@"Desktop"];
-   
-   // now call it
-   NSString *href = [win evaluateWebScript:@"Desktop.getTheValue()"];
-   NSLog(@"href: %@",href);
+   // only set the Desktop object for the top level frame
+   if ([frame parentFrame] == nil) {
+      
+      // register objective c with webkit
+      id win = [webView windowScriptObject];
+      GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
+      [win setValue: gwtCallbacks forKey:@"Desktop"];
+      
+      // now call it
+      NSString *href = [win evaluateWebScript:@"Desktop.getTheValue()"];
+      NSLog(@"href: %@",href);
+   }
 }
+
 
 @end
 
