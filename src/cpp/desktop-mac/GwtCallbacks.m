@@ -176,20 +176,22 @@
    return false;
 }
 
+- (int) showMessageBox: type
+               caption: (NSString*) caption
+               message: (NSString*) message
+               buttons: (NSString*) buttons
+         defaultButton: (int) defaultButton
+          cancelButton: (int) cancelButton
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return 42;
+}
+
 /*
  
  
  public slots:
- 
- 
- 
- 
- int showMessageBox(int type,
- QString caption,
- QString message,
- QString buttons,
- int defaultButton,
- int cancelButton);
+
  
  QVariant promptForText(QString title,
  QString caption,
@@ -280,6 +282,8 @@
       return @"prepareForSatelliteWindow";
    else if (sel == @selector(copyImageToClipboard:top:width:height:))
       return @"copyImageToClipboard";
+   else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
+      return @"showMessageBox";
    
 
    return nil;
