@@ -4,10 +4,6 @@
 
 #import "WebViewController.h"
 
-// TODO: figure out how to do this locally
-// defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
-
-
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
 }

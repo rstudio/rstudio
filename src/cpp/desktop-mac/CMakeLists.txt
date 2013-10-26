@@ -15,6 +15,11 @@
 
 project(DESKTOP_MAC)
 
+# enable developer extras 
+exec_program(defaults 
+             ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
+             OUTPUT_VARIABLE DEV_EXTRAS)
+
 # configure NOTICE file into build directory so it can be read at dev time
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
                ${CMAKE_CURRENT_BINARY_DIR}/.. COPYONLY)
