@@ -21,6 +21,13 @@
    [super dealloc];
 }
 
+- (id) init
+{
+   @throw [NSException exceptionWithName: @"WebViewControllerInitialization"
+                       reason: @"Use initWithURLRequest"
+                       userInfo: nil];
+}
+
 - (id)initWithURLRequest: (NSURLRequest*) request
 {
    // create window and become it's delegate
