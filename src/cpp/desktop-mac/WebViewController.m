@@ -92,8 +92,8 @@
       GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
       [win setValue: gwtCallbacks forKey:@"Desktop"];
       
-      // now call it
-      NSString *href = [win evaluateWebScript:@"Desktop.getTheValue()"];
+      // execute some js
+      NSString *href = [win evaluateWebScript:@"window.location.href"];
       NSLog(@"href: %@",href);
    }
 }
