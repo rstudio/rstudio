@@ -15,14 +15,10 @@
 
 project(DESKTOP_MAC)
 
-# enable developer extras 
-exec_program(defaults 
-             ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
-             OUTPUT_VARIABLE DEV_EXTRAS)
-
-# configure NOTICE file into build directory so it can be read at dev time
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
-               ${CMAKE_CURRENT_BINARY_DIR}/.. COPYONLY)
+# libraries
+find_library(APPKIT_LIBRARY NAMES AppKit)
+find_library(OPENGL_LIBRARY NAMES OpenGL)
+find_library(WEBKIT_LIBRARY NAMES WebKit)
 
 # include files
 file(GLOB_RECURSE DESKTOP_MAC_HEADER_FILES "*.h*")
@@ -37,18 +33,12 @@ set(DESKTOP_MAC_SOURCE_FILES
    WebViewController.m
 )
 
-
 # include directories
 include_directories(
   include
   ${CORE_SOURCE_DIR}/include
   ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-
-find_library(APPKIT_LIBRARY NAMES AppKit)
-find_library(OPENGL_LIBRARY NAMES OpenGL)
-find_library(WEBKIT_LIBRARY NAMES WebKit)
 
 # configure Info.plist
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
@@ -67,6 +57,7 @@ set(MACOSX_BUNDLE_BUNDLE_NAME "RStudio")
 
 add_executable(RStudio MACOSX_BUNDLE
    ${DESKTOP_MAC_SOURCE_FILES}
+   ${DESKTOP_MAC_HEADER_FILES}
    ${ICNS_FILES})
 
 target_link_libraries(RStudio
@@ -85,5 +76,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mac-terminal.in
                ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
                  DESTINATION ${RSTUDIO_INSTALL_BIN})
+                 
+# enable developer extras 
+exec_program(defaults 
+             ARGS write org.rstudio.RStudio WebKitDeveloperExtras -bool true
+             OUTPUT_VARIABLE DEV_EXTRAS)
+
+
 
 
