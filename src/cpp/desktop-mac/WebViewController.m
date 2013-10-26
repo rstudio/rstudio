@@ -8,6 +8,8 @@
 
 #import "GwtCallbacks.h"
 
+// TODO: enable javascript alerts
+
 @implementation WebViewController
 
 - (WebView*) webView

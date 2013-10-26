@@ -30,7 +30,12 @@
            document.write('can choose: ' + desktop.canChooseRVersion());
            document.write('is retina: ' + desktop.isRetina());
            
+           desktop.openMinimalWindow('foo', 'url', 100, 100);
+           desktop.activateSatelliteWindow('foo');
+           desktop.prepareForSatelliteWindow('foo', 100, 100);
+           desktop.copyImageToClipboard(0,0,100,100);
            
+           document.write('metafile: ' + desktop.supportsClipboardMetafile());
      </script>
      
   </body>

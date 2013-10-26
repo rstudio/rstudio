@@ -147,21 +147,42 @@
    return true;
 }
 
+- (void) openMinimalWindow: (NSString*) name url: (NSString*) url
+                     width: (int) width height: (int) height
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) activateSatelliteWindow: (NSString*) name
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) prepareForSatelliteWindow: (NSString*) name
+                             width: (int) width height: (int) height
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) copyImageToClipboard: (int) left top: (int) top
+                        width: (int) width height: (int) height
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (Boolean) supportsClipboardMetafile
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return false;
+}
+
 /*
  
  
  public slots:
  
  
- void openMinimalWindow(QString name, QString url, int width, int height);
- void activateSatelliteWindow(QString name);
- void prepareForSatelliteWindow(QString name, int width, int height);
  
- 
- // Image coordinates are relative to the window contents
- void copyImageToClipboard(int left, int top, int width, int height);
- 
- bool supportsClipboardMetafile();
  
  int showMessageBox(int type,
  QString caption,
@@ -251,7 +272,16 @@
       return @"showFolder";
    else if (sel == @selector(showFile:))
       return @"showFile";
+   else if (sel == @selector(openMinimalWindow:url:width:height:))
+      return @"openMinimalWindow";
+   else if (sel == @selector(activateSatelliteWindow:))
+      return @"activateSatelliteWindow";
+   else if (sel == @selector(prepareForSatelliteWindow:width:height:))
+      return @"prepareForSatelliteWindow";
+   else if (sel == @selector(copyImageToClipboard:top:width:height:))
+      return @"copyImageToClipboard";
    
+
    return nil;
 }
 
