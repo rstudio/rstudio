@@ -335,6 +335,19 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     assertNotSame("fixed", table.getElement().getStyle().getTableLayout());
   }
 
+  /**
+   * Test if the tableWidget style is applied.
+   */
+  public void testTableWidgetStyle() {
+    Resources res = GWT.create(Resources.class);
+    CellTable<String> table = new CellTable<String>(10, res);
+
+    String tableWidgetStyle = res.cellTableStyle().cellTableWidget();
+
+    TableElement tableElem = table.getElement().cast();
+    assertTrue(tableElem.getClassName().contains(tableWidgetStyle));
+  }
+
   @Override
   protected CellTable<String> createAbstractHasData() {
     return new CellTable<String>();

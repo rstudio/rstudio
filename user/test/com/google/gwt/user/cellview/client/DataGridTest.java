@@ -15,17 +15,32 @@
  */
 package com.google.gwt.user.cellview.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.user.cellview.client.DataGrid.Resources;
 import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Tests for {@link DataGrid}.
  */
 public class DataGridTest extends AbstractCellTableTestBase<DataGrid<String>> {
-
+  
+  /**
+   * Test if the dataGridWidget style is applied.
+   */
+  public void testDataGridWidgetStyle() {
+    Resources res = GWT.create(Resources.class); 
+    DataGrid<String> dataGrid = new DataGrid<String>(20, res);
+    
+    String dataGridWidgetStyle = res.dataGridStyle().dataGridWidget();
+    
+    TableElement tableElem = dataGrid.getElement().cast();
+    assertTrue(tableElem.getClassName().contains(dataGridWidgetStyle));
+  }
+  
   /**
    * Test that if a header builder does not add any rows, the header is hidden.
    */

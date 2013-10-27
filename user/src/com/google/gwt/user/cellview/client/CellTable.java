@@ -632,7 +632,6 @@ public class CellTable<T> extends AbstractCellTable<T> implements
       table.appendChild(tbodyLoading);
     }
     tfoot = table.createTFoot();
-    setStyleName(resources.cellTableStyle().cellTableWidget());
 
     // Attach the messages panel.
     {

@@ -2529,6 +2529,8 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     if (template == null) {
       template = GWT.create(Template.class);
     }
+    // Set the cell table style
+    setStyleName(style.widget());
 
     // Sink events.
     Set<String> eventTypes = new HashSet<String>();
