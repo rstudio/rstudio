@@ -1306,6 +1306,29 @@ Error initialize()
    installPackageMethodDef.numArgs = 2;
    r::routines::addCallMethod(installPackageMethodDef);
 
+   // if we are on mavericks test whether we can build. if we can't and
+   // there is no Makevars file already then generate one that forces
+   // the use of clang for package building
+   using namespace module_context;
+   if (isOSXMavericks() && !canBuildCpp())
+   {
+      FilePath makevarsPath = userHomePath().childPath(".R/Makevars");
+      if (!makevarsPath.exists())
+      {
+         Error error = makevarsPath.parent().ensureDirectory();
+         if (!error)
+         {
+            std::string makevars = "CC=clang\nCXX=clang++\n";
+            error = core::writeStringToFile(makevarsPath, makevars);
+            if (error)
+               LOG_ERROR(error);
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+   }
 
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
