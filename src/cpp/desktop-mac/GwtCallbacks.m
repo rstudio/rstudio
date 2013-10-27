@@ -187,74 +187,162 @@
    return 42;
 }
 
-/*
- 
- 
- public slots:
+// TODO: return as \n separated and update Qt Desktop to do the same
 
- 
- QVariant promptForText(QString title,
- QString caption,
- QString defaultValue,
- bool usePasswordMask,
- QString rememberPasswordPrompt,
- bool rememberByDefault,
- bool numbersOnly,
- int selectionStart,
- int selectionLength);
- 
- void checkForUpdates();
- void showAboutDialog();
- void bringMainFrameToFront();
- 
- QString filterText(QString text);
- 
- void cleanClipboard(bool stripHtml);
- 
- void setPendingQuit(int pendingQuit);
- 
- void openProjectInNewWindow(QString projectFilePath);
- 
- void openTerminal(QString terminalPath,
- QString workingDirectory,
- QString extraPathEntries);
- 
- QVariant getFontList(bool fixedWidthOnly);
- QString getFixedWidthFont();
- void setFixedWidthFont(QString font);
- 
- QVariant getZoomLevels();
- double getZoomLevel();
- void setZoomLevel(double zoomLevel);
- 
- bool forceFastScrollFactor();
- 
- QString getDesktopSynctexViewer();
- 
- void externalSynctexPreview(QString pdfPath, int page);
- 
- void externalSynctexView(const QString& pdfFile,
- const QString& srcFile,
- int line,
- int column);
- 
- bool supportsFullscreenMode();
- void toggleFullscreenMode();
- void showKeyboardShortcutHelp();
- 
- void launchSession(bool reload);
- 
- void reloadZoomWindow();
- 
- void setViewerUrl(QString url);
- 
- 
- */
+- (NSString*) promptForText: (NSString*) title
+              caption: (NSString*) caption
+              defaultValue: (NSString*) defaultValue
+              usePasswordMask: (Boolean) usePasswordMask
+              rememberPasswordPrompt: (NSString*) rememberPasswordPrompt
+              rememberByDefault: (Boolean) rememberByDefault
+              numbersOnly: (Boolean) numbersOnly
+              selectionStart: (int) selectionStart
+              selectionLength: (int) selectionLength
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"promptForText";
+}
+
+- (void) checkForUpdates
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) showAboutDialog
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) bringMainFrameToFront
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
 
 
+- (NSString*) filterText: (NSString*) text
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"filteredText";
+}
 
+- (void) cleanClipboard: (Boolean) stripHtml
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
 
+- (void) setPendingQuit: (int) pendingQuit
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
 
+- (void) openProjectInNewWindow: (NSString*) projectFilePath
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) openTerminal: (NSString*) terminalPath
+         workingDirectory: (NSString*) workingDirectory
+         extraPathEntries: (NSString*) extraPathEntries
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+
+}
+
+// TODO: return as newline delimined at update desktop to do the same
+
+- (NSString*) getFontList: (Boolean) fixedWidthOnly
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"fontList";
+}
+
+- (NSString*) getFixedWidthFont
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"getFixedWidthFont";
+}
+
+- (void) setFixedWidthFont: (NSString*) font
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+// TODO: return as newline delimited and update desktop to do the same
+
+- (NSString*) getZoomLevels
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"zoomLevels";
+}
+
+- (double) getZoomLevel
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return 1.0;
+}
+
+- (void) setZoomLevel: (double) zoomLevel
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (Boolean) forceFastScrollFactor
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return false;
+}
+
+- (NSString*) getDesktopSynctexViewer
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return @"syncIt";
+}
+
+- (void) externalSynctexPreview: (NSString*) pdfPath page: (int) page
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) externalSynctexView: (NSString*) pdfFile
+                     srcFile: (NSString*) srcFile
+                        line: (int) line
+                      column: (int) column
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (Boolean) supportsFullscreenMode
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   return false;
+}
+
+- (void) toggleFullscreenMode
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) showKeyboardShortcutHelp
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+
+}
+
+- (void) launchSession: (Boolean) reload
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+
+}
+
+- (void) reloadZoomWindow
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
+
+- (void) setViewerUrl: (NSString*) url
+{
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+}
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
@@ -284,8 +372,33 @@
       return @"copyImageToClipboard";
    else if (sel == @selector(showMessageBox:caption:message:buttons:defaultButton:cancelButton:))
       return @"showMessageBox";
-   
-
+   else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))
+      return @"promptForText";
+   else if (sel == @selector(filterText:))
+      return @"filterText";
+   else if (sel == @selector(cleanClipboard:))
+      return @"cleanClipboard";
+   else if (sel == @selector(setPendingQuit:))
+      return @"setPendingQuit";
+   else if (sel == @selector(openProjectInNewWindow:))
+      return @"openProjectInNewWindow";
+   else if (sel == @selector(openTerminal:workingDirectory:extraPathEntries:))
+      return @"openTerminal";
+   else if (sel == @selector(getFontList:))
+      return @"getFontList";
+   else if (sel == @selector(setFixedWidthFont:))
+      return @"setFixedWidthFont";
+   else if (sel == @selector(setZoomLevel:))
+      return @"setZoomLevel";
+   else if (sel == @selector(externalSynctexPreview:page:))
+      return @"externalSynctexPreview";
+   else if (sel == @selector(externalSynctexView:srcFile:line:column:))
+      return @"externalSynctexView";
+   else if (sel == @selector(launchSession:))
+      return @"launchSession";
+   else if (sel == @selector(setViewerUrl:))
+      return @"setViewerUrl";
+  
    return nil;
 }
 
