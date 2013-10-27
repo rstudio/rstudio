@@ -165,6 +165,7 @@ RCNTXT* getFunctionContext(const int depth,
    RCNTXT* pRContext = r::getGlobalContext();
    RCNTXT* pSrcContext = pRContext;
    int currentDepth = 0;
+   bool foundUserCode = false;
    while (pRContext->callflag)
    {
       if (isDebugHiddenContext(pRContext))
@@ -189,7 +190,8 @@ RCNTXT* getFunctionContext(const int depth,
                                  (pRContext != pSrcContext &&
                                   pRContext->srcref == pSrcContext->srcref))))
          {
-             break;
+            foundUserCode = true;
+            break;
          }
          pSrcContext = pRContext;
       }
@@ -205,6 +207,16 @@ RCNTXT* getFunctionContext(const int depth,
    if (pEnvironment)
    {
       *pEnvironment = currentDepth == 0 ? R_GlobalEnv : pRContext->cloenv;
+   }
+   if (depth == TOP_FUNCTION && findUserCode && !foundUserCode)
+   {
+      // if we were looking for the top user-mode function on the stack but
+      // found nothing, return the top of the stack rather than the bottom.
+      if (pEnvironment)
+         *pEnvironment = r::getGlobalContext()->cloenv;
+      if (pFoundDepth)
+         *pFoundDepth = 1;
+      pRContext = r::getGlobalContext();
    }
    return pRContext;
 }
