@@ -14,10 +14,8 @@
  */
 package org.rstudio.studio.client.application;
 
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
-import org.rstudio.core.client.js.JsObject;
 
 /**
  * This is an interface straight through to a C++ object that lives
@@ -59,7 +57,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                       int defaultButton,
                       int cancelButton);
 
-   JsObject promptForText(String title,
+   String promptForText(String title,
                         String label,
                         String initialValue,
                         boolean usePasswordMask,
@@ -95,11 +93,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String workingDirectory,
                      String extraPathEntries);
 
-   JsArrayString getFontList(boolean fixedWidthOnly);
+   String getFontList(boolean fixedWidthOnly);
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
-   JsArrayString getZoomLevels();
+   String getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
    

@@ -490,7 +490,7 @@ int GwtCallback::showMessageBox(int type,
    return cancelButton;
 }
 
-QVariant GwtCallback::promptForText(QString title,
+QString GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
                                    bool usePasswordMask,
@@ -541,13 +541,14 @@ QVariant GwtCallback::promptForText(QString title,
    {
       QString value = dialog.textValue();
       bool extraOption = dialog.extraOption();
-      QMap<QString, QVariant> values;
-      values.insert(QString::fromAscii("value"), value);
-      values.insert(QString::fromAscii("extraOption"), extraOption);
+      QString values;
+      values += value;
+      values += QString::fromAscii("\n");
+      values += extraOption ? QString::fromAscii("1") : QString::fromAscii("0");
       return values;
    }
    else
-      return QVariant();
+      return QString();
 }
 
 void GwtCallback::checkForUpdates()
@@ -836,7 +837,7 @@ bool isProportionalFont(QString fontFamily)
    return !isFixedWidthFont(font);
 }
 
-QVariant GwtCallback::getFontList(bool fixedWidthOnly)
+QString GwtCallback::getFontList(bool fixedWidthOnly)
 {
    QFontDatabase db;
    QStringList families = db.families();
@@ -848,7 +849,7 @@ QVariant GwtCallback::getFontList(bool fixedWidthOnly)
       families.erase(it, families.end());
    }
 
-   return QVariant(families);
+   return families.join(QString::fromAscii("\n"));
 }
 
 QString GwtCallback::getFixedWidthFont()
@@ -861,7 +862,7 @@ void GwtCallback::setFixedWidthFont(QString font)
    options().setFixedWidthFont(font);
 }
 
-QVariant GwtCallback::getZoomLevels()
+QString GwtCallback::getZoomLevels()
 {
    QStringList zoomLevels;
    BOOST_FOREACH(double zoomLevel, pMainWindow_->zoomLevels())
@@ -869,7 +870,7 @@ QVariant GwtCallback::getZoomLevels()
       zoomLevels.append(QString::fromStdString(
                            safe_convert::numberToString(zoomLevel)));
    }
-   return QVariant(zoomLevels);
+   return zoomLevels.join(QString::fromAscii("\n"));
 }
 
 double GwtCallback::getZoomLevel()

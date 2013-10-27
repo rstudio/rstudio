@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
@@ -48,7 +47,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          int initialIndex = -1;
          int normalIndex = -1;
          String[] zoomValues = 
-               JsUtil.toStringArray(Desktop.getFrame().getZoomLevels());
+               Desktop.getFrame().getZoomLevels().split("\\n");
          String[] zoomLabels = new String[zoomValues.length];
          for (int i=0; i<zoomValues.length; i++)
          {
@@ -85,8 +84,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          });
          
          
-         String[] fonts =
-               JsUtil.toStringArray(Desktop.getFrame().getFontList(true));
+         String[] fonts = Desktop.getFrame().getFontList(true).split("\\n");
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
 

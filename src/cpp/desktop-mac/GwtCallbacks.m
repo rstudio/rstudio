@@ -187,8 +187,6 @@
    return 42;
 }
 
-// TODO: return as \n separated and update Qt Desktop to do the same
-
 - (NSString*) promptForText: (NSString*) title
               caption: (NSString*) caption
               defaultValue: (NSString*) defaultValue
@@ -248,8 +246,6 @@
 
 }
 
-// TODO: return as newline delimined at update desktop to do the same
-
 - (NSString*) getFontList: (Boolean) fixedWidthOnly
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
@@ -266,8 +262,6 @@
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
 }
-
-// TODO: return as newline delimited and update desktop to do the same
 
 - (NSString*) getZoomLevels
 {

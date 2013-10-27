@@ -95,7 +95,7 @@ public slots:
                       int defaultButton,
                       int cancelButton);
 
-   QVariant promptForText(QString title,
+   QString promptForText(QString title,
                          QString caption,
                          QString defaultValue,
                          bool usePasswordMask,
@@ -121,11 +121,11 @@ public slots:
                      QString workingDirectory,
                      QString extraPathEntries);
 
-   QVariant getFontList(bool fixedWidthOnly);
+   QString getFontList(bool fixedWidthOnly);
    QString getFixedWidthFont();
    void setFixedWidthFont(QString font);
 
-   QVariant getZoomLevels();
+   QString getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
 

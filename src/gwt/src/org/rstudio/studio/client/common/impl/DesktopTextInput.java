@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.common.impl;
 
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
-import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -35,7 +35,7 @@ public class DesktopTextInput implements TextInput
                              ProgressOperationWithInput<String> okOperation,
                              Operation cancelOperation)
    {
-      JsObject result = Desktop.getFrame().promptForText(title,
+      String result = Desktop.getFrame().promptForText(title,
                                                        label,
                                                        initialValue,
                                                        usePasswordMask,
@@ -45,14 +45,15 @@ public class DesktopTextInput implements TextInput
                                                        selectionStart,
                                                        selectionLength,
                                                        okButtonCaption);
-      if (result == null)
+      if (StringUtil.isNullOrEmpty(result))
       {
          if (cancelOperation != null)
             cancelOperation.execute();
       }
       else
       {
-         okOperation.execute(result.getString("value"),
+         String[] lines = result.split("\\n");
+         okOperation.execute(lines[0],
                              RStudioGinjector.INSTANCE
                                    .getGlobalDisplay()
                                    .getProgressIndicator("Error"));
@@ -72,7 +73,7 @@ public class DesktopTextInput implements TextInput
                                  ProgressOperationWithInput<PromptWithOptionResult> okOperation,
                                  Operation cancelOperation)
    {
-      JsObject result = Desktop.getFrame().promptForText(title,
+      String result = Desktop.getFrame().promptForText(title,
                                                        label,
                                                        initialValue,
                                                        usePasswordMask,
@@ -82,7 +83,7 @@ public class DesktopTextInput implements TextInput
                                                        selectionStart,
                                                        selectionLength,
                                                        okButtonCaption);
-      if (result == null)
+      if (StringUtil.isNullOrEmpty(result))
       {
          if (cancelOperation != null)
             cancelOperation.execute();
@@ -90,8 +91,9 @@ public class DesktopTextInput implements TextInput
       else
       {
          PromptWithOptionResult presult = new PromptWithOptionResult();
-         presult.input = result.getString("value");
-         presult.extraOption = result.getBoolean("extraOption");
+         String[] lines = result.split("\\n");
+         presult.input = lines[0];
+         presult.extraOption = "1".equals(lines[1]);
          okOperation.execute(presult,
                              RStudioGinjector.INSTANCE
                                    .getGlobalDisplay()
