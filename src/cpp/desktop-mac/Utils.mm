@@ -115,5 +115,39 @@ NSString* openFileCommandLineArgument()
    return nil;
 }
 
+// PORT: From DesktopMain.cpp
+NSString* verifyAndNormalizeFilename(NSString* filename)
+{
+   if (filename)
+   {
+      // resolve relative path
+      std::string path([filename UTF8String]);
+      if (!FilePath::isRootPath(path))
+      {
+         path = FilePath::safeCurrentPath(
+                     FilePath("/")).childPath(path).absolutePath();
+      }
+      
+      if (FilePath(path).exists())
+         return [NSString stringWithUTF8String: path.c_str()];
+      else
+         return nil;
+   }
+   else
+   {
+      return nil;
+   }
+}
+
+// PORT: From DesktopMain.cpp
+BOOL isNonProjectFilename(NSString* filename)
+{
+   if (!filename)
+      return NO;
+   
+   FilePath filePath([filename UTF8String]);
+   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+}
+
 
 

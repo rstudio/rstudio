@@ -33,5 +33,6 @@ core::FilePath userLogPath();
 } // namespace desktop
 
 NSString* openFileCommandLineArgument();
+NSString* verifyAndNormalizeFilename(NSString* filename);
 
 #endif // DESKTOP_UTILS_HPP

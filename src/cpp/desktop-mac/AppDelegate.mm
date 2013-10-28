@@ -25,9 +25,14 @@
 - (void) applicationDidFinishLaunching: (NSNotification *) aNotification
 {
    // check for open file request (either apple event or command line)
-   NSString* openFile = openFile_;
+   NSString* openFile = verifyAndNormalizeFilename(openFile_);
    if (!openFile)
-      openFile = openFileCommandLineArgument();
+      openFile = verifyAndNormalizeFilename(openFileCommandLineArgument());
+   
+   if (openFile)
+   {
+   }
+   
    
    // create menubar
    id menubar = [[NSMenu new] autorelease];
