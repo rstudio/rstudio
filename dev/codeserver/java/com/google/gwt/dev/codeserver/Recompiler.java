@@ -59,16 +59,17 @@ class Recompiler {
   private final AtomicReference<CompileDir> lastBuild = new AtomicReference<CompileDir>();
   private final AtomicReference<ResourceLoader> resourceLoader =
       new AtomicReference<ResourceLoader>();
-  private final CompilerContext compilerContext = new CompilerContext();
+  private final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+  private CompilerContext compilerContext;
   private Options options;
 
-  Recompiler(AppSpace appSpace, String moduleName, Options options,
-      TreeLogger logger) {
+  Recompiler(AppSpace appSpace, String moduleName, Options options, TreeLogger logger) {
     this.appSpace = appSpace;
     this.originalModuleName = moduleName;
     this.options = options;
     this.logger = logger;
     this.serverPrefix = options.getPreferredHost() + ":" + options.getPort();
+    compilerContext = compilerContextBuilder.build();
   }
 
   synchronized CompileDir compile(Map<String, String> bindingProperties)
@@ -100,7 +101,7 @@ class Recompiler {
       CompilerOptions compilerOptions = new CompilerOptionsImpl(
           compileDir, options.getModuleNames(), options.getSourceLevel(),
           options.enforceStrictResources());
-      compilerContext.setOptions(compilerOptions);
+      compilerContext = compilerContextBuilder.options(compilerOptions).build();
       ModuleDef module = loadModule(compileLogger, bindingProperties);
 
       // Propagates module rename.
@@ -109,7 +110,7 @@ class Recompiler {
       compilerOptions = new CompilerOptionsImpl(
           compileDir, Lists.newArrayList(newModuleName), options.getSourceLevel(),
           options.enforceStrictResources());
-      compilerContext.setOptions(compilerOptions);
+      compilerContext = compilerContextBuilder.options(compilerOptions).build();
 
       success = new Compiler(compilerOptions).run(compileLogger, module);
       lastBuild.set(compileDir); // makes compile log available over HTTP
@@ -211,7 +212,8 @@ class Recompiler {
     this.resourceLoader.set(resources);
 
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
-        logger, originalModuleName, compilerContext, resources, true, true);
+        logger, compilerContext, originalModuleName, resources, true, true);
+    compilerContext = compilerContextBuilder.module(moduleDef).build();
 
     // We need a cross-site linker. Automatically replace the default linker.
     if (IFrameLinker.class.isAssignableFrom(moduleDef.getActivePrimaryLinker())) {

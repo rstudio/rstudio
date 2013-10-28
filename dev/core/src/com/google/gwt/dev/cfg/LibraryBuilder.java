@@ -26,7 +26,7 @@ import java.util.Set;
  *
  * It also provides access to a very small subset of properties for LibraryGroup access.
  */
-interface LibraryBuilder {
+public interface LibraryBuilder {
 
   /**
    * Adds a build resource. Build resources are any resources provided in source paths but which are

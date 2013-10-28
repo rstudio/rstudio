@@ -172,11 +172,13 @@ public class PrecompileOnePerm {
 
   private final PrecompileOnePermOptionsImpl options;
 
-  private final CompilerContext compilerContext;
+  private CompilerContext compilerContext;
+
+  private final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
 
   public PrecompileOnePerm(PrecompileOnePermOptions options) {
     this.options = new PrecompileOnePermOptionsImpl(options);
-    compilerContext = new CompilerContext.Builder().options(options).build();
+    compilerContext = compilerContextBuilder.options(options).build();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -195,7 +197,8 @@ public class PrecompileOnePerm {
     String moduleName = moduleNames.get(0);
     File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+    compilerContext = compilerContextBuilder.module(module).build();
     StandardLinkerContext linkerContext = new StandardLinkerContext(
         TreeLogger.NULL, module, options);
 
@@ -217,7 +220,7 @@ public class PrecompileOnePerm {
     if (options.isValidateOnly()) {
       TreeLogger branch = logger.branch(TreeLogger.INFO,
           "Validating compilation " + module.getName());
-      if (!Precompile.validate(branch, options, module, options.getGenDir())) {
+      if (!Precompile.validate(branch, compilerContext)) {
         branch.log(TreeLogger.ERROR, "Validation failed");
         return false;
       }
@@ -243,8 +246,7 @@ public class PrecompileOnePerm {
       Precompile.getCollapsedPermutations(module);
 
     PropertyPermutations onePerm = collapsedPermutations.get(permId);
-    Precompilation precompilation = Precompile.precompile(branch, options,
-        module, permId, onePerm, options.getGenDir());
+    Precompilation precompilation = Precompile.precompile(branch, compilerContext, permId, onePerm);
     if (precompilation == null) {
       branch.log(TreeLogger.ERROR, "Precompilation failed");
       return false;

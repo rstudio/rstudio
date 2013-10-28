@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
@@ -285,8 +285,6 @@ public class StandardGeneratorContext implements GeneratorContext {
   private final Map<Class<? extends Generator>, Generator> generators =
       new IdentityHashMap<Class<? extends Generator>, Generator>();
 
-  private final ModuleDef module;
-
   private ArtifactSet newlyGeneratedArtifacts = new ArtifactSet();
 
   private final Set<String> newlyGeneratedTypeNames = new HashSet<String>();
@@ -309,15 +307,17 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private boolean isProdMode;
 
+  private CompilerContext compilerContext;
+
   /**
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
    */
-  public StandardGeneratorContext(CompilationState compilationState, ModuleDef module, File genDir,
-      ArtifactSet allGeneratedArtifacts, boolean isProdMode) {
+  public StandardGeneratorContext(CompilerContext compilerContext,
+      CompilationState compilationState, ArtifactSet allGeneratedArtifacts, boolean isProdMode) {
+    this.compilerContext = compilerContext;
     this.compilationState = compilationState;
-    this.module = module;
-    this.genDir = genDir;
+    this.genDir = compilerContext.getOptions().getGenDir();
     this.allGeneratedArtifacts = allGeneratedArtifacts;
     this.isProdMode = isProdMode;
   }
@@ -526,7 +526,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   public Set<String> getActiveLinkerNames() {
-    return module.getActiveLinkerNames();
+    return compilerContext.getModule().getActiveLinkerNames();
   }
 
   /**
@@ -566,7 +566,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   @Override
   public ResourceOracle getResourcesOracle() {
-    return module.getResourcesOracle();
+    return compilerContext.getModule().getResourcesOracle();
   }
 
   @Override
@@ -608,7 +608,7 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Otherwise, for backwards compatibility, the generatorClass will be wrapped
    * in a {@link IncrementalGenerator} instance, and it's
    * {@link Generator#generate} method will be called.
-   * 
+   *
    * @param logger
    * @param generatorClass
    * @param typeName
@@ -813,7 +813,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Check for public path collision.
-    if (module.findPublicFile(partialPath) != null) {
+    if (compilerContext.getModule().findPublicFile(partialPath) != null) {
       logger.log(TreeLogger.WARN, "Cannot create resource '" + partialPath
           + "' because it already exists on the public path", null);
       return null;
@@ -842,9 +842,9 @@ public class StandardGeneratorContext implements GeneratorContext {
   /**
    * Adds a type name to the list of types to be reused from cache, if
    * available.
-   * 
+   *
    * @param typeName The fully qualified name of a type.
-   * 
+   *
    * @return true, if the type is available in the cache and was successfully
    *         added to the list for reuse, false otherwise.
    */

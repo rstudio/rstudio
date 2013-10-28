@@ -23,7 +23,6 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserChannelServer;
 import com.google.gwt.dev.shell.BrowserListener;
@@ -41,9 +40,6 @@ import com.google.gwt.dev.util.BrowserInfo;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableGeneratorResultCaching;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
-import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -105,8 +101,7 @@ public abstract class DevModeBase implements DoneCallback {
 
         ArchivePreloader.preloadArchives(logger, moduleDef);
 
-        CompilationState compilationState =
-            moduleDef.getCompilationState(logger, !options.isStrict(), options.getSourceLevel());
+        CompilationState compilationState = moduleDef.getCompilationState(logger, compilerContext);
         ShellModuleSpaceHost host =
             doCreateShellModuleSpaceHost(logger, compilationState, moduleDef);
         return host;
@@ -462,9 +457,9 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Base options for dev mode.
    */
-  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogDir, OptionLogLevel,
-      OptionGenDir, OptionNoServer, OptionPort, OptionCodeServerPort, OptionStartupURLs,
-      OptionRemoteUI, OptionBindAddress, OptionDisableUpdateCheck {
+  protected interface HostedModeBaseOptions extends PrecompileTaskOptions, OptionLogDir,
+      OptionNoServer, OptionPort, OptionCodeServerPort, OptionStartupURLs, OptionRemoteUI,
+      OptionBindAddress {
   }
 
   /**
@@ -776,7 +771,9 @@ public abstract class DevModeBase implements DoneCallback {
 
   protected final HostedModeBaseOptions options;
 
-  protected final CompilerContext compilerContext = new CompilerContext();
+  protected final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+
+  protected CompilerContext compilerContext;
 
   protected DevModeUI ui = null;
 
@@ -796,6 +793,7 @@ public abstract class DevModeBase implements DoneCallback {
     // Set any platform specific system properties.
     BootStrapPlatform.initHostedMode();
     BootStrapPlatform.applyPlatformHacks();
+    compilerContext = compilerContextBuilder.build();
     options = createOptions();
   }
 
@@ -1016,16 +1014,18 @@ public abstract class DevModeBase implements DoneCallback {
   /**
    * Load a module.
    *
-   * @param moduleName name of the module to load
    * @param logger TreeLogger to use
+   * @param moduleName name of the module to load
    * @param refresh if <code>true</code>, refresh the module from disk
+   *
    * @return the loaded module
    * @throws UnableToCompleteException
    */
   protected ModuleDef loadModule(TreeLogger logger, String moduleName, boolean refresh)
       throws UnableToCompleteException {
     ModuleDef moduleDef =
-        ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext, refresh, true);
+        ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName, refresh, true);
+    compilerContext = compilerContextBuilder.module(moduleDef).build();
     assert (moduleDef != null) : "Required module state is absent";
     return moduleDef;
   }

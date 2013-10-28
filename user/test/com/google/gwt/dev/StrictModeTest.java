@@ -42,8 +42,13 @@ public class StrictModeTest extends TestCase {
 
   private JJSOptions options = new CompilerOptionsImpl();
 
-  private CompilerContext compilerContext =
-      new CompilerContext.Builder().options(new PrecompileTaskOptionsImpl(options)).build();
+  protected final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+
+  private CompilerContext compilerContext = new CompilerContext();
+
+  public StrictModeTest() {
+    compilerContext = compilerContextBuilder.build();
+  }
 
   /**
    * A normal compile with a bad file should still succeed.
@@ -57,6 +62,8 @@ public class StrictModeTest extends TestCase {
    */
   public void testBadCompileStrict() {
     options.setStrict(true);
+    compilerContext =
+        compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
     try {
       precompile(BAD);
       fail("Should have failed");
@@ -76,6 +83,8 @@ public class StrictModeTest extends TestCase {
    */
   public void testBadValidateStrict() {
     options.setStrict(true);
+    compilerContext =
+        compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
     assertFalse(validate(BAD));
   }
 
@@ -91,6 +100,8 @@ public class StrictModeTest extends TestCase {
    */
   public void testGoodCompileStrict() throws UnableToCompleteException {
     options.setStrict(true);
+    compilerContext =
+        compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
     precompile(GOOD);
   }
 
@@ -106,12 +117,15 @@ public class StrictModeTest extends TestCase {
    */
   public void testGoodValidateStrict() {
     options.setStrict(true);
+    compilerContext =
+        compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
     assertTrue(validate(GOOD));
   }
 
   private void precompile(String moduleName) throws UnableToCompleteException {
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
-    if (Precompile.precompile(logger, options, module, null) == null) {
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+    compilerContext = compilerContextBuilder.module(module).build();
+    if (Precompile.precompile(logger, compilerContext) == null) {
       throw new UnableToCompleteException();
     }
   }
@@ -119,11 +133,12 @@ public class StrictModeTest extends TestCase {
   private boolean validate(String moduleName) {
     ModuleDef module;
     try {
-      module = ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
+      module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
+      compilerContext = compilerContextBuilder.module(module).build();
     } catch (UnableToCompleteException e) {
       fail("Failed to load the module definition");
       return false;
     }
-    return Precompile.validate(logger, options, module, null);
+    return Precompile.validate(logger, compilerContext);
   }
 }

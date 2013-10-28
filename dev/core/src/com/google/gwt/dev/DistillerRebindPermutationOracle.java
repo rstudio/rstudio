@@ -35,7 +35,6 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
-import java.io.File;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -49,15 +48,16 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
   private final StaticPropertyOracle[] propertyOracles;
   private final RebindOracle[] rebindOracles;
 
-  public DistillerRebindPermutationOracle(ModuleDef module,
+  public DistillerRebindPermutationOracle(CompilerContext compilerContext,
       CompilationState compilationState, ArtifactSet generatorArtifacts,
-      PropertyPermutations perms, File genDir) {
+      PropertyPermutations perms) {
+    ModuleDef module = compilerContext.getModule();
     this.compilationState = compilationState;
     permutations = new Permutation[perms.size()];
     propertyOracles = new StaticPropertyOracle[perms.size()];
     rebindOracles = new RebindOracle[perms.size()];
-    generatorContext = new StandardGeneratorContext(compilationState, module,
-        genDir, generatorArtifacts, true);
+    generatorContext = new StandardGeneratorContext(
+        compilerContext, compilationState, generatorArtifacts, true);
     BindingProperty[] orderedProps = perms.getOrderedProperties();
     SortedSet<ConfigurationProperty> configPropSet = module.getProperties().getConfigurationProperties();
     ConfigurationProperty[] configProps = configPropSet.toArray(new ConfigurationProperty[configPropSet.size()]);

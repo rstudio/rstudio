@@ -68,7 +68,7 @@ public abstract class TestSuperAndSourceTags extends TestCase {
     // Module has the same name as this class.
     String moduleName = getClass().getCanonicalName();
     moduleDef =
-        ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName, new CompilerContext());
+        ModuleDefLoader.loadFromClassPath(getRootLogger(), new CompilerContext(), moduleName);
   }
 
   /**

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -67,9 +67,12 @@ public class GetJreEmulation {
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger(new PrintWriter(
           System.err, true));
       logger.setMaxDetail(TreeLogger.WARN);
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(
-          logger, "com.google.gwt.core.Core", new CompilerContext());
-      CompilationState compilationState = module.getCompilationState(logger);
+      CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+      CompilerContext compilerContext = compilerContextBuilder.build();
+      ModuleDef module =
+          ModuleDefLoader.loadFromClassPath(logger, compilerContext, "com.google.gwt.core.Core");
+      compilerContext = compilerContextBuilder.module(module).build();
+      CompilationState compilationState = module.getCompilationState(logger, compilerContext);
       TypeOracle typeOracle = compilationState.getTypeOracle();
       SignatureDumper.dumpSignatures(typeOracle, System.out,
           new FilterImplementation());

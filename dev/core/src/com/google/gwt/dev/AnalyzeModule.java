@@ -148,7 +148,7 @@ public class AnalyzeModule {
       compilerWorkDir.mkdirs();
 
       ModuleDef module =
-          ModuleDefLoader.loadFromClassPath(logger, moduleName, compilerContext);
+          ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
       if (logger.isLoggable(TreeLogger.INFO)) {
         logger.log(TreeLogger.INFO, "Analyzing module " + module.getName());
       }

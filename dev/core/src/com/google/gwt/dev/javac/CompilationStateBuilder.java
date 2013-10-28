@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -25,7 +26,6 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -166,11 +166,15 @@ public class CompilationStateBuilder {
 
     private final boolean suppressErrors;
 
-    public CompileMoreLater(AdditionalTypeProviderDelegate delegate, boolean suppressErrors,
-        SourceLevel sourceLevel) {
-      this.compiler = new JdtCompiler(new UnitProcessorImpl(), sourceLevel);
+    private CompilerContext compilerContext;
+
+    public CompileMoreLater(
+        CompilerContext compilerContext, AdditionalTypeProviderDelegate delegate) {
+      this.compilerContext = compilerContext;
+      this.compiler = new JdtCompiler(
+          compilerContext, new UnitProcessorImpl());
+      this.suppressErrors = !compilerContext.getOptions().isStrict();
       compiler.setAdditionalTypeProviderDelegate(delegate);
-      this.suppressErrors = suppressErrors;
     }
 
     /**
@@ -182,7 +186,7 @@ public class CompilationStateBuilder {
         Collection<GeneratedUnit> generatedUnits) throws UnableToCompleteException {
       Event event = SpeedTracerLogger.start(DevModeEventType.CSB_ADD_GENERATED_TYPES);
       try {
-        return doBuildGeneratedTypes(logger, generatedUnits, this, suppressErrors);
+        return doBuildGeneratedTypes(logger, compilerContext, generatedUnits, this);
       } finally {
         event.end();
       }
@@ -221,10 +225,10 @@ public class CompilationStateBuilder {
      * <p>If the JDT compiler aborts, logs an error and throws UnableToCompleteException. (This
      * doesn't happen for normal compile errors.)</p>
      */
-    Collection<CompilationUnit> compile(TreeLogger logger,
+    Collection<CompilationUnit> compile(TreeLogger logger, CompilerContext compilerContext,
         Collection<CompilationUnitBuilder> builders,
-        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType,
-        boolean suppressErrors) throws UnableToCompleteException {
+        Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType)
+        throws UnableToCompleteException {
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
@@ -404,29 +408,30 @@ public class CompilationStateBuilder {
     }
   }
 
-  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources)
+  /**
+   * Compiles the given source files and adds them to the CompilationState. See
+   * {@link CompileMoreLater#compile} for details.
+   *
+   * @throws UnableToCompleteException if the compiler aborts (not a normal compile error).
+   */
+  public static CompilationState buildFrom(
+      TreeLogger logger, CompilerContext compilerContext, Set<Resource> resources)
       throws UnableToCompleteException {
-    return buildFrom(logger, resources, null, false, SourceLevel.DEFAULT_SOURCE_LEVEL);
-  }
-
-  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate, SourceLevel sourceLevel)
-      throws UnableToCompleteException {
-    return buildFrom(logger, resources, delegate, false, sourceLevel);
+    return buildFrom(logger, compilerContext, resources, null);
   }
 
   /**
-   * Compiles the given source files and adds them to the CompilationState.
-   * See {@link CompileMoreLater#compile} for details.
+   * Compiles the given source files and adds them to the CompilationState. See
+   * {@link CompileMoreLater#compile} for details.
+   *
    * @throws UnableToCompleteException if the compiler aborts (not a normal compile error).
    */
-  public static CompilationState buildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate delegate, boolean suppressErrors,
-      SourceLevel sourceLevel)
+  public static CompilationState buildFrom(TreeLogger logger, CompilerContext compilerContext,
+      Set<Resource> resources, AdditionalTypeProviderDelegate delegate)
       throws UnableToCompleteException {
     Event event = SpeedTracerLogger.start(DevModeEventType.CSB_BUILD_FROM_ORACLE);
     try {
-      return instance.doBuildFrom(logger, resources, delegate, suppressErrors, sourceLevel);
+      return instance.doBuildFrom(logger, compilerContext, resources, delegate);
     } finally {
       event.end();
     }
@@ -453,12 +458,12 @@ public class CompilationStateBuilder {
   /**
    * Build a new compilation state from a source oracle. Allow the caller to
    * specify a compiler delegate that will handle undefined names.
-   * 
+   *
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
-  public synchronized CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      AdditionalTypeProviderDelegate compilerDelegate, boolean suppressErrors,
-      SourceLevel sourceLevel)
+  public synchronized CompilationState doBuildFrom(TreeLogger logger,
+      CompilerContext compilerContext, Set<Resource> resources,
+      AdditionalTypeProviderDelegate compilerDelegate)
     throws UnableToCompleteException {
 
     // Units we definitely want to build.
@@ -468,8 +473,7 @@ public class CompilationStateBuilder {
     Map<CompilationUnitBuilder, CompilationUnit> cachedUnits =
         new IdentityHashMap<CompilationUnitBuilder, CompilationUnit>();
 
-    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerDelegate, suppressErrors,
-        sourceLevel);
+    CompileMoreLater compileMoreLater = new CompileMoreLater(compilerContext, compilerDelegate);
 
     // For each incoming Java source file...
     for (Resource resource : resources) {
@@ -504,26 +508,26 @@ public class CompilationStateBuilder {
           + cachedUnits.size() + " / " + resources.size() + " units from cache.");
     }
 
-    Collection<CompilationUnit> resultUnits =
-        compileMoreLater.compile(logger, builders, cachedUnits,
-            CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE, suppressErrors);
+    Collection<CompilationUnit> resultUnits = compileMoreLater.compile(
+        logger, compilerContext, builders, cachedUnits,
+        CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
     return new CompilationState(logger, resultUnits, compileMoreLater);
   }
 
-  public CompilationState doBuildFrom(TreeLogger logger, Set<Resource> resources,
-      boolean suppressErrors, SourceLevel sourceLevel)
+  public CompilationState doBuildFrom(
+      TreeLogger logger, CompilerContext compilerContext, Set<Resource> resources)
       throws UnableToCompleteException {
-    return doBuildFrom(logger, resources, null, suppressErrors, sourceLevel);
+    return doBuildFrom(logger, compilerContext, resources, null);
   }
 
   /**
    * Compile new generated units into an existing state.
-   * 
+   *
    * TODO: maybe use a finer brush than to synchronize the whole thing.
    */
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
-      Collection<GeneratedUnit> generatedUnits, CompileMoreLater compileMoreLater,
-      boolean suppressErrors) throws UnableToCompleteException {
+      CompilerContext compilerContext, Collection<GeneratedUnit> generatedUnits,
+      CompileMoreLater compileMoreLater) throws UnableToCompleteException {
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
@@ -549,7 +553,7 @@ public class CompilationStateBuilder {
       }
       builders.add(builder);
     }
-    return compileMoreLater.compile(logger, builders, cachedUnits,
-        CompilerEventType.JDT_COMPILER_CSB_GENERATED, suppressErrors);
+    return compileMoreLater.compile(logger, compilerContext, builders,
+        cachedUnits, CompilerEventType.JDT_COMPILER_CSB_GENERATED);
   }
 }

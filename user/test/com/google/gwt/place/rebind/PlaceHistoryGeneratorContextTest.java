@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
@@ -69,32 +70,33 @@ public class PlaceHistoryGeneratorContextTest extends TestCase {
     return logger;
   }
 
-  private static TypeOracle createTypeOracle(Resource... resources) {
-    Set<Resource> rtn = new HashSet<Resource>(
+  private static TypeOracle createTypeOracle(Resource... extraResources) {
+    Set<Resource> resources = new HashSet<Resource>(
         Arrays.asList(JavaResourceBase.getStandardResources()));
-    rtn.add(new RealJavaResource(Place.class));
-    rtn.add(new RealJavaResource(PlaceTokenizer.class));
-    rtn.add(new RealJavaResource(PlaceHistoryMapper.class));
-    rtn.add(new RealJavaResource(PlaceHistoryMapperWithFactory.class));
-    rtn.add(new RealJavaResource(WithTokenizers.class));
-    rtn.add(new RealJavaResource(Prefix.class));
-    rtn.add(new RealJavaResource(NoFactory.class));
-    rtn.add(new RealJavaResource(WithFactory.class));
-    rtn.add(new RealJavaResource(TokenizerFactory.class));
-    rtn.add(new RealJavaResource(Place1.class));
-    rtn.add(new RealJavaResource(Place2.class));
-    rtn.add(new RealJavaResource(Place3.class));
-    rtn.add(new RealJavaResource(Place4.class));
-    rtn.add(new RealJavaResource(Place6.class));
-    rtn.add(new RealJavaResource(AbstractTokenizer.class));
-    rtn.add(new RealJavaResource(Tokenizer2.class));
-    rtn.add(new RealJavaResource(Tokenizer3.class));
-    rtn.add(new RealJavaResource(Tokenizer4.class));
-    rtn.addAll(Arrays.asList(resources));
+    resources.add(new RealJavaResource(Place.class));
+    resources.add(new RealJavaResource(PlaceTokenizer.class));
+    resources.add(new RealJavaResource(PlaceHistoryMapper.class));
+    resources.add(new RealJavaResource(PlaceHistoryMapperWithFactory.class));
+    resources.add(new RealJavaResource(WithTokenizers.class));
+    resources.add(new RealJavaResource(Prefix.class));
+    resources.add(new RealJavaResource(NoFactory.class));
+    resources.add(new RealJavaResource(WithFactory.class));
+    resources.add(new RealJavaResource(TokenizerFactory.class));
+    resources.add(new RealJavaResource(Place1.class));
+    resources.add(new RealJavaResource(Place2.class));
+    resources.add(new RealJavaResource(Place3.class));
+    resources.add(new RealJavaResource(Place4.class));
+    resources.add(new RealJavaResource(Place6.class));
+    resources.add(new RealJavaResource(AbstractTokenizer.class));
+    resources.add(new RealJavaResource(Tokenizer2.class));
+    resources.add(new RealJavaResource(Tokenizer3.class));
+    resources.add(new RealJavaResource(Tokenizer4.class));
+    resources.addAll(Arrays.asList(extraResources));
     try {
-        return CompilationStateBuilder.buildFrom(createCompileLogger(), rtn).getTypeOracle();
+      return CompilationStateBuilder.buildFrom(
+          createCompileLogger(), new CompilerContext(), resources).getTypeOracle();
     } catch (UnableToCompleteException e) {
-        throw new RuntimeException(e);
+      throw new RuntimeException(e);
     }
   }
 

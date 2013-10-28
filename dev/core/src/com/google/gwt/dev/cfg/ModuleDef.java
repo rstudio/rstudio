@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -33,7 +34,6 @@ import com.google.gwt.dev.resource.impl.ResourceFilter;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -91,7 +91,7 @@ public class ModuleDef {
    * of target module" times.
    */
   private enum AttributeSource {
-    TARGET_LIBRARY, EXTERNAL_LIBRARY
+    EXTERNAL_LIBRARY, TARGET_LIBRARY
   }
 
   private static final ResourceFilter NON_JAVA_RESOURCES = new ResourceFilter() {
@@ -479,17 +479,11 @@ public class ModuleDef {
     return name;
   }
 
-  public CompilationState getCompilationState(TreeLogger logger) throws UnableToCompleteException {
-    return getCompilationState(logger, false, SourceLevel.DEFAULT_SOURCE_LEVEL);
-  }
-
-  public synchronized CompilationState getCompilationState(TreeLogger logger,
-      boolean suppressErrors, SourceLevel sourceLevel)
+  public CompilationState getCompilationState(TreeLogger logger, CompilerContext compilerContext)
       throws UnableToCompleteException {
     doRefresh();
     CompilationState compilationState =
-        CompilationStateBuilder.buildFrom(logger, lazySourceOracle.getResources(), null,
-            suppressErrors, sourceLevel);
+        CompilationStateBuilder.buildFrom(logger, compilerContext, lazySourceOracle.getResources());
     checkForSeedTypes(logger, compilationState);
     return compilationState;
   }

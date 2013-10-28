@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
-import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 
 /**
@@ -26,11 +26,12 @@ import com.google.gwt.dev.jdt.RebindPermutationOracle;
  */
 public class JavaScriptCompiler implements AbstractCompiler {
 
-  public UnifiedAst precompile(TreeLogger logger, ModuleDef module, RebindPermutationOracle rpo,
-      String[] declEntryPts, String[] additionalRootTypes, JJSOptions options,
+  @Override
+  public UnifiedAst precompile(TreeLogger logger, CompilerContext compilerContext,
+      RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
       boolean singlePermutation, PrecompilationMetricsArtifact precompilationMetrics)
       throws UnableToCompleteException {
-    return JavaToJavaScriptCompiler.precompile(logger, module, rpo, declEntryPts,
-        additionalRootTypes, options, singlePermutation, precompilationMetrics);
+    return JavaToJavaScriptCompiler.precompile(logger, compilerContext, rpo, declEntryPts,
+        additionalRootTypes, singlePermutation, precompilationMetrics);
   }
 }

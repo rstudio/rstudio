@@ -45,7 +45,7 @@ public class PropertyTest extends TestCase {
     // Module has the same name as this class.
     String moduleName = getClass().getCanonicalName();
     moduleDef =
-        ModuleDefLoader.loadFromClassPath(getRootLogger(), moduleName, new CompilerContext());
+        ModuleDefLoader.loadFromClassPath(getRootLogger(), new CompilerContext(), moduleName);
   }
 
   public void testModule() {
@@ -136,7 +136,7 @@ public class PropertyTest extends TestCase {
     for (String name : Arrays.asList("A", "B", "C", "D")) {
       try {
         ModuleDefLoader.loadFromClassPath(
-            TreeLogger.NULL, moduleName + "Bad" + name, new CompilerContext());
+            TreeLogger.NULL, new CompilerContext(), moduleName + "Bad" + name);
         fail("Test " + name + " should have thrown UnableToCompleteException");
       } catch (UnableToCompleteException e) {
         // OK

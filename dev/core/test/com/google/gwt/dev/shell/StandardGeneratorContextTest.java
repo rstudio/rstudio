@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.MockModuleDef;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -80,14 +81,17 @@ public class StandardGeneratorContextTest extends TestCase {
   private final List<File> toDelete = new ArrayList<File>();
 
   public StandardGeneratorContextTest() {
+    CompilerContext compilerContext =
+        new CompilerContext.Builder().module(new MockModuleDef()).build();
     try {
-      mockCompilationState =
-          CompilationStateBuilder.buildFrom(TreeLogger.NULL, Collections.<Resource>emptySet());
+      mockCompilationState = CompilationStateBuilder.buildFrom(
+          TreeLogger.NULL, compilerContext, Collections.<Resource> emptySet());
     } catch (UnableToCompleteException e) {
       throw new RuntimeException(e);
     }
-    genCtx = new StandardGeneratorContext(mockCompilationState,
-        new MockModuleDef(), null, artifactSet, false);
+
+    genCtx =
+        new StandardGeneratorContext(compilerContext, mockCompilationState, artifactSet, false);
     genCtx.setPropertyOracle(mockPropOracle);
     genCtx.setCurrentGenerator(Generator.class);
   }
@@ -195,10 +199,10 @@ public class StandardGeneratorContextTest extends TestCase {
 
   /**
    * Tests that finish() can be called before and after output file creation.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws IOException
-   * 
+   *
    */
   public void testTryCreateResource_creationWorksBetweenFinishes()
       throws UnableToCompleteException, IOException {
@@ -255,7 +259,7 @@ public class StandardGeneratorContextTest extends TestCase {
   /**
    * Tests that tryCreateResource() returns <code>null</code> when the specified
    * file is already on the public path.
-   * 
+   *
    * @throws UnableToCompleteException
    * @throws IOException
    */

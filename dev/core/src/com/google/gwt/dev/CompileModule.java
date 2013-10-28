@@ -217,7 +217,8 @@ public class CompileModule {
       return false;
     }
 
-    CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
+    CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+    CompilerContext compilerContext = compilerContextBuilder.options(options).build();
 
     // TODO(zundel): There is an optimal order to compile these modules in.
     // Modify ModuleDefLoader to be able to figure that out and sort them for
@@ -229,7 +230,8 @@ public class CompileModule {
       // written out.
       Set<String> currentModuleArchivedUnits = new HashSet<String>();
       try {
-        module = ModuleDefLoader.loadFromClassPath(logger, moduleToCompile, compilerContext);
+        module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleToCompile);
+        compilerContext = compilerContextBuilder.module(module).build();
       } catch (Throwable e) {
         CompilationProblemReporter.logAndTranslateException(logger, e);
         return false;
@@ -294,8 +296,7 @@ public class CompileModule {
 
       CompilationState compilationState;
       try {
-        compilationState = module.getCompilationState(logger, !options.isStrict(),
-            options.getSourceLevel());
+        compilationState = module.getCompilationState(logger, compilerContext);
       } catch (Throwable e) {
         CompilationProblemReporter.logAndTranslateException(logger, e);
         return false;

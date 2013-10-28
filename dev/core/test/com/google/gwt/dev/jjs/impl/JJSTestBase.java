@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.cfg.Properties;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -194,7 +194,7 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   * 
+   *
    * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param codeSnippet the body of the entry method
@@ -207,7 +207,7 @@ public abstract class JJSTestBase extends TestCase {
   /**
    * Returns the program that results from compiling the specified code snippet
    * as the body of an entry point method.
-   * 
+   *
    * @param returnType the return type of the method to compile; use "void" if
    *          the code snippet has no return statement
    * @param params the parameter list of the method to compile
@@ -237,9 +237,11 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
     addBuiltinClasses(sourceOracle);
+    CompilerContext compilerContext = new CompilerContext();
+    compilerContext.getOptions().setSourceLevel(sourceLevel);
     CompilationState state =
-        CompilationStateBuilder.buildFrom(logger, sourceOracle.getResources(),
-            getAdditionalTypeProviderDelegate(), sourceLevel);
+        CompilationStateBuilder.buildFrom(logger, compilerContext,
+            sourceOracle.getResources(), getAdditionalTypeProviderDelegate());
     JProgram program =
         JavaAstConstructor.construct(logger, state, null, "test.EntryPoint",
             "com.google.gwt.lang.Exceptions");
@@ -293,10 +295,10 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
   }
-  
+
   /**
    * Return an AdditionalTypeProviderDelegate that will be able to provide
-   * new sources for unknown classnames. 
+   * new sources for unknown classnames.
    */
   protected AdditionalTypeProviderDelegate getAdditionalTypeProviderDelegate() {
     return null;

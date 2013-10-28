@@ -102,7 +102,8 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
       this.serverSocket = sock;
     }
 
-    public void compile(TreeLogger logger, Permutation permutation,
+    @Override
+    public void compile(TreeLogger logger, CompilerContext compilerContext, Permutation permutation,
         FileBackedObject<PermutationResult> resultFile)
         throws TransientWorkerException, UnableToCompleteException {
 

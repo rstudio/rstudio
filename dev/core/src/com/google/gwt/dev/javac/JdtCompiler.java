@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -100,7 +101,7 @@ public class JdtCompiler {
     /**
      * Checks for additional packages which may contain additional compilation
      * units.
-     * 
+     *
      * @param slashedPackageName the '/' separated name of the package to find
      * @return <code>true</code> if such a package exists
      */
@@ -109,7 +110,7 @@ public class JdtCompiler {
     /**
      * Finds a new compilation unit on-the-fly for the requested type, if there
      * is an alternate mechanism for doing so.
-     * 
+     *
      * @param binaryName the binary name of the requested type
      * @return a unit answering the name, or <code>null</code> if no such unit
      *         can be created
@@ -484,27 +485,19 @@ public class JdtCompiler {
    * reflect the results of compilation. If the compiler aborts, logs an error
    * and throws UnableToCompleteException.
    */
-  public static List<CompilationUnit> compile(TreeLogger logger,
-      Collection<CompilationUnitBuilder> builders)
-      throws UnableToCompleteException {
-    return compile(logger, builders, SourceLevel.DEFAULT_SOURCE_LEVEL);
-  }
-
-  public static List<CompilationUnit> compile(TreeLogger logger,
-      Collection<CompilationUnitBuilder> builders, SourceLevel sourceLevel)
-      throws UnableToCompleteException {
+  public static List<CompilationUnit> compile(TreeLogger logger, CompilerContext compilerContext,
+      Collection<CompilationUnitBuilder> builders) throws UnableToCompleteException {
     Event jdtCompilerEvent = SpeedTracerLogger.start(CompilerEventType.JDT_COMPILER);
 
     try {
       DefaultUnitProcessor processor = new DefaultUnitProcessor();
-      JdtCompiler compiler = new JdtCompiler(processor, sourceLevel);
+      JdtCompiler compiler = new JdtCompiler(compilerContext, processor);
       compiler.doCompile(logger, builders);
       return processor.getResults();
     } finally {
       jdtCompilerEvent.end();
     }
   }
-
 
   public static CompilerOptions getStandardCompilerOptions() {
     CompilerOptions options = new CompilerOptions() {
@@ -644,6 +637,8 @@ public class JdtCompiler {
    */
   private final SourceLevel sourceLevel;
 
+  private CompilerContext compilerContext;
+
   /**
    * Controls whether the compiler strips GwtIncompatible annotations.
    */
@@ -663,9 +658,10 @@ public class JdtCompiler {
           SourceLevel.JAVA6, ClassFileConstants.JDK1_6,
           SourceLevel.JAVA7, ClassFileConstants.JDK1_7);
 
-  public JdtCompiler(UnitProcessor processor, SourceLevel sourceLevel) {
+  public JdtCompiler(CompilerContext compilerContext, UnitProcessor processor) {
+    this.compilerContext = compilerContext;
     this.processor = processor;
-    this.sourceLevel = sourceLevel;
+    this.sourceLevel = compilerContext.getOptions().getSourceLevel();
   }
 
   public void addCompiledUnit(CompilationUnit unit) {

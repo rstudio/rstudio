@@ -18,13 +18,13 @@ package com.google.gwt.dev.javac.testing;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -61,11 +61,13 @@ public class GeneratorContextBuilder {
     return new GeneratorContextBuilder(new HashSet<Resource>());
   }
 
+  private final CompilerContext compilerContext;
   private final Set<Resource> resources;
   private TreeLogger treeLogger;
 
   private GeneratorContextBuilder(Set<Resource> resources) {
     this.resources = resources;
+    this.compilerContext = new CompilerContext();
   }
 
   /**
@@ -87,7 +89,7 @@ public class GeneratorContextBuilder {
     // TODO: Add ability to add property values later and add them to this
     // context.
     try {
-      return new StandardGeneratorContext(buildCompilationState(), null, null, null, false);
+      return new StandardGeneratorContext(compilerContext, buildCompilationState(), null, false);
     } catch (UnableToCompleteException e) {
       // TODO: change signature and fix callers (looks like it's just tests)
       throw new RuntimeException(e);
@@ -105,8 +107,7 @@ public class GeneratorContextBuilder {
 
   private CompilationState buildCompilationState() throws UnableToCompleteException {
     TreeLogger logger = treeLogger != null ? treeLogger : createLogger();
-      return new CompilationStateBuilder().doBuildFrom(logger, resources, null, false,
-          SourceLevel.DEFAULT_SOURCE_LEVEL);
+      return new CompilationStateBuilder().doBuildFrom(logger, compilerContext, resources, null);
   }
 
   private TreeLogger createLogger() {

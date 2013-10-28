@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,6 +17,8 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
@@ -26,9 +28,9 @@ import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
+import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
 import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
-import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.js.ast.JsProgram;
 
 /**
@@ -42,9 +44,11 @@ public class AstConstructor {
    * {@link JavaToJavaScriptCompiler}.
    */
   public static JProgram construct(TreeLogger logger, final CompilationState state,
-      JJSOptions options, Properties properties) throws UnableToCompleteException {
+      PrecompileTaskOptions options, Properties properties) throws UnableToCompleteException {
 
     InternalCompilerException.preload();
+
+    CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
 
     RebindPermutationOracle rpo = new RebindPermutationOracle() {
       @Override
@@ -68,7 +72,7 @@ public class AstConstructor {
 
     JProgram jprogram = new JProgram();
     JsProgram jsProgram = new JsProgram();
-    UnifyAst unifyAst = new UnifyAst(logger, jprogram, jsProgram, options, rpo);
+    UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
     unifyAst.buildEverything();
 
     // Compute all super type/sub type info

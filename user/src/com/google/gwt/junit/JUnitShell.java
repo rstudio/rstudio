@@ -1342,8 +1342,8 @@ public class JUnitShell extends DevMode {
     if (!sameTest) {
       currentModule = compileStrategy.maybeCompileModule(moduleName,
           syntheticModuleName, strategy, batchingStrategy, getTopLogger());
-      currentCompilationState = currentModule.getCompilationState(getTopLogger(), true,
-          options.getSourceLevel());
+      compilerContext = compilerContextBuilder.module(currentModule).build();
+      currentCompilationState = currentModule.getCompilationState(getTopLogger(), compilerContext);
     }
     assert (currentModule != null);
 

@@ -38,7 +38,9 @@ import com.google.gwt.core.ext.soyc.impl.SizeMapRecorder;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.core.linker.SoycReportLinker;
+import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.Permutation;
+import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
@@ -67,8 +69,6 @@ import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
-import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
-import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
@@ -94,24 +94,26 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
-import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
-import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.UnifyAst;
 import com.google.gwt.dev.jjs.impl.VerifySymbolMap;
+import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
+import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
+import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
+import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.BaselineCoverageGatherer;
 import com.google.gwt.dev.js.ClosureJsRunner;
 import com.google.gwt.dev.js.CoverageInstrumentor;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
+import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsCoerceIntShift;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
-import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
@@ -273,15 +275,15 @@ public class JavaToJavaScriptCompiler {
    * Compiles a particular permutation, based on a precompiled unified AST.
    *
    * @param logger the logger to use
-   * @param unifiedAst the result of a {@link #precompile(TreeLogger, ModuleDef,
-   *          RebindPermutationOracle, String[], String[], JJSOptions, boolean,
-   *          PrecompilationMetricsArtifact)}
+   * @param compilerContext shared read only compiler state
+   * @param unifiedAst of stitched together per-type ASTs
    * @param permutation the permutation to compile
    * @return the output JavaScript
    * @throws UnableToCompleteException if an error other than {@link OutOfMemoryError} occurs
    */
-  public static PermutationResult compilePermutation(TreeLogger logger, UnifiedAst unifiedAst,
-      Permutation permutation) throws UnableToCompleteException {
+  public static PermutationResult compilePermutation(TreeLogger logger,
+      CompilerContext compilerContext, UnifiedAst unifiedAst, Permutation permutation)
+      throws UnableToCompleteException {
     JJSOptions options = unifiedAst.getOptions();
     long startTimeMilliseconds = System.currentTimeMillis();
 
@@ -398,10 +400,10 @@ public class JavaToJavaScriptCompiler {
 
       // (10) Split up the program into fragments
       SyntheticArtifact dependencies = null;
-    
+
       if (options.isRunAsyncEnabled()) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
+
         int expectedFragmentCount = options.getFragmentCount();
         // -1 is the default value, we trap 0 just in case (0 is not a legal value  in any case)
         if (expectedFragmentCount <= 0) {
@@ -465,10 +467,10 @@ public class JavaToJavaScriptCompiler {
       // point.
       HandleCrossFragmentReferences.exec(logger, jsProgram, propertyOracles);
 
-      
+
       // Verify that SymbolMap is somewhat close to being complete.
       VerifySymbolMap.exec(jsProgram, jjsmap, symbolTable);
-      
+
       // (11) Perform any post-obfuscation normalizations.
 
       // Work around an IE7 bug,
@@ -489,7 +491,7 @@ public class JavaToJavaScriptCompiler {
           options.isSoycEnabled() || options.isCompilerMetricsEnabled()
               ? new SizeBreakdown[js.length] : null;
       List<Map<Range, SourceInfo>> sourceInfoMaps = new ArrayList<Map<Range, SourceInfo>>();
-      generateJavaScriptCode(options, jprogram, jsProgram, jjsmap, js, ranges,
+      generateJavaScriptCode(compilerContext, jprogram, jsProgram, jjsmap, js, ranges,
           sizeBreakdowns, sourceInfoMaps, splitBlocks, isSourceMapsEnabled);
 
       PermutationResult toReturn =
@@ -593,25 +595,23 @@ public class JavaToJavaScriptCompiler {
     return toReturn;
   }
 
-
-  public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
+  public static UnifiedAst precompile(TreeLogger logger, CompilerContext compilerContext,
       RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
-      JJSOptions options, boolean singlePermutation) throws UnableToCompleteException {
-    return precompile(logger, module, rpo, declEntryPts, additionalRootTypes, options,
-        singlePermutation, null);
+      boolean singlePermutation) throws UnableToCompleteException {
+    return precompile(
+        logger, compilerContext, rpo, declEntryPts, additionalRootTypes, singlePermutation, null);
   }
 
   /**
    * Performs a precompilation, returning a unified AST.
    *
    * @param logger the logger to use
-   * @param module the module to compile
+   * @param compilerContext shared read only compiler state
    * @param rpo the RebindPermutationOracle
    * @param declEntryPts the set of entry classes declared in a GWT module;
    *          these will be automatically rebound
    * @param additionalRootTypes additional classes that should serve as code
    *          roots; will not be rebound; may be <code>null</code>
-   * @param options the compiler options
    * @param singlePermutation if true, do not pre-optimize the resulting AST or
    *          allow serialization of the result
    * @param precompilationMetrics if not null, gather diagnostic information
@@ -620,12 +620,15 @@ public class JavaToJavaScriptCompiler {
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
+  public static UnifiedAst precompile(TreeLogger logger, CompilerContext compilerContext,
       RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
-      JJSOptions options, boolean singlePermutation,
-      PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException {
+      boolean singlePermutation, PrecompilationMetricsArtifact precompilationMetrics)
+      throws UnableToCompleteException {
 
     InternalCompilerException.preload();
+
+    PrecompileTaskOptions options = compilerContext.getOptions();
+    ModuleDef module = compilerContext.getModule();
 
     if (additionalRootTypes == null) {
       additionalRootTypes = Empty.STRINGS;
@@ -662,10 +665,10 @@ public class JavaToJavaScriptCompiler {
 
     try {
       // (2) Assemble the Java AST.
-      UnifyAst unifyAst = new UnifyAst(logger, jprogram, jsProgram, options, rpo);
+      UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
       unifyAst.addRootTypes(allRootTypes);
       // TODO: move this into UnifyAst?
-      findEntryPoints(logger, rpo, declEntryPts, jprogram);
+      findEntryPoints(logger, compilerContext, rpo, declEntryPts, jprogram);
       unifyAst.exec();
 
       List<String> finalTypeOracleTypes = Lists.create();
@@ -1006,8 +1009,9 @@ public class JavaToJavaScriptCompiler {
     return new JMethodCall(info, qualifier, entryMethod);
   }
 
-  private static void findEntryPoints(TreeLogger logger, RebindPermutationOracle rpo,
-      String[] mainClassNames, JProgram program) throws UnableToCompleteException {
+  private static void findEntryPoints(TreeLogger logger, CompilerContext compilerContext,
+      RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
+      throws UnableToCompleteException {
     Event findEntryPointsEvent = SpeedTracerLogger.start(CompilerEventType.FIND_ENTRY_POINTS);
     JMethod bootStrapMethod = program.getIndexedMethod("EntryMethodHolder.init");
 
@@ -1090,8 +1094,8 @@ public class JavaToJavaScriptCompiler {
   /**
    * Generate JavaScript code from the given JavaScript ASTs. Also produces information about that
    * transformation.
-   * 
-   * @param options The options this compiler instance is running with
+   *
+   * @param compilerContext shared read only compiler state
    * @param jprogram The original Java program AST
    * @param jsProgram The AST to convert to source code
    * @param jjsMap A map between the JavaScript AST and the Java AST it came from
@@ -1102,13 +1106,11 @@ public class JavaToJavaScriptCompiler {
    * @param splitBlocks true if current permutation is for IE6 or unknown
    * @param sourceMapsEnabled
    */
-  private static void generateJavaScriptCode(JJSOptions options,
-      JProgram jprogram, JsProgram jsProgram,
-      JavaToJavaScriptMap jjsMap, String[] js, StatementRanges[] ranges,
-      SizeBreakdown[] sizeBreakdowns,
-      List<Map<Range, SourceInfo>> sourceInfoMaps,
+  private static void generateJavaScriptCode(CompilerContext compilerContext, JProgram jprogram,
+      JsProgram jsProgram, JavaToJavaScriptMap jjsMap, String[] js, StatementRanges[] ranges,
+      SizeBreakdown[] sizeBreakdowns, List<Map<Range, SourceInfo>> sourceInfoMaps,
       boolean splitBlocks, boolean sourceMapsEnabled) {
-
+    PrecompileTaskOptions options = compilerContext.getOptions();
     boolean useClosureCompiler = options.isClosureCompilerEnabled();
     if (useClosureCompiler) {
       ClosureJsRunner runner = new ClosureJsRunner();
@@ -1344,7 +1346,7 @@ public class JavaToJavaScriptCompiler {
               nameUsed.add(x.getName().getIdent());
             }
         }
-        
+
         @Override
         public void endVisit(JsNameRef x, JsContext ctx) {
           // Obviously this isn't even that accurate. Some of them are
@@ -1355,14 +1357,14 @@ public class JavaToJavaScriptCompiler {
             nameUsed.add(x.getName().getIdent());
           }
         }
-        
+
         @Override
         public void endVisit(JsNameOf x, JsContext ctx) {
           if (x.getName() != null) {
             nameUsed.add(x.getName().getIdent());
           }
         }
-        
+
         @Override
         public void endVisit(JsForIn x, JsContext ctx) {
           if (x.getIterVarName() != null) {
