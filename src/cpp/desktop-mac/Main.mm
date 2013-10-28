@@ -1,8 +1,14 @@
 
 
+#include <core/Log.hpp>
+#include <core/Error.hpp>
+#include <core/FilePath.hpp>
+#include <core/system/System.hpp>
+
 #import <Cocoa/Cocoa.h>
 
-#import "WebViewController.h"
+#import "Utils.hpp"
+#import "WebViewController.hpp"
 
 
 @interface AppDelegate : NSObject <NSApplicationDelegate> {
@@ -35,8 +41,25 @@
 
 @end
 
+using namespace core;
+using namespace desktop;
+
 int main(int argc, char* argv[])
 {
+   // initialize language environment variables
+   utils::initializeLang();
+ 
+   // initialize log
+   core::system::initializeLog("rdesktop",
+                               core::system::kLogLevelWarning,
+                               desktop::utils::userLogPath());
+   
+   // ignore SIGPIPE
+   Error error = core::system::ignoreSignal(core::system::SigPipe);
+   if (error)
+      LOG_ERROR(error);
+   
+   
    // initialize autorelease pool and application instance
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
    [NSApplication sharedApplication];

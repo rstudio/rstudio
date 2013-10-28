@@ -4,9 +4,10 @@
 
 #import <Webkit/WebUIDelegate.h>
 
-#import "WebViewController.h"
+#import "GwtCallbacks.hpp"
 
-#import "GwtCallbacks.h"
+#import "WebViewController.hpp"
+
 
 // TODO: enable javascript alerts
 
