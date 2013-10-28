@@ -1,13 +1,15 @@
 
 
-#import <Cocoa/Cocoa.h>
+#include <string>
 
 #include <core/FilePath.hpp>
 
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#include "Utils.hpp"
+#import <Cocoa/Cocoa.h>
+
+#import "Utils.hpp"
 
 using namespace core;
 
@@ -97,65 +99,4 @@ FilePath userLogPath()
 
 } // namespace utils
 } // namespace desktop
-
-NSString* openFileCommandLineArgument()
-{
-   NSArray *arguments = [[NSProcessInfo processInfo] arguments];
-   int count = [arguments count];
-   if (count > 1) // executable name doesn't count as an argument
-   {
-      for (int i=(count-1); i>0; --i)
-      {
-         NSString* arg = [arguments objectAtIndex: i];
-         if (![arg hasPrefix: @"-psn"]) // avoid process serial number arg
-            return arg;
-      }
-   }
-
-   return nil;
-}
-
-// PORT: From DesktopMain.cpp
-NSString* verifyAndNormalizeFilename(NSString* filename)
-{
-   if (filename)
-   {
-      // resolve relative path
-      std::string path([filename UTF8String]);
-      if (!FilePath::isRootPath(path))
-      {
-         path = FilePath::safeCurrentPath(
-                     FilePath("/")).childPath(path).absolutePath();
-      }
-      
-      if (FilePath(path).exists())
-         return [NSString stringWithUTF8String: path.c_str()];
-      else
-         return nil;
-   }
-   else
-   {
-      return nil;
-   }
-}
-
-BOOL isProjectFilename(NSString* filename)
-{
-   if (!filename)
-      return NO;
-   
-   FilePath filePath([filename UTF8String]);
-   return filePath.exists() && filePath.extensionLowerCase() == ".rproj";
-}
-
-NSString* executablePath()
-{
-   FilePath exePath;
-   Error error = core::system::executablePath(NULL, &exePath);
-   if (error)
-      LOG_ERROR(error);
-   return [NSString stringWithUTF8String: exePath.absolutePath().c_str()];
-}
-
-
 
