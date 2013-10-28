@@ -139,14 +139,22 @@ NSString* verifyAndNormalizeFilename(NSString* filename)
    }
 }
 
-// PORT: From DesktopMain.cpp
-BOOL isNonProjectFilename(NSString* filename)
+BOOL isProjectFilename(NSString* filename)
 {
    if (!filename)
       return NO;
    
    FilePath filePath([filename UTF8String]);
-   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+   return filePath.exists() && filePath.extensionLowerCase() == ".rproj";
+}
+
+NSString* executablePath()
+{
+   FilePath exePath;
+   Error error = core::system::executablePath(NULL, &exePath);
+   if (error)
+      LOG_ERROR(error);
+   return [NSString stringWithUTF8String: exePath.absolutePath().c_str()];
 }
 
 

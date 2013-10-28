@@ -2,6 +2,8 @@
 
 #import <AppKit/AppKit.h>
 
+#import <Foundation/NSTask.h>
+
 #import "AppDelegate.h"
 #import "WebViewController.h"
 #import "Utils.hpp"
@@ -17,9 +19,30 @@
 - (BOOL) application: (NSApplication *) theApplication
             openFile:(NSString *) filename
 {
-   [openFile_ release];
-   openFile_ = [filename copy];
-   return YES;
+   // open file and application together
+   if (!openFile_)
+   {
+      openFile_ = [filename copy];
+   }
+   // attemping to open a project in an existing instance, force a new instance
+   else if (isProjectFilename(filename))
+   {
+      NSArray* args = [NSArray arrayWithObject: filename];
+      [NSTask launchedTaskWithLaunchPath: executablePath()
+                               arguments: args];
+      
+   }
+   // attempt to open a file in an existing instance
+   else
+   {
+      // TODO: open file in existing instance
+      
+      NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+      [alert setMessageText: [@"Open Existing:" stringByAppendingString: filename]];
+      [alert runModal];
+   }
+   
+   return YES;   
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *) aNotification
@@ -31,6 +54,10 @@
    
    if (openFile)
    {
+      
+      NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+      [alert setMessageText: [@"Open New:" stringByAppendingString: openFile]];
+      [alert runModal];
    }
    
    

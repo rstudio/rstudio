@@ -34,5 +34,7 @@ core::FilePath userLogPath();
 
 NSString* openFileCommandLineArgument();
 NSString* verifyAndNormalizeFilename(NSString* filename);
+BOOL isProjectFilename(NSString* filename);
+NSString* executablePath();
 
 #endif // DESKTOP_UTILS_HPP
