@@ -2,6 +2,9 @@
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
+
+#include <core/r_util/RProjectFile.hpp>
 
 #import <AppKit/AppKit.h>
 
@@ -12,6 +15,24 @@
 #import "Utils.hpp"
 
 using namespace core;
+
+NSString* executablePath()
+{
+   FilePath exePath;
+   Error error = core::system::executablePath(NULL, &exePath);
+   if (error)
+      LOG_ERROR(error);
+   return [NSString stringWithUTF8String: exePath.absolutePath().c_str()];
+}
+
+BOOL isProjectFilename(NSString* filename)
+{
+   if (!filename)
+      return NO;
+   
+   FilePath filePath([filename UTF8String]);
+   return filePath.exists() && filePath.extensionLowerCase() == ".rproj";
+}
 
 NSString* openFileCommandLineArgument()
 {
@@ -54,24 +75,100 @@ NSString* verifyAndNormalizeFilename(NSString* filename)
    }
 }
 
-BOOL isProjectFilename(NSString* filename)
+// PORT: from DesktopMain.cpp
+std::string s_sharedSecret;
+
+void initializeSharedSecret()
 {
-   if (!filename)
-      return NO;
+   s_sharedSecret = core::system::generateUuid();
+   core::system::setenv("RS_SHARED_SECRET", s_sharedSecret);
+}
+
+
+// PORT: from DesktopMain.cpp
+void initializeWorkingDirectory(const std::string& filename)
+{
+   // calculate what our initial working directory should be
+   std::string workingDir;
    
-   FilePath filePath([filename UTF8String]);
-   return filePath.exists() && filePath.extensionLowerCase() == ".rproj";
+   // if there is a filename passed to us then use it's path
+   if (!filename.empty())
+   {
+      FilePath filePath(filename);
+      if (filePath.exists())
+      {
+         if (filePath.isDirectory())
+            workingDir = filePath.absolutePath();
+         else
+            workingDir = filePath.parent().absolutePath();
+      }
+   }
+   
+   // do additinal detection if necessary
+   if (workingDir.empty())
+   {
+      // get current path
+      FilePath currentPath = FilePath::safeCurrentPath(
+                                                core::system::userHomePath());
+      
+      // detect whether we were launched from the system application menu
+      // (e.g. Dock, Program File icon, etc.). we do this by checking
+      // whether the executable path is within the current path. if we
+      // weren't launched from the system app menu that set the initial
+      // wd to the current path
+      NSString* exePathStr = executablePath();
+      FilePath exePath([exePathStr UTF8String]);
+      if (!exePath.isWithin(currentPath))
+         workingDir = currentPath.absolutePath();
+   }
+   
+   // set the working dir if we have one
+   if (!workingDir.empty())
+      core::system::setenv("RS_INITIAL_WD", workingDir);
 }
 
-NSString* executablePath()
+// PORT: from DesktopMain.cpp
+void setInitialProject(const FilePath& projectFile, std::string* pFilename)
 {
-   FilePath exePath;
-   Error error = core::system::executablePath(NULL, &exePath);
-   if (error)
-      LOG_ERROR(error);
-   return [NSString stringWithUTF8String: exePath.absolutePath().c_str()];
+   core::system::setenv("RS_INITIAL_PROJECT", projectFile.absolutePath());
+   pFilename->clear();
 }
 
+// PORT: from DesktopMain.cpp
+void initializeStartupEnvironment(std::string* pFilename)
+{
+   // if the filename ends with .RData or .rda then this is an
+   // environment file. if it ends with .Rproj then it is
+   // a project file. we handle both cases by setting an environment
+   // var and then resetting the pFilename so it isn't processed
+   // using the standard open file logic
+   FilePath filePath(*pFilename);
+   if (filePath.exists())
+   {
+      std::string ext = filePath.extensionLowerCase();
+      
+      // if it is a directory or just an .rdata file then we can see
+      // whether there is a project file we can automatically attach to
+      if (filePath.isDirectory())
+      {
+         FilePath projectFile = r_util::projectFromDirectory(filePath);
+         if (!projectFile.empty())
+         {
+            setInitialProject(projectFile, pFilename);
+         }
+      }
+      else if (ext == ".rproj")
+      {
+         setInitialProject(filePath, pFilename);
+      }
+      else if (ext == ".rdata" || ext == ".rda")
+      {
+         core::system::setenv("RS_INITIAL_ENV", filePath.absolutePath());
+         pFilename->clear();
+      }
+      
+   }
+}
 
 
 @implementation AppDelegate
@@ -117,14 +214,23 @@ NSString* executablePath()
    NSString* openFile = verifyAndNormalizeFilename(openFile_);
    if (!openFile)
       openFile = verifyAndNormalizeFilename(openFileCommandLineArgument());
-   
+   std::string filename;
    if (openFile)
-   {
-      
-      NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-      [alert setMessageText: [@"Open New:" stringByAppendingString: openFile]];
-      [alert runModal];
-   }
+      filename = [openFile UTF8String];
+   
+   // intialize options
+   //
+   // TODO
+   //
+   //
+   
+   // initialize startup environment
+   initializeSharedSecret();
+   initializeWorkingDirectory(filename);
+   initializeStartupEnvironment(&filename);
+   
+  
+   
    
    
    // create menubar
