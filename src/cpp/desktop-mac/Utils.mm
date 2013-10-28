@@ -95,6 +95,25 @@ FilePath userLogPath()
    return logPath;
 }
 
-      
 } // namespace utils
 } // namespace desktop
+
+NSString* openFileCommandLineArgument()
+{
+   NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+   int count = [arguments count];
+   if (count > 1) // executable name doesn't count as an argument
+   {
+      for (int i=(count-1); i>0; --i)
+      {
+         NSString* arg = [arguments objectAtIndex: i];
+         if (![arg hasPrefix: @"-psn"]) // avoid process serial number arg
+            return arg;
+      }
+   }
+
+   return nil;
+}
+
+
+

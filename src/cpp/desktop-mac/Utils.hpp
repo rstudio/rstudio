@@ -32,4 +32,6 @@ core::FilePath userLogPath();
 } // namespace utils
 } // namespace desktop
 
+NSString* openFileCommandLineArgument();
+
 #endif // DESKTOP_UTILS_HPP

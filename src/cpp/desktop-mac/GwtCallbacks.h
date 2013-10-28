@@ -1,10 +1,7 @@
 
 
-#import <Cocoa/Cocoa.h>
-
+#import <Foundation/NSObject.h>
 
 @interface GwtCallbacks : NSObject {
 }
-
-
 @end

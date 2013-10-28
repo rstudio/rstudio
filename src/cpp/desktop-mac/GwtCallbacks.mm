@@ -1,11 +1,8 @@
 
 
-#import <Cocoa/Cocoa.h>
+#import "GwtCallbacks.h"
 
-#include "GwtCallbacks.hpp"
-
-// https://developer.apple.com/library/mac/documentation/AppleApplications/Conceptual/SafariJSProgTopics/Tasks/ObjCFromJavaScript.html
-// https://developer.apple.com/library/mac/samplecode/CallJS/Introduction/Intro.html#//apple_ref/doc/uid/DTS10004241=
+#import <Foundation/NSString.h>
 
 @implementation GwtCallbacks
 
