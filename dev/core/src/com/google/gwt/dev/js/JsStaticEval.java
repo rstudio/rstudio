@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -68,7 +68,7 @@ public class JsStaticEval {
   /**
    * Examines code to find out whether it contains any break or continue
    * statements.
-   * 
+   *
    * TODO: We could be more sophisticated with this. A nested while loop with an
    * unlabeled break should not cause this visitor to return false. Nor should a
    * labeled break break to another context.
@@ -94,10 +94,10 @@ public class JsStaticEval {
   /**
    * Creates a minimalist list of statements that must be run in order to
    * achieve the same declaration effect as the visited statements.
-   * 
+   *
    * For example, a JsFunction declaration should be run as a JsExprStmt. JsVars
    * should be run without any initializers.
-   * 
+   *
    * This visitor is called from
    * {@link StaticEvalVisitor#ensureDeclarations(JsStatement)} on any statements
    * that are removed from a function.
@@ -148,7 +148,7 @@ public class JsStaticEval {
 
   /**
    * Does static evals.
-   * 
+   *
    * TODO: borrow more concepts from
    * {@link com.google.gwt.dev.jjs.impl.DeadCodeElimination}, such as ignored
    * expression results.
@@ -220,20 +220,23 @@ public class JsStaticEval {
           continue;
         }
 
-        if (stmt.unconditionalControlBreak()) {
-          // Abrupt change in flow, chop the remaining items from this block
-          for (int j = i + 1; j < stmts.size();) {
-            JsStatement toRemove = stmts.get(j);
-            JsStatement toReplace = ensureDeclarations(toRemove);
-            if (toReplace == null) {
-              stmts.remove(j);
-              didChange = true;
-            } else if (toReplace == toRemove) {
-              ++j;
-            } else {
-              stmts.set(j, toReplace);
-              didChange = true;
-            }
+        if (!stmt.unconditionalControlBreak()) {
+          continue;
+        }
+
+        // Abrupt change in flow, chop the remaining items from this block
+        for (int j = i + 1; j < stmts.size();) {
+          JsStatement toRemove = stmts.get(j);
+          JsStatement toReplace = ensureDeclarations(toRemove);
+          if (toReplace == null) {
+            stmts.remove(j);
+            didChange = true;
+          } else if (toReplace == toRemove) {
+            ++j;
+          } else {
+            stmts.set(j, toReplace);
+            ++j;
+            didChange = true;
           }
         }
       }
@@ -539,7 +542,7 @@ public class JsStaticEval {
      * also possible for stmt to be directly returned, in which case the caller
      * should not perform AST changes that would cause an infinite optimization
      * loop.
-     * 
+     *
      * Note: EvalFunctionsAtTopScope will have changed any JsFunction
      * declarations into statements before this visitor runs.
      */
@@ -932,7 +935,7 @@ public class JsStaticEval {
 
   /**
    * Simplify short circuit AND expressions.
-   * 
+   *
    * <pre>
    * if (true && isWhatever()) -> if (isWhatever()), unless side effects
    * if (false() && isWhatever()) -> if (false())
@@ -952,7 +955,7 @@ public class JsStaticEval {
 
   /**
    * Simplify short circuit OR expressions.
-   * 
+   *
    * <pre>
    * if (true() || isWhatever()) -> if (true())
    * if (false || isWhatever()) -> if (isWhatever()), unless side effects
