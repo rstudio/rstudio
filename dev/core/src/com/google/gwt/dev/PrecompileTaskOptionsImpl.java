@@ -155,6 +155,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public boolean isJsonSoycEnabled() {
+    return jjsOptions.isJsonSoycEnabled();
+  }
+
+  @Override
   public boolean isOptimizePrecompile() {
     return jjsOptions.isOptimizePrecompile();
   }
@@ -263,6 +268,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setInlineLiteralParameters(boolean enabled) {
     jjsOptions.setInlineLiteralParameters(enabled);
+  }
+
+  @Override
+  public void setJsonSoycEnabled(boolean enabled) {
+    jjsOptions.setJsonSoycEnabled(enabled);
   }
 
   @Override

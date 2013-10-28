@@ -95,7 +95,7 @@ public abstract class CorrelationFactory implements Serializable {
       }
     }
 
-    private static String getMethodIdent(JMethod method) {
+    public static String getMethodIdent(JMethod method) {
       StringBuilder sb = new StringBuilder();
       sb.append(method.getEnclosingType().getName()).append("::");
       sb.append(method.getName()).append("(");

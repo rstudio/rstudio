@@ -35,6 +35,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private int fragmentCount = -1;
   private int fragmentsMerge = -1;
   private boolean inlineLiteralParameters = true;
+  private boolean jsonSoycEnabled = false;
   private int optimizationLevel = OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
   private boolean optimizeDataflow = true;
   private boolean optimizePrecompile = false;
@@ -75,6 +76,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
     setSoycExtra(other.isSoycExtra());
+    setJsonSoycEnabled(other.isJsonSoycEnabled());
     setSoycHtmlDisabled(other.isSoycHtmlDisabled());
     setStrict(other.isStrict());
     setEnforceStrictResources(other.enforceStrictResources());
@@ -143,6 +145,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public boolean isEnableAssertions() {
     return enableAssertions;
+  }
+
+  @Override
+  public boolean isJsonSoycEnabled() {
+    return jsonSoycEnabled;
   }
 
   @Override
@@ -229,6 +236,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setInlineLiteralParameters(boolean enabled) {
     inlineLiteralParameters = enabled;
+  }
+
+  @Override
+  public void setJsonSoycEnabled(boolean enabled) {
+    jsonSoycEnabled = enabled;
   }
 
   @Override

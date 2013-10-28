@@ -37,6 +37,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentCount;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentMerge;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
+import com.google.gwt.dev.util.arg.ArgHandlerJsonSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSource;
@@ -78,6 +79,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerScriptStyle(options));
     registerHandler(new ArgHandlerSoyc(options));
     registerHandler(new ArgHandlerSoycDetailed(options));
+    registerHandler(new ArgHandlerJsonSoyc(options));
     registerHandler(new ArgHandlerStrict(options));
     registerHandler(new ArgHandlerStrictResources(options));
     registerHandler(new ArgHandlerValidateOnlyFlag(options));

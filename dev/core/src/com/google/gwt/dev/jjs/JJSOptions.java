@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.arg.OptionEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.OptionFragmentCount;
 import com.google.gwt.dev.util.arg.OptionFragmentsMerge;
 import com.google.gwt.dev.util.arg.OptionInlineLiteralParameters;
+import com.google.gwt.dev.util.arg.OptionJsonSoycEnabled;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.OptionOptimizeDataflow;
 import com.google.gwt.dev.util.arg.OptionOptimizePrecompile;
@@ -45,6 +46,7 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionClusterSimilarFunctions, OptionDisableClassMetadata, OptionDisableCastChecking,
     OptionEnableAssertions, OptionInlineLiteralParameters, OptionOptimizeDataflow,
     OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
+    OptionJsonSoycEnabled,
     OptionOptimizePrecompile, OptionOrdinalizeEnums, OptionRemoveDuplicateFunctions, OptionStrict,
     OptionStrictResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
     OptionFragmentsMerge, OptionFragmentCount, OptionSourceLevel {

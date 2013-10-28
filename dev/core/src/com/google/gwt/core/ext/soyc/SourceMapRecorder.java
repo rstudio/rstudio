@@ -20,14 +20,15 @@ import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.thirdparty.debugging.sourcemap.FilePosition;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapFormat;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGenerator;
-import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorFactory;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapParseException;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+
+import org.json.JSONException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,19 +39,27 @@ import java.util.Set;
  */
 public class SourceMapRecorder {
 
-  public static List<SyntheticArtifact> makeSourceMapArtifacts(
-      List<Map<Range, SourceInfo>> sourceInfoMaps,
-      int permutationId) {
-    List<SyntheticArtifact> toReturn = new ArrayList<SyntheticArtifact>();
-    recordSourceMap(sourceInfoMaps, toReturn, permutationId);
-    return toReturn;
+  public static List<SyntheticArtifact> makeSourceMapArtifacts(int permutationId,
+      List<Map<Range, SourceInfo>> sourceInfoMaps) {
+    try {
+      return (new SourceMapRecorder(permutationId)).recordSourceMap(sourceInfoMaps);
+    } catch (Exception e) {
+      throw new InternalCompilerException(e.toString(), e);
+    }
   }
 
-  public static void recordSourceMap(List<Map<Range, SourceInfo>> sourceInfoMaps,
-       List<SyntheticArtifact> artifacts, int permutationId) {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  protected final int permutationId;
 
-    SourceMapGenerator generator = SourceMapGeneratorFactory.getInstance(SourceMapFormat.V3);
+  protected SourceMapRecorder(int permutationId) {
+    this.permutationId = permutationId;
+  }
+
+  protected List<SyntheticArtifact> recordSourceMap(List<Map<Range, SourceInfo>> sourceInfoMaps)
+      throws IOException, JSONException, SourceMapParseException {
+    List<SyntheticArtifact> toReturn = Lists.newArrayList();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    // TODO(ocallau) Consider use SourceMapGeneretator interface and the proper factory
+    SourceMapGeneratorV3 generator = new SourceMapGeneratorV3();
     OutputStreamWriter out = new OutputStreamWriter(baos);
     int fragment = 0;
     if (!sourceInfoMaps.isEmpty()) {
@@ -67,28 +76,40 @@ public class SourceMapRecorder {
           }
           if (r.getStartLine() == 0 || r.getEndLine() == 0) {
             // or other bogus entries that appear
+            // SeedUtil:seedTable is pruned here, may be others too
             continue;
           }
-
           // Starting with V3, SourceMap line numbers are zero-based.
           // GWT's line numbers for Java files originally came from the JDT, which is 1-based,
           // so adjust them here to avoid an off-by-one error in debuggers.
-          generator.addMapping(si.getFileName(), null,
+          generator.addMapping(si.getFileName(), getName(si),
               new FilePosition(si.getStartLine() - 1, 0),
               new FilePosition(r.getStartLine(), r.getStartColumn()),
               new FilePosition(r.getEndLine(), r.getEndColumn()));
         }
-        try {
-          baos.reset();
-          generator.appendTo(out, "sourceMap" + fragment);
-          out.flush();
-          artifacts.add(new SymbolMapsLinker.SourceMapArtifact(permutationId, fragment,
-              baos.toByteArray()));
-          fragment++;
-        } catch (IOException e) {
-          throw new InternalCompilerException(e.toString(), e);
-        }
+        updateSourceMap(generator, fragment);
+
+        baos.reset();
+        generator.appendTo(out, "sourceMap" + fragment);
+        out.flush();
+        toReturn.add(new SymbolMapsLinker.SourceMapArtifact(permutationId, fragment,
+            baos.toByteArray()));
+        fragment++;
       }
     }
+    return toReturn;
+  }
+
+  /**
+   * Updates the source map with extra information, like extensions.
+   */
+  protected void updateSourceMap(SourceMapGeneratorV3 generator, int fragment)
+      throws SourceMapParseException { }
+
+  /**
+   * Returns the given name to a sourceInfo.
+   */
+  protected String getName(SourceInfo sourceInfo) {
+    return null;
   }
 }

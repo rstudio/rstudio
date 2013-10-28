@@ -442,6 +442,18 @@ public final class Util {
   }
 
   /**
+   * @param qualifiedName A fully-qualified class name whose package name you want.
+   * @return The package name for the specified class, empty string if default package.
+   */
+  public static String getPackageName(String qualifiedName) {
+    int idx = qualifiedName.lastIndexOf('.');
+    if (idx > 0) {
+      return qualifiedName.substring(0, idx);
+    }
+    return "";
+  }
+
+  /**
    * Retrieves the last modified time of a provided URL.
    *
    * @return a positive value indicating milliseconds since the epoch (00:00:00

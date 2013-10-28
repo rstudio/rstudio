@@ -104,6 +104,11 @@ public class FragmentExtractorTest extends JJSTestBase {
   private static class MockJavaToJavaScriptMap implements JavaToJavaScriptMap {
 
     @Override
+    public JsName nameForField(JField field) {
+      return null;
+    }
+
+    @Override
     public JsName nameForMethod(JMethod method) {
       return null;
     }

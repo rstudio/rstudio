@@ -158,7 +158,10 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
       return;
     }
 
-    JMethod curMethod = dependencyChain.get(size - 1);
+    printMethodDependencyBetween(dependencyChain.get(size - 1), dependencyChain.get(size - 2));
+  }
+
+  protected void printMethodDependencyBetween(JMethod curMethod, JMethod depMethod) {
     builder.append("<method name=\"");
     if (curMethod.getEnclosingType() != null) {
       builder.append(curMethod.getEnclosingType().getName());
@@ -167,7 +170,6 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
     builder.append(curMethod.getName());
     builder.append("\">\n");
 
-    JMethod depMethod = dependencyChain.get(size - 2);
     builder.append("<called by=\"");
     if (depMethod.getEnclosingType() != null) {
       builder.append(depMethod.getEnclosingType().getName());

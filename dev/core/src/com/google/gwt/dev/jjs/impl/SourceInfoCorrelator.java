@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
+import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -120,6 +121,12 @@ public class SourceInfoCorrelator {
     @Override
     public void endVisit(JStringLiteral x, Context ctx) {
       x.getSourceInfo().addCorrelation(factory.by(Literal.STRING));
+      super.endVisit(x, ctx);
+    }
+
+    @Override
+    public void endVisit(JFieldRef x, Context ctx) {
+      x.getSourceInfo().addCorrelation(factory.by(x.getField()));
       super.endVisit(x, ctx);
     }
 

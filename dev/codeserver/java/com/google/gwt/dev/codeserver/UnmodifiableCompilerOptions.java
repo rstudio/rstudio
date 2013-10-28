@@ -118,6 +118,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setJsonSoycEnabled(boolean jsonSoycEnabled) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setLocalWorkers(int localWorkers) {
     throw new UnsupportedOperationException();
   }

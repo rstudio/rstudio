@@ -26,6 +26,10 @@ import com.google.gwt.dev.js.ast.JsStatement;
  */
 public interface JavaToJavaScriptMap {
   /**
+   * Return the JavaScript name corresponding to a Java field.
+   */
+  JsName nameForField(JField field);
+  /**
    * Return the JavaScript name corresponding to a Java method.
    */
   JsName nameForMethod(JMethod method);

@@ -42,7 +42,7 @@ public class PrecompileTaskArgProcessorTest extends TestCase {
         "-XdisableInlineLiteralParameters", "-XdisableOptimizeDataflow", "-XdisableOrdinalizeEnums",
         "-XdisableRemoveDuplicateFunctions", "-XdisableRunAsync", "-XdisableSoycHtml",
         "-XdisableUpdateCheck", "-ea", "-XenableClosureCompiler", "-soyc", "-XsoycDetailed",
-        "-strict", "com.google.gwt.dev.DevModule");
+        "-XenableJsonSoyc", "-strict", "com.google.gwt.dev.DevModule");
 
     // Show that the flags were recognized and ended up modifying options.
     assertNotEquals(
@@ -68,6 +68,7 @@ public class PrecompileTaskArgProcessorTest extends TestCase {
         defaultOptions.isClosureCompilerEnabled(), handledOptions.isClosureCompilerEnabled());
     assertNotEquals(defaultOptions.isSoycEnabled(), handledOptions.isSoycEnabled());
     assertNotEquals(defaultOptions.isSoycExtra(), handledOptions.isSoycExtra());
+    assertNotEquals(defaultOptions.isJsonSoycEnabled(), handledOptions.isJsonSoycEnabled());
     assertNotEquals(defaultOptions.isStrict(), handledOptions.isStrict());
   }
 

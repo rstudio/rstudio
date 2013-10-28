@@ -34,6 +34,7 @@ import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.SyntheticArtifact;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3.ExtensionMergeAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -305,7 +306,13 @@ public class SymbolMapsLinker extends AbstractLinker {
               }
             }
             // TODO(cromwellian): apply insert and remove edits
-            sourceMapGenerator.mergeMapSection(totalPrefixLines, 0, sourceMapString);
+            sourceMapGenerator.mergeMapSection(totalPrefixLines, 0, sourceMapString,
+                new ExtensionMergeAction() {
+                  @Override
+                  public Object merge(String extKey, Object oldVal, Object newVal) {
+                    return newVal;
+                  }
+                });
             StringWriter stringWriter = new StringWriter();
             sourceMapGenerator.appendTo(stringWriter, "sourceMap");
             emArt = emitSourceMapString(logger, stringWriter.toString(), partialPath);

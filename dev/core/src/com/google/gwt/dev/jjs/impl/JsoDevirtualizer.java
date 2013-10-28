@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -275,7 +274,7 @@ public class JsoDevirtualizer {
     }
 
     JClassType jsoType = program.getJavaScriptObject();
-    SourceInfo sourceInfo = jsoType.getSourceInfo().makeChild(SourceOrigin.UNKNOWN);
+    SourceInfo sourceInfo = method.getSourceInfo().makeChild();
 
     // Create the new method.
     String prefix;

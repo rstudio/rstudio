@@ -322,7 +322,7 @@ public class ImplementClassLiteralsAsFields {
     if (field == null) {
       // Create the allocation expression FIRST since this may be recursive on
       // super type (this forces the super type classLit to be created first).
-      SourceInfo info = typeClassLiteralHolder.getSourceInfo().makeChild();
+      SourceInfo info = type.getSourceInfo().makeChild();
       JMethodCall alloc = computeClassObjectAllocation(info, type);
       // Create a field in the class literal holder to hold the object.
       field =

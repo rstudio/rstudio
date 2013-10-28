@@ -168,6 +168,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public  boolean isJsonSoycEnabled() {
+    return false;
+  }
+
+  @Override
   public boolean isOptimizePrecompile() {
     return true;
   }

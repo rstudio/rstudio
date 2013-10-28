@@ -3004,6 +3004,12 @@ public class GenerateJavaScriptAST {
     // TODO(spoon): Instead of gathering the information here, get it via
     // SourceInfo
     JavaToJavaScriptMap jjsMap = new JavaToJavaScriptMap() {
+
+      @Override
+      public JsName nameForField(JField field) {
+        return names.get(field);
+      }
+
       @Override
       public JsName nameForMethod(JMethod method) {
         return names.get(method);

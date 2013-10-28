@@ -140,7 +140,8 @@ public class Compiler {
         options.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));
         tempWorkDir = true;
       }
-      if (options.isSoycEnabled() && options.getExtraDir() == null) {
+      if ((options.isSoycEnabled() || options.isJsonSoycEnabled()) &&
+           options.getExtraDir() == null) {
         options.setExtraDir(new File("extras"));
       }
 
