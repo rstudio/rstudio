@@ -46,7 +46,9 @@ if [ ! -d "./ace/node_modules" ]; then
 fi
 
 cd ace
-git checkout -- build
+cd build
+git checkout -- .
+cd .. 
 
 git fetch origin
 git fetch upstream
@@ -86,7 +88,8 @@ git merge \
     origin/patch/blinking-cursor \
     origin/patch/vim-ctrl-behavior \
     origin/patch/laggy-typing \
-    origin/bugfix/outdent-newline
+    origin/bugfix/outdent-newline \
+    origin/bugfix/safari-fractional-cursor
 
 
 node ./Makefile.dryice.js normal
