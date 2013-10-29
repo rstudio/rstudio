@@ -119,4 +119,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setViewerUrl(String url);
    
    boolean isOSXMavericks();
+
+   String getScrollingCompensationType();
 }

@@ -1775,12 +1775,18 @@ else {
     };
 }
 
-var isMacDesktop = window.desktop && window.navigator.platform == 'MacIntel';
-var isWinDesktop = window.desktop && window.navigator.platform == 'Win32';
+var useMacCompensation = window.desktop && window.navigator.platform == 'MacIntel';
+var useWinCompensation = window.desktop && window.navigator.platform == 'Win32';
+
+if (window.desktop && window.desktop.getScrollingCompensationType) {
+   var compType = window.desktop.getScrollingCompensationType();
+   useMacCompensation = compType == 'Mac';
+   useWinCompensation = compType == 'Win';
+} 
 
 exports.addMouseWheelListener = function(el, callback) {
     var listener = function(e) {
-        var factor = (isMacDesktop && Math.abs(e.wheelDeltaY) > 120) || (isWinDesktop && Math.abs(e.wheelDeltaY) > 3000) ? 960 : 8;
+        var factor = (useMacCompensation && Math.abs(e.wheelDeltaY) > 120) || (useWinCompensation && Math.abs(e.wheelDeltaY) > 3000) ? 960 : 8;
         if (e.wheelDelta !== undefined) {
             if (e.wheelDeltaX !== undefined) {
                 e.wheelX = -e.wheelDeltaX / factor;

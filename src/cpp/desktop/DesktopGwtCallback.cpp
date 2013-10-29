@@ -648,7 +648,9 @@ OSStatus addToPasteboard(PasteboardRef pasteboard,
    if (!dataRef)
       return memFullErr;
 
-   return ::PasteboardPutItemFlavor(pasteboard, (PasteboardItemID)slot, flavor, dataRef, 0);
+   return ::PasteboardPutItemFlavor(pasteboard,
+                                    reinterpret_cast<PasteboardItemID>(slot),
+                                    flavor, dataRef, 0);
 }
 
 } // anonymous namespace
@@ -955,4 +957,14 @@ bool GwtCallback::isOSXMavericks()
    return desktop::isOSXMavericks();
 }
 
+QString GwtCallback::getScrollingCompensationType()
+{
+#if defined(Q_WS_MACX)
+   return QString::fromAscii("Mac");
+#elif defined(Q_WS_WIN)
+   return QString::fromAscii("Win");
+#else
+   return QString::fromAscii("None");
+#endif
+}
 } // namespace desktop
