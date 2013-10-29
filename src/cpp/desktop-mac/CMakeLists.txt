@@ -31,6 +31,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    AppDelegate.mm
    GwtCallbacks.mm
    Main.mm
+   Options.mm
    Utils.mm
    WebViewController.mm
    
