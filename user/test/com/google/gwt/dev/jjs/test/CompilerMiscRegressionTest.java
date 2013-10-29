@@ -57,6 +57,34 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     return dest;
   }
 
+  private void throwE(String message) {
+    throw new RuntimeException(message);
+  }
+
+  /**
+   * Test for issue 7253.
+   */
+  public void testNestedTryFollowedByTry() {
+    try {
+      throwE("1");
+      fail("Should have thrown RuntimeException");
+    } catch (RuntimeException e) {
+      assertEquals("1", e.getMessage());
+      try {
+        throwE("2");
+        fail("Should have thrown RuntimeException");
+      } catch (RuntimeException e2) {
+        assertEquals("2", e2.getMessage());
+      }
+    }
+    try {
+      throwE("3");
+      fail("Should have thrown RuntimeException");
+    } catch (RuntimeException e) {
+      assertEquals("3", e.getMessage());
+    }
+  }
+
   /**
    * Test for issue 6638.
    */

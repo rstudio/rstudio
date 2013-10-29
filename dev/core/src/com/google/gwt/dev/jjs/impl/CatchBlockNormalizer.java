@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -55,14 +55,12 @@ public class CatchBlockNormalizer {
   private class CollapseCatchBlocks extends JModVisitor {
     JMethod wrapMethod = program.getIndexedMethod("Exceptions.wrap");
 
-    // @Override
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
       clearLocals();
       currentMethodBody = null;
     }
 
-    // @Override
     @Override
     public void endVisit(JTryStatement x, Context ctx) {
       if (x.getCatchClauses().isEmpty()) {
@@ -70,26 +68,26 @@ public class CatchBlockNormalizer {
       }
 
       SourceInfo catchInfo = x.getCatchClauses().get(0).getBlock().getSourceInfo();
-      JLocal exVar = popTempLocal();
+      JLocal exceptionVariable = newExceptionVariable(x.getSourceInfo());
       JBlock newCatchBlock = new JBlock(catchInfo);
 
       {
         // $e = Exceptions.wrap($e)
         JMethodCall call = new JMethodCall(catchInfo, null, wrapMethod);
-        call.addArg(new JLocalRef(catchInfo, exVar));
+        call.addArg(new JLocalRef(catchInfo, exceptionVariable));
         newCatchBlock.addStmt(JProgram.createAssignmentStmt(catchInfo, new JLocalRef(catchInfo,
-            exVar), call));
+            exceptionVariable), call));
       }
 
       /*
        * Build up a series of if, else if statements to test the type of the
        * exception object against the types of the user's catch block. Each catch block might have
        * multiple types in Java 7.
-       * 
+       *
        * Go backwards so we can nest the else statements in the correct order!
        */
       // rethrow the current exception if no one caught it.
-      JStatement cur = new JThrowStatement(catchInfo, new JLocalRef(catchInfo, exVar));
+      JStatement cur = new JThrowStatement(catchInfo, new JLocalRef(catchInfo, exceptionVariable));
       for (int i = x.getCatchClauses().size() - 1; i >= 0; i--) {
         JTryStatement.CatchClause clause = x.getCatchClauses().get(i);
         JBlock block = clause.getBlock();
@@ -103,16 +101,16 @@ public class CatchBlockNormalizer {
 
         // Handle the first Exception type.
         JExpression ifTest = new JInstanceOf(catchInfo, (JReferenceType) exceptionsTypes.get(0),
-            new JLocalRef(catchInfo, exVar));
+            new JLocalRef(catchInfo, exceptionVariable));
         // Handle the rest of the Exception types if any.
         for (int j = 1; j < exceptionsTypes.size(); j++) {
           JExpression orExp = new JInstanceOf(catchInfo, (JReferenceType) exceptionsTypes.get(j),
-              new JLocalRef(catchInfo, exVar));
+              new JLocalRef(catchInfo, exceptionVariable));
           ifTest = new JBinaryOperation(catchInfo, JPrimitiveType.BOOLEAN, JBinaryOperator.OR,
               ifTest, orExp);
         }
         JDeclarationStatement declaration =
-            new JDeclarationStatement(catchInfo, arg, new JLocalRef(catchInfo, exVar));
+            new JDeclarationStatement(catchInfo, arg, new JLocalRef(catchInfo, exceptionVariable));
         block.addStmt(0, declaration);
         // nest the previous as an else for me
         cur = new JIfStatement(catchInfo, ifTest, block, cur);
@@ -123,25 +121,15 @@ public class CatchBlockNormalizer {
       // Replace with a single catch block.
       x.getCatchClauses().clear();
       List<JType> newCatchTypes = new ArrayList<JType>(1);
-      newCatchTypes.add(exVar.getType());
+      newCatchTypes.add(exceptionVariable.getType());
       x.getCatchClauses().add(new JTryStatement.CatchClause(newCatchTypes,
-          new JLocalRef(newCatchBlock.getSourceInfo(), exVar), newCatchBlock));
+          new JLocalRef(newCatchBlock.getSourceInfo(), exceptionVariable), newCatchBlock));
     }
 
-    // @Override
     @Override
     public boolean visit(JMethodBody x, Context ctx) {
       currentMethodBody = x;
       clearLocals();
-      return true;
-    }
-
-    // @Override
-    @Override
-    public boolean visit(JTryStatement x, Context ctx) {
-      if (!x.getCatchClauses().isEmpty()) {
-        pushTempLocal(x.getSourceInfo());
-      }
       return true;
     }
   }
@@ -183,17 +171,15 @@ public class CatchBlockNormalizer {
   }
 
   private JMethodBody currentMethodBody;
-  private int localIndex;
+  private int catchVariableIndex;
   private final JProgram program;
-  private final List<JLocal> tempLocals = new ArrayList<JLocal>();
 
   private CatchBlockNormalizer(JProgram program) {
     this.program = program;
   }
 
   private void clearLocals() {
-    tempLocals.clear();
-    localIndex = 0;
+    catchVariableIndex = 0;
   }
 
   private void execImpl() {
@@ -203,18 +189,8 @@ public class CatchBlockNormalizer {
     unwrapper.accept(program);
   }
 
-  private JLocal popTempLocal() {
-    return tempLocals.get(--localIndex);
+  private JLocal newExceptionVariable(SourceInfo sourceInfo) {
+    return JProgram.createLocal(sourceInfo, "$e" + catchVariableIndex++,
+        program.getTypeJavaLangObject(), false, currentMethodBody);
   }
-
-  private void pushTempLocal(SourceInfo sourceInfo) {
-    if (localIndex == tempLocals.size()) {
-      JLocal newTemp =
-          JProgram.createLocal(sourceInfo, "$e" + localIndex, program.getTypeJavaLangObject(),
-              false, currentMethodBody);
-      tempLocals.add(newTemp);
-    }
-    ++localIndex;
-  }
-
 }
