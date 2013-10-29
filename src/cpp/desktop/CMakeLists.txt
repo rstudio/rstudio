@@ -439,11 +439,11 @@ if(APPLE)
 endif()
 
 # install node-webkit on apple
-if(APPLE)
-   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app"
-           DESTINATION RStudio.app/Contents/Frameworks
-           USE_SOURCE_PERMISSIONS)
-endif()
+#if(APPLE)
+#   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app"
+#           DESTINATION RStudio.app/Contents/Frameworks
+#           USE_SOURCE_PERMISSIONS)
+#endif()
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)

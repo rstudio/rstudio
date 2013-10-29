@@ -213,8 +213,10 @@ int main(int argc, char* argv[])
 #endif
 
       // run with node webkit if necessary
+      /*
       if (useNodeWebkit())
          return runWithNodeWebkit();
+      */
 
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
