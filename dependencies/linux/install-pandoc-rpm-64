@@ -42,7 +42,5 @@ rm -rf ~/.cabal
 
 # install pandoc
 CABAL=/usr/bin/cabal
-cabal update
-cabal install crypto-cipher-types-0.0.7
 . ../install-pandoc-src
 

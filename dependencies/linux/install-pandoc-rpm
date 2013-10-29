@@ -35,7 +35,6 @@ rm -rf ~/.ghc
 
 # install latest version of pandoc
 cabal update
-cabal install crypto-cipher-types-0.0.7
 cabal install --flags="embed_data_files" pandoc pandoc-citeproc
 
 
