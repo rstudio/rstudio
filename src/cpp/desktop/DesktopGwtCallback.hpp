@@ -150,6 +150,8 @@ public slots:
 
    void setViewerUrl(QString url);
 
+   bool isOSXMavericks();
+
 private:
    Synctex& synctex();
 

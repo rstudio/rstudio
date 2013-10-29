@@ -37,6 +37,8 @@
 #include <QDir>
 #include <QFileInfo>
 
+#include "DesktopUtils.hpp"
+
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
@@ -132,21 +134,6 @@ QString nodeWebkitPath()
    }
 }
 
-bool isOSXMavericks()
-{
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   return boost::algorithm::starts_with(version, "10.9");
-}
-
 } // anonymous namespace
 
 
@@ -162,7 +149,7 @@ bool useNodeWebkit()
    {
       return true;
    }
-   else if (isOSXMavericks() && !useDesktopMode)
+   else if (desktop::isOSXMavericks() && !useDesktopMode)
    {
       return true;
    }

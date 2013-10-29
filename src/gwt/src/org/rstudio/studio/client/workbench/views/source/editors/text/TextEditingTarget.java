@@ -2952,7 +2952,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.getPdfPreviewValue();
       boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO) && 

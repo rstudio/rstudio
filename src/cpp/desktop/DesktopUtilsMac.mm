@@ -15,6 +15,8 @@
 
 #include "DesktopUtils.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <QWidget>
 
 #include <core/system/Environment.hpp>
@@ -36,6 +38,22 @@ bool isRetina(QMainWindow* pMainWindow)
       return false;
    }
 }
+
+bool isOSXMavericks()
+{
+   NSDictionary *systemVersionDictionary =
+       [NSDictionary dictionaryWithContentsOfFile:
+           @"/System/Library/CoreServices/SystemVersion.plist"];
+
+   NSString *systemVersion =
+       [systemVersionDictionary objectForKey:@"ProductVersion"];
+
+   std::string version(
+         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
+
+   return boost::algorithm::starts_with(version, "10.9");
+}
+
 
 namespace {
 

@@ -73,6 +73,11 @@ bool isRetina(QMainWindow* pMainWindow)
    return false;
 }
 
+bool isOSXMavericks()
+{
+   return false;
+}
+
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
 
