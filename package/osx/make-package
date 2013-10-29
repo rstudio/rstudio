@@ -15,11 +15,6 @@ then
    cd $PACKAGE_DIR
 fi
 
-# use qtsdk built from source if available
-if [ -e /usr/local/Trolltech/Qt-4.8.0/bin/qmake ]; then
-  QMAKE="-DQT_QMAKE_EXECUTABLE=/usr/local/Trolltech/Qt-4.8.0/bin/qmake"
-fi
-
 mkdir -p build
 cd build
 rm -f CMakeCache.txt
@@ -28,7 +23,7 @@ rm -rf build/_CPack_Packages
 cmake -DRSTUDIO_TARGET=Desktop \
       -DCMAKE_BUILD_TYPE=Release \
       -DRSTUDIO_PACKAGE_BUILD=1 \
-      ${QMAKE} ../../..
+      ../../..
 
 make
 
