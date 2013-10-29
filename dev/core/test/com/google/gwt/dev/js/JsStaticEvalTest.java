@@ -28,6 +28,7 @@ public class JsStaticEvalTest extends OptimizerTestBase {
     assertEquals("alert('42 Hello');", optimize("alert(42.0 + ' Hello');"));
     assertEquals("alert('42.2 Hello');", optimize("alert(42.2 + ' Hello');"));
     assertEquals("alert('Hello 42.2');", optimize("alert('Hello ' + 42.2);"));
+    assertEquals("alert('2004318071');", optimize("alert(2004318071 + '');"));
   }
 
   public void testAssociativity() throws Exception {

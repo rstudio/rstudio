@@ -49,6 +49,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.rhino.ScriptRuntime;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -521,7 +522,7 @@ public class JsStaticEval {
     private boolean appendLiteral(StringBuilder result, JsValueLiteral val) {
       if (val instanceof JsNumberLiteral) {
         double number = ((JsNumberLiteral) val).getValue();
-        result.append(fixTrailingZeroes(String.valueOf(number)));
+        result.append(ScriptRuntime.numberToString(number, 10));
       } else if (val instanceof JsStringLiteral) {
         result.append(((JsStringLiteral) val).getValue());
       } else if (val instanceof JsBooleanLiteral) {
@@ -562,20 +563,6 @@ public class JsStaticEval {
         jsBlock.getStatements().addAll(stmts);
         return jsBlock;
       }
-    }
-
-    /*
-     * String.valueOf(Double) produces trailing .0 on integers which is
-     * incorrect for Javascript which produces conversions to string without
-     * trailing zeroes. Without this, int + String will turn out wrong.
-     */
-    private String fixTrailingZeroes(String num) {
-      if (num.endsWith(".0")) {
-        String fixNum = num.substring(0, num.length() - 2);
-        assert Double.parseDouble(fixNum) == Double.parseDouble(num);
-        num = fixNum;
-      }
-      return num;
     }
 
     private JsExpression simplifyCompare(JsExpression original, JsExpression arg1,
