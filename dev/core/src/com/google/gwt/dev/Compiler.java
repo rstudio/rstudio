@@ -175,7 +175,8 @@ public class Compiler {
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles =
               CompilePerms.makeResultFiles(options.getCompilerWorkDir(moduleName), allPerms);
-          CompilePerms.compile(branch, compilerContext, precompilation, allPerms, resultFiles);
+          CompilePerms.compile(branch, compilerContext, precompilation, allPerms,
+              options.getLocalWorkers(), resultFiles);
           compilePermutationsEvent.end();
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();

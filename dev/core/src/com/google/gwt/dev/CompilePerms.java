@@ -199,12 +199,12 @@ public class CompilePerms {
    * Compile multiple permutations.
    */
   public static void compile(TreeLogger logger, CompilerContext compilerContext,
-      Precompilation precompilation, Permutation[] perms,
+      Precompilation precompilation, Permutation[] perms, int localWorkers,
       List<FileBackedObject<PermutationResult>> resultFiles) throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO,
         "Compiling " + perms.length + " permutation" + (perms.length > 1 ? "s" : ""));
     PermutationWorkerFactory.compilePermutations(
-        branch, compilerContext, precompilation, perms, resultFiles);
+        branch, compilerContext, precompilation, perms, localWorkers, resultFiles);
     logger.log(TreeLogger.INFO, "Compile of permutations succeeded");
   }
 
@@ -324,7 +324,7 @@ public class CompilePerms {
         List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
             compilerWorkDir, subPerms);
         compile(logger, compilerContext, precompilation, subPerms,
-            resultFiles);
+            options.getLocalWorkers(), resultFiles);
       }
     }
 

@@ -229,10 +229,10 @@ public abstract class PermutationWorkerFactory {
    * PermutationWorkersFactories.
    */
   public static void compilePermutations(TreeLogger logger, CompilerContext compilerContext,
-      Precompilation precompilation, List<FileBackedObject<PermutationResult>> resultFiles)
-      throws UnableToCompleteException {
-    compilePermutations(
-        logger, compilerContext, precompilation, precompilation.getPermutations(), resultFiles);
+      Precompilation precompilation, int localWorkers,
+      List<FileBackedObject<PermutationResult>> resultFiles) throws UnableToCompleteException {
+    compilePermutations(logger, compilerContext, precompilation, precompilation.getPermutations(),
+        localWorkers, resultFiles);
   }
 
   /**
@@ -241,9 +241,8 @@ public abstract class PermutationWorkerFactory {
    * PermutationWorkersFactories.
    */
   public static void compilePermutations(TreeLogger logger, CompilerContext compilerContext,
-      Precompilation precompilation, Permutation[] permutations,
-      List<FileBackedObject<PermutationResult>> resultFiles)
-      throws UnableToCompleteException {
+      Precompilation precompilation, Permutation[] permutations, int localWorkers,
+      List<FileBackedObject<PermutationResult>> resultFiles) throws UnableToCompleteException {
     assert permutations.length == resultFiles.size();
     assert Arrays.asList(precompilation.getPermutations()).containsAll(
         Arrays.asList(permutations));
@@ -262,8 +261,7 @@ public abstract class PermutationWorkerFactory {
     // Create the workers.
     List<PermutationWorker> workers = new ArrayList<PermutationWorker>();
     try {
-      createWorkers(logger, precompilation.getUnifiedAst(), work.size(),
-          ((CompilerOptions) compilerContext.getOptions()).getLocalWorkers(), workers);
+      createWorkers(logger, precompilation.getUnifiedAst(), work.size(), localWorkers, workers);
 
       // Get it done!
       Manager.run(logger, work, workers);
