@@ -43,8 +43,11 @@ NSString* openFileCommandLineArgument()
       for (int i=(count-1); i>0; --i)
       {
          NSString* arg = [arguments objectAtIndex: i];
-         if (![arg hasPrefix: @"-psn"]) // avoid process serial number arg
+         if (![arg hasPrefix: @"-psn"] && // avoid process serial number arg
+             ![arg isEqualToString: @"--run-diagnostics"])
+         {
             return arg;
+         }
       }
    }
    
