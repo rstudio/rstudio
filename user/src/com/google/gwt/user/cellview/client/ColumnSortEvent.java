@@ -147,7 +147,7 @@ public class ColumnSortEvent extends GwtEvent<ColumnSortEvent.Handler> {
   private static Type<Handler> TYPE;
 
   /**
-   * Fires a cell preview event on all registered handlers in the handler
+   * Fires a column sort event on all registered handlers in the handler
    * manager. If no such handlers exist, this implementation will do nothing.
    * 
    * @param source the source of the event
