@@ -1023,7 +1023,7 @@ a, a:visited, a:hover {
 td.datePickerMonth,
 td.datePickerYear {
   text-align: center;
-  vertical-align: center;
+  vertical-align: middle;
   white-space: nowrap;
   font-size: 70%;
   font-weight: bold;
