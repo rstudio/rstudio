@@ -1865,6 +1865,10 @@ void rBusy(bool busy)
    if (s_wasForked)
       return;
 
+   // screen out busy = true events that occur when R isn't busy
+   if (busy && !s_rProcessingInput)
+      return;
+
    ClientEvent busyEvent(kBusy, busy);
    session::clientEventQueue().add(busyEvent);
 }
