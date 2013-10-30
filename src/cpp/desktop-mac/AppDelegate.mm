@@ -252,7 +252,7 @@ void initializeStartupEnvironment(std::string* pFilename)
    
    
    // load the main window
-   NSString *urlAddress = @"http://localhost:8787/webkit.nocache.html";
+   NSString *urlAddress = @"http://localhost:8787";
    NSURL *url = [NSURL URLWithString: urlAddress];
    NSURLRequest *request = [NSURLRequest requestWithURL: url];
    WebViewController * windowController =
