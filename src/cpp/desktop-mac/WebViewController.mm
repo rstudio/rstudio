@@ -92,7 +92,7 @@
       // register objective c with webkit
       id win = [webView windowScriptObject];
       GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
-      [win setValue: gwtCallbacks forKey:@"desktop"];
+      [win setValue: gwtCallbacks forKey:@"desktop-notyet"];
       
       // execute some js
       NSString *href = [win evaluateWebScript:@"window.location.href"];
