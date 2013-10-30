@@ -33,6 +33,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    Main.mm
    MainFrameController.mm
    Options.mm
+   SessionLauncher.mm
    Utils.mm
    WebViewController.mm
    

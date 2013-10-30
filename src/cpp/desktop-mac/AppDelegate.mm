@@ -14,6 +14,7 @@
 
 #import "AppDelegate.h"
 #import "Options.hpp"
+#import "SessionLauncher.hpp"
 #import "Utils.hpp"
 #import "MainFrameController.h"
 
@@ -334,18 +335,26 @@ bool prepareEnvironment(Options& options)
    // set the scripts path in options
    desktop::options().setScriptsPath(scriptsPath);
    
-   // load the main window
-   NSURL *url = [NSURL URLWithString: @"http://localhost:8787"];
-   [[MainFrameController alloc] initWithURL: url];
-   
-   
-   // activate the app
-   [NSApp activateIgnoringOtherApps: YES];
+   // initailize the session launcher and launch the first session
+   sessionLauncher().init(sessionPath, confPath);
+   error = sessionLauncher().launchFirstSession(filename);
+   if (error)
+   {
+      LOG_ERROR(error);
+      
+      std::string msg = sessionLauncher().launchFailedErrorMessage();
+      
+      [NSApp activateIgnoringOtherApps: YES];
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"RStudio",
+                            [NSString stringWithUTF8String: msg.c_str()]);
+      [NSApp terminate: self];
+   }
 }
 
 - (void) applicationWillTerminate: (NSNotification *) notification
 {
-
+   sessionLauncher().cleanupAtExit();
 }
 
 - (BOOL) canBecomeKeyWindow
