@@ -4,7 +4,7 @@
 
 #import <Webkit/WebUIDelegate.h>
 
-#import "GwtCallbacks.h"
+
 #import "Options.hpp"
 #import "WebViewController.h"
 
@@ -103,24 +103,6 @@
    return mutableRequest;
 }
 
-// Inject our script ojbect when the window object becomes available
-- (void) webView: (WebView*) webView
-         didClearWindowObject:(WebScriptObject *)windowObject
-         forFrame:(WebFrame *)frame
-{
-   // only set the Desktop object for the top level frame
-   if (frame == [webView mainFrame])
-   {
-      // register objective c with webkit
-      id win = [webView windowScriptObject];
-      GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
-      [win setValue: gwtCallbacks forKey:@"desktop-notyet"];
-      
-      // execute some js
-      NSString *href = [win evaluateWebScript:@"window.location.href"];
-      NSLog(@"href: %@",href);
-   }
-}
 
 
 @end

@@ -18,6 +18,8 @@
 
 #include <boost/bind.hpp>
 
+
+#include <boost/thread.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 
@@ -172,6 +174,8 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
                                              args,
                                              onCompleted));
    
+   // wait a bit to allow the socket to bind
+   boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 }
 
 

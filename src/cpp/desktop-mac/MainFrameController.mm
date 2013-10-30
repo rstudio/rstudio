@@ -15,6 +15,9 @@
 
 #import "MainFrameController.h"
 
+#import "GwtCallbacks.h"
+#import "MenuCallbacks.h"
+
 @implementation MainFrameController
 
 - (id) initWithURL: (NSURL*) url
@@ -50,5 +53,29 @@
     
     
 }
+
+// Inject our script ojbect when the window object becomes available
+- (void) webView: (WebView*) webView
+didClearWindowObject:(WebScriptObject *)windowObject
+        forFrame:(WebFrame *)frame
+{
+   // only set the Desktop object for the top level frame
+   if (frame == [webView mainFrame])
+   {
+      // register objective-c objects with javascript
+      id win = [webView windowScriptObject];
+      GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init] autorelease];
+      [win setValue: gwtCallbacks forKey:@"desktop"];
+      MenuCallbacks* menuCallbacks = [[[MenuCallbacks alloc] init] autorelease];
+      [win setValue: menuCallbacks forKey:@"desktopMenuCallback"];
+
+      
+      
+      // execute some js
+      //NSString *href = [win evaluateWebScript:@"window.location.href"];
+      //NSLog(@"href: %@",href);
+   }
+}
+
 
 @end

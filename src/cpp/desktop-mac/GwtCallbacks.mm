@@ -1,10 +1,14 @@
 
 
 #import "GwtCallbacks.h"
+#import "Options.hpp"
 
 #import <Foundation/NSString.h>
 
+using namespace desktop;
+
 @implementation GwtCallbacks
+
 
 - (id)init
 {
@@ -14,15 +18,13 @@
 - (NSString*) proportionalFont
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"proportionalFont";
+   return [NSString stringWithUTF8String: options().proportionalFont().c_str()];
 }
 
 - (NSString*) fixedWidthFont
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"fixedWidthFont";
+   return [NSString stringWithUTF8String: options().fixedWidthFont().c_str()];
 }
 
 - (int) collectPendingQuitRequest
@@ -30,11 +32,6 @@
    NSLog(@"%@", NSStringFromSelector(_cmd));
    
    return (0);
-}
-
-- (void) workbenchInitialized
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
 - (void) browseUrl: (NSString*) url
@@ -99,11 +96,10 @@
 }
 
 
-- (NSString*) onWorkbenchInitialized: (NSString*) scratchPath
+- (void) onWorkbenchInitialized: (NSString*) scratchPath
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
    
-   return @"onWorkbenchInitialized";
 }
 
 - (void) showFolder: (NSString*) path
@@ -116,24 +112,21 @@
     NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
+// R version methods are only implemented for front-ends that
+// enable the user to choose from multiple R versions
+
 - (NSString*) getRVersion
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"getRVersion";
+   return @"";
 }
 
 - (NSString*) chooseRVersion
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"chooseRVersion";
+   return @"";
 }
 
 - (Boolean) canChooseRVersion
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
    return false;
 }
 
@@ -213,13 +206,6 @@
    NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
-
-- (NSString*) filterText: (NSString*) text
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"filteredText";
-}
-
 - (void) cleanClipboard: (Boolean) stripHtml
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
@@ -263,7 +249,7 @@
 - (NSString*) getZoomLevels
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"zoomLevels";
+   return @"1.0\n1.1";
 }
 
 - (double) getZoomLevel
@@ -277,11 +263,6 @@
    NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
-- (Boolean) forceFastScrollFactor
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return false;
-}
 
 - (NSString*) getDesktopSynctexViewer
 {
@@ -337,6 +318,7 @@
 
 - (NSString*) getScrollingCompensationType
 {
+   NSLog(@"%@", NSStringFromSelector(_cmd));
    return @"None";
 }
 
@@ -370,8 +352,6 @@
       return @"showMessageBox";
    else if (sel == @selector(promptForText:caption:defaultValue:usePasswordMask:rememberPasswordPrompt:rememberByDefault:numbersOnly:selectionStart:selectionLength:))
       return @"promptForText";
-   else if (sel == @selector(filterText:))
-      return @"filterText";
    else if (sel == @selector(cleanClipboard:))
       return @"cleanClipboard";
    else if (sel == @selector(setPendingQuit:))

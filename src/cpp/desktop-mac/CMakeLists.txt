@@ -32,6 +32,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    GwtCallbacks.mm
    Main.mm
    MainFrameController.mm
+   MenuCallbacks.mm
    Options.mm
    SessionLauncher.mm
    Utils.mm
