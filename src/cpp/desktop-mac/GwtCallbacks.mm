@@ -335,6 +335,11 @@
    NSLog(@"%@", NSStringFromSelector(_cmd));
 }
 
+- (NSString*) getScrollingCompensationType
+{
+   return @"None";
+}
+
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
    if (sel == @selector(browseUrl:))
