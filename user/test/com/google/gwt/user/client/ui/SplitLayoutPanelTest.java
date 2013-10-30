@@ -15,6 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
+
 /**
  * Tests for {@link SplitLayoutPanel}.
  */
@@ -142,9 +147,100 @@ public class SplitLayoutPanelTest extends DockLayoutPanelTest {
     assertEquals(l0, children.get(0));
     assertEquals(splitter0, children.get(1));
   }
-  
+
+  @DoNotRunWith({Platform.HtmlUnitLayout})
+  public void testResize() {
+    SplitLayoutPanel p = new SplitLayoutPanel();
+    RootLayoutPanel.get().add(p);
+
+    // RootLayoutPanel handles setting the size automatically, but it's deferred to the document
+    // onLoad event, so we'd have to run the whole rest of this test in a deferred command to use
+    // that. (Otherwise, Element#getClientHeight always returns 0, since nothing's been rendered.)
+    // Setting some absolute heights on the panel manually lets us run the test synchronously.
+    p.setHeight("1000px");
+    p.setWidth("1000px");
+
+    Label north = new Label("north");
+    Label south = new Label("south");
+    Label east = new Label("east");
+    Label west = new Label("west");
+
+    p.addNorth(north, 100);
+    p.addSouth(south, 200);
+    p.addEast(east, 300);
+    p.addWest(west, 400);
+    p.forceLayout();
+
+    WidgetCollection children = p.getChildren();
+    Widget northSplitter = children.get(1);
+    assertEquals(SplitLayoutPanel.VSplitter.class, northSplitter.getClass());
+    Widget southSplitter = children.get(3);
+    assertEquals(SplitLayoutPanel.VSplitter.class, southSplitter.getClass());
+    Widget eastSplitter = children.get(5);
+    assertEquals(SplitLayoutPanel.HSplitter.class, eastSplitter.getClass());
+    Widget westSplitter = children.get(7);
+    assertEquals(SplitLayoutPanel.HSplitter.class, westSplitter.getClass());
+
+    // Dragging the north splitter down 10px should increase the north size from 100px -> 110px.
+    assertEquals(100, north.getOffsetHeight());
+    dragSplitter(northSplitter, 0, 10);
+    p.forceLayout();
+    assertEquals(110, north.getOffsetHeight());
+
+    // Dragging the south splitter up 10px should increase the south size from 200px -> 210px.
+    assertEquals(200, south.getOffsetHeight());
+    dragSplitter(southSplitter, 0, -10);
+    p.forceLayout();
+    assertEquals(210, south.getOffsetHeight());
+
+    // Dragging the east splitter right 10px should decrease the east size from 300px -> 290px.
+    assertEquals(300, east.getOffsetWidth());
+    dragSplitter(eastSplitter, 10, 0);
+    p.forceLayout();
+    assertEquals(290, east.getOffsetWidth());
+
+    // Dragging the west splitter left 10px should decrease the west size from 400px -> 390px.
+    assertEquals(400, west.getOffsetWidth());
+    dragSplitter(westSplitter, -10, 0);
+    p.forceLayout();
+    assertEquals(390, west.getOffsetWidth());
+  }
+
   @Override
   protected DockLayoutPanel createDockLayoutPanel() {
     return new SplitLayoutPanel();
+  }
+
+  /** Simulates a mouse drag on a splitter widget by creating and dispatching native events. */
+  private void dragSplitter(Widget splitter, int offsetX, int offsetY) {
+    // Even though the actual splitters are at various places in the document, all these mouse
+    // drags start at 0,0. The panel calculates the "offset" between the actual position and the
+    // mouse position, and compensates for that; if that logic is correct, then the actual
+    // positions shouldn't matter, only the relative movement since the mouse down event.
+    //
+    // This is important in some cases where the browser window is scrolled -- see issue 4755.
+    NativeEvent mouseDown = Document.get().createMouseDownEvent(
+        0, /* detail */
+        0, 0, /* screen X, Y */
+        0, 0, /* client X, Y */
+        false, false, false, false, /* modifier keys */
+        NativeEvent.BUTTON_LEFT);
+    splitter.getElement().dispatchEvent(mouseDown);
+
+    NativeEvent mouseMove = Document.get().createMouseMoveEvent(
+        0,
+        offsetX, offsetY,
+        offsetX, offsetY,
+        false, false, false, false,
+        NativeEvent.BUTTON_LEFT);
+    splitter.getElement().dispatchEvent(mouseMove);
+
+    NativeEvent mouseUp = Document.get().createMouseUpEvent(
+        0,
+        offsetX, offsetY,
+        offsetX, offsetY,
+        false, false, false, false,
+        NativeEvent.BUTTON_LEFT);
+    splitter.getElement().dispatchEvent(mouseUp);
   }
 }
