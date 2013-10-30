@@ -22,6 +22,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/system/Process.hpp>
 
 namespace desktop {
 
@@ -44,6 +45,16 @@ public:
    std::string launchFailedErrorMessage();
    
    void cleanupAtExit();
+   
+private:
+   void buildLaunchContext(std::string* pHost,
+                           std::string* pPort,
+                           std::vector<std::string>* pArgList,
+                           std::string* pUrl) const;
+   
+   core::Error launchSession(std::vector<std::string> args);
+   
+   void onRSessionExited(const core::system::ProcessResult& result);
    
 private:
    core::FilePath confPath_;

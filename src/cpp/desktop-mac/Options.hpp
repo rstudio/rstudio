@@ -42,6 +42,9 @@ public:
    std::string portNumber() const;
    std::string newPortNumber();
    
+   std::string sharedSecret() const { return sharedSecret_; }
+   void setSharedSecret(const std::string& secret) { sharedSecret_ = secret; }
+   
    std::string proportionalFont() const;
    std::string fixedWidthFont() const;
    void setFixedWidthFont(std::string font);
@@ -62,7 +65,8 @@ public:
    
    bool runDiagnostics() { return runDiagnostics_; }
    
-private:   
+private:
+   std::string sharedSecret_;
    core::FilePath scriptsPath_;
    mutable core::FilePath executablePath_;
    mutable core::FilePath supportingFilePath_;

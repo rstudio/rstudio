@@ -5,6 +5,7 @@
 #import <Webkit/WebUIDelegate.h>
 
 #import "GwtCallbacks.h"
+#import "Options.hpp"
 #import "WebViewController.h"
 
 
@@ -50,6 +51,7 @@
       webView_ = [[WebView alloc] initWithFrame: frameRect];
       [webView_ setUIDelegate: self];
       [webView_ setFrameLoadDelegate: self];
+      [webView_ setResourceLoadDelegate: self];
       
       // load the request
       [[webView_ mainFrame] loadRequest: request];
@@ -88,6 +90,18 @@
    return [webViewController webView];
 }
 
+- (NSURLRequest*) webView:(WebView *) sender
+                  resource:(id) identifier
+                  willSendRequest:(NSURLRequest *)request
+                  redirectResponse:(NSURLResponse *) redirectResponse
+                  fromDataSource:(WebDataSource *) dataSource
+{
+   NSMutableURLRequest *mutableRequest = [[request mutableCopy] autorelease];
+   std::string secret = desktop::options().sharedSecret();
+   [mutableRequest setValue: [NSString stringWithUTF8String: secret.c_str()]
+                   forHTTPHeaderField:@"X-Shared-Secret"];
+   return mutableRequest;
+}
 
 // Inject our script ojbect when the window object becomes available
 - (void) webView: (WebView*) webView

@@ -106,6 +106,12 @@ void showMessageBox(NSAlertStyle style, NSString* title, NSString* message)
    [alert runModal];
 }
    
+core::system::ProcessSupervisor& processSupervisor()
+{
+   static core::system::ProcessSupervisor instance;
+   return instance;
+}
+   
    
 } // namespace utils
 } // namespace desktop

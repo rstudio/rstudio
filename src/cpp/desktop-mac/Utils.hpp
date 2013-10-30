@@ -17,6 +17,8 @@
 #ifndef DESKTOP_UTILS_HPP
 #define DESKTOP_UTILS_HPP
 
+#include <core/system/Process.hpp>
+
 #import <AppKit/NSAlert.h>
 
 namespace core {
@@ -32,6 +34,8 @@ void initializeLang();
 core::FilePath userLogPath();
    
 void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
+   
+core::system::ProcessSupervisor& processSupervisor();
    
 } // namespace utils
 } // namespace desktop

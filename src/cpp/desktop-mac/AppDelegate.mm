@@ -83,13 +83,11 @@ NSString* verifyAndNormalizeFilename(NSString* filename)
    }
 }
 
-// PORT: from DesktopMain.cpp
-std::string s_sharedSecret;
-
 void initializeSharedSecret()
 {
-   s_sharedSecret = core::system::generateUuid();
-   core::system::setenv("RS_SHARED_SECRET", s_sharedSecret);
+   std::string sharedSecret = core::system::generateUuid();
+   desktop::options().setSharedSecret(sharedSecret);
+   core::system::setenv("RS_SHARED_SECRET", sharedSecret);
 }
 
 
@@ -214,7 +212,7 @@ bool prepareEnvironment(Options& options)
    if (desktop::options().runDiagnostics())
    {
       std::cout << std::endl << "Using R script: " << rScriptPath
-      << std::endl;
+                << std::endl;
    }
    
    // set environment and return true
@@ -335,6 +333,13 @@ bool prepareEnvironment(Options& options)
    // set the scripts path in options
    desktop::options().setScriptsPath(scriptsPath);
    
+   // setup timer for polling process supervisor
+   [NSTimer scheduledTimerWithTimeInterval: 0.5
+                                    target: self
+                                    selector:@selector(pollProcessSupervisor)
+                                    userInfo:nil
+                                    repeats: YES];
+   
    // initailize the session launcher and launch the first session
    sessionLauncher().init(sessionPath, confPath);
    error = sessionLauncher().launchFirstSession(filename);
@@ -350,6 +355,11 @@ bool prepareEnvironment(Options& options)
                             [NSString stringWithUTF8String: msg.c_str()]);
       [NSApp terminate: self];
    }
+}
+
+- (void) pollProcessSupervisor
+{
+   utils::processSupervisor().poll();
 }
 
 - (void) applicationWillTerminate: (NSNotification *) notification

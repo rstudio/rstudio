@@ -14,13 +14,60 @@
  */
 
 
+#include <iostream>
+
+#include <boost/bind.hpp>
+
+#include <core/system/Environment.hpp>
+#include <core/system/ParentProcessMonitor.hpp>
+
 #import "SessionLauncher.hpp"
 
 #import "MainFrameController.h"
 
+#import "Options.hpp"
+#import "Utils.hpp"
+
+#define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
+                   std::cout << (message) << std::endl;
+
+
 using namespace core;
 
 namespace desktop {
+   
+namespace {
+         
+void launchProcess(
+       std::string absPath,
+       std::vector<std::string> argList,
+       boost::function<void(const core::system::ProcessResult&)> onCompleted)
+{
+   core::system::ProcessOptions options;
+   Error error = utils::processSupervisor().runProgram(absPath,
+                                                       argList,
+                                                       "", options,
+                                                       onCompleted);
+   if (error)
+      LOG_ERROR(error);
+}
+
+FilePath abendLogPath()
+{
+   return desktop::utils::userLogPath().complete("rsession_abort_msg.log");
+}
+
+/*
+void logEnvVar(const std::string& name)
+{
+   std::string value = core::system::getenv(name);
+   if (!value.empty())
+      RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
+}
+*/
+   
+   
+} // anonymous namespace
    
 SessionLauncher& sessionLauncher()
 {
@@ -37,11 +84,19 @@ void SessionLauncher::init(const core::FilePath& sessionPath,
    
 Error SessionLauncher::launchFirstSession(const std::string& filename)
 {
+   // build a new new launch context
+   std::string host, port, appUrl;
+   std::vector<std::string> argList;
+   buildLaunchContext(&host, &port, &argList, &appUrl);
+
+   // launch the session
+   Error error = launchSession(argList);
+   if (error)
+      return error;
 
    // load the main window
-   NSURL *url = [NSURL URLWithString: @"http://localhost:8787"];
-   [[MainFrameController alloc] initWithURL: url];
-   
+   NSString* url = [NSString stringWithUTF8String: appUrl.c_str()];
+   [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]];
    
    // activate the app
    [NSApp activateIgnoringOtherApps: YES];
@@ -58,6 +113,67 @@ void SessionLauncher::cleanupAtExit()
 {
       
 }
+   
+void SessionLauncher::onRSessionExited(
+                              const core::system::ProcessResult& result)
+{
+      
+}
+   
+void SessionLauncher::buildLaunchContext(std::string* pHost,
+                                         std::string* pPort,
+                                         std::vector<std::string>* pArgList,
+                                         std::string* pUrl) const
+{
+   *pHost = "127.0.0.1";
+   if (pPort->empty())
+      *pPort = desktop::options().newPortNumber();
+   *pUrl = "http://" + *pHost + ":" + *pPort + "/";
+           
+   
+   pArgList->push_back("--config-file");
+   if (!confPath_.empty())
+   {
+      pArgList->push_back(confPath_.absolutePath());
+   }
+   else
+   {
+      // explicitly pass "none" so that rsession doesn't read an
+      // /etc/rstudio/rsession.conf file which may be sitting around
+      // from a previous configuratin or install
+      pArgList->push_back("none");
+   }
+   
+   pArgList->push_back("--program-mode");
+   pArgList->push_back("desktop");
+
+   pArgList->push_back("--www-port");
+   pArgList->push_back(*pPort);
+   
+   if (desktop::options().runDiagnostics())
+   {
+      pArgList->push_back("--verify-installation");
+      pArgList->push_back("1");
+   }
+}
+   
+Error SessionLauncher::launchSession(std::vector<std::string> args)
+{
+   // always remove the abend log path before launching
+   Error error = abendLogPath().removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   
+   boost::function<void(const core::system::ProcessResult&)> onCompleted =
+                  boost::bind(&SessionLauncher::onRSessionExited, this, _1);
+   
+   return parent_process_monitor::wrapFork(boost::bind(launchProcess,
+                                             sessionPath_.absolutePath(),
+                                             args,
+                                             onCompleted));
+   
+}
+
 
 
 } // namespace desktop
