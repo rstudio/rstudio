@@ -87,12 +87,12 @@
          forFrame:(WebFrame *)frame
 {
    // only set the Desktop object for the top level frame
-   if ([frame parentFrame] == nil) {
-      
+   if (frame == [webView mainFrame])
+   {
       // register objective c with webkit
       id win = [webView windowScriptObject];
       GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init ] autorelease];
-      [win setValue: gwtCallbacks forKey:@"Desktop"];
+      [win setValue: gwtCallbacks forKey:@"desktop"];
       
       // execute some js
       NSString *href = [win evaluateWebScript:@"window.location.href"];
