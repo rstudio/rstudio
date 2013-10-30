@@ -53,8 +53,10 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-TabBar .gwt-TabBarRest-wrapper { table cell around the right edge }
  * </li>
  * <li>.gwt-TabBar .gwt-TabBarItem { unselected tabs }</li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-disabled { disabled tabs }</li>
  * <li>.gwt-TabBar .gwt-TabBarItem-wrapper { table cell around tab }</li>
- * <li>.gwt-TabBar .gwt-TabBarItem-selected { additional style for selected
+ * <li>.gwt-TabBar .gwt-TabBarItem-wrapper-disabled { table cell around disabled tab }</li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-selected { additional style for selected }</li>
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabBarExample}
