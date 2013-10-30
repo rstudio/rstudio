@@ -77,9 +77,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopGwtCallbackOwner.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNodeWebkit.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
-  ${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app/Contents/Resources/app.nw/index.html
 )
 
 if(WIN32)
@@ -165,11 +163,6 @@ endif(WIN32)
 if(APPLE)
   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
     DesktopUtilsMac.mm
-    DesktopNodeWebkitMac.mm
-  )
-else()
-  set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-    DesktopNodeWebkit.cpp
   )
 endif()
 
@@ -304,19 +297,6 @@ else()
       ${COCOA_LIBRARY}
       ${SECURITY_LIBRARY})
 
-   # we also copy the node-webkit platform files into the appropriate spot
-   set(NODE_WEBKIT "${RSTUDIO_DEPENDENCIES_DIR}/common/node-webkit/0.7.5/node-webkit.app/Contents")
-   set(NODE_WEBKIT_DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app/Contents")
-   file(COPY "${NODE_WEBKIT}/Frameworks"
-        DESTINATION ${NODE_WEBKIT_DESTINATION})
-   file(COPY "${NODE_WEBKIT}/Libraries"
-        DESTINATION ${NODE_WEBKIT_DESTINATION})
-   file(COPY "${NODE_WEBKIT}/MacOS/node-webkit"
-        DESTINATION ${NODE_WEBKIT_DESTINATION}/MacOS)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/Info.plist.in
-                  ${NODE_WEBKIT_DESTINATION}/Info.plist)
-
-
 endif()
 
 # install target (OSX install goes into the bundle)
@@ -437,13 +417,6 @@ if(APPLE)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
                     DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
-
-# install node-webkit on apple
-#if(APPLE)
-#   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/node-webkit/RStudioIDE.app"
-#           DESTINATION RStudio.app/Contents/Frameworks
-#           USE_SOURCE_PERMISSIONS)
-#endif()
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)
