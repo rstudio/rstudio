@@ -37,14 +37,9 @@ enum PendingQuit {
 class GwtCallback : public QObject
 {
    Q_OBJECT
-   Q_PROPERTY(QString proportionalFont READ proportionalFont)
-   Q_PROPERTY(QString fixedWidthFont READ fixedWidthFont)
 
 public:
    GwtCallback(MainWindow* pMainWindow, GwtCallbackOwner* pOwner);
-
-   QString proportionalFont();
-   QString fixedWidthFont();
 
    int collectPendingQuitRequest();
 
@@ -52,6 +47,8 @@ signals:
    void workbenchInitialized();
 
 public slots:
+   QString proportionalFont();
+   QString fixedWidthFont();
    void browseUrl(QString url);
    QString getOpenFileName(const QString& caption,
                            const QString& dir,
@@ -109,8 +106,6 @@ public slots:
    void showAboutDialog();
    void bringMainFrameToFront();
 
-   QString filterText(QString text);
-
    void cleanClipboard(bool stripHtml);
 
    void setPendingQuit(int pendingQuit);
@@ -128,8 +123,6 @@ public slots:
    QString getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
-
-   bool forceFastScrollFactor();
 
    QString getDesktopSynctexViewer();
 
