@@ -27,15 +27,18 @@
 #include <core/system/Environment.hpp>
 
 #include <mach-o/dyld.h>
-#include <Security/AuthSession.h>
-#include <CoreServices/CoreServices.h>
-#include <Foundation/NSString.h>
-#include <Foundation/NSDictionary.h>
 
 #include <QProcess>
 #include <QTcpSocket>
 #include <QDir>
 #include <QFileInfo>
+
+#include "DesktopUtils.hpp"
+
+#import <Security/AuthSession.h>
+#import <CoreServices/CoreServices.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSDictionary.h>
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -132,21 +135,6 @@ QString nodeWebkitPath()
    }
 }
 
-bool isOSXMavericks()
-{
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   return boost::algorithm::starts_with(version, "10.9");
-}
-
 } // anonymous namespace
 
 
@@ -162,7 +150,7 @@ bool useNodeWebkit()
    {
       return true;
    }
-   else if (isOSXMavericks() && !useDesktopMode)
+   else if (desktop::isOSXMavericks() && !useDesktopMode)
    {
       return true;
    }

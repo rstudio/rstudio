@@ -950,4 +950,9 @@ void GwtCallback::setViewerUrl(QString url)
    pOwner_->webPage()->setViewerUrl(url);
 }
 
+bool GwtCallback::isOSXMavericks()
+{
+   return desktop::isOSXMavericks();
+}
+
 } // namespace desktop

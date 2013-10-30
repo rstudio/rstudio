@@ -33,6 +33,8 @@ core::FilePath userLogPath();
 
 bool isRetina(QMainWindow* pMainWindow);
 
+bool isOSXMavericks();
+
 void raiseAndActivateWindow(QWidget* pWindow);
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
