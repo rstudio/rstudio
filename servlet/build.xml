@@ -53,7 +53,7 @@
       <!-- The following two jars satisfy RequestFactory dependencies. -->
       <zipfileset src="${gwt.tools.redist}/json/r2_20080312/json-1.5.jar" />
       <zipfileset src="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-      <zipfileset src="${gwt.tools.lib}/jscomp/sourcemap-rebased.jar" />
+      <zipfileset src="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/guava/guava-15.0/guava-15.0-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
     </gwt.jar>

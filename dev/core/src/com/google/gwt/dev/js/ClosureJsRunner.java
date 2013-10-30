@@ -47,6 +47,7 @@ import com.google.gwt.thirdparty.javascript.rhino.Node;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -142,8 +143,8 @@ public class ClosureJsRunner {
    */
   private Set<String> externalProps = Sets.newHashSet();
 
-  /** 
-   * The set of external global variables discovered in the provided AST. 
+  /**
+   * The set of external global variables discovered in the provided AST.
    */
   private Set<String> externalVars = Sets.newHashSet();
 
@@ -158,12 +159,12 @@ public class ClosureJsRunner {
    */
   private final boolean validate = true;
 
-  /** 
+  /**
    * A map of GWT fragment numbers to Closure module indexes.
    */
   private int[] closureModuleSequenceMap;
 
-  /** 
+  /**
    * The number of non-exclusive fragments that are part of the load sequence
    * (including the main and leftovers).
    */
@@ -172,8 +173,14 @@ public class ClosureJsRunner {
   public ClosureJsRunner() {
   }
 
-  public void compile(JProgram jprogram, JsProgram program, String[] js, JsOutputOption jsOutputOption) {
-    CompilerOptions options = getClosureCompilerOptions(jsOutputOption);
+  public void compile(JProgram jprogram, JsProgram program, String[] js,
+      JsOutputOption jsOutputOption) {
+    CompilerOptions options;
+    try {
+      options = getClosureCompilerOptions(jsOutputOption);
+    } catch (ParseException e) {
+      throw new RuntimeException("Error setting closure compiler options", e);
+    }
     // Turn off Closure Compiler logging
     Logger.getLogger("com.google.gwt.thirdparty.javascript.jscomp").setLevel(Level.OFF);
 
@@ -353,7 +360,8 @@ public class ClosureJsRunner {
     return externs;
   }
 
-  private CompilerOptions getClosureCompilerOptions(JsOutputOption jsOutputOption) {
+  private CompilerOptions getClosureCompilerOptions(JsOutputOption jsOutputOption)
+      throws ParseException {
     CompilerOptions options = new CompilerOptions();
     WarningLevel.QUIET.setOptionsForWarningLevel(options);
 
@@ -365,7 +373,7 @@ public class ClosureJsRunner {
     for (String var : globalVars) {
       varNames.put(var, var);
     }
-    options.inputVariableMapSerialized = VariableMap.fromMap(varNames).toBytes();
+    options.setInputVariableMapSerialized(VariableMap.fromMap(varNames).toBytes());
     if (jsOutputOption == JsOutputOption.OBFUSCATED) {
       options.setRenamingPolicy(VariableRenamingPolicy.ALL, PropertyRenamingPolicy.OFF);
       options.prettyPrint = false;
@@ -388,7 +396,7 @@ public class ClosureJsRunner {
     options.labelRenaming = true;
     options.removeDeadCode = true;
     options.optimizeArgumentsArray = true;
-    options.collapseObjectLiterals = true;
+    options.setCollapseObjectLiterals(true);
     options.setShadowVariables(true);
 
     // All the advance optimizations.
