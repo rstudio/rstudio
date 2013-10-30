@@ -393,7 +393,8 @@ public class ValueBoxBase<T> extends FocusWidget implements
     T oldValue = fireEvents ? getValue() : null;
     setText(renderer.render(value));
     if (fireEvents) {
-      ValueChangeEvent.fireIfNotEqual(this, oldValue, value);
+      T newValue = getValue();
+      ValueChangeEvent.fireIfNotEqual(this, oldValue, newValue);
     }
   }
 
