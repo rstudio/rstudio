@@ -97,6 +97,16 @@ FilePath userLogPath()
    return logPath;
 }
 
+void showMessageBox(NSAlertStyle style, NSString* title, NSString* message)
+{
+   NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+   [alert setAlertStyle: style];
+   [alert setMessageText: title];
+   [alert setInformativeText: message];
+   [alert runModal];
+}
+   
+   
 } // namespace utils
 } // namespace desktop
 

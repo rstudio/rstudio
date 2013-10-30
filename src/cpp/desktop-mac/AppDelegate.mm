@@ -1,10 +1,12 @@
 
+#include <iostream>
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/REnvironment.hpp>
 
 #import <AppKit/AppKit.h>
 
@@ -16,6 +18,7 @@
 #import "WebViewController.h"
 
 using namespace core;
+using namespace desktop;
 
 NSString* executablePath()
 {
@@ -174,6 +177,51 @@ void initializeStartupEnvironment(std::string* pFilename)
    }
 }
 
+// PORT: from DesktopPosixDetectRHome
+bool prepareEnvironment(Options& options)
+{
+   // check for which R override
+   FilePath rWhichRPath;
+   std::string whichROverride = core::system::getenv("RSTUDIO_WHICH_R");
+   if (!whichROverride.empty())
+      rWhichRPath = FilePath(whichROverride);
+   
+   // determine rLdPaths script location
+   FilePath supportingFilePath = options.supportingFilePath();
+   FilePath rLdScriptPath = supportingFilePath.complete("bin/r-ldpath");
+   if (!rLdScriptPath.exists())
+      rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
+   
+   // attempt to detect R environment
+   std::string rScriptPath, errMsg;
+   r_util::EnvironmentVars rEnvVars;
+   bool success = r_util::detectREnvironment(rWhichRPath,
+                                             rLdScriptPath,
+                                             std::string(),
+                                             &rScriptPath,
+                                             &rEnvVars,
+                                             &errMsg);
+   if (!success)
+   {
+      [NSApp activateIgnoringOtherApps: YES];
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"R Not Found",
+                            [NSString stringWithUTF8String: errMsg.c_str()]);
+      return false;
+   }
+   
+   if (desktop::options().runDiagnostics())
+   {
+      std::cout << std::endl << "Using R script: " << rScriptPath
+      << std::endl;
+   }
+   
+   // set environment and return true
+   r_util::setREnvironmentVars(rEnvVars);
+   return true;
+}
+
+
 
 @implementation AppDelegate
 
@@ -204,9 +252,12 @@ void initializeStartupEnvironment(std::string* pFilename)
    {
       // TODO: open file in existing instance
       
-      NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-      [alert setMessageText: [@"Open Existing:" stringByAppendingString: filename]];
-      [alert runModal];
+      
+      desktop::utils::showMessageBox(
+                  NSInformationalAlertStyle,
+                  @"RStudio",
+                  [@"Open Existing: " stringByAppendingString: filename]);
+     
    }
    
    return YES;   
@@ -226,16 +277,21 @@ void initializeStartupEnvironment(std::string* pFilename)
    NSArray* arguments = [[NSProcessInfo processInfo] arguments];
    desktop::options().initFromCommandLine(arguments);
    
-   //
-   // TODO - more option proessing
-   //
-   //
+   // reset log if we are in run-diagnostics mode
+   if (desktop::options().runDiagnostics())
+      initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
    
    // initialize startup environment
    initializeSharedSecret();
    initializeWorkingDirectory(filename);
    initializeStartupEnvironment(&filename);
-   
+   desktop::Options& options = desktop::options();
+   if (!prepareEnvironment(options))
+   {
+      [NSApp terminate: self];
+      return;
+   }
+       
   
    
    

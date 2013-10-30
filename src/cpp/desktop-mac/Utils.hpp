@@ -17,6 +17,8 @@
 #ifndef DESKTOP_UTILS_HPP
 #define DESKTOP_UTILS_HPP
 
+#import <AppKit/NSAlert.h>
+
 namespace core {
    class FilePath;
 }
@@ -28,6 +30,8 @@ namespace utils {
 void initializeLang();
 
 core::FilePath userLogPath();
+   
+void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
    
 } // namespace utils
 } // namespace desktop
