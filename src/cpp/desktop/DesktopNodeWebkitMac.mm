@@ -27,10 +27,6 @@
 #include <core/system/Environment.hpp>
 
 #include <mach-o/dyld.h>
-#include <Security/AuthSession.h>
-#include <CoreServices/CoreServices.h>
-#include <Foundation/NSString.h>
-#include <Foundation/NSDictionary.h>
 
 #include <QProcess>
 #include <QTcpSocket>
@@ -38,6 +34,11 @@
 #include <QFileInfo>
 
 #include "DesktopUtils.hpp"
+
+#import <Security/AuthSession.h>
+#import <CoreServices/CoreServices.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSDictionary.h>
 
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
