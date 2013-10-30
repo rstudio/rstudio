@@ -17,6 +17,7 @@
 #include <core/FilePath.hpp>
 #include <core/Random.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/system/System.hpp>
 
 #import <Foundation/NSString.h>
 #import <Foundation/NSUserDefaults.h>
@@ -43,6 +44,7 @@ Options::Options()
                              @"Lucida Grande", @"font.proportional",
                              @"Monaco", @"font.fixed",
                              @"1.0", @"view.zoomlevel",
+                             [NSArray array], @"updates.ignored",
                              nil];
                              
    [prefs registerDefaults:defs];
@@ -112,50 +114,67 @@ void Options::setZoomLevel(double zoomLevel)
 
 FilePath Options::scriptsPath() const
 {
-   return FilePath();
+   return scriptsPath_;
 }
    
 void Options::setScriptsPath(const FilePath& scriptsPath)
 {
-      
+   scriptsPath_ = scriptsPath;
 }
 
 core::FilePath Options::executablePath() const
 {
-   return FilePath();
+   if (executablePath_.empty())
+   {
+      Error error = core::system::executablePath(NULL, &executablePath_);
+      if (error)
+         LOG_ERROR(error);
+   }
+   return executablePath_;
 }
    
 FilePath Options::supportingFilePath() const
 {
-   return FilePath();
+   if (supportingFilePath_.empty())
+   {
+      // default to install path
+      core::system::installPath("..", NULL, &supportingFilePath_);
+      
+      // adapt for OSX resource bundles
+      if (supportingFilePath_.complete("Info.plist").exists())
+         supportingFilePath_ = supportingFilePath_.complete("Resources");
+   }
+   return supportingFilePath_;
 }
 
 FilePath Options::wwwDocsPath() const
 {
-   return FilePath();
+   FilePath supportingPath = desktop::options().supportingFilePath();
+   FilePath wwwDocsPath = supportingPath.complete("www/docs");
+   if (!wwwDocsPath.exists())
+      wwwDocsPath = supportingPath.complete("../../../../../../gwt/www/docs");
+   return wwwDocsPath;
 }
 
 std::vector<std::string> Options::ignoredUpdateVersions() const
 {
-   return std::vector<std::string>();
+   NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+   NSArray* ignored = [prefs objectForKey: @"updates.ignored"];
+   std::vector<std::string> ignoredUpdates;
+   for (NSString* ver in ignored)
+      ignoredUpdates.push_back([ver UTF8String]);
+   return ignoredUpdates;
 }
    
 void Options::setIgnoredUpdateVersions(const std::vector<std::string>& ignored)
 {
-      
+   NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+   NSMutableArray* ign = [NSMutableArray array];
+   for (size_t i = 0; i<ignored.size(); i++)
+      [ign addObject: [NSString stringWithUTF8String: ignored[i].c_str()]];
+   [prefs setObject: ign forKey: @"updates.ignored"];
 }
 
-FilePath Options::scratchTempDir(FilePath defaultPath)
-{
-   return FilePath();
-}
-
-void Options::cleanUpScratchTempDir()
-{
-      
-}
-   
-   
 
 } // namespace desktop
 

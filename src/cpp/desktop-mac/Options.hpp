@@ -60,9 +60,6 @@ public:
    std::vector<std::string> ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const std::vector<std::string>& ignored);
    
-   core::FilePath scratchTempDir(core::FilePath defaultPath=core::FilePath());
-   void cleanUpScratchTempDir();
-   
    bool runDiagnostics() { return runDiagnostics_; }
    
 private:   
