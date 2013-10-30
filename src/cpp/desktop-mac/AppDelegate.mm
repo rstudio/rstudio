@@ -292,7 +292,47 @@ bool prepareEnvironment(Options& options)
       return;
    }
        
-  
+   // get install path
+   FilePath installPath;
+   Error error = core::system::installPath("..", NULL, &installPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      [NSApp terminate: self];
+      return;
+   }
+   
+   // calculate paths to config file, rsession, and desktop scripts
+   FilePath confPath, sessionPath, scriptsPath;
+   
+   // check for debug configuration
+#ifndef NDEBUG
+   FilePath currentPath = FilePath::safeCurrentPath(installPath);
+   if (currentPath.complete("conf/rdesktop-dev.conf").exists())
+   {
+      confPath = currentPath.complete("conf/rdesktop-dev.conf");
+      sessionPath = currentPath.complete("session/Debug/rsession");
+      scriptsPath = currentPath.complete("desktop-mac");
+   }
+#endif
+   
+   // if there is no conf path then release mode
+   if (confPath.empty())
+   {
+      // default paths (then tweak)
+      sessionPath = installPath.complete("bin/rsession");
+      scriptsPath = installPath.complete("bin");
+      
+      // check for running in a bundle
+      if (installPath.complete("Info.plist").exists())
+      {
+         sessionPath = installPath.complete("MacOS/rsession");
+         scriptsPath = installPath.complete("MacOS");
+      }
+   }
+   
+   // set the scripts path in options
+   desktop::options().setScriptsPath(scriptsPath);
    
    
    
