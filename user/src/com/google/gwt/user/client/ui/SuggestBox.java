@@ -81,7 +81,7 @@ import java.util.List;
  * text that does not match any of the SuggestBox's suggestions, then the
  * SuggestBox will not have a currently selected suggestion. It is more useful
  * to know when a suggestion has been chosen from the SuggestBox's list of
- * suggestions. A SuggestBox fires {@link SuggestionEvent SuggestionEvents}
+ * suggestions. A SuggestBox fires {@link SelectionEvent SelectionEvents}
  * whenever a suggestion is chosen, and handlers for these events can be added
  * using the {@link #addSelectionHandler(SelectionHandler)} method.
  * </p>
