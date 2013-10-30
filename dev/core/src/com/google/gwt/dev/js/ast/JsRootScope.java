@@ -17,6 +17,7 @@ import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -357,8 +358,8 @@ public final class JsRootScope extends JsScope {
   }
 
   @Override
-  public Iterable<JsName> getAllNames() {
-    return Collections.unmodifiableCollection(names.values());
+  public Iterator<JsName> getAllNames() {
+    return Collections.unmodifiableCollection(names.values()).iterator();
   }
 
   @Override

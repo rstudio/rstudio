@@ -14,6 +14,7 @@
 package com.google.gwt.dev.js.ast;
 
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * A special scope used only for catch blocks. It only holds a single symbol: the catch argument's
@@ -29,8 +30,8 @@ public class JsCatchScope extends JsNestingScope {
   }
 
   @Override
-  public Iterable<JsName> getAllNames() {
-    return Collections.singleton(name);
+  public Iterator<JsName> getAllNames() {
+    return Collections.singleton(name).iterator();
   }
 
   @Override

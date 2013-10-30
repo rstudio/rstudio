@@ -17,6 +17,7 @@ import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Maps;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -37,8 +38,8 @@ public class JsNormalScope extends JsNestingScope {
    * Returns an iterator for all the names defined by this scope.
    */
   @Override
-  public Iterable<JsName> getAllNames() {
-    return names.values();
+  public Iterator<JsName> getAllNames() {
+    return names.values().iterator();
   }
 
   /**

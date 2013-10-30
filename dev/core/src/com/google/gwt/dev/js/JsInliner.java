@@ -608,7 +608,7 @@ public class JsInliner {
      * A dummy name to represent 'this' refs.
      */
     public static final JsName THIS_NAME = new JsCatchScope(
-        JsRootScope.INSTANCE, "this").getAllNames().iterator().next();
+        JsRootScope.INSTANCE, "this").getAllNames().next();
 
     private boolean maintainsOrder = true;
     private final List<JsName> toEvaluate;

@@ -17,6 +17,7 @@ import com.google.gwt.dev.js.JsProtectedNames;
 import com.google.gwt.dev.util.StringInterner;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ import java.util.List;
  * Scopes can have parents to provide constraints when allocating actual identifiers for names.
  * Specifically, names in child scopes are chosen such that they do not conflict with names in their
  * parent scopes. The ultimate parent is usually the global scope (see
- * {@link com.google.gwt.dev.js.ast.JsProgram#getScope()}), but parentless scopes are useful
+ * {@link com.google.gwt.dev.js.ast.JsProgram#getGlobalScope()}), but parentless scopes are useful
  * for managing names that are always accessed with a qualifier and could therefore never be
  * confused with the global scope hierarchy.
  */
@@ -129,9 +130,9 @@ public abstract class JsScope implements Serializable {
   }
 
   /**
-   * Returns an iterable for all the names defined by this scope.
+   * Returns an iterator for all the names defined by this scope.
    */
-  public abstract Iterable<JsName> getAllNames();
+  public abstract Iterator<JsName> getAllNames();
 
   /**
    * Returns a list of this scope's child scopes.
