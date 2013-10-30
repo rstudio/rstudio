@@ -339,6 +339,13 @@ public class GenerateCssAst {
       }
     }
 
+    void parseCharset(String atRule) {
+      // A charset at-rule is not relevant inside a style element. Ignore it
+
+      errors.log(TreeLogger.WARN,
+          "Charset declaration detected. A charset at-rule is not relevant inside a style element");
+    }
+
     void parseDef(String atRule) {
       String value = atRule.substring(4, atRule.length()).trim();
 
