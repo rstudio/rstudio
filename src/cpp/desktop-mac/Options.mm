@@ -42,7 +42,9 @@ Options::Options()
    NSDictionary* defs = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"Lucida Grande", @"font.proportional",
                              @"Monaco", @"font.fixed",
+                             @"1.0", @"view.zoomlevel",
                              nil];
+                             
    [prefs registerDefaults:defs];
 }
    
@@ -96,12 +98,16 @@ void Options::setFixedWidthFont(std::string font)
 
 double Options::zoomLevel() const
 {
-   return 1.0;
+   NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+   NSString* zoomLevel = [prefs stringForKey: @"view.zoomlevel"];
+   return [zoomLevel doubleValue];
 }
    
 void Options::setZoomLevel(double zoomLevel)
 {
-      
+   NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+   NSNumber* zoom = [NSNumber numberWithDouble: zoomLevel];
+   [prefs setObject: [zoom stringValue] forKey: @"view.zoomlevel"];
 }
 
 FilePath Options::scriptsPath() const

@@ -11,8 +11,9 @@
 #import <Foundation/NSTask.h>
 
 #import "AppDelegate.h"
-#import "WebViewController.h"
+#import "Options.hpp"
 #import "Utils.hpp"
+#import "WebViewController.h"
 
 using namespace core;
 
@@ -222,8 +223,11 @@ void initializeStartupEnvironment(std::string* pFilename)
       filename = [openFile UTF8String];
    
    // intialize options
+   NSArray* arguments = [[NSProcessInfo processInfo] arguments];
+   desktop::options().initFromCommandLine(arguments);
+   
    //
-   // TODO
+   // TODO - more option proessing
    //
    //
    
