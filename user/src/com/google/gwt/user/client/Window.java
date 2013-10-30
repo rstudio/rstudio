@@ -700,7 +700,7 @@ public class Window {
   /**
    * Opens a new browser window. The "name" and "features" arguments are
    * specified <a href=
-   * 'http://developer.mozilla.org/en/docs/DOM:window.open'>here</a>.
+   * 'https://developer.mozilla.org/en-US/docs/Web/API/window.open'>here</a>.
    *
    * @param url      the URL that the new window will display
    * @param name     the name of the window (e.g. "_blank")
