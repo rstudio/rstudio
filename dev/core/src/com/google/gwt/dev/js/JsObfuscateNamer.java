@@ -20,8 +20,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 
-import java.util.Iterator;
-
 /**
  * A namer that uses short, unrecognizable idents to minimize generated code
  * size.
@@ -105,8 +103,8 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
 
     // Visit my idents.
     int curId = maxChildId;
-    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
-      JsName name = it.next();
+    for (JsName name : scope.getAllNames()) {
+
       if (!referenced.contains(name)) {
         // Don't allocate idents for non-referenced names.
         continue;
