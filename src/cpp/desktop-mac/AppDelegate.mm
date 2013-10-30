@@ -15,7 +15,7 @@
 #import "AppDelegate.h"
 #import "Options.hpp"
 #import "Utils.hpp"
-#import "WebViewController.h"
+#import "MainFrameController.h"
 
 using namespace core;
 using namespace desktop;
@@ -334,32 +334,10 @@ bool prepareEnvironment(Options& options)
    // set the scripts path in options
    desktop::options().setScriptsPath(scriptsPath);
    
-   
-   
-   // create menubar
-   id menubar = [[NSMenu new] autorelease];
-   id appMenuItem = [[NSMenuItem new] autorelease];
-   [menubar addItem: appMenuItem];
-   [NSApp setMainMenu: menubar];
-   id appMenu = [[NSMenu new] autorelease];
-   id appName = [[NSProcessInfo processInfo] processName];
-   id quitTitle = [@"Quit " stringByAppendingString:appName];
-   id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
-                                                 action:@selector(terminate:)
-                                          keyEquivalent:@"q"] autorelease];
-   [appMenu addItem: quitMenuItem];
-   [appMenuItem setSubmenu: appMenu];
-   
-   
    // load the main window
-   NSString *urlAddress = @"http://localhost:8787";
-   NSURL *url = [NSURL URLWithString: urlAddress];
-   NSURLRequest *request = [NSURLRequest requestWithURL: url];
-   WebViewController * windowController =
-   [[WebViewController alloc] initWithURLRequest: request];
+   NSURL *url = [NSURL URLWithString: @"http://localhost:8787"];
+   [[MainFrameController alloc] initWithURL: url];
    
-   // remember size and position accross sessions
-   [windowController setWindowFrameAutosaveName: @"RStudio"];
    
    // activate the app
    [NSApp activateIgnoringOtherApps: YES];

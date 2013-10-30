@@ -64,6 +64,14 @@
    return self;
 }
 
+- (void) windowDidLoad
+{
+   [super windowDidLoad];
+   
+   // more post-load initialization
+}
+
+
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification
 {
