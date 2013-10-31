@@ -69,7 +69,7 @@ public class ClosureJsRunner {
       "es5.js",
 
       // Event APIs
-      "w3c_event.js", "w3c_event3.js",
+      "w3c_event.js", "w3c_event3.js", "w3c_device_sensor_event.js",
       "gecko_event.js",
       "ie_event.js",
       "webkit_event.js",
@@ -87,7 +87,7 @@ public class ClosureJsRunner {
       "webkit_css.js",
 
       // Top-level namespaces
-      "google.js",
+      "chrome.js", "google.js",
 
       "deprecated.js", "fileapi.js", "flash.js", "gears_symbols.js", "gears_types.js",
       "gecko_xml.js", "html5.js", "ie_vml.js", "iphone.js", "webstorage.js", "w3c_anim_timing.js",
