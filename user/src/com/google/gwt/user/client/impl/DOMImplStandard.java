@@ -40,10 +40,6 @@ abstract class DOMImplStandard extends DOMImpl {
 
   private static JavaScriptObject dispatchUnhandledEvent;
 
-  public void disposeEvents(Element elem) {
-    sinkEventsImpl(elem, 0);
-  }
-
   @Override
   public Element eventGetFromElement(Event evt) {
     if (evt.getType().equals(BrowserEvents.MOUSEOVER)) {

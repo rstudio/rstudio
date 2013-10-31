@@ -23,16 +23,6 @@ import com.google.gwt.user.client.Element;
 class DOMImplMozilla extends DOMImplStandard {
 
   @Override
-  public void disposeEvents(Element elem) {
-    super.disposeEvents(elem);
-    disposeEventsMozilla(elem);
-  }
-
-  public native void disposeEventsMozilla(Element elem) /*-{
-    elem.removeEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
-  }-*/;
-
-  @Override
   public void sinkEvents(Element elem, int bits) {
     super.sinkEvents(elem, bits);
     sinkEventsMozilla(elem, bits);
@@ -73,7 +63,18 @@ class DOMImplMozilla extends DOMImplStandard {
       true
     );
 
-    $wnd.addEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent,
-      true);
+    $wnd.addEventListener('DOMMouseScroll',
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+  }-*/;
+
+  @Override
+  protected void disposeEventSystem() {
+    super.disposeEventSystem();
+    disposeEventSystemMozilla();
+  }
+
+  private native void disposeEventSystemMozilla() /*-{
+    $wnd.removeEventListener('DOMMouseScroll',
+      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
   }-*/;
 }
