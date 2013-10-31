@@ -22,11 +22,10 @@ import com.google.gwt.dev.js.ast.JsScope;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
- * A namer that uses short, readable idents to maximize reability.
+ * A namer that keeps the short ("pretty") identifier wherever possible.
  */
 public class JsPrettyNamer extends JsNamer {
 
@@ -34,83 +33,94 @@ public class JsPrettyNamer extends JsNamer {
     new JsPrettyNamer(program, propertyOracles).execImpl();
   }
 
-  /**
-   * Communicates to a parent scope all the idents used by all child scopes.
-   */
-  private Set<String> childIdents = null;
-
   public JsPrettyNamer(JsProgram program, PropertyOracle[] propertyOracles) {
     super(program, propertyOracles);
   }
 
   @Override
   protected void reset() {
-    childIdents = new HashSet<String>();
   }
 
   @Override
   protected void visit(JsScope scope) {
-    // Save off the childIdents which is currently being computed for my parent.
-    Set<String> myChildIdents = childIdents;
+    changeNames(scope);
+  }
 
-    /*
-     * Visit my children first. Reset childIdents so that my children will get a
-     * clean slate: I do not communicate to my children.
-     */
-    childIdents = new HashSet<String>();
+  /**
+   * Does a minimal fixup on the short names in the given scope and all its descendants.
+   * Unobfuscatable names map to their full name and any names that conflict with a previous
+   * idenitifier or any child scope's identifier are renamed. Otherwise the short name is
+   * left as-is.
+   * @return all names used in the given scope and any of its descendants (after renaming).
+   */
+  private Set<String> changeNames(JsScope scope) {
+
+    // First, change the names in all the child scopes and remember that they're taken.
+    Set<String> taken = new HashSet<String>();
     for (JsScope child : scope.getChildren()) {
-      visit(child);
+      taken.addAll(changeNames(child));
     }
-    // Child idents now contains all idents my children are using.
 
     // The next integer to try as an identifier suffix.
-    HashMap<String, Integer> startIdent = new HashMap<String, Integer>();
+    HashMap<String, Integer> suffixCounters = new HashMap<String, Integer>();
 
-    // Visit all my idents.
-    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
-      JsName name = it.next();
+    for (JsName name : scope.getAllNames()) {
       if (!referenced.contains(name)) {
         // Don't allocate idents for non-referenced names.
         continue;
       }
-
-      if (!name.isObfuscatable()) {
-        // Unobfuscatable names become themselves.
-        name.setShortIdent(name.getIdent());
-        continue;
-      }
-
-      String newIdent = name.getShortIdent();
-      if (!isLegal(scope, childIdents, newIdent)) {
-        String checkIdent;
-
-        // Start searching using a suffix hint stored in the scope.
-        // We still do a search in case there is a collision with
-        // a user-provided identifier
-        Integer s = startIdent.get(newIdent);
-        int suffix = (s == null) ? 0 : s.intValue();
-        do {
-          checkIdent = newIdent + "_" + suffix++;
-        } while (!isLegal(scope, childIdents, checkIdent));
-        startIdent.put(newIdent, suffix);
-        name.setShortIdent(checkIdent);
-      } else {
-        // nothing to do; the short name is already good
-      }
-      childIdents.add(name.getShortIdent());
+      rename(name, scope, taken, suffixCounters);
+      taken.add(name.getShortIdent());
     }
-    myChildIdents.addAll(childIdents);
-    childIdents = myChildIdents;
+
+    return taken;
   }
 
-  private boolean isLegal(JsScope scope, Set<String> childIdents,
-      String newIdent) {
-    if (!isAvailableIdent(newIdent)) {
+  /**
+   * Changes the short identifier of one JsName.
+   * @param taken the set of short identifiers that are already used (read-only)
+   * @param suffixCounters contains the next suffix to use for each prefix (updated).
+   */
+  private void rename(JsName name, JsScope scope, Set<String> taken,
+      HashMap<String, Integer> suffixCounters) {
+
+    if (!name.isObfuscatable()) {
+      // We must use the full name.
+      name.setShortIdent(name.getIdent());
+      return;
+    }
+
+    String prefix = name.getShortIdent();
+    if (!isAvailable(prefix, scope, taken)) {
+
+      // Start searching using a suffix hint stored in the scope.
+      // We still do a search in case there is a collision with
+      // a user-provided identifier
+
+      Integer suffixOrNull = suffixCounters.get(prefix);
+      int suffix = (suffixOrNull == null) ? 0 : suffixOrNull;
+
+      String candidate;
+      do {
+        candidate = prefix + "_" + suffix++;
+      } while (!isAvailable(candidate, scope, taken));
+
+      suffixCounters.put(prefix, suffix);
+      name.setShortIdent(candidate);
+    }
+    // otherwise the short name is already good
+  }
+
+  /**
+   * Returns true if a candidate identifier is available in a scope.
+   * @param taken the set of names that we've already used.
+   */
+  private boolean isAvailable(String candidate, JsScope scope, Set<String> taken) {
+    if (!isAvailableIdent(candidate)) {
       return false;
     }
 
-    if (childIdents.contains(newIdent)) {
-      // one of my children already claimed this ident
+    if (taken.contains(candidate)) {
       return false;
     }
     /*
@@ -118,6 +128,6 @@ public class JsPrettyNamer extends JsNamer {
      * unobfuscatable name! It's okay if it conflicts with an existing
      * obfuscatable name; that name will get obfuscated out of the way.
      */
-    return (scope.findExistingUnobfuscatableName(newIdent) == null);
+    return (scope.findExistingUnobfuscatableName(candidate) == null);
   }
 }

@@ -149,7 +149,7 @@ public abstract class JsNamer {
 
   protected abstract void visit(JsScope scope);
 
-  protected boolean isAvailableIdent(String newIdent) {
+  protected final boolean isAvailableIdent(String newIdent) {
     if (!JsProtectedNames.isLegalName(newIdent)) {
       return false;
     }
