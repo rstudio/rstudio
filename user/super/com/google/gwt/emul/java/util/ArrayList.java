@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,7 +23,7 @@ import java.io.Serializable;
  * Resizeable array implementation of the List interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html">[Sun
  * docs]</a>
- * 
+ *
  * <p>
  * This implementation differs from JDK 1.5 <code>ArrayList</code> in terms of
  * capacity management. There is no speed advantage to pre-allocating array
@@ -34,7 +34,7 @@ import java.io.Serializable;
  * <code>ArrayList()</code>. It is only present for compatibility with JDK
  * 1.5's API.
  * </p>
- * 
+ *
  * @param <E> the element type.
  */
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
@@ -53,10 +53,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     array.splice(index, deleteCount, value);
   }-*/;
 
-  private static native void spliceArray(Object[] array, int index,
-      int deleteCount, Object[] values) /*-{
-    Array.prototype.splice.apply(array, [index, deleteCount].concat(values));
-  }-*/;
+  private void insertAt(int index, Object[] values) {
+    Array.nativeArraycopy(values, 0, array, index, values.length);
+  }
 
   /**
    * This field holds a JavaScript array.
@@ -77,10 +76,10 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   public ArrayList() {
   }
-  
+
   public ArrayList(Collection<? extends E> c) {
     // Avoid calling overridable methods from constructors
-    spliceArray(array, 0, 0, c.toArray());
+    insertAt(0, c.toArray());
     size = array.length;
   }
 
@@ -112,7 +111,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (len == 0) {
       return false;
     }
-    spliceArray(array, size, 0, cArray);
+    insertAt(size, cArray);
     size += len;
     return true;
   }
@@ -126,7 +125,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (len == 0) {
       return false;
     }
-    spliceArray(array, index, 0, cArray);
+    insertAt(index, cArray);
     size += len;
     return true;
   }

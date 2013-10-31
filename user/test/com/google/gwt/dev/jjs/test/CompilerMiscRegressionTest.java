@@ -28,6 +28,9 @@ import com.google.gwt.dev.jjs.test.overrides.package3.SomePackageConfusedParent;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests Miscelaneous fixes.
  */
@@ -70,6 +73,39 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
 
   private void throwE(String message) {
     throw new RuntimeException(message);
+  }
+
+  /**
+   * Test for issue 8243.
+   */
+  public void testAddAllLargeNumberOfElements() {
+
+    int dstLength = 10;
+    // Some browser have a limit on the number of parameters a function can have and 130000 barely
+    // exceeds Chrome limit (as of V34).
+    // This limit also applies when functions are called through apply().
+    int srcLength =  130000;
+    List<String> original = new ArrayList<String>();
+    for (int i = 0; i < dstLength; i++) {
+      original.add("foo");
+    }
+    List<String> src = new ArrayList<String>();
+    for (int i = 0; i < srcLength; i++) {
+      src.add("bar");
+    }
+
+    original.addAll(src);
+    final int totalLength = srcLength + dstLength;
+    assertEquals(totalLength, original.size());
+
+    // Check the result sampling as iterating through large arrays seems costly in IE.
+    for (int i = 0; i < totalLength; i += 1000) {
+      if (i < dstLength) {
+        assertEquals("foo", original.get(i));
+      } else {
+        assertEquals("bar", original.get(i));
+      }
+    }
   }
 
   /**

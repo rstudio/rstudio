@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -101,7 +101,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted byte array.
-   * 
+   *
    * @param sortedArray byte array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -132,7 +132,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted char array.
-   * 
+   *
    * @param a char array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -163,7 +163,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted double array.
-   * 
+   *
    * @param sortedArray double array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -194,12 +194,12 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted float array.
-   * 
+   *
    * Note that some underlying JavaScript interpreters do not actually implement
    * floats (using double instead), so you may get slightly different behavior
    * regarding values that are very close (or equal) since conversion errors
    * to/from double may change the values slightly.
-   * 
+   *
    * @param sortedArray float array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -230,7 +230,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted int array.
-   * 
+   *
    * @param sortedArray int array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -261,13 +261,13 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted long array.
-   * 
+   *
    * Note that most underlying JavaScript interpreters do not actually implement
    * longs, so the values must be stored in doubles instead. This means that
    * certain legal values cannot be represented, and comparison of two unequal
    * long values may result in unexpected results if they are not also
    * representable as doubles.
-   * 
+   *
    * @param sortedArray long array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -298,7 +298,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted object array, using natural ordering.
-   * 
+   *
    * @param sortedArray object array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -314,7 +314,7 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted short array.
-   * 
+   *
    * @param sortedArray short array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
@@ -346,7 +346,7 @@ public class Arrays {
   /**
    * Perform a binary search on a sorted object array, using a user-specified
    * comparison function.
-   * 
+   *
    * @param sortedArray object array to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
@@ -1278,11 +1278,11 @@ public class Arrays {
   /**
    * Return a JavaScript function object which will compare elements of the
    * specified object array.
-   * 
+   *
    * Note that this function isn't currently used but is kept because the native
    * sort/fixup approach is faster everywhere but IE. In the future, we may
    * choose to use deferred binding in the JRE to make those platforms faster.
-   * 
+   *
    * @param array the array of objects to compare
    * @param comp the Comparator to use to compare individual objects.
    * @return a JavaScript function object taking indices into the array to
@@ -1312,7 +1312,7 @@ public class Arrays {
 
   /**
    * Sort a small subsection of an array by insertion sort.
-   * 
+   *
    * @param array array to sort
    * @param low lower bound of range to sort
    * @param high upper bound of range to sort
@@ -1332,7 +1332,7 @@ public class Arrays {
   /**
    * Merge the two sorted subarrays (srcLow,srcMid] and (srcMid,srcHigh] into
    * dest.
-   * 
+   *
    * @param src source array for merge
    * @param srcLow lower bound of bottom sorted half
    * @param srcMid upper bound of bottom sorted half & lower bound of top sorted
@@ -1359,7 +1359,7 @@ public class Arrays {
 
   /**
    * Performs a merge sort on the specified portion of an object array.
-   * 
+   *
    * Uses O(n) temporary space to perform the merge, but is stable.
    */
   @SuppressWarnings("unchecked")
@@ -1373,7 +1373,7 @@ public class Arrays {
   /**
    * Recursive helper function for
    * {@link Arrays#mergeSort(Object[], int, int, Comparator)}.
-   * 
+   *
    * @param temp temporary space, as large as the range of elements being
    *          sorted. On entry, temp should contain a copy of the sort range
    *          from array.
@@ -1431,9 +1431,8 @@ public class Arrays {
     var temp = array.slice(fromIndex, toIndex);
     temp.sort(@com.google.gwt.lang.LongLib::compare(Lcom/google/gwt/lang/LongLibBase$LongEmul;Lcom/google/gwt/lang/LongLibBase$LongEmul;));
     var n = toIndex - fromIndex;
-    // Do the equivalent of array.splice(fromIndex, n, temp) except
-    // flattening the temp slice.
-    Array.prototype.splice.apply(array, [fromIndex, n].concat(temp));
+    @com.google.gwt.lang.Array::nativeArraycopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+        temp, 0, array, fromIndex, n)
   }-*/;
 
   /**
@@ -1455,26 +1454,25 @@ public class Arrays {
       return a - b;
     });
     var n = toIndex - fromIndex;
-    // Do the equivalent of array.splice(fromIndex, n, temp) except
-    // flattening the temp slice.
-    Array.prototype.splice.apply(array, [fromIndex, n].concat(temp.slice(0, n)));
+    @com.google.gwt.lang.Array::nativeArraycopy(Ljava/lang/Object;ILjava/lang/Object;II)(
+        temp, 0, array, fromIndex, n)
   }-*/;
 
   /**
    * Sort a subset of an array with the specified comparison function. Note that
    * the array is also referenced via closure in the comparison function.
-   * 
+   *
    * This implementation sorts it using the native (unstable) sort using an
    * index array and comparing the indices if they are otherwise equal, then
    * making another pass through the array to put them into the proper order.
    * This adds O(2*n) space for the index array and a temporary copy for
    * re-ordering (one of which is required anyway since JavaScript can't sort
    * subsets of an array), and the re-order pass takes O(n) time.
-   * 
+   *
    * Note that this function isn't currently used but is kept because the native
    * sort/fixup approach is faster everywhere but IE. In the future, we may
    * choose to use deferred binding in the JRE to make those platforms faster.
-   * 
+   *
    * @param array an array of either Java primitives or Object references
    * @param fromIndex the start of the range to sort
    * @param toIndex one past the end of the range to sort
@@ -1506,11 +1504,11 @@ public class Arrays {
   /**
    * Performs the checks specified by the JRE docs and throws appropriate
    * exceptions.
-   * 
+   *
    * @param fromIndex beginning of the range to sort
    * @param toIndex past the end of the range to sort
    * @param length size of the array to sort
-   * 
+   *
    * @throws IllegalArgumentException if fromIndex > toIndex
    * @throws ArrayIndexOutOfBoundsException if fromIndex < 0 or toIndex > length
    */
