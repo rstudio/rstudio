@@ -50,6 +50,7 @@ import com.google.gwt.emultest.java.util.HashSetTest;
 import com.google.gwt.emultest.java.util.IdentityHashMapTest;
 import com.google.gwt.emultest.java.util.ObjectsTest;
 import com.google.gwt.emultest.java.util.LinkedHashMapTest;
+import com.google.gwt.emultest.java.util.LinkedHashSetTest;
 import com.google.gwt.emultest.java.util.LinkedListTest;
 import com.google.gwt.emultest.java.util.PriorityQueueTest;
 import com.google.gwt.emultest.java.util.RandomTest;
@@ -107,6 +108,7 @@ public class EmulSuite {
     suite.addTestSuite(HashSetTest.class);
     suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(LinkedHashMapTest.class);
+    suite.addTestSuite(LinkedHashSetTest.class);
     suite.addTestSuite(LinkedListTest.class);
     suite.addTestSuite(ObjectsTest.class);
     suite.addTestSuite(PriorityQueueTest.class);

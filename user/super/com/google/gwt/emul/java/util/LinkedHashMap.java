@@ -199,6 +199,11 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
   }
 
   @Override
+  public Object clone() {
+    return new LinkedHashMap<K, V>(this);
+  }
+
+  @Override
   public boolean containsKey(Object key) {
     return map.containsKey(key);
   }

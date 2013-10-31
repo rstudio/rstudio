@@ -182,30 +182,30 @@ public class LinkedHashMapTest extends TestMap {
   /*
    * Test method for 'java.util.LinkedHashMap.clone()'
    */
-  // public void donttestClone() {
-  // LinkedHashMap srcMap = new LinkedHashMap();
-  // checkEmptyLinkedHashMapAssumptions(srcMap);
-  //
-  // // Check empty clone behavior
-  // LinkedHashMap dstMap = (LinkedHashMap) srcMap.clone();
-  // assertNotNull(dstMap);
-  // assertEquals(dstMap.size(), srcMap.size());
-  // // assertTrue(dstMap.values().toArray().equals(srcMap.values().toArray()));
-  // assertTrue(dstMap.keySet().equals(srcMap.keySet()));
-  // assertTrue(dstMap.entrySet().equals(srcMap.entrySet()));
-  //
-  // // Check non-empty clone behavior
-  // srcMap.put(KEY_1, VALUE_1);
-  // srcMap.put(KEY_2, VALUE_2);
-  // srcMap.put(KEY_3, VALUE_3);
-  // dstMap = (LinkedHashMap) srcMap.clone();
-  // assertNotNull(dstMap);
-  // assertEquals(dstMap.size(), srcMap.size());
-  //
-  // assertTrue(dstMap.keySet().equals(srcMap.keySet()));
-  //
-  // assertTrue(dstMap.entrySet().equals(srcMap.entrySet()));
-  // }
+  @SuppressWarnings("unchecked")
+  public void testClone() {
+    LinkedHashMap<String, String> srcMap = new LinkedHashMap<String, String>();
+    checkEmptyLinkedHashMapAssumptions(srcMap);
+
+    // Check empty clone behavior
+    LinkedHashMap<String, String> dstMap = (LinkedHashMap<String, String>) srcMap.clone();
+    assertNotNull(dstMap);
+    assertEquals(dstMap.size(), srcMap.size());
+    assertEquals(dstMap.keySet().toArray(), srcMap.keySet().toArray());
+    assertEquals(dstMap.entrySet().toArray(), srcMap.entrySet().toArray());
+
+    // Check non-empty clone behavior
+    srcMap.put(KEY_1, VALUE_1);
+    srcMap.put(KEY_2, VALUE_2);
+    srcMap.put(KEY_3, VALUE_3);
+    srcMap.put(KEY_4, VALUE_4);
+    dstMap = (LinkedHashMap<String, String>) srcMap.clone();
+    assertNotNull(dstMap);
+    assertEquals(dstMap.size(), srcMap.size());
+    assertEquals(dstMap.keySet().toArray(), srcMap.keySet().toArray());
+    assertEquals(dstMap.entrySet().toArray(), srcMap.entrySet().toArray());
+  }
+
   /*
    * Test method for 'java.util.LinkedHashMap.containsKey(Object)'
    */
@@ -738,10 +738,9 @@ public class LinkedHashMapTest extends TestMap {
     assertEquals(val, VALUE_VAL);
   }
 
-  @SuppressWarnings("unchecked") // raw Map/LinkedHashMap
   @Override
-  protected Map makeEmptyMap() {
-    return new LinkedHashMap();
+  protected Map<?, ?> makeEmptyMap() {
+    return new LinkedHashMap<Object, Object>();
   }
 
   /**

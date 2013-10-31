@@ -52,4 +52,9 @@ public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable {
     super(new LinkedHashMap<E, Object>(initialCapacity, loadFactor));
   }
 
+  @Override
+  public Object clone() {
+    return new LinkedHashSet<E>(this);
+  }
+
 }
