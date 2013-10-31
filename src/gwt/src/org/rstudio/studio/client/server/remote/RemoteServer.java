@@ -3045,7 +3045,7 @@ public class RemoteServer implements Server
    
    @Override
    public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
-         boolean set, ServerRequestCallback<Void> requestCallback)
+         boolean set, boolean arm, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray bps = new JSONArray();
       for (int i = 0; i < breakpoints.size(); i++)
@@ -3056,6 +3056,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, bps);
       params.set(1, JSONBoolean.getInstance(set));
+      params.set(2, JSONBoolean.getInstance(arm));
       sendRequest(RPC_SCOPE, 
             UPDATE_SHINY_BREAKPOINTS,
             params, 
