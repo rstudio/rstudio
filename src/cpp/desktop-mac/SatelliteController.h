@@ -15,12 +15,9 @@
 
 #import "WebViewController.h"
 
+
+
 @interface SatelliteController : WebViewController
 
-+ (void) activateSatelliteWindow: (NSString*) name;
-
-+ (void) prepareForSatelliteWindow: (NSString*) name
-                             width: (int) width
-                            height: (int) height;
 
 @end

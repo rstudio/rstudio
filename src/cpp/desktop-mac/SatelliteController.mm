@@ -13,34 +13,22 @@
  *
  */
 
+// TODO: crash at exit with Cmd-Q (timer polling on processSupervisor?)
+
+// TODO: window positioning and persistance for satellites
+// TODO: confirm all callbacks to main frame occur for satellites
+
+// TODO: closeAllSatellites and session re-launch in SessionLauncher
+// TODO: other windows types (minimal window, std browser window)
+
+// TODO: main menu
+// TODO: GwtCallbacks
+
 #import "SatelliteController.h"
 
 #import "GwtCallbacks.h"
 
 @implementation SatelliteController
-
-static NSArray* windows_;
-static NSString* pendingWindow_;
-
-+ (void) initialize
-{
-   windows_ = [[NSArray alloc] init];
-   pendingWindow_ = nil;
-}
-
-+ (void) activateSatelliteWindow: (NSString*) name
-{
-   
-}
-
-+ (void) prepareForSatelliteWindow: (NSString*) name
-                             width: (int) width
-                            height: (int) height
-{
-   NSLog(@"Prepare for satellite: %@", name);
-   
-}
-
 
 // Inject our script ojbect when the window object becomes available
 - (void) webView: (WebView*) webView
@@ -61,6 +49,8 @@ didClearWindowObject:(WebScriptObject *)windowObject
    [win evaluateWebScript:
       @"if (window.notifyRStudioSatelliteClosing) "
       "   window.notifyRStudioSatelliteClosing());"];
+   
+   [super windowWillClose: notification];
 }
 
 - (void) windowDidBecomeMain: (NSNotification *) notification

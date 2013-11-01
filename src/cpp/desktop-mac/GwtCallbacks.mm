@@ -5,7 +5,7 @@
 
 #import <Foundation/NSString.h>
 
-#include "SatelliteController.h"
+#include "WebViewController.h"
 
 using namespace desktop;
 
@@ -151,15 +151,15 @@ using namespace desktop;
 
 - (void) activateSatelliteWindow: (NSString*) name
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [WebViewController activateSatelliteWindow: name];
 }
 
 - (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width height: (int) height
 {
-   [SatelliteController prepareForSatelliteWindow: name
-                                            width: width
-                                           height: height];
+   [WebViewController prepareForSatelliteWindow: name
+                                          width: width
+                                          height: height];
 }
 
 - (void) copyImageToClipboard: (int) left top: (int) top

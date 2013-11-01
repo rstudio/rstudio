@@ -22,7 +22,8 @@
 
 - (id) initWithURL: (NSURL*) url
 {
-   if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]])
+   if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
+                                   name: nil])
    {
       // create the main menu
       id menubar = [[NSMenu new] autorelease];

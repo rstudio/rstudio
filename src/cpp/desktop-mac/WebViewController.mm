@@ -9,10 +9,56 @@
 #import "WebViewController.h"
 #import "GwtCallbacks.h"
 #import "MenuCallbacks.h"
+#import "SatelliteController.h"
 
 // TODO: enable javascript alerts
 
+struct PendingSatelliteWindow
+{
+   PendingSatelliteWindow()
+      : name(), width(-1), height(-1)
+   {
+   }
+   
+   PendingSatelliteWindow(std::string name, int width, int height)
+      : name(name), width(width), height(height)
+   {
+   }
+   
+   bool empty() const { return name.empty(); }
+   
+   std::string name;
+   int width;
+   int height;
+};
+
+
 @implementation WebViewController
+
+static NSMutableDictionary* namedWindows_;
+static PendingSatelliteWindow pendingWindow_;
+
++ (void) initialize
+{
+   namedWindows_ = [[NSMutableDictionary alloc] init];
+   pendingWindow_ = PendingSatelliteWindow();
+}
+
++ (void) activateSatelliteWindow: (NSString*) name
+{
+   WebViewController* controller = [namedWindows_ objectForKey: name];
+   if (controller)
+      [[controller window] makeKeyAndOrderFront: self];
+}
+
++ (void) prepareForSatelliteWindow: (NSString*) name
+                             width: (int) width
+                            height: (int) height
+{
+   pendingWindow_ = PendingSatelliteWindow([name UTF8String], width, height);
+}
+
+
 
 - (WebView*) webView
 {
@@ -21,6 +67,7 @@
 
 - (void) dealloc
 {
+   [name_ release];
    [webView_ release];
    [super dealloc];
 }
@@ -33,15 +80,16 @@
 }
 
 - (id)initWithURLRequest: (NSURLRequest*) request
+                    name: (NSString*) name
 {
    // create window and become it's delegate
    NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
-   NSWindow * window = [[[NSWindow alloc] initWithContentRect: frameRect
+   NSWindow* window = [[[NSWindow alloc] initWithContentRect: frameRect
                                           styleMask: NSTitledWindowMask |
                                                      NSClosableWindowMask |
                                                      NSResizableWindowMask
                                           backing: NSBackingStoreBuffered
-                                          defer: NO] autorelease];   
+                                          defer: NO] autorelease];
    [window setDelegate: self];
    [window setTitle: @"RStudio"];
    
@@ -61,7 +109,18 @@
       [window setContentView: webView_];
       
       // bring the window to the front
-      [window makeKeyAndOrderFront: nil];
+      [window makeKeyAndOrderFront: self];
+      
+      // speciql treatment for named windows
+      if (name)
+      {
+         // track it (for reactivation)
+         name_ = [name copy];
+         [namedWindows_ setValue: self forKey: name_];
+         
+         // auto save positiom
+         [self setWindowFrameAutosaveName: name_];
+      }
    }
    
    return self;
@@ -78,6 +137,10 @@
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification
 {
+   // if we were named then remove from the tracker
+   if (name_)
+      [namedWindows_ removeObjectForKey: name_];
+   
    [self autorelease];
 }
 
@@ -85,10 +148,41 @@
 - (WebView *) webView: (WebView *) sender
               createWebViewWithRequest:(NSURLRequest *)request
 {
-   // self-freeing so don't auto-release
-   WebViewController * webViewController =
-            [[WebViewController alloc] initWithURLRequest: request];
-   return [webViewController webView];
+   // check for a pending satellite request
+   if (!pendingWindow_.empty())
+   {
+      // capture and then clear the pending window
+      PendingSatelliteWindow pendingWindow = pendingWindow_;
+      pendingWindow_ = PendingSatelliteWindow();
+      
+      // get the name
+      NSString* name =
+        [NSString stringWithUTF8String: pendingWindow.name.c_str()];
+     
+      // check for an existing window
+      WebViewController* controller = [namedWindows_ objectForKey: name];
+      if (controller)
+      {
+         [[controller window] makeKeyAndOrderFront: self];
+         return nil;
+      }
+      else
+      {
+         // self-freeing so don't auto-release
+         SatelliteController* satelliteController =
+         [[SatelliteController alloc] initWithURLRequest: request
+                                                    name: name];
+         return [satelliteController webView];
+      }
+   }
+   else
+   {
+      // self-freeing so don't auto-release
+      WebViewController * webViewController =
+               [[WebViewController alloc] initWithURLRequest: request
+                                                        name: nil];
+      return [webViewController webView];
+   }
 }
 
 - (NSURLRequest*) webView:(WebView *) sender
