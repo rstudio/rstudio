@@ -34,6 +34,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    MainFrameController.mm
    MenuCallbacks.mm
    Options.mm
+   SatelliteController.mm
    SessionLauncher.mm
    Utils.mm
    WebViewController.mm

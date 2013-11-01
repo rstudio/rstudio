@@ -65,11 +65,6 @@ didClearWindowObject:(WebScriptObject *)windowObject
       // register objective-c objects with javascript
       [self registerDesktopObject];
       [self registerDesktopMenuCallbackObject];
-      
-      
-      // execute some js
-      //NSString *href = [win evaluateWebScript:@"window.location.href"];
-      //NSLog(@"href: %@",href);
    }
 }
 

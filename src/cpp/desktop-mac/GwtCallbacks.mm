@@ -5,6 +5,8 @@
 
 #import <Foundation/NSString.h>
 
+#include "SatelliteController.h"
+
 using namespace desktop;
 
 @implementation GwtCallbacks
@@ -12,7 +14,11 @@ using namespace desktop;
 
 - (id)init
 {
-   return [super init];
+   if (self = [super init])
+   {
+      appDelegate_ = (AppDelegate*)[NSApp delegate];
+   }
+   return self;
 }
 
 - (NSString*) proportionalFont
@@ -151,7 +157,9 @@ using namespace desktop;
 - (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width height: (int) height
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [SatelliteController prepareForSatelliteWindow: name
+                                            width: width
+                                           height: height];
 }
 
 - (void) copyImageToClipboard: (int) left top: (int) top
