@@ -206,7 +206,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
               statsContext.bytesStat(methodName, encodedResponse.length(), "responseReceived"));
 
       if (statusCode != Response.SC_OK) {
-        caught = new StatusCodeException(statusCode, encodedResponse);
+        caught = new StatusCodeException(statusCode, response.getStatusText(), encodedResponse);
       } else if (encodedResponse == null) {
         // This can happen if the XHR is interrupted by the server dying
         caught = new InvocationException("No response payload from " + methodName);

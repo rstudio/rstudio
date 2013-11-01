@@ -114,6 +114,7 @@ public class RemoteServiceServletTest extends RpcTestBase {
         if (caught instanceof StatusCodeException) {
           assertEquals(Response.SC_NOT_FOUND,
               ((StatusCodeException) caught).getStatusCode());
+          assertEquals("Not Found", ((StatusCodeException) caught).getStatusText());
           finishTest();
         } else {
           TestSetValidator.rethrowException(caught);
