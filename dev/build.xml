@@ -64,7 +64,7 @@
           <include name="jscomp/20131014/compiler-rebased.jar" />
           <include name="jscomp/20131014/sourcemap-rebased.jar" />
           <include name="jsr305/jsr305.jar" />
-          <include name="protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
+          <include name="protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar" />
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
           <include name="tomcat/commons-el-1.0.jar" />
           <include name="tomcat/jasper-compiler-1.0.jar" />
@@ -114,7 +114,7 @@
           <zipfileset src="${gwt.tools.lib}/jscomp/20131014/compiler-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jsr305/jsr305.jar" />
-          <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar" />
+          <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar" />
           <!-- dependencies needed for JSP support in DevMode: BEGIN -->
           <zipfileset src="${gwt.tools.lib}/tomcat/commons-el-1.0.jar" />
           <zipfileset src="${gwt.tools.lib}/tomcat/jasper-compiler-1.0.jar" />
@@ -189,6 +189,7 @@
           <pathelement location="${gwt.tools.lib}/jscomp/20131014/compiler-rebased.jar" />
           <pathelement location="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
           <pathelement location="${gwt.tools.lib}/jsr305/jsr305.jar" />
+          <pathelement location="${gwt.tools.lib}/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar" />
       </classpath>
     </gwt.javac>
   </target>

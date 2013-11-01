@@ -60,7 +60,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0.jar" sourcepath="/GWT_TOOLS/lib/jboss/test-harness/jboss-test-harness-api-1.0.0-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/testng/testng-5.14.1-nojunit.jar" sourcepath="/GWT_TOOLS/lib/testng/testng-5.14.1-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/sourcemap-rebased.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

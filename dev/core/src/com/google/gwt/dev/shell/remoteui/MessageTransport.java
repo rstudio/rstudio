@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -50,13 +50,13 @@ public class MessageTransport {
 
     /**
      * Called when an exception occurs when attempting to send a response
-     * message. 
+     * message.
      */
     void onResponseException(Exception e);
 
     /**
      * Called when the transport terminates due to an exception.
-     * 
+     *
      * @param e The exception that led to the termination
      */
     void onTermination(Exception e);
@@ -73,7 +73,7 @@ public class MessageTransport {
     /**
      * Create a new instance with the given failure message. The exception's
      * message will be set to {@link Failure#getMessage()}.
-     * 
+     *
      * @param failureMessage The failure message returned by the server
      */
     public RequestException(Failure failureMessage) {
@@ -115,7 +115,7 @@ public class MessageTransport {
     /**
      * Sets the response that was received from the server, and signals the
      * thread that is waiting on the response.
-     * 
+     *
      * @param responseMessage the server's response
      * @throws InterruptedException
      */
@@ -212,7 +212,7 @@ public class MessageTransport {
 
   /**
    * Create a new instance using the given streams and request processor.
-   * 
+   *
    * @param inputStream an input stream for reading messages
    * @param outputStream an output stream for writing messages
    * @param requestProcessor a callback interface for handling remote client
@@ -231,9 +231,9 @@ public class MessageTransport {
 
   /**
    * Asynchronously executes the request on a remote server.
-   * 
+   *
    * @param requestMessage The request to execute
-   * 
+   *
    * @return a {@link Future} that can be used to access the server's response
    */
   public Future<Response> executeRequestAsync(Request requestMessage) {
@@ -282,7 +282,7 @@ public class MessageTransport {
    * generally be called by another thread. Memory consistency effects: actions
    * in a thread prior to calling this method happen-before the callback is
    * invoked.
-   * 
+   *
    * @param requestMessage The request to execute
    * @param callback The callback to invoke when the response is received
    */
@@ -303,7 +303,7 @@ public class MessageTransport {
    * Starts up the message transport. The message transport creates its own
    * threads, so it is not necessary to invoke this method from a separate
    * thread.
-   * 
+   *
    * Closing either stream will cause the termination of the transport.
    */
   public void start() {
@@ -312,12 +312,17 @@ public class MessageTransport {
       return;
     }
 
-    // This thread terminates on interruption or IO failure
+    // This thread terminates on interruption, IO failure or EOF
     Thread messageProcessingThread = new Thread(new Runnable() {
       public void run() {
         try {
           while (true) {
             Message message = Message.parseDelimitedFrom(inputStream);
+            if (message == null) {
+              // EOF detected. Throw an IOException to emulate old behaviour.
+              // TODO(rluble): hacky, maybe the server should terminate normally in this case.
+              throw new IOException("Attempt to read past EOF");
+            }
             // TODO: This is where we would do a protocol check
             processMessage(message);
           }

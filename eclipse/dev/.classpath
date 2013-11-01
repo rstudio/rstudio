@@ -20,7 +20,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jsp-api-2.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9-sources.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.2.0/protobuf-java-rebased-2.2.0.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-15.0/guava-15.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/sourcemap-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/compiler-rebased.jar"/>
