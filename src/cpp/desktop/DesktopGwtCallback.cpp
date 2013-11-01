@@ -587,6 +587,16 @@ void GwtCallback::bringMainFrameToFront()
    desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
+QString GwtCallback::filterText(QString text)
+{
+   // Ace doesn't do well with NFD Unicode text. To repro on
+   // Mac OS X, create a folder on disk with accented characters
+   // in the name, then create a file in that folder. Do a
+   // Get Info on the file and copy the path. Now you'll have
+   // an NFD string on the clipboard.
+   return text.normalized(QString::NormalizationForm_C);
+}
+
 #ifdef __APPLE__
 
 namespace {

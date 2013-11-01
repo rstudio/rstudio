@@ -322,6 +322,13 @@ using namespace desktop;
    return @"None";
 }
 
+- (NSString*) filterText: (NSString*) text
+{
+   // TODO: normalize NFD Unicode text as we do in Qt version
+   
+   return text;
+}
+
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
    if (sel == @selector(browseUrl:))
@@ -374,6 +381,8 @@ using namespace desktop;
       return @"launchSession";
    else if (sel == @selector(setViewerUrl:))
       return @"setViewerUrl";
+   else if (sel == @selector(filterText:))
+      return @"filterText";
   
    return nil;
 }

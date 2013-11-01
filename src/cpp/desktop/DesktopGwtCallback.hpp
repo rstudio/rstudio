@@ -106,6 +106,8 @@ public slots:
    void showAboutDialog();
    void bringMainFrameToFront();
 
+   QString filterText(QString text);
+
    void cleanClipboard(bool stripHtml);
 
    void setPendingQuit(int pendingQuit);
