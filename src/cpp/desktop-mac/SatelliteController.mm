@@ -16,11 +16,12 @@
 // TODO: crash at exit with Cmd-Q (timer polling on processSupervisor?)
 
 // TODO: window positioning and persistance for satellites
-// TODO: confirm all callbacks to main frame occur for satellites
+// TODO Cmd+W and other stuff from main
 
 // TODO: closeAllSatellites and session re-launch in SessionLauncher
 // TODO: other windows types (minimal window, std browser window)
 
+// TOOD: file downloading
 // TODO: main menu
 // TODO: GwtCallbacks
 
@@ -43,14 +44,14 @@ didClearWindowObject:(WebScriptObject *)windowObject
    }
 }
 
-- (void) windowWillClose: (NSNotification *) notification
+- (BOOL) windowShouldClose: (id) sender
 {
    id win = [webView_ windowScriptObject];
    [win evaluateWebScript:
       @"if (window.notifyRStudioSatelliteClosing) "
-      "   window.notifyRStudioSatelliteClosing());"];
+      "   window.notifyRStudioSatelliteClosing();"];
    
-   [super windowWillClose: notification];
+   return YES;
 }
 
 - (void) windowDidBecomeMain: (NSNotification *) notification
