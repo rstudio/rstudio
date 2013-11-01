@@ -2274,6 +2274,26 @@ void ensureRLibsUser(const core::FilePath& userHomePath,
       LOG_ERROR(error);
 }
 
+#ifdef __APPLE__
+// we now launch our child processes from the desktop using our standard
+// process management code which closes all file descriptors thereby
+// breaking parent_process_monitor. So on the Mac we use the more simplistic
+// approach of polling for ppid == 1. This is fine because we expect that
+// the Desktop will _always_ outlive us (it waits for us to exit before
+// closing) so anytime it exits before we do it must be a crash). we don't
+// call abort() however because we don't want a crash report to occur
+void detectParentTermination()
+{
+   while(true)
+   {
+      boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+      if (::getppid() == 1)
+      {
+         ::exit(EXIT_FAILURE);
+      }
+   }
+}
+#else
 void detectParentTermination()
 {
    using namespace parent_process_monitor;
@@ -2292,6 +2312,7 @@ void detectParentTermination()
       LOG_ERROR_MESSAGE("waitForParentTermination failed");
    }
 }
+#endif
 
 // NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()

@@ -22,7 +22,6 @@
 #include <boost/thread.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
-#include <core/system/ParentProcessMonitor.hpp>
 
 #import "SessionLauncher.hpp"
 
@@ -41,18 +40,17 @@ namespace desktop {
    
 namespace {
          
-void launchProcess(
+Error launchProcess(
        std::string absPath,
        std::vector<std::string> argList,
        boost::function<void(const core::system::ProcessResult&)> onCompleted)
 {
    core::system::ProcessOptions options;
-   Error error = utils::processSupervisor().runProgram(absPath,
-                                                       argList,
-                                                       "", options,
-                                                       onCompleted);
-   if (error)
-      LOG_ERROR(error);
+   return utils::processSupervisor().runProgram(absPath,
+                                                argList,
+                                                "",
+                                                options,
+                                                onCompleted);
 }
 
 FilePath abendLogPath()
@@ -235,16 +233,15 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
    boost::function<void(const core::system::ProcessResult&)> onCompleted =
                   boost::bind(&SessionLauncher::onRSessionExited, this, _1);
    
-   
-   // TODO: wait for parent termination isn't working
-   
-   return parent_process_monitor::wrapFork(boost::bind(launchProcess,
-                                             sessionPath_.absolutePath(),
-                                             args,
-                                             onCompleted));
+   error = launchProcess(sessionPath_.absolutePath(), args, onCompleted);
+   if (error)
+      return error;
    
    // wait a bit to allow the socket to bind
    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+   
+   // success!
+   return Success();
 }
    
 std::string SessionLauncher::collectAbendLogMessage()
