@@ -59,14 +59,12 @@ FilePath abendLogPath()
    return desktop::utils::userLogPath().complete("rsession_abort_msg.log");
 }
 
-/*
 void logEnvVar(const std::string& name)
 {
    std::string value = core::system::getenv(name);
    if (!value.empty())
       RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
 }
-*/
    
    
 } // anonymous namespace
@@ -90,18 +88,36 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    std::string host, port, appUrl;
    std::vector<std::string> argList;
    buildLaunchContext(&host, &port, &argList, &appUrl);
+   
+   RUN_DIAGNOSTICS_LOG("\nAttempting to launch R session...");
+   logEnvVar("RSTUDIO_WHICH_R");
+   logEnvVar("R_HOME");
+   logEnvVar("R_DOC_DIR");
+   logEnvVar("R_INCLUDE_DIR");
+   logEnvVar("R_SHARE_DIR");
+   logEnvVar("R_LIBS");
+   logEnvVar("R_LIBS_USER");
+   logEnvVar("DYLD_LIBRARY_PATH");
+   logEnvVar("LD_LIBRARY_PATH");
+   logEnvVar("PATH");
+   logEnvVar("HOME");
+   logEnvVar("R_USER");
 
    // launch the session
    Error error = launchSession(argList);
    if (error)
       return error;
 
-   // load the main window
-   NSString* url = [NSString stringWithUTF8String: appUrl.c_str()];
-   [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]];
-   
-   // activate the app
-   [NSApp activateIgnoringOtherApps: YES];
+
+   // load the main window if we aren't running diagnostics
+   if (!desktop::options().runDiagnostics())
+   {
+      NSString* url = [NSString stringWithUTF8String: appUrl.c_str()];
+      [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]];
+
+      // activate the app
+      [NSApp activateIgnoringOtherApps: YES];
+   }
    
    return Success();
 }
@@ -119,7 +135,15 @@ void SessionLauncher::cleanupAtExit()
 void SessionLauncher::onRSessionExited(
                               const core::system::ProcessResult& result)
 {
-      
+   // write output to stdout and quit if we were running diagnostics
+   if (desktop::options().runDiagnostics())
+   {
+      std::cout << result.stdOut << std::endl << result.stdErr << std::endl;
+      [NSApp stop: nil];
+      return;
+   }
+   
+   
 }
    
 void SessionLauncher::buildLaunchContext(std::string* pHost,
@@ -168,6 +192,9 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
    
    boost::function<void(const core::system::ProcessResult&)> onCompleted =
                   boost::bind(&SessionLauncher::onRSessionExited, this, _1);
+   
+   
+   // TODO: wait for parent termination isn't working
    
    return parent_process_monitor::wrapFork(boost::bind(launchProcess,
                                              sessionPath_.absolutePath(),
