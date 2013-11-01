@@ -7,7 +7,8 @@
 
 #import "Options.hpp"
 #import "WebViewController.h"
-
+#import "GwtCallbacks.h"
+#import "MenuCallbacks.h"
 
 // TODO: enable javascript alerts
 
@@ -103,6 +104,19 @@
    return mutableRequest;
 }
 
+- (void) registerDesktopObject
+{
+   id win = [webView_ windowScriptObject];
+   GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init] autorelease];
+   [win setValue: gwtCallbacks forKey:@"desktop"];
+}
+
+- (void) registerDesktopMenuCallbackObject
+{
+   id win = [webView_ windowScriptObject];
+   MenuCallbacks* menuCallbacks = [[[MenuCallbacks alloc] init] autorelease];
+   [win setValue: menuCallbacks forKey:@"desktopMenuCallback"];
+}
 
 
 @end

@@ -11,5 +11,9 @@
 
 // Get the embedded WebView
 - (WebView*) webView;
+
+// subclass methods for registering javascript callbacks
+- (void) registerDesktopObject;
+- (void) registerDesktopMenuCallbackObject;
 @end
 

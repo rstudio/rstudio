@@ -63,12 +63,8 @@ didClearWindowObject:(WebScriptObject *)windowObject
    if (frame == [webView mainFrame])
    {
       // register objective-c objects with javascript
-      id win = [webView windowScriptObject];
-      GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init] autorelease];
-      [win setValue: gwtCallbacks forKey:@"desktop"];
-      MenuCallbacks* menuCallbacks = [[[MenuCallbacks alloc] init] autorelease];
-      [win setValue: menuCallbacks forKey:@"desktopMenuCallback"];
-
+      [self registerDesktopObject];
+      [self registerDesktopMenuCallbackObject];
       
       
       // execute some js
