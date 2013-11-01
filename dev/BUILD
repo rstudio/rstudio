@@ -164,8 +164,12 @@ Zip(
             "core/src/**/*.proto",
             "core/src/**/*.properties",
             "core/src/**/*.xsd",
+            "core/src/**/*.txt",
         ],
-        exclude = ["**/package-info.java"],
+        exclude = [
+            "**/package-info.java",
+            "README.txt",
+        ],
     ),
     root = "core/src",
 )

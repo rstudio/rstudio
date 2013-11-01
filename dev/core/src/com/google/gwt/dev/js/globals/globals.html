@@ -1,0 +1,19 @@
+<html>
+<head>
+  <title>Globals defined by your browser</title>
+</head>
+<body>
+
+<pre id="globals">
+</pre>
+
+<script>
+(function () {
+  var list = Object.getOwnPropertyNames(window);
+  list.sort()
+  document.getElementById("globals").textContent = list.join("\n");
+})();
+</script>
+
+</body>
+</html>

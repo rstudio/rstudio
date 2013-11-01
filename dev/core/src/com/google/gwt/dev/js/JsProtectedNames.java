@@ -15,8 +15,13 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Resources;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -76,6 +81,24 @@ public class JsProtectedNames {
         "Path", "self");
 
     illegalNames.addAll(javaScriptKeywords);
+    illegalNames.addAll(loadGlobals("chrome30"));
+    illegalNames.addAll(loadGlobals("firefox25"));
+  }
+
+  /**
+   * Loads globals from a resource file in the "globals" subdirectory.
+   */
+  private static List<String> loadGlobals(String basename) {
+    String path = "globals/" + basename + ".txt";
+    URL resource = JsProtectedNames.class.getResource(path);
+    if (resource == null) {
+      throw new RuntimeException("JsProtectedNames can't find resource: " + path);
+    }
+    try {
+      return Resources.readLines(resource, Charsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException("JsProtectedNames can't read resource: " + path, e);
+    }
   }
 
   public static boolean isKeyword(String s) {
