@@ -65,7 +65,15 @@ public class JsProtectedNames {
         "match", "src", "cos", "title", "write", "JSON", "PI", "beta", "log", "forms", "split",
         "input", "NaN", "focus", "map", "defer", "data", "push", "atan2", "atan", "shape", "small",
         "blur", "text", "LN2", "get", "max", "arity", "dir", "x", "Error", "y", "z", "sort", "size",
-        "round", "Math");
+        "round", "Math",
+        // From Chrome 30
+        "CSS", "Rect", "Blob", "self", "Node", "JSON", "Intl", "Attr", "Date",
+        "File", "name", "Text", "Array", "Audio", "event", "Range", "Touch", "Image", "Error",
+        "Event", "top", "url",
+        // From Firefox 25
+        "Map", "Set", "eval", "Proxy",
+        // From Safari 7.0
+        "Path", "self");
 
     illegalNames.addAll(javaScriptKeywords);
   }
