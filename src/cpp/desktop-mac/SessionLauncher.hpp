@@ -56,9 +56,12 @@ private:
    
    void onRSessionExited(const core::system::ProcessResult& result);
    
+   std::string collectAbendLogMessage();
+   
 private:
    core::FilePath confPath_;
    core::FilePath sessionPath_;
+   std::string sessionStderr_;
 };
    
 

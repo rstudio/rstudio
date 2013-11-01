@@ -20,6 +20,7 @@
 
 
 #include <boost/thread.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 
@@ -124,12 +125,38 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    
 std::string SessionLauncher::launchFailedErrorMessage()
 {
-   return std::string();
-}
+   // check for abend log -- bail if there is none
+   std::string abendLog = collectAbendLogMessage();
+   if (abendLog.empty())
+      return std::string();
    
+   // build message
+   std::string errMsg = "The R session had a fatal error.";
+   
+   // check for R version mismatch
+   if (abendLog.find("arguments passed to .Internal") != std::string::npos)
+   {
+      errMsg.append("\n\nThis error was very likely caused "
+                    "by R attempting to load packages from a different "
+                    "incompatible version of R on your system. Please remove "
+                    "other versions of R and/or remove environment variables "
+                    "that reference libraries from other versions of R "
+                    "before proceeding.");
+   }
+   
+   errMsg.append("\n\n" + abendLog);
+   
+   // check for stderr
+   if (!sessionStderr_.empty())
+       errMsg.append("\n\n" + sessionStderr_);
+       
+   return errMsg;
+}
+ 
+
 void SessionLauncher::cleanupAtExit()
 {
-      
+   // currently does nothing
 }
    
 void SessionLauncher::onRSessionExited(
@@ -139,11 +166,25 @@ void SessionLauncher::onRSessionExited(
    if (desktop::options().runDiagnostics())
    {
       std::cout << result.stdOut << std::endl << result.stdErr << std::endl;
-      [NSApp stop: nil];
+      [NSApp terminate: nil];
       return;
    }
    
+   // collect stderr
+   sessionStderr_ = result.stdErr;
    
+   
+   // TODO: pendingQuit handling, for now we just show abend log errors
+   
+   if (abendLogPath().exists())
+   {
+      std::string errMsg = collectAbendLogMessage();
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"RStudio",
+                            [NSString stringWithUTF8String: errMsg.c_str()]);
+   }
+   
+   [NSApp stop: nil];
 }
    
 void SessionLauncher::buildLaunchContext(std::string* pHost,
@@ -185,10 +226,11 @@ void SessionLauncher::buildLaunchContext(std::string* pHost,
    
 Error SessionLauncher::launchSession(std::vector<std::string> args)
 {
-   // always remove the abend log path before launching
+   // always reset the abend log path and stderr before launching
    Error error = abendLogPath().removeIfExists();
    if (error)
       LOG_ERROR(error);
+   sessionStderr_.clear();
    
    boost::function<void(const core::system::ProcessResult&)> onCompleted =
                   boost::bind(&SessionLauncher::onRSessionExited, this, _1);
@@ -203,6 +245,24 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
    
    // wait a bit to allow the socket to bind
    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+}
+   
+std::string SessionLauncher::collectAbendLogMessage()
+{
+   std::string contents;
+   FilePath abendLog = abendLogPath();
+   if (abendLog.exists())
+   {
+      Error error = core::readStringFromFile(abendLog, &contents);
+      if (error)
+         LOG_ERROR(error);
+      
+      error = abendLog.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   return contents;
 }
 
 

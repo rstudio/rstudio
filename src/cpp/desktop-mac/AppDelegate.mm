@@ -364,6 +364,16 @@ bool prepareEnvironment(Options& options)
 
 - (void) applicationWillTerminate: (NSNotification *) notification
 {
+   // check for launchFailedErrorMessage
+   std::string err = sessionLauncher().launchFailedErrorMessage();
+   if (!err.empty())
+   {
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"RStudio",
+                            [NSString stringWithUTF8String: err.c_str()]);
+   }
+   
+   // cleanup
    sessionLauncher().cleanupAtExit();
 }
 
