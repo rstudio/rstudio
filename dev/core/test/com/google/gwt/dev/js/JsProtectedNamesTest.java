@@ -30,6 +30,10 @@ public class JsProtectedNamesTest extends TestCase {
     checkNotLegal("uneval");
   }
 
+  public void testIE9Symbol() throws Exception {
+    checkNotLegal("ActiveXObject");
+  }
+
   private void checkNotLegal(String global) {
     assertFalse(global + " shouldn't be legal", JsProtectedNames.isLegalName(global));
   }

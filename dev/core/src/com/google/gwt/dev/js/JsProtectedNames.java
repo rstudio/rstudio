@@ -83,6 +83,7 @@ public class JsProtectedNames {
     illegalNames.addAll(javaScriptKeywords);
     illegalNames.addAll(loadGlobals("chrome30"));
     illegalNames.addAll(loadGlobals("firefox25"));
+    illegalNames.addAll(loadGlobals("ie9"));
   }
 
   /**
