@@ -15,9 +15,20 @@
 
 #import "WebViewController.h"
 
-@interface MainFrameController : WebViewController
+@interface MainFrameController : WebViewController {
+   BOOL quitConfirmed_;
+}
+
+// access single instance
++ (MainFrameController*) instance;
 
 // designated initializer
 - (id) initWithURL: (NSURL*) url;
+
+// evaluate javascript
+- (id) evaluateJavaScript: (NSString*) js;
+
+// quit for real
+- (void) quit;
 
 @end

@@ -18,13 +18,28 @@
 #import "GwtCallbacks.h"
 #import "MenuCallbacks.h"
 
+#include "SessionLauncher.hpp"
+
 @implementation MainFrameController
+
+static MainFrameController* instance_;
+
++ (MainFrameController*) instance
+{
+   return instance_;
+}
 
 - (id) initWithURL: (NSURL*) url
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
                                    name: nil])
    {
+      // initialize the global instance
+      instance_ = self;
+      
+      // quit is not confirmed
+      quitConfirmed_ = NO;
+      
       // create the main menu
       id menubar = [[NSMenu new] autorelease];
       id appMenuItem = [[NSMenuItem new] autorelease];
@@ -34,17 +49,48 @@
       id appName = [[NSProcessInfo processInfo] processName];
       id quitTitle = [@"Quit " stringByAppendingString:appName];
       id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
-                                                    action:@selector(terminate:)
+                                                    action: NULL
                                              keyEquivalent:@"q"] autorelease];
+      [quitMenuItem setTarget: self];
+      [quitMenuItem setAction: @selector(initiateQuit:)];
+      [quitMenuItem setEnabled: YES];
       [appMenu addItem: quitMenuItem];
       [appMenuItem setSubmenu: appMenu];
       
-
       // auto-save window position
       [self setWindowFrameAutosaveName: @"RStudio"];
+      
+      // set title
+      [[self window] setTitle: @"RStudio"];
    }
    
    return self;
+}
+
+- (id) evaluateJavaScript: (NSString*) js
+{
+   id win = [webView_ windowScriptObject];
+   return [win evaluateWebScript: js];
+}
+
+- (BOOL) hasDesktopObject
+{
+   WebScriptObject* script = [webView_ windowScriptObject];
+   if (script == nil)
+      return NO;
+   
+   return [[script evaluateWebScript: @"!!window.desktopHooks"] boolValue];   
+}
+
+- (void) initiateQuit
+{
+   [[self window] performClose: self];
+}
+
+- (void) quit
+{
+   quitConfirmed_ = YES;
+   [[self window] performClose: self];
 }
 
 
@@ -66,6 +112,27 @@ didClearWindowObject:(WebScriptObject *)windowObject
       // register objective-c objects with javascript
       [self registerDesktopObject];
       [self registerDesktopMenuCallbackObject];
+   }
+}
+
+- (BOOL) windowShouldClose: (id) sender
+{
+   if (quitConfirmed_)
+   {
+      return YES;
+   }
+   else if (!desktop::sessionLauncher().sessionProcessActive())
+   {
+      return YES;
+   }
+   else if (![self hasDesktopObject])
+   {
+      return YES;
+   }
+   else
+   {
+      [self evaluateJavaScript: @"window.desktopHooks.quitR()"];
+      return NO;
    }
 }
 

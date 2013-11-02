@@ -121,6 +121,36 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    return Success();
 }
    
+Error SessionLauncher::launchNextSession(bool reload)
+{
+
+   // TODO: onFirstWorkbenchInitialized style handling
+   
+   // build a new launch context -- re-use the same port if we aren't reloading
+   std::string port = !reload ? options().portNumber() : "";
+   std::string host, url;
+   std::vector<std::string> argList;
+   buildLaunchContext(&host, &port, &argList, &url);
+   
+   // launch the process
+   Error error = launchSession(argList);
+   if (error)
+      return error;
+   
+   // reload if necessary
+   if (reload)
+   {
+      NSURL* nsurl = [NSURL URLWithString:
+                        [NSString stringWithUTF8String: url.c_str()]];
+      NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
+      [[[[MainFrameController instance]
+             webView] mainFrame] loadRequest: request];
+   }
+   
+   return Success();
+}
+
+   
 std::string SessionLauncher::launchFailedErrorMessage()
 {
    // check for abend log -- bail if there is none
@@ -157,9 +187,31 @@ void SessionLauncher::cleanupAtExit()
    // currently does nothing
 }
    
+void SessionLauncher::setPendingQuit(PendingQuit pendingQuit)
+{
+   pendingQuit_= pendingQuit;
+}
+   
+PendingQuit SessionLauncher::collectPendingQuit()
+{
+   if (pendingQuit_ != PendingQuitNone)
+   {
+      PendingQuit pendingQuit = pendingQuit_;
+      pendingQuit_ = PendingQuitNone;
+      return pendingQuit;
+   }
+   else
+   {
+      return PendingQuitNone;
+   }
+}
+   
 void SessionLauncher::onRSessionExited(
                               const core::system::ProcessResult& result)
 {
+   // set flag indicating a process is no longer active
+   sessionProcessActive_ = false;
+   
    // write output to stdout and quit if we were running diagnostics
    if (desktop::options().runDiagnostics())
    {
@@ -171,18 +223,56 @@ void SessionLauncher::onRSessionExited(
    // collect stderr
    sessionStderr_ = result.stdErr;
    
+   // get pending quit status
+   int pendingQuit = collectPendingQuit();
    
-   // TODO: pendingQuit handling, for now we just show abend log errors
-   
-   if (abendLogPath().exists())
+   // if there was no pending quit set then this is a crash
+   if (pendingQuit == PendingQuitNone)
    {
-      std::string errMsg = collectAbendLogMessage();
-      utils::showMessageBox(NSCriticalAlertStyle,
-                            @"RStudio",
-                            [NSString stringWithUTF8String: errMsg.c_str()]);
+      closeAllWindows();
+      
+      [[MainFrameController instance]
+         evaluateJavaScript: @"window.desktopHooks.notifyRCrashed()"];
+      
+      if (abendLogPath().exists())
+      {
+         std::string errMsg = collectAbendLogMessage();
+         utils::showMessageBox(NSCriticalAlertStyle,
+                               @"RStudio",
+                               [NSString stringWithUTF8String: errMsg.c_str()]);
+      }
+
    }
    
-   [NSApp stop: nil];
+   // quit and exit means close the main window
+   else if (pendingQuit == PendingQuitAndExit)
+   {
+      [[MainFrameController instance] quit];
+   }
+   
+   // otherwise this is a restart so we need to launch the next session
+   else
+   {
+      // close all satellite windows if we are reloading
+      bool reload = (pendingQuit == PendingQuitRestartAndReload);
+      if (reload)
+         closeAllWindows();
+      
+      // launch next session
+      Error error = launchNextSession(reload);
+      if (error)
+      {
+         LOG_ERROR(error);
+         
+         std::string errMsg = launchFailedErrorMessage();
+         utils::showMessageBox(NSCriticalAlertStyle,
+                               @"RStudio",
+                               [NSString stringWithUTF8String: errMsg.c_str()]);
+        
+         
+         [[MainFrameController instance] quit];
+      }
+   }
 }
    
 void SessionLauncher::buildLaunchContext(std::string* pHost,
@@ -237,12 +327,16 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
    if (error)
       return error;
    
+   // session process is active
+   sessionProcessActive_ = true;
+   
    // wait a bit to allow the socket to bind
    boost::this_thread::sleep(boost::posix_time::milliseconds(100));
    
    // success!
    return Success();
 }
+
    
 std::string SessionLauncher::collectAbendLogMessage()
 {
@@ -260,6 +354,17 @@ std::string SessionLauncher::collectAbendLogMessage()
    }
    
    return contents;
+}
+   
+void SessionLauncher::closeAllWindows()
+{
+   NSWindow* mainWindow = [[MainFrameController instance] window];
+   NSArray* windows = [NSApp windows];
+   for (NSWindow* window in windows)
+   {
+      if (window != mainWindow)
+         [window close];
+   }
 }
 
 

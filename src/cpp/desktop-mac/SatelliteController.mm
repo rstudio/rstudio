@@ -13,12 +13,24 @@
  *
  */
 
-// TODO: crash at exit with Cmd-Q (timer polling on processSupervisor?)
+// TODO: introduced sentinel desktop object so we can do gwt
+// deferred binding on the WebKit port (nice for evolution)
+
+
+// TODO: equivlant of disconnecting firstWorkbenchInitialized
+// this is done for file assoications (launchNextSession)
+
+// TODO: file associations
+
+// TODO: test R crashed codepath
+
+// TODO: system shutdown sequence (interact with?)
+
 
 // TODO: window positioning and persistance for satellites
 // TODO Cmd+W and other stuff from main
 
-// TODO: closeAllSatellites and session re-launch in SessionLauncher
+
 // TODO: other windows types (minimal window, std browser window)
 
 // TOOD: file downloading

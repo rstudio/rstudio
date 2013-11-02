@@ -334,7 +334,7 @@ bool prepareEnvironment(Options& options)
    desktop::options().setScriptsPath(scriptsPath);
    
    // setup timer for polling process supervisor
-   [NSTimer scheduledTimerWithTimeInterval: 0.5
+   [NSTimer scheduledTimerWithTimeInterval: 0.1
                                     target: self
                                     selector:@selector(pollProcessSupervisor)
                                     userInfo:nil

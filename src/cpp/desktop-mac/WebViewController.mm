@@ -172,6 +172,10 @@ static PendingSatelliteWindow pendingWindow_;
          SatelliteController* satelliteController =
          [[SatelliteController alloc] initWithURLRequest: request
                                                     name: name];
+         
+         [[satelliteController window]
+                  cascadeTopLeftFromPoint: NSMakePoint(10, 5)];
+         
          return [satelliteController webView];
       }
    }

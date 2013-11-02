@@ -26,6 +26,14 @@
 
 namespace desktop {
 
+enum PendingQuit {
+   PendingQuitNone = 0,
+   PendingQuitAndExit = 1,
+   PendingQuitAndRestart = 2,
+   PendingQuitRestartAndReload = 3
+};
+   
+   
 // singleton
 class SessionLauncher;
 SessionLauncher& sessionLauncher();
@@ -33,12 +41,19 @@ SessionLauncher& sessionLauncher();
 class SessionLauncher : boost::noncopyable
 {
 private:
-   SessionLauncher() {}
+   SessionLauncher()
+     : pendingQuit_(PendingQuitNone), sessionProcessActive_(false)
+   {
+   }
    friend SessionLauncher& sessionLauncher();
    
 public:
    void init(const core::FilePath& sessionPath,
              const core::FilePath& confPath);
+   
+   bool sessionProcessActive() { return sessionProcessActive_; }
+   
+   void setPendingQuit(PendingQuit pendingQuit);
    
    core::Error launchFirstSession(const std::string& filename);
    
@@ -47,6 +62,9 @@ public:
    void cleanupAtExit();
    
 private:
+   
+   PendingQuit collectPendingQuit();
+   
    void buildLaunchContext(std::string* pHost,
                            std::string* pPort,
                            std::vector<std::string>* pArgList,
@@ -54,14 +72,20 @@ private:
    
    core::Error launchSession(std::vector<std::string> args);
    
+   core::Error launchNextSession(bool reload);
+   
    void onRSessionExited(const core::system::ProcessResult& result);
    
    std::string collectAbendLogMessage();
+   
+   void closeAllWindows();
    
 private:
    core::FilePath confPath_;
    core::FilePath sessionPath_;
    std::string sessionStderr_;
+   PendingQuit pendingQuit_;
+   bool sessionProcessActive_;
 };
    
 

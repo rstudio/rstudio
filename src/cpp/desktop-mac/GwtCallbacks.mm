@@ -5,7 +5,9 @@
 
 #import <Foundation/NSString.h>
 
-#include "WebViewController.h"
+#include "SessionLauncher.hpp"
+
+#import "WebViewController.h"
 
 using namespace desktop;
 
@@ -23,21 +25,12 @@ using namespace desktop;
 
 - (NSString*) proportionalFont
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
    return [NSString stringWithUTF8String: options().proportionalFont().c_str()];
 }
 
 - (NSString*) fixedWidthFont
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
    return [NSString stringWithUTF8String: options().fixedWidthFont().c_str()];
-}
-
-- (int) collectPendingQuitRequest
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return (0);
 }
 
 - (void) browseUrl: (NSString*) url
@@ -221,7 +214,7 @@ using namespace desktop;
 
 - (void) setPendingQuit: (int) pendingQuit
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   sessionLauncher().setPendingQuit((PendingQuit)pendingQuit);
 }
 
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
