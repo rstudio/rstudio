@@ -13,9 +13,13 @@
  *
  */
 
+// TODO: initial load performance issue
+//  - has to be related to initial R process startup time since
+//    it doesn't happen for reload but does for reload project
+//    not unique to safari, git bisect for issues introduced?
+
 // TODO: introduced sentinel desktop object so we can do gwt
 // deferred binding on the WebKit port (nice for evolution)
-
 
 // TODO: equivlant of disconnecting firstWorkbenchInitialized
 // this is done for file assoications (launchNextSession)
@@ -26,7 +30,7 @@
 
 
 // TODO: window positioning and persistance for satellites
-// TODO Cmd+W and other stuff from main
+// TODO Cmd+W and other stuff from main window
 
 
 // TODO: other windows types (minimal window, std browser window)
