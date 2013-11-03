@@ -121,7 +121,7 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    return Success();
 }
    
-Error SessionLauncher::launchNextSession(bool reload)
+void SessionLauncher::launchNextSession(bool reload)
 {
 
    // TODO: onFirstWorkbenchInitialized style handling
@@ -134,20 +134,29 @@ Error SessionLauncher::launchNextSession(bool reload)
    
    // launch the process
    Error error = launchSession(argList);
-   if (error)
-      return error;
-   
-   // reload if necessary
-   if (reload)
+   if (!error)
    {
-      NSURL* nsurl = [NSURL URLWithString:
-                        [NSString stringWithUTF8String: url.c_str()]];
-      NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
-      [[[[MainFrameController instance]
-             webView] mainFrame] loadRequest: request];
+      // reload if necessary
+      if (reload)
+      {
+         NSURL* nsurl = [NSURL URLWithString:
+                           [NSString stringWithUTF8String: url.c_str()]];
+         NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
+         [[[[MainFrameController instance]
+                webView] mainFrame] loadRequest: request];
+      }
    }
-   
-   return Success();
+   else
+   {
+      LOG_ERROR(error);
+
+      std::string errMsg = launchFailedErrorMessage();
+      utils::showMessageBox(NSCriticalAlertStyle,
+                            @"RStudio",
+                            [NSString stringWithUTF8String: errMsg.c_str()]);
+
+      [[MainFrameController instance] quit];
+   }
 }
 
    
@@ -259,19 +268,7 @@ void SessionLauncher::onRSessionExited(
          closeAllWindows();
       
       // launch next session
-      Error error = launchNextSession(reload);
-      if (error)
-      {
-         LOG_ERROR(error);
-         
-         std::string errMsg = launchFailedErrorMessage();
-         utils::showMessageBox(NSCriticalAlertStyle,
-                               @"RStudio",
-                               [NSString stringWithUTF8String: errMsg.c_str()]);
-        
-         
-         [[MainFrameController instance] quit];
-      }
+      launchNextSession(reload);
    }
 }
    

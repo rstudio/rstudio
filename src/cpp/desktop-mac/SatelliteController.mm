@@ -22,8 +22,6 @@
 
 // TODO: file associations
 
-// TODO: test R crashed codepath
-
 // TODO: system shutdown sequence (interact with?)
 
 
@@ -36,6 +34,9 @@
 // TOOD: file downloading
 // TODO: main menu
 // TODO: GwtCallbacks
+// TODO: about box
+// TODO: check for updates
+// TODO: enter "boink" in vcs view
 
 #import "SatelliteController.h"
 

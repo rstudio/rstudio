@@ -57,6 +57,8 @@ public:
    
    core::Error launchFirstSession(const std::string& filename);
    
+   void launchNextSession(bool reload);
+   
    std::string launchFailedErrorMessage();
    
    void cleanupAtExit();
@@ -72,8 +74,7 @@ private:
    
    core::Error launchSession(std::vector<std::string> args);
    
-   core::Error launchNextSession(bool reload);
-   
+      
    void onRSessionExited(const core::system::ProcessResult& result);
    
    std::string collectAbendLogMessage();

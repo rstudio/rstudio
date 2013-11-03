@@ -303,8 +303,7 @@ using namespace desktop;
 
 - (void) launchSession: (Boolean) reload
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-
+   sessionLauncher().launchNextSession(reload);
 }
 
 - (void) reloadZoomWindow
