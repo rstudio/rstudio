@@ -20,7 +20,6 @@
 #import "MainFrameController.h"
 
 #import "MainFrameMenu.h"
-#import "CommandInvoker.h"
 
 @implementation MainFrameMenu
 
@@ -29,6 +28,7 @@
    if (self = [super init])
    {
       menuStack_ = [[NSMutableArray alloc] init];
+      commands_ = [[NSMutableArray alloc] init];
    }
    return self;
 }
@@ -37,6 +37,7 @@
 {
    [mainMenu_ release];
    [menuStack_ release];
+   [commands_ release];
    [super dealloc];
 }
 
@@ -73,7 +74,6 @@
    // create the menu and associate it with the menu item. we also
    // turn off "autoenable" so we can manage command states explicitly
    NSMenu* menu = [[[NSMenu alloc] initWithTitle: menuName] autorelease];
-   [menu setAutoenablesItems: NO];
    [[self currentTargetMenu] setSubmenu: menu forItem: menuItem];
    
    // update the menu stack
@@ -95,10 +95,10 @@
    [menuItem setTitleWithMnemonic: label];
    [menuItem setToolTip: tooltip];
 
-   id invoker = [[[CommandInvoker alloc] init: commandId] autorelease];
-   [menuItem setRepresentedObject: invoker]; // for retain purposes
-   [menuItem setTarget: invoker];
-   [menuItem setAction: @selector(invoke)];
+   [menuItem setTag: [commands_ count]];
+   [commands_ addObject: commandId];
+   [menuItem setTarget: self];
+   [menuItem setAction: @selector(invoke:)];
    
    // TODO: reflect other menu state/behavior
    
@@ -127,6 +127,33 @@
       return mainMenu_;
    else
       return [menuStack_ lastObject];
+}
+
+- (void) invoke: (id) sender {
+   NSString* command = [commands_ objectAtIndex: [sender tag]];
+   [[MainFrameController instance] invokeCommand: command];
+}
+
+- (BOOL) validateMenuItem: (NSMenuItem *) item {
+   NSString* command = [commands_ objectAtIndex: [item tag]];
+
+   NSString* labelJs = [NSString stringWithFormat: @"window.desktopHooks.getCommandLabel(\"%@\");", command];
+   [item setTitleWithMnemonic: [[MainFrameController instance] evaluateJavaScript: labelJs]];
+
+   NSString* checkedJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandChecked(\"%@\");", command];
+   if ([[[MainFrameController instance] evaluateJavaScript: checkedJs] boolValue])
+      [item setState: NSOnState];
+   else
+      [item setState: NSOffState];
+
+   NSString* visibleJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandVisible(\"%@\");", command];
+   [item setHidden: ![[[MainFrameController instance] evaluateJavaScript: visibleJs] boolValue]];
+
+   NSString* enabledJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");", command];
+   if ([[[MainFrameController instance] evaluateJavaScript: enabledJs] boolValue])
+      return YES;
+   else
+      return NO;
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel

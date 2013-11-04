@@ -37,9 +37,9 @@
 - (void) openFileInRStudio: (NSString*) filename;
 
 // evaluate javascript
-- (NSString*) evaluateJavaScript: (NSString*) js;
+- (id) evaluateJavaScript: (NSString*) js;
 
-- (NSString*) invokeCommand: (NSString*) command;
+- (id) invokeCommand: (NSString*) command;
 
 
 // initiate a quit sequence

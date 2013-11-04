@@ -120,13 +120,13 @@ static MainFrameController* instance_;
 }
 
 
-- (NSString*) evaluateJavaScript: (NSString*) js
+- (id) evaluateJavaScript: (NSString*) js
 {
    id win = [webView_ windowScriptObject];
    return [win evaluateWebScript: js];
 }
 
-- (NSString*) invokeCommand: (NSString*) command
+- (id) invokeCommand: (NSString*) command
 {
    return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
                                      command]];
