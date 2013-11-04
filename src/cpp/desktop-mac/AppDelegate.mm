@@ -355,6 +355,23 @@ bool prepareEnvironment(Options& options)
    utils::processSupervisor().poll();
 }
 
+- (NSApplicationTerminateReply) applicationShouldTerminate:
+                                          (NSApplication *) sender
+{
+   // TODO: ensure that the code below protects against attempting to
+   // interact with a MainFrame window that's already closed/dead
+   
+   if (!sessionLauncher().sessionProcessActive())
+   {
+      return NSTerminateNow;
+   }
+   else
+   {
+      [[MainFrameController instance] initiateQuit];
+      return NSTerminateCancel;
+   }
+}
+
 - (void) applicationWillTerminate: (NSNotification *) notification
 {
    // check for launchFailedErrorMessage

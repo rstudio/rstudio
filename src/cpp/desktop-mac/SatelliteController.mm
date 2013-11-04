@@ -37,6 +37,9 @@
 // TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
 
+// TODO: improve system shutdown handling (confirm our current logic
+//       is airtight and return ShutdownLater (with subsequent callback)
+//       rather than ShutdownCancel)
 
 #import "SatelliteController.h"
 

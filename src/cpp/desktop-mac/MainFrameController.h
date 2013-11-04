@@ -39,6 +39,10 @@
 // evaluate javascript
 - (NSString*) evaluateJavaScript: (NSString*) js;
 
+
+// initiate a quit sequence
+- (void) initiateQuit;
+
 // quit for real
 - (void) quit;
 
