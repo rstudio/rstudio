@@ -18,16 +18,11 @@
 //    it doesn't happen for reload but does for reload project
 //    not unique to safari, git bisect for issues introduced?
 
-// TODO: introduced sentinel desktop object so we can do gwt
-// deferred binding on the WebKit port (nice for evolution)
-
 
 // TODO: system shutdown sequence (interact with?)
 
-
 // TODO: window positioning and persistance for satellites
 // TODO Cmd+W and other stuff from main window
-
 
 // TODO: other windows types (minimal window, std browser window)
 
@@ -36,7 +31,10 @@
 // TODO: GwtCallbacks
 // TODO: about box
 // TODO: check for updates
+
 // TODO: enter "boink" in vcs view
+// TODO: strange layout of console progress dialog
+
 
 #import "SatelliteController.h"
 

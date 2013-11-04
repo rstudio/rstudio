@@ -26,6 +26,12 @@
       return window.NodeWebkit ? "true" : "false";
    ]]></property-provider>
    <collapse-property name="rstudio.nodewebkit" values="*"/>
+   
+   <define-property name="rstudio.cocoa" values="true,false"/>
+   <property-provider name="rstudio.cocoa"><![CDATA[
+      return window.desktop && window.desktop.isCocoa ? "true" : "false";
+   ]]></property-provider>
+   <collapse-property name="rstudio.cocoa" values="*"/>
 
    <!--
    <define-property name="rstudio.debug" values="true,false"/>
@@ -90,6 +96,10 @@
       <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
+   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.WebCRANChooser">
+      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
+      <when-property-is name="rstudio.cocoa" value="true"/>
+   </replace-with>
 
    <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.WebActionsWidget">
       <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
@@ -114,13 +124,21 @@
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
-
+   <replace-with class="org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory">
+      <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
+      <when-property-is name="rstudio.cocoa" value="true"/>
+   </replace-with>
+  
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.impl.DesktopTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
       <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+   <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
+      <when-type-is class="org.rstudio.studio.client.common.TextInput"/>
+      <when-property-is name="rstudio.cocoa" value="true"/>
    </replace-with>
 
    <!-- define permutations for emulated and native stack modes -->

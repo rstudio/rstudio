@@ -23,6 +23,11 @@ using namespace desktop;
    return self;
 }
 
+// sentinel function for gwt deferred binding
+- (void) isCocoa
+{
+}
+
 - (NSString*) proportionalFont
 {
    return [NSString stringWithUTF8String: options().proportionalFont().c_str()];
