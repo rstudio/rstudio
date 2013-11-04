@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -39,12 +39,12 @@ public class JTypeOracle implements Serializable {
 
   /**
    * Checks a clinit method to find out a few things.
-   * 
+   *
    * <ol>
    * <li>What other clinits it calls.</li>
    * <li>If it runs any code other than clinit calls.</li>
    * </ol>
-   * 
+   *
    * This is used to remove "dead clinit cycles" where self-referential cycles
    * of empty clinits can keep each other alive.
    */
@@ -56,7 +56,7 @@ public class JTypeOracle implements Serializable {
      * Tracks whether any live code is run in this clinit. This is only reliable
      * because we explicitly visit all AST structures that might contain
      * non-clinit-calling code.
-     * 
+     *
      * @see #mightBeDeadCode(JExpression)
      * @see #mightBeDeadCode(JStatement)
      */
@@ -297,13 +297,24 @@ public class JTypeOracle implements Serializable {
   private final Map<JClassType, Map<String, JMethod>> polyClassMethodMap =
       new IdentityHashMap<JClassType, Map<String, JMethod>>();
 
-  public JTypeOracle(JProgram program) {
+  /**
+   * Whether this type oracle has whole world knowledge or not. Monolithic compiles have whole
+   * world knowledge but separate compiles know only about their immediate source and the
+   * immediately referenced types
+   */
+  private final boolean hasWholeWorldKnowledge;
+
+  /**
+   * Constructs a new JTypeOracle.
+   */
+  public JTypeOracle(JProgram program, boolean hasWholeWorldKnowledge) {
     this.program = program;
+    this.hasWholeWorldKnowledge = hasWholeWorldKnowledge;
   }
 
   /**
    * True if the type is a JSO or interface implemented by JSO..
-   * 
+   *
    * @param type
    * @return
    */
@@ -530,7 +541,12 @@ public class JTypeOracle implements Serializable {
     for (JInterfaceType jsoIntf : jsoSingleImpls.keySet()) {
       Set<JClassType> implementors = get(isImplementedMap, jsoIntf);
       for (JClassType implementor : implementors) {
-        if (!program.isJavaScriptObject(implementor)) {
+        if (!hasWholeWorldKnowledge || !program.isJavaScriptObject(implementor)) {
+          // Assume always dualImpl for separate compilation. Due to the nature of separate
+          // compilation, the compiler can not know if a specific interface is implemented in a
+          // different module unless it is a monolithic whole world compile.
+          // TODO(rluble): Jso devirtualization should be an normalization pass before optimization
+          // JTypeOracle should be mostly unaware of JSOs.
           dualImpls.add(jsoIntf);
           break;
         }
@@ -543,7 +559,7 @@ public class JTypeOracle implements Serializable {
    * or implement in any instantiable class, including strange cases where there
    * is no direct relationship between the methods except in a subclass that
    * inherits one and implements the other. Example:
-   * 
+   *
    * <pre>
    * interface IFoo {
    *   foo();
@@ -554,7 +570,7 @@ public class JTypeOracle implements Serializable {
    * class Foo extends Unrelated implements IFoo {
    * }
    * </pre>
-   * 
+   *
    * In this case, <code>Unrelated.foo()</code> virtually implements
    * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
    */

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -263,7 +263,9 @@ public class JProgram extends JNode {
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
   public final List<JClassType> immortalCodeGenTypes = new ArrayList<JClassType>();
 
-  public final JTypeOracle typeOracle = new JTypeOracle(this);
+  // TODO(rluble): (Separate compilation) the second parameter (hasWholeWorldKnoledge) must be
+  // false when doing separate compilation.
+  public final JTypeOracle typeOracle = new JTypeOracle(this, true);
 
   /**
    * Special serialization treatment.
@@ -318,7 +320,7 @@ public class JProgram extends JNode {
   private JClassType typeSpecialJavaScriptObject;
 
   private JClassType typeString;
-  
+
   private FragmentPartitioningResult fragmentPartitioninResult;
 
   public JProgram() {
@@ -342,7 +344,7 @@ public class JProgram extends JNode {
     if (IMMORTAL_CODEGEN_TYPES_SET.contains(name)) {
       immortalCodeGenTypes.add((JClassType) type);
     }
-    
+
     if (INDEX_TYPES_SET.contains(name)) {
       indexedTypes.put(type.getShortName(), type);
       for (JMethod method : type.getMethods()) {
@@ -616,7 +618,7 @@ public class JProgram extends JNode {
     // Initial fragment is the +1.
     return runAsyncs.size() + 1;
   }
-  
+
   public FragmentPartitioningResult getFragmentPartitioningResult() {
     return fragmentPartitioninResult;
   }
@@ -998,7 +1000,7 @@ public class JProgram extends JNode {
 
   /**
    * See notes in {@link #writeObject(ObjectOutputStream)}.
-   * 
+   *
    * @see #writeObject(ObjectOutputStream)
    */
   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -1009,7 +1011,7 @@ public class JProgram extends JNode {
   /**
    * Serializing the Java AST is a multi-step process to avoid blowing out the
    * stack.
-   * 
+   *
    * <ol>
    * <li>Write all declared types in a lightweight manner to establish object
    * identity for types</li>
@@ -1021,7 +1023,7 @@ public class JProgram extends JNode {
    * <li>Write the bodies of the entry methods (unlike all other methods, these
    * are not contained by any type.</li>
    * </ol>
-   * 
+   *
    * The goal of this process to to avoid "running away" with the stack. Without
    * special logic here, lots of things would reference types, method body code
    * would reference both types and other methods, and really, really long

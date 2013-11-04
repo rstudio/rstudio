@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -44,11 +44,11 @@ import java.util.Stack;
  * {@link com.google.gwt.core.client.JavaScriptObject JavaScriptObject} (JSO)
  * restrictions. The restrictions are summarized in
  * <code>jsoRestrictions.html</code>.
- * 
- * 
+ *
+ *
  * Any violations found are attached as errors on the
  * CompilationUnitDeclaration.
- * 
+ *
  * @see <a
  *      href="http://code.google.com/p/google-web-toolkit/wiki/OverlayTypes">Overlay
  *      types design doc</a>
@@ -70,12 +70,26 @@ public class JSORestrictionsChecker {
       String intfName = CharOperation.toString(interf.compoundName);
       String alreadyImplementor = interfacesToJsoImpls.get(intfName);
       String myName = CharOperation.toString(jsoType.binding.compoundName);
-      if (alreadyImplementor == null) {
-        interfacesToJsoImpls.put(intfName, myName);
-      } else {
+
+      if (!areInSameModule(jsoType, interf)) {
+        String msg = errMustBeDefinedInTheSameModule(intfName,myName);
+        errorOn(jsoType, cud, msg);
+        return;
+      }
+
+      if (alreadyImplementor != null) {
         String msg = errAlreadyImplemented(intfName, alreadyImplementor, myName);
         errorOn(jsoType, cud, msg);
+        return;
       }
+
+      interfacesToJsoImpls.put(intfName, myName);
+    }
+
+    // TODO(rluble): (Separate compilation) Implement a real check that a JSO must is defined in
+    // the same module as the interface(s) it implements. Depends on upcoming JProgram changes.
+    private boolean areInSameModule(TypeDeclaration jsoType, ReferenceBinding interf) {
+      return true;
     }
 
     public String getJsoImplementor(ReferenceBinding binding) {
@@ -250,7 +264,7 @@ public class JSORestrictionsChecker {
   /**
    * Checks an entire
    * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration}.
-   * 
+   *
    */
   public static void check(CheckerState state, CompilationUnitDeclaration cud) {
     JSORestrictionsChecker checker = new JSORestrictionsChecker(state, cud);
@@ -292,6 +306,13 @@ public class JSORestrictionsChecker {
     return "Only one JavaScriptObject type may implement the methods of an "
         + "interface that declared methods. The interface (" + intfName
         + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
+  }
+
+  // TODO(rluble): (Separate compilation) It would be nice to have the actual module names here.
+  static String errMustBeDefinedInTheSameModule(String intfName, String jsoImplementation) {
+    return "A JavaScriptObject type may only implement an interface that is defined in the same"
+        + " module. The interface (" + intfName + ") and  the JavaScriptObject type (" +
+        jsoImplementation + ") are defined different modules";
   }
 
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,

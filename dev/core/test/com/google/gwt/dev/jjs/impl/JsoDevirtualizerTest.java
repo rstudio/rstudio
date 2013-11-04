@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 /**
  * Tests for the {@link JsoDevirtualizer} visitor.
@@ -45,46 +46,61 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
         return code;
       }
     });
-    
+
     addSnippetImport("com.google.gwt.lang.Cast");
     addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
-    
+
+    // Defines a bunch of JSO interfaces and classes with functions a() and b().
     addSnippetClassDecl(
-        "interface Iface1 { int a(); }",
+        "interface Iface1 { int a(); int b(); }",
         "static class J1 implements Iface1 {",
         "  public int a() { return 1; }",
+        "  public int b() { return 1; }",
         "}",
         "static class Jso1 extends JavaScriptObject implements Iface1 {",
         "  protected Jso1() { }",
         "  public final int a() { return 2; }",
+        "  public final int b() { return 2; }",
         "  public static native Jso1 create() /*-{ return {} }-*/;",
         "}",
-        "static interface Iface2 { int a(); }",
+        "static interface Iface2 { int a(); int b(); }",
         "static class J2 implements Iface2 {",
         "  public int a() { return 3; }",
+        "  public int b() { return 3; }",
         "}",
         "static class Jso2 extends JavaScriptObject implements Iface2 {",
-        "  protected Jso2() { }", "  public final int a() { return 4; }",
-        "  public static native Jso2 create() /*-{ return {} }-*/;", 
+        "  protected Jso2() { }",
+        "  public final int a() { return 4; }",
+        "  public final int b() { return 4; }",
+        "  public static native Jso2 create() /*-{ return {} }-*/;",
         "}",
         "static Iface1 val1 = new J1();",
         "static Iface1 val2 = Jso1.create();",
         "static Iface2 val3 = new J2();",
-        "static Iface2 val4 = Jso2.create();");        
+        "static Iface2 val4 = Jso2.create();");
 
-    StringBuilder code = new StringBuilder();    
+    // Constructs a code snippet that calls a() but NOT b().
+    StringBuilder code = new StringBuilder();
     code.append("int result = val1.a() + val2.a() + val3.a() + val4.a();");
-            
-    // The salient point in the results below is that the JSO method used for
-    // val1 and val1 has a different name the method used for val2 and val3.
+
+    // Constructs an expectation about the resulting devirtualized method calls of a(). The salient
+    // point in the results below is that the JSO method used for val1 and val1 has a different name
+    // the method used for val2 and val3.
     StringBuffer expected = new StringBuffer();
     expected.append("int result = ");
     expected.append("JavaScriptObject.a__devirtual$(EntryPoint.val1) + ");
     expected.append("JavaScriptObject.a__devirtual$(EntryPoint.val2) + ");
     expected.append("JavaScriptObject.a0__devirtual$(EntryPoint.val3) + ");
     expected.append("JavaScriptObject.a0__devirtual$(EntryPoint.val4);");
-    
-    optimize("void", code.toString()).intoString(expected.toString());
+
+    Result result = optimize("void", code.toString());
+    // Asserts that a() method calls were redirected to the devirtualized version.
+    result.intoString(expected.toString());
+    // Asserts that a() AND b() method definitions were both duplicated as devirtualized versions
+    // even though b() was never called.
+    result.classHasMethodSnippets("EntryPoint$Jso1", Lists.newArrayList("public final int a();",
+        "public final int b();", "public static final int $a(EntryPoint$Jso1 this$static);",
+        "public static final int $b(EntryPoint$Jso1 this$static);"));
   }
 
   @Override
