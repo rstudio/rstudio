@@ -87,7 +87,8 @@ static PendingSatelliteWindow pendingWindow_;
    NSWindow* window = [[[NSWindow alloc] initWithContentRect: frameRect
                                           styleMask: NSTitledWindowMask |
                                                      NSClosableWindowMask |
-                                                     NSResizableWindowMask
+                                                     NSResizableWindowMask |
+                                                     NSMiniaturizableWindowMask
                                           backing: NSBackingStoreBuffered
                                           defer: NO] autorelease];
    [window setDelegate: self];
