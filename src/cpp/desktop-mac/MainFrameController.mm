@@ -20,7 +20,7 @@
 #include <core/FilePath.hpp>
 
 #import "GwtCallbacks.h"
-#import "MenuCallbacks.h"
+#import "MainFrameMenu.h"
 
 #include "SessionLauncher.hpp"
 

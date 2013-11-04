@@ -1,5 +1,5 @@
 /*
- * MenuCallbacks.h
+ * MainFrameMenu.h
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,6 +15,6 @@
 
 #import <Foundation/NSObject.h>
 
-@interface MenuCallbacks : NSObject {
+@interface MainFrameMenu : NSObject {
 }
 @end

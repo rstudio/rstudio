@@ -16,9 +16,9 @@
 
 #import <Foundation/NSString.h>
 
-#import "MenuCallbacks.h"
+#import "MainFrameMenu.h"
 
-@implementation MenuCallbacks
+@implementation MainFrameMenu
 
 - (id)init
 {
