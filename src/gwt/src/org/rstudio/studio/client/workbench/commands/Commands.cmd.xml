@@ -331,7 +331,6 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="showLogFiles"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
-            <cmd refid="showWebkitDevtools"/>
             <separator/>
             <cmd refid="debugDumpContents"/>
             <cmd refid="debugImportDump"/>
@@ -1158,8 +1157,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show warning bar"/>
    <cmd id="showRequestLog"
         menuLabel="_Request Log"/>
-   <cmd id="showWebkitDevtools"
-        menuLabel="_Webkit Devtools"/>
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
         visible="false"/>

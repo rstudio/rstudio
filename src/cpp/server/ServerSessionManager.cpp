@@ -62,14 +62,6 @@ core::system::ProcessConfig sessionProcessConfig(
    args.push_back(std::make_pair("-" kUserIdentitySessionOptionShort,
                                  username));
 
-   // customize for case of running server on desktop
-   if (server::options().serverOnDesktop())
-   {
-      args.push_back(std::make_pair("--" kTimeoutSessionOption, "0"));
-      args.push_back(std::make_pair("--" kDisconnectedTimeoutSessionOption, "0"));
-      args.push_back(std::make_pair("--" kShowUserIdentitySessionOption, "0"));
-   }
-
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())

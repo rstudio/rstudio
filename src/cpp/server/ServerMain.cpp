@@ -89,22 +89,10 @@ http::UriHandlerFunction blockingFileHandler()
 {
    Options& options = server::options();
 
-   // determine initJs
+   // determine initJs (none for now)
    std::string initJs;
-   if (options.serverOnDesktop())
-   {
-      initJs = "if (window.require) {";
-      initJs +=   "window.NodeWebkit = require('nw.gui'); ";
-      initJs +=   "var win = window.NodeWebkit.Window.get(); ";
-      initJs +=   "win.on('close', function() { ";
-      initJs +=   "  if (window.NodeWebkitClose) ";
-      initJs +=   "    window.NodeWebkitClose(); ";
-      initJs +=   "  else ";
-      initJs +=   "    this.close(true);";
-      initJs +=   "}); ";
-      initJs += "}";
-   }
 
+   // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
                                    mainPageFilter,

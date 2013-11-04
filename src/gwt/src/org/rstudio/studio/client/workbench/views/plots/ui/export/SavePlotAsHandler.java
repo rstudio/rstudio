@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.NodeWebkit;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ServerError;
@@ -58,7 +57,7 @@ public class SavePlotAsHandler
                            boolean viewAfterSave,
                            final Operation onCompleted)
    {
-      if (Desktop.isDesktop() || NodeWebkit.isNodeWebkit() || !viewAfterSave)
+      if (Desktop.isDesktop() || !viewAfterSave)
          desktopSavePlotAs(targetPath, overwrite, viewAfterSave, onCompleted);
       else
          webSavePlotAs(targetPath, overwrite, viewAfterSave, onCompleted);

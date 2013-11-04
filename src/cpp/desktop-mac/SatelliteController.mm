@@ -31,6 +31,9 @@
 // TODO: about box
 // TODO: check for updates
 
+// TODO: system shutdown notice
+// TODO: webkit version check
+
 // TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
 

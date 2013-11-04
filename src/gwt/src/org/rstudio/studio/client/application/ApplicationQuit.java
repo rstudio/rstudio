@@ -174,10 +174,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          return;
       }
       
-      // raise window if necessary
-      if (NodeWebkit.isNodeWebkit())
-         NodeWebkit.raiseWindow();
-      
       // just an unsaved environment
       if (unsavedSourceDocs.size() == 0) 
       {        

@@ -233,14 +233,6 @@ void remove(const http::Request& request,
 
 Error initialize()
 {
-   // for server in desktop we bypass this mechanism entirely
-   // (to get around cross-session file permission problems)
-   if (server::options().serverOnDesktop())
-   {
-      s_secureCookieKey = "F5D5F89FFD38435188B724DA2655DA6D";
-      return Success();
-   }
-
    // determine path to use for secure cookie key file
    FilePath secureCookieKeyPath;
    if (core::system::effectiveUserIsRoot())
