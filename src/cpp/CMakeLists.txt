@@ -42,8 +42,8 @@ if(UNIX)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
-   # if present, set osx deployment target variables from environment vars
    if(APPLE)
+      # if present, set osx deployment target variables from environment vars
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
          set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
          message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
@@ -52,6 +52,10 @@ if(UNIX)
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
+      # Mavericks and later default to libc++, which is not compatible with the
+      # older libstdc++
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
+      set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
    endif()
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)
