@@ -13,8 +13,11 @@
  *
  */
 
+
 #import <Foundation/NSObject.h>
 
 @interface MainFrameMenu : NSObject {
+   NSMenu* mainMenu_;
+   NSMutableArray* menuStack_;
 }
 @end

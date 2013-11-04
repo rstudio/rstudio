@@ -17,6 +17,8 @@
 #import <Foundation/NSString.h>
 #import <Cocoa/Cocoa.h>
 
+#import "MainFrameController.h"
+
 #import "MainFrameMenu.h"
 
 @implementation MainFrameMenu
@@ -25,36 +27,56 @@
 {
    if (self = [super init])
    {
-      // create the main menu
-      id menubar = [[NSMenu new] autorelease];
-      id appMenuItem = [[NSMenuItem new] autorelease];
-      [menubar addItem: appMenuItem];
-      [NSApp setMainMenu: menubar];
-      id appMenu = [[NSMenu new] autorelease];
-      id appName = [[NSProcessInfo processInfo] processName];
-      id quitTitle = [@"Quit " stringByAppendingString:appName];
-      id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
-                                                    action: NULL
-                                             keyEquivalent:@"q"] autorelease];
-      [quitMenuItem setTarget: self];
-      [quitMenuItem setAction: @selector(initiateQuit:)];
-      [quitMenuItem setEnabled: YES];
-      [appMenu addItem: quitMenuItem];
-      [appMenuItem setSubmenu: appMenu];
-
-      
+      menuStack_ = [[NSMutableArray alloc] init];
    }
    return self;
 }
 
-- (void) beginMainMenu
+- (void) dealloc
 {
-   
+   [mainMenu_ release];
+   [menuStack_ release];
+   [super dealloc];
 }
 
-- (void) beginMenu: (NSString*) menu
+- (void) beginMainMenu
 {
+   // create main menu
+   mainMenu_ = [[NSMenu alloc] initWithTitle: @"MainMenu"];
+   NSMenuItem* appMenuItem = [[NSMenuItem new] autorelease];
+   [mainMenu_ addItem: appMenuItem];
+   [NSApp setMainMenu: mainMenu_];
    
+   // create app menu (currently just has quit)
+   NSMenu* appMenu = [[NSMenu new] autorelease];
+   NSMenuItem* quitMenuItem = [[[NSMenuItem alloc]
+                                initWithTitle: @"Quit RStudio"
+                                action: @selector(initiateQuit)
+                                keyEquivalent:@"q"] autorelease];
+   [quitMenuItem setTarget: [MainFrameController instance]];
+   [appMenu addItem: quitMenuItem];
+   [appMenuItem setSubmenu: appMenu];
+}
+
+- (void) beginMenu: (NSString*) menuName
+{
+   // remove ampersand
+   menuName = [menuName stringByReplacingOccurrencesOfString:@"&"
+                                                  withString:@""];
+      
+   // create the menu item and add it to the target
+   NSMenuItem* menuItem = [[NSMenuItem new] autorelease];
+   [menuItem setTitle: menuName];
+   [[self currentTargetMenu] addItem: menuItem];
+   
+   // create the menu and associate it with the menu item. we also
+   // turn off "autoenable" so we can manage command states explicitly
+   NSMenu* menu = [[[NSMenu alloc] initWithTitle: menuName] autorelease];
+   [menu setAutoenablesItems: NO];
+   [[self currentTargetMenu] setSubmenu: menu forItem: menuItem];
+   
+   // update the menu stack
+   [menuStack_ addObject: menu];
 }
 
 - (void) addCommand: (NSString*) commandId
@@ -63,22 +85,45 @@
            shortcut: (NSString*) shortcut
         isCheckable: (Boolean) isCheckable
 {
+   // remove ampersand
+   label = [label stringByReplacingOccurrencesOfString:@"&"
+                                                  withString:@""];
    
+   // placeholder text for empty labels (can happen for MRU entries)
+   if ([label length] == 0)
+      label = @"Placeholder";
+   
+   // create menu item
+   NSMenuItem* menuItem  = [[NSMenuItem new] autorelease];
+   [menuItem setTitle: label];
+   
+   // TODO: reflect other menu state/behavior
+   
+   // add it to the menu
+   [[self currentTargetMenu] addItem: menuItem];
 }
 
 - (void) addSeparator
 {
-   
+   [[self currentTargetMenu] addItem: [NSMenuItem separatorItem]];
 }
 
 - (void) endMenu
 {
-   
+   [menuStack_ removeLastObject];
 }
 
 - (void) endMainMenu
 {
-   
+   [NSApp setMainMenu: mainMenu_];
+}
+
+- (NSMenu*) currentTargetMenu
+{
+   if ([menuStack_ count] == 0)
+      return mainMenu_;
+   else
+      return [menuStack_ lastObject];
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
@@ -93,7 +138,10 @@
 
 + (BOOL)isSelectorExcludedFromWebScript: (SEL) sel
 {
-   return NO;
+   if (sel == @selector(currentTargetMenu))
+      return YES;
+   else
+      return NO;
 }
 
 @end
