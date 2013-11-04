@@ -7,7 +7,7 @@
 
 #include "SessionLauncher.hpp"
 
-#import "WebViewController.h"
+#import "MainFrameController.h"
 
 using namespace desktop;
 
@@ -97,8 +97,9 @@ using namespace desktop;
 
 - (void) onWorkbenchInitialized: (NSString*) scratchPath
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
    
+   // notify main frame controller of workbench initialized
+   [[MainFrameController instance] onWorkbenchInitialized];
 }
 
 - (void) showFolder: (NSString*) path

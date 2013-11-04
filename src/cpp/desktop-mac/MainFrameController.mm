@@ -15,6 +15,10 @@
 
 #import "MainFrameController.h"
 
+#include <boost/algorithm/string/replace.hpp>
+
+#include <core/FilePath.hpp>
+
 #import "GwtCallbacks.h"
 #import "MenuCallbacks.h"
 
@@ -29,7 +33,7 @@ static MainFrameController* instance_;
    return instance_;
 }
 
-- (id) initWithURL: (NSURL*) url
+- (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
                                    name: nil])
@@ -37,8 +41,13 @@ static MainFrameController* instance_;
       // initialize the global instance
       instance_ = self;
       
-      // quit is not confirmed
+      // initialize flags
       quitConfirmed_ = NO;
+      firstWorkbenchInitialized_ = NO;
+      
+      // retain openFile request
+      if (openFile)
+         openFile_ = [openFile retain];
       
       // create the main menu
       id menubar = [[NSMenu new] autorelease];
@@ -67,7 +76,64 @@ static MainFrameController* instance_;
    return self;
 }
 
-- (id) evaluateJavaScript: (NSString*) js
+- (void) dealloc
+{
+   [openFile_ release];
+   [super dealloc];
+}
+
+- (void) onWorkbenchInitialized
+{
+   // reset state (in case this occurred in response to a manual reload
+   // or reload for a new project context)
+   quitConfirmed_ = NO;
+
+   // see if there is a project dir to display in the titlebar
+   // if there are unsaved changes then resolve them before exiting
+   NSString* projectDir = [self evaluateJavaScript:
+                                @"window.desktopHooks.getActiveProjectDir()"] ;
+   if ([projectDir length] > 0)
+      [[self window] setTitle: [projectDir stringByAppendingString:
+                                                            @" - RStudio"]];
+   else
+      [[self window] setTitle: @"RStudio"];
+   
+   // open file if requested for first workbench
+   if (!firstWorkbenchInitialized_)
+   {
+      if (openFile_)
+         [self openFileInRStudio: openFile_];
+      
+      firstWorkbenchInitialized_ = YES;
+   }
+   
+   // TODO: check for updates
+}
+
+- (void) openFileInRStudio: (NSString*) openFile
+{
+   // must be absolute
+   std::string filename = [openFile UTF8String];
+   if (!core::FilePath::isRootPath(filename))
+       return;
+   
+   // must exist and be a standard file rather than a directory
+   core::FilePath filePath(filename);
+   if (!filePath.exists() || filePath.isDirectory())
+      return;
+   
+   // fixup for passing as a javascript string
+   boost::algorithm::replace_all(filename, "\\", "\\\\");
+   boost::algorithm::replace_all(filename, "\"", "\\\"");
+   boost::algorithm::replace_all(filename, "\n", "\\n");
+   
+   // execute the openFile command
+   std::string js = "window.desktopHooks.openFile(\"" + filename + "\")";
+   [self evaluateJavaScript: [NSString stringWithUTF8String: js.c_str()]];
+}
+
+
+- (NSString*) evaluateJavaScript: (NSString*) js
 {
    id win = [webView_ windowScriptObject];
    return [win evaluateWebScript: js];

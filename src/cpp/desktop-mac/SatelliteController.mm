@@ -21,10 +21,6 @@
 // TODO: introduced sentinel desktop object so we can do gwt
 // deferred binding on the WebKit port (nice for evolution)
 
-// TODO: equivlant of disconnecting firstWorkbenchInitialized
-// this is done for file assoications (launchNextSession)
-
-// TODO: file associations
 
 // TODO: system shutdown sequence (interact with?)
 

@@ -249,14 +249,7 @@ bool prepareEnvironment(Options& options)
    // attempt to open a file in an existing instance
    else
    {
-      // TODO: open file in existing instance
-      
-      
-      desktop::utils::showMessageBox(
-                  NSInformationalAlertStyle,
-                  @"RStudio",
-                  [@"Open Existing: " stringByAppendingString: filename]);
-     
+      [[MainFrameController instance] openFileInRStudio: filename];
    }
    
    return YES;   

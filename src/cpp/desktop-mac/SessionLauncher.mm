@@ -111,8 +111,10 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    // load the main window if we aren't running diagnostics
    if (!desktop::options().runDiagnostics())
    {
+      NSString* openFile = [NSString stringWithUTF8String: filename.c_str()];
       NSString* url = [NSString stringWithUTF8String: appUrl.c_str()];
-      [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]];
+      [[MainFrameController alloc] initWithURL: [NSURL URLWithString: url]
+                                      openFile: openFile];
 
       // activate the app
       [NSApp activateIgnoringOtherApps: YES];
@@ -122,10 +124,7 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
 }
    
 void SessionLauncher::launchNextSession(bool reload)
-{
-
-   // TODO: onFirstWorkbenchInitialized style handling
-   
+{   
    // build a new launch context -- re-use the same port if we aren't reloading
    std::string port = !reload ? options().portNumber() : "";
    std::string host, url;

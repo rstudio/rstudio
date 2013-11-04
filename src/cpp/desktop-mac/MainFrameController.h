@@ -17,16 +17,24 @@
 
 @interface MainFrameController : WebViewController {
    BOOL quitConfirmed_;
+   BOOL firstWorkbenchInitialized_;
+   NSString* openFile_;
 }
 
 // access single instance
 + (MainFrameController*) instance;
 
 // designated initializer
-- (id) initWithURL: (NSURL*) url;
+- (id) initWithURL: (NSURL*) url openFile: (NSString*) openFile;
+
+// noification of workbench initialized
+- (void) onWorkbenchInitialized;
+
+// open a file association file
+- (void) openFileInRStudio: (NSString*) filename;
 
 // evaluate javascript
-- (id) evaluateJavaScript: (NSString*) js;
+- (NSString*) evaluateJavaScript: (NSString*) js;
 
 // quit for real
 - (void) quit;
