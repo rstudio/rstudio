@@ -149,6 +149,28 @@
    NSString* visibleJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandVisible(\"%@\");", command];
    [item setHidden: ![[[MainFrameController instance] evaluateJavaScript: visibleJs] boolValue]];
 
+   // Suppress any unnecessary separators. This code will run once per menu item which seems more
+   // effort than necessary, but there's no guarantee that I know of that validateMenuItem will be
+   // called from top to bottom, and it's fast anyway.
+   NSMenu* menu = [item menu];
+   bool suppressSep = TRUE; // When TRUE, we don't need any more seps at this point in the menu.
+   NSMenuItem* trailingSep = Nil; // If non-null when we're done looping, an extraneous trailing sep.
+   for (NSMenuItem* i in [menu itemArray]) {
+      if ([i isSeparatorItem]) {
+         [i setHidden: suppressSep];
+         if (!suppressSep) {
+            trailingSep = i;
+            suppressSep = TRUE;
+         }
+      } else if (![i isHidden]) {
+         // We've encountered a non-hidden, non-sep menu entry; the next sep should be shown.
+         suppressSep = FALSE;
+         trailingSep = Nil;
+      }
+   }
+   if (trailingSep != Nil)
+      [trailingSep setHidden: YES];
+
    NSString* enabledJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");", command];
    if ([[[MainFrameController instance] evaluateJavaScript: enabledJs] boolValue])
       return YES;
