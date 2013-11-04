@@ -19,12 +19,11 @@
 //    not unique to safari, git bisect for issues introduced?
 
 
-// TODO: system shutdown sequence (interact with?)
-
 // TODO: window positioning and persistance for satellites
+// TODO: other windows types (minimal window, std browser window)
 // TODO Cmd+W and other stuff from main window
 
-// TODO: other windows types (minimal window, std browser window)
+// TODO: more robust wait for server to be ready (currently wait for 100ms)
 
 // TOOD: file downloading
 // TODO: main menu
