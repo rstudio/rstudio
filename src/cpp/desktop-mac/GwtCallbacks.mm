@@ -324,7 +324,6 @@ using namespace desktop;
 
 - (NSString*) getScrollingCompensationType
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
    return @"None";
 }
 
