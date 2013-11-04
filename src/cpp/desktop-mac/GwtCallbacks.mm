@@ -1,4 +1,6 @@
 
+#include <core/FilePath.hpp>
+#include <core/system/System.hpp>
 
 #import "GwtCallbacks.h"
 #import "Options.hpp"
@@ -9,7 +11,24 @@
 
 #import "MainFrameController.h"
 
+using namespace core;
 using namespace desktop;
+
+namespace {
+   
+FilePath userHomePath()
+{
+   return core::system::userHomePath("R_USER|HOME");
+}
+
+NSString* resolveAliasedPath(NSString* path)
+{
+   FilePath resolved = FilePath::resolveAliasedPath([path UTF8String],
+                                                    userHomePath());
+   return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
+}
+   
+} // anonymous namespace
 
 @implementation GwtCallbacks
 
@@ -40,7 +59,21 @@ using namespace desktop;
 
 - (void) browseUrl: (NSString*) url
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // check for a pdf and force use of preview (prevent crash that can
+   // occur with certain versions of acrobat reader)
+   NSURL* nsurl = [NSURL URLWithString: url];
+   if ([nsurl isFileURL])
+   {
+      if ([[nsurl absoluteString] hasSuffix: @".pdf"])
+      {
+         [[NSWorkspace sharedWorkspace] openFile: nsurl.path
+                                 withApplication: @"Preview"];
+         return;
+      }
+   }
+   
+   // standard web browser
+   [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString: url]];
 }
 
 - (NSString*) getOpenFileName: (NSString*) caption dir: (NSString*) dir filter: (NSString*) filter
@@ -94,27 +127,43 @@ using namespace desktop;
 
 - (NSString*) getUriForPath: (NSString*) path
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"getUriForPath";
+   NSURL* url = [NSURL fileURLWithPath: resolveAliasedPath(path)];
+   return [url absoluteString];
 }
 
 
 - (void) onWorkbenchInitialized: (NSString*) scratchPath
 {
-   
-   // notify main frame controller of workbench initialized
    [[MainFrameController instance] onWorkbenchInitialized];
 }
 
 - (void) showFolder: (NSString*) path
 {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
+   if (path == nil || [path length] == 0)
+      return;
+   
+   path = resolveAliasedPath(path);
+   
+   [[NSWorkspace sharedWorkspace] openFile: path];
 }
 
 - (void) showFile: (NSString*) path
 {
-    NSLog(@"%@", NSStringFromSelector(_cmd));
+   if (path == nil || [path length] == 0)
+      return;
+   
+   path = resolveAliasedPath(path);
+   
+   // force preview for pdfs
+   if ([path hasSuffix: @".pdf"])
+   {
+      [[NSWorkspace sharedWorkspace] openFile: path
+                              withApplication: @"Preview"];
+   }
+   else
+   {
+      [[NSWorkspace sharedWorkspace] openFile: path];
+   }
 }
 
 // R version methods are only implemented for front-ends that

@@ -25,7 +25,7 @@
 
 // TODO: more robust wait for server to be ready (currently wait for 100ms)
 
-// TOOD: file downloading
+// TOOD: file downloading (force preview on mac)
 // TODO: main menu
 // TODO: GwtCallbacks
 // TODO: about box
