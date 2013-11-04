@@ -24,6 +24,5 @@
 
 // subclass methods for registering javascript callbacks
 - (void) registerDesktopObject;
-- (void) registerDesktopMenuCallbackObject;
 @end
 

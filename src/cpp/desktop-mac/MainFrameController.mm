@@ -50,21 +50,7 @@ static MainFrameController* instance_;
          openFile_ = [openFile retain];
       
       // create the main menu
-      id menubar = [[NSMenu new] autorelease];
-      id appMenuItem = [[NSMenuItem new] autorelease];
-      [menubar addItem: appMenuItem];
-      [NSApp setMainMenu: menubar];
-      id appMenu = [[NSMenu new] autorelease];
-      id appName = [[NSProcessInfo processInfo] processName];
-      id quitTitle = [@"Quit " stringByAppendingString:appName];
-      id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
-                                                    action: NULL
-                                             keyEquivalent:@"q"] autorelease];
-      [quitMenuItem setTarget: self];
-      [quitMenuItem setAction: @selector(initiateQuit:)];
-      [quitMenuItem setEnabled: YES];
-      [appMenu addItem: quitMenuItem];
-      [appMenuItem setSubmenu: appMenu];
+      menu_ = [[MainFrameMenu alloc] init];
       
       // auto-save window position
       [self setWindowFrameAutosaveName: @"RStudio"];
@@ -78,6 +64,7 @@ static MainFrameController* instance_;
 
 - (void) dealloc
 {
+   [menu_ release];
    [openFile_ release];
    [super dealloc];
 }
@@ -175,9 +162,12 @@ didClearWindowObject:(WebScriptObject *)windowObject
    // only set the Desktop object for the top level frame
    if (frame == [webView mainFrame])
    {
-      // register objective-c objects with javascript
+      // register desktop object
       [self registerDesktopObject];
-      [self registerDesktopMenuCallbackObject];
+      
+      // register main menu callback
+      WebScriptObject* win = [webView_ windowScriptObject];
+      [win setValue: menu_ forKey:@"desktopMenuCallback"];
    }
 }
 

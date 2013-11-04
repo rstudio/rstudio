@@ -15,10 +15,13 @@
 
 #import "WebViewController.h"
 
+#import "MainFrameMenu.h"
+
 @interface MainFrameController : WebViewController {
    BOOL quitConfirmed_;
    BOOL firstWorkbenchInitialized_;
    NSString* openFile_;
+   MainFrameMenu* menu_;
 }
 
 // access single instance

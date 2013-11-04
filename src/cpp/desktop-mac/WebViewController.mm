@@ -209,14 +209,6 @@ static PendingSatelliteWindow pendingWindow_;
    [win setValue: gwtCallbacks forKey:@"desktop"];
 }
 
-- (void) registerDesktopMenuCallbackObject
-{
-   id win = [webView_ windowScriptObject];
-   MainFrameMenu* menu = [[[MainFrameMenu alloc] init] autorelease];
-   [win setValue: menu forKey:@"desktopMenuCallback"];
-}
-
-
 @end
 
 

@@ -15,6 +15,7 @@
 
 
 #import <Foundation/NSString.h>
+#import <Cocoa/Cocoa.h>
 
 #import "MainFrameMenu.h"
 
@@ -22,7 +23,28 @@
 
 - (id)init
 {
-   return [super init];
+   if (self = [super init])
+   {
+      // create the main menu
+      id menubar = [[NSMenu new] autorelease];
+      id appMenuItem = [[NSMenuItem new] autorelease];
+      [menubar addItem: appMenuItem];
+      [NSApp setMainMenu: menubar];
+      id appMenu = [[NSMenu new] autorelease];
+      id appName = [[NSProcessInfo processInfo] processName];
+      id quitTitle = [@"Quit " stringByAppendingString:appName];
+      id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:quitTitle
+                                                    action: NULL
+                                             keyEquivalent:@"q"] autorelease];
+      [quitMenuItem setTarget: self];
+      [quitMenuItem setAction: @selector(initiateQuit:)];
+      [quitMenuItem setEnabled: YES];
+      [appMenu addItem: quitMenuItem];
+      [appMenuItem setSubmenu: appMenu];
+
+      
+   }
+   return self;
 }
 
 - (void) beginMainMenu
