@@ -60,6 +60,8 @@ public class JsVerboseNamer extends JsNamer {
       }
 
       String fullIdent = name.getIdent();
+      // Fixes package-info.java classes.
+      fullIdent = fullIdent.replace("-", "_");
       if (!isLegal(fullIdent)) {
         String checkIdent;
         for (int i = 0; true; ++i) {

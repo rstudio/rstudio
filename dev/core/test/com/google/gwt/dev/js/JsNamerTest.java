@@ -21,8 +21,16 @@ import com.google.gwt.core.ext.DefaultConfigurationProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsExprStmt;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsInvocation;
+import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -67,6 +75,7 @@ public class JsNamerTest extends TestCase {
     assertEquals("function fooLOGGER_0(){return 42}\n",
         rename("function fooLOGGER() { return 42; }"));
   }
+
   public void testNoBlacklist() throws Exception {
     props.blacklist = null;
     props.blacklistSuffixes = null;
@@ -102,8 +111,29 @@ public class JsNamerTest extends TestCase {
         rename(program));
   }
 
-  private String rename(String js) throws Exception {
-    return rename(parseJs(js));
+  public void testPackageInfo() throws Exception {
+    // Synthesize a function definition with an illegal name, "package-info" like can result from
+    // JDT compilation of package-info.java files.
+    JsProgram jsProgram = new JsProgram();
+    JsScope scope = jsProgram.getScope();
+
+    // Function declaration statement.
+    JsName name = scope.declareName("package-info", "package-info");
+    List<JsStatement> statements = jsProgram.getFragment(0).getGlobalBlock().getStatements();
+    JsFunction function = new JsFunction(SourceOrigin.UNKNOWN, scope, name);
+    function.setBody(new JsBlock(SourceOrigin.UNKNOWN));
+    statements.add(new JsExprStmt(SourceOrigin.UNKNOWN, function));
+
+    // Function invocation statement.
+    JsInvocation invocation = new JsInvocation(SourceOrigin.UNKNOWN);
+    invocation.setQualifier(new JsNameRef(SourceOrigin.UNKNOWN, name));
+    statements.add(new JsExprStmt(SourceOrigin.UNKNOWN, invocation));
+
+    // Verify that the illegal "-" character is translated.
+    assertEquals(
+        "function package_info(){}\npackage_info();", rename(jsProgram, JsOutputOption.PRETTY));
+    assertEquals(
+        "function package_info(){}\npackage_info();", rename(jsProgram, JsOutputOption.DETAILED));
   }
 
   private JsProgram parseJs(String js) throws IOException, JsParserException {
@@ -115,12 +145,30 @@ public class JsNamerTest extends TestCase {
   }
 
   private String rename(JsProgram program) {
+    return rename(program, JsOutputOption.PRETTY);
+  }
+
+  private String rename(JsProgram program, JsOutputOption outputOption) {
     JsSymbolResolver.exec(program);
-    JsPrettyNamer.exec(program, new PropertyOracle[]{props});
+    switch (outputOption) {
+      case PRETTY:
+        JsPrettyNamer.exec(program, new PropertyOracle[] {props});
+        break;
+      case OBFUSCATED:
+        JsObfuscateNamer.exec(program, new PropertyOracle[] {props});
+        break;
+      case DETAILED:
+        JsVerboseNamer.exec(program, new PropertyOracle[] {props});
+        break;
+    }
     TextOutput text = new DefaultTextOutput(true);
     JsVisitor generator = new JsSourceGenerationVisitor(text);
     generator.accept(program);
     return text.toString();
+  }
+
+  private String rename(String js) throws Exception {
+    return rename(parseJs(js));
   }
 
   private static class BlacklistProps implements PropertyOracle {

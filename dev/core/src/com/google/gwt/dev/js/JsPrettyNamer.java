@@ -91,6 +91,11 @@ public class JsPrettyNamer extends JsNamer {
     }
 
     String prefix = name.getShortIdent();
+    if (prefix.contains("-")) {
+      // Fixes package-info.java classes.
+      prefix = prefix.replace("-", "_");
+      name.setShortIdent(prefix);
+    }
     if (!isAvailable(prefix, scope, taken)) {
 
       // Start searching using a suffix hint stored in the scope.
