@@ -62,16 +62,14 @@ public abstract class HasWidgetsTester {
       // During onLoad, isAttached must be true, and the element be a descendant
       // of the body element.
       Assert.assertTrue(isAttached());
-      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-          getElement()));
+      Assert.assertTrue(RootPanel.getBodyElement().isOrHasChild(getElement()));
     }
 
     @Override
     protected void onUnload() {
       // During onUnload, everything must *still* be attached.
       Assert.assertTrue(isAttached());
-      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-          getElement()));
+      Assert.assertTrue(RootPanel.getBodyElement().isOrHasChild(getElement()));
     }
   }
 
@@ -147,14 +145,12 @@ public abstract class HasWidgetsTester {
     TestWidget widget = new TestWidget();
     adder.addChild(container, widget);
     Assert.assertTrue(widget.isAttached());
-    Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-        widget.getElement()));
+    Assert.assertTrue(RootPanel.getBodyElement().isOrHasChild(widget.getElement()));
     container.remove(widget);
 
     // After removal, the widget should be detached.
     Assert.assertFalse(widget.isAttached());
-    Assert.assertFalse(DOM.isOrHasChild(RootPanel.getBodyElement(),
-        widget.getElement()));
+    Assert.assertFalse(RootPanel.getBodyElement().isOrHasChild(widget.getElement()));
   }
 
   /**

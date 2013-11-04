@@ -401,21 +401,21 @@ public class TreeTest extends GWTTestCase {
 
     // Start with html.
     TreeItem item = t.addItem(SafeHtmlUtils.fromSafeConstant("hello"));
-    String inner = DOM.getInnerHTML(item.getContentElem());
+    String inner = item.getContentElem().getInnerHTML();
     assertTrue(inner.indexOf("hello") >= 0);
     t.addItem(item);
     Widget goodbyeWidget = new Label("goodbye");
     item.setWidget(goodbyeWidget);
-    String innerWidget = DOM.getInnerHTML(item.getContentElem());
+    String innerWidget = item.getContentElem().getInnerHTML();
     assertFalse(innerWidget.indexOf("hello") >= 0);
 
     // Start with widget.
     Widget hello = new Label("hello");
     TreeItem widgetItem = t.addItem(hello);
-    assertTrue(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("hello") >= 0);
+    assertTrue(widgetItem.getContentElem().getInnerHTML().indexOf("hello") >= 0);
     widgetItem.setText("goodbye");
-    assertFalse(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("hello") >= 0);
-    assertTrue(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("goodbye") >= 0);
+    assertFalse(widgetItem.getContentElem().getInnerHTML().indexOf("hello") >= 0);
+    assertTrue(widgetItem.getContentElem().getInnerHTML().indexOf("goodbye") >= 0);
     assertNull(hello.getParent());
 
     // Move widget.
@@ -425,7 +425,7 @@ public class TreeTest extends GWTTestCase {
 
     // Set back to text.
     item.setText("aloha");
-    assertEquals("aloha", DOM.getInnerHTML(item.getContentElem()));
+    assertEquals("aloha", item.getContentElem().getInnerHTML());
     assertNull(goodbyeWidget.getParent());
     assertNull(item.getWidget());
   }

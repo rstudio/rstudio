@@ -75,8 +75,8 @@ public final class VerticalSplitPanel extends SplitPanel {
   private static class Impl {
     private static void expandToFitParentHorizontally(Element elem) {
       addAbsolutePositoning(elem);
-      DOM.setStyleAttribute(elem, "left", "0");
-      DOM.setStyleAttribute(elem, "right", "0");
+      elem.getStyle().setProperty("left", "0");
+      elem.getStyle().setProperty("right", "0");
     }
 
     protected VerticalSplitPanel panel;
@@ -84,7 +84,7 @@ public final class VerticalSplitPanel extends SplitPanel {
     public void init(VerticalSplitPanel panel) {
       this.panel = panel;
 
-      DOM.setStyleAttribute(panel.getElement(), "position", "relative");
+      panel.getElement().getStyle().setProperty("position", "relative");
 
       final Element topElem = panel.getElement(TOP);
       final Element bottomElem = panel.getElement(BOTTOM);
@@ -96,7 +96,7 @@ public final class VerticalSplitPanel extends SplitPanel {
       expandToFitParentUsingCssOffsets(panel.container);
 
       // Snap the bottom wrapper to the bottom side.
-      DOM.setStyleAttribute(bottomElem, "bottom", "0");
+      bottomElem.getStyle().setProperty("bottom", "0");
     }
 
     public void onAttach() {
@@ -180,7 +180,7 @@ public final class VerticalSplitPanel extends SplitPanel {
       // Prevents inherited text-align settings from interfering with the
       // panel's layout.
       elem.getStyle().setTextAlign(TextAlign.LEFT);
-      DOM.setStyleAttribute(elem, "position", "relative");
+      elem.getStyle().setProperty("position", "relative");
 
       final Element topElem = panel.getElement(TOP);
       final Element bottomElem = panel.getElement(BOTTOM);
@@ -200,7 +200,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
     @Override
     public void onDetach() {
-      DOM.setElementProperty(panel.container, "onresize", null);
+      panel.container.setPropertyString("onresize", null);
     }
 
     @Override

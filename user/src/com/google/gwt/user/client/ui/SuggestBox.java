@@ -35,7 +35,6 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
@@ -616,7 +615,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       // menu. If the window is resized and the suggestion cannot fit on a
       // single row, it should be clipped (instead of wrapping around and
       // taking up a second row).
-      DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
+      getElement().getStyle().setProperty("whiteSpace", "nowrap");
       setStyleName(STYLENAME_DEFAULT);
       setSuggestion(suggestion);
     }

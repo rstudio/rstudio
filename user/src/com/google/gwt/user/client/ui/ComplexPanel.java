@@ -68,7 +68,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
     } finally {
       // Physical detach.
       Element elem = w.getElement();
-      DOM.removeChild(DOM.getParent(elem), elem);
+      DOM.getParent(elem).removeChild(elem);
   
       // Logical detach.
       getChildren().remove(w);

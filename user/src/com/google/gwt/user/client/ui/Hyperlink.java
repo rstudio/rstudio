@@ -283,7 +283,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     super.onBrowserEvent(event);
     if (DOM.eventGetType(event) == Event.ONCLICK && impl.handleAsClick(event)) {
       History.newItem(getTargetHistoryToken());
-      DOM.eventPreventDefault(event);
+      event.preventDefault();
     }
   }
 
@@ -343,7 +343,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
       : "targetHistoryToken must not be null, consider using Anchor instead";
     this.targetHistoryToken = targetHistoryToken;
     String hash = History.encodeHistoryToken(targetHistoryToken);
-    DOM.setElementProperty(anchorElem, "href", "#" + hash);
+    anchorElem.setPropertyString("href", "#" + hash);
   }
 
   public void setText(String text) {

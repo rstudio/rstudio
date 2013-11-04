@@ -84,7 +84,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
     public void init(HorizontalSplitPanel panel) {
       this.panel = panel;
 
-      DOM.setStyleAttribute(panel.getElement(), "position", "relative");
+      panel.getElement().getStyle().setProperty("position", "relative");
 
       expandToFitParentHorizontally(panel.getElement(LEFT));
       expandToFitParentHorizontally(panel.getElement(RIGHT));
@@ -211,7 +211,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
         elem.getStyle().setTextAlign(TextAlign.LEFT);
       }
 
-      DOM.setStyleAttribute(elem, "position", "relative");
+      elem.getStyle().setProperty("position", "relative");
 
       /*
        * Technically, these are snapped to the top and bottom, but IE doesn't
@@ -240,7 +240,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     @Override
     public void onDetach() {
-      DOM.setElementAttribute(panel.container, "onresize", null);
+      panel.container.setAttribute("onresize", null);
     }
 
     @Override

@@ -45,7 +45,7 @@ public class ClickyLink extends Widget implements HasText {
    */
   public ClickyLink() {
     setElement(DOM.createAnchor());
-    DOM.setElementAttribute(getElement(), "href", "#");
+    getElement().setAttribute("href", "#");
     sinkEvents(Event.ONCLICK);
 
     addDomHandler(new ClickHandler() {
@@ -73,7 +73,7 @@ public class ClickyLink extends Widget implements HasText {
   }
 
   public String getText() {
-    return DOM.getInnerText(getElement());
+    return getElement().getInnerText();
   }
 
   public void setPopupText(String text) {
@@ -81,6 +81,6 @@ public class ClickyLink extends Widget implements HasText {
   }
 
   public void setText(String text) {
-    DOM.setInnerText(getElement(), text);
+    getElement().setInnerText(text);
   }
 }

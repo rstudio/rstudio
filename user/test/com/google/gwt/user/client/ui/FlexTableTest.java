@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 
 /**
@@ -58,7 +57,7 @@ public class FlexTableTest extends HTMLTableTestBase {
         } else {
           if (widget != null) {
             System.err.println("row: " + row + ", col: " + col + ", widget: "
-                + DOM.toString(widget.getElement()));
+                + widget.getElement().getString());
           }
           assertNull(widget);
         }

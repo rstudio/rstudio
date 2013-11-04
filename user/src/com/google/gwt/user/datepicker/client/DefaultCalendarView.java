@@ -17,7 +17,6 @@ package com.google.gwt.user.datepicker.client;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.datepicker.client.DefaultCalendarView.CellGrid.DateCell;
 
@@ -134,7 +133,7 @@ public final class DefaultCalendarView extends CalendarView {
       }
 
       private void setText(String value) {
-        DOM.setInnerText(getElement(), value);
+        getElement().setInnerText(value);
       }
     }
 

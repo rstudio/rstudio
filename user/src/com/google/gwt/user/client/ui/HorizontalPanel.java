@@ -38,8 +38,8 @@ public class HorizontalPanel extends CellPanel implements HasAlignment,
     tableRow = DOM.createTR();
     DOM.appendChild(getBody(), tableRow);
 
-    DOM.setElementProperty(getTable(), "cellSpacing", "0");
-    DOM.setElementProperty(getTable(), "cellPadding", "0");
+    getTable().setPropertyString("cellSpacing", "0");
+    getTable().setPropertyString("cellPadding", "0");
   }
 
   @Override
@@ -84,7 +84,7 @@ public class HorizontalPanel extends CellPanel implements HasAlignment,
     Element td = DOM.getParent(w.getElement());
     boolean removed = super.remove(w);
     if (removed) {
-      DOM.removeChild(tableRow, td);
+      tableRow.removeChild(td);
     }
     return removed;
   }

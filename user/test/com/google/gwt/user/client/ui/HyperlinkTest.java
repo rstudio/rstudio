@@ -66,7 +66,7 @@ public class HyperlinkTest extends GWTTestCase {
     Hyperlink link = new Hyperlink("foobar", TEST_HISTORY_TOKEN);
     Element element = link.getElement();
     Element anchorElement = (Element)element.getFirstChildElement();
-    String propertyString = DOM.getElementProperty(anchorElement, "href");
+    String propertyString = anchorElement.getPropertyString("href");
     int index = propertyString.indexOf('#');
     assertFalse(index == -1);
     String fragment = propertyString.substring(index + 1);

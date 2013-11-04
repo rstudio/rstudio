@@ -164,7 +164,7 @@ public abstract class CustomButton extends ButtonBase {
      */
     @Override
     public String getHTML() {
-      return DOM.getInnerHTML(getFace());
+      return getFace().getInnerHTML();
     }
 
     /**
@@ -175,7 +175,7 @@ public abstract class CustomButton extends ButtonBase {
      */
     @Override
     public String getText() {
-      return DOM.getInnerText(getFace());
+      return getFace().getInnerText();
     }
 
     /**
@@ -198,7 +198,7 @@ public abstract class CustomButton extends ButtonBase {
     public void setHTML(String html) {
       face = DOM.createDiv();
       UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
-      DOM.setInnerHTML(face, html);
+      face.setInnerHTML(html);
       updateButtonFace();
     }
 
@@ -221,7 +221,7 @@ public abstract class CustomButton extends ButtonBase {
     public final void setText(String text) {
       face = DOM.createDiv();
       UIObject.setStyleName(face, STYLENAME_HTML_FACE, true);
-      DOM.setInnerText(face, text);
+      face.setInnerText(text);
       updateButtonFace();
     }
 
@@ -652,7 +652,7 @@ public abstract class CustomButton extends ButtonBase {
           DOM.setCapture(getElement());
           isCapturing = true;
           // Prevent dragging (on some browsers);
-          DOM.eventPreventDefault(event);
+          event.preventDefault();
         }
         break;
       case Event.ONMOUSEUP:
@@ -667,13 +667,13 @@ public abstract class CustomButton extends ButtonBase {
       case Event.ONMOUSEMOVE:
         if (isCapturing) {
           // Prevent dragging (on other browsers);
-          DOM.eventPreventDefault(event);
+          event.preventDefault();
         }
         break;
       case Event.ONMOUSEOUT:
         Element to = DOM.eventGetToElement(event);
-        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event))
-            && (to == null || !DOM.isOrHasChild(getElement(), to))) {
+        if (getElement().isOrHasChild(DOM.eventGetTarget(event))
+            && (to == null || !getElement().isOrHasChild(to))) {
           if (isCapturing) {
             onClickCancel();
           }
@@ -681,7 +681,7 @@ public abstract class CustomButton extends ButtonBase {
         }
         break;
       case Event.ONMOUSEOVER:
-        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event))) {
+        if (getElement().isOrHasChild(DOM.eventGetTarget(event))) {
           setHovering(true);
           if (isCapturing) {
             onClickStart();
@@ -706,7 +706,7 @@ public abstract class CustomButton extends ButtonBase {
 
     // Synthesize clicks based on keyboard events AFTER the normal key handling.
     if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-      char keyCode = (char) DOM.eventGetKeyCode(event);
+      char keyCode = (char) event.getKeyCode();
       switch (type) {
         case Event.ONKEYDOWN:
           if (keyCode == ' ') {
@@ -1015,7 +1015,7 @@ public abstract class CustomButton extends ButtonBase {
   private void setCurrentFaceElement(Element newFaceElement) {
     if (curFaceElement != newFaceElement) {
       if (curFaceElement != null) {
-        DOM.removeChild(getElement(), curFaceElement);
+        getElement().removeChild(curFaceElement);
       }
       curFaceElement = newFaceElement;
       DOM.appendChild(getElement(), curFaceElement);

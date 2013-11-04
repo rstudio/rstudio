@@ -75,10 +75,10 @@ public class CheckBoxTest extends GWTTestCase {
     cb.setText("test Text");
     assertEquals(cb.getText(), "test Text");
 
-    cb.setChecked(true);
-    assertTrue(cb.isChecked());
-    cb.setChecked(false);
-    assertFalse(cb.isChecked());
+    cb.setValue(true);
+    assertTrue(cb.getValue());
+    cb.setValue(false);
+    assertFalse(cb.getValue());
 
     cb.setValue(true);
     assertTrue(cb.getValue());
@@ -241,9 +241,9 @@ public class CheckBoxTest extends GWTTestCase {
   public void testValueChangeEvent() {
     Handler h = new Handler();
     cb.addValueChangeHandler(h);
-    cb.setChecked(false);
+    cb.setValue(false);
     assertNull(h.received);
-    cb.setChecked(true);
+    cb.setValue(true);
     assertNull(h.received);
 
     cb.setValue(false);

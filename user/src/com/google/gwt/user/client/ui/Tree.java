@@ -595,7 +595,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       case Event.ONKEYPRESS:
       case Event.ONKEYUP:
         // Issue 1890: Do not block history navigation via alt+left/right
-        if (DOM.eventGetAltKey(event) || DOM.eventGetMetaKey(event)) {
+        if (event.getAltKey() || event.getMetaKey()) {
           super.onBrowserEvent(event);
           return;
         }
@@ -641,7 +641,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
       }
 
       case Event.ONKEYUP: {
-        if (DOM.eventGetKeyCode(event) == KeyCodes.KEY_TAB) {
+        if (event.getKeyCode() == KeyCodes.KEY_TAB) {
           ArrayList<Element> chain = new ArrayList<Element>();
           collectElementChain(chain, getElement(), DOM.eventGetTarget(event));
           TreeItem item = findItemByChain(chain, 0, root);
@@ -657,9 +657,9 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     switch (eventType) {
       case Event.ONKEYDOWN:
       case Event.ONKEYUP: {
-        if (KeyCodes.isArrowKey(DOM.eventGetKeyCode(event))) {
-          DOM.eventCancelBubble(event, true);
-          DOM.eventPreventDefault(event);
+        if (KeyCodes.isArrowKey(event.getKeyCode())) {
+          event.stopPropagation();
+          event.preventDefault();
           return;
         }
       }
@@ -965,9 +965,9 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     if (useLeafImages || treeItem.isFullNode()) {
       showImage(treeItem, images.treeLeaf());
     } else if (LocaleInfo.getCurrentLocale().isRTL()) {
-      DOM.setStyleAttribute(treeItem.getElement(), "paddingRight", indentValue);
+      treeItem.getElement().getStyle().setProperty("paddingRight", indentValue);
     } else {
-      DOM.setStyleAttribute(treeItem.getElement(), "paddingLeft", indentValue);
+      treeItem.getElement().getStyle().setProperty("paddingLeft", indentValue);
     }
   }
 
@@ -1000,10 +1000,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     TreeItem item = findItemByChain(chain, 0, root);
     if (item != null && item != root) {
       if (item.getChildCount() > 0
-          && DOM.isOrHasChild(item.getImageElement(), hElem)) {
+          && item.getImageElement().isOrHasChild(hElem)) {
         item.setState(!item.getState(), true);
         return true;
-      } else if (DOM.isOrHasChild(item.getElement(), hElem)) {
+      } else if (item.getElement().isOrHasChild(hElem)) {
         onSelection(item, true, !shouldTreeDelegateFocusToElement(hElem));
         return true;
       }
@@ -1063,22 +1063,22 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     setImages(images, useLeafImages);
     setElement(DOM.createDiv());
 
-    DOM.setStyleAttribute(getElement(), "position", "relative");
+    getElement().getStyle().setProperty("position", "relative");
 
     // Fix rendering problem with relatively-positioned elements and their
     // children by
     // forcing the element that is positioned relatively to 'have layout'
-    DOM.setStyleAttribute(getElement(), "zoom", "1");
+    getElement().getStyle().setProperty("zoom", "1");
 
     focusable = FocusPanel.impl.createFocusable();
-    DOM.setStyleAttribute(focusable, "fontSize", "0");
-    DOM.setStyleAttribute(focusable, "position", "absolute");
+    focusable.getStyle().setProperty("fontSize", "0");
+    focusable.getStyle().setProperty("position", "absolute");
 
     // Hide focus outline in Mozilla/Webkit/Opera
-    DOM.setStyleAttribute(focusable, "outline", "0px");
+    focusable.getStyle().setProperty("outline", "0px");
 
     // Hide focus outline in IE 6/7
-    DOM.setElementAttribute(focusable, "hideFocus", "true");
+    focusable.setAttribute("hideFocus", "true");
 
     DOM.setIntStyleAttribute(focusable, "zIndex", -1);
     DOM.appendChild(getElement(), focusable);
@@ -1099,7 +1099,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   private void keyboardNavigation(Event event) {
     // Handle keyboard events if keyboard navigation is enabled
     if (isKeyboardNavigationEnabled(curSelection)) {
-      int code = DOM.eventGetKeyCode(event);
+      int code = event.getKeyCode();
 
       switch (KeyCodes.maybeSwapArrowKeysForRtl(code, LocaleInfo.getCurrentLocale().isRTL())) {
         case KeyCodes.KEY_UP: {
@@ -1162,7 +1162,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     if (focusableWidget != null) {
       focusableWidget.setFocus(true);
       if (scrollOnSelectEnabled) {
-        DOM.scrollIntoView(((Widget) focusableWidget).getElement());
+        ((Widget) focusableWidget).getElement().scrollIntoView();
       }
     } else {
       if (scrollOnSelectEnabled) {
@@ -1172,10 +1172,10 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
         int containerLeft = getAbsoluteLeft();
         int containerTop = getAbsoluteTop();
   
-        int left = DOM.getAbsoluteLeft(selectedElem) - containerLeft;
-        int top = DOM.getAbsoluteTop(selectedElem) - containerTop;
-        int width = DOM.getElementPropertyInt(selectedElem, "offsetWidth");
-        int height = DOM.getElementPropertyInt(selectedElem, "offsetHeight");
+        int left = selectedElem.getAbsoluteLeft() - containerLeft;
+        int top = selectedElem.getAbsoluteTop() - containerTop;
+        int width = selectedElem.getPropertyInt("offsetWidth");
+        int height = selectedElem.getPropertyInt("offsetHeight");
 
         // If the item is not visible, quite here
         if (width == 0 || height == 0) {
@@ -1186,13 +1186,13 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
   
         // Set the focusable element's position and size to exactly underlap the
         // item's content element.
-        DOM.setStyleAttribute(focusable, "left", left + "px");
-        DOM.setStyleAttribute(focusable, "top", top + "px");
-        DOM.setStyleAttribute(focusable, "width", width + "px");
-        DOM.setStyleAttribute(focusable, "height", height + "px");
+        focusable.getStyle().setProperty("left", left + "px");
+        focusable.getStyle().setProperty("top", top + "px");
+        focusable.getStyle().setProperty("width", width + "px");
+        focusable.getStyle().setProperty("height", height + "px");
   
         // Scroll it into view.
-        DOM.scrollIntoView(focusable);
+        focusable.scrollIntoView();
       }
 
       // Update ARIA attributes to reflect the information from the
@@ -1292,7 +1292,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
 
     if (!useLeafImages) {
       Image image = images.treeLeaf().createImage();
-      DOM.setStyleAttribute(image.getElement(), "visibility", "hidden");
+      image.getElement().getStyle().setProperty("visibility", "hidden");
       RootPanel.get().add(image);
       int size = image.getWidth() + TreeItem.IMAGE_PAD;
       image.removeFromParent();

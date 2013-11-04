@@ -37,10 +37,10 @@ public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {
    * @return the modifiers as defined in {@link KeyboardListener}.
    */
   public static int getKeyboardModifiers(Event event) {
-    return (DOM.eventGetShiftKey(event) ? KeyboardListener.MODIFIER_SHIFT : 0)
-        | (DOM.eventGetMetaKey(event) ? KeyboardListener.MODIFIER_META : 0)
-        | (DOM.eventGetCtrlKey(event) ? KeyboardListener.MODIFIER_CTRL : 0)
-        | (DOM.eventGetAltKey(event) ? KeyboardListener.MODIFIER_ALT : 0);
+    return (event.getShiftKey() ? KeyboardListener.MODIFIER_SHIFT : 0)
+        | (event.getMetaKey() ? KeyboardListener.MODIFIER_META : 0)
+        | (event.getCtrlKey() ? KeyboardListener.MODIFIER_CTRL : 0)
+        | (event.getAltKey() ? KeyboardListener.MODIFIER_ALT : 0);
   }
 
   /**
@@ -55,15 +55,15 @@ public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {
 
     switch (DOM.eventGetType(event)) {
       case Event.ONKEYDOWN:
-        fireKeyDown(sender, (char) DOM.eventGetKeyCode(event), modifiers);
+        fireKeyDown(sender, (char) event.getKeyCode(), modifiers);
         break;
 
       case Event.ONKEYUP:
-        fireKeyUp(sender, (char) DOM.eventGetKeyCode(event), modifiers);
+        fireKeyUp(sender, (char) event.getKeyCode(), modifiers);
         break;
 
       case Event.ONKEYPRESS:
-        fireKeyPress(sender, (char) DOM.eventGetKeyCode(event), modifiers);
+        fireKeyPress(sender, (char) event.getKeyCode(), modifiers);
         break;
     }
   }

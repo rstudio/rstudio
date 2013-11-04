@@ -68,7 +68,7 @@ public class LoggingPopup extends PopupPanel {
       DOM.setCapture(dragHandle.getElement());
       dragStartX = event.getClientX();
       dragStartY = event.getClientY();
-      DOM.eventPreventDefault(DOM.eventGetCurrentEvent());
+      DOM.eventGetCurrentEvent().preventDefault();
     }
  
     public void onMouseMove(MouseMoveEvent event) {

@@ -381,7 +381,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
     Element container = getItemContainerElement();
     while (DOM.getChildCount(container) > 0) {
-      DOM.removeChild(container, DOM.getChild(container, 0));
+      container.removeChild(DOM.getChild(container, 0));
     }
 
     // Set the parent of all items to null
@@ -625,7 +625,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       }
 
       case Event.ONKEYDOWN: {
-        int keyCode = DOM.eventGetKeyCode(event);
+        int keyCode = event.getKeyCode();
         boolean isRtl = LocaleInfo.getCurrentLocale().isRTL();
         keyCode = KeyCodes.maybeSwapArrowKeysForRtl(keyCode, isRtl);
         switch (keyCode) {
@@ -999,14 +999,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     if (submenu == null) {
       // Remove the submenu indicator
       if (tdCount == 2) {
-        DOM.removeChild(tr, DOM.getChild(tr, 1));
+        tr.removeChild(DOM.getChild(tr, 1));
       }
       setItemColSpan(item, 2);
     } else if (tdCount == 1) {
       // Show the submenu indicator
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
-      DOM.setElementProperty(td, "vAlign", "middle");
+      td.setPropertyString("vAlign", "middle");
       td.setInnerSafeHtml(subMenuIcon.getSafeHtml());
       setStyleName(td, "subMenuIcon");
       DOM.appendChild(tr, td);
@@ -1046,13 +1046,13 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   private void eatEvent(Event event) {
-    DOM.eventCancelBubble(event, true);
-    DOM.eventPreventDefault(event);
+    event.stopPropagation();
+    event.preventDefault();
   }
 
   private MenuItem findItem(Element hItem) {
     for (MenuItem item : items) {
-      if (DOM.isOrHasChild(item.getElement(), hItem)) {
+      if (item.getElement().isOrHasChild(hItem)) {
         return item;
       }
     }
@@ -1098,10 +1098,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     }
 
     // Hide focus outline in Mozilla/Webkit/Opera
-    DOM.setStyleAttribute(getElement(), "outline", "0px");
+    getElement().getStyle().setProperty("outline", "0px");
 
     // Hide focus outline in IE 6/7
-    DOM.setElementAttribute(getElement(), "hideFocus", "true");
+    getElement().setAttribute("hideFocus", "true");
 
     // Deselect items when blurring without a child menu.
     addDomHandler(new BlurHandler() {
@@ -1278,7 +1278,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     }
 
     Element container = getItemContainerElement();
-    DOM.removeChild(container, DOM.getChild(container, idx));
+    container.removeChild(DOM.getChild(container, idx));
     allItems.remove(idx);
     return true;
   }
@@ -1383,6 +1383,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
    * @param colspan the colspan
    */
   private void setItemColSpan(UIObject item, int colspan) {
-    DOM.setElementPropertyInt(item.getElement(), "colSpan", colspan);
+    item.getElement().setPropertyInt("colSpan", colspan);
   }
 }

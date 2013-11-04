@@ -64,11 +64,11 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
    */
   public void fireMouseEvent(Widget sender, Event event) {
     final Element senderElem = sender.getElement();
-    int x = DOM.eventGetClientX(event) - DOM.getAbsoluteLeft(senderElem)
-        + DOM.getElementPropertyInt(senderElem, "scrollLeft")
+    int x = event.getClientX() - senderElem.getAbsoluteLeft()
+        + senderElem.getPropertyInt("scrollLeft")
         + Window.getScrollLeft();
-    int y = DOM.eventGetClientY(event) - DOM.getAbsoluteTop(senderElem)
-        + DOM.getElementPropertyInt(senderElem, "scrollTop")
+    int y = event.getClientY() - senderElem.getAbsoluteTop()
+        + senderElem.getPropertyInt("scrollTop")
         + Window.getScrollTop();
 
     switch (DOM.eventGetType(event)) {
@@ -85,7 +85,7 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
         // Only fire the mouseEnter event if it's coming from outside this
         // widget.
         Element from = DOM.eventGetFromElement(event);
-        if (from == null || !DOM.isOrHasChild(senderElem, from)) {
+        if (from == null || !senderElem.isOrHasChild(from)) {
           fireMouseEnter(sender);
         }
         break;
@@ -93,7 +93,7 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
         // Only fire the mouseLeave event if it's actually leaving this
         // widget.
         Element to = DOM.eventGetToElement(event);
-        if (to == null || !DOM.isOrHasChild(senderElem, to)) {
+        if (to == null || !senderElem.isOrHasChild(to)) {
           fireMouseLeave(sender);
         }
         break;

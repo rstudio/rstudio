@@ -163,7 +163,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
           break;
 
         case Event.ONKEYDOWN:
-          if (((char) DOM.eventGetKeyCode(event)) == KeyCodes.KEY_ENTER) {
+          if (((char) event.getKeyCode()) == KeyCodes.KEY_ENTER) {
             TabBar.this.selectTabByTabWidget(this);
           }
           TabBar.this.onKeyDown(this, (char) event.getKeyCode(),

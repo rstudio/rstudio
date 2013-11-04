@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -130,7 +129,7 @@ public class Grid extends HTMLTable {
   public boolean clearCell(int row, int column) {
     Element td = getCellFormatter().getElement(row, column);
     boolean b = internalClearCell(td, false);
-    DOM.setInnerHTML(td, "&nbsp;");
+    td.setInnerHTML("&nbsp;");
     return b;
   }
 
@@ -271,7 +270,7 @@ public class Grid extends HTMLTable {
 
     // Add a non-breaking space to the TD. This ensures that the cell is
     // displayed.
-    DOM.setInnerHTML(td, "&nbsp;");
+    td.setInnerHTML("&nbsp;");
     return td;
   }
 

@@ -65,8 +65,8 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
     body = DOM.createTBody();
     DOM.appendChild(table, body);
-    DOM.setElementPropertyInt(table, "cellSpacing", 0);
-    DOM.setElementPropertyInt(table, "cellPadding", 0);
+    table.setPropertyInt("cellSpacing", 0);
+    table.setPropertyInt("cellPadding", 0);
 
     DOM.sinkEvents(table, Event.ONCLICK);
     setStyleName(DEFAULT_STYLENAME);
@@ -146,13 +146,13 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
     // header styling
     setStyleName(tdh, DEFAULT_ITEM_STYLENAME, true);
-    DOM.setElementPropertyInt(tdh, "__owner", hashCode());
-    DOM.setElementProperty(tdh, "height", "1px");
+    tdh.setPropertyInt("__owner", hashCode());
+    tdh.setPropertyString("height", "1px");
 
     // body styling
     setStyleName(tdb, DEFAULT_STYLENAME + "Content", true);
-    DOM.setElementProperty(tdb, "height", "100%");
-    DOM.setElementProperty(tdb, "vAlign", "top");
+    tdb.setPropertyString("height", "100%");
+    tdb.setPropertyString("vAlign", "top");
 
     // Now that the DOM is connected, call insert (this ensures that onLoad() is
     // not fired until the child widget is attached to the DOM).
@@ -231,9 +231,9 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
     Element tdWrapper = DOM.getChild(DOM.getChild(body, index * 2), 0);
     Element headerElem = DOM.getFirstChild(tdWrapper);
     if (asHTML) {
-      DOM.setInnerHTML(getHeaderTextElem(headerElem), text);
+      getHeaderTextElem(headerElem).setInnerHTML(text);
     } else {
-      DOM.setInnerText(getHeaderTextElem(headerElem), text);
+      getHeaderTextElem(headerElem).setInnerText(text);
     }
   }
 
@@ -300,10 +300,10 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
 
   private int findDividerIndex(Element elem) {
     while (elem != null && elem != getElement()) {
-      String expando = DOM.getElementProperty(elem, "__index");
+      String expando = elem.getPropertyString("__index");
       if (expando != null) {
         // Make sure it belongs to me!
-        int ownerHash = DOM.getElementPropertyInt(elem, "__owner");
+        int ownerHash = elem.getPropertyInt("__owner");
         if (ownerHash == hashCode()) {
           // Yes, it's mine.
           return Integer.parseInt(expando);
@@ -324,9 +324,9 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
       // Calculate which internal table elements to remove.
       int rowIndex = 2 * index;
       Element tr = DOM.getChild(body, rowIndex);
-      DOM.removeChild(body, tr);
+      body.removeChild(tr);
       tr = DOM.getChild(body, rowIndex);
-      DOM.removeChild(body, tr);
+      body.removeChild(tr);
 
       // Correct visible stack for new location.
       if (visibleStack == index) {
@@ -373,7 +373,7 @@ public class StackPanel extends ComplexPanel implements InsertPanel.ForIsWidget 
     for (int i = beforeIndex, c = getWidgetCount(); i < c; ++i) {
       Element childTR = DOM.getChild(body, i * 2);
       Element childTD = DOM.getFirstChild(childTR);
-      DOM.setElementPropertyInt(childTD, "__index", i);
+      childTD.setPropertyInt("__index", i);
 
       // Update the special style on the first element
       if (beforeIndex == 0) {

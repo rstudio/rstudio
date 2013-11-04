@@ -79,12 +79,12 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
   @Override
   public final String getHTML() {
-    return beforeInitPlaceholder == null ? getHTMLImpl() : DOM.getInnerHTML(beforeInitPlaceholder);
+    return beforeInitPlaceholder == null ? getHTMLImpl() : beforeInitPlaceholder.getInnerHTML();
   }
 
   @Override
   public final String getText() {
-    return beforeInitPlaceholder == null ? getTextImpl() : DOM.getInnerText(beforeInitPlaceholder);
+    return beforeInitPlaceholder == null ? getTextImpl() : beforeInitPlaceholder.getInnerText();
   }
 
   @Override
@@ -222,7 +222,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     if (beforeInitPlaceholder == null) {
       setHTMLImpl(html);
     } else {
-      DOM.setInnerHTML(beforeInitPlaceholder, html);
+      beforeInitPlaceholder.setInnerHTML(html);
     }
   }
 
@@ -243,7 +243,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     if (beforeInitPlaceholder == null) {
       setTextImpl(text);
     } else {
-      DOM.setInnerText(beforeInitPlaceholder, text);
+      beforeInitPlaceholder.setInnerText(text);
     }
   }
 
@@ -296,7 +296,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     String html = getHTML();
     boolean enabled = isEnabled();
     beforeInitPlaceholder = DOM.createDiv();
-    DOM.setInnerHTML(beforeInitPlaceholder, html);
+    beforeInitPlaceholder.setInnerHTML(html);
     setEnabled(enabled);
   }
 
@@ -366,7 +366,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
     // When the iframe is ready, ensure cached content is set.
     if (beforeInitPlaceholder != null) {
-      setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
+      setHTMLImpl(beforeInitPlaceholder.getInnerHTML());
       setEnabledImpl(isEnabled());
       beforeInitPlaceholder = null;
     }

@@ -79,7 +79,6 @@ import com.google.gwt.event.dom.client.TouchMoveHandler;
 import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
 /**
@@ -285,7 +284,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
    * @return <code>true</code> if the widget is enabled
    */
   public boolean isEnabled() {
-    return !DOM.getElementPropertyBoolean(getElement(), "disabled");
+    return !getElement().getPropertyBoolean("disabled");
   }
 
   /**
@@ -334,7 +333,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   public void setAccessKey(char key) {
-    DOM.setElementProperty(getElement(), "accessKey", "" + key);
+    getElement().setPropertyString("accessKey", "" + key);
   }
 
   /**
@@ -344,7 +343,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
    *          to disable it
    */
   public void setEnabled(boolean enabled) {
-    DOM.setElementPropertyBoolean(getElement(), "disabled", !enabled);
+    getElement().setPropertyBoolean("disabled", !enabled);
   }
 
   public void setFocus(boolean focused) {

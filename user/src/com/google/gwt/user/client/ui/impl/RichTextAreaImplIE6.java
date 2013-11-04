@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.dom.client.Node;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -35,7 +34,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
   @Override
   public Element createElement() {
     Element elem = super.createElement();
-    DOM.setElementProperty(elem, "src", "javascript:''");
+    elem.setPropertyString("src", "javascript:''");
     return elem;
   }
 

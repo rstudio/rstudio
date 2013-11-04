@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -98,7 +97,7 @@ public class WidgetOnLoadTest extends GWTTestCase {
   static int orderIndex;
 
   static boolean isElementAttached(Element elem) {
-    return DOM.isOrHasChild(RootPanel.getBodyElement(), elem);
+    return RootPanel.getBodyElement().isOrHasChild(elem);
   }
 
   @Override

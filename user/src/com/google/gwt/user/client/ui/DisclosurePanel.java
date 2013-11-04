@@ -103,9 +103,9 @@ public final class DisclosurePanel extends Composite implements
       // Anchor is used to allow keyboard access.
       super(DOM.createAnchor());
       Element elem = getElement();
-      DOM.setElementProperty(elem, "href", "javascript:void(0);");
+      elem.setPropertyString("href", "javascript:void(0);");
       // Avoids layout problems from having blocks in inlines.
-      DOM.setStyleAttribute(elem, "display", "block");
+      elem.getStyle().setProperty("display", "block");
       sinkEvents(Event.ONCLICK);
       setStyleName(STYLENAME_HEADER);
     }
@@ -165,8 +165,7 @@ public final class DisclosurePanel extends Composite implements
       if (!opening) {
         curPanel.contentWrapper.setVisible(false);
       }
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
-          "auto");
+      curPanel.contentWrapper.getElement().getStyle().setProperty("height", "auto");
       curPanel = null;
     }
 
@@ -182,17 +181,14 @@ public final class DisclosurePanel extends Composite implements
 
     @Override
     protected void onUpdate(double progress) {
-      int scrollHeight = DOM.getElementPropertyInt(
-          curPanel.contentWrapper.getElement(), "scrollHeight");
+      int scrollHeight = curPanel.contentWrapper.getElement().getPropertyInt("scrollHeight");
       int height = (int) (progress * scrollHeight);
       if (!opening) {
         height = scrollHeight - height;
       }
       height = Math.max(height, 1);
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
-          height + "px");
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "width",
-          "auto");
+      curPanel.contentWrapper.getElement().getStyle().setProperty("height", height + "px");
+      curPanel.contentWrapper.getElement().getStyle().setProperty("width", "auto");
     }
   }
 
@@ -246,9 +242,9 @@ public final class DisclosurePanel extends Composite implements
       DOM.appendChild(tr, labelTD);
 
       // set image TD to be same width as image.
-      DOM.setElementProperty(imageTD, "align", "center");
-      DOM.setElementProperty(imageTD, "valign", "middle");
-      DOM.setStyleAttribute(imageTD, "width", iconImage.getWidth() + "px");
+      imageTD.setPropertyString("align", "center");
+      imageTD.setPropertyString("valign", "middle");
+      imageTD.getStyle().setProperty("width", iconImage.getWidth() + "px");
 
       DOM.appendChild(imageTD, iconImage.getElement());
 
@@ -277,7 +273,7 @@ public final class DisclosurePanel extends Composite implements
     }
 
     public final String getText() {
-      return DOM.getInnerText(labelTD);
+      return labelTD.getInnerText();
     }
 
     public final void onClose(CloseEvent<DisclosurePanel> event) {
@@ -289,7 +285,7 @@ public final class DisclosurePanel extends Composite implements
     }
 
     public final void setText(String text) {
-      DOM.setInnerText(labelTD, text);
+      labelTD.setInnerText(text);
     }
 
     private void setStyle() {
@@ -351,8 +347,8 @@ public final class DisclosurePanel extends Composite implements
     initWidget(mainPanel);
     mainPanel.add(header);
     mainPanel.add(contentWrapper);
-    DOM.setStyleAttribute(contentWrapper.getElement(), "padding", "0px");
-    DOM.setStyleAttribute(contentWrapper.getElement(), "overflow", "hidden");
+    contentWrapper.getElement().getStyle().setProperty("padding", "0px");
+    contentWrapper.getElement().getStyle().setProperty("overflow", "hidden");
     setStyleName(STYLENAME_DEFAULT);
     setContentDisplay(false);
   }

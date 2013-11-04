@@ -162,7 +162,7 @@ public abstract class Panel extends Widget implements HasWidgets.ForIsWidget {
     // element is still attached when onDetach()/onUnload() are called.
     Element elem = w.getElement();
     w.setParent(null);
-    DOM.removeChild(DOM.getParent(elem), elem);
+    DOM.getParent(elem).removeChild(elem);
   }
 
   @Override

@@ -23,7 +23,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.CustomButton.Face;
 
@@ -102,8 +101,7 @@ public class CustomButtonTest extends GWTTestCase {
     for (Map.Entry<String, Face> entry : faces.entrySet()) {
       Face f = entry.getValue();
       b.setCurrentFace(f);
-      String computedStyleName = DOM.getElementProperty(b.getElement(),
-          "className");
+      String computedStyleName = b.getElement().getPropertyString("className");
       assertTrue(computedStyleName.indexOf("random") == 0);
       assertTrue(computedStyleName.indexOf("random-" + f.getName()) >= 0);
       assertTrue(computedStyleName.indexOf("fobar") >= 0);

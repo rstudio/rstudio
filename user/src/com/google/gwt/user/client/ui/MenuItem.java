@@ -126,7 +126,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
     }
     setStyleName("gwt-MenuItem");
 
-    DOM.setElementAttribute(getElement(), "id", DOM.createUniqueId());
+    getElement().setAttribute("id", DOM.createUniqueId());
     // Add a11y role "menuitem"
     Roles.getMenuitemRole().set(getElement());
   }
@@ -163,7 +163,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   @Override
   public String getHTML() {
-    return DOM.getInnerHTML(getElement());
+    return getElement().getInnerHTML();
   }
 
   /**
@@ -195,7 +195,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   @Override
   public String getText() {
-    return DOM.getInnerText(getElement());
+    return getElement().getInnerText();
   }
 
   @Override
@@ -231,7 +231,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   @Override
   public void setHTML(String html) {
-    DOM.setInnerHTML(getElement(), html);
+    getElement().setInnerHTML(html);
   }
 
   /**
@@ -269,7 +269,7 @@ public class MenuItem extends UIObject implements HasHTML, HasEnabled, HasSafeHt
 
   @Override
   public void setText(String text) {
-    DOM.setInnerText(getElement(), text);
+    getElement().setInnerText(text);
   }
 
   /**

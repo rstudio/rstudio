@@ -51,7 +51,7 @@ public class UIObjectTest extends GWTTestCase {
    */
   public static void assertDebugId(String debugID, Element elem) {
     debugID = UIObject.DEBUG_ID_PREFIX + debugID;
-    assertEquals(debugID, DOM.getElementProperty(elem, "id"));
+    assertEquals(debugID, elem.getPropertyString("id"));
   }
 
   /**
@@ -68,7 +68,7 @@ public class UIObjectTest extends GWTTestCase {
   public static void assertDebugIdContents(String debugID, String contents) {
     debugID = UIObject.DEBUG_ID_PREFIX + debugID;
     Element elem = DOM.getElementById(debugID);
-    assertEquals(contents, DOM.getInnerHTML(elem));
+    assertEquals(contents, elem.getInnerHTML());
   }
 
   @Override
@@ -151,8 +151,8 @@ public class UIObjectTest extends GWTTestCase {
     assertDebugId("test2", oElem);
 
     // Test setting actual id
-    DOM.setElementProperty(oElem, "id", "mytest");
-    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    oElem.setPropertyString("id", "mytest");
+    assertEquals("mytest", oElem.getPropertyString("id"));
 
     // Test overriding with debug ID succeeds if ID present
     UIObject.ensureDebugId(oElem, "test3");
@@ -173,12 +173,12 @@ public class UIObjectTest extends GWTTestCase {
     assertDebugId("test2-subElem", o.subElement);
 
     // Test setting actual id
-    DOM.setElementProperty(oElem, "id", "mytest");
-    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    oElem.setPropertyString("id", "mytest");
+    assertEquals("mytest", oElem.getPropertyString("id"));
     assertDebugId("test2-subElem", o.subElement);
 
     // Test overriding with debug ID succeeds if ID present
-    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    assertEquals("mytest", oElem.getPropertyString("id"));
     o.ensureDebugId("test3");
     assertDebugId("test3", oElem);
     assertDebugId("test3-subElem", o.subElement);
@@ -363,14 +363,14 @@ public class UIObjectTest extends GWTTestCase {
   }
 
   private void assertPrimaryStyleNameEquals(UIObject o, String className) {
-    String attr = DOM.getElementProperty(o.getElement(), "className");
+    String attr = o.getElement().getPropertyString("className");
     assertTrue(attr.indexOf(className) == 0);
     assertTrue(attr.length() == className.length()
         || attr.charAt(className.length()) == ' ');
   }
 
   private boolean containsClass(UIObject o, String className) {
-    String[] classes = DOM.getElementProperty(o.getElement(), "className").split(
+    String[] classes = o.getElement().getPropertyString("className").split(
         "\\s+");
     for (int i = 0; i < classes.length; i++) {
       if (className.equals(classes[i])) {

@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
-import com.google.gwt.user.client.DOM;
 
 /**
  * Tests both {@link HorizontalSplitPanel} and {@link VerticalSplitPanel}.
@@ -30,7 +29,7 @@ public abstract class SplitPanelTestBase<T extends SplitPanel> extends
   private static Widget createMockWidget() {
     final Label label = new Label();
     label.setText("Testing 1, 2, 3");
-    DOM.setStyleAttribute(label.getElement(), "fontSize", "72pt");
+    label.getElement().getStyle().setProperty("fontSize", "72pt");
     return label;
   }
 

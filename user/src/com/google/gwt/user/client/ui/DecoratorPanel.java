@@ -166,8 +166,8 @@ public class DecoratorPanel extends SimplePanel {
     Element table = getElement();
     tbody = DOM.createTBody();
     DOM.appendChild(table, tbody);
-    DOM.setElementPropertyInt(table, "cellSpacing", 0);
-    DOM.setElementPropertyInt(table, "cellPadding", 0);
+    table.setPropertyInt("cellSpacing", 0);
+    table.setPropertyInt("cellPadding", 0);
 
     // Add each row
     for (int i = 0; i < rowStyles.length; i++) {

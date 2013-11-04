@@ -212,7 +212,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           // Set the position attribute, and then attach to the DOM. Otherwise,
           // the PopupPanel will appear to 'jump' from its static/relative
           // position to its absolute position (issue #1231).
-          DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+          curPanel.getElement().getStyle().setProperty("position", "absolute");
           if (curPanel.topPosition != -1) {
             curPanel.setPopupPosition(curPanel.leftPosition,
                 curPanel.topPosition);
@@ -250,14 +250,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         impl.onHide(curPanel.getElement());
       }
       impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
-      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
+      curPanel.getElement().getStyle().setProperty("overflow", "visible");
     }
 
     @Override
     protected void onStart() {
       offsetHeight = curPanel.getOffsetHeight();
       offsetWidth = curPanel.getOffsetWidth();
-      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "hidden");
+      curPanel.getElement().getStyle().setProperty("overflow", "hidden");
       super.onStart();
     }
 
@@ -337,7 +337,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         // Set the position attribute, and then attach to the DOM. Otherwise,
         // the PopupPanel will appear to 'jump' from its static/relative
         // position to its absolute position (issue #1231).
-        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+        curPanel.getElement().getStyle().setProperty("position", "absolute");
         if (curPanel.topPosition != -1) {
           curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
         }
@@ -349,7 +349,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         }
         impl.onHide(curPanel.getElement());
       }
-      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
+      curPanel.getElement().getStyle().setProperty("overflow", "visible");
     }
   }
 
@@ -589,7 +589,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's left position
    */
   public int getPopupLeft() {
-    return DOM.getAbsoluteLeft(getElement());
+    return getElement().getAbsoluteLeft();
   }
 
   /**
@@ -598,12 +598,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's top position
    */
   public int getPopupTop() {
-    return DOM.getAbsoluteTop(getElement());
+    return getElement().getAbsoluteTop();
   }
 
   @Override
   public String getTitle() {
-    return DOM.getElementProperty(getContainerElement(), "title");
+    return getContainerElement().getPropertyString("title");
   }
 
   /**
@@ -960,8 +960,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // Because the panel is absolutely positioned, this will not create
     // "holes" in displayed contents and it allows normal layout passes
     // to occur so the size of the PopupPanel can be reliably determined.
-    DOM.setStyleAttribute(getElement(), "visibility", visible ? "visible"
-        : "hidden");
+    getElement().getStyle().setProperty("visibility", visible ? "visible" : "hidden");
 
     // If the PopupImpl creates an iframe shim, it's also necessary to hide it
     // as well.

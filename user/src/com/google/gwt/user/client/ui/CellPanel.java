@@ -94,7 +94,7 @@ public abstract class CellPanel extends ComplexPanel {
    * @param width the width of the panel's cell borders, in pixels
    */
   public void setBorderWidth(int width) {
-    DOM.setElementProperty(table, "border", "" + width);
+    table.setPropertyString("border", "" + width);
   }
 
   /**
@@ -198,7 +198,7 @@ public abstract class CellPanel extends ComplexPanel {
    */
   public void setSpacing(int spacing) {
     this.spacing = spacing;
-    DOM.setElementPropertyInt(table, "cellSpacing", spacing);
+    table.setPropertyInt("cellSpacing", spacing);
   }
 
   protected Element getBody() {
@@ -211,12 +211,12 @@ public abstract class CellPanel extends ComplexPanel {
 
   protected void setCellHorizontalAlignment(Element td,
       HorizontalAlignmentConstant align) {
-    DOM.setElementProperty(td, "align", align.getTextAlignString());
+    td.setPropertyString("align", align.getTextAlignString());
   }
 
   protected void setCellVerticalAlignment(Element td,
       VerticalAlignmentConstant align) {
-    DOM.setStyleAttribute(td, "verticalAlign", align.getVerticalAlignString());
+    td.getStyle().setProperty("verticalAlign", align.getVerticalAlignString());
   }
 
   Element getWidgetTd(Widget w) {

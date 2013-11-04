@@ -182,24 +182,24 @@ public class RadioButtonTest extends GWTTestCase {
     RootPanel.get().add(r3);
 
     // Check one button in each group
-    r2.setChecked(true);
-    r3.setChecked(true);
+    r2.setValue(true);
+    r3.setValue(true);
 
     // Move a button over
     r2.setName("group2");
 
     // Check that the correct buttons are checked
-    assertTrue(r2.isChecked());
-    assertFalse(r3.isChecked());
+    assertTrue(r2.getValue());
+    assertFalse(r3.getValue());
 
-    r1.setChecked(true);
-    assertTrue(r1.isChecked());
-    assertTrue(r2.isChecked());
+    r1.setValue(true);
+    assertTrue(r1.getValue());
+    assertTrue(r2.getValue());
 
-    r3.setChecked(true);
-    assertTrue(r1.isChecked());
-    assertFalse(r2.isChecked());
-    assertTrue(r3.isChecked());
+    r3.setValue(true);
+    assertTrue(r1.getValue());
+    assertFalse(r2.getValue());
+    assertTrue(r3.getValue());
   }
 
   /**

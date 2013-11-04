@@ -138,18 +138,18 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
     @Override
     protected void onComplete() {
       if (growing) {
-        DOM.setStyleAttribute(container1, "height", "100%");
+        container1.getStyle().setProperty("height", "100%");
         UIObject.setVisible(container1, true);
         UIObject.setVisible(container2, false);
-        DOM.setStyleAttribute(container2, "height", "100%");
+        container2.getStyle().setProperty("height", "100%");
       } else {
         UIObject.setVisible(container1, false);
-        DOM.setStyleAttribute(container1, "height", "100%");
-        DOM.setStyleAttribute(container2, "height", "100%");
+        container1.getStyle().setProperty("height", "100%");
+        container2.getStyle().setProperty("height", "100%");
         UIObject.setVisible(container2, true);
       }
-      DOM.setStyleAttribute(container1, "overflow", "visible");
-      DOM.setStyleAttribute(container2, "overflow", "visible");
+      container1.getStyle().setProperty("overflow", "visible");
+      container2.getStyle().setProperty("overflow", "visible");
       container1 = null;
       container2 = null;
       hideOldWidget();
@@ -158,8 +158,8 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
     @Override
     protected void onStart() {
       // Start the animation
-      DOM.setStyleAttribute(container1, "overflow", "hidden");
-      DOM.setStyleAttribute(container2, "overflow", "hidden");
+      container1.getStyle().setProperty("overflow", "hidden");
+      container2.getStyle().setProperty("overflow", "hidden");
       onUpdate(0.0);
       UIObject.setVisible(container1, true);
       UIObject.setVisible(container2, true);
@@ -175,10 +175,8 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
       int height1;
       int height2;
       if (fixedHeight == -1) {
-        height1 = (int) (progress * DOM.getElementPropertyInt(container1,
-            "scrollHeight"));
-        height2 = (int) ((1.0 - progress) * DOM.getElementPropertyInt(
-            container2, "scrollHeight"));
+        height1 = (int) (progress * container1.getPropertyInt("scrollHeight"));
+        height2 = (int) ((1.0 - progress) * container2.getPropertyInt("scrollHeight"));
       } else {
         height1 = (int) (progress * fixedHeight);
         height2 = fixedHeight - height1;
@@ -193,8 +191,8 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
         height2 = 1;
         height1 = Math.max(1, height1 - 1);
       }
-      DOM.setStyleAttribute(container1, "height", height1 + "px");
-      DOM.setStyleAttribute(container2, "height", height2 + "px");
+      container1.getStyle().setProperty("height", height1 + "px");
+      container2.getStyle().setProperty("height", height2 + "px");
     }
 
     /**
@@ -298,7 +296,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
     if (removed) {
       resetChildWidget(w);
 
-      DOM.removeChild(getElement(), container);
+      getElement().removeChild(container);
       if (visibleWidget == w) {
         visibleWidget = null;
       }
@@ -335,10 +333,10 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
    */
   private Element createWidgetContainer() {
     Element container = DOM.createDiv();
-    DOM.setStyleAttribute(container, "width", "100%");
-    DOM.setStyleAttribute(container, "height", "0px");
-    DOM.setStyleAttribute(container, "padding", "0px");
-    DOM.setStyleAttribute(container, "margin", "0px");
+    container.getStyle().setProperty("width", "100%");
+    container.getStyle().setProperty("height", "0px");
+    container.getStyle().setProperty("padding", "0px");
+    container.getStyle().setProperty("margin", "0px");
     return container;
   }
 
@@ -347,14 +345,14 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
    */
   private void finishWidgetInitialization(Element container, Widget w) {
     UIObject.setVisible(container, false);
-    DOM.setStyleAttribute(container, "height", "100%");
+    container.getStyle().setProperty("height", "100%");
 
     // Set 100% by default.
     Element element = w.getElement();
-    if (DOM.getStyleAttribute(element, "width").equals("")) {
+    if (element.getStyle().getProperty("width").equals("")) {
       w.setWidth("100%");
     }
-    if (DOM.getStyleAttribute(element, "height").equals("")) {
+    if (element.getStyle().getProperty("height").equals("")) {
       w.setHeight("100%");
     }
 

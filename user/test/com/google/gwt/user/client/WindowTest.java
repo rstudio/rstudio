@@ -61,7 +61,7 @@ public class WindowTest extends GWTTestCase {
     }
 
     for (int i = 0, n = toRemove.size(); i < n; ++i) {
-      DOM.removeChild(bodyElem, toRemove.get(i));
+      bodyElem.removeChild(toRemove.get(i));
     }
   }
 

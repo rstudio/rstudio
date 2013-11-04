@@ -31,7 +31,7 @@ public class DecoratorPanelTest extends SimplePanelTestBase<DecoratorPanel> {
    * @param styleName the style name the element should have
    */
   private static void assertStyleName(Element elem, String styleName) {
-    assertEquals(styleName, DOM.getElementProperty(elem, "className"));
+    assertEquals(styleName, elem.getPropertyString("className"));
   }
 
   /**

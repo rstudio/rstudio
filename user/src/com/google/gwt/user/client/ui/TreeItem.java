@@ -71,7 +71,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
         Element tdContent = DOM.getNextSibling(tdImg);
 
         // Undoes padding from table element.
-        DOM.setStyleAttribute(item.getElement(), "padding", "0px");
+        item.getElement().getStyle().setProperty("padding", "0px");
         DOM.appendChild(tdContent, item.contentElem);
         item.imageHolder = tdImg;
       }
@@ -91,18 +91,18 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
         DOM.appendChild(tbody, tr);
         DOM.appendChild(tr, tdImg);
         DOM.appendChild(tr, tdContent);
-        DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
-        DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
+        tdImg.getStyle().setProperty("verticalAlign", "middle");
+        tdContent.getStyle().setProperty("verticalAlign", "middle");
         DOM.appendChild(tdContent, contentElem);
-        DOM.setStyleAttribute(contentElem, "display", "inline");
+        contentElem.getStyle().setProperty("display", "inline");
         setStyleName(contentElem, "gwt-TreeItem");
-        DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
+        BASE_INTERNAL_ELEM.getStyle().setProperty("whiteSpace", "nowrap");
 
         // Create the base element that will be cloned
         BASE_BARE_ELEM = DOM.createDiv();
 
         // Simulates padding from table element.
-        DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
+        BASE_BARE_ELEM.getStyle().setProperty("padding", "3px");
         DOM.appendChild(BASE_BARE_ELEM, contentElem);
         Roles.getTreeitemRole().set(contentElem);
       }
@@ -116,7 +116,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     @Override
     void convertToFullNode(TreeItem item) {
       super.convertToFullNode(item);
-      DOM.setStyleAttribute(item.getElement(), "marginBottom", "0px");
+      item.getElement().getStyle().setProperty("marginBottom", "0px");
     }
   }
 
@@ -169,12 +169,12 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
         if (opening) {
           UIObject.setVisible(curItem.childSpanElem, true);
           onUpdate(1.0);
-          DOM.setStyleAttribute(curItem.childSpanElem, "height", "auto");
+          curItem.childSpanElem.getStyle().setProperty("height", "auto");
         } else {
           UIObject.setVisible(curItem.childSpanElem, false);
         }
-        DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "visible");
-        DOM.setStyleAttribute(curItem.childSpanElem, "width", "auto");
+        curItem.childSpanElem.getStyle().setProperty("overflow", "visible");
+        curItem.childSpanElem.getStyle().setProperty("width", "auto");
         curItem = null;
       }
     }
@@ -188,7 +188,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
       if (!opening) {
         scrollHeight = curItem.childSpanElem.getScrollHeight();
       }
-      DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "hidden");
+      curItem.childSpanElem.getStyle().setProperty("overflow", "hidden");
 
       // If the TreeItem is already open, onStart will set its height to its
       // natural height. If the TreeItem is currently closed, onStart will set
@@ -215,12 +215,11 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
       // instead of hiding them completely.
       height = Math.max(height, 1);
 
-      DOM.setStyleAttribute(curItem.childSpanElem, "height", height + "px");
+      curItem.childSpanElem.getStyle().setProperty("height", height + "px");
 
       // We need to set the width explicitly of the item might be cropped
-      int scrollWidth = DOM.getElementPropertyInt(curItem.childSpanElem,
-          "scrollWidth");
-      DOM.setStyleAttribute(curItem.childSpanElem, "width", scrollWidth + "px");
+      int scrollWidth = curItem.childSpanElem.getPropertyInt("scrollWidth");
+      curItem.childSpanElem.getStyle().setProperty("width", scrollWidth + "px");
     }
   }
 
@@ -315,7 +314,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     Element elem = DOM.clone(BASE_BARE_ELEM, true);
     setElement(elem);
     contentElem = DOM.getFirstChild(elem);
-    DOM.setElementAttribute(contentElem, "id", DOM.createUniqueId());
+    contentElem.setAttribute("id", DOM.createUniqueId());
 
     // The root item always has children.
     if (isRoot) {
@@ -436,7 +435,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
 
   @Override
   public String getHTML() {
-    return DOM.getInnerHTML(contentElem);
+    return contentElem.getInnerHTML();
   }
 
   /**
@@ -459,7 +458,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
 
   @Override
   public String getText() {
-    return DOM.getInnerText(contentElem);
+    return contentElem.getInnerText();
   }
 
   /**
@@ -671,7 +670,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   @Override
   public void setHTML(String html) {
     setWidget(null);
-    DOM.setInnerHTML(contentElem, html);
+    contentElem.setInnerHTML(html);
   }
 
   @Override
@@ -727,7 +726,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   @Override
   public void setText(String text) {
     setWidget(null);
-    DOM.setInnerText(contentElem, text);
+    contentElem.setInnerText(text);
   }
 
   /**
@@ -764,7 +763,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     }
 
     // Clear out any existing content before adding a widget.
-    DOM.setInnerHTML(contentElem, "");
+    contentElem.setInnerHTML("");
 
     // Logical detach old/attach new.
     widget = newWidget;
@@ -782,7 +781,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
       // order of the entire tree
 
       if (Tree.shouldTreeDelegateFocusToElement(widget.getElement())) {
-        DOM.setElementAttribute(widget.getElement(), "tabIndex", "-1");
+        widget.getElement().setAttribute("tabIndex", "-1");
       }
     }
   }
@@ -885,7 +884,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
     convertToFullNode();
     childSpanElem = DOM.createDiv();
     DOM.appendChild(getElement(), childSpanElem);
-    DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
+    childSpanElem.getStyle().setProperty("whiteSpace", "nowrap");
     children = new ArrayList<TreeItem>();
   }
 

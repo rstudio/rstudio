@@ -142,7 +142,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    */
   public void cancelKey() {
     if (currentEvent != null) {
-      DOM.eventPreventDefault(currentEvent);
+      currentEvent.preventDefault();
     }
   }
 
@@ -168,7 +168,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   }
 
   public String getName() {
-    return DOM.getElementProperty(getElement(), "name");
+    return getElement().getPropertyString("name");
   }
 
   /**
@@ -195,7 +195,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   }
 
   public String getText() {
-    return DOM.getElementProperty(getElement(), "value");
+    return getElement().getPropertyString("value");
   }
 
   /**
@@ -233,7 +233,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    *         <code>false</code> if the widget is currently editable
    */
   public boolean isReadOnly() {
-    return DOM.getElementPropertyBoolean(getElement(), "readOnly");
+    return getElement().getPropertyBoolean("readOnly");
   }
 
   @Override
@@ -276,7 +276,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   }
 
   public void setAlignment(TextAlignment align) {
-    DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
+    getElement().getStyle().setProperty("textAlign", align.getTextAlignString());
   }
 
   /**
@@ -326,7 +326,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
   }
 
   public void setName(String name) {
-    DOM.setElementProperty(getElement(), "name", name);
+    getElement().setPropertyString("name", name);
   }
 
   /**
@@ -336,7 +336,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    *          <code>false</code> the widget becomes editable
    */
   public void setReadOnly(boolean readOnly) {
-    DOM.setElementPropertyBoolean(getElement(), "readOnly", readOnly);
+    getElement().setPropertyBoolean("readOnly", readOnly);
     String readOnlyStyle = "readonly";
     if (readOnly) {
       addStyleDependentName(readOnlyStyle);
@@ -381,7 +381,7 @@ public class ValueBoxBase<T> extends FocusWidget implements
    * @param text the object's new text
    */
   public void setText(String text) {
-    DOM.setElementProperty(getElement(), "value", text != null ? text : "");
+    getElement().setPropertyString("value", text != null ? text : "");
     autoDirHandler.refreshDirection();
   }
 

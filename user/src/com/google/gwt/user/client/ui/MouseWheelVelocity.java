@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -43,7 +42,7 @@ public class MouseWheelVelocity {
    * @param e the event
    */
   public MouseWheelVelocity(Event e) {
-    vY = DOM.eventGetMouseWheelVelocityY(e);
+    vY = e.getMouseWheelVelocityY();
   }
 
   @Override

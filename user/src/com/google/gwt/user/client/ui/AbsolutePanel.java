@@ -64,9 +64,9 @@ public class AbsolutePanel extends ComplexPanel implements
    * @param elem the DOM element
    */
   private static void changeToStaticPositioning(Element elem) {
-    DOM.setStyleAttribute(elem, "left", "");
-    DOM.setStyleAttribute(elem, "top", "");
-    DOM.setStyleAttribute(elem, "position", "");
+    elem.getStyle().setProperty("left", "");
+    elem.getStyle().setProperty("top", "");
+    elem.getStyle().setProperty("position", "");
   }
 
   /**
@@ -77,8 +77,8 @@ public class AbsolutePanel extends ComplexPanel implements
 
     // Setting the panel's position style to 'relative' causes it to be treated
     // as a new positioning context for its children.
-    DOM.setStyleAttribute(getElement(), "position", "relative");
-    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
+    getElement().getStyle().setProperty("position", "relative");
+    getElement().getStyle().setProperty("overflow", "hidden");
   }
 
   /**
@@ -136,8 +136,8 @@ public class AbsolutePanel extends ComplexPanel implements
    */
   public int getWidgetLeft(Widget w) {
     checkWidgetParent(w);
-    return DOM.getAbsoluteLeft(w.getElement())
-        - DOM.getAbsoluteLeft(getElement());
+    return w.getElement().getAbsoluteLeft()
+        - getElement().getAbsoluteLeft();
   }
 
   /**
@@ -149,8 +149,8 @@ public class AbsolutePanel extends ComplexPanel implements
    */
   public int getWidgetTop(Widget w) {
     checkWidgetParent(w);
-    return DOM.getAbsoluteTop(w.getElement())
-        - DOM.getAbsoluteTop(getElement());
+    return w.getElement().getAbsoluteTop()
+        - getElement().getAbsoluteTop();
   }
 
   public void insert(Widget w, int beforeIndex) {
@@ -223,9 +223,9 @@ public class AbsolutePanel extends ComplexPanel implements
     if (left == -1 && top == -1) {
       changeToStaticPositioning(h);
     } else {
-      DOM.setStyleAttribute(h, "position", "absolute");
-      DOM.setStyleAttribute(h, "left", left + "px");
-      DOM.setStyleAttribute(h, "top", top + "px");
+      h.getStyle().setProperty("position", "absolute");
+      h.getStyle().setProperty("left", left + "px");
+      h.getStyle().setProperty("top", top + "px");
     }
   }
 

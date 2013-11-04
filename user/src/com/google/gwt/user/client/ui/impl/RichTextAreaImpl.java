@@ -44,11 +44,11 @@ public class RichTextAreaImpl {
   }
 
   public String getHTML() {
-    return DOM.getElementProperty(elem, "value");
+    return elem.getPropertyString("value");
   }
 
   public String getText() {
-    return DOM.getElementProperty(elem, "value");
+    return elem.getPropertyString("value");
   }
 
   public void initElement() {
@@ -72,7 +72,7 @@ public class RichTextAreaImpl {
   }-*/;
 
   public void setHTML(String html) {
-    DOM.setElementProperty(elem, "value", html);
+    elem.setPropertyString("value", html);
   }
 
   public void setOwner(HasInitializeHandlers owner) {
@@ -80,7 +80,7 @@ public class RichTextAreaImpl {
   }
 
   public void setText(String text) {
-    DOM.setElementProperty(elem, "value", text);
+    elem.setPropertyString("value", text);
   }
 
   /**
