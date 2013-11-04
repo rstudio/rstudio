@@ -118,10 +118,6 @@
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
-   <replace-with class="org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory">
-      <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
-      <when-property-is name="rstudio.cocoa" value="true"/>
-   </replace-with>
   
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
       <when-type-is class="org.rstudio.studio.client.common.TextInput"/>

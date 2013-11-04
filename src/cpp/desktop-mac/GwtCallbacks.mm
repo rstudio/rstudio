@@ -225,12 +225,34 @@ NSString* resolveAliasedPath(NSString* path)
 - (int) showMessageBox: type
                caption: (NSString*) caption
                message: (NSString*) message
-               buttons: (NSString*) buttons
+               buttons: (NSString*) buttons // Pipe-delimited
          defaultButton: (int) defaultButton
           cancelButton: (int) cancelButton
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return 42;
+   NSArray *dialogButtons = [buttons componentsSeparatedByString: @"|"];
+   NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+
+   [alert setMessageText:caption];
+   [alert setInformativeText:message];
+   for (NSString* buttonText in dialogButtons)
+   {
+      [alert addButtonWithTitle: buttonText];
+   }
+
+   // Make Enter invoke the default button, and ESC the cancel button.
+   [[[alert buttons] objectAtIndex:defaultButton] setKeyEquivalent: @"\r"];
+   [[[alert buttons] objectAtIndex:cancelButton] setKeyEquivalent: @"\033"];
+   
+   // Run the dialog and translate the result
+   int clicked = [alert runModal];
+   switch(clicked)
+   {
+      case NSAlertFirstButtonReturn:
+         return 0;
+      case NSAlertSecondButtonReturn:
+         return 1;
+   }
+   return (clicked - NSAlertThirdButtonReturn) + 2;
 }
 
 - (NSString*) promptForText: (NSString*) title
