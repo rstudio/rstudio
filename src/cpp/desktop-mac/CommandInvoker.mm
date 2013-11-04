@@ -1,5 +1,5 @@
 /*
- * MainFrameMenu.h
+ * CommandInvoker.mm
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,12 +13,25 @@
  *
  */
 
+#import "CommandInvoker.h"
 
-#import <Foundation/NSObject.h>
+#import "MainFrameController.h"
 
-@interface MainFrameMenu : NSObject {
-   NSMenu* mainMenu_;
-   NSMutableArray* menuStack_;
+@implementation CommandInvoker
+
+- (id) init: (NSString*) command {
+   command_ = [command retain];
+   return self;
+}
+
+- (void) dealloc {
+   [command_ release];
+   [super dealloc];
+}
+
+- (void) invoke {
+   MainFrameController* mfc = [MainFrameController instance];
+   [mfc invokeCommand: command_];
 }
 
 @end

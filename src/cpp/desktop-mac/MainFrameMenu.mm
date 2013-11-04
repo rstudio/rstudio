@@ -20,6 +20,7 @@
 #import "MainFrameController.h"
 
 #import "MainFrameMenu.h"
+#import "CommandInvoker.h"
 
 @implementation MainFrameMenu
 
@@ -85,17 +86,19 @@
            shortcut: (NSString*) shortcut
         isCheckable: (Boolean) isCheckable
 {
-   // remove ampersand
-   label = [label stringByReplacingOccurrencesOfString:@"&"
-                                                  withString:@""];
-   
    // placeholder text for empty labels (can happen for MRU entries)
    if ([label length] == 0)
       label = @"Placeholder";
    
    // create menu item
    NSMenuItem* menuItem  = [[NSMenuItem new] autorelease];
-   [menuItem setTitle: label];
+   [menuItem setTitleWithMnemonic: label];
+   [menuItem setToolTip: tooltip];
+
+   id invoker = [[[CommandInvoker alloc] init: commandId] autorelease];
+   [menuItem setRepresentedObject: invoker]; // for retain purposes
+   [menuItem setTarget: invoker];
+   [menuItem setAction: @selector(invoke)];
    
    // TODO: reflect other menu state/behavior
    

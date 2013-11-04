@@ -126,6 +126,12 @@ static MainFrameController* instance_;
    return [win evaluateWebScript: js];
 }
 
+- (NSString*) invokeCommand: (NSString*) command
+{
+   return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
+                                     command]];
+}
+
 - (BOOL) hasDesktopObject
 {
    WebScriptObject* script = [webView_ windowScriptObject];
