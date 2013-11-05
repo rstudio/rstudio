@@ -31,6 +31,18 @@ import java.util.Set;
  */
 public class ZipLibrariesTest extends TestCase {
 
+  private static class SimpleMockResource extends MockResource {
+
+    public SimpleMockResource(String path) {
+      super(path);
+    }
+
+    @Override
+    public CharSequence getContent() {
+      return "";
+    }
+  }
+
   public void testRoundTrip() throws IOException, IncompatibleLibraryVersionException {
     File zipFile = File.createTempFile("Test", ".gwtlib");
     zipFile.deleteOnExit();
@@ -50,6 +62,9 @@ public class ZipLibrariesTest extends TestCase {
     // Put data in the library and save it.
     ZipLibraryBuilder zipLibraryBuilder = new ZipLibraryBuilder(zipFile.getPath());
     zipLibraryBuilder.setLibraryName(expectedLibraryName);
+    // Include unusual path characters.
+    zipLibraryBuilder.addPublicResource(new SimpleMockResource("ui:binder:com.foo.baz.TableView"));
+    // Include specific expected contents.
     zipLibraryBuilder.addPublicResource(new MockResource("index.html") {
         @Override
       public CharSequence getContent() {

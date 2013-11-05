@@ -45,7 +45,10 @@ import java.util.zip.ZipOutputStream;
 /**
  * A library builder that writes contents to a zip file.
  */
-public class ZipLibraryBuilder implements LibraryBuilder {
+// TODO(stalcup): the compiler currently uses an inefficient mixture of java, protobuf, and
+// custom serialization. unify all serialization on protobuf (either ascii or binary format
+// depending on human-readability constraints).
+class ZipLibraryBuilder implements LibraryBuilder {
 
   private class ZipLibraryWriter {
 

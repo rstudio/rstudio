@@ -16,7 +16,7 @@ package com.google.gwt.dev.cfg;
 /**
  * Utility functions and constants for reading and writing library files.
  */
-class Libraries {
+public class Libraries {
 
   /**
    * Indicates that an attempt to load a library failed because the version in the provided data did
@@ -51,7 +51,7 @@ class Libraries {
   public static final String DIRECTORY_PUBLIC_RESOURCES = "publicResources/";
   public static final String EXTENSION_CLASS_FILE = ".class";
   public static final String EXTENSION_COMPILATION_UNITS = ".compilationUnit";
-  public static final String KEY_VALUE_SEPARATOR = ":";
+  public static final String KEY_VALUE_SEPARATOR = "->";
   public static final String LIBRARY_NAME_ENTRY_NAME = "libraryName.txt";
   public static final String LINE_SEPARATOR = "\n";
   public static final String NEW_BINDING_PROPERTY_VALUES_BY_NAME_ENTRY_NAME =
