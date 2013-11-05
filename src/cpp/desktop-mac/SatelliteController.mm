@@ -34,8 +34,6 @@
 
 // TODO: check for updates
 
-// TODO: enable javascript alerts
-
 // TODO: webkit version check
 
 // TODO: enter "boink" in vcs view

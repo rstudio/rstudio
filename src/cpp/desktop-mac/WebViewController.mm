@@ -182,6 +182,31 @@ static PendingSatelliteWindow pendingWindow_;
       [[self window] setTitle: title];
 }
 
+- (BOOL)                     webView: (WebView*) sender
+runJavaScriptConfirmPanelWithMessage: (NSString*) message
+                    initiatedByFrame: (WebFrame *) frame
+{
+   NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+   [alert setMessageText:message];
+   [alert setAlertStyle:NSWarningAlertStyle];
+   [alert addButtonWithTitle:@"Yes"];
+   [alert addButtonWithTitle:@"No"];
+   if ([alert runModal] == NSAlertFirstButtonReturn)
+      return YES;
+   else
+      return NO;
+}
+
+- (void)                   webView: (WebView *) sender
+runJavaScriptAlertPanelWithMessage: (NSString *) message
+                  initiatedByFrame: (WebFrame *) frame
+{
+   NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+   [alert setMessageText: message];
+   [alert addButtonWithTitle:@"OK"];
+   [alert runModal];
+}
+
 - (void) webView: (WebView *)sender
   printFrameView: (WebFrameView *) frameView
 {
