@@ -1,4 +1,5 @@
 
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/FilePath.hpp>
@@ -223,7 +224,35 @@ NSString* resolveAliasedPath(NSString* path)
 - (void) openMinimalWindow: (NSString*) name url: (NSString*) url
                      width: (int) width height: (int) height
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // adjust name to scope within minimal windows
+   name = [name stringByAppendingString: @"_minimal"];
+   
+   // check for an existing window with this name
+   WebViewController* controller = [WebViewController windowNamed: name];
+   
+   // create a new window if necessary
+   if (!controller)
+   {
+      // self-freeing so don't auto-release
+      controller = [[WebViewController alloc] initWithURLRequest:
+                  [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
+                                              name: name];
+   }
+   
+   // reset window size (adjust for title bar height)
+   NSRect frame = [[controller window] frame];
+   NSPoint origin = frame.origin;
+   height += desktop::utils::titleBarHeight();
+   frame = NSMakeRect(origin.x, origin.y, width, height);
+   [[controller window] setFrame: frame display: NO];
+   
+   // load url
+   NSURL* nsurl = [NSURL URLWithString: url];   
+   NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
+   [[[controller webView] mainFrame ] loadRequest: request];
+  
+   // bring to front
+   [[controller window] makeKeyAndOrderFront: self];
 }
 
 - (void) activateSatelliteWindow: (NSString*) name
@@ -386,7 +415,10 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) reloadZoomWindow
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   WebViewController* controller =
+            [WebViewController windowNamed: @"_rstudio_zoom_minimal"];
+   if (controller)
+      [[[controller webView] mainFrame] reload];
 }
 
 - (void) setViewerUrl: (NSString*) url

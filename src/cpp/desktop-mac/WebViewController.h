@@ -8,6 +8,8 @@
    NSString* name_;
 }
 
++ (WebViewController*) windowNamed: (NSString*) name;
+
 + (void) activateSatelliteWindow: (NSString*) name;
 
 + (void) prepareForSatelliteWindow: (NSString*) name

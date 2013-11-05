@@ -59,7 +59,10 @@ static PendingSatelliteWindow pendingWindow_;
    pendingWindow_ = PendingSatelliteWindow([name UTF8String], width, height);
 }
 
-
++ (WebViewController*) windowNamed: (NSString*) name
+{
+   return [namedWindows_ objectForKey: name];
+}
 
 - (WebView*) webView
 {

@@ -138,6 +138,18 @@ void toggleFullscreenMode(NSWindow* window)
 }
 
    
+float titleBarHeight()
+{
+   NSRect frame = NSMakeRect (0, 0, 100, 100);
+   
+   NSRect contentRect;
+   contentRect = [NSWindow contentRectForFrameRect: frame
+                                         styleMask: NSTitledWindowMask];
+   
+   return (frame.size.height - contentRect.size.height);
+   
+} 
+   
    
 } // namespace utils
 } // namespace desktop

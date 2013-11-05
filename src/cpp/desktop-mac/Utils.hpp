@@ -41,6 +41,7 @@ bool supportsFullscreenMode(NSWindow* window);
 void enableFullscreenMode(NSWindow* window, bool primary);
 void toggleFullscreenMode(NSWindow* window);
 
+float titleBarHeight();
    
 } // namespace utils
 } // namespace desktop
