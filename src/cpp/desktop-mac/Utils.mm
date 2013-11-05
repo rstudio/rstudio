@@ -112,6 +112,32 @@ core::system::ProcessSupervisor& processSupervisor()
    return instance;
 }
    
+bool supportsFullscreenMode(NSWindow* window)
+{
+   return [window respondsToSelector:@selector(toggleFullScreen:)];
+}
+   
+
+// see: https://developer.apple.com/library/mac/#documentation/General/Conceptual/MOSXAppProgrammingGuide/FullScreenApp/FullScreenApp.html
+void enableFullscreenMode(NSWindow* window, bool primary)
+{
+   if (supportsFullscreenMode(window))
+   {
+      NSWindowCollectionBehavior behavior = [window collectionBehavior];
+      behavior = behavior | (primary ?
+                             NSWindowCollectionBehaviorFullScreenPrimary :
+                             NSWindowCollectionBehaviorFullScreenAuxiliary);
+      [window setCollectionBehavior:behavior];
+   }
+}
+
+void toggleFullscreenMode(NSWindow* window)
+{
+   if (supportsFullscreenMode(window))
+      [window toggleFullScreen:nil];
+}
+
+   
    
 } // namespace utils
 } // namespace desktop

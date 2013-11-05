@@ -21,8 +21,11 @@
 
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
+#import "Utils.hpp"
 
 #include "SessionLauncher.hpp"
+
+
 
 @implementation MainFrameController
 
@@ -57,6 +60,9 @@ static MainFrameController* instance_;
       
       // set title
       [[self window] setTitle: @"RStudio"];
+      
+      // set primary fullscreen mode
+      desktop::utils::enableFullscreenMode([self window], true);
    }
    
    return self;

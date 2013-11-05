@@ -37,6 +37,11 @@ void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
    
 core::system::ProcessSupervisor& processSupervisor();
    
+bool supportsFullscreenMode(NSWindow* window);
+void enableFullscreenMode(NSWindow* window, bool primary);
+void toggleFullscreenMode(NSWindow* window);
+
+   
 } // namespace utils
 } // namespace desktop
 

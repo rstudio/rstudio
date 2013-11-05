@@ -10,6 +10,7 @@
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
 #import "SatelliteController.h"
+#import "Utils.hpp"
 
 // TODO: enable javascript alerts
 
@@ -112,7 +113,7 @@ static PendingSatelliteWindow pendingWindow_;
       // bring the window to the front
       [window makeKeyAndOrderFront: self];
       
-      // speciql treatment for named windows
+      // special treatment for named windows
       if (name)
       {
          // track it (for reactivation)
@@ -122,6 +123,10 @@ static PendingSatelliteWindow pendingWindow_;
          // auto save positiom
          [self setWindowFrameAutosaveName: name_];
       }
+      
+      // set fullscreen mode (defualt to non-primary)
+      desktop::utils::enableFullscreenMode(window, false);
+      
    }
    
    return self;

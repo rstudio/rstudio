@@ -10,6 +10,7 @@
 #import <Foundation/NSString.h>
 
 #include "SessionLauncher.hpp"
+#include "Utils.hpp"
 
 #import "MainFrameController.h"
 
@@ -360,13 +361,14 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (Boolean) supportsFullscreenMode
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return false;
+   NSWindow* mainWindow = [[MainFrameController instance] window];
+   return desktop::utils::supportsFullscreenMode(mainWindow);
 }
 
 - (void) toggleFullscreenMode
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   NSWindow* mainWindow = [[MainFrameController instance] window];
+   desktop::utils::toggleFullscreenMode(mainWindow);
 }
 
 - (void) showKeyboardShortcutHelp
