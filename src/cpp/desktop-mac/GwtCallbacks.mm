@@ -362,8 +362,10 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) showKeyboardShortcutHelp
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-
+   FilePath keyboardHelpPath = options().wwwDocsPath().complete("keyboard.htm");
+   NSURL* url = [NSURL fileURLWithPath:
+      [NSString stringWithUTF8String: keyboardHelpPath.absolutePath().c_str()]];
+   [[NSWorkspace sharedWorkspace] openURL: url];
 }
 
 - (void) launchSession: (Boolean) reload
