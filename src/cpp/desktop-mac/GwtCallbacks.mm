@@ -345,7 +345,13 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) openProjectInNewWindow: (NSString*) projectFilePath
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   projectFilePath = resolveAliasedPath(projectFilePath);
+   
+   NSString* exePath = [NSString stringWithUTF8String:
+               desktop::options().executablePath().absolutePath().c_str()];
+   NSArray* args = [NSArray arrayWithObject: projectFilePath];
+   
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
 
 - (void) openTerminal: (NSString*) terminalPath
