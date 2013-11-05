@@ -12,6 +12,7 @@
 #import "SatelliteController.h"
 #import "SecondaryWindowController.h"
 #import "Utils.hpp"
+#import "MainFrameWebView.h"
 
 struct PendingSatelliteWindow
 {
@@ -105,7 +106,7 @@ static PendingSatelliteWindow pendingWindow_;
    if (self = [super initWithWindow: window])
    {
       // create web view, save it as a member, and register as it's delegate,
-      webView_ = [[WebView alloc] initWithFrame: frameRect];
+      webView_ = [[MainFrameWebView alloc] initWithFrame: frameRect];
       [webView_ setUIDelegate: self];
       [webView_ setFrameLoadDelegate: self];
       [webView_ setResourceLoadDelegate: self];

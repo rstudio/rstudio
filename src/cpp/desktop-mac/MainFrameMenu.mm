@@ -231,8 +231,7 @@ NSString* charToStr(unichar c) {
    if (trailingSep != Nil)
       [trailingSep setHidden: YES];
 
-   NSString* enabledJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");", command];
-   if ([[[MainFrameController instance] evaluateJavaScript: enabledJs] boolValue])
+   if ([[MainFrameController instance] isCommandEnabled: command])
       return YES;
    else
       return NO;

@@ -140,6 +140,12 @@ static MainFrameController* instance_;
                                      command]];
 }
 
+- (BOOL) isCommandEnabled: (NSString*) command
+{
+   return [[self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");",
+                                     command]] boolValue];
+}
+
 - (BOOL) hasDesktopObject
 {
    WebScriptObject* script = [webView_ windowScriptObject];

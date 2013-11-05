@@ -41,6 +41,8 @@
 
 - (id) invokeCommand: (NSString*) command;
 
+- (BOOL) isCommandEnabled: (NSString*) command;
+
 
 // initiate a quit sequence
 - (void) initiateQuit;
