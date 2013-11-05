@@ -98,7 +98,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
     private String originalUrl;
     private int retryCount;
     private String url;
-    
+
     public RequestData(String url, LoadTerminatedHandler errorHandler,
         int fragment, DownloadStrategy downloadStrategy, int maxRetryCount) {
       this.url = url;
@@ -109,15 +109,25 @@ public class LoadingStrategyBase implements LoadingStrategy {
       this.fragment = fragment;
       this.downloadStrategy = downloadStrategy;
     }
-    
+
     public LoadTerminatedHandler getErrorHandler() { return errorHandler; }
-    
+
     public int getFragment() { return fragment; }
-    
+
     public int getRetryCount() { return retryCount; }
-    
+
+    protected void setRetryCount(int retryCount) {
+      this.retryCount = retryCount;
+    }
+
     public String getUrl() { return url; }
-    
+
+    protected void setUrl(String url) {
+      this.url = url;
+    }
+
+    public String getOriginalUrl() { return originalUrl; }
+
     public void onLoadError(Throwable e, boolean mayRetry) {
       if (mayRetry) {
         retryCount++;
@@ -128,13 +138,13 @@ public class LoadingStrategyBase implements LoadingStrategy {
           return;
         }
       }
-      errorHandler.loadTerminated(e); 
+      errorHandler.loadTerminated(e);
     }
-    
+
     public void tryDownload() {
       downloadStrategy.tryDownload(this);
     }
-    
+
     public void tryInstall(String code) {
       try {
         gwtInstallCode(code);
@@ -147,7 +157,7 @@ public class LoadingStrategyBase implements LoadingStrategy {
       }
     }
   }
-  
+
   /**
    * The number of times that we will retry a download. Note that if the install
    * fails, we do not retry, since there's no reason to expect a different result.
@@ -180,6 +190,10 @@ public class LoadingStrategyBase implements LoadingStrategy {
   
   private DownloadStrategy downloadStrategy;
   private final FragmentReloadTracker manualRetryNumbers = FragmentReloadTracker.create();
+
+  public DownloadStrategy getDownloadStrategy() {
+    return downloadStrategy;
+  }
 
   /**
    * Subclasses should create a DownloadStrategy and pass it into this constructor.
