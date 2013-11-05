@@ -4,6 +4,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 #import "GwtCallbacks.h"
 #import "Options.hpp"
@@ -358,8 +359,26 @@ NSString* resolveAliasedPath(NSString* path)
          workingDirectory: (NSString*) workingDirectory
          extraPathEntries: (NSString*) extraPathEntries
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-
+   // append extra path entries to our path before launching
+   if ([extraPathEntries length] > 0)
+   {
+      std::string path = core::system::getenv("PATH");
+      std::string previousPath = path;
+      core::system::addToPath(&path, [extraPathEntries UTF8String]);
+      core::system::setenv("PATH", path);
+   }
+   
+   // call Terminal.app with an applescript that navigates it
+   // to the specified directory. note we don't reference the
+   // passed terminalPath because this setting isn't respected
+   // on the Mac (we always use Terminal.app)
+   FilePath macTermScriptFilePath =
+            desktop::options().scriptsPath().complete("mac-terminal");
+   NSString* exePath = [NSString stringWithUTF8String:
+                              macTermScriptFilePath.absolutePath().c_str()];
+   workingDirectory = resolveAliasedPath(workingDirectory);
+   NSArray* args = [NSArray arrayWithObject: workingDirectory];
+   [NSTask launchedTaskWithLaunchPath: exePath arguments: args];
 }
 
 - (NSString*) getFixedWidthFontList
@@ -458,6 +477,8 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (NSString*) filterText: (NSString*) text
 {
+   NSLog(@"%@", NSStringFromSelector(_cmd));
+   
    // TODO: normalize NFD Unicode text as we do in Qt version
    
    return text;
