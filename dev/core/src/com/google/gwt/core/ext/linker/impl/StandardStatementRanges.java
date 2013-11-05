@@ -16,15 +16,43 @@
 package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The standard implementation of {@link StatementRanges}.
  */
 public class StandardStatementRanges implements StatementRanges, Serializable {
-  private static int[] toArray(ArrayList<Integer> list) {
+
+  /**
+   * Combines multiple StatementRanges into a single StatementRanges by assuming
+   * that the offsets inside each subsequent StatementRanges instance begin
+   * after the ending offset of the previous instance.
+   */
+  public static StatementRanges combine(List<StatementRanges> statementRangesList) {
+    List<Integer> combinedStarts = Lists.newArrayList();
+    List<Integer> combinedEnds = Lists.newArrayList();
+
+    int lastEndingOffset = 0;
+    for (StatementRanges statementRanges : statementRangesList) {
+      // Append all the start and end indexes + the current offset.
+      for (int i = 0; i < statementRanges.numStatements(); i++) {
+        combinedStarts.add(lastEndingOffset + statementRanges.start(i));
+        combinedEnds.add(lastEndingOffset + statementRanges.end(i));
+      }
+      // Move the offset forward to the end of the just finished StatementRanges
+      // instance.
+      if (statementRanges.numStatements() > 0) {
+        lastEndingOffset += statementRanges.end(statementRanges.numStatements() - 1);
+      }
+    }
+
+    return new StandardStatementRanges(combinedStarts, combinedEnds);
+  }
+
+  private static int[] toArray(List<Integer> list) {
     int[] ary = new int[list.size()];
     for (int i = 0; i < list.size(); i++) {
       ary[i] = list.get(i);
@@ -32,23 +60,27 @@ public class StandardStatementRanges implements StatementRanges, Serializable {
     return ary;
   }
 
-  private final int[] ends;
-  private final int[] starts;
+  // VisibleForTesting
+  final int[] ends;
+  final int[] starts;
 
-  public StandardStatementRanges(ArrayList<Integer> starts, ArrayList<Integer> ends) {
+  public StandardStatementRanges(List<Integer> starts, List<Integer> ends) {
     assert starts.size() == ends.size();
     this.starts = toArray(starts);
     this.ends = toArray(ends);
   }
 
+  @Override
   public int end(int i) {
     return ends[i];
   }
 
+  @Override
   public int numStatements() {
     return starts.length;
   }
 
+  @Override
   public int start(int i) {
     return starts[i];
   }
