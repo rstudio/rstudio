@@ -284,15 +284,27 @@ NSString* resolveAliasedPath(NSString* path)
    // Translate the message type requested by the client to the appropriate
    // type of NSAlert
    NSAlertStyle style = NSInformationalAlertStyle;
-   if (type == MSG_WARNING)
+   if (type == MSG_WARNING || type == MSG_ERROR)
       style = NSWarningAlertStyle;
-   else if (type == MSG_ERROR)
-      style = NSCriticalAlertStyle;
-   [alert setAlertStyle: style];
    
-   // TODO: Pick an image appropriate for each MessageType and attach it to the
-   // dialog
-
+   // Choose an image type appropriate to the alert
+   NSString* imageName = @"";
+   if (type == MSG_POPUP_BLOCKED)
+      imageName = @"dialog_popup_blocked.png";
+   else if (type == MSG_INFO)
+      imageName = @"dialog_info.png";
+   else if (type == MSG_WARNING)
+      imageName = @"dialog_warning.png";
+   else if (type == MSG_ERROR)
+      imageName = @"dialog_error.png";
+   else if (type == MSG_QUESTION)
+      imageName = @"dialog_question.png";
+   
+   if ([imageName length] > 0)
+   {
+      [alert setIcon: [NSImage imageNamed: imageName]];
+   }
+      
    [alert setMessageText:caption];
    [alert setInformativeText:message];
    for (NSString* buttonText in dialogButtons)

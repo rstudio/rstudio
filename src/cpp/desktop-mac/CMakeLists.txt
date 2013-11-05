@@ -61,13 +61,20 @@ set(MACOSX_BUNDLE_ICON_FILE RStudio.icns)
 set_source_files_properties(${ICNS_FILES}
    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
+# add image resources to the bundle
+file(GLOB PNG_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/png/*.png)
+set_source_files_properties(${PNG_FILES}
+   PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
 # define bundle name and executable
 set(MACOSX_BUNDLE_BUNDLE_NAME "RStudio")
 
 add_executable(RStudio MACOSX_BUNDLE
    ${DESKTOP_MAC_SOURCE_FILES}
    ${DESKTOP_MAC_HEADER_FILES}
-   ${ICNS_FILES})
+   ${ICNS_FILES}
+   ${PNG_FILES})
+
 
 target_link_libraries(RStudio
    rstudio-core
