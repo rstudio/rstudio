@@ -18,7 +18,6 @@
 //    it doesn't happen for reload but does for reload project
 //    not unique to safari, git bisect for issues introduced?
 
-
 // TODO: window positioning and persistance for satellites
 
 // TODO: base64 download for ggivs
@@ -26,7 +25,12 @@
 
 // TODO: main menu
 
-// TODO: GwtCallbacks
+// TODO: filterText callback
+
+// TODO: undo and clipboard callbacks (undo/redo/cut/copy/paste)
+//       (also cleanClipboard and copyImageToClipboard)
+
+// TODO: zoom callbacks
 
 // TODO: about box
 
