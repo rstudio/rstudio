@@ -87,7 +87,11 @@ import java.lang.annotation.Target;
  * 
  * @param <T> the type of interface that must be implemented by the derivative
  *          class.
+ *
+ * @deprecated AsyncProxy will no longer be part of the SDK with next release. Please
+ *             look for third party libraries if you still need to use it.
  */
+@Deprecated
 @AsyncProxy.DefaultValue()
 public interface AsyncProxy<T> {
   /*
