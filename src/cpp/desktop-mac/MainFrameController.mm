@@ -183,6 +183,12 @@ didClearWindowObject:(WebScriptObject *)windowObject
    }
 }
 
+- (void) windowDidBecomeMain: (NSNotification *) notification
+{
+   if ([self hasDesktopObject])
+      [self invokeCommand: @"vcsRefreshNoError"];
+}
+
 - (BOOL) windowShouldClose: (id) sender
 {
    if (quitConfirmed_)
