@@ -25,6 +25,8 @@
    // this array. In other words, to get the tag for a menu item you would do
    // [commands_ objectAtIndex: [item tag]]
    NSMutableArray* commands_;
+
+   NSDictionary* shortcutMap_;
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) item;

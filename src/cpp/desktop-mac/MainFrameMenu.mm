@@ -23,6 +23,10 @@
 
 @implementation MainFrameMenu
 
+NSString* charToStr(unichar c) {
+   return [[NSString stringWithCharacters: &c length: 1] autorelease];
+}
+
 - (id)init
 {
    if (self = [super init])
@@ -30,6 +34,30 @@
       menuStack_ = [[NSMutableArray alloc] init];
       commands_ = [[NSMutableArray alloc] init];
       [commands_ addObject: @""]; // Make sure index 0 is not taken
+
+      shortcutMap_ = [[NSDictionary alloc] initWithObjectsAndKeys:
+                      @"\uF700", @"Up",
+                      @"\uF701", @"Down",
+                      @"\uF702", @"Left",
+                      @"\uF703", @"Right",
+                      @"\uF704", @"F1",
+                      @"\uF705", @"F2",
+                      @"\uF706", @"F3",
+                      @"\uF707", @"F4",
+                      @"\uF708", @"F5",
+                      @"\uF709", @"F6",
+                      @"\uF70A", @"F7",
+                      @"\uF70B", @"F8",
+                      @"\uF70C", @"F9",
+                      @"\uF70D", @"F10",
+                      @"\uF70E", @"F11",
+                      @"\uF70F", @"F12",
+                      @"\uF72C", @"PageUp",
+                      @"\uF72D", @"PageDown",
+                      @"\n",     @"Enter",
+                      @"\t",     @"Tab",
+                      @"\b",     @"Backspace",
+                      nil];
    }
    return self;
 }
@@ -39,6 +67,7 @@
    [mainMenu_ release];
    [menuStack_ release];
    [commands_ release];
+   [shortcutMap_ release];
    [super dealloc];
 }
 
@@ -93,7 +122,7 @@
    [menuItem setTarget: self];
    [menuItem setAction: @selector(invoke:)];
    
-   // TODO: reflect other menu state/behavior
+   [self assignShortcut: shortcut toMenuItem: menuItem];
    
    // add it to the menu
    [[self currentTargetMenu] addItem: menuItem];
@@ -125,6 +154,40 @@
 - (void) invoke: (id) sender {
    NSString* command = [commands_ objectAtIndex: [sender tag]];
    [[MainFrameController instance] invokeCommand: command];
+}
+
+- (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
+   static NSRegularExpression* re = [[NSRegularExpression alloc] initWithPattern: @"^[a-zA-Z0-9.+\\-/`]$"
+                                                                         options: NSRegularExpressionCaseInsensitive
+                                                                           error: NULL];
+
+   if ([shortcut length] == 0)
+      return;
+
+   NSArray* parts = [shortcut componentsSeparatedByString: @"+"];
+   NSUInteger modifiers = 0;
+   for (NSUInteger i = 0; i < [parts count] - 1; i++) {
+      NSString* mod = [parts objectAtIndex: i];
+      if ([mod isEqualToString: @"Ctrl"])
+         modifiers |= NSControlKeyMask;
+      else if ([mod isEqualToString: @"Shift"])
+         modifiers |= NSShiftKeyMask;
+      else if ([mod isEqualToString: @"Alt"])
+         modifiers |= NSAlternateKeyMask;
+      else if ([mod isEqualToString: @"Meta"])
+         modifiers |= NSCommandKeyMask;
+   }
+   NSString* key = [parts lastObject];
+   [menuItem setKeyEquivalentModifierMask: modifiers];
+   if ([re numberOfMatchesInString: key
+                           options: NSMatchingAnchored
+                             range: NSMakeRange(0, [key length])] > 0) {
+      [menuItem setKeyEquivalent: [key lowercaseStringWithLocale: [NSLocale systemLocale]]];
+   } else {
+      NSString* keyEquiv = [shortcutMap_ objectForKey: key];
+      assert(keyEquiv != Nil);
+      [menuItem setKeyEquivalent: keyEquiv];
+   }
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) item {
