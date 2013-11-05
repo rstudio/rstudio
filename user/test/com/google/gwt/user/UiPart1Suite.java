@@ -16,6 +16,7 @@
 package com.google.gwt.user;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.user.client.CustomEventsTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
 import com.google.gwt.user.client.ui.ButtonTest;
@@ -74,6 +75,7 @@ public class UiPart1Suite {
     suite.addTestSuite(CompositeTest.class);
     suite.addTestSuite(CreateEventTest.class);
     suite.addTestSuite(CustomButtonTest.class);
+    suite.addTestSuite(CustomEventsTest.class);
     suite.addTestSuite(CustomScrollPanelTest.class);
     suite.addTestSuite(DateBoxTest.class);
     suite.addTestSuite(DatePickerTest.class);
