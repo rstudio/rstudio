@@ -29,6 +29,7 @@
    {
       menuStack_ = [[NSMutableArray alloc] init];
       commands_ = [[NSMutableArray alloc] init];
+      [commands_ addObject: @""]; // Make sure index 0 is not taken
    }
    return self;
 }
@@ -65,10 +66,14 @@
    // remove ampersand
    menuName = [menuName stringByReplacingOccurrencesOfString:@"&"
                                                   withString:@""];
-      
+
+   if ([menuName isEqualToString: @"Help"]) {
+      [self addWindowMenu];
+   }
+
    // create the menu item and add it to the target
    NSMenuItem* menuItem = [[NSMenuItem new] autorelease];
-   [menuItem setTitle: menuName];
+   [menuItem setTitleWithMnemonic: menuName];
    [[self currentTargetMenu] addItem: menuItem];
    
    // create the menu and associate it with the menu item. we also
@@ -135,6 +140,10 @@
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) item {
+   if ([item tag] == 0) {
+      return YES;
+   }
+
    NSString* command = [commands_ objectAtIndex: [item tag]];
 
    NSString* labelJs = [NSString stringWithFormat: @"window.desktopHooks.getCommandLabel(\"%@\");", command];
@@ -176,6 +185,81 @@
       return YES;
    else
       return NO;
+}
+
+- (void) addWindowMenu {
+   NSMenuItem* windowMenuItem = [[NSMenuItem new] autorelease];
+   [windowMenuItem setTitleWithMnemonic: @"Window"];
+   [[self currentTargetMenu] addItem: windowMenuItem];
+
+   NSMenu* windowMenu = [[[NSMenu alloc] initWithTitle: @"Window"] autorelease];
+   [[self currentTargetMenu] setSubmenu: windowMenu forItem: windowMenuItem];
+
+   NSMenuItem* minimize = [[NSMenuItem new] autorelease];
+   [minimize setTitle: @"Minimize"];
+   [minimize setTarget: self];
+   [minimize setAction: @selector(minimize:)];
+   [minimize setKeyEquivalent: @"m"];
+   [minimize setKeyEquivalentModifierMask: NSCommandKeyMask];
+   [minimize setAlternate: NO];
+   [minimize setTag: 0];
+   [windowMenu addItem: minimize];
+
+   NSMenuItem* minimizeAll = [[NSMenuItem new] autorelease];
+   [minimizeAll setTitle: @"Minimize All"];
+   [minimizeAll setTarget: NSApp];
+   [minimizeAll setAction: @selector(miniaturizeAll:)];
+   [minimizeAll setKeyEquivalent: @"m"];
+   [minimizeAll setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
+   [minimizeAll setAlternate: YES];
+   [minimizeAll setTag: 0];
+   [windowMenu addItem: minimizeAll];
+
+   NSMenuItem* zoom = [[NSMenuItem new] autorelease];
+   [zoom setTitle: @"Zoom"];
+   [zoom setTarget: self];
+   [zoom setAction: @selector(zoom:)];
+   [zoom setAlternate: NO];
+   [zoom setTag: 0];
+   [windowMenu addItem: zoom];
+
+   NSMenuItem* zoomAll = [[NSMenuItem new] autorelease];
+   [zoomAll setTitle: @"Zoom All"];
+   [zoomAll setTarget: NSApp];
+   [zoomAll setAction: @selector(zoomAll:)];
+   [zoomAll setKeyEquivalentModifierMask: NSAlternateKeyMask];
+   [zoomAll setAlternate: YES];
+   [zoomAll setTag: 0];
+   [windowMenu addItem: zoomAll];
+
+   [windowMenu addItem: [NSMenuItem separatorItem]];
+
+   NSMenuItem* bringAllToFront = [[NSMenuItem new] autorelease];
+   [bringAllToFront setTitle: @"Bring All to Front"];
+   [bringAllToFront setTarget: self];
+   [bringAllToFront setAction: @selector(bringAllToFront:)];
+   [bringAllToFront setKeyEquivalentModifierMask: NSAlternateKeyMask];
+   [bringAllToFront setAlternate: YES];
+   [bringAllToFront setTag: 0];
+   [windowMenu addItem: bringAllToFront];
+
+   [windowMenu addItem: [NSMenuItem separatorItem]];
+
+   [NSApp setWindowsMenu: windowMenu];
+}
+
+- (void) minimize: (id) sender {
+   [[NSApp keyWindow] performMiniaturize: sender];
+}
+
+- (void) zoom: (id) sender {
+   [[NSApp keyWindow] performZoom: sender];
+}
+
+- (void) bringAllToFront: (id) sender {
+   for (NSWindow* window in [NSApp windows]) {
+      [window orderFront: self];
+   }
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
