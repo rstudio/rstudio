@@ -268,7 +268,6 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (Boolean) supportsClipboardMetafile
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
    return false;
 }
 
@@ -331,7 +330,8 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) bringMainFrameToFront
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [NSApp activateIgnoringOtherApps: YES];
+   [[[MainFrameController instance] window] makeKeyAndOrderFront: self];
 }
 
 - (void) cleanClipboard: (Boolean) stripHtml
