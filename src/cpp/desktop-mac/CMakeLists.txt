@@ -35,6 +35,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    MainFrameMenu.mm
    Options.mm
    SatelliteController.mm
+   SecondaryWindowController.mm
    SessionLauncher.mm
    Utils.mm
    WebViewController.mm

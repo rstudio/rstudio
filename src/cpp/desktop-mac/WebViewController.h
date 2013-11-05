@@ -6,6 +6,8 @@
 @interface WebViewController : NSWindowController<NSWindowDelegate> {
    WebView* webView_;
    NSString* name_;
+   NSURL* baseUrl_;
+   NSString* viewerUrl_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;
@@ -20,6 +22,12 @@
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name;
+
+// load a new url
+- (void) loadURL: (NSURL*) url;
+
+// set the current viewer url
+- (void) setViewerURL: (NSString*) url;
 
 // Get the embedded WebView
 - (WebView*) webView;

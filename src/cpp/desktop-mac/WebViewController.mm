@@ -10,9 +10,8 @@
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
 #import "SatelliteController.h"
+#import "SecondaryWindowController.h"
 #import "Utils.hpp"
-
-// TODO: enable javascript alerts
 
 struct PendingSatelliteWindow
 {
@@ -73,6 +72,7 @@ static PendingSatelliteWindow pendingWindow_;
 {
    [name_ release];
    [webView_ release];
+   [baseUrl_ release];
    [super dealloc];
 }
 
@@ -86,6 +86,9 @@ static PendingSatelliteWindow pendingWindow_;
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
 {
+   // record base url
+   baseUrl_ = [[request URL] retain];
+   
    // create window and become it's delegate
    NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
    NSWindow* window = [[[NSWindow alloc] initWithContentRect: frameRect
@@ -106,6 +109,7 @@ static PendingSatelliteWindow pendingWindow_;
       [webView_ setUIDelegate: self];
       [webView_ setFrameLoadDelegate: self];
       [webView_ setResourceLoadDelegate: self];
+      [webView_ setPolicyDelegate: self];
       
       // load the request
       [[webView_ mainFrame] loadRequest: request];
@@ -135,6 +139,33 @@ static PendingSatelliteWindow pendingWindow_;
    return self;
 }
 
+- (void) loadURL: (NSURL*) url
+{
+   // record base url
+   if(url != baseUrl_)
+   {
+      [url retain];
+      [baseUrl_ release];
+      baseUrl_ = url;
+   }
+   
+   // load the webview
+   NSURLRequest* request = [NSURLRequest requestWithURL: baseUrl_];
+   [[[self webView] mainFrame] loadRequest: request];
+}
+
+// set the current viewer url
+- (void) setViewerURL: (NSString*) url
+{
+   // record viewer url
+   if(url != viewerUrl_)
+   {
+      [url retain];
+      [viewerUrl_ release];
+      viewerUrl_ = url;
+   }   
+}
+
 - (void) windowDidLoad
 {
    [super windowDidLoad];
@@ -160,6 +191,100 @@ static PendingSatelliteWindow pendingWindow_;
       [namedWindows_ removeObjectForKey: name_];
    
    [self autorelease];
+}
+
+- (BOOL) isSupportedScheme: (NSString*) scheme
+{
+   return ([scheme isEqualTo: @"http"] ||
+           [scheme isEqualTo: @"https"] ||
+           [scheme isEqualTo: @"mailto"] ||
+           [scheme isEqualTo: @"data"]);
+}
+
+- (BOOL) isApplicationURL: (NSURL*) url
+{
+   if (([[url scheme] isEqualTo: [baseUrl_ scheme]] &&
+        [[url host] isEqualTo: [baseUrl_ host]] &&
+        [[url port] isEqualTo: [baseUrl_ port]]))
+   {
+      return YES;
+   }
+   else
+   {
+      return NO;
+   }
+}
+
+-(void) decidePolicyFor: (WebView *) webView
+      actionInformation: (NSDictionary *) actionInformation
+                request: (NSURLRequest *) request
+       decisionListener: (id <WebPolicyDecisionListener>) listener
+{
+   // get the url for comparison to the base url
+   NSURL* url = [request URL];
+   if ([[url absoluteString] isEqualTo: @"about:blank"])
+   {
+      [listener use];
+      return;
+   }
+   
+   // ensure this is a supported scheme
+   NSString* scheme = [url scheme];
+   if (![self isSupportedScheme: scheme])
+   {
+      [[NSWorkspace sharedWorkspace] openURL: url];
+      [listener ignore];
+      return;
+   }
+   
+   NSString* host = [url host];
+   BOOL isLocal = [host isEqualTo: @"localhost"] ||
+   [host isEqualTo: @"127.0.0.1"];
+   
+   if ((!baseUrl_ && isLocal) || [self isApplicationURL: url])
+   {
+      [listener use];
+   }
+   else if (isLocal && (viewerUrl_ != nil) &&
+            [[url absoluteString] hasPrefix: viewerUrl_])
+   {
+      [listener use];
+   }
+   else
+   {
+      // open externally
+      desktop::utils::browseURL(url);
+      
+      
+      // TODO: base64 downloads
+      
+      [listener ignore];
+   }
+
+}
+
+- (void)               webView: (WebView *) webView
+decidePolicyForNewWindowAction: (NSDictionary *) actionInformation
+                       request: (NSURLRequest *) request
+                  newFrameName: (NSString *)frameName
+              decisionListener: (id < WebPolicyDecisionListener >)listener
+{
+   [self decidePolicyFor: webView
+       actionInformation: actionInformation
+                 request: request
+        decisionListener: listener];
+}
+
+- (void)                webView:(WebView *) webView
+decidePolicyForNavigationAction: (NSDictionary *) actionInformation
+                        request: (NSURLRequest *) request
+                          frame: (WebFrame *) frame
+               decisionListener:(id < WebPolicyDecisionListener >)listener
+{
+   [self decidePolicyFor: webView
+       actionInformation: actionInformation
+                 request: request
+        decisionListener: listener];
 }
 
 // Handle new window request by creating another controller
@@ -200,10 +325,10 @@ static PendingSatelliteWindow pendingWindow_;
    else
    {
       // self-freeing so don't auto-release
-      WebViewController * webViewController =
-               [[WebViewController alloc] initWithURLRequest: request
-                                                        name: nil];
-      return [webViewController webView];
+      SecondaryWindowController * controller =
+         [[SecondaryWindowController alloc] initWithURLRequest: request
+                                                  name: nil];
+      return [controller webView];
    }
 }
 

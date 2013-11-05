@@ -63,21 +63,8 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) browseUrl: (NSString*) url
 {
-   // check for a pdf and force use of preview (prevent crash that can
-   // occur with certain versions of acrobat reader)
    NSURL* nsurl = [NSURL URLWithString: url];
-   if ([nsurl isFileURL])
-   {
-      if ([[nsurl absoluteString] hasSuffix: @".pdf"])
-      {
-         [[NSWorkspace sharedWorkspace] openFile: nsurl.path
-                                 withApplication: @"Preview"];
-         return;
-      }
-   }
-   
-   // standard web browser
-   [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString: url]];
+   desktop::utils::browseURL(nsurl);
 }
 
 - (NSString*) getOpenFileName: (NSString*) caption
@@ -248,8 +235,7 @@ NSString* resolveAliasedPath(NSString* path)
    
    // load url
    NSURL* nsurl = [NSURL URLWithString: url];   
-   NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
-   [[[controller webView] mainFrame ] loadRequest: request];
+   [controller loadURL: nsurl];
   
    // bring to front
    [[controller window] makeKeyAndOrderFront: self];
@@ -423,7 +409,7 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) setViewerUrl: (NSString*) url
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [[MainFrameController instance] setViewerURL: url];
 }
 
 - (NSString*) getScrollingCompensationType

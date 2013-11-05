@@ -140,9 +140,7 @@ void SessionLauncher::launchNextSession(bool reload)
       {
          NSURL* nsurl = [NSURL URLWithString:
                            [NSString stringWithUTF8String: url.c_str()]];
-         NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
-         [[[[MainFrameController instance]
-                webView] mainFrame] loadRequest: request];
+         [[MainFrameController instance] loadURL: nsurl];
       }
    }
    else

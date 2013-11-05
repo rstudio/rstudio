@@ -106,6 +106,21 @@ void showMessageBox(NSAlertStyle style, NSString* title, NSString* message)
    [alert runModal];
 }
    
+void browseURL(NSURL* nsurl)
+{
+   // check for a pdf and force use of preview (prevent crash that can
+   // occur with certain versions of acrobat reader)
+   if ([nsurl isFileURL] && [[nsurl absoluteString] hasSuffix: @".pdf"])
+   {
+      [[NSWorkspace sharedWorkspace] openFile: nsurl.path
+                              withApplication: @"Preview"];
+   }
+   else
+   {
+      [[NSWorkspace sharedWorkspace] openURL: nsurl];
+   }
+}
+   
 core::system::ProcessSupervisor& processSupervisor()
 {
    static core::system::ProcessSupervisor instance;

@@ -21,7 +21,7 @@
 
 // TODO: window positioning and persistance for satellites
 // TODO: other windows types (minimal window, std browser window)
-// TODO Cmd+W and other stuff from main window
+// TODO: Cmd+W and other stuff from main window
 
 // TODO: more robust wait for server to be ready (currently wait for 100ms)
 
@@ -31,7 +31,9 @@
 // TODO: about box
 // TODO: check for updates
 
-// TODO: system shutdown notice
+// TODO: printing?
+// TODO: enable javascript alerts
+
 // TODO: webkit version check
 
 // TODO: enter "boink" in vcs view

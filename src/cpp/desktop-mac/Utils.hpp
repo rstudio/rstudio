@@ -35,6 +35,8 @@ core::FilePath userLogPath();
    
 void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
    
+void browseURL(NSURL* url);
+   
 core::system::ProcessSupervisor& processSupervisor();
    
 bool supportsFullscreenMode(NSWindow* window);
