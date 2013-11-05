@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -26,13 +27,79 @@ import com.google.gwt.user.client.Event;
  * by those browsers that come a bit closer to supporting a common standard (ie,
  * not legacy IEs).
  */
-abstract class DOMImplStandard extends DOMImpl {
+public abstract class DOMImplStandard extends DOMImpl {
+
+  /**
+   * Adds custom bitless event dispatchers to GWT. If no specific event dispatcher supplied for an
+   * event, the default dispatcher is used.
+   * <p> Example usage:
+   * <pre>
+   * static {
+   *   DOMImplStandard.addBitlessEventDispatchers(getMyCustomDispatchers());
+   * }
+   *
+   * private static native JavaScriptObject getMyCustomDispatchers() /*-{
+   *   return {
+   *     click: @com.xxx.YYY::myCustomDispatcher(*),
+   *     ...
+   *   };
+   * }-* /;
+   * </pre>
+   *
+   * <p> Note that although this method is public for extensions, it is subject to change in
+   * different releases.
+   *
+   * @param eventMap an object that provides dispatching methods keyed with the name of the event
+   */
+  public static void addBitlessEventDispatchers(JavaScriptObject eventMap) {
+    ensureInit();
+    bitlessEventDispatchers.merge(eventMap);
+  }
+
+  /**
+   * Adds custom capture event dispatchers to GWT.
+   * <p> Example usage:
+   * <pre>
+   * static {
+   *   if (isIE10Plus())) {
+   *     DOMImplStandard.addCaptureEventDispatchers(getMsPointerCaptureDispatchers());
+   *   }
+   * }
+   *
+   * private static native JavaScriptObject getMsPointerCaptureDispatchers() /*-{
+   *   return {
+   *     MSPointerDown: @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*),
+   *     MSPointerUp:   @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*),
+   *     ...
+   *   };
+   * }-* /;
+   * </pre>
+   *
+   * <p> Note that although this method is public for extensions, it is subject to change in
+   * different releases.
+   *
+   * @param eventMap an object that provides dispatching methods keyed with the name of the event
+   */
+  public static void addCaptureEventDispatchers(JavaScriptObject eventMap) {
+    ensureInit();
+    captureEventDispatchers.merge(eventMap);
+  }
+
+  private static void ensureInit() {
+    if (eventSystemIsInitialized) {
+      throw new IllegalStateException("Event system already initialized");
+    }
+
+    // Ensure that any default extensions for the browser is registered via
+    // static initializers in deferred binding of DOMImpl:
+    GWT.create(DOMImpl.class);
+  }
 
   private static Element captureElem;
 
-  private static JavaScriptObject bitlessEventDispatchers = getBitlessEventDispatchers();
+  private static EventMap bitlessEventDispatchers = getBitlessEventDispatchers();
 
-  private static JavaScriptObject captureEventDispatchers = getCaptureEventDispatchers();
+  private static EventMap captureEventDispatchers = getCaptureEventDispatchers();
 
   @Deprecated // We no longer want any external JSNI dependencies
   private static JavaScriptObject dispatchEvent;
@@ -159,7 +226,7 @@ abstract class DOMImplStandard extends DOMImpl {
     @com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent =
         $entry(@com.google.gwt.user.client.impl.DOMImplStandard::dispatchUnhandledEvent(*));
 
-    var foreach = @com.google.gwt.user.client.impl.DOMImplStandard::foreach(*);
+    var foreach = @com.google.gwt.user.client.impl.EventMap::foreach(*);
 
     // Ensure $entry for bitless event dispatchers
     var bitlessEvents = @com.google.gwt.user.client.impl.DOMImplStandard::bitlessEventDispatchers;
@@ -175,7 +242,7 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   protected native void disposeEventSystem() /*-{
-    var foreach = @com.google.gwt.user.client.impl.DOMImplStandard::foreach(*);
+    var foreach = @com.google.gwt.user.client.impl.EventMap::foreach(*);
 
     // Remove capture event listeners
     foreach(captureEvents, function(e, fn) { $wnd.removeEventListener(e, fn, true); });
@@ -290,7 +357,7 @@ abstract class DOMImplStandard extends DOMImpl {
     }
   }
 
-  private static native JavaScriptObject getBitlessEventDispatchers() /*-{
+  private static native EventMap getBitlessEventDispatchers() /*-{
     return {
       _default_: @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent(*),
       dragenter: @com.google.gwt.user.client.impl.DOMImplStandard::dispatchDragEvent(*),
@@ -298,7 +365,7 @@ abstract class DOMImplStandard extends DOMImpl {
     };
   }-*/;
 
-  private static native JavaScriptObject getCaptureEventDispatchers() /*-{
+  private static native EventMap getCaptureEventDispatchers() /*-{
     return {
       // Mouse events
       click:      @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*),
@@ -324,13 +391,5 @@ abstract class DOMImplStandard extends DOMImpl {
       gestureend:   @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*),
       gesturechange:@com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent(*),
     };
-  }-*/;
-
-  private static native void foreach(JavaScriptObject map, JavaScriptObject fn) /*-{
-    for (var e in map) {
-      if (map.hasOwnProperty(e)) {
-        fn(e, map[e]);
-      }
-    }
   }-*/;
 }
