@@ -75,11 +75,17 @@ NSString* resolveAliasedPath(NSString* path)
    [open setTitle: caption];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
-   if ([filter length] > 0)
+   // If the filter was specified and looks like a filter string
+   // (i.e. "R Projects (*.RProj)"), extract just the extension ("RProj") to
+   // pass to the open dialog.
+   if ([filter length] > 0 &&
+       [filter rangeOfString: @"*."].location != NSNotFound)
    {
-      // TODO: Extract the extension from the filter using string math
-      // (i.e. "R Projects (*.RProj)" => "RProj" and apply it using
-      // [open setAllowedFileTypes]
+      NSString* toExt = [filter substringFromIndex:
+                         [filter rangeOfString: @"*."].location + 2];
+      NSString* fromExt = [toExt substringToIndex:
+                           [toExt rangeOfString: @")"].location];
+      [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
    }
    long int result = [open runModal];
    if (result == NSOKButton)
