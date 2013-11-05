@@ -134,6 +134,8 @@ static MainFrameController* instance_;
 
 - (id) invokeCommand: (NSString*) command
 {
+   [[self window] makeKeyAndOrderFront: self];
+   
    return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
                                      command]];
 }
