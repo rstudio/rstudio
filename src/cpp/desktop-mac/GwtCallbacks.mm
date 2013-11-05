@@ -1,4 +1,6 @@
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/system/System.hpp>
 
@@ -393,6 +395,21 @@ NSString* resolveAliasedPath(NSString* path)
 - (NSString*) getScrollingCompensationType
 {
    return @"None";
+}
+
+- (Boolean) isOSXMavericks
+{
+   NSDictionary *systemVersionDictionary =
+   [NSDictionary dictionaryWithContentsOfFile:
+    @"/System/Library/CoreServices/SystemVersion.plist"];
+   
+   NSString *systemVersion =
+   [systemVersionDictionary objectForKey:@"ProductVersion"];
+   
+   std::string version(
+                       [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
+   
+   return boost::algorithm::starts_with(version, "10.9");
 }
 
 - (NSString*) filterText: (NSString*) text
