@@ -14,16 +14,33 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
+
+import java.util.List;
 
 /**
  * Tests for DynamicPropertyOracle.
  */
 public class DynamicPropertyOracleTest extends TestCase {
 
+  public void testGetConfigurationProperty() throws BadPropertyValueException {
+    // Sets up.
+    List<String> expectedValues = Lists.newArrayList("webkit", "mozilla");
+    Properties properties = new Properties();
+    ConfigurationProperty userAgentProperty = properties.createConfiguration("user.agent", true);
+    userAgentProperty.setValues(expectedValues);
+    DynamicPropertyOracle dynamicPropertyOracle = new DynamicPropertyOracle(properties);
+
+    // Pulls out the prepared configuration property.
+    com.google.gwt.core.ext.ConfigurationProperty configurationProperty =
+        dynamicPropertyOracle.getConfigurationProperty("user.agent");
+    assertEquals(expectedValues, configurationProperty.getValues());
+  }
+
   public void testProcess() throws BadPropertyValueException {
-    // Setups up.
+    // Sets up.
     Properties properties = new Properties();
     BindingProperty userAgentProperty = properties.createBinding("user.agent");
     BindingProperty localeProperty = properties.createBinding("locale");

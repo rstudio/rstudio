@@ -38,6 +38,8 @@ import java.util.SortedSet;
  * properties not previously queried and allowing an external driver to prescribe values for
  * properties that have been discovered as dependencies.
  */
+// TODO(stalcup): get rid of foo.ConfigurationProperty and bar.ConfigurationProperty class name
+// collisions.
 public class DynamicPropertyOracle implements PropertyOracle {
 
   private static SelectionProperty createSelectionProperty(
@@ -69,8 +71,9 @@ public class DynamicPropertyOracle implements PropertyOracle {
   public ConfigurationProperty getConfigurationProperty(String propertyName)
       throws BadPropertyValueException {
     Property property = properties.find(propertyName);
-    if (property instanceof ConfigurationProperty) {
-      ConfigurationProperty configurationProperty = (ConfigurationProperty) property;
+    if (property instanceof com.google.gwt.dev.cfg.ConfigurationProperty) {
+      com.google.gwt.dev.cfg.ConfigurationProperty configurationProperty =
+          (com.google.gwt.dev.cfg.ConfigurationProperty) property;
       return new DefaultConfigurationProperty(
           configurationProperty.getName(), configurationProperty.getValues());
     }
