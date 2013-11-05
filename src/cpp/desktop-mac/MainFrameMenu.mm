@@ -46,19 +46,7 @@
 {
    // create main menu
    mainMenu_ = [[NSMenu alloc] initWithTitle: @"MainMenu"];
-   NSMenuItem* appMenuItem = [[NSMenuItem new] autorelease];
-   [mainMenu_ addItem: appMenuItem];
-   [NSApp setMainMenu: mainMenu_];
-   
-   // create app menu (currently just has quit)
-   NSMenu* appMenu = [[NSMenu new] autorelease];
-   NSMenuItem* quitMenuItem = [[[NSMenuItem alloc]
-                                initWithTitle: @"Quit RStudio"
-                                action: @selector(initiateQuit)
-                                keyEquivalent:@"q"] autorelease];
-   [quitMenuItem setTarget: [MainFrameController instance]];
-   [appMenu addItem: quitMenuItem];
-   [appMenuItem setSubmenu: appMenu];
+   [self addAppMenu];
 }
 
 - (void) beginMenu: (NSString*) menuName
@@ -187,6 +175,80 @@
       return NO;
 }
 
+- (void) addAppMenu {
+   NSMenuItem* appMenuItem = [[NSMenuItem new] autorelease];
+   [mainMenu_ addItem: appMenuItem];
+   [NSApp setMainMenu: mainMenu_];
+
+   // create app menu (currently just has quit)
+   NSMenu* appMenu = [[NSMenu new] autorelease];
+   [appMenuItem setSubmenu: appMenu];
+
+   // "About RStudio"
+   NSMenuItem* aboutMenuItem = [[NSMenuItem alloc]
+                                initWithTitle: @"About RStudio"
+                                action: @selector(showAbout:)
+                                keyEquivalent: @""];
+   [aboutMenuItem setTarget: self];
+   [appMenu addItem: aboutMenuItem];
+
+   [appMenu addItem: [NSMenuItem separatorItem]];
+
+   // "Preferences..."
+   NSMenuItem* prefsMenuItem = [[NSMenuItem alloc]
+                                initWithTitle: @"Preferences\u2026"
+                                action: @selector(showPrefs:)
+                                keyEquivalent: @","];
+   [prefsMenuItem setTarget: self];
+   [prefsMenuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
+   [appMenu addItem: prefsMenuItem];
+
+   [appMenu addItem: [NSMenuItem separatorItem]];
+
+   // "Services" (These don't currently appear to actually work correctly)
+   NSMenuItem* servicesMenuItem = [[NSMenuItem new] autorelease];
+   [servicesMenuItem setTitle: @"Services"];
+   [appMenu addItem: servicesMenuItem];
+   NSMenu* servicesMenu = [[NSMenu new] autorelease];
+   [NSApp setServicesMenu: servicesMenu];
+   [servicesMenuItem setSubmenu: servicesMenu];
+
+   [appMenu addItem: [NSMenuItem separatorItem]];
+
+   // "Hide RStudio"
+   NSMenuItem* hideMenuItem = [[[NSMenuItem alloc] initWithTitle: @"Hide RStudio"
+                                                          action: @selector(hide:)
+                                                   keyEquivalent: @"h"] autorelease];
+   [hideMenuItem setTarget: NSApp];
+   [hideMenuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
+   [appMenu addItem: hideMenuItem];
+
+   // "Hide Others"
+   NSMenuItem* hideOthersMenuItem = [[[NSMenuItem alloc] initWithTitle: @"Hide Others"
+                                                                action: @selector(hideOtherApplications:)
+                                                         keyEquivalent: @"h"] autorelease];
+   [hideOthersMenuItem setTarget: NSApp];
+   [hideOthersMenuItem setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
+   [appMenu addItem: hideOthersMenuItem];
+
+   // "Show All"
+   NSMenuItem* showAllMenuItem = [[[NSMenuItem alloc] initWithTitle: @"Show All"
+                                                             action: @selector(unhideAllApplications:)
+                                                      keyEquivalent: @""] autorelease];
+   [showAllMenuItem setTarget: NSApp];
+   [appMenu addItem: showAllMenuItem];
+
+   [appMenu addItem: [NSMenuItem separatorItem]];
+
+   // "Quit RStudio"
+   NSMenuItem* quitMenuItem = [[[NSMenuItem alloc]
+                                initWithTitle: @"Quit RStudio"
+                                action: @selector(initiateQuit)
+                                keyEquivalent:@"q"] autorelease];
+   [quitMenuItem setTarget: [MainFrameController instance]];
+   [appMenu addItem: quitMenuItem];
+}
+
 - (void) addWindowMenu {
    NSMenuItem* windowMenuItem = [[NSMenuItem new] autorelease];
    [windowMenuItem setTitleWithMnemonic: @"Window"];
@@ -260,6 +322,15 @@
    for (NSWindow* window in [NSApp windows]) {
       [window orderFront: self];
    }
+   [[NSApp mainWindow] makeKeyAndOrderFront: self];
+}
+
+- (void) showAbout: (id) sender {
+   [[MainFrameController instance] invokeCommand: @"showAboutDialog"];
+}
+
+- (void) showPrefs: (id) sender {
+   [[MainFrameController instance] invokeCommand: @"macPreferences"];
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
@@ -274,10 +345,17 @@
 
 + (BOOL)isSelectorExcludedFromWebScript: (SEL) sel
 {
-   if (sel == @selector(currentTargetMenu))
-      return YES;
-   else
+   if (sel == @selector(beginMainMenu) ||
+       sel == @selector(beginMenu:) ||
+       sel == @selector(addCommand:label:tooltip:shortcut:isCheckable:) ||
+       sel == @selector(addSeparator) ||
+       sel == @selector(endMenu) ||
+       sel == @selector(endMainMenu)) {
       return NO;
+   }
+   else {
+      return YES;
+   }
 }
 
 @end
