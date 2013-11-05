@@ -105,7 +105,7 @@ NSString* resolveAliasedPath(NSString* path)
                          [dir stringByStandardizingPath]];
    NSSavePanel *save = [NSSavePanel savePanel];
    [save setAllowedFileTypes: extensions];
-   [save setAllowsOtherFileTypes: forceDefaultExtension];
+   [save setAllowsOtherFileTypes: !forceDefaultExtension];
    [save setTitle: caption];
    [save setDirectoryURL: pathAndFile];
    [save setNameFieldStringValue: [pathAndFile lastPathComponent]];
@@ -266,7 +266,7 @@ NSString* resolveAliasedPath(NSString* path)
    return false;
 }
 
-- (int) showMessageBox: type
+- (int) showMessageBox: (int) type
                caption: (NSString*) caption
                message: (NSString*) message
                buttons: (NSString*) buttons // Pipe-delimited
@@ -275,6 +275,18 @@ NSString* resolveAliasedPath(NSString* path)
 {
    NSArray *dialogButtons = [buttons componentsSeparatedByString: @"|"];
    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+
+   // Translate the message type requested by the client to the appropriate
+   // type of NSAlert
+   NSAlertStyle style = NSInformationalAlertStyle;
+   if (type == MSG_WARNING)
+      style = NSWarningAlertStyle;
+   else if (type == MSG_ERROR)
+      style = NSCriticalAlertStyle;
+   [alert setAlertStyle: style];
+   
+   // TODO: Pick an image appropriate for each MessageType and attach it to the
+   // dialog
 
    [alert setMessageText:caption];
    [alert setInformativeText:message];
