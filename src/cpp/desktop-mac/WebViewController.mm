@@ -138,6 +138,15 @@ static PendingSatelliteWindow pendingWindow_;
    
    // more post-load initialization
 }
+ 
+- (void) webView:(WebView *) sender
+ didReceiveTitle:(NSString *) title
+        forFrame:(WebFrame *) frame
+{
+   // set window title when main frame title is available
+   if (frame == [webView_ mainFrame])
+      [[self window] setTitle: title];
+}
 
 
 // WebViewController is a self-freeing object so free it when the window closes
