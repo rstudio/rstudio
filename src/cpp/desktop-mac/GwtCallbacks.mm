@@ -88,9 +88,28 @@ NSString* resolveAliasedPath(NSString* path)
               defaultExtension: (NSString*) defaultExtension
               forceDefaultExtension: (Boolean) forceDefaultExtension
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"getSaveFileName";
+   // The method is invoked with an extension like ".R", but NSSavePanel
+   // expects extensions to look like "R" (i.e. no leading period).
+   NSArray *extensions = [NSArray arrayWithObject:
+                          [defaultExtension substringFromIndex: 1]];
+   NSURL *pathAndFile = [NSURL fileURLWithPath:
+                         [dir stringByStandardizingPath]];
+   NSSavePanel *save = [NSSavePanel savePanel];
+   [save setAllowedFileTypes: extensions];
+   [save setAllowsOtherFileTypes: forceDefaultExtension];
+   [save setTitle: caption];
+   [save setDirectoryURL: pathAndFile];
+   [save setNameFieldStringValue: [pathAndFile lastPathComponent]];
+   long int result = [save runModal];
+   if (result == NSOKButton)
+   {
+      NSString *filename = [[save URL] path];
+      return filename;
+   }
+   else
+   {
+      return @"";
+   }
 }
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
