@@ -21,8 +21,6 @@
 
 // TODO: window positioning and persistance for satellites
 
-// TODO: more robust wait for server to be ready (currently wait for 100ms)
-
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
 
