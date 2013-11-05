@@ -118,7 +118,7 @@ public slots:
                      QString workingDirectory,
                      QString extraPathEntries);
 
-   QString getFontList(bool fixedWidthOnly);
+   QString getFixedWidthFontList();
    QString getFixedWidthFont();
    void setFixedWidthFont(QString font);
 

@@ -357,21 +357,22 @@ NSString* resolveAliasedPath(NSString* path)
 
 }
 
-- (NSString*) getFontList: (Boolean) fixedWidthOnly
+- (NSString*) getFixedWidthFontList
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"fontList";
+   NSArray* fonts = [[NSFontManager sharedFontManager]
+                         availableFontNamesWithTraits: NSFixedPitchFontMask];
+   return [fonts componentsJoinedByString: @"\n"];
 }
 
 - (NSString*) getFixedWidthFont
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"getFixedWidthFont";
+   return [NSString stringWithUTF8String:
+                              desktop::options().fixedWidthFont().c_str()];
 }
 
 - (void) setFixedWidthFont: (NSString*) font
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   desktop::options().setFixedWidthFont([font UTF8String]);
 }
 
 - (NSString*) getZoomLevels
@@ -548,8 +549,6 @@ NSString* resolveAliasedPath(NSString* path)
       return @"openProjectInNewWindow";
    else if (sel == @selector(openTerminal:workingDirectory:extraPathEntries:))
       return @"openTerminal";
-   else if (sel == @selector(getFontList:))
-      return @"getFontList";
    else if (sel == @selector(setFixedWidthFont:))
       return @"setFixedWidthFont";
    else if (sel == @selector(setZoomLevel:))

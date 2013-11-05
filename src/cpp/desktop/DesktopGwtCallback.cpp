@@ -839,17 +839,14 @@ bool isProportionalFont(QString fontFamily)
    return !isFixedWidthFont(font);
 }
 
-QString GwtCallback::getFontList(bool fixedWidthOnly)
+QString GwtCallback::getFixedWidthFontList()
 {
    QFontDatabase db;
    QStringList families = db.families();
 
-   if (fixedWidthOnly)
-   {
-      QStringList::iterator it = std::remove_if(
+   QStringList::iterator it = std::remove_if(
             families.begin(), families.end(), isProportionalFont);
-      families.erase(it, families.end());
-   }
+   families.erase(it, families.end());
 
    return families.join(QString::fromAscii("\n"));
 }

@@ -93,7 +93,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String workingDirectory,
                      String extraPathEntries);
 
-   String getFontList(boolean fixedWidthOnly);
+   String getFixedWidthFontList();
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    

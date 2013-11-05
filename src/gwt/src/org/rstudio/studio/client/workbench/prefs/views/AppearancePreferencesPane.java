@@ -84,7 +84,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          });
          
          
-         String[] fonts = Desktop.getFrame().getFontList(true).split("\\n");
+         String[] fonts = Desktop.getFrame().getFixedWidthFontList().split("\\n");
 
          fontFace_ = new SelectWidget("Editor font:", fonts, fonts, false, false, false);
 
