@@ -41,7 +41,6 @@ NSString* resolveAliasedPath(NSString* path)
 {
    if (self = [super init])
    {
-      appDelegate_ = (AppDelegate*)[NSApp delegate];
    }
    return self;
 }

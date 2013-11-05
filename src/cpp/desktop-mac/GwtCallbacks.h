@@ -15,6 +15,5 @@ enum MessageType
 };
 
 @interface GwtCallbacks : NSObject {
-   AppDelegate* appDelegate_;
 }
 @end
