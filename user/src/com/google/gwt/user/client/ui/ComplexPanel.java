@@ -84,7 +84,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
    * @param container the element within which the child will be contained
    */
   protected void add(Widget child, Element container) {
-    add(child, container.<com.google.gwt.user.client.Element>cast());
+    add(child, DOM.asOld(container));
   }
 
   /**
@@ -179,8 +179,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel.ForIsWi
    */
   protected void insert(Widget child, Element container, int beforeIndex,
       boolean domInsert) {
-    insert(child, container.<com.google.gwt.user.client.Element>cast(), beforeIndex,
-        domInsert);
+    insert(child, DOM.asOld(container), beforeIndex, domInsert);
   }
 
   /**

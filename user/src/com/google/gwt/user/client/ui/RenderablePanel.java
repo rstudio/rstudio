@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.DOM;
 
 /**
  * EXPERIMENTAL and subject to change. Do not use this in production code.
@@ -97,7 +98,7 @@ public class RenderablePanel extends ComplexPanel implements IsRenderable {
    * @param toReplace the element to be replaced by the widget
    */
   public final void addAndReplaceElement(Widget widget, Element toReplace) {
-    addAndReplaceElement(widget, toReplace.<com.google.gwt.user.client.Element>cast());
+    addAndReplaceElement(widget, DOM.asOld(toReplace));
   }
 
   /**

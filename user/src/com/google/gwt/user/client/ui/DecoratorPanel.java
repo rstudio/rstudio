@@ -192,11 +192,11 @@ public class DecoratorPanel extends SimplePanel {
   protected com.google.gwt.user.client.Element getCellElement(int row, int cell) {
     Element tr = DOM.getChild(tbody, row);
     Element td = DOM.getChild(tr, cell);
-    return DOM.getFirstChild(td).cast();
+    return DOM.asOld(DOM.getFirstChild(td));
   }
 
   @Override
   protected com.google.gwt.user.client.Element getContainerElement() {
-    return containerElem.cast();
+    return DOM.asOld(containerElem);
   }
 }

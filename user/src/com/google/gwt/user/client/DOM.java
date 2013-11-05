@@ -517,7 +517,7 @@ public class DOM {
    * @return the element from which the mouse pointer was moved
    */
   public static com.google.gwt.user.client.Element eventGetFromElement(Event evt) {
-    return impl.eventGetFromElement(evt).cast();
+    return asOld(impl.eventGetFromElement(evt));
   }
 
   /**
@@ -638,7 +638,7 @@ public class DOM {
    * @return the element to which the mouse pointer was moved
    */
   public static com.google.gwt.user.client.Element eventGetToElement(Event evt) {
-    return impl.eventGetToElement(evt).cast();
+    return asOld(impl.eventGetToElement(evt));
   }
 
   /**
@@ -761,7 +761,7 @@ public class DOM {
    *         exists
    */
   public static com.google.gwt.user.client.Element getCaptureElement() {
-    return sCaptureElem.cast();
+    return asOld(sCaptureElem);
   }
 
   /**
@@ -772,7 +772,7 @@ public class DOM {
    * @return the n-th child element
    */
   public static com.google.gwt.user.client.Element getChild(Element parent, int index) {
-    return impl.getChild(parent, index).cast();
+    return asOld(impl.getChild(parent, index));
   }
 
   /**
@@ -818,7 +818,7 @@ public class DOM {
    * @return the associated element, or <code>null</code> if none is found
    */
   public static com.google.gwt.user.client.Element getElementById(String id) {
-    return Document.get().getElementById(id).cast();
+    return asOld(Document.get().getElementById(id));
   }
 
   /**
@@ -889,7 +889,7 @@ public class DOM {
    * @return the child element
    */
   public static com.google.gwt.user.client.Element getFirstChild(Element elem) {
-    return elem.getFirstChildElement().cast();
+    return asOld(elem.getFirstChildElement());
   }
 
   /**
@@ -971,7 +971,7 @@ public class DOM {
    * @return the parent element
    */
   public static com.google.gwt.user.client.Element getParent(Element elem) {
-    return elem.getParentElement().cast();
+    return asOld(elem.getParentElement());
   }
 
   /**
@@ -1465,5 +1465,17 @@ public class DOM {
 
     // Pass the event to the listener.
     listener.onBrowserEvent(evt);
+  }
+
+  /**
+   * Provided as a convenient way to upcast values statically typed as
+   * {@link Element} to {@link com.google.gwt.user.client.Element}.
+   * For easier upgrades in the future, it's recommended that this function
+   * only be called within a <code>return</code> statement.
+   * <p>
+   * Does <em>not</em> throw a {@link NullPointerException} if elem is null.
+   */
+  public static com.google.gwt.user.client.Element asOld(Element elem) {
+    return (com.google.gwt.user.client.Element) elem;
   }
 }

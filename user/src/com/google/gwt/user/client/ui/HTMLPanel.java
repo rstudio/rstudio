@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.DOM;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -186,7 +187,7 @@ public class HTMLPanel extends ComplexPanel {
    * @param toReplace the element to be replaced by the widget
    */
   public final void addAndReplaceElement(Widget widget, Element toReplace) {
-    addAndReplaceElement(widget, toReplace.<com.google.gwt.user.client.Element>cast());
+    addAndReplaceElement(widget, DOM.asOld(toReplace));
   }
 
   /**
@@ -311,7 +312,7 @@ public class HTMLPanel extends ComplexPanel {
    */
   public com.google.gwt.user.client.Element getElementById(String id) {
     Element elem = isAttached() ? Document.get().getElementById(id) : attachToDomAndGetElement(id);
-    return elem.cast();
+    return DOM.asOld(elem);
   }
 
   /**

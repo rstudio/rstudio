@@ -529,7 +529,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
    * @param elem the new input element
    */
   protected void replaceInputElement(Element elem) {
-    replaceInputElement(elem.<com.google.gwt.user.client.Element>cast());
+    replaceInputElement(DOM.asOld(elem));
   }
 
   /**

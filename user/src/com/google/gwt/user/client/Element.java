@@ -23,12 +23,14 @@ package com.google.gwt.user.client;
  * created from, and can be accessed in JavaScript code as expected. This is
  * typically done by calling methods in the
  * {@link com.google.gwt.user.client.DOM} class.
- *
+ * <p>
  * As of GWT 2.6, users should use {@link com.google.gwt.dom.client.Element}
  * instead.  As an exception, some methods still return a <code>Element</code>
  * object for backwards compatibility (though this will change in a future
  * release), so overriding them will require returning an <code>Element</code>
  * object too.
+ *
+ * @see DOM#asOld
  */
 @Deprecated
 public class Element extends com.google.gwt.dom.client.Element {

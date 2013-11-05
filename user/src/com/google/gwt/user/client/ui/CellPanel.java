@@ -202,17 +202,17 @@ public abstract class CellPanel extends ComplexPanel {
   }
 
   protected com.google.gwt.user.client.Element getBody() {
-    return body.cast();
+    return DOM.asOld(body);
   }
 
   protected com.google.gwt.user.client.Element getTable() {
-    return table.cast();
+    return DOM.asOld(table);
   }
 
   @SuppressWarnings("deprecation")
   protected void setCellHorizontalAlignment(Element td,
       HorizontalAlignmentConstant align) {
-    setCellHorizontalAlignment(td.<com.google.gwt.user.client.Element>cast(), align);
+    setCellHorizontalAlignment(DOM.asOld(td), align);
   }
 
   /**
@@ -228,7 +228,7 @@ public abstract class CellPanel extends ComplexPanel {
   @SuppressWarnings("deprecation")
   protected void setCellVerticalAlignment(Element td,
       VerticalAlignmentConstant align) {
-    setCellVerticalAlignment(td.<com.google.gwt.user.client.Element>cast(), align);
+    setCellVerticalAlignment(DOM.asOld(td), align);
   }
 
   /**

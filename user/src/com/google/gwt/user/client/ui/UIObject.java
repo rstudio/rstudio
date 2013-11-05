@@ -556,7 +556,7 @@ public abstract class UIObject implements HasVisibility {
    */
   public com.google.gwt.user.client.Element getElement() {
     assert (element != null) : MISSING_ELEMENT_ERROR;
-    return element.cast();
+    return DOM.asOld(element);
   }
 
   /**
@@ -899,7 +899,7 @@ public abstract class UIObject implements HasVisibility {
    * @param elem the object's element
    */
   protected final void setElement(Element elem) {
-    setElement(elem.<com.google.gwt.user.client.Element>cast());
+    setElement(DOM.asOld(elem));
   }
 
   /**

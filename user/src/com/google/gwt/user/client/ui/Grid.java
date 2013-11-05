@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 
 /**
  * A rectangular grid that can contain text, html, or a child
@@ -271,7 +272,7 @@ public class Grid extends HTMLTable {
     // Add a non-breaking space to the TD. This ensures that the cell is
     // displayed.
     td.setInnerHTML("&nbsp;");
-    return td.cast();
+    return DOM.asOld(td);
   }
 
   /**
