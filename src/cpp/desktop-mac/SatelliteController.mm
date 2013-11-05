@@ -20,15 +20,18 @@
 
 
 // TODO: window positioning and persistance for satellites
-// TODO: other windows types (minimal window, std browser window)
-// TODO: Cmd+W and other stuff from main window
 
 // TODO: more robust wait for server to be ready (currently wait for 100ms)
 
-// TOOD: file downloading (force preview on mac)
+// TODO: base64 download for ggivs
+// TODO: toolbar for secondary window
+
 // TODO: main menu
+
 // TODO: GwtCallbacks
+
 // TODO: about box
+
 // TODO: check for updates
 
 // TODO: printing?
