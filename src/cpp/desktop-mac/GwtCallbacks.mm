@@ -76,11 +76,29 @@ NSString* resolveAliasedPath(NSString* path)
    [[NSWorkspace sharedWorkspace] openURL: [NSURL URLWithString: url]];
 }
 
-- (NSString*) getOpenFileName: (NSString*) caption dir: (NSString*) dir filter: (NSString*) filter
+- (NSString*) getOpenFileName: (NSString*) caption
+              dir: (NSString*) dir
+              filter: (NSString*) filter
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"getOpenFileName";
+   NSOpenPanel *open = [NSOpenPanel openPanel];
+   [open setTitle: caption];
+   [open setDirectoryURL: [NSURL fileURLWithPath:
+                           [dir stringByStandardizingPath]]];
+   if ([filter length] > 0)
+   {
+      // TODO: Extract the extension from the filter using string math
+      // (i.e. "R Projects (*.RProj)" => "RProj" and apply it using
+      // [open setAllowedFileTypes]
+   }
+   long int result = [open runModal];
+   if (result == NSOKButton)
+   {
+      return [[open URL] path];
+   }
+   else
+   {
+      return @"";
+   }
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
