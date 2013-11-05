@@ -182,6 +182,21 @@ static PendingSatelliteWindow pendingWindow_;
       [[self window] setTitle: title];
 }
 
+- (void) webView: (WebView *)sender
+  printFrameView: (WebFrameView *) frameView
+{
+   if ([frameView documentViewShouldHandlePrint])
+   {
+      [frameView printDocumentView];
+   }
+   else
+   {
+      NSPrintOperation* printOperation =
+      [frameView printOperationWithPrintInfo: [NSPrintInfo sharedPrintInfo]];
+      [printOperation runOperation];
+   }
+}
+
 
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification

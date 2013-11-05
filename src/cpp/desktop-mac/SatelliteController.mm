@@ -34,7 +34,6 @@
 
 // TODO: check for updates
 
-// TODO: printing?
 // TODO: enable javascript alerts
 
 // TODO: webkit version check
