@@ -203,24 +203,6 @@ NSString* resolveAliasedPath(NSString* path)
    }
 }
 
-// R version methods are only implemented for front-ends that
-// enable the user to choose from multiple R versions
-
-- (NSString*) getRVersion
-{
-   return @"";
-}
-
-- (NSString*) chooseRVersion
-{
-   return @"";
-}
-
-- (Boolean) canChooseRVersion
-{
-   return false;
-}
-
 - (Boolean) isRetina
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
@@ -292,19 +274,7 @@ NSString* resolveAliasedPath(NSString* path)
    return (clicked - NSAlertThirdButtonReturn) + 2;
 }
 
-- (NSString*) promptForText: (NSString*) title
-              caption: (NSString*) caption
-              defaultValue: (NSString*) defaultValue
-              usePasswordMask: (Boolean) usePasswordMask
-              rememberPasswordPrompt: (NSString*) rememberPasswordPrompt
-              rememberByDefault: (Boolean) rememberByDefault
-              numbersOnly: (Boolean) numbersOnly
-              selectionStart: (int) selectionStart
-              selectionLength: (int) selectionLength
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"promptForText";
-}
+
 
 - (void) checkForUpdates
 {
@@ -379,25 +349,6 @@ NSString* resolveAliasedPath(NSString* path)
 }
 
 
-- (NSString*) getDesktopSynctexViewer
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"syncIt";
-}
-
-- (void) externalSynctexPreview: (NSString*) pdfPath page: (int) page
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-}
-
-- (void) externalSynctexView: (NSString*) pdfFile
-                     srcFile: (NSString*) srcFile
-                        line: (int) line
-                      column: (int) column
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-}
-
 - (Boolean) supportsFullscreenMode
 {
    NSLog(@"%@", NSStringFromSelector(_cmd));
@@ -441,6 +392,59 @@ NSString* resolveAliasedPath(NSString* path)
    
    return text;
 }
+
+
+// R version methods are only implemented for front-ends that
+// enable the user to choose from multiple R versions
+
+- (NSString*) getRVersion
+{
+   return @"";
+}
+
+- (NSString*) chooseRVersion
+{
+   return @"";
+}
+
+- (Boolean) canChooseRVersion
+{
+   return false;
+}
+
+// No desktop synctex on the Mac
+
+- (NSString*) getDesktopSynctexViewer
+{
+   return @"";
+}
+
+- (void) externalSynctexPreview: (NSString*) pdfPath page: (int) page
+{
+}
+
+- (void) externalSynctexView: (NSString*) pdfFile
+                     srcFile: (NSString*) srcFile
+                        line: (int) line
+                      column: (int) column
+{
+}
+
+// We allow WebTextInput to handle prompt for text in the Cocoa port
+
+- (NSString*) promptForText: (NSString*) title
+                    caption: (NSString*) caption
+               defaultValue: (NSString*) defaultValue
+            usePasswordMask: (Boolean) usePasswordMask
+     rememberPasswordPrompt: (NSString*) rememberPasswordPrompt
+          rememberByDefault: (Boolean) rememberByDefault
+                numbersOnly: (Boolean) numbersOnly
+             selectionStart: (int) selectionStart
+            selectionLength: (int) selectionLength
+{
+   return @"";
+}
+
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
 {
