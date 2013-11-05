@@ -49,7 +49,7 @@ public class ConditionWhenPropertyIs extends Condition {
   @Override
   public String toSource() {
     return String.format(
-        "BindingPropertiesProvider.getPropertyValue(\"%s\").equals(\"%s\")", propName, value);
+        "RuntimePropertyRegistry.getPropertyValue(\"%s\").equals(\"%s\")", propName, value);
   }
 
   @Override

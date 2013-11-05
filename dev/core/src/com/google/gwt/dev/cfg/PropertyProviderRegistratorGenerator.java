@@ -91,20 +91,22 @@ public class PropertyProviderRegistratorGenerator extends Generator {
 
     if (out != null) {
       out.println("package " + PACKAGE_PATH + ";");
-      out.println("import com.google.gwt.core.client.BindingPropertiesProvider;");
+      out.println("import com.google.gwt.core.client.RuntimePropertyRegistry;");
       out.println(
-          "import com.google.gwt.core.client.BindingPropertiesProvider.BindingPropertyProvider;");
+          "import com.google.gwt.core.client.RuntimePropertyRegistry.PropertyValueProvider;");
       out.println("public class " + typeName + " {");
 
       for (BindingProperty bindingProperty : newBindingProperties) {
         createPropertyProviderClass(logger, out, bindingProperty);
       }
+      // TODO(stalcup): create configuration property providers.
 
       out.println("  public static void register() {");
       for (String propertyProviderClassName : propertyProviderClassNames) {
-        out.println("    BindingPropertiesProvider.registerBindingPropertyProvider(new "
+        out.println("    RuntimePropertyRegistry.registerPropertyValueProvider(new "
             + propertyProviderClassName + "());");
       }
+      // TODO(stalcup): register configuration property providers.
       out.println("  }");
       out.println("}");
 
@@ -152,11 +154,11 @@ public class PropertyProviderRegistratorGenerator extends Generator {
 
   private void createPropertyProviderClass(
       TreeLogger logger, PrintWriter out, BindingProperty bindingProperty) {
-    String bindingPropertyClassName = "BindingPropertyProvider" + propertyProviderClassNames.size();
+    String bindingPropertyClassName = "PropertyValueProvider" + propertyProviderClassNames.size();
     propertyProviderClassNames.add(bindingPropertyClassName);
 
-    out.println("  private static class " + bindingPropertyClassName
-        + " extends BindingPropertyProvider {");
+    out.println(
+        "  private static class " + bindingPropertyClassName + " extends PropertyValueProvider {");
     out.println("  public String getName() {");
     out.println("    return \"" + bindingProperty.getName() + "\";");
     out.println("  }");
@@ -182,13 +184,13 @@ public class PropertyProviderRegistratorGenerator extends Generator {
       TreeLogger logger, PrintWriter out, BindingProperty bindingProperty) {
     out.print("  public native String getValue() /*-");
     out.print(generateValue(logger, bindingProperty).trim());
-    out.println("  -*/;");
+    out.println("-*/;");
   }
 
   private void createProviderGetter(PrintWriter out, BindingProperty bindingProperty) {
     out.print("  public native String getValue() /*-");
     out.print(bindingProperty.getProvider().getBody().trim());
-    out.print("  -*/;");
+    out.print("-*/;");
   }
 
   private String generateValue(TreeLogger logger, BindingProperty bindingProperty) {

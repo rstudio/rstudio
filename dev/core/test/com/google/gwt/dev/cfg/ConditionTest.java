@@ -119,9 +119,9 @@ public class ConditionTest extends TestCase {
 
     // Exercise it all.
     assertEquals(
-        "!(((((requestTypeName.equals(\"com.google.gwt.Foo\")) && (BindingPropertiesProvider."
+        "!(((((requestTypeName.equals(\"com.google.gwt.Foo\")) && (RuntimePropertyRegistry."
         + "getPropertyValue(\"user.agent\").equals(\"webkit\")))) || (((requestTypeName.equals"
-        + "(\"com.google.gwt.HasFocus\")) && (BindingPropertiesProvider.getPropertyValue("
+        + "(\"com.google.gwt.HasFocus\")) && (RuntimePropertyRegistry.getPropertyValue("
         + "\"user.agent\").equals(\"ie9\"))))))", new ConditionNone(new ConditionAll(
         new ConditionWhenTypeIs("com.google.gwt.Foo"),
         new ConditionWhenPropertyIs("user.agent", "webkit")), new ConditionAll(
