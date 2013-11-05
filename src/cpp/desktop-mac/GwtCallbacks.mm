@@ -205,9 +205,16 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (Boolean) isRetina
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return true;
+   NSWindow* mainWindow = [[MainFrameController instance] window];
+   if ([mainWindow respondsToSelector:@selector(backingScaleFactor)])
+   {
+      double scaleFactor = [mainWindow backingScaleFactor];
+      return scaleFactor == 2.0;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 - (void) openMinimalWindow: (NSString*) name url: (NSString*) url
