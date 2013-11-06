@@ -553,9 +553,10 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (NSString*) filterText: (NSString*) text
 {
-   // TODO: normalize NFD Unicode text as we do in Qt version
-   
-   return text;
+   // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
+   // necessary in the first place but just in case, and for symmetry with the Qt
+   // code, do the normalization anyway.
+   return [text precomposedStringWithCanonicalMapping];
 }
 
 
