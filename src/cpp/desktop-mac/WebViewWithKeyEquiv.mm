@@ -1,5 +1,5 @@
 /*
- * MainFrameWebView.mm
+ * WebViewWithKeyEquiv.mm
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -13,31 +13,18 @@
  *
  */
 
-#import "MainFrameWebView.h"
-#import "MainFrameController.h"
+#import "WebViewWithKeyEquiv.h"
 
-@implementation MainFrameWebView
+@implementation WebViewWithKeyEquiv
 
-@synthesize keyEquivDelegate;
-
-- (void) dealloc
+- (void) setKeyEquivDelegate: (id) delegate
 {
-   [keyEquivDelegate release];
-   [super dealloc];
-}
-
-- (id) initWithFrame:(NSRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        // Initialization code here.
-    }
-    return self;
+   keyEquivDelegate_ = delegate;
 }
 
 - (BOOL) performKeyEquivalent: (NSEvent *) theEvent
 {
-   if (keyEquivDelegate != nil && [keyEquivDelegate performKeyEquivalent: theEvent])
+   if (keyEquivDelegate_ != nil && [keyEquivDelegate_ performKeyEquivalent: theEvent])
       return YES;
    return [super performKeyEquivalent: theEvent];
 }

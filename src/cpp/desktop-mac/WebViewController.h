@@ -3,10 +3,10 @@
 #import <Cocoa/Cocoa.h>
 #import <Webkit/WebKit.h>
 
-#import "MainFrameWebView.h"
+#import "WebViewWithKeyEquiv.h"
 
 @interface WebViewController : NSWindowController<NSWindowDelegate> {
-   MainFrameWebView* webView_;
+   WebViewWithKeyEquiv* webView_;
    NSString* name_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;

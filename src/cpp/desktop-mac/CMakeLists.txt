@@ -33,7 +33,7 @@ set(DESKTOP_MAC_SOURCE_FILES
    Main.mm
    MainFrameController.mm
    MainFrameMenu.mm
-   MainFrameWebView.mm
+   WebViewWithKeyEquiv.mm
    Options.mm
    SatelliteController.mm
    SecondaryWindowController.mm

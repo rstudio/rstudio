@@ -13,7 +13,7 @@
 #import "SatelliteController.h"
 #import "SecondaryWindowController.h"
 #import "Utils.hpp"
-#import "MainFrameWebView.h"
+#import "WebViewWithKeyEquiv.h"
 
 struct PendingSatelliteWindow
 {
@@ -113,7 +113,7 @@ static PendingSatelliteWindow pendingWindow_;
    if (self = [super initWithWindow: window])
    {
       // create web view, save it as a member, and register as it's delegate,
-      webView_ = [[MainFrameWebView alloc] initWithFrame: frameRect];
+      webView_ = [[WebViewWithKeyEquiv alloc] initWithFrame: frameRect];
       [webView_ setUIDelegate: self];
       [webView_ setFrameLoadDelegate: self];
       [webView_ setResourceLoadDelegate: self];
@@ -425,6 +425,18 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    id win = [webView_ windowScriptObject];
    GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init] autorelease];
    [win setValue: gwtCallbacks forKey:@"desktop"];
+}
+
+- (BOOL) performKeyEquivalent: (NSEvent *)theEvent
+{
+   NSString* chr = [theEvent charactersIgnoringModifiers];
+   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+   if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
+   {
+      [[webView_ window] performClose: self];
+      return YES;
+   }
+   return NO;
 }
 
 @end

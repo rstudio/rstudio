@@ -58,6 +58,18 @@ NSString* charToStr(unichar c) {
                       @"\t",     @"Tab",
                       @"\b",     @"Backspace",
                       nil];
+      
+      customShortcuts_ = [[NSDictionary alloc] initWithObjectsAndKeys:
+                          @"Meta+0", @"zoomActualSize",
+                          @"Meta+=", @"zoomIn",
+                          @"Meta+-", @"zoomOut",
+                          @"Meta+Z", @"undoDummy",
+                          @"Meta+Shift+Z", @"redoDummy",
+                          nil];
+      // Undo/Redo can't have normal keyboard shortcuts assigned--their keystrokes need to be
+      // handled by WebKit itself. But we still want it to show up in the menu. So just special
+      // case them.
+
    }
    return self;
 }
@@ -68,6 +80,7 @@ NSString* charToStr(unichar c) {
    [menuStack_ release];
    [commands_ release];
    [shortcutMap_ release];
+   [customShortcuts_ release];
    [super dealloc];
 }
 
@@ -122,29 +135,11 @@ NSString* charToStr(unichar c) {
    [menuItem setTarget: self];
    [menuItem setAction: @selector(invoke:)];
    
-  
-   // special case for zoom commands
-   if ([commandId isEqualToString: @"zoomActualSize"])
-   {
-      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
-      [menuItem setKeyEquivalent: @"0"];
-   }
-   else if ([commandId isEqualToString: @"zoomIn"])
-   {
-      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
-      [menuItem setKeyEquivalent: @"="];
-   }
-   else if ([commandId isEqualToString: @"zoomOut"])
-   {
-      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
-      [menuItem setKeyEquivalent: @"-"];
-   }
-   else
-   {
-      [self assignShortcut: shortcut toMenuItem: menuItem];
-   }
-
+   if ([customShortcuts_ objectForKey: commandId] != nil)
+      shortcut = [customShortcuts_ objectForKey: commandId];
    
+   [self assignShortcut: shortcut toMenuItem: menuItem];
+
    // add it to the menu
    [[self currentTargetMenu] addItem: menuItem];
 }
@@ -178,7 +173,7 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
-   static NSRegularExpression* re = [[NSRegularExpression alloc] initWithPattern: @"^[a-zA-Z0-9.+\\-/`]$"
+   static NSRegularExpression* re = [[NSRegularExpression alloc] initWithPattern: @"^[a-zA-Z0-9.+\\-/`=]$"
                                                                          options: NSRegularExpressionCaseInsensitive
                                                                            error: NULL];
 
