@@ -26,8 +26,6 @@
 
 // TODO: zoom callbacks
 
-// TODO: webkit version check
-
 
 // TODO: main menu
 

@@ -191,14 +191,14 @@ static MainFrameController* instance_;
    if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
    {
       int version = core::safe_convert::stringTo<int>(match[1], 0);
-      if (version < 536)
+      if (version < 534)
       {
          desktop::utils::showMessageBox(
              NSWarningAlertStyle,
              @"Older Version of Safari Detected",
              @"RStudio uses the Safari WebKit browser engine for rendering "
              @"its user interface. The minimum required version of Safari is "
-             @"6.0 and an earlier version was detected on your system.\n\n"
+             @"5.1 and an earlier version was detected on your system.\n\n"
              @"Please update to a more recent version of Safari to ensure that "
              @"all RStudio features work correctly.");
       }
