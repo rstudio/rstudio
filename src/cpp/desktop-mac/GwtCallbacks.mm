@@ -290,15 +290,15 @@ NSString* resolveAliasedPath(NSString* path)
    // Choose an image type appropriate to the alert
    NSString* imageName = @"";
    if (type == MSG_POPUP_BLOCKED)
-      imageName = @"dialog_popup_blocked.png";
+      imageName = @"dialog_popup_blocked";
    else if (type == MSG_INFO)
-      imageName = @"dialog_info.png";
+      imageName = @"dialog_info";
    else if (type == MSG_WARNING)
-      imageName = @"dialog_warning.png";
+      imageName = @"dialog_warning";
    else if (type == MSG_ERROR)
-      imageName = @"dialog_error.png";
+      imageName = @"dialog_error";
    else if (type == MSG_QUESTION)
-      imageName = @"dialog_question.png";
+      imageName = @"dialog_question";
    
    if ([imageName length] > 0)
    {
