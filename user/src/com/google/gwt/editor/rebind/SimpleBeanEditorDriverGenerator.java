@@ -19,12 +19,30 @@ import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.editor.client.impl.AbstractSimpleBeanEditorDriver;
 import com.google.gwt.editor.client.impl.SimpleBeanEditorDelegate;
 import com.google.gwt.editor.rebind.model.EditorData;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 /**
  * Generates implementations of {@link SimpleBeanEditorDriver}.
  */
 public class SimpleBeanEditorDriverGenerator extends
     AbstractEditorDriverGenerator {
+
+  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of();
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnProperties() {
+    return false;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
+  }
 
   @Override
   protected Class<?> getDriverInterfaceType() {

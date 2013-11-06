@@ -37,6 +37,7 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,19 +90,22 @@ public class LocalizableGenerator extends Generator {
     }
   }
 
-   /**
+  public static final String CONSTANTS_NAME = Constants.class.getName();
+
+  public static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
+
+  /**
     * Obsolete comment for GWT metadata - needs to be removed once all
     * references have been removed.
     */
   public static final String GWT_KEY = "gwt.key";
 
-  public static final String CONSTANTS_NAME = Constants.class.getName();
-
-  public static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
-
   public static final String MESSAGES_NAME = Messages.class.getName();
 
   private LocalizableLinkageCreator linkageCreator = new LocalizableLinkageCreator();
+
+  private static ImmutableSet<String> relevantPropertyNames =
+      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
 
   /**
    * Generate an implementation for the given type.
@@ -180,6 +184,21 @@ public class LocalizableGenerator extends Generator {
     }
 
     return returnedClass;
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnProperties() {
+    return false;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
   }
 
   /**

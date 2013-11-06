@@ -29,6 +29,7 @@ import com.google.gwt.i18n.shared.CustomDateTimeFormat;
 import com.google.gwt.i18n.shared.CustomDateTimeFormat.Pattern;
 import com.google.gwt.i18n.shared.DateTimeFormat;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -40,6 +41,9 @@ import java.io.PrintWriter;
  * format patterns at compile time.
  */
 public class CustomDateTimeFormatGenerator extends Generator {
+
+  private static ImmutableSet<String> relevantPropertyNames =
+      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
 
   /**
    * Generate an implementation for the given type.
@@ -141,5 +145,15 @@ public class CustomDateTimeFormatGenerator extends Generator {
       writer.commit(logger);
     }
     return packageName + "." + className;
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnProperties() {
+    return false;
   }
 }

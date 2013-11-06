@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
 import com.google.gwt.i18n.server.GwtLocaleImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -82,6 +83,9 @@ public class LocaleInfoGenerator extends Generator {
     RTL_LOCALES.add("ps");
     RTL_LOCALES.add("ur");
   }
+
+  private static ImmutableSet<String> relevantPropertyNames =
+      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
 
   /**
    * Generate an implementation for the given type.
@@ -311,6 +315,16 @@ public class LocaleInfoGenerator extends Generator {
       writer.commit(logger);
     }
     return packageName + "." + className;
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
   }
 
   /**

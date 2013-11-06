@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.client.AsyncProxy;
 import com.google.gwt.user.client.AsyncProxy.AllowNonVoid;
 import com.google.gwt.user.client.AsyncProxy.ConcreteType;
@@ -42,6 +43,8 @@ import java.util.Iterator;
  * Generates implementation of AsyncProxy interfaces.
  */
 public class AsyncProxyGenerator extends Generator {
+
+  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of();
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext generatorContext,
@@ -206,6 +209,21 @@ public class AsyncProxyGenerator extends Generator {
 
     // Return the name of the concrete class
     return createdClassName;
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnProperties() {
+    return false;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
   }
 
   private JClassType getConcreteType(TreeLogger logger, TypeOracle typeOracle,

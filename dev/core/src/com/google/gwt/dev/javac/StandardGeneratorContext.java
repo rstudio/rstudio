@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.IncrementalGenerator;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.RebindRuleResolver;
+import com.google.gwt.core.ext.SubsetFilteringPropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
@@ -292,7 +293,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   private final Map<String, PendingResource> pendingResources =
       new HashMap<String, PendingResource>();
 
-  private transient PropertyOracle propOracle;
+  private transient PropertyOracle propertyOracle;
 
   private RebindRuleResolver rebindRuleResolver;
 
@@ -561,7 +562,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   @Override
   public final PropertyOracle getPropertyOracle() {
-    return propOracle;
+    return propertyOracle;
   }
 
   @Override
@@ -648,8 +649,15 @@ public class StandardGeneratorContext implements GeneratorContext {
     Event generatorEvent =
         SpeedTracerLogger.start(type, "class", generatorClassName, "type", typeName);
 
+    PropertyOracle originalPropertyOracle = propertyOracle;
     try {
       RebindResult result;
+      // TODO(stalcup): refactor the Generator/PropertyOracle system (in a potentially backwards
+      // incompatible way) so that all Generators are forced to accurately declare the names of
+      // properties they care about.
+      propertyOracle = new SubsetFilteringPropertyOracle(
+          generator.getAccessedPropertyNames(), originalPropertyOracle,
+          generatorClassName + ".getAccessedPropertyNames() may need to be updated.");
       if (generator instanceof IncrementalGenerator) {
         IncrementalGenerator incGenerator = (IncrementalGenerator) generator;
 
@@ -694,6 +702,7 @@ public class StandardGeneratorContext implements GeneratorContext {
           + "' threw an exception while rebinding '" + typeName + "'", e);
       throw new UnableToCompleteException();
     } finally {
+      propertyOracle = originalPropertyOracle;
       generatorEvent.end();
     }
   }
@@ -717,8 +726,8 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Sets the current transient property oracle to answer current property
    * questions.
    */
-  public void setPropertyOracle(PropertyOracle propOracle) {
-    this.propOracle = propOracle;
+  public void setPropertyOracle(PropertyOracle propertyOracle) {
+    this.propertyOracle = propertyOracle;
   }
 
   public void setRebindRuleResolver(RebindRuleResolver resolver) {

@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -36,6 +37,9 @@ import java.io.PrintWriter;
  */
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
+
+  private static ImmutableSet<String> relevantPropertyNames =
+      ImmutableSet.of("user.agent", "user.agent.runtimeWarning");
 
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
@@ -101,5 +105,15 @@ public class UserAgentGenerator extends Generator {
       sw.commit(logger);
     }
     return composerFactory.getCreatedClassName();
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
   }
 }

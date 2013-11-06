@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
 /**
  * Generator for producing the asynchronous version of a
@@ -37,6 +38,10 @@ public class ServiceInterfaceProxyGenerator extends IncrementalGenerator {
    * by a version of this generator with a different version id.
    */
   private static final long GENERATOR_VERSION_ID = 1L;
+
+  private static ImmutableSet<String> relevantPropertyNames = ImmutableSet.of(
+      "gwt.elideTypeNamesFromRPC", "rpc.enhancedClasses", "gwt.suppressNonStaticFinalFieldWarnings",
+      "rpc.blacklist");
 
   @Override
   public RebindResult generateIncrementally(TreeLogger logger, GeneratorContext ctx,
@@ -65,6 +70,11 @@ public class ServiceInterfaceProxyGenerator extends IncrementalGenerator {
             + remoteService.getQualifiedSourceName() + "'", null);
 
     return proxyCreator.create(proxyLogger, ctx);
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
   }
 
   @Override

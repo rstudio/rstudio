@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.CurrencyList;
 import com.google.gwt.i18n.client.impl.CurrencyDataImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -42,9 +43,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 /**
@@ -72,9 +73,9 @@ public class CurrencyListGenerator extends Generator {
 
     private final String portableSymbol;
 
-    private final String symbol;
-
     private String simpleSymbol;
+
+    private final String symbol;
 
     /**
      * Create an instance.
@@ -262,6 +263,9 @@ public class CurrencyListGenerator extends Generator {
     return str.replace("\"", "\\\"");
   }
 
+  private static ImmutableSet<String> relevantPropertyNames =
+      ImmutableSet.of("locale.queryparam", "locale", "runtime.locales", "locale.cookie");
+
   /**
    * Generate an implementation for the given type.
    * 
@@ -296,6 +300,16 @@ public class CurrencyListGenerator extends Generator {
     CachedGeneratorContext cachedContext = new CachedGeneratorContext(context);
     return generateRuntimeSelection(logger, cachedContext, targetClass, locale,
         runtimeLocales);
+  }
+
+  @Override
+  public ImmutableSet<String> getAccessedPropertyNames() {
+    return relevantPropertyNames;
+  }
+
+  @Override
+  public boolean contentDependsOnTypes() {
+    return false;
   }
 
   /**
