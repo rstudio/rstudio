@@ -1,7 +1,4 @@
-downloadUpdateInfo <- function(os, manual) {
-  # Get the current version of RStudio and construct the update URL
-  version <- package_version(
-              utils:::packageDescription("rstudio", fields = "Version"))
+downloadUpdateInfo <- function(version, os, manual) {
   updateUrl <- paste("http://www.rstudio.org/links/check_for_update", 
                      "?version=", version, 
                      "&os=", os, 

@@ -24,6 +24,7 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   ServerUnavailableHandler,
                                                   ClientDisconnectedHandler,
                                                   InvalidClientVersionHandler,
-                                                  ServerOfflineHandler
+                                                  ServerOfflineHandler, 
+                                                  UpdateCheckEvent.Handler
 {
 }

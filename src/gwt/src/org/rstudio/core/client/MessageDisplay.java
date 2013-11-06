@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import java.util.List;
+
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focusable;
 
@@ -254,6 +256,24 @@ public abstract class MessageDisplay
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
          dialog.addButton("Cancel");
+      dialog.showModal();
+   }
+   
+   public void showGenericDialog(int type,
+                                 String caption,
+                                 String message,
+                                 List<String> buttonLabels,
+                                 List<Operation> buttonOperations,
+                                 int defaultButton)
+   {
+      DialogBuilder dialog = createDialog(type, caption, message);
+      int numButtons = Math.min(buttonLabels.size(), buttonOperations.size());
+      for (int i = 0; i < numButtons; i++)
+      {
+         dialog.addButton(buttonLabels.get(i),
+                          buttonOperations.get(i));
+      }
+      dialog.setDefaultButton(defaultButton);
       dialog.showModal();
    }
 

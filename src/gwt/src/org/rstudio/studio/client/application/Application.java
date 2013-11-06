@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
@@ -46,6 +48,7 @@ import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -124,6 +127,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ServerUnavailableEvent.TYPE, this);
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
+      events.addHandler(UpdateCheckEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -357,6 +361,34 @@ public class Application implements ApplicationEventHandlers
          Desktop.getFrame().macZoomOut();
    }
   
+   @Handler
+   void onCheckForUpdates()
+   {
+      server_.checkForUpdates(new ServerRequestCallback<UpdateCheckResult>()
+      {
+         @Override
+         public void onResponseReceived(UpdateCheckResult result)
+         {
+            respondToUpdateCheck(result, true);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error Checking for Updates", 
+                  "An error occurred while checking for updates: "
+                  + error.getMessage());
+         }
+      });
+   }
+
+
+   @Override
+   public void onUpdateCheck(UpdateCheckEvent event)
+   {
+      respondToUpdateCheck(event.getResult(), false);
+   }
+
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
@@ -697,7 +729,58 @@ public class Application implements ApplicationEventHandlers
       return Window.Location.getParameter("project") != null; 
    }
    
-  
+   private void respondToUpdateCheck(final UpdateCheckResult result, 
+                                     boolean manual)
+   {
+      if (result.getUpdateVersion().length() > 0)
+      {
+         // TODO: Ensure update version is not in the list of ignored versions.
+         ArrayList<String> buttonLabels = new ArrayList<String>();
+         ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
+         
+         buttonLabels.add("Download...");
+         buttonOperations.add(new Operation() {
+            @Override
+            public void execute()
+            {
+               // TODO: Prepare to quit the app before installing this update
+               Desktop.getFrame().browseUrl(result.getUpdateUrl());
+            }
+         });
+
+         buttonLabels.add("Remind Later");
+         buttonOperations.add(new Operation() {
+            @Override
+            public void execute()
+            {
+               // Don't do anything here; the prompt will re-appear the next
+               // time we do an update check
+            }
+         });
+
+         buttonLabels.add("Ignore Update");
+         buttonOperations.add(new Operation() {
+            @Override
+            public void execute()
+            {
+               // TODO: Add to list of ignored versions
+            }
+         });
+
+         globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION, 
+               "Update Available", 
+               result.getUpdateMessage(), 
+               buttonLabels, 
+               buttonOperations, 0);
+      }
+      else if (manual) 
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "No Update Available", 
+                              "You're using the newest version of RStudio.");
+      }
+   }
+   
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;

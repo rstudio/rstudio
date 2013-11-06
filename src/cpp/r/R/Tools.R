@@ -544,34 +544,3 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
       end_character_number = .rs.scalar(srcref[6]))
 })
 
-.rs.addFunction("downloadUpdateInfo", function(os, manual) {
-  # Get the current version of RStudio and construct the update URL
-  version <- package_version(
-              utils:::packageDescription("rstudio", fields = "Version"))
-  updateUrl <- paste("http://www.rstudio.org/links/check_for_update", 
-                     "?version=", version, 
-                     "&os=", os, 
-                     "&format=kvp", sep = "")
-  if (isTRUE(manual)) 
-  {
-    updateUrl <- paste(updateUrl, "&manual=true", sep = "")
-  }
-  
-  # Open the URL and reaad the result
-  conn <- url(updateUrl, open = "rt")
-  on.exit(close(conn), add = TRUE)  
-  result <- readLines(conn, warn = FALSE)
-  
-  # Parse the key-value pairs into a named list. 
-  # In: "foo=bar&baz=quux"
-  # Out: list(foo = "bar", baz = "quux")
-  pairs <- strsplit(result, "&", fixed = TRUE)
-  pairs <- strsplit(unlist(pairs), "=", fixed = TRUE)
-  pairs <- sapply(pairs, function(pair) { 
-    result <- list(if (length(pair) > 1) utils::URLdecode(pair[2]) else "")
-    names(result) <- pair[1]
-    result
-  }) 
-  return(pairs)
-})
-

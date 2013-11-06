@@ -207,12 +207,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
    }
 
    @Handler
-   void onCheckForUpdates()
-   {
-      Desktop.getFrame().checkForUpdates();
-   }
-
-   @Handler
    void onShowAboutDialog()
    {
       Desktop.getFrame().showAboutDialog();

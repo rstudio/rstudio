@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include "session-config.h"
+
 using namespace core;
 
 namespace session {
@@ -56,6 +58,8 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
 void endBootUpdateCheck(const core::system::ProcessResult& result)
 {
    json::Object obj = jsonFromProcessResult(result);
+   // TODO: Don't bother emitting an event if there's no available update
+   // version
    ClientEvent event (client_events::kUpdateCheck, obj);
    module_context::enqueClientEvent(event);
 }
@@ -93,6 +97,8 @@ void beginUpdateCheck(bool manual,
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("'); downloadUpdateInfo('");
+   cmd.append(RSTUDIO_VERSION);
+   cmd.append("', '");
 #if defined(_WIN32)
    cmd.append("windows");
 #elif defined(__APPLE__)
@@ -120,7 +126,7 @@ void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
                        const core::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
-   response.setResponse(jsonFromProcessResult(result));
+   response.setResult(jsonFromProcessResult(result));
    cont(Success(), &response);
 }
    

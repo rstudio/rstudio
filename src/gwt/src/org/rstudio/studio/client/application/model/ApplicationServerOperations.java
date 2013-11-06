@@ -62,4 +62,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void suspendForRestart(SuspendOptions options,
                           ServerRequestCallback<Void> requestCallback);
    void ping(ServerRequestCallback<Void> requestCallback);
+
+   public void checkForUpdates(
+         ServerRequestCallback<UpdateCheckResult> requestCallback);
 }

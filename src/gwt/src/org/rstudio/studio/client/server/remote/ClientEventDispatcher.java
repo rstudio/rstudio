@@ -27,6 +27,7 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
@@ -515,6 +516,11 @@ public class ClientEventDispatcher
          {
             ViewerNavigateEvent.Data data = event.getData();
             eventBus_.fireEvent(new ViewerNavigateEvent(data));
+         }
+         else if (type.equals(ClientEvent.UpdateCheck))
+         {
+            UpdateCheckResult data = event.getData();
+            eventBus_.fireEvent(new UpdateCheckEvent(data));
          }
          else
          {
