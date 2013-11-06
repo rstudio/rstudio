@@ -85,14 +85,12 @@ public class JsCoerceIntShiftTest extends TestCase {
 
   private PropertyOracle safariOracle = new MockOracle("safari");
   private PropertyOracle firefoxOracle = new MockOracle("gecko1_8");
-  private PropertyOracle ieOracle = new MockOracle("ie6");
   private PropertyOracle noAgentOracle = new MockOracle(null);
 
   private TreeLogger logger = new FailErrorLogger();
 
   public void testNonSafari() throws Exception {
     assertNotRewritten(firefoxOracle);
-    assertNotRewritten(ieOracle, firefoxOracle);
   }
   
   public void testNoUserAgent() throws Exception {

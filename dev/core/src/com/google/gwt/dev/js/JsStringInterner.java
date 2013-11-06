@@ -305,13 +305,10 @@ public class JsStringInterner {
    * @param jprogram the JProgram that has fragment dependency data for
    *          <code>program</code>
    * @param program the JsProgram
-   * @param alwaysIntern true for browsers like IE which must always intern literals
    * @return a map describing the interning that occurred
    */
-  public static Map<JsName, String> exec(JProgram jprogram, JsProgram program,
-      boolean alwaysIntern) {
-    StringVisitor v = new StringVisitor(jprogram, program.getScope(), alwaysIntern ? null :
-      getOccurenceMap(program));
+  public static Map<JsName, String> exec(JProgram jprogram, JsProgram program) {
+    StringVisitor v = new StringVisitor(jprogram, program.getScope(), getOccurenceMap(program));
     v.accept(program);
 
     Map<Integer, SortedSet<JsStringLiteral>> bins = new HashMap<Integer, SortedSet<JsStringLiteral>>();

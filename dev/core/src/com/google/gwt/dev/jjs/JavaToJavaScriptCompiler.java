@@ -81,7 +81,6 @@ import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
-import com.google.gwt.dev.jjs.impl.JsIEBlockTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
@@ -114,7 +113,6 @@ import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsCoerceIntShift;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
-import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
@@ -433,17 +431,13 @@ public class JavaToJavaScriptCompiler {
         }
       }
 
-      // detect if browser is ie6 or not known
-      boolean isIE6orUnknown = findBooleanProperty(propertyOracles, logger, "user.agent", "ie6",
-          true, false, true);
-
       boolean isSourceMapsEnabled = findBooleanProperty(propertyOracles, logger,
           "compiler.useSourceMaps", "true", true, false, false);
       // (10.5) Obfuscate
       Map<JsName, String> obfuscateMap = Maps.create();
       switch (options.getOutput()) {
         case OBFUSCATED:
-          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram, propertyOracles);
           if (options.shouldRemoveDuplicateFunctions() &&
               JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
@@ -455,7 +449,7 @@ public class JavaToJavaScriptCompiler {
           JsPrettyNamer.exec(jsProgram, propertyOracles);
           break;
         case DETAILED:
-          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram, isIE6orUnknown);
+          obfuscateMap = JsStringInterner.exec(jprogram, jsProgram);
           JsVerboseNamer.exec(jsProgram, propertyOracles);
           break;
         default:
@@ -473,15 +467,6 @@ public class JavaToJavaScriptCompiler {
 
       // (11) Perform any post-obfuscation normalizations.
 
-      // Work around an IE7 bug,
-      // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
-      // note, JsIEBlockTextTransformer now handles restructuring top level
-      // blocks, this class now handles non-top level blocks only.
-      boolean splitBlocks = isIE6orUnknown;
-
-      if (splitBlocks) {
-        JsIEBlockSizeVisitor.exec(jsProgram);
-      }
       JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
 
       // (12) Generate the final output text.
@@ -492,7 +477,7 @@ public class JavaToJavaScriptCompiler {
               ? new SizeBreakdown[js.length] : null;
       List<Map<Range, SourceInfo>> sourceInfoMaps = new ArrayList<Map<Range, SourceInfo>>();
       generateJavaScriptCode(compilerContext, jprogram, jsProgram, jjsmap, js, ranges,
-          sizeBreakdowns, sourceInfoMaps, splitBlocks, isSourceMapsEnabled);
+          sizeBreakdowns, sourceInfoMaps, isSourceMapsEnabled);
 
       PermutationResult toReturn =
           new PermutationResultImpl(js, permutation, makeSymbolMap(symbolTable, jsProgram), ranges);
@@ -1103,13 +1088,12 @@ public class JavaToJavaScriptCompiler {
    * @param ranges An array to hold the statement ranges for that JavaScript
    * @param sizeBreakdowns An array to hold the size breakdowns for that JavaScript
    * @param sourceInfoMaps An array to hold the source info maps for that JavaScript
-   * @param splitBlocks true if current permutation is for IE6 or unknown
    * @param sourceMapsEnabled
    */
   private static void generateJavaScriptCode(CompilerContext compilerContext, JProgram jprogram,
       JsProgram jsProgram, JavaToJavaScriptMap jjsMap, String[] js, StatementRanges[] ranges,
       SizeBreakdown[] sizeBreakdowns, List<Map<Range, SourceInfo>> sourceInfoMaps,
-      boolean splitBlocks, boolean sourceMapsEnabled) {
+      boolean sourceMapsEnabled) {
     PrecompileTaskOptions options = compilerContext.getOptions();
     boolean useClosureCompiler = options.isClosureCompilerEnabled();
     if (useClosureCompiler) {
@@ -1158,12 +1142,6 @@ public class JavaToJavaScriptCompiler {
         transformer.exec();
       }
       functionClusterEvent.end();
-
-      // rewrite top-level blocks to limit the number of statements
-      if (!sourceMapsEnabled && splitBlocks) {
-        transformer = new JsIEBlockTextTransformer(transformer);
-        transformer.exec();
-      }
 
       js[i] = transformer.getJs();
       ranges[i] = transformer.getStatementRanges();
