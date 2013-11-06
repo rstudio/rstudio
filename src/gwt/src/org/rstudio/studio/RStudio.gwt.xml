@@ -27,13 +27,6 @@
    ]]></property-provider>
    <collapse-property name="rstudio.cocoa" values="*"/>
 
-   <!--
-   <define-property name="rstudio.debug" values="true,false"/>
-   <property-provider name="rstudio.debug"><![CDATA[
-      return /\bdebug=1\b/.test(window.location.search) ? "true" : "false";
-   ]]></property-provider>
-   -->
-
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
    
@@ -132,7 +125,7 @@
    </replace-with>
 
    <!-- define permutations for emulated and native stack modes -->
-   <set-property name="compiler.stackMode" value="emulated,native"/>
+   <set-property name="compiler.stackMode" value="native,emulated"/>
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
 
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
