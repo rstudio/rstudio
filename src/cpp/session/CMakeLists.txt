@@ -76,6 +76,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
+   modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
    modules/SessionViewer.cpp
    modules/SessionWorkbench.cpp
