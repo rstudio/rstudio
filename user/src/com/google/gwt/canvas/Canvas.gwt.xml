@@ -25,9 +25,13 @@
 
   <!-- Give default support value of no to unsupported browsers -->
   <set-property name="canvasElementSupport" value="no">
-    <any>
-      <when-property-is name="user.agent" value="ie8" />
-    </any>
+    <all>
+      <when-property-is name="user.agent" value="ie8"/>
+      <!-- removes IE9 fallback to IE8 -->
+      <none>
+        <when-property-is name="user.agent" value="ie9"/>
+      </none>
+    </all>
   </set-property>
 
   <replace-with class="com.google.gwt.canvas.client.Canvas.CanvasElementSupportDetectedMaybe">
