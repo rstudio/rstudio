@@ -157,10 +157,6 @@ public class ImageTest extends GWTTestCase {
     return imgState.@com.google.gwt.user.client.ui.Image.State::getStateName() ();
   }-*/;
 
-  private static native boolean isIE6() /*-{
-    return @com.google.gwt.dom.client.DOMImplIE6::isIE6()();
-  }-*/;
-
   private int firedError;
 
   private int firedLoad;
@@ -186,14 +182,6 @@ public class ImageTest extends GWTTestCase {
    * error.
    */
   public void testAttachDetach() {
-    /*
-     * This test fails on IE6 due to the way ImageSrcIE6 delays setting the
-     * src of images. It may be a real error, but it doesn't seem to affect
-     * apps and its too obscure to spend time fixing it.  
-     */
-    if (isIE6()) {
-      return;
-    }
 
     final Image image = new Image("counting-forwards.png");
     RootPanel.get().add(image);
@@ -281,14 +269,6 @@ public class ImageTest extends GWTTestCase {
    */
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testChangeImageToClippedSynchronously() {
-    /*
-     * This test fails on IE6 due to the way ImageSrcIE6 delays setting the
-     * src of images. It may be a real error, but it doesn't seem to affect
-     * apps and its too obscure to spend time fixing it.  
-     */
-    if (isIE6()) {
-      return;
-    }
 
     final Image image = new Image("counting-forwards.png");
     assertEquals("unclipped", getCurrentImageStateName(image));

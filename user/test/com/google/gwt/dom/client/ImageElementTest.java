@@ -27,12 +27,6 @@ public class ImageElementTest extends GWTTestCase {
     return "com.google.gwt.dom.DOMTest";
   }
 
-  /**
-   * IE6 has a special implementation of {@link ImageElement#setSrc(String)}
-   * that prevents the browser from loading uncached images multiple times. In
-   * order to test this properly, the browser should be set to clear its cache
-   * on exit.
-   */
   public void testSetSrc() {
     // The parent element will actually load the image.
     ImageElement parent = Document.get().createImageElement();

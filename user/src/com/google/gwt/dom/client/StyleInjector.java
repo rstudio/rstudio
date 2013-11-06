@@ -88,7 +88,7 @@ public class StyleInjector {
   /**
    * IE doesn't allow manipulation of a style element through DOM methods. There
    * is also a hard-coded limit on the number of times that createStyleSheet can
-   * be called before IE6 starts throwing exceptions.
+   * be called before IE8-9 starts throwing exceptions.
    */
   public static class StyleInjectorImplIE extends StyleInjectorImpl {
 

@@ -102,7 +102,8 @@ public class SelectTests extends GWTTestCase {
    */
   public void testMultipleSelection() {
     Document doc = Document.get();
-    SelectElement select = doc.createSelectElement(true);
+    SelectElement select = doc.createSelectElement();
+    select.setMultiple(true);
     doc.getBody().appendChild(select);
 
     OptionElement opt0 = doc.createOptionElement();

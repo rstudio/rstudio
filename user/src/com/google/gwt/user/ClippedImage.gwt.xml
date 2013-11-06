@@ -26,12 +26,4 @@
 <module type="fileset">
 	<inherits name="com.google.gwt.core.Core" />
 	<inherits name="com.google.gwt.user.UserAgent" />
-
-	<!-- IE6 needs a different implementation. IE8 does not. -->
-	<replace-with
-		class="com.google.gwt.user.client.ui.impl.ClippedImageImplIE6">
-		<when-type-is
-			class="com.google.gwt.user.client.ui.impl.ClippedImageImpl" />
-		<when-property-is name="user.agent" value="ie6" />
-	</replace-with>
 </module>

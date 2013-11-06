@@ -1032,21 +1032,27 @@ public class Document extends Node {
 
   /**
    * Creates a &lt;select&gt; element.
-   * 
+   *
    * @return the newly created element
    */
   public final SelectElement createSelectElement() {
-    return DOMImpl.impl.createSelectElement(this, false);
+    return (SelectElement) DOMImpl.impl.createElement(this, SelectElement.TAG);
   }
 
   /**
    * Creates a &lt;select&gt; element.
-   * 
+   *
    * @param multiple <code>true</code> to allow multiple-selection
    * @return the newly created element
+   *
+   * @deprecatred use {@link #createSelectElement()} and call
+   *              {@link SelectElement#setMultiple(boolean)} to configure multiple-selection.
    */
+  @Deprecated
   public final SelectElement createSelectElement(boolean multiple) {
-    return DOMImpl.impl.createSelectElement(this, multiple);
+    SelectElement el = createSelectElement();
+    el.setMultiple(multiple);
+    return el;
   }
 
   /**

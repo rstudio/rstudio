@@ -90,14 +90,6 @@ abstract class DOMImpl {
     return elem;
   }
 
-  public SelectElement createSelectElement(Document doc, boolean multiple) {
-    SelectElement select = (SelectElement) createElement(doc, "select");
-    if (multiple) {
-      select.setMultiple(true);
-    }
-    return select;
-  }
-
   public native void cssClearOpacity(Style style) /*-{
     style.opacity = '';
   }-*/;
@@ -307,14 +299,6 @@ abstract class DOMImpl {
 
   public native boolean hasAttribute(Element elem, String name) /*-{
     return elem.hasAttribute(name);
-  }-*/;
-
-  public native String imgGetSrc(Element img) /*-{
-    return img.src;
-  }-*/;
-
-  public native void imgSetSrc(Element img, String src) /*-{
-    img.src = src;
   }-*/;
 
   public abstract boolean isOrHasChild(Node parent, Node child);

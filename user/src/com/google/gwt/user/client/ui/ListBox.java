@@ -123,18 +123,20 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * Creates an empty list box in single selection mode.
    */
   public ListBox() {
-    this(false);
+    super(Document.get().createSelectElement());
+    setStyleName("gwt-ListBox");
   }
 
   /**
-   * Creates an empty list box. The preferred way to enable multiple selections
-   * is to use this constructor rather than {@link #setMultipleSelect(boolean)}.
-   * 
+   * Creates an empty list box.
+   *
    * @param isMultipleSelect specifies if multiple selection is enabled
+   * @deprecated use {@link #setMultipleSelect(boolean)} instead.
    */
+  @Deprecated
   public ListBox(boolean isMultipleSelect) {
-    super(Document.get().createSelectElement(isMultipleSelect));
-    setStyleName("gwt-ListBox");
+    this();
+    setMultipleSelect(isMultipleSelect);
   }
 
   /**
@@ -509,7 +511,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * Note that setting the selected index programmatically does <em>not</em>
    * cause the {@link ChangeHandler#onChange(ChangeEvent)} event to be fired.
    * </p>
-   * 
+   *
    * @param index the index of the item to be selected
    */
   public void setSelectedIndex(int index) {
@@ -544,7 +546,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * Retrieves the text of an option element. If the text was set by
    * {@link #setOptionText} and was wrapped with Unicode bidi formatting
    * characters, also removes those additional formatting characters.
-   *  
+   * 
    * @param option an option element
    * @return the element's text
    */

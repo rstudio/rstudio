@@ -69,7 +69,7 @@ class DOMImplIE9 extends DOMImplStandardBase {
 
   @Override
   public boolean isOrHasChild(Node parent, Node child) {
-    // IE9 still behaves like IE6-8 for this method
+    // IE9 still behaves like IE8 for this method
     return DOMImplTrident.isOrHasChildImpl(parent, child);
   }
 
