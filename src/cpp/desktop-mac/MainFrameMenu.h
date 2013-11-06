@@ -27,6 +27,7 @@
    NSMutableArray* commands_;
 
    NSDictionary* shortcutMap_;
+   NSDictionary* customShortcuts_;
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) item;
