@@ -24,6 +24,12 @@
 
 // TODO: use unsupported file type in viewer to investigate download handling
 
+// TODO: merge onto master
+
+// TODO: see if we can log js exceptions
+
+// TOOD: test on snow leopoard
+
 // TODO: main menu
 
 // TODO: filterText callback
