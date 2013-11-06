@@ -182,7 +182,7 @@ NSString* charToStr(unichar c) {
    if ([re numberOfMatchesInString: key
                            options: NSMatchingAnchored
                              range: NSMakeRange(0, [key length])] > 0) {
-      [menuItem setKeyEquivalent: [key lowercaseStringWithLocale: [NSLocale systemLocale]]];
+      [menuItem setKeyEquivalent: [key lowercaseString]];
    } else {
       NSString* keyEquiv = [shortcutMap_ objectForKey: key];
       assert(keyEquiv != Nil);
