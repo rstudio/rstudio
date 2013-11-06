@@ -489,8 +489,6 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (NSString*) filterText: (NSString*) text
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
    // TODO: normalize NFD Unicode text as we do in Qt version
    
    return text;
