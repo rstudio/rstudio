@@ -18,30 +18,23 @@
 
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
-
 // TODO: use unsupported file type in viewer to investigate download handling
 
-// TODO: merge onto master
-
+// TODO: merge onto master & restart dailies
 // TOOD: test on snow leopoard
 
-// TODO: main menu
-
-// TODO: filterText callback
-
 // TODO: file dialogs
-
 // TODO: message box dialogs
-
-// TODO: undo and clipboard callbacks (undo/redo/cut/copy/paste)
-//       (also cleanClipboard and copyImageToClipboard)
-
-// TODO: about box
-
 // TODO: check for updates
 
+// TODO: cleanClipboard
+// TODO: copyImageToClipboard
 // TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
+// TODO: filterText callback
+// TODO: remove services menu
+
+// TODO: about box
 
 
 #import "SatelliteController.h"

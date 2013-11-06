@@ -108,8 +108,6 @@ static MainFrameController* instance_;
       
       firstWorkbenchInitialized_ = YES;
    }
-   
-   // TODO: check for updates
 }
 
 - (void) openFileInRStudio: (NSString*) openFile
