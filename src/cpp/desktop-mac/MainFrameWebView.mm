@@ -18,6 +18,14 @@
 
 @implementation MainFrameWebView
 
+@synthesize keyEquivDelegate;
+
+- (void) dealloc
+{
+   [keyEquivDelegate release];
+   [super dealloc];
+}
+
 - (id) initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];
@@ -29,19 +37,8 @@
 
 - (BOOL) performKeyEquivalent: (NSEvent *) theEvent
 {
-   if ([[theEvent charactersIgnoringModifiers] isEqualToString: @"w"]
-       && ([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask)
-   {
-      if ([[MainFrameController instance] isCommandEnabled: @"closeSourceDoc"])
-      {
-         [[MainFrameController instance] invokeCommand: @"closeSourceDoc"];
-      }
-      else
-      {
-         [[self window] performClose: self];
-      }
+   if (keyEquivDelegate != nil && [keyEquivDelegate performKeyEquivalent: theEvent])
       return YES;
-   }
    return [super performKeyEquivalent: theEvent];
 }
 

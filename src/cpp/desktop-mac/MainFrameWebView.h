@@ -17,4 +17,6 @@
 
 @interface MainFrameWebView : WebView
 
+@property(retain) id keyEquivDelegate;
+
 @end

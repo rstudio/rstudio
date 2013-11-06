@@ -112,6 +112,7 @@ static PendingSatelliteWindow pendingWindow_;
       [webView_ setFrameLoadDelegate: self];
       [webView_ setResourceLoadDelegate: self];
       [webView_ setPolicyDelegate: self];
+      [webView_ setKeyEquivDelegate: self];
       
       // load the request
       [[webView_ mainFrame] loadRequest: request];

@@ -249,5 +249,31 @@ didClearWindowObject:(WebScriptObject *)windowObject
    }
 }
 
+- (BOOL) performKeyEquivalent: (NSEvent *) theEvent
+{
+   NSString* chr = [theEvent charactersIgnoringModifiers];
+   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+   
+   if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
+   {
+      if ([self isCommandEnabled: @"closeSourceDoc"])
+      {
+         [self invokeCommand: @"closeSourceDoc"];
+      }
+      else
+      {
+         [[webView_ window] performClose: self];
+      }
+      return YES;
+   }
+   else if ([chr isEqualToString: @","] && mod == NSCommandKeyMask)
+   {
+      [self invokeCommand: @"macPreferences"];
+      return YES;
+   }
+   
+   return [super performKeyEquivalent: theEvent];
+}
+
 
 @end
