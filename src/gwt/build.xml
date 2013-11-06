@@ -135,32 +135,12 @@
       </exec>
    </target>
 
-   <target name="desktop-draft" description="Compile desktop using GWT's draft mode">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
-         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
-      </antcall>
-   </target>
-
    <target name="draft" description="Compile using GWT's draft mode">
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
          <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
       </antcall>
    </target>
-
-   <target name="desktop" description="Compile only desktop permutation">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
-      </antcall>
-   </target>
-
-   <target name="server" description="Compile only server permutation">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioServer"/>
-      </antcall>
-   </target>
-	
 	
    <target name="superdevmode" description="Run super dev mode">
    	<antcall target="gwtc">
@@ -177,27 +157,6 @@
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
-	
-
-   <target name="devmode" depends="ext,javac" description="Run development mode">
-      <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
-         <classpath>
-            <pathelement location="src"/>
-            <path refid="project.class.path"/>
-         </classpath>
-         <jvmarg value="-Xmx2048M"/>
-         <arg value="-war"/>
-         <arg value="www"/>
-         <arg value="-noserver"/>
-         <arg value="-startupUrl"/>
-         <arg value="http://localhost:8787"/>
-         <arg line="-bindAddress 0.0.0.0"/>
-         <!-- Additional arguments like -logLevel DEBUG -->
-         <arg value="org.rstudio.studio.RStudioDraft"/>
-      </java>
-   </target>
-
-   <target name="hosted" depends="devmode"/>
 
    <target name="build" depends="gwtc" description="Build this project" />
 
