@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Generates an implementation of a user-defined interface <code>T</code> that
@@ -155,7 +156,7 @@ public class ImageBundleGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

@@ -318,7 +318,7 @@ public class LocaleInfoGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

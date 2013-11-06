@@ -24,6 +24,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
+import java.util.Set;
+
 /**
  * Generator for producing the asynchronous version of a
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
@@ -73,7 +75,7 @@ public class ServiceInterfaceProxyGenerator extends IncrementalGenerator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

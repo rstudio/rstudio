@@ -34,6 +34,7 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.Set;
 
 /**
  * Generator used to generate an implementation of a
@@ -148,7 +149,7 @@ public class CustomDateTimeFormatGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

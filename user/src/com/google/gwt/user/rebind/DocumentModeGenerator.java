@@ -33,6 +33,7 @@ import com.google.gwt.user.client.DocumentModeAsserter.Severity;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Generator for {@link com.google.gwt.user.client.DocumentModeAsserter}.
@@ -132,7 +133,7 @@ public class DocumentModeGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

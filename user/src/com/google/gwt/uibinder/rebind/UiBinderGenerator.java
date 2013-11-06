@@ -38,6 +38,7 @@ import org.xml.sax.SAXParseException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Generator for implementations of
@@ -137,7 +138,7 @@ public class UiBinderGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

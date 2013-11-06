@@ -13,7 +13,7 @@
  */
 package com.google.gwt.core.ext;
 
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import java.util.Set;
 
 /**
  * Generates source code for subclasses during deferred binding requests. Subclasses must be
@@ -98,7 +98,7 @@ public abstract class Generator {
    * Generators that don't need access to every property can override this method to speed up
    * separate compiles.
    */
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return null;
   }
 

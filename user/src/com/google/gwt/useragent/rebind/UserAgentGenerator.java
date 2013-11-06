@@ -31,6 +31,7 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.Set;
 
 /**
  * Generator for {@link com.google.gwt.useragent.client.UserAgent}.
@@ -108,7 +109,7 @@ public class UserAgentGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 

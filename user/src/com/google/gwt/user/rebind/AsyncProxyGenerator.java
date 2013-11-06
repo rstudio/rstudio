@@ -38,6 +38,7 @@ import com.google.gwt.user.client.impl.AsyncProxyBase;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Generates implementation of AsyncProxy interfaces.
@@ -212,7 +213,7 @@ public class AsyncProxyGenerator extends Generator {
   }
 
   @Override
-  public ImmutableSet<String> getAccessedPropertyNames() {
+  public Set<String> getAccessedPropertyNames() {
     return relevantPropertyNames;
   }
 
