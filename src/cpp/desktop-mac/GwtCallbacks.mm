@@ -149,27 +149,55 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) undo
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // It appears that using the webView's undoManager doesn't work (for what we want it to do).
+   // However the native handling of Cmd+Z seems to do the right thing.
+   CGEventRef event1, event2, event3, event4;
+   event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
+   event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
+   event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
+   event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
+   CGEventSetFlags(event2, kCGEventFlagMaskCommand);
+   CGEventSetFlags(event3, kCGEventFlagMaskCommand);
+   CGEventPost(kCGHIDEventTap, event1);
+   CGEventPost(kCGHIDEventTap, event2);
+   CGEventPost(kCGHIDEventTap, event3);
+   CGEventPost(kCGHIDEventTap, event4);
 }
 
 - (void) redo
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // It appears that using the webView's undoManager doesn't work (for what we want it to do).
+   // However the native handling of Cmd+Z seems to do the right thing.
+   CGEventRef event1, event2, event3, event4, event5, event6;
+   event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
+   event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, true);
+   event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
+   event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
+   event5 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, false);
+   event6 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
+   CGEventSetFlags(event3, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+   CGEventSetFlags(event4, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+   CGEventPost(kCGHIDEventTap, event1);
+   CGEventPost(kCGHIDEventTap, event2);
+   CGEventPost(kCGHIDEventTap, event3);
+   CGEventPost(kCGHIDEventTap, event4);
+   CGEventPost(kCGHIDEventTap, event5);
+   CGEventPost(kCGHIDEventTap, event6);
 }
 
 - (void) clipboardCut
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [[[MainFrameController instance] webView] cut: self];
 }
 
 - (void) clipboardCopy
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [[[MainFrameController instance] webView] copy: self];
 }
 
 - (void) clipboardPaste
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [[[MainFrameController instance] webView] paste: self];
 }
 
 - (NSString*) getUriForPath: (NSString*) path

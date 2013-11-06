@@ -122,7 +122,6 @@ NSString* charToStr(unichar c) {
    [menuItem setTarget: self];
    [menuItem setAction: @selector(invoke:)];
    
-  
    // special case for zoom commands
    if ([commandId isEqualToString: @"zoomActualSize"])
    {
@@ -141,10 +140,17 @@ NSString* charToStr(unichar c) {
    }
    else
    {
+      // Undo/Redo can't have normal keyboard shortcuts assigned--their keystrokes need to be
+      // handled by WebKit itself. But we still want it to show up in the menu. So just special
+      // case them.
+      if ([commandId isEqualToString: @"undoDummy"])
+         shortcut = @"Meta+Z";
+      else if ([commandId isEqualToString: @"redoDummy"])
+         shortcut = @"Meta+Shift+Z";
+
       [self assignShortcut: shortcut toMenuItem: menuItem];
    }
 
-   
    // add it to the menu
    [[self currentTargetMenu] addItem: menuItem];
 }

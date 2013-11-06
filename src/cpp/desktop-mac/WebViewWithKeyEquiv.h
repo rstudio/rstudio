@@ -1,5 +1,5 @@
 /*
- * MainFrameWebView.h
+ * WebViewWithKeyEquiv.h
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -15,8 +15,11 @@
 
 #import <WebKit/WebKit.h>
 
-@interface MainFrameWebView : WebView
+@interface WebViewWithKeyEquiv : WebView
+{
+   id keyEquivDelegate_;
+}
 
-@property(retain) id keyEquivDelegate;
+- (void) setKeyEquivDelegate: (id) delegate;
 
 @end
