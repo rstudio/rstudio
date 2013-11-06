@@ -20,19 +20,14 @@
 // TODO: toolbar for secondary window
 // TODO: use unsupported file type in viewer to investigate download handling
 
-// TODO: merge onto master & restart dailies
 // TOOD: test on snow leopoard
 
-// TODO: file dialogs
 // TODO: message box dialogs
 // TODO: check for updates
 
-// TODO: cleanClipboard
 // TODO: copyImageToClipboard
 // TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
-// TODO: filterText callback
-// TODO: remove services menu
 
 // TODO: about box
 

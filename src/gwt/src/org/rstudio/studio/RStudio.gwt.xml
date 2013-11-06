@@ -63,11 +63,7 @@
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
-   <replace-with class="org.rstudio.studio.client.common.impl.WebFileDialogs">
-      <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
-      <when-property-is name="rstudio.cocoa" value="true"/>
-   </replace-with>
-
+ 
    <replace-with class="org.rstudio.studio.client.application.ui.impl.WebApplicationHeader">
       <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
    </replace-with>
