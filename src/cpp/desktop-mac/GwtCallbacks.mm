@@ -378,7 +378,7 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) showAboutDialog
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   [NSApp orderFrontStandardAboutPanel: self];
 }
 
 - (void) bringMainFrameToFront
