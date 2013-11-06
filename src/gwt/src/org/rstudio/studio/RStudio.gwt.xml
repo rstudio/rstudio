@@ -23,7 +23,7 @@
     
    <define-property name="rstudio.cocoa" values="true,false"/>
    <property-provider name="rstudio.cocoa"><![CDATA[
-      return window.desktop && window.desktop.isCocoa ? "true" : "false";
+      return window.desktop && window.desktop.isCocoa() ? "true" : "false";
    ]]></property-provider>
    <collapse-property name="rstudio.cocoa" values="*"/>
 

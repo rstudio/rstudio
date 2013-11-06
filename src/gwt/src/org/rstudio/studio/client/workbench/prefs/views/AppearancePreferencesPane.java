@@ -22,6 +22,8 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -44,45 +46,48 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.isDesktop())
       {
-         int initialIndex = -1;
-         int normalIndex = -1;
-         String[] zoomValues = 
-               Desktop.getFrame().getZoomLevels().split("\\n");
-         String[] zoomLabels = new String[zoomValues.length];
-         for (int i=0; i<zoomValues.length; i++)
+         // no zoom level on cocoa desktop
+         if (!BrowseCap.isCocoaDesktop())
          {
-            double zoomValue = Double.parseDouble(zoomValues[i]);
-            
-            if (zoomValue == 1.0)
-               normalIndex = i;
-            
-            if (zoomValue == Desktop.getFrame().getZoomLevel())
-               initialIndex = i;
-            
-            zoomLabels[i] = StringUtil.formatPercent(zoomValue);
-         }
-         
-         if (initialIndex == -1)
-            initialIndex = normalIndex;
-         
-         zoomLevel_ = new SelectWidget("Zoom:",
-                                       zoomLabels,
-                                       zoomValues,
-                                       false);
-         zoomLevel_.getListBox().setSelectedIndex(initialIndex);
-         initialZoomLevel_ = zoomValues[initialIndex];
-         
-         leftPanel.add(zoomLevel_);
-         
-         zoomLevel_.getListBox().addChangeHandler(new ChangeHandler() {
-            @Override
-            public void onChange(ChangeEvent event)
+            int initialIndex = -1;
+            int normalIndex = -1;
+            String[] zoomValues = 
+                  Desktop.getFrame().getZoomLevels().split("\\n");
+            String[] zoomLabels = new String[zoomValues.length];
+            for (int i=0; i<zoomValues.length; i++)
             {
-               updatePreviewZoomLevel();
-               preview_.reload();
+               double zoomValue = Double.parseDouble(zoomValues[i]);
+               
+               if (zoomValue == 1.0)
+                  normalIndex = i;
+               
+               if (zoomValue == Desktop.getFrame().getZoomLevel())
+                  initialIndex = i;
+               
+               zoomLabels[i] = StringUtil.formatPercent(zoomValue);
             }
-         });
-         
+            
+            if (initialIndex == -1)
+               initialIndex = normalIndex;
+            
+            zoomLevel_ = new SelectWidget("Zoom:",
+                                          zoomLabels,
+                                          zoomValues,
+                                          false);
+            zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+            initialZoomLevel_ = zoomValues[initialIndex];
+            
+            leftPanel.add(zoomLevel_);
+            
+            zoomLevel_.getListBox().addChangeHandler(new ChangeHandler() {
+               @Override
+               public void onChange(ChangeEvent event)
+               {
+                  updatePreviewZoomLevel();
+                  preview_.reload();
+               }
+            });
+         }
          
          String[] fonts = Desktop.getFrame().getFixedWidthFontList().split("\\n");
 
@@ -173,7 +178,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private void updatePreviewZoomLevel()
    {
       // no zoom preview on desktop
-      if (Desktop.isDesktop())
+      if (Desktop.isDesktop() && !Desktop.getFrame().isCocoa())
       {
          preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
                                Desktop.getFrame().getZoomLevel());
@@ -207,11 +212,14 @@ public class AppearancePreferencesPane extends PreferencesPane
             restartRequired = true;
          }
          
-         if (!initialZoomLevel_.equals(zoomLevel_.getValue()))
+         if (!Desktop.getFrame().isCocoa())
          {
-            double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
-            Desktop.getFrame().setZoomLevel(zoomLevel);
-            restartRequired = true;
+            if (!initialZoomLevel_.equals(zoomLevel_.getValue()))
+            {
+               double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
+               Desktop.getFrame().setZoomLevel(zoomLevel);
+               restartRequired = true;
+            }
          }
       }
 

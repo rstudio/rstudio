@@ -47,8 +47,9 @@ NSString* resolveAliasedPath(NSString* path)
 }
 
 // sentinel function for gwt deferred binding
-- (void) isCocoa
+- (Boolean) isCocoa
 {
+   return true;
 }
 
 - (NSString*) proportionalFont
@@ -411,21 +412,26 @@ NSString* resolveAliasedPath(NSString* path)
    desktop::options().setFixedWidthFont([font UTF8String]);
 }
 
-- (NSString*) getZoomLevels
+- (void) macZoomActualSize
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return @"1.0\n1.1";
+   // reset the zoom level
+   desktop::options().setZoomLevel(0);
+   [[MainFrameController instance] syncZoomLevel];
 }
 
-- (double) getZoomLevel
+
+- (void) macZoomIn
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   return 1.0;
+   // increment the current zoom level
+   desktop::options().setZoomLevel(desktop::options().zoomLevel() + 1);
+   [[MainFrameController instance] syncZoomLevel];
 }
 
-- (void) setZoomLevel: (double) zoomLevel
+- (void) macZoomOut
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // decrement the current zoom level
+   desktop::options().setZoomLevel(desktop::options().zoomLevel() - 1);
+   [[MainFrameController instance] syncZoomLevel];
 }
 
 
@@ -530,6 +536,23 @@ NSString* resolveAliasedPath(NSString* path)
                       column: (int) column
 {
 }
+
+// Custom zoom implementation on the Mac
+
+- (NSString*) getZoomLevels
+{
+    return @"";
+}
+
+- (double) getZoomLevel
+{
+    return 1.0;
+}
+
+- (void) setZoomLevel: (double) zoomLevel
+{
+}
+
 
 // We allow WebTextInput to handle prompt for text in the Cocoa port
 

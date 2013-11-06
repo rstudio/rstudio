@@ -71,6 +71,11 @@ Synctex& GwtCallback::synctex()
    return *pSynctex_;
 }
 
+bool GwtCallback::isCocoa()
+{
+   return false;
+}
+
 void GwtCallback::browseUrl(QString url)
 {
    QUrl qurl = QUrl::fromEncoded(url.toAscii());
@@ -880,6 +885,18 @@ double GwtCallback::getZoomLevel()
 void GwtCallback::setZoomLevel(double zoomLevel)
 {
    options().setZoomLevel(zoomLevel);
+}
+
+void GwtCallback::macZoomActualSize()
+{
+}
+
+void GwtCallback::macZoomIn()
+{
+}
+
+void GwtCallback::macZoomOut()
+{
 }
 
 

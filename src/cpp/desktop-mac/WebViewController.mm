@@ -34,6 +34,12 @@ struct PendingSatelliteWindow
    int height;
 };
 
+// get access to private webview zoom apis
+@interface WebView (Zoom)
+- (IBAction)zoomPageIn:(id)sender;
+- (IBAction)zoomPageOut:(id)sender;
+- (IBAction)resetPageZoom:(id)sender;
+@end
 
 @implementation WebViewController
 
@@ -114,6 +120,9 @@ static PendingSatelliteWindow pendingWindow_;
       [webView_ setPolicyDelegate: self];
       [webView_ setKeyEquivDelegate: self];
       
+      // respect the current zoom level
+      [self syncZoomLevel];
+      
       // load the request
       [[webView_ mainFrame] loadRequest: request];
       
@@ -155,6 +164,29 @@ static PendingSatelliteWindow pendingWindow_;
    // load the webview
    NSURLRequest* request = [NSURLRequest requestWithURL: baseUrl_];
    [[[self webView] mainFrame] loadRequest: request];
+}
+
+- (void) syncZoomLevel
+{
+   // reset to a known baseline
+   [webView_ resetPageZoom: self];
+   
+   // get the zoom level
+   int zoomLevel = desktop::options().zoomLevel();
+   
+   // zoom in
+   if (zoomLevel > 0)
+   {
+      for (int i=0; i<zoomLevel; i++)
+         [webView_ zoomPageIn: self];
+   }
+   // zoom out
+   else if (zoomLevel < 0)
+   {
+      zoomLevel = std::abs(zoomLevel);
+      for (int i=0; i<zoomLevel; i++)
+         [webView_ zoomPageOut: self];
+   }
 }
 
 // set the current viewer url

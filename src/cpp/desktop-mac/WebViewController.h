@@ -34,6 +34,9 @@
 // Get the embedded WebView
 - (WebView*) webView;
 
+// sync the web view's zoom level
+- (void) syncZoomLevel;
+
 // subclass methods for registering javascript callbacks
 - (void) registerDesktopObject;
 @end

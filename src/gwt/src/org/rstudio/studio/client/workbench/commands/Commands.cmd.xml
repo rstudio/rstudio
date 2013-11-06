@@ -176,6 +176,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
+         <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
          <separator/>
@@ -626,6 +627,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"/>
+   <cmd id="zoomActualSize"
+        menuLabel="Actual Size"/>
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
    <cmd id="zoomOut"

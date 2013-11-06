@@ -267,7 +267,7 @@ didClearWindowObject:(WebScriptObject *)windowObject
       return YES;
    }
    else if (([chr isEqualToString: @"0"] && mod == NSCommandKeyMask) ||
-            ([chr isEqualToString: @"+"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"="] && mod == NSCommandKeyMask) ||
             ([chr isEqualToString: @"-"] && mod == NSCommandKeyMask) ||
             ([chr isEqualToString: @","] && mod == NSCommandKeyMask) ||
             ([chr isEqualToString: @"h"] && mod == NSCommandKeyMask) ||

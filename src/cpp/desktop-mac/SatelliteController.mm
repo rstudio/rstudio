@@ -24,9 +24,6 @@
 
 // TODO: use unsupported file type in viewer to investigate download handling
 
-// TODO: zoom callbacks
-
-
 // TODO: main menu
 
 // TODO: filterText callback

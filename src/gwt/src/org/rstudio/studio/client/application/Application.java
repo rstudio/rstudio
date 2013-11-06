@@ -35,6 +35,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
@@ -333,15 +334,27 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onZoomActualSize()
+   {
+      // only supported in cocoa desktop
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomActualSize();
+   }
+   
+   @Handler
    public void onZoomIn()
    {
-      // fake handler (this is intercepted by Qt)
+      // pass on to cocoa desktop (qt desktop intercepts)
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomIn();
    }
    
    @Handler
    public void onZoomOut()
    {
-      // fake handler (this is intercepted by Qt)
+      // pass on to cocoa desktop (qt desktop intercepts)
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomOut();
    }
   
    public void onSessionSerialization(SessionSerializationEvent event)
@@ -603,6 +616,12 @@ public class Application implements ApplicationEventHandlers
            
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
+      
+      // hide zoom actual size everywhere but cocoa desktop
+      if (!BrowseCap.isCocoaDesktop())
+      {
+         commands_.zoomActualSize().remove();
+      }
       
       // hide zoom in and zoom out in web mode
       if (!Desktop.isDesktop())

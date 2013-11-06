@@ -122,7 +122,28 @@ NSString* charToStr(unichar c) {
    [menuItem setTarget: self];
    [menuItem setAction: @selector(invoke:)];
    
-   [self assignShortcut: shortcut toMenuItem: menuItem];
+  
+   // special case for zoom commands
+   if ([commandId isEqualToString: @"zoomActualSize"])
+   {
+      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
+      [menuItem setKeyEquivalent: @"0"];
+   }
+   else if ([commandId isEqualToString: @"zoomIn"])
+   {
+      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
+      [menuItem setKeyEquivalent: @"="];
+   }
+   else if ([commandId isEqualToString: @"zoomOut"])
+   {
+      [menuItem setKeyEquivalentModifierMask: NSCommandKeyMask];
+      [menuItem setKeyEquivalent: @"-"];
+   }
+   else
+   {
+      [self assignShortcut: shortcut toMenuItem: menuItem];
+   }
+
    
    // add it to the menu
    [[self currentTargetMenu] addItem: menuItem];

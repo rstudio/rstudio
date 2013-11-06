@@ -43,7 +43,7 @@ Options::Options()
    NSDictionary* defs = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"Lucida Grande", @"font.proportional",
                              @"Monaco", @"font.fixedwidth",
-                             @"1.0", @"view.zoomlevel",
+                             @"0", @"view.maczoomlevel",
                              [NSArray array], @"updates.ignored",
                              nil];
                              
@@ -98,18 +98,18 @@ void Options::setFixedWidthFont(std::string font)
              forKey: @"font.fixedwidth"];
 }
 
-double Options::zoomLevel() const
+int Options::zoomLevel() const
 {
    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-   NSString* zoomLevel = [prefs stringForKey: @"view.zoomlevel"];
-   return [zoomLevel doubleValue];
+   NSString* zoomLevel = [prefs stringForKey: @"view.maczoomlevel"];
+   return [zoomLevel intValue];
 }
    
-void Options::setZoomLevel(double zoomLevel)
+void Options::setZoomLevel(int zoomLevel)
 {
    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
-   NSNumber* zoom = [NSNumber numberWithDouble: zoomLevel];
-   [prefs setObject: [zoom stringValue] forKey: @"view.zoomlevel"];
+   NSNumber* zoom = [NSNumber numberWithInt: zoomLevel];
+   [prefs setObject: [zoom stringValue] forKey: @"view.maczoomlevel"];
 }
 
 FilePath Options::scriptsPath() const
