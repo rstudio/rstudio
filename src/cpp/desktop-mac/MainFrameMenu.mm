@@ -283,7 +283,10 @@ NSString* charToStr(unichar c) {
 
    [appMenu addItem: [NSMenuItem separatorItem]];
 
-   // "Services" (These don't currently appear to actually work correctly)
+   /*
+   // "Services"
+   // These don't currently appear to actually work correctly; text in the console input
+   // area and in Ace aren't picked up (though console output works fine).
    NSMenuItem* servicesMenuItem = [[NSMenuItem new] autorelease];
    [servicesMenuItem setTitle: @"Services"];
    [appMenu addItem: servicesMenuItem];
@@ -292,6 +295,7 @@ NSString* charToStr(unichar c) {
    [servicesMenuItem setSubmenu: servicesMenu];
 
    [appMenu addItem: [NSMenuItem separatorItem]];
+   */
 
    // "Hide RStudio"
    NSMenuItem* hideMenuItem = [[[NSMenuItem alloc] initWithTitle: @"Hide RStudio"
