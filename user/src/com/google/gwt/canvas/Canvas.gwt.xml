@@ -26,7 +26,6 @@
   <!-- Give default support value of no to unsupported browsers -->
   <set-property name="canvasElementSupport" value="no">
     <any>
-      <when-property-is name="user.agent" value="ie6" />
       <when-property-is name="user.agent" value="ie8" />
     </any>
   </set-property>
