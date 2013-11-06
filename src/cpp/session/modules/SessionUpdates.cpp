@@ -79,10 +79,15 @@ void beginUpdateCheck(bool manual,
    // Arguments
    std::vector<std::string> args;
    args.push_back("--slave");
-   args.push_back("--no-save");
-   args.push_back("--no-restore");
+   args.push_back("--vanilla");
+#if defined(_WIN32)
+   if (userSettings().useInternet2())
+   {
+      args.push_back("--internet2");
+   }
+#endif
    args.push_back("-e");
-
+   
    // Build the command to send to R
    std::string cmd;
    cmd.append("source('");
@@ -132,9 +137,13 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   events().onDeferredInit.connect(boost::bind(beginUpdateCheck,
-                                               false,
-                                               endBootUpdateCheck));
+   // Only check for updates in desktop mode
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      events().onDeferredInit.connect(boost::bind(beginUpdateCheck,
+                                                  false,
+                                                  endBootUpdateCheck));
+   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()
