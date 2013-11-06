@@ -389,7 +389,25 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) cleanClipboard: (Boolean) stripHtml
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // Remove all but plain-text and (optionally) HTML data from the pasteboard.
+   
+   NSPasteboard* pasteboard = [NSPasteboard generalPasteboard];
+   if ([[pasteboard pasteboardItems] count] == 0)
+      return;
+   
+   NSString* data = [pasteboard stringForType: NSStringPboardType];
+   if (data == nil)
+      return;
+   
+   NSString* htmlData = nil;
+   if (!stripHtml)
+      htmlData = [pasteboard stringForType: NSHTMLPboardType];
+   
+   [pasteboard clearContents];
+   
+   [pasteboard setString: data forType: NSStringPboardType];
+   if (htmlData != nil)
+      [pasteboard setString: htmlData forType: NSHTMLPboardType];
 }
 
 - (void) setPendingQuit: (int) pendingQuit
