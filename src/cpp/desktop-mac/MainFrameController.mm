@@ -70,6 +70,7 @@ static MainFrameController* instance_;
 
 - (void) dealloc
 {
+   instance_ = nil;
    [menu_ release];
    [openFile_ release];
    [super dealloc];

@@ -358,17 +358,30 @@ bool prepareEnvironment(Options& options)
 - (NSApplicationTerminateReply) applicationShouldTerminate:
                                           (NSApplication *) sender
 {
-   // TODO: ensure that the code below protects against attempting to
-   // interact with a MainFrame window that's already closed/dead
-   
+   // this code enables us to interrupt a shutdown sequence. ideally we'd
+   // return NSTerminateLater and then later confirm the shutdown via
+   // replyToApplicationShouldTerminate however the fact that initiateQuit
+   // begins an asynchronous process makes that very complicated. the only
+   // downside of return NSTerminateCancel is that in the case where we
+   // block a shutdown an extra dialog appears indicating that RStudio 
+   // blocked shutdown. this is considered the lesser of two other evils:
+   // (1) blowing over unsaved changes at shutdown; or (2) introducing
+   // new codepaths into an already complex set of async shutdown codepaths
+   // to handle things correctly
+  
+   MainFrameController* mainFrame = [MainFrameController instance];
    if (!sessionLauncher().sessionProcessActive())
    {
       return NSTerminateNow;
    }
+   else if (mainFrame != nil)
+   {
+      [mainFrame initiateQuit];
+      return NSTerminateCancel;
+   }
    else
    {
-      [[MainFrameController instance] initiateQuit];
-      return NSTerminateCancel;
+      return NSTerminateNow;
    }
 }
 
