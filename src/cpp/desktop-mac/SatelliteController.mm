@@ -26,8 +26,6 @@
 
 // TODO: merge onto master
 
-// TODO: see if we can log js exceptions
-
 // TOOD: test on snow leopoard
 
 // TODO: main menu
@@ -35,6 +33,8 @@
 // TODO: filterText callback
 
 // TODO: file dialogs
+
+// TODO: message box dialogs
 
 // TODO: undo and clipboard callbacks (undo/redo/cut/copy/paste)
 //       (also cleanClipboard and copyImageToClipboard)
