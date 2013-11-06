@@ -266,10 +266,20 @@ didClearWindowObject:(WebScriptObject *)windowObject
       }
       return YES;
    }
-   else if ([chr isEqualToString: @","] && mod == NSCommandKeyMask)
+   else if (([chr isEqualToString: @","] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"h"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"h"] && mod == (NSCommandKeyMask | NSAlternateKeyMask)) ||
+            ([chr isEqualToString: @"m"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"m"] && mod == (NSCommandKeyMask | NSAlternateKeyMask)))
    {
-      [self invokeCommand: @"macPreferences"];
-      return YES;
+      // These are shortcuts that only exist on the menu, so they must be invoked there rather
+      // than letting the in-page shortcut manager handle it.
+      // It's possible we could let all key-equivs get dispatched through the menu, but our Qt
+      // desktop code works pretty hard to avoid that and I can't remember why (quite likely
+      // to do with copy/paste I think). Safer to just keep the behavior the same except for
+      // these few cases that are different.
+      if ([[NSApp mainMenu] performKeyEquivalent: theEvent])
+         return YES;
    }
    
    return [super performKeyEquivalent: theEvent];
