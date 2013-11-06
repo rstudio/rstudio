@@ -90,7 +90,7 @@
     <mkdir dir="${javac.out}" />
     <gwt.javac excludes="**/super/**">
       <classpath>
-        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
+        <pathelement location="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
         <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
@@ -210,7 +210,7 @@
       <fileset dir="src" excludes="**/package.html" />
       <fileset dir="super" excludes="**/package.html" />
       <fileset dir="${javac.out}" />
-      <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" excludes="**/*.java"/>
+      <zipfileset src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" excludes="**/*.java"/>
       <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
       <zipfileset src="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />
       <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />

@@ -60,7 +60,8 @@
           <include name="eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar" />
           <include name="guava/guava-15.0/guava-15.0-rebased.jar" />
           <include name="icu4j/50.1.1/icu4j.jar" />
-          <include name="jetty/jetty-6.1.11.jar" />
+          <include name="jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar" />
+          <include name="jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" />
           <include name="jscomp/20131014/compiler-rebased.jar" />
           <include name="jscomp/20131014/sourcemap-rebased.jar" />
           <include name="jsr305/jsr305.jar" />
@@ -73,23 +74,23 @@
           <!-- dependencies needed for JSP support in DevMode: END -->
           <include name="apache/commons/commons-collections-3.2.1.jar" />
           <!-- htmlunit dependencies not already included: BEGIN -->
-          <include name="apache/http/httpclient-4.1.2.jar" />
-          <include name="apache/http/httpcore-4.1.2.jar" />
-          <include name="apache/http/httpmime-4.1.2.jar" />
+          <include name="apache/http/httpclient-4.3.1.jar" />
+          <include name="apache/http/httpcore-4.3.jar" />
+          <include name="apache/http/httpmime-4.3.1.jar" />
           <include name="apache/james/apache-mime4j-0.6.jar" />
-          <include name="apache/commons/commons-codec-1.3.jar" />
-          <include name="apache/commons/commons-io-1.4.jar" />
-          <include name="apache/commons/commons-lang-2.6.jar" />
-          <include name="apache/commons/commons-logging-1.1.1.jar" />
-          <include name="cssparser/cssparser-0.9.5.jar" />
-          <include name="htmlunit/htmlunit-2.9/htmlunit-v2.9.jar" />
-          <include name="htmlunit/htmlunit-2.9/htmlunit-core-js-v2.9.jar" />
-          <include name="nekohtml/nekohtml-1.9.15.jar" />
+          <include name="apache/commons/commons-codec-1.8.jar" />
+          <include name="apache/commons/commons-io-2.4.jar" />
+          <include name="apache/commons/commons-lang3-3.1.jar" />
+          <include name="apache/commons/commons-logging-1.1.3.jar" />
+          <include name="cssparser/cssparser-0.9.11.jar" />
+          <include name="htmlunit/htmlunit-2.13/htmlunit-2.13.jar" />
+          <include name="htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar" />
+          <include name="nekohtml/nekohtml-1.9.19.jar" />
           <include name="cup/java-cup-11a.jar" />
           <include name="xalan/xalan-2.7.1-nocup.jar" />
-          <include name="xerces/xerces-2_9_1/serializer.jar" />
-          <include name="xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
-          <include name="xerces/xerces-2_9_1/xml-apis.jar" />
+          <include name="xerces/xerces-2_11_0/serializer-2.7.1.jar" />
+          <include name="xerces/xerces-2_11_0/xercesImpl-2.11.0.jar" />
+          <include name="xerces/xerces-2_11_0/xml-apis-1.4.01.jar" />
           <include name="w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
           <include name="sun/swingworker/swing-worker-1.1.jar" />
@@ -110,7 +111,8 @@
           <zipfileset src="${gwt.tools.lib}/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar" />
           <zipfileset src="${gwt.tools.lib}/guava/guava-15.0/guava-15.0-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/icu4j/50.1.1/icu4j.jar" />
-          <zipfileset src="${gwt.tools.lib}/jetty/jetty-6.1.11.jar" />
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar" />
+          <zipfileset src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/20131014/compiler-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
           <zipfileset src="${gwt.tools.lib}/jsr305/jsr305.jar" />
@@ -123,23 +125,23 @@
           <!-- dependencies needed for JSP support in DevMode: END -->
           <zipfileset src="${gwt.tools.lib}/apache/commons/commons-collections-3.2.1.jar" />
           <!-- htmlunit dependencies not already included: BEGIN -->
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpclient-4.1.2.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpcore-4.1.2.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/http/httpmime-4.1.2.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpclient-4.3.1.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpcore-4.3.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/http/httpmime-4.3.1.jar" />
           <zipfileset src="${gwt.tools.lib}/apache/james/apache-mime4j-0.6.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-codec-1.3.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-io-1.4.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang-2.6.jar" />
-          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-logging-1.1.1.jar" />
-          <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.5.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.9/htmlunit-2.9.jar" />
-          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9.jar" />
-          <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.15.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-codec-1.8.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-io-2.4.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-lang3-3.1.jar" />
+          <zipfileset src="${gwt.tools.lib}/apache/commons/commons-logging-1.1.3.jar" />
+          <zipfileset src="${gwt.tools.lib}/cssparser/cssparser-0.9.11.jar" />
+          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.13/htmlunit-2.13.jar" />
+          <zipfileset src="${gwt.tools.lib}/htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar" />
+          <zipfileset src="${gwt.tools.lib}/nekohtml/nekohtml-1.9.19.jar" />
           <zipfileset src="${gwt.tools.lib}/cup/java-cup-11a.jar" />
           <zipfileset src="${gwt.tools.lib}/xalan/xalan-2.7.1-nocup.jar" />
-          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
-          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl-NoMetaInf.jar" />
-          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xml-apis.jar" />
+          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_11_0/serializer-2.7.1.jar" />
+          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_11_0/xercesImpl-2.11.0.jar" />
+          <zipfileset src="${gwt.tools.lib}/xerces/xerces-2_11_0/xml-apis-1.4.01.jar" />
           <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
           <zipfileset src="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />

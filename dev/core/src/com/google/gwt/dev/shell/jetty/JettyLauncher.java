@@ -24,20 +24,22 @@ import com.google.gwt.dev.util.Util;
 
 import org.apache.tools.ant.taskdefs.Javac;
 import org.eclipse.jdt.core.JDTCompilerAdapter;
-import org.mortbay.component.AbstractLifeCycle;
-import org.mortbay.jetty.AbstractConnector;
-import org.mortbay.jetty.HttpFields.Field;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.RequestLog;
-import org.mortbay.jetty.Response;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.RequestLogHandler;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSocketConnector;
-import org.mortbay.jetty.webapp.WebAppClassLoader;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.log.Log;
-import org.mortbay.log.Logger;
+import org.eclipse.jetty.http.HttpFields;
+import org.eclipse.jetty.http.HttpFields.Field;
+import org.eclipse.jetty.server.AbstractConnector;
+import org.eclipse.jetty.server.AbstractHttpConnection;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.RequestLog;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.RequestLogHandler;
+import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.ssl.SslSocketConnector;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+import org.eclipse.jetty.webapp.WebAppClassLoader;
+import org.eclipse.jetty.webapp.WebAppContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +48,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -139,23 +140,19 @@ public class JettyLauncher extends ServletContainerLauncher {
             + " - " + request.getMethod() + ' ' + request.getUri() + " ("
             + userString + request.getRemoteHost() + ')' + bytesString);
         if (branch.isLoggable(logHeaders)) {
-          // Request headers
-          TreeLogger headers = branch.branch(logHeaders, "Request headers");
-          Iterator<Field> headerFields = request.getConnection().getRequestFields().getFields();
-          while (headerFields.hasNext()) {
-            Field headerField = headerFields.next();
-            headers.log(logHeaders, headerField.getName() + ": "
-                + headerField.getValue());
-          }
-          // Response headers
-          headers = branch.branch(logHeaders, "Response headers");
-          headerFields = response.getHttpFields().getFields();
-          while (headerFields.hasNext()) {
-            Field headerField = headerFields.next();
-            headers.log(logHeaders, headerField.getName() + ": "
-                + headerField.getValue());
-          }
+          AbstractHttpConnection connection = request.getConnection();
+          logHeaders(branch.branch(logHeaders, "Request headers"), logHeaders,
+              connection.getRequestFields());
+          logHeaders(branch.branch(logHeaders, "Response headers"), logHeaders,
+              connection.getResponseFields());
         }
+      }
+    }
+
+    private void logHeaders(TreeLogger logger, TreeLogger.Type logLevel, HttpFields fields) {
+      for (int i = 0; i < fields.size(); ++i) {
+        Field field = fields.getField(i);
+        logger.log(logLevel, field.getName() + ": " + field.getValue());
       }
     }
   }
@@ -178,9 +175,9 @@ public class JettyLauncher extends ServletContainerLauncher {
       this.logger = logger;
     }
 
-    public void debug(String msg, Object arg0, Object arg1) {
+    public void debug(String msg, Object... args) {
       if (logger.isLoggable(TreeLogger.SPAM)) {
-        logger.log(TreeLogger.SPAM, format(msg, arg0, arg1));
+        logger.log(TreeLogger.SPAM, format(msg, args));
       }
     }
 
@@ -188,14 +185,30 @@ public class JettyLauncher extends ServletContainerLauncher {
       logger.log(TreeLogger.SPAM, msg, th);
     }
 
+    public void debug(Throwable th) {
+      logger.log(TreeLogger.SPAM, "", th);
+    }
+
     public Logger getLogger(String name) {
       return this;
     }
 
-    public void info(String msg, Object arg0, Object arg1) {
+    public String getName() {
+      return "";
+    }
+
+    public void info(String msg, Object... args) {
       if (logger.isLoggable(TreeLogger.TRACE)) {
-        logger.log(TreeLogger.TRACE, format(msg, arg0, arg1));
+        logger.log(TreeLogger.TRACE, format(msg, args));
       }
+    }
+
+    public void info(String msg, Throwable th) {
+      logger.log(TreeLogger.TRACE, msg, th);
+    }
+
+    public void info(Throwable th) {
+      logger.log(TreeLogger.TRACE, "", th);
     }
 
     public boolean isDebugEnabled() {
@@ -206,9 +219,9 @@ public class JettyLauncher extends ServletContainerLauncher {
       // ignored
     }
 
-    public void warn(String msg, Object arg0, Object arg1) {
+    public void warn(String msg, Object... args) {
       if (logger.isLoggable(TreeLogger.WARN)) {
-        logger.log(TreeLogger.WARN, format(msg, arg0, arg1));
+        logger.log(TreeLogger.WARN, format(msg, args));
       }
     }
 
@@ -216,20 +229,42 @@ public class JettyLauncher extends ServletContainerLauncher {
       logger.log(TreeLogger.WARN, msg, th);
     }
 
-    /**
-     * Copied from org.mortbay.log.StdErrLog.
-     */
-    private String format(String msg, Object arg0, Object arg1) {
-      int i0 = msg.indexOf("{}");
-      int i1 = i0 < 0 ? -1 : msg.indexOf("{}", i0 + 2);
+    public void warn(Throwable th) {
+      logger.log(TreeLogger.WARN, "", th);
+    }
 
-      if (arg1 != null && i1 >= 0) {
-        msg = msg.substring(0, i1) + arg1 + msg.substring(i1 + 2);
+    public void ignore(Throwable th) {
+      logger.log(TreeLogger.SPAM, "IGNORE", th);
+    }
+
+    /**
+     * Copied from org.eclipse.log.StdErrLog.
+     */
+    private String format(String msg, Object... args) {
+      if (msg == null) {
+        msg = "";
+        for (int i = 0; i < args.length; i++) {
+          msg += "{} ";
+        }
       }
-      if (arg0 != null && i0 >= 0) {
-        msg = msg.substring(0, i0) + arg0 + msg.substring(i0 + 2);
+      String braces = "{}";
+      int start = 0;
+      StringBuilder builder = new StringBuilder();
+      for (Object arg : args) {
+        int bracesIndex = msg.indexOf(braces, start);
+        if (bracesIndex < 0) {
+          builder.append(msg.substring(start));
+          builder.append(" ");
+          builder.append(arg);
+          start = msg.length();
+        } else {
+          builder.append(msg.substring(start, bracesIndex));
+          builder.append(String.valueOf(arg));
+          start = bracesIndex + braces.length();
+        }
       }
-      return msg;
+      builder.append(msg.substring(start));
+      return builder.toString();
     }
   }
 
@@ -335,7 +370,7 @@ public class JettyLauncher extends ServletContainerLauncher {
 
         // For a system path, load from the outside world.
         URL found;
-        if (isSystemPath(checkName)) {
+        if (isSystemClass(checkName.replace('/', '.'))) {
           found = systemClassLoader.getResource(name);
           if (found != null) {
             return found;
@@ -364,23 +399,10 @@ public class JettyLauncher extends ServletContainerLauncher {
         return super.findResource(name);
       }
 
-      /**
-       * Override to additionally consider the most commonly available JSP and
-       * XML implementation as system resources. (In fact, Jasper is in gwt-dev
-       * via embedded Tomcat, so we always hit this case.)
-       */
-      @Override
-      public boolean isSystemPath(String name) {
-        name = name.replace('/', '.');
-        return super.isSystemPath(name)
-            || name.startsWith("org.apache.jasper.")
-            || name.startsWith("org.apache.xerces.");
-      }
-
       @Override
       protected Class<?> findClass(String name) throws ClassNotFoundException {
         // For system path, always prefer the outside world.
-        if (isSystemPath(name)) {
+        if (isSystemClass(name)) {
           try {
             return systemClassLoader.loadClass(name);
           } catch (ClassNotFoundException e) {
@@ -391,7 +413,7 @@ public class JettyLauncher extends ServletContainerLauncher {
           return super.findClass(name);
         } catch (ClassNotFoundException e) {
           // Don't allow server classes to be loaded from the outside.
-          if (isServerPath(name)) {
+          if (isServerClass(name)) {
             throw e;
           }
         }
@@ -464,8 +486,6 @@ public class JettyLauncher extends ServletContainerLauncher {
      */
     private final ClassLoader systemClassLoader = Thread.currentThread().getContextClassLoader();
 
-    private WebAppClassLoaderExtension classLoader;
-
     @SuppressWarnings("unchecked")
     private WebAppContextWithReload(TreeLogger logger, String webApp,
         String contextPath) {
@@ -474,16 +494,27 @@ public class JettyLauncher extends ServletContainerLauncher {
 
       // Prevent file locking on Windows; pick up file changes.
       getInitParams().put(
-          "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+          "org.eclipse.jetty.servlet.Default.useFileMappedBuffer", "false");
 
       // Since the parent class loader is bootstrap-only, prefer it first.
       setParentLoaderPriority(true);
     }
 
+    /**
+     * Override to additionally consider the most commonly available JSP and
+     * XML implementation as system resources. (In fact, Jasper is in gwt-dev
+     * via embedded Tomcat, so we always hit this case.)
+     */
+    @Override
+    public boolean isSystemClass(String name) {
+      return super.isSystemClass(name)
+          || name.startsWith("org.apache.jasper.")
+          || name.startsWith("org.apache.xerces.");
+    }
+
     @Override
     protected void doStart() throws Exception {
-      classLoader = new WebAppClassLoaderExtension();
-      setClassLoader(classLoader);
+      setClassLoader(new WebAppClassLoaderExtension());
       super.doStart();
     }
 
@@ -491,12 +522,12 @@ public class JettyLauncher extends ServletContainerLauncher {
     protected void doStop() throws Exception {
       super.doStop();
       
-      Class<?> jdbcUnloader = classLoader.loadClass("com.google.gwt.dev.shell.jetty.JDBCUnloader");
+      Class<?> jdbcUnloader =
+          getClassLoader().loadClass("com.google.gwt.dev.shell.jetty.JDBCUnloader");
       java.lang.reflect.Method unload = jdbcUnloader.getMethod("unload");
       unload.invoke(null);
       
       setClassLoader(null);
-      classLoader.destroy();
     }
   }
 
@@ -516,10 +547,6 @@ public class JettyLauncher extends ServletContainerLauncher {
   private static final String PROPERTY_NOWARN_WEBAPP_CLASSPATH = "gwt.nowarn.webapp.classpath";
 
   static {
-    // Suppress spammy Jetty log initialization.
-    System.setProperty("org.mortbay.log.class", JettyNullLogger.class.getName());
-    Log.getLog();
-
     /*
      * Make JDT the default Ant compiler so that JSP compilation just works
      * out-of-the-box. If we don't set this, it's very, very difficult to make
@@ -672,7 +699,7 @@ public class JettyLauncher extends ServletContainerLauncher {
     jreLeakPrevention(logger);
     
     // Turn off XML validation.
-    System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
+    System.setProperty("org.eclipse.jetty.xml.XmlParser.Validating", "false");
 
     Server server = new Server();
 
@@ -704,7 +731,6 @@ public class JettyLauncher extends ServletContainerLauncher {
         branch.log(TreeLogger.TRACE, "Connection is null");
       }
     }
-
     return createServletContainer(logger, appRootDir, server, wac,
         connectorPort);
   }
@@ -715,8 +741,7 @@ public class JettyLauncher extends ServletContainerLauncher {
   }
 
   protected WebAppContext createWebAppContext(TreeLogger logger, File appRootDir) {
-    return new WebAppContextWithReload(logger, appRootDir.getAbsolutePath(),
-        "/");
+    return new WebAppContextWithReload(logger, appRootDir.getAbsolutePath(), "/");
   }
 
   protected AbstractConnector getConnector(TreeLogger logger) {

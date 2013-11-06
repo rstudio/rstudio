@@ -32,6 +32,7 @@ import com.gargoylesoftware.htmlunit.javascript.SimpleScriptable;
 import com.gargoylesoftware.htmlunit.javascript.SimpleScriptableProxy;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 
+import net.sourceforge.htmlunit.corejs.javascript.ConsString;
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
 import net.sourceforge.htmlunit.corejs.javascript.JavaScriptException;
@@ -210,7 +211,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       if (args.length == 1
           && methodName.indexOf(REPLACE_METHOD_SIGNATURE) != -1) {
         // getUrl() is not visible
-        String currentUrl = window.jsxGet_location().toString();
+        String currentUrl = window.getLocation().toString();
         currentUrl = getUrlBeforeHash(currentUrl);
         String newUrl = getUrlBeforeHash((String) args[0].getValue());
         if (!newUrl.equals(currentUrl)) {
@@ -302,6 +303,9 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
       Value returnVal = new Value();
       returnVal.setJsObject(new JsObjectRef(refId));
       return returnVal;
+    }
+    if (value instanceof ConsString) {
+      return new Value(value.toString());
     }
     if (value instanceof Number) {
       return new Value(convertNumberFromJsval(((Number) value)));
