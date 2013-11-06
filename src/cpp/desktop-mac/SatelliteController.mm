@@ -19,24 +19,30 @@
 //    not unique to safari, git bisect for issues introduced?
 
 // TODO: window positioning and persistance for satellites
+//       (also verify we like the positioning of other windows)
 
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
+
+// TODO: use unsupported file type in viewer to investigate download handling
+
+// TODO: zoom callbacks
+
+// TODO: webkit version check
+
 
 // TODO: main menu
 
 // TODO: filterText callback
 
+// TODO: file dialogs
+
 // TODO: undo and clipboard callbacks (undo/redo/cut/copy/paste)
 //       (also cleanClipboard and copyImageToClipboard)
-
-// TODO: zoom callbacks
 
 // TODO: about box
 
 // TODO: check for updates
-
-// TODO: webkit version check
 
 // TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
