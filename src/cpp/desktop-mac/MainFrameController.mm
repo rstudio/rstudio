@@ -15,9 +15,11 @@
 
 #import "MainFrameController.h"
 
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
@@ -63,6 +65,12 @@ static MainFrameController* instance_;
       
       // set primary fullscreen mode
       desktop::utils::enableFullscreenMode([self window], true);
+      
+      // webkit version check
+      NSString* userAgent = [webView_
+               stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+      [self checkWebkitVersion: userAgent];
+
    }
    
    return self;
@@ -175,7 +183,29 @@ static MainFrameController* instance_;
     
 }
 
-// Inject our script ojbect when the window object becomes available
+- (void) checkWebkitVersion: (NSString*) userAgent
+{
+   // parse version info out of user agent string
+   boost::regex re("^.*?AppleWebKit/(\\d+).*$");
+   boost::smatch match;
+   if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
+   {
+      int version = core::safe_convert::stringTo<int>(match[1], 0);
+      if (version < 536)
+      {
+         desktop::utils::showMessageBox(
+             NSWarningAlertStyle,
+             @"Older Version of Safari Detected",
+             @"RStudio uses the Safari WebKit browser engine for rendering "
+             @"its user interface. The minimum required version of Safari is "
+             @"6.0 and an earlier version was detected on your system.\n\n"
+             @"Please update to a more recent version of Safari to ensure that "
+             @"all RStudio features work correctly.");
+      }
+   }
+}
+
+// Inject our script object when the window object becomes available
 - (void) webView: (WebView*) webView
 didClearWindowObject:(WebScriptObject *)windowObject
         forFrame:(WebFrame *)frame
