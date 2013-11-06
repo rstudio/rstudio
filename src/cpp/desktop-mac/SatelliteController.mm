@@ -13,10 +13,8 @@
  *
  */
 
-// TODO: initial load performance issue
-//  - has to be related to initial R process startup time since
-//    it doesn't happen for reload but does for reload project
-//    not unique to safari, git bisect for issues introduced?
+// TODO: initial load performance issue - it takes about 1 second to
+//       forceLoad the deferred binding for the source pane. no idea why.
 
 // TODO: window positioning and persistance for satellites
 //       (also verify we like the positioning of other windows)
