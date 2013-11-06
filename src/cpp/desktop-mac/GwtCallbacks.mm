@@ -130,9 +130,21 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-   
-   return @"getExistingDirectory";
+   NSOpenPanel *open = [NSOpenPanel openPanel];
+   [open setTitle: caption];
+   [open setDirectoryURL: [NSURL fileURLWithPath:
+                           [dir stringByStandardizingPath]]];
+   [open setCanChooseFiles: false];
+   [open setCanChooseDirectories: true];
+   long int result = [open runModal];
+   if (result == NSOKButton)
+   {
+      return [[open URL] path];
+   }
+   else
+   {
+      return @"";
+   }
 }
 
 - (void) undo
