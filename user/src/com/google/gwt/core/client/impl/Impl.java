@@ -88,15 +88,7 @@ public final class Impl {
    */
   public static native JavaScriptObject entry(JavaScriptObject jsFunction) /*-{
     return function() {
-      try {
-        return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
-      } catch (e) {
-        // This catch block is here to ensure that the finally block in entry0
-        // will be executed correctly on IE6/7.  We can't put a catch Throwable
-        // in entry0 because this would always cause the unhandled exception to
-        // be wrapped in a JavaScriptException type.
-        throw e;
-      }
+      return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
     };
   }-*/;
 
