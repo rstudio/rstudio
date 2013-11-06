@@ -112,6 +112,10 @@ static PendingSatelliteWindow pendingWindow_;
    // initialize superclass then continue
    if (self = [super initWithWindow: window])
    {
+      // set autosave name if this is a named window
+      if (name)
+         [self setWindowFrameAutosaveName: name];
+      
       // create web view, save it as a member, and register as it's delegate,
       webView_ = [[WebViewWithKeyEquiv alloc] initWithFrame: frameRect];
       [webView_ setUIDelegate: self];
@@ -132,15 +136,12 @@ static PendingSatelliteWindow pendingWindow_;
       // bring the window to the front
       [window makeKeyAndOrderFront: self];
       
-      // special treatment for named windows
+      // track named windows for reactivation
       if (name)
       {
          // track it (for reactivation)
          name_ = [name copy];
          [namedWindows_ setValue: self forKey: name_];
-         
-         // auto save positiom
-         [self setWindowFrameAutosaveName: name_];
       }
       
       // set fullscreen mode (defualt to non-primary)
@@ -391,9 +392,7 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
          [[SatelliteController alloc] initWithURLRequest: request
                                                     name: name];
          
-         [[satelliteController window]
-                  cascadeTopLeftFromPoint: NSMakePoint(10, 5)];
-         
+         // return it
          return [satelliteController webView];
       }
    }

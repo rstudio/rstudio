@@ -16,9 +16,6 @@
 // TODO: initial load performance issue - it takes about 1 second to
 //       forceLoad the deferred binding for the source pane. no idea why.
 
-// TODO: window positioning and persistance for satellites
-//       (also verify we like the positioning of other windows)
-
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
 
