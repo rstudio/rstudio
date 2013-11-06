@@ -234,15 +234,13 @@ public class UIPrefsAccessor extends Prefs
       // get the underlying value
       String pdfPreview = pdfPreview().getValue();
       
-      // we disabled the internal viewer for qtwebkit but have 
-      // now restored it since we are using safari
-      /*
+      // the internal viewer has stability issues on the mac 
+      // so re-route to system viewer
       if (BrowseCap.isMacintoshDesktop())
       {
          if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
             pdfPreview = PDF_PREVIEW_SYSTEM;
       }
-      */
       
       // return the (potentially) adjusted value
       return pdfPreview;
