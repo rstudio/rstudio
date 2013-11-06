@@ -125,7 +125,7 @@
    </replace-with>
 
    <!-- define permutations for emulated and native stack modes -->
-   <set-property name="compiler.stackMode" value="native,emulated"/>
+   <set-property name="compiler.stackMode" value="emulated,native"/>
    <set-configuration-property name="compiler.emulatedStack.recordLineNumbers" value="true" />
 
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
