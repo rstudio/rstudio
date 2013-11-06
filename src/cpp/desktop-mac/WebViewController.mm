@@ -2,6 +2,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import <WebKit/WebFrame.h>
 #import <Webkit/WebUIDelegate.h>
 
 
