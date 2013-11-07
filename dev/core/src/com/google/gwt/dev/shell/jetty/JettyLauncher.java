@@ -570,8 +570,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
     connector.setPort(port);
 
-    // Don't share ports with an existing process.
-    connector.setReuseAddress(false);
+    // Allow binding to a port even if it's still in state TIME_WAIT.
+    connector.setReuseAddress(true);
 
     // Linux keeps the port blocked after shutdown if we don't disable this.
     connector.setSoLingerTime(0);
