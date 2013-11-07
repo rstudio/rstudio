@@ -56,16 +56,7 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
    return obj;
 }
 
-void endBootUpdateCheck(const core::system::ProcessResult& result)
-{
-   json::Object obj = jsonFromProcessResult(result);
-   // TODO: Don't bother emitting an event if there's no available update
-   // version
-   ClientEvent event (client_events::kUpdateCheck, obj);
-   module_context::enqueClientEvent(event);
-}
-   
-void beginUpdateCheck(bool manual, 
+void beginUpdateCheck(bool manual,
    const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
    // Find the path to R 
@@ -134,7 +125,15 @@ void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
 void checkForUpdates(const json::JsonRpcRequest& request,
                      const json::JsonRpcFunctionContinuation& cont)
 {
-   beginUpdateCheck(true, boost::bind(endRPCUpdateCheck, cont, _1));
+   bool manual = false;
+   Error error = json::readParam(request.params, 0, &manual);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      cont(error, &response);
+      return;
+   }
+   beginUpdateCheck(manual, boost::bind(endRPCUpdateCheck, cont, _1));
 }
 
 } // anonymous namespace
@@ -143,16 +142,6 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-
-   // Only check for updates in desktop mode, and when update check is not
-   // disabled
-   if (session::options().programMode() == kSessionProgramModeDesktop &&
-       core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty())
-   {
-      events().onDeferredInit.connect(boost::bind(beginUpdateCheck,
-                                                  false,
-                                                  endBootUpdateCheck));
-   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()

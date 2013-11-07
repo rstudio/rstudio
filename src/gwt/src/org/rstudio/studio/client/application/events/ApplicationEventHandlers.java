@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
-
 public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   UnauthorizedHandler,
                                                   ReloadEvent.Handler,
@@ -26,8 +24,6 @@ public interface ApplicationEventHandlers extends LogoutRequestedHandler,
                                                   ServerUnavailableHandler,
                                                   ClientDisconnectedHandler,
                                                   InvalidClientVersionHandler,
-                                                  ServerOfflineHandler, 
-                                                  UpdateCheckEvent.Handler,
-                                                  SessionInitHandler
+                                                  ServerOfflineHandler
 {
 }
