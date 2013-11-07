@@ -68,7 +68,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         int selectionStart,
                         int selectionLength, String okButtonCaption);
 
-   void checkForUpdates();
    void showAboutDialog();
    void bringMainFrameToFront();
 

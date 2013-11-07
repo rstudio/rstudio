@@ -102,24 +102,6 @@ public class DesktopHooks
          return "";
    }
    
-   boolean getCheckForUpdates()
-   {
-      // adding late in the cycle of v0.98 so defend against any 
-      // order of initialization problems
-      // TODO: remove the try/catch once we get on the v0.99 branch
-      try
-      {
-         return !session_.getSessionInfo().getDisableCheckForUpdates() &&
-                pUIPrefs_.get().checkForUpdates().getValue();
-      }
-      catch(Throwable e)
-      {
-         Debug.logToConsole("Error reading check for updates status: " +
-                            e.getMessage());
-         return false;
-      }
-   }
-
    void invokeCommand(String cmdId)
    {
       commands_.getCommandById(cmdId).execute();

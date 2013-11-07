@@ -42,7 +42,6 @@ MainWindow::MainWindow(QUrl url) :
       GwtWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this, this),
-      updateChecker_(this),
       pSessionLauncher_(NULL),
       pCurrentSessionProcess_(NULL)
 {
@@ -168,12 +167,6 @@ void MainWindow::onWorkbenchInitialized()
       setWindowTitle(QString::fromAscii("RStudio"));
 
    avoidMoveCursorIfNecessary();
-
-   // check for updates if requested
-   bool check = webView()->page()->mainFrame()->evaluateJavaScript(
-      QString::fromAscii("window.desktopHooks.getCheckForUpdates()")).toBool();
-   if (check)
-      updateChecker_.performCheck(false);
 }
 
 void MainWindow::resetMargins()
@@ -317,11 +310,6 @@ void MainWindow::openFileInRStudio(QString path)
 
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromAscii("window.desktopHooks.openFile(\"") + path + QString::fromAscii("\")"));
-}
-
-void MainWindow::checkForUpdates()
-{
-   updateChecker_.performCheck(true);
 }
 
 void MainWindow::onPdfViewerClosed(QString pdfPath)
