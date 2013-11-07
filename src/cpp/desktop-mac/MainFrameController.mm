@@ -141,7 +141,13 @@ static MainFrameController* instance_;
 
 - (id) invokeCommand: (NSString*) command
 {
-   [[self window] makeKeyAndOrderFront: self];
+   static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:
+                                        @"undoDummy", @"redoDummy",
+                                        @"cutDummy", @"copyDummy", @"pasteDummy",
+                                        nil];
+
+   if (![noRefocusCommands containsObject: command])
+      [[self window] makeKeyAndOrderFront: self];
    
    return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
                                      command]];

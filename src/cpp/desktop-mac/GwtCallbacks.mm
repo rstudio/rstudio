@@ -149,55 +149,77 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (void) undo
 {
-   // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-   // However the native handling of Cmd+Z seems to do the right thing.
-   CGEventRef event1, event2, event3, event4;
-   event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
-   event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
-   event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
-   event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
-   CGEventSetFlags(event2, kCGEventFlagMaskCommand);
-   CGEventSetFlags(event3, kCGEventFlagMaskCommand);
-   CGEventPost(kCGHIDEventTap, event1);
-   CGEventPost(kCGHIDEventTap, event2);
-   CGEventPost(kCGHIDEventTap, event3);
-   CGEventPost(kCGHIDEventTap, event4);
+   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   {
+      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
+      // It doesn't do anything in the main window when we use the menu to invoke.
+      // However the native handling of Cmd+Z seems to do the right thing.
+      CGEventRef event1, event2, event3, event4;
+      event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
+      event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
+      event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
+      event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
+      CGEventSetFlags(event2, kCGEventFlagMaskCommand);
+      CGEventSetFlags(event3, kCGEventFlagMaskCommand);
+      CGEventPost(kCGHIDEventTap, event1);
+      CGEventPost(kCGHIDEventTap, event2);
+      CGEventPost(kCGHIDEventTap, event3);
+      CGEventPost(kCGHIDEventTap, event4);
+   }
+   else
+   {
+      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
+      // endless loop of Cmd+Z-ing.
+      WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
+      [[[webViewController webView] undoManager] undo];
+   }
 }
 
 - (void) redo
 {
-   // It appears that using the webView's undoManager doesn't work (for what we want it to do).
-   // However the native handling of Cmd+Z seems to do the right thing.
-   CGEventRef event1, event2, event3, event4, event5, event6;
-   event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
-   event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, true);
-   event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
-   event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
-   event5 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, false);
-   event6 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
-   CGEventSetFlags(event3, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
-   CGEventSetFlags(event4, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
-   CGEventPost(kCGHIDEventTap, event1);
-   CGEventPost(kCGHIDEventTap, event2);
-   CGEventPost(kCGHIDEventTap, event3);
-   CGEventPost(kCGHIDEventTap, event4);
-   CGEventPost(kCGHIDEventTap, event5);
-   CGEventPost(kCGHIDEventTap, event6);
+   if ([NSApp mainWindow] == [[MainFrameController instance] window])
+   {
+      // It appears that using the webView's undoManager doesn't work (for what we want it to do).
+      // It doesn't do anything in the main window when we use the menu to invoke.
+      // However the native handling of Cmd+Shift+Z seems to do the right thing.
+      CGEventRef event1, event2, event3, event4, event5, event6;
+      event1 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, true);
+      event2 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, true);
+      event3 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, true);
+      event4 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)6, false);
+      event5 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)56, false);
+      event6 = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)55, false);
+      CGEventSetFlags(event3, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+      CGEventSetFlags(event4, kCGEventFlagMaskCommand | kCGEventFlagMaskShift);
+      CGEventPost(kCGHIDEventTap, event1);
+      CGEventPost(kCGHIDEventTap, event2);
+      CGEventPost(kCGHIDEventTap, event3);
+      CGEventPost(kCGHIDEventTap, event4);
+      CGEventPost(kCGHIDEventTap, event5);
+      CGEventPost(kCGHIDEventTap, event6);
+   }
+   else
+   {
+      // undoManager works just fine on secondary windows, and sending Cmd+Z sends us into an
+      // endless loop of Cmd+Shift+Z-ing.
+      WebViewController* webViewController = (WebViewController*)[[NSApp mainWindow] delegate];
+      [[[webViewController webView] undoManager] redo];
+   }
 }
 
 - (void) clipboardCut
 {
-   [[[MainFrameController instance] webView] cut: self];
+   [[[[NSApp mainWindow] windowController] webView] cut: self];
 }
 
 - (void) clipboardCopy
 {
-   [[[MainFrameController instance] webView] copy: self];
+   [[[[NSApp mainWindow] windowController] webView] copy: self];
 }
 
 - (void) clipboardPaste
 {
-   [[[MainFrameController instance] webView] paste: self];
+   [[[[NSApp mainWindow] windowController] webView] paste: self];
 }
 
 - (NSString*) getUriForPath: (NSString*) path

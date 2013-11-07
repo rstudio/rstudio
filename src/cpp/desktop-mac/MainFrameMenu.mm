@@ -65,6 +65,9 @@ NSString* charToStr(unichar c) {
                           @"Meta+-", @"zoomOut",
                           @"Meta+Z", @"undoDummy",
                           @"Meta+Shift+Z", @"redoDummy",
+                          @"Meta+X", @"cutDummy",
+                          @"Meta+C", @"copyDummy",
+                          @"Meta+V", @"pasteDummy",
                           nil];
       // Undo/Redo can't have normal keyboard shortcuts assigned--their keystrokes need to be
       // handled by WebKit itself. But we still want it to show up in the menu. So just special

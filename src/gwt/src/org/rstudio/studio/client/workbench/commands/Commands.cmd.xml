@@ -452,13 +452,6 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="debugContinue" value="Shift+F5"/>
       <shortcut refid="debugStop" value="Shift+F8"/>
       <shortcut refid="showProfiler" value="Cmd+Shift+F6"/>
-      <!--
-      <shortcut refid="undoDummy" value="Cmd+Z" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-      <shortcut refid="redoDummy" value="Cmd+Shift+Z" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-      -->
-      <shortcut refid="cutDummy" value="Cmd+X" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-      <shortcut refid="copyDummy" value="Cmd+C" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-      <shortcut refid="pasteDummy" value="Cmd+V" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
    </shortcuts>
 
    <!--

@@ -456,6 +456,24 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       [[webView_ window] performClose: self];
       return YES;
    }
+   
+   // Without these, secondary/satellite windows don't respond to clipboard shortcuts
+   if ([chr isEqualToString: @"x"] && mod == NSCommandKeyMask)
+   {
+      [webView_ cut: self];
+      return YES;
+   }
+   if ([chr isEqualToString: @"c"] && mod == NSCommandKeyMask)
+   {
+      [webView_ copy: self];
+      return YES;
+   }
+   if ([chr isEqualToString: @"v"] && mod == NSCommandKeyMask)
+   {
+      [webView_ paste: self];
+      return YES;
+   }
+   
    return NO;
 }
 
