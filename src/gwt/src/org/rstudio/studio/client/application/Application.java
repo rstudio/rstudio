@@ -18,6 +18,7 @@ package org.rstudio.studio.client.application;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -45,6 +46,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
@@ -63,8 +65,10 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -109,6 +113,7 @@ public class Application implements ApplicationEventHandlers
       pApplicationQuit_ = pApplicationQuit;
       pApplicationInterrupt_ = pApplicationInterrupt;
       pAceThemes_ = pAceThemes;
+      ignoredUpdates_ = IgnoredUpdates.create();
 
       // bind to commands
       binder.bind(commands_, this);
@@ -128,6 +133,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(InvalidClientVersionEvent.TYPE, this);
       events.addHandler(ServerOfflineEvent.TYPE, this);
       events.addHandler(UpdateCheckEvent.TYPE, this);
+      events.addHandler(SessionInitEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -522,10 +528,42 @@ public class Application implements ApplicationEventHandlers
       view_.showSessionAbendWarning();
    }
    
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      new JSObjectStateValue(
+            "updates",
+            "ignoredUpdates",
+            ClientState.PERSISTENT,
+            session_.getSessionInfo().getClientState(),
+            false)
+       {
+          @Override
+          protected void onInit(JsObject value)
+          {
+             if (value != null)
+                ignoredUpdates_ = value.cast();
+          }
+   
+          @Override
+          protected JsObject getValue()
+          {
+             ignoredUpdatesDirty_ = false;
+             return ignoredUpdates_.cast();
+          }
+          
+          @Override
+          protected boolean hasChanged()
+          {
+             return ignoredUpdatesDirty_;
+          }
+       };
+   }
+
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
-      // get the agreeeent (if any)
+      // get the agreement (if any)
       final Agreement agreement = sessionInfo.pendingAgreement();
       
       // if there is an agreement then prompt user for agreement (otherwise just
@@ -732,9 +770,21 @@ public class Application implements ApplicationEventHandlers
    private void respondToUpdateCheck(final UpdateCheckResult result, 
                                      boolean manual)
    {
+      boolean ignoredUpdate = false;
       if (result.getUpdateVersion().length() > 0)
       {
-         // TODO: Ensure update version is not in the list of ignored versions.
+         JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
+         for (int i = 0; i < ignoredUpdates.length(); i++)
+         {
+            if (ignoredUpdates.get(i).equals(result.getUpdateVersion()))
+            {
+               ignoredUpdate = true;
+            }
+         }
+      }
+      if (result.getUpdateVersion().length() > 0 &&
+          !ignoredUpdate)
+      {
          ArrayList<String> buttonLabels = new ArrayList<String>();
          ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
          
@@ -758,14 +808,19 @@ public class Application implements ApplicationEventHandlers
             }
          });
 
-         buttonLabels.add("Ignore Update");
-         buttonOperations.add(new Operation() {
-            @Override
-            public void execute()
-            {
-               // TODO: Add to list of ignored versions
-            }
-         });
+         // Only provide the option to ignore the update if it's not urgent.
+         if (result.getUpdateUrgency() == 0)
+         {
+            buttonLabels.add("Ignore Update");
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
+               {
+                  ignoredUpdates_.addIgnoredUpdate(result.getUpdateVersion());
+                  ignoredUpdatesDirty_ = true;
+               }
+            });
+         }
 
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION, 
                "Update Available", 
@@ -797,5 +852,7 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
 
+   private IgnoredUpdates ignoredUpdates_;
+   private boolean ignoredUpdatesDirty_ = false;
    private ClientStateUpdater clientStateUpdaterInstance_;
 }
