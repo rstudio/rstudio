@@ -68,6 +68,30 @@ NSString* resolveAliasedPath(NSString* path)
    desktop::utils::browseURL(nsurl);
 }
 
+- (NSString*) runSheetFileDialog: (NSSavePanel*) panel
+{
+   NSString* path = @"";
+   [panel beginSheetModalForWindow: [[MainFrameController instance] window]
+                completionHandler: nil];
+   long int result = [panel runModal];
+   @try
+   {
+      if (result == NSOKButton)
+      {
+         path = [[panel URL] path];
+      }
+   }
+   @catch (NSException* e)
+   {
+      throw e;
+   }
+   @finally
+   {
+      [NSApp endSheet:panel];
+   }
+   return path;
+}
+
 - (NSString*) getOpenFileName: (NSString*) caption
               dir: (NSString*) dir
               filter: (NSString*) filter
@@ -88,15 +112,7 @@ NSString* resolveAliasedPath(NSString* path)
                            [toExt rangeOfString: @")"].location];
       [open setAllowedFileTypes: [NSArray arrayWithObject: fromExt]];
    }
-   long int result = [open runModal];
-   if (result == NSOKButton)
-   {
-      return [[open URL] path];
-   }
-   else
-   {
-      return @"";
-   }
+   return [self runSheetFileDialog: open];
 }
 
 - (NSString*) getSaveFileName: (NSString*) caption
@@ -116,16 +132,7 @@ NSString* resolveAliasedPath(NSString* path)
    [save setTitle: caption];
    [save setDirectoryURL: pathAndFile];
    [save setNameFieldStringValue: [pathAndFile lastPathComponent]];
-   long int result = [save runModal];
-   if (result == NSOKButton)
-   {
-      NSString *filename = [[save URL] path];
-      return filename;
-   }
-   else
-   {
-      return @"";
-   }
+   return [self runSheetFileDialog: save];
 }
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
@@ -136,15 +143,7 @@ NSString* resolveAliasedPath(NSString* path)
                            [dir stringByStandardizingPath]]];
    [open setCanChooseFiles: false];
    [open setCanChooseDirectories: true];
-   long int result = [open runModal];
-   if (result == NSOKButton)
-   {
-      return [[open URL] path];
-   }
-   else
-   {
-      return @"";
-   }
+   return [self runSheetFileDialog: open];
 }
 
 - (void) undo
@@ -336,6 +335,13 @@ NSString* resolveAliasedPath(NSString* path)
    return false;
 }
 
+- (void) modalAlertDidEnd: (void *) alert
+               returnCode: (int) returnCode
+              contextInfo: (int *) contextInfo
+{
+   [NSApp stopModalWithCode: returnCode];
+}
+
 - (int) showMessageBox: (int) type
                caption: (NSString*) caption
                message: (NSString*) message
@@ -380,9 +386,12 @@ NSString* resolveAliasedPath(NSString* path)
    // Make Enter invoke the default button, and ESC the cancel button.
    [[[alert buttons] objectAtIndex:defaultButton] setKeyEquivalent: @"\r"];
    [[[alert buttons] objectAtIndex:cancelButton] setKeyEquivalent: @"\033"];
-   
+   [alert beginSheetModalForWindow: [[MainFrameController instance] window]
+                     modalDelegate: self
+                    didEndSelector: @selector(modalAlertDidEnd:returnCode:contextInfo:)
+                       contextInfo: nil];
    // Run the dialog and translate the result
-   int clicked = [alert runModal];
+   int clicked = [NSApp runModalForWindow: [alert window]];
    switch(clicked)
    {
       case NSAlertFirstButtonReturn:
