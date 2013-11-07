@@ -173,10 +173,6 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) assignShortcut: (NSString*) shortcut toMenuItem: (NSMenuItem*) menuItem {
-   static NSRegularExpression* re = [[NSRegularExpression alloc] initWithPattern: @"^[a-zA-Z0-9.+\\-/`=]$"
-                                                                         options: NSRegularExpressionCaseInsensitive
-                                                                           error: NULL];
-
    if ([shortcut length] == 0)
       return;
 
@@ -195,9 +191,7 @@ NSString* charToStr(unichar c) {
    }
    NSString* key = [parts lastObject];
    [menuItem setKeyEquivalentModifierMask: modifiers];
-   if ([re numberOfMatchesInString: key
-                           options: NSMatchingAnchored
-                             range: NSMakeRange(0, [key length])] > 0) {
+   if ([key length] == 1) {
       [menuItem setKeyEquivalent: [key lowercaseString]];
    } else {
       NSString* keyEquiv = [shortcutMap_ objectForKey: key];
