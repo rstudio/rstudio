@@ -266,6 +266,14 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    if (name_)
       [namedWindows_ removeObjectForKey: name_];
    
+   // unsubscribe observers
+   [[self window] setDelegate: nil];
+   [webView_ setUIDelegate: nil];
+   [webView_ setFrameLoadDelegate: nil];
+   [webView_ setResourceLoadDelegate: nil];
+   [webView_ setPolicyDelegate: nil];
+   [webView_ setKeyEquivDelegate: nil];
+   
    [self autorelease];
 }
 
