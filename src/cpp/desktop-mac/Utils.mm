@@ -9,6 +9,10 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
+
+
 #import "Utils.hpp"
 
 using namespace core;
@@ -163,8 +167,40 @@ float titleBarHeight()
    
    return (frame.size.height - contentRect.size.height);
    
-} 
+}
+  
+NSData *base64Decode(NSString *input)
+{
+   CFErrorRef error;
+   SecTransformRef transform = SecDecodeTransformCreate(kSecBase64Encoding,
+                                                        &error);
+   if (error)
+   {
+      NSLog(@"Error SecDecodeTransformCreate");
+      return nil;
+   }
    
+   if (!SecTransformSetAttribute(transform,
+                                kSecTransformInputAttributeName,
+                                input,
+                                &error))
+   {
+      NSLog(@"Error SecTransformSetAttribute");
+      CFRelease(transform);
+      return nil;
+   }
+   
+   NSData* data = (NSData*)SecTransformExecute(transform, &error);
+   CFRelease(transform);
+   if (error)
+   {
+      NSLog(@"Error SecTransformExecute");
+      return nil;
+   }
+   
+   return [data autorelease];
+}
+
    
 } // namespace utils
 } // namespace desktop

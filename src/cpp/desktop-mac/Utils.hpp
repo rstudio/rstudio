@@ -45,6 +45,8 @@ void toggleFullscreenMode(NSWindow* window);
 
 float titleBarHeight();
    
+NSData *base64decode(NSString *input);
+   
 } // namespace utils
 } // namespace desktop
 
