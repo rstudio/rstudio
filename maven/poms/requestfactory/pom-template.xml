@@ -12,12 +12,12 @@
     <artifactId>requestfactory</artifactId>
     <packaging>pom</packaging>
     <name>RequestFactory</name>
-    <url>http://code.google.com/webtoolkit/doc/latest/DevGuideRequestFactory.html</url>
+    <url>http://www.gwtproject.org/doc/latest/DevGuideRequestFactory.html</url>
     <version>${gwtVersion}</version>
     <licenses>
         <license>
-            <name>Google Web Toolkit Terms</name>
-            <url>http://code.google.com/webtoolkit/terms.html</url>
+            <name>GWT Terms</name>
+            <url>http://www.gwtproject.org/terms.html</url>
         </license>
     </licenses>
     <dependencyManagement>
