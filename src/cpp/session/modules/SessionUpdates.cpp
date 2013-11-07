@@ -18,6 +18,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/Process.hpp>
+#include <core/system/Environment.hpp>
 
 #include <boost/bind.hpp>
 
@@ -143,8 +144,10 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   // Only check for updates in desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   // Only check for updates in desktop mode, and when update check is not
+   // disabled
+   if (session::options().programMode() == kSessionProgramModeDesktop &&
+       core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty())
    {
       events().onDeferredInit.connect(boost::bind(beginUpdateCheck,
                                                   false,
