@@ -13,24 +13,6 @@
  *
  */
 
-// TODO: initial load performance issue - it takes about 1 second to
-//       forceLoad the deferred binding for the source pane. no idea why.
-
-// TODO: base64 download for ggivs
-// TODO: toolbar for secondary window
-
-// TOOD: test on snow leopoard
-
-// TODO: message box dialogs
-// TODO: check for updates
-
-// TODO: remove dependency on NSRegularExpression (requires Lion)
-// TODO: copyImageToClipboard
-// TODO: clipboard and undo/redo commands not working in other windows
-
-// TODO: about box
-
-
 #import "SatelliteController.h"
 
 #import "GwtCallbacks.h"
