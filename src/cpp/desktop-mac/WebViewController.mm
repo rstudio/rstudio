@@ -348,7 +348,9 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
            (navType == WebNavigationTypeLinkClicked ||
             navType == WebNavigationTypeFormSubmitted))
       {
-         [self handleBase64Download: url webView: webView];
+         [self handleBase64Download: url
+                         forElement: [actionInformation
+                                      objectForKey:WebActionElementKey]];
       }
       else
       {
@@ -478,12 +480,50 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
 }
 
 - (void) handleBase64Download: (NSURL*) url
-                      webView: (WebView*) webView
+                   forElement: (NSDictionary*) elementDict
 {
    // TODO: handle base64 download
    // (see WebPage::handleBase64Download in Qt version)
+   NSString* absUrl = [url absoluteString];
+   NSArray* parts = [absUrl
+                     componentsSeparatedByCharactersInSet: [NSCharacterSet
+                                                            characterSetWithCharactersInString: @":;,"]];
+   if ([parts count] != 4)
+      return;
+   if (![@"data" isEqualToString: [parts objectAtIndex: 0]])
+      return;
+   if (![@"base64" isEqualToString: [parts objectAtIndex: 2]])
+      return;
+
+   DOMNode* node = [elementDict objectForKey: @"WebElementDOMNode"];
+   // The DOM node that was clicked might be the DOMText or another element that was inside the anchor.
+   // Walk the parents until we get to an anchor.
+   while (node && ([node nodeType] != 1 || ![[(DOMElement*)node tagName] isEqualToString: @"A"]))
+      node = [node parentElement];
+   if (!node)
+      return;
+
+   DOMElement* el = (DOMElement*)node;
+
+   NSString* filename = [[[el attributes] getNamedItem: @"download"] nodeValue];
+
+   NSSavePanel* dlSavePanel = [NSSavePanel savePanel];
+   [dlSavePanel setNameFieldStringValue: filename];
+
+   [dlSavePanel beginSheetModalForWindow: [self window] completionHandler: nil];
+   long int result = [dlSavePanel runModal];
+   [NSApp endSheet: dlSavePanel];
    
-   NSLog(@"handleBase64Download");
+   if (result != NSFileHandlingPanelOKButton)
+      return;
+   
+   NSString* path = [[dlSavePanel URL] path];
+   NSData* data = desktop::utils::base64Decode([parts objectAtIndex: 3]);
+   if (![[NSFileManager defaultManager] createFileAtPath: path contents: data attributes: nil])
+   {
+      NSLog(@"Failed to write file %@", path);
+      // TODO: Alert about failure
+   }
 }
 
 @end
