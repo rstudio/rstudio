@@ -11,13 +11,13 @@
     <groupId>com.google.gwt</groupId>
     <artifactId>gwt</artifactId>
     <packaging>pom</packaging>
-    <name>Google Web Toolkit</name>
-    <url>http://code.google.com/webtoolkit/</url>
+    <name>GWT</name>
+    <url>http://www.gwtproject.org/</url>
     <version>${gwtVersion}</version>
     <licenses>
         <license>
-            <name>Google Web Toolkit Terms</name>
-            <url>http://code.google.com/webtoolkit/terms.html</url>
+            <name>GWT Terms</name>
+            <url>http://www.gwtproject.org/terms.html</url>
         </license>
     </licenses>
 </project>
