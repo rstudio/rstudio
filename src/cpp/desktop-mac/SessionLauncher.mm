@@ -272,9 +272,11 @@ void SessionLauncher::onRSessionExited(
 
    }
    
-   // quit and exit means close the main window
+   // quit and exit means close all the windows and quit
    else if (pendingQuit == PendingQuitAndExit)
    {
+      closeAllWindows();
+      
       [[MainFrameController instance] quit];
    }
    
