@@ -412,7 +412,7 @@ NSString* charToStr(unichar c) {
 }
 
 - (void) showPrefs: (id) sender {
-   [[MainFrameController instance] invokeCommand: @"macPreferences"];
+   [[MainFrameController instance] invokeCommand: @"showOptions"];
 }
 
 + (NSString *) webScriptNameForSelector: (SEL) sel
