@@ -336,15 +336,23 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    }
    else
    {
-      // open externally
-      desktop::utils::browseURL(url);
-      
-      
-      // TODO: base64 downloads
+      // perform a base64 download if necessary
+      WebNavigationType navType = (WebNavigationType)[[actionInformation
+                        objectForKey:WebActionNavigationTypeKey] intValue];
+      if ([scheme isEqualToString: @"data"] &&
+           (navType == WebNavigationTypeLinkClicked ||
+            navType == WebNavigationTypeFormSubmitted))
+      {
+         [self handleBase64Download: url webView: webView];
+      }
+      else
+      {
+         // open externally
+         desktop::utils::browseURL(url);
+      }
       
       [listener ignore];
    }
-
 }
 
 - (void)               webView: (WebView *) webView
@@ -444,6 +452,15 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       return YES;
    }
    return NO;
+}
+
+- (void) handleBase64Download: (NSURL*) url
+                      webView: (WebView*) webView
+{
+   // TODO: handle base64 download
+   // (see WebPage::handleBase64Download in Qt version)
+   
+   NSLog(@"handleBase64Download");
 }
 
 @end
