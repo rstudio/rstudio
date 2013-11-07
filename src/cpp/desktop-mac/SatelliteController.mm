@@ -19,6 +19,7 @@
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
 // TODO: use unsupported file type in viewer to investigate download handling
+// TODO: mouse move crash at exit
 
 // TOOD: test on snow leopoard
 
@@ -26,8 +27,8 @@
 // TODO: check for updates
 
 // TODO: copyImageToClipboard
-// TODO: enter "boink" in vcs view
 // TODO: strange layout of console progress dialog
+// TODO: global progress has no background
 
 // TODO: about box
 
