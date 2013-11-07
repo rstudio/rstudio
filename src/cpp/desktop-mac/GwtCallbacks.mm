@@ -326,7 +326,9 @@ NSString* resolveAliasedPath(NSString* path)
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
 {
-   NSLog(@"%@", NSStringFromSelector(_cmd));
+   // Unlike the Qt implementation, the Cocoa implementation relies on the
+   // webpage having selected the desired image first.
+   [[[MainFrameController instance] webView] copy: self];
 }
 
 - (Boolean) supportsClipboardMetafile

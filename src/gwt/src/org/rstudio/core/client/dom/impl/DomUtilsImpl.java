@@ -41,4 +41,6 @@ public interface DomUtilsImpl
    void setSelectionOffsets(Element container, int start, int end);
 
    boolean isSelectionAsynchronous();
+
+   void selectElement(Element el);
 }

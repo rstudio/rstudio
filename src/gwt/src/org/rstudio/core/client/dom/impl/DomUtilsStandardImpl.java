@@ -186,4 +186,13 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
    {
       return false;
    }
+
+   @Override
+   public void selectElement(Element el)
+   {
+      Document doc = el.getOwnerDocument();
+      Range rng = Range.create(doc);
+      rng.selectNode(el);
+      Selection.get(NativeWindow.get(doc)).setRange(rng);
+   }
 }
