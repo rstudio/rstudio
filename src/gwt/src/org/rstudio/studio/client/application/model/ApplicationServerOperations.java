@@ -64,5 +64,6 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    void ping(ServerRequestCallback<Void> requestCallback);
 
    public void checkForUpdates(
+         boolean manual,
          ServerRequestCallback<UpdateCheckResult> requestCallback);
 }

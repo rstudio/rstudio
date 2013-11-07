@@ -104,7 +104,6 @@ extern const int kPresentationPaneRequestCompleted;
 extern const int kUnhandledError;
 extern const int kErrorHandlerChanged;
 extern const int kViewerNavigate;
-extern const int kUpdateCheck;
 }
    
 class ClientEvent

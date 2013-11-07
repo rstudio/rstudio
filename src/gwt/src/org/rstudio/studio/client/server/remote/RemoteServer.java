@@ -3065,10 +3065,14 @@ public class RemoteServer implements Server
 
    @Override
    public void checkForUpdates(
+         boolean manual,
          ServerRequestCallback<UpdateCheckResult> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(manual));
       sendRequest(RPC_SCOPE, 
             CHECK_FOR_UPDATES,
+            params, 
             requestCallback);
    }
 

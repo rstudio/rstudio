@@ -106,7 +106,6 @@ const int kPresentationPaneRequestCompleted = 81;
 const int kUnhandledError = 82;
 const int kErrorHandlerChanged = 83;
 const int kViewerNavigate = 84;
-const int kUpdateCheck = 85;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -278,8 +277,6 @@ std::string ClientEvent::typeName() const
          return "error_handler_changed";
       case client_events::kViewerNavigate:
          return "viewer_navigate";
-      case client_events::kUpdateCheck:
-         return "update_check";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
