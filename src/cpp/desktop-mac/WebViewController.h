@@ -37,6 +37,9 @@
 // sync the web view's zoom level
 - (void) syncZoomLevel;
 
+// print
+- (void) printFrameView: (WebFrameView*) frameView;
+
 // subclass methods for registering javascript callbacks
 - (void) registerDesktopObject;
 @end

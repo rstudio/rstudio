@@ -15,6 +15,8 @@
 
 #import "WebViewController.h"
 
-@interface SecondaryWindowController : WebViewController
+@interface SecondaryWindowController : WebViewController <NSToolbarDelegate> {
+   NSArray* toolbarItems_;
+}
 
 @end

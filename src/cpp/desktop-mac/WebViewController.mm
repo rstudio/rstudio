@@ -252,10 +252,15 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    }
    else
    {
-      NSPrintOperation* printOperation =
-      [frameView printOperationWithPrintInfo: [NSPrintInfo sharedPrintInfo]];
-      [printOperation runOperation];
+      [self printFrameView: frameView];
    }
+}
+
+- (void) printFrameView: (WebFrameView*) frameView
+{
+   NSPrintOperation* printOperation =
+   [frameView printOperationWithPrintInfo: [NSPrintInfo sharedPrintInfo]];
+   [printOperation runOperation];
 }
 
 
