@@ -25,6 +25,8 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.IgnoredUpdates;
@@ -84,7 +86,8 @@ public class DesktopApplicationHeader implements ApplicationHeader
                           Provider<CodeSearch> pCodeSearch,
                           Provider<UIPrefs> pUIPrefs,
                           ErrorManager errorManager,
-                          GlobalDisplay globalDisplay)
+                          GlobalDisplay globalDisplay,
+                          ApplicationQuit appQuit)
    {
       session_ = session;
       eventBus_= events;
@@ -92,6 +95,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
       globalDisplay_ = globalDisplay;
       ignoredUpdates_ = IgnoredUpdates.create();
       server_ = server;
+      appQuit_ = appQuit;
       binder_.bind(commands, this);
       commands.mainMenu(new DesktopMenuCallback());
 
@@ -326,13 +330,20 @@ public class DesktopApplicationHeader implements ApplicationHeader
          ArrayList<String> buttonLabels = new ArrayList<String>();
          ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
          
-         buttonLabels.add("Download...");
+         buttonLabels.add("Quit and Download...");
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
             {
-               // TODO: Prepare to quit the app before installing this update
-               Desktop.getFrame().browseUrl(result.getUpdateUrl());
+               appQuit_.prepareForQuit("Update RStudio", new QuitContext()
+               {
+                  @Override
+                  public void onReadyToQuit(boolean saveChanges)
+                  {
+                     Desktop.getFrame().browseUrl(result.getUpdateUrl());
+                     appQuit_.performQuit(saveChanges, null);
+                  }
+               }); 
             }
          });
 
@@ -382,4 +393,5 @@ public class DesktopApplicationHeader implements ApplicationHeader
    private ApplicationServerOperations server_;
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
+   private ApplicationQuit appQuit_; 
 }
