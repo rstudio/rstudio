@@ -27,7 +27,7 @@
 
 // TODO: remove dependency on NSRegularExpression (requires Lion)
 // TODO: copyImageToClipboard
-// TODO: global progress has no background
+// TODO: clipboard and undo/redo commands not working in other windows
 
 // TODO: about box
 
