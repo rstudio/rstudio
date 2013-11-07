@@ -369,13 +369,6 @@ NSString* resolveAliasedPath(NSString* path)
    return (clicked - NSAlertThirdButtonReturn) + 2;
 }
 
-
-
-- (void) checkForUpdates
-{
-   NSLog(@"%@", NSStringFromSelector(_cmd));
-}
-
 - (void) showAboutDialog
 {
    [NSApp orderFrontStandardAboutPanel: self];
