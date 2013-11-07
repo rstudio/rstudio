@@ -21,7 +21,7 @@ public class UpdateCheckResult extends JavaScriptObject
    protected UpdateCheckResult() {}
    
    public final native String getUpdateMessage() /*-{
-      return this['update-message'];
+      return this['update-message'].trim();
    }-*/;
 
    public final native int getUpdateUrgency() /*-{
@@ -29,10 +29,10 @@ public class UpdateCheckResult extends JavaScriptObject
    }-*/;
    
    public final native String getUpdateUrl() /*-{
-      return this['update-url'];
+      return this['update-url'].trim();
    }-*/;
 
    public final native String getUpdateVersion() /*-{
-      return this['update-version'];
+      return this['update-version'].trim();
    }-*/;
 }

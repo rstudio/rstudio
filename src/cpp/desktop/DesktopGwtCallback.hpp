@@ -103,7 +103,6 @@ public slots:
                          int selectionStart,
                          int selectionLength);
 
-   void checkForUpdates();
    void showAboutDialog();
    void bringMainFrameToFront();
 
