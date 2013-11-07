@@ -18,7 +18,6 @@
 
 // TODO: base64 download for ggivs
 // TODO: toolbar for secondary window
-// TODO: use unsupported file type in viewer to investigate download handling
 
 // TOOD: test on snow leopoard
 
