@@ -173,4 +173,22 @@ public class MathTest extends GWTTestCase {
     v = Math.tanh(-0.0);
     assertEquals(-0.0, v);
   }
+
+  public void testScalb() {
+    assertEquals(40.0d, Math.scalb(5d, 3));
+    assertEquals(40.0f, Math.scalb(5f, 3));
+
+    assertEquals(64.0d, Math.scalb(64d, 0));
+    assertEquals(64.0f, Math.scalb(64f, 0));
+
+    // Cases in which we can't use integer shift (|scaleFactor| >= 31):
+
+    assertEquals(2147483648.0d, Math.scalb(1d, 31));
+    assertEquals(4294967296.0d, Math.scalb(1d, 32));
+    assertEquals(2.3283064e-10d, Math.scalb(1d, -32), 1e-7d);
+
+    assertEquals(2147483648.0f, Math.scalb(1f, 31));
+    assertEquals(4294967296.0f, Math.scalb(1f, 32));
+    assertEquals(2.3283064e-10f, Math.scalb(1f, -32), 1e-7f);
+  }
 }

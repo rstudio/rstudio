@@ -202,7 +202,9 @@ public final class Math {
   }-*/;
 
   public static double scalb(double d, int scaleFactor) {
-    if (scaleFactor > 0) {
+    if (scaleFactor >= 31 || scaleFactor <= -31) {
+      return d * Math.pow(2, scaleFactor);
+    } else if (scaleFactor > 0) {
       return d * (1 << scaleFactor);
     } else if (scaleFactor == 0) {
       return d;
@@ -212,7 +214,9 @@ public final class Math {
   }
 
   public static float scalb(float f, int scaleFactor) {
-    if (scaleFactor > 0) {
+    if (scaleFactor >= 31 || scaleFactor <= -31) {
+      return f * (float) Math.pow(2, scaleFactor);
+    } else if (scaleFactor > 0) {
       return f * (1 << scaleFactor);
     } else if (scaleFactor == 0) {
       return f;
