@@ -17,32 +17,18 @@
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
 <module type="fileset">
-	<inherits name="com.google.gwt.core.Core"/>
-	<inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
 
-  <!-- Mozilla has a slightly different history implementation than the     -->
-  <!-- standard case.                                                       -->
-  <replace-with class="com.google.gwt.user.client.impl.HistoryImplMozilla">
-    <when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-    <when-property-is name="user.agent" value="gecko1_8"/>
+  <!-- IE8 does not work with the standard implementation -->
+  <replace-with class="com.google.gwt.user.client.History.HistoryImplIE8">
+    <when-type-is class="com.google.gwt.user.client.History.HistoryImpl" />
+    <all>
+      <!-- prevent fallback for IE9 -->
+      <none>
+        <when-property-is name="user.agent" value="ie9" />
+      </none>
+      <when-property-is name="user.agent" value="ie8" />
+    </all>
   </replace-with>
-
-	<!-- Opera has yet another slightly different implementation. -->
-	<replace-with class="com.google.gwt.user.client.impl.HistoryImplTimer">
-		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-		<when-property-is name="user.agent" value="opera"/>
-	</replace-with>
-
-	<!-- Safari is almost like Opera, but again slightly different. -->
-	<replace-with class="com.google.gwt.user.client.impl.HistoryImplSafari">
-		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-		<when-property-is name="user.agent" value="safari"/>
-	</replace-with>
-
-  <!-- IE6 has a completely different history implementation. IE8 used the -->
-  <!-- standard implementation. -->
-	<replace-with class="com.google.gwt.user.client.impl.HistoryImplIE6">
-		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-		<when-property-is name="user.agent" value="ie6"/>
-	</replace-with>
 </module>

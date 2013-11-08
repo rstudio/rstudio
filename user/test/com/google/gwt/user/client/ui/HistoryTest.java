@@ -17,12 +17,15 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 
 import java.util.ArrayList;
 
@@ -33,51 +36,17 @@ import java.util.ArrayList;
  */
 public class HistoryTest extends GWTTestCase {
 
-  private static native String getCurrentLocationHash() /*-{
-    var href = $wnd.location.href;
-
-    splitted = href.split("#");
-    if (splitted.length != 2) {
-      return null;
+  private static String getCurrentLocationHash() {
+    // Firefox automatically decodes location.hash so parse it from Window.Location.getHref
+    String href = Window.Location.getHref();
+    String[] split = href.split("#");
+    if (split.length != 2) {
+      fail("can not read history token");
     }
+    return split[1];
+  }
 
-    hashPortion = splitted[1];
-
-    return hashPortion;
-  }-*/;
-
-  /*
-   * Copied from UserAgentPropertyGenerator and HistoryImplSafari.
-   */
-  private static native boolean isSafari2() /*-{
-    var ua = navigator.userAgent;
-    
-    // copied from UserAgentPropertyGenerator
-    if (ua.indexOf("webkit") == -1) {
-      return false;
-    }
-    
-    // copied from HistoryImplSafari
-    var exp = / AppleWebKit\/([\d]+)/;
-    var result = exp.exec(ua);
-    if (result) {
-      // The standard history implementation works fine on WebKit >= 522
-      // (Safari 3 beta).
-      if (parseInt(result[1]) >= 522) {
-        return false;
-      }
-    }
-  
-    // The standard history implementation works just fine on the iPhone, which
-    // unfortunately reports itself as WebKit/420+.
-    if (ua.indexOf('iPhone') != -1) {
-      return false;
-    }
-  
-    return true;
-  }-*/;
-
-  private HistoryListener historyListener;
+  private HandlerRegistration handlerRegistration;
   private Timer timer;
 
   @Override
@@ -90,9 +59,11 @@ public class HistoryTest extends GWTTestCase {
     final String escToken = "%24%24%24";
 
     delayTestFinish(5000);
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String token) {
-        assertEquals(escToken, token);
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        assertEquals(escToken, event.getValue());
         finishTest();
       }
     });
@@ -106,9 +77,11 @@ public class HistoryTest extends GWTTestCase {
   public void testEmptyHistoryTokens() {
     delayTestFinish(5000);
 
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String historyToken) {
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
 
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        String historyToken = event.getValue();
         if (historyToken == null) {
           fail("historyToken should not be null");
         }
@@ -133,21 +106,24 @@ public class HistoryTest extends GWTTestCase {
    */
   public void testNoEvents() {
     delayTestFinish(5000);
-    addHistoryListenerImpl(new HistoryListener() {
-      {
-        timer = new Timer() {
-          public void run() {
-            finishTest();
-          }
-        };
-        timer.schedule(500);
-      }
 
-      public void onHistoryChanged(String historyToken) {
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
         fail("onHistoryChanged should not have been called");
       }
     });
+
     History.newItem("testNoEvents", false);
+
+    timer = new Timer() {
+      @Override
+      public void run() {
+        finishTest();
+      }
+    };
+    timer.schedule(500);
   }
 
   /*
@@ -156,11 +132,6 @@ public class HistoryTest extends GWTTestCase {
    */
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testHistory() {
-    if (isSafari2()) {
-      // History.back() is broken on Safari2, so we skip this test.
-      return;
-    }
-    
     /*
      * Sentinel token which should only be seen if tokens are lost during the
      * rest of the test. Without this, History.back() might send the browser too
@@ -168,25 +139,31 @@ public class HistoryTest extends GWTTestCase {
      */
     History.newItem("if-you-see-this-then-history-went-back-too-far");
 
+    final String historyToken1 = "token 1";
+    final String historyToken2 = "token 2";
     delayTestFinish(10000);
-    addHistoryListenerImpl(new HistoryListener() {
+
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
       private int state = 0;
 
-      public void onHistoryChanged(String historyToken) {
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        String historyToken = event.getValue();
         switch (state) {
           case 0: {
-            if (!historyToken.equals("foo bar")) {
-              fail("Expecting token 'foo bar', but got: " + historyToken);
+            if (!historyToken.equals(historyToken1)) {
+              fail("Expecting token '" + historyToken1 + "', but got: " + historyToken);
             }
 
             state = 1;
-            History.newItem("baz");
+            History.newItem(historyToken2);
             break;
           }
 
           case 1: {
-            if (!historyToken.equals("baz")) {
-              fail("Expecting token 'baz', but got: " + historyToken);
+            if (!historyToken.equals(historyToken2)) {
+              fail("Expecting token '" + historyToken2 + "', but got: " + historyToken);
             }
 
             state = 2;
@@ -195,8 +172,8 @@ public class HistoryTest extends GWTTestCase {
           }
 
           case 2: {
-            if (!historyToken.equals("foo bar")) {
-              fail("Expecting token 'foo bar' after History.back(), but got: " + historyToken);
+            if (!historyToken.equals(historyToken1)) {
+              fail("Expecting token '" + historyToken1 + "', but got: " + historyToken);
             }
             finishTest();
             break;
@@ -204,28 +181,20 @@ public class HistoryTest extends GWTTestCase {
         }
       }
     });
-    
-    /*
-     * Delay kicking off the history transitions, so the browser has time to process
-     * the initial sentinel token
-     */
-    new Timer() {
-      @Override
-      public void run() {
-        History.newItem("foo bar");
-      }
-    }.schedule(5000);
+
+    History.newItem(historyToken1);
   }
 
   /**
-   * Verify that {@link HistoryListener#onHistoryChanged(String)} is only
-   * called once per {@link History#newItem(String)}. 
+   * Verify that {@link ValueChangeHandler#onValueChange(ValueChangeEvent)}
+   * is only called once per {@link History#newItem(String)}.
    */
   public void testHistoryChangedCount() {
     delayTestFinish(5000);
     timer = new Timer() {
       private int count = 0;
       
+      @Override
       public void run() {
         if (count++ == 0) {
           // verify that duplicates don't issue another event
@@ -236,10 +205,11 @@ public class HistoryTest extends GWTTestCase {
         }
       }
     };
-    addHistoryListenerImpl(new HistoryListener() {
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
       final ArrayList<Object> counter = new ArrayList<Object>();
 
-      public void onHistoryChanged(String historyToken) {
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
         counter.add(null);
         if (counter.size() != 1) {
           fail("onHistoryChanged called multiple times");
@@ -248,6 +218,7 @@ public class HistoryTest extends GWTTestCase {
         timer.schedule(500);
       }
     });
+
     History.newItem("testHistoryChangedCount");
   }
 
@@ -256,17 +227,41 @@ public class HistoryTest extends GWTTestCase {
     final String shouldBeEncodedAs = "%25%20%5E%5B%5D%7C%22%3C%3E%7B%7D%5C";
 
     delayTestFinish(5000);
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String token) {
-        if (!isSafari2()) {
-          // Safari2 does not update the URL, so we don't verify it
-          assertEquals(shouldBeEncodedAs, getCurrentLocationHash());
-        }
-        assertEquals(shouldBeEncoded, token);
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        assertEquals(shouldBeEncodedAs, getCurrentLocationHash());
+        assertEquals(shouldBeEncoded, event.getValue());
         finishTest();
       }
     });
     History.newItem(shouldBeEncoded);
+  }
+
+  /**
+   * Test to make sure that there is no double unescaping of hash values.
+   * See https://bugzilla.mozilla.org/show_bug.cgi?id=483304
+   */
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  public void testNoDoubleTokenUnEscaping() {
+    final String shouldBeEncoded = "abc%20abc";
+
+    delayTestFinish(5000);
+
+    History.newItem(shouldBeEncoded);
+    History.newItem("someOtherToken");
+    History.back();
+    // allow browser to update the url
+    timer = new Timer() {
+      @Override
+      public void run() {
+        // make sure that value in url actually matches the original token
+        assertEquals(shouldBeEncoded, History.getToken());
+        finishTest();
+      }
+    };
+    timer.schedule(200);
   }
 
   /*
@@ -279,16 +274,15 @@ public class HistoryTest extends GWTTestCase {
     final String shouldNotChange = "abc;,/?:@&=+$-_.!~*()ABC123foo";
 
     delayTestFinish(5000);
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String token) {
-        if (!isSafari2()) {
-          // Safari2 does not update the URL, so we don't verify it
-          assertEquals(shouldNotChange, getCurrentLocationHash());
-        }
-        assertEquals(shouldNotChange, token);
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        assertEquals(shouldNotChange, event.getValue());
         finishTest();
       }
     });
+
     History.newItem(shouldNotChange);
   }
 
@@ -301,8 +295,11 @@ public class HistoryTest extends GWTTestCase {
     delayTestFinish(5000);
     final String token = "foo?bar";
 
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String historyToken) {
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
+        String historyToken = event.getValue();
         if (historyToken == null) {
           fail("historyToken should not be null");
         }
@@ -310,6 +307,7 @@ public class HistoryTest extends GWTTestCase {
         finishTest();
       }
     });
+
     History.newItem(token);
   }
 
@@ -323,8 +321,10 @@ public class HistoryTest extends GWTTestCase {
   public void testEmptyHistoryToken() {
     final ArrayList<Object> counter = new ArrayList<Object>();
 
-    addHistoryListenerImpl(new HistoryListener() {
-      public void onHistoryChanged(String historyToken) {
+    addHistoryListenerImpl(new ValueChangeHandler<String>() {
+
+      @Override
+      public void onValueChange(ValueChangeEvent<String> event) {
         counter.add(new Object());
         assertFalse("Browser is borked by empty history token", isBorked());
       }
@@ -345,9 +345,9 @@ public class HistoryTest extends GWTTestCase {
 
   @Override
   protected void gwtTearDown() throws Exception {
-    if (historyListener != null) {
-      History.removeHistoryListener(historyListener);
-      historyListener = null;
+    if (handlerRegistration != null) {
+      handlerRegistration.removeHandler();
+      handlerRegistration = null;
     }
     if (timer != null) {
       timer.cancel();
@@ -355,8 +355,7 @@ public class HistoryTest extends GWTTestCase {
     }
   }
 
-  private void addHistoryListenerImpl(HistoryListener historyListener) {
-    this.historyListener = historyListener;
-    History.addHistoryListener(historyListener);
-  }  
+  private void addHistoryListenerImpl(ValueChangeHandler<String> handler) {
+    this.handlerRegistration = History.addValueChangeHandler(handler);
+  }
 }
