@@ -24,6 +24,7 @@ import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
 import com.google.gwt.user.server.Base64Test;
 import com.google.gwt.user.server.UtilTest;
 import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServletTest;
+import com.google.gwt.user.server.rpc.DequeMapTest;
 import com.google.gwt.user.server.rpc.RPCRequestTest;
 import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
@@ -54,6 +55,7 @@ public class RpcJreSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Non-browser tests for com.google.gwt.user.client.rpc");
     suite.addTestSuite(BlacklistTypeFilterTest.class);
+    suite.addTestSuite(DequeMapTest.class);
     suite.addTestSuite(SerializationUtilsTest.class);
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(TypeHierarchyUtilsTest.class);
