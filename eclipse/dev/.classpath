@@ -24,6 +24,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-15.0/guava-15.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/sourcemap-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/compiler-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android.jar" />
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

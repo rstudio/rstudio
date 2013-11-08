@@ -94,9 +94,7 @@
           <include name="w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
           <include name="sun/swingworker/swing-worker-1.1.jar" />
-        </fileset>
-        <fileset dir="${gwt.tools.redist}">
-          <include name="json/r2_20080312/json-1.5.jar" />
+          <include name="json/android-sdk-19.1/json-android.jar" />
         </fileset>
         <fileset file="build.xml"/>
       </sourcefiles>
@@ -145,7 +143,7 @@
           <zipfileset src="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
           <!-- htmlunit dependencies not already included: END -->
           <zipfileset src="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />
-          <zipfileset src="${gwt.tools.redist}/json/r2_20080312/json-1.5.jar" />
+          <zipfileset src="${gwt.tools.lib}/json/android-sdk-19.1/json-android.jar" />
         </gwt.jar>
       </sequential>
     </outofdate>

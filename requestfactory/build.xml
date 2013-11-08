@@ -30,7 +30,7 @@
             classname="com.google.web.bindery.requestfactory.server.RequestFactoryJarExtractor">
         <classpath>
           <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev.jar" />
-          <fileset dir="${gwt.tools.redist}" includes="json/r2_20080312/json-1.5.jar" />
+          <fileset dir="${gwt.tools.lib}" includes="json/android-sdk-19.1/json-android.jar" />
           <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
           <pathelement path="${gwt.build.out}/user/bin" />
           <pathelement path="${gwt.build.out}/dev/bin-test" />

@@ -69,7 +69,7 @@
     <pathelement location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final-sources.jar" />
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-api/slf4j-api-1.6.1.jar" />
     <pathelement location="${gwt.tools.lib}/slf4j/slf4j-log4j12/slf4j-log4j12-1.6.1.jar" />
-    <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+    <pathelement location="${gwt.tools.lib}/json/android-sdk-19.1/json-android.jar" />
     <pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
     <!-- TCK jars -->
     <pathelement location="${gwt.tools.lib}/hibernate/validator/tck/jsr303-tck-1.0.3.GA-sources.jar" />
@@ -96,7 +96,7 @@
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />
-        <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+        <pathelement location="${gwt.tools.lib}/json/android-sdk-19.1/json-android.jar" />
         <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
         <!-- The source is included so validation is available from client code -->
         <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
@@ -184,16 +184,16 @@
             <arg value="com.google.gwt.json.JSON" />
             <arg value="com.google.gwt.regexp.RegExp" />
             <arg value="com.google.gwt.user.User" />
-    
+
             <!-- Below are modules that depend on User           -->
             <arg value="com.google.gwt.xml.XML" />
             <arg value="com.google.gwt.rpc.RPC" />
             <arg value="com.google.gwt.debug.Debug" />
             <arg value="com.google.gwt.logging.Logging" />
-    
+
             <arg value="com.google.gwt.place.Place" />
             <arg value="com.google.gwt.activity.Activity" />
-    
+
             <arg value="com.google.web.bindery.event.Event" />
             <arg value="com.google.web.bindery.autobean.AutoBean" />
             <arg value="com.google.web.bindery.requestfactory.RequestFactory" />
@@ -745,10 +745,10 @@
     </parallel>
     </limit>
   </target>
-  
-  
+
+
   <!-- Validation TCK test and reports -->
-  
+
   <!-- TODO(nchalko) move the tck target to user/build.xml and then delete
          all of samples/validaitontck -->
     <target name="tck"
@@ -782,7 +782,7 @@
       <attribute name="annotation" default="NOT SET" />
       <attribute name="outputproperty" default="jsr303.marked.@{annotation}" />
       <sequential>
-   
+
       </sequential>
     </macrodef>
 
@@ -814,8 +814,8 @@
     <target name="tck.report">
       <mkdir dir="${junit.out}/tck-report" />
       <mkdir dir="${junit.out}/tck-report/text" />
-      
-      <scan> 
+
+      <scan>
         <fileset dir="test/org/hibernate/jsr303/tck/tests" id="id"/>
         <filterchain>
           <countfilter match="@Failing"  property="jsr303.marked.Failing" init="0"/>
@@ -824,18 +824,18 @@
           <countfilter match="@TestNotCompatible"  property="jsr303.marked.TestNotCompatible" init="0"/>
         </filterchain>
       </scan>
-      
+
       <!-- force to zero if not set above -->
       <property name="jsr303.marked.Failing" value="0"/>
       <property name="jsr303.marked.NonTckTest" value="0"/>
       <property name="jsr303.marked.NotSupported" value="0"/>
       <property name="jsr303.marked.TestNotCompatible" value="0"/>
-      
+
       <echo message="Marked Failing = ${jsr303.marked.Failing}" />
       <echo message="Marked NonTckTest = ${jsr303.marked.NonTckTest}" />
       <echo message="Marked NotSupported = ${jsr303.marked.NotSupported}" />
       <echo message="Marked TestNotCompatible = ${jsr303.marked.TestNotCompatible}" />
-      
+
       <junitreport todir="${junit.out}/tck-report">
         <fileset dir="${junit.out}/tck-dev-htmlunit">
           <include name="reports/TEST-*.xml" />
@@ -871,7 +871,7 @@
           excludes="${gwt.tck.testcase.dev.excludes}" />
       <gwt.junit test.name="test.dev.htmlunit"
           test.args="${test.args} -standardsMode "
-          test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true"     
+          test.jvmargs="-ea -Dcom.google.gwt.sample.validationtck.util.Failing.include=true"
           test.out="${junit.out}/tck-dev-htmlunit"
           test.cases="tck.dev.htmlunit.tests"
           haltonfailure="false"
@@ -881,7 +881,7 @@
         </extraclasspaths>
       </gwt.junit>
     </target>
-  
+
   <!--
       Merges coverage data for the entire project
   -->

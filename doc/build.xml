@@ -25,10 +25,10 @@
   <path id="USER_CLASS_PATH">
     <pathelement location="${gwt.dev.jar}" />
     <pathelement location="${gwt.user.jar}" />
-    <pathelement location="${gwt.tools}/redist/json/r2_20080312/json-1.5.jar" />
+    <pathelement location="${gwt.tools.lib}/lib/json/android-sdk-19.1/json-android.jar" />
     <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />  
+    <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
     <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
     <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
   </path>
