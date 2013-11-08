@@ -11,12 +11,10 @@
 		.productName {
 			font-size: 20pt;
 			font-weight: bold;
-			text-align: center;
-			margin-bottom: 15px;
+			margin-bottom: 5px;
 		}
 		
 		.productVersion {
-			text-align: center;
 			margin-bottom: 5px;
 		}
 		
@@ -33,15 +31,36 @@
 			margin-top: 15px;
 			margin-bottom: 15px;
 		}
+		
+		.logo {
+	      float: left;
+	      margin-right: 20px;
+	   }
+	   
+	   .productInfo {
+	      text-align: left;
+	      overflow: hidden;
+	      margin-left: auto;
+	      margin-right: auto;
+	      width: 65%;
+	   }
+	   
+	   .outerProductInfo {
+	      text-align: center;
+	   }
 	</ui:style>
 	<g:HTMLPanel styleName="{style.aboutBox}">
-		<g:Image resource='{res.rstudio}' />
-		<g:Label text="RStudio" styleName="{style.productName}"></g:Label>
-		<g:HTMLPanel styleName="{style.productVersion}">
-			<g:InlineLabel text="Version "></g:InlineLabel>
-			<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
-			<g:InlineLabel text="&ndash; &copy; 2009-2013 RStudio, Inc."></g:InlineLabel>
-		</g:HTMLPanel>
+	   <g:HTMLPanel styleName="{style.outerProductInfo}">
+		   <g:HTMLPanel styleName="{style.productInfo}">
+				<g:Image resource='{res.rstudio}' styleName="{style.logo}"/>
+				<g:Label text="RStudio" styleName="{style.productName}"></g:Label>
+				<g:HTMLPanel styleName="{style.productVersion}">
+					<g:InlineLabel text="Version "></g:InlineLabel>
+					<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
+					<g:InlineLabel text="&ndash; &copy; 2009-2013 RStudio, Inc."></g:InlineLabel>
+				</g:HTMLPanel>
+			</g:HTMLPanel>
+	   </g:HTMLPanel>
 		<g:HTMLPanel styleName="{style.userAgent}">
 			<g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
 		</g:HTMLPanel>
