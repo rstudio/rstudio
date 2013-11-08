@@ -21,6 +21,7 @@
 		.userAgent {
 			text-align: center;
 			font-size: 8pt;
+			margin-top: 10px;
 			margin-bottom: 15px;
 		}
 		
