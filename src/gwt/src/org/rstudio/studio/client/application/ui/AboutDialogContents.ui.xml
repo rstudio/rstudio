@@ -46,7 +46,8 @@
 		<g:InlineLabel
 			text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
 		<g:Anchor href="http://www.gnu.org/licenses/agpl-3.0.txt"
-			text="Affero General Public License."></g:Anchor>
+			text="Affero General Public License."
+			target="_blank"></g:Anchor>
 		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
 			visibleLines="15" readOnly="true"></g:TextArea>
 	</g:HTMLPanel>
