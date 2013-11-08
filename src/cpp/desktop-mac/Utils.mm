@@ -10,10 +10,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <Security/Security.h>
-
-
 #import "Utils.hpp"
 
 using namespace core;
