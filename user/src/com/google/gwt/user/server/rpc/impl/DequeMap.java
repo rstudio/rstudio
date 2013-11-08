@@ -34,17 +34,17 @@ public class DequeMap<K, V> {
   /**
    * The default initial capacity for the Deque objects.
    */
-  static final int DEFAULT_INITIAL_DEQUE_CAPACITY = 3;
+  private static final int DEFAULT_INITIAL_DEQUE_CAPACITY = 3;
 
   /**
    * The default initial capacity for the Deque objects.
    */
-  static final int DEFAULT_INITIAL_MAP_CAPACITY = 3;
+  private static final int DEFAULT_INITIAL_MAP_CAPACITY = 3;
 
   /**
    * The initial capacity for the Deque objects.
    */
-  int dequeCapacity = DEFAULT_INITIAL_DEQUE_CAPACITY;
+  private int dequeCapacity = DEFAULT_INITIAL_DEQUE_CAPACITY;
 
   /**
    * The map used to hold data.
@@ -52,7 +52,9 @@ public class DequeMap<K, V> {
    * Note that we do not extend map because we require control over the
    * addition and removal of elements from the map.
    */
-  HashMap<K, Deque<V>> map = null;
+  private final HashMap<K, ArrayDeque<V>> map;
+
+  private int size = 0;
 
   /**
    * Constructs an empty <tt>DequeMap</tt> with the default initial capacities
@@ -71,7 +73,7 @@ public class DequeMap<K, V> {
    * @throws IllegalArgumentException if the initial capacity is negative.
    */
   public DequeMap(int initialMapCapacity, int initialDequeCapacity) {
-    map = new HashMap<K, Deque<V>>(initialMapCapacity);
+    map = new HashMap<K, ArrayDeque<V>>(initialMapCapacity);
     dequeCapacity = initialDequeCapacity;
   }
 
@@ -86,12 +88,16 @@ public class DequeMap<K, V> {
    * @param value the value to push for the key
    */
   public void add(K key, V value) {
-    Deque<V> deque = map.get(key);
+    ArrayDeque<V> deque = map.get(key);
     if (deque == null) {
       deque = new ArrayDeque<V>(dequeCapacity);
       deque.addFirst(value);
       map.put(key, deque);
+      size++;
     } else {
+      if (deque.isEmpty()) {
+        size++;
+      }
       deque.addFirst(value);
     }
   }
@@ -123,6 +129,19 @@ public class DequeMap<K, V> {
     if (deque == null) {
       return null;
     }
-    return deque.pollFirst();
+    boolean wasEmpty = deque.isEmpty();
+    V result = deque.pollFirst();
+    if (deque.isEmpty() && !wasEmpty) {
+      assert size > 0;
+      size--;
+    }
+    return result;
+  }
+
+  /**
+   * Returns true if no mappings are defined.
+   */
+  public boolean isEmpty() {
+    return size == 0;
   }
 }

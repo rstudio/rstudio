@@ -23,6 +23,9 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializedTypeViolationException;
 import com.google.gwt.user.client.rpc.TestSetFactory.ReverseSorter;
 import com.google.gwt.user.server.rpc.RPCTypeCheckCollectionsTest.TestHashSet;
+import com.google.gwt.user.server.rpc.testcases.SubtypeUsedTwice;
+import com.google.gwt.user.server.rpc.testcases.SubtypeUsedTwice.Arg;
+import com.google.gwt.user.server.rpc.testcases.SubtypeUsedTwice.TypedHandle;
 import com.google.gwt.user.server.rpc.testcases.TypeVariableCycle;
 
 import junit.framework.TestCase;
@@ -2473,6 +2476,22 @@ public class RPCTypeCheckTest extends TestCase {
     Object deserializedArg = decoded.getParameters()[0];
     assertEquals(TypeVariableCycle.PtrPtr.class, deserializedArg.getClass());
     assertEquals("hello", ((TypeVariableCycle.PtrPtr) deserializedArg).get());
+  }
+
+  public void testSubtypeUsedTwice() throws Exception {
+
+    // Build an RPC request that calls send(ARG)
+    RPCTypeCheckFactory builder = new RPCTypeCheckFactory(SubtypeUsedTwice.class, "send");
+    builder.write(SubtypeUsedTwice.makeArg(123));
+    String request = builder.toString();
+
+    // Make sure we can decode it.
+    RPCRequest decoded = RPC.decodeRequest(request);
+    Object deserializedArg = decoded.getParameters()[0];
+    assertEquals(Arg.class, deserializedArg.getClass());
+    IsSerializable thing = ((Arg) deserializedArg).handle.thing.any;
+    TypedHandle handle = (TypedHandle) thing;
+    assertEquals(123, handle.thing);
   }
 
   /**

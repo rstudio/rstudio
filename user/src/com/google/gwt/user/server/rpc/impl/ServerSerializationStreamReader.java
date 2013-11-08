@@ -578,6 +578,17 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
       return null;
     }
 
+    if (isSimpleClass(expectedType) && !resolvedTypes.isEmpty()) {
+      // Start a new scope for resolving type variables. This is a workaround for false sharing
+      // because the type checker doesn't implement type variables properly.
+      //
+      // For example, if expectedType is Serializable and the actual value is a LinkedHashMap, we
+      // don't want any of LinkedHashMap, HashMap, or Map to inherit any bindings for their K,V
+      // variables from the surrounding content.
+      // Fixes issue 7628.
+      resolvedTypes = new DequeMap<TypeVariable<?>, Type>();
+    }
+
     return deserialize(typeSignature, expectedType, resolvedTypes);
   }
 
@@ -1114,6 +1125,17 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
       }
     }
     return null;
+  }
+
+  /**
+   * Returns true if the given type is a top-level class or interface with no type parameters.
+   */
+  private boolean isSimpleClass(Type t) {
+    if (!(t instanceof Class)) {
+      return false;
+    }
+    Class cl = (Class) t;
+    return cl.getTypeParameters().length == 0 && cl.getEnclosingClass() == null;
   }
 
   private void validateTypeVersions(Class<?> instanceClass,
