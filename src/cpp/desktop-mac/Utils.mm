@@ -1,6 +1,7 @@
 
 
 #include <string>
+#include <vector>
 
 #include <core/FilePath.hpp>
 
@@ -168,37 +169,67 @@ float titleBarHeight()
    return (frame.size.height - contentRect.size.height);
    
 }
-  
+
+namespace {
+int charToB64Val(unsigned char c)
+{
+   if (c >= 'A' && c <= 'Z')
+      return c - 'A';
+   if (c >= 'a' && c <= 'z')
+      return 26 + (c - 'a');
+   if (c >= '0' && c <= '9')
+      return 52 + (c - '0');
+   if (c == '+')
+      return 62;
+   if (c == '/')
+      return 63;
+   if (c == '=')
+      return 0;
+   return -1;
+}
+}
+
 NSData *base64Decode(NSString *input)
 {
-   CFErrorRef error;
-   SecTransformRef transform = SecDecodeTransformCreate(kSecBase64Encoding,
-                                                        &error);
-   if (error)
+   int paddingChars = 0;
+   std::vector<unsigned char> output;
+   output.reserve(static_cast<int>([input length] * 0.75 + 2));
+   std::vector<unsigned int> buffer;
+   buffer.reserve(4);
+   NSUInteger pos = 0;
+   NSUInteger len = [input length];
+   while (pos < len)
    {
-      NSLog(@"Error SecDecodeTransformCreate");
-      return nil;
+      unichar c = [input characterAtIndex: pos++];
+      // ignore whitespace
+      if (c == ' ' || c == '\r' || c == '\n' || c == '\t')
+         continue;
+
+      if (c == '=')
+      {
+         paddingChars++;
+         if (paddingChars > 2)
+            return nil;
+      }
+      else if (paddingChars > 0)
+         return nil; // padding chars must only appear at the end
+      
+      int decodedVal = charToB64Val(c);
+      if (decodedVal < 0)
+         return nil; // invalid data
+      buffer.push_back(decodedVal);
+      if (buffer.size() == 4)
+      {
+         // We have a quartet; align and flush to output
+         output.push_back( (buffer[0]<<2) | buffer[1]>>4);
+         output.push_back( ((buffer[1]&0xF)<<4) | (buffer[2]>>2) );
+         output.push_back( ((buffer[2]&0x3)<<6) | (buffer[3]) );
+         buffer.clear();
+      }
    }
-   
-   if (!SecTransformSetAttribute(transform,
-                                kSecTransformInputAttributeName,
-                                input,
-                                &error))
-   {
-      NSLog(@"Error SecTransformSetAttribute");
-      CFRelease(transform);
-      return nil;
-   }
-   
-   NSData* data = (NSData*)SecTransformExecute(transform, &error);
-   CFRelease(transform);
-   if (error)
-   {
-      NSLog(@"Error SecTransformExecute");
-      return nil;
-   }
-   
-   return [data autorelease];
+   while (paddingChars-- > 0)
+      output.pop_back();
+   return [NSData dataWithBytes: &output[0] length: output.size()];
 }
 
    

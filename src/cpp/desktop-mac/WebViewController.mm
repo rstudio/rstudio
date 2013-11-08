@@ -488,12 +488,13 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    NSArray* parts = [absUrl
                      componentsSeparatedByCharactersInSet: [NSCharacterSet
                                                             characterSetWithCharactersInString: @":;,"]];
-   if ([parts count] != 4)
+   if ([parts count] != 4
+       || ![@"data" isEqualToString: [parts objectAtIndex: 0]]
+       || ![@"base64" isEqualToString: [parts objectAtIndex: 2]])
+   {
+      NSLog(@"Invalid data URL");
       return;
-   if (![@"data" isEqualToString: [parts objectAtIndex: 0]])
-      return;
-   if (![@"base64" isEqualToString: [parts objectAtIndex: 2]])
-      return;
+   }
 
    DOMNode* node = [elementDict objectForKey: @"WebElementDOMNode"];
    // The DOM node that was clicked might be the DOMText or another element that was inside the anchor.
@@ -501,11 +502,27 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    while (node && ([node nodeType] != 1 || ![[(DOMElement*)node tagName] isEqualToString: @"A"]))
       node = [node parentElement];
    if (!node)
+   {
+      NSLog(@"Data URI's originating anchor not found");
       return;
+   }
 
    DOMElement* el = (DOMElement*)node;
 
-   NSString* filename = [[[el attributes] getNamedItem: @"download"] nodeValue];
+   DOMNode* downloadAttrib = [[el attributes] getNamedItem: @"download"];
+   if (downloadAttrib == nil)
+   {
+      NSLog(@"'download' attribute not found on anchor");
+      return;
+   }
+   NSString* filename = [downloadAttrib nodeValue];
+
+   NSData* data = desktop::utils::base64Decode([parts objectAtIndex: 3]);
+   if (data == nil)
+   {
+      NSLog(@"Failed to decode data URL");
+      return;
+   }
 
    NSSavePanel* dlSavePanel = [NSSavePanel savePanel];
    [dlSavePanel setNameFieldStringValue: filename];
@@ -517,13 +534,7 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    if (result != NSFileHandlingPanelOKButton)
       return;
    
-   NSString* path = [[dlSavePanel URL] path];
-   NSData* data = desktop::utils::base64Decode([parts objectAtIndex: 3]);
-   if (![[NSFileManager defaultManager] createFileAtPath: path contents: data attributes: nil])
-   {
-      NSLog(@"Failed to write file %@", path);
-      // TODO: Alert about failure
-   }
+   [data writeToURL: [dlSavePanel URL] atomically: FALSE];
 }
 
 @end
