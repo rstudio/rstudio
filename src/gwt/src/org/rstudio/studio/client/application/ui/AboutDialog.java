@@ -26,6 +26,7 @@ public class AboutDialog extends ModalDialogBase
 {
    public AboutDialog(ProductInfo info)
    {
+      setText("About RStudio");
       ThemedButton OKButton = new ThemedButton("OK", 
          new ClickHandler() 
       {
