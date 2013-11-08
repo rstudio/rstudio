@@ -48,6 +48,6 @@
 		<g:Anchor href="http://www.gnu.org/licenses/agpl-3.0.txt"
 			text="Affero General Public License."></g:Anchor>
 		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
-			visibleLines="25" readOnly="true"></g:TextArea>
+			visibleLines="15" readOnly="true"></g:TextArea>
 	</g:HTMLPanel>
 </ui:UiBinder> 
