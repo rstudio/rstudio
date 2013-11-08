@@ -27,13 +27,22 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class AboutDialogContents extends Composite
 {
-
+   public static void ensureStylesInjected()
+   {
+      new AboutDialogContents();
+   }
+   
    private static AboutDialogContentsUiBinder uiBinder = GWT
          .create(AboutDialogContentsUiBinder.class);
 
    interface AboutDialogContentsUiBinder extends
          UiBinder<Widget, AboutDialogContents>
    {
+   }
+   
+   private AboutDialogContents()
+   {
+      uiBinder.createAndBindUi(this);
    }
 
    public AboutDialogContents(ProductInfo info)

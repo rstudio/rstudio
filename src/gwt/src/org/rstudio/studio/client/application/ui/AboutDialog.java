@@ -18,8 +18,6 @@ import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
@@ -45,19 +43,6 @@ public class AboutDialog extends ModalDialogBase
    protected Widget createMainWidget()
    {
       return contents_;
-   }
-   
-   @Override
-   public void showModal()
-   {
-      super.showModal();
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            center();
-         }
-      });
    }
    
    private AboutDialogContents contents_;
