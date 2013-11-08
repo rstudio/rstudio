@@ -203,8 +203,9 @@ static MainFrameController* instance_;
              @"RStudio uses the Safari WebKit browser engine for rendering "
              @"its user interface. The minimum required version of Safari is "
              @"5.1 and an earlier version was detected on your system.\n\n"
-             @"Please update to a more recent version of Safari to ensure that "
-             @"all RStudio features work correctly.");
+             @"In order to ensure that all RStudio features work correctly "
+             @"please run System Update to install a more recent version "
+             @"of Safari.");
       }
    }
 }
