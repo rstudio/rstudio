@@ -45,7 +45,9 @@ import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -215,6 +217,25 @@ public class Application implements ApplicationEventHandlers
    public void onHideToolbar()
    {
       setToolbarPref(false);
+   }
+   
+   
+   @Handler
+   void onShowAboutDialog()
+   {
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+      {
+         @Override
+         public void onResponseReceived(ProductInfo info)
+         {
+            AboutDialog about = new AboutDialog(info);
+            about.showModal();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
    
    @Handler

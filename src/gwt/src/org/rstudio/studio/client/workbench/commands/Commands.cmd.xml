@@ -1175,8 +1175,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Quit RStudio..."/>
 
    <cmd id="showAboutDialog"
-        menuLabel="_About RStudio"
-        visible="false"/>
+        menuLabel="_About RStudio"/>
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
         visible="false"/>

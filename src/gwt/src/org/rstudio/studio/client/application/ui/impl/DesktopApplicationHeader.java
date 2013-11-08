@@ -112,8 +112,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
 
-      commands.showAboutDialog().setVisible(true);
-
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
@@ -263,24 +261,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
          }
       }.schedule(1000);
       
-   }
-
-   @Handler
-   void onShowAboutDialog()
-   {
-      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
-      {
-         @Override
-         public void onResponseReceived(ProductInfo info)
-         {
-            AboutDialog about = new AboutDialog(info);
-            about.showModal();
-         }
-         @Override
-         public void onError(ServerError error)
-         {
-         }
-      });
    }
 
    @Handler
