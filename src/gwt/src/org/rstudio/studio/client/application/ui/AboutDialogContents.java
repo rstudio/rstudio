@@ -19,6 +19,7 @@ import org.rstudio.studio.client.application.model.ProductInfo;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.TextArea;
@@ -39,9 +40,11 @@ public class AboutDialogContents extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionLabel.setText(info.getVersion());
+      userAgentLabel.setText(Window.Navigator.getUserAgent());
       noticeBox.setValue(info.getNotice());
    }
 
    @UiField InlineLabel versionLabel;
+   @UiField InlineLabel userAgentLabel;
    @UiField TextArea noticeBox;
 }

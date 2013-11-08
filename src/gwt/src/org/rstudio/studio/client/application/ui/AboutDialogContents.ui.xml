@@ -2,40 +2,52 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
-	@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-	
-	.productName
-	{
-		font-size: 20pt;
-		font-weight: bold;
-		text-align: center;
-		margin-bottom: 15px;
-	}
-
-	.productVersion
-	{
-	   text-align: center;
-		margin-bottom: 15px;
-	}
-
-	.noticeBox
-	{
-		clear: both;
-		width: 100%;
-		font-family: fixedWidthFont;
-		margin-top: 15px;
-		margin-bottom: 15px;
-	}
+		@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+		.aboutBox {
+			-webkit-user-select: auto;
+		}
+		
+		.productName {
+			font-size: 20pt;
+			font-weight: bold;
+			text-align: center;
+			margin-bottom: 15px;
+		}
+		
+		.productVersion {
+			text-align: center;
+			margin-bottom: 5px;
+		}
+		
+		.userAgent {
+			text-align: center;
+			font-size: 8pt;
+			margin-bottom: 15px;
+		}
+		
+		.noticeBox {
+			clear: both;
+			width: 100%;
+			font-family: fixedWidthFont;
+			margin-top: 15px;
+			margin-bottom: 15px;
+		}
 	</ui:style>
-	<g:HTMLPanel>
+	<g:HTMLPanel styleName="{style.aboutBox}">
 		<g:Label text="RStudio" styleName="{style.productName}"></g:Label>
 		<g:HTMLPanel styleName="{style.productVersion}">
 			<g:InlineLabel text="Version "></g:InlineLabel>
 			<g:InlineLabel ui:field="versionLabel"></g:InlineLabel>
 			<g:InlineLabel text="&ndash; &copy; 2009-2013 RStudio, Inc."></g:InlineLabel>
 		</g:HTMLPanel>
-		<g:InlineLabel text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
-		<g:Anchor href="http://www.gnu.org/licenses/agpl-3.0.txt" text="Affero General Public License."></g:Anchor>
-		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}" visibleLines="25" readOnly="true"></g:TextArea>
+		<g:HTMLPanel styleName="{style.userAgent}">
+			<g:InlineLabel ui:field="userAgentLabel"></g:InlineLabel>
+		</g:HTMLPanel>
+		<g:InlineLabel
+			text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
+		<g:Anchor href="http://www.gnu.org/licenses/agpl-3.0.txt"
+			text="Affero General Public License."></g:Anchor>
+		<g:TextArea ui:field="noticeBox" styleName="{style.noticeBox}"
+			visibleLines="25" readOnly="true"></g:TextArea>
 	</g:HTMLPanel>
 </ui:UiBinder> 
