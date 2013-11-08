@@ -32,6 +32,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
@@ -3076,6 +3077,14 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void getProductInfo(ServerRequestCallback<ProductInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            GET_PRODUCT_INFO,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3346,4 +3355,5 @@ public class RemoteServer implements Server
    private static final String GET_INIT_MESSAGES = "get_init_messages";
 
    private static final String CHECK_FOR_UPDATES = "check_for_updates";
+   private static final String GET_PRODUCT_INFO = "get_product_info";
 }

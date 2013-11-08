@@ -66,4 +66,7 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    public void checkForUpdates(
          boolean manual,
          ServerRequestCallback<UpdateCheckResult> requestCallback);
+
+   public void getProductInfo(
+         ServerRequestCallback<ProductInfo> requestCallback);
 }
