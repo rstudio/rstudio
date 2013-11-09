@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -38,7 +38,7 @@ import java.util.Map;
 public class SplittableTest extends GWTTestCase {
 
   /**
-   * 
+   *
    */
   private static final EncodeState testState = EncodeState.forTesting();
 
@@ -275,6 +275,8 @@ public class SplittableTest extends GWTTestCase {
     list.add("Web");
     assertEquals(Arrays.asList("World", "Wide", "Web"), list);
     assertEquals("[\"World\",\"Wide\",\"Web\"]", data.getPayload());
+
+    assertEquals(data.getPayload(), normalize(data).getPayload());
   }
 
   public void testSplittableMapStringString() {
@@ -293,9 +295,8 @@ public class SplittableTest extends GWTTestCase {
 
     map.put("bar", "foo2");
     assertEquals("foo2", map.get("bar"));
-    String payload = data.getPayload();
-    assertTrue(payload.contains("\"bar\":\"foo2\""));
-    assertTrue(payload.contains("\"isNull\":null"));
+
+    assertEquals(data.getPayload(), normalize(data).getPayload());
   }
 
   public void testString() {
@@ -304,7 +305,7 @@ public class SplittableTest extends GWTTestCase {
     assertFalse(s.isKeyed());
     assertTrue(s.isString());
     assertEquals("Hello '\" World!", s.asString());
-    assertEquals("\"Hello '\\\" World!\"", s.getPayload());
+    assertEquals(s.getPayload(), normalize(s).getPayload());
   }
 
   public void testStringEmpty() {
@@ -326,5 +327,9 @@ public class SplittableTest extends GWTTestCase {
 
   private Splittable string(String value) {
     return StringQuoter.split(StringQuoter.quote(value));
+  }
+
+  private Splittable normalize(Splittable splittable) {
+    return StringQuoter.split(splittable.getPayload());
   }
 }
