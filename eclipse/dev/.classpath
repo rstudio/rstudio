@@ -8,7 +8,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core_3.8.3.v20130121-145325.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.jdt.core.source_3.8.3.v20130121-145325.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdtCompilerAdapter-3.8.3.v20130121-145325.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jsr305/jsr305.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
@@ -18,13 +18,14 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jasper-compiler-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jasper-runtime-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/jsp-api-2.0.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-core-js-2.9-sources.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9.jar" sourcepath="/GWT_TOOLS/lib/htmlunit/htmlunit-2.9/htmlunit-2.9-sources.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-15.0/guava-15.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/sourcemap-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/compiler-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android.jar" />
+	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-collections-3.2.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
