@@ -22,6 +22,11 @@ class HistoryImplMozilla extends HistoryImplTimer {
 
   @Override
   protected String decodeFragment(String encodedFragment) {
+    // IE11 chooses the firefox permutation
+    // make sure we use the code from HistoryImpl instead of relying on FF behaviour
+    if (isIE11()) {
+      return super.decodeFragment(encodedFragment);
+    }
     // Mozilla browsers pre-decode the result of location.hash, so there's no
     // need to decode it again (which would in fact be incorrect).
     return encodedFragment;
@@ -49,5 +54,9 @@ class HistoryImplMozilla extends HistoryImplTimer {
     } else {
       $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
     }
+  }-*/;
+
+  private native boolean isIE11() /*-{
+    return $wnd.navigator.userAgent.indexOf('Trident') != -1
   }-*/;
 }
