@@ -48,6 +48,7 @@ set (SESSION_SOURCE_FILES
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
+   modules/SessionAbout.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
@@ -76,6 +77,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
+   modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
    modules/SessionViewer.cpp
    modules/SessionWorkbench.cpp
@@ -195,6 +197,10 @@ foreach(SESSION_R_FILE ${SESSION_R_FILES})
                   COPYONLY)
 endforeach()
 
+# configure the NOTICE file into the resources directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
+               ${CMAKE_CURRENT_SOURCE_DIR}/resources COPYONLY)
+
 # set include directories
 include_directories(
    include
@@ -258,6 +264,7 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script
@@ -294,6 +301,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # notice
+   install(FILES "resources/NOTICE"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # R scripts

@@ -25,7 +25,6 @@
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
-#include "DesktopUpdateChecker.hpp"
 
 namespace desktop {
 
@@ -54,7 +53,6 @@ public slots:
    void zoomOut();
    void manageCommand(QString cmdId, QAction* pAction);
    void openFileInRStudio(QString path);
-   void checkForUpdates();
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
 
@@ -95,7 +93,6 @@ private:
    bool quitConfirmed_;
    MenuCallback menuCallback_;
    GwtCallback gwtCallback_;
-   UpdateChecker updateChecker_;
    SessionLauncher* pSessionLauncher_;
    QProcess* pCurrentSessionProcess_;
 };

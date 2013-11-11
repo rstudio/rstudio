@@ -89,7 +89,8 @@ git merge \
     origin/patch/vim-ctrl-behavior \
     origin/patch/laggy-typing \
     origin/bugfix/outdent-newline \
-    origin/bugfix/safari-fractional-cursor
+    origin/bugfix/safari-fractional-cursor \
+    origin/feature/scrolling-compensation 
 
 
 node ./Makefile.dryice.js normal

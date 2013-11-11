@@ -94,6 +94,7 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
 
+#include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -116,6 +117,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionViewer.hpp"
 #include "modules/SessionHistory.hpp"
@@ -1568,6 +1570,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::overlay::initialize)
       (modules::breakpoints::initialize)
       (modules::errors::initialize)
+      (modules::updates::initialize)
+      (modules::about::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -2274,6 +2278,26 @@ void ensureRLibsUser(const core::FilePath& userHomePath,
       LOG_ERROR(error);
 }
 
+#ifdef __APPLE__
+// we now launch our child processes from the desktop using our standard
+// process management code which closes all file descriptors thereby
+// breaking parent_process_monitor. So on the Mac we use the more simplistic
+// approach of polling for ppid == 1. This is fine because we expect that
+// the Desktop will _always_ outlive us (it waits for us to exit before
+// closing) so anytime it exits before we do it must be a crash). we don't
+// call abort() however because we don't want a crash report to occur
+void detectParentTermination()
+{
+   while(true)
+   {
+      boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+      if (::getppid() == 1)
+      {
+         ::exit(EXIT_FAILURE);
+      }
+   }
+}
+#else
 void detectParentTermination()
 {
    using namespace parent_process_monitor;
@@ -2292,6 +2316,7 @@ void detectParentTermination()
       LOG_ERROR_MESSAGE("waitForParentTermination failed");
    }
 }
+#endif
 
 // NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()

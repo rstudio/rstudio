@@ -43,7 +43,6 @@
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
-#include "DesktopUpdateAvailableDialog.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -69,6 +68,11 @@ Synctex& GwtCallback::synctex()
       pSynctex_ = Synctex::create(pMainWindow_);
 
    return *pSynctex_;
+}
+
+bool GwtCallback::isCocoa()
+{
+   return false;
 }
 
 void GwtCallback::browseUrl(QString url)
@@ -445,13 +449,6 @@ int GwtCallback::showMessageBox(int type,
                                 int defaultButton,
                                 int cancelButton)
 {
-   // cancel update checker if it's visible
-   DesktopUpdateAvailableDialog* pUpdateDialog =
-                  qobject_cast<DesktopUpdateAvailableDialog*>(
-                        QApplication::activeModalWidget());
-   if (pUpdateDialog != NULL)
-      pUpdateDialog->close();
-
    // cancel other message box if it's visible
    QMessageBox* pMsgBox = qobject_cast<QMessageBox*>(
                         QApplication::activeModalWidget());
@@ -490,7 +487,7 @@ int GwtCallback::showMessageBox(int type,
    return cancelButton;
 }
 
-QVariant GwtCallback::promptForText(QString title,
+QString GwtCallback::promptForText(QString title,
                                    QString caption,
                                    QString defaultValue,
                                    bool usePasswordMask,
@@ -541,18 +538,14 @@ QVariant GwtCallback::promptForText(QString title,
    {
       QString value = dialog.textValue();
       bool extraOption = dialog.extraOption();
-      QMap<QString, QVariant> values;
-      values.insert(QString::fromAscii("value"), value);
-      values.insert(QString::fromAscii("extraOption"), extraOption);
+      QString values;
+      values += value;
+      values += QString::fromAscii("\n");
+      values += extraOption ? QString::fromAscii("1") : QString::fromAscii("0");
       return values;
    }
    else
-      return QVariant();
-}
-
-void GwtCallback::checkForUpdates()
-{
-   pMainWindow_->checkForUpdates();
+      return QString();
 }
 
 bool GwtCallback::supportsFullscreenMode()
@@ -647,7 +640,9 @@ OSStatus addToPasteboard(PasteboardRef pasteboard,
    if (!dataRef)
       return memFullErr;
 
-   return ::PasteboardPutItemFlavor(pasteboard, (PasteboardItemID)slot, flavor, dataRef, 0);
+   return ::PasteboardPutItemFlavor(pasteboard,
+                                    reinterpret_cast<PasteboardItemID>(slot),
+                                    flavor, dataRef, 0);
 }
 
 } // anonymous namespace
@@ -836,19 +831,16 @@ bool isProportionalFont(QString fontFamily)
    return !isFixedWidthFont(font);
 }
 
-QVariant GwtCallback::getFontList(bool fixedWidthOnly)
+QString GwtCallback::getFixedWidthFontList()
 {
    QFontDatabase db;
    QStringList families = db.families();
 
-   if (fixedWidthOnly)
-   {
-      QStringList::iterator it = std::remove_if(
+   QStringList::iterator it = std::remove_if(
             families.begin(), families.end(), isProportionalFont);
-      families.erase(it, families.end());
-   }
+   families.erase(it, families.end());
 
-   return QVariant(families);
+   return families.join(QString::fromAscii("\n"));
 }
 
 QString GwtCallback::getFixedWidthFont()
@@ -861,7 +853,7 @@ void GwtCallback::setFixedWidthFont(QString font)
    options().setFixedWidthFont(font);
 }
 
-QVariant GwtCallback::getZoomLevels()
+QString GwtCallback::getZoomLevels()
 {
    QStringList zoomLevels;
    BOOST_FOREACH(double zoomLevel, pMainWindow_->zoomLevels())
@@ -869,7 +861,7 @@ QVariant GwtCallback::getZoomLevels()
       zoomLevels.append(QString::fromStdString(
                            safe_convert::numberToString(zoomLevel)));
    }
-   return QVariant(zoomLevels);
+   return zoomLevels.join(QString::fromAscii("\n"));
 }
 
 double GwtCallback::getZoomLevel()
@@ -882,13 +874,16 @@ void GwtCallback::setZoomLevel(double zoomLevel)
    options().setZoomLevel(zoomLevel);
 }
 
-bool GwtCallback::forceFastScrollFactor()
+void GwtCallback::macZoomActualSize()
 {
-#ifdef Q_WS_MACX
-   return true;
-#else
-   return false;
-#endif
+}
+
+void GwtCallback::macZoomIn()
+{
+}
+
+void GwtCallback::macZoomOut()
+{
 }
 
 
@@ -954,4 +949,14 @@ bool GwtCallback::isOSXMavericks()
    return desktop::isOSXMavericks();
 }
 
+QString GwtCallback::getScrollingCompensationType()
+{
+#if defined(Q_WS_MACX)
+   return QString::fromAscii("Mac");
+#elif defined(Q_WS_WIN)
+   return QString::fromAscii("Win");
+#else
+   return QString::fromAscii("None");
+#endif
+}
 } // namespace desktop

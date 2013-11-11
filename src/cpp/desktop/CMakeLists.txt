@@ -128,8 +128,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopSlotBinders.cpp
   DesktopSynctex.cpp
   DesktopNetworkAccessManager.cpp
-  DesktopUpdateAvailableDialog.cpp
-  DesktopUpdateChecker.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
 )
@@ -180,7 +178,6 @@ qt4_wrap_ui(DESKTOP_UI_SOURCES
    DesktopAboutDialog.ui
    DesktopChooseRHome.ui
    DesktopInputDialog.ui
-   DesktopUpdateAvailableDialog.ui
 )
 
 set(DESKTOP_RESOURCES_FILES desktop.qrc)

@@ -179,6 +179,7 @@ public abstract class
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
+   public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();
    public abstract AppCommand jumpTo();
@@ -266,7 +267,6 @@ public abstract class
    public abstract AppCommand helpUsingRStudio();
    public abstract AppCommand helpKeyboardShortcuts();
    public abstract AppCommand showRequestLog();
-   public abstract AppCommand showWebkitDevtools();
    public abstract AppCommand logFocusedElement();
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();

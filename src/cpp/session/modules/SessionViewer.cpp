@@ -90,7 +90,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       {
          // get the path to the tempdir and the file
          FilePath tempDir = r::session::utils::tempDir();
-         FilePath filePath(url);
+         FilePath filePath = module_context::resolveAliasedPath(url);
 
          // if it's in the temp dir and we're running R >= 2.14 then
          // we can serve it via the help server, otherwise we need

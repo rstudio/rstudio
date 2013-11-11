@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# install-node-webkit
+# install-cef
 #
 # Copyright (C) 2009-12 by RStudio, Inc.
 #
@@ -40,24 +40,28 @@ download()
   fi
 }
 
-# download and extract if necessary
-NODE_WEBKIT_VERSION="0.7.5"
+# download and extract cef if necessary
+CEF_VERSION="3.1547.1412"
 if [ "$PLATFORM" == "Darwin" ]
 then
-  NODE_WEBKIT_PLATFORM=osx-ia32
+  CEF_PLATFORM=macosx64
+
+  # TODO: Linux platform (32 vs. 64 bit)
 fi
 
-NODE_WEBKIT_DIR=node-webkit
-if [ -d "$NODE_WEBKIT_DIR/$NODE_WEBKIT_VERSION" ]
+CEF_DIR=CEF
+if [ -d "$CEF_DIR/$CEF_VERSION" ]
 then
-   echo "node-webkit $NODE_WEBKIT_VERSION already installed"
+   echo "Chromium Embedded Framework already installed"
 else
-   NODE_WEBKIT_FILE=node-webkit-v${NODE_WEBKIT_VERSION}-${NODE_WEBKIT_PLATFORM}
-   NODE_WEBKIT_ARCHIVE=$NODE_WEBKIT_FILE.zip
-   download $NODE_WEBKIT_ARCHIVE
-   mkdir -p $NODE_WEBKIT_DIR
-   unzip -q $NODE_WEBKIT_ARCHIVE -d $NODE_WEBKIT_DIR/$NODE_WEBKIT_VERSION
-   rm $NODE_WEBKIT_ARCHIVE
+   CEF_FILE=cef_binary_${CEF_VERSION}_$CEF_PLATFORM
+   CEF_ARCHIVE=$CEF_FILE.zip
+   download $CEF_ARCHIVE
+   unzip -q $CEF_ARCHIVE
+   rm -rf __MACOSX
+   mkdir -p $CEF_DIR
+   mv $CEF_FILE $CEF_DIR/$CEF_VERSION
+   rm $CEF_ARCHIVE
 fi
 
 # back to install dir
