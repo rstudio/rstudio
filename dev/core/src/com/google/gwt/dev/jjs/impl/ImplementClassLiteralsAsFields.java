@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -120,42 +120,42 @@ public class ImplementClassLiteralsAsFields {
   /**
    * Create an expression that will evaluate, at run time, to the class literal.
    * Causes recursive literal create (super type, array element type). Examples:
-   * 
+   *
    * Class:
-   * 
+   *
    * <pre>
    * Class.createForClass("java.lang.", "Object", /JSeedIdOf/"java.lang.Object", null)
    * Class.createForClass("java.lang.", "Exception", /JSeedIdOf/"java.lang.Exception", Throwable.class)
    * </pre>
-   * 
+   *
    * Interface:
-   * 
+   *
    * <pre>
    * Class.createForInterface(&quot;java.lang.&quot;, &quot;Comparable&quot;)
    * </pre>
-   * 
+   *
    * Primitive:
-   * 
+   *
    * <pre>
    * Class.createForPrimitive(&quot;&quot;, &quot;int&quot;, &quot; I&quot;)
    * </pre>
-   * 
+   *
    * Array:
-   * 
+   *
    * <pre>
    * Class.createForArray("", "[I", /JSeedIdOf/"com.google.gwt.lang.Array", int.class)
    * Class.createForArray("[Lcom.example.", "Foo;", /JSeedIdOf/"com.google.gwt.lang.Array", Foo.class)
    * </pre>
-   * 
+   *
    * Enum:
-   * 
+   *
    * <pre>
    * Class.createForEnum("com.example.", "MyEnum", /JSeedIdOf/"com.example.MyEnum", Enum.class,
    *     public static MyEnum[] values(), public static MyEnum valueOf(String name))
    * </pre>
-   * 
+   *
    * Enum subclass:
-   * 
+   *
    * <pre>
    * Class.createForEnum("com.example.", "MyEnum$1", /JSeedIdOf/"com.example.MyEnum$1", MyEnum.class,
    *     null, null))
@@ -262,6 +262,14 @@ public class ImplementClassLiteralsAsFields {
   private void execImpl() {
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
+    // TODO(rluble): This is kind of hacky. It would be more general purpose to create a class
+    // literal implementation for every class and let unused ones be pruned by optimization.
+    // Instead we're prematurely optimizing.
+    if (!program.typeOracle.hasWholeWorldKnowledge()) {
+      for (JType type : program.getDeclaredTypes()) {
+        resolveClassLiteralField(type);
+      }
+    }
     program.recordClassLiteralFields(classLiteralFields);
   }
 
@@ -300,7 +308,7 @@ public class ImplementClassLiteralsAsFields {
 
   /**
    * Resolve a class literal field. Takes the form:
-   * 
+   *
    * <pre>
    * class ClassLiteralHolder {
    *   Class Ljava_lang_Object_2_classLit =
