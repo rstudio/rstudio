@@ -283,7 +283,11 @@ gwtOnLoad = function(errFn, modName, modBase){
   } else {
     if (plugin.connect(url, topWin.__gwt_SessionID, $hosted, $moduleName,
         $hostedHtmlVersion)) {
-      window.onUnload = function() {
+      // take over the onunload function, wrapping any existing call if it exists
+      var oldUnload = window.onunload;
+      window.onunload = function() {
+        // run wrapped unload first in case it is running gwt code
+        !!oldUnload && oldUnload();
         try {
           // wrap in try/catch since plugins are not required to supply this
           plugin.disconnect();
@@ -311,9 +315,6 @@ function simpleEscape(originalString) {
     .replace(/\'/g, "&#39;")
     .replace(/\"/g,"&quot;");
 }
-
-window.onunload = function() {
-};
 
 // Lightweight metrics
 window.fireOnModuleLoadStart = function(className) {
