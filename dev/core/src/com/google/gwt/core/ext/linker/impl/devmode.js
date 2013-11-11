@@ -174,14 +174,6 @@ function fireOnModuleLoadStart(className) {
 /******************************************************************************
  * Helper functions for the Development Mode startup code. Listed alphabetically
  *****************************************************************************/
-function disconnectPlugin() {
-  try {
-    // wrap in try/catch since plugins are not required to supply this
-    plugin.disconnect();
-  } catch (e) {
-  }
-}
-
 function doBrowserSpecificFixes() {
   var ua = navigator.userAgent.toLowerCase();
   if (ua.indexOf("gecko") != -1) {
@@ -375,7 +367,6 @@ function gwtOnLoad(errFn, moduleName, moduleBase, softPermutationId, computeProp
   $moduleBase = moduleBase;
   __gwt_getProperty = computePropValue;
   
-  window.onunload = function() { };
   doBrowserSpecificFixes();
 
   if (!findPluginXPCOM()) {
@@ -391,6 +382,16 @@ function gwtOnLoad(errFn, moduleName, moduleBase, softPermutationId, computeProp
   if (plugin == null) {
     loadIframe("http://www.gwtproject.org/missing-plugin/");
   } else {
-    window.onUnload = disconnectPlugin();
+    // take over the onunload function, wrapping any existing call if it exists
+    var oldUnload = window.onunload;
+    window.onunload = function() {
+      // run wrapped unload first in case it is running gwt code
+      !!oldUnload && oldUnload();
+      try {
+        // wrap in try/catch since plugins are not required to supply this
+        plugin.disconnect();
+      } catch (e) {
+      }
+    };
   }
 }
