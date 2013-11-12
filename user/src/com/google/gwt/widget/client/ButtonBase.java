@@ -16,8 +16,8 @@
 package com.google.gwt.widget.client;
 
 import com.google.gwt.cell.client.ButtonCellBase;
-import com.google.gwt.cell.client.IsCollapsible;
 import com.google.gwt.cell.client.ButtonCellBase.Decoration;
+import com.google.gwt.cell.client.IsCollapsible;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -54,7 +54,11 @@ import com.google.gwt.user.client.ui.HasEnabled;
  * Base class for buttons that supports content decoration.
  * 
  * @param <C> the data type of the button's contents
+ *
+ * @deprecated will be be removed in the next release. You can copy the source if you still need
+ *             this functionality.
  */
+@Deprecated
 public class ButtonBase<C> extends CellWidget<C> implements HasEnabled, Focusable, IsCollapsible,
     HasAllFocusHandlers, HasMouseDownHandlers, HasMouseUpHandlers, HasMouseOutHandlers,
     HasMouseOverHandlers, HasClickHandlers, HasAllKeyHandlers {

@@ -21,7 +21,11 @@ import com.google.gwt.user.client.ui.HasText;
 
 /**
  * A button that displays text and an optional icon.
+ *
+ * @deprecated Will be be removed in the next release. You can copy the source if you still need
+ *             this functionality.
  */
+@Deprecated
 public class TextButton extends ButtonBase<String> implements HasText {
 
   /**
