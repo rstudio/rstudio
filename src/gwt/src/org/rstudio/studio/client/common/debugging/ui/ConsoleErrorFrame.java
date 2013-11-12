@@ -39,7 +39,8 @@ public class ConsoleErrorFrame extends Composite
    {
    }
 
-   public ConsoleErrorFrame(ErrorFrame frame, ConsoleError.Observer observer)
+   public ConsoleErrorFrame(int number, ErrorFrame frame, 
+                            ConsoleError.Observer observer)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
@@ -48,6 +49,7 @@ public class ConsoleErrorFrame extends Composite
       
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
+      frameNumber.setText((new Integer(number)).toString());
       if (hasSource)
       {
          sourceLink.setText(
@@ -71,6 +73,8 @@ public class ConsoleErrorFrame extends Composite
    Label functionName;
    @UiField
    Anchor sourceLink;
+   @UiField
+   Label frameNumber;
 
    private ConsoleError.Observer observer_;
    private ErrorFrame frame_ = null;
