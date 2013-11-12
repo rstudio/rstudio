@@ -17,6 +17,7 @@ package com.google.gwt.event.dom.client;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HandlerTestBase;
@@ -30,6 +31,30 @@ public class DomEventTest extends HandlerTestBase {
   private HandlerManager manager;
   static class Flag {
     public boolean flag = false;
+  }
+
+  interface CustomClickHandler extends EventHandler {
+    void onClick(CustomClickEvent evt);
+  }
+
+  static class CustomClickEvent extends MouseEvent<CustomClickHandler> {
+
+    public static final Type<CustomClickHandler> TYPE =
+        new Type<CustomClickHandler>("click", new CustomClickEvent());
+
+    public static Type<CustomClickHandler> getType() {
+      return TYPE;
+    }
+
+    @Override
+    public Type<CustomClickHandler> getAssociatedType() {
+      return TYPE;
+    }
+
+    @Override
+    protected void dispatch(CustomClickHandler handler) {
+      handler.onClick(this);
+    }
   }
 
   public void testKeyEvents() {
@@ -150,6 +175,33 @@ public class DomEventTest extends HandlerTestBase {
     b.getElement().dispatchEvent(event);
 
     assertTrue("Never received expected mouse-down event", flag.flag);
+  }
+
+  public void testMultipleDomEventTypesPerEventName() {
+    Button b = new Button();
+    RootPanel.get().add(b);
+
+    final Flag first = new Flag();
+    b.addClickHandler(new ClickHandler() {
+      @Override
+      public void onClick(ClickEvent event) {
+        first.flag = true;
+      }
+    });
+
+    final Flag second = new Flag();
+    b.addDomHandler(new CustomClickHandler() {
+      @Override
+      public void onClick(CustomClickEvent event) {
+        second.flag = true;
+      }
+    }, CustomClickEvent.getType());
+
+    NativeEvent event = Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, false, false);
+    b.getElement().dispatchEvent(event);
+
+    assertTrue("Never received expected click event", first.flag);
+    assertTrue("Never received expected click event", second.flag);
   }
 
   private void checkFire(DomEvent<?> event, HandlerRegistration registration,
