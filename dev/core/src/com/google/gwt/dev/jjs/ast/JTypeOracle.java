@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -682,26 +683,37 @@ public class JTypeOracle implements Serializable {
   public void recomputeAfterOptimizations() {
     Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
 
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      computeClinitTarget(type, computed);
-    }
-    nextDual : for (Iterator<JInterfaceType> it = dualImpls.iterator(); it.hasNext();) {
-      JInterfaceType dualIntf = it.next();
-      Set<JClassType> implementors = get(isImplementedMap, dualIntf);
-      for (JClassType implementor : implementors) {
-        if (isInstantiatedType(implementor) && !program.isJavaScriptObject(implementor)) {
-          // This dual is still implemented by a Java class.
-          continue nextDual;
-        }
+    if (hasWholeWorldKnowledge) {
+      // Optimizations that only make sense in whole world compiles:
+      //   (1) minimize clinit()s.
+      for (JDeclaredType type : program.getDeclaredTypes()) {
+        computeClinitTarget(type, computed);
       }
-      // No Java implementors.
-      it.remove();
-    }
 
-    // Prune jsoSingleImpls when implementor isn't live
-    Iterator<JClassType> jit = jsoSingleImpls.values().iterator();
-    while (jit.hasNext()) {
-      if (!isInstantiatedType(jit.next())) {
+      //   (2) make JSOs singleImpl when all the Java implementors are gone.
+      nextDual:
+      for (Iterator<JInterfaceType> it = dualImpls.iterator(); it.hasNext(); ) {
+        JInterfaceType dualIntf = it.next();
+        Set<JClassType> implementors = get(isImplementedMap, dualIntf);
+        for (JClassType implementor : implementors) {
+          if (isInstantiatedType(implementor) && !program.isJavaScriptObject(implementor)) {
+            // This dual is still implemented by a Java class.
+            continue nextDual;
+          }
+        }
+        // No Java implementors.
+        it.remove();
+      }
+
+      //   (3) prune JSOs from jsoSingleImpls and dualImpls when JSO isn't live hence the
+      //       interface is no longer considered to be implemented by a JSO.
+      Iterator<Entry<JInterfaceType, JClassType>> jit = jsoSingleImpls.entrySet().iterator();
+      while (jit.hasNext()) {
+        Entry<JInterfaceType, JClassType> jsoSingleImplEntry = jit.next();
+        if (isInstantiatedType(jsoSingleImplEntry.getValue())) {
+          continue;
+        }
+        dualImpls.remove(jsoSingleImplEntry.getKey());
         jit.remove();
       }
     }

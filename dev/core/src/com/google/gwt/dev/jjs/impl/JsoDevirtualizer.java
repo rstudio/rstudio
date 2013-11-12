@@ -177,9 +177,8 @@ public class JsoDevirtualizer {
       } else if (devirtualMethodByMethod.containsKey(method)
           || program.isJavaScriptObject(targetType)
           || program.typeOracle.isSingleJsoImpl(targetType)
-          || program.typeOracle.isDualJsoInterface(targetType) || (
-              targetType == program.getTypeJavaLangObject()
-              && findOverridingMethod(method, program.getJavaScriptObject()) != null)) {
+          || program.typeOracle.isDualJsoInterface(targetType)
+          || targetType == program.getTypeJavaLangObject()) {
         return true;
       }
       return false;
