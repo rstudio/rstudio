@@ -35,6 +35,8 @@ then
   $CABAL update
   $CABAL install --only-dependencies
   $CABAL install hsb2hs
+  # add .cabal/bin to path for hsb2hs
+  PATH=$PATH:~/.cabal/bin
   $CABAL install --flags="embed_data_files" citeproc-hs
   $CABAL install alex happy
   $CABAL configure --flags="embed_data_files"

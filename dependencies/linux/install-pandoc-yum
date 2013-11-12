@@ -20,22 +20,16 @@ set -e
 # install dir
 INSTALL_DIR=`pwd`
 
-# establish pandoc directory and work there
-PANDOC_DIR=${INSTALL_DIR}/pandoc
-mkdir -p ${PANDOC_DIR}
-cd $PANDOC_DIR
-
 # install haskell dependencies
 sudo yum install -y gmp-devel
 sudo yum install -y haskell-platform
 
-# wipe out existing state
-rm -rf ~/.cabal
-rm -rf ~/.ghc
-
 # install latest version of pandoc
 cabal update
+cabal install http-conduit # can't build blaze-builder with 7.0.4
 cabal install --flags="embed_data_files" pandoc pandoc-citeproc
+
+# pandoc binary ends up in ~/.cabal/bin
 
 
 

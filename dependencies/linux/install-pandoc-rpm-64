@@ -36,11 +36,9 @@ rm ${JUSTHUB}
 # install haskell platform
 sudo yum install -y haskell
 
-# wipe out existing state
-rm -rf ~/.ghc
-rm -rf ~/.cabal
-
 # install pandoc
 CABAL=/usr/bin/cabal
+$CABAL update
+$CABAL install http-conduit
 . ../install-pandoc-src
 
