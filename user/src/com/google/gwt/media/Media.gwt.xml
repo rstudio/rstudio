@@ -27,17 +27,11 @@
   <set-property name="audioElementSupport" value="maybe" />
 
   <set-property name="videoElementSupport" value="no">
-    <any>
-      <when-property-is name="user.agent" value="ie6" />
-      <when-property-is name="user.agent" value="ie8" />
-    </any>
+    <when-property-is name="user.agent" value="ie8" />
   </set-property>
   
   <set-property name="audioElementSupport" value="no">
-    <any>
-      <when-property-is name="user.agent" value="ie6" />
-      <when-property-is name="user.agent" value="ie8" />
-    </any>
+    <when-property-is name="user.agent" value="ie8" />
   </set-property>
 
   <replace-with class="com.google.gwt.media.client.Video.VideoElementSupportDetectedMaybe">
