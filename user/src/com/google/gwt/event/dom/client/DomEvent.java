@@ -21,6 +21,9 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * {@link DomEvent} is a subclass of {@link GwtEvent} that provides events that
  * underlying native browser event object as well as a subclass of {@link Type}
@@ -64,7 +67,12 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
       if (registered == null) {
         init();
       }
-      registered.unsafePut(eventName, this);
+      List<Type<?>> types = registered.unsafeGet(eventName);
+      if (types == null) {
+        types = new ArrayList<Type<?>>();
+        registered.unsafePut(eventName, types);
+      }
+      types.add(this);
       name = eventName;
     }
 
@@ -78,7 +86,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
     }
   }
 
-  private static PrivateMap<Type<?>> registered;
+  private static PrivateMap<List<Type<?>>> registered;
 
   /**
    * Fires the given native event on the specified handlers.
@@ -104,26 +112,28 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
     assert nativeEvent != null : "nativeEvent must not be null";
 
     if (registered != null) {
-      final DomEvent.Type<?> typeKey = registered.unsafeGet(nativeEvent.getType());
-      if (typeKey != null) {
-        // Store and restore native event just in case we are in recursive
-        // loop.
-        NativeEvent currentNative = typeKey.flyweight.nativeEvent;
-        Element currentRelativeElem = typeKey.flyweight.relativeElem;
-        typeKey.flyweight.setNativeEvent(nativeEvent);
-        typeKey.flyweight.setRelativeElement(relativeElem);
+      List<Type<?>> types = registered.unsafeGet(nativeEvent.getType());
+      if (types != null) {
+        for (DomEvent.Type<?> type : types) {
+          // Store and restore native event just in case we are in recursive
+          // loop.
+          NativeEvent currentNative = type.flyweight.nativeEvent;
+          Element currentRelativeElem = type.flyweight.relativeElem;
+          type.flyweight.setNativeEvent(nativeEvent);
+          type.flyweight.setRelativeElement(relativeElem);
 
-        handlerSource.fireEvent(typeKey.flyweight);
+          handlerSource.fireEvent(type.flyweight);
 
-        typeKey.flyweight.setNativeEvent(currentNative);
-        typeKey.flyweight.setRelativeElement(currentRelativeElem);
+          type.flyweight.setNativeEvent(currentNative);
+          type.flyweight.setRelativeElement(currentRelativeElem);
+        }
       }
     }
   }
 
   // This method can go away once we have eager clinits.
   static void init() {
-    registered = new PrivateMap<Type<?>>();
+    registered = new PrivateMap<List<Type<?>>>();
   }
 
   private NativeEvent nativeEvent;
