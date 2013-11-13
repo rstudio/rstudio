@@ -25,9 +25,24 @@ FilePath userHomePath()
 {
    return core::system::userHomePath("R_USER|HOME");
 }
+   
+NSString* createAliasedPath(NSString* path)
+{
+   if (path == nil || [path length] == 0)
+      return @"";
+   
+   std::string aliased = FilePath::createAliasedPath(
+                  FilePath([path UTF8String]), userHomePath());
+   
+   return [NSString stringWithUTF8String: aliased.c_str()];
+}
+
 
 NSString* resolveAliasedPath(NSString* path)
 {
+   if (path == nil)
+      path = @"";
+   
    FilePath resolved = FilePath::resolveAliasedPath([path UTF8String],
                                                     userHomePath());
    return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
@@ -89,13 +104,15 @@ NSString* resolveAliasedPath(NSString* path)
    {
       [NSApp endSheet:panel];
    }
-   return path;
+   return createAliasedPath(path);
 }
 
 - (NSString*) getOpenFileName: (NSString*) caption
               dir: (NSString*) dir
               filter: (NSString*) filter
 {
+   dir = resolveAliasedPath(dir);
+   
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
    [open setDirectoryURL: [NSURL fileURLWithPath:
@@ -120,6 +137,8 @@ NSString* resolveAliasedPath(NSString* path)
               defaultExtension: (NSString*) defaultExtension
               forceDefaultExtension: (Boolean) forceDefaultExtension
 {
+   dir = resolveAliasedPath(dir);
+   
    // The method is invoked with an extension like ".R", but NSSavePanel
    // expects extensions to look like "R" (i.e. no leading period).
    NSArray *extensions = [NSArray arrayWithObject:
@@ -137,6 +156,7 @@ NSString* resolveAliasedPath(NSString* path)
 
 - (NSString*) getExistingDirectory: (NSString*) caption dir: (NSString*) dir
 {
+   dir = resolveAliasedPath(dir);
    NSOpenPanel *open = [NSOpenPanel openPanel];
    [open setTitle: caption];
    [open setDirectoryURL: [NSURL fileURLWithPath:
