@@ -23,6 +23,11 @@
   <target name="-servlet" description="Packages this project into a jar">
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar>
+      <!-- Rebased dependencies go in gwt-servlet too -->
+      <zipfileset src="${gwt.tools.lib}/guava/guava-15.0/guava-15.0-rebased.jar" />
+      <zipfileset src="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
+      <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
+      <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar" />
       <fileset dir="${gwt.dev.bin}">
         <include name="com/google/gwt/dev/asm/**" />
         <include name="com/google/gwt/dev/util/Name*.class" />
@@ -51,12 +56,8 @@
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar destfile="${project.lib.deps}">
       <!-- The following two jars satisfy RequestFactory dependencies. -->
-      <zipfileset src="${gwt.tools.lib}/guava/guava-15.0/guava-15.0-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/json/android-sdk-19.1/json-android.jar" />
       <zipfileset src="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-      <zipfileset src="${gwt.tools.lib}/jscomp/20131014/sourcemap-rebased.jar" />
-      <zipfileset src="${gwt.tools.lib}/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar" />
-      <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />
     </gwt.jar>
   </target>
 </project>
