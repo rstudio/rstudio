@@ -477,7 +477,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    }
    if ([chr isEqualToString: @"a"] && mod == NSCommandKeyMask)
    {
-      [webView_ selectAll: self];
+      if ([webView_ respondsToSelector: @selector(selectAll:)])
+         [webView_ selectAll: self];
       return YES;
    }
    
