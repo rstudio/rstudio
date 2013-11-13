@@ -139,15 +139,21 @@ NSString* resolveAliasedPath(NSString* path)
 {
    dir = resolveAliasedPath(dir);
    
-   // The method is invoked with an extension like ".R", but NSSavePanel
-   // expects extensions to look like "R" (i.e. no leading period).
-   NSArray *extensions = [NSArray arrayWithObject:
-                          [defaultExtension substringFromIndex: 1]];
    NSURL *pathAndFile = [NSURL fileURLWithPath:
                          [dir stringByStandardizingPath]];
    NSSavePanel *save = [NSSavePanel savePanel];
-   [save setAllowedFileTypes: extensions];
-   [save setAllowsOtherFileTypes: !forceDefaultExtension];
+   
+   if (defaultExtension != nil && [defaultExtension length] > 0)
+   {
+      // The method is invoked with an extension like ".R", but NSSavePanel
+      // expects extensions to look like "R" (i.e. no leading period).
+      NSArray *extensions = [NSArray arrayWithObject:
+                                [defaultExtension substringFromIndex: 1]];
+  
+      [save setAllowedFileTypes: extensions];
+      [save setAllowsOtherFileTypes: !forceDefaultExtension];
+   }
+   
    [save setTitle: caption];
    [save setDirectoryURL: pathAndFile];
    [save setNameFieldStringValue: [pathAndFile lastPathComponent]];
