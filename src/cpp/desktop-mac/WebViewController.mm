@@ -475,6 +475,11 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
       [webView_ paste: self];
       return YES;
    }
+   if ([chr isEqualToString: @"a"] && mod == NSCommandKeyMask)
+   {
+      [webView_ selectAll: self];
+      return YES;
+   }
    
    return NO;
 }
