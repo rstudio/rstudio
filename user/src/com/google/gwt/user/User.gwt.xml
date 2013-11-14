@@ -42,7 +42,6 @@
   <inherits name="com.google.gwt.user.ClippedImage"/>
   <inherits name="com.google.gwt.user.datepicker.DatePicker"/>
   <inherits name="com.google.gwt.user.DocumentMode"/>
-  <inherits name="com.google.gwt.user.DocumentRoot" />
   <inherits name="com.google.gwt.user.DOM"/>
   <inherits name="com.google.gwt.user.FileUpload"/>
   <inherits name="com.google.gwt.user.Focus"/>
