@@ -90,7 +90,7 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getClassFilePaths() {
+  public Set<String> getRegularClassFilePaths() {
     return null;
   }
 
@@ -105,7 +105,7 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getCompilationUnitTypeNames() {
+  public Set<String> getRegularCompilationUnitTypeNames() {
     return compilationUnitTypeNames;
   }
 

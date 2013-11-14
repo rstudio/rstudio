@@ -182,7 +182,7 @@ class ZipLibraryBuilder implements LibraryBuilder {
     }
 
     private void writeClassFilePaths() {
-      writeStringSet(Libraries.CLASS_FILE_PATHS_ENTRY_NAME, classFilePaths);
+      writeStringSet(Libraries.REGULAR_CLASS_FILE_PATHS_ENTRY_NAME, regularClassFilePaths);
       writeStringSet(Libraries.SUPER_SOURCE_CLASS_FILE_PATHS_ENTRY_NAME, superSourceClassFilePaths);
     }
 
@@ -200,7 +200,8 @@ class ZipLibraryBuilder implements LibraryBuilder {
     }
 
     private void writeCompilationUnitTypeNames() {
-      writeStringSet(Libraries.COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME, compilationUnitTypeNames);
+      writeStringSet(Libraries.REGULAR_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME,
+          regularCompilationUnitTypeNames);
       writeStringSet(Libraries.SUPER_SOURCE_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME,
           superSourceCompilationUnitTypeNames);
     }
@@ -318,9 +319,7 @@ class ZipLibraryBuilder implements LibraryBuilder {
   }
 
   private Map<String, Resource> buildResourcesByPath = Maps.newHashMap();
-  private Set<String> classFilePaths = Sets.newHashSet();
   private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
-  private Set<String> compilationUnitTypeNames = Sets.newLinkedHashSet();
   private Set<String> dependencyLibraryNames = Sets.newHashSet();
   private String libraryName;
   private Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
@@ -330,6 +329,8 @@ class ZipLibraryBuilder implements LibraryBuilder {
   private Map<String, Resource> publicResourcesByPath = Maps.newHashMap();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
   private Set<String> reboundTypeNames = Sets.newHashSet();
+  private Set<String> regularClassFilePaths = Sets.newHashSet();
+  private Set<String> regularCompilationUnitTypeNames = Sets.newLinkedHashSet();
   private Set<String> superSourceClassFilePaths = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeNames = Sets.newLinkedHashSet();
   private ZipLibraryWriter zipLibraryWriter;
@@ -353,7 +354,7 @@ class ZipLibraryBuilder implements LibraryBuilder {
     if (compilationUnit.isSuperSource()) {
       superSourceCompilationUnitTypeNames.add(compilationUnit.getTypeName());
     } else {
-      compilationUnitTypeNames.add(compilationUnit.getTypeName());
+      regularCompilationUnitTypeNames.add(compilationUnit.getTypeName());
     }
     compilationUnitsByTypeName.put(compilationUnit.getTypeName(), compilationUnit);
 
@@ -364,7 +365,7 @@ class ZipLibraryBuilder implements LibraryBuilder {
         zipLibraryWriter.writeClassFile(classFilePath, compiledClass.getBytes());
       } else {
         String classFilePath = compiledClass.getInternalName();
-        classFilePaths.add(Libraries.computeClassFileName(classFilePath));
+        regularClassFilePaths.add(Libraries.computeClassFileName(classFilePath));
         zipLibraryWriter.writeClassFile(classFilePath, compiledClass.getBytes());
       }
     }

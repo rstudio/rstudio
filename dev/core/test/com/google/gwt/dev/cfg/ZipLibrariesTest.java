@@ -58,6 +58,13 @@ public class ZipLibrariesTest extends TestCase {
     Set<String> expectedDependencyLibraryNames = Sets.newHashSet("FooLib", "BarLib");
     MockCompilationUnit expectedCompilationUnit =
         new MockCompilationUnit("com.google.gwt.core.client.RuntimeRebinder", "blah");
+    MockCompilationUnit expectedSuperSourceCompilationUnit =
+        new MockCompilationUnit("com.google.gwt.core.client.SuperRuntimeRebinder", "superblah") {
+            @Override
+          public boolean isSuperSource() {
+            return true;
+          }
+        };
 
     // Put data in the library and save it.
     ZipLibraryBuilder zipLibraryBuilder = new ZipLibraryBuilder(zipFile.getPath());
@@ -80,12 +87,15 @@ public class ZipLibrariesTest extends TestCase {
     }
     zipLibraryBuilder.addDependencyLibraryNames(expectedDependencyLibraryNames);
     zipLibraryBuilder.addCompilationUnit(expectedCompilationUnit);
+    zipLibraryBuilder.addCompilationUnit(expectedSuperSourceCompilationUnit);
     zipLibraryBuilder.write();
 
     // Read data back from disk.
     ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
     CompilationUnit actualCompilationUnit =
         zipLibrary.getCompilationUnitByTypeName("com.google.gwt.core.client.RuntimeRebinder");
+    CompilationUnit actualSuperSourceCompilationUnit =
+        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.core.client.SuperRuntimeRebinder");
 
     // Compare it.
     assertEquals(expectedLibraryName, zipLibrary.getLibraryName());
@@ -97,9 +107,15 @@ public class ZipLibrariesTest extends TestCase {
     assertEquals(expectedLocaleConfigurationValues,
         zipLibrary.getNewConfigurationPropertyValuesByName().get("locale"));
     assertEquals(expectedDependencyLibraryNames, zipLibrary.getDependencyLibraryNames());
+    // CompilationUnit
     assertEquals(
         expectedCompilationUnit.getResourceLocation(), actualCompilationUnit.getResourceLocation());
     assertEquals(expectedCompilationUnit.getTypeName(), actualCompilationUnit.getTypeName());
+    // SuperSourceCompilationUnit
+    assertEquals(expectedSuperSourceCompilationUnit.getResourceLocation(),
+        actualSuperSourceCompilationUnit.getResourceLocation());
+    assertEquals(expectedSuperSourceCompilationUnit.getTypeName(),
+        actualSuperSourceCompilationUnit.getTypeName());
   }
 
   public void testVersionNumberException() throws IOException {

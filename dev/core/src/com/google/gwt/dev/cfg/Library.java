@@ -45,26 +45,15 @@ public interface Library {
   Set<String> getBuildResourcePaths();
 
   /**
-   * Returns the set of class file paths. Facilitates LibraryGroup's fast single class file
-   * retrieval across large groups of provided libraries.
-   */
-  Set<String> getClassFilePaths();
-
-  /**
    * Returns a class file input stream or null for the provided path.
    */
   InputStream getClassFileStream(String classFilePath);
 
   /**
-   * Returns the compilation unit with the given type name.
+   * Returns the compilation unit with the given type name. The returned compilation unit might be
+   * regular or might be super sourced depending on which was stored during library construction.
    */
   CompilationUnit getCompilationUnitByTypeName(String typeName);
-
-  /**
-   * Returns the set of compilation unit type names. Facilitates LibraryGroup's fast single
-   * compilation unit retrieval across large groups of provided libraries.
-   */
-  Set<String> getCompilationUnitTypeNames();
 
   /**
    * Returns the set of names of dependency libraries. Facilitates LibraryGroup's library tree
@@ -121,6 +110,19 @@ public interface Library {
    * list from source would be very costly.
    */
   Set<String> getReboundTypeNames();
+
+  /**
+   * Returns the set of regular (non-super-source) class file paths. Facilitates LibraryGroup's fast
+   * single class file retrieval across large groups of provided libraries.
+   */
+  Set<String> getRegularClassFilePaths();
+
+  /**
+   * Returns the set of regular (non-super-source) compilation unit type names. Facilitates
+   * LibraryGroup's fast single compilation unit retrieval across large groups of provided
+   * libraries.
+   */
+  Set<String> getRegularCompilationUnitTypeNames();
 
   /**
    * Returns the set of super source class file paths. Facilitates LibraryGroup's fast single class

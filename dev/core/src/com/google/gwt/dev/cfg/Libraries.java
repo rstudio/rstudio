@@ -41,9 +41,6 @@ public class Libraries {
   }
 
   public static final String BUILD_RESOURCE_PATHS_ENTRY_NAME = "buildResourcePaths.txt";
-  public static final String CLASS_FILE_PATHS_ENTRY_NAME = "classFilePaths.txt";
-  public static final String COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME =
-      "compilationUnitTypeNames.txt";
   public static final String DEPENDENCY_LIBRARY_NAMES_ENTRY_NAME = "dependencyLibraryNames.txt";
   public static final String DIRECTORY_BUILD_RESOURCES = "buildResources/";
   public static final String DIRECTORY_BYTECODE = "bytecode/";
@@ -62,6 +59,9 @@ public class Libraries {
   public static final String PUBLIC_RESOURCE_PATHS_ENTRY_NAME = "publicResourcePaths.txt";
   public static final String RAN_GENERATOR_NAMES_ENTRY_NAME = "ranGeneratorNames.txt";
   public static final String REBOUND_TYPE_NAMES_ENTRY_NAME = "reboundTypeNames.txt";
+  public static final String REGULAR_CLASS_FILE_PATHS_ENTRY_NAME = "regularClassFilePaths.txt";
+  public static final String REGULAR_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME =
+      "regularCompilationUnitTypeNames.txt";
   public static final String SUPER_SOURCE_CLASS_FILE_PATHS_ENTRY_NAME =
       "superSourceClassFilePaths.txt";
   public static final String SUPER_SOURCE_COMPILATION_UNIT_TYPE_NAMES_ENTRY_NAME =
