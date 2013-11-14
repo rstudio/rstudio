@@ -84,6 +84,10 @@ public abstract class ToolBase {
   }
 
   protected void printHelp() {
+    printHelp(false);
+  }
+
+  protected void printHelp(boolean includeUndocumented) {
     System.err.println(About.getGwtVersion());
 
     Set<ArgHandler> uniqueArgHandlers = new LinkedHashSet<ArgHandler>(argHandlers.values());
@@ -120,7 +124,7 @@ public abstract class ToolBase {
     // Print the command-line template.
     //
     for (ArgHandler handler : uniqueArgHandlers) {
-      if (handler.isUndocumented()) {
+      if (!includeUndocumented && handler.isUndocumented()) {
         continue;
       }
       String helpTag = handler.getHelpTag();
@@ -137,7 +141,7 @@ public abstract class ToolBase {
 
     // Print the flagless args.
     //
-    if (nullHandler != null && !nullHandler.isUndocumented()) {
+    if (nullHandler != null && (!nullHandler.isUndocumented() || includeUndocumented)) {
       String[] tagArgs = nullHandler.getTagArgs();
       for (String element : tagArgs) {
         System.err.print(nullHandler.isRequired() ? " " : " [");
@@ -159,7 +163,7 @@ public abstract class ToolBase {
     // Print the details.
     //
     for (ArgHandler handler : uniqueArgHandlers) {
-      if (handler.isUndocumented()) {
+      if (!includeUndocumented && handler.isUndocumented()) {
         continue;
       }
       String helpTag = handler.getHelpTag();
@@ -178,7 +182,7 @@ public abstract class ToolBase {
 
     // And details for the "extra" args, if any.
     //
-    if (nullHandler != null && !nullHandler.isUndocumented()) {
+    if (nullHandler != null && (!nullHandler.isUndocumented() || includeUndocumented)) {
       System.err.println("and ");
       String tagArg = nullHandler.getTagArgs()[0];
       int len = tagArg.length();
@@ -198,14 +202,19 @@ public abstract class ToolBase {
 
     if (args.length > 0) {
       boolean help = false;
+      boolean helpUndocumented = false;
       if ("-help".equalsIgnoreCase(args[0])) {
         help = true;
       } else if ("-?".equals(args[0])) {
         help = true;
+      } else if ("-helpfull".equalsIgnoreCase(args[0])) {
+        help = helpUndocumented = true;
+      } else if ("-??".equals(args[0])) {
+        help = helpUndocumented = true;
       }
 
       if (help) {
-        printHelp();
+        printHelp(helpUndocumented);
         return false;
       }
     }
