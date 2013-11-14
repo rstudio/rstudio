@@ -157,7 +157,6 @@ NSString* resolveAliasedPath(NSString* path)
    }
    
    // determine the default filename
-   NSString* defaultFilename = @"";
    FilePath filePath([dir UTF8String]);
    if (!filePath.isDirectory())
    {
@@ -166,12 +165,12 @@ NSString* resolveAliasedPath(NSString* path)
          filename = filePath.stem();
       else
          filename = filePath.filename();
-      defaultFilename = [NSString stringWithUTF8String: filename.c_str()];
+      [save setNameFieldStringValue:
+                  [NSString stringWithUTF8String: filename.c_str()]];
    }
 
    [save setTitle: caption];
    [save setDirectoryURL: pathAndFile];
-   [save setNameFieldStringValue: defaultFilename];
    return [self runSheetFileDialog: save];
 }
 
