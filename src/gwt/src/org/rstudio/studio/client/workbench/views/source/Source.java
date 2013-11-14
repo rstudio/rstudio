@@ -36,6 +36,7 @@ import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -264,7 +265,16 @@ public class Source implements InsertSourceHandler,
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));
-             
+
+      // See bug 3673 and https://bugs.webkit.org/show_bug.cgi?id=41016
+      if (BrowseCap.isMacintosh())
+      {
+         ShortcutManager.INSTANCE.register(
+               KeyboardShortcut.META | KeyboardShortcut.ALT,
+               192,
+               commands.executeNextChunk());
+      }
+
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
