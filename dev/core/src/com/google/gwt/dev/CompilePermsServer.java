@@ -20,8 +20,8 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
-import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -296,7 +296,8 @@ public class CompilePermsServer {
   static void compilePermutation(TreeLogger logger, UnifiedAst ast,
       ObjectInputStream in, ObjectOutputStream out)
       throws ClassNotFoundException, IOException {
-    FileBackedObject<PermutationResult> resultFile = (FileBackedObject<PermutationResult>) in.readObject();
+    PersistenceBackedObject<PermutationResult> resultFile =
+        (PersistenceBackedObject<PermutationResult>) in.readObject();
     Permutation permutation = (Permutation) in.readObject();
     logger.log(TreeLogger.SPAM, "Permutation read");
 

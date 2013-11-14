@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
-import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.PersistenceBackedObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +44,7 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
 
     @Override
     public void compile(TreeLogger logger, CompilerContext compilerContext, Permutation permutation,
-        FileBackedObject<PermutationResult> resultFile)
+        PersistenceBackedObject<PermutationResult> resultFile)
         throws TransientWorkerException, UnableToCompleteException {
       try {
         PermutationResult result = CompilePerms.compile(logger, compilerContext, permutation, ast);

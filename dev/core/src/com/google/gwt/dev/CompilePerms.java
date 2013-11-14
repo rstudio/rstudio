@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.PerfCounter;
+import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.OptionLocalWorkers;
@@ -200,7 +201,8 @@ public class CompilePerms {
    */
   public static void compile(TreeLogger logger, CompilerContext compilerContext,
       Precompilation precompilation, Permutation[] perms, int localWorkers,
-      List<FileBackedObject<PermutationResult>> resultFiles) throws UnableToCompleteException {
+      List<PersistenceBackedObject<PermutationResult>> resultFiles)
+      throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO,
         "Compiling " + perms.length + " permutation" + (perms.length > 1 ? "s" : ""));
     PermutationWorkerFactory.compilePermutations(
@@ -233,9 +235,9 @@ public class CompilePerms {
     System.exit(exitCode);
   }
 
-  public static List<FileBackedObject<PermutationResult>> makeResultFiles(
+  public static List<PersistenceBackedObject<PermutationResult>> makeResultFiles(
       File compilerWorkDir, Permutation[] perms) {
-    List<FileBackedObject<PermutationResult>> toReturn = Lists.newArrayList();
+    List<PersistenceBackedObject<PermutationResult>> toReturn = Lists.newArrayList();
     for (int i = 0; i < perms.length; ++i) {
       File f = makePermFilename(compilerWorkDir, perms[i].getId());
       toReturn.add(new FileBackedObject<PermutationResult>(PermutationResult.class, f));
@@ -305,7 +307,7 @@ public class CompilePerms {
       File precompilationFile = new File(compilerWorkDir,
           Precompile.PRECOMPILE_FILENAME);
 
-      PrecompilationResult precompileResults = readPrecompilationFile(logger, 
+      PrecompilationResult precompileResults = readPrecompilationFile(logger,
           precompilationFile);
 
       if (precompileResults instanceof PrecompileTaskOptions) {
@@ -321,7 +323,7 @@ public class CompilePerms {
         Permutation[] subPerms = selectPermutationsForPrecompilation(
             permsToRun, precompilation);
 
-        List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
+        List<PersistenceBackedObject<PermutationResult>> resultFiles = makeResultFiles(
             compilerWorkDir, subPerms);
         compile(logger, compilerContext, precompilation, subPerms,
             options.getLocalWorkers(), resultFiles);

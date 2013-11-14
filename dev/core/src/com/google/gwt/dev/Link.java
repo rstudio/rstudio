@@ -37,11 +37,11 @@ import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
-import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.NullOutputFileSet;
 import com.google.gwt.dev.util.OutputFileSet;
 import com.google.gwt.dev.util.OutputFileSetOnDirectory;
 import com.google.gwt.dev.util.OutputFileSetOnJar;
+import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -166,7 +166,7 @@ public class Link {
 
   public static void link(TreeLogger logger, ModuleDef module,
       ArtifactSet generatedArtifacts, Permutation[] permutations,
-      List<FileBackedObject<PermutationResult>> resultFiles, JJSOptions precompileOptions,
+      List<PersistenceBackedObject<PermutationResult>> resultFiles, JJSOptions precompileOptions,
       LinkOptions linkOptions)
       throws UnableToCompleteException, IOException {
 
@@ -435,7 +435,7 @@ public class Link {
   private static ArtifactSet doSimulatedShardingLink(TreeLogger logger,
       ModuleDef module, StandardLinkerContext linkerContext,
       ArtifactSet generatedArtifacts, Permutation[] perms,
-      List<FileBackedObject<PermutationResult>> resultFiles)
+      List<PersistenceBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     ArtifactSet combinedArtifacts = new ArtifactSet();
     for (int i = 0; i < perms.length; ++i) {
@@ -464,7 +464,7 @@ public class Link {
    *         operation
    */
   private static ArtifactSet finishPermutation(TreeLogger logger,
-      Permutation perm, FileBackedObject<PermutationResult> resultFile,
+      Permutation perm, PersistenceBackedObject<PermutationResult> resultFile,
       StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts)
       throws UnableToCompleteException {
     PermutationResult permResult = resultFile.newInstance(logger);
@@ -649,11 +649,11 @@ public class Link {
          */
         Precompilation precomp = (Precompilation) precompileResults;
         Permutation[] perms = precomp.getPermutations();
-        List<FileBackedObject<PermutationResult>> resultFiles =
+        List<PersistenceBackedObject<PermutationResult>> resultFiles =
             CompilePerms.makeResultFiles(compilerWorkDir, perms);
 
         // Check that all files are present
-        for (FileBackedObject<PermutationResult> file : resultFiles) {
+        for (PersistenceBackedObject<PermutationResult> file : resultFiles) {
           if (!file.exists()) {
             logger.log(TreeLogger.ERROR,
                 "File not found '" + file.getPath() + "'; please compile all permutations");
