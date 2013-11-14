@@ -143,7 +143,9 @@ NSString* resolveAliasedPath(NSString* path)
                          [dir stringByStandardizingPath]];
    NSSavePanel *save = [NSSavePanel savePanel];
    
-   if (defaultExtension != nil && [defaultExtension length] > 0)
+   BOOL hasDefaultExtension = defaultExtension != nil &&
+                              [defaultExtension length] > 0;
+   if (hasDefaultExtension)
    {
       // The method is invoked with an extension like ".R", but NSSavePanel
       // expects extensions to look like "R" (i.e. no leading period).
@@ -154,9 +156,22 @@ NSString* resolveAliasedPath(NSString* path)
       [save setAllowsOtherFileTypes: !forceDefaultExtension];
    }
    
+   // determine the default filename
+   NSString* defaultFilename = @"";
+   FilePath filePath([dir UTF8String]);
+   if (!filePath.isDirectory())
+   {
+      std::string filename;
+      if (hasDefaultExtension)
+         filename = filePath.stem();
+      else
+         filename = filePath.filename();
+      defaultFilename = [NSString stringWithUTF8String: filename.c_str()];
+   }
+
    [save setTitle: caption];
    [save setDirectoryURL: pathAndFile];
-   [save setNameFieldStringValue: [pathAndFile lastPathComponent]];
+   [save setNameFieldStringValue: defaultFilename];
    return [self runSheetFileDialog: save];
 }
 
