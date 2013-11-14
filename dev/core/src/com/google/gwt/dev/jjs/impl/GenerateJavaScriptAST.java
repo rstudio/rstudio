@@ -486,11 +486,6 @@ public class GenerateJavaScriptAST {
           accept(arrayType);
         }
       }
-
-      // Generate symbolic names for all query type ids.
-      if (!output.shouldMinimize()) {
-        setupSymbolicCastMaps();
-      }
     }
 
     @Override
@@ -748,45 +743,6 @@ public class GenerateJavaScriptAST {
       assert !symbolTable.containsKey(symbolData) : "Duplicate symbol " + "recorded "
           + jsName.getIdent() + " for " + x.getName() + " and key " + symbolData.getJsniIdent();
       symbolTable.put(symbolData, jsName);
-    }
-
-    /**
-     * Create more readable output by generating symbolic constants for query
-     * ids.
-     */
-    private void setupSymbolicCastMaps() {
-      namesByQueryId = new ArrayList<JsName>();
-
-      for (JReferenceType type : program.getTypesByQueryId()) {
-        String shortName;
-        String longName;
-        if (type instanceof JArrayType) {
-          JArrayType arrayType = (JArrayType) type;
-          JType leafType = arrayType.getLeafType();
-          if (leafType instanceof JReferenceType) {
-            shortName = ((JReferenceType) leafType).getShortName();
-          } else {
-            shortName = leafType.getName();
-          }
-          shortName += "_$" + arrayType.getDims();
-          longName = getNameString(leafType) + "_$" + arrayType.getDims();
-        } else {
-          shortName = type.getShortName();
-          longName = getNameString(type);
-        }
-        JsName name = topScope.declareName("Q$" + longName, "Q$" + shortName);
-        namesByQueryId.add(name);
-      }
-      // TODO(cromwellian): see about moving this into an immortal type
-      StringBuilder sb = new StringBuilder();
-      sb.append("function makeCastMap(a) {");
-      sb.append("  var result = {};");
-      sb.append("  for (var i = 0, c = a.length; i < c; ++i) {");
-      sb.append("    result[a[i]] = 1;");
-      sb.append("  }");
-      sb.append("  return result;");
-      sb.append("}");
-      makeMapFunction = createGlobalFunction(sb.toString());
     }
   }
 
@@ -1516,7 +1472,6 @@ public class GenerateJavaScriptAST {
       // Long lits must go at the top, they can be constant field initializers.
       generateLongLiterals(vars);
       generateImmortalTypes(vars);
-      generateQueryIdConstants(vars);
       generateInternedCastMapLiterals(vars);
      
       // Class objects, but only if there are any.
@@ -1564,37 +1519,29 @@ public class GenerateJavaScriptAST {
       super.endVisit(x, ctx);
       JsArrayLiteral arrayLit = (JsArrayLiteral) pop();
       SourceInfo sourceInfo = x.getSourceInfo();
-      if (namesByQueryId == null || x.getExprs().size() == 0) {
-        String stringMap = castMapToString(x);
-        // if interned, use variable reference
-        if (namesByCastMap.containsKey(stringMap)) {
-          push(namesByCastMap.get(stringMap).makeRef(x.getSourceInfo()));
-        } else if (internedCastMap.contains(stringMap)) {
-          // interned variable hasn't been created yet
-          String internName = "CM$";
-          boolean first = true;
-          for (JExpression expr : x.getExprs()) {
-            if (first) {
-              first = false;
-            } else {
-              internName += "_";
-            }
-            // Name is CM$queryId_queryId_queryId
-            internName += ((JsQueryType) expr).getQueryId();
+      String stringMap = castMapToString(x);
+      // if interned, use variable reference
+      if (namesByCastMap.containsKey(stringMap)) {
+        push(namesByCastMap.get(stringMap).makeRef(x.getSourceInfo()));
+      } else if (internedCastMap.contains(stringMap)) {
+        // interned variable hasn't been created yet
+        String internName = "CM$";
+        boolean first = true;
+        for (JExpression expr : x.getExprs()) {
+          if (first) {
+            first = false;
+          } else {
+            internName += "_";
           }
-          JsName internedCastMapName = topScope.declareName(internName, internName);
-          namesByCastMap.put(stringMap, internedCastMapName);
-          castMapByString.put(stringMap, castMapToObjectLiteral(arrayLit, sourceInfo));
-          push(internedCastMapName.makeRef(x.getSourceInfo()));
-        } else {
-          push(castMapToObjectLiteral(arrayLit, sourceInfo));
+          // Name is CM$queryId_queryId_queryId
+          internName += ((JsQueryType) expr).getQueryId();
         }
+        JsName internedCastMapName = topScope.declareName(internName, internName);
+        namesByCastMap.put(stringMap, internedCastMapName);
+        castMapByString.put(stringMap, castMapToObjectLiteral(arrayLit, sourceInfo));
+        push(internedCastMapName.makeRef(x.getSourceInfo()));
       } else {
-        // makeMap([Q_Object, Q_Foo, Q_Bar]);
-        JsInvocation inv = new JsInvocation(sourceInfo);
-        inv.setQualifier(makeMapFunction.getName().makeRef(sourceInfo));
-        inv.getArguments().add(arrayLit);
-        push(inv);
+        push(castMapToObjectLiteral(arrayLit, sourceInfo));
       }
     }
 
@@ -1624,16 +1571,6 @@ public class GenerateJavaScriptAST {
       JsExpression valueExpr = (JsExpression) pop();
       JsExpression labelExpr = (JsExpression) pop();
       push(new JsPropertyInitializer(init.getSourceInfo(), labelExpr, valueExpr));
-    }
-
-    @Override
-    public void endVisit(JsQueryType x, Context ctx) {
-      if (namesByQueryId == null || x.getQueryId() < 0) {
-        super.endVisit(x, ctx);
-      } else {
-        JsName name = namesByQueryId.get(x.getQueryId());
-        push(name.makeRef(x.getSourceInfo()));
-      }
     }
 
     @Override
@@ -2196,20 +2133,6 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateQueryIdConstants(JsVars vars) {
-      if (namesByQueryId != null) {
-        SourceInfo info = vars.getSourceInfo();
-        int id = 0;
-        for (JsName jsName : namesByQueryId) {
-          JsVar var = new JsVar(info, jsName);
-          var.setInitExpr(new JsNumberLiteral(info, id++));
-          vars.add(var);
-        }
-      }
-    }
-
-
-
     private void generateSeedFuncAndPrototype(JClassType x, List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo();
       if (x != program.getTypeJavaLangString()) {
@@ -2722,7 +2645,6 @@ public class GenerateJavaScriptAST {
       new IdentityHashMap<JAbstractMethodBody, JsFunction>();
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
   private int nextSeedId = 1;
-  private List<JsName> namesByQueryId;
   private Map<String, JsName> namesByCastMap = new HashMap<String, JsName>();
   private JsFunction nullFunc;
 
