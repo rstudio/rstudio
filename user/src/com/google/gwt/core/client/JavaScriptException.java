@@ -75,11 +75,6 @@ public final class JavaScriptException extends RuntimeException {
     return (e == null) ? null : e.name;
   }-*/;
 
-  private static String getExceptionProperties(Object e) {
-    return (GWT.isScript() && e instanceof JavaScriptObject)
-        ? StackTraceCreator.getProperties((JavaScriptObject) e) : "";
-  }
-
   /**
    * The original description of the JavaScript exception this class wraps,
    * initialized as <code>e.message</code>.
@@ -202,7 +197,7 @@ public final class JavaScriptException extends RuntimeException {
       Object exception = getThrown();
       name = getExceptionName(exception);
       description = description + ": " + getExceptionDescription(exception);
-      message = "(" + name + ") " + getExceptionProperties(exception) + description;
+      message = "(" + name + ") " + description;
     }
   }
 
