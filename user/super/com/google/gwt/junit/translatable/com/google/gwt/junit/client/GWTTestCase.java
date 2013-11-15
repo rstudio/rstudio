@@ -61,7 +61,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * UncaughtExceptionHandler used to catch exceptions reported via
-   * {@link GWT#maybeReportUncaughtException}.
+   * {@link GWT#reportUncaughtException}.
    */
   private final class TestCaseUncaughtExceptionHandler implements UncaughtExceptionHandler {
     @Override

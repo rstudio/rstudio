@@ -166,7 +166,7 @@ public final class GWT {
    *
    * @return the currently active handler, or null if no handler is active.
    *
-   * @see #maybeReportUncaughtException(Throwable)
+   * @see #reportUncaughtException(Throwable)
    */
   public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
     return uncaughtExceptionHandler;
@@ -176,13 +176,14 @@ public final class GWT {
    * Reports an exception caught at the "top level" to a handler set via
    * {@link #setUncaughtExceptionHandler(UncaughtExceptionHandler)}. This is
    * used in places where the browser calls into user code such as event
-   * callbacks, timers, and RPC. See {@link Impl#entry0} for an example how to
-   * handle this correctly.
+   * callbacks, timers, and RPC.
    * <p>
-   * This method is a no-op if no handler is set.
+   * If no {@code UncaughtExceptionHandler} is set, the exception is reported
+   * to browser. Browsers usually log these exceptions to the JavaScript
+   * console.
    */
-  public static void maybeReportUncaughtException(Throwable t) {
-    Impl.maybeReportUncaughtException(uncaughtExceptionHandler, t);
+  public static void reportUncaughtException(Throwable e) {
+    Impl.reportUncaughtException(e);
   }
 
   /**

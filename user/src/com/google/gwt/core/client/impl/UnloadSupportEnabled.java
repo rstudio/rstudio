@@ -133,10 +133,7 @@ public class UnloadSupportEnabled extends UnloadSupport {
       try {
         d.dispose();
       } catch (Throwable e) {
-        GWT.UncaughtExceptionHandler uncaughtExceptionHandler = GWT.getUncaughtExceptionHandler();
-        if (uncaughtExceptionHandler != null) {
-          uncaughtExceptionHandler.onUncaughtException(e);
-        }
+        GWT.reportUncaughtException(e);
       }
       disposables.remove(d);
     }

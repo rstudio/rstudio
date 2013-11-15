@@ -77,7 +77,7 @@ public class StubScheduler extends Scheduler {
         reschedule = command.execute();
       } catch (Throwable e) {
         reschedule = false;
-        GWT.maybeReportUncaughtException(e);
+        GWT.reportUncaughtException(e);
       }
       if (reschedule) {
         repeatingCommands.add(command);
@@ -110,7 +110,7 @@ public class StubScheduler extends Scheduler {
       try {
         command.execute();
       } catch (Throwable e) {
-        GWT.maybeReportUncaughtException(e);
+        GWT.reportUncaughtException(e);
       }
     }
     return !scheduledCommands.isEmpty();

@@ -180,8 +180,7 @@ public class SchedulerImpl extends Scheduler {
           t.executeScheduled();
         }
       } catch (Throwable e) {
-        // TODO(goktug): this is a no-op if handler is not set and exception will be swallowed.
-        GWT.maybeReportUncaughtException(e);
+        GWT.reportUncaughtException(e);
       }
     }
     return rescheduled;
