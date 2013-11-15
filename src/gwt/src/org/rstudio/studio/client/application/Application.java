@@ -35,6 +35,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
@@ -44,7 +45,9 @@ import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -216,6 +219,25 @@ public class Application implements ApplicationEventHandlers
       setToolbarPref(false);
    }
    
+   
+   @Handler
+   void onShowAboutDialog()
+   {
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+      {
+         @Override
+         public void onResponseReceived(ProductInfo info)
+         {
+            AboutDialog about = new AboutDialog(info);
+            about.showModal();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
+   }
+   
    @Handler
    public void onGoToFileFunction()
    {
@@ -333,15 +355,27 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onZoomActualSize()
+   {
+      // only supported in cocoa desktop
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomActualSize();
+   }
+   
+   @Handler
    public void onZoomIn()
    {
-      // fake handler (this is intercepted by Qt)
+      // pass on to cocoa desktop (qt desktop intercepts)
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomIn();
    }
    
    @Handler
    public void onZoomOut()
    {
-      // fake handler (this is intercepted by Qt)
+      // pass on to cocoa desktop (qt desktop intercepts)
+      if (BrowseCap.isCocoaDesktop())
+         Desktop.getFrame().macZoomOut();
    }
   
    public void onSessionSerialization(SessionSerializationEvent event)
@@ -480,7 +514,7 @@ public class Application implements ApplicationEventHandlers
    private void verifyAgreement(SessionInfo sessionInfo,
                               final Operation verifiedOperation)
    {
-      // get the agreeeent (if any)
+      // get the agreement (if any)
       final Agreement agreement = sessionInfo.pendingAgreement();
       
       // if there is an agreement then prompt user for agreement (otherwise just
@@ -604,6 +638,12 @@ public class Application implements ApplicationEventHandlers
       // show workbench
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
+      // hide zoom actual size everywhere but cocoa desktop
+      if (!BrowseCap.isCocoaDesktop())
+      {
+         commands_.zoomActualSize().remove();
+      }
+      
       // hide zoom in and zoom out in web mode
       if (!Desktop.isDesktop())
       {
@@ -678,7 +718,6 @@ public class Application implements ApplicationEventHandlers
       return Window.Location.getParameter("project") != null; 
    }
    
-  
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;

@@ -35,7 +35,17 @@ core::FilePath userLogPath();
    
 void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
    
+void browseURL(NSURL* url);
+   
 core::system::ProcessSupervisor& processSupervisor();
+   
+bool supportsFullscreenMode(NSWindow* window);
+void enableFullscreenMode(NSWindow* window, bool primary);
+void toggleFullscreenMode(NSWindow* window);
+
+float titleBarHeight();
+   
+NSData *base64Decode(NSString *input);
    
 } // namespace utils
 } // namespace desktop

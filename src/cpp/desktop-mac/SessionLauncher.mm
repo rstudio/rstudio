@@ -20,7 +20,12 @@
 
 
 #include <boost/thread.hpp>
+
 #include <core/FileSerializer.hpp>
+#include <core/WaitUtils.hpp>
+
+#include <core/http/TcpIpBlockingClient.hpp>
+
 #include <core/system/Environment.hpp>
 
 #import "SessionLauncher.hpp"
@@ -65,7 +70,24 @@ void logEnvVar(const std::string& name)
       RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
 }
    
+core::WaitResult serverReady(const std::string& host,
+                             const std::string& port)
+{
+   core::http::Request request;
+   request.setMethod("GET");
+   request.setHost("host");
+   request.setUri("/");
+   request.setHeader("Accept", "*/*");
+   request.setHeader("Connection", "close");
    
+   core::http::Response response;
+   Error error = core::http::sendRequest(host, port, request, &response);
+   if (error)
+      return WaitResult(WaitContinue, Success());
+   else
+      return WaitResult(WaitSuccess, Success());
+}
+
 } // anonymous namespace
    
 SessionLauncher& sessionLauncher()
@@ -103,7 +125,7 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
    logEnvVar("R_USER");
 
    // launch the session
-   Error error = launchSession(argList);
+   Error error = launchSession(host, port, argList);
    if (error)
       return error;
 
@@ -132,7 +154,7 @@ void SessionLauncher::launchNextSession(bool reload)
    buildLaunchContext(&host, &port, &argList, &url);
    
    // launch the process
-   Error error = launchSession(argList);
+   Error error = launchSession(host, port, argList);
    if (!error)
    {
       // reload if necessary
@@ -140,9 +162,7 @@ void SessionLauncher::launchNextSession(bool reload)
       {
          NSURL* nsurl = [NSURL URLWithString:
                            [NSString stringWithUTF8String: url.c_str()]];
-         NSURLRequest* request = [NSURLRequest requestWithURL: nsurl];
-         [[[[MainFrameController instance]
-                webView] mainFrame] loadRequest: request];
+         [[MainFrameController instance] loadURL: nsurl];
       }
    }
    else
@@ -252,9 +272,11 @@ void SessionLauncher::onRSessionExited(
 
    }
    
-   // quit and exit means close the main window
+   // quit and exit means close all the windows and quit
    else if (pendingQuit == PendingQuitAndExit)
    {
+      closeAllWindows();
+      
       [[MainFrameController instance] quit];
    }
    
@@ -308,7 +330,9 @@ void SessionLauncher::buildLaunchContext(std::string* pHost,
    }
 }
    
-Error SessionLauncher::launchSession(std::vector<std::string> args)
+Error SessionLauncher::launchSession(const std::string& host,
+                                     const std::string& port,
+                                     std::vector<std::string> args)
 {
    // always reset the abend log path and stderr before launching
    Error error = abendLogPath().removeIfExists();
@@ -326,11 +350,8 @@ Error SessionLauncher::launchSession(std::vector<std::string> args)
    // session process is active
    sessionProcessActive_ = true;
    
-   // wait a bit to allow the socket to bind
-   boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-   
-   // success!
-   return Success();
+   // wait for process to be available
+   return waitWithTimeout(boost::bind(serverReady, host, port), 50, 25, 10);
 }
 
    

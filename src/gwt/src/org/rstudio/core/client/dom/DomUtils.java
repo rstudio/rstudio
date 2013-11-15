@@ -124,6 +124,11 @@ public class DomUtils
       return false;
    }
 
+   public static void selectElement(Element el)
+   {
+      impl.selectElement(el);
+   }
+
    private static final Pattern NEWLINE = Pattern.create("\\n");
    private static int trimLines(NodeList<Node> nodes, final int linesToTrim)
    {

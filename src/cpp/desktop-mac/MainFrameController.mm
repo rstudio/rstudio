@@ -15,14 +15,19 @@
 
 #import "MainFrameController.h"
 
+#include <boost/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 #include <core/FilePath.hpp>
+#include <core/SafeConvert.hpp>
 
 #import "GwtCallbacks.h"
 #import "MainFrameMenu.h"
+#import "Utils.hpp"
 
 #include "SessionLauncher.hpp"
+
+
 
 @implementation MainFrameController
 
@@ -57,6 +62,15 @@ static MainFrameController* instance_;
       
       // set title
       [[self window] setTitle: @"RStudio"];
+      
+      // set primary fullscreen mode
+      desktop::utils::enableFullscreenMode([self window], true);
+      
+      // webkit version check
+      NSString* userAgent = [webView_
+               stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
+      [self checkWebkitVersion: userAgent];
+
    }
    
    return self;
@@ -64,6 +78,7 @@ static MainFrameController* instance_;
 
 - (void) dealloc
 {
+   instance_ = nil;
    [menu_ release];
    [openFile_ release];
    [super dealloc];
@@ -93,8 +108,6 @@ static MainFrameController* instance_;
       
       firstWorkbenchInitialized_ = YES;
    }
-   
-   // TODO: check for updates
 }
 
 - (void) openFileInRStudio: (NSString*) openFile
@@ -120,10 +133,30 @@ static MainFrameController* instance_;
 }
 
 
-- (NSString*) evaluateJavaScript: (NSString*) js
+- (id) evaluateJavaScript: (NSString*) js
 {
    id win = [webView_ windowScriptObject];
    return [win evaluateWebScript: js];
+}
+
+- (id) invokeCommand: (NSString*) command
+{
+   static NSArray* noRefocusCommands = [[NSArray alloc] initWithObjects:
+                                        @"undoDummy", @"redoDummy",
+                                        @"cutDummy", @"copyDummy", @"pasteDummy",
+                                        nil];
+
+   if (![noRefocusCommands containsObject: command])
+      [[self window] makeKeyAndOrderFront: self];
+   
+   return [self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.invokeCommand(\"%@\");",
+                                     command]];
+}
+
+- (BOOL) isCommandEnabled: (NSString*) command
+{
+   return [[self evaluateJavaScript: [NSString stringWithFormat: @"window.desktopHooks.isCommandEnabled(\"%@\");",
+                                     command]] boolValue];
 }
 
 - (BOOL) hasDesktopObject
@@ -154,7 +187,30 @@ static MainFrameController* instance_;
     
 }
 
-// Inject our script ojbect when the window object becomes available
+- (void) checkWebkitVersion: (NSString*) userAgent
+{
+   // parse version info out of user agent string
+   boost::regex re("^.*?AppleWebKit/(\\d+).*$");
+   boost::smatch match;
+   if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
+   {
+      int version = core::safe_convert::stringTo<int>(match[1], 0);
+      if (version < 534)
+      {
+         desktop::utils::showMessageBox(
+             NSWarningAlertStyle,
+             @"Older Version of Safari Detected",
+             @"RStudio uses the Safari WebKit browser engine for rendering "
+             @"its user interface. The minimum required version of Safari is "
+             @"5.1 and an earlier version was detected on your system.\n\n"
+             @"In order to ensure that all RStudio features work correctly "
+             @"please run System Update to install a more recent version "
+             @"of Safari.");
+      }
+   }
+}
+
+// Inject our script object when the window object becomes available
 - (void) webView: (WebView*) webView
 didClearWindowObject:(WebScriptObject *)windowObject
         forFrame:(WebFrame *)frame
@@ -169,6 +225,12 @@ didClearWindowObject:(WebScriptObject *)windowObject
       WebScriptObject* win = [webView_ windowScriptObject];
       [win setValue: menu_ forKey:@"desktopMenuCallback"];
    }
+}
+
+- (void) windowDidBecomeMain: (NSNotification *) notification
+{
+   if ([self hasDesktopObject])
+      [self invokeCommand: @"vcsRefreshNoError"];
 }
 
 - (BOOL) windowShouldClose: (id) sender
@@ -190,6 +252,45 @@ didClearWindowObject:(WebScriptObject *)windowObject
       [self evaluateJavaScript: @"window.desktopHooks.quitR()"];
       return NO;
    }
+}
+
+- (BOOL) performKeyEquivalent: (NSEvent *) theEvent
+{
+   NSString* chr = [theEvent charactersIgnoringModifiers];
+   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+   
+   if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
+   {
+      if ([self isCommandEnabled: @"closeSourceDoc"])
+      {
+         [self invokeCommand: @"closeSourceDoc"];
+      }
+      else
+      {
+         [[webView_ window] performClose: self];
+      }
+      return YES;
+   }
+   else if (([chr isEqualToString: @"0"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"="] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"-"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @","] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"h"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"h"] && mod == (NSCommandKeyMask | NSAlternateKeyMask)) ||
+            ([chr isEqualToString: @"m"] && mod == NSCommandKeyMask) ||
+            ([chr isEqualToString: @"m"] && mod == (NSCommandKeyMask | NSAlternateKeyMask)))
+   {
+      // These are shortcuts that only exist on the menu, so they must be invoked there rather
+      // than letting the in-page shortcut manager handle it.
+      // It's possible we could let all key-equivs get dispatched through the menu, but our Qt
+      // desktop code works pretty hard to avoid that and I can't remember why (quite likely
+      // to do with copy/paste I think). Safer to just keep the behavior the same except for
+      // these few cases that are different.
+      if ([[NSApp mainMenu] performKeyEquivalent: theEvent])
+         return YES;
+   }
+   
+   return [super performKeyEquivalent: theEvent];
 }
 
 

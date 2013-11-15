@@ -13,34 +13,6 @@
  *
  */
 
-// TODO: initial load performance issue
-//  - has to be related to initial R process startup time since
-//    it doesn't happen for reload but does for reload project
-//    not unique to safari, git bisect for issues introduced?
-
-
-// TODO: window positioning and persistance for satellites
-// TODO: other windows types (minimal window, std browser window)
-// TODO Cmd+W and other stuff from main window
-
-// TODO: more robust wait for server to be ready (currently wait for 100ms)
-
-// TOOD: file downloading
-// TODO: main menu
-// TODO: GwtCallbacks
-// TODO: about box
-// TODO: check for updates
-
-// TODO: system shutdown notice
-// TODO: webkit version check
-
-// TODO: enter "boink" in vcs view
-// TODO: strange layout of console progress dialog
-
-// TODO: improve system shutdown handling (confirm our current logic
-//       is airtight and return ShutdownLater (with subsequent callback)
-//       rather than ShutdownCancel)
-
 #import "SatelliteController.h"
 
 #import "GwtCallbacks.h"

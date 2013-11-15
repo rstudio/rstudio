@@ -94,6 +94,7 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
 
+#include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -116,6 +117,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionViewer.hpp"
 #include "modules/SessionHistory.hpp"
@@ -1568,6 +1570,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::overlay::initialize)
       (modules::breakpoints::initialize)
       (modules::errors::initialize)
+      (modules::updates::initialize)
+      (modules::about::initialize)
 
       // workers
       (workers::web_request::initialize)

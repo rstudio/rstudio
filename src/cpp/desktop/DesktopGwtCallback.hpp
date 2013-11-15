@@ -49,6 +49,7 @@ signals:
 public slots:
    QString proportionalFont();
    QString fixedWidthFont();
+   bool isCocoa();
    void browseUrl(QString url);
    QString getOpenFileName(const QString& caption,
                            const QString& dir,
@@ -102,7 +103,6 @@ public slots:
                          int selectionStart,
                          int selectionLength);
 
-   void checkForUpdates();
    void showAboutDialog();
    void bringMainFrameToFront();
 
@@ -118,13 +118,17 @@ public slots:
                      QString workingDirectory,
                      QString extraPathEntries);
 
-   QString getFontList(bool fixedWidthOnly);
+   QString getFixedWidthFontList();
    QString getFixedWidthFont();
    void setFixedWidthFont(QString font);
 
    QString getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
+
+   void macZoomActualSize();
+   void macZoomIn();
+   void macZoomOut();
 
    QString getDesktopSynctexViewer();
 

@@ -19,5 +19,17 @@
 @interface MainFrameMenu : NSObject {
    NSMenu* mainMenu_;
    NSMutableArray* menuStack_;
+
+   // Stores a list of the commands that were added as menu items. Each NSMenuItem has
+   // a "tag" property that is an NSInt, and the value of the tag is the index into
+   // this array. In other words, to get the tag for a menu item you would do
+   // [commands_ objectAtIndex: [item tag]]
+   NSMutableArray* commands_;
+
+   NSDictionary* shortcutMap_;
+   NSDictionary* customShortcuts_;
 }
+
+- (BOOL) validateMenuItem: (NSMenuItem *) item;
+
 @end

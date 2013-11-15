@@ -164,7 +164,7 @@ public class PaneManager
       {
          public void onValueChange(ValueChangeEvent<PaneConfig> evt)
          {
-            ArrayList<LogicalWindow> newPanes = createPanes(evt.getValue());
+            ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue()));
             panes_ = newPanes;
             left_.replaceWindows(newPanes.get(0), newPanes.get(1));
             right_.replaceWindows(newPanes.get(2), newPanes.get(3));

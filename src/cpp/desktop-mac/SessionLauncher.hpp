@@ -72,7 +72,9 @@ private:
                            std::vector<std::string>* pArgList,
                            std::string* pUrl) const;
    
-   core::Error launchSession(std::vector<std::string> args);
+   core::Error launchSession(const std::string& host,
+                             const std::string& port,
+                             std::vector<std::string> args);
    
       
    void onRSessionExited(const core::system::ProcessResult& result);

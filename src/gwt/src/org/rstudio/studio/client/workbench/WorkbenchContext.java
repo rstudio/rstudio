@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -66,7 +67,23 @@ public class WorkbenchContext
             if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED)
                isRestartInProgress_ = true;
             else if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
-               isRestartInProgress_ = false;
+            {
+               // clear the restart in progress event after a delay
+               // (it basically just controls whether errors are displayed
+               // from get_environment_state, list_packages, etc.). we've 
+               // seen issues where the flag is cleared too soon -- this
+               // is likely an underlying logic problem in sendPing, but
+               // we don't want to make a change to that late in the v0.98
+               // cycle so instead we just delay the setting of the flag
+               // finding a better solution is tracked in bug #3651
+               new Timer() {
+                  @Override
+                  public void run()
+                  {
+                     isRestartInProgress_ = false;
+                  }
+               }.schedule(500);
+            }
          }
       });
    }

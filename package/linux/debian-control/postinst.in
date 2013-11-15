@@ -5,6 +5,7 @@ set +e
 
 # add rserver user account
 sudo useradd -r rstudio-server
+sudo groupadd -r rstudio-server
 
 # create softlink to admin script in /usr/sbin
 sudo ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server

@@ -24,6 +24,7 @@ import org.rstudio.core.client.js.JavaScriptPassthrough;
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
 {
+   boolean isCocoa();
    void browseUrl(String url);
    String getOpenFileName(String caption, String dir, String filter);
    String getSaveFileName(String caption, 
@@ -67,7 +68,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         int selectionStart,
                         int selectionLength, String okButtonCaption);
 
-   void checkForUpdates();
    void showAboutDialog();
    void bringMainFrameToFront();
 
@@ -93,13 +93,18 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String workingDirectory,
                      String extraPathEntries);
 
-   String getFontList(boolean fixedWidthOnly);
+   String getFixedWidthFontList();
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
    String getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
+   
+   // mac-specific zoom calls
+   void macZoomActualSize();
+   void macZoomIn();
+   void macZoomOut();
    
    String getDesktopSynctexViewer();
    

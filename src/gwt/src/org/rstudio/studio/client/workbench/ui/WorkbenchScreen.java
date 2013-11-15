@@ -87,7 +87,7 @@ public class WorkbenchScreen extends Composite
       edit_ = edit;
       optionsLoader_ = optionsLoader;
       
-      if (!BrowseCap.isMacintoshDesktop())
+      if (!BrowseCap.isMacintoshDesktop() || BrowseCap.isCocoaDesktop())
          commands.macPreferences().remove();
       
       if (!Desktop.isDesktop() || 

@@ -234,5 +234,7 @@
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>10.6.0</string>
 </dict>
 </plist>

@@ -49,8 +49,8 @@ public:
    std::string fixedWidthFont() const;
    void setFixedWidthFont(std::string font);
    
-   double zoomLevel() const;
-   void setZoomLevel(double zoomLevel);
+   int zoomLevel() const;
+   void setZoomLevel(int zoomLevel);
       
    core::FilePath scriptsPath() const;
    void setScriptsPath(const core::FilePath& scriptsPath);

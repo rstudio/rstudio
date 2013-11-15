@@ -43,7 +43,6 @@
 #include "DesktopMainWindow.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSynctex.hpp"
-#include "DesktopUpdateAvailableDialog.hpp"
 
 #ifdef __APPLE__
 #include <Carbon/Carbon.h>
@@ -69,6 +68,11 @@ Synctex& GwtCallback::synctex()
       pSynctex_ = Synctex::create(pMainWindow_);
 
    return *pSynctex_;
+}
+
+bool GwtCallback::isCocoa()
+{
+   return false;
 }
 
 void GwtCallback::browseUrl(QString url)
@@ -445,13 +449,6 @@ int GwtCallback::showMessageBox(int type,
                                 int defaultButton,
                                 int cancelButton)
 {
-   // cancel update checker if it's visible
-   DesktopUpdateAvailableDialog* pUpdateDialog =
-                  qobject_cast<DesktopUpdateAvailableDialog*>(
-                        QApplication::activeModalWidget());
-   if (pUpdateDialog != NULL)
-      pUpdateDialog->close();
-
    // cancel other message box if it's visible
    QMessageBox* pMsgBox = qobject_cast<QMessageBox*>(
                         QApplication::activeModalWidget());
@@ -549,11 +546,6 @@ QString GwtCallback::promptForText(QString title,
    }
    else
       return QString();
-}
-
-void GwtCallback::checkForUpdates()
-{
-   pMainWindow_->checkForUpdates();
 }
 
 bool GwtCallback::supportsFullscreenMode()
@@ -839,17 +831,14 @@ bool isProportionalFont(QString fontFamily)
    return !isFixedWidthFont(font);
 }
 
-QString GwtCallback::getFontList(bool fixedWidthOnly)
+QString GwtCallback::getFixedWidthFontList()
 {
    QFontDatabase db;
    QStringList families = db.families();
 
-   if (fixedWidthOnly)
-   {
-      QStringList::iterator it = std::remove_if(
+   QStringList::iterator it = std::remove_if(
             families.begin(), families.end(), isProportionalFont);
-      families.erase(it, families.end());
-   }
+   families.erase(it, families.end());
 
    return families.join(QString::fromAscii("\n"));
 }
@@ -883,6 +872,18 @@ double GwtCallback::getZoomLevel()
 void GwtCallback::setZoomLevel(double zoomLevel)
 {
    options().setZoomLevel(zoomLevel);
+}
+
+void GwtCallback::macZoomActualSize()
+{
+}
+
+void GwtCallback::macZoomIn()
+{
+}
+
+void GwtCallback::macZoomOut()
+{
 }
 
 

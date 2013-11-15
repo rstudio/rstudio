@@ -23,16 +23,9 @@
     
    <define-property name="rstudio.cocoa" values="true,false"/>
    <property-provider name="rstudio.cocoa"><![CDATA[
-      return window.desktop && window.desktop.isCocoa ? "true" : "false";
+      return window.desktop && window.desktop.isCocoa() ? "true" : "false";
    ]]></property-provider>
    <collapse-property name="rstudio.cocoa" values="*"/>
-
-   <!--
-   <define-property name="rstudio.debug" values="true,false"/>
-   <property-provider name="rstudio.debug"><![CDATA[
-      return /\bdebug=1\b/.test(window.location.search) ? "true" : "false";
-   ]]></property-provider>
-   -->
 
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
@@ -70,7 +63,7 @@
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
-
+ 
    <replace-with class="org.rstudio.studio.client.application.ui.impl.WebApplicationHeader">
       <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
    </replace-with>
@@ -113,10 +106,6 @@
    <replace-with class="org.rstudio.studio.client.common.dialog.DesktopDialogBuilderFactory">
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
       <when-property-is name="rstudio.desktop" value="true"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory">
-      <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
-      <when-property-is name="rstudio.cocoa" value="true"/>
    </replace-with>
   
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">

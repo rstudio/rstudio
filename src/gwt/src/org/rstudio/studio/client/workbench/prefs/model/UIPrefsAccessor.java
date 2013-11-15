@@ -234,7 +234,8 @@ public class UIPrefsAccessor extends Prefs
       // get the underlying value
       String pdfPreview = pdfPreview().getValue();
       
-      // the internal viewer no longer works on osx
+      // the internal viewer has stability issues on the mac 
+      // so re-route to system viewer
       if (BrowseCap.isMacintoshDesktop())
       {
          if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))

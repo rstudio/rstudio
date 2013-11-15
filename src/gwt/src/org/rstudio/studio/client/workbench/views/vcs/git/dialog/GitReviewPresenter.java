@@ -321,6 +321,7 @@ public class GitReviewPresenter implements ReviewPresenter
             {
                getTable().toggleStaged(
                      event.getNativeKeyCode() == KeyCodes.KEY_ENTER);
+               event.preventDefault();
             }
          }
       });
