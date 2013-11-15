@@ -10,7 +10,6 @@ This product includes software developed by:
  - The Eclipse Foundation (http://www.eclipse.org/).
    - Java Development Tools (http://www.eclipse.org/jdt/)
    - Standard Widget Toolkit (http://www.eclipse.org/swt/) with modifications
- - The JFreeChart project (http://www.jfree.org/jfreechart/)
  - Mort Bay Consulting (http://www.mortbay.com/)
    - Jetty 6.1.11 (http://mortbay.org/jetty/)
  - The Mozilla Foundation (http://www.mozilla.org/).

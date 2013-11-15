@@ -92,7 +92,6 @@
       <classpath>
         <pathelement location="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
-        <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/sac/sac-1.3.jar" />
         <pathelement location="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar" />

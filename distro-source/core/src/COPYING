@@ -222,12 +222,6 @@ e.g. "gwt-dev-linux.jar".
   Source code availability:
     http://mortbay.org/jetty/
 
-* JFreeChart
-  License: GNU Lesser General Public License v. 2.1
-    http://www.gnu.org/licenses/lgpl.html
-  Source code availability: 
-    http://jfree.org/jfreechart/download.html
-
 * Mozilla Rhino
   License: Mozilla Public License v. 1.1
     http://www.mozilla.org/MPL/MPL-1.1.txt
@@ -245,5 +239,3 @@ e.g. "gwt-dev-linux.jar".
   Source code availablility:
     http://code.google.com/p/protobuf/source/checkout
   Binary modifications consist of package-rebasing. The rebased classes are rooted at com/google/gwt/dev/protobuf/ within gwt-dev.jar
-
-
