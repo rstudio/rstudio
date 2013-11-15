@@ -18,6 +18,7 @@ package com.google.gwt.core.client.impl;
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
@@ -193,15 +194,39 @@ public final class Impl {
     uncaughtExceptionHandlerForTest = handler;
   }
 
-  public static void maybeReportUncaughtException(
-      UncaughtExceptionHandler handler, Throwable t) {
-    if (uncaughtExceptionHandlerForTest != null) {
-      uncaughtExceptionHandlerForTest.onUncaughtException(t);
+  public static void reportUncaughtException(Throwable e) {
+    if (Impl.uncaughtExceptionHandlerForTest != null) {
+      Impl.uncaughtExceptionHandlerForTest.onUncaughtException(e);
     }
-    if (handler != null && handler != uncaughtExceptionHandlerForTest) {
-      handler.onUncaughtException(t);
+
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler == Impl.uncaughtExceptionHandlerForTest) {
+      return; // Already reported so we're done.
     }
+
+    if (handler != null) {
+      try {
+        handler.onUncaughtException(e);
+        return; // Done.
+      } catch (Exception handlerException) {
+        // Broken UncaughtExceptionHandler - report it to browser
+        reportToBrowser(handlerException);
+      }
+    }
+
+    // Make sure that the exception is not swallowed and let the browser handle it
+    reportToBrowser(e);
   }
+
+  private static void reportToBrowser(Throwable e) {
+    reportToBrowser(e instanceof JavaScriptException ? ((JavaScriptException) e).getThrown() : e);
+  }
+
+  private static native void reportToBrowser(Object e) /*-{
+    $wnd.setTimeout(function () {
+      throw e;
+    }, 0);
+  }-*/;
 
   /**
    * Indicates if <code>$entry</code> has been called.
@@ -315,7 +340,7 @@ public final class Impl {
         try {
           return apply(jsFunction, thisObj, args);
         } catch (Throwable t) {
-          GWT.maybeReportUncaughtException(t);
+          reportUncaughtException(t);
           return undefined();
         }
       } else {

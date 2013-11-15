@@ -17,7 +17,6 @@
 package com.google.gwt.storage.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.Disposable;
 import com.google.gwt.core.client.impl.Impl;
@@ -53,16 +52,11 @@ class StorageImpl {
     if (!hasStorageEventHandlers()) {
       return;
     }
-    UncaughtExceptionHandler ueh = GWT.getUncaughtExceptionHandler();
     for (StorageEvent.Handler handler : storageEventHandlers) {
-      if (ueh != null) {
-        try {
-          handler.onStorageChange(event);
-        } catch (Throwable t) {
-          GWT.maybeReportUncaughtException(t);
-        }
-      } else {
+      try {
         handler.onStorageChange(event);
+      } catch (Throwable t) {
+        GWT.reportUncaughtException(t);
       }
     }
   }

@@ -16,7 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.Duration;
-import com.google.gwt.core.client.GWT;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +32,7 @@ import java.util.List;
  * warning which a user may choose to cancel. In that event, a
  * {@link CommandCanceledException} or an
  * {@link IncrementalCommandCanceledException} is reported through
- * {@link GWT#maybeReportUncaughtException} depending on the type of command which
+ * {@link GWT#reportUncaughtException} depending on the type of command which
  * caused the warning. All other commands will continue to be executed.
  * </p>
  *
@@ -240,9 +239,10 @@ class CommandExecutor {
   }
 
   /**
-   * Reports either a {@link CommandCanceledException} or an
-   * {@link IncrementalCommandCanceledException} back through the
-   * {@link UncaughtExceptionHandler} if one is set.
+   * Removes the command from the queue and throws either a
+   * {@link CommandCanceledException} or an
+   * {@link IncrementalCommandCanceledException} depending on type of the
+   * command.
    */
   protected void doCommandCanceled() {
     Object cmd = iterator.getLast();
@@ -250,10 +250,9 @@ class CommandExecutor {
     assert (cmd != null);
 
     if (cmd instanceof Command) {
-      GWT.maybeReportUncaughtException(new CommandCanceledException((Command) cmd));
+      throw new CommandCanceledException((Command) cmd);
     } else if (cmd instanceof IncrementalCommand) {
-      GWT.maybeReportUncaughtException(
-          new IncrementalCommandCanceledException((IncrementalCommand) cmd));
+      throw new IncrementalCommandCanceledException((IncrementalCommand) cmd);
     }
 
     setExecuting(false);

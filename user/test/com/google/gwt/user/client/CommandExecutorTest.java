@@ -73,24 +73,6 @@ public class CommandExecutorTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  private boolean recordUncaughtException;
-  private Throwable capturedException;
-
-  @Override
-  protected void gwtSetUp() throws Exception {
-    recordUncaughtException = false;
-    capturedException = null;
-  }
-
-  @Override
-  protected void reportUncaughtException(Throwable ex) {
-    if (recordUncaughtException && capturedException == null) {
-      capturedException = ex;
-    } else {
-      super.reportUncaughtException(ex);
-    }
-  }
-
   /**
    * Test method for
    * {@link com.google.gwt.user.client.CommandExecutor#doExecuteCommands(int)}.
@@ -105,9 +87,14 @@ public class CommandExecutorTest extends GWTTestCase {
     ce.setExecuting(true);
     ce.submit(c1);
     ce.setLast(0);
-    recordUncaughtException = true;
 
-    ce.doCommandCanceled();
+    Exception capturedException = null;
+    try {
+      ce.doCommandCanceled();
+      fail("exception should have thrown");
+    } catch (Exception e) {
+      capturedException = e;
+    }
     assertSame(c1, ((CommandCanceledException) capturedException).getCommand());
     ce.doExecuteCommands(Duration.currentTimeMillis());
     assertFalse(c1.didExecute());
@@ -146,9 +133,14 @@ public class CommandExecutorTest extends GWTTestCase {
     ce.setExecuting(true);
     ce.submit(ic);
     ce.setLast(0);
-    recordUncaughtException = true;
 
-    ce.doCommandCanceled();
+    Exception capturedException = null;
+    try {
+      ce.doCommandCanceled();
+      fail("exception should have thrown");
+    } catch (Exception e) {
+      capturedException = e;
+    }
     assertSame(ic, ((IncrementalCommandCanceledException) capturedException).getCommand());
     ce.doExecuteCommands(Duration.currentTimeMillis());
     assertEquals(0, ic.getExecuteCount());

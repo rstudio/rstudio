@@ -572,16 +572,11 @@ public class AsyncFragmentLoader {
     if (callbacks != null) {
       logEventProgress("runCallbacks" + fragment, "begin");
       allCallbacks[fragment] = null;
-      GWT.UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
       for (Object callback : callbacks) {
-        if (handler == null) {
+        try {
           ((RunAsyncCallback) callback).onSuccess();
-        } else {
-          try {
-            ((RunAsyncCallback) callback).onSuccess();
-          } catch (Throwable t) {
-            GWT.maybeReportUncaughtException(t);
-          }
+        } catch (Throwable t) {
+          GWT.reportUncaughtException(t);
         }
       }
       logEventProgress("runCallbacks" + fragment, "end");

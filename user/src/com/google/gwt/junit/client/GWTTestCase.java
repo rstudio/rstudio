@@ -374,7 +374,7 @@ public abstract class GWTTestCase extends TestCase {
    * the reported exception is currently ignored, but this may result in an error in a future
    * version of GWT.
    *
-   * @see com.google.gwt.core.client.GWT#maybeReportUncaughtException
+   * @see com.google.gwt.core.client.GWT#reportUncaughtException
    */
   protected void reportUncaughtException(Throwable ex) {
     // implemented in the translatable version of this class
