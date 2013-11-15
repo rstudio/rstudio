@@ -211,7 +211,10 @@ NSString* charToStr(unichar c) {
    NSString* command = [commands_ objectAtIndex: [item tag]];
 
    NSString* labelJs = [NSString stringWithFormat: @"window.desktopHooks.getCommandLabel(\"%@\");", command];
-   [item setTitleWithMnemonic: [[MainFrameController instance] evaluateJavaScript: labelJs]];
+   NSString* title = [[MainFrameController instance] evaluateJavaScript: labelJs];
+   if (title == nil) // setTitleWithMnemonic raises exception if passed nil
+      title = @"";
+   [item setTitleWithMnemonic: title];
 
    NSString* checkedJs = [NSString stringWithFormat: @"window.desktopHooks.isCommandChecked(\"%@\");", command];
    if ([[[MainFrameController instance] evaluateJavaScript: checkedJs] boolValue])
