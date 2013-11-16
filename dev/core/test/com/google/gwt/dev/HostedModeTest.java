@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.DevMode.HostedModeOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 
 import java.io.File;
 import java.net.BindException;
@@ -46,29 +45,10 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testAllValidArgs() {
-    assertProcessSuccess(argProcessor, new String[] {"-port", "8080", "-whitelist", "white",
-        "-blacklist", "black", "-logLevel", "DEBUG", "-noserver", "-server",
-        MySCL.class.getName(), "-gen", "myGen", "-war", "myWar", "-workDir",
-        "myWork", "-extra", "myExtra", "-startupUrl", "http://www.google.com/",
-        "-startupUrl", "foo", "c.g.g.h.H", "my.Module"});
-
-    assertNotNull(BrowserWidgetHostChecker.matchWhitelisted("white"));
-    assertNotNull(BrowserWidgetHostChecker.matchBlacklisted("black"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88/"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88/foo"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88/"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88/foo"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org/"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org/foo"));
-    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://www.evildomain.org/foo?http://localhost"));
-    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1"));
-    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88"));
-    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88/"));
-    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88/foo"));
+    assertProcessSuccess(argProcessor, new String[] {"-port", "8080", "-logLevel", "DEBUG",
+        "-noserver", "-server", MySCL.class.getName(), "-gen", "myGen", "-war",
+        "myWar", "-workDir", "myWork", "-extra", "myExtra", "-startupUrl",
+        "http://www.google.com/", "-startupUrl", "foo", "c.g.g.h.H", "my.Module"});
 
     assertEquals(new File("myGen").getAbsoluteFile(),
         options.getGenDir().getAbsoluteFile());

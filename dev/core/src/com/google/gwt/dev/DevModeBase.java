@@ -26,7 +26,6 @@ import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserChannelServer;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
-import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
@@ -165,34 +164,6 @@ public abstract class DevModeBase implements DoneCallback {
         System.err.println("-bindAddress host \"" + value + "\" unknown");
         return false;
       }
-    }
-  }
-
-  /**
-   * Handles the -blacklist command line argument.
-   */
-  protected static class ArgHandlerBlacklist extends ArgHandlerString {
-    public ArgHandlerBlacklist() {
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-blacklist";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[]{"blacklist-string"};
-    }
-
-    @Override
-    public boolean setString(String blacklistStr) {
-      return BrowserWidgetHostChecker.blacklistRegexes(blacklistStr);
     }
   }
 
@@ -421,34 +392,6 @@ public abstract class DevModeBase implements DoneCallback {
       }
 
       return true;
-    }
-  }
-
-  /**
-   * Handles the -whitelist command line flag.
-   */
-  protected static class ArgHandlerWhitelist extends ArgHandlerString {
-    public ArgHandlerWhitelist() {
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-whitelist";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[]{"whitelist-string"};
-    }
-
-    @Override
-    public boolean setString(String whitelistStr) {
-      return BrowserWidgetHostChecker.whitelistRegexes(whitelistStr);
     }
   }
 
@@ -690,8 +633,6 @@ public abstract class DevModeBase implements DoneCallback {
         registerHandler(new ArgHandlerNoServerFlag(options));
       }
       registerHandler(new ArgHandlerPort(options));
-      registerHandler(new ArgHandlerWhitelist());
-      registerHandler(new ArgHandlerBlacklist());
       registerHandler(new ArgHandlerEnableGeneratorResultCaching());
       registerHandler(new ArgHandlerLogDir(options));
       registerHandler(new ArgHandlerLogLevel(options));
