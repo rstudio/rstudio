@@ -44,9 +44,10 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
 
   @Override
   protected OutputStream createNewOutputStream(String path,
-      final long lastModifiedTime) throws IOException {
+      final long timeStampMillis) throws IOException {
     final File file = pathToFile(path);
-    if (file.exists() && file.lastModified() >= lastModifiedTime) {
+    if (file.exists() && timeStampMillis != TIMESTAMP_UNAVAILABLE &&
+        file.lastModified() >= timeStampMillis) {
       return new NullOutputStream();
     }
 
@@ -55,7 +56,9 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
       @Override
       public void close() throws IOException {
         super.close();
-        file.setLastModified(lastModifiedTime);
+        if (timeStampMillis != TIMESTAMP_UNAVAILABLE) {
+          file.setLastModified(timeStampMillis);
+        }
       }
     };
   }

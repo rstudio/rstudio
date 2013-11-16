@@ -24,6 +24,12 @@ import java.util.Set;
  * An abstract set of files that a linker links into.
  */
 public abstract class OutputFileSet {
+
+  /**
+   * Indicates that the file should be overwritten.
+   */
+  public static final int TIMESTAMP_UNAVAILABLE = -1;
+
   private final String pathDescription;
   private final Set<String> pathsSeen = new HashSet<String>();
 
@@ -52,15 +58,28 @@ public abstract class OutputFileSet {
     return pathDescription;
   }
 
+  /**
+   * Opens a file for write. If writing to a zip file and the file already exists,
+   * this has no effect. Otherwise, overwrites any existing file.
+   * @return the output stream to write to, possibly a NullOutputStream
+   */
   public final OutputStream openForWrite(String path) throws IOException {
-    int lastModifiedTime = -1;
-    return openForWrite(path, lastModifiedTime);
+    return openForWrite(path, TIMESTAMP_UNAVAILABLE);
   }
 
-  public OutputStream openForWrite(String path, long lastModifiedTime)
+  /**
+   * Opens a file for write. If writing to a zip file and the file already
+   * exists, there will be no effect. If writing to a directory, the file
+   * exists, and the given timestamp is older or equal to the file's
+   * current timestamp, there will be no effect.
+   * @param timeStampMillis last modified time in milliseconds, or
+   * TIMESTAMP_UNAVAILABLE to force an overwrite.
+   * @return the output stream to write to, possibly a NullOutputStream
+   */
+  public OutputStream openForWrite(String path, long timeStampMillis)
       throws IOException {
     pathsSeen.add(path);
-    return createNewOutputStream(path, lastModifiedTime);
+    return createNewOutputStream(path, timeStampMillis);
   }
 
   protected abstract OutputStream createNewOutputStream(String path,
