@@ -386,6 +386,11 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
         decisionListener: listener];
 }
 
+- (NSWindow*) uiWindow
+{
+   return [self window];
+}
+
 // Handle new window request by creating another controller
 - (WebView *) webView: (WebView *) sender
               createWebViewWithRequest:(NSURLRequest *)request
@@ -445,7 +450,8 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
 - (void) registerDesktopObject
 {
    id win = [webView_ windowScriptObject];
-   GwtCallbacks* gwtCallbacks = [[[GwtCallbacks alloc] init] autorelease];
+   GwtCallbacks* gwtCallbacks =
+            [[[GwtCallbacks alloc] initWithUIDelegate: self] autorelease];
    [win setValue: gwtCallbacks forKey:@"desktop"];
 }
 

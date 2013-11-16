@@ -52,11 +52,11 @@ NSString* resolveAliasedPath(NSString* path)
 
 @implementation GwtCallbacks
 
-
-- (id)init
+- (id) initWithUIDelegate: (id<GwtCallbacksUIDelegate>) uiDelegate
 {
    if (self = [super init])
    {
+      uiDelegate_ = uiDelegate;
    }
    return self;
 }
@@ -86,7 +86,7 @@ NSString* resolveAliasedPath(NSString* path)
 - (NSString*) runSheetFileDialog: (NSSavePanel*) panel
 {
    NSString* path = @"";
-   [panel beginSheetModalForWindow: [[MainFrameController instance] window]
+   [panel beginSheetModalForWindow: [uiDelegate_ uiWindow]
                 completionHandler: nil];
    long int result = [panel runModal];
    @try
@@ -426,7 +426,7 @@ NSString* resolveAliasedPath(NSString* path)
    // Make Enter invoke the default button, and ESC the cancel button.
    [[[alert buttons] objectAtIndex:defaultButton] setKeyEquivalent: @"\r"];
    [[[alert buttons] objectAtIndex:cancelButton] setKeyEquivalent: @"\033"];
-   [alert beginSheetModalForWindow: [[MainFrameController instance] window]
+   [alert beginSheetModalForWindow: [uiDelegate_ uiWindow]
                      modalDelegate: self
                     didEndSelector: @selector(modalAlertDidEnd:returnCode:contextInfo:)
                        contextInfo: nil];
@@ -753,7 +753,10 @@ NSString* resolveAliasedPath(NSString* path)
 
 + (BOOL)isSelectorExcludedFromWebScript: (SEL) sel
 {
-   return NO;
+   if (sel == @selector(setUIDelegate:))
+      return YES;
+   else
+      return NO;
 }
 
 @end
