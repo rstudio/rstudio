@@ -562,7 +562,7 @@
           includes="com/google/gwt/dev/js/client/CoverageTest.class"
           excludes="" />
       <gwt.junit test.name="test.coverage.htmlunit"
-        test.args="${test.args} -draftCompile -out www -prod -runStyle HtmlUnit:FF3.6"
+        test.args="${test.args} -draftCompile -out www -prod"
         test.jvmargs="${test.jvmargs} -Dgwt.coverage=com/google/gwt/dev/js/client/CoverageTestModule.java,"
         test.out="${junit.out}/coverage-htmlunit"
         test.cases="test.coverage.htmlunit.tests" >
