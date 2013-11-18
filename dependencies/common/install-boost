@@ -60,7 +60,7 @@ then
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang cxxflags="-stdlib=libstdc++" variant=release threading=multi link=static install
    else
      sudo ./bjam --prefix=$BOOST_DIR variant=release install
    fi
