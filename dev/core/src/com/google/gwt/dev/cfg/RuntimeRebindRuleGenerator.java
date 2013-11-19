@@ -39,7 +39,7 @@ public class RuntimeRebindRuleGenerator {
 
     StringBuilder typeBody = new StringBuilder();
     typeBody.append(
-        "private static class " + typeName + " extends RuntimeRebinder.RuntimeRebindRule {\n");
+        "private static class " + typeName + " extends RuntimeRebindRule {\n");
     typeBody.append("  public native Object createInstance() /*-{\n");
     typeBody.append("    " + jsniCreateInstanceExpression + "\n");
     typeBody.append("  }-*/;\n");
