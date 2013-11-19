@@ -24,9 +24,18 @@ import com.google.gwt.safehtml.shared.SafeUri;
  */
 public class ImageResourcePrototype implements ImageResource {
 
+  /**
+   * Marker class for bundled {@code ImageResourcePrototype}.
+   */
+  public static class Bundle extends ImageResourcePrototype {
+    public Bundle(String name, SafeUri url, int left, int top, int width, int height,
+        boolean animated, boolean lossy) {
+      super(name, url, left, top, width, height, animated, lossy);
+    }
+  }
+
   private final boolean animated;
   private final boolean lossy;
-  private final boolean standalone;
   private final String name;
   private final SafeUri url;
   private final int left;
@@ -38,7 +47,7 @@ public class ImageResourcePrototype implements ImageResource {
    * Only called by generated code.
    */
   public ImageResourcePrototype(String name, SafeUri url, int left, int top, int width, int height,
-      boolean animated, boolean lossy, boolean standalone) {
+      boolean animated, boolean lossy) {
     this.name = name;
     this.left = left;
     this.top = top;
@@ -47,7 +56,6 @@ public class ImageResourcePrototype implements ImageResource {
     this.url = url;
     this.animated = animated;
     this.lossy = lossy;
-    this.standalone = standalone;
   }
 
   /**
@@ -96,10 +104,5 @@ public class ImageResourcePrototype implements ImageResource {
    */
   public boolean isLossy() {
     return lossy;
-  }
-
-  @Override
-  public boolean isStandalone() {
-    return standalone;
   }
 }

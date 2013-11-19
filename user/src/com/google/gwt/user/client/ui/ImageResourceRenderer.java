@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.impl.ImageResourcePrototype;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeUri;
@@ -36,10 +37,10 @@ public class ImageResourceRenderer extends AbstractSafeHtmlRenderer<ImageResourc
 
   @Override
   public SafeHtml render(ImageResource image) {
-    if (image.isStandalone()) {
-      return TEMPLATE.image(image.getSafeUri(), image.getWidth(), image.getHeight());
-    } else {
+    if (image instanceof ImageResourcePrototype.Bundle) {
       return AbstractImagePrototype.create(image).getSafeHtml();
+    } else {
+      return TEMPLATE.image(image.getSafeUri(), image.getWidth(), image.getHeight());
     }
   }
 }
