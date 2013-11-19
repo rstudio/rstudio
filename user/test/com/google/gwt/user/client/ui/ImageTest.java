@@ -31,6 +31,7 @@ import com.google.gwt.junit.client.WithProperties.Property;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.impl.ImageResourcePrototype;
 import com.google.gwt.user.client.Timer;
 
 /**
@@ -623,8 +624,7 @@ public class ImageTest extends GWTTestCase {
     Bundle b = GWT.create(Bundle.class);
     Image image = new Image(b.prettyPiccy());
     assertResourceWorked(image, b.prettyPiccy());
-
-    assertFalse(b.prettyPiccy().isStandalone());
+    assertTrue(b.prettyPiccy() instanceof ImageResourcePrototype.Bundle);
     assertEquals("clipped", getCurrentImageStateName(image));
   }
 
@@ -637,7 +637,7 @@ public class ImageTest extends GWTTestCase {
     image.setResource(b.prettyPiccy());
     assertResourceWorked(image, b.prettyPiccy());
 
-    assertFalse(b.prettyPiccy().isStandalone());
+    assertTrue(b.prettyPiccy() instanceof ImageResourcePrototype.Bundle);
     assertEquals("clipped", getCurrentImageStateName(image));
   }
 
@@ -646,7 +646,7 @@ public class ImageTest extends GWTTestCase {
     Image image = new Image(b.prettyPiccyStandalone());
     assertResourceWorked(image, b.prettyPiccyStandalone());
 
-    assertTrue(b.prettyPiccyStandalone().isStandalone());
+    assertFalse(b.prettyPiccyStandalone() instanceof ImageResourcePrototype.Bundle);
     assertEquals("unclipped", getCurrentImageStateName(image));
   }
 
@@ -656,7 +656,7 @@ public class ImageTest extends GWTTestCase {
     image.setResource(b.prettyPiccyStandalone());
     assertResourceWorked(image, b.prettyPiccyStandalone());
 
-    assertTrue(b.prettyPiccyStandalone().isStandalone());
+    assertFalse(b.prettyPiccyStandalone() instanceof ImageResourcePrototype.Bundle);
     assertEquals("unclipped", getCurrentImageStateName(image));
   }
 

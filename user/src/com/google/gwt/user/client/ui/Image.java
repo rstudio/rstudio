@@ -81,6 +81,7 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.impl.ImageResourcePrototype;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Event;
@@ -516,12 +517,12 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to be displayed
    */
   public Image(ImageResource resource) {
-    if (resource.isStandalone()) {
-      changeState(new UnclippedState(this, resource.getSafeUri(), resource.getWidth(),
-          resource.getHeight()));
-    } else {
+    if (resource instanceof ImageResourcePrototype.Bundle) {
       changeState(new ClippedState(this, resource.getSafeUri(), resource.getLeft(),
           resource.getTop(), resource.getWidth(), resource.getHeight()));
+    } else {
+      changeState(new UnclippedState(this, resource.getSafeUri(), resource.getWidth(),
+          resource.getHeight()));
     }
     setStyleName("gwt-Image");
   }
@@ -872,11 +873,11 @@ public class Image extends Widget implements SourcesLoadEvents, HasLoadHandlers,
    * @param resource the ImageResource to display
    */
   public void setResource(ImageResource resource) {
-    if (resource.isStandalone()) {
-      state.setUrl(this, resource.getSafeUri(), resource.getWidth(), resource.getHeight());
-    } else {
+    if (resource instanceof ImageResourcePrototype.Bundle) {
       state.setUrlAndVisibleRect(this, resource.getSafeUri(), resource.getLeft(),
           resource.getTop(), resource.getWidth(), resource.getHeight());
+    } else {
+      state.setUrl(this, resource.getSafeUri(), resource.getWidth(), resource.getHeight());
     }
   }
 

@@ -171,7 +171,7 @@ public class ImageResourceTest extends GWTTestCase {
     // Make sure that the large, lossy image isn't bundled with the rest
     assertTrue(((ImageResourcePrototype) lossy).isLossy());
     assertTrue(!i64.getSafeUri().equals(lossy.getSafeUri()));
-    assertTrue(lossy.isStandalone());
+    assertFalse(lossy instanceof ImageResourcePrototype.Bundle);
 
     assertEquals(16, r.i16x16Vertical().getWidth());
     assertEquals(16, r.i16x16Vertical().getHeight());
@@ -200,10 +200,10 @@ public class ImageResourceTest extends GWTTestCase {
     // No image packing
     assertEquals(0, a.getTop());
     assertEquals(0, a.getLeft());
-    assertTrue(a.isStandalone());
+    assertFalse(a instanceof ImageResourcePrototype.Bundle);
     assertEquals(0, b.getTop());
     assertEquals(0, b.getLeft());
-    assertTrue(b.isStandalone());
+    assertFalse(b instanceof ImageResourcePrototype.Bundle);
   }
 
   /**
@@ -220,10 +220,10 @@ public class ImageResourceTest extends GWTTestCase {
     // No image packing
     assertEquals(0, a.getTop());
     assertEquals(0, a.getLeft());
-    assertTrue(a.isStandalone());
+    assertFalse(a instanceof ImageResourcePrototype.Bundle);
     assertEquals(0, b.getTop());
     assertEquals(0, b.getLeft());
-    assertTrue(b.isStandalone());
+    assertFalse(b instanceof ImageResourcePrototype.Bundle);
   }
 
   @SuppressWarnings("deprecation")

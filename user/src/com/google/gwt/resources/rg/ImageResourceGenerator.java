@@ -72,8 +72,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     }
 
     @Override
-    public boolean isStandalone() {
-      return false;
+    public Class<?> getResourceType() {
+      return ImageResourcePrototype.Bundle.class;
     }
 
     public LocalizedImage addImage(TreeLogger logger, ResourceContext context,
@@ -259,7 +259,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     protected String normalContentsFieldName;
     protected String rtlContentsFieldName;
 
-    public abstract boolean isStandalone();
+    public abstract Class<?> getResourceType();
 
     public abstract ImageRect getImageRect(ImageResourceDeclaration image);
 
@@ -304,8 +304,8 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
     }
 
     @Override
-    public boolean isStandalone() {
-      return true;
+    public Class<?> getResourceType() {
+      return ImageResourcePrototype.class;
     }
 
     @Override
@@ -476,13 +476,14 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
       throws UnableToCompleteException {
     String name = method.getName();
 
+    ImageResourceDeclaration image = new ImageResourceDeclaration(method);
+    DisplayedImage bundle = getImage(image);
+
     SourceWriter sw = new StringSourceWriter();
-    sw.println("new " + ImageResourcePrototype.class.getName() + "(");
+    sw.println("new " + bundle.getResourceType().getCanonicalName() + "(");
     sw.indent();
     sw.println('"' + name + "\",");
 
-    ImageResourceDeclaration image = new ImageResourceDeclaration(method);
-    DisplayedImage bundle = getImage(image);
     ImageRect rect = bundle.getImageRect(image);
     if (rect == null) {
       throw new NullPointerException("No ImageRect ever computed for " + name);
@@ -500,8 +501,7 @@ public final class ImageResourceGenerator extends AbstractResourceGenerator
           + urlExpressions[1] + " : " + urlExpressions[0] + "),");
     }
     sw.println(rect.getLeft() + ", " + rect.getTop() + ", " + rect.getWidth() + ", "
-        + rect.getHeight() + ", " + rect.isAnimated() + ", " + rect.isLossy() + ", "
-        + bundle.isStandalone());
+        + rect.getHeight() + ", " + rect.isAnimated() + ", " + rect.isLossy());
 
     sw.outdent();
     sw.print(")");
