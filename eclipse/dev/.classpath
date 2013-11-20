@@ -22,8 +22,8 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-15.0/guava-15.0-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/sourcemap-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131014/compiler-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118/sourcemap-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
