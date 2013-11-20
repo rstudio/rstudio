@@ -43,7 +43,12 @@ final class Exceptions {
     var jse = e.__gwt$exception;
     if (!jse) {
       jse = @com.google.gwt.core.client.JavaScriptException::new(Ljava/lang/Object;)(e);
-      e.__gwt$exception = jse;
+      try {
+        // See https://code.google.com/p/google-web-toolkit/issues/detail?id=8449
+        e.__gwt$exception = jse;
+      } catch (e) {
+        // The exception is not cachable
+      }
     }
     return jse;
   }-*/;
