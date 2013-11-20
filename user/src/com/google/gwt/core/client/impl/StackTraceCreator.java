@@ -247,7 +247,7 @@ public class StackTraceCreator {
       return stack;
     }
 
-    protected native JsArrayString getStack(JavaScriptObject e) /*-{
+    private native JsArrayString getStack(JavaScriptObject e) /*-{
       return (e && e.stack) ? e.stack.split('\n') : [];
     }-*/;
 
@@ -423,54 +423,6 @@ public class StackTraceCreator {
   private static native int parseInt(String number) /*-{
     return parseInt(number) || -1;
   }-*/;
-
-  /**
-   * Opera encodes stack trace information in the error's message.
-   */
-  static class CollectorOpera extends CollectorMoz {
-    /**
-     * We have much a much simpler format to work with.
-     */
-    @Override
-    protected String extractName(String fnToString) {
-      return fnToString.length() == 0 ? ANONYMOUS : fnToString;
-    }
-
-    /**
-     * Opera has the function name on every-other line.
-     */
-    @Override
-    protected JsArrayString getStack(JavaScriptObject e) {
-      JsArrayString toReturn = getMessage(e);
-      assert toReturn.length() % 2 == 0 : "Expecting an even number of lines";
-
-      int i, i2, j;
-      for (i = 0, i2 = 0, j = toReturn.length(); i2 < j; i++, i2 += 2) {
-        int idx = toReturn.get(i2).lastIndexOf("function ");
-        if (idx == -1) {
-          toReturn.set(i, "");
-        } else {
-          toReturn.set(i, toReturn.get(i2).substring(idx + 9).trim());
-        }
-      }
-      setLength(toReturn, i);
-
-      return toReturn;
-    }
-
-    @Override
-    protected int toSplice() {
-      return 3;
-    }
-
-    private native JsArrayString getMessage(JavaScriptObject e) /*-{
-      return (e && e.message) ? e.message.split('\n') : [];
-    }-*/;
-
-    private native void setLength(JsArrayString obj, int length) /*-{
-      obj.length = length;
-    }-*/;
-  }
 
   /**
    * When compiler.stackMode = strip, we stub out the collector.
