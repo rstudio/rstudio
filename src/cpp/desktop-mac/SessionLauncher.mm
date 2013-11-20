@@ -105,6 +105,10 @@ void SessionLauncher::init(const core::FilePath& sessionPath,
    
 Error SessionLauncher::launchFirstSession(const std::string& filename)
 {
+   // remove the DYLD_VERSIONED_FRAMEWORK_PATH so it doesn't interact
+   // with the rsession process or any of it's child processes
+   core::system::unsetenv("DYLD_VERSIONED_FRAMEWORK_PATH");
+   
    // build a new new launch context
    std::string host, port, appUrl;
    std::vector<std::string> argList;
