@@ -50,6 +50,17 @@ import java.util.Set;
 public class LibraryGroup {
 
   /**
+   * An exception that indicates that more than one library has the same name, thus making name
+   * based references ambiguous.
+   */
+  public static class DuplicateLibraryNameException extends InternalCompilerException {
+
+    public DuplicateLibraryNameException(String message) {
+      super(message);
+    }
+  }
+
+  /**
    * An exception that indicates that some library was referenced as a dependency but was not
    * provided to the compiler.
    */
@@ -316,6 +327,11 @@ public class LibraryGroup {
   private void buildLibraryIndexes(boolean verifyLibraryReferences) {
     librariesByName = Maps.newLinkedHashMap();
     for (Library library : libraries) {
+      if (librariesByName.containsKey(library.getLibraryName())) {
+        throw new DuplicateLibraryNameException("More than one library is claiming the name \""
+            + library.getLibraryName() + "\", thus making library references ambiguous. "
+            + "Compilation can not proceed.");
+      }
       librariesByName.put(library.getLibraryName(), library);
     }
 

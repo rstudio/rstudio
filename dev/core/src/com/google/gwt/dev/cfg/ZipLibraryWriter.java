@@ -48,15 +48,15 @@ import java.util.zip.ZipOutputStream;
 // TODO(stalcup): the compiler currently uses an inefficient mixture of java, protobuf, and
 // custom serialization. unify all serialization on protobuf (either ascii or binary format
 // depending on human-readability constraints).
-class ZipLibraryBuilder implements LibraryBuilder {
+class ZipLibraryWriter implements LibraryWriter {
 
-  private class ZipLibraryWriter {
+  private class ZipWriter {
 
     private boolean fileReady;
     private final File zipFile;
     private ZipOutputStream zipOutputStream;
 
-    private ZipLibraryWriter(String zipFileName) {
+    private ZipWriter(String zipFileName) {
       zipFile = new File(zipFileName);
     }
 
@@ -333,10 +333,10 @@ class ZipLibraryBuilder implements LibraryBuilder {
   private Set<String> regularCompilationUnitTypeNames = Sets.newLinkedHashSet();
   private Set<String> superSourceClassFilePaths = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeNames = Sets.newLinkedHashSet();
-  private ZipLibraryWriter zipLibraryWriter;
+  private ZipWriter zipWriter;
 
-  public ZipLibraryBuilder(String fileName) {
-    zipLibraryWriter = new ZipLibraryWriter(fileName);
+  public ZipLibraryWriter(String fileName) {
+    zipWriter = new ZipWriter(fileName);
   }
 
   @Override
@@ -362,15 +362,15 @@ class ZipLibraryBuilder implements LibraryBuilder {
       if (compilationUnit.isSuperSource()) {
         String classFilePath = compiledClass.getInternalName();
         superSourceClassFilePaths.add(Libraries.computeClassFileName(classFilePath));
-        zipLibraryWriter.writeClassFile(classFilePath, compiledClass.getBytes());
+        zipWriter.writeClassFile(classFilePath, compiledClass.getBytes());
       } else {
         String classFilePath = compiledClass.getInternalName();
         regularClassFilePaths.add(Libraries.computeClassFileName(classFilePath));
-        zipLibraryWriter.writeClassFile(classFilePath, compiledClass.getBytes());
+        zipWriter.writeClassFile(classFilePath, compiledClass.getBytes());
       }
     }
 
-    zipLibraryWriter.writeCompilationUnitFile(compilationUnit);
+    zipWriter.writeCompilationUnitFile(compilationUnit);
   }
 
   @Override
@@ -418,7 +418,7 @@ class ZipLibraryBuilder implements LibraryBuilder {
   @Override
   public ZipEntryBackedObject<PermutationResult> getPermutationResultHandle() {
     if (permutationResultHandle == null) {
-      permutationResultHandle = zipLibraryWriter.getPermutationResultHandle();
+      permutationResultHandle = zipWriter.getPermutationResultHandle();
     }
     return permutationResultHandle;
   }
@@ -440,6 +440,6 @@ class ZipLibraryBuilder implements LibraryBuilder {
 
   @Override
   public void write() {
-    zipLibraryWriter.write();
+    zipWriter.write();
   }
 }

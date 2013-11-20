@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
@@ -28,13 +29,20 @@ import junit.framework.TestCase;
  */
 public class ModuleDefLoaderTest extends TestCase {
 
-  private CompilerContext compilerContext = new CompilerContext();
+  private MockLibraryWriter mockLibraryWriter = new MockLibraryWriter();
+  private CompilerContext compilerContext =
+      new CompilerContext.Builder().libraryWriter(mockLibraryWriter).build();
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    ModuleDefLoader.getModulesCache().clear();
+  }
 
   public void assertHonorsStrictResources(boolean strictResources)
       throws UnableToCompleteException {
     TreeLogger logger = TreeLogger.NULL;
     compilerContext.getOptions().setEnforceStrictResources(strictResources);
-    ModuleDefLoader.getModulesCache().clear();
     ModuleDef emptyModule = ModuleDefLoader.loadFromClassPath(
         logger, compilerContext, "com.google.gwt.dev.cfg.testdata.merging.Empty");
     Resource sourceFile =
@@ -155,11 +163,46 @@ public class ModuleDefLoaderTest extends TestCase {
     }
   }
 
-  public void testSeparateResourcesLibraryOne() throws UnableToCompleteException {
-    TreeLogger logger = TreeLogger.NULL;
-    ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(
-        logger, compilerContext, "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
-        false, false);
+  public void testSeparateLibraryName() throws UnableToCompleteException {
+    ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+
+    assertEquals("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
+        mockLibraryWriter.getLibraryName());
+  }
+
+  public void testSeparateLibraryModuleReferences() throws UnableToCompleteException {
+    ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+
+    // The library writer was given the module and it's direct fileset module xml files as build
+    // resources.
+    assertEquals(Sets.newHashSet(
+        "com/google/gwt/dev/cfg/testdata/separate/filesetone/FileSetOne.gwt.xml",
+        "com/google/gwt/dev/cfg/testdata/separate/libraryone/LibraryOne.gwt.xml"),
+        mockLibraryWriter.getBuildResourcePaths());
+    // The library writer was given LibraryTwo as a dependency library.
+    assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"),
+        mockLibraryWriter.getDependencyLibraryNames());
+  }
+
+  public void testSeparateModuleReferences() throws UnableToCompleteException {
+    ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+
+    // The module sees itself and it's direct fileset module as "target" modules.
+    assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
+        "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne"),
+        libraryOneModule.getTargetLibraryModuleNames());
+    // The module sees the referenced library module as a "library" module.
+    assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"),
+        libraryOneModule.getExternalLibraryModuleNames());
+  }
+
+  public void testSeparateModuleResourcesLibraryOne() throws UnableToCompleteException {
+    ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+
     // Includes own source.
     assertNotNull(libraryOneModule.findSourceFile(
         "com/google/gwt/dev/cfg/testdata/separate/libraryone/client/LibraryOne.java"));

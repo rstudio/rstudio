@@ -39,6 +39,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.net.URL;
@@ -167,6 +168,17 @@ public class ModuleDef {
    * directives in modules (or the implicit ./client directory).
    */
   private ResourceOracleImpl lazySourceOracle;
+
+  /**
+   * Names of free-standing compilable library modules that are depended upon by this module.
+   */
+  private final Set<String> externalLibraryModuleNames = Sets.newLinkedHashSet();
+
+  /**
+   * Names of non-independently-compilable modules (mostly filesets) that together make up the
+   * current module.
+   */
+  private final Set<String> targetLibraryModuleNames = Sets.newLinkedHashSet();
 
   private final Map<String, Class<? extends Linker>> linkerTypesByName =
       new LinkedHashMap<String, Class<? extends Linker>>();
@@ -353,10 +365,11 @@ public class ModuleDef {
    * At the moment the ModuleDef uses it's monolithic property in combination with the entering
    * modules ModuleType to updates its idea of attribute source.
    */
-  public void enterModule(ModuleType moduleType) {
+  public void enterModule(ModuleType moduleType, String moduleName) {
     if (monolithic) {
       // When you're monolithic the module tree is all effectively one giant library.
       currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+      targetLibraryModuleNames.add(moduleName);
       return;
     }
 
@@ -369,6 +382,7 @@ public class ModuleDef {
     if (currentAttributeSource.isEmpty() && moduleType == ModuleType.LIBRARY) {
       // Then any attributes you see are your own.
       currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+      targetLibraryModuleNames.add(moduleName);
       return;
     }
 
@@ -378,9 +392,11 @@ public class ModuleDef {
       if (moduleType == ModuleType.FILESET) {
         // Then any attributes you see are still your own.
         currentAttributeSource.push(AttributeSource.TARGET_LIBRARY);
+        targetLibraryModuleNames.add(moduleName);
       } else {
         // But if you enter a library module then any attributes you see are external.
         currentAttributeSource.push(AttributeSource.EXTERNAL_LIBRARY);
+        addExternalLibraryModuleName(moduleName);
       }
     } else if (currentAttributeSource.peek() == AttributeSource.EXTERNAL_LIBRARY) {
       // If your current attribute source is an external library then regardless of whether you
@@ -493,6 +509,14 @@ public class ModuleDef {
     return entryPointTypeNames.toArray(new String[n]);
   }
 
+  /**
+   * Returns the names of free-standing compilable library modules that are depended upon by this
+   * module.
+   */
+  public Set<String> getExternalLibraryModuleNames() {
+    return externalLibraryModuleNames;
+  }
+
   public synchronized String getFunctionName() {
     return getName().replace('.', '_');
   }
@@ -556,6 +580,14 @@ public class ModuleDef {
    */
   public Styles getStyles() {
     return styles;
+  }
+
+  /**
+   * Returns the names of non-independently-compilable modules (mostly filesets) that together make
+   * up the current module.
+   */
+  public Set<String> getTargetLibraryModuleNames() {
+    return targetLibraryModuleNames;
   }
 
   public boolean isGwtXmlFileStale() {
@@ -663,6 +695,14 @@ public class ModuleDef {
 
     needsRefresh = true;
     moduleDefNormalize.end();
+  }
+
+  private void addExternalLibraryModuleName(String moduleName) {
+    // Ignore circular dependencies on self.
+    if (moduleName.equals(getName())) {
+      return;
+    }
+    externalLibraryModuleNames.add(moduleName);
   }
 
   private void checkForSeedTypes(TreeLogger logger, CompilationState compilationState)

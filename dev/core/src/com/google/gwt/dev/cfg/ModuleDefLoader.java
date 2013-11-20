@@ -18,6 +18,7 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.resource.impl.UrlResource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -154,7 +155,13 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
-      return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, monolithic);
+      ModuleDef module =
+          ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, monolithic);
+
+      LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
+      libraryWriter.setLibraryName(module.getName());
+      libraryWriter.addDependencyLibraryNames(module.getExternalLibraryModuleNames());
+      return module;
     } finally {
       moduleDefLoadFromClassPathEvent.end();
     }
@@ -272,6 +279,7 @@ public class ModuleDefLoader {
 
     TreeLogger logger = parentLogger.branch(TreeLogger.DEBUG, "Loading inherited module '"
         + moduleName + "'", null);
+    LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
 
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
@@ -286,6 +294,7 @@ public class ModuleDefLoader {
     String resName = slashedModuleName + ModuleDefLoader.GWT_MODULE_XML_SUFFIX;
     URL moduleURL = resourceLoader.getResource(resName);
 
+    long lastModified = 0;
     if (moduleURL != null) {
       String externalForm = moduleURL.toExternalForm();
       if (logger.isLoggable(TreeLogger.DEBUG)) {
@@ -297,6 +306,7 @@ public class ModuleDefLoader {
             && (!(externalForm.startsWith("http://")))
             && (!(externalForm.startsWith("ftp://")))) {
           File gwtXmlFile = new File(moduleURL.toURI());
+          lastModified = gwtXmlFile.lastModified();
           moduleDef.addGwtXmlFile(gwtXmlFile);
         }
       } catch (URISyntaxException e) {
@@ -331,6 +341,13 @@ public class ModuleDefLoader {
       ModuleDefSchema schema =
           new ModuleDefSchema(logger, this, moduleName, moduleURL, moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
+
+      // If this module.gwt.xml file is one of the target modules that together make up this
+      // ModuleDef.
+      if (moduleDef.getTargetLibraryModuleNames().contains(moduleName)) {
+        // Then save a copy of the xml file in the created library file.
+        libraryWriter.addBuildResource(new UrlResource(moduleURL, resName, lastModified));
+      }
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Unexpected error while processing XML", e);
       throw new UnableToCompleteException();

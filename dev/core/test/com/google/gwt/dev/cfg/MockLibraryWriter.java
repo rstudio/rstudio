@@ -19,19 +19,23 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Set;
 
 /**
- * A do-nothing library builder for tests and compiler code paths that expect a library builder but
- * which are running in a context in which compilation does not want a library to be built.
+ * A mock and in memory library writer for setting up test situations.
  */
-public class NullLibraryBuilder implements LibraryBuilder {
+public class MockLibraryWriter implements LibraryWriter {
 
+  private Set<String> buildResourcePaths = Sets.newHashSet();
+  private Set<String> dependencyLibraryNames = Sets.newHashSet();
+  private String libraryName;
   private Set<String> strings = ImmutableSet.of();
 
   @Override
   public void addBuildResource(Resource buildResource) {
+    buildResourcePaths.add(buildResource.getPath());
   }
 
   @Override
@@ -40,10 +44,12 @@ public class NullLibraryBuilder implements LibraryBuilder {
 
   @Override
   public void addDependencyLibraryName(String libraryName) {
+    dependencyLibraryNames.add(libraryName);
   }
 
   @Override
   public void addDependencyLibraryNames(Set<String> dependencyLibraryNames) {
+    this.dependencyLibraryNames.addAll(dependencyLibraryNames);
   }
 
   @Override
@@ -62,6 +68,18 @@ public class NullLibraryBuilder implements LibraryBuilder {
 
   @Override
   public void addRanGeneratorName(String generatorName) {
+  }
+
+  public Set<String> getBuildResourcePaths() {
+    return buildResourcePaths;
+  }
+
+  public Set<String> getDependencyLibraryNames() {
+    return dependencyLibraryNames;
+  }
+
+  public String getLibraryName() {
+    return libraryName;
   }
 
   @Override
@@ -86,6 +104,7 @@ public class NullLibraryBuilder implements LibraryBuilder {
 
   @Override
   public void setLibraryName(String libraryName) {
+    this.libraryName = libraryName;
   }
 
   @Override

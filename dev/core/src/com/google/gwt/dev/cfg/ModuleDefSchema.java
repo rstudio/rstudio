@@ -1429,7 +1429,7 @@ public class ModuleDefSchema extends Schema {
 
   @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo, String type) {
-    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase()));
+    moduleDef.enterModule(ModuleType.valueOf(type.toUpperCase()), moduleName);
     return bodySchema;
   }
 

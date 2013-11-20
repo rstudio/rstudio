@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Tests for ZipLibrary and ZipLibraryBuilder.
+ * Tests for ZipLibrary and ZipLibraryWriter.
  */
 public class ZipLibrariesTest extends TestCase {
 
@@ -67,28 +67,28 @@ public class ZipLibrariesTest extends TestCase {
         };
 
     // Put data in the library and save it.
-    ZipLibraryBuilder zipLibraryBuilder = new ZipLibraryBuilder(zipFile.getPath());
-    zipLibraryBuilder.setLibraryName(expectedLibraryName);
+    ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
+    zipLibraryWriter.setLibraryName(expectedLibraryName);
     // Include unusual path characters.
-    zipLibraryBuilder.addPublicResource(new SimpleMockResource("ui:binder:com.foo.baz.TableView"));
+    zipLibraryWriter.addPublicResource(new SimpleMockResource("ui:binder:com.foo.baz.TableView"));
     // Include specific expected contents.
-    zipLibraryBuilder.addPublicResource(new MockResource("index.html") {
+    zipLibraryWriter.addPublicResource(new MockResource("index.html") {
         @Override
       public CharSequence getContent() {
         return expectedResourceContents;
       }
     });
-    zipLibraryBuilder.addNewConfigurationPropertyValuesByName(
+    zipLibraryWriter.addNewConfigurationPropertyValuesByName(
         "user.agent", expectedUserAgentConfigurationValues);
-    zipLibraryBuilder.addNewConfigurationPropertyValuesByName(
+    zipLibraryWriter.addNewConfigurationPropertyValuesByName(
         "locale", expectedLocaleConfigurationValues);
     for (String generatorName : expectedRanGeneratorNames) {
-      zipLibraryBuilder.addRanGeneratorName(generatorName);
+      zipLibraryWriter.addRanGeneratorName(generatorName);
     }
-    zipLibraryBuilder.addDependencyLibraryNames(expectedDependencyLibraryNames);
-    zipLibraryBuilder.addCompilationUnit(expectedCompilationUnit);
-    zipLibraryBuilder.addCompilationUnit(expectedSuperSourceCompilationUnit);
-    zipLibraryBuilder.write();
+    zipLibraryWriter.addDependencyLibraryNames(expectedDependencyLibraryNames);
+    zipLibraryWriter.addCompilationUnit(expectedCompilationUnit);
+    zipLibraryWriter.addCompilationUnit(expectedSuperSourceCompilationUnit);
+    zipLibraryWriter.write();
 
     // Read data back from disk.
     ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
@@ -123,9 +123,9 @@ public class ZipLibrariesTest extends TestCase {
     zipFile.deleteOnExit();
 
     // Put data in the library and save it.
-    ZipLibraryBuilder zipLibraryBuilder = new ZipLibraryBuilder(zipFile.getPath());
-    zipLibraryBuilder.setLibraryName("BazLib");
-    zipLibraryBuilder.write();
+    ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
+    zipLibraryWriter.setLibraryName("BazLib");
+    zipLibraryWriter.write();
 
     // Change the expected version number so that this next read should fail.
     ZipLibraries.versionNumber++;

@@ -13,9 +13,10 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.cfg.LibraryBuilder;
 import com.google.gwt.dev.cfg.LibraryGroup;
+import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.cfg.NullLibraryWriter;
 import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -35,7 +36,7 @@ public class CompilerContext {
   public static class Builder {
 
     private ResourceOracle buildResourceOracle;
-    private LibraryBuilder libraryBuilder;
+    private LibraryWriter libraryWriter = new NullLibraryWriter();
     private LibraryGroup libraryGroup;
     private ModuleDef module;
     private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
@@ -46,7 +47,7 @@ public class CompilerContext {
     public CompilerContext build() {
       CompilerContext compilerContext = new CompilerContext();
       compilerContext.buildResourceOracle = buildResourceOracle;
-      compilerContext.libraryBuilder = libraryBuilder;
+      compilerContext.libraryWriter = libraryWriter;
       compilerContext.libraryGroup = libraryGroup;
       compilerContext.module = module;
       compilerContext.options = options;
@@ -61,8 +62,8 @@ public class CompilerContext {
       return this;
     }
 
-    public Builder libraryBuilder(LibraryBuilder libraryBuilder) {
-      this.libraryBuilder = libraryBuilder;
+    public Builder libraryWriter(LibraryWriter libraryWriter) {
+      this.libraryWriter = libraryWriter;
       return this;
     }
 
@@ -98,7 +99,7 @@ public class CompilerContext {
   }
 
   private ResourceOracle buildResourceOracle;
-  private LibraryBuilder libraryBuilder;
+  private LibraryWriter libraryWriter = new NullLibraryWriter();
   private LibraryGroup libraryGroup;
   private ModuleDef module;
 
@@ -121,7 +122,7 @@ public class CompilerContext {
   public Multimap<String, String> gatherNewBindingPropertyValuesForGenerator(String generatorName) {
     Multimap<String, String> newBindingPropertyValues =
         getLibraryGroup().gatherNewBindingPropertyValuesForGenerator(generatorName);
-    newBindingPropertyValues.putAll(libraryBuilder.getNewBindingPropertyValuesByName());
+    newBindingPropertyValues.putAll(libraryWriter.getNewBindingPropertyValuesByName());
     return newBindingPropertyValues;
   }
 
@@ -138,14 +139,14 @@ public class CompilerContext {
       String generatorName) {
     Multimap<String, String> newConfigurationPropertyValues =
         getLibraryGroup().gatherNewConfigurationPropertyValuesForGenerator(generatorName);
-    newConfigurationPropertyValues.putAll(libraryBuilder.getNewConfigurationPropertyValuesByName());
+    newConfigurationPropertyValues.putAll(libraryWriter.getNewConfigurationPropertyValuesByName());
     return newConfigurationPropertyValues;
   }
 
   public Set<String> gatherNewReboundTypeNamesForGenerator(String generatorName) {
     Set<String> newReboundTypeNames =
         getLibraryGroup().gatherNewReboundTypeNamesForGenerator(generatorName);
-    newReboundTypeNames.addAll(libraryBuilder.getReboundTypeNames());
+    newReboundTypeNames.addAll(libraryWriter.getReboundTypeNames());
     return newReboundTypeNames;
   }
 
@@ -157,8 +158,8 @@ public class CompilerContext {
     return buildResourceOracle;
   }
 
-  public LibraryBuilder getLibraryBuilder() {
-    return libraryBuilder;
+  public LibraryWriter getLibraryWriter() {
+    return libraryWriter;
   }
 
   public LibraryGroup getLibraryGroup() {
