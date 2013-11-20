@@ -22,8 +22,14 @@ import com.google.gwt.dev.util.StringKey;
  */
 class ContentId extends StringKey {
 
+  private String sourceTypeName;
+
   public ContentId(String sourceTypeName, String strongHash) {
     super(sourceTypeName + ':' + strongHash);
+    this.sourceTypeName = sourceTypeName;
   }
 
+  public String getSourceTypeName() {
+    return sourceTypeName;
+  }
 }

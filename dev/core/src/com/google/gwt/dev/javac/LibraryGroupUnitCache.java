@@ -29,9 +29,6 @@ import java.util.Set;
 /**
  * A cache that finds compilation unit instances in a library group.<br />
  *
- * ContentId based lookups are not supported since having multiple versions of the same compilation
- * unit in a set of libraries would be an error.<br />
- *
  * Removals are not supported since libraries are immutable and the removals would only be needed if
  * library contents were invalid.
  */
@@ -112,10 +109,18 @@ public class LibraryGroupUnitCache implements UnitCache {
     knownEmptyResourcePaths.clear();
   }
 
+  /**
+   * Finds and returns the compilation unit for the type name referenced in the provided ContentId.
+   * <br />
+   *
+   * Normally ContentId based lookups are expected to point at a particular revision of a type. But
+   * when sourcing compilation units from a LibraryGroup there is only one version of any
+   * compilation unit and that version is by definition "most current".
+   */
   @Override
   public CompilationUnit find(ContentId contentId) {
-    throw new UnsupportedOperationException(
-        "Multiple compilation unit revision retrieval is not supported.");
+    String typeName = contentId.getSourceTypeName();
+    return find(typeNameToResourcePath(typeName));
   }
 
   @Override

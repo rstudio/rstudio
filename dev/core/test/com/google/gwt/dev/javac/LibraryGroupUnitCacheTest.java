@@ -13,10 +13,8 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.cfg.Library;
 import com.google.gwt.dev.cfg.LibraryGroup;
 import com.google.gwt.dev.cfg.MockLibrary;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import junit.framework.TestCase;
 
@@ -37,8 +35,6 @@ public class LibraryGroupUnitCacheTest extends TestCase {
   public void testFindCompilationUnit() {
     String fooResourcePath =
         LibraryGroupUnitCache.typeNameToResourcePath(fooCompilationUnit.getTypeName());
-    String barResourcePath =
-        LibraryGroupUnitCache.typeNameToResourcePath(barCompilationUnit.getTypeName());
 
     // Create random libraries with some compilation units.
     List<MockLibrary> libraries = MockLibrary.createRandomLibraryGraph(4, 1);
@@ -50,22 +46,11 @@ public class LibraryGroupUnitCacheTest extends TestCase {
     LibraryGroupUnitCache libraryGroupUnitCache =
         new LibraryGroupUnitCache(LibraryGroup.fromLibraries(libraries, true));
 
-    // Finds regular and super sourced compilation units
+    // Finds regular and super sourced compilation units using both resource path and content id
+    // lookups.
     assertEquals(fooCompilationUnit, libraryGroupUnitCache.find(fooResourcePath));
-    assertEquals(barCompilationUnit, libraryGroupUnitCache.find(barResourcePath));
-  }
-
-  public void testFindContentIdNotSupported() {
-    LibraryGroup emptyLibraryGroup =
-        LibraryGroup.fromLibraries(Lists.<Library> newArrayList(), false);
-    LibraryGroupUnitCache emptyLibraryGroupUnitCache = new LibraryGroupUnitCache(emptyLibraryGroup);
-
-    try {
-      emptyLibraryGroupUnitCache.find((ContentId) null);
-      fail("expected an UnsupportedOperationException");
-    } catch (UnsupportedOperationException e) {
-      // Expected behavior.
-    }
+    assertEquals(barCompilationUnit,
+        libraryGroupUnitCache.find(new ContentId(barCompilationUnit.getTypeName(), "someHash")));
   }
 
   public void testNoSuchEntry() {
