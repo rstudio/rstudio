@@ -77,5 +77,30 @@ else
     download "$JUNIT_JAR"
     mv "$JUNIT_JAR" "$LIB_DIR/$JUNIT_JAR"
 fi
+
+# Selenium browser test framework
+SELENIUM_VER=2.37.0
+SELENIUM_REL=selenium-$SELENIUM_VER
+SELENIUM_JAVA_BINDINGS_ZIP=selenium-java-$SELENIUM_VER.zip
+if [ -d "$LIB_DIR/selenium/$SELENIUM_VER" ]
+then
+    echo "$SELENIUM_JAVA_BINDINGS_ZIP already installed"
+else
+    download "$SELENIUM_JAVA_BINDINGS_ZIP"
+    mkdir -p "$LIB_DIR/selenium"
+    unzip -qd "$LIB_DIR" "$SELENIUM_JAVA_BINDINGS_ZIP"
+    mv "$LIB_DIR/$SELENIUM_REL" "$LIB_DIR/selenium/$SELENIUM_VER"
+    rm "$SELENIUM_JAVA_BINDINGS_ZIP"
+fi
+
+SELENIUM_SERVER_JAR=selenium-server-standalone-$SELENIUM_VER.jar
+if [ -f "$LIB_DIR/selenium/$SELENIUM_VER/$SELENIUM_SERVER_JAR" ]
+then
+    echo "$SELENIUM_SERVER_JAR already installed"
+else
+    download "$SELENIUM_SERVER_JAR"
+    mv "$SELENIUM_SERVER_JAR" "$LIB_DIR/selenium/$SELENIUM_VER/$SELENIUM_SERVER_JAR"
+fi
+
 # back to install dir
 cd $INSTALL_DIR
