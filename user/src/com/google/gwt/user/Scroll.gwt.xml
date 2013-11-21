@@ -19,10 +19,6 @@
   <!-- IE doesn't fire a scroll event when the DOM is resized. -->
   <replace-with class="com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident">
     <when-type-is class="com.google.gwt.user.client.ui.ScrollImpl"/>
-    <!-- Order is important here, otherwise IE10 falls back to IE9 -->
-    <none>
-      <when-property-is name="user.agent" value="ie10"/>
-    </none>
     <any>
       <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
