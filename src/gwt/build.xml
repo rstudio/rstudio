@@ -32,6 +32,12 @@
       <fileset dir="lib/gin/1.5" includes="*.jar"/>
    </path>
 
+   <path id="test.class.path">
+      <pathelement location="bin"/>
+      <fileset dir="lib/selenium/2.37.0" includes="*.jar"/>
+      <fileset dir="lib/selenium/2.37.0/libs" includes="*.jar"/>
+   </path>
+
    <target name="ext">
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
@@ -167,6 +173,25 @@
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
       <delete dir="extras" failonerror="false" />
+   </target>
+
+   <target name="test" description="Runs Selenium tests" depends="build-tests">
+      <java failonerror="true" fork="true" classname="org.rstudio.studio.selenium.BootRStudio">
+         <classpath>
+            <pathelement location="src"/>
+            <path refid="test.class.path"/>
+         </classpath>
+      </java>
+   </target>
+
+   <target name="build-tests" description="Builds Selenium tests">
+      <javac srcdir="test" includes="selenium/**" encoding="utf-8"
+             destdir="bin"
+             source="1.5" target="1.5" nowarn="true" deprecation="true"
+             debug="true" debuglevel="lines,vars,source"
+             includeantruntime="false">
+         <classpath refid="test.class.path"/>
+      </javac>
    </target>
 
 </project>
