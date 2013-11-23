@@ -213,13 +213,12 @@ public final class Impl {
     }
 
     if (handler != null) {
-      try {
-        handler.onUncaughtException(e);
-        return; // Done.
-      } catch (Exception handlerException) {
-        // Broken UncaughtExceptionHandler - report it to browser
-        reportToBrowser(handlerException);
-      }
+      // TODO(goktug): Handler might throw an exception but catching and reporting it to browser
+      // here breaks assumptions of some existing hybrid apps that uses UCE for exception
+      // conversion. We don't have an alternative functionality (yet) and it is too risky to include
+      // the change in the release at last minute.
+      handler.onUncaughtException(e);
+      return; // Done.
     }
 
     // Make sure that the exception is not swallowed and let the browser handle it
