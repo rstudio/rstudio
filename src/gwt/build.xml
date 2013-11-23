@@ -185,7 +185,7 @@
    </target>
 
    <target name="build-tests" description="Builds Selenium tests">
-      <javac srcdir="test" includes="selenium/**" encoding="utf-8"
+      <javac srcdir="test" includes="org/rstudio/studio/selenium/**" encoding="utf-8"
              destdir="bin"
              source="1.5" target="1.5" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
