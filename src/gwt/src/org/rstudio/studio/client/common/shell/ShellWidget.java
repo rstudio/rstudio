@@ -30,6 +30,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -72,6 +73,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_ = new PreWidget();
       output_.setStylePrimaryName(styles_.output());
       output_.addClickHandler(secondaryInputHandler);
+      ElementIds.assignElementId(output_.getElement(), 
+                                 ElementIds.CONSOLE_OUTPUT);
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -90,6 +93,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_.setPadding(0);
       input_.autoHeight();
       final Widget inputWidget = input_.asWidget();
+      ElementIds.assignElementId(inputWidget.getElement(),
+                                 ElementIds.CONSOLE_INPUT);
       input_.addClickHandler(secondaryInputHandler) ;
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
