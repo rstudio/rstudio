@@ -176,11 +176,12 @@
    </target>
 
    <target name="test" description="Runs Selenium tests" depends="build-tests">
-      <java failonerror="true" fork="true" classname="org.rstudio.studio.selenium.BootRStudio">
+      <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
          <classpath>
             <pathelement location="src"/>
             <path refid="test.class.path"/>
          </classpath>
+         <arg value="org.rstudio.studio.selenium.RStudioTestSuite"/>
       </java>
    </target>
 

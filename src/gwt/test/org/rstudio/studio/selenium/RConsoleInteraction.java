@@ -10,16 +10,12 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import static org.junit.Assert.*;
 import org.junit.Test; 
 
-public class BootRStudio  {
-
+public class RConsoleInteraction  {
    @Test
-   public void testRStudioBoot() {
+   public void testRConsoleInteraction() {
        WebDriver driver = new FirefoxDriver();
 
        driver.get("http://localhost:8787/");
-
-       // Check the title of the page
-       assertEquals(driver.getTitle(), "RStudio");
 
        //Close the browser
        driver.quit();
