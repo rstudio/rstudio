@@ -102,5 +102,22 @@ else
     mv "$SELENIUM_SERVER_JAR" "$LIB_DIR/selenium/$SELENIUM_VER/$SELENIUM_SERVER_JAR"
 fi
 
+# ChromeDriver for Selenium 
+CHROMEDRIVER_VER=2.7
+CHROMEDRIVER_LIB_DIR=$LIB_DIR/selenium/chromedriver/$CHROMEDRIVER_VER
+if [ -d "$CHROMEDRIVER_LIB_DIR" ]
+then
+    echo "ChromeDriver binaries already installed"
+else
+    mkdir -p "$CHROMEDRIVER_LIB_DIR"
+    download "chromedriver-mac"
+    mv "chromedriver-mac" "$CHROMEDRIVER_LIB_DIR"
+    download "chromedriver-linux"
+    mv "chromedriver-linux" "$CHROMEDRIVER_LIB_DIR"
+    download "chromedriver-win.exe"
+    mv "chromedriver-win.exe" "$CHROMEDRIVER_LIB_DIR"
+    chmod u+x $CHROMEDRIVER_LIB_DIR/*
+fi
+
 # back to install dir
 cd $INSTALL_DIR

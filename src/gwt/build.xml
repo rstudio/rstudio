@@ -178,7 +178,9 @@
    <target name="test" description="Runs Selenium tests" depends="build-tests">
       <parallel>
          <daemons>
-            <exec executable="lib/selenium/chromedriver" />
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-mac" os="Mac OS X" />
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-win.exe" os="Windows NT" />
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-linux" os="Linux" />
          </daemons>
          <sequential>
             <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
