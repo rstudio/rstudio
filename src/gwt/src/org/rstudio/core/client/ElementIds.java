@@ -20,4 +20,5 @@ public class ElementIds
    public final static String CONSOLE_OUTPUT = "console_output";
    public final static String LOADING_SPINNER = "loading_image";
    public final static String SHELL_WIDGET = "shell_widget";
+   public final static String POPUP_COMPLETIONS = "popup_completions";
 }
