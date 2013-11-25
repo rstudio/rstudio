@@ -67,7 +67,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
-
+      
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
       output_ = new PreWidget();
@@ -219,6 +219,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
             }
          });
       }
+
+      ElementIds.assignElementId(this.getElement(), ElementIds.SHELL_WIDGET);
    }
 
    protected void doOnLoad()

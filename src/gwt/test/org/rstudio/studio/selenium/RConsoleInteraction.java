@@ -32,10 +32,20 @@ public class RConsoleInteraction  {
        });
        
        WebElement console = driver.findElement(By.id(
-             ElementIds.getElementId(ElementIds.CONSOLE_INPUT)));
+             ElementIds.getElementId(ElementIds.SHELL_WIDGET)));
 
        console.sendKeys("40 + 2");
-       console.sendKeys(Keys.RETURN);
+       console.sendKeys(Keys.ENTER);
+       
+       final WebElement output = driver.findElement(By.id(
+             ElementIds.getElementId(ElementIds.CONSOLE_OUTPUT)));
+
+       (new WebDriverWait(driver, 5)).until(new ExpectedCondition<Boolean>() {
+          public Boolean apply(WebDriver d) {
+             String outputText = output.getText();
+             return outputText.contains("42");
+          }
+       });
 
        //Close the browser
        driver.quit();
