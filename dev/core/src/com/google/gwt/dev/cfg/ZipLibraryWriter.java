@@ -48,7 +48,7 @@ import java.util.zip.ZipOutputStream;
 // TODO(stalcup): the compiler currently uses an inefficient mixture of java, protobuf, and
 // custom serialization. unify all serialization on protobuf (either ascii or binary format
 // depending on human-readability constraints).
-class ZipLibraryWriter implements LibraryWriter {
+public class ZipLibraryWriter implements LibraryWriter {
 
   private class ZipWriter {
 

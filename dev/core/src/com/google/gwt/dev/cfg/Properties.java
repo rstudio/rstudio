@@ -34,6 +34,13 @@ public class Properties implements Iterable<Property> {
   private final SortedMap<String, Property> map = new TreeMap<String, Property>();
 
   /**
+   * Adds a previously created deferred-binding property.
+   */
+  public void addBindingProperty(BindingProperty bindingProperty) {
+    bindingProps.add(bindingProperty);
+  }
+
+  /**
    * Creates the specified deferred-binding property, or returns an existing one
    * by the specified name if present.
    */

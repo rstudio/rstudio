@@ -51,9 +51,9 @@ public class PropertyDefiningStrategyTest extends TestCase {
   }
 
   public void testGetSyntheticModuleExtension() {
-    assertEquals("JUnit.name$value",
+    assertEquals("JUnit.name_value",
         getStrategyForSingleProperty().getSyntheticModuleExtension());
-    assertEquals("JUnit.name1$value1.name2$value2",
+    assertEquals("JUnit.name1_value1.name2_value2",
         getStrategyForTwoProperties().getSyntheticModuleExtension());
     assertEquals("JUnit",
         getStrategyForNoProperty().getSyntheticModuleExtension());

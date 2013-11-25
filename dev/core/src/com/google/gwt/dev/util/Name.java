@@ -97,6 +97,39 @@ public class Name {
     }
 
   /**
+   * Represents a Java class name in source form, for example: {@code org.example.Foo.Bar}.
+   *
+   * See {@link "http://java.sun.com/docs/books/jvms/second_edition/html/Concepts.doc.html#20207"}
+   */
+  public static class SourceName {
+
+    /**
+     * Construct the fully qualified name of an inner class.
+     *
+     * @param outerClassSourceName source name of outer class, ie {@code org.test.Foo}
+     * @param innerClassShortName short name of inner class, ie {@code Bar}
+     * @return fully qualified source name of the inner class
+     */
+    public static String getInnerClassName(
+        String outerClassSourceName, String innerClassShortName) {
+      assert isSourceName(outerClassSourceName);
+      return outerClassSourceName + '.' + innerClassShortName;
+    }
+
+    public static String getShortClassName(String sourceName) {
+      assert isSourceName(sourceName);
+      int lastDollar = sourceName.lastIndexOf('.');
+      if (lastDollar < 0) {
+        return sourceName;
+      }
+      return sourceName.substring(lastDollar + 1);
+    }
+
+    private SourceName() {
+    }
+  }
+
+  /**
    * Represents a Java class name in either source or binary form, for example:
    * {@code org.example.Foo.Bar or org.example.Foo$Bar}.
    * 

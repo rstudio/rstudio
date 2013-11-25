@@ -17,6 +17,7 @@ package com.google.gwt.dev.util;
 
 import com.google.gwt.dev.util.Name.BinaryName;
 import com.google.gwt.dev.util.Name.InternalName;
+import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 
 import junit.framework.TestCase;
@@ -150,4 +151,8 @@ public class NameTest extends TestCase {
     assertTrue(Name.isSourceName("org.test.Foo.Bar.Baz$"));
   }
 
+  public void testSourceName() {
+    assertEquals("org.test.Foo.Bar", SourceName.getInnerClassName("org.test.Foo", "Bar"));
+    assertEquals("Bar", SourceName.getShortClassName("org.test.Foo.Bar"));
+  }
 }

@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.impl.ResourceGeneratorUtilImpl;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
@@ -29,7 +30,6 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.resources.client.ClientBundle.Source;
 
 import java.io.File;
@@ -70,7 +70,7 @@ public final class ResourceGeneratorUtil {
     }
 
     public URL locate(String resourceName) {
-      File f = namedFiles.get(resourceName);
+      File f = ResourceGeneratorUtilImpl.getGeneratedFile(resourceName);
       if (f != null && f.isFile() && f.canRead()) {
         try {
           return f.toURI().toURL();
@@ -103,8 +103,6 @@ public final class ResourceGeneratorUtil {
       return (r == null) ? null : r.getURL();
     }
   }
-
-  private static Map<String, File> namedFiles = Maps.create();
 
   /**
    * These are type names from previous APIs or from APIs with similar
@@ -157,12 +155,13 @@ public final class ResourceGeneratorUtil {
    * @param file the File whose contents are to be provided to the ClientBundle
    *          system
    */
+  // TODO(stalcup): the addNamedFile() and Locator system are redundant and need to be deleted. They
+  // exist because resources generated via the GeneratorContext are not queryable via the available
+  // ResourceOracle. This should be corrected.
   public static void addNamedFile(String resourceName, File file) {
-    assert resourceName != null : "resourceName";
-    assert file != null : "file";
-    assert file.isFile() && file.canRead() : "file does not exist or cannot be read";
-
-    namedFiles = Maps.put(namedFiles, resourceName, file);
+    // User code should not refer to private Compiler classes, but it is being done here in lieu of
+    // the above mentioned refactoring.
+    ResourceGeneratorUtilImpl.addGeneratedFile(resourceName, file);
   }
 
   /**

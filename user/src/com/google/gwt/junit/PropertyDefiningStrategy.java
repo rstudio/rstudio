@@ -50,7 +50,7 @@ public class PropertyDefiningStrategy implements Strategy {
       StringBuilder sb = new StringBuilder();
       for (Property property : properties) {
         sb.append(".").append(property.name()).append(
-            "$").append(property.value());
+            "_").append(property.value());
       }
       extension += sb.toString();
     }

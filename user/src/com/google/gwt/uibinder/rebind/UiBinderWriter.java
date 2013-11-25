@@ -745,7 +745,7 @@ public class UiBinderWriter implements Statements {
         throw new RuntimeException("No such package: " + packageName);
       }
 
-      JClassType rtn = pkg.findType(className);
+      JClassType rtn = getOracle().findType(pkg.getName(), className);
       if (rtn != null) {
         return rtn;
       }
