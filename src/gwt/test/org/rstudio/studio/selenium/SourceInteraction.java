@@ -15,15 +15,19 @@
 package org.rstudio.studio.selenium;
 
 import java.net.URL;
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -51,6 +55,35 @@ public class SourceInteraction
       WebElement newRScriptMenuEntry = MenuNavigator.getMenuItem(driver_,
             "File", "New File", "R Script");
       newRScriptMenuEntry.click();
+      
+      // Wait for the "Untitled" buffer to appear
+      (new WebDriverWait(driver_, 5)).until(new ExpectedCondition<Boolean>() {
+         public Boolean apply(WebDriver d) {
+            List<WebElement>elements = driver_.findElements(By.className(
+                   "gwt-TabLayoutPanelTab-selected"));
+            for (WebElement e: elements) {
+               if (e.getText().startsWith("Untitled")) {
+                  return true;
+               }
+            }
+            return false;
+         }
+      });
+      
+      // Type some code into the file. Note that the matching { is auto 
+      // completed.
+      Actions a = new Actions(driver_);
+      a.sendKeys("f <- function() {" + Keys.ENTER);
+      a.sendKeys(Keys.TAB + "42" + Keys.ENTER);
+      a.perform();
+      
+      // Source the entire file
+      WebElement sourceMenuEntry = MenuNavigator.getMenuItem(driver_, 
+            "Code", "Source");
+      sourceMenuEntry.click();
+      
+      // Wait for the console to contain the string "source"
+      ConsoleTestUtils.waitForConsoleContainsText(driver_, "source(");
    }
    
    private static WebDriver driver_;

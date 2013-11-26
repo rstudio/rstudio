@@ -36,6 +36,7 @@ public class MenuNavigator
       for (WebElement menuItem: menuItems) {
          if (menuItem.getText().startsWith(itemName)) {
             foundMenu = menuItem;
+            break;
          }
       }
       assertNotNull(foundMenu);

@@ -72,15 +72,7 @@ public class RConsoleInteraction {
        do42.sendKeys(Keys.ENTER);
        do42.perform();
 
-       final WebElement output = driver_.findElement(By.id(
-             ElementIds.getElementId(ElementIds.CONSOLE_OUTPUT)));
-
-       (new WebDriverWait(driver_, 5)).until(new ExpectedCondition<Boolean>() {
-          public Boolean apply(WebDriver d) {
-             String outputText = output.getText();
-             return outputText.contains("42");
-          }
-       });
+       ConsoleTestUtils.waitForConsoleContainsText(driver_, "42");
    }
    
    @Test
