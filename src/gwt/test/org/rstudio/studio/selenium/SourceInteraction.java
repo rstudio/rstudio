@@ -27,8 +27,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import static org.junit.Assert.*;
-
 public class SourceInteraction
 {
    @BeforeClass
@@ -50,17 +48,9 @@ public class SourceInteraction
    
    @Test
    public void createNewRSourceFile() {
-      WebElement menuBar = driver_.findElement(By.className("gwt-MenuBar"));
-      WebElement fileMenu = MenuNavigator.findMenuItemByName(menuBar, "File");
-      fileMenu.click();
-      
-      WebElement fileMenuPopup = (new WebDriverWait(driver_, 1))
-            .until(ExpectedConditions.presenceOfElementLocated(
-                  By.className("gwt-MenuBarPopup")));
-
-      WebElement newFilePopup = MenuNavigator.findMenuItemByName(fileMenuPopup, 
-                                                                 "New File");
-      newFilePopup.click();
+      WebElement newRScriptMenuEntry = MenuNavigator.getMenuItem(driver_,
+            "File", "New File", "R Script");
+      newRScriptMenuEntry.click();
    }
    
    private static WebDriver driver_;
