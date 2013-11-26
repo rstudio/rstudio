@@ -15,8 +15,6 @@
 package org.rstudio.studio.selenium;
 
 import java.net.URL;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -51,19 +49,18 @@ public class SourceInteraction
    }
    
    @Test
-   public void createNewSourceFile() {
+   public void createNewRSourceFile() {
       WebElement menuBar = driver_.findElement(By.className("gwt-MenuBar"));
-      List<WebElement> menuItems = menuBar.findElements(By.className("gwt-MenuItem"));
-      WebElement fileMenu = null;
-      for (WebElement menuItem: menuItems) {
-         if (menuItem.getText().equals("File")) {
-            fileMenu = menuItem;
-         }
-      }
-      assertNotNull(fileMenu);
-
+      WebElement fileMenu = MenuNavigator.findMenuItemByName(menuBar, "File");
       fileMenu.click();
-      driver_.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+      
+      WebElement fileMenuPopup = (new WebDriverWait(driver_, 1))
+            .until(ExpectedConditions.presenceOfElementLocated(
+                  By.className("gwt-MenuBarPopup")));
+
+      WebElement newFilePopup = MenuNavigator.findMenuItemByName(fileMenuPopup, 
+                                                                 "New File");
+      newFilePopup.click();
    }
    
    private static WebDriver driver_;
