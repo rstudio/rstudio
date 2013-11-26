@@ -30,6 +30,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.rstudio.core.client.ElementIds;
 
 public class SourceInteraction
 {
@@ -51,7 +52,57 @@ public class SourceInteraction
    }
    
    @Test
-   public void createNewRSourceFile() {
+   public void createAndSourceRFile() {
+      createRFile();
+      
+      // Type some code into the file. Note that the matching brace is auto 
+      // completed.
+      Actions a = new Actions(driver_);
+      a.sendKeys("f <- function() {" + Keys.ENTER);
+      a.sendKeys(Keys.TAB + "42" + Keys.ENTER);
+      a.perform();
+      
+      // Source the entire file
+      WebElement sourceMenuEntry = MenuNavigator.getMenuItem(driver_, 
+            "Code", "Source");
+      sourceMenuEntry.click();
+      
+      // Wait for the console to contain the string "source"
+      ConsoleTestUtils.waitForConsoleContainsText(driver_, "source(");
+      
+      closeUnsavedRFile();
+   }
+   
+   @Test
+   public void findAndReplace() {
+      createRFile();
+      
+      // Type some code into the file
+      Actions a = new Actions(driver_);
+      a.sendKeys("foo <- 'bar'" + Keys.ENTER);
+      a.perform();
+      
+      // Invoke find and replace
+      WebElement findMenuEntry = MenuNavigator.getMenuItem(driver_, 
+            "Edit", "Find...");
+      findMenuEntry.click();
+      
+      // Wait for the find and replace panel to come up
+      (new WebDriverWait(driver_, 2))
+        .until(ExpectedConditions.presenceOfElementLocated(
+              By.id(ElementIds.getElementId(ElementIds.FIND_REPLACE_BAR))));
+      
+      // Type the text and the text to be replaced (replace 'bar' with 'foo')
+      Actions rep = new Actions(driver_);
+      rep.sendKeys("bar" + Keys.TAB + "foo" + Keys.ENTER);
+      rep.perform();
+      
+      DialogTestUtils.respondToModalDialog(driver_, "OK");
+      
+      closeUnsavedRFile();
+   }
+   
+   private void createRFile() {
       WebElement newRScriptMenuEntry = MenuNavigator.getMenuItem(driver_,
             "File", "New File", "R Script");
       newRScriptMenuEntry.click();
@@ -69,21 +120,13 @@ public class SourceInteraction
             return false;
          }
       });
-      
-      // Type some code into the file. Note that the matching { is auto 
-      // completed.
-      Actions a = new Actions(driver_);
-      a.sendKeys("f <- function() {" + Keys.ENTER);
-      a.sendKeys(Keys.TAB + "42" + Keys.ENTER);
-      a.perform();
-      
-      // Source the entire file
-      WebElement sourceMenuEntry = MenuNavigator.getMenuItem(driver_, 
-            "Code", "Source");
-      sourceMenuEntry.click();
-      
-      // Wait for the console to contain the string "source"
-      ConsoleTestUtils.waitForConsoleContainsText(driver_, "source(");
+   }
+   
+   private void closeUnsavedRFile() {
+      WebElement closeEntry = MenuNavigator.getMenuItem(driver_,
+            "File", "Close");
+      closeEntry.click();
+      DialogTestUtils.respondToModalDialog(driver_, "Don't Save");
    }
    
    private static WebDriver driver_;
