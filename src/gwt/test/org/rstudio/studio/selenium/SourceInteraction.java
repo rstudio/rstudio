@@ -18,6 +18,7 @@ import java.net.URL;
 import java.util.List;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.By;
@@ -59,7 +60,7 @@ public class SourceInteraction
       // completed.
       Actions a = new Actions(driver_);
       a.sendKeys("f <- function() {" + Keys.ENTER);
-      a.sendKeys(Keys.TAB + "42" + Keys.ENTER);
+      a.sendKeys(Keys.TAB + "42");
       a.perform();
       
       // Source the entire file
@@ -78,9 +79,23 @@ public class SourceInteraction
       createRFile();
       
       // Type some code into the file
+      String preReplaceCode = "foo <- 'bar'";
       Actions a = new Actions(driver_);
-      a.sendKeys("foo <- 'bar'" + Keys.ENTER);
+      a.sendKeys(preReplaceCode + Keys.ENTER);
       a.perform();
+      
+      // Find the ACE editor instance that the code appears in. (CONSIDER: 
+      // This is not the best way to find the code editor instance.)
+      WebElement editor = null;
+      List<WebElement> editors = driver_.findElements(
+            By.className("ace_content"));
+      for (WebElement e: editors) {
+         if (e.getText().contains(preReplaceCode)) {
+            editor = e;
+            break;
+         }
+      }
+      Assert.assertNotNull(editor);
       
       // Invoke find and replace
       WebElement findMenuEntry = MenuNavigator.getMenuItem(driver_, 
@@ -98,6 +113,13 @@ public class SourceInteraction
       rep.perform();
       
       DialogTestUtils.respondToModalDialog(driver_, "OK");
+      
+      Actions dismiss = new Actions(driver_);
+      dismiss.sendKeys(Keys.ESCAPE);
+      dismiss.perform();
+      
+      // Ensure that the source has been updated
+      Assert.assertTrue(editor.getText().contains("foo <- 'foo'"));
       
       closeUnsavedRFile();
    }
