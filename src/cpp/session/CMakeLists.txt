@@ -353,7 +353,7 @@ endif()
  # install 64-bit gcc runtime for session win64
 if(RSTUDIO_SESSION_WIN64)
    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
-   install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
+   install(PROGRAMS ${GCC_PATH}/libgcc_s_seh-1.dll
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
