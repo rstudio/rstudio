@@ -908,6 +908,18 @@ public class CellTable<T> extends AbstractCellTable<T> implements
     }
   }
 
+  @Override
+  protected void doAttachChildren() {
+    super.doAttachChildren();
+    doAttach(messagesPanel);
+  }
+
+  @Override
+  protected void doDetachChildren() {
+    super.doDetachChildren();
+    doDetach(messagesPanel);
+  }
+
   /**
    * Assert if colgroup is enabled, and throw an exception with the supplied message if it's not
    * enabled.

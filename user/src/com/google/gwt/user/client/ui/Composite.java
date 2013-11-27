@@ -167,7 +167,9 @@ public abstract class Composite extends Widget implements IsRenderable {
     // the widget's onDetach will do so).
     DOM.setEventListener(getElement(), this);
 
-    // Call onLoad() directly, because we're not calling super.onAttach().
+    // Call doAttachChildren() and then onLoad() directly, because we're not
+    // calling super.onAttach().
+    doAttachChildren();
     onLoad();
     AttachEvent.fire(this, true);
   }
@@ -176,6 +178,7 @@ public abstract class Composite extends Widget implements IsRenderable {
   protected void onDetach() {
     try {
       onUnload();
+      doDetachChildren();
       AttachEvent.fire(this, false);
     } finally {
       // We don't want an exception in user code to keep us from calling the

@@ -174,4 +174,34 @@ public class CompositeTest extends GWTTestCase {
     assertTrue(ca.delegateDetachOrder < wa.delegateDetachOrder);
   }
 
+  public void testChildrenAttachDetach() {
+    class TestComposite extends Composite {
+      int doAttachChildrenCount = 0;
+      int doDetachChildrenCount = 0;
+      TextBox tb = new TextBox();
+
+      public TestComposite() {
+        initWidget(tb);
+      }
+
+      @Override
+      protected void doAttachChildren() {
+        doAttachChildrenCount++;
+      }
+
+      @Override
+      protected void doDetachChildren() {
+        doDetachChildrenCount++;
+      }
+    }
+
+    TestComposite c = new TestComposite();
+    RootPanel.get().add(c);
+    RootPanel.get().remove(c);
+    RootPanel.get().add(c);
+    RootPanel.get().remove(c);
+
+    assertEquals(2, c.doAttachChildrenCount);
+    assertEquals(2, c.doDetachChildrenCount);
+  }
 }
