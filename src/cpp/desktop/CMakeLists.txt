@@ -15,6 +15,8 @@
 
 cmake_minimum_required(VERSION 2.8.8)
 
+cmake_policy(SET CMP0020 OLD)
+
 project(DESKTOP)
 
 # require Qt 5.2.0
@@ -451,7 +453,9 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebKit${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebKitWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Positioning${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5PrintSupport${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Sensors${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Svg${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Xml${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5XmlPatterns${LIB_SUFFIX}.dll
@@ -459,7 +463,6 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5Qml${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Sql${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5OpenGL${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/Qt5V8${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Multimedia${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5MultimediaWidgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/libEGL${LIB_SUFFIX}.dll

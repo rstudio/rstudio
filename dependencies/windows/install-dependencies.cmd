@@ -8,8 +8,8 @@ set WGET_ARGS=--no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_FILE=boost-1.50-win-gcc47.zip
-set MINGW_FILE=mingw64-gcc47.zip
+set BOOST_FILE=boost-1.50-win-gcc48.zip
+set MINGW_FILE=mingw64-gcc48.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.5.1.zip
 set JUNIT_FILE=junit-4.9b3.jar
@@ -18,19 +18,19 @@ set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys_ssh.zip
 set SUMATRA_PDF_FILE=SumatraPDF-2.1.1.zip
 
-if not exist boost-1.50-win-gcc47 (
+if not exist boost-1.50-win-gcc48 (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
-  mkdir boost-1.50-win-gcc47
+  mkdir boost-1.50-win-gcc48
   echo Unzipping %BOOST_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_FILE%" -d boost-1.50-win-gcc47
+  unzip %UNZIP_ARGS% "%BOOST_FILE%" -d boost-1.50-win-gcc48
   del "%BOOST_FILE%"
 )
 
-if not exist mingw64-gcc47 (
+if not exist mingw64-gcc48 (
   wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
-  mkdir mingw64-gcc47
+  mkdir mingw64-gcc48
   echo Unzipping %MINGW_FILE%
-  unzip %UNZIP_ARGS% "%MINGW_FILE%" -d mingw64-gcc47
+  unzip %UNZIP_ARGS% "%MINGW_FILE%" -d mingw64-gcc48
   del "%MINGW_FILE%"
 )
 

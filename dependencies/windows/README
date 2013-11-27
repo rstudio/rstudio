@@ -15,24 +15,14 @@ Installing QT
 =============================================================================
 
 Qt installation involves both the Qt SDK and MinGW compiler
-as well as version Qt 4.8.3 of the Qt Framework. First, install
-the QtSDK from this URL:
+as well as version Qt 5.2 of the Qt Framework. First, install
+Qt 5.2 rc1 from this URL:
 
-https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
+http://download.qt-project.org/snapshots/qt/5.2/5.2.0-rc1/2013-11-27_177/qt-windows-opensource-5.2.0-rc1-mingw48_opengl-x86-offline_2013-11-27_11-26-05-177.exe
 
-Note that Mingw 4.4 and the MinGW version of Qt are not installed
-by default so you need to perform a custom installation and 
-modify the following defaults:
-
-- Under Development Tools, select the MinGW variant of the Qt
-framework (the last of the variants listed)
-- Under Miscellaneous, specify that Mingw4.4 be installed
-
-RStudio is built against version 4.8.3 of the Qt Framework, so you should
-install it from here:
-
-http://download.qt-project.org/official_releases/qt/4.8/4.8.3/qt-win-opensource-4.8.3-mingw.exe
-
+Note that Mingw 4.8 is not installed by default so you need to
+be sure to select it under Tools in the installer target 
+customization UI.
 
 Update System Path
 =============================================================================
@@ -43,8 +33,8 @@ via the CMake installer if the "Add to system path" option was chosen during
 installation). For Qt and MinGW you should ensure that the following 
 additional directories are available on the path:
 
-C:\Qt\Qt5.1.1\5.1.1\mingw48_32\bin
-C:\Qt\Qt5.1.1\Tools\MinGW\bin
+C:\Qt\Qt5.2.0\5.2.0-rc1\mingw48_32\bin
+C:\Qt\Qt5.2.0\Tools\mingw48_32\bin
 
 Finally, you should also ensure that your R installation's bin
 directory is on the system path. For example:
@@ -84,9 +74,12 @@ Win64
 (ensure 64 bit mingw is in the path) 
 
 bjam --prefix=C:\boost64 toolset=gcc address-model=64 ^
- variant=debug,release link=static threading=multi ^
- define=BOOST_USE_WINDOWS_H ^
- install
+     --with-date_time --with-filesystem --with-iostreams ^
+     --with-program_options --with-regex --with-signals ^ 
+     --with-system --with-thread --with-chrono ^ 
+     variant=debug,release link=static threading=multi ^ 
+     install
+
 
 Note the additional define of BOOST_USE_WINDOWS_H required for the 64 bit build 
 

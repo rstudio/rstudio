@@ -70,7 +70,7 @@ else()
    if(RSTUDIO_SESSION_WIN64)
 
       # increase stack size to 20MB, avoid mingw auto-importing warning,
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--allow-multiple-definition")
 
       add_definitions(-D_WIN64
                       -D_WIN64_WINNT=0x0501
@@ -81,7 +81,7 @@ else()
 
       # increase stack size to 20MB, avoid mingw auto-importing warning,
       # and ensure that we are large address aware
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--large-address-aware")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack=0x01400000,--enable-auto-import,--large-address-aware,--allow-multiple-definition")
 
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
@@ -135,10 +135,14 @@ if(UNIX)
 else()
      # hard-code to our own prebuilt boost libs
      if(RSTUDIO_SESSION_WIN64)
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc47/boost64")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc48/boost64")
      else()
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc47/boost32")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc48/boost32")
      endif()
+     set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
+     foreach(BOOST_LIB ${BOOST_LIBS})
+        list(APPEND Boost_LIBRARIES "${BOOST_LIBRARYDIR}/libboost_${BOOST_LIB}-mgw48-mt-1_50.a")
+     endforeach()
      set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_50")
      find_package(Boost ${BOOST_VERSION} REQUIRED COMPONENTS ${BOOST_LIBS})
 endif()
