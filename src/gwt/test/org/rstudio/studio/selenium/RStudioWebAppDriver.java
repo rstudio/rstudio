@@ -1,5 +1,5 @@
 /*
- * BootRStudio.java
+ * RStudioWebAppDriver.java
  *
  * Copyright (C) 2009-13 by RStudio, Inc.
  *
@@ -12,25 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.selenium;
 
+import java.net.URL;
+
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test; 
-
-public class BootRStudio  {
-
-   @Test
-   public void testRStudioBoot() throws Exception {
-       WebDriver driver = RStudioWebAppDriver.start();
-
-       // Check the title of the page
-       assertEquals(driver.getTitle(), "RStudio");
-
-       // Close the browser
-       RStudioWebAppDriver.stop();
+public class RStudioWebAppDriver
+{
+   public static WebDriver start() throws Exception {
+      driver_ = new RemoteWebDriver(
+            new URL("http://localhost:9515/"), DesiredCapabilities.chrome());
+      
+      driver_.get("http://localhost:4011/");
+      return driver_;
    }
+   
+   public static void stop() {
+      driver_.quit();
+   }
+   
+   private static WebDriver driver_;
 }

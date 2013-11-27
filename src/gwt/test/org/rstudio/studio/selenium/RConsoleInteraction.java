@@ -18,8 +18,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -32,7 +30,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test; 
 
-import java.net.URL;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -40,17 +37,14 @@ import junit.framework.Assert;
 public class RConsoleInteraction {
    @BeforeClass
    public static void setUpBeforeClass() throws Exception {
-      driver_ = new RemoteWebDriver(
-            new URL("http://localhost:9515/"), DesiredCapabilities.chrome());
-      
-      driver_.get("http://localhost:8787/");
+      driver_ = RStudioWebAppDriver.start();
       
       ConsoleTestUtils.beginConsoleInteraction(driver_);
    }
    
    @AfterClass
    public static void tearDownAfterClass() throws Exception {
-      driver_.quit();
+      RStudioWebAppDriver.stop();
    }
    
    @Test

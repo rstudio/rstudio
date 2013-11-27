@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.selenium;
 
-import java.net.URL;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -26,8 +25,6 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -37,10 +34,7 @@ public class SourceInteraction
 {
    @BeforeClass
    public static void setUpBeforeClass() throws Exception {
-      driver_ = new RemoteWebDriver(
-            new URL("http://localhost:9515/"), DesiredCapabilities.chrome());
-      
-      driver_.get("http://localhost:8787/");
+      driver_ = RStudioWebAppDriver.start();
 
       (new WebDriverWait(driver_, 10))
         .until(ExpectedConditions.presenceOfElementLocated(
@@ -49,7 +43,7 @@ public class SourceInteraction
    
    @AfterClass
    public static void tearDownAfterClass() throws Exception {
-      driver_.quit();
+      RStudioWebAppDriver.stop();
    }
    
    @Test
