@@ -212,6 +212,8 @@ public class Name {
    * 
    * @param name class name to test
    */
+  // TODO(stalcup): improve validation using Character.isJavaIdentifierStart() and
+  // Character.isJavaIdentifierPart().
   public static boolean isSourceName(String name) {
     if (name == null) {
       return true;

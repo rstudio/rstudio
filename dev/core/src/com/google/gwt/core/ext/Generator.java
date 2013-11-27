@@ -13,6 +13,8 @@
  */
 package com.google.gwt.core.ext;
 
+import com.google.gwt.thirdparty.guava.common.base.Strings;
+
 import java.util.Set;
 
 /**
@@ -24,6 +26,8 @@ import java.util.Set;
  * The compiler will use this information to run generators less often and cache their outputs.
  */
 public abstract class Generator {
+
+  private static final int MAX_SIXTEEN_BIT_NUMBER_STRING_LENGTH = 5;
 
   /**
    * Escapes string content to be a valid string literal.
@@ -79,6 +83,46 @@ public abstract class Generator {
     }
 
     return String.valueOf(newChars);
+  }
+
+  /**
+   * Returns an escaped version of a String that is valid as a Java class name.<br />
+   *
+   * Illegal characters become "_" + the character integer padded to 5 digits like "_01234". The
+   * padding prevents collisions like the following "_" + "123" + "4" = "_" + "1234". The "_" escape
+   * character is escaped to "__".
+   */
+  public static String escapeClassName(String unescapedString) {
+    char[] unescapedCharacters = unescapedString.toCharArray();
+    StringBuilder escapedCharacters = new StringBuilder();
+
+    boolean firstCharacter = true;
+    for (char unescapedCharacter : unescapedCharacters) {
+      if (firstCharacter && !Character.isJavaIdentifierStart(unescapedCharacter)) {
+        // Escape characters that can't be the first in a class name.
+        escapeAndAppendCharacter(escapedCharacters, unescapedCharacter);
+      } else if (!Character.isJavaIdentifierPart(unescapedCharacter)) {
+        // Escape characters that can't be in a class name.
+        escapeAndAppendCharacter(escapedCharacters, unescapedCharacter);
+      } else if (unescapedCharacter == '_') {
+        // Escape the escape character.
+        escapedCharacters.append("__");
+      } else {
+        // Leave valid characters alone.
+        escapedCharacters.append(unescapedCharacter);
+      }
+
+      firstCharacter = false;
+    }
+
+    return escapedCharacters.toString();
+  }
+
+  private static void escapeAndAppendCharacter(
+      StringBuilder escapedCharacters, char unescapedCharacter) {
+    String numberString = Integer.toString(unescapedCharacter);
+    numberString = Strings.padStart(numberString, MAX_SIXTEEN_BIT_NUMBER_STRING_LENGTH, '0');
+    escapedCharacters.append("_" + numberString);
   }
 
   /**

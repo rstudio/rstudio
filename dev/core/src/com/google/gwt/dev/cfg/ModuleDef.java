@@ -33,7 +33,6 @@ import com.google.gwt.dev.resource.impl.PathPrefixSet;
 import com.google.gwt.dev.resource.impl.ResourceFilter;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -233,14 +232,9 @@ public class ModuleDef {
   }
 
   /**
-   * Constructs a ModuleDef.<br />
-   *
-   * Provided module names must also be valid source names.
+   * Constructs a ModuleDef.
    */
   public ModuleDef(String name, ResourceLoader resources, boolean monolithic) {
-    Preconditions.checkArgument(Name.isSourceName(name),
-        "Module name " + name + " is not a valid source name.");
-
     this.name = name;
     this.resources = resources;
     this.monolithic = monolithic;
@@ -641,13 +635,10 @@ public class ModuleDef {
   }
 
   /**
-   * Override the module's apparent name. Setting this value to <code>null<code>will disable the
-   * name override. Provided module names must also be valid source names.
+   * Override the module's apparent name. Setting this value to
+   * <code>null<code>will disable the name override.
    */
   public synchronized void setNameOverride(String nameOverride) {
-    Preconditions.checkArgument(Name.isSourceName(nameOverride),
-        "Module name " + nameOverride + " is not a valid source name.");
-
     this.nameOverride = nameOverride;
   }
 

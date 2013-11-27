@@ -33,7 +33,8 @@ public class EntryMethodHolderGenerator extends Generator {
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String moduleName)
       throws UnableToCompleteException {
-    String typeName = moduleName.replace(".", "_") + "_" + ENTRY_METHOD_HOLDER_SUFFIX;
+    // Module names aren't subject to Java class name restrictions, so must be escaped.
+    String typeName = Generator.escapeClassName(moduleName + "_" + ENTRY_METHOD_HOLDER_SUFFIX);
     PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeName);
 
     if (out != null) {
