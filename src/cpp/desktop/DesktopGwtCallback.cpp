@@ -23,9 +23,11 @@
 
 #include <boost/foreach.hpp>
 
-#include <QtGui/QFileDialog>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QApplication>
+#include <QAbstractButton>
+#include <QWebFrame>
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -77,32 +79,32 @@ bool GwtCallback::isCocoa()
 
 void GwtCallback::browseUrl(QString url)
 {
-   QUrl qurl = QUrl::fromEncoded(url.toAscii());
+   QUrl qurl = QUrl::fromEncoded(url.toUtf8());
 
-#ifdef Q_WS_MAC
-   if (qurl.scheme() == QString::fromAscii("file"))
+#ifdef Q_OS_MAC
+   if (qurl.scheme() == QString::fromUtf8("file"))
    {
       QProcess open;
       QStringList args;
       // force use of Preview for PDFs (Adobe Reader 10.01 crashes)
-      if (url.toLower().endsWith(QString::fromAscii(".pdf")))
+      if (url.toLower().endsWith(QString::fromUtf8(".pdf")))
       {
-         args.append(QString::fromAscii("-a"));
-         args.append(QString::fromAscii("Preview"));
+         args.append(QString::fromUtf8("-a"));
+         args.append(QString::fromUtf8("Preview"));
          args.append(url);
       }
       else
       {
          args.append(url);
       }
-      open.start(QString::fromAscii("open"), args);
+      open.start(QString::fromUtf8("open"), args);
       open.waitForFinished(5000);
       if (open.exitCode() != 0)
       {
          // Probably means that the file doesn't have a registered
          // application or something.
          QProcess reveal;
-         reveal.startDetached(QString::fromAscii("open"), QStringList() << QString::fromAscii("-R") << url);
+         reveal.startDetached(QString::fromUtf8("open"), QStringList() << QString::fromUtf8("-R") << url);
       }
       return;
    }
@@ -208,7 +210,7 @@ QString GwtCallback::getExistingDirectory(const QString& caption,
       // Bug
       wchar_t szDir[MAX_PATH];
       BROWSEINFOW bi;
-      bi.hwndOwner = pOwner_->asWidget()->winId();
+      bi.hwndOwner = (HWND)(pOwner_->asWidget()->winId());
       bi.pidlRoot = NULL;
       bi.pszDisplayName = szDir;
       bi.lpszTitle = L"Select a folder:";
@@ -370,7 +372,7 @@ void GwtCallback::openMinimalWindow(QString name,
 {
    static WindowTracker windowTracker;
 
-   bool named = !name.isEmpty() && name != QString::fromAscii("_blank");
+   bool named = !name.isEmpty() && name != QString::fromUtf8("_blank");
 
    BrowserWindow* browser = NULL;
    if (named)
@@ -425,17 +427,17 @@ bool GwtCallback::supportsClipboardMetafile()
 namespace {
    QMessageBox::ButtonRole captionToRole(QString caption)
    {
-      if (caption == QString::fromAscii("OK"))
+      if (caption == QString::fromUtf8("OK"))
          return QMessageBox::AcceptRole;
-      else if (caption == QString::fromAscii("Cancel"))
+      else if (caption == QString::fromUtf8("Cancel"))
          return QMessageBox::RejectRole;
-      else if (caption == QString::fromAscii("Yes"))
+      else if (caption == QString::fromUtf8("Yes"))
          return QMessageBox::YesRole;
-      else if (caption == QString::fromAscii("No"))
+      else if (caption == QString::fromUtf8("No"))
          return QMessageBox::NoRole;
-      else if (caption == QString::fromAscii("Save"))
+      else if (caption == QString::fromUtf8("Save"))
          return QMessageBox::AcceptRole;
-      else if (caption == QString::fromAscii("Don't Save"))
+      else if (caption == QString::fromUtf8("Don't Save"))
          return QMessageBox::DestructiveRole;
       else
          return QMessageBox::ActionRole;
@@ -464,7 +466,7 @@ int GwtCallback::showMessageBox(int type,
    msgBox.setWindowModality(Qt::WindowModal);
    msgBox.setTextFormat(Qt::PlainText);
 
-   QStringList buttonList = buttons.split(QChar::fromAscii('|'));
+   QStringList buttonList = buttons.split(QChar::fromLatin1('|'));
 
    for (int i = 0; i != buttonList.size(); i++)
    {
@@ -540,8 +542,8 @@ QString GwtCallback::promptForText(QString title,
       bool extraOption = dialog.extraOption();
       QString values;
       values += value;
-      values += QString::fromAscii("\n");
-      values += extraOption ? QString::fromAscii("1") : QString::fromAscii("0");
+      values += QString::fromUtf8("\n");
+      values += extraOption ? QString::fromUtf8("1") : QString::fromUtf8("0");
       return values;
    }
    else
@@ -757,7 +759,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    core::system::addToPath(&path, extraPathEntries.toStdString());
    core::system::setenv("PATH", path);
 
-#if defined(Q_WS_MACX)
+#if defined(Q_OS_MACX)
 
    // call Terminal.app with an applescript that navigates it
    // to the specified directory. note we don't reference the
@@ -771,14 +773,14 @@ void GwtCallback::openTerminal(QString terminalPath,
    args.append(resolveAliasedPath(workingDirectory));
    QProcess::startDetached(macTermScriptPath, args);
 
-#elif defined(Q_WS_WIN)
+#elif defined(Q_OS_WIN)
 
    // git bash
    if (terminalPath.length() > 0)
    {
       QStringList args;
-      args.append(QString::fromAscii("--login"));
-      args.append(QString::fromAscii("-i"));
+      args.append(QString::fromUtf8("--login"));
+      args.append(QString::fromUtf8("-i"));
       QProcess::startDetached(terminalPath,
                               args,
                               resolveAliasedPath(workingDirectory));
@@ -791,7 +793,7 @@ void GwtCallback::openTerminal(QString terminalPath,
       core::system::setenv("HOME", userProfile);
 
       // run the process
-      QProcess::startDetached(QString::fromAscii("cmd.exe"),
+      QProcess::startDetached(QString::fromUtf8("cmd.exe"),
                               QStringList(),
                               resolveAliasedPath(workingDirectory));
 
@@ -800,7 +802,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    }
 
 
-#elif defined(Q_WS_X11)
+#elif defined(Q_OS_LINUX)
 
    // start the auto-detected terminal (or user-specified override)
    if (!terminalPath.length() == 0)
@@ -814,8 +816,8 @@ void GwtCallback::openTerminal(QString terminalPath,
    {
       desktop::showWarning(
          NULL,
-         QString::fromAscii("Terminal Not Found"),
-         QString::fromAscii(
+         QString::fromUtf8("Terminal Not Found"),
+         QString::fromUtf8(
                   "Unable to find a compatible terminal program to launch"));
    }
 
@@ -840,7 +842,7 @@ QString GwtCallback::getFixedWidthFontList()
             families.begin(), families.end(), isProportionalFont);
    families.erase(it, families.end());
 
-   return families.join(QString::fromAscii("\n"));
+   return families.join(QString::fromUtf8("\n"));
 }
 
 QString GwtCallback::getFixedWidthFont()
@@ -861,7 +863,7 @@ QString GwtCallback::getZoomLevels()
       zoomLevels.append(QString::fromStdString(
                            safe_convert::numberToString(zoomLevel)));
    }
-   return zoomLevels.join(QString::fromAscii("\n"));
+   return zoomLevels.join(QString::fromUtf8("\n"));
 }
 
 double GwtCallback::getZoomLevel()
@@ -928,7 +930,7 @@ void GwtCallback::reloadZoomWindow()
       if (!pWindow->isVisible())
          continue;
 
-      if (pWindow->windowTitle() == QString::fromAscii("Plot Zoom"))
+      if (pWindow->windowTitle() == QString::fromUtf8("Plot Zoom"))
       {
          // do the reload
          BrowserWindow* pBrowserWindow = (BrowserWindow*)pWindow;
@@ -952,11 +954,11 @@ bool GwtCallback::isOSXMavericks()
 QString GwtCallback::getScrollingCompensationType()
 {
 #if defined(Q_WS_MACX)
-   return QString::fromAscii("Mac");
+   return QString::fromUtf8("Mac");
 #elif defined(Q_WS_WIN)
-   return QString::fromAscii("Win");
+   return QString::fromUtf8("Win");
 #else
-   return QString::fromAscii("None");
+   return QString::fromUtf8("None");
 #endif
 }
 } // namespace desktop

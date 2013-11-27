@@ -138,11 +138,11 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow, const SyncRequest& req)
    if (req.page != -1)
    {
       QStringList args;
-      args.append(QString::fromAscii("-i"));
+      args.append(QString::fromUtf8("-i"));
       args.append(QString::fromStdString(
                            safe_convert::numberToString(req.page)));
       args.append(req.pdfFile);
-      QProcess::startDetached(QString::fromAscii("evince"), args);
+      QProcess::startDetached(QString::fromUtf8("evince"), args);
    }
    else
    {

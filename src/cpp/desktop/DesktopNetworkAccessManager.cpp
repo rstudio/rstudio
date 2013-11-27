@@ -42,9 +42,9 @@ QNetworkReply* NetworkAccessManager::createRequest(
       const QNetworkRequest& req,
       QIODevice* outgoingData)
 { 
-   if (req.url().scheme() == QString::fromAscii("http") &&
-       (req.url().host() == QString::fromAscii("127.0.0.1") ||
-        req.url().host() == QString::fromAscii("localhost")) &&
+   if (req.url().scheme() == QString::fromUtf8("http") &&
+       (req.url().host() == QString::fromUtf8("127.0.0.1") ||
+        req.url().host() == QString::fromUtf8("localhost")) &&
         req.url().port() == desktop::options().portNumber().toInt())
    {
       return new NetworkReply(

@@ -65,8 +65,8 @@ ApplicationLaunch::ApplicationLaunch() :
     pMainWindow_(NULL)
 {
    setAttribute(Qt::WA_NativeWindow);
-   setWindowTitle(QString::fromAscii(WINDOW_TITLE));
-   ::SetParent(winId(), HWND_MESSAGE);
+   setWindowTitle(QString::fromUtf8(WINDOW_TITLE));
+   ::SetParent((HWND)winId(), HWND_MESSAGE);
 }
 
 void ApplicationLaunch::init(QString,
@@ -86,7 +86,7 @@ void ApplicationLaunch::setActivationWindow(QWidget* pWindow)
 
 void ApplicationLaunch::activateWindow()
 {
-   activate(winId());
+   activate((HWND)winId());
 }
 
 QString ApplicationLaunch::startupOpenFileRequest() const
@@ -100,7 +100,7 @@ bool acquireLock()
 {
    // The file is implicitly released/deleted when the process exits
 
-   QString lockFilePath = QDir::temp().absoluteFilePath(QString::fromAscii("rstudio.lock"));
+   QString lockFilePath = QDir::temp().absoluteFilePath(QString::fromUtf8("rstudio.lock"));
    HANDLE hFile = ::CreateFileW(lockFilePath.toStdWString().c_str(),
                                 GENERIC_WRITE,
                                 0, // exclusive access
@@ -136,14 +136,14 @@ bool ApplicationLaunch::sendMessage(QString filename)
    do
    {
       hwndAppLaunch = ::FindWindowEx(HWND_MESSAGE, hwndAppLaunch, NULL, WINDOW_TITLE);
-   } while (hwndAppLaunch == winId()); // Ignore ourselves
+   } while (hwndAppLaunch == (HWND)winId()); // Ignore ourselves
 
    if (::IsWindow(hwndAppLaunch))
    {
       HWND hwnd = reinterpret_cast<HWND>(::SendMessage(hwndAppLaunch,
                                                        wmGetMainWindowHandle(),
-                                                       NULL,
-                                                       NULL));
+                                                       0,
+                                                       0));
       if (::IsWindow(hwnd))
       {
          HWND hwndPopup = ::GetLastActivePopup(hwnd);
@@ -162,7 +162,7 @@ bool ApplicationLaunch::sendMessage(QString filename)
             copydata.lpData = data.data();
             copydata.cbData = data.size();
 
-            HWND sender = winId();
+            HWND sender = (HWND)winId();
 
             ::SendMessage(hwndAppLaunch,
                           WM_COPYDATA,
@@ -175,8 +175,11 @@ bool ApplicationLaunch::sendMessage(QString filename)
    return true;
 }
 
-bool ApplicationLaunch::winEvent(MSG *message, long *result)
+bool ApplicationLaunch::nativeEvent(const QByteArray & eventType,
+                                    void * msg,
+                                    long * result)
 {
+   MSG* message = (MSG*)msg;
    if (message->message == WM_COPYDATA)
    {
       COPYDATASTRUCT* cds = reinterpret_cast<COPYDATASTRUCT*>(message->lParam);
@@ -193,12 +196,12 @@ bool ApplicationLaunch::winEvent(MSG *message, long *result)
    else if (message->message == wmGetMainWindowHandle())
    {
       if (pMainWindow_)
-         *result = reinterpret_cast<LRESULT>(pMainWindow_->winId());
+         *result = reinterpret_cast<LRESULT>((HWND)(pMainWindow_->winId()));
       else
-         *result = NULL;
+         *result = 0;
       return true;
    }
-   return QWidget::winEvent(message, result);
+   return QWidget::nativeEvent(eventType, message, result);
 }
 
 } // namespace desktop

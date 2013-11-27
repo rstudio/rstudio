@@ -20,6 +20,7 @@
 #include <core/FilePath.hpp>
 
 #include <QWidget>
+#include <QWebFrame>
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -100,7 +101,7 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
 
          // try to tile the window (but leave pdf window alone
          // since it is so large)
-         if (name != QString::fromAscii("pdf"))
+         if (name != QString::fromUtf8("pdf"))
          {
             // calculate location to move to
 
@@ -149,7 +150,7 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromAscii(" Qt/") + QString::fromAscii(qVersion());
+   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
 }
 
 bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
@@ -158,13 +159,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
 {
    QUrl url = request.url();
 
-   if (url.toString() == QString::fromAscii("about:blank"))
+   if (url.toString() == QString::fromUtf8("about:blank"))
       return true;
 
-   if (url.scheme() != QString::fromAscii("http")
-       && url.scheme() != QString::fromAscii("https")
-       && url.scheme() != QString::fromAscii("mailto")
-       && url.scheme() != QString::fromAscii("data"))
+   if (url.scheme() != QString::fromUtf8("http")
+       && url.scheme() != QString::fromUtf8("https")
+       && url.scheme() != QString::fromUtf8("mailto")
+       && url.scheme() != QString::fromUtf8("data"))
    {
       qDebug() << url.toString();
       return false;
@@ -235,7 +236,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    {
       QWebElement a = aElements.at(i);
       QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromAscii('\n'), QString::fromUtf8(""));
+      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
       if (href == urlString)
       {
          aTag = a;

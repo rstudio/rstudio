@@ -15,6 +15,7 @@
 
 #include <QtGui>
 #include <QtWebKit>
+#include <QPushButton>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -192,7 +193,6 @@ int main(int argc, char* argv[])
    try
    {
       initializeLang();
-      QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
       // initialize log
       core::system::initializeLog("rdesktop",
@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
-      ApplicationLaunch::init(QString::fromAscii("RStudio"),
+      ApplicationLaunch::init(QString::fromUtf8("RStudio"),
                               argc,
                               argv,
                               &pApp,
@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
          if (pApp->arguments().size() > 1)
          {
             QString arg = pApp->arguments().last();
-            if (arg != QString::fromAscii(kRunDiagnosticsOption))
+            if (arg != QString::fromUtf8(kRunDiagnosticsOption))
                filename = verifyAndNormalizeFilename(arg);
          }
       }

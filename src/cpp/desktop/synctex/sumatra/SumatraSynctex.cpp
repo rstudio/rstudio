@@ -36,20 +36,20 @@ namespace {
 QStringList standardSumatraArgs()
 {
    QStringList args;
-   args.append(QString::fromAscii("-bg-color"));
-   args.append(QString::fromAscii("#ffffff"));
-   args.append(QString::fromAscii("-reuse-instance"));
+   args.append(QString::fromUtf8("-bg-color"));
+   args.append(QString::fromUtf8("#ffffff"));
+   args.append(QString::fromUtf8("-reuse-instance"));
    return args;
 }
 
 QStringList inverseSearchArgs(WId mainWindowId)
 {
    QStringList args;
-   args.append(QString::fromAscii("-inverse-search"));
+   args.append(QString::fromUtf8("-inverse-search"));
 
    QString cmdFormat;
-   QString quote = QString::fromAscii("\"");
-   QString space = QString::fromAscii(" ");
+   QString quote = QString::fromUtf8("\"");
+   QString space = QString::fromUtf8(" ");
 
    // path to rsinverse binary
    std::string rsinverse = desktop::options().rsinversePath().absolutePath();
@@ -72,7 +72,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
    cmdFormat.append(space);
 
    // file and line placeholders
-   cmdFormat.append(QString::fromAscii("\"%f\" %l"));
+   cmdFormat.append(QString::fromUtf8("\"%f\" %l"));
    args.append(cmdFormat);
 
    return args;
@@ -91,7 +91,7 @@ void SumatraSynctex::syncView(const QString& pdfFile,
                               const QPoint& srcLoc)
 {
    QStringList args = standardSumatraArgs();
-   args.append(QString::fromAscii("-forward-search"));
+   args.append(QString::fromUtf8("-forward-search"));
    args.append(srcFile);
    args.append(
       QString::fromStdString(safe_convert::numberToString(srcLoc.x())));
@@ -103,7 +103,7 @@ void SumatraSynctex::syncView(const QString& pdfFile,
 void SumatraSynctex::syncView(const QString& pdfFile, int page)
 {
    QStringList args = standardSumatraArgs();
-   args.append(QString::fromAscii("-page"));
+   args.append(QString::fromUtf8("-page"));
    args.append(QString::fromStdString(safe_convert::numberToString(page)));
    args.append(inverseSearchArgs(mainWindowId()));
    args.append(pdfFile);

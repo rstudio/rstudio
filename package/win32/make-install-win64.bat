@@ -3,7 +3,7 @@ setlocal
 set WIN64_BUILD_PATH=build64
 IF "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=Release
 IF "%CMAKE_BUILD_TYPE%" == "Debug" set WIN64_BUILD_PATH=build64-debug
-set MINGW64_PATH=%CD%\..\..\dependencies\windows\mingw64\bin
+set MINGW64_PATH=%CD%\..\..\dependencies\windows\mingw64-gcc47\bin
 set INSTALL_PATH=%1%
 
 REM perform 64-bit build 

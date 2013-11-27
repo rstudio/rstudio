@@ -124,8 +124,7 @@ NetworkReply::NetworkReply(const std::string& localPeer,
    if (req.url().hasQuery())
    {
       uri.append("?");
-      QByteArray queryString = req.url().encodedQuery();
-      uri.append(queryString.begin(), queryString.end());
+      uri.append(req.url().query().toStdString());
    }
    request.setUri(uri);
 

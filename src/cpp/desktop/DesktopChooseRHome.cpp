@@ -57,7 +57,7 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
     if (!core::system::isWin64())
        ui->radioDefault64->setVisible(false);
 
-    setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
+    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
     setWindowFlags(
           (windowFlags() | Qt::Dialog)
@@ -232,7 +232,7 @@ void ChooseRHome::done(int r)
                                        "You can download R from the official R Project "
                                        "website. Would you like to go there now?")))
                {
-                  desktop::openUrl(QUrl(QString::fromAscii("http://www.rstudio.org/links/r-project")));
+                  desktop::openUrl(QUrl(QString::fromUtf8("http://www.rstudio.org/links/r-project")));
                }
             }
          }

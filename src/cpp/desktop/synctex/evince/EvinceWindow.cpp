@@ -22,7 +22,7 @@ EvinceWindow::EvinceWindow(const SynctexViewerInfo& viewerInfo,
                            const QString &service,
                            QObject *parent)
     : QDBusAbstractInterface(service,
-                             QString::fromAscii("/org/gnome/evince/Window/0"),
+                             QString::fromUtf8("/org/gnome/evince/Window/0"),
                              staticInterfaceName(),
                              QDBusConnection::sessionBus(),
                              parent),

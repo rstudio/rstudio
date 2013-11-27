@@ -26,10 +26,10 @@ InputDialog::InputDialog(QWidget *parent) :
    ui->setupUi(this);
    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
 
-   pOK_ = new QPushButton(QString::fromAscii("OK"));
+   pOK_ = new QPushButton(QString::fromUtf8("OK"));
    ui->buttonBox->addButton(pOK_, QDialogButtonBox::AcceptRole);
 
-   QPushButton* pCancel = new QPushButton(QString::fromAscii("Cancel"));
+   QPushButton* pCancel = new QPushButton(QString::fromUtf8("Cancel"));
    ui->buttonBox->addButton(pCancel, QDialogButtonBox::RejectRole);
 
    ui->extraOption->setVisible(false);
@@ -82,7 +82,7 @@ void InputDialog::setEchoMode(QLineEdit::EchoMode mode)
 void InputDialog::setNumbersOnly(bool numbersOnly)
 {
    if (numbersOnly)
-      ui->lineEdit->setInputMask(QString::fromAscii("D99999999"));
+      ui->lineEdit->setInputMask(QString::fromUtf8("D99999999"));
    else
       ui->lineEdit->setInputMask(QString());
 }

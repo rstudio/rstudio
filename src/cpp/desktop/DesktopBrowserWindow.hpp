@@ -18,7 +18,7 @@
 
 #include <QAction>
 #include <QMainWindow>
-#include <QWebView>
+#include <QtWebKitWidgets/QWebView>
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"

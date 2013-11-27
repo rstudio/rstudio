@@ -15,6 +15,8 @@
 
 #include "DesktopSatelliteWindow.hpp"
 
+#include <QWebFrame>
+
 #include "DesktopGwtCallback.hpp"
 
 namespace desktop {
@@ -27,15 +29,15 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow) :
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
-   setWindowIcon(QIcon(QString::fromAscii(":/icons/RStudio.ico")));
+   setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 }
 
 void SatelliteWindow::onJavaScriptWindowObjectCleared()
 {
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromAscii("desktop"),
+         QString::fromUtf8("desktop"),
          &gwtCallback_,
-         QScriptEngine::QtOwnership);
+         QWebFrame::QtOwnership);
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
@@ -56,14 +58,14 @@ void SatelliteWindow::finishLoading(bool ok)
 
 void SatelliteWindow::closeEvent(QCloseEvent *)
 {
-    webView()->page()->mainFrame()->evaluateJavaScript(QString::fromAscii(
+    webView()->page()->mainFrame()->evaluateJavaScript(QString::fromUtf8(
          "if (window.notifyRStudioSatelliteClosing) "
          "   window.notifyRStudioSatelliteClosing();"));
 }
 
 void SatelliteWindow::onActivated()
 {
-   webView()->page()->mainFrame()->evaluateJavaScript(QString::fromAscii(
+   webView()->page()->mainFrame()->evaluateJavaScript(QString::fromUtf8(
          "if (window.notifyRStudioSatelliteReactivated) "
          "   window.notifyRStudioSatelliteReactivated(null);"));
 }

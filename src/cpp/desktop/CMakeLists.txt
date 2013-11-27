@@ -13,43 +13,64 @@
 #
 #
 
+cmake_minimum_required(VERSION 2.8.8)
+
 project(DESKTOP)
 
-# require Qt 4.8
-set(QT_VERSION 4.8.0)
+# require Qt 5.2.0
+set(QT_VERSION "5.2.0")
+set(QT_VERSION_SUFFIX "-rc1")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
 if(NOT WIN32)
    # prefer rstudio qtsdk install then home qtsdk install
    if(NOT QT_QMAKE_EXECUTABLE)
-      set(QMAKE_QT48_SDK "/opt/RStudio-QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
-      if(EXISTS ${QMAKE_QT48_SDK})
-         set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
+      set(QT_VERSION "5.2.0")
+      if(APPLE)
+         set(QT_COMPILER "clang_64")
       else()
-         set(QMAKE_QT48_SDK "$ENV{HOME}/QtSDK/Desktop/Qt/4.8.0/gcc/bin/qmake")
-         if(EXISTS ${QMAKE_QT48_SDK})
-            set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
+         set(QT_COMPILER "gcc_64")
+      endif()
+
+      set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/${QT_VERSION}/${QT_COMPILER}")
+      if(EXISTS ${QMAKE_QT50_SDK})
+         set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+      else()
+         set(QMAKE_QT50_SDK "$ENV{HOME}/Qt${QT_VERSION}/${QT_VERSION}${QT_VERSION_SUFFIX}/${QT_COMPILER}")
+         if(EXISTS ${QMAKE_QT50_SDK})
+            set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
          endif()
       endif()
    endif()
 else()
    if(NOT QT_QMAKE_EXECUTABLE)
-      set(QMAKE_QT48_SDK "C:\\Qt\\4.8.3\\bin\\qmake.exe")
-      if(EXISTS ${QMAKE_QT48_SDK})
-         set(QT_QMAKE_EXECUTABLE ${QMAKE_QT48_SDK})
+      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION}${QT_VERSION_SUFFIX}\\mingw48_32")
+      if(EXISTS ${QMAKE_QT50_SDK})
+         set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       endif()
    endif()
 endif()
 
+# set the cmake prefix path based on the location of the qmake executable
+get_filename_component(QT_BIN_DIR ${QT_QMAKE_EXECUTABLE} PATH)
+set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
+
 # find and include Qt
 add_definitions(-DQT_NO_CAST_FROM_ASCII -DQT_NO_CAST_TO_ASCII)
-list(APPEND RSTUDIO_QT_COMPONENTS QtCore QtGui QtNetwork QtWebKit)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Gui REQUIRED)
+find_package(Qt5Network REQUIRED)
+find_package(Qt5WebKit REQUIRED)
+find_package(Qt5WebKitWidgets REQUIRED)
 if(UNIX AND NOT APPLE)
-   list(APPEND RSTUDIO_QT_COMPONENTS QtDBus)
+   find_package(Qt5DBus REQUIRED)
 endif()
-find_package(Qt4 ${QT_VERSION} COMPONENTS ${RSTUDIO_QT_COMPONENTS} REQUIRED)
-include(${QT_USE_FILE})
+
+
 
 # disable clang warnings for qt sources
 if(APPLE)
@@ -173,15 +194,15 @@ include_directories(
 )
 
 # ensure moc files are generated
-qt4_wrap_cpp(MOC_DESKTOP_SOURCE_FILES ${MOC_DESKTOP_HEADER_FILES})
-qt4_wrap_ui(DESKTOP_UI_SOURCES
+qt5_wrap_cpp(MOC_DESKTOP_SOURCE_FILES ${MOC_DESKTOP_HEADER_FILES})
+qt5_wrap_ui(DESKTOP_UI_SOURCES
    DesktopAboutDialog.ui
    DesktopChooseRHome.ui
    DesktopInputDialog.ui
 )
 
 set(DESKTOP_RESOURCES_FILES desktop.qrc)
-qt4_add_resources(DESKTOP_RESOURCES_SOURCES ${DESKTOP_RESOURCES_FILES})
+qt5_add_resources(DESKTOP_RESOURCES_SOURCES ${DESKTOP_RESOURCES_FILES})
 
 if(WIN32)
 
@@ -249,6 +270,12 @@ if(NOT APPLE)
       ${DESKTOP_UI_SOURCES}
    )
 
+   if(WIN32)
+      qt5_use_modules(rstudio Core Widgets Gui Network WebKit WebKitWidgets)
+   else()
+      qt5_use_modules(rstudio Core Widgets Gui Network WebKit WebKitWidgets DBus)
+   endif()
+
    # add rpath for linux so we can find qt libraries in our bin dir
    if(UNIX AND RSTUDIO_BUNDLE_QT)
       set_target_properties(rstudio PROPERTIES
@@ -287,6 +314,8 @@ else()
       ${DESKTOP_UI_SOURCES}
       ${ICNS_FILES})
 
+   qt5_use_modules(RStudio Core Widgets Gui Network WebKit WebKitWidgets)
+
    target_link_libraries(RStudio
       ${QT_LIBRARIES}
       rstudio-core
@@ -295,6 +324,7 @@ else()
       ${SECURITY_LIBRARY})
 
 endif()
+
 
 # install target (OSX install goes into the bundle)
 if(APPLE)
@@ -309,9 +339,9 @@ endif()
 if(RSTUDIO_BUNDLE_QT)
    # set lib suffix for windows
    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-      set(LIB_SUFFIX "d4")
+      set(LIB_SUFFIX "d")
    else()
-      set(LIB_SUFFIX "4")
+      set(LIB_SUFFIX "")
    endif()
 
    # install qt conf
@@ -327,7 +357,7 @@ if(RSTUDIO_BUNDLE_QT)
 
    # copy qt plugins
    if(WIN32)
-      set(QT_IMAGEFORMATS_DIR "${QT_PLUGINS_DIR}/imageformats")
+      set(QT_IMAGEFORMATS_DIR "${Qt5Core_DIR}/../../../plugins/imageformats")
       install(PROGRAMS "${QT_IMAGEFORMATS_DIR}/qgif${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qico${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qjpeg${LIB_SUFFIX}.dll"
@@ -336,9 +366,19 @@ if(RSTUDIO_BUNDLE_QT)
                        "${QT_IMAGEFORMATS_DIR}/qtga${LIB_SUFFIX}.dll"
                        "${QT_IMAGEFORMATS_DIR}/qtiff${LIB_SUFFIX}.dll"
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins/imageformats)
+
+      set(QT_PLATFORMS_DIR "${Qt5Core_DIR}/../../../plugins/platforms")
+      install(PROGRAMS "${QT_PLATFORMS_DIR}/qminimal${LIB_SUFFIX}.dll"
+                       "${QT_PLATFORMS_DIR}/qwindows${LIB_SUFFIX}.dll"
+              DESTINATION "${QTPLUGINS_DEST_DIR}/plugins/platforms")
    else()
-      install(DIRECTORY "${QT_PLUGINS_DIR}/imageformats"
+      install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/imageformats"
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
+              PATTERN "*_debug.*" EXCLUDE
+              PATTERN "*.a" EXCLUDE)
+      install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/platforms"
+              DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
+              PATTERN "*_debug.*" EXCLUDE
               PATTERN "*.a" EXCLUDE)
    endif()
 
@@ -359,38 +399,78 @@ if(RSTUDIO_BUNDLE_QT)
    # copy qt shared objects directly to bin on unix (fixed up rpath above)
    elseif(UNIX)
       # install dependent libraries
-      set(QT_FULL_VERSION "${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}")
-      install(PROGRAMS ${QT_LIBRARY_DIR}/libQtCore.so.4
-                       ${QT_LIBRARY_DIR}/libQtCore.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtDBus.so.4
-                       ${QT_LIBRARY_DIR}/libQtDBus.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtGui.so.4
-                       ${QT_LIBRARY_DIR}/libQtGui.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtNetwork.so.4
-                       ${QT_LIBRARY_DIR}/libQtNetwork.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtWebKit.so.4
-                       ${QT_LIBRARY_DIR}/libQtWebKit.so.4.9.0
-                       ${QT_LIBRARY_DIR}/libQtSvg.so.4
-                       ${QT_LIBRARY_DIR}/libQtSvg.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtXml.so.4
-                       ${QT_LIBRARY_DIR}/libQtXml.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libQtXmlPatterns.so.4
-                       ${QT_LIBRARY_DIR}/libQtXmlPatterns.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libphonon.so.4
-                       ${QT_LIBRARY_DIR}/libphonon.so.4.4.0
+      set(QT_LIBRARY_DIR "${Qt5Core_DIR}/../../../lib")
+      set(QT_FULL_VERSION ${QT_VERSION})
+      install(PROGRAMS ${QT_LIBRARY_DIR}/libQt5Core.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Core.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5DBus.so.5
+                       ${QT_LIBRARY_DIR}/libQt5DBus.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Gui.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Gui.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Network.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Network.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Widgets.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Widgets.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebKit.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Positioning.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Positioning.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5PrintSupport.so.5
+                       ${QT_LIBRARY_DIR}/libQt5PrintSupport.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Sensors.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Sensors.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Svg.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Svg.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Xml.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Xml.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5XmlPatterns.so.5
+                       ${QT_LIBRARY_DIR}/libQt5XmlPatterns.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Quick.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Quick.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Qml.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Qml.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5Sql.so.5
+                       ${QT_LIBRARY_DIR}/libQt5Sql.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5OpenGL.so.5
+                       ${QT_LIBRARY_DIR}/libQt5OpenGL.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libicui18n.so.51
+                       ${QT_LIBRARY_DIR}/libicui18n.so.51.1
+                       ${QT_LIBRARY_DIR}/libicuuc.so.51
+                       ${QT_LIBRARY_DIR}/libicuuc.so.51.1
+                       ${QT_LIBRARY_DIR}/libicudata.so.51
+                       ${QT_LIBRARY_DIR}/libicudata.so.51.1
               DESTINATION ${RSTUDIO_INSTALL_BIN})
-
    # copy qt dlls directly to bin on win32
    elseif(WIN32)
-      install(PROGRAMS ${QT_BINARY_DIR}/QtCore${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtGui${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtNetwork${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtWebKit${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtSvg${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/QtXml${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/phonon${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/mingwm10.dll
-                       ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
+      set(QT_BINARY_DIR "${Qt5Core_DIR}/../../../bin")
+      install(PROGRAMS ${QT_BINARY_DIR}/Qt5Core${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Gui${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Network${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebKit${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebKitWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5PrintSupport${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Svg${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Xml${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5XmlPatterns${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Quick${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Qml${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Sql${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5OpenGL${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5V8${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5Multimedia${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5MultimediaWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/libEGL${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/libGLESv2${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/icudt49.dll
+                       ${QT_BINARY_DIR}/icuin49.dll
+                       ${QT_BINARY_DIR}/icuuc49.dll
+                       ${QT_BINARY_DIR}/libwinpthread-1.dll
+                       ${QT_BINARY_DIR}/libstdc++-6.dll
+                       ${QT_BINARY_DIR}/D3DCompiler_43.dll
+                       ${QT_BINARY_DIR}/libgcc_s_sjlj-1.dll
               DESTINATION ${RSTUDIO_INSTALL_BIN})
    endif()
 endif(RSTUDIO_BUNDLE_QT)

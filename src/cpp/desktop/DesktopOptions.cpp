@@ -16,6 +16,8 @@
 #include "DesktopOptions.hpp"
 
 #include <QtGui>
+#include <QApplication>
+#include <QDesktopWidget>
 
 #include <core/Error.hpp>
 #include <core/Random.hpp>
@@ -46,14 +48,14 @@ void Options::initFromCommandLine(const QStringList& arguments)
    for (int i=1; i<arguments.size(); i++)
    {
       QString arg = arguments.at(i);
-      if (arg == QString::fromAscii(kRunDiagnosticsOption))
+      if (arg == QString::fromUtf8(kRunDiagnosticsOption))
          runDiagnostics_ = true;
    }
 }
 
 void Options::restoreMainWindowBounds(QMainWindow* win)
 {
-   QString key = QString::fromAscii("mainwindow/geometry");
+   QString key = QString::fromUtf8("mainwindow/geometry");
    if (settings_.contains(key))
       win->restoreGeometry(settings_.value(key).toByteArray());
    else
@@ -70,7 +72,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
 
 void Options::saveMainWindowBounds(QMainWindow* win)
 {
-   settings_.setValue(QString::fromAscii("mainwindow/geometry"),
+   settings_.setValue(QString::fromUtf8("mainwindow/geometry"),
                       win->saveGeometry());
 }
 
@@ -87,12 +89,12 @@ QString Options::portNumber() const
       // recalculate the local peer and set RS_LOCAL_PEER so that
       // rsession and it's children can use it
 #ifdef _WIN32
-      QString localPeer = QString::fromAscii("\\\\.\\pipe\\") +
-                          portNumber_ + QString::fromAscii("-rsession");
+      QString localPeer = QString::fromUtf8("\\\\.\\pipe\\") +
+                          portNumber_ + QString::fromUtf8("-rsession");
 #else
       QString localPeer = QDir(QDir::tempPath()).absolutePath() +
-                          QString::fromAscii("/") + portNumber_ +
-                          QString::fromAscii("-rsession");
+                          QString::fromUtf8("/") + portNumber_ +
+                          QString::fromUtf8("-rsession");
 #endif
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
@@ -134,7 +136,7 @@ QString Options::proportionalFont() const
    static QString detectedFont;
 
    QString font =
-         settings_.value(QString::fromAscii("font.proportional")).toString();
+         settings_.value(QString::fromUtf8("font.proportional")).toString();
    if (!font.isEmpty())
    {
       return font;
@@ -146,35 +148,35 @@ QString Options::proportionalFont() const
    QStringList fontList;
 #if defined(_WIN32)
    fontList <<
-           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
-           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
-           QString::fromAscii("Lucida Grande") <<          // Mac
-           QString::fromAscii("Helvetica");
+           QString::fromUtf8("Segoe UI") << QString::fromUtf8("Verdana") <<  // Windows
+           QString::fromUtf8("Lucida Sans") << QString::fromUtf8("DejaVu Sans") <<  // Linux
+           QString::fromUtf8("Lucida Grande") <<          // Mac
+           QString::fromUtf8("Helvetica");
 #elif defined(__APPLE__)
    fontList <<
-           QString::fromAscii("Lucida Grande") <<          // Mac
-           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
-           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
-           QString::fromAscii("Helvetica");
+           QString::fromUtf8("Lucida Grande") <<          // Mac
+           QString::fromUtf8("Lucida Sans") << QString::fromUtf8("DejaVu Sans") <<  // Linux
+           QString::fromUtf8("Segoe UI") << QString::fromUtf8("Verdana") <<  // Windows
+           QString::fromUtf8("Helvetica");
 #else
    fontList <<
-           QString::fromAscii("Ubuntu") << // Ubuntu
-           QString::fromAscii("Lucida Sans") << QString::fromAscii("DejaVu Sans") <<  // Linux
-           QString::fromAscii("Lucida Grande") <<          // Mac
-           QString::fromAscii("Segoe UI") << QString::fromAscii("Verdana") <<  // Windows
-           QString::fromAscii("Helvetica");
+           QString::fromUtf8("Ubuntu") << // Ubuntu
+           QString::fromUtf8("Lucida Sans") << QString::fromUtf8("DejaVu Sans") <<  // Linux
+           QString::fromUtf8("Lucida Grande") <<          // Mac
+           QString::fromUtf8("Segoe UI") << QString::fromUtf8("Verdana") <<  // Windows
+           QString::fromUtf8("Helvetica");
 #endif
-   return QString::fromAscii("\"") +
-         findFirstMatchingFont(fontList, QString::fromAscii("sans-serif"), false) +
-         QString::fromAscii("\"");
+   return QString::fromUtf8("\"") +
+         findFirstMatchingFont(fontList, QString::fromUtf8("sans-serif"), false) +
+         QString::fromUtf8("\"");
 }
 
 void Options::setFixedWidthFont(QString font)
 {
    if (font.isEmpty())
-      settings_.remove(QString::fromAscii("font.fixedWidth"));
+      settings_.remove(QString::fromUtf8("font.fixedWidth"));
    else
-      settings_.setValue(QString::fromAscii("font.fixedWidth"),
+      settings_.setValue(QString::fromUtf8("font.fixedWidth"),
                          font);
 }
 
@@ -183,7 +185,7 @@ QString Options::fixedWidthFont() const
    static QString detectedFont;
 
    QString font =
-         settings_.value(QString::fromAscii("font.fixedWidth")).toString();
+         settings_.value(QString::fromUtf8("font.fixedWidth")).toString();
    if (!font.isEmpty())
    {
       return font;
@@ -194,33 +196,33 @@ QString Options::fixedWidthFont() const
 
    QStringList fontList;
    fontList <<
-#if defined(Q_WS_MACX)
-           QString::fromAscii("Monaco")
-#elif defined (Q_WS_X11)
-           QString::fromAscii("Ubuntu Mono") << QString::fromAscii("Droid Sans Mono") << QString::fromAscii("DejaVu Sans Mono") << QString::fromAscii("Monospace")
+#if defined(Q_OS_MACX)
+           QString::fromUtf8("Monaco")
+#elif defined (Q_OS_LINUX)
+           QString::fromUtf8("Ubuntu Mono") << QString::fromUtf8("Droid Sans Mono") << QString::fromUtf8("DejaVu Sans Mono") << QString::fromUtf8("Monospace")
 #else
-           QString::fromAscii("Lucida Console") << QString::fromAscii("Consolas") // Windows;
+           QString::fromUtf8("Lucida Console") << QString::fromUtf8("Consolas") // Windows;
 #endif
            ;
 
    // The fallback font is Courier, not monospace, because QtWebKit doesn't
    // actually provide a monospace font (appears to use Helvetica)
 
-   return detectedFont = QString::fromAscii("\"") +
-         findFirstMatchingFont(fontList, QString::fromAscii("Courier"), true) +
-         QString::fromAscii("\"");
+   return detectedFont = QString::fromUtf8("\"") +
+         findFirstMatchingFont(fontList, QString::fromUtf8("Courier"), true) +
+         QString::fromUtf8("\"");
 }
 
 
 double Options::zoomLevel() const
 {
-   QVariant zoom = settings_.value(QString::fromAscii("view.zoomLevel"), 1.0);
+   QVariant zoom = settings_.value(QString::fromUtf8("view.zoomLevel"), 1.0);
    return zoom.toDouble();
 }
 
 void Options::setZoomLevel(double zoomLevel)
 {
-   settings_.setValue(QString::fromAscii("view.zoomLevel"), zoomLevel);
+   settings_.setValue(QString::fromUtf8("view.zoomLevel"), zoomLevel);
 }
 
 
@@ -233,16 +235,16 @@ QString Options::rBinDir() const
    // accept either. We'll distinguish between this case (where preferR64
    // should be ignored) and the other case by using null for this case and
    // empty string for the other.
-   if (!settings_.contains(QString::fromAscii("RBinDir")))
+   if (!settings_.contains(QString::fromUtf8("RBinDir")))
       return QString::null;
 
-   QString value = settings_.value(QString::fromAscii("RBinDir")).toString();
+   QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
 }
 
 void Options::setRBinDir(QString path)
 {
-   settings_.setValue(QString::fromAscii("RBinDir"), path);
+   settings_.setValue(QString::fromUtf8("RBinDir"), path);
 }
 
 bool Options::preferR64() const
@@ -250,14 +252,14 @@ bool Options::preferR64() const
    if (!core::system::isWin64())
       return false;
 
-   if (!settings_.contains(QString::fromAscii("PreferR64")))
+   if (!settings_.contains(QString::fromUtf8("PreferR64")))
       return true;
-   return settings_.value(QString::fromAscii("PreferR64")).toBool();
+   return settings_.value(QString::fromUtf8("PreferR64")).toBool();
 }
 
 void Options::setPreferR64(bool preferR64)
 {
-   settings_.setValue(QString::fromAscii("PreferR64"), preferR64);
+   settings_.setValue(QString::fromUtf8("PreferR64"), preferR64);
 }
 #endif
 
@@ -343,12 +345,12 @@ FilePath Options::rsinversePath() const
 
 QStringList Options::ignoredUpdateVersions() const
 {
-   return settings_.value(QString::fromAscii("ignoredUpdateVersions"), QStringList()).toStringList();
+   return settings_.value(QString::fromUtf8("ignoredUpdateVersions"), QStringList()).toStringList();
 }
 
 void Options::setIgnoredUpdateVersions(const QStringList& ignoredVersions)
 {
-   settings_.setValue(QString::fromAscii("ignoredUpdateVersions"), ignoredVersions);
+   settings_.setValue(QString::fromUtf8("ignoredUpdateVersions"), ignoredVersions);
 }
 
 core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
@@ -374,7 +376,7 @@ void Options::cleanUpScratchTempDir()
 
 bool Options::webkitDevTools()
 {
-   return settings_.value(QString::fromAscii("webkitDevTools"), false).toBool();
+   return settings_.value(QString::fromUtf8("webkitDevTools"), false).toBool();
 }
 
 } // namespace desktop

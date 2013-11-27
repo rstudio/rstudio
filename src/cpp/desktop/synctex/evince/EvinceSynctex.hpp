@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QMap>
 #include <QPoint>
+
 #include <QDBusPendingCallWatcher>
 
 #include <DesktopSynctex.hpp>

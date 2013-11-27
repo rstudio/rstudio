@@ -57,7 +57,7 @@ public Q_SLOTS: // METHODS
        {
           QFileInfo srcFileInfo(srcFilePath);
           srcFilePath = srcFileInfo.canonicalPath() +
-                        QString::fromAscii("/./") +
+                        QString::fromUtf8("/./") +
                         srcFileInfo.fileName();
        }
 

@@ -17,6 +17,10 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTemporaryFile>
+
+
+#include <QStyleFactory>
+
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include "DesktopDownloadHelper.hpp"
@@ -31,9 +35,9 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
     baseUrl_(baseUrl)
 {
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
-      setStyle(new QPlastiqueStyle());
+      setStyle(QStyleFactory::create(QString::fromUtf8("fusion")));
 #endif
    pWebPage_ = new WebPage(baseUrl, this);
    setPage(pWebPage_);
@@ -75,8 +79,8 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
    // default, if present.
    if (pReply && pReply->hasRawHeader("content-disposition"))
    {
-      QString headerValue = QString::fromAscii(pReply->rawHeader("content-disposition"));
-      QRegExp regexp(QString::fromAscii("filename=(.+)"), Qt::CaseInsensitive);
+      QString headerValue = QString::fromUtf8(pReply->rawHeader("content-disposition"));
+      QRegExp regexp(QString::fromUtf8("filename=(.+)"), Qt::CaseInsensitive);
       if (regexp.indexIn(headerValue) >= 0)
       {
          defaultFileName = regexp.cap(1);
@@ -98,15 +102,24 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
 #ifndef _WIN32
    if (pEv->key() == 'W')
    {
-#ifdef Q_WS_MAC
-      Qt::KeyboardModifier modifier = Qt::MetaModifier;
-#else
-      Qt::KeyboardModifier modifier = Qt::ControlModifier;
+      // check modifier and emit signal
+      if (pEv->modifiers() & Qt::ControlModifier)
+         onCloseWindowShortcut();
+   }
 #endif
 
-      // check modifier and emit signal
-      if (pEv->modifiers() & modifier)
-         onCloseWindowShortcut();
+  // flip control and meta on the mac
+#ifdef Q_OS_MAC
+   Qt::KeyboardModifiers modifiers = pEv->modifiers();
+   if (modifiers & Qt::MetaModifier && !(modifiers & Qt::ControlModifier))
+   {
+      modifiers &= ~Qt::MetaModifier;
+      modifiers |= Qt::ControlModifier;
+   }
+   else if (modifiers & Qt::ControlModifier && !(modifiers & Qt::MetaModifier))
+   {
+      modifiers &= ~Qt::ControlModifier;
+      modifiers |= Qt::MetaModifier;
    }
 #endif
 
@@ -114,30 +127,14 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
    // presses resulting in keyCode=0 in the DOM's keydown events.
    // This is due to some missing switch cases in the case
    // where the keypad modifier bit is on, so we turn it off.
-  
-   Qt::KeyboardModifiers modifiers;
-  
-#ifdef Q_WS_MAC
-   if ((pEv->nativeModifiers() & 0x40101) == 0x40101) {
-      modifiers &= ~Qt::MetaModifier;
-      modifiers |= Qt::ControlModifier;
-   } else if ((pEv->nativeModifiers() & 0x100108) == 0x100108) {
-      modifiers &= ~Qt::ControlModifier;
-      modifiers |= Qt::MetaModifier;
-   } else {
-#else
-   {
-#endif     
-     modifiers = pEv->modifiers();
-   }
-
    QKeyEvent newEv(pEv->type(),    
                    pEv->key(),
-                   modifiers & ~Qt::KeypadModifier,
+                   pEv->modifiers() & ~Qt::KeypadModifier,
                    pEv->text(),
                    pEv->isAutoRepeat(),
                    pEv->count());
   
+   // delegate to base
    this->QWebView::keyPressEvent(&newEv);
 }
 
@@ -174,7 +171,7 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
 
    QString contentType =
          pReply->header(QNetworkRequest::ContentTypeHeader).toString();
-   if (contentType.contains(QRegExp(QString::fromAscii("^\\s*application/pdf($|;)"),
+   if (contentType.contains(QRegExp(QString::fromUtf8("^\\s*application/pdf($|;)"),
                                     Qt::CaseInsensitive)))
    {
       core::FilePath dir(options().scratchTempDir());
@@ -224,14 +221,14 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
 void WebView::openFile(QString fileName)
 {
    // force use of Preview for PDFs on the Mac (Adobe Reader 10.01 crashes)
-#ifdef Q_WS_MAC
-   if (fileName.toLower().endsWith(QString::fromAscii(".pdf")))
+#ifdef Q_OS_MAC
+   if (fileName.toLower().endsWith(QString::fromUtf8(".pdf")))
    {
       QStringList args;
-      args.append(QString::fromAscii("-a"));
-      args.append(QString::fromAscii("Preview"));
+      args.append(QString::fromUtf8("-a"));
+      args.append(QString::fromUtf8("Preview"));
       args.append(fileName);
-      QProcess::startDetached(QString::fromAscii("open"), args);
+      QProcess::startDetached(QString::fromUtf8("open"), args);
       return;
    }
 #endif
