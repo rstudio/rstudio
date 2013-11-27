@@ -21,6 +21,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -92,6 +93,14 @@ public class DataImportTests
       
       DialogTestUtils.respondToModalDialog(driver_, "Import");
       ConsoleTestUtils.waitForConsoleContainsText(driver_, "read.csv");
+
+      // Once the CSV has been read, make sure all the rows made it to the
+      // generated object
+      ConsoleTestUtils.beginConsoleInteraction(driver_);
+      (new Actions(driver_))
+         .sendKeys(Keys.ESCAPE + "nrow(banklist)" + Keys.ENTER)
+         .perform();
+      ConsoleTestUtils.waitForConsoleContainsText(driver_, "515");
    }
    
    private static WebDriver driver_;
