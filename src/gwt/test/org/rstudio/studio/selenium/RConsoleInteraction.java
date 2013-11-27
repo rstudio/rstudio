@@ -116,8 +116,32 @@ public class RConsoleInteraction {
       Assert.assertEquals(plotWindow.getTagName(), "iframe");
       driver_.switchTo().frame(plotWindow);
 
-      (new WebDriverWait(driver_, 5))
+      WebElement plotImg = (new WebDriverWait(driver_, 5))
         .until(ExpectedConditions.presenceOfElementLocated(By.tagName("img")));
+      
+      // Switch back to document context
+      driver_.switchTo().defaultContent();
+   }
+
+   @Test
+   public void testInvokeHelp() {
+      ConsoleTestUtils.resumeConsoleInteraction(driver_);
+      Actions help = new Actions(driver_);
+      help.sendKeys(Keys.ESCAPE + "?lapply" + Keys.ENTER);
+      help.perform();
+
+      // Wait for the Help window to activate
+      final WebElement helpWindow = (new WebDriverWait(driver_, 5))
+        .until(ExpectedConditions.presenceOfElementLocated(
+              By.id(ElementIds.getElementId(ElementIds.HELP_FRAME))));
+
+      // Wait for help to appear in the window
+      Assert.assertEquals(helpWindow.getTagName(), "iframe");
+      driver_.switchTo().frame(helpWindow);
+      
+      (new WebDriverWait(driver_, 5))
+        .until(ExpectedConditions.textToBePresentInElement(
+              By.tagName("body"), "lapply"));
       
       // Switch back to document context
       driver_.switchTo().defaultContent();
