@@ -21,7 +21,9 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({ BootRStudio.class, 
                 RConsoleInteraction.class,
-                SourceInteraction.class })
+                SourceInteraction.class,
+                DataImportTests.class
+                })
 public class RStudioTestSuite 
 {
 

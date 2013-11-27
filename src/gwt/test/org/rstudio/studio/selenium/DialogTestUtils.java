@@ -25,12 +25,25 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class DialogTestUtils
 {
-   public static void respondToModalDialog(final WebDriver driver, 
-                                           String response) {
-      // Wait for the dialog to appear
-      WebElement dialog = (new WebDriverWait(driver, 2))
+   public static WebElement waitForModalToAppear(WebDriver driver) {
+      return (new WebDriverWait(driver, 2))
         .until(ExpectedConditions.presenceOfElementLocated(
               By.className("gwt-DialogBox-ModalDialog")));
+   }
+   
+   public static void waitForModalToDisappear(final WebDriver driver) {
+      (new WebDriverWait(driver, 5)).until(new ExpectedCondition<Boolean>() {
+         public Boolean apply(WebDriver d) {
+            List<WebElement>elements = driver.findElements(By.className(
+                  "gwt-DialogBox-ModalDialog"));
+            return elements.size() == 0;
+         }
+      });
+   }
+
+   public static void respondToModalDialog(WebDriver driver, 
+                                           String response) {
+      WebElement dialog = waitForModalToAppear(driver);
       
       // Find the button requested and invoke it
       List<WebElement> buttons = 
@@ -42,13 +55,7 @@ public class DialogTestUtils
          }
       }
       
-      // Wait for the dialog to disappear
-      (new WebDriverWait(driver, 5)).until(new ExpectedCondition<Boolean>() {
-         public Boolean apply(WebDriver d) {
-            List<WebElement>elements = driver.findElements(By.className(
-                  "gwt-DialogBox-ModalDialog"));
-            return elements.size() == 0;
-         }
-      });
+      (new WebDriverWait(driver, 5)).until(
+            ExpectedConditions.stalenessOf(dialog));
    }
 }

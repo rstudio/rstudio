@@ -116,7 +116,7 @@ public class RConsoleInteraction {
       Assert.assertEquals(plotWindow.getTagName(), "iframe");
       driver_.switchTo().frame(plotWindow);
 
-      WebElement plotImg = (new WebDriverWait(driver_, 5))
+      (new WebDriverWait(driver_, 5))
         .until(ExpectedConditions.presenceOfElementLocated(By.tagName("img")));
       
       // Switch back to document context
