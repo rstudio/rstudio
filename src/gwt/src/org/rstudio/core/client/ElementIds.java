@@ -23,4 +23,5 @@ public class ElementIds
    public final static String POPUP_COMPLETIONS = "popup_completions";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
+   public final static String PLOT_IMAGE_FRAME = "plot_image_frame";
 }

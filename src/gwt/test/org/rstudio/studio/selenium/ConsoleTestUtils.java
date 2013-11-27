@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.selenium;
 
+import java.util.List;
+
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -23,6 +25,27 @@ import org.rstudio.core.client.ElementIds;
 
 public class ConsoleTestUtils
 {
+   public static void beginConsoleInteraction(final WebDriver driver) {
+       // Wait for the console panel to load
+      (new WebDriverWait(driver, 15)).until(new ExpectedCondition<Boolean>() {
+         public Boolean apply(WebDriver d) {
+            List<WebElement>elements = driver.findElements(By.id(
+                  ElementIds.getElementId(ElementIds.CONSOLE_INPUT)));
+            return elements.size() > 0;
+         }
+      });
+
+      resumeConsoleInteraction(driver);
+   }
+   
+   public static void resumeConsoleInteraction(WebDriver driver) {
+      // Click on the console
+      WebElement console = driver.findElement(By.id(
+            ElementIds.getElementId(ElementIds.SHELL_WIDGET)));
+
+      console.click();
+   }
+
    public static void waitForConsoleContainsText(WebDriver driver, 
                                                  final String text) {
       final WebElement output = driver.findElement(By.id(

@@ -21,6 +21,7 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.Keys;
 import org.rstudio.core.client.ElementIds;
@@ -34,6 +35,8 @@ import org.junit.Test;
 import java.net.URL;
 import java.util.List;
 
+import junit.framework.Assert;
+
 public class RConsoleInteraction {
    @BeforeClass
    public static void setUpBeforeClass() throws Exception {
@@ -42,20 +45,7 @@ public class RConsoleInteraction {
       
       driver_.get("http://localhost:8787/");
       
-       // Wait for the console panel to load
-      (new WebDriverWait(driver_, 15)).until(new ExpectedCondition<Boolean>() {
-         public Boolean apply(WebDriver d) {
-            List<WebElement>elements = driver_.findElements(By.id(
-                  ElementIds.getElementId(ElementIds.CONSOLE_INPUT)));
-            return elements.size() > 0;
-         }
-      });
-
-      // Click on the shell
-      WebElement console = driver_.findElement(By.id(
-            ElementIds.getElementId(ElementIds.SHELL_WIDGET)));
-
-      console.click();
+      ConsoleTestUtils.beginConsoleInteraction(driver_);
    }
    
    @AfterClass
@@ -107,6 +97,30 @@ public class RConsoleInteraction {
              return elements.size() == 0;
           }
        });
+   }
+   
+   @Test
+   public void testPlotGeneration() {
+      ConsoleTestUtils.resumeConsoleInteraction(driver_);
+
+      Actions plotCars = new Actions(driver_);
+      plotCars.sendKeys(Keys.ESCAPE + "plot(cars)" + Keys.ENTER);
+      plotCars.perform();
+      
+      // Wait for the Plot window to activate
+      final WebElement plotWindow = (new WebDriverWait(driver_, 5))
+        .until(ExpectedConditions.presenceOfElementLocated(
+              By.id(ElementIds.getElementId(ElementIds.PLOT_IMAGE_FRAME))));
+      
+      // Wait for a plot to appear in the window
+      Assert.assertEquals(plotWindow.getTagName(), "iframe");
+      driver_.switchTo().frame(plotWindow);
+
+      (new WebDriverWait(driver_, 5))
+        .until(ExpectedConditions.presenceOfElementLocated(By.tagName("img")));
+      
+      // Switch back to document context
+      driver_.switchTo().defaultContent();
    }
 
    private static WebDriver driver_;
