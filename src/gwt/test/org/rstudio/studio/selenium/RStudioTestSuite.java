@@ -22,7 +22,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({ BootRStudio.class, 
                 RConsoleInteraction.class,
                 SourceInteraction.class,
-                DataImportTests.class
+                DataImportTests.class,
+                WorkbenchTests.class
                 })
 public class RStudioTestSuite 
 {

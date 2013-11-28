@@ -54,20 +54,7 @@ public class DataImportTests
       final WebElement importFileDialog = 
             DialogTestUtils.waitForModalToAppear(driver_);
      
-      // Unfortunately even after the dialog is loaded, the textbox into which
-      // we need to type the filename may not yet be focused. Wait for it to be
-      // present and focused before continuing.
-      (new WebDriverWait(driver_, 5)).until(new ExpectedCondition<Boolean>() {
-          public Boolean apply(WebDriver d) {
-             List<WebElement>elements = importFileDialog.findElements(By.tagName(
-                   "input"));
-             if (elements.size() > 0 &&
-                 driver_.switchTo().activeElement().equals(elements.get(0))) {
-                return true;
-             }
-             return false;
-          }
-      });
+      DialogTestUtils.waitForFocusedInput(driver_, importFileDialog);
  
       Actions typeName = new Actions(driver_);
       File csvFile = new File("test/org/rstudio/studio/selenium/resources/banklist.csv");

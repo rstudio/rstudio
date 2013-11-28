@@ -58,4 +58,22 @@ public class DialogTestUtils
       (new WebDriverWait(driver, 5)).until(
             ExpectedConditions.stalenessOf(dialog));
    }
+   
+   // Unfortunately even after the dialog is loaded, the textbox into which
+   // we need to type may not yet be ready for input. Wait for it to be
+   // present and focused before continuing.
+   public static void waitForFocusedInput(final WebDriver driver, 
+                                          final WebElement dialog) {
+      (new WebDriverWait(driver, 5)).until(new ExpectedCondition<Boolean>() {
+          public Boolean apply(WebDriver d) {
+             List<WebElement>elements = dialog.findElements(By.tagName(
+                   "input"));
+             if (elements.size() > 0 &&
+                 driver.switchTo().activeElement().equals(elements.get(0))) {
+                return true;
+             }
+             return false;
+          }
+      });
+   }
 }
