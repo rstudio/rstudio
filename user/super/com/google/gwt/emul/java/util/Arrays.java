@@ -385,6 +385,123 @@ public class Arrays {
     return -low - 1;
   }
 
+  public static boolean[] copyOf(boolean[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static byte[] copyOf(byte[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static char[] copyOf(char[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static double[] copyOf(double[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static float[] copyOf(float[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static int[] copyOf(int[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static long[] copyOf(long[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static short[] copyOf(short[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static <T> T[] copyOf(T[] original, int newLength) {
+    checkArrayLength(newLength);
+    return copyOfRange(original, 0, newLength);
+  }
+
+  public static boolean[] copyOfRange(boolean[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    boolean[] copy = new boolean[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static byte[] copyOfRange(byte[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    byte[] copy = new byte[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static char[] copyOfRange(char[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    char[] copy = new char[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static double[] copyOfRange(double[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    double[] copy = new double[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static float[] copyOfRange(float[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    float[] copy = new float[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static int[] copyOfRange(int[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    int[] copy = new int[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static long[] copyOfRange(long[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    long[] copy = new long[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static short[] copyOfRange(short[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    short[] copy = new short[newLength];
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
+  public static <T> T[] copyOfRange(T[] original, int from, int to) {
+    int newLength = getLengthFromRange(from, to);
+    T[] copy = Array.createFrom(original, newLength);
+    System.arraycopy(original, from, copy, 0,
+        Math.min(original.length - from, newLength));
+    return copy;
+  }
+
   public static boolean deepEquals(Object[] a1, Object[] a2) {
     if (a1 == a2) {
       return true;
@@ -1086,6 +1203,12 @@ public class Arrays {
     return b.toString();
   }
 
+  private static void checkArrayLength(int length) {
+    if (length < 0) {
+      throw new NegativeArraySizeException();
+    }
+  }
+
   /**
    * Recursive helper function for {@link Arrays#deepToString(Object[])}.
    */
@@ -1142,6 +1265,14 @@ public class Arrays {
     }
     b.append("]");
     return b.toString();
+  }
+
+  private static int getLengthFromRange(int from, int to) {
+    int length = to - from;
+    if (length < 0) {
+      throw new IllegalArgumentException(from + " > " + to);
+    }
+    return length;
   }
 
   /**
@@ -1234,7 +1365,7 @@ public class Arrays {
   @SuppressWarnings("unchecked")
   private static void mergeSort(Object[] x, int fromIndex, int toIndex,
       Comparator<?> comp) {
-    Object[] temp = Array.cloneSubrange(x, fromIndex, toIndex);
+    Object[] temp = copyOfRange(x, fromIndex, toIndex);
     mergeSort(temp, x, fromIndex, toIndex, -fromIndex,
         (Comparator<Object>) comp);
   }
