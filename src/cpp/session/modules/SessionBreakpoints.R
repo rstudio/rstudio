@@ -153,11 +153,17 @@
 
   for (idx in 1:length(funBody))
   {
-    # check to see if this is one of the several types of objects we can't do
+    # Check to see if this is one of the several types of objects we can't do
     # equality testing for. Note that these object types are all leaf nodes in
-    # the parse tree, so it's safe to stop recursion here.
+    # the parse tree, so it's safe to stop recursion here. Also note that we
+    # can't use the helpful is.na() here since that function emits warnings
+    # for some types of objects in the parse tree.
     if (is.null(funBody[[idx]]) || 
         identical(funBody[[idx]], NA) || 
+        identical(funBody[[idx]], NA_character_) || 
+        identical(funBody[[idx]], NA_complex_) || 
+        identical(funBody[[idx]], NA_integer_) || 
+        identical(funBody[[idx]], NA_real_) || 
         is.pairlist(funBody[[idx]])) 
        next
 

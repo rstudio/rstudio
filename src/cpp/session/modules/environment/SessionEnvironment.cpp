@@ -221,14 +221,26 @@ RCNTXT* getFunctionContext(const int depth,
    return pRContext;
 }
 
-// return whether the context stack contains a pure (interactive) browser
+// Return whether we're in browse context--meaning that there's a browser on
+// the context stack and at least one function (i.e. we're not browsing at the
+// top level).
 bool inBrowseContext()
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   bool foundBrowser = false;
+   bool foundFunction = false;
    while (pRContext->callflag)
    {
       if ((pRContext->callflag & CTXT_BROWSER) &&
           !(pRContext->callflag & CTXT_FUNCTION))
+      {
+         foundBrowser = true;
+      }
+      else if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         foundFunction = true;
+      }
+      if (foundBrowser && foundFunction)
       {
          return true;
       }
