@@ -84,7 +84,7 @@ public final class System {
           destArray[destOfs++] = srcArray[srcOfs++];
         }
       }
-    } else {
+    } else if (len > 0) {
       nativeArraycopy(src, srcOfs, dest, destOfs, len);
     }
   }
