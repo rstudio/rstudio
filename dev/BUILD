@@ -165,6 +165,7 @@ Zip(
             "core/src/**/*.properties",
             "core/src/**/*.xsd",
             "core/src/**/*.txt",
+            "core/src/com/google/gwt/dev/js/globals/globals.html",  # for testing
         ],
         exclude = [
             "**/package-info.java",
