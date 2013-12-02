@@ -45,18 +45,7 @@ public class WorkbenchTests
    
    @Test
    public void testWorkbenchPersistance() throws Exception {
-      // Clear out the workspace and make sure it's clear
-      WebElement menuItem = MenuNavigator.getMenuItem(driver_, 
-            "Session", "Clear Workspace...");
-      menuItem.click();
-      DialogTestUtils.respondToModalDialog(driver_, "Yes");
-      
-      ConsoleTestUtils.beginConsoleInteraction(driver_);
-      (new Actions(driver_))
-         .sendKeys(Keys.ESCAPE + "ls()" + Keys.ENTER)
-         .perform();
-      
-      ConsoleTestUtils.waitForConsoleContainsText(driver_, "character(0)");
+      clearWorkspace();
       
       // Add a variable to the workspace
       (new Actions(driver_))
@@ -79,8 +68,47 @@ public class WorkbenchTests
          .sendKeys(workspaceFilePath + Keys.ENTER)
          .perform();
       
-      // TODO: Clear workspace again, load saved workspace, and verify that
-      // variable is present again
+      DialogTestUtils.waitForModalToDisappear(driver_);
+      
+      // Clear the workspace and load it again
+      clearWorkspace();
+      
+      WebElement loadItem = MenuNavigator.getMenuItem(driver_,  
+            "Session", "Load Workspace...");
+      loadItem.click();
+      
+      WebElement loadDialog = DialogTestUtils.waitForModalToAppear(driver_);
+      DialogTestUtils.waitForFocusedInput(driver_, loadDialog);
+      
+      (new Actions(driver_))
+         .sendKeys(workspaceFilePath + Keys.ENTER)
+         .perform();
+
+      DialogTestUtils.waitForModalToDisappear(driver_);
+      
+      // List the workspace and see if the variable is present
+      ConsoleTestUtils.beginConsoleInteraction(driver_);
+      (new Actions(driver_))
+         .sendKeys(Keys.chord(Keys.CONTROL + "l"))
+         .sendKeys(Keys.ESCAPE + "ls()" + Keys.ENTER)
+         .perform();
+      
+      ConsoleTestUtils.waitForConsoleContainsText(driver_, "selenium");
+   }
+   
+   private void clearWorkspace() {
+      // Clear out the workspace and make sure it's clear
+      WebElement menuItem = MenuNavigator.getMenuItem(driver_, 
+            "Session", "Clear Workspace...");
+      menuItem.click();
+      DialogTestUtils.respondToModalDialog(driver_, "Yes");
+      
+      ConsoleTestUtils.beginConsoleInteraction(driver_);
+      (new Actions(driver_))
+         .sendKeys(Keys.ESCAPE + "ls()" + Keys.ENTER)
+         .perform();
+      
+      ConsoleTestUtils.waitForConsoleContainsText(driver_, "character(0)");
    }
    
    private static WebDriver driver_;
