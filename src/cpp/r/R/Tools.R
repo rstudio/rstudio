@@ -171,7 +171,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
    # make a copy of the snapshot into plot and set its metadata in a way
    # that is compatible with recordPlot
    plot = snapshot
-   attr(plot, "version") <- grDevices:::rversion()
+   attr(plot, "version") <- as.character(getRversion())
    class(plot) <- "recordedplot"
    
    save(plot, file=filename)
