@@ -1,5 +1,3 @@
-#include <iostream>
-
 #import <Cocoa/Cocoa.h>
 
 #import <WebKit/WebFrame.h>
@@ -483,6 +481,14 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    {
       [webView_ paste: self];
       return YES;
+   }
+   if ([chr isEqualToString: @"a"] && mod == NSCommandKeyMask)
+   {
+      if ([webView_ respondsToSelector: @selector(selectAll:)])
+         [webView_ selectAll: self];
+      
+      // ACE needs to handle this event to do custom logic for Select All, so
+      // continue to process the event as though it were unhandled here.
    }
    
    return NO;
