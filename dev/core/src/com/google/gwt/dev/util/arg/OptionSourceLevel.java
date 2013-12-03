@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 /**
  * An option that can indicates the Java source level compatibility.
  */
-public interface OptionSource {
+public interface OptionSourceLevel {
 
   SourceLevel getSourceLevel();
 

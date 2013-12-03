@@ -29,7 +29,7 @@ import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
-import com.google.gwt.dev.util.arg.ArgHandlerSource;
+import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerStrict;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -91,7 +91,7 @@ public class CompileModule {
         }
       });
       registerHandler(new ArgHandlerModuleName(options));
-      registerHandler(new ArgHandlerSource(options));
+      registerHandler(new ArgHandlerSourceLevel(options));
       registerHandler(new ArgHandlerStrict(options));
     }
 

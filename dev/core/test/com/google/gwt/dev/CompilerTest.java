@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 
@@ -91,5 +92,35 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertProcessFailure(argProcessor, "-out", "www");
     assertProcessFailure(argProcessor, "-sourceLevel", "ssss");
     assertProcessFailure(argProcessor, "-sourceLevel", "1.5");
+  }
+
+  /**
+   * Tests ordering for emum {@link SourceLevel}.
+   */
+  public void testSourceLevelOrdering() {
+    SourceLevel[] sourceLevels = SourceLevel.values();
+    SourceLevel previousSourceLevel = sourceLevels[0];
+    for (int i = 1; i < sourceLevels.length; i++) {
+      assertTrue(Utility.versionCompare(previousSourceLevel.getStringValue(),
+          sourceLevels[i].getStringValue()) < 0);
+      previousSourceLevel = sourceLevels[i];
+    }
+  }
+
+  public void testSourceLevelSelection() {
+    // We are not able to compile to less that Java 6 so, we might as well do Java7 on
+    // these cases.
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.4"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.5"));
+
+    assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6"));
+    assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6_26"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.8"));
+
+    // not proper version strings => default to JAVA7.
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6u3"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6b3"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7b3"));
   }
 }
