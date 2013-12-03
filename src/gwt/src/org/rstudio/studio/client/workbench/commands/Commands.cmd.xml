@@ -791,7 +791,7 @@ well as menu structures (for main menu and popup menus).
   
    <cmd id="knitToHTML"
         buttonLabel="Knit HTML"
-        menuLabel="Knit HTML"
+        menuLabel="_Knit HTML"
         desc="Knit the current document to HTML"/>
  
    <cmd id="previewHTML"
@@ -801,16 +801,16 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="publishHTML"
         buttonLabel="Publish"
-        menuLabel="Publish to RPubs..."
+        menuLabel="P_ublish to RPubs..."
         desc="Publish the current document"/>      
  
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"
-        menuLabel="Compile PDF"
+        menuLabel="_Compile PDF"
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
 
    <cmd id="compileNotebook"
-        menuLabel="Compile _Notebook..."
+        menuLabel="_Compile Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
