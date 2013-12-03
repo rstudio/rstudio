@@ -1,4 +1,4 @@
-
+#include <iostream>
 
 #import <Cocoa/Cocoa.h>
 
@@ -458,13 +458,16 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
 - (BOOL) performKeyEquivalent: (NSEvent *)theEvent
 {
    NSString* chr = [theEvent charactersIgnoringModifiers];
-   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+   // Get all the modifier flags except caps lock, which we don't care about for
+   // the sake of these comparisons
+   NSUInteger mod = [theEvent modifierFlags] &
+         (NSDeviceIndependentModifierFlagsMask ^ NSAlphaShiftKeyMask);
    if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
    {
       [[webView_ window] performClose: self];
       return YES;
    }
-   
+
    // Without these, secondary/satellite windows don't respond to clipboard shortcuts
    if ([chr isEqualToString: @"x"] && mod == NSCommandKeyMask)
    {
