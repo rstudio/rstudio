@@ -302,6 +302,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
             diffToolbar_.invalidateSeparators();
          }
       });
+      
+      commitMessage_.getElement().setAttribute("spellcheck", "false");
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
