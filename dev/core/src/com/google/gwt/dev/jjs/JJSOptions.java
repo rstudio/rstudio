@@ -31,7 +31,7 @@ import com.google.gwt.dev.util.arg.OptionOrdinalizeEnums;
 import com.google.gwt.dev.util.arg.OptionRemoveDuplicateFunctions;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
-import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.OptionSoycDetailed;
 import com.google.gwt.dev.util.arg.OptionSoycEnabled;
 import com.google.gwt.dev.util.arg.OptionSoycHtmlDisabled;
@@ -47,5 +47,5 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionSoycDetailed,
     OptionOptimizePrecompile, OptionOrdinalizeEnums, OptionRemoveDuplicateFunctions, OptionStrict,
     OptionStrictResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
-    OptionFragmentsMerge, OptionFragmentCount, OptionSource {
+    OptionFragmentsMerge, OptionFragmentCount, OptionSourceLevel {
 }

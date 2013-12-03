@@ -17,8 +17,8 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.dev.ArgProcessorBase;
-import com.google.gwt.dev.util.arg.ArgHandlerSource;
-import com.google.gwt.dev.util.arg.OptionSource;
+import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
+import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
@@ -175,7 +175,7 @@ public class Options {
       registerHandler(new SourceFlag());
       registerHandler(new ModuleNameArgument());
       registerHandler(new StrictResourcesFlag());
-      registerHandler(new ArgHandlerSource(new OptionSource() {
+      registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
         public SourceLevel getSourceLevel() {
           return sourceLevel;

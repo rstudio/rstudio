@@ -21,21 +21,23 @@ import com.google.gwt.util.tools.ArgHandlerString;
 /**
  * Set the Java source level compatibility.
  */
-public class ArgHandlerSource extends ArgHandlerString {
-  private final OptionSource options;
+public class ArgHandlerSourceLevel extends ArgHandlerString {
+  private static final String AUTO_SELECT = "auto";
+  private final OptionSourceLevel options;
 
-  public ArgHandlerSource(OptionSource options) {
+  public ArgHandlerSourceLevel(OptionSourceLevel options) {
     this.options = options;
   }
 
   @Override
   public String[] getDefaultArgs() {
-    return new String[]{getTag(), SourceLevel.DEFAULT_SOURCE_LEVEL.getStringValue()};
+    return new String[]{getTag(), AUTO_SELECT};
   }
 
   @Override
   public String getPurpose() {
-    return "Specifies Java source level (defaults to " + SourceLevel.DEFAULT_SOURCE_LEVEL + ")";
+    return "Specifies Java source level (defaults to " + AUTO_SELECT + ":" +
+        SourceLevel.DEFAULT_SOURCE_LEVEL + ")";
   }
 
   @Override
@@ -45,14 +47,18 @@ public class ArgHandlerSource extends ArgHandlerString {
 
   @Override
   public String[] getTagArgs() {
-    return new String[]{"[" + Joiner.on(",").join(SourceLevel.values()) + "]"};
+    return new String[]{"[" + AUTO_SELECT + "," + Joiner.on(",").join(SourceLevel.values()) + "]"};
   }
 
   @Override
   public boolean setString(String value) {
+    if (value.equals(AUTO_SELECT)) {
+      options.setSourceLevel(SourceLevel.DEFAULT_SOURCE_LEVEL);
+      return true;
+    }
     SourceLevel level = SourceLevel.fromString(value);
     if (value == null) {
-      System.err.println("Source level must be one of [" +
+      System.err.println("Source level must be one of [" + AUTO_SELECT +
           Joiner.on(",").join(SourceLevel.values()) + "].");
       return false;
     }

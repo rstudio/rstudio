@@ -41,7 +41,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSource;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
-import com.google.gwt.dev.util.arg.ArgHandlerSource;
+import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerSoycDetailed;
 import com.google.gwt.dev.util.arg.ArgHandlerStrict;
@@ -81,7 +81,7 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerStrict(options));
     registerHandler(new ArgHandlerStrictResources(options));
     registerHandler(new ArgHandlerValidateOnlyFlag(options));
-    registerHandler(new ArgHandlerSource(options));
+    registerHandler(new ArgHandlerSourceLevel(options));
   }
 
   @Override
