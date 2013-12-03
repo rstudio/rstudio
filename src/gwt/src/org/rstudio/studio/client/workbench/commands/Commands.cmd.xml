@@ -428,6 +428,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
       <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
       <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
+      <shortcut refid="compileNotebook" value="Cmd+Shift+Alt+H" />
       <shortcut refid="synctexSearch" value="Cmd+F8" />
       <shortcut refid="checkSpelling" value="F7" />
       <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
