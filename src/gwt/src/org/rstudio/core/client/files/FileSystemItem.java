@@ -99,9 +99,9 @@ public class FileSystemItem extends JavaScriptObject
       return this.dir;
    }-*/;
 
-   public final long getLength()
+   public final int getLength()
    { 
-      return new Double(getLengthNative()).longValue();
+      return getLengthNative();
    }
 
    public final Date getLastModified() 
@@ -112,7 +112,7 @@ public class FileSystemItem extends JavaScriptObject
    
    public final FileSystemItem getParentPath()
    {
-      String parentPath ;
+      String parentPath;
       String path = getPath();
       int lastSlash = path.lastIndexOf('/');
       if (lastSlash <= 0)
@@ -297,7 +297,7 @@ public class FileSystemItem extends JavaScriptObject
       return path.substring(Math.max(0, path.lastIndexOf('/') + 1));
    }
    
-   private final native double getLengthNative() /*-{
+   private final native int getLengthNative() /*-{
       return this.length;
    }-*/;
 
