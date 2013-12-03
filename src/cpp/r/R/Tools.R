@@ -229,6 +229,14 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
      },
      silent = TRUE);
    }
+
+   # set the pid attribute to the current pid if necessary
+   if (rVersion >= "3.0.2")
+   {
+      plotPid <- attr(plot, "pid")
+      if (is.null(plotPid) || (plotPid != Sys.getpid()))
+        attr(plot, "pid") <- Sys.getpid()
+   }
    
    # we suppressWarnings so that R doesnt print a warning if we restore
    # a plot saved from a previous version of R (which will occur if we 
