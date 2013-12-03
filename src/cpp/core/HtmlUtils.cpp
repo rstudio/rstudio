@@ -21,6 +21,8 @@
 #include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/http/Util.hpp>
+
 namespace core {
 namespace html_utils {
 
@@ -49,6 +51,9 @@ std::string Base64ImageFilter::toBase64Image(const boost::cmatch& match)
 {
    // extract image reference
    std::string imgRef = match[3];
+
+   // url decode it
+   imgRef = http::util::urlDecode(imgRef);
 
    // see if this is an image within the base directory. if it is then
    // base64 encode it
