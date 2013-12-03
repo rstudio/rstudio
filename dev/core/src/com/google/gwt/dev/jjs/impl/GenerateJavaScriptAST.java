@@ -147,6 +147,7 @@ import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsSeedIdOf;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
@@ -162,8 +163,8 @@ import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.dev.util.collect.IdentityHashSet;
-import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -1943,28 +1944,50 @@ public class GenerateJavaScriptAST {
       }
     }
 
+    /**
+     * Creates gwtOnLoad bootstrapping code. Unusually, the created code is executed as part of
+     * source loading and runs in the global scope (not inside of any function scope).
+     */
+    // TODO(stalcup): get rid of manually synthesized AST and replace it either with calls to static
+    // functions that vary only in their data arguments or else create source with a Generator.
     private void generateGwtOnLoad(List<JsFunction> entryFuncs, List<JsStatement> globalStmts) {
       /**
        * <pre>
        * var $entry = Impl.registerEntry();
-       * function gwtOnLoad(errFn, modName, modBase, softPermutationId){
-       *   $moduleName = modName;
-       *   $moduleBase = modBase;
-       *   CollapsedPropertyHolder.permutationId = softPermutationId;
-       *   if (errFn) {
-       *     try {
-       *       $entry(init)();
-       *     } catch(e) {
-       *       errFn(modName);
+       * // Stub gwtOnLoad at top level so that HtmlUnit can find it.
+       * // On first execution this will assign a value of null into gwtOnLoad.
+       * // It's value will actually be built inside of the following anonymous
+       * // function and subsequent executions will preserve the existing value.
+       * // Since gwtOnLoad is being varred, this will work in the global scope
+       * // as well as in speculative future scopes in which linkers might
+       * // choose to place the output.
+       * var gwtOnLoad = typeof gwtOnLoad === 'undefined' ? null : gwtOnLoad;
+       * // Create gwtOnLoad in function scope so the previousGwtOnLoad reference is preserved.
+       * (function() {
+       *   var previousGwtOnLoad = gwtOnLoad;
+       *   gwtOnLoad = function(errFn, modName, modBase, softPermutationId) {
+       *     if (previousGwtOnLoad) {
+       *       previousGwtOnLoad(errFn, modName, modBase, softPermutationId);
        *     }
-       *   } else {
-       *     $entry(init)();
+       *     $moduleName = modName;
+       *     $moduleBase = modBase;
+       *     CollapsedPropertyHolder.permutationId = softPermutationId;
+       *     if (errFn) {
+       *       try {
+       *         $entry(init)();
+       *       } catch(e) {
+       *         errFn(modName);
+       *       }
+       *     } else {
+       *       $entry(init)();
+       *     }
        *   }
-       * }
+       * }());
        * </pre>
        */
       SourceInfo sourceInfo = SourceOrigin.UNKNOWN;
 
+      // var $entry = Impl.registerEntry();
       JsName entryName = topScope.declareName("$entry");
       JsVar entryVar = new JsVar(sourceInfo, entryName);
       JsInvocation registerEntryCall = new JsInvocation(sourceInfo);
@@ -1975,44 +1998,103 @@ public class GenerateJavaScriptAST {
       entryVars.add(entryVar);
       globalStmts.add(entryVars);
 
+      // Stub gwtOnLoad at top level so that HtmlUnit can find it.
+      // var gwtOnLoad = typeof gwtOnLoad === 'undefined' ? null : gwtOnLoad;
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
-      JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope, gwtOnLoadName, true);
+      JsVar gwtOnLoadNameVar = new JsVar(sourceInfo, gwtOnLoadName);
+      gwtOnLoadNameVar.setInitExpr(new JsConditional(sourceInfo, new JsBinaryOperation(sourceInfo,
+          JsBinaryOperator.REF_EQ, new JsPrefixOperation(
+              sourceInfo, JsUnaryOperator.TYPEOF, gwtOnLoadName.makeRef(sourceInfo)),
+          new JsStringLiteral(sourceInfo, "undefined")), JsNullLiteral.INSTANCE,
+          gwtOnLoadName.makeRef(sourceInfo)));
+      JsVars gwtOnLoadNameVars = new JsVars(sourceInfo);
+      gwtOnLoadNameVars.add(gwtOnLoadNameVar);
+      globalStmts.add(gwtOnLoadNameVars);
+
+      // Create gwtOnLoad in function scope so the previousGwtOnLoad reference is preserved.
+      // (function() {
+      JsFunction createGwtOnLoadFunction = new JsFunction(sourceInfo, topScope);
+      JsBlock createGwtOnLoadBody = new JsBlock(sourceInfo);
+      createGwtOnLoadFunction.setBody(createGwtOnLoadBody);
+
+      // var previousGwtOnLoad = gwtOnLoad;
+      JsName previousGwtOnLoadName =
+          createGwtOnLoadFunction.getScope().declareName("previousGwtOnLoad");
+      JsVar previousGwtOnLoadNameVar = new JsVar(sourceInfo, previousGwtOnLoadName);
+      previousGwtOnLoadNameVar.setInitExpr(gwtOnLoadName.makeRef(sourceInfo));
+      JsVars previousGwtOnLoadNameVars = new JsVars(sourceInfo);
+      previousGwtOnLoadNameVars.add(previousGwtOnLoadNameVar);
+      createGwtOnLoadBody.getStatements().add(previousGwtOnLoadNameVars);
+
+      // gwtOnLoad = function(errFn, modName, modBase, softPermutationId) {
+      JsFunction gwtOnLoad = new JsFunction(sourceInfo, createGwtOnLoadFunction.getScope());
       gwtOnLoad.setArtificiallyRescued(true);
-      globalStmts.add(gwtOnLoad.makeStmt());
-      JsBlock body = new JsBlock(sourceInfo);
-      gwtOnLoad.setBody(body);
+      JsBlock gwtOnLoadFunctionBody = new JsBlock(sourceInfo);
+      gwtOnLoad.setBody(gwtOnLoadFunctionBody);
+      JsExpression gwtOnLoadAssignment =
+          createAssignment(gwtOnLoadName.makeRef(sourceInfo), gwtOnLoad);
+      createGwtOnLoadBody.getStatements().add(gwtOnLoadAssignment.makeStmt());
       JsScope fnScope = gwtOnLoad.getScope();
-      List<JsParameter> params = gwtOnLoad.getParameters();
+      List<JsParameter> gwtOnLoadParams = gwtOnLoad.getParameters();
       JsName errFn = fnScope.declareName("errFn");
       JsName modName = fnScope.declareName("modName");
       JsName modBase = fnScope.declareName("modBase");
       JsName softPermutationId = fnScope.declareName("softPermutationId");
-      params.add(new JsParameter(sourceInfo, errFn));
-      params.add(new JsParameter(sourceInfo, modName));
-      params.add(new JsParameter(sourceInfo, modBase));
-      params.add(new JsParameter(sourceInfo, softPermutationId));
-      JsExpression asg =
+      gwtOnLoadParams.add(new JsParameter(sourceInfo, errFn));
+      gwtOnLoadParams.add(new JsParameter(sourceInfo, modName));
+      gwtOnLoadParams.add(new JsParameter(sourceInfo, modBase));
+      gwtOnLoadParams.add(new JsParameter(sourceInfo, softPermutationId));
+
+      // if (previousGwtOnLoad) {
+      //   previousGwtOnLoad();
+      // }
+      JsIf previousGwtOnLoadIf = new JsIf(sourceInfo);
+      gwtOnLoadFunctionBody.getStatements().add(previousGwtOnLoadIf);
+      previousGwtOnLoadIf.setIfExpr(previousGwtOnLoadName.makeRef(sourceInfo));
+      JsInvocation previousGwtOnLoadCall = new JsInvocation(sourceInfo);
+      previousGwtOnLoadCall.setQualifier(previousGwtOnLoadName.makeRef(sourceInfo));
+      List<JsExpression> previousGwtOnLoadCallArguments = previousGwtOnLoadCall.getArguments();
+      previousGwtOnLoadCallArguments.add(errFn.makeRef(sourceInfo));
+      previousGwtOnLoadCallArguments.add(modName.makeRef(sourceInfo));
+      previousGwtOnLoadCallArguments.add(modBase.makeRef(sourceInfo));
+      previousGwtOnLoadCallArguments.add(softPermutationId.makeRef(sourceInfo));
+      previousGwtOnLoadIf.setThenStmt(previousGwtOnLoadCall.makeStmt());
+
+      // $moduleName = modName;
+      JsExpression moduleNameAssignment =
           createAssignment(topScope.findExistingUnobfuscatableName("$moduleName").makeRef(
               sourceInfo), modName.makeRef(sourceInfo));
-      body.getStatements().add(asg.makeStmt());
-      asg =
+      gwtOnLoadFunctionBody.getStatements().add(moduleNameAssignment.makeStmt());
+
+      // $moduleBase = modBase;
+      JsExpression moduleBaseAssignment =
           createAssignment(topScope.findExistingUnobfuscatableName("$moduleBase").makeRef(
               sourceInfo), modBase.makeRef(sourceInfo));
-      body.getStatements().add(asg.makeStmt());
+      gwtOnLoadFunctionBody.getStatements().add(moduleBaseAssignment.makeStmt());
 
       // Assignment to CollapsedPropertyHolder.permutationId only if it's used
+      // CollapsedPropertyHolder.permutationId = softPermutationId;
       JsName permutationIdFieldName =
           names.get(program.getIndexedField("CollapsedPropertyHolder.permutationId"));
       if (permutationIdFieldName != null) {
-        asg =
+        JsExpression permutationIdAssignment =
             createAssignment(permutationIdFieldName.makeRef(sourceInfo), softPermutationId
                 .makeRef(sourceInfo));
-        body.getStatements().add(asg.makeStmt());
+        gwtOnLoadFunctionBody.getStatements().add(permutationIdAssignment.makeStmt());
       }
 
+      // if (errFn) {
+      //   try {
+      //     $entry(init)();
+      //   } catch(e) {
+      //     errFn(modName);
+      //   }
+      // } else {
+      //   $entry(init)();
+      // }
       JsIf jsIf = new JsIf(sourceInfo);
-      body.getStatements().add(jsIf);
+      gwtOnLoadFunctionBody.getStatements().add(jsIf);
       jsIf.setIfExpr(errFn.makeRef(sourceInfo));
       JsTry jsTry = new JsTry(sourceInfo);
       jsIf.setThenStmt(jsTry);
@@ -2039,6 +2121,11 @@ public class GenerateJavaScriptAST {
       catchBlock.getStatements().add(errCall.makeStmt());
       errCall.setQualifier(errFn.makeRef(sourceInfo));
       errCall.getArguments().add(modName.makeRef(sourceInfo));
+
+      // }());
+      JsInvocation createGwtOnLoadCall = new JsInvocation(sourceInfo);
+      createGwtOnLoadCall.setQualifier(createGwtOnLoadFunction);
+      globalStmts.add(createGwtOnLoadCall.makeStmt());
     }
 
     private void generateImmortalTypes(JsVars globals) {
