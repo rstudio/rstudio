@@ -959,4 +959,15 @@ QString GwtCallback::getScrollingCompensationType()
    return QString::fromAscii("None");
 #endif
 }
+
+void GwtCallback::setBusy(bool)
+{
+#if defined(Q_WS_MACX)
+   // call AppNap apis for Mac (we use Cocoa on the Mac though so
+   // this codepath will never be hit)
+#endif
+}
+
+
+
 } // namespace desktop

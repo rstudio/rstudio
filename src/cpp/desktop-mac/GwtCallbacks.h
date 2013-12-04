@@ -20,6 +20,7 @@ enum MessageType
 
 @interface GwtCallbacks : NSObject {
    id<GwtCallbacksUIDelegate> uiDelegate_;
+   id<NSObject> busyActivity_;
 }
 
 // designated initializer

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
@@ -55,6 +56,9 @@ public class WorkbenchContext
          public void onBusy(BusyEvent event)
          {
             isServerBusy_ = event.isBusy();
+            
+            if (Desktop.isDesktop())
+               Desktop.getFrame().setBusy(isServerBusy_);
          } 
       });
       
