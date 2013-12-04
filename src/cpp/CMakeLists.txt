@@ -54,8 +54,11 @@ if(UNIX)
       endif()
       # Mavericks and later default to libc++, which is not compatible with the
       # older libstdc++
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
-      set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
+      if(CMAKE_SYSTEM_VERSION VERSION_GREATER 13.0.0 OR 
+         CMAKE_SYSTEM_VERSION VERSION_EQUAL 13.0.0)
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
+         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
+      endif()
    endif()
 
    # gcc hardending options (see: http://wiki.debian.org/Hardening)
