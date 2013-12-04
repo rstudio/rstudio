@@ -617,6 +617,40 @@ NSString* resolveAliasedPath(NSString* path)
    return boost::algorithm::starts_with(version, "10.9");
 }
 
+// On Mavericks we need to tell the OS that we are busy so that
+// AppNap doesn't kick in. Declare a local version of NSActivityOptions
+// so we can build this on non-Mavericks systems
+typedef NS_OPTIONS(uint64_t,
+RS_NSActivityOptions) {
+   RS_NSActivityIdleDisplaySleepDisabled = (1ULL << 40),
+   RS_NSActivityIdleSystemSleepDisabled = (1ULL << 20),
+   RS_NSActivitySuddenTerminationDisabled = (1ULL << 14),
+   RS_NSActivityAutomaticTerminationDisabled = (1ULL << 15),
+   RS_NSActivityUserInitiated = (0x00FFFFFFULL | RS_NSActivityIdleSystemSleepDisabled),
+   RS_NSActivityUserInitiatedAllowingIdleSystemSleep = (RS_NSActivityUserInitiated & ~RS_NSActivityIdleSystemSleepDisabled),
+   RS_NSActivityBackground = 0x000000FFULL,
+   RS_NSActivityLatencyCritical = 0xFF00000000ULL,
+};
+
+- (void) setBusy: (Boolean) busy
+{
+   id pi = [NSProcessInfo processInfo];
+   if ([pi respondsToSelector: @selector(beginActivityWithOptions:reason:)])
+   {
+      if (busy)
+      {
+         [pi performSelector: @selector(beginActivityWithOptions:reason:)
+                  withObject: [NSNumber numberWithInt:
+                         RS_NSActivityUserInitiatedAllowingIdleSystemSleep]
+                  withObject: @"R Computation"];
+      }
+      else
+      {
+         [pi performSelector: @selector(endActivity)];
+      }
+   }
+}
+
 - (NSString*) filterText: (NSString*) text
 {
    // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
@@ -747,6 +781,8 @@ NSString* resolveAliasedPath(NSString* path)
       return @"setViewerUrl";
    else if (sel == @selector(filterText:))
       return @"filterText";
+   else if (sel == @selector(setBusy:))
+      return @"setBusy";
   
    return nil;
 }
