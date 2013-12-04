@@ -53,11 +53,17 @@ if(UNIX)
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
       endif()
       # Mavericks and later default to libc++, which is not compatible with the
-      # older libstdc++
-      if(CMAKE_SYSTEM_VERSION VERSION_GREATER 13.0.0 OR 
-         CMAKE_SYSTEM_VERSION VERSION_EQUAL 13.0.0)
-         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
-         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++ -mmacosx-version-min=10.7")
+      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
+      # flags to enforce usage of the older library.
+
+      # Figure out what version of Mac OS X this is. Unfortunately 
+      # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
+      # version number another way. 
+      EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
       endif()
    endif()
 
