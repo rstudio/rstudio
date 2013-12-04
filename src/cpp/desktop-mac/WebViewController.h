@@ -4,8 +4,10 @@
 #import <Webkit/WebKit.h>
 
 #import "WebViewWithKeyEquiv.h"
+#import "GwtCallbacks.h"
 
-@interface WebViewController : NSWindowController<NSWindowDelegate> {
+@interface WebViewController :
+          NSWindowController<NSWindowDelegate,GwtCallbacksUIDelegate> {
    WebViewWithKeyEquiv* webView_;
    NSString* name_;
    NSURL* baseUrl_;
