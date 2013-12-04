@@ -24,6 +24,13 @@ import java.util.Properties;
  */
 public class About {
   /**
+   * @deprecated use {@link #getGwtVersionObject()} or
+   *             {@link #getGwtVersionNum()} instead.
+   */
+  @Deprecated
+  public static String GWT_VERSION_NUM;
+
+  /**
    * Tag used for text replacement of the SVN version (split up to avoid
    * replacing it here).
    */ 
@@ -64,6 +71,9 @@ public class About {
     } else {
       gwtVersion = new GwtVersion(tmp);
     }
+
+    // Initialize deprecated constant
+    GWT_VERSION_NUM = getGwtVersionNum();
   }
 
   /**
