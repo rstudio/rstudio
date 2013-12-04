@@ -57,6 +57,7 @@ NSString* resolveAliasedPath(NSString* path)
    if (self = [super init])
    {
       uiDelegate_ = uiDelegate;
+      busyActivity_ = nil;
    }
    return self;
 }
@@ -637,16 +638,18 @@ RS_NSActivityOptions) {
    id pi = [NSProcessInfo processInfo];
    if ([pi respondsToSelector: @selector(beginActivityWithOptions:reason:)])
    {
-      if (busy)
+      if (busy && busyActivity_ == nil)
       {
-         [pi performSelector: @selector(beginActivityWithOptions:reason:)
+         busyActivity_ = [[pi performSelector: @selector(beginActivityWithOptions:reason:)
                   withObject: [NSNumber numberWithInt:
                          RS_NSActivityUserInitiatedAllowingIdleSystemSleep]
-                  withObject: @"R Computation"];
+                  withObject: @"R Computation"] retain];
       }
-      else
+      else if (!busy && busyActivity_ != nil)
       {
-         [pi performSelector: @selector(endActivity)];
+         [pi performSelector: @selector(endActivity:) withObject: busyActivity_];
+         [busyActivity_ release];
+         busyActivity_ = nil;
       }
    }
 }
