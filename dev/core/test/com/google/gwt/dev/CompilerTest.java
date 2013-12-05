@@ -35,10 +35,10 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testAllValidArgs() {
-    assertProcessSuccess(argProcessor, "-logLevel", "DEBUG", "-style",
+    assertProcessSuccess(argProcessor, new String[] {"-logLevel", "DEBUG", "-style",
         "PRETTY", "-ea", "-XdisableAggressiveOptimization", "-gen", "myGen",
         "-war", "myWar", "-workDir", "myWork", "-extra", "myExtra",
-        "-localWorkers", "2", "-sourceLevel", "1.7", "c.g.g.h.H", "my.Module");
+        "-localWorkers", "2", "-sourceLevel", "1.7", "c.g.g.h.H", "my.Module"});
 
     assertEquals(new File("myGen").getAbsoluteFile(),
         options.getGenDir().getAbsoluteFile());
@@ -65,7 +65,7 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testDefaultArgs() {
-    assertProcessSuccess(argProcessor, "c.g.g.h.H");
+    assertProcessSuccess(argProcessor, new String[] {"c.g.g.h.H"});
 
     assertEquals(null, options.getGenDir());
     assertEquals(new File("war").getAbsoluteFile(),
@@ -89,9 +89,11 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testForbiddenArgs() {
-    assertProcessFailure(argProcessor, "-out", "www");
-    assertProcessFailure(argProcessor, "-sourceLevel", "ssss");
-    assertProcessFailure(argProcessor, "-sourceLevel", "1.5");
+    assertProcessFailure(argProcessor, "Unknown argument", new String[] {"-out", "www"});
+    assertProcessFailure(argProcessor, "Source level must be one of",
+        new String[] {"-sourceLevel", "ssss"});
+    assertProcessFailure(argProcessor, "Source level must be one of",
+        new String[] {"-sourceLevel", "1.5"});
   }
 
   /**
