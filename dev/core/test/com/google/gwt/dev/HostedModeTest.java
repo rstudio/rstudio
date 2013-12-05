@@ -1,12 +1,12 @@
 /*
  * Copyright 2009 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -46,11 +46,11 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testAllValidArgs() {
-    assertProcessSuccess(argProcessor, "-port", "8080", "-whitelist", "white",
+    assertProcessSuccess(argProcessor, new String[] {"-port", "8080", "-whitelist", "white",
         "-blacklist", "black", "-logLevel", "DEBUG", "-noserver", "-server",
         MySCL.class.getName(), "-gen", "myGen", "-war", "myWar", "-workDir",
         "myWork", "-extra", "myExtra", "-startupUrl", "http://www.google.com/",
-        "-startupUrl", "foo", "c.g.g.h.H", "my.Module");
+        "-startupUrl", "foo", "c.g.g.h.H", "my.Module"});
 
     assertNotNull(BrowserWidgetHostChecker.matchWhitelisted("white"));
     assertNotNull(BrowserWidgetHostChecker.matchBlacklisted("black"));
@@ -93,7 +93,7 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testNoServer() {
-    assertProcessSuccess(argProcessor, "-noserver", "c.g.g.h.H");
+    assertProcessSuccess(argProcessor, new String[] {"-noserver", "c.g.g.h.H"});
 
     assertTrue(options.isNoServer());
     assertNull(options.getServletContainerLauncher());
@@ -103,8 +103,8 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testNoServerOverridesServer() {
-    assertProcessSuccess(argProcessor, "-server", MySCL.class.getName(),
-        "-noserver", "c.g.g.h.H");
+    assertProcessSuccess(argProcessor,
+        new String[] {"-server", MySCL.class.getName(), "-noserver", "c.g.g.h.H"});
 
     assertTrue(options.isNoServer());
     assertSame(MySCL.class, options.getServletContainerLauncher().getClass());
@@ -114,7 +114,7 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testDefaultArgs() {
-    assertProcessSuccess(argProcessor, "c.g.g.h.H");
+    assertProcessSuccess(argProcessor, new String[] {"c.g.g.h.H"});
 
     assertEquals(null, options.getGenDir());
     assertEquals(new File("war").getAbsoluteFile(),
@@ -142,6 +142,6 @@ public class HostedModeTest extends ArgProcessorTestBase {
   }
 
   public void testForbiddenArgs() {
-    assertProcessFailure(argProcessor, "-out", "www");
+    assertProcessFailure(argProcessor, "Unknown argument", new String[] {"-out", "www"});
   }
 }

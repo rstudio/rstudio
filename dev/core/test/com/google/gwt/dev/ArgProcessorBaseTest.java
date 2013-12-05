@@ -44,16 +44,17 @@ public class ArgProcessorBaseTest extends ArgProcessorTestBase {
   }
 
   public void testOptionOrderIsPrecedenceArgs() {
-    assertProcessSuccess(argProcessor);
+    assertProcessSuccess(argProcessor, new String[0]);
     assertEquals(9, options.getOptimizationLevel());
 
-    assertProcessSuccess(argProcessor, "-optimize", "5");
+    assertProcessSuccess(argProcessor, new String[] {"-optimize", "5"});
     assertEquals(5, options.getOptimizationLevel());
 
-    assertProcessSuccess(argProcessor, "-optimize", "5", "-draftCompile");
+    assertProcessSuccess(argProcessor, new String[] {"-optimize", "5", "-draftCompile"});
     assertEquals(0, options.getOptimizationLevel());
 
-    assertProcessSuccess(argProcessor, "-optimize", "5", "-draftCompile", "-optimize", "9");
+    assertProcessSuccess(argProcessor,
+        new String[] {"-optimize", "5", "-draftCompile", "-optimize", "9"});
     assertEquals(9, options.getOptimizationLevel());
   }
 }
