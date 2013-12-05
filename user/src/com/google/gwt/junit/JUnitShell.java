@@ -93,6 +93,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.Servlet;
+
 /**
  * This class is responsible for hosting JUnit test case execution. There are
  * three main pieces to the JUnit system.
@@ -1144,9 +1146,12 @@ public class JUnitShell extends DevMode {
       path = '/' + module.getName() + path;
       if (!servletClass.equals(loadedServletsByPath.get(path))) {
         try {
-          wac.addServlet(servletClass, path);
+          // We should load the class ourselves because otherwise if Jetty tries and fails to load
+          // by itself, it will be left in a broken state (looks like this is fixed in Jetty 9).
+          Class<? extends Servlet> clazz = wac.loadClass(servletClass).asSubclass(Servlet.class);
+          wac.addServlet(clazz, path);
           loadedServletsByPath.put(path, servletClass);
-        } catch (Exception e) {
+        } catch (ClassNotFoundException e) {
           getTopLogger().log(
               TreeLogger.WARN,
               "Failed to load servlet class '" + servletClass
