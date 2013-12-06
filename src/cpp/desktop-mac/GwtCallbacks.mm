@@ -140,8 +140,6 @@ NSString* resolveAliasedPath(NSString* path)
 {
    dir = resolveAliasedPath(dir);
    
-   NSURL *pathAndFile = [NSURL fileURLWithPath:
-                         [dir stringByStandardizingPath]];
    NSSavePanel *save = [NSSavePanel savePanel];
    
    BOOL hasDefaultExtension = defaultExtension != nil &&
@@ -168,10 +166,21 @@ NSString* resolveAliasedPath(NSString* path)
          filename = filePath.filename();
       [save setNameFieldStringValue:
                   [NSString stringWithUTF8String: filename.c_str()]];
+
+      // In OSX 10.6, leaving the filename as part of the directory (in the
+      // argument to setDirectoryURL below) causes the file to be treated as
+      // though it were a directory itself.  Remove it to avoid confusion.
+      NSRange idx = [dir rangeOfString: @"/"
+                               options: NSBackwardsSearch];
+      if (idx.location != NSNotFound)
+         dir = [dir substringToIndex: idx.location];
    }
 
+   NSURL *path = [NSURL fileURLWithPath:
+                  [dir stringByStandardizingPath]];
+
    [save setTitle: caption];
-   [save setDirectoryURL: pathAndFile];
+   [save setDirectoryURL: path];
    return [self runSheetFileDialog: save];
 }
 
