@@ -48,6 +48,8 @@
             <jvmarg value="-Xmx512M" />
             <module />
             <arg value="-strict" />
+            <arg value="-sourceLevel" />
+            <arg value="${javac.source}" />
             <arg value="-out" />
             <arg value="${project.build}/bin" />
           </java>
