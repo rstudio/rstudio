@@ -571,6 +571,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (endState == "qstring" || endState == "qqstring")
          return "";
 
+      // TODO: optimize
+      var tabAsSpaces = Array(tabSize + 1).join(" ");
+
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
       // the real line with the `line` param, and when we finish with this
@@ -742,7 +745,34 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   buffer += tab;
                for (var j = 0; j < spacesToAdd; j++)
                   buffer += " ";
-               return leadingIndent + buffer + continuationIndent;
+               var result = leadingIndent + buffer;
+
+               // Sometimes even though verticallyAlignFunctionArgs is used,
+               // the user chooses to manually "break the rules" and use the
+               // non-aligned style, like so:
+               //
+               // plot(foo,
+               //   bar, baz,
+               //
+               // Without the below loop, hitting Enter after "baz," causes
+               // the cursor to end up aligned with foo. The loop simply
+               // replaces the indentation with the minimal indentation.
+               //
+               // TODO: Perhaps we can skip the above few lines of code if
+               // there are other lines present
+               var thisIndent;
+               for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
+                  // If a line contains only whitespace, it doesn't count
+                  if (!/[^\s]/.test(this.$getLine(i)))
+                     continue;
+                  // TODO: If a line is a continuation of a multi-line string,
+                  // its indentation doesn't count
+                  thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
+                  if (thisIndent.length < result.length)
+                     result = thisIndent;
+               }
+
+               return result + continuationIndent;
             }
          }
 
