@@ -1,5 +1,3 @@
-
-
 #import <Cocoa/Cocoa.h>
 
 #import <WebKit/WebFrame.h>
@@ -458,13 +456,16 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
 - (BOOL) performKeyEquivalent: (NSEvent *)theEvent
 {
    NSString* chr = [theEvent charactersIgnoringModifiers];
-   NSUInteger mod = [theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+   // Get all the modifier flags except caps lock, which we don't care about for
+   // the sake of these comparisons
+   NSUInteger mod = [theEvent modifierFlags] &
+         (NSDeviceIndependentModifierFlagsMask ^ NSAlphaShiftKeyMask);
    if ([chr isEqualToString: @"w"] && mod == NSCommandKeyMask)
    {
       [[webView_ window] performClose: self];
       return YES;
    }
-   
+
    // Without these, secondary/satellite windows don't respond to clipboard shortcuts
    if ([chr isEqualToString: @"x"] && mod == NSCommandKeyMask)
    {
@@ -480,6 +481,14 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    {
       [webView_ paste: self];
       return YES;
+   }
+   if ([chr isEqualToString: @"a"] && mod == NSCommandKeyMask)
+   {
+      if ([webView_ respondsToSelector: @selector(selectAll:)])
+         [webView_ selectAll: self];
+      
+      // ACE needs to handle this event to do custom logic for Select All, so
+      // continue to process the event as though it were unhandled here.
    }
    
    return NO;

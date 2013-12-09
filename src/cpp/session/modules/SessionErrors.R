@@ -28,7 +28,7 @@
    inSource <- FALSE
 
    # When this handler is invoked for an unhandled error happening at
-   # the top level, there four calls on the stack:
+   # the top level, there are four calls on the stack:
    # 1. This function
    # 2. The anonymous error handler (set via options below)
    # 3. The error invoker (e.g. stop)
@@ -65,7 +65,7 @@
       }
       else
          srcref <- rep(0L, 8)
-      c (list(func = .rs.scalar(deparse(call)),
+      c (list(func = .rs.scalar(paste(deparse(call), collapse="\n")),
               file = .rs.scalar(srcfile)),
          .rs.lineDataList(srcref))
    })

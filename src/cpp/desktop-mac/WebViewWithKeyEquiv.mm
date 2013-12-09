@@ -24,8 +24,10 @@
 
 - (BOOL) performKeyEquivalent: (NSEvent *) theEvent
 {
-   if (keyEquivDelegate_ != nil && [keyEquivDelegate_ performKeyEquivalent: theEvent])
-      return YES;
+   if (keyEquivDelegate_ != nil)
+   {
+      return [keyEquivDelegate_ performKeyEquivalent: theEvent];
+   }
    return [super performKeyEquivalent: theEvent];
 }
 

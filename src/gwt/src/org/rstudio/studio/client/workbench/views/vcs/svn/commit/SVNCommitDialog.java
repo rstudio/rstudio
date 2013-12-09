@@ -120,6 +120,8 @@ public class SVNCommitDialog extends ModalDialogBase
          }
       });
 
+      message_.getElement().setAttribute("spellcheck", "false");
+      
       if (!StringUtil.isNullOrEmpty(commitDraft_))
          message_.setText(commitDraft_);
    }

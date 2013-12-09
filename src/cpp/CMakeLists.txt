@@ -42,8 +42,8 @@ if(UNIX)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
-   # if present, set osx deployment target variables from environment vars
    if(APPLE)
+      # if present, set osx deployment target variables from environment vars
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
          set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
          message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
@@ -51,6 +51,19 @@ if(UNIX)
       if(NOT $ENV{CMAKE_OSX_DEPLOYMENT_TARGET} STREQUAL "")
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+      endif()
+      # Mavericks and later default to libc++, which is not compatible with the
+      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
+      # flags to enforce usage of the older library.
+
+      # Figure out what version of Mac OS X this is. Unfortunately 
+      # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
+      # version number another way. 
+      EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
       endif()
    endif()
 

@@ -57,6 +57,7 @@ NSString* resolveAliasedPath(NSString* path)
    if (self = [super init])
    {
       uiDelegate_ = uiDelegate;
+      busyActivity_ = nil;
    }
    return self;
 }
@@ -139,8 +140,6 @@ NSString* resolveAliasedPath(NSString* path)
 {
    dir = resolveAliasedPath(dir);
    
-   NSURL *pathAndFile = [NSURL fileURLWithPath:
-                         [dir stringByStandardizingPath]];
    NSSavePanel *save = [NSSavePanel savePanel];
    
    BOOL hasDefaultExtension = defaultExtension != nil &&
@@ -167,10 +166,21 @@ NSString* resolveAliasedPath(NSString* path)
          filename = filePath.filename();
       [save setNameFieldStringValue:
                   [NSString stringWithUTF8String: filename.c_str()]];
+
+      // In OSX 10.6, leaving the filename as part of the directory (in the
+      // argument to setDirectoryURL below) causes the file to be treated as
+      // though it were a directory itself.  Remove it to avoid confusion.
+      NSRange idx = [dir rangeOfString: @"/"
+                               options: NSBackwardsSearch];
+      if (idx.location != NSNotFound)
+         dir = [dir substringToIndex: idx.location];
    }
 
+   NSURL *path = [NSURL fileURLWithPath:
+                  [dir stringByStandardizingPath]];
+
    [save setTitle: caption];
-   [save setDirectoryURL: pathAndFile];
+   [save setDirectoryURL: path];
    return [self runSheetFileDialog: save];
 }
 
@@ -617,6 +627,42 @@ NSString* resolveAliasedPath(NSString* path)
    return boost::algorithm::starts_with(version, "10.9");
 }
 
+// On Mavericks we need to tell the OS that we are busy so that
+// AppNap doesn't kick in. Declare a local version of NSActivityOptions
+// so we can build this on non-Mavericks systems
+typedef NS_OPTIONS(uint64_t,
+RS_NSActivityOptions) {
+   RS_NSActivityIdleDisplaySleepDisabled = (1ULL << 40),
+   RS_NSActivityIdleSystemSleepDisabled = (1ULL << 20),
+   RS_NSActivitySuddenTerminationDisabled = (1ULL << 14),
+   RS_NSActivityAutomaticTerminationDisabled = (1ULL << 15),
+   RS_NSActivityUserInitiated = (0x00FFFFFFULL | RS_NSActivityIdleSystemSleepDisabled),
+   RS_NSActivityUserInitiatedAllowingIdleSystemSleep = (RS_NSActivityUserInitiated & ~RS_NSActivityIdleSystemSleepDisabled),
+   RS_NSActivityBackground = 0x000000FFULL,
+   RS_NSActivityLatencyCritical = 0xFF00000000ULL,
+};
+
+- (void) setBusy: (Boolean) busy
+{
+   id pi = [NSProcessInfo processInfo];
+   if ([pi respondsToSelector: @selector(beginActivityWithOptions:reason:)])
+   {
+      if (busy && busyActivity_ == nil)
+      {
+         busyActivity_ = [[pi performSelector: @selector(beginActivityWithOptions:reason:)
+                  withObject: [NSNumber numberWithInt:
+                         RS_NSActivityUserInitiatedAllowingIdleSystemSleep]
+                  withObject: @"R Computation"] retain];
+      }
+      else if (!busy && busyActivity_ != nil)
+      {
+         [pi performSelector: @selector(endActivity:) withObject: busyActivity_];
+         [busyActivity_ release];
+         busyActivity_ = nil;
+      }
+   }
+}
+
 - (NSString*) filterText: (NSString*) text
 {
    // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
@@ -747,6 +793,8 @@ NSString* resolveAliasedPath(NSString* path)
       return @"setViewerUrl";
    else if (sel == @selector(filterText:))
       return @"filterText";
+   else if (sel == @selector(setBusy:))
+      return @"setBusy";
   
    return nil;
 }

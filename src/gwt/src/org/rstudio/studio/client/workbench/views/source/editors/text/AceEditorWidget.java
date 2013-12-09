@@ -18,6 +18,7 @@ import java.util.ArrayList;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
@@ -102,7 +104,23 @@ public class AceEditorWidget extends Composite
               return;
            }
            
-           toggleBreakpointAtPosition(arg.getDocumentPosition());            
+           NativeEvent evt = arg.getNativeEvent();
+           
+           // right-clicking shouldn't set a breakpoint
+           if (evt.getButton() != NativeEvent.BUTTON_LEFT) 
+           {
+              return;
+           }
+           
+           // make sure that the click was in the left half of the element--
+           // clicking on the line number itself (or the gutter near the 
+           // text) shouldn't set a breakpoint.
+           if (evt.getClientX() < 
+               (targetElement.getAbsoluteLeft() + 
+                     (targetElement.getClientWidth() / 2))) 
+           {
+              toggleBreakpointAtPosition(arg.getDocumentPosition());            
+           }
         }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()

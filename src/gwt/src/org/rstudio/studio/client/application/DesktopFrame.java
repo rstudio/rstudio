@@ -126,4 +126,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    boolean isOSXMavericks();
 
    String getScrollingCompensationType();
+   
+   void setBusy(boolean busy);
 }
