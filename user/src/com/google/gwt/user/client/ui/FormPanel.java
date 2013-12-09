@@ -213,7 +213,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents, FormPanel
   interface IFrameTemplate extends SafeHtmlTemplates {
     static final IFrameTemplate INSTANCE = GWT.create(IFrameTemplate.class);
 
-    @Template("<iframe src=\"javascript:''\" name='{0}' "
+    @Template("<iframe src=\"javascript:''\" name='{0}' tabindex='-1' "
         + "style='position:absolute;width:0;height:0;border:0'>")
     SafeHtml get(String name);
   }
