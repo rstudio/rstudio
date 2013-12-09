@@ -747,6 +747,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   buffer += " ";
                var result = leadingIndent + buffer;
 
+               // Compute the size of the indent in spaces (e.g. if a tab
+               // is 4 spaces, and result is "\t\t ", the size is 9)
+               var resultSize = result.replace("\t", tabAsSpaces).length;
+
                // Sometimes even though verticallyAlignFunctionArgs is used,
                // the user chooses to manually "break the rules" and use the
                // non-aligned style, like so:
@@ -765,11 +769,17 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   // If a line contains only whitespace, it doesn't count
                   if (!/[^\s]/.test(this.$getLine(i)))
                      continue;
-                  // TODO: If a line is a continuation of a multi-line string,
-                  // its indentation doesn't count
+                  // If this line is is a continuation of a multi-line string, 
+                  // ignore it.
+                  var rowEndState = this.$endStates[i-1];
+                  if (rowEndState === "qstring" || rowEndState === "qqstring") 
+                     continue;
                   thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
-                  if (thisIndent.length < result.length)
+                  thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                  if (thisIndentSize < resultSize) {
                      result = thisIndent;
+                     resultSize = thisIndentSize;
+                  }
                }
 
                return result + continuationIndent;
