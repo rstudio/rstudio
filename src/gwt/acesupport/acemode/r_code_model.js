@@ -571,6 +571,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (endState == "qstring" || endState == "qqstring")
          return "";
 
+      // TODO: optimize
+      var tabAsSpaces = Array(tabSize + 1).join(" ");
+
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
       // the real line with the `line` param, and when we finish with this
@@ -742,7 +745,44 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   buffer += tab;
                for (var j = 0; j < spacesToAdd; j++)
                   buffer += " ";
-               return leadingIndent + buffer + continuationIndent;
+               var result = leadingIndent + buffer;
+
+               // Compute the size of the indent in spaces (e.g. if a tab
+               // is 4 spaces, and result is "\t\t ", the size is 9)
+               var resultSize = result.replace("\t", tabAsSpaces).length;
+
+               // Sometimes even though verticallyAlignFunctionArgs is used,
+               // the user chooses to manually "break the rules" and use the
+               // non-aligned style, like so:
+               //
+               // plot(foo,
+               //   bar, baz,
+               //
+               // Without the below loop, hitting Enter after "baz," causes
+               // the cursor to end up aligned with foo. The loop simply
+               // replaces the indentation with the minimal indentation.
+               //
+               // TODO: Perhaps we can skip the above few lines of code if
+               // there are other lines present
+               var thisIndent;
+               for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
+                  // If a line contains only whitespace, it doesn't count
+                  if (!/[^\s]/.test(this.$getLine(i)))
+                     continue;
+                  // If this line is is a continuation of a multi-line string, 
+                  // ignore it.
+                  var rowEndState = this.$endStates[i-1];
+                  if (rowEndState === "qstring" || rowEndState === "qqstring") 
+                     continue;
+                  thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
+                  thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                  if (thisIndentSize < resultSize) {
+                     result = thisIndent;
+                     resultSize = thisIndentSize;
+                  }
+               }
+
+               return result + continuationIndent;
             }
          }
 

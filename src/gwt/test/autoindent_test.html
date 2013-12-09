@@ -25,173 +25,207 @@
 
 <h2 style="margin-top: 250px">Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
-<ol>
-<li><pre expected="2">
+<ol id="testcontainer" style="display: none;">
+<li><pre data-expected="2">
 doPlot &lt;- function()
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 doPlot &lt;- function() {
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   doPlot &lt;- function() {
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 doPlot &lt;- function()
 {
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 plot(
 </pre></li>
-<li><pre expected="5">
+<li><pre data-expected="2" data-expected-vertical-args="5">
 plot(x,
 </pre></li>
-<li><pre expected="5">
+<li><pre data-expected="2" data-expected-vertical-args="5">
 plot(x,
      y,
 </pre></li>
-<li><pre expected="7">
+<li><pre data-expected="7">
 plot(x,
      c(foo,
 </pre></li>
-<li><pre expected="5">
+<li><pre data-expected="2" data-expected-vertical-args="5">
 plot(x,
      c(foo,
        bar),
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 plot(
   x,
   c(foo,
     bar),
 </pre></li>
-<li><pre expected="0">
+<li><pre data-expected="0">
 plot(x, c(foo, bar))
 </pre></li>
-<li><pre expected="0">
+<li><pre data-expected="0">
 plot(
   x, c(foo, bar))
 </pre></li>
-<li><pre expected="0">
+<li><pre data-expected="0">
 plot(x,
      c(foo, bar))
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
   plot(x,
        c(foo, bar))
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   if (foo())
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   if (foo())
     bar
   else
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   if (foo())
     bar
   else
 # annoyingly placed comment
 </pre></li>
-<li><pre expected="0">
+<li><pre data-expected="0">
 if (foo())
   bar
 else NULL
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
                   # annoyingly placed comment
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1) NULL
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1) ()
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1)
   {
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 function() {
   for (i = 0;
        i &lt; (20 * intervals);
        i += 1) {
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   if (x) {
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   if (foo(
 </pre></li>
-<li><pre expected="6">
+<li><pre data-expected="6">
   if (foo(
         bar),
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
   while (foo())
     NULL
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
   while (foo())
   {
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
   # Invalid parse tree
   while (foo())
   {
     foo (()
   }
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
   repeat
     foo()
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 function() {
   repeat
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 function() {
   repeat {
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 5 *
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 # One expression continued over more than two lines
 5 ~
   5 +
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 else
   5 +
 </pre></li>
-<li><pre expected="4">
+<li><pre data-expected="4">
 if (foo())
   5 +
 </pre></li>
-<li><pre expected="2">
+<li><pre data-expected="2">
 xyplot(ysim ~ xsim) +
   layer(panel.ablineq(lm(y ~ x), r.sq = TRUE, rot = TRUE,
                       at = 0.8, pos = 3), style = 1) +
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b=2, 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b=2 + 3 + 
+    4, 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  b="Multi line
+strings are evil" 
+</pre></li>
+<li><pre data-expected="2">
+verylongfunction(a=1,
+  "Single line strings are OK"
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction(a=1,
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction("Multi 
+line strings are evil"
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="17">
+verylongfunction(x=1
+
+
+</pre></li>
+<li><pre data-expected="2" data-expected-vertical-args="3">
+verylongfunction(x=1
+   # I'm about to document an arg
 </pre></li>
 </ol>
 
@@ -201,7 +235,7 @@ var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
 require('mode/auto_brace_insert').setInsertMatching(true);
 
-function doIndentTest(el) {
+function doIndentTest(el, state) {
   var doc = new Document('');
   var mode = new RMode(false, doc);
   var rCodeModel = new RCodeModel(doc, mode.$tokenizer);
@@ -214,7 +248,13 @@ function doIndentTest(el) {
                                             "  ",
                                             2);
   el.appendChild(document.createTextNode(indent + "|"));
-  var expected = el.getAttribute("expected");
+  var attrName = "data-expected"; 
+  if (state.length > 0 && 
+      el.getAttribute(attrName + "-" + state)) 
+  {
+     attrName += ("-" + state);
+  }
+  var expected = el.getAttribute(attrName);
   if (expected == indent.length + "")
   {
     el.style.backgroundColor = '#BFB';
@@ -228,22 +268,40 @@ function doIndentTest(el) {
 }
 
 var test = document.getElementById("runme");
-var pres = document.getElementsByTagName("pre");
+var container = document.getElementById("testcontainer");
 var passed = 0, failed = 0;
-for (var i = 0; i < pres.length; i++)
+var states = [ "", "vertical-args" ];
+for (var i = 0; i < states.length; i++) 
 {
-  if (!test)
-  {
-    if (doIndentTest(pres[i]))
-      passed++;
-    else
-      failed++;
-  }
-  else
-  {
-    if (pres[i] != test)
-      pres[i].style.display = 'none';
-  }
+   // Set up the state to be tested
+   require('mode/r_code_model').setVerticallyAlignFunctionArgs(
+      states[i] === "vertical-args");
+   // Clone the tests for the new state
+   var testnode = container.cloneNode(true);
+   var header = document.createElement("h2");
+   header.innerText = "Test " + i + (
+      states[i].length > 0 ? 
+         ": " + states[i] : 
+         "");
+   container.parentNode.appendChild(header);
+   container.parentNode.appendChild(testnode);
+   testnode.style.display = "block";
+   pres = testnode.getElementsByTagName("pre");
+   for (var j = 0; j < pres.length; j++)
+   {
+     if (!test)
+     {
+       if (doIndentTest(pres[j], states[i]))
+         passed++;
+       else
+         failed++;
+     }
+     else
+     {
+       if (pres[j] != test)
+         pres[j].style.display = 'none';
+     }
+   }
 }
 if (test)
 {
