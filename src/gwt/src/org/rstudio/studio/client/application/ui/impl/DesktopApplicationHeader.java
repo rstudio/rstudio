@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -56,9 +55,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -174,24 +170,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
                                    pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
-
-      // 1823: invalid command key sequences still result in characters
-      //       inserted in the editor
-      if (BrowseCap.hasMetaKey())
-      {
-         Event.addNativePreviewHandler(new NativePreviewHandler()
-         {
-            @Override
-            public void onPreviewNativeEvent(NativePreviewEvent event)
-            {
-               if (event.getTypeInt() == Event.ONKEYPRESS &&
-                   event.getNativeEvent().getMetaKey())
-               {
-                  event.getNativeEvent().preventDefault();
-               }
-            }
-         });
-      }
    }
    
    public void showToolbar(boolean showToolbar)
