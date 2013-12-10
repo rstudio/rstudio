@@ -100,7 +100,7 @@ class Recompiler {
     try {
       CompilerOptions compilerOptions = new CompilerOptionsImpl(
           compileDir, options.getModuleNames(), options.getSourceLevel(),
-          options.enforceStrictResources());
+          options.enforceStrictResources(), options.getLogLevel());
       compilerContext = compilerContextBuilder.options(compilerOptions).build();
       ModuleDef module = loadModule(compileLogger, bindingProperties);
 
@@ -109,7 +109,7 @@ class Recompiler {
       moduleName.set(newModuleName);
       compilerOptions = new CompilerOptionsImpl(
           compileDir, Lists.newArrayList(newModuleName), options.getSourceLevel(),
-          options.enforceStrictResources());
+          options.enforceStrictResources(), options.getLogLevel());
       compilerContext = compilerContextBuilder.options(compilerOptions).build();
 
       success = new Compiler(compilerOptions).run(compileLogger, module);

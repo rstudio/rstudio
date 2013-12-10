@@ -34,13 +34,15 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final boolean strictResources;
+  private final TreeLogger.Type logLevel;
 
   CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
-      boolean strictResources) {
+      boolean strictResources, TreeLogger.Type logLevel) {
     this.compileDir = compileDir;
     this.moduleNames = Lists.newArrayList(moduleNames);
     this.sourceLevel = sourceLevel;
     this.strictResources = strictResources;
+    this.logLevel = logLevel;
   }
 
   @Override
@@ -83,7 +85,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public TreeLogger.Type getLogLevel() {
-    return TreeLogger.Type.WARN;
+    return logLevel;
   }
 
   @Override
