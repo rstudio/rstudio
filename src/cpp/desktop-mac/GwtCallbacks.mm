@@ -630,8 +630,8 @@ NSString* resolveAliasedPath(NSString* path)
 // On Mavericks we need to tell the OS that we are busy so that
 // AppNap doesn't kick in. Declare a local version of NSActivityOptions
 // so we can build this on non-Mavericks systems
-typedef NS_OPTIONS(uint64_t,
-RS_NSActivityOptions) {
+enum RS_NSActivityOptions : uint64_t
+{
    RS_NSActivityIdleDisplaySleepDisabled = (1ULL << 40),
    RS_NSActivityIdleSystemSleepDisabled = (1ULL << 20),
    RS_NSActivitySuddenTerminationDisabled = (1ULL << 14),
