@@ -11,7 +11,7 @@
 
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.5.1</gwtVersion>
+    <gwtVersion>2.6.0</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
@@ -35,7 +35,7 @@
   </repositories>
 
   <dependencies>
-    <!-- Google Web Toolkit (GWT) -->
+    <!-- GWT -->
 
     <dependency>
       <groupId>com.google.gwt</groupId>
@@ -188,8 +188,8 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <!-- TODO: Update version to 2.5.0 once gwt-maven-plugin 2.5.0 final is released (post-GWT 2.5.0) -->
-        <version>2.5.0-rc1</version>
+        <!-- TODO: Update version to 2.6.0 once gwt-maven-plugin 2.6.0 final is released (post-GWT 2.6.0) -->
+        <version>2.6.0-rc3</version>
         <dependencies>
           <dependency>
             <groupId>com.google.gwt</groupId>
@@ -199,6 +199,11 @@
           <dependency>
             <groupId>com.google.gwt</groupId>
             <artifactId>gwt-dev</artifactId>
+            <version>${gwtVersion}</version>
+          </dependency>
+          <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-codeserver</artifactId>
             <version>${gwtVersion}</version>
           </dependency>
         </dependencies>
