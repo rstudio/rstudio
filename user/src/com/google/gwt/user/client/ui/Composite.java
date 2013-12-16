@@ -88,6 +88,8 @@ public abstract class Composite extends Widget implements IsRenderable {
     if (renderable != null) {
       return renderable.render(stamper);
     } else {
+      checkInit();
+
       HtmlSpanBuilder spanBuilder = HtmlBuilderFactory.get()
           .createSpanBuilder();
       stamper.stamp(spanBuilder).end();
@@ -115,6 +117,15 @@ public abstract class Composite extends Widget implements IsRenderable {
   }
 
   /**
+   * Check if the composite is initialized.
+   */
+  private void checkInit() {
+    if (widget == null) {
+      throw new IllegalStateException("initWidget() is not called yet");
+    }
+  }
+
+  /**
    * Sets the widget to be wrapped by the composite. The wrapped widget must be
    * set before calling any {@link Widget} methods on this object, or adding it
    * to a panel. This method may only be called once for a given composite.
@@ -126,6 +137,10 @@ public abstract class Composite extends Widget implements IsRenderable {
     if (this.widget != null) {
       throw new IllegalStateException("Composite.initWidget() may only be "
           + "called once.");
+    }
+
+    if (widget == null) {
+      throw new NullPointerException("widget cannot be null");
     }
 
     if (widget instanceof IsRenderable) {
@@ -154,6 +169,8 @@ public abstract class Composite extends Widget implements IsRenderable {
 
   @Override
   protected void onAttach() {
+    checkInit();
+
     if (!isOrWasAttached()) {
       widget.sinkEvents(eventsToSink);
       eventsToSink = -1;
