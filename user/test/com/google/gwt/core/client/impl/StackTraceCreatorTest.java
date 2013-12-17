@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
 import com.google.gwt.core.client.impl.StackTraceCreator.CollectorChrome;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -150,7 +151,7 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
   private static JsArrayString sample() {
     if (GWT.isScript()) {
-      return StackTraceCreator.createStackTrace();
+      return GWT.<Collector> create(Collector.class).collect();
     } else {
       return JavaScriptObject.createArray().cast();
     }
@@ -167,19 +168,19 @@ public class StackTraceCreatorTest extends GWTTestCase {
 
   public void testExtractName() {
     assertEquals("anonymous",
-        StackTraceCreator.extractNameFromToString("function(){}"));
+        new Collector().extractName("function(){}"));
     assertEquals("anonymous",
-        StackTraceCreator.extractNameFromToString("function (){}"));
+        new Collector().extractName("function (){}"));
     assertEquals("anonymous",
-        StackTraceCreator.extractNameFromToString("  function (){}"));
+        new Collector().extractName("  function (){}"));
     assertEquals("anonymous",
-        StackTraceCreator.extractNameFromToString("function  (){}"));
+        new Collector().extractName("function  (){}"));
     assertEquals("foo",
-        StackTraceCreator.extractNameFromToString("function foo(){}"));
+        new Collector().extractName("function foo(){}"));
     assertEquals("foo",
-        StackTraceCreator.extractNameFromToString("function foo (){}"));
+        new Collector().extractName("function foo (){}"));
     assertEquals("foo",
-        StackTraceCreator.extractNameFromToString("  function foo (){}"));
+        new Collector().extractName("  function foo (){}"));
   }
 
   public void testChromeExtractName() {

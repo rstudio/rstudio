@@ -85,7 +85,7 @@ public class StackTraceCreator {
     }
 
     public void fillInStackTrace(Throwable t) {
-      JsArrayString stack = StackTraceCreator.createStackTrace();
+      JsArrayString stack = collect();
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
         stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
@@ -109,19 +109,26 @@ public class StackTraceCreator {
      * Package-access for testing.
      */
     protected String extractName(String fnToString) {
-      return extractNameFromToString(fnToString);
-    }
-
-    /**
-     * Raise an exception and return it.
-     */
-    protected native JavaScriptObject makeException() /*-{
-      try {
-        null.a();
-      } catch (e) {
-        return e;
+      String toReturn = "";
+      fnToString = fnToString.trim();
+      int index = fnToString.indexOf("(");
+      int start = fnToString.startsWith("function") ? 8 : 0;
+      if (index == -1) {
+        // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
+        index = fnToString.indexOf('@');
+        /**
+         * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
+         * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
+         * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
+         * of the name.
+         */
+        start = fnToString.startsWith("function ") ? 9 : 0;
       }
-    }-*/;
+      if (index != -1) {
+        toReturn = fnToString.substring(start, index).trim();
+      }
+      return toReturn.length() > 0 ? toReturn : ANONYMOUS;
+    }
   }
 
   /**
@@ -204,6 +211,17 @@ public class StackTraceCreator {
       return splice(inferFrom(makeException()), toSplice());
     }
 
+    /**
+     * Raise an exception and return it.
+     */
+    protected native JavaScriptObject makeException() /*-{
+      try {
+        null.a();
+      } catch (e) {
+        return e;
+      }
+    }-*/;
+
     @Override
     public JsArrayString inferFrom(Object e) {
       JavaScriptObject jso = (e instanceof JavaScriptObject) ? (JavaScriptObject) e : null;
@@ -271,7 +289,7 @@ public class StackTraceCreator {
 
     @Override
     public void fillInStackTrace(Throwable t) {
-      JsArrayString stack = StackTraceCreator.createStackTrace();
+      JsArrayString stack = collect();
       parseStackTrace(t, stack);
     }
 
@@ -435,41 +453,6 @@ public class StackTraceCreator {
     }
 
     GWT.<Collector> create(Collector.class).fillInStackTrace(t);
-  }
-
-  /**
-   * Create a stack trace based on the current execution stack. This method
-   * should only be called in Production Mode.
-   */
-  static JsArrayString createStackTrace() {
-    if (!GWT.isScript()) {
-      throw new RuntimeException(
-          "StackTraceCreator should only be called in Production Mode");
-    }
-
-    return GWT.<Collector> create(Collector.class).collect();
-  }
-
-  static String extractNameFromToString(String fnToString) {
-    String toReturn = "";
-    fnToString = fnToString.trim();
-    int index = fnToString.indexOf("(");
-    int start = fnToString.startsWith("function") ? 8 : 0;
-    if (index == -1) {
-      // Firefox 14 does not include parenthesis and uses '@' symbol instead to terminate symbol
-      index = fnToString.indexOf('@');
-      /**
-       * Firefox 14 doesn't return strings like 'function()' for anonymous methods, so
-       * we assert a space must trail 'function' keyword for a method named 'functionName', e.g.
-       * functionName:file.js:2 won't accidentally strip off the 'function' prefix which is part
-       * of the name.
-       */
-      start = fnToString.startsWith("function ") ? 9 : 0;
-    }
-    if (index != -1) {
-      toReturn = fnToString.substring(start, index).trim();
-    }
-    return toReturn.length() > 0 ? toReturn : ANONYMOUS;
   }
 
   private static native JsArrayString splice(JsArrayString arr, int length) /*-{
