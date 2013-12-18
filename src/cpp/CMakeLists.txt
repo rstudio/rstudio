@@ -76,6 +76,15 @@ if(UNIX)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now")
    endif()
 
+   # static link to gcc runtime libraries on linux
+   if(NOT APPLE)
+      execute_process(COMMAND g++ -print-file-name=libstdc++.a
+                      OUTPUT_VARIABLE RSTUDIO_STATIC_LIBSTDCPP
+                      OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND ln -fs "${RSTUDIO_STATIC_LIBSTDCPP}" "${CMAKE_CURRENT_BINARY_DIR}/libstdc++.a")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -L${CMAKE_CURRENT_BINARY_DIR}")
+   endif()
+
 # Win32 specific global directives
 else()
    add_definitions(-DWINVER=0x501)
