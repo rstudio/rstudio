@@ -73,25 +73,13 @@ public class StackTraceCreator {
       return toReturn;
     }-*/;
 
-    public void createStackTrace(JavaScriptException e) {
-      JsArrayString stack = inferFrom(e.getThrown());
-
+    protected StackTraceElement[] getStackTrace(JsArrayString stack) {
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
         stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
             LINE_NUMBER_UNKNOWN);
       }
-      e.setStackTrace(stackTrace);
-    }
-
-    public void fillInStackTrace(Throwable t) {
-      JsArrayString stack = collect();
-      StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
-      for (int i = 0, j = stackTrace.length; i < j; i++) {
-        stackTrace[i] = new StackTraceElement("Unknown", stack.get(i), null,
-            LINE_NUMBER_UNKNOWN);
-      }
-      t.setStackTrace(stackTrace);
+      return stackTrace;
     }
 
     /**
@@ -151,13 +139,10 @@ public class StackTraceCreator {
     }
 
     @Override
-    public void createStackTrace(JavaScriptException e) {
-      // No-op, relying on initializer call to collect()
-    }
-
-    @Override
-    public void fillInStackTrace(Throwable t) {
-      JsArrayString stack = collect();
+    protected StackTraceElement[] getStackTrace(JsArrayString stack) {
+      if (stack.length() == 0) {
+        return null;
+      }
       JsArrayString locations = getLocation();
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
@@ -177,12 +162,7 @@ public class StackTraceCreator {
         stackTrace[i] = new StackTraceElement("Unknown", stack.get(i),
             fileName, lineNumber);
       }
-      t.setStackTrace(stackTrace);
-    }
-
-    @Override
-    public JsArrayString inferFrom(Object e) {
-      throw new RuntimeException("Should not reach here");
+      return stackTrace;
     }
 
     private native JsArrayString getLocation()/*-{
@@ -282,18 +262,6 @@ public class StackTraceCreator {
     }
 
     @Override
-    public void createStackTrace(JavaScriptException e) {
-      JsArrayString stack = inferFrom(e.getThrown());
-      parseStackTrace(e, stack);
-    }
-
-    @Override
-    public void fillInStackTrace(Throwable t) {
-      JsArrayString stack = collect();
-      parseStackTrace(t, stack);
-    }
-
-    @Override
     public JsArrayString inferFrom(Object e) {
       JsArrayString stack = super.inferFrom(e);
       if (stack.length() == 0) {
@@ -367,7 +335,8 @@ public class StackTraceCreator {
       return 3;
     }
 
-    private void parseStackTrace(Throwable e, JsArrayString stack) {
+    @Override
+    protected StackTraceElement[] getStackTrace(JsArrayString stack) {
       StackTraceElement[] stackTrace = new StackTraceElement[stack.length()];
       for (int i = 0, j = stackTrace.length; i < j; i++) {
         String stackElements[] = stack.get(i).split("@@");
@@ -391,7 +360,7 @@ public class StackTraceCreator {
         stackTrace[i] = new StackTraceElement("Unknown", stackElements[0], fileName + "@" + col,
             replaceIfNoSourceMap(line < 0 ? -1 : line));
       }
-      e.setStackTrace(stackTrace);
+      return stackTrace;
     }
   }
 
@@ -419,13 +388,8 @@ public class StackTraceCreator {
     }
 
     @Override
-    public void createStackTrace(JavaScriptException e) {
-      // empty, since Throwable.getStackTrace() properly handles null
-    }
-
-    @Override
-    public void fillInStackTrace(Throwable t) {
-      // empty, since Throwable.getStackTrace() properly handles null
+    protected StackTraceElement[] getStackTrace(JsArrayString stack) {
+      return null;
     }
   }
 
@@ -439,7 +403,12 @@ public class StackTraceCreator {
           "StackTraceCreator should only be called in Production Mode");
     }
 
-    GWT.<Collector> create(Collector.class).createStackTrace(e);
+    Collector collector = GWT.<Collector> create(Collector.class);
+    JsArrayString stack = collector.inferFrom(e.getThrown());
+    StackTraceElement[] stackTrace = collector.getStackTrace(stack);
+    if (stackTrace != null) {
+      e.setStackTrace(stackTrace);
+    }
   }
 
   /**
@@ -452,7 +421,12 @@ public class StackTraceCreator {
           "StackTraceCreator should only be called in Production Mode");
     }
 
-    GWT.<Collector> create(Collector.class).fillInStackTrace(t);
+    Collector collector = GWT.<Collector> create(Collector.class);
+    JsArrayString stack = collector.collect();
+    StackTraceElement[] stackTrace = collector.getStackTrace(stack);
+    if (stackTrace != null) {
+      t.setStackTrace(stackTrace);
+    }
   }
 
   private static native JsArrayString splice(JsArrayString arr, int length) /*-{
