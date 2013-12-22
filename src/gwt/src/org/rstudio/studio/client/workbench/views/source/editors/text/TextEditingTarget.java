@@ -2308,6 +2308,27 @@ public class TextEditingTarget implements EditingTarget
 
       executeRange(Range.fromPoints(start, end));
    }
+
+   @Handler   
+   void onExecuteCurrentSection()
+   {
+      docDisplay_.focus();
+
+      // Determine the bounds of the code section that the cursor is
+      // currently in.
+      Scope currentSection = docDisplay_.getCurrentSection();
+
+      // Doublecheck to ensure that the returned section is well defined.
+      // It is ok to have a null beginning or end since that would be the
+      // case for a document with a single section delimiter
+      if (currentSection == null || (currentSection.getEnd() == null && currentSection.getPreamble() == null))
+         return;
+
+      Position start = currentSection.getPreamble();
+      Position end = currentSection.getEnd();
+
+      executeRange(Range.fromPoints(start, end));
+   }
    
    @Handler
    void onInsertChunk()
