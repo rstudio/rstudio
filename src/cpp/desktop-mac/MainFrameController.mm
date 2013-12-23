@@ -63,6 +63,11 @@ static MainFrameController* instance_;
       // set title
       [[self window] setTitle: @"RStudio"];
       
+      // set dock tile for application
+      dockTile_ = [[DockTileView alloc] init];
+      [[NSApp dockTile] setContentView: dockTile_];
+      [[NSApp dockTile] display];
+      
       // set primary fullscreen mode
       desktop::utils::enableFullscreenMode([self window], true);
       
@@ -79,6 +84,7 @@ static MainFrameController* instance_;
 - (void) dealloc
 {
    instance_ = nil;
+   [dockTile_ release];
    [menu_ release];
    [openFile_ release];
    [super dealloc];
@@ -95,10 +101,17 @@ static MainFrameController* instance_;
    NSString* projectDir = [self evaluateJavaScript:
                                 @"window.desktopHooks.getActiveProjectDir()"] ;
    if ([projectDir length] > 0)
+   {
       [[self window] setTitle: [projectDir stringByAppendingString:
                                                             @" - RStudio"]];
+      
+      [self updateDockTile: projectDir];
+   }
    else
+   {
       [[self window] setTitle: @"RStudio"];
+      [self updateDockTile: nil];
+   }
    
    // open file if requested for first workbench
    if (!firstWorkbenchInitialized_)
@@ -108,6 +121,16 @@ static MainFrameController* instance_;
       
       firstWorkbenchInitialized_ = YES;
    }
+}
+
+- (void) updateDockTile: (NSString*) projectDir
+{
+   if (projectDir != nil)
+      [dockTile_ setLabel: [projectDir lastPathComponent]];
+   else
+      [dockTile_ setLabel: nil];
+   
+   [[NSApp dockTile] display];
 }
 
 - (void) openFileInRStudio: (NSString*) openFile
