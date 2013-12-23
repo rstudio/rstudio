@@ -108,7 +108,10 @@ static MainFrameController* instance_;
       [self updateDockTile: projectDir];
    }
    else
+   {
       [[self window] setTitle: @"RStudio"];
+      [self updateDockTile: nil];
+   }
    
    // open file if requested for first workbench
    if (!firstWorkbenchInitialized_)
@@ -122,7 +125,11 @@ static MainFrameController* instance_;
 
 - (void) updateDockTile: (NSString*) projectDir
 {
-   [dockTile_ setLabel: [projectDir lastPathComponent]];
+   if (projectDir != nil)
+      [dockTile_ setLabel: [projectDir lastPathComponent]];
+   else
+      [dockTile_ setLabel: nil];
+   
    [[NSApp dockTile] display];
 }
 
