@@ -101,11 +101,12 @@
    CGFloat minY = CGRectGetMinY(rect) + puffer;
    
    CGContextBeginPath(context);
-   NSColor* fillColor = [NSColor colorWithCalibratedRed: 1.0f  // iOS badge
+   NSColor* fillNsColor = [NSColor colorWithCalibratedRed: 1.0f  // iOS badge
                                                   green: 0.22f
                                                    blue: 0.22f
                                                   alpha: 1.0f];
-   CGContextSetFillColorWithColor(context, fillColor.CGColor);
+   CGColorRef fillColor = [self CGColorFromNSColor: fillNsColor];
+   CGContextSetFillColorWithColor(context, fillColor);
    CGContextAddArc(context, maxX-radius, minY+radius, radius,
                    M_PI+(M_PI/2.0f), 0.0f, 0.0f);
    CGContextAddArc(context, maxX-radius, maxY-radius, radius,
@@ -117,16 +118,20 @@
    
    
    // draw shadow
-   CGContextSetShadowWithColor(
-                  context,
-                  CGSizeMake(0.0f, 1.0f),
-                  2.0f,
-                  [NSColor colorWithCalibratedWhite: 0.0f alpha:0.75f].CGColor);
+   NSColor* shadowNsColor = [NSColor colorWithCalibratedWhite:0.0f alpha:0.75f];
+   CGColorRef shadowColor = [self CGColorFromNSColor: shadowNsColor];
+   CGContextSetShadowWithColor(context,
+                               CGSizeMake(0.0f, 1.0f),
+                               2.0f,
+                               shadowColor);
    
    
    CGContextFillPath(context);
    
    CGContextRestoreGState(context);
+   
+   CGColorRelease(fillColor);
+   CGColorRelease(shadowColor);
 }
 
 - (void)drawShineWithContext:(CGContextRef)context inRect:(CGRect)rect
@@ -195,7 +200,8 @@
    CGFloat lineSize = 1.5f;
    
    CGContextSetLineWidth(context, lineSize);
-   CGContextSetStrokeColorWithColor(context, [NSColor whiteColor].CGColor);
+   CGColorRef strokeColor = [self CGColorFromNSColor: [NSColor whiteColor]];
+   CGContextSetStrokeColorWithColor(context, strokeColor);
    CGContextAddArc(context, maxX-radius, minY+radius, radius,
                    M_PI + (M_PI/2.0f), 0.0f, 0.0f);
    CGContextAddArc(context, maxX-radius, maxY-radius, radius, 0.0f,
@@ -207,9 +213,24 @@
    
    CGContextClosePath(context);
    CGContextStrokePath(context);
+   
+   CGColorRelease(strokeColor);
 }
 
 
+- (CGColorRef) CGColorFromNSColor: (NSColor*) color
+{
+   NSColor* deviceColor = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
+   CGFloat red = [deviceColor redComponent];
+   CGFloat green = [deviceColor greenComponent];
+   CGFloat blue = [deviceColor blueComponent];
+   CGFloat alpha = [deviceColor alphaComponent];
+   const CGFloat components[4] = { red, green, blue, alpha };
+   CGColorSpaceRef deviceRGBColorSpace = CGColorSpaceCreateDeviceRGB();
+   CGColorRef cgColor = CGColorCreate(deviceRGBColorSpace, components);
+   CGColorSpaceRelease(deviceRGBColorSpace);
+   return cgColor;
+}
 
 
 
