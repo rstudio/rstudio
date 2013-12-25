@@ -2277,14 +2277,9 @@ public class TextEditingTarget implements EditingTarget
 
       int startRow = docDisplay_.getSelectionStart().getRow();
       int startColumn = 0;
-
-      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
-      int endColumn = docDisplay_.getLength(endRow);
-
       Position start = Position.create(startRow, startColumn);
-      Position end = Position.create(endRow, endColumn);
-
-      executeRange(Range.fromPoints(start, end));
+      
+      executeRange(Range.fromPoints(start, endPosition()));
    }
 
    @Handler
@@ -2314,20 +2309,28 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
 
-      // Determine the bounds of the code section that the cursor is
-      // currently in.
+      // Determine the current section.
+      docDisplay_.getScopeTree();
       Scope currentSection = docDisplay_.getCurrentSection();
-
-      // Doublecheck to ensure that the returned section is well defined.
-      // It is ok to have a null beginning or end since that would be the
-      // case for a document with a single section delimiter
-      if (currentSection == null || (currentSection.getEnd() == null && currentSection.getPreamble() == null))
+      if (currentSection == null)
          return;
-
-      Position start = currentSection.getPreamble();
+      
+      // Determine the start and end of the section
+      Position start = currentSection.getBodyStart();
+      if (start == null)
+         start = Position.create(0, 0);
       Position end = currentSection.getEnd();
-
+      if (end == null)
+         end = endPosition();
+      
       executeRange(Range.fromPoints(start, end));
+   }
+    
+   private Position endPosition()
+   {
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+      return Position.create(endRow, endColumn);
    }
    
    @Handler
