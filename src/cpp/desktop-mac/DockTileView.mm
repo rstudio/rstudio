@@ -20,6 +20,15 @@
 
 @implementation DockTileView
 
+- (id) init
+{
+   if (self = [super init])
+   {
+      showLabel_ = FALSE;
+   }
+   return self;
+}
+
 - (void) setLabel: (NSString*) label
 {
    if(label != label_)
@@ -28,6 +37,11 @@
       [label_ release];
       label_ = label;
    }
+}
+
+- (void) setShowLabel: (BOOL) show
+{
+   showLabel_ = show;
 }
 
 - (void) drawRect: (NSRect)rect
@@ -42,7 +56,7 @@
            operation:NSCompositeCopy fraction:1.0];
    
    // draw the label if needed
-   if (label_ != nil)
+   if (showLabel_ && (label_ != nil))
    {
       // sizes all based on the containing bounds
       const CGFloat kBaseSize = 128;

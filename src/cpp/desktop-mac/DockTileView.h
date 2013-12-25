@@ -18,8 +18,10 @@
 
 @interface DockTileView : NSView {
    NSString* label_;
+   BOOL showLabel_;
 }
 
 - (void) setLabel: (NSString*) label;
+- (void) setShowLabel: (BOOL) show;
 
 @end
