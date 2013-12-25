@@ -60,8 +60,12 @@
       
       // draw the badge rounded rect
       NSRect badgeRect = NSMakeRect(0, 0, bounds.size.width, height);
+      
       [self drawRoundedRectWithContext: context inRect: badgeRect];
-      [self drawShineWithContext: context inRect: badgeRect];
+      
+      // shine wasn't adding anything so we eliminated it...
+      //self drawShineWithContext: context inRect: badgeRect];
+      
       [self drawFrameWithContext: context inRect: badgeRect];
       
       
@@ -101,9 +105,9 @@
    CGFloat minY = CGRectGetMinY(rect) + puffer;
    
    CGContextBeginPath(context);
-   NSColor* fillNsColor = [NSColor colorWithCalibratedRed: 1.0f  // iOS badge
-                                                  green: 0.22f
-                                                   blue: 0.22f
+   NSColor* fillNsColor = [NSColor colorWithCalibratedRed: 0.05f  // iOS badge
+                                                  green: 0.58f
+                                                   blue: 1.0f
                                                   alpha: 1.0f];
    CGColorRef fillColor = [self CGColorFromNSColor: fillNsColor];
    CGContextSetFillColorWithColor(context, fillColor);
