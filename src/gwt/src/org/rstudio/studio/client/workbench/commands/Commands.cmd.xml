@@ -158,6 +158,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="executeToCurrentLine"/>
             <cmd refid="executeFromCurrentLine"/>
             <cmd refid="executeCurrentFunction"/>
+            <cmd refid="executeCurrentSection"/>
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
@@ -376,6 +377,7 @@ well as menu structures (for main menu and popup menus).
       <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
       <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
       <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
+      <shortcut refid="executeCurrentSection" value="Alt+Enter"/>
       <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
       <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
       <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
@@ -722,6 +724,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeCurrentFunction"
         menuLabel="Run _Function Definition"
         desc="Run the top-level function definition, if any, that contains the cursor"/>
+   <cmd id="executeCurrentSection"
+	     buttonLabel="Run Section"
+        menuLabel="Run Code _Section"
+        desc="Run the code section that contains the cursor"/>
    <cmd id="executeLastCode"
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"/>       

@@ -141,6 +141,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
+      toolbar.addRightWidget(runSectionButton_ = commands_.executeCurrentSection().createToolbarButton());
+      toolbar.addRightSeparator();
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton());
       toolbar.addRightSeparator();
       toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
@@ -305,6 +307,7 @@ public class TextEditingTargetWidget
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
       runButton_.setText(width < 480 ? "" : "Run");
+      runSectionButton_.setText(width < 480 ? "" : "Run Section");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
@@ -463,6 +466,7 @@ public class TextEditingTargetWidget
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitToHTMLButton_;
    private ToolbarButton runButton_;
+   private ToolbarButton runSectionButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;

@@ -62,6 +62,15 @@ public class ScopeList implements Iterable<Scope>
       }
    };
 
+   public static final ScopePredicate SECT = new ScopePredicate()
+   {
+      @Override
+      public boolean test(Scope scope)
+      {
+         return scope.isSection();
+      }
+   };
+
    public static final ScopePredicate FUNC = new ScopePredicate()
    {
       @Override

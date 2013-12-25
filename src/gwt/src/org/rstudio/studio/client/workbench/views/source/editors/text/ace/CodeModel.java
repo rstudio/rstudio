@@ -51,6 +51,14 @@ public class CodeModel extends JavaScriptObject
       });
    }-*/;
 
+   public native final Scope getCurrentSection(Position position) /*-{
+      if (!this.getCurrentScope)
+         return null;
+      return this.getCurrentScope(position, function(scope) {
+         return scope.isSection();
+      });
+   }-*/;
+
    public native final JsArray<Scope> getScopeTree() /*-{
       return this.getScopeTree ? this.getScopeTree() : [];
    }-*/;
