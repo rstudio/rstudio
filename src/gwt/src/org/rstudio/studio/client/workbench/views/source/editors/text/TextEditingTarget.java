@@ -2277,14 +2277,9 @@ public class TextEditingTarget implements EditingTarget
 
       int startRow = docDisplay_.getSelectionStart().getRow();
       int startColumn = 0;
-
-      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
-      int endColumn = docDisplay_.getLength(endRow);
-
       Position start = Position.create(startRow, startColumn);
-      Position end = Position.create(endRow, endColumn);
-
-      executeRange(Range.fromPoints(start, end));
+      
+      executeRange(Range.fromPoints(start, endPosition()));
    }
 
    @Handler
@@ -2307,6 +2302,35 @@ public class TextEditingTarget implements EditingTarget
       Position end = currentFunction.getEnd();
 
       executeRange(Range.fromPoints(start, end));
+   }
+
+   @Handler   
+   void onExecuteCurrentSection()
+   {
+      docDisplay_.focus();
+
+      // Determine the current section.
+      docDisplay_.getScopeTree();
+      Scope currentSection = docDisplay_.getCurrentSection();
+      if (currentSection == null)
+         return;
+      
+      // Determine the start and end of the section
+      Position start = currentSection.getBodyStart();
+      if (start == null)
+         start = Position.create(0, 0);
+      Position end = currentSection.getEnd();
+      if (end == null)
+         end = endPosition();
+      
+      executeRange(Range.fromPoints(start, end));
+   }
+    
+   private Position endPosition()
+   {
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+      return Position.create(endRow, endColumn);
    }
    
    @Handler
