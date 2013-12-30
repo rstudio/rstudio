@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.text.shared.ToStringRenderer;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SimpleKeyProvider;
 
@@ -47,17 +48,21 @@ public class ValueListBox<T> extends Composite implements
 
   private final List<T> values = new ArrayList<T>();
   private final Map<Object, Integer> valueKeyToIndex = new HashMap<Object, Integer>();
-  private final Renderer<T> renderer;
+  private final Renderer<? super T> renderer;
   private final ProvidesKey<T> keyProvider;
 
   private TakesValueEditor<T> editor;
   private T value;
 
-  public ValueListBox(Renderer<T> renderer) {
+  public ValueListBox() {
+    this(ToStringRenderer.instance());
+  }
+
+  public ValueListBox(Renderer<? super T> renderer) {
     this(renderer, new SimpleKeyProvider<T>());
   }
   
-  public ValueListBox(Renderer<T> renderer, ProvidesKey<T> keyProvider) {
+  public ValueListBox(Renderer<? super T> renderer, ProvidesKey<T> keyProvider) {
     this.keyProvider = keyProvider;
     this.renderer = renderer;
     initWidget(new ListBox());

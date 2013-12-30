@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.text.shared.ToStringRenderer;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
@@ -40,9 +41,9 @@ public class ValuePicker<T> extends Composite
     implements HasConstrainedValue<T>, IsEditor<LeafValueEditor<T>> {
 
   private static class DefaultCell<T> extends AbstractCell<T> {
-    private final Renderer<T> renderer;
+    private final Renderer<? super T> renderer;
 
-    DefaultCell(Renderer<T> renderer) {
+    DefaultCell(Renderer<? super T> renderer) {
       this.renderer = renderer;
     }
 
@@ -69,8 +70,12 @@ public class ValuePicker<T> extends Composite
     });
   }
 
-  public ValuePicker(Renderer<T> renderer) {
+  public ValuePicker(Renderer<? super T> renderer) {
     this(new CellList<T>(new DefaultCell<T>(renderer)));
+  }
+
+  public ValuePicker() {
+    this(ToStringRenderer.instance());
   }
 
   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<T> handler) {

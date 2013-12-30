@@ -22,6 +22,7 @@ import com.google.gwt.editor.client.LeafValueEditor;
 import com.google.gwt.editor.client.adapters.TakesValueEditor;
 import com.google.gwt.text.shared.Parser;
 import com.google.gwt.text.shared.Renderer;
+import com.google.gwt.text.shared.ToStringRenderer;
 import com.google.gwt.uibinder.client.UiConstructor;
 import com.google.gwt.user.client.TakesValue;
 
@@ -95,6 +96,10 @@ public class ValueLabel<T> extends LabelBase<T> implements TakesValue<T>,
   private final Renderer<? super T> renderer;
   private T value;
   private LeafValueEditor<T> editor;
+
+  public ValueLabel() {
+    this(ToStringRenderer.instance());
+  }
 
   /**
    * Creates an empty value label.
