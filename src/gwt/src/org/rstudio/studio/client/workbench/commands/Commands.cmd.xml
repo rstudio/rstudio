@@ -158,6 +158,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="executeToCurrentLine"/>
             <cmd refid="executeFromCurrentLine"/>
             <cmd refid="executeCurrentFunction"/>
+            <cmd refid="executeCurrentSection"/>
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
@@ -176,6 +177,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
+         <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
          <separator/>
@@ -373,10 +375,10 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="foldAll" value="Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="foldAll" value="Cmd+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfoldAll" value="Shift+Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
+         <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
          <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Alt+Up" title="Move Lines Up" />
          <shortcut value="Alt+Down" title="Move Lines Down" />
@@ -430,6 +432,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Build">
          <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
+         <shortcut refid="compileNotebook" value="Cmd+Shift+Alt+H" />
          <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
          <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
@@ -465,7 +468,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="F2" title="Show Function Code" />
          <shortcut value="Tab" title="Complete Code" />
          <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-         <shortcut refid="restartR" value="Cmd+Shift+0"/>
+         <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="restartR" value="Cmd+Shift+F10"/>
          <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
          <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
          <shortcut refid="showRequestLog" value="Ctrl+`" />
@@ -656,6 +660,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"/>
+   <cmd id="zoomActualSize"
+        menuLabel="Actual Size"/>
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
    <cmd id="zoomOut"
@@ -748,6 +754,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeCurrentFunction"
         menuLabel="Run _Function Definition"
         desc="Run the top-level function definition, if any, that contains the cursor"/>
+   <cmd id="executeCurrentSection"
+	     buttonLabel="Run Section"
+        menuLabel="Run Code _Section"
+        desc="Run the code section that contains the cursor"/>
    <cmd id="executeLastCode"
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"/>       
@@ -817,7 +827,7 @@ well as menu structures (for main menu and popup menus).
   
    <cmd id="knitToHTML"
         buttonLabel="Knit HTML"
-        menuLabel="Knit HTML"
+        menuLabel="_Knit HTML"
         desc="Knit the current document to HTML"/>
  
    <cmd id="previewHTML"
@@ -827,16 +837,16 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="publishHTML"
         buttonLabel="Publish"
-        menuLabel="Publish to RPubs..."
+        menuLabel="P_ublish to RPubs..."
         desc="Publish the current document"/>      
  
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"
-        menuLabel="Compile PDF"
+        menuLabel="_Compile PDF"
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
 
    <cmd id="compileNotebook"
-        menuLabel="Compile _Notebook..."
+        menuLabel="_Compile Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
@@ -1166,6 +1176,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHelp"
         menuLabel="Refresh"
         desc="Refresh topic"/>
+
+   <cmd id="viewerPopout"
+        buttonLabel=""
+        desc="Show in new window"/>
+   <cmd id="viewerRefresh"
+        desc="Refresh page"/> 
+   <cmd id="viewerStop"
+        buttonLabel=""
+        desc="Stop application"/>  
+   <cmd id="viewerClear"
+        buttonLabel=""
+        desc="Clear viewer"/>  
+        
    <cmd id="raiseException"
         menuLabel="Raise Exception"/>
    <cmd id="raiseException2"
@@ -1189,8 +1212,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Quit RStudio..."/>
 
    <cmd id="showAboutDialog"
-        menuLabel="_About RStudio"
-        visible="false"/>
+        menuLabel="_About RStudio"/>
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
         visible="false"/>
@@ -1302,4 +1324,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
         checkable="true"/>
+        
+   <cmd id="showProfiler"
+        menuLabel= "_Profiler"
+        desc="Show the R code profiler"/>
+   <cmd id="startProfiler"
+        menuLabel="Start Profiling"
+        desc="Start profiling R code"/>
+   <cmd id="stopProfiler"
+        menuLabel="Stop Profiling"
+        desc="Stop profiling R code"/>
 </commands>

@@ -27,6 +27,8 @@
 #include <core/SafeConvert.hpp>
 #include <core/text/DcfParser.hpp>
 
+#include <core/r_util/RPackageInfo.hpp>
+
 namespace core {
 namespace r_util {
 
@@ -158,7 +160,7 @@ std::string detectBuildType(const FilePath& projectFilePath,
                             RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
-   if (projectDir.childPath("DESCRIPTION").exists())
+   if (r_util::isPackageDirectory(projectDir))
    {
       setBuildPackageDefaults("", pConfig);
    }

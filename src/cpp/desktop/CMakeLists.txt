@@ -77,7 +77,7 @@ list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopGwtCallbackOwner.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 )
 
 if(WIN32)
@@ -97,8 +97,8 @@ if(NOT WIN32)
    )
 endif()
 
-configure_file (${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-                ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
+                ${CMAKE_CURRENT_BINARY_DIR}/desktop-config.h)
 
 # source files
 set(DESKTOP_SOURCE_FILES
@@ -128,8 +128,6 @@ set(DESKTOP_SOURCE_FILES
   DesktopSlotBinders.cpp
   DesktopSynctex.cpp
   DesktopNetworkAccessManager.cpp
-  DesktopUpdateAvailableDialog.cpp
-  DesktopUpdateChecker.cpp
   3rdparty/qtsingleapplication/qtsingleapplication.cpp
   3rdparty/qtsingleapplication/qtlocalpeer.cpp
 )
@@ -180,7 +178,6 @@ qt4_wrap_ui(DESKTOP_UI_SOURCES
    DesktopAboutDialog.ui
    DesktopChooseRHome.ui
    DesktopInputDialog.ui
-   DesktopUpdateAvailableDialog.ui
 )
 
 set(DESKTOP_RESOURCES_FILES desktop.qrc)
@@ -228,6 +225,7 @@ if(WIN32)
 elseif(APPLE)
    find_library(APPLICATION_SERVICES_LIBRARY NAMES ApplicationServices)
    find_library(COCOA_LIBRARY NAMES Cocoa)
+   find_library(SECURITY_LIBRARY NAMES Security)
 endif(WIN32)
 
 
@@ -293,7 +291,8 @@ else()
       ${QT_LIBRARIES}
       rstudio-core
       ${APPLICATION_SERVICES_LIBRARY}
-      ${COCOA_LIBRARY})
+      ${COCOA_LIBRARY}
+      ${SECURITY_LIBRARY})
 
 endif()
 
@@ -352,6 +351,8 @@ if(RSTUDIO_BUNDLE_QT)
             \"\${CMAKE_INSTALL_PREFIX}/${QTPLUGINS_DEST_DIR}/plugins/*${CMAKE_SHARED_LIBRARY_SUFFIX}\")
           include(BundleUtilities)
           file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession\")
+          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver\")
+          file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rserver-pam\")
           fixup_bundle(\"${APPS}\" \"\${QTPLUGINS}\" \"${DIRS}\")
           ")
 
@@ -413,7 +414,6 @@ if(APPLE)
    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal
                     DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
-
 
 # install desktop integration files on linux
 if(RSTUDIO_INSTALL_FREEDESKTOP)

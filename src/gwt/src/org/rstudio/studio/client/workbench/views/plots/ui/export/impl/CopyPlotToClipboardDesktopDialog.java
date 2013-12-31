@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -85,6 +87,11 @@ public class CopyPlotToClipboardDesktopDialog extends ExportPlotDialog
       if (images.getLength() > 0)
       {
          ElementEx img = images.getItem(0).cast();
+
+         if (BrowseCap.isCocoaDesktop()) {
+            win.focus();
+            DomUtils.selectElement(img);
+         }
 
          Desktop.getFrame().copyImageToClipboard(img.getClientLeft(),
                                                  img.getClientTop(),

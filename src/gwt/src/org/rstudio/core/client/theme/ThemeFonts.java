@@ -45,11 +45,11 @@ public class ThemeFonts
    static class DesktopThemeFontLoader implements ThemeFontLoader
    {
       public native final String getProportionalFont() /*-{
-         return $wnd.desktop.proportionalFont;
+         return $wnd.desktop.proportionalFont();
       }-*/;
 
       public native final String getFixedWidthFont() /*-{
-         return $wnd.desktop.fixedWidthFont;
+         return $wnd.desktop.fixedWidthFont();
       }-*/;
    }
 

@@ -42,8 +42,8 @@ if(UNIX)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
 
-   # if present, set osx deployment target variables from environment vars
    if(APPLE)
+      # if present, set osx deployment target variables from environment vars
       if(NOT $ENV{CMAKE_OSX_SYSROOT} STREQUAL "")
          set(CMAKE_OSX_SYSROOT $ENV{CMAKE_OSX_SYSROOT})
          message(STATUS "Set CMAKE_OSX_SYSROOT to ${CMAKE_OSX_SYSROOT}")
@@ -51,6 +51,19 @@ if(UNIX)
       if(NOT $ENV{CMAKE_OSX_DEPLOYMENT_TARGET} STREQUAL "")
          set(CMAKE_OSX_DEPLOYMENT_TARGET $ENV{CMAKE_OSX_DEPLOYMENT_TARGET})
          message(STATUS "Set CMAKE_OSX_DEPLOYMENT_TARGET to ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+      endif()
+      # Mavericks and later default to libc++, which is not compatible with the
+      # older libstdc++. Figure out if we're on Mavericks, and if so, add 
+      # flags to enforce usage of the older library.
+
+      # Figure out what version of Mac OS X this is. Unfortunately 
+      # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
+      # version number another way. 
+      EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
+      if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
       endif()
    endif()
 
@@ -61,6 +74,15 @@ if(UNIX)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
       add_definitions(-pie -fPIE)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now")
+   endif()
+
+   # static link to gcc runtime libraries on linux
+   if(NOT APPLE)
+      execute_process(COMMAND g++ -print-file-name=libstdc++.a
+                      OUTPUT_VARIABLE RSTUDIO_STATIC_LIBSTDCPP
+                      OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND ln -fs "${RSTUDIO_STATIC_LIBSTDCPP}" "${CMAKE_CURRENT_BINARY_DIR}/libstdc++.a")
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -L${CMAKE_CURRENT_BINARY_DIR}")
    endif()
 
 # Win32 specific global directives
@@ -211,7 +233,11 @@ else()
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP)
          add_subdirectory(diagnostics)
-         add_subdirectory(desktop)
+         if(NOT APPLE)
+            add_subdirectory(desktop)
+         else()
+            add_subdirectory(desktop-mac)
+         endif()
          configure_file(rdesktop-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rdesktop-dev)
          configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
       endif()

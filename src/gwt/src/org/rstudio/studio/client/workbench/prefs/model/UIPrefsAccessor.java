@@ -227,6 +227,25 @@ public class UIPrefsAccessor extends Prefs
       return string("pdf_previewer", getDefaultPdfPreview());
    }
    
+   // provide a straight value accessor for pdfPreview which will
+   // automatically prevent the use of the internal viewer on osx
+   public String getPdfPreviewValue()
+   {
+      // get the underlying value
+      String pdfPreview = pdfPreview().getValue();
+      
+      // the internal viewer has stability issues on the mac 
+      // so re-route to system viewer
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
+            pdfPreview = PDF_PREVIEW_SYSTEM;
+      }
+      
+      // return the (potentially) adjusted value
+      return pdfPreview;
+   }
+   
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
    {
       return bool("always_enable_concordance", true);

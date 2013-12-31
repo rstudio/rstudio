@@ -21,8 +21,9 @@
 
 .paneLayoutTable td.paneLayoutTable {
    background-color: white;
-   height: 195px;
+   height: 200px;
    vertical-align: top;
+   padding-top: 0px;
    -moz-border-radius: 6px;
    -webkit-border-radius: 6px;
    border-radius: 6px;

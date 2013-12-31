@@ -211,7 +211,8 @@
 
 .rs.addFunction( "initializeRStudioPackages", function(libDir,
                                                        pkgSrcDir,
-                                                       rsVersion) {
+                                                       rsVersion,
+                                                       force) {
   
   if (getRversion() >= "3.0.0") {
     
@@ -222,7 +223,7 @@
     # function to update a package if necessary
     updateIfNecessary <- function(pkgName) {
       isInstalled <- .rs.isPackageInstalled(pkgName, .rs.defaultLibraryPath())
-      if (!isInstalled || (.rs.getPackageVersion(pkgName) != rsVersion)) {
+      if (force || !isInstalled || (.rs.getPackageVersion(pkgName) != rsVersion)) {
         
         # remove if necessary
         if (isInstalled)

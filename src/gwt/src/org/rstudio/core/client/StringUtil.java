@@ -16,13 +16,13 @@ package org.rstudio.core.client;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
+
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -64,31 +64,33 @@ public class StringUtil
 
    public static String formatFileSize(long size)
    {
-      if (size < 1024)
-      {
-         return size + " B";
-      }
-
-      int i = Arrays.binarySearch(SIZES, size);
-
-      long divisor;
-      String label;
-
-      if (i >= 0)
-      {
-         divisor = SIZES[i];
-         label = LABELS[i];
-      }
-      else
-      {
-         i = ~i;
-         i--;
-         divisor = SIZES[i];
-         label = LABELS[i];
-      }
-
-      return FORMAT.format((double)size / divisor) + " " + label;
+      return formatFileSize(new Long(size).intValue());
    }
+   
+   // Given a raw size, convert it to a human-readable value 
+   // (e.g. 11580 -> "11.3 KB"). Note that this routine must generally avoid
+   // implicit casts and use only ints; GWT's JavaScript compiler will truncate
+   // values it believes to be ints to Int32 max/min (+/- 2 billion) during
+   // type checking, and this function deals in file and object sizes larger
+   // than that.
+   public static String formatFileSize(int size)
+   {
+      int i = 0, divisor = 1;
+
+      for (; nativeDivide(size, divisor) > 1024 && i < LABELS.length; i++)
+      {
+         divisor *= 1024;
+      }
+
+      return FORMAT.format((double)size / divisor) + " " + LABELS[i];
+   }
+   
+   // Peform an integer division and return the result. GWT's division operator
+   // truncates the result to Int32 range. 
+   public static native int nativeDivide(int num, int denom) 
+   /*-{
+      return num / denom;
+   }-*/;
    
    public static String prettyFormatNumber(double number)
    {
@@ -464,13 +466,8 @@ public class StringUtil
       return result;
    }
 
-   private static final long[] SIZES = {
-         1024L, // kilobyte
-         1024L * 1024L, // megabyte
-         1024L * 1024L * 1024L, // gigabyte
-         1024L * 1024L * 1024L * 1024L, // terabyte
-   };
    private static final String[] LABELS = {
+         "B",
          "KB",
          "MB",
          "GB",

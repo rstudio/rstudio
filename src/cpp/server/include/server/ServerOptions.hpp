@@ -72,7 +72,7 @@ public:
    bool serverDaemonize() const { return serverDaemonize_; }
 
    bool serverAppArmorEnabled() const { return serverAppArmorEnabled_; }
-      
+
    // www 
    std::string wwwAddress() const
    { 
@@ -120,6 +120,11 @@ public:
    }
 
    // auth
+   bool authNone()
+   {
+      return authNone_;
+   }
+
    bool authValidateUsers()
    {
       return authValidateUsers_;
@@ -178,7 +183,8 @@ public:
 
 private:
 
-   void resolvePath(std::string* pPath) const;
+   void resolvePath(const core::FilePath& basePath,
+                    std::string* pPath) const;
 
    void addOverlayOptions(boost::program_options::options_description* pServer,
                           boost::program_options::options_description* pWWW,
@@ -221,6 +227,7 @@ private:
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
+   bool authNone_;
    bool authValidateUsers_;
    std::string authRequiredUserGroup_;
    std::string authPamHelperPath_;

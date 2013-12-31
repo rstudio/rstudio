@@ -29,7 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "config.h"
+#include "session-config.h"
 
 #ifdef RSTUDIO_SERVER
 #include <core/system/Crypto.hpp>

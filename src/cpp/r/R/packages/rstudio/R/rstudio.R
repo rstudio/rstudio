@@ -23,3 +23,13 @@ previewRd <- function(rdFile) {
   invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
 }
 
+viewer <- function(url, height = NULL) {
+  
+  if (!is.character(url) || (length(url) != 1))
+    stop("url must be a single element character vector.")
+  
+  if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
+     stop("height must be a single element numeric vector.")
+  
+  invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
+}

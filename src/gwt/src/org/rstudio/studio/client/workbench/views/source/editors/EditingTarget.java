@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -35,6 +36,7 @@ import java.util.HashSet;
 
 public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
+                                       HasEnsureHeightHandlers,
                                        HasCloseHandlers<Void>,
                                        UnsavedChangesTarget
 {
@@ -53,7 +55,7 @@ public interface EditingTarget extends IsWidget,
    HashSet<AppCommand> getSupportedCommands();
    boolean canCompilePdf();
    
-   void verifyPrerequisites();
+   void verifyCppPrerequisites();
 
    void focus();
    void onActivate();

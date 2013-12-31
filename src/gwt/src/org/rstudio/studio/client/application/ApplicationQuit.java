@@ -171,10 +171,11 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       if (saveAction != SaveAction.SAVEASK && unsavedSourceDocs.size() == 0)
       {
          quitContext.onReadyToQuit(saveAction == SaveAction.SAVE);
+         return;
       }
       
       // just an unsaved environment
-      else if (unsavedSourceDocs.size() == 0) 
+      if (unsavedSourceDocs.size() == 0) 
       {        
          // confirm quit and do it
          String prompt = "Save workspace image to " + 

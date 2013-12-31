@@ -28,4 +28,8 @@ public class EnvironmentFrame extends JavaScriptObject
    public final native int getFrame() /*-{
       return this.frame;
    }-*/;
+   
+   public final native boolean isLocal() /*-{
+      return this.local;
+   }-*/;
 }

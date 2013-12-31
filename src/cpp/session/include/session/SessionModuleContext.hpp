@@ -87,6 +87,9 @@ core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
 core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
+// get the R local help port
+std::string rLocalHelpPort();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
 
@@ -337,6 +340,8 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 
 std::string resourceFileAsString(const std::string& fileName);
 
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();
@@ -345,6 +350,20 @@ void syncRSaveAction();
 std::string libPathsString();
 bool canBuildCpp();
 bool haveRcppAttributes();
+
+#ifdef __APPLE__
+bool isOSXMavericks();
+bool hasOSXMavericksDeveloperTools();
+#else
+inline bool isOSXMavericks()
+{
+   return false;
+}
+inline bool hasOSXMavericksDeveloperTools()
+{
+   return false;
+}
+#endif
 
 struct VcsContext
 {

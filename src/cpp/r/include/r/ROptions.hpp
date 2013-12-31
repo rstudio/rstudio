@@ -48,7 +48,9 @@ int getOptionWidth();
 SEXP getOption(const std::string& name);
    
 template <typename T>
-T getOption(const std::string& name, const T& defaultValue = T())
+T getOption(const std::string& name,
+            const T& defaultValue = T(),
+            bool logNotFound = true)
 {
    // prevent Rf_install from encountering error/longjmp condition
    if (name.empty())
@@ -72,7 +74,8 @@ T getOption(const std::string& name, const T& defaultValue = T())
    {
       core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       error.addProperty("symbol (option)", name);
-      LOG_ERROR(error);
+      if (logNotFound)
+         LOG_ERROR(error);
       return defaultValue;
    }
 }

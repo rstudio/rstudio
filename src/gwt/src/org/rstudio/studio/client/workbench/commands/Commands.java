@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand executeFromCurrentLine();
    public abstract AppCommand executeCurrentFunction();
+   public abstract AppCommand executeCurrentSection();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertSection();
@@ -179,6 +180,7 @@ public abstract class
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
+   public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();
    public abstract AppCommand jumpTo();
@@ -240,6 +242,11 @@ public abstract class
    public abstract AppCommand versionControlShowRsaKey();
    public abstract AppCommand versionControlProjectSetup();
    
+   // Profiler
+   public abstract AppCommand showProfiler();
+   public abstract AppCommand startProfiler();
+   public abstract AppCommand stopProfiler();
+   
    // Tools
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
@@ -266,6 +273,12 @@ public abstract class
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
    public abstract AppCommand viewShortcuts();
+   
+   // Viewer
+   public abstract AppCommand viewerPopout();
+   public abstract AppCommand viewerRefresh();
+   public abstract AppCommand viewerStop();
+   public abstract AppCommand viewerClear();
 
    // Application
    public abstract AppCommand quitSession();

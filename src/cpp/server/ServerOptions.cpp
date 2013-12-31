@@ -90,12 +90,25 @@ ProgramStatus Options::read(int argc,
    using namespace boost::program_options ;
 
    // compute install path
-   Error error = core::system::installPath("..", argc, argv, &installPath_);
+   Error error = core::system::installPath("..", argv[0], &installPath_);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
       return ProgramStatus::exitFailure();
    }
+
+   // compute the resource and binary paths
+   FilePath resourcePath = installPath_;
+   FilePath binaryPath = installPath_.childPath("bin");
+
+   // detect running in OSX bundle and tweak paths
+#ifdef __APPLE__
+   if (installPath_.complete("Info.plist").exists())
+   {
+      resourcePath = installPath_.complete("Resources");
+      binaryPath = installPath_.complete("MacOS");
+   }
+#endif
 
    // verify installation flag
    options_description verify("verify");
@@ -121,7 +134,8 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&serverUser_)->default_value(kDefaultProgramUser),
          "program user")
       ("server-daemonize",
-         value<bool>(&serverDaemonize_)->default_value(1),
+         value<bool>(&serverDaemonize_)->default_value(
+                                      core::system::effectiveUserIsRoot()),
          "run program as daemon")
       ("server-app-armor-enabled",
          value<bool>(&serverAppArmorEnabled_)->default_value(1),
@@ -161,10 +175,10 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("bin/rsession"),
+         value<std::string>(&rsessionPath_)->default_value("rsession"),
          "path to rsession executable")
       ("rldpath-path",
-         value<std::string>(&rldpathPath_)->default_value("bin/r-ldpath"),
+         value<std::string>(&rldpathPath_)->default_value("r-ldpath"),
          "path to r-ldpath script")
       ("rsession-ld-library-path",
          value<std::string>(&rsessionLdLibraryPath_)->default_value(""),
@@ -185,14 +199,19 @@ ProgramStatus Options::read(int argc,
    // still read depracated options (so we don't break config files)
    options_description auth("auth");
    auth.add_options()
+      ("auth-none",
+        value<bool>(&authNone_)->default_value(
+                                 !core::system::effectiveUserIsRoot()),
+        "don't do any authentication")
       ("auth-validate-users",
-        value<bool>(&authValidateUsers_)->default_value(true),
+        value<bool>(&authValidateUsers_)->default_value(
+                                 core::system::effectiveUserIsRoot()),
         "validate that authenticated users exist on the target system")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
         "limit to users belonging to the specified group")
       ("auth-pam-helper-path",
-        value<std::string>(&authPamHelperPath_)->default_value("bin/rserver-pam"),
+        value<std::string>(&authPamHelperPath_)->default_value("rserver-pam"),
        "path to PAM helper binary")
       ("auth-pam-requires-priv",
         value<bool>(&dep.authPamRequiresPriv)->default_value(
@@ -245,7 +264,11 @@ ProgramStatus Options::read(int argc,
    // a --test-config wouldn't test overlay options)
    if (status.exit())
       return status;
-    
+
+   // rationalize auth settings
+   if (authNone_)
+      authValidateUsers_ = false;
+
    // if specified, confirm that the program user exists. however, if the
    // program user is the default and it doesn't exist then allow that to pass,
    // this just means that the user did a simple make install and hasn't setup
@@ -284,21 +307,22 @@ ProgramStatus Options::read(int argc,
 
    // convert relative paths by completing from the system installation
    // path (this allows us to be relocatable)
-   resolvePath(&wwwLocalPath_);
-   resolvePath(&wwwSymbolMapsPath_);
-   resolvePath(&authPamHelperPath_);
-   resolvePath(&rsessionPath_);
-   resolvePath(&rldpathPath_);
-   resolvePath(&rsessionConfigFile_);
+   resolvePath(resourcePath, &wwwLocalPath_);
+   resolvePath(resourcePath, &wwwSymbolMapsPath_);
+   resolvePath(binaryPath, &authPamHelperPath_);
+   resolvePath(binaryPath, &rsessionPath_);
+   resolvePath(binaryPath, &rldpathPath_);
+   resolvePath(resourcePath, &rsessionConfigFile_);
 
    // return status
    return status;
 }
 
-void Options::resolvePath(std::string* pPath) const
+void Options::resolvePath(const FilePath& basePath,
+                          std::string* pPath) const
 {
    if (!pPath->empty())
-      *pPath = installPath_.complete(*pPath).absolutePath();
+      *pPath = basePath.complete(*pPath).absolutePath();
 }
 
 } // namespace server

@@ -98,7 +98,7 @@ public class EnvironmentPresenter extends BasePresenter
       void clearSelection();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
-      void setEnvironmentName(String name);
+      void setEnvironmentName(String name, boolean local);
       void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
@@ -195,6 +195,7 @@ public class EnvironmentPresenter extends BasePresenter
          {
             loadNewContextState(event.getContextDepth(), 
                   event.getEnvironmentName(),
+                  event.environmentIsLocal(),
                   event.getCallFrames(),
                   event.useProvidedSource(),
                   event.getFunctionCode());
@@ -450,10 +451,10 @@ public class EnvironmentPresenter extends BasePresenter
    {
       final String dataFilePath = event.getFile().getPath();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-           "Confirm Load Workspace",
+           "Confirm Load RData",
 
            "Do you want to load the R data file \"" + dataFilePath + "\" " +
-           "into your workspace?",
+           "into the global environment?",
 
            new ProgressOperation() {
               public void execute(ProgressIndicator indicator)
@@ -516,6 +517,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       loadNewContextState(environmentState.contextDepth(),
             environmentState.environmentName(),
+            environmentState.environmentIsLocal(),
             environmentState.callFrames(),
             environmentState.useProvidedSource(),
             environmentState.functionCode());
@@ -546,13 +548,14 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
+         boolean isLocalEvironment, 
          JsArray<CallFrame> callFrames,
          boolean useBrowseSources,
          String functionCode)
    {
       setContextDepth(contextDepth);
       environmentName_ = environmentName;
-      view_.setEnvironmentName(environmentName_);
+      view_.setEnvironmentName(environmentName_, isLocalEvironment);
       if (callFrames != null && 
           callFrames.length() > 0 &&
           contextDepth > 0)

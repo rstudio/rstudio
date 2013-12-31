@@ -14,39 +14,51 @@
  */
 package org.rstudio.studio.client.application.ui.impl;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import org.rstudio.core.client.BrowseCap;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
+import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class DesktopApplicationHeader implements ApplicationHeader
 {
@@ -65,13 +77,21 @@ public class DesktopApplicationHeader implements ApplicationHeader
    public void initialize(Commands commands,
                           EventBus events,
                           final Session session,
-                          WorkbenchServerOperations server,
+                          ApplicationServerOperations server, 
                           Provider<DesktopHooks> pDesktopHooks,
                           Provider<CodeSearch> pCodeSearch,
-                          ErrorManager errorManager)
+                          Provider<UIPrefs> pUIPrefs,
+                          ErrorManager errorManager,
+                          GlobalDisplay globalDisplay,
+                          ApplicationQuit appQuit)
    {
       session_ = session;
       eventBus_= events;
+      pUIPrefs_ = pUIPrefs;
+      globalDisplay_ = globalDisplay;
+      ignoredUpdates_ = IgnoredUpdates.create();
+      server_ = server;
+      appQuit_ = appQuit;
       binder_.bind(commands, this);
       commands.mainMenu(new DesktopMenuCallback());
 
@@ -86,8 +106,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
 
-      commands.showAboutDialog().setVisible(true);
-
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          public void onSessionInit(SessionInitEvent sie)
          {
@@ -95,12 +113,45 @@ public class DesktopApplicationHeader implements ApplicationHeader
             
             toolbar_.completeInitialization(sessionInfo);
             
+            new JSObjectStateValue(
+                  "updates",
+                  "ignoredUpdates",
+                  ClientState.PERSISTENT,
+                  session_.getSessionInfo().getClientState(),
+                  false)
+            {
+               @Override
+               protected void onInit(JsObject value)
+               {
+                  if (value != null)
+                     ignoredUpdates_ = value.cast();
+               }
+         
+               @Override
+               protected JsObject getValue()
+               {
+                  ignoredUpdatesDirty_ = false;
+                  return ignoredUpdates_.cast();
+               }
+               
+               @Override
+               protected boolean hasChanged()
+               {
+                  return ignoredUpdatesDirty_;
+               }
+            };
+
             Scheduler.get().scheduleFinally(new ScheduledCommand()
             {
                public void execute()
                {
                   Desktop.getFrame().onWorkbenchInitialized(
                         sessionInfo.getScratchDir());
+                  if (!sessionInfo.getDisableCheckForUpdates() &&
+                      pUIPrefs_.get().checkForUpdates().getValue())
+                  {
+                     checkForUpdates(false);
+                  }
                }
             });
          }
@@ -119,24 +170,6 @@ public class DesktopApplicationHeader implements ApplicationHeader
                                    pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles(); 
       toolbar_.addStyleName(styles.desktopGlobalToolbar());
-
-      // 1823: invalid command key sequences still result in characters
-      //       inserted in the editor
-      if (BrowseCap.hasMetaKey())
-      {
-         Event.addNativePreviewHandler(new NativePreviewHandler()
-         {
-            @Override
-            public void onPreviewNativeEvent(NativePreviewEvent event)
-            {
-               if (event.getTypeInt() == Event.ONKEYPRESS &&
-                   event.getNativeEvent().getMetaKey())
-               {
-                  event.getNativeEvent().preventDefault();
-               }
-            }
-         });
-      }
    }
    
    public void showToolbar(boolean showToolbar)
@@ -209,13 +242,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCheckForUpdates()
    {
-      Desktop.getFrame().checkForUpdates();
-   }
-
-   @Handler
-   void onShowAboutDialog()
-   {
-      Desktop.getFrame().showAboutDialog();
+      checkForUpdates(true);
    }
 
    public int getPreferredHeight()
@@ -231,7 +258,110 @@ public class DesktopApplicationHeader implements ApplicationHeader
       return toolbar_;
    }
 
+   private void checkForUpdates(final boolean manual)
+   {
+      server_.checkForUpdates(manual, 
+            new ServerRequestCallback<UpdateCheckResult>()
+      {
+         @Override
+         public void onResponseReceived(UpdateCheckResult result)
+         {
+            respondToUpdateCheck(result, manual);
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            globalDisplay_.showErrorMessage("Error Checking for Updates", 
+                  "An error occurred while checking for updates: "
+                  + error.getMessage());
+         }
+      });
+   }
+
+   private void respondToUpdateCheck(final UpdateCheckResult result, 
+                                     boolean manual)
+   {
+      boolean ignoredUpdate = false;
+      if (result.getUpdateVersion().length() > 0)
+      {
+         JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
+         for (int i = 0; i < ignoredUpdates.length(); i++)
+         {
+            if (ignoredUpdates.get(i).equals(result.getUpdateVersion()))
+            {
+               ignoredUpdate = true;
+            }
+         }
+      }
+      if (result.getUpdateVersion().length() > 0 &&
+          !ignoredUpdate)
+      {
+         ArrayList<String> buttonLabels = new ArrayList<String>();
+         ArrayList<Operation> buttonOperations = new ArrayList<Operation>();
+         
+         buttonLabels.add("Quit and Download...");
+         buttonOperations.add(new Operation() {
+            @Override
+            public void execute()
+            {
+               appQuit_.prepareForQuit("Update RStudio", new QuitContext()
+               {
+                  @Override
+                  public void onReadyToQuit(boolean saveChanges)
+                  {
+                     Desktop.getFrame().browseUrl(result.getUpdateUrl());
+                     appQuit_.performQuit(saveChanges, null);
+                  }
+               }); 
+            }
+         });
+
+         buttonLabels.add("Remind Later");
+         buttonOperations.add(new Operation() {
+            @Override
+            public void execute()
+            {
+               // Don't do anything here; the prompt will re-appear the next
+               // time we do an update check
+            }
+         });
+
+         // Only provide the option to ignore the update if it's not urgent.
+         if (result.getUpdateUrgency() == 0)
+         {
+            buttonLabels.add("Ignore Update");
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
+               {
+                  ignoredUpdates_.addIgnoredUpdate(result.getUpdateVersion());
+                  ignoredUpdatesDirty_ = true;
+               }
+            });
+         }
+
+         globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION, 
+               "Update Available", 
+               result.getUpdateMessage(), 
+               buttonLabels, 
+               buttonOperations, 0);
+      }
+      else if (manual) 
+      {
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
+                              "No Update Available", 
+                              "You're using the newest version of RStudio.");
+      }
+   }
+   
    private Session session_;
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;
+   private GlobalDisplay globalDisplay_;
+   Provider<UIPrefs> pUIPrefs_;
+   private ApplicationServerOperations server_;
+   private IgnoredUpdates ignoredUpdates_;
+   private boolean ignoredUpdatesDirty_ = false;
+   private ApplicationQuit appQuit_; 
 }

@@ -76,15 +76,6 @@ bool s_provideHeaders = false;
 // show in an external browser
 bool s_handleCustom = false;
 
-std::string rLocalHelpPort()
-{
-   std::string port;
-   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
-   if (error)
-      LOG_ERROR(error);
-   return port;
-}
-
 std::string localURL(const std::string& address, const std::string& port)
 {
    return "http://" + address + ":" + port + "/";
@@ -102,7 +93,7 @@ bool isLocalURL(const std::string& url,
                 std::string* pLocalURLPath)
 {
    // first look for local ip prefix
-   std::string rPort = rLocalHelpPort();
+   std::string rPort = module_context::rLocalHelpPort();
    std::string urlPrefix = localURL("127.0.0.1", rPort);
    size_t pos = url.find(urlPrefix + scope);
    if (pos != std::string::npos)
@@ -178,20 +169,11 @@ bool handleLocalHttpUrl(const std::string& url)
    // all since if we don't do any mapping they'll just fail hard
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      // extract the port
-      boost::regex re("http[s]?://localhost:([0-9]+)(/.*)?");
-      boost::smatch match;
-      if (boost::regex_search(url, match, re))
+      // see if we can form a portmap path for this url
+      std::string path;
+      if (module_context::portmapPathForLocalhostUrl(url, &path))
       {
-         // calculate the path
-         std::string path = match[2];
-         if (path.empty())
-            path = "/";
-         path = "p/" + match[1] + path;
-
-         // enque client event
          module_context::enqueClientEvent(browseUrlEvent(path));
-
          return true;
       }
    }
@@ -810,6 +792,14 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    std::string uri = request.uri();
    if (!uri.compare(0, sessionPrefix.length(), sessionPrefix))
       uri = uri.substr(sessionPrefix.length());
+
+   // remove query parameters and anchor
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+   pos = uri.find("#");
+   if (pos != std::string::npos)
+      uri.erase(pos);
 
    // ensure that this path does not contain ..
    if (uri.find("..") != std::string::npos)

@@ -1,7 +1,7 @@
 /*
- * config.h.in
+ * SessionUpdates.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-13 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,21 @@
  *
  */
 
-#define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
-#cmakedefine RSTUDIO_SERVER
+#ifndef SESSION_UPDATES_HPP
+#define SESSION_UPDATES_HPP
 
+namespace core {
+   class Error;
+}
+
+namespace session {
+namespace modules {
+namespace updates {
+
+core::Error initialize();
+   
+} // namespace updates
+} // namespace modules
+} // namespace session
+
+#endif

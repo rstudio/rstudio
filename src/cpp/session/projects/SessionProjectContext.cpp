@@ -199,7 +199,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 void ProjectContext::augmentRbuildignore()
 {
-   if (directory().childPath("DESCRIPTION").exists())
+   if (r_util::isPackageDirectory(directory()))
    {
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";

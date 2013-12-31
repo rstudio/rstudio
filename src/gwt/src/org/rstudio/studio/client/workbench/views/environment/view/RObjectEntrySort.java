@@ -106,8 +106,12 @@ class RObjectEntrySort implements Comparator<RObjectEntry>
       return result;
    }
 
+   // Gets sort order of two strings. Coerces from undefined/null values to 
+   // empty strings.
    private native int localeCompare(String first, String second) /*-{
-       return first.localeCompare(second);
+      firstVal = first ? first : "";
+      secondVal = second ? second : "";
+      return firstVal.localeCompare(secondVal);
    }-*/;
    
    public static final int SORT_AUTO = 0;

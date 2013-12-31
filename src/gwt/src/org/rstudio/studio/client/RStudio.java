@@ -42,6 +42,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.application.ui.AboutDialogContents;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
@@ -231,6 +232,7 @@ public class RStudio implements EntryPoint
       RPubsUploadDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
+      AboutDialogContents.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

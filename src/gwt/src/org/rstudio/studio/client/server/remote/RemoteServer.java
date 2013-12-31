@@ -32,7 +32,9 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -47,6 +49,7 @@ import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.common.shiny.model.ShinyCapabilities;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
@@ -1269,6 +1272,13 @@ public class RemoteServer implements Server
                               ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, "is_read_only_file", path, requestCallback);
+   }
+   
+   @Override
+   public void getShinyCapabilities(
+         ServerRequestCallback<ShinyCapabilities> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_shiny_capabilities", requestCallback);
    }
 
    public void getRecentHistory(
@@ -2498,6 +2508,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
+   @Override
+   public void viewerStopped(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_stopped", requestCallback);
+   }
+
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
@@ -3030,7 +3047,7 @@ public class RemoteServer implements Server
    
    @Override
    public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
-         boolean set, ServerRequestCallback<Void> requestCallback)
+         boolean set, boolean arm, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray bps = new JSONArray();
       for (int i = 0; i < breakpoints.size(); i++)
@@ -3041,9 +3058,31 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, bps);
       params.set(1, JSONBoolean.getInstance(set));
+      params.set(2, JSONBoolean.getInstance(arm));
       sendRequest(RPC_SCOPE, 
             UPDATE_SHINY_BREAKPOINTS,
             params, 
+            requestCallback);
+   }
+
+   @Override
+   public void checkForUpdates(
+         boolean manual,
+         ServerRequestCallback<UpdateCheckResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(manual));
+      sendRequest(RPC_SCOPE, 
+            CHECK_FOR_UPDATES,
+            params, 
+            requestCallback);
+   }
+
+   @Override
+   public void getProductInfo(ServerRequestCallback<ProductInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            GET_PRODUCT_INFO,
             requestCallback);
    }
 
@@ -3316,6 +3355,6 @@ public class RemoteServer implements Server
    
    private static final String GET_INIT_MESSAGES = "get_init_messages";
 
-
-
+   private static final String CHECK_FOR_UPDATES = "check_for_updates";
+   private static final String GET_PRODUCT_INFO = "get_product_info";
 }

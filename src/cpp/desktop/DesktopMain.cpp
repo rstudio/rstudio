@@ -92,7 +92,7 @@ void initializeWorkingDirectory(int argc,
       // wd to the current path
 
       FilePath exePath;
-      Error error = core::system::executablePath(argc, argv, &exePath);
+      Error error = core::system::executablePath(argv[0], &exePath);
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
@@ -107,7 +107,8 @@ void initializeWorkingDirectory(int argc,
 
       // on linux we take the current working dir if we were launched
       // from within a terminal
-      if (core::system::stdoutIsTerminal())
+      if (core::system::stdoutIsTerminal() &&
+         (currentPath != core::system::userHomePath()))
       {
          workingDir = currentPath.absolutePath();
       }
@@ -278,7 +279,7 @@ int main(int argc, char* argv[])
 
       // get install path
       FilePath installPath;
-      error = core::system::installPath("..", argc, argv, &installPath);
+      error = core::system::installPath("..", argv[0], &installPath);
       if (error)
       {
          LOG_ERROR(error);

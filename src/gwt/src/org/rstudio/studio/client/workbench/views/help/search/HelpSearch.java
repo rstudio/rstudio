@@ -15,8 +15,12 @@
 package org.rstudio.studio.client.workbench.views.help.search;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.SearchDisplay;
@@ -41,18 +45,21 @@ public class HelpSearch
       eventBus_ = eventBus ;
       server_ = server ;
       
+      display_.getSearchDisplay().addSelectionHandler(
+                                       new SelectionHandler<Suggestion>() {
+
+         @Override
+         public void onSelection(SelectionEvent<Suggestion> event)
+         {
+            fireShowHelpEvent(event.getSelectedItem().getDisplayString());
+         }
+      });
+      
       display_.getSearchDisplay().addSelectionCommitHandler(
                                  new SelectionCommitHandler<String>() {
          public void onSelectionCommit(SelectionCommitEvent<String> event)
-         {
-            server_.search(event.getSelectedItem(), 
-                           new SimpleRequestCallback<JsArrayString>() {
-               public void onResponseReceived(JsArrayString url)
-               {
-                  if (url != null && url.length() > 0)
-                     eventBus_.fireEvent(new ShowHelpEvent(url.get(0))) ;
-               }
-            }) ;
+         {       
+            fireShowHelpEvent(event.getSelectedItem());
          }
       }) ;
    }
@@ -60,6 +67,17 @@ public class HelpSearch
    public Widget getSearchWidget()
    {
       return (Widget) display_.getSearchDisplay();
+   }
+   
+   private void fireShowHelpEvent(String topic)
+   {
+      server_.search(topic, new SimpleRequestCallback<JsArrayString>() {
+         public void onResponseReceived(JsArrayString url)
+         {
+            if (url != null && url.length() > 0)
+               eventBus_.fireEvent(new ShowHelpEvent(url.get(0))) ;
+         }
+         }) ;
    }
    
    private final HelpServerOperations server_ ;

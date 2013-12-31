@@ -41,9 +41,26 @@ namespace session {
 namespace modules { 
 namespace environment {
 
-EnvironmentMonitor s_environmentMonitor;
+// allocate on the heap so we control timing of destruction (if we leave it
+// to the destructor we might release the underlying environment SEXP after
+// R has already shut down)
+EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
 
 namespace {
+
+// The environment monitor and friends do work in reponse to events in R.
+// In rare cases, this work can trigger the same events in R that are
+// being responded to, leading to unwanted recursion. This simple guard
+// increments the given counter on construction (and decrements on destruction)
+// so vulnerable event handlers below can prevent reentrancy.
+class EventRecursionGuard
+{
+public:
+   EventRecursionGuard(int& counter): counter_(counter) { counter_++; }
+   ~EventRecursionGuard() { counter_--; }
+private:
+   int& counter_;
+};
 
 bool isValidSrcref(SEXP srcref)
 {
@@ -148,6 +165,7 @@ RCNTXT* getFunctionContext(const int depth,
    RCNTXT* pRContext = r::getGlobalContext();
    RCNTXT* pSrcContext = pRContext;
    int currentDepth = 0;
+   bool foundUserCode = false;
    while (pRContext->callflag)
    {
       if (isDebugHiddenContext(pRContext))
@@ -172,7 +190,8 @@ RCNTXT* getFunctionContext(const int depth,
                                  (pRContext != pSrcContext &&
                                   pRContext->srcref == pSrcContext->srcref))))
          {
-             break;
+            foundUserCode = true;
+            break;
          }
          pSrcContext = pRContext;
       }
@@ -189,17 +208,39 @@ RCNTXT* getFunctionContext(const int depth,
    {
       *pEnvironment = currentDepth == 0 ? R_GlobalEnv : pRContext->cloenv;
    }
+   if (depth == TOP_FUNCTION && findUserCode && !foundUserCode)
+   {
+      // if we were looking for the top user-mode function on the stack but
+      // found nothing, return the top of the stack rather than the bottom.
+      if (pEnvironment)
+         *pEnvironment = r::getGlobalContext()->cloenv;
+      if (pFoundDepth)
+         *pFoundDepth = 1;
+      pRContext = r::getGlobalContext();
+   }
    return pRContext;
 }
 
-// return whether the context stack contains a pure (interactive) browser
+// Return whether we're in browse context--meaning that there's a browser on
+// the context stack and at least one function (i.e. we're not browsing at the
+// top level).
 bool inBrowseContext()
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   bool foundBrowser = false;
+   bool foundFunction = false;
    while (pRContext->callflag)
    {
       if ((pRContext->callflag & CTXT_BROWSER) &&
           !(pRContext->callflag & CTXT_FUNCTION))
+      {
+         foundBrowser = true;
+      }
+      else if (pRContext->callflag & CTXT_FUNCTION)
+      {
+         foundFunction = true;
+      }
+      if (foundBrowser && foundFunction)
       {
          return true;
       }
@@ -340,9 +381,9 @@ json::Array environmentListAsJson()
     std::vector<Variable> vars;
     json::Array listJson;
 
-    if (s_environmentMonitor.hasEnvironment())
+    if (s_pEnvironmentMonitor->hasEnvironment())
     {
-       SEXP env = s_environmentMonitor.getMonitoredEnvironment();
+       SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
        if (env != NULL)
           listEnvironment(env, false, &rProtect, &vars);
 
@@ -412,12 +453,12 @@ Error setEnvironmentName(int contextDepth,
       }
       if (error || env == R_EmptyEnv)
       {
-         s_environmentMonitor.setMonitoredEnvironment(R_GlobalEnv, true);
+         s_pEnvironmentMonitor->setMonitoredEnvironment(R_GlobalEnv, true);
          return error;
       }
    }
 
-   s_environmentMonitor.setMonitoredEnvironment(environment, true);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(environment, true);
    return Success();
 }
 
@@ -458,7 +499,7 @@ Error setEnvironmentFrame(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   s_environmentMonitor.setMonitoredEnvironment(environment, true);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(environment, true);
    return Success();
 }
 
@@ -544,10 +585,11 @@ json::Object commonEnvironmentStateData(int depth)
 
       // If the environment currently monitored is the function's environment,
       // return that environment
-      if (s_environmentMonitor.getMonitoredEnvironment() ==
+      if (s_pEnvironmentMonitor->getMonitoredEnvironment() ==
           pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
+         varJson["environment_is_local"] = true;
          inFunctionEnvironment = true;
       }
 
@@ -569,15 +611,23 @@ json::Object commonEnvironmentStateData(int depth)
    {
       // emit the name of the environment we're currently working with
       std::string environmentName;
-      if (s_environmentMonitor.hasEnvironment())
+      bool local = false;
+      if (s_pEnvironmentMonitor->hasEnvironment())
       {
          Error error = r::exec::RFunction(".rs.environmentName",
-                                    s_environmentMonitor.getMonitoredEnvironment())
+                                    s_pEnvironmentMonitor->getMonitoredEnvironment())
                                     .call(&environmentName);
+         if (error)
+            LOG_ERROR(error);
+
+         error = r::exec::RFunction(".rs.environmentIsLocal",
+                                    s_pEnvironmentMonitor->getMonitoredEnvironment())
+                                    .call(&local);
          if (error)
             LOG_ERROR(error);
       }
       varJson["environment_name"] = environmentName;
+      varJson["environment_is_local"] = local;
    }
 
    // always emit the code for the function, even if we don't think that the
@@ -621,7 +671,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    *pContextDepth = requestedDepth;
    SEXP env = NULL;
    getFunctionContext(requestedDepth, false, NULL, &env);
-   s_environmentMonitor.setMonitoredEnvironment(env);
+   s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
    enqueContextDepthChangedEvent(*pContextDepth);
@@ -639,12 +689,28 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   s_environmentMonitor.checkForChanges();
+   // Prevent recursive calls to this function (see notes in
+   // EventRecursionGuard)
+   static int inDetectChanges = 0;
+   if (inDetectChanges > 0)
+      return;
+
+   EventRecursionGuard guard(inDetectChanges);
+
+   s_pEnvironmentMonitor->checkForChanges();
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
+   // Prevent recursive calls to this function (see notes in
+   // EventRecursionGuard)
+   static int inConsolePrompt = 0;
+   if (inConsolePrompt > 0)
+      return;
+
+   EventRecursionGuard guard(inConsolePrompt);
+
    int depth = 0;
    SEXP environmentTop = NULL;
    RCNTXT* pRContext = NULL;
@@ -663,7 +729,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
              getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
    }
 
-   if (environmentTop != s_environmentMonitor.getMonitoredEnvironment() ||
+   if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        pRContext != *pCurrentContext)
    {
@@ -678,7 +744,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       }
 
       // start monitoring the enviroment at the new depth
-      s_environmentMonitor.setMonitoredEnvironment(environmentTop);
+      s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = pRContext;
       enqueContextDepthChangedEvent(depth);
@@ -692,6 +758,31 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       {
          enqueBrowserLineChangedEvent(r::getGlobalContext()->srcref);
       }
+   }
+}
+
+void onBeforeExecute()
+{
+   // The client tracks busy state based on whether a console prompt has
+   // been issued (because R doesn't reliably deliver non-busy state) --
+   // i.e. when a console prompt occurs the client leaves busy state.
+   // During debugging the busy state is therefore exited as soon as a
+   // Browse> prompt is hit. This is often not a problem as the debug
+   // stop command will interrupt R if necessary. However, in the case
+   // where the Next or Continue command results in R running without
+   // hitting another breakpoint we've essentially lost the busy state.
+   //
+   // This handler (which executes right before console input is returned
+   // to R) checks whether we are in the Browser and if so re-raises the
+   // busy event to indicate that R is now back in a busy state. The busy
+   // state will be immediately cleared if another Browse> prompt is hit
+   // however if R continues running then the client will properly restore
+   // the state of the interruptR command
+
+   if (inBrowseContext())
+   {
+      ClientEvent event(client_events::kBusy, true);
+      module_context::enqueClientEvent(event);
    }
 }
 
@@ -746,7 +837,7 @@ Error removeObjects(const json::JsonRpcRequest& request,
 
    error = r::exec::RFunction(".rs.removeObjects",
                         objectNames,
-                        s_environmentMonitor.getMonitoredEnvironment()).call();
+                        s_pEnvironmentMonitor->getMonitoredEnvironment()).call();
    if (error)
       return error;
 
@@ -764,7 +855,7 @@ Error removeAllObjects(const json::JsonRpcRequest& request,
 
    error = r::exec::RFunction(".rs.removeAllObjects",
                         includeHidden,
-                        s_environmentMonitor.getMonitoredEnvironment()).call();
+                        s_pEnvironmentMonitor->getMonitoredEnvironment()).call();
    if (error)
       return error;
 
@@ -787,7 +878,7 @@ Error getObjectContents(const json::JsonRpcRequest& request,
       return error;
    error = r::exec::RFunction(".rs.getObjectContents",
                               objectName,
-                              s_environmentMonitor.getMonitoredEnvironment())
+                              s_pEnvironmentMonitor->getMonitoredEnvironment())
                               .call(&objContents, &protect);
    if (error)
       return error;
@@ -828,6 +919,11 @@ json::Value environmentStateAsJson()
 
 Error initialize()
 {
+   // store on the heap so that the destructor is never called (so we
+   // don't end up releasing the underlying environment SEXP after
+   // R has already shut down / deinitialized)
+   s_pEnvironmentMonitor = new EnvironmentMonitor();
+
    boost::shared_ptr<int> pContextDepth =
          boost::make_shared<int>(0);
    boost::shared_ptr<RCNTXT*> pCurrentContext =
@@ -840,6 +936,7 @@ Error initialize()
    events().onConsolePrompt.connect(bind(onConsolePrompt,
                                          pContextDepth,
                                          pCurrentContext));
+   events().onBeforeExecute.connect(onBeforeExecute);
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);

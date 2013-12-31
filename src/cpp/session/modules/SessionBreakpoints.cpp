@@ -35,7 +35,7 @@
 #include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
-#include <r/Rinternals.h>
+#include <r/RInternal.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -475,8 +475,8 @@ Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse*)
 {
    json::Array breakpointArr;
-   bool set = false;
-   Error error = json::readParams(request.params, &breakpointArr, &set);
+   bool set = false, arm = false;
+   Error error = json::readParams(request.params, &breakpointArr, &set, &arm);
    if (error)
       return error;
 
@@ -495,17 +495,20 @@ Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
       if (set)
          s_breakpoints.push_back(breakpoint);
 
-      // Is this breakpoint associated with a running Shiny function?
-      boost::shared_ptr<ShinyFunction> psf =
-            findShinyFunction(breakpoint->path, breakpoint->lineNumber);
-      if (psf)
-      {
-         // Collect all the breakpoints associated with this function and
-         // update the function's state
-         std::vector<int> lines = getShinyBreakpointLines(*psf);
-         r::exec::RFunction(".rs.setShinyBreakpoints", psf->getName(),
-                                                       psf->getWhere(),
-                                                       lines).call();
+      // Is this breakpoint associated with a running Shiny function? If it is,
+      // and the caller wants the changes armed immediately, reflect them
+      if (arm) {
+         boost::shared_ptr<ShinyFunction> psf =
+               findShinyFunction(breakpoint->path, breakpoint->lineNumber);
+         if (psf)
+         {
+            // Collect all the breakpoints associated with this function and
+            // update the function's state
+            std::vector<int> lines = getShinyBreakpointLines(*psf);
+            r::exec::RFunction(".rs.setShinyBreakpoints", psf->getName(),
+                                                          psf->getWhere(),
+                                                          lines).call();
+         }
       }
    }
 

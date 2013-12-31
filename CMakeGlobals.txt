@@ -16,6 +16,7 @@
 # version info
 if ("$ENV{RSTUDIO_VERSION_MAJOR}" STREQUAL "")
   set(CPACK_PACKAGE_VERSION_MAJOR "99")
+  set(RSTUDIO_UNVERSIONED_BUILD TRUE)
 else()
   set(CPACK_PACKAGE_VERSION_MAJOR $ENV{RSTUDIO_VERSION_MAJOR})
 endif()
@@ -43,7 +44,8 @@ if(NOT RSTUDIO_TARGET)
 endif()
 
 # set desktop and server build flags
-if( NOT WIN32 AND (${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Server") )
+if( NOT WIN32 AND ( (${RSTUDIO_TARGET} STREQUAL "Development") OR
+                    (${RSTUDIO_TARGET} STREQUAL "Server")) )
    set(RSTUDIO_SERVER TRUE)
 endif()
 if( ${RSTUDIO_TARGET} STREQUAL "Development" OR ${RSTUDIO_TARGET} STREQUAL "Desktop" )

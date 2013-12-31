@@ -55,7 +55,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // compute the resource path
    FilePath resourcePath;
-   Error error = core::system::installPath("..", argc, argv, &resourcePath);
+   Error error = core::system::installPath("..", argv[0], &resourcePath);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
@@ -119,9 +119,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // session options
    options_description session("session") ;
    session.add_options()
-      ("session-timeout-minutes",
+      (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      (kDisconnectedTimeoutSessionOption,
+         value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
+         "session disconnected timeout (minutes)" )
       ("session-preflight-script",
          value<std::string>(&preflightScript_)->default_value(""),
          "session preflight script")
@@ -250,7 +253,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
        value<std::string>(&userIdentity_)->default_value(currentUsername),
-       "user identity" );
+       "user identity" )
+      (kShowUserIdentitySessionOption,
+       value<bool>(&showUserIdentity_)->default_value(true),
+       "show the user identity");
 
    // overlay options
    options_description overlay("overlay");

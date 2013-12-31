@@ -16,20 +16,12 @@
 cmake_minimum_required(VERSION 2.6)
 project (RSTUDIO_GWT)
 
-# build desktop variation only if appropriate
-if (RSTUDIO_SERVER)
-   set(ANT_ARGS "server")
-else()
-   set(ANT_ARGS "desktop")
-endif()
-
 # invoke ant to build
 add_custom_target(gwt_build ALL)
 add_custom_command(
    TARGET gwt_build
    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-   COMMAND ant
-   ARGS ${ANT_ARGS})
+   COMMAND ant)
 
 # installation rules
 install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})

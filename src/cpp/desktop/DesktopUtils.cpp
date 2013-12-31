@@ -73,6 +73,11 @@ bool isRetina(QMainWindow* pMainWindow)
    return false;
 }
 
+bool isOSXMavericks()
+{
+   return false;
+}
+
 void enableFullscreenMode(QMainWindow* pMainWindow, bool primary)
 {
 
@@ -171,6 +176,19 @@ void showWarning(QWidget *parent, const QString &title, const QString& text)
 void showInfo(QWidget* parent, const QString& title, const QString& text)
 {
    showMessageBox(QMessageBox::Information, parent, title, text);
+}
+
+void showFileError(const QString& action,
+                   const QString& file,
+                   const QString& error)
+{
+   QString msg = QString::fromUtf8("Error ") + action +
+                 QString::fromUtf8(" ") + file +
+                 QString::fromUtf8(" - ") + error;
+   showMessageBox(QMessageBox::Critical,
+                  NULL,
+                  QString::fromUtf8("File Error"),
+                  msg);
 }
 
 void launchProjectInNewInstance(QString projectFilename)

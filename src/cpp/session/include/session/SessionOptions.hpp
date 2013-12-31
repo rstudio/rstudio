@@ -124,6 +124,8 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
+
    bool createPublicFolder() const { return createPublicFolder_; }
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
@@ -277,6 +279,11 @@ public:
       return std::string(userIdentity_.c_str()); 
    }
    
+   bool showUserIdentity() const
+   {
+      return showUserIdentity_;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -385,6 +392,7 @@ private:
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
+   int disconnectedTimeoutMinutes_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
 
@@ -427,6 +435,7 @@ private:
    bool allowRpubsPublish_;
 
    // user info
+   bool showUserIdentity_;
    std::string userIdentity_;
    std::string userHomePath_;
    std::string userScratchPath_;   

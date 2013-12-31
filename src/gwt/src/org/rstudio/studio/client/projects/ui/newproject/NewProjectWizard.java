@@ -70,8 +70,15 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    @Override
    protected NewProjectResult ammendInput(NewProjectResult result)
    {
-      result.setOpenInNewWindow(openInNewWindow_.getValue());
-      return result;
+      if (result != null)
+      {
+         result.setOpenInNewWindow(openInNewWindow_.getValue());
+         return result;
+      }
+      else
+      {
+         return null;
+      }
    }
    
    private final CheckBox openInNewWindow_;

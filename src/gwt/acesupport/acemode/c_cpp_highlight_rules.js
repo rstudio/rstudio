@@ -38,14 +38,17 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = function() {
 
     var keywords = lang.arrayToMap(
-        ("and|double|not_eq|throw|and_eq|dynamic_cast|operator|true|" +
-        "asm|else|or|try|auto|enum|or_eq|typedef|bitand|explicit|private|" +
-        "typeid|bitor|extern|protected|typename|bool|false|public|union|" +
-        "break|float|register|unsigned|case|fro|reinterpret-cast|using|catch|" +
-        "friend|return|virtual|char|goto|short|void|class|if|signed|volatile|" +
-        "compl|inline|sizeof|wchar_t|const|int|static|while|const-cast|long|" +
-        "static_cast|xor|continue|mutable|struct|xor_eq|default|namespace|" +
-        "switch|delete|new|template|do|not|this|for").split("|")
+        ("alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break" +
+        "case|catch|char|char16_t|char32_t|class|compl|const" +
+        "constexpr|const_cast|continue|decltype|default|delete|do" +
+        "double|dynamic_cast|else|enum|explicit|export|extern|false" +
+        "float|for|friend|goto|if|inline|int|long|mutable|namespace" +
+        "new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private" +
+        "protected|public|register|reinterpret_cast|return|short" +
+        "signed|sizeof|static|static_assert|static_cast|struct" +
+        "switch|template|this|thread_local|throw|true|try|typedef" +
+        "typeid|typename|union|unsigned|using|virtual|void|volatile" +
+        "wchar_t|while|xor|xor_eq").split("|")
     );
 
     var buildinConstants = lang.arrayToMap(

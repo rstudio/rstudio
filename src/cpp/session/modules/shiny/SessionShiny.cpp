@@ -16,6 +16,7 @@
 #include "SessionShiny.hpp"
 
 #include <core/Error.hpp>
+#include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
 
@@ -49,14 +50,22 @@ void onPackageLoaded(const std::string& pkgname)
          if (!hasRequiredVersion)
          {
             module_context::consoleWriteError("\nWARNING: To run Shiny "
-              "applications with RStudio Server you need to install the "
-              "latest version of the Shiny package from Github. You can "
-              "do this using the devtools package as follows:\n\n"
-              "   install.packages('devtools')\n"
-              "   devtools::install_github('shiny', 'rstudio')\n\n");
+              "applications with RStudio you need to install the "
+              "latest version of the Shiny package from CRAN (version 0.8 "
+              "or higher is required).\n\n");
          }
       }
    }
+}
+
+Error getShinyCapabilities(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   json::Object capsJson;
+   capsJson["installed"] = module_context::isPackageInstalled("shiny");
+   pResponse->setResult(capsJson);
+
+   return Success();
 }
 
 } // anonymous namespace
@@ -65,9 +74,14 @@ void onPackageLoaded(const std::string& pkgname)
 
 Error initialize()
 {
-   module_context::events().onPackageLoaded.connect(onPackageLoaded);
+   using namespace module_context;
+   events().onPackageLoaded.connect(onPackageLoaded);
 
-   return Success();
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(registerRpcMethod, "get_shiny_capabilities", getShinyCapabilities));
+
+   return initBlock.execute();
 }
 
 

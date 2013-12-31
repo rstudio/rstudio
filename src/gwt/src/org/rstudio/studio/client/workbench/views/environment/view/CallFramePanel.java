@@ -124,13 +124,27 @@ public class CallFramePanel extends ResizeComposite
    {
       clearCallFrames();
       
+      // Check to see whether every function on the stack is internal. 
+      // If it is, the traceback window may appear empty, so show everything
+      // to give the user some context.
+      boolean allInternal = true;
+      for (int idx = 0; idx < frameList.length(); idx++)
+      {
+         if (frameList.get(idx).isNavigable()) {
+            allInternal = false;
+            break;
+         }
+      }
+      
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
-               !panelHost_.getShowInternalFunctions() && !frame.isNavigable());
+               !panelHost_.getShowInternalFunctions() && 
+                  !frame.isNavigable() &&
+                  !allInternal);
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();

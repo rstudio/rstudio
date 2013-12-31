@@ -543,7 +543,7 @@ PidType currentProcessId()
    return ::GetCurrentProcessId();
 }
 
-Error executablePath(int argc, char * const argv[],
+Error executablePath(const char * argv0,
                      FilePath* pExecutablePath)
 {
    *pExecutablePath = FilePath(_pgmptr);
@@ -552,12 +552,12 @@ Error executablePath(int argc, char * const argv[],
 
 // installation path
 Error installPath(const std::string& relativeToExecutable,
-                  int argc, char * const argv[],
+                  const char * argv0,
                   FilePath* pInstallationPath)
 {
    // get full executable path
    FilePath exePath;
-   Error error = executablePath(argc, argv, &exePath);
+   Error error = executablePath(argv0, &exePath);
    if (error)
       return error;
 

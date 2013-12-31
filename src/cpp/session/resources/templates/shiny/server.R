@@ -1,19 +1,21 @@
+
+# This is the server logic for a Shiny web application.
+# You can find out more about building applications with Shiny here:
+# 
+# http://www.rstudio.com/shiny/
+#
+
 library(shiny)
 
-# Define server logic required to generate and plot a random distribution
 shinyServer(function(input, output) {
    
-  # Expression that generates a plot of the distribution. The expression
-  # is wrapped in a call to renderPlot to indicate that:
-  #
-  #  1) It is "reactive" and therefore should be automatically 
-  #     re-executed when inputs change
-  #  2) Its output type is a plot 
-  #
   output$distPlot <- renderPlot({
-    # generate an rnorm distribution and plot it
+     
+    # generate and plot an rnorm distribution with the requested
+    # number of observations
     dist <- rnorm(input$obs)
     hist(dist)
+    
   })
   
 })

@@ -88,9 +88,15 @@ bool mainPageFilter(const core::http::Request& request,
 http::UriHandlerFunction blockingFileHandler()
 {
    Options& options = server::options();
+
+   // determine initJs (none for now)
+   std::string initJs;
+
+   // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
                                    mainPageFilter,
+                                   initJs,
                                    options.wwwUseEmulatedStack());
 }
 

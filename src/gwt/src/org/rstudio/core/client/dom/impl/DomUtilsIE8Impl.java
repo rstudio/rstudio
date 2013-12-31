@@ -163,4 +163,10 @@ public class DomUtilsIE8Impl implements DomUtilsImpl
    {
       return true;
    }
+
+   @Override
+   public void selectElement(Element el)
+   {
+      throw new UnsupportedOperationException("DomUtilsIE8Impl.selectElement not implemented");
+   }
 }

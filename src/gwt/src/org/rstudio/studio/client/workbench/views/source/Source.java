@@ -36,6 +36,7 @@ import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -43,6 +44,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -79,6 +81,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -214,6 +218,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeToCurrentLine());
       dynamicCommands_.add(commands.executeFromCurrentLine());
       dynamicCommands_.add(commands.executeCurrentFunction());
+      dynamicCommands_.add(commands.executeCurrentSection());
       dynamicCommands_.add(commands.executeLastCode());
       dynamicCommands_.add(commands.insertChunk());
       dynamicCommands_.add(commands.insertSection());
@@ -261,7 +266,18 @@ public class Source implements InsertSourceHandler,
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));
-             
+
+      // See bug 3673 and https://bugs.webkit.org/show_bug.cgi?id=41016
+      if (BrowseCap.isMacintosh())
+      {
+         ShortcutManager.INSTANCE.register(
+               KeyboardShortcut.META | KeyboardShortcut.ALT,
+               192,
+               commands.executeNextChunk(), 
+               "Execute",
+               commands.executeNextChunk().getMenuLabel(false));
+      }
+
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
@@ -397,14 +413,8 @@ public class Source implements InsertSourceHandler,
       // Same with this event
       fireDocTabsChanged();
       
-      // open project docs (but delay it so we are fully initialized)
-      new Timer() {
-         @Override
-         public void run()
-         {
-            openProjectDocs(session);  
-         } 
-      }.schedule(10);
+      // open project docs
+      openProjectDocs(session);    
    }
 
    /**
@@ -447,30 +457,50 @@ public class Source implements InsertSourceHandler,
       JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
       if (openDocs.length() > 0)
       {
-         // record the first doc for reactivation
-         FileSystemItem firstDoc = FileSystemItem.createFile(openDocs.get(0));
+         // set new tab pending for the duration of the continuation
+         newTabPending_++;
+                 
+         // create a continuation for opening the source docs
+         SerializedCommandQueue openCommands = new SerializedCommandQueue();
          
          for (int i=0; i<openDocs.length(); i++)
          {
-            // get the file
-            FileSystemItem fsi = FileSystemItem.createFile(openDocs.get(i));
-             
-            // if this is the last doc then activate the first doc when done
-            final FileSystemItem activateDoc = 
-                           (i == openDocs.length() - 1) ? firstDoc : null;
-            
-            // open the file
-            openFile(fsi, 
-                     fileTypeRegistry_.getTextTypeForFile(fsi), 
-                     new CommandWithArg<EditingTarget>() {
-                        @Override
-                        public void execute(EditingTarget arg)
-                        {
-                           if (activateDoc != null)
-                              openFile(activateDoc);
-                        }
-                     });
+            String doc = openDocs.get(i);
+            final FileSystemItem fsi = FileSystemItem.createFile(doc);
+              
+            openCommands.addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  openFile(fsi, 
+                           fileTypeRegistry_.getTextTypeForFile(fsi), 
+                           new CommandWithArg<EditingTarget>() {
+                              @Override
+                              public void execute(EditingTarget arg)
+                              {  
+                                 continuation.execute();
+                              }
+                           });
+               }
+            });
          }
+         
+         // decrement newTabPending and select first tab when done
+         openCommands.addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               newTabPending_--;
+               onFirstTab();
+               continuation.execute();
+            }
+            
+         });
+         
+         // execute the continuation
+         openCommands.run();
       }
    }
    
@@ -524,6 +554,37 @@ public class Source implements InsertSourceHandler,
             });
    }
    
+   @Handler
+   public void onShowProfiler()
+   {
+      // first try to activate existing
+      for (int idx = 0; idx < editors_.size(); idx++)
+      {
+         String path = editors_.get(idx).getPath();
+         if (ProfilerEditingTarget.PATH.equals(path))
+         {
+            ensureVisible(false);
+            view_.selectTab(idx);
+            return;
+         }
+      }
+      
+      // create new profiler 
+      ensureVisible(true);
+      server_.newDocument(
+            FileTypeRegistry.PROFILER.getTypeId(),
+            null,
+            (JsObject) ProfilerContents.createDefault().cast(),
+            new SimpleRequestCallback<SourceDocument>("Show Profiler")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument response)
+               {
+                  addTab(response);
+               }
+            });
+   }
+   
 
    @Handler
    public void onNewSourceDoc()
@@ -551,7 +612,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target)
                {
-                  target.verifyPrerequisites(); 
+                  target.verifyCppPrerequisites(); 
                }
              }
          );
@@ -563,7 +624,7 @@ public class Source implements InsertSourceHandler,
                    @Override
                    public void onSuccess(EditingTarget target)
                    {
-                      target.verifyPrerequisites();
+                      target.verifyCppPrerequisites();
                    }
                 });
       }
@@ -572,6 +633,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSweaveDoc()
    {
+      // set concordance value if we need to
       String concordance = new String();
       if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
       {
@@ -580,25 +642,49 @@ public class Source implements InsertSourceHandler,
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
-      final boolean hasConcordance = concordance.length() > 0;
-      
-      String contents = "\\documentclass{article}\n" +
-                        "\n" +
-                        "\\begin{document}\n" +
-                        concordance +
-                        "\n\n\n\n" +
-                        "\\end{document}";
-      
-      newDoc(FileTypeRegistry.SWEAVE, 
-             contents, 
-             new ResultCallback<EditingTarget, ServerError> () {
-                @Override
-                public void onSuccess(EditingTarget target)
-                {
-                   int startRow = 4 + (hasConcordance ? 1 : 0);
-                   target.setCursorPosition(Position.create(startRow, 0));
-                }
-             });
+      final String concordanceValue = concordance;
+     
+      // show progress
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 500, "Creating new document...").getIndicator();
+
+      // get the template
+      server_.getSourceTemplate("", 
+                                "sweave.Rnw", 
+                                new ServerRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String templateContents)
+         {
+            indicator.onCompleted();
+            
+            // add in concordance if necessary
+            final boolean hasConcordance = concordanceValue.length() > 0;
+            if (hasConcordance)
+            {
+               String beginDoc = "\\begin{document}\n";
+               templateContents = templateContents.replace(
+                     beginDoc,
+                     beginDoc + concordanceValue);
+            }
+            
+            newDoc(FileTypeRegistry.SWEAVE, 
+                  templateContents, 
+                  new ResultCallback<EditingTarget, ServerError> () {
+               @Override
+               public void onSuccess(EditingTarget target)
+               {
+                  int startRow = 4 + (hasConcordance ? 1 : 0);
+                  target.setCursorPosition(Position.create(startRow, 0));
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+      });
    }
    
    @Handler
@@ -1307,6 +1393,9 @@ public class Source implements InsertSourceHandler,
                         endPosition = SourcePosition.create(
                               filePos.getEndLine() - 1,
                               filePos.getEndColumn() + 1);
+                        
+                        if (Desktop.isDesktop())
+                           Desktop.getFrame().bringMainFrameToFront();
                      }
                      navigate(target, 
                               SourcePosition.create(position.getLine() - 1,

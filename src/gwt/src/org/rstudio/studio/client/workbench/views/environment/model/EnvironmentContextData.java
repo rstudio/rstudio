@@ -48,4 +48,8 @@ public class EnvironmentContextData extends JavaScriptObject
    public final native String environmentName() /*-{
       return this.environment_name;
    }-*/;
+   
+   public final native boolean environmentIsLocal() /*-{
+      return this.environment_is_local;
+   }-*/;
 }

@@ -45,6 +45,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <core/r_util/RPackageInfo.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
@@ -68,7 +70,7 @@
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core ;
 
@@ -879,6 +881,16 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+// get the R local help port
+std::string rLocalHelpPort()
+{
+   std::string port;
+   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
+   if (error)
+      LOG_ERROR(error);
+   return port;
+}
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {
@@ -895,7 +907,7 @@ std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
    // check whether we are in a package
    FilePath sourceDir = sourceFilePath.parent();
    if (sourceDir.filename() == "R" &&
-       sourceDir.parent().childPath("DESCRIPTION").exists())
+       r_util::isPackageDirectory(sourceDir.parent()))
    {
       r_util::RPackageInfo pkgInfo;
       Error error = pkgInfo.read(sourceDir.parent());
@@ -1047,12 +1059,17 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
    std::string ext = filePath.extensionLowerCase();
+   std::string name = filePath.filename();
    if (ext == ".rprofile" ||
        ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
        ext == ".renviron" ||
        ext == ".gitignore")
+   {
+      return true;
+   }
+   else if (name == ".travis.yml")
    {
       return true;
    }
@@ -1261,6 +1278,28 @@ std::string resourceFileAsString(const std::string& fileName)
    }
 
    return fileContents;
+}
+
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
+{
+   // extract the port
+   boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1):([0-9]+)(/.*)?");
+   boost::smatch match;
+   if (boost::regex_search(url, match, re))
+   {
+      // calculate the path
+      std::string path = match[2];
+      if (path.empty())
+         path = "/";
+      path = "p/" + match[1] + path;
+      *pPath = path;
+
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 

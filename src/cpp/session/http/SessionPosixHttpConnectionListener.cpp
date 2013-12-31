@@ -22,6 +22,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionLocalStreams.hpp>
 
+#include "SessionTcpIpHttpConnectionListener.hpp"
 #include "SessionLocalStreamHttpConnectionListener.hpp"
 
 using namespace core ;
@@ -43,12 +44,23 @@ void initializeHttpConnectionListener()
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      FilePath streamPath(core::system::getenv("RS_LOCAL_PEER"));
-      s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
+      std::string localPeer = core::system::getenv("RS_LOCAL_PEER");
+      if (!localPeer.empty())
+      {
+         FilePath streamPath(localPeer);
+         s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
                                            core::system::UserReadWriteMode,
                                            options.sharedSecret(),
                                            -1);
+      }
+      else
+      {
+         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
+                                            "127.0.0.1",
+                                            options.wwwPort(),
+                                            options.sharedSecret());
+      }
    }
    else // mode == "server"
    {

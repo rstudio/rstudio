@@ -45,6 +45,7 @@ import java.util.ArrayList;
 
 public class SourcePane extends Composite implements Display,
                                                      HasEnsureVisibleHandlers,
+                                                     HasEnsureHeightHandlers,
                                                      RequiresResize,
                                                      ProvidesResize,
                                                      BeforeShowCallback,
@@ -228,6 +229,13 @@ public class SourcePane extends Composite implements Display,
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
+   @Override
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
 
    public void onResize()
    {
@@ -292,4 +300,5 @@ public class SourcePane extends Composite implements Display,
    private Image chevron_;
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
+  
 }

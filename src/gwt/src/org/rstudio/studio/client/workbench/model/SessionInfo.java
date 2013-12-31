@@ -344,4 +344,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getDisableCheckForUpdates() /*-{
       return this.disable_check_for_updates;
    }-*/;
+   
+   public final native boolean getShowIdentity() /*-{
+      return this.show_identity;
+   }-*/;
 }

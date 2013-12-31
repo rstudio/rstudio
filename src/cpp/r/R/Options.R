@@ -19,6 +19,20 @@ options(browser = function(url)
    .Call("rs_browseURL", url) ;
 })
 
+# default viewer option if not already set
+if (is.null(getOption("viewer"))) {
+   options(viewer = function(url, height = NULL)
+   {
+      if (!is.character(url) || (length(url) != 1))
+         stop("url must be a single element character vector.", call. = FALSE)
+      
+      if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
+         stop("height must be a single element integer vector.", call. = FALSE)
+      
+      invisible(.Call("rs_viewer", url, height))  
+   })
+}
+
 # custom pager implementation
 options(pager = .rs.pager)
 

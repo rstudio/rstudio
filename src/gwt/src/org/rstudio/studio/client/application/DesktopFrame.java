@@ -14,10 +14,8 @@
  */
 package org.rstudio.studio.client.application;
 
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
-import org.rstudio.core.client.js.JsObject;
 
 /**
  * This is an interface straight through to a C++ object that lives
@@ -26,6 +24,7 @@ import org.rstudio.core.client.js.JsObject;
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
 {
+   boolean isCocoa();
    void browseUrl(String url);
    String getOpenFileName(String caption, String dir, String filter);
    String getSaveFileName(String caption, 
@@ -59,7 +58,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                       int defaultButton,
                       int cancelButton);
 
-   JsObject promptForText(String title,
+   String promptForText(String title,
                         String label,
                         String initialValue,
                         boolean usePasswordMask,
@@ -69,7 +68,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                         int selectionStart,
                         int selectionLength, String okButtonCaption);
 
-   void checkForUpdates();
    void showAboutDialog();
    void bringMainFrameToFront();
 
@@ -95,13 +93,18 @@ public interface DesktopFrame extends JavaScriptPassthrough
                      String workingDirectory,
                      String extraPathEntries);
 
-   JsArrayString getFontList(boolean fixedWidthOnly);
+   String getFixedWidthFontList();
    String getFixedWidthFont();
    void setFixedWidthFont(String font);
    
-   JsArrayString getZoomLevels();
+   String getZoomLevels();
    double getZoomLevel();
    void setZoomLevel(double zoomLevel);
+   
+   // mac-specific zoom calls
+   void macZoomActualSize();
+   void macZoomIn();
+   void macZoomOut();
    
    String getDesktopSynctexViewer();
    
@@ -117,4 +120,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showKeyboardShortcutHelp();
    
    void reloadZoomWindow();
+   
+   void setViewerUrl(String url);
+   
+   boolean isOSXMavericks();
+
+   String getScrollingCompensationType();
+   
+   void setBusy(boolean busy);
 }

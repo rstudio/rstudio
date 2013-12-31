@@ -42,7 +42,9 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -137,7 +139,8 @@ public class TextEditingTarget implements EditingTarget
 
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
-                                    HasEnsureVisibleHandlers
+                                    HasEnsureVisibleHandlers,
+                                    HasEnsureHeightHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
@@ -1213,7 +1216,7 @@ public class TextEditingTarget implements EditingTarget
    
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
       // NOTE: will be a no-op for non-c/c++ file types
       cppHelper_.checkBuildCppDependencies(this, view_, fileType_);
@@ -1236,6 +1239,11 @@ public class TextEditingTarget implements EditingTarget
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return view_.addEnsureVisibleHandler(handler);
+   }
+   
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+   {
+      return view_.addEnsureHeightHandler(handler);
    }
 
    public HandlerRegistration addCloseHandler(CloseHandler<java.lang.Void> handler)
@@ -2197,6 +2205,11 @@ public class TextEditingTarget implements EditingTarget
       // ensure all of the lines in the selection are within roxygen
       int selStartRow = range.getStart().getRow();
       int selEndRow = range.getEnd().getRow();
+      
+      // ignore the last row if it's column 0
+      if (range.getEnd().getColumn() == 0)
+         selEndRow = Math.max(selEndRow-1, selStartRow);
+      
       for (int i=selStartRow; i<=selEndRow; i++)
       {
          if (!isRoxygenLine(docDisplay_.getLine(i)))
@@ -2264,14 +2277,9 @@ public class TextEditingTarget implements EditingTarget
 
       int startRow = docDisplay_.getSelectionStart().getRow();
       int startColumn = 0;
-
-      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
-      int endColumn = docDisplay_.getLength(endRow);
-
       Position start = Position.create(startRow, startColumn);
-      Position end = Position.create(endRow, endColumn);
-
-      executeRange(Range.fromPoints(start, end));
+      
+      executeRange(Range.fromPoints(start, endPosition()));
    }
 
    @Handler
@@ -2294,6 +2302,35 @@ public class TextEditingTarget implements EditingTarget
       Position end = currentFunction.getEnd();
 
       executeRange(Range.fromPoints(start, end));
+   }
+
+   @Handler   
+   void onExecuteCurrentSection()
+   {
+      docDisplay_.focus();
+
+      // Determine the current section.
+      docDisplay_.getScopeTree();
+      Scope currentSection = docDisplay_.getCurrentSection();
+      if (currentSection == null)
+         return;
+      
+      // Determine the start and end of the section
+      Position start = currentSection.getBodyStart();
+      if (start == null)
+         start = Position.create(0, 0);
+      Position end = currentSection.getEnd();
+      if (end == null)
+         end = endPosition();
+      
+      executeRange(Range.fromPoints(start, end));
+   }
+    
+   private Position endPosition()
+   {
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+      return Position.create(endRow, endColumn);
    }
    
    @Handler
@@ -2939,7 +2976,7 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onCompilePDF()
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.getPdfPreviewValue();
       boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO) && 

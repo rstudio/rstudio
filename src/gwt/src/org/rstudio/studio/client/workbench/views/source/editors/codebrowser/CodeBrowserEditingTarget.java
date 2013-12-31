@@ -36,6 +36,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -346,7 +347,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
    }
    
@@ -532,6 +533,16 @@ public class CodeBrowserEditingTarget implements EditingTarget
 
    @Override
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   {
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+         }
+      };
+   }
+   
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
    {
       return new HandlerRegistration()
       {

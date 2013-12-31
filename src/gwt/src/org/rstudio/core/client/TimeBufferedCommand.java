@@ -35,7 +35,7 @@ public abstract class TimeBufferedCommand
    /**
     * Creates a TimeBufferedCommand that will only run when nudged.
     */
-   protected TimeBufferedCommand(int activeIntervalMillis)
+   public TimeBufferedCommand(int activeIntervalMillis)
    {
       this(-1, -1, activeIntervalMillis);
    }
@@ -44,7 +44,7 @@ public abstract class TimeBufferedCommand
     * Creates a TimeBufferedCommand that will run when nudged, or every
     * passiveIntervalMillis milliseconds, whichever comes first.
     */
-   protected TimeBufferedCommand(int passiveIntervalMillis,
+   public TimeBufferedCommand(int passiveIntervalMillis,
                                  int activeIntervalMillis)
    {
       this(passiveIntervalMillis, passiveIntervalMillis, activeIntervalMillis);
@@ -55,7 +55,7 @@ public abstract class TimeBufferedCommand
     * passiveIntervalMillis milliseconds, whichever comes first; with a
     * custom period before the first "passive" run.
     */
-   protected TimeBufferedCommand(int initialIntervalMillis,
+   public TimeBufferedCommand(int initialIntervalMillis,
                                  int passiveIntervalMillis,
                                  int activeIntervalMillis)
    {

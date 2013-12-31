@@ -95,6 +95,49 @@
    return(NULL)
 })
 
+# Given the body of the function, return the substeps of the function on which
+# a breakpoint was set (not the substep of the breakpoint itself).
+.rs.addFunction("findBreakpointSteps", function(funBody)
+{
+   if (typeof(funBody) != "language")
+   {
+      return(NULL)
+   }
+   for (idx in 1:length(funBody))
+   {
+      # if this is a doTrace call, we found a breakpoint; stop recursion here
+      if (is.call(funBody[[idx]]) && 
+          as.character(funBody[[idx]][[1]]) == ".doTrace")
+      {
+         return(idx + 1)
+      }
+      nestedSteps <- .rs.findBreakpointSteps(funBody[[idx]])
+      if (!is.null(nestedSteps))
+      {
+         return(c(idx, nestedSteps))
+      }
+   }
+})
+
+# Given a function, return the function with all of the breakpoints removed.
+.rs.addFunction("removeBreakpoints", function(fun)
+{
+   repeat
+   {
+      # Find the step on which a breakpoint was set
+      inner <- .rs.findBreakpointSteps(body(fun))
+      if (length(inner) < 2)
+         break;
+
+      # Replace the outer expression (which contains the breakpoint) with the
+      # inner one (which contains the expression formerly wrapped by the
+      # breakpoint)
+      outer <- inner[1:(length(inner)-1)]
+      body(fun)[[outer]] <- body(fun)[[inner]]
+   }
+   fun
+})
+
 # given a traced function body and the original function body, recursively copy
 # the source references from the original body to the traced body, adding
 # source references to the injected trace code from the line being traced
@@ -110,11 +153,17 @@
 
   for (idx in 1:length(funBody))
   {
-    # check to see if this is one of the several types of objects we can't do
+    # Check to see if this is one of the several types of objects we can't do
     # equality testing for. Note that these object types are all leaf nodes in
-    # the parse tree, so it's safe to stop recursion here.
+    # the parse tree, so it's safe to stop recursion here. Also note that we
+    # can't use the helpful is.na() here since that function emits warnings
+    # for some types of objects in the parse tree.
     if (is.null(funBody[[idx]]) || 
         identical(funBody[[idx]], NA) || 
+        identical(funBody[[idx]], NA_character_) || 
+        identical(funBody[[idx]], NA_complex_) || 
+        identical(funBody[[idx]], NA_integer_) || 
+        identical(funBody[[idx]], NA_real_) || 
         is.pairlist(funBody[[idx]])) 
        next
 
@@ -470,22 +519,6 @@
    # which breakpoints are to be set, and set breakpoints there
    steps <- .rs.getFunctionSteps(env$fun, "fun", lines)
 
-   # The Shiny server function gets special treatment. In this specific
-   # function, we don't want to set any breakpoints in sub-expressions, so
-   # remove any steps above that include substeps
-   isShinyServer <- attr(env$fun, "shinyServerFunction")
-   if (!is.null(isShinyServer) && isShinyServer)
-   {
-      for (i in length(steps):1)
-      {
-         # getFunctionSteps returns a comma-delimited list of sub-steps, so if
-         # the steps contains a comma, it contains a substep.
-         if (length(grep(",", steps[[i]]$at, fixed = TRUE)) > 0)
-         {
-            steps[[i]] <- NULL
-         }
-      }
-   }
    suppressWarnings(.rs.setFunctionBreakpoints(
          "fun", env, lapply(steps, function(step) { step$at } )))
 
@@ -499,9 +532,13 @@
 # label - friendly label for function to show in callstack
 .rs.addGlobalFunction("registerShinyDebugHook", function(params)
 {
-   # Copy source refs to the body of the function 
+   # Get the function from storage in Shiny, and remove any breakpoints it may
+   # already contain
    fun <- .rs.getShinyFunction(params$name, params$where)
+   fun <- .rs.removeBreakpoints(fun)
    params$expr <- body(fun)
+
+   # Copy source refs to the body of the function 
    attr(fun, "srcref") <- attr(body(fun), "wholeSrcref")
    params$fun <- fun
 
