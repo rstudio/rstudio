@@ -80,7 +80,18 @@ public class ShortcutManager implements NativePreviewHandler,
             new KeyboardShortcut(modifiers, keyCode, groupName, title);
       if (command == null)
       {
-         unboundShortcuts_.add(shortcut);
+         // If the shortcut is unbound, check to see whether there's another
+         // unbound shortcut with the same title; replace it if there is.
+         boolean existingShortcut = false;
+         for (int i = 0; i < unboundShortcuts_.size(); i++) {
+            if (unboundShortcuts_.get(i).getTitle().equals(title)) {
+               unboundShortcuts_.set(i, shortcut);
+               existingShortcut = true;
+               break;
+            }
+         }
+         if (!existingShortcut)
+            unboundShortcuts_.add(shortcut);
       }
       else
       {

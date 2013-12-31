@@ -51,10 +51,11 @@ public class ShortcutInfoPanel extends Composite
             new String[] { "Execute", "Debug", "Build" }, 
             new String[] { "Source Control", "Other" }
       };
-      sb.appendHtmlConstant("<table><tr>");
+      int pctWidth = 100 / groupNames.length;
+      sb.appendHtmlConstant("<table width='100%'><tr>");
       for (String[] colGroupNames: groupNames)
       {
-         sb.appendHtmlConstant("<td>");
+         sb.appendHtmlConstant("<td width='" + pctWidth + "%'>");
          for (String colGroupName: colGroupNames)
          {
             sb.appendHtmlConstant("<h2>");

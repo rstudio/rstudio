@@ -384,6 +384,9 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Alt+Down" title="Move Lines Down" />
          <shortcut value="Ctrl+U" title="Yank Line Up to Cursor" />
          <shortcut value="Ctrl+K" title="Yank Line After Cursor" />
+         <shortcut value="Cmd+Shift+Alt+G" title="Go to Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Shift+Alt+G" title="Go to Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
