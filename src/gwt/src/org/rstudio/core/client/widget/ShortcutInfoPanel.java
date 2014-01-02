@@ -51,9 +51,9 @@ public class ShortcutInfoPanel extends Composite
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
       String[][] groupNames = { 
             new String[] { "Tabs/Panes", "Files", "Console" },
-            new String[] { "Source Navigation", "Source Editor" },
-            new String[] { "Execute", "Debug", "Build" }, 
-            new String[] { "Source Control", "Other" }
+            new String[] { "Source Navigation", "Execute" },
+            new String[] { "Source Editor", "Debug" }, 
+            new String[] { "Source Control", "Build", "Other" }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
