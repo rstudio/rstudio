@@ -25,12 +25,31 @@ import java.io.Serializable;
  * @param <E> element type.
  */
 public class LinkedList<E> extends AbstractSequentialList<E> implements
-    List<E>, Queue<E>, Serializable {
+    List<E>, Deque<E>, Serializable {
   /*
    * This implementation uses a doubly-linked circular list with a header node.
    * 
    * TODO(jat): add more efficient subList implementation.
    */
+
+  private final class DescendingIteratorImpl implements Iterator<E> {
+    private final ListIterator<E> itr = new ListIteratorImpl(size, header);
+
+    @Override
+    public boolean hasNext() {
+      return itr.hasPrevious();
+    }
+
+    @Override
+    public E next() {
+      return itr.previous();
+    }
+
+    @Override
+    public void remove() {
+      itr.remove();
+    }
+  }
 
   /**
    * Implementation of ListIterator for linked lists.
@@ -222,6 +241,11 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     size = 0;
   }
 
+  @Override
+  public Iterator<E> descendingIterator() {
+    return new DescendingIteratorImpl();
+  }
+
   public E element() {
     return getFirst();
   }
@@ -260,10 +284,27 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   }
 
   public boolean offer(E o) {
-    return add(o);
+    return offerLast(o);
+  }
+
+  @Override
+  public boolean offerFirst(E e) {
+    addFirst(e);
+    return true;
+  }
+
+  @Override
+  public boolean offerLast(E e) {
+    addLast(e);
+    return true;
   }
 
   public E peek() {
+    return peekFirst();
+  }
+
+  @Override
+  public E peekFirst() {
     if (size == 0) {
       return null;
     } else {
@@ -271,7 +312,21 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     }
   }
 
+  @Override
+  public E peekLast() {
+    if (size == 0) {
+      return null;
+    } else {
+      return getLast();
+    }
+  }
+
   public E poll() {
+    return pollFirst();
+  }
+
+  @Override
+  public E pollFirst() {
     if (size == 0) {
       return null;
     } else {
@@ -279,24 +334,53 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     }
   }
 
+  @Override
+  public E pollLast() {
+    if (size == 0) {
+      return null;
+    } else {
+      return removeLast();
+    }
+  }
+
+  @Override
+  public E pop() {
+    return removeFirst();
+  }
+
+  @Override
+  public void push(E e) {
+    addFirst(e);
+  }
+
   public E remove() {
     return removeFirst();
   }
 
   public E removeFirst() {
-    throwEmptyException();
-    --size;
-    Node<E> node = header.next;
-    node.remove();
+    Node<E> node = removeNode(header.next);
     return node.value;
   }
 
+  @Override
+  public boolean removeFirstOccurrence(Object o) {
+    return remove(o);
+  }
+
   public E removeLast() {
-    throwEmptyException();
-    --size;
-    Node<E> node = header.prev;
-    node.remove();
+    Node<E> node = removeNode(header.prev);
     return node.value;
+  }
+
+  @Override
+  public boolean removeLastOccurrence(Object o) {
+    for (Node<E> e = header.prev; e != header; e = e.prev) {
+      if (Objects.equals(e.value, o)) {
+        removeNode(e);
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -307,6 +391,13 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   private void addBefore(E o, Node<E> target) {
     new Node<E>(o, target);
     ++size;
+  }
+
+  private Node<E> removeNode(Node<E> node) {
+    throwEmptyException();
+    --size;
+    node.remove();
+    return node;
   }
 
   /**
