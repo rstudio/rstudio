@@ -122,7 +122,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       Map.Entry<K, V> entry = (Entry<K, V>) o; // suppress unchecked
       Entry<K, V> lookupEntry = getEntry(entry.getKey());
       return lookupEntry != null
-          && Utility.equalsWithNullCheck(lookupEntry.getValue(),
+          && Objects.equals(lookupEntry.getValue(),
               entry.getValue());
     }
 
@@ -205,8 +205,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
         return false;
       }
       Map.Entry<?, ?> other = (Map.Entry<?, ?>) o;
-      return Utility.equalsWithNullCheck(key, other.getKey())
-          && Utility.equalsWithNullCheck(value, other.getValue());
+      return Objects.equals(key, other.getKey())
+          && Objects.equals(value, other.getValue());
     }
 
     public K getKey() {
@@ -327,7 +327,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
           }
           Entry<K, V> lookupEntry = getEntry(key);
           return lookupEntry != null
-              && Utility.equalsWithNullCheck(lookupEntry.getValue(),
+              && Objects.equals(lookupEntry.getValue(),
                   entry.getValue());
         }
 

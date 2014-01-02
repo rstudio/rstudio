@@ -41,7 +41,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
         Object key = entry.getKey();
         if (EnumMap.this.containsKey(key)) {
           Object value = EnumMap.this.get(key);
-          return Utility.equalsWithNullCheck(entry.getValue(), value);
+          return Objects.equals(entry.getValue(), value);
         }
       }
       return false;
@@ -155,7 +155,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
   @Override
   public boolean containsValue(Object value) {
     for (K key : keySet) {
-      if (Utility.equalsWithNullCheck(value, values[key.ordinal()])) {
+      if (Objects.equals(value, values[key.ordinal()])) {
         return true;
       }
     }

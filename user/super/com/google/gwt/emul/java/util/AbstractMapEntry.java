@@ -15,8 +15,6 @@
  */
 package java.util;
 
-import static java.util.Utility.equalsWithNullCheck;
-
 /**
  * Basic {@link Map.Entry} implementation that implements hashCode, equals, and
  * toString.
@@ -27,8 +25,8 @@ abstract class AbstractMapEntry<K, V> implements Map.Entry<K, V> {
   public final boolean equals(Object other) {
     if (other instanceof Map.Entry) {
       Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
-      if (equalsWithNullCheck(getKey(), entry.getKey())
-          && equalsWithNullCheck(getValue(), entry.getValue())) {
+      if (Objects.equals(getKey(), entry.getKey())
+          && Objects.equals(getValue(), entry.getValue())) {
         return true;
       }
     }

@@ -243,7 +243,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
       E elem = iter.next();
       Object elemOther = iterOther.next();
 
-      if (!(elem == null ? elemOther == null : elem.equals(elemOther))) {
+      if (!Objects.equals(elem, elemOther)) {
         return false;
       }
     }
@@ -268,7 +268,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
   public int indexOf(Object toFind) {
     for (int i = 0, n = size(); i < n; ++i) {
-      if (toFind == null ? get(i) == null : toFind.equals(get(i))) {
+      if (Objects.equals(toFind, get(i))) {
         return i;
       }
     }
@@ -282,7 +282,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
   public int lastIndexOf(Object toFind) {
     for (int i = size() - 1; i > -1; --i) {
-      if (toFind == null ? get(i) == null : toFind.equals(get(i))) {
+      if (Objects.equals(toFind, get(i))) {
         return i;
       }
     }

@@ -253,7 +253,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    */
   int indexOf(Object o, int index) {
     for (; index < size; ++index) {
-      if (Utility.equalsWithNullCheck(o, array[index])) {
+      if (Objects.equals(o, array[index])) {
         return index;
       }
     }
@@ -265,7 +265,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    */
   int lastIndexOf(Object o, int index) {
     for (; index >= 0; --index) {
-      if (Utility.equalsWithNullCheck(o, array[index])) {
+      if (Objects.equals(o, array[index])) {
         return index;
       }
     }

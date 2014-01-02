@@ -40,7 +40,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
       Entry<K, V> entry = iter.next();
       V v = entry.getValue();
-      if (value == null ? v == null : value.equals(v)) {
+      if (Objects.equals(value, v)) {
         return true;
       }
     }
@@ -68,7 +68,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       if (!containsKey(otherKey)) {
         return false;
       }
-      if (!Utility.equalsWithNullCheck(otherValue, get(otherKey))) {
+      if (!Objects.equals(otherValue, get(otherKey))) {
         return false;
       }
     }
@@ -205,7 +205,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
       Entry<K, V> entry = iter.next();
       K k = entry.getKey();
-      if (key == null ? k == null : key.equals(k)) {
+      if (Objects.equals(key, k)) {
         if (remove) {
           entry = new MapEntryImpl<K, V>(entry.getKey(), entry.getValue());
           iter.remove();

@@ -64,7 +64,7 @@ public class HashMap<K, V> extends AbstractHashMap<K, V> implements Cloneable,
 
   @Override
   protected boolean equals(Object value1, Object value2) {
-    return Utility.equalsWithNullCheck(value1, value2);
+    return Objects.equals(value1, value2);
   }
 
   @Override

@@ -118,7 +118,7 @@ public class Collections {
     }
 
     public boolean contains(Object item) {
-      return Utility.equalsWithNullCheck(element, item);
+      return Objects.equals(element, item);
     }
 
     public E get(int index) {
@@ -820,7 +820,7 @@ public class Collections {
   public static int frequency(Collection<?> c, Object o) {
     int count = 0;
     for (Object e : c) {
-      if (o == null ? e == null : o.equals(e)) {
+      if (Objects.equals(o, e)) {
         ++count;
       }
     }
@@ -884,7 +884,7 @@ public class Collections {
     boolean modified = false;
     for (ListIterator<T> it = list.listIterator(); it.hasNext();) {
       T t = it.next();
-      if (t == null ? oldVal == null : t.equals(oldVal)) {
+      if (Objects.equals(t, oldVal)) {
         it.set(newVal);
         modified = true;
       }

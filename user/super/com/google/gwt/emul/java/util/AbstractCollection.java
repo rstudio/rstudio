@@ -152,7 +152,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   private <T> Iterator<T> advanceToFind(Iterator<T> iter, Object o) {
     while (iter.hasNext()) {
       T t = iter.next();
-      if (o == null ? t == null : o.equals(t)) {
+      if (Objects.equals(o, t)) {
         return iter;
       }
     }
