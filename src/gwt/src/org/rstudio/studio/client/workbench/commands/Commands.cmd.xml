@@ -482,8 +482,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />
          <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
-         <shortcut refid="helpKeyboardShortcuts" value="Cmd+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
          <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
