@@ -17,10 +17,16 @@ package org.rstudio.core.client.command;
 
 
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -40,6 +46,8 @@ public class ShortcutViewer implements NativePreviewHandler
          GlobalDisplay globalDisplay)
    {
       binder.bind(commands, this);
+      
+      globalDisplay_ = globalDisplay;
    }
    
    @Handler
@@ -50,20 +58,43 @@ public class ShortcutViewer implements NativePreviewHandler
       {
          return;
       }
-      shortcutInfo_ = new ShortcutInfoPanel();
+      shortcutInfo_ = new ShortcutInfoPanel(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (Desktop.isDesktop())
+               Desktop.getFrame().showKeyboardShortcutHelp();
+            else 
+               openApplicationURL("docs/keyboard.htm");
+         }
+      });
       RootLayoutPanel.get().add(shortcutInfo_);
       preview_ = Event.addNativePreviewHandler(this);
    }
-   
+
    @Override
    public void onPreviewNativeEvent(NativePreviewEvent event)
    {
       if (event.isCanceled())
          return;
-
+      
       if (event.getTypeInt() == Event.ONKEYDOWN || 
           event.getTypeInt() == Event.ONMOUSEDOWN)
       {
+         if (event.getTypeInt() == Event.ONMOUSEDOWN &&
+             event.getNativeEvent().getButton() == NativeEvent.BUTTON_RIGHT)
+            return;
+
+         // Let the user click on the full doc link without dismissing the
+         // popover
+         EventTarget et = event.getNativeEvent().getEventTarget();
+         if (Element.is(et)) {
+            Element e = Element.as(et);
+            if (e.getTagName().equalsIgnoreCase("a"))
+               return;
+         }
+
          if (shortcutInfo_ != null)
             RootLayoutPanel.get().remove(shortcutInfo_);
          shortcutInfo_ = null;
@@ -74,6 +105,13 @@ public class ShortcutViewer implements NativePreviewHandler
       }
    }
 
+   private void openApplicationURL(String relativeURL)
+   {
+      String url = GWT.getHostPageBaseURL() + relativeURL;
+      globalDisplay_.openWindow(url);
+   }
+   
    private ShortcutInfoPanel shortcutInfo_ = null;
    private HandlerRegistration preview_;
+   private GlobalDisplay globalDisplay_;
 }

@@ -572,12 +572,6 @@ public class Application implements ApplicationEventHandlers
       Window.Location.replace(url);
    }
    
-   private void openApplicationURL(String relativeURL)
-   {
-      String url = GWT.getHostPageBaseURL() + relativeURL;
-      globalDisplay_.openWindow(url);
-   }
-   
    private void initializeWorkbench()
    {
       pAceThemes_.get();

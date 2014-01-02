@@ -21,9 +21,13 @@ import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -39,7 +43,7 @@ public class ShortcutInfoPanel extends Composite
    {
    }
 
-   public ShortcutInfoPanel()
+   public ShortcutInfoPanel(final Command onShowFullDocs)
    {
       initWidget(uiBinder.createAndBindUi(this));
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
@@ -84,8 +88,18 @@ public class ShortcutInfoPanel extends Composite
       sb.appendHtmlConstant("</td></tr></table>");
       HTMLPanel panel = new HTMLPanel(sb.toSafeHtml());
       shortcutPanel.add(panel);
+      
+      shortcutDocLink.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            onShowFullDocs.execute();
+         }
+      });
    }
    
    @UiField HTMLPanel shortcutPanel;
    @UiField FocusPanel focusPanel;
+   @UiField Anchor shortcutDocLink;
 }

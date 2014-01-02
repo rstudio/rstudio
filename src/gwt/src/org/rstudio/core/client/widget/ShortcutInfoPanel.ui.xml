@@ -7,6 +7,7 @@
 	.shortcutHeader
 	{
 	  font-size: 150%;
+	  width: 66%;
 	}
 
    .shortcutPanel
@@ -43,12 +44,26 @@
 	{
 	  vertical-align: top;
 	}
+	
+	.shortcutDocLink 
+	{
+	  float: right;
+	  width: 33%;
+	  text-align: right;
+	  vertical-align: top;
+	  text-decoration: underline;
+	  opacity: 0.7;
+	  cursor: pointer;
+	}
 	</ui:style>
 	<g:FocusPanel styleName="{style.shortcutOuterPanel}">
 		<g:FocusPanel ui:field="focusPanel" styleName="{style.shortcutPanel}">
 			<g:HTMLPanel>
+			   <g:Anchor styleName="{style.shortcutDocLink}" 
+			             text="See All Shortcuts..."
+			             ui:field="shortcutDocLink"></g:Anchor>
 			   <g:Label styleName="{style.shortcutHeader}" 
-			            text="RStudio Keyboard Shortcuts"></g:Label>
+			            text="Keyboard Shortcut Quick Reference"></g:Label>
 				<g:HTMLPanel ui:field="shortcutPanel">
 				</g:HTMLPanel>
 			</g:HTMLPanel>

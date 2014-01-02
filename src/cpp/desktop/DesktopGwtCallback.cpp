@@ -558,6 +558,14 @@ void GwtCallback::toggleFullscreenMode()
    desktop::toggleFullscreenMode(pMainWindow_);
 }
 
+void GwtCallback::showKeyboardShortcutHelp()
+{
+   FilePath keyboardHelpPath = options().wwwDocsPath().complete("keyboard.htm");
+   QString file = QString::fromUtf8(keyboardHelpPath.absolutePath().c_str());
+   QUrl url = QUrl::fromLocalFile(file);
+   desktop::openUrl(url);
+}
+
 void GwtCallback::showAboutDialog()
 {
    // WA_DeleteOnClose
