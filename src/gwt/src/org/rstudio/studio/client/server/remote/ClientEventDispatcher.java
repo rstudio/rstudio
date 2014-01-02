@@ -97,6 +97,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
@@ -515,6 +516,11 @@ public class ClientEventDispatcher
          {
             ViewerNavigateEvent.Data data = event.getData();
             eventBus_.fireEvent(new ViewerNavigateEvent(data));
+         }
+         else if (type.equals(ClientEvent.SourceExtendedTypeDetected))
+         {
+            SourceExtendedTypeDetectedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SourceExtendedTypeDetectedEvent(data));
          }
          else
          {

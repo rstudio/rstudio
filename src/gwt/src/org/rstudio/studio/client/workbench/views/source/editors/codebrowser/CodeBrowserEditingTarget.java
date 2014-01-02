@@ -282,6 +282,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+   }
+
+   @Override
    public HasValue<String> getName()
    {
       return new Value<String>("Source Viewer");

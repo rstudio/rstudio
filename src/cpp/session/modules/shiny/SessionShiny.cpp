@@ -58,6 +58,22 @@ void onPackageLoaded(const std::string& pkgname)
    }
 }
 
+std::string onDetectShinySourceType(
+      boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   if (!pDoc->path().empty())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+      if (filePath.filename() == "ui.R" ||
+          filePath.filename() == "server.R")
+      {
+         return "shiny";
+      }
+   }
+
+   return std::string();
+}
+
 Error getShinyCapabilities(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -76,6 +92,7 @@ Error initialize()
 {
    using namespace module_context;
    events().onPackageLoaded.connect(onPackageLoaded);
+   events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

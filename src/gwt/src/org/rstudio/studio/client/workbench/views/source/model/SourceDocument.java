@@ -54,6 +54,14 @@ public class SourceDocument extends JavaScriptObject
       this.type = type;
    }-*/;
 
+   public native final String getExtendedType() /*-{
+      return this.extended_type;
+   }-*/;
+
+   public native final void setExtendedType(String extendedType) /*-{
+      this.extended_type = extendedType;
+   }-*/;
+   
    /**
     * Gets the contents of the file.
     */

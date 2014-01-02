@@ -55,12 +55,14 @@ public class TextEditingTargetWidget
                                   FileTypeRegistry fileTypeRegistry,
                                   DocDisplay editor,
                                   TextFileType fileType,
+                                  String extendedType,
                                   EventBus events)
    {
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
+      extendedType_ = extendedType;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ =
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
@@ -242,13 +244,19 @@ public class TextEditingTargetWidget
       }
       return codeTransform_;
    }
+   
+   public void adaptToExtendedFileType(String extendedType)
+   {
+      extendedType_ = extendedType;
+      adaptToFileType(editor_.getFileType());
+   }
 
    public void adaptToFileType(TextFileType fileType)
    {
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
-      boolean canSource = fileType.canSource();
-      boolean canSourceWithEcho = fileType.canSourceWithEcho();
+      boolean canSource = fileType.canSource() && !extendedType_.equals("shiny");
+      boolean canSourceWithEcho = canSource && fileType.canSourceWithEcho();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isMarkdown = fileType.isMarkdown();
@@ -454,6 +462,7 @@ public class TextEditingTargetWidget
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
+   private String extendedType_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
    private InfoBar warningBar_;

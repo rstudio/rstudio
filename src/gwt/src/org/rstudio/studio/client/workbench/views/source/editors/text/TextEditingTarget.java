@@ -152,6 +152,8 @@ public class TextEditingTarget implements EditingTarget
       StatusBar getStatusBar();
 
       boolean isAttached();
+      
+      void adaptToExtendedFileType(String extendedType);
 
       void debug_dumpContents();
       void debug_importDump();
@@ -592,6 +594,7 @@ public class TextEditingTarget implements EditingTarget
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
+                                          document.getExtendedType(),
                                           events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
@@ -1668,6 +1671,12 @@ public class TextEditingTarget implements EditingTarget
    public String getId()
    {
       return id_;
+   }
+   
+   @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+      view_.adaptToExtendedFileType(extendedType);
    }
 
    public HasValue<String> getName()
