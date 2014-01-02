@@ -182,13 +182,14 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      sourceMenu.addSeparator();
+      sourceMenu.addItem(commands_.compileNotebook().createMenuItem(false));
       
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
 
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.compileNotebook().createToolbarButton());
-
+     
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
       chunksMenu.addSeparator();
@@ -255,16 +256,17 @@ public class TextEditingTargetWidget
    {
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
-      boolean canSource = fileType.canSource() && !extendedType_.equals("shiny");
-      boolean canSourceWithEcho = canSource && fileType.canSourceWithEcho();
+      boolean canSource = fileType.canSource();
+      boolean canSourceWithEcho = fileType.canSourceWithEcho();
+      boolean canSourceOnSave = fileType.canSourceOnSave();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isMarkdown = fileType.isMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
-      
-      sourceOnSave_.setVisible(fileType.canSourceOnSave());
-      srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
+     
+      sourceOnSave_.setVisible(canSourceOnSave);
+      srcOnSaveLabel_.setVisible(canSourceOnSave);
       if (fileType.isRd())
          srcOnSaveLabel_.setText("Preview on Save");
       else
@@ -283,6 +285,20 @@ public class TextEditingTargetWidget
       
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
+      
+      if (isShinyFile())
+      {
+         sourceOnSave_.setVisible(false);
+         srcOnSaveLabel_.setVisible(false);
+         runButton_.setText("");
+         sourceButton_.setVisible(false);
+         sourceMenuButton_.setVisible(false);
+      }
+   }
+   
+   private boolean isShinyFile()
+   {
+      return extendedType_.equals("shiny");
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -312,7 +328,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(width < 480 ? "" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
