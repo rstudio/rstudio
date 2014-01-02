@@ -127,6 +127,23 @@ public class RegExp {
   }
 
   /**
+   * Returns a literal pattern <code>String</code> for the specified
+   * <code>String</code>.
+   *
+   * <p>This method produces a <code>String</code> that can be used to
+   * create a <code>RegExp</code> that would match the string
+   * <code>s</code> as if it were a literal pattern.</p> Metacharacters
+   * or escape sequences in the input sequence will be given no special
+   * meaning.
+   *
+   * @param  input The string to be literalized
+   * @return  A literal string replacement
+   */
+  public static String quote(String input) {
+    return Pattern.quote(input);
+  }
+
+  /**
    * Parses a flags string as a set of characters. Does not reject unknown
    * flags.
    *

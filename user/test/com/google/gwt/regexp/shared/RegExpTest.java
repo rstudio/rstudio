@@ -712,6 +712,11 @@ public class RegExpTest extends GWTTestCase {
     assertTrue(RegExp.compile("[a-z]+").test("abc"));
     assertFalse(RegExp.compile("[a-z]+").test("42"));
   }
+  
+  public void testQuote() {
+    String input = "t][e}{s)(/-t |q.,u?o**t+^e$\\/";
+    assertTrue(RegExp.compile(RegExp.quote(input)).test(input));
+  }
 
   /**
    * Checks that a regular expression matches all characters of a string and no
