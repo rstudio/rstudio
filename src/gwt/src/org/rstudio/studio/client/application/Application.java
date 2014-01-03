@@ -271,15 +271,6 @@ public class Application implements ApplicationEventHandlers
          globalDisplay_.openRStudioLink("docs");
    }
    
-   @Handler
-   public void onHelpKeyboardShortcuts()
-   {
-      if (Desktop.isDesktop())
-         Desktop.getFrame().showKeyboardShortcutHelp();
-      else
-         openApplicationURL("docs/keyboard.htm");
-   }
-   
    private void showAgreement()
    {
       globalDisplay_.openWindow(server_.getApplicationURL("agreement"));
@@ -579,12 +570,6 @@ public class Application implements ApplicationEventHandlers
     
       String url = GWT.getHostPageBaseURL() + relativeUrl;
       Window.Location.replace(url);
-   }
-   
-   private void openApplicationURL(String relativeURL)
-   {
-      String url = GWT.getHostPageBaseURL() + relativeURL;
-      globalDisplay_.openWindow(url);
    }
    
    private void initializeWorkbench()

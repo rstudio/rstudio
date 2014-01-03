@@ -274,7 +274,9 @@ public class Source implements InsertSourceHandler,
          ShortcutManager.INSTANCE.register(
                KeyboardShortcut.META | KeyboardShortcut.ALT,
                192,
-               commands.executeNextChunk());
+               commands.executeNextChunk(), 
+               "Execute",
+               commands.executeNextChunk().getMenuLabel(false));
       }
 
       events.addHandler(ShowContentEvent.TYPE, this);
