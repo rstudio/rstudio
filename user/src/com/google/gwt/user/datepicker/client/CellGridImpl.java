@@ -20,9 +20,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.impl.ElementMapperImpl;
@@ -175,8 +175,6 @@ abstract class CellGridImpl<V> extends Grid {
   }
 
   public Cell getCell(Element element) {
-    // This cast is always valid because both Element types are JSOs and have
-    // no new fields are added in the subclass.
     return elementToCell.get(element);
   }
 
