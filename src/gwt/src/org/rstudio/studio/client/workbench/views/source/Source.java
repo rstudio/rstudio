@@ -117,6 +117,7 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
                              CodeBrowserFinishedHandler,
+                             SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler
 {
    public interface Display extends IsWidget,
@@ -347,6 +348,8 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+      
+      events.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
@@ -2333,6 +2336,20 @@ public class Source implements InsertSourceHandler,
       
       private final SourcePosition restorePosition_;
       private final AppCommand retryCommand_;
+   }
+   
+   @Override
+   public void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e)
+   {
+      // set the extended type of the specified source file
+      for (EditingTarget editor : editors_)
+      {
+         if (editor.getId().equals(e.getDocId()))
+         {
+            editor.adaptToExtendedFileType(e.getExtendedType());
+            break;
+         }
+      }
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

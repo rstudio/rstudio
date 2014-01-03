@@ -96,6 +96,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ErrorHandlerChanged = "error_handler_changed";
    public static final String ViewerNavigate = "viewer_navigate";
    public static final String UpdateCheck = "update_check";
+   public static final String SourceExtendedTypeDetected = "source_extended_type_detected";
 
    protected ClientEvent()
    {

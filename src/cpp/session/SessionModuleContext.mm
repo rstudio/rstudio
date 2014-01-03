@@ -21,6 +21,7 @@
 
 #include <Foundation/NSString.h>
 #include <Foundation/NSDictionary.h>
+#include <Foundation/NSAutoreleasePool.h>
 
 using namespace core;
 
@@ -29,6 +30,8 @@ namespace module_context {
 
 bool isOSXMavericks()
 {
+   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
    NSDictionary *systemVersionDictionary =
        [NSDictionary dictionaryWithContentsOfFile:
            @"/System/Library/CoreServices/SystemVersion.plist"];
@@ -38,6 +41,8 @@ bool isOSXMavericks()
 
    std::string version(
          [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
+
+   [pool release];
 
    return boost::algorithm::starts_with(version, "10.9");
 }

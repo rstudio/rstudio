@@ -41,7 +41,7 @@ public interface EditingTarget extends IsWidget,
                                        UnsavedChangesTarget
 {
    String getId();
-
+   
    /**
     * Used as the tab name
     */
@@ -52,6 +52,8 @@ public interface EditingTarget extends IsWidget,
    ImageResource getIcon();
    String getTabTooltip();
 
+   void adaptToExtendedFileType(String extendedType);
+   
    HashSet<AppCommand> getSupportedCommands();
    boolean canCompilePdf();
    

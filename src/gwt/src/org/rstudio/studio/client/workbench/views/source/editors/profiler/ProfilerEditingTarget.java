@@ -60,6 +60,11 @@ public class ProfilerEditingTarget implements EditingTarget
    {
       return doc_.getId();
    }
+   
+   @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+   }
 
    public HasValue<String> getName()
    {
