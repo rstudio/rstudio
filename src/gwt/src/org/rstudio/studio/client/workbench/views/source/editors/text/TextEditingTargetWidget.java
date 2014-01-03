@@ -328,7 +328,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile()) ? "Launch" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");

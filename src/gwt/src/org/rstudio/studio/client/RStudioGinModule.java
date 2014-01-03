@@ -69,6 +69,9 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
+import org.rstudio.studio.client.shiny.ShinyApplication;
+import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
+import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
 import org.rstudio.studio.client.vcs.ui.VCSApplicationWindow;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
@@ -200,6 +203,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Synctex.class).in(Singleton.class);
       bind(PDFViewer.class).in(Singleton.class);
       bind(HTMLPreview.class).in(Singleton.class);      
+      bind(ShinyApplication.class).in(Singleton.class);      
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
@@ -213,6 +217,7 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(PDFViewerApplicationView.class).to(PDFViewerApplicationWindow.class);
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
+      bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;

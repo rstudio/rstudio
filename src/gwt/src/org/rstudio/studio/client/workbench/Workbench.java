@@ -43,6 +43,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
@@ -79,7 +80,8 @@ public class Workbench implements BusyHandler,
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
                     HTMLPreview htmlPreview, // required to force gin to create
-                    ProfilerPresenter prof)  // required to force gin to create
+                    ProfilerPresenter prof,  // required to force gin to create
+                    ShinyApplication sApp)   // required to force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
