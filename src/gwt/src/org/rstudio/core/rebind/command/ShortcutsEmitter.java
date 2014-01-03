@@ -31,10 +31,12 @@ import java.io.StringWriter;
 public class ShortcutsEmitter
 {
    public ShortcutsEmitter(TreeLogger logger,
+                           String groupName, 
                            Element shortcutsEl) throws UnableToCompleteException
    {
       logger_ = logger;
       shortcutsEl_ = shortcutsEl;
+      groupName_ = groupName;
    }
 
    public void generate(SourceWriter writer) throws UnableToCompleteException
@@ -53,28 +55,31 @@ public class ShortcutsEmitter
          }
 
          String condition = childEl.getAttribute("if");
-         String commandId = childEl.getAttribute("refid");
+         String command = childEl.getAttribute("refid");
          String shortcutValue = childEl.getAttribute("value");
+         String title = childEl.getAttribute("title");
 
-         if (commandId.length() == 0)
-         {
-            logger_.log(Type.ERROR, "Required attribute refid was missing\n" + elementToString(childEl));
-            throw new UnableToCompleteException();
-         }
+         // Use null when we don't have a command associated with the shortcut,
+         // otherwise refer to the function that returns the command 
+         command += command.isEmpty() ? "null" : "()";
+
          if (shortcutValue.length() == 0)
          {
             logger_.log(Type.ERROR, "Required attribute shortcut was missing\n" + elementToString(childEl));
             throw new UnableToCompleteException();
          }
 
-         printShortcut(writer, condition, shortcutValue, commandId);
+         printShortcut(writer, condition, shortcutValue, 
+                       command, groupName_, title);
       }
    }
 
    private void printShortcut(SourceWriter writer,
                               String condition,
                               String shortcutValue,
-                              String commandId) throws UnableToCompleteException
+                              String command,
+                              String shortcutGroup,
+                              String title) throws UnableToCompleteException
    {
       String[] chunks = shortcutValue.split("\\+");
       int modifiers = KeyboardShortcut.NONE;
@@ -120,18 +125,24 @@ public class ShortcutsEmitter
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.CTRL) + ", " +
                         key + ", " +
-                        commandId + "());");
+                        command + ", " +
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
          writer.println("ShortcutManager.INSTANCE.register(" +
                         (modifiers| KeyboardShortcut.META) + ", " +
                         key + ", " +
-                        commandId + "());");
+                        command + ", " +
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
       }
       else
       {
          writer.println("ShortcutManager.INSTANCE.register(" +
                         modifiers + ", " +
                         key + ", " +
-                        commandId + "());");
+                        command + ", " +
+                        "\"" + shortcutGroup + "\", " +
+                        "\"" + title + "\");");
       }
 
       if (!condition.isEmpty())
@@ -221,4 +232,5 @@ public class ShortcutsEmitter
 
    private final TreeLogger logger_;
    private final Element shortcutsEl_;
+   private final String groupName_;
 }

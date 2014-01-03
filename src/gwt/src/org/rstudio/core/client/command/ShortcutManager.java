@@ -1,7 +1,7 @@
 /*
  * ShortcutManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-13 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -22,7 +23,12 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public class ShortcutManager implements NativePreviewHandler,
                                         NativeKeyDownHandler
@@ -61,14 +67,37 @@ public class ShortcutManager implements NativePreviewHandler,
       };
    }
 
-   public void register(int modifiers, int keyCode, AppCommand command)
+   public void register(int modifiers, 
+                        int keyCode, 
+                        AppCommand command, 
+                        String groupName, 
+                        String title)
    {
       if (!BrowseCap.hasMetaKey() && (modifiers & KeyboardShortcut.META) != 0)
          return;
       
-      KeyboardShortcut shortcut = new KeyboardShortcut(modifiers, keyCode);
-      commands_.put(shortcut, command);
-      command.setShortcut(shortcut);
+      KeyboardShortcut shortcut = 
+            new KeyboardShortcut(modifiers, keyCode, groupName, title);
+      if (command == null)
+      {
+         // If the shortcut is unbound, check to see whether there's another
+         // unbound shortcut with the same title; replace it if there is.
+         boolean existingShortcut = false;
+         for (int i = 0; i < unboundShortcuts_.size(); i++) {
+            if (unboundShortcuts_.get(i).getTitle().equals(title)) {
+               unboundShortcuts_.set(i, shortcut);
+               existingShortcut = true;
+               break;
+            }
+         }
+         if (!existingShortcut)
+            unboundShortcuts_.add(shortcut);
+      }
+      else
+      {
+         commands_.put(shortcut, command);
+         command.setShortcut(shortcut);
+      }
    }
 
    public void onKeyDown(NativeKeyDownEvent evt)
@@ -90,6 +119,49 @@ public class ShortcutManager implements NativePreviewHandler,
          if (handleKeyDown(event.getNativeEvent()))
             event.cancel();
       }
+   }
+   
+   public List<ShortcutInfo> getActiveShortcutInfo()
+   {
+      List<ShortcutInfo> info = new ArrayList<ShortcutInfo>();
+      
+      HashMap<Command, ShortcutInfo> infoMap = 
+            new HashMap<Command, ShortcutInfo>();
+      Set<KeyboardShortcut> shortcuts = commands_.keySet();
+      
+      // Create a ShortcutInfo for each unbound shortcut
+      for (KeyboardShortcut shortcut: unboundShortcuts_)
+      {
+         info.add(new ShortcutInfo(shortcut, null));
+      }
+
+      // Create a ShortcutInfo for each command (a command may have multiple
+      // shortcut bindings)
+      for (KeyboardShortcut shortcut: shortcuts)
+      {
+         AppCommand command = commands_.get(shortcut);
+         if (infoMap.containsKey(command))
+         {
+            infoMap.get(command).addShortcut(shortcut);
+         }
+         else
+         {
+            ShortcutInfo shortcutInfo = new ShortcutInfo(shortcut, command);
+            info.add(shortcutInfo);
+            infoMap.put(command, shortcutInfo);
+         }
+      }
+      // Sort the commands back into the order in which they were created 
+      // (reading them out of the keyset mangles the original order)
+      Collections.sort(info, new Comparator<ShortcutInfo>()
+      {
+         @Override
+         public int compare(ShortcutInfo o1, ShortcutInfo o2)
+         {
+            return o1.getOrder() - o2.getOrder();
+         }
+      });
+      return info;
    }
 
    private boolean handleKeyDown(NativeEvent e)
@@ -120,5 +192,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private int disableCount_ = 0;
    private final HashMap<KeyboardShortcut, AppCommand> commands_
                                   = new HashMap<KeyboardShortcut, AppCommand>();
+   private ArrayList<KeyboardShortcut> unboundShortcuts_
+                                  = new ArrayList<KeyboardShortcut>();
 
 }
