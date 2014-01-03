@@ -331,10 +331,10 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       codeTools.setTitle("Code Tools");
       toolbar.addLeftWidget(codeTools);
       
-      Label readOnlyLabel = new Label("(Read-only)");
-      readOnlyLabel.addStyleName(RES.styles().readOnly());
-      toolbar.addRightWidget(readOnlyLabel);
-    
+      toolbar.addRightWidget(commands_.executeCode().createToolbarButton());
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
+      
       return toolbar;
    }
    
@@ -354,6 +354,10 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          
       });
       toolbar.addLeftWidget(contextWidget_);
+      
+      Label readOnlyLabel = new Label("(Read-only)");
+      readOnlyLabel.addStyleName(RES.styles().readOnly());
+      toolbar.addRightWidget(readOnlyLabel);
          
       return toolbar;
    }

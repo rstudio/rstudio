@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -100,6 +101,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       fontSizeManager_ = fontSizeManager;
       globalDisplay_ = globalDisplay;
       docDisplay_ = docDisplay;
+      codeExecution_ = new EditingTargetCodeExecution(docDisplay);
       
       TextEditingTarget.addRecordNavigationPositionHandler(releaseOnDismiss_,
                                                            docDisplay_, 
@@ -212,6 +214,26 @@ public class CodeBrowserEditingTarget implements EditingTarget
                   }
                });
       }
+   }
+   
+   @Handler
+   void onExecuteCode()
+   {
+      codeExecution_.executeSelection(true);
+   }
+   
+   @Handler
+   void onExecuteCodeWithoutFocus()
+   {
+      codeExecution_.executeSelection(false);
+   }
+   
+   @Handler
+   void onExecuteLastCode()
+   {
+      docDisplay_.focus();
+      
+      codeExecution_.executeLastCode();
    }
    
    
@@ -342,6 +364,9 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.findPrevious());
       commands.add(commands_.goToHelp());
       commands.add(commands_.goToFunctionDefinition());
+      commands.add(commands_.executeCode());
+      commands.add(commands_.executeCodeWithoutFocus());
+      commands.add(commands_.executeLastCode());
       return commands;
    }
 
@@ -645,6 +670,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private HandlerRegistration commandReg_;
    
    private DocDisplay docDisplay_;
+   private EditingTargetCodeExecution codeExecution_;
    
    private SearchPathFunctionDefinition currentFunction_ = null;
 
