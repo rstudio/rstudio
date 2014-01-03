@@ -34,6 +34,11 @@
 	  width: 100%;
 	}
 	
+	.shortcutPanel:focus 
+	{
+	  outline:none
+	}
+	
 	.shortcutPanel strong
 	{
 	  color: #c0c0ff;
