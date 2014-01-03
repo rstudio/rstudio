@@ -212,7 +212,8 @@ public class EnvironmentObjects extends ResizeComposite
    public void setEnvironmentName(String environmentName)
    {
       environmentName_ = environmentName;
-      objectDisplay_.setEnvironmentName(environmentName);
+      if (objectDisplay_ != null)
+         objectDisplay_.setEnvironmentName(environmentName);
    }
 
    public int getScrollPosition()
@@ -263,8 +264,30 @@ public class EnvironmentObjects extends ResizeComposite
       return objectDisplayType_;
    }
 
+   // Sets the object display type. Waits for the event loop to finish because
+   // of an apparent timing bug triggered by superdevmode (see case 3745).
    public void setObjectDisplay(int type)
    {
+      deferredObjectDisplayType_ = new Integer(type);
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            setDeferredObjectDisplay();
+         }
+      });
+   }
+
+   private void setDeferredObjectDisplay() 
+   {
+      if (deferredObjectDisplayType_ == null) 
+      {
+         return;
+      }
+
+      int type = deferredObjectDisplayType_;
+      
       // if we already have an active display of this type, do nothing
       if (type == objectDisplayType_ && 
           objectDisplay_ != null)
@@ -314,6 +337,7 @@ public class EnvironmentObjects extends ResizeComposite
       objectDisplay_.addStyleName(style.objectGrid());
       objectDisplay_.addStyleName(style.environmentPanel());
       splitPanel.add(objectDisplay_);
+      deferredObjectDisplayType_ = null;
    }
 
    // CallFramePanelHost implementation ---------------------------------------
@@ -629,4 +653,5 @@ public class EnvironmentObjects extends ResizeComposite
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
+   private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
 }
