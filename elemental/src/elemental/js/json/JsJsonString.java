@@ -16,7 +16,6 @@
 package elemental.js.json;
 
 import elemental.json.JsonString;
-import elemental.json.JsonValue;
 
 /**
  * Client-side 'zero overhead' JSO implementation using extension method
@@ -28,10 +27,6 @@ final public class JsJsonString extends JsJsonValue
   public static JsonString create(String string) {
     return createProd(string);
   }
-
-  static native String getString(JsonValue value) /*-{
-    return @elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(value);
-  }-*/;
 
   /*
    * MAGIC: String cast to object interface.

@@ -28,6 +28,12 @@ import elemental.json.JsonValue;
  */
 public class JsJsonFactory implements JsonFactory {
 
+  private static native <T extends JsonValue> T parse0(String jsonString) /*-{
+    // assume Chrome, safe and non-broken JSON.parse impl
+    var value = $wnd.JSON.parse(jsonString);
+    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(value);
+  }-*/;
+
   public JsonString create(String string) {
     return JsJsonString.create(string);
   }
@@ -48,11 +54,10 @@ public class JsJsonFactory implements JsonFactory {
     return JsJsonNull.create();
   }
 
-  public native JsonObject createObject() /*-{
-    return Object.create(null);
-  }-*/;
+  public JsonObject createObject() {
+    return JsJsonObject.create();
+  }
 
-  @SuppressWarnings({"unchecked"})
   public <T extends JsonValue> T parse(String jsonString) throws JsonException {
     try {
       return parse0(jsonString);
@@ -60,14 +65,4 @@ public class JsJsonFactory implements JsonFactory {
       throw new JsonException("Can't parse " + jsonString);
     }
   }
-
-  private native <T extends JsonValue> T parse0(String jsonString) /*-{
-    // assume Chrome, safe and non-broken JSON.parse impl
-    return $wnd.JSON.parse(jsonString, function(key, value) {
-      if (typeof value === 'object') {
-        return value;
-      }
-      return Object(value);
-    });
-  }-*/;
 }

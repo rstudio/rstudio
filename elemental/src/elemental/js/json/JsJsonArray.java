@@ -16,8 +16,6 @@
 package elemental.js.json;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayNumber;
-import com.google.gwt.core.client.JsArrayString;
 
 import elemental.js.util.JsArrayOf;
 import elemental.json.JsonArray;
@@ -41,7 +39,7 @@ final public class JsJsonArray extends JsJsonValue
   }
 
   public final native JsonValue get(int index) /*-{
-    return this[index];
+    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(this[index]);
   }-*/;
 
   public JsonArray getArray(int index) {
@@ -75,22 +73,18 @@ final public class JsJsonArray extends JsJsonValue
   }
 
   public native void set(int index, JsonValue value) /*-{
-       this[index] = value;
+    this[index] = value;
   }-*/;
   
   public void set(int index, String string) {
-    asJsStringArray().set(index, string);
+    set(index, JsJsonString.create(string));
   }
 
-  public native void set(int index, double number) /*-{
-    this[index] = Object(number);
-  }-*/;
+  public void set(int index, double number) {
+    set(index, JsJsonNumber.create(number));
+  }
 
-  public native void set(int index, boolean bool) /*-{
-    this[index] = Object(bool);
-  }-*/;
-
-  private JsArrayString asJsStringArray() {
-    return this.cast();
+  public void set(int index, boolean bool) {
+    set(index, JsJsonBoolean.create(bool));
   }
 }

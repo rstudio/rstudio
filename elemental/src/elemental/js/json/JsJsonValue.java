@@ -27,7 +27,7 @@ public class JsJsonValue extends JavaScriptObject implements JsonValue {
 
   static native JsonValue box(JsonValue value) /*-{
     // box for DevMode, not ProdMode
-    return @com.google.gwt.core.client.GWT::isScript()() ? value : Object(value);
+    return @com.google.gwt.core.client.GWT::isScript()() || value == null ? value : Object(value);
   }-*/;
 
   static native JsonValue debox(JsonValue value) /*-{
@@ -54,23 +54,26 @@ public class JsJsonValue extends JavaScriptObject implements JsonValue {
 
   @Override
   final public native boolean asBoolean() /*-{
-     return @com.google.gwt.core.client.GWT::isScript()() ?
+     return @com.google.gwt.core.client.GWT::isScript()() || this == null ?
         !!@elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this) :
         (!!@elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this)).valueOf();
   }-*/;
 
   @Override
   final public native double asNumber() /*-{
+    if (this == null) {
+      return 0;
+    }
     return @com.google.gwt.core.client.GWT::isScript()() ?
         +@elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this) :
         (+@elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this)).valueOf();
-
   }-*/;
 
   @Override
   // avoid casts, as compiler will throw CCE trying to cast a raw JS String to an interface
   final public native String asString() /*-{
-    return "" + @elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this);
+    return this == null ? null :
+        ("" + @elemental.js.json.JsJsonValue::debox(Lelemental/json/JsonValue;)(this));
   }-*/;
 
   final public JsonType getType() {
