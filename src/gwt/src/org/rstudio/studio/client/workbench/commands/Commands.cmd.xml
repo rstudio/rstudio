@@ -454,6 +454,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
+         <shortcut refid="executeCurrentSection" value="Cmd+Alt+S"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
       </shortcutgroup>
