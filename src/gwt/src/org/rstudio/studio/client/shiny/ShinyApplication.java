@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;

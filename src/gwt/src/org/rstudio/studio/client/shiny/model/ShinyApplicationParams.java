@@ -20,7 +20,13 @@ public class ShinyApplicationParams extends JavaScriptObject
 {
    protected ShinyApplicationParams() {}
    
-   public native static ShinyApplicationParams create() /*-{
-      return {}
+   public native static ShinyApplicationParams create(String path) /*-{
+      return {
+         path: path
+      };
+   }-*/;
+   
+   public final native String getPath() /*-{
+      return this.path;
    }-*/;
 }

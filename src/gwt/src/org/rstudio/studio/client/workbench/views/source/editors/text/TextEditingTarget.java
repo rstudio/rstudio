@@ -2534,7 +2534,7 @@ public class TextEditingTarget implements
                 extendedType_.equals("shiny")) 
             {
                events_.fireEvent(new ShowShinyApplicationEvent(
-                     ShinyApplicationParams.create()));
+                     ShinyApplicationParams.create("http://127.0.0.1/")));
                return;
             }
          
