@@ -53,6 +53,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -81,8 +82,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.shiny.events.ShowShinyApplicationEvent;
-import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -2530,32 +2529,43 @@ public class TextEditingTarget implements
          }
          else
          {
+            Command sourceCommand = null;
+            
             if (fileType_.isR() && 
                 extendedType_.equals("shiny")) 
             {
-               events_.fireEvent(new ShowShinyApplicationEvent(
-                     ShinyApplicationParams.create("http://127.0.0.1/")));
-               return;
-            }
-         
-            Command sourceCommand = new Command() {
-               @Override
-               public void execute()
-               {
-                  if (docDisplay_.hasBreakpoints())
+               // If this is a Shiny app, launch the app in a satellite window 
+               // instead of sourcing it.
+               sourceCommand = new Command() {
+                  @Override
+                  public void execute()
                   {
-                     hideBreakpointWarningBar();
+                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite()
+                                              .launchShinyApplication(getPath());
                   }
-                  consoleDispatcher_.executeSourceCommand(
-                        getPath(),
-                        fileType_,
-                        docUpdateSentinel_.getEncoding(),
-                        activeCodeIsAscii(),
-                        forceEcho ? true : echo,
-                        true,
-                        docDisplay_.hasBreakpoints());   
-               }
-            };
+               };
+            }
+            else 
+            {
+               sourceCommand = new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     if (docDisplay_.hasBreakpoints())
+                     {
+                        hideBreakpointWarningBar();
+                     }
+                     consoleDispatcher_.executeSourceCommand(
+                           getPath(),
+                           fileType_,
+                           docUpdateSentinel_.getEncoding(),
+                           activeCodeIsAscii(),
+                           forceEcho ? true : echo,
+                           true,
+                           docDisplay_.hasBreakpoints());   
+                  }
+               };
+            }
             
             if (saveWhenSourcing && (dirtyState_.getValue() || (getPath() == null)))
                saveThenExecute(null, sourceCommand);

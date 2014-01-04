@@ -15,9 +15,13 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
+import org.rstudio.studio.client.shiny.events.ShowShinyApplicationEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -33,8 +37,27 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    public ShinyApplicationSatellite(ShinyApplicationView view,
                                     Satellite satellite,
                                     Provider<AceThemes> pAceThemes,
-                                    ApplicationUncaughtExceptionHandler exHandler)
+                                    ApplicationUncaughtExceptionHandler exHandler,
+                                    EventBus eventBus)
    {
       super(NAME, view, satellite, pAceThemes, exHandler);
+      eventBus_ = eventBus;
    }
+
+   public void launchShinyApplication(String filePath)
+   {
+      // TODO: Figure out if the Shiny app satellite window is already
+      // showing this app.
+      String dir = filePath.substring(0, filePath.lastIndexOf("/"));
+      eventBus_.fireEvent(new SendToConsoleEvent(
+            "shiny::runApp('" + dir + "')", 
+            true));
+      
+      // TODO: Listen at the console to figure out what random port was assigned,
+      // so we can point the viewer at the right place.
+      eventBus_.fireEvent(new ShowShinyApplicationEvent(
+                          ShinyApplicationParams.create("http://127.0.0.1/")));
+   }
+   
+   private EventBus eventBus_;
 }

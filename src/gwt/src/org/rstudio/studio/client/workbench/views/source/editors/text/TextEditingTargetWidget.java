@@ -290,9 +290,10 @@ public class TextEditingTargetWidget
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
-         runButton_.setText("");
-         sourceButton_.setVisible(false);
+         runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
+         sourceButton_.setText("Launch");
+         chunksButton_.setVisible(false);
       }
    }
    
@@ -328,7 +329,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(((width < 480) || isShinyFile()) ? "Launch" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
@@ -337,7 +338,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
-      sourceButton_.setText(width < 400 ? "" : "Source");
+      sourceButton_.setText(width < 400 ? "" : (isShinyFile() ? "Launch" : "Source"));
       chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
    
