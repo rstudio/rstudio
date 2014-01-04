@@ -208,11 +208,10 @@ public final class Impl {
     }
 
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler == Impl.uncaughtExceptionHandlerForTest) {
-      return; // Already reported so we're done.
-    }
-
     if (handler != null) {
+      if (handler == Impl.uncaughtExceptionHandlerForTest) {
+        return; // Already reported so we're done.
+      }
       // TODO(goktug): Handler might throw an exception but catching and reporting it to browser
       // here breaks assumptions of some existing hybrid apps that uses UCE for exception
       // conversion. We don't have an alternative functionality (yet) and it is too risky to include
