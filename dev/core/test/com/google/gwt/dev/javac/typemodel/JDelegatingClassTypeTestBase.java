@@ -67,6 +67,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
       assertEquals(substitute(substitution, preSubParam.getType()),
           postSubParam.getType());
+
+      assertEquals(preSubParam.getName(), postSubParam.getName());
     }
 
     JClassType[] preSubThrows = preSubMethod.getThrows();

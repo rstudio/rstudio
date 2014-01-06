@@ -36,10 +36,14 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
 
   private JType type;
 
+  /**
+   * Creates a new JParameter from an existing one.
+   */
   JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
     this.enclosingMethod = enclosingMethod;
     this.type = srcParam.type;
-    this.name = StringInterner.get().intern(srcParam.name);
+    this.name = srcParam.name;
+    this.argNameIsReal = srcParam.argNameIsReal;
     this.annotations = srcParam.annotations;
   }
 
