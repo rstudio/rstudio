@@ -61,7 +61,8 @@ void setCRANReposOption(const std::string& url)
 {
    if (!url.empty())
    {
-      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
+      Error error = r::exec::RFunction(".rs.setCRANReposFromSettings",
+                                       url).call();
       if (error)
          LOG_ERROR(error);
    }

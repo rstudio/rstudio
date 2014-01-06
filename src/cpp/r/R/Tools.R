@@ -398,10 +398,33 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 {
   local({
       r <- getOption("repos");
+      # attribute indicating the repos was set from rstudio prefs
+      attr(r, "RStudio") <- TRUE
       r["CRAN"] <- reposUrl;
       options(repos=r)
     })
 })
+
+.rs.addFunction( "setCRANReposAtStartup", function(reposUrl)
+{
+   # check whether the user has already set a CRAN repository
+   # in their .Rprofile
+   repos = getOption("repos")
+   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+
+   if (!cranMirrorConfigured)
+      .rs.setCRANRepos(reposUrl)
+})
+
+.rs.addFunction( "setCRANReposFromSettings", function(reposUrl)
+{
+   # only set the repository if the repository was set by us
+   # in the first place (it wouldn't be if the user defined a
+   # repository in .Rprofile or called setRepositories directly)
+   if (!is.null(attr(getOption("repos"), "RStudio")))
+      .rs.setCRANRepos(reposUrl)
+})
+
 
 .rs.addFunction( "setMemoryLimit", function(limit)
 {
