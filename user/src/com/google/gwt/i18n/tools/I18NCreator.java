@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,7 +40,7 @@ public final class I18NCreator extends ToolBase {
 
   /**
    * Utility class to handle class name argument.
-   * 
+   *
    */
   protected class ArgHandlerClassName extends ArgHandlerExtra {
 
@@ -136,9 +136,8 @@ public final class I18NCreator extends ToolBase {
     String gwtDevPath = installPath + '/' + "gwt-dev.jar";
 
     // Figure out what platform we're on
-    // 
-    boolean isWindows = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
-        "windows") >= 0;
+    //
+    boolean isWindows = System.getProperty("os.name").contains("Windows");
 
     // If the path from here to the install directory is relative, we need to
     // set specific "base" directory tags; this is for sample creation during
