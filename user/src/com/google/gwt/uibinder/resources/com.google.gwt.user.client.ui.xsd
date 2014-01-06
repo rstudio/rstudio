@@ -232,6 +232,14 @@
                 name="east"
                 type="DockDirectionType">
             </xs:element>
+            <xs:element
+                name="lineStart"
+                type="DockDirectionType">
+            </xs:element>
+            <xs:element
+                name="lineEnd"
+                type="DockDirectionType">
+            </xs:element>
             <!-- The center element does not require the size, only a widget -->
             <xs:element
                 name="center"
@@ -248,7 +256,7 @@
             processContents="lax" />
     </xs:complexType>
 
-    <!-- Used for north, south, west, and east in the DockLayoutPanel. -->
+    <!-- Used for north, south, west, east, lineStart, and lineEnd in the DockLayoutPanel. -->
     <xs:complexType
         name="DockDirectionType">
         <xs:complexContent>
