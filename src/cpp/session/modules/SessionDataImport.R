@@ -107,7 +107,8 @@
         header=header,
         separator=sep,
         decimal=dec,
-        quote=quote)
+        quote=quote,
+        defaultStringsAsFactors=default.stringsAsFactors())
 })
 
 .rs.addJsonRpcHandler("get_output_preview", function(path, header, sep, decimal, quote)
@@ -119,5 +120,6 @@
         outputNames=names(output),
         header=header,
         separator=sep,
-        quote=quote)
+        quote=quote,
+        defaultStringsAsFactors=default.stringsAsFactors())
 })

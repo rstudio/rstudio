@@ -32,6 +32,13 @@
                   <td>Quote</td>
                   <td><g:ListBox ui:field="quote_" styleName="{res.styles.list}" /></td>
                </tr>
+               <tr>
+                  <td>na.strings</td>
+                  <td><g:TextBox ui:field="naStrings_" styleName="{res.styles.nastrings}"></g:TextBox></td>
+               </tr>
+               <tr>
+                  <td><g:CheckBox ui:field="stringsAsFactors_" text="Strings as factors"></g:CheckBox></td>
+               </tr>
             </table>
          </g:HTMLPanel>
          <g:VerticalPanel>

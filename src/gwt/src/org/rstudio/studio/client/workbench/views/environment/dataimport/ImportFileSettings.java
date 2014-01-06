@@ -23,7 +23,9 @@ public class ImportFileSettings
                              boolean header,
                              String sep,
                              String decimal,
-                             String quote)
+                             String quote,
+                             String naStrings,
+                             boolean stringsAsFactors)
    {
       file_ = file;
       varname_ = varname;
@@ -31,6 +33,8 @@ public class ImportFileSettings
       sep_ = sep;
       decimal_ = decimal;
       quote_ = quote;
+      naStrings_ = naStrings;
+      stringsAsFactors_ = stringsAsFactors;
    }
 
    public FileSystemItem getFile()
@@ -62,6 +66,16 @@ public class ImportFileSettings
    {
       return quote_;
    }
+   
+   public String getNAStrings()
+   {
+      return naStrings_;
+   }
+   
+   public boolean getStringsAsFactors()
+   {
+      return stringsAsFactors_;
+   }
 
    public int calculateSimilarity(ImportFileSettings other)
    {
@@ -83,4 +97,6 @@ public class ImportFileSettings
    private final String sep_;
    private final String decimal_;
    private final String quote_;
+   private final String naStrings_;
+   private final boolean stringsAsFactors_;
 }
