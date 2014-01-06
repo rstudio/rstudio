@@ -427,6 +427,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
+         <shortcut refid="saveAllSourceDocs" value= "Cmd+Alt+S"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
@@ -454,7 +455,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
-         <shortcut refid="executeCurrentSection" value="Cmd+Alt+S"/>
+         <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
       </shortcutgroup>
