@@ -90,7 +90,7 @@ std::string replaceRPort(const std::string& url, const std::string& rPort)
 
 bool isLocalURL(const std::string& url,
                 const std::string& scope,
-                std::string* pLocalURLPath)
+                std::string* pLocalURLPath = NULL)
 {
    // first look for local ip prefix
    std::string rPort = module_context::rLocalHelpPort();
@@ -99,7 +99,8 @@ bool isLocalURL(const std::string& url,
    if (pos != std::string::npos)
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
-      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+      if (pLocalURLPath)
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
@@ -109,7 +110,8 @@ bool isLocalURL(const std::string& url,
    if (pos != std::string::npos)
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
-      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+      if (pLocalURLPath)
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
@@ -153,6 +155,12 @@ bool handleLocalHttpUrl(const std::string& url)
       {
          return false;
       }
+   }
+
+   // leave portmapped urls alone
+   if (isLocalURL(url, "p/"))
+   {
+      return false;
    }
 
    // otherwise look for help (which would be all other localhost urls)
