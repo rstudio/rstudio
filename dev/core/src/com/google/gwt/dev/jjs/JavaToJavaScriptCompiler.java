@@ -187,6 +187,7 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final byte[][] js;
+    private final String jsStrongName;
     private final Permutation permutation;
     private final byte[] serializedSymbolMap;
     private final StatementRanges[] statementRanges;
@@ -198,6 +199,7 @@ public class JavaToJavaScriptCompiler {
         bytes[i] = Util.getBytes(js[i]);
       }
       this.js = bytes;
+      this.jsStrongName = Util.computeStrongName(bytes);
       this.permutation = permutation;
       try {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -222,6 +224,11 @@ public class JavaToJavaScriptCompiler {
     @Override
     public byte[][] getJs() {
       return js;
+    }
+
+    @Override
+    public String getJsStrongName() {
+      return jsStrongName;
     }
 
     @Override

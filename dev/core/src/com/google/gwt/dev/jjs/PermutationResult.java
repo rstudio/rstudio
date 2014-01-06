@@ -45,6 +45,11 @@ public interface PermutationResult extends Serializable {
   byte[][] getJs();
 
   /**
+   * The hash that uniquely identifies this compiled JavaScript code.
+   */
+  String getJsStrongName();
+
+  /**
    * Returns the associated permutation.
    */
   Permutation getPermutation();

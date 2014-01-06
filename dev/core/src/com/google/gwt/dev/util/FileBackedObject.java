@@ -21,6 +21,7 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.Serializable;
 
 /**
@@ -73,6 +74,10 @@ public class FileBackedObject<T extends Serializable> implements PersistenceBack
       return Util.readFileAsObject(backingFile, clazz);
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Missing class definition", e);
+      throw new UnableToCompleteException();
+    } catch (InvalidClassException e) {
+      logger.log(
+          TreeLogger.ERROR, "Incompatible version of class " + clazz.getSimpleName() + ".", e);
       throw new UnableToCompleteException();
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to instantiate object", e);

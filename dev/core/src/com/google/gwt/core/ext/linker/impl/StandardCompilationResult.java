@@ -22,7 +22,6 @@ import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.DiskCache;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 
 import java.io.Serializable;
@@ -95,7 +94,7 @@ public class StandardCompilationResult extends CompilationResult {
   public StandardCompilationResult(PermutationResult permutationResult) {
     super(StandardLinkerContext.class);
     byte[][] js = permutationResult.getJs();
-    this.strongName = Util.computeStrongName(js);
+    this.strongName = permutationResult.getJsStrongName();
     byte[] serializedSymbolMap = permutationResult.getSerializedSymbolMap();
     this.statementRanges = permutationResult.getStatementRanges();
     this.permutationId = permutationResult.getPermutation().getId();

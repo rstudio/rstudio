@@ -92,6 +92,10 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
           getBytes("code for fragment 0"), getBytes("code for fragment 1")};
     }
 
+    public String getJsStrongName() {
+      return "fragment 0 and 1 strong name";
+    }
+
     public Permutation getPermutation() {
       return new Permutation(0, new StaticPropertyOracle(
           new BindingProperty[0], new String[0],
