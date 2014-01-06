@@ -24,6 +24,41 @@ import java.io.Serializable;
  */
 public class Collections {
 
+  private static final class LifoQueue<E> extends AbstractQueue<E> implements
+      Serializable {
+
+    private final Deque<E> deque;
+
+    LifoQueue(Deque<E> deque) {
+      this.deque = deque;
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+      return deque.iterator();
+    }
+
+    @Override
+    public boolean offer(E e) {
+      return deque.offerFirst(e);
+    }
+
+    @Override
+    public E peek() {
+      return deque.peekFirst();
+    }
+
+    @Override
+    public E poll() {
+      return deque.pollFirst();
+    }
+
+    @Override
+    public int size() {
+      return deque.size();
+    }
+  }
+
   private static final class EmptyList extends AbstractList implements
       RandomAccess, Serializable {
     @Override
@@ -643,6 +678,10 @@ public class Collections {
       result |= c.add(e);
     }
     return result;
+  }
+
+  public static <T> Queue<T> asLifoQueue(Deque<T> deque) {
+    return new LifoQueue<T>(deque);
   }
 
   /**

@@ -20,9 +20,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 
 /**
  * Test various collections.
@@ -49,6 +52,67 @@ public class CollectionsTest extends EmulTestBase {
 
   private static Entry<String, String> dummyEntry() {
     return Collections.singletonMap("foo", "bar").entrySet().iterator().next();
+  }
+
+  public void testAsLifoQueue() {
+    Object o1 = new Object();
+    Object o2 = new Object();
+    Object o3 = new Object();
+    LinkedList<Object> deque = new LinkedList<Object>();
+    Queue<Object> queueView = Collections.asLifoQueue(deque);
+
+    assertTrue(queueView.isEmpty());
+    assertEquals(0, queueView.size());
+
+    queueView.add(o1);
+    assertEquals(deque.getFirst(), o1);
+    assertEquals(deque.element(), o1);
+    queueView.add(o2);
+    assertEquals(deque.getFirst(), o2);
+    assertEquals(deque.element(), o2);
+    queueView.offer(o3);
+    assertEquals(deque.getFirst(), o3);
+    assertEquals(deque.element(), o3);
+
+    assertEquals(deque.size(), 3);
+    assertEquals(deque.size(), queueView.size());
+
+    assertEquals(deque.getFirst(), o3);
+    assertEquals(queueView.element(), o3);
+    assertEquals(queueView.peek(), o3);
+    assertEquals(queueView.poll(), o3);
+
+    assertEquals(deque.getFirst(), o2);
+    assertEquals(queueView.element(), o2);
+    assertEquals(queueView.peek(), o2);
+    assertEquals(queueView.poll(), o2);
+
+    assertEquals(deque.getFirst(), o1);
+    assertEquals(queueView.element(), o1);
+    assertEquals(queueView.peek(), o1);
+    assertEquals(queueView.remove(), o1);
+
+    assertTrue(deque.isEmpty());
+    assertEquals(deque.size(), queueView.size());
+    assertTrue(queueView.isEmpty());
+
+    queueView.add(o1);
+    queueView.add(o2);
+    queueView.add(o3);
+
+    Iterator<Object> dequeIterator = deque.iterator();
+    Iterator<Object> queueIterator = queueView.iterator();
+    while (dequeIterator.hasNext() && queueIterator.hasNext()) {
+      assertEquals(dequeIterator.next(), queueIterator.next());
+    }
+    assertEquals(dequeIterator.hasNext(), queueIterator.hasNext());
+
+    assertEquals(deque.toArray(), queueView.toArray());
+    assertEquals(deque.toString(), queueView.toString());
+
+    queueView.clear();
+    assertTrue(deque.isEmpty());
+    assertTrue(queueView.isEmpty());
   }
 
   /**
