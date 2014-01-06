@@ -25,7 +25,7 @@ import java.io.Serializable;
  * @param <E> element type.
  */
 public class LinkedList<E> extends AbstractSequentialList<E> implements
-    List<E>, Deque<E>, Serializable {
+    Cloneable, List<E>, Deque<E>, Serializable {
   /*
    * This implementation uses a doubly-linked circular list with a header node.
    * 
@@ -239,6 +239,10 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   public void clear() {
     header = new Node<E>();
     size = 0;
+  }
+
+  public Object clone() {
+    return new LinkedList<E>(this);
   }
 
   @Override
