@@ -607,7 +607,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       String msg = "Deferred binding failed for '" + sourceName
           + "'; expect subsequent failures";
       host.getLogger().log(TreeLogger.ERROR, msg);
-      throw new UnableToCompleteException();
+      throw e;
     }
   }
 
