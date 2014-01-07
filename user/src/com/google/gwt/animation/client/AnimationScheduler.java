@@ -49,11 +49,17 @@ public abstract class AnimationScheduler {
     public abstract void cancel();
   }
 
+  private static AnimationScheduler instance;
+
   /**
    * Returns the default implementation of the AnimationScheduler API.
    */
   public static AnimationScheduler get() {
-    return AnimationSchedulerImpl.INSTANCE;
+    if (instance == null) {
+      instance = AnimationSchedulerImplStandard.isNativelySupported()
+              ? new AnimationSchedulerImplStandard() : new AnimationSchedulerImplTimer();
+    }
+    return instance;
   }
 
   /**

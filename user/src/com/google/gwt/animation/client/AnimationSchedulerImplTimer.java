@@ -26,7 +26,7 @@ import java.util.List;
  * Implementation using a timer for browsers that do not support animation
  * frames.
  */
-class AnimationSchedulerImplTimer extends AnimationSchedulerImpl {
+class AnimationSchedulerImplTimer extends AnimationScheduler {
 
   /**
    * Timer based implementation of {@link AnimationScheduler.AnimationHandle}.
@@ -87,11 +87,6 @@ class AnimationSchedulerImplTimer extends AnimationSchedulerImpl {
 
     // Return the request id.
     return requestId;
-  }
-
-  @Override
-  protected boolean isNativelySupported() {
-    return true;
   }
 
   private void cancelAnimationFrame(AnimationHandle requestId) {
