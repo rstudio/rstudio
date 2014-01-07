@@ -970,7 +970,7 @@ void GwtCallback::setBusy(bool)
 
 void GwtCallback::setWindowTitle(QString title)
 {
-
+   pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - RStudio"));
 }
 
 
