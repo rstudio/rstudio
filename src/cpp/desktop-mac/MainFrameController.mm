@@ -122,7 +122,7 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    }
    else
    {
-      [self setWindowTitle: @"RStudio"];
+      [self setWindowTitle: nil];
       [self updateDockTile: nil];
    }
    
@@ -138,6 +138,11 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 
 - (void) setWindowTitle: (NSString*) title
 {
+   if (title == nil)
+      title = @"RStudio";
+   else
+      title = [title stringByAppendingString: @" - RStudio"];
+   
    [[self window] setTitle: title];
 }
 
