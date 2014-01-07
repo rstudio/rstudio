@@ -148,6 +148,7 @@ public class TextEditingTarget implements
       void showFindReplace(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void findFromSelection();
       void replaceAndFind();
       
       StatusBar getStatusBar();
@@ -359,6 +360,14 @@ public class TextEditingTarget implements
                event.preventDefault();
                event.stopPropagation();
                commands_.findReplace().execute();
+            }
+            else if (BrowseCap.hasMetaKey() && 
+                     (mod == KeyboardShortcut.META) &&
+                     (ne.getKeyCode() == 'E'))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.findFromSelection().execute();
             }
             else if (mod == KeyboardShortcut.ALT
                      && ne.getKeyCode() == 189) // hyphen
@@ -2961,6 +2970,12 @@ public class TextEditingTarget implements
    void onFindPrevious()
    {
       view_.findPrevious();
+   }
+   
+   @Handler
+   void onFindFromSelection()
+   {
+      view_.findFromSelection();
    }
    
    @Handler
