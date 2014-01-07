@@ -165,7 +165,12 @@ void handleLocalhostResponse(
          // check for url beginning with localhost:port
          else if (boost::algorithm::starts_with(location, mappedLocation))
          {
-            rewrittenLocation = "http://localhost/p/" + port +
+            // form full path to main server port
+            std::string localhost = "http://localhost";
+            if (server::options().wwwPort() != "80")
+               localhost += (":" + server::options().wwwPort());
+
+            rewrittenLocation = localhost + "/p/" + port +
                                 location.substr(mappedLocation.length());
          }
 
