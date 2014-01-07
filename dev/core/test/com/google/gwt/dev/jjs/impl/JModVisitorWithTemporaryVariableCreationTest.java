@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -24,9 +23,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
-import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
 /**
@@ -67,26 +64,8 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     }
   }
 
-  private final class Result {
-    private final String optimized;
-    private final String returnType;
-    private final String userCode;
-
-    public Result(String returnType, String userCode, String optimized) {
-      this.returnType = returnType;
-      this.userCode = userCode;
-      this.optimized = optimized;
-    }
-
-    public void into(String expected) throws UnableToCompleteException {
-      JProgram program = compileSnippet(returnType, expected);
-      expected = getMainMethodSource(program);
-      assertEquals(userCode, expected, optimized);
-    }
-  }
-
   public void testBasic() throws Exception {
-    assertTransform("int i = 3;").into("int $t0; int i = $t0 = 3;");
+    assertTransform("int i = 3;", new AlwaysReplacer()).into("int $t0; int i = $t0 = 3;");
   }
 
   public void testForStatement() throws Exception {
@@ -103,7 +82,7 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("int $t3;");
     expected.append("for (int $t0, i = $t0 = 0; $t1 = true; $t3 = i += $t2 = 1);");
 
-    assertTransform(original.toString()).into(expected.toString());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 
   public void testForStatementScoping() throws Exception {
@@ -119,7 +98,7 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("for (int $t1, i = $t1 = 3; $t2 = f; );");
     expected.append("int $t3; int j = $t3 = 4;");
 
-    assertTransform(original.toString()).into(expected.toString());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 
   /**
@@ -136,11 +115,11 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("boolean $t2;");
     expected.append("for (int $t1, i = $t1 = 3; $t2 = $type; );");
 
-    assertTransform(original.toString()).into(expected.toString());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 
   public void testNested() throws Exception {
-    assertTransform("{ int i = 3; } ").into("{ int $t0; int i = $t0 = 3; }");
+    assertTransform("{ int i = 3; }", new AlwaysReplacer()).into("{ int $t0; int i = $t0 = 3; }");
   }
 
   public void testNestedPost() throws Exception {
@@ -152,7 +131,7 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("int $t0; int i = $t0 = 3;");
     expected.append("{ int $t1; int j = $t1 = 4; }");
 
-    assertTransform(original.toString()).into(expected.toString());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 
   public void testNestedPre() throws Exception {
@@ -164,7 +143,7 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("{ int $t0; int i = $t0 = 3; }");
     expected.append("int $t1; int j = $t1 = 4;");
 
-    assertTransform(original.toString()).into(expected.toString());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 
   public void testVeryComplex() throws Exception {
@@ -182,14 +161,6 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
     expected.append("{ int $t4; int i = $t4 = 3; int $t5; int j = $t5 = 4; }");
     expected.append("int $t6; int c = $t6 = 2;");
 
-    assertTransform(original.toString()).into(expected.toString());
-  }
-
-  private Result assertTransform(String codeSnippet)
-      throws UnableToCompleteException {
-    JProgram program = compileSnippet("void", codeSnippet);
-    JMethod mainMethod = findMainMethod(program);
-    new AlwaysReplacer().accept(mainMethod);
-    return new Result("void", codeSnippet, mainMethod.getBody().toSource());
+    assertTransform(original.toString(), new AlwaysReplacer()).into(expected.toString());
   }
 }

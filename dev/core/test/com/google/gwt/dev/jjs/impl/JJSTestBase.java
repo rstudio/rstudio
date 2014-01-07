@@ -308,4 +308,30 @@ public abstract class JJSTestBase extends TestCase {
    * Java source level compatibility option.
    */
   protected SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
+
+  public Result assertTransform(String codeSnippet, JVisitor visitor)
+      throws UnableToCompleteException {
+    JProgram program = compileSnippet("void", codeSnippet);
+    JMethod mainMethod = findMainMethod(program);
+    visitor.accept(mainMethod);
+    return new Result("void", codeSnippet, mainMethod.getBody().toSource());
+  }
+
+  public final class Result {
+    private final String optimized;
+    private final String returnType;
+    private final String userCode;
+
+    public Result(String returnType, String userCode, String optimized) {
+      this.returnType = returnType;
+      this.userCode = userCode;
+      this.optimized = optimized;
+    }
+
+    public void into(String expected) throws UnableToCompleteException {
+      JProgram program = compileSnippet(returnType, expected);
+      expected = getMainMethodSource(program);
+      assertEquals(userCode, expected, optimized);
+    }
+  }
 }
