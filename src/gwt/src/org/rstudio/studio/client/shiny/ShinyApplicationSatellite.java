@@ -37,27 +37,27 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    public ShinyApplicationSatellite(ShinyApplicationView view,
                                     Satellite satellite,
                                     Provider<AceThemes> pAceThemes,
+                                    Provider<ShinyApplicationPresenter> pPresenter,
                                     ApplicationUncaughtExceptionHandler exHandler,
                                     EventBus eventBus)
    {
       super(NAME, view, satellite, pAceThemes, exHandler);
       eventBus_ = eventBus;
+      pPresenter_ = pPresenter;
    }
 
    public void launchShinyApplication(String filePath)
    {
-      // TODO: Figure out if the Shiny app satellite window is already
-      // showing this app.
       String dir = filePath.substring(0, filePath.lastIndexOf("/"));
       eventBus_.fireEvent(new SendToConsoleEvent(
             "shiny::runApp('" + dir + "')", 
             true));
       
-      // TODO: Listen at the console to figure out what random port was assigned,
-      // so we can point the viewer at the right place.
+      pPresenter_.get(); 
       eventBus_.fireEvent(new ShowShinyApplicationEvent(
                           ShinyApplicationParams.create("http://127.0.0.1/")));
    }
    
    private EventBus eventBus_;
+   private Provider<ShinyApplicationPresenter> pPresenter_;
 }
