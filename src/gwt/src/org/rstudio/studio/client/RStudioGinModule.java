@@ -70,6 +70,8 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
+import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
+import org.rstudio.studio.client.shiny.ui.ShinyApplicationPanel;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
 import org.rstudio.studio.client.vcs.VCSApplicationView;
@@ -272,6 +274,7 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(PDFViewerPresenter.Display.class).to(PDFViewerPanel.class);
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
+      bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

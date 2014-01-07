@@ -55,7 +55,8 @@ public class ShinyApplicationSatellite extends SatelliteApplication
       
       pPresenter_.get(); 
       eventBus_.fireEvent(new ShowShinyApplicationEvent(
-                          ShinyApplicationParams.create("http://127.0.0.1/")));
+                          ShinyApplicationParams.create("http://127.0.0.1/", 
+                                                        "/users/me/file")));
    }
    
    private EventBus eventBus_;

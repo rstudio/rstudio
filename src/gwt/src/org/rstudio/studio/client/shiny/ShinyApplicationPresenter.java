@@ -15,10 +15,9 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.core.client.command.CommandBinder;
-
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
-
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -36,7 +35,6 @@ public class ShinyApplicationPresenter implements IsWidget
    public interface Display extends IsWidget
    {
       void showApp(String url);
-      
       String getDocumentTitle();
    }
    
@@ -70,5 +68,10 @@ public class ShinyApplicationPresenter implements IsWidget
       return view_.asWidget();
    }
    
+   public void loadApp(ShinyApplicationParams params) 
+   {
+      view_.showApp(params.getUrl());
+   }
+
    private final Display view_;
 }

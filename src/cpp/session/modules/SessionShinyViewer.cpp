@@ -34,7 +34,7 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace shinyViewer {
+namespace shiny_viewer {
 
 namespace {
 
@@ -56,7 +56,7 @@ void loadApp(const std::string& url, const std::string& path)
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_Shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
+SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
 {
    loadApp(r::sexp::safeAsString(urlSEXP),
            r::sexp::safeAsString(pathSEXP));
@@ -69,14 +69,16 @@ SEXP rs_Shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
 
 Error initialize()
 {
-   R_CallMethodDef methodDefViewer ;
-   methodDefViewer.name = "rs_shinyViewer" ;
-   methodDefViewer.fun = (DL_FUNC) rs_viewer ;
+   R_CallMethodDef methodDefViewer;
+   methodDefViewer.name = "rs_shinyviewer";
+   methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
    methodDefViewer.numArgs = 2;
    r::routines::addCallMethod(methodDefViewer);
+
+   return Success();
 }
 
-} // namespace shinyViewer
+} // namespace shiny_viewer
 } // namespace modules
 } // namesapce session
 

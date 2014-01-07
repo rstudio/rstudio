@@ -22,11 +22,11 @@ namespace core {
  
 namespace session {
 namespace modules { 
-namespace shinyViewer {
+namespace shiny_viewer {
 
 core::Error initialize();
                        
-} // namespace shinyViewer
+} // namespace shiny_viewer
 } // namespace modules
 } // namesapce session
 

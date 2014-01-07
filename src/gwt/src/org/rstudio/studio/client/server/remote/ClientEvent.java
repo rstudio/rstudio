@@ -97,6 +97,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ViewerNavigate = "viewer_navigate";
    public static final String UpdateCheck = "update_check";
    public static final String SourceExtendedTypeDetected = "source_extended_type_detected";
+   public static final String ShinyViewer = "shiny_viewer";
 
    protected ClientEvent()
    {

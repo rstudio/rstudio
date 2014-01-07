@@ -26,6 +26,8 @@ import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 @Singleton
@@ -35,18 +37,22 @@ public class ShinyApplicationWindow extends SatelliteWindow
 
    @Inject
    public ShinyApplicationWindow(Provider<EventBus> pEventBus,
-                                 Provider<FontSizeManager> pFSManager)
+                                 Provider<FontSizeManager> pFSManager, 
+                                 Provider<ShinyApplicationPresenter> pPresenter)
    {
       super(pEventBus, pFSManager);
+      pPresenter_ = pPresenter;
    }
 
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       Window.setTitle("RStudio: Shiny Application");
+      ShinyApplicationPresenter appPresenter = pPresenter_.get();
+      appPresenter.loadApp((ShinyApplicationParams) params.cast());
       
       // make it fill the containing layout panel
-      Widget presWidget = new Label("Are you there, God? It's me, Margaret.");
+      Widget presWidget = appPresenter.asWidget();
       mainPanel.add(presWidget);
       mainPanel.setWidgetLeftRight(presWidget, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(presWidget, 0, Unit.PX, 0, Unit.PX);
@@ -62,4 +68,6 @@ public class ShinyApplicationWindow extends SatelliteWindow
    {
       return this;
    }
+   
+   private Provider<ShinyApplicationPresenter> pPresenter_;
 }
