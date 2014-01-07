@@ -153,40 +153,11 @@ void handleLocalhostResponse(
       std::string location = response.headerValue("Location");
       if (!location.empty())
       {
-         std::string rewrittenLocation;
-         std::string mappedLocation = "http://localhost:" + port;
-
-         // check for relative url
-         if (!boost::algorithm::starts_with(location, "http://"))
-         {
-            rewrittenLocation = "/p/" + port + location;
-         }
-
-         // check for url beginning with localhost:port
-         else if (boost::algorithm::starts_with(location, mappedLocation))
-         {
-            // form full path to main server port
-            std::string localhost = "http://localhost";
-            if (server::options().wwwPort() != "80")
-               localhost += (":" + server::options().wwwPort());
-
-            rewrittenLocation = localhost + "/p/" + port +
-                                location.substr(mappedLocation.length());
-         }
-
-         // re-write the location if necessary
-         if (!rewrittenLocation.empty())
-         {
-            http::Response redirectResponse;
-            redirectResponse.assign(response);
-            redirectResponse.setHeader(http::Header("Location",
-                                                    rewrittenLocation));
-            ptrConnection->writeResponse(redirectResponse);
-         }
-         else
-         {
-            ptrConnection->writeResponse(response);
-         }
+         location = "/p/" + port + location;
+         http::Response redirectResponse;
+         redirectResponse.assign(response);
+         redirectResponse.setHeader(http::Header("Location", location));
+         ptrConnection->writeResponse(redirectResponse);
       }
       else
       {
