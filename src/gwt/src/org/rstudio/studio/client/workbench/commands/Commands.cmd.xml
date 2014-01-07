@@ -394,6 +394,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
          <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
