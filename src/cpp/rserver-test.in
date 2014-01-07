@@ -3,7 +3,7 @@
 #
 # rserver-test
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-14 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -15,21 +15,5 @@
 #
 #
 
-# remove stream files/dirs
-cleanupStreams()
-{
-   rm -rf /tmp/rstudio-rsession
-   rm -rf /tmp/rstudio-rserver
-}
-cleanupStreams
-
-# generic cleanup routine
-cleanup()
-{
-   cleanupStreams
-   exit $?
-}
-trap cleanup SIGINT
-
-server/rserver --config-file conf/rserver-test.conf "$@"
+./rserver-dev --www-port=4011 --auth-none=1 "$@"
 

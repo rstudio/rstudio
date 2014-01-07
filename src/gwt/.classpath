@@ -12,8 +12,8 @@
 	<classpathentry kind="lib" path="lib/gin/1.5/javax.inject.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/2.5.1/gwt-api-checker.jar"/>
 	<classpathentry kind="lib" path="lib/gwt/2.5.1/validation-api-1.0.0.GA-sources.jar"/>
-	<classpathentry kind="lib" path="/Users/jmcphers/rstudio/src/gwt/lib/selenium/2.37.0/selenium-java-2.37.0-srcs.jar"/>
-	<classpathentry kind="lib" path="/Users/jmcphers/rstudio/src/gwt/lib/selenium/2.37.0/selenium-java-2.37.0.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/2.37.0/selenium-java-2.37.0-srcs.jar"/>
+	<classpathentry kind="lib" path="lib/selenium/2.37.0/selenium-java-2.37.0.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.9b3.jar"/>
 	<classpathentry kind="lib" path="lib/selenium/2.37.0/libs/guava-15.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
