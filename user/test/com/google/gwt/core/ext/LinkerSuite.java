@@ -17,6 +17,7 @@ package com.google.gwt.core.ext;
 
 import com.google.gwt.core.ext.linker.impl.SelectionScriptJavaScriptTest;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinkerUnitTest;
+import com.google.gwt.core.ext.linker.impl.StandardCompilationResultTest;
 import com.google.gwt.core.ext.test.CrossSiteIframeLinkerTest;
 import com.google.gwt.core.ext.test.IFrameLinkerTest;
 import com.google.gwt.core.ext.test.SingleScriptLinkerTest;
@@ -38,6 +39,7 @@ public class LinkerSuite {
     suite.addTestSuite(CrossSiteIframeLinkerTest.class);
     suite.addTestSuite(IFrameLinkerTest.class);
     suite.addTestSuite(LinkerUnitTest.class);
+    suite.addTestSuite(StandardCompilationResultTest.class);
     suite.addTestSuite(SelectionScriptJavaScriptTest.class);
     suite.addTestSuite(SelectionScriptLinkerUnitTest.class);
     suite.addTestSuite(XSLinkerTest.class);
