@@ -113,19 +113,16 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    [self updateDockTileShowLabel];
    
    // see if there is a project dir to display in the titlebar
-   // if there are unsaved changes then resolve them before exiting
    NSString* projectDir = [self evaluateJavaScript:
                                 @"window.desktopHooks.getActiveProjectDir()"] ;
    if ([projectDir length] > 0)
    {
-      [[self window] setTitle: [projectDir stringByAppendingString:
-                                                            @" - RStudio"]];
-      
+      [self setWindowTitle: projectDir];
       [self updateDockTile: projectDir];
    }
    else
    {
-      [[self window] setTitle: @"RStudio"];
+      [self setWindowTitle: @"RStudio"];
       [self updateDockTile: nil];
    }
    
@@ -137,6 +134,11 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       
       firstWorkbenchInitialized_ = YES;
    }
+}
+
+- (void) setWindowTitle: (NSString*) title
+{
+   [[self window] setTitle: title];
 }
 
 

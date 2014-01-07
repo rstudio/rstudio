@@ -128,4 +128,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    String getScrollingCompensationType();
    
    void setBusy(boolean busy);
+   
+   void setWindowTitle(String title);
 }

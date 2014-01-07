@@ -663,6 +663,11 @@ enum RS_NSActivityOptions : uint64_t
    }
 }
 
+- (void) setWindowTitle: (NSString*) title
+{
+   [[MainFrameController instance] setWindowTitle: title];
+}
+ 
 - (NSString*) filterText: (NSString*) text
 {
    // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
@@ -795,6 +800,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"filterText";
    else if (sel == @selector(setBusy:))
       return @"setBusy";
+   else if (sel == @selector(setWindowTitle:))
+      return @"setWindowTitle";
   
    return nil;
 }

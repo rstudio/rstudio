@@ -968,6 +968,10 @@ void GwtCallback::setBusy(bool)
 #endif
 }
 
+void GwtCallback::setWindowTitle(QString title)
+{
+
+}
 
 
 } // namespace desktop
