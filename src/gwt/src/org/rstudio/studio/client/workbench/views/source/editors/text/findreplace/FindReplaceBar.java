@@ -21,6 +21,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -61,6 +62,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       shelf.setWidth("100%");
 
       VerticalPanel panel = new VerticalPanel();
+      ElementIds.assignElementId(panel.getElement(), 
+                                 ElementIds.FIND_REPLACE_BAR);
       
       HorizontalPanel findReplacePanel = new HorizontalPanel();
       findReplacePanel.addStyleName(RES.styles().findPanel());

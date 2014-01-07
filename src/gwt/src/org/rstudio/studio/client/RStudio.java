@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -116,6 +117,7 @@ public class RStudio implements EntryPoint
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
       div.getStyle().setZIndex(1000);
+      ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
       Document.get().getBody().appendChild(div);
 
       return new Command()

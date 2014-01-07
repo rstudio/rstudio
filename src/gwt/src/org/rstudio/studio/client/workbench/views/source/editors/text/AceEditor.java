@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
@@ -209,6 +210,9 @@ public class AceEditor implements DocDisplay,
    public AceEditor()
    {
       widget_ = new AceEditorWidget();
+      ElementIds.assignElementId(widget_.getElement(), 
+                                 ElementIds.SOURCE_TEXT_EDITOR);
+
       completionManager_ = new NullCompletionManager();
       RStudioGinjector.INSTANCE.injectMembers(this);
 
