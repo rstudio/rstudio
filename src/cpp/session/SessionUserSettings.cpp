@@ -343,8 +343,9 @@ void UserSettings::setRprofileOnResume(bool rProfileOnResume)
 }
 
 int UserSettings::saveAction() const
-{
-   return settings_.getInt(kSaveAction, -1);
+{   
+   return settings_.getInt(kSaveAction,
+                           session::options().saveActionDefault());
 }
 
 void UserSettings::setSaveAction(int saveAction)
