@@ -98,6 +98,8 @@ public class SearchWidget extends Composite implements SearchDisplay
                        SuggestionDisplay suggestDisplay,
                        boolean continuousSearch)
    {
+      textBox.getElement().setAttribute("spellcheck", "false");
+      
       if (suggestDisplay != null)
          suggestBox_ = new FocusSuggestBox(oracle, textBox, suggestDisplay);
       else 
