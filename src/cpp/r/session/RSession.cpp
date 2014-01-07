@@ -476,7 +476,7 @@ Error initialize()
    // set default repository if requested
    if (!s_options.rCRANRepos.empty())
    {
-      error = r::exec::RFunction(".rs.setCRANRepos",
+      error = r::exec::RFunction(".rs.setCRANReposAtStartup",
                                  s_options.rCRANRepos).call();
       if (error)
          return error;

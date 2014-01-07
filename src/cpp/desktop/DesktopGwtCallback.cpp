@@ -968,6 +968,10 @@ void GwtCallback::setBusy(bool)
 #endif
 }
 
+void GwtCallback::setWindowTitle(QString title)
+{
+   pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - RStudio"));
+}
 
 
 } // namespace desktop

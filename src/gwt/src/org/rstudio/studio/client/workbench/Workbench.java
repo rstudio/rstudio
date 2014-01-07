@@ -37,6 +37,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.server.Server;
@@ -52,6 +53,9 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
@@ -76,6 +80,7 @@ public class Workbench implements BusyHandler,
                     FileDialogs fileDialogs,
                     FileTypeRegistry fileTypeRegistry,
                     ConsoleDispatcher consoleDispatcher,
+                    Provider<GitState> pGitState,
                     ChooseFile chooseFile,   // required to force gin to create
                     AskPassManager askPass,  // required to force gin to create
                     PDFViewer pdfViewer,     // required to force gin to create
@@ -95,6 +100,7 @@ public class Workbench implements BusyHandler,
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
+      pGitState_ = pGitState;
       
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
       
@@ -137,6 +143,28 @@ public class Workbench implements BusyHandler,
       
       // check for init messages
       checkForInitMessages();
+      
+      if (Desktop.isDesktop() && 
+          session_.getSessionInfo().getVcsName().equals(VCSConstants.GIT_ID))
+      {
+         pGitState_.get().addVcsRefreshHandler(new VcsRefreshHandler() {
+   
+            @Override
+            public void onVcsRefresh(VcsRefreshEvent event)
+            {
+               FileSystemItem projDir = workbenchContext_.getActiveProjectDir();
+               if (projDir != null)
+               {
+                  String title = projDir.getPath();
+                  String branch = pGitState_.get().getBranchInfo()
+                                                        .getActiveBranch();
+                  if (branch != null)
+                     title = title + " - " + branch;
+                  Desktop.getFrame().setWindowTitle(title);
+               }
+            }
+         });
+      }
       
    }
    
@@ -371,6 +399,7 @@ public class Workbench implements BusyHandler,
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private final Provider<GitState> pGitState_;
    private final TimeBufferedCommand metricsChangedCommand_;
    private WorkbenchMetrics lastWorkbenchMetrics_;
    private boolean nearQuotaWarningShown_ = false; 

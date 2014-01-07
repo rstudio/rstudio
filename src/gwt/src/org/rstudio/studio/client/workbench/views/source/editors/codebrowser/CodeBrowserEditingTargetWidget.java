@@ -239,6 +239,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void findFromSelection()
+   {
+      findReplace_.findFromSelection();
+   }
+   
+   @Override
    public void scrollToLeft()
    {
       new Timer() {

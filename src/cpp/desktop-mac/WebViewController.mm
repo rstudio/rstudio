@@ -305,6 +305,7 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
 -(void) decidePolicyFor: (WebView *) webView
       actionInformation: (NSDictionary *) actionInformation
                 request: (NSURLRequest *) request
+                 iframe: (BOOL) iframe
        decisionListener: (id <WebPolicyDecisionListener>) listener
 {
    // get the url for comparison to the base url
@@ -352,8 +353,9 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       }
       else
       {
-         // open externally
-         desktop::utils::browseURL(url);
+         // show urls that aren't in iframes externall
+         if (!iframe)
+            desktop::utils::browseURL(url);
       }
       
       [listener ignore];
@@ -369,6 +371,7 @@ decidePolicyForNewWindowAction: (NSDictionary *) actionInformation
    [self decidePolicyFor: webView
        actionInformation: actionInformation
                  request: request
+                  iframe: FALSE
         decisionListener: listener];
 }
 
@@ -381,6 +384,7 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    [self decidePolicyFor: webView
        actionInformation: actionInformation
                  request: request
+                  iframe: frame != [webView_ mainFrame]
         decisionListener: listener];
 }
 

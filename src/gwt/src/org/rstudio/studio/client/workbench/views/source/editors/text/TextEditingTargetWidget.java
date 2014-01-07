@@ -386,6 +386,12 @@ public class TextEditingTargetWidget
    }
    
    @Override
+   public void findFromSelection()
+   {
+      findReplace_.findFromSelection();
+   }
+   
+   @Override
    public void replaceAndFind()
    {
       findReplace_.replaceAndFind();

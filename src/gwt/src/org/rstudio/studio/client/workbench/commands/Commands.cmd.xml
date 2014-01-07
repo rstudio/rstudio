@@ -119,6 +119,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findReplace"/>
          <cmd refid="findNext"/>
          <cmd refid="findPrevious"/>
+         <cmd refid="findFromSelection"/>
          <cmd refid="replaceAndFind"/>
          <separator/>
          <cmd refid="findInFiles"/>
@@ -392,6 +393,8 @@ well as menu structures (for main menu and popup menus).
       <shortcutgroup name="Source Navigation">
          <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
          <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
+         <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
@@ -427,6 +430,7 @@ well as menu structures (for main menu and popup menus).
       </shortcutgroup>
       <shortcutgroup name="Files">
          <shortcut refid="saveSourceDoc" value="Cmd+S"/>
+         <shortcut refid="saveAllSourceDocs" value= "Cmd+Alt+S"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
          <shortcut refid="openSourceDoc" value="Cmd+O"/>
@@ -454,7 +458,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
          <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
-         <shortcut refid="executeCurrentSection" value="Cmd+Alt+S"/>
+         <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
          <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
          <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
       </shortcutgroup>
@@ -714,6 +718,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleFullScreen"
         menuLabel="Toggle Full Screen"/>
 
+   <cmd id="findFromSelection"
+        menuLabel="_Use Selection for Find"/>
    <cmd id="findReplace"
         menuLabel="_Find..."/>
    <cmd id="findNext"

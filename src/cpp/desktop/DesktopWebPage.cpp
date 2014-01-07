@@ -199,7 +199,9 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       }
       else
       {
-         desktop::openUrl(url);
+         // don't open iframes externally
+         if (pWebFrame->parentFrame() == NULL)
+            desktop::openUrl(url);
       }
 
       if (!navigated_)

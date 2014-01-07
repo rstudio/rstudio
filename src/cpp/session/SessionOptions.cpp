@@ -29,6 +29,8 @@
 
 #include <monitor/MonitorConstants.hpp>
 
+#include <r/session/RSession.hpp>
+
 #include <session/SessionConstants.hpp>
 
 using namespace core ;
@@ -117,6 +119,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "port to listen on");
 
    // session options
+   std::string saveActionDefault;
    options_description session("session") ;
    session.add_options()
       (kTimeoutSessionOption,
@@ -133,7 +136,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "automatically create public folder")
       ("session-rprofile-on-resume-default",
           value<bool>(&rProfileOnResumeDefault_)->default_value(false),
-          "default user setting for running Rprofile on resume");
+          "default user setting for running Rprofile on resume")
+      ("session-save-action-default",
+       value<std::string>(&saveActionDefault)->default_value(""),
+          "default save action (yes, no, or ask)");
 
    // allow options
    options_description allow("allow");
@@ -355,6 +361,22 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
+
+   // convert string save action default to intenger
+   if (saveActionDefault == "yes")
+      saveActionDefault_ = r::session::kSaveActionSave;
+   else if (saveActionDefault == "no")
+      saveActionDefault_ = r::session::kSaveActionNoSave;
+   else if (saveActionDefault == "ask" || saveActionDefault.empty())
+      saveActionDefault_ = r::session::kSaveActionAsk;
+   else
+   {
+      program_options::reportWarnings(
+         "Invalid value '" + saveActionDefault + "' for "
+         "session-save-action-default. Valid values are yes, no, and ask.",
+         ERROR_LOCATION);
+      saveActionDefault_ = r::session::kSaveActionAsk;
+   }
 
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);

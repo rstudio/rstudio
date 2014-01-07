@@ -154,6 +154,8 @@ public slots:
 
    void setBusy(bool busy);
 
+   void setWindowTitle(QString title);
+
 private:
    Synctex& synctex();
 

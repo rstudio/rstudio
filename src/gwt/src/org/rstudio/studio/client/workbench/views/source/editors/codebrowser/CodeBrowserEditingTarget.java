@@ -79,6 +79,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       void showFind(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void findFromSelection();
       void scrollToLeft();
    }
 
@@ -121,6 +122,14 @@ public class CodeBrowserEditingTarget implements EditingTarget
                event.preventDefault();
                event.stopPropagation();
                commands_.findReplace().execute();
+            }
+            else if (BrowseCap.hasMetaKey() && 
+                     (mod == KeyboardShortcut.META) &&
+                     (ne.getKeyCode() == 'E'))
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               commands_.findFromSelection().execute();
             }
          }
       });
@@ -273,6 +282,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       view_.findPrevious();
    }
    
+   @Handler
+   void onFindFromSelection()
+   {
+      view_.findFromSelection();
+   }
+   
    @Override
    public Position search(String regex)
    {
@@ -362,6 +377,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.findReplace());
       commands.add(commands_.findNext());
       commands.add(commands_.findPrevious());
+      commands.add(commands_.findFromSelection());
       commands.add(commands_.goToHelp());
       commands.add(commands_.goToFunctionDefinition());
       commands.add(commands_.executeCode());

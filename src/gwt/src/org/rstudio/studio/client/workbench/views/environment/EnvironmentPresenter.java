@@ -65,6 +65,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
@@ -736,16 +737,18 @@ public class EnvironmentPresenter extends BasePresenter
               input,
               varname,
               "Import Dataset",
-              new OperationWithInput<ImportFileSettings>()
+              new OperationWithInput<ImportFileSettingsDialogResult>()
               {
                  public void execute(
-                         ImportFileSettings input)
+                       ImportFileSettingsDialogResult result)
                  {
+                    ImportFileSettings input = result.getSettings();
                     String var = StringUtil.toRSymbolName(input.getVarname());
                     String code =
                             var +
                             " <- " +
-                            makeCommand(input) +
+                            makeCommand(input, 
+                                        result.getDefaultStringsAsFactors()) +
                             "\n  View(" + var + ")";
                     eventBus_.fireEvent(new SendToConsoleEvent(code, true));
                  }
@@ -754,21 +757,22 @@ public class EnvironmentPresenter extends BasePresenter
       dialog.showModal();
    }
 
-   private String makeCommand(ImportFileSettings input)
+   private String makeCommand(ImportFileSettings input,
+                              boolean defaultStringsAsFactors)
    {
       HashMap<String, ImportFileSettings> commandDefaults_ =
               new HashMap<String, ImportFileSettings>();
 
       commandDefaults_.put("read.table", new ImportFileSettings(
-              null, null, false, "", ".", "\"'"));
+              null, null, false, "", ".", "\"'", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv", new ImportFileSettings(
-              null, null, true, ",", ".", "\""));
+              null, null, true, ",", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim", new ImportFileSettings(
-              null, null, true, "\t", ".", "\""));
+              null, null, true, "\t", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv2", new ImportFileSettings(
-              null, null, true, ";", ",", "\""));
+              null, null, true, ";", ",", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim2", new ImportFileSettings(
-              null, null, true, "\t", ",", "\""));
+              null, null, true, "\t", ",", "\"", "NA", defaultStringsAsFactors));
 
       String command = "read.table";
       ImportFileSettings settings = commandDefaults_.get("read.table");
@@ -789,13 +793,18 @@ public class EnvironmentPresenter extends BasePresenter
       code.append("(");
       code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
       if (input.isHeader() != settings.isHeader())
-         code.append(", header=" + (input.isHeader() ? "T" : "F"));
+         code.append(", header=" + (input.isHeader() ? "TRUE" : "FALSE"));
       if (!input.getSep().equals(settings.getSep()))
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
       if (!input.getDec().equals(settings.getDec()))
          code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
       if (!input.getQuote().equals(settings.getQuote()))
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
+      if (!input.getNAStrings().equals(settings.getNAStrings()))
+         code.append(", na.strings=" + StringUtil.textToRLiteral(input.getNAStrings()));
+      if (input.getStringsAsFactors() != settings.getStringsAsFactors())
+         code.append(", stringsAsFactors=" + (input.getStringsAsFactors() ? "TRUE" : "FALSE"));
+         
       code.append(")");
 
       return code.toString();

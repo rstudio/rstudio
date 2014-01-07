@@ -35,6 +35,9 @@
 // noification of workbench initialized
 - (void) onWorkbenchInitialized;
 
+// set the window title
+- (void) setWindowTitle: (NSString*) title;
+
 // open a file association file
 - (void) openFileInRStudio: (NSString*) filename;
 

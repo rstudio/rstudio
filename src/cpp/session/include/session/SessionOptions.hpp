@@ -130,6 +130,8 @@ public:
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
 
+   int saveActionDefault() const { return saveActionDefault_; }
+
    unsigned int minimumUserId() const { return 100; }
    
    core::FilePath coreRSourcePath() const 
@@ -395,6 +397,7 @@ private:
    int disconnectedTimeoutMinutes_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
+   int saveActionDefault_;
 
    // r
    std::string coreRSourcePath_;
