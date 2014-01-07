@@ -15,6 +15,8 @@
 
 #include "SessionShiny.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
@@ -58,6 +60,56 @@ void onPackageLoaded(const std::string& pkgname)
    }
 }
 
+
+
+bool isShinyAppDir(const FilePath& filePath)
+{
+   bool hasServer = filePath.childPath("server.R").exists() ||
+                    filePath.childPath("server.r").exists();
+   if (hasServer)
+   {
+      bool hasUI = filePath.childPath("ui.R").exists() ||
+                   filePath.childPath("ui.r").exists() ||
+                   filePath.childPath("www").exists();
+
+      return hasUI;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+std::string onDetectShinySourceType(
+      boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   const char * const kShinyType = "shiny";
+
+   if (!pDoc->path().empty())
+   {
+      FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+      std::string filename = filePath.filename();
+
+      if (boost::algorithm::iequals(filename, "ui.r") &&
+          boost::algorithm::icontains(pDoc->contents(), "shinyUI"))
+      {
+         return kShinyType;
+      }
+      else if (boost::algorithm::iequals(filename, "server.r") &&
+               boost::algorithm::icontains(pDoc->contents(), "shinyServer"))
+      {
+         return kShinyType;
+      }
+      else if (filePath.extensionLowerCase() == ".r" &&
+               isShinyAppDir(filePath.parent()))
+      {
+         return kShinyType;
+      }
+   }
+
+   return std::string();
+}
+
 Error getShinyCapabilities(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -76,6 +128,7 @@ Error initialize()
 {
    using namespace module_context;
    events().onPackageLoaded.connect(onPackageLoaded);
+   events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

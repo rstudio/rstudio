@@ -23,7 +23,9 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
@@ -192,8 +194,15 @@ class CommandBundleGeneratorHelper
       NodeList nodes = getConfigDoc("/commands/shortcuts");
       for (int i = 0; i < nodes.getLength(); i++)
       {
-         new ShortcutsEmitter(logger_,
-                              (Element) nodes.item(i)).generate(writer);
+         NodeList groups = nodes.item(i).getChildNodes();
+         for (int j = 0; j < groups.getLength(); j++)
+         {
+            if (groups.item(j).getNodeType() != Node.ELEMENT_NODE)
+               continue;
+            String groupName = ((Element) groups.item(j)).getAttribute("name");
+            new ShortcutsEmitter(logger_, groupName,
+                                 (Element) groups.item(j)).generate(writer);
+         }
       }
       writer.outdent();
       writer.println("}");

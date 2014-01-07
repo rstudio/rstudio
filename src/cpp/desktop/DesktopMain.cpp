@@ -107,7 +107,8 @@ void initializeWorkingDirectory(int argc,
 
       // on linux we take the current working dir if we were launched
       // from within a terminal
-      if (core::system::stdoutIsTerminal())
+      if (core::system::stdoutIsTerminal() &&
+         (currentPath != core::system::userHomePath()))
       {
          workingDir = currentPath.absolutePath();
       }

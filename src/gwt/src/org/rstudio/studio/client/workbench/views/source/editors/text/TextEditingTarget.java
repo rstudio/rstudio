@@ -87,7 +87,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -99,7 +98,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -123,7 +122,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class TextEditingTarget implements EditingTarget
+public class TextEditingTarget implements 
+                                  EditingTarget,
+                                  EditingTargetCodeExecution.CodeExtractor
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
@@ -152,6 +153,8 @@ public class TextEditingTarget implements EditingTarget
       StatusBar getStatusBar();
 
       boolean isAttached();
+      
+      void adaptToExtendedFileType(String extendedType);
 
       void debug_dumpContents();
       void debug_importDump();
@@ -330,6 +333,7 @@ public class TextEditingTarget implements EditingTarget
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
       prefs_ = prefs;
+      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       previewHtmlHelper_ = new TextEditingTargetPreviewHtmlHelper();
       cppHelper_ = new TextEditingTargetCppHelper(server);
@@ -592,6 +596,7 @@ public class TextEditingTarget implements EditingTarget
                                           fileTypeRegistry_,
                                           docDisplay_,
                                           fileType_,
+                                          document.getExtendedType(),
                                           events_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
@@ -1634,11 +1639,7 @@ public class TextEditingTarget implements EditingTarget
       while (releaseOnDismiss_.size() > 0)
          releaseOnDismiss_.remove(0).removeHandler();
 
-      if (lastExecutedCode_ != null)
-      {
-         lastExecutedCode_.detach();
-         lastExecutedCode_ = null;
-      }
+      codeExecution_.detachLastExecuted();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
@@ -1668,6 +1669,12 @@ public class TextEditingTarget implements EditingTarget
    public String getId()
    {
       return id_;
+   }
+   
+   @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+      view_.adaptToExtendedFileType(extendedType);
    }
 
    public HasValue<String> getName()
@@ -2133,123 +2140,28 @@ public class TextEditingTarget implements EditingTarget
    @Handler
    void onExecuteCodeWithoutFocus()
    {
-      executeCode(false);
+      codeExecution_.executeSelection(false);
    }
    
    @Handler
    void onExecuteCode()
    {
-      executeCode(true);
-   }
-   
-   void executeCode(boolean consoleExecuteWhenNotFocused)
-   {  
-      // allow console a chance to execute code if we aren't focused
-      if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
-      {
-         events_.fireEvent(new ConsoleExecutePendingInputEvent());
-         return;
-      }
-      
-      
-      Range selectionRange = docDisplay_.getSelectionRange();
-      boolean noSelection = selectionRange.isEmpty();
-      if (noSelection)
-      {
-         int row = docDisplay_.getSelectionStart().getRow();
-         selectionRange = Range.fromPoints(
-               Position.create(row, 0),
-               Position.create(row, docDisplay_.getLength(row)));
-      }
-
-      executeRange(selectionRange);
-      
-      // advance if there is no current selection
-      if (noSelection)
-      {
-         if (!docDisplay_.moveSelectionToNextLine(true))
-            docDisplay_.moveSelectionToBlankLine();
-      }
+      codeExecution_.executeSelection(true);
    }
 
-   private void executeRange(Range range)
+   @Override
+   public String extractCode(DocDisplay docDisplay, Range range)
    {
       Scope sweaveChunk = scopeHelper_.getCurrentSweaveChunk(range.getStart());
 
       String code = sweaveChunk != null
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)
                     : docDisplay_.getCode(range.getStart(), range.getEnd());
-      setLastExecuted(range.getStart(), range.getEnd());
-      
-      // trim intelligently
-      code = code.trim();
-      if (code.length() == 0)
-         code = "\n";
-      
-      // strip roxygen off the beginning of lines
-      if (isRoxygenExampleRange(range))
-      {
-         code = code.replaceFirst("^\\s*#'\\s?", "");
-         code = code.replaceAll("\n\\s*#'\\s?", "\n");
-      }
-      
-      // send to console
-      events_.fireEvent(new SendToConsoleEvent(
-                                  code, 
-                                  true, 
-                                  prefs_.focusConsoleAfterExec().getValue()));
+                    
+      return code;
    }
    
-   private boolean isRoxygenExampleRange(Range range)
-   {
-      // ensure all of the lines in the selection are within roxygen
-      int selStartRow = range.getStart().getRow();
-      int selEndRow = range.getEnd().getRow();
-      
-      // ignore the last row if it's column 0
-      if (range.getEnd().getColumn() == 0)
-         selEndRow = Math.max(selEndRow-1, selStartRow);
-      
-      for (int i=selStartRow; i<=selEndRow; i++)
-      {
-         if (!isRoxygenLine(docDisplay_.getLine(i)))
-            return false;
-      }
-      
-      // scan backwards and look for @example
-      int row = selStartRow;
-      while (--row >= 0)
-      {
-         String line = docDisplay_.getLine(row);
-         
-         // must still be within roxygen
-         if (!isRoxygenLine(line))
-            return false;
-         
-         // if we are in an example block return true
-         if (line.matches("^\\s*#'\\s*@example.*$"))
-            return true;
-      }
-      
-      // didn't find the example block
-      return false;
-   }
-   
-   private boolean isRoxygenLine(String line)
-   {
-      String trimmedLine = line.trim();
-      return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
-   }
-
-   private void setLastExecuted(Position start, Position end)
-   {
-      if (lastExecutedCode_ != null)
-      {
-         lastExecutedCode_.detach();
-         lastExecutedCode_ = null;
-      }
-      lastExecutedCode_ = docDisplay_.createAnchoredSelection(start, end);
-   }
+  
 
    @Handler
    void onExecuteAllCode()
@@ -2266,8 +2178,8 @@ public class TextEditingTarget implements EditingTarget
       int row = docDisplay_.getSelectionEnd().getRow();
       int col = docDisplay_.getLength(row);
 
-      executeRange(Range.fromPoints(Position.create(0, 0),
-                                    Position.create(row, col)));
+      codeExecution_.executeRange(Range.fromPoints(Position.create(0, 0),
+                                  Position.create(row, col)));
    }
    
    @Handler
@@ -2277,14 +2189,9 @@ public class TextEditingTarget implements EditingTarget
 
       int startRow = docDisplay_.getSelectionStart().getRow();
       int startColumn = 0;
-
-      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
-      int endColumn = docDisplay_.getLength(endRow);
-
       Position start = Position.create(startRow, startColumn);
-      Position end = Position.create(endRow, endColumn);
-
-      executeRange(Range.fromPoints(start, end));
+      
+      codeExecution_.executeRange(Range.fromPoints(start, endPosition()));
    }
 
    @Handler
@@ -2306,7 +2213,36 @@ public class TextEditingTarget implements EditingTarget
       Position start = currentFunction.getPreamble();
       Position end = currentFunction.getEnd();
 
-      executeRange(Range.fromPoints(start, end));
+      codeExecution_.executeRange(Range.fromPoints(start, end));
+   }
+
+   @Handler   
+   void onExecuteCurrentSection()
+   {
+      docDisplay_.focus();
+
+      // Determine the current section.
+      docDisplay_.getScopeTree();
+      Scope currentSection = docDisplay_.getCurrentSection();
+      if (currentSection == null)
+         return;
+      
+      // Determine the start and end of the section
+      Position start = currentSection.getBodyStart();
+      if (start == null)
+         start = Position.create(0, 0);
+      Position end = currentSection.getEnd();
+      if (end == null)
+         end = endPosition();
+      
+      codeExecution_.executeRange(Range.fromPoints(start, end));
+   }
+    
+   private Position endPosition()
+   {
+      int endRow = Math.max(0, docDisplay_.getRowCount() - 1);
+      int endColumn = docDisplay_.getLength(endRow);
+      return Position.create(endRow, endColumn);
    }
    
    @Handler
@@ -2432,7 +2368,7 @@ public class TextEditingTarget implements EditingTarget
             docDisplay_.createSelection(range.getStart(), range.getEnd()));
       if (!range.isEmpty())
       {
-         setLastExecuted(range.getStart(), range.getEnd());
+         codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
          String code = scopeHelper_.getSweaveChunkText(chunk);
          events_.fireEvent(new SendToConsoleEvent(code, true));
 
@@ -2641,14 +2577,7 @@ public class TextEditingTarget implements EditingTarget
    {
       docDisplay_.focus();
 
-      if (lastExecutedCode_ != null)
-      {
-         String code = lastExecutedCode_.getValue();
-         if (code != null && code.trim().length() > 0)
-         {
-            events_.fireEvent(new SendToConsoleEvent(code, true));
-         }
-      }
+      codeExecution_.executeLastCode();
    }
    
    @Handler
@@ -3654,7 +3583,7 @@ public class TextEditingTarget implements EditingTarget
    // Prevents external edit checks from happening too soon after each other
    private final IntervalTracker externalEditCheckInterval_ =
          new IntervalTracker(1000, true);
-   private AnchoredSelection lastExecutedCode_;
+   private final EditingTargetCodeExecution codeExecution_;
    
    private SourcePosition debugStartPos_ = null;
    private SourcePosition debugEndPos_ = null;

@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand executeFromCurrentLine();
    public abstract AppCommand executeCurrentFunction();
+   public abstract AppCommand executeCurrentSection();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertSection();
@@ -271,6 +272,7 @@ public abstract class
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
+   public abstract AppCommand viewShortcuts();
    
    // Viewer
    public abstract AppCommand viewerPopout();

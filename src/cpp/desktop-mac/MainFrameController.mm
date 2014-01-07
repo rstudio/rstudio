@@ -33,6 +33,9 @@
 
 static MainFrameController* instance_;
 
+// context for tracking all running applications
+const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
+
 + (MainFrameController*) instance
 {
    return instance_;
@@ -63,6 +66,11 @@ static MainFrameController* instance_;
       // set title
       [[self window] setTitle: @"RStudio"];
       
+      // set dock tile for application
+      dockTile_ = [[DockTileView alloc] init];
+      [[NSApp dockTile] setContentView: dockTile_];
+      [[NSApp dockTile] display];
+      
       // set primary fullscreen mode
       desktop::utils::enableFullscreenMode([self window], true);
       
@@ -70,7 +78,12 @@ static MainFrameController* instance_;
       NSString* userAgent = [webView_
                stringByEvaluatingJavaScriptFromString:@"navigator.userAgent"];
       [self checkWebkitVersion: userAgent];
-
+      
+      // signup for changes in the list of running applications
+      [[NSWorkspace sharedWorkspace] addObserver:self
+                                      forKeyPath:@"runningApplications"
+                                         options:NSKeyValueObservingOptionNew
+                                         context:&kRunningApplicationsContext];
    }
    
    return self;
@@ -78,7 +91,13 @@ static MainFrameController* instance_;
 
 - (void) dealloc
 {
+   // unsubscribe to changes in the list of running applications
+   [[NSWorkspace sharedWorkspace] removeObserver:self
+                                      forKeyPath:@"runningApplications"
+                                         context:&kRunningApplicationsContext];
+   
    instance_ = nil;
+   [dockTile_ release];
    [menu_ release];
    [openFile_ release];
    [super dealloc];
@@ -90,15 +109,25 @@ static MainFrameController* instance_;
    // or reload for a new project context)
    quitConfirmed_ = NO;
 
+   // determine whether we should show a DockTile label
+   [self updateDockTileShowLabel];
+   
    // see if there is a project dir to display in the titlebar
    // if there are unsaved changes then resolve them before exiting
    NSString* projectDir = [self evaluateJavaScript:
                                 @"window.desktopHooks.getActiveProjectDir()"] ;
    if ([projectDir length] > 0)
+   {
       [[self window] setTitle: [projectDir stringByAppendingString:
                                                             @" - RStudio"]];
+      
+      [self updateDockTile: projectDir];
+   }
    else
+   {
       [[self window] setTitle: @"RStudio"];
+      [self updateDockTile: nil];
+   }
    
    // open file if requested for first workbench
    if (!firstWorkbenchInitialized_)
@@ -108,6 +137,43 @@ static MainFrameController* instance_;
       
       firstWorkbenchInitialized_ = YES;
    }
+}
+
+
+// whenever the list of running applications changes then check to see
+// whether we should show project name labels on our dock tile (do it
+// if there is more than one instance of RStudio active)
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context
+{
+   if (context == &kRunningApplicationsContext)
+      [self updateDockTileShowLabel];
+}
+
+
+- (void) updateDockTile: (NSString*) projectDir
+{
+   if (projectDir != nil)
+      [dockTile_ setLabel: [projectDir lastPathComponent]];
+   else
+      [dockTile_ setLabel: nil];
+   
+   [[NSApp dockTile] display];
+}
+
+- (void) updateDockTileShowLabel
+{
+   if ([[NSRunningApplication runningApplicationsWithBundleIdentifier:
+         [[NSBundle mainBundle] bundleIdentifier]] count] > 1) {
+      [dockTile_ setShowLabel: TRUE];
+   }
+   else {
+      [dockTile_ setShowLabel: FALSE];
+   }
+   
+   [[NSApp dockTile] display];
 }
 
 - (void) openFileInRStudio: (NSString*) openFile

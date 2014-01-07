@@ -79,6 +79,11 @@ public class UrlContentEditingTarget implements EditingTarget
       return doc_.getId();
    }
 
+   @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+   }
+
    public HasValue<String> getName()
    {
       String title = getContentTitle();
@@ -379,6 +384,4 @@ public class UrlContentEditingTarget implements EditingTarget
    private HandlerRegistration commandReg_;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
-
-  
 }

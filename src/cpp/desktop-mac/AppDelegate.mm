@@ -226,6 +226,7 @@ bool prepareEnvironment(Options& options)
 
 - (void)dealloc
 {
+   [dockMenu_ release];
    [openFile_ release];
    [super dealloc];
 }
@@ -408,6 +409,25 @@ bool prepareEnvironment(Options& options)
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication*) s
 {
    return YES;
+}
+
+- (NSMenu *) applicationDockMenu: (NSApplication *) sender
+{
+   if (dockMenu_ == nil)
+   {
+      dockMenu_ = [[[NSMenu alloc] init] retain];
+      [dockMenu_ addItem: [[NSMenuItem alloc]
+                     initWithTitle: @"New RStudio Window"
+                        action:@selector(launchNewRStudioWindow)
+                        keyEquivalent:@""]];
+   }
+   return dockMenu_;
+}
+
+- (void) launchNewRStudioWindow
+{
+   [NSTask launchedTaskWithLaunchPath: executablePath()
+                            arguments: [NSArray new]];
 }
 
 @end

@@ -234,6 +234,11 @@
   <true/>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+   <key>LSEnvironment</key>
+   <dict>
+      <key>DYLD_VERSIONED_FRAMEWORK_PATH</key>
+      <string>/System/Library/StagedFrameworks/Safari</string>
+   </dict>
   <key>LSMinimumSystemVersion</key>
   <string>10.6.0</string>
 </dict>

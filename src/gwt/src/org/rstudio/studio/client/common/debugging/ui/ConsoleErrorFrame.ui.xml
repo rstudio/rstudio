@@ -9,9 +9,32 @@
 	.sourceLink {
 	  cursor: pointer;
 	}
+	
+	.functionBlock {
+	  display: inline-block;
+	}
+	
+	.frameNumber {
+	  vertical-align: top;
+	  float: left;
+	  font-size: 80%;
+	  width: 1.5em; 
+	  text-align: right;
+	  margin-top: 0.3em;
+	  white-space: nowrap;
+	}
+	
+	.frame {
+	  clear: both;
+	}
 	</ui:style>
-	<g:HTMLPanel>
-	  <g:Label ui:field="functionName" styleName="{style.function}"></g:Label>
-	  <g:Anchor ui:field="sourceLink" styleName="{style.sourceLink} ace_constant ace_numeric"></g:Anchor>
-	</g:HTMLPanel>
+	<g:HTMLPanel styleName="{style.frame}">
+	   <g:Label styleName="{style.frameNumber} ace_constant ace_numeric"
+	            ui:field="frameNumber"></g:Label>
+		<g:HTMLPanel styleName="{style.functionBlock}">
+		  <g:Label ui:field="functionName" styleName="{style.function}"></g:Label>
+		  <g:Anchor ui:field="sourceLink" 
+		            styleName="{style.sourceLink} ace_constant ace_numeric"></g:Anchor>
+		</g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 

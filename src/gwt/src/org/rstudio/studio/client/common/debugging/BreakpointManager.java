@@ -139,7 +139,8 @@ public class BreakpointManager
       
       ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
       bps.add(breakpoint);
-      server_.updateShinyBreakpoints(bps, true, new VoidServerRequestCallback());
+      server_.updateShinyBreakpoints(bps, true, true, 
+                                     new VoidServerRequestCallback());
 
       return breakpoint;
    }
@@ -234,7 +235,7 @@ public class BreakpointManager
             ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
             bps.add(breakpoint);
             server_.updateShinyBreakpoints(
-                  bps, false, new VoidServerRequestCallback());
+                  bps, false, true, new VoidServerRequestCallback());
          }
       }
       onBreakpointAddOrRemove();
@@ -253,6 +254,17 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoint.markStepsNeedUpdate();
+         // if this is a top-level breakpoint, it may be a Shiny breakpoint. 
+         // update the server's knowledge of the breakpoint so that the next
+         // time this breakpoint is injected, it's injected at the correct 
+         // line.
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL) 
+         {
+            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+            bps.add(breakpoint);
+            server_.updateShinyBreakpoints(bps, true, false,
+                                           new VoidServerRequestCallback());
+         }
       }
    }
    
@@ -758,7 +770,7 @@ public class BreakpointManager
       // Let the server know that top-level breakpoints were cleared (if any)
       if (topLevelBPs.size() > 0)
       {
-         server_.updateShinyBreakpoints(topLevelBPs, false, 
+         server_.updateShinyBreakpoints(topLevelBPs, false, true, 
                                         new VoidServerRequestCallback());
       }
       

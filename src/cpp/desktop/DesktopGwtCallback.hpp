@@ -152,6 +152,8 @@ public slots:
 
    bool isOSXMavericks();
 
+   void setBusy(bool busy);
+
 private:
    Synctex& synctex();
 

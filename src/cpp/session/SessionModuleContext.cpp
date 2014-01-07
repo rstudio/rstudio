@@ -1059,12 +1059,17 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
    std::string ext = filePath.extensionLowerCase();
+   std::string name = filePath.filename();
    if (ext == ".rprofile" ||
        ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
        ext == ".renviron" ||
        ext == ".gitignore")
+   {
+      return true;
+   }
+   else if (name == ".travis.yml")
    {
       return true;
    }

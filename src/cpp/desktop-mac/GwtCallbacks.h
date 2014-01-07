@@ -14,6 +14,17 @@ enum MessageType
    MSG_QUESTION = 4
 };
 
+@protocol GwtCallbacksUIDelegate
+-(NSWindow*) uiWindow;
+@end
+
 @interface GwtCallbacks : NSObject {
+   id<GwtCallbacksUIDelegate> uiDelegate_;
+   id<NSObject> busyActivity_;
 }
+
+// designated initializer
+- (id) initWithUIDelegate: (id<GwtCallbacksUIDelegate>) uiDelegate;
+
+
 @end

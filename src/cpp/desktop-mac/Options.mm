@@ -107,6 +107,12 @@ int Options::zoomLevel() const
    
 void Options::setZoomLevel(int zoomLevel)
 {
+   // enforce min and max
+   if (zoomLevel > 6)
+      zoomLevel = 6;
+   else if (zoomLevel < -3)
+      zoomLevel = -3;
+   
    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
    NSNumber* zoom = [NSNumber numberWithInt: zoomLevel];
    [prefs setObject: [zoom stringValue] forKey: @"view.maczoomlevel"];

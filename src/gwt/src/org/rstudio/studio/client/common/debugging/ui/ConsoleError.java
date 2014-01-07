@@ -85,7 +85,7 @@ public class ConsoleError extends Composite
       
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
-         ConsoleErrorFrame frame = new ConsoleErrorFrame(
+         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, 
                err.getErrorFrames().get(i), observer_);
          framePanel.add(frame);
       }

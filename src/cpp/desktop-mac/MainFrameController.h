@@ -16,12 +16,14 @@
 #import "WebViewController.h"
 
 #import "MainFrameMenu.h"
+#import "DockTileView.h"
 
 @interface MainFrameController : WebViewController {
    BOOL quitConfirmed_;
    BOOL firstWorkbenchInitialized_;
    NSString* openFile_;
    MainFrameMenu* menu_;
+   DockTileView* dockTile_;
 }
 
 // access single instance

@@ -151,8 +151,8 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
             @Override
             public void onClick(ClickEvent event)
             {
-              server_.manipulatorPlotClicked(event.getX(), 
-                                             event.getY(), 
+              server_.manipulatorPlotClicked(new Double(event.getX()).intValue(), 
+                                             new Double(event.getY()).intValue(), 
                                              new ManipulatorRequestCallback());
                
             }   

@@ -31,6 +31,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 namespace core {
    class Error;
@@ -216,6 +217,26 @@ enum ChangeSource
    ChangeSourceURI
 };
    
+
+// custom slot combiner that takes the first non empty value
+template<typename T>
+struct firstNonEmpty
+{
+  typedef T result_type;
+
+  template<typename InputIterator>
+  T operator()(InputIterator first, InputIterator last) const
+  {
+     for (InputIterator it = first; it != last; ++it)
+     {
+        if (!it->empty())
+           return *it;
+     }
+     return T();
+  }
+};
+
+
 // session events
 struct Events : boost::noncopyable
 {
@@ -232,6 +253,10 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
    boost::signal<void (const std::string&)>  onPackageLoaded;
+
+   // signal for detecting extended type of documents
+   boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
+                 firstNonEmpty<std::string> > onDetectSourceExtendedType;
 };
 
 Events& events();

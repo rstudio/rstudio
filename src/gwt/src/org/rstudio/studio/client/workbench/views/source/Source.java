@@ -117,6 +117,7 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
                              CodeBrowserFinishedHandler,
+                             SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler
 {
    public interface Display extends IsWidget,
@@ -218,6 +219,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeToCurrentLine());
       dynamicCommands_.add(commands.executeFromCurrentLine());
       dynamicCommands_.add(commands.executeCurrentFunction());
+      dynamicCommands_.add(commands.executeCurrentSection());
       dynamicCommands_.add(commands.executeLastCode());
       dynamicCommands_.add(commands.insertChunk());
       dynamicCommands_.add(commands.insertSection());
@@ -272,7 +274,9 @@ public class Source implements InsertSourceHandler,
          ShortcutManager.INSTANCE.register(
                KeyboardShortcut.META | KeyboardShortcut.ALT,
                192,
-               commands.executeNextChunk());
+               commands.executeNextChunk(), 
+               "Execute",
+               commands.executeNextChunk().getMenuLabel(false));
       }
 
       events.addHandler(ShowContentEvent.TYPE, this);
@@ -344,6 +348,8 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+      
+      events.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
@@ -630,6 +636,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSweaveDoc()
    {
+      // set concordance value if we need to
       String concordance = new String();
       if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
       {
@@ -638,25 +645,49 @@ public class Source implements InsertSourceHandler,
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
-      final boolean hasConcordance = concordance.length() > 0;
-      
-      String contents = "\\documentclass{article}\n" +
-                        "\n" +
-                        "\\begin{document}\n" +
-                        concordance +
-                        "\n\n\n\n" +
-                        "\\end{document}";
-      
-      newDoc(FileTypeRegistry.SWEAVE, 
-             contents, 
-             new ResultCallback<EditingTarget, ServerError> () {
-                @Override
-                public void onSuccess(EditingTarget target)
-                {
-                   int startRow = 4 + (hasConcordance ? 1 : 0);
-                   target.setCursorPosition(Position.create(startRow, 0));
-                }
-             });
+      final String concordanceValue = concordance;
+     
+      // show progress
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 500, "Creating new document...").getIndicator();
+
+      // get the template
+      server_.getSourceTemplate("", 
+                                "sweave.Rnw", 
+                                new ServerRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String templateContents)
+         {
+            indicator.onCompleted();
+            
+            // add in concordance if necessary
+            final boolean hasConcordance = concordanceValue.length() > 0;
+            if (hasConcordance)
+            {
+               String beginDoc = "\\begin{document}\n";
+               templateContents = templateContents.replace(
+                     beginDoc,
+                     beginDoc + concordanceValue);
+            }
+            
+            newDoc(FileTypeRegistry.SWEAVE, 
+                  templateContents, 
+                  new ResultCallback<EditingTarget, ServerError> () {
+               @Override
+               public void onSuccess(EditingTarget target)
+               {
+                  int startRow = 4 + (hasConcordance ? 1 : 0);
+                  target.setCursorPosition(Position.create(startRow, 0));
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+      });
    }
    
    @Handler
@@ -2305,6 +2336,20 @@ public class Source implements InsertSourceHandler,
       
       private final SourcePosition restorePosition_;
       private final AppCommand retryCommand_;
+   }
+   
+   @Override
+   public void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e)
+   {
+      // set the extended type of the specified source file
+      for (EditingTarget editor : editors_)
+      {
+         if (editor.getId().equals(e.getDocId()))
+         {
+            editor.adaptToExtendedFileType(e.getExtendedType());
+            break;
+         }
+      }
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

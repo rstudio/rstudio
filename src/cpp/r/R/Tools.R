@@ -171,7 +171,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
    # make a copy of the snapshot into plot and set its metadata in a way
    # that is compatible with recordPlot
    plot = snapshot
-   attr(plot, "version") <- grDevices:::rversion()
+   attr(plot, "version") <- as.character(getRversion())
    class(plot) <- "recordedplot"
    
    save(plot, file=filename)
@@ -228,6 +228,14 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
        }
      },
      silent = TRUE);
+   }
+
+   # set the pid attribute to the current pid if necessary
+   if (rVersion >= "3.0.2")
+   {
+      plotPid <- attr(plot, "pid")
+      if (is.null(plotPid) || (plotPid != Sys.getpid()))
+        attr(plot, "pid") <- Sys.getpid()
    }
    
    # we suppressWarnings so that R doesnt print a warning if we restore
