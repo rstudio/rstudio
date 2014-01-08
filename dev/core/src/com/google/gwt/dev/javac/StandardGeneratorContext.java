@@ -567,7 +567,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   @Override
   public ResourceOracle getResourcesOracle() {
-    return compilerContext.getModule().getResourcesOracle();
+    return compilerContext.getModule().getBuildResourceOracle();
   }
 
   @Override

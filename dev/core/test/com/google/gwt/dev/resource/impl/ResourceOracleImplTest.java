@@ -344,7 +344,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * Verify that duplicate entries are removed from the classpath, and that
    * multiple ResourceOracleImpls created from the same classloader return the
    * same list of ClassPathEntries.
-   *
    */
   public void testRemoveDuplicates() {
     TreeLogger logger = createTestTreeLogger();
@@ -353,15 +352,15 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     URLClassLoader classLoader = new URLClassLoader(new URL[]{
         cpe1, cpe2, cpe2, cpe1, cpe2,}, null);
     ResourceOracleImpl oracle = new ResourceOracleImpl(logger, classLoader);
-    List<ClassPathEntry> classPath = oracle.getClassPath();
-    assertEquals(2, classPath.size());
-    assertJarEntry(classPath.get(0), "cpe1.jar");
-    assertJarEntry(classPath.get(1), "cpe2.zip");
+    List<ClassPathEntry> classPathEntries = oracle.getClassPathEntries();
+    assertEquals(2, classPathEntries.size());
+    assertJarEntry(classPathEntries.get(0), "cpe1.jar");
+    assertJarEntry(classPathEntries.get(1), "cpe2.zip");
     oracle = new ResourceOracleImpl(logger, classLoader);
-    List<ClassPathEntry> classPath2 = oracle.getClassPath();
-    assertEquals(2, classPath2.size());
+    List<ClassPathEntry> classPathEntries2 = oracle.getClassPathEntries();
+    assertEquals(2, classPathEntries2.size());
     for (int i = 0; i < 2; ++i) {
-      assertSame(classPath.get(i), classPath2.get(i));
+      assertSame(classPathEntries.get(i), classPathEntries2.get(i));
     }
   }
 
@@ -539,9 +538,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
   private ResourceOracleSnapshot refreshAndSnapshot(TreeLogger logger,
       ResourceOracleImpl oracle) {
-    ResourceOracleImpl.refresh(logger, oracle);
+    oracle.scanResources(logger);
     ResourceOracleSnapshot snapshot1 = new ResourceOracleSnapshot(oracle);
-    ResourceOracleImpl.refresh(logger, oracle);
+    oracle.scanResources(logger);
     ResourceOracleSnapshot snapshot2 = new ResourceOracleSnapshot(oracle);
     snapshot1.assertSameCollections(snapshot2);
     return snapshot1;
