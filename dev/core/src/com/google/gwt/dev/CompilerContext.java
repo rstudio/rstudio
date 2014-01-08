@@ -13,10 +13,7 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.cfg.CombinedResourceOracle;
 import com.google.gwt.dev.cfg.LibraryGroup;
-import com.google.gwt.dev.cfg.LibraryGroupBuildResourceOracle;
-import com.google.gwt.dev.cfg.LibraryGroupPublicResourceOracle;
 import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.NullLibraryWriter;
@@ -39,8 +36,8 @@ public class CompilerContext {
   public static class Builder {
 
     private ResourceOracle buildResourceOracle;
-    private LibraryGroup libraryGroup;
     private LibraryWriter libraryWriter = new NullLibraryWriter();
+    private LibraryGroup libraryGroup;
     private ModuleDef module;
     private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     private ResourceOracle publicResourceOracle;
@@ -48,8 +45,6 @@ public class CompilerContext {
     private UnitCache unitCache;
 
     public CompilerContext build() {
-      initializeResourceOracles();
-
       CompilerContext compilerContext = new CompilerContext();
       compilerContext.buildResourceOracle = buildResourceOracle;
       compilerContext.libraryWriter = libraryWriter;
@@ -62,11 +57,8 @@ public class CompilerContext {
       return compilerContext;
     }
 
-    /**
-     * Sets the libraryGroup and uses it to set resource oracles as well.
-     */
-    public Builder libraryGroup(LibraryGroup libraryGroup) {
-      this.libraryGroup = libraryGroup;
+    public Builder buildResourceOracle(ResourceOracle buildResourceOracle) {
+      this.buildResourceOracle = buildResourceOracle;
       return this;
     }
 
@@ -75,9 +67,11 @@ public class CompilerContext {
       return this;
     }
 
-    /**
-     * Sets the module and uses it to set resource oracles as well.
-     */
+    public Builder libraryGroup(LibraryGroup libraryGroup) {
+      this.libraryGroup = libraryGroup;
+      return this;
+    }
+
     public Builder module(ModuleDef module) {
       this.module = module;
       return this;
@@ -88,53 +82,25 @@ public class CompilerContext {
       return this;
     }
 
+    public Builder publicResourceOracle(ResourceOracle publicResourceOracle) {
+      this.publicResourceOracle = publicResourceOracle;
+      return this;
+    }
+
+    public Builder sourceResourceOracle(ResourceOracle sourceResourceOracle) {
+      this.sourceResourceOracle = sourceResourceOracle;
+      return this;
+    }
+
     public Builder unitCache(UnitCache unitCache) {
       this.unitCache = unitCache;
       return this;
     }
-
-    /**
-     * Initialize source, build, and public resource oracles using the most complete currently
-     * available combination of moduleDef and libraryGroup.<br />
-     *
-     * When executing as part of a monolithic compilation there will likely only be a moduleDef
-     * available. That will result in sourcing resource oracles only from it, which is what
-     * monolithic compilation expects.<br />
-     *
-     * When executing as part of a separate compilation there will likely be both a moduleDef and
-     * libraryGroup available. That will result in sourcing resource oracles from a mixed
-     * combination, which is what separate compilation expects.
-     */
-    private void initializeResourceOracles() {
-      if (libraryGroup != null) {
-        if (module != null) {
-          sourceResourceOracle = module.getSourceResourceOracle();
-          buildResourceOracle = new CombinedResourceOracle(
-              module.getBuildResourceOracle(), new LibraryGroupBuildResourceOracle(libraryGroup));
-          publicResourceOracle = new CombinedResourceOracle(
-              module.getPublicResourceOracle(), new LibraryGroupPublicResourceOracle(libraryGroup));
-        } else {
-          sourceResourceOracle = null;
-          buildResourceOracle = new LibraryGroupBuildResourceOracle(libraryGroup);
-          publicResourceOracle = new LibraryGroupPublicResourceOracle(libraryGroup);
-        }
-      } else {
-        if (module != null) {
-          sourceResourceOracle = module.getSourceResourceOracle();
-          buildResourceOracle = module.getBuildResourceOracle();
-          publicResourceOracle = module.getPublicResourceOracle();
-        } else {
-          sourceResourceOracle = null;
-          buildResourceOracle = null;
-          publicResourceOracle = null;
-        }
-      }
-    }
   }
 
   private ResourceOracle buildResourceOracle;
-  private LibraryGroup libraryGroup;
   private LibraryWriter libraryWriter = new NullLibraryWriter();
+  private LibraryGroup libraryGroup;
   private ModuleDef module;
 
   // TODO(stalcup): split this into module parsing, precompilation, compilation, and linking option
@@ -192,12 +158,12 @@ public class CompilerContext {
     return buildResourceOracle;
   }
 
-  public LibraryGroup getLibraryGroup() {
-    return libraryGroup;
-  }
-
   public LibraryWriter getLibraryWriter() {
     return libraryWriter;
+  }
+
+  public LibraryGroup getLibraryGroup() {
+    return libraryGroup;
   }
 
   public ModuleDef getModule() {

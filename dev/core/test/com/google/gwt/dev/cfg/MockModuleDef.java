@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 
@@ -25,7 +24,6 @@ import java.io.InputStream;
 public class MockModuleDef extends ModuleDef {
     public MockModuleDef() {
       super("mock");
-      normalize(TreeLogger.NULL);
     }
 
     @Override
@@ -62,4 +60,9 @@ public class MockModuleDef extends ModuleDef {
       }
       return null;
     }
-}
+
+    @Override
+    public String[] getAllPublicFiles() {
+      return new String[] {"onPublicPath.txt"};
+    }
+  }

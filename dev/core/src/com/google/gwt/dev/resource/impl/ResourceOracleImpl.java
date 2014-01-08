@@ -26,7 +26,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,22 +110,18 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
   }
 
-  private static class ResourceDescription implements Comparable<ResourceDescription> {
+  private static class ResourceData implements Comparable<ResourceData> {
     public final PathPrefix pathPrefix;
     public final AbstractResource resource;
 
-    public ResourceDescription(AbstractResource resource, PathPrefix pathPrefix) {
+    public ResourceData(AbstractResource resource, PathPrefix pathPrefix) {
       this.resource =
           pathPrefix.shouldReroot() ? new RerootedResource(resource, pathPrefix) : resource;
       this.pathPrefix = pathPrefix;
     }
 
-    public boolean isPreferredOver(ResourceDescription that) {
-      return this.compareTo(that) >= 0;
-    }
-
     @Override
-    public int compareTo(ResourceDescription other) {
+    public int compareTo(ResourceData other) {
       // Rerooted takes precedence over not rerooted.
       if (this.resource.wasRerooted() != other.resource.wasRerooted()) {
         return this.resource.wasRerooted() ? 1 : -1;
@@ -137,10 +132,10 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     @Override
     public boolean equals(Object o) {
-      if (!(o instanceof ResourceDescription)) {
+      if (!(o instanceof ResourceData)) {
         return false;
       }
-      ResourceDescription other = (ResourceDescription) o;
+      ResourceData other = (ResourceData) o;
       return this.pathPrefix.getPriority() == other.pathPrefix.getPriority()
           && this.resource.wasRerooted() == other.resource.wasRerooted();
     }
@@ -225,53 +220,92 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   /**
-   * Scans the associated paths to recompute the available resources.
+   * Rescans the associated paths to recompute the available resources.
+   *
+   * TODO(conroy,scottb): This synchronization could be improved upon to allow
+   * disjoint sets of oracles to be refreshed simultaneously.
    *
    * @param logger status and error details are written here
+   * @param first At least one ResourceOracleImpl must be passed to refresh
+   * @param rest Callers may optionally pass several oracles
    */
-  public synchronized void scanResources(TreeLogger logger) {
+  public static synchronized void refresh(TreeLogger logger, ResourceOracleImpl first,
+      ResourceOracleImpl... rest) {
+    int len = 1 + rest.length;
+    ResourceOracleImpl[] oracles = new ResourceOracleImpl[1 + rest.length];
+    oracles[0] = first;
+    System.arraycopy(rest, 0, oracles, 1, rest.length);
+
     Event resourceOracle =
         SpeedTracerLogger.start(CompilerEventType.RESOURCE_ORACLE, "phase", "refresh");
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger, null);
 
-    Map<String, ResourceDescription> resourceDescriptionsByPath =
-        new LinkedHashMap<String, ResourceDescription>();
+    /*
+     * Allocate fresh data structures in anticipation of needing to honor the
+     * "new identity for the collections if anything changes" guarantee. Use a
+     * LinkedHashMap because we do not want the order to change.
+     */
+    List<Map<String, ResourceData>> resourceDataMaps = new ArrayList<Map<String, ResourceData>>();
 
-    for (ClassPathEntry classPathEntry : classPathEntries) {
+    List<PathPrefixSet> pathPrefixSets = new ArrayList<PathPrefixSet>();
+    for (ResourceOracleImpl oracle : oracles) {
+      if (!oracle.classPath.equals(oracles[0].classPath)) {
+        throw new IllegalArgumentException("Refreshing multiple oracles with different classpaths");
+      }
+      resourceDataMaps.add(new LinkedHashMap<String, ResourceData>());
+      pathPrefixSets.add(oracle.pathPrefixSet);
+    }
+
+    /*
+     * Walk across path roots (i.e. classpath entries) in priority order. This
+     * is a "reverse painter's algorithm", relying on being careful never to add
+     * a resource that has already been added to the new map under construction
+     * to create the effect that resources founder earlier on the classpath take
+     * precedence.
+     *
+     * Exceptions: super has priority over non-super; and if there are two super
+     * resources with the same path, the one with the higher-priority path
+     * prefix wins.
+     */
+    for (ClassPathEntry pathRoot : oracles[0].classPath) {
       TreeLogger branchForClassPathEntry =
-          Messages.EXAMINING_PATH_ROOT.branch(refreshBranch, classPathEntry.getLocation(), null);
+          Messages.EXAMINING_PATH_ROOT.branch(refreshBranch, pathRoot.getLocation(), null);
 
-      Map<AbstractResource, PathPrefix> prefixesByResource =
-          classPathEntry.findApplicableResources(branchForClassPathEntry, pathPrefixSet);
-      for (Entry<AbstractResource, PathPrefix> entry : prefixesByResource.entrySet()) {
-        AbstractResource resource = entry.getKey();
-        PathPrefix pathPrefix = entry.getValue();
-        ResourceDescription resourceDescription = new ResourceDescription(resource, pathPrefix);
-        String resourcePath = resourceDescription.resource.getPath();
-
-        // In case of collision.
-        if (resourceDescriptionsByPath.containsKey(resourcePath)) {
-          ResourceDescription oldResourceDescription = resourceDescriptionsByPath.get(resourcePath);
-          if (resourceDescription.isPreferredOver(oldResourceDescription)) {
-            resourceDescriptionsByPath.put(resourcePath, resourceDescription);
+      List<Map<AbstractResource, PathPrefix>> resourceToPrefixMaps =
+          pathRoot.findApplicableResources(branchForClassPathEntry, pathPrefixSets);
+      for (int i = 0; i < len; ++i) {
+        Map<String, ResourceData> resourceDataMap = resourceDataMaps.get(i);
+        Map<AbstractResource, PathPrefix> resourceToPrefixMap = resourceToPrefixMaps.get(i);
+        for (Entry<AbstractResource, PathPrefix> entry : resourceToPrefixMap.entrySet()) {
+          ResourceData newCpeData = new ResourceData(entry.getKey(), entry.getValue());
+          String resourcePath = newCpeData.resource.getPath();
+          ResourceData oldCpeData = resourceDataMap.get(resourcePath);
+          // Old wins unless the new resource has higher priority.
+          if (oldCpeData == null || oldCpeData.compareTo(newCpeData) < 0) {
+            resourceDataMap.put(resourcePath, newCpeData);
           } else {
             Messages.IGNORING_SHADOWED_RESOURCE.log(branchForClassPathEntry, resourcePath, null);
           }
-        } else {
-          resourceDescriptionsByPath.put(resourcePath, resourceDescription);
         }
       }
     }
 
-    Map<String, Resource> resourcesByPath = new HashMap<String, Resource>();
-    for (Entry<String, ResourceDescription> entry : resourceDescriptionsByPath.entrySet()) {
-      resourcesByPath.put(entry.getKey(), entry.getValue().resource);
-    }
+    for (int i = 0; i < len; ++i) {
+      Map<String, ResourceData> resourceDataMap = resourceDataMaps.get(i);
+      Map<String, Resource> externalMap = new HashMap<String, Resource>();
+      Set<Resource> externalSet = new HashSet<Resource>();
+      for (Entry<String, ResourceData> entry : resourceDataMap.entrySet()) {
+        String path = entry.getKey();
+        ResourceData data = entry.getValue();
+        externalMap.put(path, data.resource);
+        externalSet.add(data.resource);
+      }
 
-    // Update exposed collections with new (unmodifiable) data structures.
-    exposedResources = Collections.unmodifiableSet(Sets.newHashSet(resourcesByPath.values()));
-    exposedResourceMap = Collections.unmodifiableMap(resourcesByPath);
-    exposedPathNames = Collections.unmodifiableSet(resourcesByPath.keySet());
+      // Update exposed collections with new (unmodifiable) data structures.
+      oracles[i].exposedResources = Collections.unmodifiableSet(externalSet);
+      oracles[i].exposedResourceMap = Collections.unmodifiableMap(externalMap);
+      oracles[i].exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
+    }
 
     resourceOracle.end();
   }
@@ -327,7 +361,7 @@ public class ResourceOracleImpl implements ResourceOracle {
     return classPath;
   }
 
-  private final List<ClassPathEntry> classPathEntries;
+  private final List<ClassPathEntry> classPath;
 
   private Set<String> exposedPathNames = Collections.emptySet();
 
@@ -342,8 +376,8 @@ public class ResourceOracleImpl implements ResourceOracle {
    * {@link ClassPathEntry ClassPathEntries}. The list is held by reference and
    * must not be modified.
    */
-  public ResourceOracleImpl(List<ClassPathEntry> classPathEntries) {
-    this.classPathEntries = classPathEntries;
+  public ResourceOracleImpl(List<ClassPathEntry> classPath) {
+    this.classPath = classPath;
   }
 
   /**
@@ -399,7 +433,7 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   // @VisibleForTesting
-  List<ClassPathEntry> getClassPathEntries() {
-    return classPathEntries;
+  List<ClassPathEntry> getClassPath() {
+    return classPath;
   }
 }

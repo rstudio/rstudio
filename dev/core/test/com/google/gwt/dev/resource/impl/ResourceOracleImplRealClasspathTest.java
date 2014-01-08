@@ -66,7 +66,7 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeJunitPrefix());
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
     assertEquals(2, resourceMap.size());
   }
@@ -76,17 +76,17 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeJunitPrefix());
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
     assertEquals(2, resourceMap.size());
 
     // Plain refresh should have no effect.
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting same path entries should have no effect.
     resourceOracle.setPathPrefixes(pathPrefixSet);
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical path entries should have no effect.
@@ -94,17 +94,17 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeJunitPrefix());
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical result should have no effect.
     pathPrefixSet.add(makeJunitPrefix());
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Actually change the working set.
     pathPrefixSet.add(makeThisClassPrefixPlus());
-    resourceOracle.scanResources(logger);
+    ResourceOracleImpl.refresh(logger, resourceOracle);
     assertEquals(3, resourceOracle.getResourceMap().size());
   }
 }

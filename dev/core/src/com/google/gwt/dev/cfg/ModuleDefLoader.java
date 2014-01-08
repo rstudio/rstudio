@@ -286,7 +286,7 @@ public class ModuleDefLoader {
           null);
       throw new UnableToCompleteException();
     }
-    moduleDef.addInheritedModules(moduleName);
+    moduleDef.addInteritedModule(moduleName);
 
     // Find the specified module using the classpath.
     //

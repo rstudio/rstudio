@@ -49,7 +49,6 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
-import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.OutputFileSet;
 
@@ -245,14 +244,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   public ArtifactSet getArtifactsForPublicResources(TreeLogger logger,
       ModuleDef module) {
     ArtifactSet artifacts = new ArtifactSet();
-    // TODO(stalcup): switch to sourcing publicResourceOracle from
-    // compilerContext.getPublicResourceOracle() so that this code will work properly regardless of
-    // how the surrounding context is initialized.
-    ResourceOracleImpl publicResourceOracle = module.getPublicResourceOracle();
-    for (String path : publicResourceOracle.getPathNames()) {
+    for (String path : module.getAllPublicFiles()) {
       String partialPath = path.replace(File.separatorChar, '/');
       PublicResource resource = new StandardPublicResource(partialPath,
-          publicResourceOracle.getResourceMap().get(path));
+          module.findPublicFile(path));
       artifacts.add(resource);
       if (logger.isLoggable(TreeLogger.SPAM)) {
         logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
