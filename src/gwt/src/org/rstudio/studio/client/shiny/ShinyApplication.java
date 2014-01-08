@@ -17,7 +17,7 @@ package org.rstudio.studio.client.shiny;
 import org.rstudio.core.client.Size;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.shiny.events.ShowShinyApplicationEvent;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,10 +29,10 @@ public class ShinyApplication
    public ShinyApplication(EventBus eventBus, 
                            final SatelliteManager satelliteManager)
    {
-      eventBus.addHandler(ShowShinyApplicationEvent.TYPE, 
-                          new ShowShinyApplicationEvent.Handler() {
+      eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, 
+                          new ShinyApplicationStatusEvent.Handler() {
          @Override
-         public void onShowShinyApplication(ShowShinyApplicationEvent event)
+         public void onShowShinyApplication(ShinyApplicationStatusEvent event)
          {
             // open the window 
             satelliteManager.openSatellite(ShinyApplicationSatellite.NAME,     

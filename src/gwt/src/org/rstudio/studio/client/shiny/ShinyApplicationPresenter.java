@@ -35,6 +35,7 @@ public class ShinyApplicationPresenter implements IsWidget
    public interface Display extends IsWidget
    {
       String getDocumentTitle();
+      String getUrl();
       void showApp(ShinyApplicationParams params);
    }
    
@@ -46,6 +47,8 @@ public class ShinyApplicationPresenter implements IsWidget
                                Satellite satellite)
    {
       view_ = view;
+      satellite_ = satellite;
+      events_ = eventBus;
       
       binder.bind(commands, this);  
       
@@ -59,6 +62,8 @@ public class ShinyApplicationPresenter implements IsWidget
             // TODO: Stop Shiny app when viewer closes
          }
       });
+
+      initializeEvents();
    }     
 
    
@@ -73,5 +78,33 @@ public class ShinyApplicationPresenter implements IsWidget
       view_.showApp(params);
    }
 
+   private native void initializeEvents() /*-{  
+      var thiz = this;   
+      $wnd.addEventListener(
+            "message",
+            $entry(function(e) {
+               thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
+            }),
+            true);
+   }-*/;
+   
+   private void onMessage(String data, String origin)
+   {  
+      if ("disconnected".equals(data))
+      {
+         // ensure the frame url starts with the specified origin
+         if (view_.getUrl().startsWith(origin)) 
+         {
+            closeApp();
+         }
+      }
+   }
+   
+   private final native void closeApp() /*-{
+      $wnd.close();
+   }-*/;
+   
    private final Display view_;
+   private final Satellite satellite_;
+   private final EventBus events_;
 }

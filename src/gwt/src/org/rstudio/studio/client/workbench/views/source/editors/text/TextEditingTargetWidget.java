@@ -36,6 +36,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -222,8 +223,6 @@ public class TextEditingTargetWidget
       return texButton;
    }
    
-  
-  
    private Widget createCodeTransformMenuButton()
    {
       if (codeTransform_ == null)
@@ -297,7 +296,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setVisible(false);
          runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
-         sourceButton_.setText("Launch");
+         sourceButton_.setText("Run");
          chunksButton_.setVisible(false);
       }
       
@@ -345,7 +344,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
-      sourceButton_.setText(width < 400 ? "" : (isShinyFile() ? "Launch" : "Source"));
+      sourceButton_.setText(width < 400 ? "" : (isShinyFile() ? "Run" : "Source"));
       chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
    
@@ -471,6 +470,24 @@ public class TextEditingTargetWidget
       }).showModal();
    }
 
+   // Called by the owning TextEditingTarget to notify the widget that the 
+   // Shiny application associated with this widget has changed state.
+   @Override
+   public void onShinyApplicationStateChanged(String state)
+   {
+      if (isShinyFile())
+      {
+         if (state.equals(ShinyApplicationParams.STATE_STARTED)) 
+         {
+            sourceButton_.setText("Reload");
+         }
+         else if (state.equals(ShinyApplicationParams.STATE_STOPPED))
+         {
+            sourceButton_.setText("Run");
+         }
+      }
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
@@ -487,7 +504,7 @@ public class TextEditingTargetWidget
    {
       editor_.onVisibilityChanged(visible);
    }
-
+   
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;

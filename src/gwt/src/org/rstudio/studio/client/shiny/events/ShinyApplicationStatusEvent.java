@@ -1,5 +1,5 @@
 /*
- * ShowShinyApplicationEvent.java
+ * ShinyApplicationStatusEvent.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -19,17 +19,17 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowShinyApplicationEvent extends GwtEvent<ShowShinyApplicationEvent.Handler>
+public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatusEvent.Handler>
 { 
    public interface Handler extends EventHandler
    {
-      void onShowShinyApplication(ShowShinyApplicationEvent event);
+      void onShowShinyApplication(ShinyApplicationStatusEvent event);
    }
 
-   public static final GwtEvent.Type<ShowShinyApplicationEvent.Handler> TYPE =
-      new GwtEvent.Type<ShowShinyApplicationEvent.Handler>();
+   public static final GwtEvent.Type<ShinyApplicationStatusEvent.Handler> TYPE =
+      new GwtEvent.Type<ShinyApplicationStatusEvent.Handler>();
    
-   public ShowShinyApplicationEvent(ShinyApplicationParams params)
+   public ShinyApplicationStatusEvent(ShinyApplicationParams params)
    {
       params_ = params;
    }
@@ -40,13 +40,13 @@ public class ShowShinyApplicationEvent extends GwtEvent<ShowShinyApplicationEven
    }
    
    @Override
-   protected void dispatch(ShowShinyApplicationEvent.Handler handler)
+   protected void dispatch(ShinyApplicationStatusEvent.Handler handler)
    {
       handler.onShowShinyApplication(this);
    }
 
    @Override
-   public GwtEvent.Type<ShowShinyApplicationEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<ShinyApplicationStatusEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }

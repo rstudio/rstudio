@@ -187,6 +187,26 @@ public class SatelliteManager implements CloseHandler<Window>
       pendingEventsBySatelliteName_.clear();
    }
    
+   // close one satellite window 
+   public void closeSatelliteWindow(String name)
+   {
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
+         {
+            try 
+            { 
+               satellite.getWindow().close();
+            }
+            catch(Throwable e)
+            {
+            }
+            break;
+         }
+      }   
+   }
+   
    // dispatch an event to all satellites
    public void dispatchEvent(JavaScriptObject clientEvent)
    {
@@ -297,7 +317,7 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
-   // export the global function requried for satellites to register
+   // export the global function required for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
@@ -337,7 +357,7 @@ public class SatelliteManager implements CloseHandler<Window>
    }-*/;
    
    // check whether the current window is a satellite (note this method
-   // is also implemeted in the Satellite class -- we don't want this class
+   // is also implemented in the Satellite class -- we don't want this class
    // to depend on Satellite so we duplicate the definition)
    private native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;
