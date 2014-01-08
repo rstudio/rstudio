@@ -212,8 +212,13 @@ public final class Impl {
       return; // Done.
     }
 
-    // Make sure that the exception is not swallowed and let the browser handle it
-    reportToBrowser(e);
+    // Make sure that the exception is not swallowed
+    if (GWT.isClient()) {
+      reportToBrowser(e);
+    } else {
+      System.err.print("Uncaught exception ");
+      e.printStackTrace(System.err);
+    }
   }
 
   private static void reportToBrowser(Throwable e) {
