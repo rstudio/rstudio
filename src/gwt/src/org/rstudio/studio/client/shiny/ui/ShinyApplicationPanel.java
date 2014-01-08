@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.shiny.ui;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.AnchorableFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
 public class ShinyApplicationPanel extends ResizeComposite
                                    implements ShinyApplicationPresenter.Display
@@ -49,13 +51,18 @@ public class ShinyApplicationPanel extends ResizeComposite
    
    private Toolbar createToolbar(Commands commands)
    {
-      return new Toolbar();
+      Toolbar toolbar = new Toolbar();
+      appPathLabel_ = new Label();
+      toolbar.addLeftWidget(appPathLabel_);
+      return toolbar;
    }
    
    @Override
-   public void showApp(String url)
+   public void showApp(ShinyApplicationParams params)
    {
-      previewFrame_.navigate(url);
+      appParams_ = params;
+      previewFrame_.navigate(appParams_.getUrl());
+      appPathLabel_.setText(appParams_.getPath());
    }
    
    @Override
@@ -65,4 +72,6 @@ public class ShinyApplicationPanel extends ResizeComposite
    }
 
    private final AnchorableFrame previewFrame_;
+   private Label appPathLabel_;
+   private ShinyApplicationParams appParams_;
 }

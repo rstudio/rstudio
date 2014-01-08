@@ -64,6 +64,21 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
    return R_NilValue;
 }
 
+Error initShinyBrowserPref()
+{
+   SEXP shinyBrowser = r::options::getOption("shiny.browser");
+   // If the user hasn't specified a value for the shiny.browser preference,
+   // set it to our internal Shiny application viewer
+   if (shinyBrowser == R_NilValue)
+   {
+      SEXP rstudioShinyBrowser =
+            r::sexp::findFunction("shinyViewer", "rstudio");
+      if (rstudioShinyBrowser != R_NilValue)
+         r::options::setOption("shiny.browser", rstudioShinyBrowser);
+   }
+   return Success();
+}
+
 } // anonymous namespace
 
 
@@ -75,7 +90,10 @@ Error initialize()
    methodDefViewer.numArgs = 2;
    r::routines::addCallMethod(methodDefViewer);
 
-   return Success();
+   ExecBlock initBlock ;
+   initBlock.addFunctions()
+      (initShinyBrowserPref);
+   return initBlock.execute();
 }
 
 } // namespace shiny_viewer

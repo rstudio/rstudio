@@ -34,8 +34,8 @@ public class ShinyApplicationPresenter implements IsWidget
 
    public interface Display extends IsWidget
    {
-      void showApp(String url);
       String getDocumentTitle();
+      void showApp(ShinyApplicationParams params);
    }
    
    @Inject
@@ -70,7 +70,7 @@ public class ShinyApplicationPresenter implements IsWidget
    
    public void loadApp(ShinyApplicationParams params) 
    {
-      view_.showApp(params.getUrl());
+      view_.showApp(params);
    }
 
    private final Display view_;

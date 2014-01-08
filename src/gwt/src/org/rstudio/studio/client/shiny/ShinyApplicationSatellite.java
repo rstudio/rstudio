@@ -18,8 +18,6 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
-import org.rstudio.studio.client.shiny.events.ShowShinyApplicationEvent;
-import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -37,13 +35,11 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    public ShinyApplicationSatellite(ShinyApplicationView view,
                                     Satellite satellite,
                                     Provider<AceThemes> pAceThemes,
-                                    Provider<ShinyApplicationPresenter> pPresenter,
                                     ApplicationUncaughtExceptionHandler exHandler,
                                     EventBus eventBus)
    {
       super(NAME, view, satellite, pAceThemes, exHandler);
       eventBus_ = eventBus;
-      pPresenter_ = pPresenter;
    }
 
    public void launchShinyApplication(String filePath)
@@ -52,13 +48,7 @@ public class ShinyApplicationSatellite extends SatelliteApplication
       eventBus_.fireEvent(new SendToConsoleEvent(
             "shiny::runApp('" + dir + "')", 
             true));
-      
-      pPresenter_.get(); 
-      eventBus_.fireEvent(new ShowShinyApplicationEvent(
-                          ShinyApplicationParams.create("http://127.0.0.1/", 
-                                                        "/users/me/file")));
    }
    
    private EventBus eventBus_;
-   private Provider<ShinyApplicationPresenter> pPresenter_;
 }
