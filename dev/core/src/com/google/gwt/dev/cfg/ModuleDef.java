@@ -38,6 +38,9 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Iterators;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -143,6 +146,13 @@ public class ModuleDef {
 
   private boolean collapseAllProperties;
 
+  /**
+   * Used to keep track of the current category of attribute source. When the attribute source is
+   * TARGET_LIBRARY all attributes are accumulated but when it is EXTERNAL_LIBRARY there are some
+   * attributes that are not collected.
+   */
+  private Deque<AttributeSource> currentAttributeSource = Lists.newLinkedList();
+
   private final DefaultFilters defaultFilters;
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
@@ -159,7 +169,8 @@ public class ModuleDef {
   private ResourceOracleImpl lazyPublicOracle;
 
   /**
-   * A subset of lazySourceOracle, contains files other than .java and .class files.
+   * Contains files other than .java and .class files (such as CSS and PNG files) from either the
+   * source or resource paths.
    */
   private ResourceOracleImpl lazyResourcesOracle;
 
@@ -192,7 +203,6 @@ public class ModuleDef {
   private final boolean monolithic;
 
   private final String name;
-  private final ResourceLoader resources;
 
   /**
    * Must use a separate field to track override, because setNameOverride() will
@@ -200,18 +210,15 @@ public class ModuleDef {
    */
   private String nameOverride;
 
-  /**
-   * Used to keep track of the current category of attribute source. When the attribute source is
-   * TARGET_LIBRARY all attributes are accumulated but when it is EXTERNAL_LIBRARY there are some
-   * attributes that are not collected.
-   */
-  private Deque<AttributeSource> currentAttributeSource = Lists.newLinkedList();
-
-  private boolean needsRefresh;
-
   private final Properties properties = new Properties();
 
   private PathPrefixSet publicPrefixSet = new PathPrefixSet();
+
+  private PathPrefixSet resourcePrefixSet = new PathPrefixSet();
+
+  private final ResourceLoader resources;
+
+  private boolean resourcesScanned;
 
   private final Rules rules = new Rules();
 
@@ -279,6 +286,17 @@ public class ModuleDef {
         includeList, excludeList, skipList, defaultExcludes, caseSensitive), true, excludeList));
   }
 
+  public void addResourcePath(String resourcePath) {
+    if (lazyResourcesOracle != null) {
+      throw new IllegalStateException("Already normalized");
+    }
+    if (!attributeIsForTargetLibrary()) {
+      return;
+    }
+    PathPrefix pathPrefix = new PathPrefix(resourcePath, NON_JAVA_RESOURCES);
+    resourcePrefixSet.add(pathPrefix);
+  }
+
   public void addRule(Rule rule) {
     if (!attributeIsForTargetLibrary()) {
       return;
@@ -316,7 +334,7 @@ public class ModuleDef {
   /**
    * Free up memory no longer needed in later compile stages. After calling this
    * method, the ResourceOracle will be empty and unusable. Calling
-   * {@link #refresh()} will restore them.
+   * {@link #ensureResourcesScanned()} will restore them.
    */
   public synchronized void clear() {
     if (lazySourceOracle != null) {
@@ -413,7 +431,7 @@ public class ModuleDef {
   }
 
   public synchronized Resource findPublicFile(String partialPath) {
-    doRefresh();
+    ensureResourcesScanned();
     return lazyPublicOracle.getResourceMap().get(partialPath);
   }
 
@@ -445,7 +463,7 @@ public class ModuleDef {
    * @return the resource for the requested source file
    */
   public synchronized Resource findSourceFile(String partialPath) {
-    doRefresh();
+    ensureResourcesScanned();
     return lazySourceOracle.getResourceMap().get(partialPath);
   }
 
@@ -476,18 +494,38 @@ public class ModuleDef {
     return Collections.unmodifiableCollection(archiveURLs);
   }
 
-  public String[] getAllPublicFiles() {
-    doRefresh();
-    return lazyPublicOracle.getPathNames().toArray(Empty.STRINGS);
-  }
-
   /**
    * Strictly for statistics gathering. There is no guarantee that the source
    * oracle has been initialized.
    */
   public String[] getAllSourceFiles() {
-    doRefresh();
+    ensureResourcesScanned();
     return lazySourceOracle.getPathNames().toArray(Empty.STRINGS);
+  }
+
+  public synchronized ResourceOracle getBuildResourceOracle() {
+    if (lazyResourcesOracle == null) {
+      lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL, resources);
+      PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();
+
+      // For backwards compatibility, register source resource paths as build resource paths as
+      // well.
+      PathPrefixSet newPathPrefixes = new PathPrefixSet();
+      for (PathPrefix pathPrefix : pathPrefixes.values()) {
+        newPathPrefixes.add(
+            new PathPrefix(pathPrefix.getPrefix(), NON_JAVA_RESOURCES, pathPrefix.shouldReroot()));
+      }
+
+      // Register build resource paths.
+      for (PathPrefix resourcePathPrefix : resourcePrefixSet.values()) {
+        newPathPrefixes.add(resourcePathPrefix);
+      }
+      lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
+      lazyResourcesOracle.scanResources(TreeLogger.NULL);
+    } else {
+      ensureResourcesScanned();
+    }
+    return lazyResourcesOracle;
   }
 
   /**
@@ -500,9 +538,9 @@ public class ModuleDef {
 
   public CompilationState getCompilationState(TreeLogger logger, CompilerContext compilerContext)
       throws UnableToCompleteException {
-    doRefresh();
-    CompilationState compilationState =
-        CompilationStateBuilder.buildFrom(logger, compilerContext, lazySourceOracle.getResources());
+    ensureResourcesScanned();
+    CompilationState compilationState = CompilationStateBuilder.buildFrom(
+        logger, compilerContext, compilerContext.getSourceResourceOracle().getResources());
     checkForSeedTypes(logger, compilationState);
     return compilationState;
   }
@@ -524,6 +562,11 @@ public class ModuleDef {
     return getName().replace('.', '_');
   }
 
+  public List<Rule> getGeneratorRules() {
+    return ImmutableList.copyOf(
+        Iterators.filter(rules.iterator(), Predicates.instanceOf(RuleGenerateWith.class)));
+  }
+
   public Class<? extends Linker> getLinker(String name) {
     return linkerTypesByName.get(name);
   }
@@ -543,21 +586,33 @@ public class ModuleDef {
     return properties;
   }
 
-  public synchronized ResourceOracle getResourcesOracle() {
-    if (lazyResourcesOracle == null) {
-      lazyResourcesOracle = new ResourceOracleImpl(TreeLogger.NULL, resources);
-      PathPrefixSet pathPrefixes = lazySourceOracle.getPathPrefixes();
-      PathPrefixSet newPathPrefixes = new PathPrefixSet();
-      for (PathPrefix pathPrefix : pathPrefixes.values()) {
-        newPathPrefixes.add(new PathPrefix(pathPrefix.getPrefix(), NON_JAVA_RESOURCES, pathPrefix
-            .shouldReroot()));
+  public ResourceOracleImpl getPublicResourceOracle() {
+    ensureResourcesScanned();
+    return lazyPublicOracle;
+  }
+
+  public Set<Resource> getResourcesNewerThan(long modificationTime) {
+    Set<Resource> newerResources = Sets.newHashSet();
+
+    for (Resource resource : getPublicResourceOracle().getResources()) {
+      if (resource.getLastModified() > modificationTime) {
+        newerResources.add(resource);
       }
-      lazyResourcesOracle.setPathPrefixes(newPathPrefixes);
-      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyResourcesOracle);
-    } else {
-      doRefresh();
     }
-    return lazyResourcesOracle;
+
+    for (Resource resource : getSourceResourceOracle().getResources()) {
+      if (resource.getLastModified() > modificationTime) {
+        newerResources.add(resource);
+      }
+    }
+
+    for (Resource resource : getBuildResourceOracle().getResources()) {
+      if (resource.getLastModified() > modificationTime) {
+        newerResources.add(resource);
+      }
+    }
+
+    return newerResources;
   }
 
   /**
@@ -576,6 +631,11 @@ public class ModuleDef {
 
   public synchronized String[] getServletPaths() {
     return servletClassNamesByPath.keySet().toArray(Empty.STRINGS);
+  }
+
+  public synchronized ResourceOracle getSourceResourceOracle() {
+    ensureResourcesScanned();
+    return lazySourceOracle;
   }
 
   /**
@@ -611,6 +671,18 @@ public class ModuleDef {
     return lastModified > 0 ? lastModified : moduleDefCreationTime;
   }
 
+  public long getResourceLastModified() {
+    long resourceLastModified = 1000;
+    Set<Resource> allResources = Sets.newHashSet();
+    allResources.addAll(getPublicResourceOracle().getResources());
+    allResources.addAll(getSourceResourceOracle().getResources());
+    allResources.addAll(getBuildResourceOracle().getResources());
+    for (Resource resource : allResources) {
+      resourceLastModified = Math.max(resourceLastModified, resource.getLastModified());
+    }
+    return resourceLastModified;
+  }
+
   /**
    * For convenience in unit tests, servlets can be automatically loaded and
    * mapped in the embedded web server. If a servlet is already mapped to the
@@ -624,7 +696,7 @@ public class ModuleDef {
   }
 
   public synchronized void refresh() {
-    needsRefresh = true;
+    resourcesScanned = false;
   }
 
   /**
@@ -646,7 +718,7 @@ public class ModuleDef {
     archiveURLs.add(url);
   }
 
-  void addInteritedModule(String moduleName) {
+  void addInheritedModules(String moduleName) {
     inheritedModules.add(moduleName);
   }
 
@@ -696,7 +768,6 @@ public class ModuleDef {
     lazySourceOracle = new ResourceOracleImpl(branch, resources);
     lazySourceOracle.setPathPrefixes(sourcePrefixSet);
 
-    needsRefresh = true;
     moduleDefNormalize.end();
   }
 
@@ -735,25 +806,23 @@ public class ModuleDef {
     }
   }
 
-  private synchronized void doRefresh() {
-    if (!needsRefresh) {
+  private synchronized void ensureResourcesScanned() {
+    if (resourcesScanned) {
       return;
     }
-    Event moduleDefEvent =
-        SpeedTracerLogger.start(CompilerEventType.MODULE_DEF, "phase", "refresh", "module",
-            getName());
-    // Refresh resource oracles.
-    if (lazyResourcesOracle == null) {
-      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle, lazySourceOracle);
-    } else {
-      ResourceOracleImpl.refresh(TreeLogger.NULL, lazyPublicOracle, lazySourceOracle,
-          lazyResourcesOracle);
+    resourcesScanned = true;
+
+    Event moduleDefEvent = SpeedTracerLogger.start(
+        CompilerEventType.MODULE_DEF, "phase", "refresh", "module", getName());
+    if (lazyResourcesOracle != null) {
+      lazyResourcesOracle.scanResources(TreeLogger.NULL);
     }
+    lazyPublicOracle.scanResources(TreeLogger.NULL);
+    lazySourceOracle.scanResources(TreeLogger.NULL);
     moduleDefEvent.end();
-    needsRefresh = false;
   }
 
-  private boolean attributeIsForTargetLibrary() {
+  boolean attributeIsForTargetLibrary() {
     return currentAttributeSource.isEmpty()
         || currentAttributeSource.peek() == AttributeSource.TARGET_LIBRARY;
   }
