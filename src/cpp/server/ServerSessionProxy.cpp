@@ -125,6 +125,40 @@ private:
    }
 };
 
+
+void rewriteLocalhostAddressHeader(const std::string& headerName,
+                                   const http::Request& originalRequest,
+                                   const std::string& port,
+                                   http::Response* pResponse)
+{
+   // get the address and the proxied address
+   std::string address = pResponse->headerValue(headerName);
+   std::string proxiedAddress = "http://localhost:" + port;
+   std::string portPath = "/p/" + port;
+
+   // relative address, just prepend port
+   if (boost::algorithm::starts_with(address, "/"))
+   {
+      address = portPath + address;
+   }
+   // proxied address, substitute base url
+   else if (boost::algorithm::starts_with(address, proxiedAddress))
+   {
+      // find the base url from the original request
+      std::string originalUri = originalRequest.absoluteUri();
+      std::string::size_type pos = originalUri.find(portPath);
+      if (pos != std::string::npos) // precaution, should always be true
+      {
+          // substitute the base url for the proxied address
+         std::string baseUrl = originalUri.substr(0, pos + portPath.length());
+         address = baseUrl + address.substr(proxiedAddress.length());
+      }
+   }
+
+   // replace the header (no-op if both of the above tests fail)
+   pResponse->replaceHeader(headerName, address);
+}
+
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
@@ -150,13 +184,35 @@ void handleLocalhostResponse(
    else
    {   
       // re-write location headers if necessary
-      std::string location = response.headerValue("Location");
-      if (!location.empty())
+      const char * const kLocation = "Location";
+      const char * const kRefresh = "Refresh";
+      std::string location = response.headerValue(kLocation);
+      std::string refresh = response.headerValue(kRefresh);
+      if (!location.empty() || !refresh.empty())
       {
-         location = "/p/" + port + location;
+         // make a copy of the response to rewrite the headers into
          http::Response redirectResponse;
          redirectResponse.assign(response);
-         redirectResponse.setHeader(http::Header("Location", location));
+
+         // handle Location
+         if (!location.empty())
+         {
+            rewriteLocalhostAddressHeader(kLocation,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // handle Refresh
+         if (!refresh.empty())
+         {
+            rewriteLocalhostAddressHeader(kRefresh,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // write the copy
          ptrConnection->writeResponse(redirectResponse);
       }
       else
@@ -408,6 +464,9 @@ void proxyLocalhostRequest(
    std::string portPath = match[0];
    std::string uri = replace_first_copy(request.uri(), portPath, "/");
    request.setUri(uri);
+
+   // set the host
+   request.setHost("localhost:" + port);
 
    // remove headers to be a correctly behaving proxy
    request.removeHeader("Keep-Alive");
