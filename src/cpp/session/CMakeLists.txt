@@ -74,6 +74,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
    modules/SessionRPubs.cpp
+   modules/SessionShinyViewer.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp

@@ -295,9 +295,10 @@ public class TextEditingTargetWidget
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
-         runButton_.setText("");
-         sourceButton_.setVisible(false);
+         runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
+         sourceButton_.setText("Launch");
+         chunksButton_.setVisible(false);
       }
       
       toolbar_.invalidateSeparators();
@@ -344,7 +345,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
-      sourceButton_.setText(width < 400 ? "" : "Source");
+      sourceButton_.setText(width < 400 ? "" : (isShinyFile() ? "Launch" : "Source"));
       chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
    

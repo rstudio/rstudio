@@ -115,6 +115,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
+#include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionUpdates.hpp"
@@ -1572,6 +1573,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::errors::initialize)
       (modules::updates::initialize)
       (modules::about::initialize)
+      (modules::shiny_viewer::initialize)
 
       // workers
       (workers::web_request::initialize)

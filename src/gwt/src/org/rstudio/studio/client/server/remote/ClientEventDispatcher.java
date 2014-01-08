@@ -54,6 +54,8 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.shiny.events.ShowShinyApplicationEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -521,6 +523,11 @@ public class ClientEventDispatcher
          {
             SourceExtendedTypeDetectedEvent.Data data = event.getData();
             eventBus_.fireEvent(new SourceExtendedTypeDetectedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ShinyViewer))
+         {
+            ShinyApplicationParams data = event.getData();
+            eventBus_.fireEvent(new ShowShinyApplicationEvent(data));
          }
          else
          {

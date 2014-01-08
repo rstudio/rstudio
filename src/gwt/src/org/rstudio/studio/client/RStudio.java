@@ -61,6 +61,7 @@ import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
+import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -170,6 +171,12 @@ public class RStudio implements EntryPoint
                   else if (HTMLPreviewApplication.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
+                           RootLayoutPanel.get(),
+                           dismissProgressAnimation);
+                  }
+                  else if (ShinyApplicationSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
                            RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }

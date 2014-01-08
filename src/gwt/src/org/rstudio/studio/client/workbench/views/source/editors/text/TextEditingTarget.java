@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.command.AppCommand;
@@ -52,6 +53,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
@@ -600,6 +602,7 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
+      extendedType_ = document.getExtendedType();
       view_ = new TextEditingTargetWidget(commands_,
                                           prefs_,
                                           fileTypeRegistry_,
@@ -1684,6 +1687,7 @@ public class TextEditingTarget implements
    public void adaptToExtendedFileType(String extendedType)
    {
       view_.adaptToExtendedFileType(extendedType);
+      extendedType_ = extendedType;
    }
 
    public HasValue<String> getName()
@@ -2504,7 +2508,7 @@ public class TextEditingTarget implements
             fileType_.canCompilePDF() || 
             fileType_.canKnitToHTML() ||
             fileType_.isRpres();
-
+         
          RnwWeave rnwWeave = compilePdfHelper_.getActiveRnwWeave();
          final boolean forceEcho = sweave && (rnwWeave != null) ? rnwWeave.forceEchoOnExec() : false;
          
@@ -2537,24 +2541,43 @@ public class TextEditingTarget implements
          }
          else
          {
-            Command sourceCommand = new Command() {
-               @Override
-               public void execute()
-               {
-                  if (docDisplay_.hasBreakpoints())
+            Command sourceCommand = null;
+            
+            if (fileType_.isR() && 
+                extendedType_.equals("shiny")) 
+            {
+               // If this is a Shiny app, launch the app in a satellite window 
+               // instead of sourcing it.
+               sourceCommand = new Command() {
+                  @Override
+                  public void execute()
                   {
-                     hideBreakpointWarningBar();
+                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite()
+                                              .launchShinyApplication(getPath());
                   }
-                  consoleDispatcher_.executeSourceCommand(
-                        getPath(),
-                        fileType_,
-                        docUpdateSentinel_.getEncoding(),
-                        activeCodeIsAscii(),
-                        forceEcho ? true : echo,
-                        true,
-                        docDisplay_.hasBreakpoints());   
-               }
-            };
+               };
+            }
+            else 
+            {
+               sourceCommand = new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     if (docDisplay_.hasBreakpoints())
+                     {
+                        hideBreakpointWarningBar();
+                     }
+                     consoleDispatcher_.executeSourceCommand(
+                           getPath(),
+                           fileType_,
+                           docUpdateSentinel_.getEncoding(),
+                           activeCodeIsAscii(),
+                           forceEcho ? true : echo,
+                           true,
+                           docDisplay_.hasBreakpoints());   
+                  }
+               };
+            }
             
             if (saveWhenSourcing && (dirtyState_.getValue() || (getPath() == null)))
                saveThenExecute(null, sourceCommand);
@@ -3607,4 +3630,5 @@ public class TextEditingTarget implements
    private SourcePosition debugEndPos_ = null;
    private boolean isDebugWarningVisible_ = false;
    private boolean isBreakpointWarningVisible_ = false;
+   private String extendedType_;
 }
