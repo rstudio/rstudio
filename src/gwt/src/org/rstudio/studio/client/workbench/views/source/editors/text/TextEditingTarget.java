@@ -2161,7 +2161,10 @@ public class TextEditingTarget implements
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)
    {
-      Scope sweaveChunk = scopeHelper_.getCurrentSweaveChunk(range.getStart());
+      Scope sweaveChunk = null;
+      
+      if (fileType_.canExecuteChunks())
+         sweaveChunk = scopeHelper_.getCurrentSweaveChunk(range.getStart());
 
       String code = sweaveChunk != null
                     ? scopeHelper_.getSweaveChunkText(sweaveChunk, range)

@@ -96,7 +96,7 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbars(createToolbar(fileType),
+      panel_ = new PanelWithToolbars(toolbar_ = createToolbar(fileType),
                                     editor.asWidget(),
                                     statusBar_);
       adaptToFileType(fileType);
@@ -143,9 +143,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
-      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton());
+      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
+      toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
@@ -262,9 +262,14 @@ public class TextEditingTargetWidget
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isMarkdown = fileType.isMarkdown();
+      boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
-     
+      
+      // don't show the run buttons for cpp files
+      runButton_.setVisible(canExecuteCode && !isCpp);
+      runLastButton_.setVisible(runButton_.isVisible());
+      
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
       if (fileType.isRd())
@@ -275,8 +280,8 @@ public class TextEditingTargetWidget
             (canExecuteCode && !fileType.canAuthorContent()) ||
             fileType.isCpp());   
      
-      sourceButton_.setVisible(canSource);
-      sourceMenuButton_.setVisible(canSourceWithEcho);
+      sourceButton_.setVisible(canSource && !isPlainMarkdown);
+      sourceMenuButton_.setVisible(canSourceWithEcho && !isPlainMarkdown);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);
@@ -294,6 +299,8 @@ public class TextEditingTargetWidget
          sourceButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
       }
+      
+      toolbar_.invalidateSeparators();
    }
    
    private boolean isShinyFile()
@@ -487,6 +494,7 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
+   private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
@@ -494,6 +502,7 @@ public class TextEditingTargetWidget
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitToHTMLButton_;
    private ToolbarButton runButton_;
+   private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;

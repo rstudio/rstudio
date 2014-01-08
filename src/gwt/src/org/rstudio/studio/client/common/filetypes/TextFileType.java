@@ -212,6 +212,11 @@ public class TextFileType extends EditableFileType
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isPlainMarkdown()
+   {
+      return FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isC()
    {
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());

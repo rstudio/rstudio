@@ -33,22 +33,27 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 {
    private class CommandToolbarButton extends ToolbarButton implements
          EnabledChangedHandler, VisibleChangedHandler
-   {
+   { 
       public CommandToolbarButton(String buttonLabel,
-            ImageResourceProvider imageResourceProvider, AppCommand command)
+            ImageResourceProvider imageResourceProvider, AppCommand command,
+            boolean synced)
       {
          super(buttonLabel, imageResourceProvider, command);
          command_ = command;
+         synced_ = synced;
       }
 
       @Override
       protected void onAttach()
       {
-         setEnabled(command_.isEnabled());
-         setVisible(command_.isVisible());
-         handlerReg_ = command_.addEnabledChangedHandler(this);
-         handlerReg2_ = command_.addVisibleChangedHandler(this);
-
+         if (synced_)
+         {
+            setEnabled(command_.isEnabled());
+            setVisible(command_.isVisible());
+            handlerReg_ = command_.addEnabledChangedHandler(this);
+            handlerReg2_ = command_.addVisibleChangedHandler(this);
+         }
+         
          parentToolbar_ = getParentToolbar();
 
          super.onAttach();
@@ -59,8 +64,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       {
          super.onDetach();
 
-         handlerReg_.removeHandler();
-         handlerReg2_.removeHandler();
+         if (synced_)
+         {
+            handlerReg_.removeHandler();
+            handlerReg2_.removeHandler();
+         }
       }
 
       public void onEnabledChanged(AppCommand command)
@@ -78,6 +86,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
 
       private final AppCommand command_;
+      private boolean synced_ = true;
       private HandlerRegistration handlerReg_;
       private HandlerRegistration handlerReg2_;
       private Toolbar parentToolbar_;
@@ -282,8 +291,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public ToolbarButton createToolbarButton()
    {
+      return createToolbarButton(true);
+   }
+   
+   public ToolbarButton createToolbarButton(boolean synced)
+   {
       CommandToolbarButton button = new CommandToolbarButton(getButtonLabel(),
-                                                             this, this);
+                                                             this, 
+                                                             this, 
+                                                             synced);
       if (getTooltip() != null)
          button.setTitle(getTooltip());
       return button;
