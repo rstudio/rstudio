@@ -344,7 +344,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
 
-      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.1.1/SumatraPDF.exe"
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.4/SumatraPDF.exe"
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
