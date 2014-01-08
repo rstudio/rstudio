@@ -236,6 +236,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
    * (May return either the JavaScript itself or the name of a Java resource ending with ".js".)
    */
   protected String getJsDevModeRedirectHook(LinkerContext context) {
+    if (shouldUseSelfForWindowAndDocument(context)) {
+      // Probably a Web Worker. Super Dev Mode isn't supported.
+      return "";
+    }
+
     // Enable Super Dev Mode for this app if the devModeRedirectEnabled config property is true.
     if (getBooleanConfigurationProperty(context, "devModeRedirectEnabled", true)) {
       return "com/google/gwt/core/linker/DevModeRedirectHook.js";
