@@ -33,6 +33,14 @@ if (is.null(getOption("viewer"))) {
    })
 }
 
+# default shiny viewer option if not already set
+if (is.null(getOption("shiny.browser"))) {
+   options(shiny.browser = function(url, path)
+   {
+      invisible(.Call("rs_shinyviewer", url, path))
+   })
+}
+
 # custom pager implementation
 options(pager = .rs.pager)
 

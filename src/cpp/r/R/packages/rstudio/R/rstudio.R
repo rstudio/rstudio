@@ -36,11 +36,5 @@ viewer <- function(url, height = NULL) {
 
 shinyViewer <- function(url, path) {
 
-  if (!is.character(url) || (length(url) != 1))
-    stop("url must be a single element character vector.")
-
-  if (!is.character(path) || (length(path) != 1))
-    stop("path must be a single element character vector.")
-
   invisible(.Call(getNativeSymbolInfo("rs_shinyviewer", PACKAGE=""), url, path))     
 }

@@ -57,26 +57,30 @@ void loadApp(const std::string& url, const std::string& path)
 }
 
 SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
-{
-   loadApp(r::sexp::safeAsString(urlSEXP),
-           r::sexp::safeAsString(pathSEXP));
+{   
+   try
+   {
+      if (!r::sexp::isString(urlSEXP) || (r::sexp::length(urlSEXP) != 1))
+      {
+         throw r::exec::RErrorException(
+            "url must be a single element character vector.");
+      }
+
+      if (!r::sexp::isString(pathSEXP) || (r::sexp::length(pathSEXP) != 1))
+      {
+         throw r::exec::RErrorException(
+            "path must be a single element character vector.");
+      }
+
+      loadApp(r::sexp::safeAsString(urlSEXP),
+              r::sexp::safeAsString(pathSEXP));
+   }
+   catch(const r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
 
    return R_NilValue;
-}
-
-Error initShinyBrowserPref()
-{
-   SEXP shinyBrowser = r::options::getOption("shiny.browser");
-   // If the user hasn't specified a value for the shiny.browser preference,
-   // set it to our internal Shiny application viewer
-   if (shinyBrowser == R_NilValue)
-   {
-      SEXP rstudioShinyBrowser =
-            r::sexp::findFunction("shinyViewer", "rstudio");
-      if (rstudioShinyBrowser != R_NilValue)
-         r::options::setOption("shiny.browser", rstudioShinyBrowser);
-   }
-   return Success();
 }
 
 } // anonymous namespace
@@ -90,10 +94,7 @@ Error initialize()
    methodDefViewer.numArgs = 2;
    r::routines::addCallMethod(methodDefViewer);
 
-   ExecBlock initBlock ;
-   initBlock.addFunctions()
-      (initShinyBrowserPref);
-   return initBlock.execute();
+   return Success();
 }
 
 } // namespace shiny_viewer
