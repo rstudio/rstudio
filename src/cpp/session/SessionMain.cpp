@@ -543,11 +543,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
                                       buildTargetDir.childPath("src").exists();
+         sessionInfo["has_pkg_vig"] =
+               (type == r_util::kBuildTypePackage) &&
+               buildTargetDir.childPath("vignettes").exists();
       }
       else
       {
          sessionInfo["build_target_dir"] = json::Value();
          sessionInfo["has_pkg_src"] = false;
+         sessionInfo["has_pkg_vig"] = false;
       }
 
    }
@@ -556,6 +560,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
       sessionInfo["build_target_dir"] = json::Value();
       sessionInfo["has_pkg_src"] = false;
+      sessionInfo["has_pkg_vig"] = false;
    }
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();

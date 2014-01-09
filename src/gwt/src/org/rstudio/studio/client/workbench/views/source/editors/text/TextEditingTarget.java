@@ -1644,19 +1644,34 @@ public class TextEditingTarget implements
    
    private FileSystemItem getSaveFileDefaultDir()
    {
-      FileSystemItem fsi;
+      FileSystemItem fsi = null;
       SessionInfo si = session_.getSessionInfo();
         
-      // C/C++ files in package projects go in the src directory
-      if (fileType_.isC() && si.getHasPackageSrcDir())
+      if (si.getBuildToolsType() == SessionInfo.BUILD_TOOLS_PACKAGE)
       {
-         fsi = FileSystemItem.createDir(si.getBuildTargetDir());
-         fsi = FileSystemItem.createDir(fsi.completePath("src"));
+         FileSystemItem pkg = FileSystemItem.createDir(si.getBuildTargetDir());
+         
+         if (fileType_.isR())
+         {
+            fsi = FileSystemItem.createDir(pkg.completePath("R"));
+         }
+         else if (fileType_.isC() && si.getHasPackageSrcDir())
+         {
+            fsi = FileSystemItem.createDir(pkg.completePath("src"));
+         }
+         else if (fileType_.isRd())
+         {
+            fsi = FileSystemItem.createDir(pkg.completePath("man"));
+         }
+         else if ((fileType_.isRnw() || fileType_.isRmd()) && 
+                   si.getHasPackageVignetteDir())
+         {
+            fsi = FileSystemItem.createDir(pkg.completePath("vignettes"));
+         }
       }
-      else
-      {
+      
+      if (fsi == null)
          fsi = workbenchContext_.getDefaultFileDialogDir();
-      }
       
       return fsi;
    }

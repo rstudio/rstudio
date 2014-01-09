@@ -260,6 +260,10 @@ public class SessionInfo extends JavaScriptObject
       return this.has_pkg_src;
    }-*/;
    
+   public final native boolean getHasPackageVignetteDir() /*-{
+      return this.has_pkg_vig;
+   }-*/;
+   
    public final String getPresentationName()
    {
       PresentationState state = getPresentationState();
