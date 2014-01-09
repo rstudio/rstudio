@@ -15,19 +15,20 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class ShinyApplicationPresenter implements IsWidget
+public class ShinyApplicationPresenter 
+      implements IsWidget, ShinyApplicationStatusEvent.Handler
 {
    public interface Binder 
           extends CommandBinder<Commands, ShinyApplicationPresenter>
@@ -38,6 +39,7 @@ public class ShinyApplicationPresenter implements IsWidget
       String getDocumentTitle();
       String getUrl();
       void showApp(ShinyApplicationParams params);
+      void reloadApp();
    }
    
    @Inject
@@ -53,33 +55,36 @@ public class ShinyApplicationPresenter implements IsWidget
       
       binder.bind(commands, this);  
       
-      // TODO: map Ctrl-R to our internal refresh handler
-      // (follow example in HTMLPreviewPresenter)
-      satellite.addCloseHandler(new CloseHandler<Satellite>()
-      {
-         @Override
-         public void onClose(CloseEvent<Satellite> event)
-         {
-            // TODO: Stop Shiny app when viewer closes
-         }
-      });
-
       initializeEvents();
    }     
 
-   
    @Override
    public Widget asWidget()
    {
       return view_.asWidget();
    }
    
+   @Override
+   public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
+   {
+      if (event.getParams().getState() == ShinyApplicationParams.STATE_RELOADING)
+      {
+         view_.reloadApp();
+      }
+   }
+   
+   @Handler
+   public void onReloadShinyApp()
+   {
+      view_.reloadApp();
+   }
+
    public void loadApp(ShinyApplicationParams params) 
    {
       params_ = params;
       view_.showApp(params);
    }
-
+   
    private native void initializeEvents() /*-{  
       var thiz = this;   
       $wnd.addEventListener(

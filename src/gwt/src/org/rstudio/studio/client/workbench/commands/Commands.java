@@ -337,5 +337,5 @@ public abstract class
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
-   
+   public abstract AppCommand reloadShinyApp();
 }

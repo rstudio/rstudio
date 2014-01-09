@@ -23,6 +23,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -260,6 +261,15 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
+   // dispatch a command to all satellites. 
+   public void dispatchCommand(AppCommand command)
+   {
+      for (ActiveSatellite satellite: satellites_)
+      {
+         callDispatchCommand(satellite.getWindow(), command.getId());
+      }
+   }
+
    // close all satellites when we are closed
    @Override
    public void onClose(CloseEvent<Window> event)
@@ -356,6 +366,12 @@ public class SatelliteManager implements CloseHandler<Window>
       satellite.dispatchEventToRStudioSatellite(clientEvent);
    }-*/;
    
+   // dispatch command to a satellite
+   private native void callDispatchCommand(JavaScriptObject satellite,
+                                           String commandId) /*-{
+      satellite.dispatchCommandToRStudioSatellite(commandId);
+   }-*/;
+
    // check whether the current window is a satellite (note this method
    // is also implemented in the Satellite class -- we don't want this class
    // to depend on Satellite so we duplicate the definition)

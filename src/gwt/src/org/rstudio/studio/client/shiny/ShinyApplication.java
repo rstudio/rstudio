@@ -64,6 +64,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       String dir = filePath.substring(0, filePath.lastIndexOf("/"));
       if (dir.equals(currentAppFilePath_))
       {
+         satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
          satelliteManager_.activateSatelliteWindow(ShinyApplicationSatellite.NAME);
       }
       else
