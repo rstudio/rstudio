@@ -68,7 +68,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
       // cascade correctly -- it wouldn't be totally out of the question
-      // to make htis work but we'd rather not have this complexity
+      // to make this work but we'd rather not have this complexity
       // if we don't need to.
       if (isCurrentWindowSatellite())
       {

@@ -20,6 +20,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -75,6 +76,7 @@ public class ShinyApplicationPresenter implements IsWidget
    
    public void loadApp(ShinyApplicationParams params) 
    {
+      params_ = params;
       view_.showApp(params);
    }
 
@@ -86,6 +88,13 @@ public class ShinyApplicationPresenter implements IsWidget
                thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
             }),
             true);
+
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               thiz.@org.rstudio.studio.client.shiny.ShinyApplicationPresenter::onClose()();
+            }),
+            true);
    }-*/;
    
    private void onMessage(String data, String origin)
@@ -95,16 +104,30 @@ public class ShinyApplicationPresenter implements IsWidget
          // ensure the frame url starts with the specified origin
          if (view_.getUrl().startsWith(origin)) 
          {
-            closeApp();
+            closeShinyApp();
          }
       }
    }
    
-   private final native void closeApp() /*-{
+   private void onClose()
+   {
+      ShinyApplicationParams params = ShinyApplicationParams.create(
+            params_.getPath(), 
+            params_.getUrl(), 
+            ShinyApplicationParams.STATE_STOPPED);
+      notifyShinyAppClosed(params);
+   }
+   
+   private final native void closeShinyApp() /*-{
       $wnd.close();
    }-*/;
    
+   private final native void notifyShinyAppClosed(JavaScriptObject params) /*-{
+      $wnd.opener.notifyShinyAppClosed(params);
+   }-*/;
+
    private final Display view_;
    private final Satellite satellite_;
    private final EventBus events_;
+   private ShinyApplicationParams params_;
 }

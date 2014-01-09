@@ -18,7 +18,9 @@ import org.rstudio.core.client.Size;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -29,16 +31,40 @@ public class ShinyApplication
    public ShinyApplication(EventBus eventBus, 
                            final SatelliteManager satelliteManager)
    {
-      eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, 
+      eventBus_ = eventBus;
+      eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, 
                           new ShinyApplicationStatusEvent.Handler() {
          @Override
          public void onShowShinyApplication(ShinyApplicationStatusEvent event)
          {
-            // open the window 
-            satelliteManager.openSatellite(ShinyApplicationSatellite.NAME,     
-                                           event.getParams(),
-                                           new Size(960,1100));   
+            if (event.getParams().getState() == 
+                  ShinyApplicationParams.STATE_STARTED)
+            {
+               // open the window 
+               satelliteManager.openSatellite(ShinyApplicationSatellite.NAME,     
+                                              event.getParams(),
+                                              new Size(960,1100));   
+            }
          }  
       });
+      
+      exportShinyAppClosedCallback();
    }
+   
+   private void notifyShinyAppClosed(JavaScriptObject params)
+   {
+      eventBus_.fireEvent(new ShinyApplicationStatusEvent(
+            (ShinyApplicationParams) params.cast()));
+   }
+   
+   private final native void exportShinyAppClosedCallback()/*-{
+      var registry = this;     
+      $wnd.notifyShinyAppClosed = $entry(
+         function(params) {
+            registry.@org.rstudio.studio.client.shiny.ShinyApplication::notifyShinyAppClosed(Lcom/google/gwt/core/client/JavaScriptObject;)(params);
+         }
+      ); 
+   }-*/;
+
+   private final EventBus eventBus_;
 }
