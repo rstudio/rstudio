@@ -104,6 +104,7 @@ public class ShinyApplicationPresenter implements IsWidget
          // ensure the frame url starts with the specified origin
          if (view_.getUrl().startsWith(origin)) 
          {
+            appStopped_ = true;
             closeShinyApp();
          }
       }
@@ -114,7 +115,9 @@ public class ShinyApplicationPresenter implements IsWidget
       ShinyApplicationParams params = ShinyApplicationParams.create(
             params_.getPath(), 
             params_.getUrl(), 
-            ShinyApplicationParams.STATE_STOPPED);
+            appStopped_ ?
+               ShinyApplicationParams.STATE_STOPPED :
+               ShinyApplicationParams.STATE_STOPPING);
       notifyShinyAppClosed(params);
    }
    
@@ -130,4 +133,5 @@ public class ShinyApplicationPresenter implements IsWidget
    private final Satellite satellite_;
    private final EventBus events_;
    private ShinyApplicationParams params_;
+   private boolean appStopped_ = false;
 }

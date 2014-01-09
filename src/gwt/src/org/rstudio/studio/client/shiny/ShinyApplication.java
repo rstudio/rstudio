@@ -19,6 +19,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -30,11 +31,13 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
 {
    @Inject
    public ShinyApplication(EventBus eventBus, 
+                           Commands commands,
                            final SatelliteManager satelliteManager)
    {
       eventBus_ = eventBus;
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       satelliteManager_ = satelliteManager;
+      commands_ = commands;
       
       exportShinyAppClosedCallback();
    }
@@ -73,6 +76,15 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
 
    private void notifyShinyAppClosed(JavaScriptObject params)
    {
+      ShinyApplicationParams appState = params.cast();
+      // If the application is stopping, then the user initiated the stop by
+      // closing the app window. Interrupt R to stop the Shiny app.
+      if (appState.getState().equals(ShinyApplicationParams.STATE_STOPPING))
+      {
+         if (commands_.interruptR().isEnabled()) 
+            commands_.interruptR().execute();
+         appState.setState(ShinyApplicationParams.STATE_STOPPED);
+      }
       eventBus_.fireEvent(new ShinyApplicationStatusEvent(
             (ShinyApplicationParams) params.cast()));
    }
@@ -88,6 +100,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
 
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
+   private final Commands commands_;
 
    private String currentAppFilePath_;
 }
