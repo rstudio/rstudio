@@ -121,7 +121,7 @@ public class DocumentModeAsserter implements EntryPoint {
        * document.compatMode configuration property settings from
        * DocumentMode.gwt.xml, so they're mostly on their own.
        */
-      message = "Your *.gwt.xml module configuration prohibits the use of the current doucment "
+      message = "Your *.gwt.xml module configuration prohibits the use of the current document "
           + "rendering mode (document.compatMode=' " + currentMode
           + "').<br>Modify your application's host HTML page doctype, or update your custom "
           + "'document.compatMode' configuration property settings.";
