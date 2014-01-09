@@ -43,6 +43,7 @@ import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
+import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -95,6 +96,7 @@ public interface RStudioGinjector extends Ginjector
    PDFViewerApplication getPDFViewerApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
    ShinyApplicationSatellite getShinyApplicationSatellite();
+   ShinyApplication getShinyApplication();
    EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();

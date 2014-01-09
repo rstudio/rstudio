@@ -52,6 +52,7 @@ void loadApp(const std::string& url, const std::string& path)
    json::Object dataJson;
    dataJson["url"] = s_currentAppUrl;
    dataJson["path"] = s_currentAppPath;
+   dataJson["state"] = "started";
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }

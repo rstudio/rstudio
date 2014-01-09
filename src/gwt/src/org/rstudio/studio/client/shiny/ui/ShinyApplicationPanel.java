@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.AnchorableFrame;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
@@ -32,21 +32,14 @@ public class ShinyApplicationPanel extends ResizeComposite
    @Inject
    public ShinyApplicationPanel(Commands commands)
    {
-      LayoutPanel panel = new LayoutPanel();
+      rootPanel_ = new LayoutPanel();
       
-      Toolbar toolbar = createToolbar(commands);
-      int tbHeight = toolbar.getHeight();
-      panel.add(toolbar);
-      panel.setWidgetLeftRight(toolbar, 0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopHeight(toolbar, 0, Unit.PX, tbHeight, Unit.PX);
+      toolbar_ = createToolbar(commands);
+      rootPanel_.add(toolbar_);
+      rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
+      rootPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, toolbar_.getHeight(), Unit.PX);
       
-      previewFrame_ = new AnchorableFrame();
-      previewFrame_.setSize("100%", "100%");
-      panel.add(previewFrame_);
-      panel.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
-      panel.setWidgetTopBottom(previewFrame_, tbHeight+1, Unit.PX, 0, Unit.PX);
-      
-      initWidget(panel);
+      initWidget(rootPanel_);
    }
    
    private Toolbar createToolbar(Commands commands)
@@ -61,17 +54,37 @@ public class ShinyApplicationPanel extends ResizeComposite
    public void showApp(ShinyApplicationParams params)
    {
       appParams_ = params;
-      previewFrame_.navigate(appParams_.getUrl());
       appPathLabel_.setText(appParams_.getPath());
+
+      if (appFrame_ != null)
+      {
+         rootPanel_.remove(appFrame_);
+         appFrame_ = null;
+      }
+
+      appFrame_ = new RStudioFrame(appParams_.getUrl());
+      appFrame_.setSize("100%", "100%");
+      rootPanel_.add(appFrame_);
+      rootPanel_.setWidgetLeftRight(appFrame_,  0, Unit.PX, 0, Unit.PX);
+      rootPanel_.setWidgetTopBottom(appFrame_, toolbar_.getHeight()+1, Unit.PX, 0, Unit.PX);
    }
    
    @Override
    public String getDocumentTitle()
    {
-      return previewFrame_.getWindow().getDocument().getTitle();
+      return appFrame_.getWindow().getDocument().getTitle();
    }
 
-   private final AnchorableFrame previewFrame_;
+   @Override
+   public String getUrl()
+   {
+      return appParams_.getUrl();
+   }
+
+   private LayoutPanel rootPanel_;
    private Label appPathLabel_;
+   private Toolbar toolbar_;
+
+   private RStudioFrame appFrame_;
    private ShinyApplicationParams appParams_;
 }

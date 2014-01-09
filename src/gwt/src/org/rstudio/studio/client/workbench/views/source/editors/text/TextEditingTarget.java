@@ -82,6 +82,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -158,6 +159,7 @@ public class TextEditingTarget implements
       boolean isAttached();
       
       void adaptToExtendedFileType(String extendedType);
+      void onShinyApplicationStateChanged(String state);
 
       void debug_dumpContents();
       void debug_importDump();
@@ -432,6 +434,26 @@ public class TextEditingTarget implements
             view_.showFindReplace(event.getDefaultForward());
          }
       });
+      
+      events_.addHandler(
+            ShinyApplicationStatusEvent.TYPE, 
+            new ShinyApplicationStatusEvent.Handler()
+            {
+               @Override
+               public void onShinyApplicationStatus(
+                     ShinyApplicationStatusEvent event)
+               {
+                  // If the document appears to be inside the directory 
+                  // associated with the event, update the view to match the
+                  // new state.
+                  if (getPath() != null &&
+                      getPath().startsWith(event.getParams().getPath()))
+                  {
+                     view_.onShinyApplicationStateChanged(
+                           event.getParams().getState());
+                  }
+               }
+            });
       
       events_.addHandler(
             BreakpointsSavedEvent.TYPE, 
@@ -2552,7 +2574,7 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
-                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite()
+                     RStudioGinjector.INSTANCE.getShinyApplication()
                                               .launchShinyApplication(getPath());
                   }
                };
