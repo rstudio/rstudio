@@ -23,7 +23,7 @@ public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatus
 { 
    public interface Handler extends EventHandler
    {
-      void onShowShinyApplication(ShinyApplicationStatusEvent event);
+      void onShinyApplicationStatus(ShinyApplicationStatusEvent event);
    }
 
    public static final GwtEvent.Type<ShinyApplicationStatusEvent.Handler> TYPE =
@@ -42,7 +42,7 @@ public class ShinyApplicationStatusEvent extends GwtEvent<ShinyApplicationStatus
    @Override
    protected void dispatch(ShinyApplicationStatusEvent.Handler handler)
    {
-      handler.onShowShinyApplication(this);
+      handler.onShinyApplicationStatus(this);
    }
 
    @Override

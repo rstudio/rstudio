@@ -440,13 +440,14 @@ public class TextEditingTarget implements
             new ShinyApplicationStatusEvent.Handler()
             {
                @Override
-               public void onShowShinyApplication(
+               public void onShinyApplicationStatus(
                      ShinyApplicationStatusEvent event)
                {
                   // If the document appears to be inside the directory 
                   // associated with the event, update the view to match the
                   // new state.
-                  if (getPath().startsWith(event.getParams().getPath()))
+                  if (getPath() != null &&
+                      getPath().startsWith(event.getParams().getPath()))
                   {
                      view_.onShinyApplicationStateChanged(
                            event.getParams().getState());
@@ -2573,7 +2574,7 @@ public class TextEditingTarget implements
                   @Override
                   public void execute()
                   {
-                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite()
+                     RStudioGinjector.INSTANCE.getShinyApplication()
                                               .launchShinyApplication(getPath());
                   }
                };

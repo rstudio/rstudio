@@ -480,10 +480,15 @@ public class TextEditingTargetWidget
          if (state.equals(ShinyApplicationParams.STATE_STARTED)) 
          {
             sourceButton_.setText("Reload");
+            // TODO: Use a unique image resource
+            sourceButton_.setLeftImage(
+                  commands_.refreshWorkspace().getImageResource());
          }
          else if (state.equals(ShinyApplicationParams.STATE_STOPPED))
          {
             sourceButton_.setText("Run");
+            sourceButton_.setLeftImage(
+                  commands_.sourceActiveDocument().getImageResource());
          }
       }
    }

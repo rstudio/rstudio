@@ -15,11 +15,9 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -35,20 +33,8 @@ public class ShinyApplicationSatellite extends SatelliteApplication
    public ShinyApplicationSatellite(ShinyApplicationView view,
                                     Satellite satellite,
                                     Provider<AceThemes> pAceThemes,
-                                    ApplicationUncaughtExceptionHandler exHandler,
-                                    EventBus eventBus)
+                                    ApplicationUncaughtExceptionHandler exHandler)
    {
       super(NAME, view, satellite, pAceThemes, exHandler);
-      eventBus_ = eventBus;
    }
-
-   public void launchShinyApplication(String filePath)
-   {
-      String dir = filePath.substring(0, filePath.lastIndexOf("/"));
-      eventBus_.fireEvent(new SendToConsoleEvent(
-            "shiny::runApp('" + dir + "')", 
-            true));
-   }
-   
-   private EventBus eventBus_;
 }
