@@ -187,6 +187,10 @@ public class SessionInfo extends JavaScriptObject
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;
    }-*/;
+   
+   public native final String getGithubBaseUrl() /*-{
+      return this.github_base_url;
+   }-*/;
 
    // TODO: The check for null was for migration in the presence of 
    // sessions that couldn't suspend (3/21/2011). Remove this check

@@ -2595,6 +2595,35 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    return remoteOriginUrl;
 }
 
+std::string githubBaseUrl()
+{
+   if (!isGitEnabled())
+      return std::string();
+
+   std::string originUrl = remoteOriginUrl(s_git_.root());
+   if (originUrl.empty())
+      return std::string();
+
+   // check for ssh url
+   std::string repo;
+   const std::string kSSHPrefix = "git@github.com:";
+   if (boost::algorithm::starts_with(originUrl, kSSHPrefix))
+      repo = originUrl.substr(kSSHPrefix.length());
+
+   // check for https url
+   const std::string kHTTPSPrefix = "https://github.com/";
+   if (boost::algorithm::starts_with(originUrl, kHTTPSPrefix))
+      repo = originUrl.substr(kHTTPSPrefix.length());
+
+   // bail if we didn't get a repo
+   if (repo.empty())
+      return std::string();
+
+   // strip the .git off the end and form the github url
+   boost::algorithm::replace_last(repo, ".git", "");
+   return "https://github.com/" + repo;
+}
+
 core::Error initializeGit(const core::FilePath& workingDir)
 {
    s_git_.setRoot(detectGitDir(workingDir));

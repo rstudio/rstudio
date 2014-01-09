@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
@@ -215,6 +216,12 @@ public class SVNPresenter extends BaseVcsPresenter
    public void onVcsPush()
    {
       // git specific,  not supported by svn
+   }
+   
+   @Override
+   public void viewOnGitHub(GitHubViewRequest viewRequest)
+   {
+      // git specific, not supported by svn
    }
    
 

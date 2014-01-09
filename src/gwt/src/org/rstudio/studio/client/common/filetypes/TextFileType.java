@@ -238,6 +238,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsFileLog());
       results.add(commands.vcsFileDiff());
       results.add(commands.vcsFileRevert());
+      results.add(commands.vcsViewOnGitHub());
+      results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
       if (canExecuteCode())
       {

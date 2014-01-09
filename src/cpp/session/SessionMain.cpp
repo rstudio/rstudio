@@ -512,6 +512,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
    sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(
                               modules::source_control::defaultSshKeyDir());
+   sessionInfo["github_base_url"] = modules::git::githubBaseUrl();
 
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();

@@ -141,6 +141,8 @@ public abstract class
    public abstract AppCommand vcsDiff();
    public abstract AppCommand vcsCommit();
    public abstract AppCommand vcsRevert();
+   public abstract AppCommand vcsViewOnGitHub();
+   public abstract AppCommand vcsBlameOnGitHub();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
    public abstract AppCommand vcsRefreshNoError();

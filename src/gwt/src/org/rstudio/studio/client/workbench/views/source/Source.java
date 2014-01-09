@@ -257,6 +257,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
       dynamicCommands_.add(commands.debugBreakpoint());
+      dynamicCommands_.add(commands.vcsViewOnGitHub());
+      dynamicCommands_.add(commands.vcsBlameOnGitHub());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -2011,13 +2013,37 @@ public class Source implements InsertSourceHandler,
       commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled);
       commands_.vcsFileRevert().setVisible(vcsCommandsEnabled);
       commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled);
-      
+          
       if (vcsCommandsEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
          commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
          commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
          commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
+      }
+      
+      String githubBaseUrl = session_.getSessionInfo().getGithubBaseUrl();
+      boolean isGithubRepo = !StringUtil.isNullOrEmpty(githubBaseUrl);
+      if (vcsCommandsEnabled && isGithubRepo)
+      {
+         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
+         
+         commands_.vcsViewOnGitHub().setVisible(true);
+         commands_.vcsViewOnGitHub().setEnabled(true);
+         commands_.vcsViewOnGitHub().setMenuLabel(
+                                  "_View \"" + name + "\" on GitHub");
+         
+         commands_.vcsBlameOnGitHub().setVisible(true);
+         commands_.vcsBlameOnGitHub().setEnabled(true);
+         commands_.vcsBlameOnGitHub().setMenuLabel(
+                                  "_Blame \"" + name + "\" on GitHub");
+      }
+      else
+      {
+         commands_.vcsViewOnGitHub().setVisible(false);
+         commands_.vcsViewOnGitHub().setEnabled(false);
+         commands_.vcsBlameOnGitHub().setVisible(false);
+         commands_.vcsBlameOnGitHub().setEnabled(false);
       }
    }
    

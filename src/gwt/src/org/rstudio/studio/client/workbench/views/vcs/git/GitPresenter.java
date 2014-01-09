@@ -40,10 +40,13 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
@@ -74,6 +77,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                        VCSFileOpener vcsFileOpener,
                        Display view,
                        GitServerOperations server,
+                       Session session,
                        final Commands commands,
                        Binder commandBinder,
                        GitState gitState,
@@ -85,6 +89,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
       server_ = server;
+      session_ = session;
       commands_ = commands;
       gitState_ = gitState;
       globalDisplay_ = globalDisplay;
@@ -351,6 +356,51 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    }
    
    @Override
+   public void viewOnGitHub(final GitHubViewRequest viewRequest)
+   {
+      Command viewOnGithub = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            // verify there is a remote branch
+            if (!gitState_.hasRemote())
+            {
+               String branch = gitState_.getBranchInfo().getActiveBranch();
+               globalDisplay_.showErrorMessage(
+                "No Remote Branch", 
+                "The current local branch " + branch + " is not synched to a " +
+                "remote branch so the source file can't be viewed on GitHub");
+            }
+            
+            // form the github url
+            SessionInfo si = session_.getSessionInfo();
+            FileSystemItem file = viewRequest.getFile();
+            String branch = gitState_.getBranchInfo().getActiveBranch();
+            String url = si.getGithubBaseUrl();
+            url += viewRequest.getViewType() == GitHubViewRequest.ViewType.View 
+                                 ? "/blob/" : "/blame/";                             
+            url += branch + "/";
+            url += file.getPathRelativeTo(si.getActiveProjectDir());    
+            if (viewRequest.getStartLine() != -1)
+               url += "#L" + viewRequest.getStartLine();
+            if (viewRequest.getEndLine() != viewRequest.getStartLine())
+               url += "-L" + viewRequest.getEndLine();
+            
+            globalDisplay_.openWindow(url);
+         }
+      
+      };
+      
+      // if we don't have branch info then perform a refresh
+      // before interrogating the git state
+      if (gitState_.getBranchInfo() == null)
+         gitState_.refresh(false, viewOnGithub);
+      else
+         viewOnGithub.execute();
+   }
+   
+   @Override
    public void onVcsCleanup()
    {
       // svn specific, not supported by git
@@ -361,6 +411,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private final GitPresenterCore gitPresenterCore_;
    private final GitServerOperations server_;
    private final Commands commands_;
+   private final Session session_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;

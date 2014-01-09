@@ -137,6 +137,9 @@ public class GlobalToolbar extends Toolbar
          vcsMenu.addItem(commands_.vcsFileLog().createMenuItem(false));
          vcsMenu.addItem(commands_.vcsFileRevert().createMenuItem(false));
          vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.vcsViewOnGitHub().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsBlameOnGitHub().createMenuItem(false));
+         vcsMenu.addSeparator();
          vcsMenu.addItem(commands_.vcsCommit().createMenuItem(false));
          vcsMenu.addSeparator();
          vcsMenu.addItem(commands_.vcsPull().createMenuItem(false));

@@ -120,6 +120,8 @@ import org.rstudio.studio.client.workbench.views.source.model.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRevertFileEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitHubEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1857,7 +1859,39 @@ public class TextEditingTarget implements
       events_.fireEvent(new VcsRevertFileEvent(
             FileSystemItem.createFile(docUpdateSentinel_.getPath())));
    }
+   
+   @Handler
+   void onVcsViewOnGitHub()
+   {
+      fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType.View);
+   }
 
+   @Handler
+   void onVcsBlameOnGitHub()
+   {
+      fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType.Blame);
+   }
+   
+   private void fireVcsViewOnGithubEvent(GitHubViewRequest.ViewType type)
+   {
+      FileSystemItem file = 
+                  FileSystemItem.createFile(docUpdateSentinel_.getPath());
+      
+      if (docDisplay_.getSelectionValue().length() > 0)
+      {
+         int start = docDisplay_.getSelectionStart().getRow() + 1;
+         int end = docDisplay_.getSelectionEnd().getRow() + 1;
+         events_.fireEvent(new VcsViewOnGitHubEvent(
+                         new GitHubViewRequest(file, type, start, end)));
+      }
+      else
+      {
+         events_.fireEvent(new VcsViewOnGitHubEvent(
+                         new GitHubViewRequest(file, type)));
+      }
+   }
+   
+   
    @Handler
    void onExtractFunction()
    {
