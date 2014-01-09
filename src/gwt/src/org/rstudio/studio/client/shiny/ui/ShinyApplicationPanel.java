@@ -32,9 +32,10 @@ public class ShinyApplicationPanel extends ResizeComposite
    @Inject
    public ShinyApplicationPanel(Commands commands)
    {
+      commands_ = commands;
       rootPanel_ = new LayoutPanel();
       
-      toolbar_ = createToolbar(commands);
+      toolbar_ = createToolbar(commands_);
       rootPanel_.add(toolbar_);
       rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
       rootPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, toolbar_.getHeight(), Unit.PX);
@@ -45,8 +46,17 @@ public class ShinyApplicationPanel extends ResizeComposite
    private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new Toolbar();
+      toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.reloadShinyApp().createToolbarButton());
+
+      Label viewingLabel = new Label("Viewing: ");
+      viewingLabel.getElement().getStyle().setColor("#606060");
+      viewingLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
+      toolbar.addRightWidget(viewingLabel);
       appPathLabel_ = new Label();
-      toolbar.addLeftWidget(appPathLabel_);
+      appPathLabel_.getElement().getStyle().setMarginRight(20, Unit.PX);
+      toolbar.addRightWidget(appPathLabel_);
       return toolbar;
    }
    
@@ -88,6 +98,8 @@ public class ShinyApplicationPanel extends ResizeComposite
    {
       return appParams_.getUrl();
    }
+   
+   private final Commands commands_;
 
    private LayoutPanel rootPanel_;
    private Label appPathLabel_;

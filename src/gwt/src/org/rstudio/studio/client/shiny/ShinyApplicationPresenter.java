@@ -17,6 +17,7 @@ package org.rstudio.studio.client.shiny;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
@@ -44,6 +45,7 @@ public class ShinyApplicationPresenter
    
    @Inject
    public ShinyApplicationPresenter(Display view,
+                               GlobalDisplay globalDisplay,
                                Binder binder,
                                final Commands commands,
                                EventBus eventBus,
@@ -52,6 +54,7 @@ public class ShinyApplicationPresenter
       view_ = view;
       satellite_ = satellite;
       events_ = eventBus;
+      globalDisplay_ = globalDisplay;
       
       binder.bind(commands, this);  
       
@@ -77,6 +80,18 @@ public class ShinyApplicationPresenter
    public void onReloadShinyApp()
    {
       view_.reloadApp();
+   }
+   
+   @Handler
+   public void onViewerPopout()
+   {
+      // Consider the app to be stopped for our purposes--we can no longer
+      // communicate with it when it's been launched in an external browser
+      appStopped_ = true;
+      
+      // Launch it in the external browser, then close this window
+      globalDisplay_.openWindow(params_.getUrl());
+      closeShinyApp();
    }
 
    public void loadApp(ShinyApplicationParams params) 
@@ -137,6 +152,9 @@ public class ShinyApplicationPresenter
    private final Display view_;
    private final Satellite satellite_;
    private final EventBus events_;
+   private final GlobalDisplay globalDisplay_;
+   
    private ShinyApplicationParams params_;
    private boolean appStopped_ = false;
+   private boolean popoutToBrowser_ = false;
 }
