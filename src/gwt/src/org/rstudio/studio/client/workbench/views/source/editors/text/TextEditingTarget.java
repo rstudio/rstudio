@@ -640,13 +640,17 @@ public class TextEditingTarget implements
             dirtyState_,
             events_);
 
-      // ensure that Makefile always uses tabs
+      // ensure that Makefile and Makebars always uses tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            if ("Makefile".equals(event.getValue()))
+            if ("Makefile".equals(event.getValue()) ||
+                "Makevars".equals(event.getValue()) ||
+                "Makevars.win".equals(event.getValue()))
+            {
                docDisplay_.setUseSoftTabs(false);
+            }
          }
       });
       
@@ -3522,10 +3526,17 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   // Makefile always uses tabs
                   FileSystemItem file = context.getActiveFile();
-                  if ((file != null) && "Makefile".equals(file.getName()))
+                  if ((file != null) && 
+                     ("Makefile".equals(file.getName()) ||
+                      "Makevars".equals(file.getName()) ||
+                      "Makevars.win".equals(file.getName())))
+                  {
                      docDisplay.setUseSoftTabs(false);
+                  }
                   else
+                  {
                      docDisplay.setUseSoftTabs(arg);
+                  }
                }}));
       releaseOnDismiss.add(prefs.numSpacesForTab().bind(
             new CommandWithArg<Integer>() {
