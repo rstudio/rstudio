@@ -487,7 +487,6 @@ public class TextEditingTargetWidget
          if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
          {
             sourceCommandText_ = "Reload";
-            // TODO: Use a unique image resource
             sourceButton_.setLeftImage(
                   commands_.reloadShinyApp().getImageResource());
          }

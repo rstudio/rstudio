@@ -100,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ContainsFoldPredicate;
@@ -321,7 +322,8 @@ public class TextEditingTarget implements
                             FontSizeManager fontSizeManager,
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
-                            BreakpointManager breakpointManager)
+                            BreakpointManager breakpointManager,
+                            SourceBuildHelper sourceBuildHelper)
    {
       commands_ = commands;
       server_ = server;
@@ -336,6 +338,7 @@ public class TextEditingTarget implements
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
+      sourceBuildHelper_ = sourceBuildHelper;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -2559,7 +2562,7 @@ public class TextEditingTarget implements
    @Handler
    void onSourceActiveDocument()
    {
-     sourceActiveDocument(false);
+      sourceActiveDocument(false);
    }
    
    @Handler
@@ -2567,10 +2570,19 @@ public class TextEditingTarget implements
    {
       sourceActiveDocument(true);
    }
+   
   
    private void sourceActiveDocument(final boolean echo)
    {
       docDisplay_.focus();
+
+      // If the document being sourced is a Shiny file, run the app instead.
+      if (fileType_.isR() && 
+          extendedType_.equals("shiny")) 
+      {
+         runShinyApp();
+         return;
+      }
 
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
@@ -2616,25 +2628,7 @@ public class TextEditingTarget implements
          }
          else
          {
-            Command sourceCommand = null;
-            
-            if (fileType_.isR() && 
-                extendedType_.equals("shiny")) 
-            {
-               // If this is a Shiny app, launch the app in a satellite window 
-               // instead of sourcing it.
-               sourceCommand = new Command() {
-                  @Override
-                  public void execute()
-                  {
-                     RStudioGinjector.INSTANCE.getShinyApplication()
-                                              .launchShinyApplication(getPath());
-                  }
-               };
-            }
-            else 
-            {
-               sourceCommand = new Command() {
+            Command sourceCommand = new Command() {
                   @Override
                   public void execute()
                   {
@@ -2652,7 +2646,6 @@ public class TextEditingTarget implements
                            docDisplay_.hasBreakpoints());   
                   }
                };
-            }
             
             if (saveWhenSourcing && (dirtyState_.getValue() || (getPath() == null)))
                saveThenExecute(null, sourceCommand);
@@ -2669,6 +2662,17 @@ public class TextEditingTarget implements
       }
    }
    
+   private void runShinyApp()
+   {
+      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+         @Override
+         public void execute()
+         {
+            RStudioGinjector.INSTANCE.getShinyApplication()
+                                     .launchShinyApplication(getPath());
+         }
+      }, "Run Shiny Application");
+   }
 
    private boolean activeCodeIsAscii()
    {
@@ -3681,6 +3685,7 @@ public class TextEditingTarget implements
    private final Session session_;
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
+   private final SourceBuildHelper sourceBuildHelper_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
