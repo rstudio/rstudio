@@ -18,6 +18,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.remote.ClientEventDispatcher;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -42,10 +43,12 @@ public class Satellite implements HasCloseHandlers<Satellite>
    @Inject
    public Satellite(Session session,
                     EventBus eventBus,
+                    Commands commands,
                     Provider<UIPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
+      commands_ = commands;
       eventDispatcher_ = new ClientEventDispatcher(eventBus);
    }
    
@@ -129,6 +132,13 @@ public class Satellite implements HasCloseHandlers<Satellite>
          }
       ); 
       
+      // export command notification callback
+      $wnd.dispatchCommandToRStudioSatellite = $entry(
+         function(commandId) {
+            satellite.@org.rstudio.studio.client.common.satellite.Satellite::dispatchCommand(Ljava/lang/String;)(commandId);
+         }
+      ); 
+
       // register (this will call the setSessionInfo back)
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;
@@ -203,11 +213,17 @@ public class Satellite implements HasCloseHandlers<Satellite>
       eventDispatcher_.enqueEventAsJso(clientEvent);
    }
    
+   // called by main window to deliver commands
+   private void dispatchCommand(String commandId)
+   {  
+      commands_.getCommandById(commandId).execute();
+   }
    
    private final Session session_;
    private final Provider<UIPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
+   private final Commands commands_;
    private JavaScriptObject params_ = null;
    private CommandWithArg<JavaScriptObject> onReactivated_ = null;
 }

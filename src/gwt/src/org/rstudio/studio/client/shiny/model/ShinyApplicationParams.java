@@ -21,7 +21,9 @@ public class ShinyApplicationParams extends JavaScriptObject
    protected ShinyApplicationParams() {}
    
    public final static String STATE_STARTED = "started";
+   public final static String STATE_STOPPING = "stopping";
    public final static String STATE_STOPPED = "stopped";
+   public final static String STATE_RELOADING = "reloading";
    
    public native static ShinyApplicationParams create(String path, 
                                                       String url, 
@@ -43,5 +45,9 @@ public class ShinyApplicationParams extends JavaScriptObject
    
    public final native String getState() /*-{
       return this.state;
+   }-*/;
+   
+   public final native void setState(String state) /*-{
+      this.state = state;
    }-*/;
 }

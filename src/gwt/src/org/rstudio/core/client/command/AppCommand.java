@@ -199,8 +199,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       String result = (desc + " " + shortcut).trim();
       return result.length() == 0 ? null : result;
    }
+   
+   public String getId()
+   {
+      return id_;
+   }
 
    // Called by CommandBundleGenerator
+   public void setId(String id)
+   {
+      id_ = id;
+   }
+
    public void setDesc(String desc)
    {
       desc_ = desc;
@@ -379,6 +389,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
+   private String id_;
  
    private static boolean enableNoHandlerAssertions_ = true;
 }

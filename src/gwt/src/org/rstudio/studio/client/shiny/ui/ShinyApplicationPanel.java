@@ -70,6 +70,14 @@ public class ShinyApplicationPanel extends ResizeComposite
    }
    
    @Override
+   public void reloadApp()
+   {
+      // appFrame_.getWindow().reload() would be better, but won't work here
+      // due to same-origin policy restrictions
+      appFrame_.setUrl(appFrame_.getUrl());
+   }
+
+   @Override
    public String getDocumentTitle()
    {
       return appFrame_.getWindow().getDocument().getTitle();

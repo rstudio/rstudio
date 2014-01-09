@@ -296,8 +296,8 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setVisible(false);
          runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
-         sourceButton_.setText("Run");
          chunksButton_.setVisible(false);
+         setSourceButtonFromShinyState();
       }
       
       toolbar_.invalidateSeparators();
@@ -344,7 +344,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
-      sourceButton_.setText(width < 400 ? "" : (isShinyFile() ? "Run" : "Source"));
+      sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
       chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
    
@@ -475,22 +475,30 @@ public class TextEditingTargetWidget
    @Override
    public void onShinyApplicationStateChanged(String state)
    {
+      shinyAppState_ = state;
+      setSourceButtonFromShinyState();
+   }
+   
+   public void setSourceButtonFromShinyState()
+   {
+      sourceCommandText_ = "Source";
       if (isShinyFile())
       {
-         if (state.equals(ShinyApplicationParams.STATE_STARTED)) 
+         if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
          {
-            sourceButton_.setText("Reload");
+            sourceCommandText_ = "Reload";
             // TODO: Use a unique image resource
             sourceButton_.setLeftImage(
-                  commands_.refreshWorkspace().getImageResource());
+                  commands_.reloadShinyApp().getImageResource());
          }
-         else if (state.equals(ShinyApplicationParams.STATE_STOPPED))
+         else if (shinyAppState_.equals(ShinyApplicationParams.STATE_STOPPED))
          {
-            sourceButton_.setText("Run");
+            sourceCommandText_ = "Run";
             sourceButton_.setLeftImage(
                   commands_.sourceActiveDocument().getImageResource());
          }
       }
+      sourceButton_.setText(sourceCommandText_);
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
@@ -536,4 +544,6 @@ public class TextEditingTargetWidget
    private ToolbarButton texToolbarButton_;
    private Label srcOnSaveLabel_;
 
+   private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
+   private String sourceCommandText_ = "Source";
 }
