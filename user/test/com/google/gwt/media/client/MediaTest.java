@@ -52,7 +52,7 @@ public abstract class MediaTest extends GWTTestCase {
   }-*/;
 
   static native boolean isIE8() /*-{
-    return $wnd.navigator.userAgent.indexOf('msie') != -1 && $doc.documentMode == 8
+    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
   }-*/;
 
   static native boolean isOldFirefox() /*-{
