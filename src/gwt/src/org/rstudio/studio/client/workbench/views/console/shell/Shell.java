@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -331,13 +332,20 @@ public class Shell implements ConsoleInputHandler,
    {  
       final InputEditorDisplay display = view_.getInputEditorDisplay();
       
+      // get anything already at the console
+      final String previousInput = StringUtil.notNull(display.getText());
+      
       // define code block we execute at finish
       Command finishSendToConsole = new Command() {
          @Override
          public void execute()
          {
             if (event.shouldExecute())
+            {
                processCommandEntry();
+               if (previousInput.length() > 0)
+                  display.setText(previousInput);
+            }
             
             if (!event.shouldExecute() || event.shouldFocus())
             {
