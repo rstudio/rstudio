@@ -362,22 +362,17 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       {
          @Override
          public void execute()
-         {
-            // verify there is a remote branch
-            if (!gitState_.hasRemote())
-            {
-               String branch = gitState_.getBranchInfo().getActiveBranch();
-               globalDisplay_.showErrorMessage(
-                "No Remote Branch", 
-                "The current local branch " + branch + " is not synched to a " +
-                "remote branch so the source file can't be viewed on GitHub");
-               return;
-            }
+         {           
+            // determine the branch (use master if there is no remote)
+            String branch = null;
+            if (gitState_.hasRemote())
+               branch = gitState_.getBranchInfo().getActiveBranch();
+            else
+               branch = "master";
             
             // form the github url
             SessionInfo si = session_.getSessionInfo();
             FileSystemItem file = viewRequest.getFile();
-            String branch = gitState_.getBranchInfo().getActiveBranch();
             String url = si.getGithubBaseUrl();
             url += viewRequest.getViewType() == GitHubViewRequest.ViewType.View 
                                  ? "/blob/" : "/blame/";                             
