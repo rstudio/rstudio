@@ -46,9 +46,10 @@ public class ShinyApplicationWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
-      Window.setTitle("RStudio: Shiny Application");
+      ShinyApplicationParams appParams = params.cast();
+      Window.setTitle(appParams.getPath() + " - " + "Shiny");
       ShinyApplicationPresenter appPresenter = pPresenter_.get();
-      appPresenter.loadApp((ShinyApplicationParams) params.cast());
+      appPresenter.loadApp(appParams);
       
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();
