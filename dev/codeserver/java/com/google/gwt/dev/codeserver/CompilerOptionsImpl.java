@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
@@ -31,6 +32,7 @@ import java.util.List;
  */
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
+  private final List<String> libraryPaths;
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final boolean strictResources;
@@ -39,6 +41,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   CompilerOptionsImpl(CompileDir compileDir, List<String> moduleNames, SourceLevel sourceLevel,
       boolean strictResources, TreeLogger.Type logLevel) {
     this.compileDir = compileDir;
+    this.libraryPaths = ImmutableList.<String>of();
     this.moduleNames = Lists.newArrayList(moduleNames);
     this.sourceLevel = sourceLevel;
     this.strictResources = strictResources;
@@ -77,7 +80,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public List<String> getLibraryPaths() {
-    return null;
+    return libraryPaths;
   }
 
   /**
@@ -217,18 +220,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean isValidateOnly() {
     return false;
-  }
-
-  @Override
-  public void setLibraryPaths(List<String> libraryPaths) {
-  }
-
-  @Override
-  public void setLink(boolean link) {
-  }
-
-  @Override
-  public void setOutputLibraryPath(String outputLibraryPath) {
   }
 
   @Override

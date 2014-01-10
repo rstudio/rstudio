@@ -123,6 +123,16 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  public void setLibraryPaths(List<String> libraryPaths) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLink(boolean link) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public final void setLocalWorkers(int localWorkers) {
     throw new UnsupportedOperationException();
   }
@@ -164,6 +174,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setOutput(JsOutputOption obfuscated) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setOutputLibraryPath(String outputLibraryPath) {
     throw new UnsupportedOperationException();
   }
 
