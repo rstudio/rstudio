@@ -128,6 +128,8 @@ public class GlobalToolbar extends Toolbar
    
    public void completeInitialization(SessionInfo sessionInfo)
    { 
+      StandardIcons icons = StandardIcons.INSTANCE;
+      
       if (sessionInfo.isVcsEnabled())
       {
          addLeftSeparator();
@@ -152,9 +154,9 @@ public class GlobalToolbar extends Toolbar
       
          ImageResource vcsIcon = null;
          if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
-            vcsIcon = RESOURCES.gitIcon();
+            vcsIcon = icons.git();
          else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
-            vcsIcon = RESOURCES.svnIcon();
+            vcsIcon = icons.svn();
          
          ToolbarButton vcsButton = new ToolbarButton(
                null,
@@ -181,15 +183,6 @@ public class GlobalToolbar extends Toolbar
       codeSearchFocusContext_.record();
       FocusHelper.setFocusDeferred((CanFocus)searchWidget_);
    }
-   
-   interface Resources extends ClientBundle
-   {
-      ImageResource gitIcon();
-      ImageResource svnIcon();
-   }
-   
-   private static final Resources RESOURCES =  
-                              (Resources) GWT.create(Resources.class);
      
    private final Commands commands_;
    private final ToolbarPopupMenu newMenu_;
