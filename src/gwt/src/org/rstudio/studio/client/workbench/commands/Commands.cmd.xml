@@ -449,6 +449,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
          <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
+         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
       </shortcutgroup>
       <shortcutgroup name="Execute">
          <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
@@ -1276,8 +1277,8 @@ well as menu structures (for main menu and popup menus).
         desc="Execute devtools::load_all"/>     
         
    <cmd id="roxygenizePackage"
-        menuLabel="Roxygenize"
-        desc="Run roxygenize for the package"/>     
+        menuLabel="_Document"
+        desc="Run roxygen2 to document this package"/>     
 
    <cmd id="checkPackage"
         buttonLabel="Check"
