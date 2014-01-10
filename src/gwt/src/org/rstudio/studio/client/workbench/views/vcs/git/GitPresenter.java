@@ -371,6 +371,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                 "No Remote Branch", 
                 "The current local branch " + branch + " is not synched to a " +
                 "remote branch so the source file can't be viewed on GitHub");
+               return;
             }
             
             // form the github url
