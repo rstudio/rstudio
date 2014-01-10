@@ -77,6 +77,8 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
+core::FilePath tempDir();
+
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 

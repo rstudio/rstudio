@@ -740,6 +740,11 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return r::session::utils::tempFile(prefix, extension);
 }
 
+FilePath tempDir()
+{
+   return r::session::utils::tempDir();
+}
+
 FilePath findProgram(const std::string& name)
 {
    std::string which;

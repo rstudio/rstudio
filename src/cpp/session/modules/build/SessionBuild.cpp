@@ -58,6 +58,11 @@ namespace session {
 
 namespace {
 
+std::string quoteString(const std::string& str)
+{
+   return "'" + str + "'";
+}
+
 shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
@@ -346,7 +351,8 @@ private:
             return true;
          }
          else if ( (type == kCheckPackage) &&
-                   options_.autoRoxygenizeForCheck)
+                   options_.autoRoxygenizeForCheck &&
+                   !projectConfig().packageUseDevtools)
          {
             return true;
          }
@@ -507,6 +513,9 @@ private:
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
 #endif
 
+      // set the not cran env var
+      core::system::setenv(&childEnv, "NOT_CRAN", "true");
+
       // add r tools to path if necessary
       addRtoolsToPathIfNecessary(&childEnv, &postBuildWarning_);
 
@@ -614,72 +623,186 @@ private:
 
       else if (type == kCheckPackage)
       {
-         // first build then check
+         if (projectConfig().packageUseDevtools)
+            devtoolsCheckPackage(packagePath, cb, pkgOptions);
+         else
+            checkPackage(rBinDir, packagePath, cb, pkgOptions);
+      }
+   }
 
-         // compose the build command
-         RCommand rCmd(rBinDir);
-         rCmd << "build";
+   void checkPackage(const FilePath& rBinDir,
+                     const FilePath& packagePath,
+                     const core::system::ProcessCallbacks& cb,
+                     const core::system::ProcessOptions& pkgOptions)
+   {
+      // first build then check
 
-         // add extra args if provided
-         rCmd << projectConfig().packageBuildArgs;
+      // compose the build command
+      RCommand rCmd(rBinDir);
+      rCmd << "build";
 
-         // add --no-manual and --no-vignettes if they are in the check options
+      // add extra args if provided
+      rCmd << projectConfig().packageBuildArgs;
+
+      // add --no-manual and --no-build-vignettes if they are in the check options
+      std::string checkArgs = projectConfig().packageCheckArgs;
+      if (checkArgs.find("--no-manual") != std::string::npos)
+         rCmd << "--no-manual";
+      if (checkArgs.find("--no-build-vignettes") != std::string::npos)
+         rCmd << "--no-build-vignettes";
+
+      // add filename as a FilePath so it is escaped
+      rCmd << FilePath(packagePath.filename());
+
+      // compose the check command (will be executed by the onExit
+      // handler of the build cmd)
+      RCommand rCheckCmd(rBinDir);
+      rCheckCmd << "check";
+
+      // add extra args if provided
+      std::string extraArgs = projectConfig().packageCheckArgs;
+      rCheckCmd << extraArgs;
+
+      // add filename as a FilePath so it is escaped
+      rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
+
+      // special callback for build result
+      core::system::ProcessCallbacks buildCb = cb;
+      buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
+                                    Build::shared_from_this(),
+                                    _1,
+                                    rCheckCmd,
+                                    pkgOptions,
+                                    buildCb);
+
+      // show the user the command
+      enqueCommandString(rCmd.commandString());
+
+      // set a success message
+      successMessage_ = "R CMD check succeeded\n";
+
+      // bind a success function if appropriate
+      if (userSettings().cleanupAfterRCmdCheck())
+      {
+         successFunction_ = boost::bind(&Build::cleanupAfterCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
+      if (userSettings().viewDirAfterRCmdCheck())
+      {
+         failureFunction_ = boost::bind(
+                  &Build::viewDirAfterFailedCheck,
+                  Build::shared_from_this(),
+                  pkgInfo_);
+      }
+
+      // run the source build
+      module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                     pkgOptions,
+                                                     buildCb);
+   }
+
+   void devtoolsCheckPackage(const FilePath& packagePath,
+                             const core::system::ProcessCallbacks& cb,
+                             const core::system::ProcessOptions& pkgOptions)
+   {
+      // Find the path to R
+      FilePath rProgramPath;
+      Error error = module_context::rScriptPath(&rProgramPath);
+      if (error)
+      {
+         terminateWithError("attempting to locate R binary", error);
+         return;
+      }
+
+      // standard args
+      std::vector<std::string> args;
+      args.push_back("--slave");
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+
+      // build the call to check
+      std::ostringstream ostr;
+      ostr << "devtools::check('" << packagePath.filename() << "'";
+      if (projectConfig().packageRoxygenize.empty() ||
+          !options_.autoRoxygenizeForCheck)
+         ostr << ", document = FALSE";
+
+      if (!userSettings().cleanupAfterRCmdCheck())
+          ostr << ", cleanup = FALSE";
+
+      // optional extra check args
+      if (!projectConfig().packageCheckArgs.empty())
+      {
+         // additional args
+         std::vector<std::string> extraArgs;
+         boost::algorithm::split(extraArgs,
+                                 projectConfig().packageCheckArgs,
+                                 boost::is_space(),
+                                 boost::algorithm::token_compress_on);
+
+         std::vector<std::string> quotedArgs;
+         std::transform(extraArgs.begin(),
+                        extraArgs.end(),
+                        std::back_inserter(quotedArgs),
+                        quoteString);
+
+         ostr << ", args = c(" << boost::algorithm::join(quotedArgs, ",");
+         ostr << ")";
+      }
+
+      // optional extra build args
+      if (!projectConfig().packageBuildArgs.empty())
+      {
+         std::vector<std::string> extraBuildArgs;
+         boost::algorithm::split(extraBuildArgs,
+                                 projectConfig().packageBuildArgs,
+                                 boost::is_space(),
+                                 boost::algorithm::token_compress_on);
+
+         // propagate check vignette args
+         // add --no-manual and --no-build-vignettes if they are specified
          std::string checkArgs = projectConfig().packageCheckArgs;
          if (checkArgs.find("--no-manual") != std::string::npos)
-            rCmd << "--no-manual";
-         if (checkArgs.find("--no-vignettes") != std::string::npos)
-            rCmd << "--no-vignettes";
+            extraBuildArgs.push_back("--no-manual");
+         if (checkArgs.find("--no-build-vignettes") != std::string::npos)
+            extraBuildArgs.push_back("--no-build-vignettes");
 
-         // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
+         std::vector<std::string> quotedArgs;
+         std::transform(extraBuildArgs.begin(),
+                        extraBuildArgs.end(),
+                        std::back_inserter(quotedArgs),
+                        quoteString);
 
-         // compose the check command (will be executed by the onExit
-         // handler of the build cmd)
-         RCommand rCheckCmd(rBinDir);
-         rCheckCmd << "check";
-
-         // add extra args if provided
-         std::string extraArgs = projectConfig().packageCheckArgs;
-         rCheckCmd << extraArgs;
-
-         // add filename as a FilePath so it is escaped
-         rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
-
-         // special callback for build result
-         core::system::ProcessCallbacks buildCb = cb;
-         buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
-                                       Build::shared_from_this(),
-                                       _1,
-                                       rCheckCmd,
-                                       pkgOptions,
-                                       buildCb);
-
-         // show the user the command
-         enqueCommandString(rCmd.commandString());
-
-         // set a success message
-         successMessage_ = "R CMD check succeeded\n";
-
-         // bind a success function if appropriate
-         if (userSettings().cleanupAfterRCmdCheck())
-         {
-            successFunction_ = boost::bind(&Build::cleanupAfterCheck,
-                                           Build::shared_from_this(),
-                                           pkgInfo_);
-         }
-
-         if (userSettings().viewDirAfterRCmdCheck())
-         {
-            failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
-                                           Build::shared_from_this(),
-                                           pkgInfo_);
-         }
-
-         // run the source build
-         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        pkgOptions,
-                                                        buildCb);
+         ostr << ", build_args = c(" << boost::algorithm::join(quotedArgs, ",");
+         ostr << ")";
       }
+
+      // enque the command string without the check_dir
+      enqueCommandString(ostr.str() + ")");
+
+      // now complete the command
+      ostr << ", check_dir = '.')";
+      args.push_back("-e");
+      args.push_back(ostr.str());
+
+      // set a success message
+      successMessage_ = "\nR CMD check succeeded\n";
+
+      if (userSettings().viewDirAfterRCmdCheck())
+      {
+         failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
+      // run it
+      module_context::processSupervisor().runProgram(
+               string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+               args,
+               pkgOptions,
+               cb);
    }
 
 

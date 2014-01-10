@@ -66,7 +66,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       });
       
       chkUseDevtools_ = checkBox(
-            "Use devtools functions to check and build package");
+            "Use devtools to document, check, and build package");
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
