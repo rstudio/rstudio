@@ -1845,8 +1845,19 @@ public class TextEditingTarget implements
    @Handler
    void onVcsFileDiff()
    {
-      events_.fireEvent(new ShowVcsDiffEvent(
-            FileSystemItem.createFile(docUpdateSentinel_.getPath())));
+      Command showDiffCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            events_.fireEvent(new ShowVcsDiffEvent(
+                  FileSystemItem.createFile(docUpdateSentinel_.getPath())));
+         }
+      };
+      
+      if (dirtyState_.getValue())
+         saveWithPrompt(showDiffCommand, null);
+      else
+         showDiffCommand.execute();
    }
    
    @Handler
