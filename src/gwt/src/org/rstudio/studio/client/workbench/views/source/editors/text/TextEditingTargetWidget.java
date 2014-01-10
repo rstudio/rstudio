@@ -265,8 +265,8 @@ public class TextEditingTargetWidget
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
       
-      // don't show the run buttons for cpp files
-      runButton_.setVisible(canExecuteCode && !isCpp);
+      // don't show the run buttons for cpp files, or R files in Shiny
+      runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible());
       
       sourceOnSave_.setVisible(canSourceOnSave);
@@ -481,22 +481,26 @@ public class TextEditingTargetWidget
    
    public void setSourceButtonFromShinyState()
    {
-      sourceCommandText_ = "Source";
+      sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
+      String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
       if (isShinyFile())
       {
          if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
          {
-            sourceCommandText_ = "Reload";
+            sourceCommandText_ = "Reload App";
+            sourceCommandDesc = "Save changes and reload the Shiny application";
             sourceButton_.setLeftImage(
                   commands_.reloadShinyApp().getImageResource());
          }
          else if (shinyAppState_.equals(ShinyApplicationParams.STATE_STOPPED))
          {
-            sourceCommandText_ = "Run";
+            sourceCommandText_ = "Run App";
+            sourceCommandDesc = "Run the Shiny application";
             sourceButton_.setLeftImage(
-                  commands_.sourceActiveDocument().getImageResource());
+                  commands_.debugContinue().getImageResource());
          }
       }
+      sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
    }
 

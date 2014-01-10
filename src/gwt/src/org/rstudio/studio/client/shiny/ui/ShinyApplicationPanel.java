@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.shiny.ui;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
@@ -47,16 +46,7 @@ public class ShinyApplicationPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.reloadShinyApp().createToolbarButton());
-
-      Label viewingLabel = new Label("Viewing: ");
-      viewingLabel.getElement().getStyle().setColor("#606060");
-      viewingLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
-      toolbar.addRightWidget(viewingLabel);
-      appPathLabel_ = new Label();
-      appPathLabel_.getElement().getStyle().setMarginRight(20, Unit.PX);
-      toolbar.addRightWidget(appPathLabel_);
+      toolbar.addRightWidget(commands_.reloadShinyApp().createToolbarButton());
       return toolbar;
    }
    
@@ -64,7 +54,6 @@ public class ShinyApplicationPanel extends ResizeComposite
    public void showApp(ShinyApplicationParams params)
    {
       appParams_ = params;
-      appPathLabel_.setText(appParams_.getPath());
 
       if (appFrame_ != null)
       {
@@ -102,7 +91,6 @@ public class ShinyApplicationPanel extends ResizeComposite
    private final Commands commands_;
 
    private LayoutPanel rootPanel_;
-   private Label appPathLabel_;
    private Toolbar toolbar_;
 
    private RStudioFrame appFrame_;

@@ -85,13 +85,7 @@ public class ShinyApplicationPresenter
    @Handler
    public void onViewerPopout()
    {
-      // Consider the app to be stopped for our purposes--we can no longer
-      // communicate with it when it's been launched in an external browser
-      appStopped_ = true;
-      
-      // Launch it in the external browser, then close this window
       globalDisplay_.openWindow(params_.getUrl());
-      closeShinyApp();
    }
 
    public void loadApp(ShinyApplicationParams params) 
