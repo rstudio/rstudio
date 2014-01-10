@@ -472,8 +472,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="debugStop" value="Shift+F8"/>
       </shortcutgroup>
       <shortcutgroup name="Source Control">
-         <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" title="Diff Files"/>
-         <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
+         <shortcut refid="vcsFileDiff" value="Ctrl+Alt+D" title="Diff Files"/>
+         <shortcut refid="vcsCommit" value="Ctrl+Alt+M" />
       </shortcutgroup>
       <shortcutgroup name="Other">
          <shortcut value="F1" title="Show Function Help" />
