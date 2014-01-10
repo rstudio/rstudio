@@ -372,7 +372,12 @@ private:
       {
          roclet = "'" + roclet + "'";
       }
-      boost::format fmt("roxygenize('.', roclets=c(%1%))");
+
+      boost::format fmt;
+      if (projectConfig().packageUseDevtools)
+         fmt = boost::format(" devtools::document('.', , roclets=c(%1%))");
+      else
+         fmt = boost::format(" roxygen2::roxygenize('.', roclets=c(%1%))");
       std::string roxygenizeCall = boost::str(
          fmt % boost::algorithm::join(roclets, ", "));
 
@@ -386,7 +391,6 @@ private:
             "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
             " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
             " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
-            " library(roxygen2); "
             " %1%; }"
           "))");
       std::string cmd = boost::str(cmdFmt % roxygenizeCall);
