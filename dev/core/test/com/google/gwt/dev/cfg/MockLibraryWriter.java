@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -50,6 +51,10 @@ public class MockLibraryWriter implements LibraryWriter {
   @Override
   public void addDependencyLibraryNames(Set<String> dependencyLibraryNames) {
     this.dependencyLibraryNames.addAll(dependencyLibraryNames);
+  }
+
+  @Override
+  public void addGeneratedArtifacts(ArtifactSet generatedArtifacts) {
   }
 
   @Override

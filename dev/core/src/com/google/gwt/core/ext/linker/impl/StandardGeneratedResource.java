@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
@@ -41,18 +40,16 @@ public class StandardGeneratedResource extends GeneratedResource {
   /**
    * Creates an artifact by writing bytes to the disk cache.
    */
-  public StandardGeneratedResource(Class<? extends Generator> generatorType,
-      String partialPath, byte[] data) {
-    super(StandardLinkerContext.class, generatorType, partialPath);
+  public StandardGeneratedResource(String partialPath, byte[] data) {
+    super(StandardLinkerContext.class, partialPath);
     this.token = diskCache.writeByteArray(data);
   }
 
   /**
    * Creates an artifact that points to a file already saved in the disk cache.
    */
-  public StandardGeneratedResource(Class<? extends Generator> generatorType,
-      String partialPath, long token) {
-    super(StandardLinkerContext.class, generatorType, partialPath);
+  public StandardGeneratedResource(String partialPath, long token) {
+    super(StandardLinkerContext.class, partialPath);
     this.token = token;
   }
 

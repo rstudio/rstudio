@@ -1003,7 +1003,8 @@ public abstract class DevModeBase implements DoneCallback {
         logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
 
     // Create a new active linker stack for the fresh link.
-    StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger, module, options);
+    StandardLinkerContext linkerStack = new StandardLinkerContext(
+        linkLogger, module, compilerContext.getPublicResourceOracle(), options);
     ArtifactSet artifacts = linkerStack.getArtifactsForPublicResources(logger, module);
     artifacts = linkerStack.invokeLegacyLinkers(linkLogger, artifacts);
     artifacts = linkerStack.invokeFinalLink(linkLogger, artifacts);

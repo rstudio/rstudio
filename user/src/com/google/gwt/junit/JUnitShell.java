@@ -1140,6 +1140,7 @@ public class JUnitShell extends DevMode {
 
   void maybeCompileForWebMode(ModuleDef module, String... userAgents)
       throws UnableToCompleteException {
+    compilerContext = compilerContextBuilder.module(module).build();
     // Load any declared servlets.
     for (String path : module.getServletPaths()) {
       String servletClass = module.findServletForPath(path);
@@ -1163,8 +1164,8 @@ public class JUnitShell extends DevMode {
       // BACKWARDS COMPATIBILITY: many linkers currently fail in dev mode.
       try {
         Linker l = module.getActivePrimaryLinker().newInstance();
-        StandardLinkerContext context =
-          new StandardLinkerContext(getTopLogger(), module, null);
+        StandardLinkerContext context = new StandardLinkerContext(
+            getTopLogger(), module, compilerContext.getPublicResourceOracle(), null);
         if (!l.supportsDevModeInJunit(context)) {
           if (module.getLinker("std") != null) {
             // TODO: unfortunately, this could be race condition between dev/prod

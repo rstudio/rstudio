@@ -385,8 +385,8 @@ public class CompilePerms {
       PermutationResult permResult =
           compile(logger, compilerContext, subPerms[0], precompilation.getUnifiedAst());
       Link.linkOnePermutationToJar(logger, compilerContext.getModule(),
-          precompilation.getGeneratedArtifacts(), permResult,
-          makePermFilename(compilerWorkDir, permId), compilerContext.getOptions());
+          compilerContext.getPublicResourceOracle(), precompilation.getGeneratedArtifacts(),
+          permResult, makePermFilename(compilerWorkDir, permId), compilerContext.getOptions());
     }
 
     logger.log(TreeLogger.INFO, "Compile of permutations succeeded");

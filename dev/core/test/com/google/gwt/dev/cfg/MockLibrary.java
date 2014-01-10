@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -90,11 +91,6 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getRegularClassFilePaths() {
-    return null;
-  }
-
-  @Override
   public InputStream getClassFileStream(String classFilePath) {
     return null;
   }
@@ -105,13 +101,13 @@ public class MockLibrary implements Library {
   }
 
   @Override
-  public Set<String> getRegularCompilationUnitTypeNames() {
-    return compilationUnitTypeNames;
+  public Set<String> getDependencyLibraryNames() {
+    return dependencyLibraryNames;
   }
 
   @Override
-  public Set<String> getDependencyLibraryNames() {
-    return dependencyLibraryNames;
+  public ArtifactSet getGeneratedArtifacts() {
+    return null;
   }
 
   @Override
@@ -152,6 +148,16 @@ public class MockLibrary implements Library {
   @Override
   public Set<String> getReboundTypeNames() {
     return reboundTypeNames;
+  }
+
+  @Override
+  public Set<String> getRegularClassFilePaths() {
+    return null;
+  }
+
+  @Override
+  public Set<String> getRegularCompilationUnitTypeNames() {
+    return compilationUnitTypeNames;
   }
 
   @Override

@@ -75,6 +75,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     return compileDir.getGenDir();
   }
 
+  @Override
+  public List<String> getLibraryPaths() {
+    return null;
+  }
+
   /**
    * Number of threads to use to compile permutations.
    */
@@ -109,8 +114,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean shouldSaveSource() {
-    return false; // handling this a different way
+  public String getOutputLibraryPath() {
+    return null;
   }
 
   @Override
@@ -215,12 +220,29 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public void setLibraryPaths(List<String> libraryPaths) {
+  }
+
+  @Override
+  public void setLink(boolean link) {
+  }
+
+  @Override
+  public void setOutputLibraryPath(String outputLibraryPath) {
+  }
+
+  @Override
   public boolean shouldClusterSimilarFunctions() {
     return false;
   }
 
   @Override
   public boolean shouldInlineLiteralParameters() {
+    return false;
+  }
+
+  @Override
+  public boolean shouldLink() {
     return false;
   }
 
@@ -237,5 +259,10 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean shouldRemoveDuplicateFunctions() {
     return false;
+  }
+
+  @Override
+  public boolean shouldSaveSource() {
+    return false; // handling this a different way
   }
 }

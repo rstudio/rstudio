@@ -150,7 +150,7 @@ public class CompileOnePerm {
 
     PermutationResult permResult =
         precompilation.getUnifiedAst().compilePermutation(logger, compilerContext, subPerms[0]);
-    Link.linkOnePermutationToJar(logger, module,
+    Link.linkOnePermutationToJar(logger, module, compilerContext.getPublicResourceOracle(),
         precompilation.getGeneratedArtifacts(), permResult, makePermFilename(
             compilerWorkDir, permId), precompilationOptions);
     return true;

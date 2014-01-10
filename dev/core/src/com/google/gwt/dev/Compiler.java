@@ -38,6 +38,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -198,8 +199,9 @@ public class Compiler {
             absExtrasPath = absExtrasPath.getAbsoluteFile();
             logMessage += "; Writing extras to " + absExtrasPath;
           }
-          Link.link(logger.branch(TreeLogger.TRACE, logMessage), module, generatedArtifacts,
-              allPerms, resultFiles, precompileOptions, options);
+          Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
+              module.getPublicResourceOracle(), generatedArtifacts, allPerms, resultFiles,
+              Sets.<PermutationResult>newHashSet(), precompileOptions, options);
 
           linkEvent.end();
           long compileDone = System.currentTimeMillis();

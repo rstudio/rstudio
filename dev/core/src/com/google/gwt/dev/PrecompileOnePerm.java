@@ -200,7 +200,7 @@ public class PrecompileOnePerm {
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();
     StandardLinkerContext linkerContext = new StandardLinkerContext(
-        TreeLogger.NULL, module, options);
+        TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(), options);
 
     if (!linkerContext.allLinkersAreShardable()) {
       logger.log(TreeLogger.ERROR,

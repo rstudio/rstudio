@@ -148,7 +148,6 @@ public class StandardGeneratorContextTest extends TestCase {
     genCtx.setCurrentGenerator(MockGenerator.class);
     GeneratedResource res = genCtx.commitResource(mockLogger, os);
     assertEquals(path, res.getPartialPath());
-    assertEquals(MockGenerator.class, res.getGenerator());
     assertEquals(1, artifactSet.size());
     assertTrue(artifactSet.contains(res));
     try {

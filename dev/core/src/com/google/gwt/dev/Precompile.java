@@ -413,8 +413,8 @@ public class Precompile {
           ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
       compilerContext = compilerContextBuilder.module(module).build();
 
-      StandardLinkerContext linkerContext =
-          new StandardLinkerContext(TreeLogger.NULL, module, options);
+      StandardLinkerContext linkerContext = new StandardLinkerContext(
+          TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(), options);
 
       boolean generateOnShards = true;
 

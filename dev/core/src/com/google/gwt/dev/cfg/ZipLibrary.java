@@ -13,6 +13,8 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.CompilerIoException;
@@ -27,6 +29,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.ByteStreams;
 import com.google.gwt.thirdparty.guava.common.io.CharStreams;
 
 import java.io.File;
@@ -93,6 +96,16 @@ class ZipLibrary implements Library {
       return readStringSet(Libraries.BUILD_RESOURCE_PATHS_ENTRY_NAME);
     }
 
+    private byte[] readBytes(String entryName) {
+      ZipEntry zipEntry = zipFile.getEntry(entryName);
+      try {
+        return ByteStreams.toByteArray(getInputStream(zipEntry));
+      } catch (IOException e) {
+        throw new CompilerIoException(
+            "Failed to read " + entryName + " in " + zipFile.getName() + " as bytes.", e);
+      }
+    }
+
     private CompilationUnit readCompilationUnitByTypeName(String typeName) {
       ZipEntry compilationUnitEntry =
           zipFile.getEntry(Libraries.computeCompilationUnitEntryName(typeName));
@@ -119,6 +132,18 @@ class ZipLibrary implements Library {
 
     private Set<String> readDependencyLibraryNames() {
       return readStringSet(Libraries.DEPENDENCY_LIBRARY_NAMES_ENTRY_NAME);
+    }
+
+    private ArtifactSet readGeneratedArtifacts() {
+      Set<String> generatedArtifactNames =
+          readStringSet(Libraries.GENERATED_ARTIFACT_NAMES_ENTRY_NAME);
+      ArtifactSet artifacts = new ArtifactSet();
+      for (String generatedArtifactName : generatedArtifactNames) {
+        StandardGeneratedResource artifact = new StandardGeneratedResource(generatedArtifactName,
+            readBytes(Libraries.DIRECTORY_GENERATED_ARTIFACTS + generatedArtifactName));
+        artifacts.add(artifact);
+      }
+      return artifacts;
     }
 
     private String readLibraryName() {
@@ -224,6 +249,7 @@ class ZipLibrary implements Library {
   private Set<String> classFilePaths;
   private Map<String, CompilationUnit> compilationUnitsByTypeName = Maps.newHashMap();
   private Set<String> dependencyLibraryNames;
+  private ArtifactSet generatedArtifacts;
   private String libraryName;
   private Multimap<String, String> newBindingPropertyValuesByName;
   private Multimap<String, String> newConfigurationPropertyValuesByName;
@@ -290,6 +316,14 @@ class ZipLibrary implements Library {
           Collections.unmodifiableSet(zipLibraryReader.readDependencyLibraryNames());
     }
     return dependencyLibraryNames;
+  }
+
+  @Override
+  public ArtifactSet getGeneratedArtifacts() {
+    if (generatedArtifacts == null) {
+      generatedArtifacts = zipLibraryReader.readGeneratedArtifacts();
+    }
+    return generatedArtifacts;
   }
 
   @Override

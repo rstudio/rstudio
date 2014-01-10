@@ -45,9 +45,11 @@ public class Libraries {
   public static final String DIRECTORY_BUILD_RESOURCES = "buildResources/";
   public static final String DIRECTORY_BYTECODE = "bytecode/";
   public static final String DIRECTORY_COMPILATION_UNITS = "compilationUnits/";
+  public static final String DIRECTORY_GENERATED_ARTIFACTS = "generatedArtifacts/";
   public static final String DIRECTORY_PUBLIC_RESOURCES = "publicResources/";
   public static final String EXTENSION_CLASS_FILE = ".class";
   public static final String EXTENSION_COMPILATION_UNITS = ".compilationUnit";
+  public static final String GENERATED_ARTIFACT_NAMES_ENTRY_NAME = "generatedArtifactNames.txt";
   public static final String KEY_VALUE_SEPARATOR = "->";
   public static final String LIBRARY_NAME_ENTRY_NAME = "libraryName.txt";
   public static final String LINE_SEPARATOR = "\n";

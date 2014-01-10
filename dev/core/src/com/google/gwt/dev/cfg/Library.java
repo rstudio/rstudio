@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -60,6 +61,11 @@ public interface Library {
    * analysis for link ordering and partial generator execution.
    */
   Set<String> getDependencyLibraryNames();
+
+  /**
+   * Returns the set of artifacts that were created by generators when compiling this library.
+   */
+  ArtifactSet getGeneratedArtifacts();
 
   /**
    * Returns the name of the library. Should be unique within the library dependency tree.

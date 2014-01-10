@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
@@ -48,6 +49,12 @@ public interface LibraryWriter {
    * Registers dependency on a set of other libraries.
    */
   void addDependencyLibraryNames(Set<String> dependencyLibraryNames);
+
+  /**
+   * Adds a generated artifact. Artifacts created by generators need to be collected so that they
+   * can be provided to the final linker.
+   */
+  void addGeneratedArtifacts(ArtifactSet generatedArtifacts);
 
   /**
    * Registers newly legal values on some binding property.

@@ -412,8 +412,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     GeneratedResource debuggerSource =
-        new StandardGeneratedResource(currentGenerator, gcup.getSourceMapPath(),
-            gcup.getSourceToken());
+        new StandardGeneratedResource(gcup.getSourceMapPath(), gcup.getSourceToken());
     debuggerSource.setVisibility(Visibility.Source);
     commitArtifact(logger, debuggerSource);
   }
@@ -463,7 +462,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
     // Add the GeneratedResource to the ArtifactSet
     GeneratedResource toReturn =
-        new StandardGeneratedResource(currentGenerator, partialPath, pendingResource.takeBytes());
+        new StandardGeneratedResource(partialPath, pendingResource.takeBytes());
     commitArtifact(logger, toReturn);
     pendingResources.remove(pendingResource.getPartialPath());
     return toReturn;

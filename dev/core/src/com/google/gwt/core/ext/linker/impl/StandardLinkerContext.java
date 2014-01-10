@@ -49,7 +49,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
-import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.OutputFileSet;
 
@@ -124,17 +124,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
 
+  private ResourceOracle publicResourceOracle;
+
   private final SortedSet<SelectionProperty> selectionProperties;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      JJSOptions jjsOptions) throws UnableToCompleteException {
+      ResourceOracle publicResourceOracle, JJSOptions jjsOptions) throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
-    this.jjsOptions = jjsOptions;
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
     this.moduleLastModified = module.lastModified();
+    this.publicResourceOracle = publicResourceOracle;
+    this.jjsOptions = jjsOptions;
 
     // Sort the linkers into the order they should actually run.
     linkerClasses = new ArrayList<Class<? extends Linker>>();
@@ -245,10 +248,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   public ArtifactSet getArtifactsForPublicResources(TreeLogger logger,
       ModuleDef module) {
     ArtifactSet artifacts = new ArtifactSet();
-    // TODO(stalcup): switch to sourcing publicResourceOracle from
-    // compilerContext.getPublicResourceOracle() so that this code will work properly regardless of
-    // how the surrounding context is initialized.
-    ResourceOracleImpl publicResourceOracle = module.getPublicResourceOracle();
     for (String path : publicResourceOracle.getPathNames()) {
       String partialPath = path.replace(File.separatorChar, '/');
       PublicResource resource = new StandardPublicResource(partialPath,

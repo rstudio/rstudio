@@ -13,6 +13,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -97,6 +98,7 @@ public class LibraryGroup {
   }
 
   private Set<String> compilationUnitTypeNames;
+  private ArtifactSet generatedArtifacts;
   private List<Library> libraries = Lists.newArrayList();
   private Map<String, Library> librariesByBuildResourcePath;
   private Map<String, Library> librariesByClassFilePath;
@@ -136,7 +138,7 @@ public class LibraryGroup {
    */
   public Multimap<String, String> gatherNewBindingPropertyValuesForGenerator(String generatorName) {
     Multimap<String, String> newBindingPropertyValuesByName = LinkedHashMultimap.create();
-    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, true)) {
+    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, false)) {
       newBindingPropertyValuesByName.putAll(
           libraryPendingGeneratorRun.getNewBindingPropertyValuesByName());
     }
@@ -151,7 +153,7 @@ public class LibraryGroup {
   public Multimap<String, String> gatherNewConfigurationPropertyValuesForGenerator(
       String generatorName) {
     Multimap<String, String> newConfigurationPropertyValuesByName = LinkedHashMultimap.create();
-    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, true)) {
+    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, false)) {
       newConfigurationPropertyValuesByName.putAll(
           libraryPendingGeneratorRun.getNewConfigurationPropertyValuesByName());
     }
@@ -164,8 +166,9 @@ public class LibraryGroup {
    */
   public Set<String> gatherNewReboundTypeNamesForGenerator(String generatorName) {
     Set<String> newReboundTypeNames = Sets.newHashSet();
-    for (Library libraryPendingGeneratorRun : gatherLibrariesForGenerator(generatorName, true)) {
-      newReboundTypeNames.addAll(libraryPendingGeneratorRun.getReboundTypeNames());
+    List<Library> unprocessedLibraries = gatherLibrariesForGenerator(generatorName, false);
+    for (Library unprocessedLibrary : unprocessedLibraries) {
+      newReboundTypeNames.addAll(unprocessedLibrary.getReboundTypeNames());
     }
     return newReboundTypeNames;
   }
@@ -176,7 +179,8 @@ public class LibraryGroup {
    */
   public Set<String> gatherOldReboundTypeNamesForGenerator(String generatorName) {
     Set<String> oldReboundTypeNames = Sets.newHashSet();
-    for (Library processedLibrary : gatherLibrariesForGenerator(generatorName, false)) {
+    List<Library> processedLibraries = gatherLibrariesForGenerator(generatorName, true);
+    for (Library processedLibrary : processedLibraries) {
       oldReboundTypeNames.addAll(processedLibrary.getReboundTypeNames());
     }
     return oldReboundTypeNames;
@@ -238,6 +242,16 @@ public class LibraryGroup {
       compilationUnitTypeNames = Collections.unmodifiableSet(compilationUnitTypeNames);
     }
     return compilationUnitTypeNames;
+  }
+
+  public ArtifactSet getGeneratedArtifacts() {
+    if (generatedArtifacts == null) {
+      generatedArtifacts = new ArtifactSet();
+      for (Library library : libraries) {
+        generatedArtifacts.addAll(library.getGeneratedArtifacts());
+      }
+    }
+    return generatedArtifacts;
   }
 
   /**
@@ -387,7 +401,8 @@ public class LibraryGroup {
    * Walks the library dependency graph and collects a list of libraries that either have or have
    * not run the given generator depending on the given gatherNotProcessed boolean.
    */
-  private List<Library> gatherLibrariesForGenerator(String generatorName, boolean generatorWasRun) {
+  private List<Library> gatherLibrariesForGenerator(
+      String generatorName, boolean gatherLibrariesThatHaveAlreadyRunThisGenerator) {
     Set<Library> exploredLibraries = Sets.newHashSet();
     LinkedList<Library> unexploredLibraries = Lists.newLinkedList();
     List<Library> librariesForGenerator = Lists.newArrayList();
@@ -397,13 +412,15 @@ public class LibraryGroup {
       Library library = unexploredLibraries.removeFirst();
       exploredLibraries.add(library);
 
-      boolean alreadyProcessed = library.getRanGeneratorNames().contains(generatorName);
-      if (generatorWasRun && alreadyProcessed) {
+      boolean libraryHasAlreadyRunThisGenerator =
+          library.getRanGeneratorNames().contains(generatorName);
+      if (!gatherLibrariesThatHaveAlreadyRunThisGenerator && libraryHasAlreadyRunThisGenerator) {
+        // don't gather this one
         continue;
       }
 
+      // gather this library
       librariesForGenerator.add(library);
-
       for (Library dependencyLibrary : asLibraries(library.getDependencyLibraryNames())) {
         if (exploredLibraries.contains(dependencyLibrary)) {
           continue;
