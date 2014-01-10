@@ -62,6 +62,7 @@ struct RProjectConfig
         packageBuildBinaryArgs(),
         packageCheckArgs(),
         packageRoxygenize(),
+        packageUseDevtools(false),
         makefilePath(),
         customScriptPath(),
         tutorialPath()
@@ -86,6 +87,7 @@ struct RProjectConfig
    std::string packageBuildBinaryArgs;
    std::string packageCheckArgs;
    std::string packageRoxygenize;
+   bool packageUseDevtools;
    std::string makefilePath;
    std::string customScriptPath;
    std::string tutorialPath;

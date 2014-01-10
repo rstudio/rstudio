@@ -464,6 +464,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageRoxygenize = "";
    }
 
+   // extract package use devtools
+   it = dcfFields.find("PackageUseDevtools");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageUseDevtools)))
+         return requiredFieldError("PackageUseDevtools", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageUseDevtools = false;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -571,6 +583,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
          // extra fields
          if (config.buildType == kBuildTypePackage)
          {
+            if (config.packageUseDevtools)
+            {
+               build.append("PackageUseDevtools: Yes\n");
+            }
+
             if (!config.packagePath.empty())
             {
                boost::format pkgFmt("PackagePath: %1%\n");

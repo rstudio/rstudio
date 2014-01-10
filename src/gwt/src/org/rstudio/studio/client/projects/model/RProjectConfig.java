@@ -134,6 +134,14 @@ public class RProjectConfig extends JavaScriptObject
       this.build_type = buildType;
    }-*/;
    
+   public native final boolean getPackageUseDevtools() /*-{
+      return this.package_use_devtools;
+   }-*/;
+   
+   public native final void setPackageUseDevtools(boolean useDevtools) /*-{
+      this.package_use_devtools = useDevtools;
+   }-*/;
+   
    public native final String getPackagePath() /*-{
       return this.package_path;
    }-*/;
