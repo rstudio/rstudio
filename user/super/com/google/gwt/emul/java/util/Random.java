@@ -34,6 +34,8 @@
  */
 package java.util;
 
+import com.google.gwt.core.client.JsDate;
+
 /**
  * This class provides methods that generates pseudo-random numbers of different
  * types, such as {@code int}, {@code long}, {@code double}, and {@code float}.
@@ -81,14 +83,6 @@ public class Random {
   }
 
   /**
-   * Return the number of milliseconds since 1/1/1970 as a double
-   * in order to avoid the use os LongLib.
-   */
-  private static native double currentTimeMillis() /*-{
-    return (new Date()).getTime();
-  }-*/;
-
-  /**
    * The boolean value indicating if the second Gaussian number is available.
    */
   private boolean haveNextNextGaussian = false;
@@ -115,7 +109,9 @@ public class Random {
    * @see #setSeed
    */
   public Random() {
-    double seed = uniqueSeed++ + currentTimeMillis();
+    // JsDate.now used instead of System.currentTimeMillis()
+    // as it returns a double in order to avoid the use os LongLib.
+    double seed = uniqueSeed++ + JsDate.now();
     int hi = (int) Math.floor(seed * twoToTheMinus24) & 0xffffff;
     int lo = (int) (seed - (hi * twoToThe24));
     setSeed(hi, lo);

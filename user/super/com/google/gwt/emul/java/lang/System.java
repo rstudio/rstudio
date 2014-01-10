@@ -15,6 +15,7 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.impl.Impl;
 
 import java.io.PrintStream;
@@ -90,7 +91,7 @@ public final class System {
   }
 
   public static long currentTimeMillis() {
-    return (long) currentTimeMillis0();
+    return (long) JsDate.now();
   }
 
   /**
@@ -128,10 +129,6 @@ public final class System {
       return !destComp.isPrimitive();
     }
   }
-
-  private static native double currentTimeMillis0() /*-{
-    return (new Date()).getTime();
-  }-*/;
 
   /**
    * Returns the length of an array via Javascript.

@@ -25,9 +25,9 @@ public class Duration {
    * double. Because emulated long math is significantly slower than doubles in
    * Production Mode, this method is to be preferred.
    */
-  public static native double currentTimeMillis() /*-{
-    return (new Date()).getTime();
-  }-*/;
+  public static double currentTimeMillis() {
+    return JsDate.now();
+  }
 
   private static native int uncheckedConversion(double elapsed) /*-{
     return elapsed;
