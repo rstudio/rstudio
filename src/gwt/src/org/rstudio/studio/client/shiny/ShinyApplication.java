@@ -15,30 +15,42 @@
 package org.rstudio.studio.client.shiny;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
 {
+   public interface Binder
+   extends CommandBinder<Commands, ShinyApplication> {}
+
    @Inject
    public ShinyApplication(EventBus eventBus, 
                            Commands commands,
+                           Binder binder,
+                           Provider<UIPrefs> pPrefs,
                            final SatelliteManager satelliteManager)
    {
       eventBus_ = eventBus;
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       satelliteManager_ = satelliteManager;
       commands_ = commands;
+      pPrefs_ = pPrefs;
       
+      binder.bind(commands, this);
       exportShinyAppClosedCallback();
    }
    
@@ -59,6 +71,24 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       }
    }
 
+   @Handler
+   public void onShinyRunInPane()
+   {
+      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_PANE);
+   }
+   
+   @Handler
+   public void onShinyRunInViewer()
+   {
+      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_WINDOW);
+   }
+
+   @Handler
+   public void onShinyRunInBrowser()
+   {
+      setShinyViewerType(ShinyViewerType.SHINY_VIEWER_BROWSER);
+   }
+   
    public void launchShinyApplication(String filePath)
    {
       String dir = filePath.substring(0, filePath.lastIndexOf("/"));
@@ -99,9 +129,17 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       ); 
    }-*/;
 
+   private void setShinyViewerType(int viewerType)
+   {
+      UIPrefs prefs = pPrefs_.get();
+      prefs.shinyViewerType().setGlobalValue(viewerType);
+      prefs.writeUIPrefs();
+   }
+   
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
    private final Commands commands_;
+   private final Provider<UIPrefs> pPrefs_;
 
    private String currentAppFilePath_;
 }

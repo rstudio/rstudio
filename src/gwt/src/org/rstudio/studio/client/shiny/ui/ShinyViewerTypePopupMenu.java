@@ -23,7 +23,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.inject.Inject;
 
-// An extension of the toolbar popup menu that gets the 
+// An extension of the toolbar popup menu that gets the current Shiny viewer
+// type and checks the appropriate command before showing the menu
 public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
 {
    @Inject
