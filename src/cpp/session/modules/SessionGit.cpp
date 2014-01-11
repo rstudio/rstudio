@@ -2619,6 +2619,10 @@ std::string githubBaseUrl()
    if (repo.empty())
       return std::string();
 
+   // if the repo starts with / then remove it
+   if (repo[0] == '/')
+      repo = repo.substr(1);
+
    // strip the .git off the end and form the github url
    boost::algorithm::replace_last(repo, ".git", "");
    return "https://github.com/" + repo;
