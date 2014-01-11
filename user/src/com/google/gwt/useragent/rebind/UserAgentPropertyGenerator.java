@@ -22,8 +22,8 @@ import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.SortedSet;
 
 /**
@@ -33,123 +33,64 @@ import java.util.SortedSet;
 public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
 
   /**
-   * List of valid user agent selection property values, which helps ensure that
-   * UserAgent.gwt.xml stays in sync with the
-   * {@link #writeUserAgentPropertyJavaScript(SourceWriter,SortedSet)} method body of this
-   * class.
+   * The list of {@code user.agent} values listed here should be kept in sync with
+   * {@code UserAgent.gwt.xml}.
+   * <p>Note that the order of enums matter as the script selection is based on running
+   * these predicates in order and matching the first one that returns {@code true}.
    */
-  private static final List<String> VALID_VALUES = Arrays.asList(new String[]{
-      "ie6", "ie8", "gecko1_8", "safari", "opera", "ie9", "ie10"});
+  private enum UserAgent {
+    opera("return (ua.indexOf('opera') != -1);"),
+    safari("return (ua.indexOf('webkit') != -1);"),
+    ie10("return (ua.indexOf('msie') != -1 && ($doc.documentMode == 10));"),
+    ie9("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 9));"),
+    ie8("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 8));"),
+    gecko1_8("return (ua.indexOf('gecko') != -1);");
 
-  /**
-   * List of predicates to identify user agent.
-   * The order of evaluation is from top to bottom, i.e., the first matching
-   * predicate will have the associated ua token returned.
-   * ua is defined in an outer scope and is therefore visible in
-   * the predicate javascript fragment.
-   */
-  private static UserAgentPropertyGeneratorPredicate[] predicates =
-    new UserAgentPropertyGeneratorPredicate[] {
+    private final String predicateBlock;
 
-      // opera
-      new UserAgentPropertyGeneratorPredicate("opera")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('opera') != -1);")
-      .returns("'opera'"),
+    private UserAgent(String predicateBlock) {
+      this.predicateBlock = predicateBlock;
+    }
 
-      // webkit family
-      new UserAgentPropertyGeneratorPredicate("safari")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('webkit') != -1);")
-      .returns("'safari'"),
-
-      // IE10
-      new UserAgentPropertyGeneratorPredicate("ie10")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 10));")
-      .returns("'ie10'"),
-
-      // IE9
-      new UserAgentPropertyGeneratorPredicate("ie9")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 9));")
-      .returns("'ie9'"),
-
-      // IE8
-      new UserAgentPropertyGeneratorPredicate("ie8")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('msie') != -1 && ($doc.documentMode >= 8));")
-      .returns("'ie8'"),
-
-      // IE6
-      new UserAgentPropertyGeneratorPredicate("ie6")
-      .getPredicateBlock()
-        .println("var result = /msie ([0-9]+)\\.([0-9]+)/.exec(ua);")
-        .println("if (result && result.length == 3)")
-        .indent()
-          .println("return (makeVersion(result) >= 6000);")
-        .outdent()
-      .returns("'ie6'"),
-
-      // gecko family
-      new UserAgentPropertyGeneratorPredicate("gecko1_8")
-      .getPredicateBlock()
-        .println("return (ua.indexOf('gecko') != -1);")
-      .returns("'gecko1_8'"),
-  };
+    private static Set<String> getKnownAgents() {
+      HashSet<String> userAgents = new HashSet<String>();
+      for (UserAgent userAgent : values()) {
+        userAgents.add(userAgent.name());
+      }
+      return userAgents;
+    }
+  }
 
   /**
    * Writes out the JavaScript function body for determining the value of the
    * <code>user.agent</code> selection property. This method is used to create
    * the selection script and by {@link UserAgentGenerator} to assert at runtime
-   * that the correct user agent permutation is executing. The list of
-   * <code>user.agent</code> values listed here should be kept in sync with
-   * {@link #VALID_VALUES} and <code>UserAgent.gwt.xml</code>.
+   * that the correct user agent permutation is executing.
    */
-  static void writeUserAgentPropertyJavaScript(SourceWriter body, 
+  static void writeUserAgentPropertyJavaScript(SourceWriter body,
       SortedSet<String> possibleValues) {
 
     // write preamble
     body.println("var ua = navigator.userAgent.toLowerCase();");
-    body.println("var makeVersion = function(result) {");
-    body.indent();
-    body.println("return (parseInt(result[1]) * 1000) + parseInt(result[2]);");
-    body.outdent();
-    body.println("};");
 
-    // write only selected user agents 
-    for (int i = 0; i < predicates.length; i++) {
-      if (possibleValues.contains(predicates[i].getUserAgent())) {
+    for (UserAgent userAgent : UserAgent.values()) {
+      // write only selected user agents
+      if (possibleValues.contains(userAgent.name())) {
         body.println("if ((function() { ");
-        body.indent();
-        body.print(predicates[i].toString());
-        body.outdent();
-        body.println("})()) return " + predicates[i].getReturnValue() + ";");
+        body.indentln(userAgent.predicateBlock);
+        body.println("})()) return '%s';", userAgent.name());
       }
     }
-    
+
     // default return
     body.println("return 'unknown';");
   }
 
   @Override
-  public String generate(TreeLogger logger, SortedSet<String> possibleValues,
-      String fallback, SortedSet<ConfigurationProperty> configProperties) {
-    for (String value : possibleValues) {
-      if (!VALID_VALUES.contains(value)) {
-        logger.log(TreeLogger.WARN, "Unrecognized "
-            + UserAgentGenerator.PROPERTY_USER_AGENT + " property value '"
-            + value + "', possibly due to UserAgent.gwt.xml and "
-            + UserAgentPropertyGenerator.class.getName()
-            + " being out of sync." + " Use <set-configuration-property name=\""
-            + UserAgentAsserterGenerator.PROPERTY_USER_AGENT_RUNTIME_WARNING
-            + "\" value=\"false\"/> to suppress this warning message.");
-      }
-    }
-    // make sure that the # of ua in VALID_VALUES
-    // is the same of predicates. maybe should iterate
-    // to make sure each one has a match.
-    assert predicates.length == VALID_VALUES.size();
+  public String generate(TreeLogger logger, SortedSet<String> possibleValues, String fallback,
+      SortedSet<ConfigurationProperty> configProperties) {
+    assertUserAgents(logger, possibleValues);
+
     StringSourceWriter body = new StringSourceWriter();
     body.println("{");
     body.indent();
@@ -158,5 +99,15 @@ public class UserAgentPropertyGenerator implements PropertyProviderGenerator {
     body.println("}");
 
     return body.toString();
+  }
+
+  private static void assertUserAgents(TreeLogger logger, SortedSet<String> possibleValues) {
+    HashSet<String> unknownValues = new HashSet<String>(possibleValues);
+    unknownValues.removeAll(UserAgent.getKnownAgents());
+    if (!unknownValues.isEmpty()) {
+      logger.log(TreeLogger.WARN, "Unrecognized " + UserAgentGenerator.PROPERTY_USER_AGENT
+          + " values " + unknownValues + ", possibly due to UserAgent.gwt.xml and "
+          + UserAgentPropertyGenerator.class.getName() + " being out of sync.");
+    }
   }
 }
