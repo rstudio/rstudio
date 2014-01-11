@@ -927,15 +927,19 @@ private:
 
    void viewDirAfterFailedCheck(const r_util::RPackageInfo& pkgInfo)
    {
-      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
-      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+      if (!terminationRequested_)
+      {
+         FilePath buildPath = projects::projectContext()
+                                       .buildTargetPath().parent();
+         FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
-      json::Object dataJson;
-      dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
-      dataJson["activate"] = true;
-      ClientEvent event(client_events::kDirectoryNavigate, dataJson);
+         json::Object dataJson;
+         dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
+         dataJson["activate"] = true;
+         ClientEvent event(client_events::kDirectoryNavigate, dataJson);
 
-      module_context::enqueClientEvent(event);
+         module_context::enqueClientEvent(event);
+      }
    }
 
    void executeMakefileBuild(const std::string& type,
