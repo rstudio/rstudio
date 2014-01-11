@@ -180,11 +180,12 @@ public class JsNamerTest extends TestCase {
     public ConfigurationProperty getConfigurationProperty(String propertyName)
         throws BadPropertyValueException {
 
-      if (JsNamer.BLACKLIST.equals(propertyName) && blacklist != null) {
-        return new DefaultConfigurationProperty(JsNamer.BLACKLIST, blacklist);
+      if (ReservedNames.BLACKLIST.equals(propertyName) && blacklist != null) {
+        return new DefaultConfigurationProperty(ReservedNames.BLACKLIST, blacklist);
       }
-      if (JsNamer.BLACKLIST_SUFFIXES.equals(propertyName) && blacklistSuffixes != null) {
-        return new DefaultConfigurationProperty(JsNamer.BLACKLIST_SUFFIXES, blacklistSuffixes);
+      if (ReservedNames.BLACKLIST_SUFFIXES.equals(propertyName) && blacklistSuffixes != null) {
+        return new DefaultConfigurationProperty(ReservedNames.BLACKLIST_SUFFIXES,
+            blacklistSuffixes);
       }
       throw new BadPropertyValueException("No property value for " + propertyName);
     }

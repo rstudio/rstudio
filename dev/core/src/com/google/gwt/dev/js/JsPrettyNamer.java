@@ -121,7 +121,7 @@ public class JsPrettyNamer extends JsNamer {
    * @param taken the set of names that we've already used.
    */
   private boolean isAvailable(String candidate, JsScope scope, Set<String> taken) {
-    if (!isAvailableIdent(candidate)) {
+    if (!reserved.isAvailable(candidate)) {
       return false;
     }
 

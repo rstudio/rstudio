@@ -79,6 +79,6 @@ public class JsVerboseNamer extends JsNamer {
   }
 
   protected boolean isLegal(String newIdent) {
-    return isAvailableIdent(newIdent);
+    return reserved.isAvailable(newIdent);
   }
 }

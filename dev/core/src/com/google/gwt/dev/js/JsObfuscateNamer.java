@@ -132,7 +132,7 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
   }
 
   private boolean isLegal(JsScope scope, String newIdent) {
-    if (!isAvailableIdent(newIdent)) {
+    if (!reserved.isAvailable(newIdent)) {
       return false;
     }
     /*
