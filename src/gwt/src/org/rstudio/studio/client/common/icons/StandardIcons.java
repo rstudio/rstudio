@@ -34,4 +34,5 @@ public interface StandardIcons extends ClientBundle
    ImageResource function();
    ImageResource git();
    ImageResource svn();
+   ImageResource viewer_window();
 }

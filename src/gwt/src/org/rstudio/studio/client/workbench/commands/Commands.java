@@ -336,8 +336,13 @@ public abstract class
    public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
    
+   // Shiny IDE features
+   public abstract AppCommand reloadShinyApp();
+   public abstract AppCommand shinyRunInPane();
+   public abstract AppCommand shinyRunInViewer();
+   public abstract AppCommand shinyRunInBrowser();
+   
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
-   public abstract AppCommand reloadShinyApp();
 }

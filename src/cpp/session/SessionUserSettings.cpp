@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include "modules/SessionErrors.hpp"
+#include "modules/SessionShinyViewer.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -263,6 +264,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    bool handleErrorsInUserCodeOnly = readPref<bool>(prefs, "handle_errors_in_user_code_only", true);
    pHandleErrorsInUserCodeOnly_.reset(new bool(handleErrorsInUserCodeOnly));
+
+   int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
+   pShinyViewerType_.reset(new int(shinyViewerType));
 }
 
 
@@ -306,6 +310,11 @@ std::string UserSettings::spellingLanguage() const
 bool UserSettings::handleErrorsInUserCodeOnly() const
 {
    return readUiPref<bool>(pHandleErrorsInUserCodeOnly_);
+}
+
+int UserSettings::shinyViewerType() const
+{
+   return readUiPref<int>(pShinyViewerType_);
 }
 
 std::vector<std::string> UserSettings::spellingCustomDictionaries() const

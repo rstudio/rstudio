@@ -94,6 +94,7 @@ public:
    std::string defaultLatexProgram() const;
    bool alwaysEnableRnwCorcordance() const;
    bool handleErrorsInUserCodeOnly() const;
+   int shinyViewerType() const;
 
    bool rProfileOnResume() const;
    void setRprofileOnResume(bool rProfileOnResume);
@@ -195,6 +196,7 @@ private:
    mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
    mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
+   mutable boost::scoped_ptr<int> pShinyViewerType_;
 };
    
 } // namespace session
