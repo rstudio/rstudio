@@ -352,7 +352,7 @@ private:
          }
          else if ( (type == kCheckPackage) &&
                    options_.autoRoxygenizeForCheck &&
-                   !projectConfig().packageUseDevtools)
+                   !useDevtools())
          {
             return true;
          }
@@ -380,8 +380,8 @@ private:
       }
 
       boost::format fmt;
-      if (projectConfig().packageUseDevtools)
-         fmt = boost::format(" devtools::document('.', , roclets=c(%1%))");
+      if (useDevtools())
+         fmt = boost::format(" devtools::document('.', roclets=c(%1%))");
       else
          fmt = boost::format(" roxygen2::roxygenize('.', roclets=c(%1%))");
       std::string roxygenizeCall = boost::str(
@@ -623,7 +623,7 @@ private:
 
       else if (type == kCheckPackage)
       {
-         if (projectConfig().packageUseDevtools)
+         if (useDevtools())
             devtoolsCheckPackage(packagePath, cb, pkgOptions);
          else
             checkPackage(rBinDir, packagePath, cb, pkgOptions);
@@ -934,6 +934,23 @@ private:
    {
       enqueBuildOutput(kBuildOutputError, msg);
       enqueBuildCompleted();
+   }
+
+   bool useDevtools()
+   {
+      if (projectConfig().packageUseDevtools)
+      {
+         bool haveRequiredDevtools = false;
+         Error error = r::exec::RFunction(".rs.haveRequiredDevtools")
+                                               .call(&haveRequiredDevtools);
+         if (error)
+            LOG_ERROR(error);
+         return haveRequiredDevtools;
+      }
+      else
+      {
+         return false;
+      }
    }
 
 public:

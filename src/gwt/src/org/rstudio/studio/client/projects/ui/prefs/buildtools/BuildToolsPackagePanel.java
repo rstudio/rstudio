@@ -66,7 +66,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       });
       
       chkUseDevtools_ = checkBox(
-            "Use devtools to document, check, and build package");
+            "Use devtools package functions if available");
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
@@ -135,6 +135,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    protected void provideDefaults()
    {
       installAdditionalArguments_.setText("--no-multiarch --with-keep.source");
+      chkUseDevtools_.setValue(true);
    }
 
    @Override

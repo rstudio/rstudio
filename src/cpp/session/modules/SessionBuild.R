@@ -26,3 +26,7 @@ setHook("sourceCpp.onBuildComplete", function(succeeded, output) {
    .rs.isPackageInstalled("Rcpp") && (.rs.getPackageVersion("Rcpp") >= "0.10.1")
 })
 
+.rs.addFunction("haveRequiredDevtools", function() {
+   .rs.isPackageInstalled("devtools") && (.rs.getPackageVersion("devtools") >= "1.4")
+})
+

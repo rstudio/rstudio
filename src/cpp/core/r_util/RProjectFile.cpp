@@ -152,6 +152,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
                              RProjectConfig* pConfig)
 {
    pConfig->buildType = kBuildTypePackage;
+   pConfig->packageUseDevtools = true;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
