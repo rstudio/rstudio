@@ -32,11 +32,13 @@ import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -68,6 +70,7 @@ public class TextEditingTargetWidget
       srcOnSaveLabel_ =
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
+      shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -206,7 +209,15 @@ public class TextEditingTargetWidget
                        chunksMenu, 
                        true);
       toolbar.addRightWidget(chunksButton_);
-            
+      
+      ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
+      shinyLaunchButton_ = new ToolbarButton(
+                       "", 
+                       StandardIcons.INSTANCE.viewer_window(),
+                       shinyLaunchMenu, 
+                       true);
+      shinyLaunchButton_.setVisible(false);
+      toolbar.addRightWidget(shinyLaunchButton_);
       return toolbar;
    }
    
@@ -297,6 +308,7 @@ public class TextEditingTargetWidget
          runButton_.setVisible(false);
          sourceMenuButton_.setVisible(false);
          chunksButton_.setVisible(false);
+         shinyLaunchButton_.setVisible(true);
          setSourceButtonFromShinyState();
       }
       
@@ -525,6 +537,7 @@ public class TextEditingTargetWidget
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
+   private final ShinyViewerTypePopupMenu shinyViewerMenu_;
    private String extendedType_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
@@ -542,6 +555,7 @@ public class TextEditingTargetWidget
    private ToolbarButton chunksButton_;
    private ToolbarButton helpMenuButton_;
    private ToolbarButton rcppHelpButton_;
+   private ToolbarButton shinyLaunchButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;

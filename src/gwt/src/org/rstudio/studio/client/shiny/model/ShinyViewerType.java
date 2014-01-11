@@ -1,5 +1,5 @@
 /*
- * ShinyServerOperations.java
+ * ShinyViewerType.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,16 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.shiny.model;
+package org.rstudio.studio.client.shiny.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
+import com.google.gwt.core.client.JavaScriptObject;
 
-public interface ShinyServerOperations
+public class ShinyViewerType extends JavaScriptObject
 {
-   void getShinyCapabilities(
-               ServerRequestCallback<ShinyCapabilities> requestCallback);
-
-   void getShinyViewerType(
-               ServerRequestCallback<ShinyViewerType> requestCallback);
+   protected ShinyViewerType() {}
+   
+   public final static int SHINY_VIEWER_USER = 0;
+   public final static int SHINY_VIEWER_NONE = 1;
+   public final static int SHINY_VIEWER_PANE = 2;
+   public final static int SHINY_VIEWER_WINDOW = 3;
+   public final static int SHINY_VIEWER_BROWSER = 4;
+   
+   public final native int getViewerType() /*-{ 
+      return this.viewerType;
+   }-*/;
 }

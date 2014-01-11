@@ -29,6 +29,7 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 using namespace core;
 
@@ -84,18 +85,65 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
    return R_NilValue;
 }
 
-} // anonymous namespace
+void setShinyViewerType(int viewerType)
+{
+   Error error =
+      r::exec::RFunction(".rs.setShinyViewerType",
+                         viewerType).call();
+   if (error)
+      LOG_ERROR(error);
+}
 
+void onUserSettingsChanged(boost::shared_ptr<int> pShinyViewerType)
+{
+   int shinyViewerType = userSettings().shinyViewerType();
+   if (shinyViewerType != *pShinyViewerType)
+   {
+      setShinyViewerType(shinyViewerType);
+      *pShinyViewerType = shinyViewerType;
+   }
+}
+
+Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
+{
+   SEXP shinyBrowser = r::options::getOption("shiny.launch.browser");
+   *pShinyViewerType = userSettings().shinyViewerType();
+
+   // If the user hasn't specified a value for the shiny.launch.browser
+   // preference, set it to the one specified in UI prefs.
+   if (shinyBrowser == R_NilValue)
+   {
+      setShinyViewerType(*pShinyViewerType);
+   }
+
+   return Success();
+}
+
+} // anonymous namespace
 
 Error initialize()
 {
+   using boost::bind;
+   using namespace module_context;
+
+   boost::shared_ptr<int> pShinyViewerType =
+         boost::make_shared<int>(SHINY_VIEWER_NONE);
+
    R_CallMethodDef methodDefViewer;
    methodDefViewer.name = "rs_shinyviewer";
    methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
    methodDefViewer.numArgs = 2;
    r::routines::addCallMethod(methodDefViewer);
 
-   return Success();
+   userSettings().onChanged.connect(bind(onUserSettingsChanged,
+                                         pShinyViewerType));
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionShinyViewer.R"))
+      (bind(initShinyViewerPref, pShinyViewerType));
+
+   return initBlock.execute();
 }
 
 } // namespace shiny_viewer

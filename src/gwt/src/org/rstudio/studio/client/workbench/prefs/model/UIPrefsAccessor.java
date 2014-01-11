@@ -19,6 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -317,6 +318,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_internal_functions", false);
    }
    
+   public PrefValue<Integer> shinyViewerType()
+   {
+      return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
+   }
+
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())
