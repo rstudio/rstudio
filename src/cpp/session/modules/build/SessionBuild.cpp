@@ -405,7 +405,7 @@ private:
       if (useDevtools())
          fmt = boost::format("devtools::document(roclets=c(%1%))");
       else
-         fmt = boost::format("roxygen2::roxygenize(roclets=c(%1%))");
+         fmt = boost::format("roxygen2::roxygenize('.', roclets=c(%1%))");
       std::string roxygenizeCall = boost::str(
          fmt % boost::algorithm::join(roclets, ", "));
 
