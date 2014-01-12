@@ -120,23 +120,12 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          // in desktop mode make sure we have the right version of httpuv
          if (options().programMode() == kSessionProgramModeDesktop)
          {
-            if (module_context::isPackageInstalled("httpuv"))
+            if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
             {
-               // version check
-               bool hasRequiredVersion = false;
-               Error error = r::exec::evaluateString(
-                ".rs.getPackageVersion('httpuv') >= 1.2", &hasRequiredVersion);
-               if (error)
-                  LOG_ERROR(error);
-
-               // print warning if necessary
-               if (!hasRequiredVersion)
-               {
-                  module_context::consoleWriteError("\nWARNING: To run "
-                    "applications within the RStudio Viewer pane you need to "
-                    "install the latest version of the httpuv package from "
-                    "CRAN (version 1.2 or higher is required).\n\n");
-               }
+               module_context::consoleWriteError("\nWARNING: To run "
+                 "applications within the RStudio Viewer pane you need to "
+                 "install the latest version of the httpuv package from "
+                 "CRAN (version 1.2 or higher is required).\n\n");
             }
          }
 

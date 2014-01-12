@@ -907,6 +907,19 @@ bool isPackageInstalled(const std::string& packageName)
    return !error ? installed : false;
 }
 
+bool isPackageVersionInstalled(const std::string& packageName,
+                               const std::string& version)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
+   bool installed;
+   r::exec::RFunction func(".rs.isPackageVersionInstalled",
+                           packageName, version);
+   Error error = func.call(&installed);
+   return !error ? installed : false;
+}
+
+
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package

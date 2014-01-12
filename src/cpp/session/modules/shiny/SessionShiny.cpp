@@ -41,15 +41,7 @@ void onPackageLoaded(const std::string& pkgname)
    {
       if (pkgname == "shiny")
       {
-         // version check
-         bool hasRequiredVersion = false;
-         Error error = r::exec::evaluateString(
-              ".rs.getPackageVersion('shiny') > 0.7", &hasRequiredVersion);
-         if (error)
-            LOG_ERROR(error);
-
-         // print warning if necessary
-         if (!hasRequiredVersion)
+         if (!module_context::isPackageVersionInstalled("shiny", "0.8"))
          {
             module_context::consoleWriteError("\nWARNING: To run Shiny "
               "applications with RStudio you need to install the "

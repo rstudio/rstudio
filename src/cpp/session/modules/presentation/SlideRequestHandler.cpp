@@ -234,11 +234,7 @@ std::string embeddedWebFonts()
 
 bool hasKnitrVersion_1_2()
 {
-   bool hasVersion = false;
-   Error error = r::exec::RFunction(".rs.hasKnitrVersion_1_2").call(&hasVersion);
-   if (error)
-      LOG_ERROR(error);
-   return hasVersion;
+   return module_context::isPackageVersionInstalled("knitr", "1.2");
 }
 
 std::string extractKnitrError(const std::string& stdError)

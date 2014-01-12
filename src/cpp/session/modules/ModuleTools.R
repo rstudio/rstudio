@@ -90,3 +90,8 @@
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
 })
 
+.rs.addFunction("isPackageVersionInstalled", function(name, version) {
+   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+})
+
+

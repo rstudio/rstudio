@@ -1022,19 +1022,8 @@ private:
 
    bool useDevtools()
    {
-      if (projectConfig().packageUseDevtools)
-      {
-         bool haveRequiredDevtools = false;
-         Error error = r::exec::RFunction(".rs.haveRequiredDevtools")
-                                               .call(&haveRequiredDevtools);
-         if (error)
-            LOG_ERROR(error);
-         return haveRequiredDevtools;
-      }
-      else
-      {
-         return false;
-      }
+      return projectConfig().packageUseDevtools &&
+             module_context::isPackageVersionInstalled("devtools", "1.4");
    }
 
 public:
@@ -1597,12 +1586,7 @@ namespace module_context {
 
 bool haveRcppAttributes()
 {
-   bool haveAttributes = false;
-   Error error = r::exec::RFunction(".rs.haveRcppAttributes")
-                                                        .call(&haveAttributes);
-   if (error)
-      LOG_ERROR(error);
-   return haveAttributes;
+   return module_context::isPackageVersionInstalled("Rcpp", "0.10.1");
 }
 
 bool canBuildCpp()
