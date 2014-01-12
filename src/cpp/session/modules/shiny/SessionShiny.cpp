@@ -120,7 +120,11 @@ Error initialize()
 {
    using namespace module_context;
    events().onPackageLoaded.connect(onPackageLoaded);
-   events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
+
+   // run app features require shiny v0.8 (the version where the
+   // shiny.launch.browser option can be a function)
+   if (module_context::isPackageVersionInstalled("shiny", "0.8"))
+      events().onDetectSourceExtendedType.connect(onDetectShinySourceType);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
