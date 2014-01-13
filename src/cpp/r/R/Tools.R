@@ -18,11 +18,11 @@
 
 # add a function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addFunction", function(
-   name, FN, hideFromDebugger = FALSE)
+   name, FN, attrs = list())
 { 
    fullName = paste(".rs.", name, sep="")
-   if (hideFromDebugger)
-      attr(FN, "hideFromDebugger") <- TRUE
+   for (attrib in names(attrs))
+     attr(FN, attrib) <- attrs[[attrib]]
    assign(fullName, FN, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })

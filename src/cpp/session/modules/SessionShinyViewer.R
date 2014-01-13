@@ -13,13 +13,13 @@
 #
 #
 
-.rs.addFunction("invokeShinyWindowViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd()))
-})
-
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
    invisible(.Call("rs_viewer", url, NULL))
-})
+}, attrs = list(shinyViewerType = 2))
+
+.rs.addFunction("invokeShinyWindowViewer", function(url) {
+   invisible(.Call("rs_shinyviewer", url, getwd()))
+}, attrs = list(shinyViewerType = 3))
 
 .rs.addFunction("setShinyViewerType", function(type) {
    if (type == 1)
@@ -36,12 +36,10 @@
    viewer <- getOption("shiny.launch.browser")
    if (identical(viewer, FALSE))
       return(1)
-   else if (identical(viewer, .rs.invokeShinyPaneViewer))
-      return(2)
-   else if (identical(viewer, .rs.invokeShinyWindowViewer))
-      return(3)
    else if (identical(viewer, TRUE))
       return(4)
+   else if (is.function(viewer) && is.numeric(attr(viewer, "shinyViewerType")))
+      return(attr(viewer, "shinyViewerType"))
    return(0)
 })
 
