@@ -1689,17 +1689,18 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
 }
 
 
-std::string githubUrl(const std::string& view,
-                      const FilePath& filePath = FilePath())
+std::string getUpstream(const std::string& branch = std::string())
 {
-   if (!isGitEnabled())
-      return std::string();
+   // determine the query (no explicit branch means current branch)
+   std::string query = "@{upstream}";
+   if (!branch.empty())
+      query = branch + query;
 
-   // first get the upstream name
+   // get the upstream
    std::string upstream;
    core::system::ProcessResult result;
    Error error = gitExec(ShellArgs() <<
-                           "rev-parse" << "--abbrev-ref" << "@{upstream}",
+                           "rev-parse" << "--abbrev-ref" << query,
                          s_git_.root(),
                          &result);
    if (error)
@@ -1707,15 +1708,30 @@ std::string githubUrl(const std::string& view,
       LOG_ERROR(error);
       return std::string();
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      // we assume origin/master for no upstream
-      upstream = "origin/master";
-   }
-   else
+   else if (result.exitStatus == EXIT_SUCCESS)
    {
       upstream = boost::algorithm::trim_copy(result.stdOut);
    }
+
+   return upstream;
+}
+
+std::string githubUrl(const std::string& view,
+                      const FilePath& filePath = FilePath())
+{
+   if (!isGitEnabled())
+      return std::string();
+
+   // get the upstream for the current branch
+   std::string upstream = getUpstream();
+
+   // if there is none then get the upstream for master
+   if (upstream.empty())
+      upstream = getUpstream("master");
+
+   // if there still isn't one then fall back to origin/master
+   if (upstream.empty())
+      upstream = "origin/master";
 
    // parse out the upstream name and branch
    std::string::size_type pos = upstream.find_first_of('/');
@@ -1728,8 +1744,8 @@ std::string githubUrl(const std::string& view,
    std::string upstreamBranch = upstream.substr(pos + 1);
 
    // now get the remote url
-   result = core::system::ProcessResult();
-   error = gitExec(ShellArgs() <<
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
                    "config" << "--get" << ("remote." + upstreamName + ".url"),
                    s_git_.root(),
                    &result);
