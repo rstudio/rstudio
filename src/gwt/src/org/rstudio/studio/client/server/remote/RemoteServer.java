@@ -63,6 +63,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
@@ -3106,6 +3107,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
 
+   @Override
+   public void getShinyRunCmd(String shinyAppDir, 
+                              ServerRequestCallback<ShinyRunCmd> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(shinyAppDir));
+      sendRequest(RPC_SCOPE,
+            GET_SHINY_RUN_CMD,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -3380,4 +3393,5 @@ public class RemoteServer implements Server
    private static final String GET_PRODUCT_INFO = "get_product_info";
 
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";
+   private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
 }

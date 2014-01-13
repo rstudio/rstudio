@@ -105,6 +105,37 @@ void onUserSettingsChanged(boost::shared_ptr<int> pShinyViewerType)
    }
 }
 
+Error getShinyRunCmd(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string targetPath;
+   Error error = json::readParams(request.params, &targetPath);
+   if (error)
+      return error;
+
+   // Consider: if the shiny namespace is attached to the search path, we
+   // don't need to emit "shiny::".
+   std::string runCmd = "shiny::runApp(";
+   std::string dir = module_context::safeCurrentPath().pathRelativeTo(
+            module_context::resolveAliasedPath(targetPath),
+            module_context::userHomePath());
+   if (dir != ".")
+   {
+      // runApp defaults to the current working directory, so don't specify
+      // it unless we need to.
+      runCmd.append("'");
+      runCmd.append(dir);
+      runCmd.append("'");
+   }
+   runCmd.append(")");
+
+   json::Object dataJson;
+   dataJson["run_cmd"] = runCmd;
+   pResponse->setResult(dataJson);
+
+   return Success();
+}
+
 Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
 {
    SEXP shinyBrowser = r::options::getOption("shiny.launch.browser");
@@ -147,6 +178,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionShinyViewer.R"))
+      (bind(registerRpcMethod, "get_shiny_run_cmd", getShinyRunCmd))
       (bind(initShinyViewerPref, pShinyViewerType));
 
    return initBlock.execute();

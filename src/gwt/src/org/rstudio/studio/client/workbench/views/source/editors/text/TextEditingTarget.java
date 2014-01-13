@@ -1776,6 +1776,8 @@ public class TextEditingTarget implements
 
    public String getPath()
    {
+      if (docUpdateSentinel_ == null)
+         return null;
       return docUpdateSentinel_.getPath();
    }
       

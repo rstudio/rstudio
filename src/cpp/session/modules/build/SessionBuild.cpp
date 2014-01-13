@@ -1323,29 +1323,9 @@ Error getCppCapabilities(const json::JsonRpcRequest& request,
 Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   // compute the path to use for devtools::load_all
-   std::string loadAllPath;
-
-   // start with the build target path
-   FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-   FilePath currentPath = module_context::safeCurrentPath();
-
-   // if the build target path and the current working directory
-   // are the same then return "."
-   if (buildTargetPath == currentPath)
-   {
-      loadAllPath = ".";
-   }
-   else if (buildTargetPath.isWithin(currentPath))
-   {
-      loadAllPath = buildTargetPath.relativePath(currentPath);
-   }
-   else
-   {
-      loadAllPath = module_context::createAliasedPath(buildTargetPath);
-   }
-
-   pResponse->setResult(loadAllPath);
+   pResponse->setResult(module_context::safeCurrentPath().pathRelativeTo(
+            projects::projectContext().buildTargetPath(),
+            module_context::userHomePath()));
 
    return Success();
 }

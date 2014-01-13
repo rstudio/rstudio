@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.shiny.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 
 public interface ShinyServerOperations
@@ -24,4 +25,8 @@ public interface ShinyServerOperations
 
    void getShinyViewerType(
                ServerRequestCallback<ShinyViewerType> requestCallback);
+   
+   void getShinyRunCmd(
+               String shinyAppDir,
+               ServerRequestCallback<ShinyRunCmd> requestCallback);
 }

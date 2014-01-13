@@ -18,9 +18,14 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -42,13 +47,17 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
                            Commands commands,
                            Binder binder,
                            Provider<UIPrefs> pPrefs,
-                           final SatelliteManager satelliteManager)
+                           final SatelliteManager satelliteManager, 
+                           ShinyServerOperations server,
+                           GlobalDisplay display)
    {
       eventBus_ = eventBus;
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       satelliteManager_ = satelliteManager;
       commands_ = commands;
       pPrefs_ = pPrefs;
+      server_ = server;
+      display_ = display;
       
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
@@ -99,9 +108,23 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       }
       else
       {
-         eventBus_.fireEvent(new SendToConsoleEvent(
-               "shiny::runApp('" + dir + "')", 
-               true));
+         server_.getShinyRunCmd(dir, 
+               new ServerRequestCallback<ShinyRunCmd>()
+               {
+                  @Override
+                  public void onResponseReceived(ShinyRunCmd cmd)
+                  {
+                     eventBus_.fireEvent(
+                           new SendToConsoleEvent(cmd.getRunCmd(), true));
+                  }
+      
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     display_.showErrorMessage("Shiny App Launch Failed", 
+                                               error.getMessage());
+                  }
+               });
       }
    }
 
@@ -140,6 +163,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
    private final SatelliteManager satelliteManager_;
    private final Commands commands_;
    private final Provider<UIPrefs> pPrefs_;
+   private final ShinyServerOperations server_;
+   private final GlobalDisplay display_;
 
    private String currentAppFilePath_;
 }
