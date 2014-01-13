@@ -17,6 +17,8 @@ package org.rstudio.studio.client.shiny;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
+import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -28,6 +30,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.BusyEvent;
+import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -37,7 +41,8 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
+public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
+                                         BusyHandler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -49,16 +54,21 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
                            Provider<UIPrefs> pPrefs,
                            final SatelliteManager satelliteManager, 
                            ShinyServerOperations server,
-                           GlobalDisplay display)
+                           GlobalDisplay display,
+                           ApplicationInterrupt interrupt)
    {
       eventBus_ = eventBus;
-      eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       satelliteManager_ = satelliteManager;
       commands_ = commands;
       pPrefs_ = pPrefs;
       server_ = server;
       display_ = display;
+      isBusy_ = false;
+      interrupt_ = interrupt;
       
+      eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
+      eventBus_.addHandler(BusyEvent.TYPE, this);
+
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
    }
@@ -78,6 +88,12 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       {
          currentAppFilePath_ = null;
       }
+   }
+
+   @Override
+   public void onBusy(BusyEvent event)
+   {
+      isBusy_ = event.isBusy();
    }
 
    @Handler
@@ -100,31 +116,30 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
    
    public void launchShinyApplication(String filePath)
    {
-      String dir = filePath.substring(0, filePath.lastIndexOf("/"));
+      final String dir = filePath.substring(0, filePath.lastIndexOf("/"));
       if (dir.equals(currentAppFilePath_))
       {
+         // The app being launched is the one already running; open and
+         // reload the app.
          satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
          satelliteManager_.activateSatelliteWindow(ShinyApplicationSatellite.NAME);
+         return;
+      }
+      else if (currentAppFilePath_ != null && isBusy_)
+      {
+         // There's another app running. Interrupt it and then start this one.
+         interrupt_.interruptR(new InterruptHandler() {
+            @Override
+            public void onInterruptFinished()
+            {
+               launchShinyAppDir(dir);
+            }
+         });
       }
       else
       {
-         server_.getShinyRunCmd(dir, 
-               new ServerRequestCallback<ShinyRunCmd>()
-               {
-                  @Override
-                  public void onResponseReceived(ShinyRunCmd cmd)
-                  {
-                     eventBus_.fireEvent(
-                           new SendToConsoleEvent(cmd.getRunCmd(), true));
-                  }
-      
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     display_.showErrorMessage("Shiny App Launch Failed", 
-                                               error.getMessage());
-                  }
-               });
+         // Nothing else running, start this app.
+         launchShinyAppDir(dir);
       }
    }
 
@@ -159,12 +174,35 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler
       prefs.writeUIPrefs();
    }
    
+   private void launchShinyAppDir(String dir)
+   {
+      server_.getShinyRunCmd(dir, 
+            new ServerRequestCallback<ShinyRunCmd>()
+            {
+               @Override
+               public void onResponseReceived(ShinyRunCmd cmd)
+               {
+                  eventBus_.fireEvent(
+                        new SendToConsoleEvent(cmd.getRunCmd(), true));
+               }
+   
+               @Override
+               public void onError(ServerError error)
+               {
+                  display_.showErrorMessage("Shiny App Launch Failed", 
+                                            error.getMessage());
+               }
+            });
+   }
+   
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
    private final Commands commands_;
    private final Provider<UIPrefs> pPrefs_;
    private final ShinyServerOperations server_;
    private final GlobalDisplay display_;
+   private final ApplicationInterrupt interrupt_;
 
    private String currentAppFilePath_;
+   private boolean isBusy_;
 }
