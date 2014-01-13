@@ -316,11 +316,11 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
-                     "opts_knit$set(stop_on_error = 2L); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
+                                    "error=FALSE, "
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "
