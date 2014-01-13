@@ -1561,6 +1561,17 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void gitGithubRemoteUrl(String view, 
+                                  String path,
+                                  ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(view));
+      params.set(1, new JSONString(path));
+      sendRequest(RPC_SCOPE, GIT_GITHUB_REMOTE_URL, params, callback);
+   }
+   
+   @Override
    public void gitDiffFile(String path,
                            PatchMode mode,
                            int contextLines,
@@ -3262,6 +3273,7 @@ public class RemoteServer implements Server
    private static final String GIT_INIT_REPO = "git_init_repo";
    private static final String GIT_GET_IGNORES = "git_get_ignores";
    private static final String GIT_SET_IGNORES = "git_set_ignores";
+   private static final String GIT_GITHUB_REMOTE_URL = "git_github_remote_url";
    private static final String GIT_DIFF_FILE = "git_diff_file";
    private static final String GIT_APPLY_PATCH = "git_apply_patch";
    private static final String GIT_HISTORY_COUNT = "git_history_count";

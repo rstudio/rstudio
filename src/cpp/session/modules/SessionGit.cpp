@@ -1689,6 +1689,122 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
 }
 
 
+std::string githubUrl(const std::string& view,
+                      const FilePath& filePath = FilePath())
+{
+   if (!isGitEnabled())
+      return std::string();
+
+   // first get the upstream name
+   std::string upstream;
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                           "rev-parse" << "--abbrev-ref" << "@{upstream}",
+                         s_git_.root(),
+                         &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      // we assume origin/master for no upstream
+      upstream = "origin/master";
+   }
+   else
+   {
+      upstream = boost::algorithm::trim_copy(result.stdOut);
+   }
+
+   // parse out the upstream name and branch
+   std::string::size_type pos = upstream.find_first_of('/');
+   if (pos == std::string::npos)
+   {
+      LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
+      return std::string();
+   }
+   std::string upstreamName = upstream.substr(0, pos);
+   std::string upstreamBranch = upstream.substr(pos + 1);
+
+   // now get the remote url
+   result = core::system::ProcessResult();
+   error = gitExec(ShellArgs() <<
+                   "config" << "--get" << ("remote." + upstreamName + ".url"),
+                   s_git_.root(),
+                   &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus != 0)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+      return std::string();
+   }
+
+   // get the url
+   std::string remoteUrl = boost::algorithm::trim_copy(result.stdOut);
+
+   // check for github
+
+   // check for ssh url
+   std::string repo;
+   const std::string kSSHPrefix = "git@github.com:";
+   if (boost::algorithm::starts_with(remoteUrl, kSSHPrefix))
+      repo = remoteUrl.substr(kSSHPrefix.length());
+
+   // check for https url
+   const std::string kHTTPSPrefix = "https://github.com/";
+   if (boost::algorithm::starts_with(remoteUrl, kHTTPSPrefix))
+      repo = remoteUrl.substr(kHTTPSPrefix.length());
+
+   // bail if we didn't get a repo
+   if (repo.empty())
+      return std::string();
+
+   // if the repo starts with / then remove it
+   if (repo[0] == '/')
+      repo = repo.substr(1);
+
+   // strip the .git off the end and form the github url from repo and branch
+   boost::algorithm::replace_last(repo, ".git", "");
+   std::string url = "https://github.com/" +
+                     repo + "/" + view + "/" +
+                     upstreamBranch;
+
+   if (!filePath.empty())
+   {
+      std::string relative = filePath.relativePath(s_git_.root());
+      if (relative.empty())
+         return std::string();
+
+      url = url + "/" + relative;
+   }
+
+   return url;
+}
+
+
+Error vcsGithubRemoteUrl(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   // get the params
+   std::string view, path;
+   Error error = json::readParams(request.params, &view, &path);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // return the github url
+   pResponse->setResult(githubUrl(view, filePath));
+   return Success();
+}
+
+
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -2571,6 +2687,7 @@ bool isGitDirectory(const core::FilePath& workingDir)
    return !detectGitDir(workingDir).empty();
 }
 
+
 std::string remoteOriginUrl(const FilePath& workingDir)
 {
    // default to none
@@ -2595,38 +2712,12 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    return remoteOriginUrl;
 }
 
-std::string githubBaseUrl()
+
+bool isGithubRepository()
 {
-   if (!isGitEnabled())
-      return std::string();
-
-   std::string originUrl = remoteOriginUrl(s_git_.root());
-   if (originUrl.empty())
-      return std::string();
-
-   // check for ssh url
-   std::string repo;
-   const std::string kSSHPrefix = "git@github.com:";
-   if (boost::algorithm::starts_with(originUrl, kSSHPrefix))
-      repo = originUrl.substr(kSSHPrefix.length());
-
-   // check for https url
-   const std::string kHTTPSPrefix = "https://github.com/";
-   if (boost::algorithm::starts_with(originUrl, kHTTPSPrefix))
-      repo = originUrl.substr(kHTTPSPrefix.length());
-
-   // bail if we didn't get a repo
-   if (repo.empty())
-      return std::string();
-
-   // if the repo starts with / then remove it
-   if (repo[0] == '/')
-      repo = repo.substr(1);
-
-   // strip the .git off the end and form the github url
-   boost::algorithm::replace_last(repo, ".git", "");
-   return "https://github.com/" + repo;
+   return !githubUrl("blob").empty();
 }
+
 
 core::Error initializeGit(const core::FilePath& workingDir)
 {
@@ -2736,7 +2827,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
-      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores));
+      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
+      (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)
       return error;

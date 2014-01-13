@@ -40,8 +40,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -77,7 +75,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                        VCSFileOpener vcsFileOpener,
                        Display view,
                        GitServerOperations server,
-                       Session session,
                        final Commands commands,
                        Binder commandBinder,
                        GitState gitState,
@@ -89,7 +86,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       vcsFileOpener_  = vcsFileOpener;
       view_ = view;
       server_ = server;
-      session_ = session;
       commands_ = commands;
       gitState_ = gitState;
       globalDisplay_ = globalDisplay;
@@ -358,42 +354,39 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    @Override
    public void viewOnGitHub(final GitHubViewRequest viewRequest)
    {
-      Command viewOnGithub = new Command()
-      {
+      String view = null;
+      if (viewRequest.getViewType() == GitHubViewRequest.ViewType.View)
+         view = "blob";
+      else if (viewRequest.getViewType() == GitHubViewRequest.ViewType.Blame)
+         view = "blame";
+      
+      final String path = viewRequest.getFile().getPath();
+      server_.gitGithubRemoteUrl(view, 
+                                 path, 
+                                 new SimpleRequestCallback<String>() {
+         
          @Override
-         public void execute()
-         {           
-            // determine the branch (use master if there is no remote)
-            String branch = null;
-            if (gitState_.hasRemote())
-               branch = gitState_.getBranchInfo().getActiveBranch();
+         public void onResponseReceived(String url)
+         {
+            if (url.length() == 0)
+            {
+               globalDisplay_.showErrorMessage(
+                     "Error", 
+                     "Unable to view " + path + " on GitHub.\n\n" +
+                     "Are you sure that this file is on GithHub and is " + 
+                     "contained in the currently active project?");
+            }
             else
-               branch = "master";
-            
-            // form the github url
-            SessionInfo si = session_.getSessionInfo();
-            FileSystemItem file = viewRequest.getFile();
-            String url = si.getGithubBaseUrl();
-            url += viewRequest.getViewType() == GitHubViewRequest.ViewType.View 
-                                 ? "/blob/" : "/blame/";                             
-            url += branch + "/";
-            url += file.getPathRelativeTo(si.getActiveProjectDir());    
-            if (viewRequest.getStartLine() != -1)
-               url += "#L" + viewRequest.getStartLine();
-            if (viewRequest.getEndLine() != viewRequest.getStartLine())
-               url += "-L" + viewRequest.getEndLine();
-            
-            globalDisplay_.openWindow(url);
+            {
+               if (viewRequest.getStartLine() != -1)
+                  url += "#L" + viewRequest.getStartLine();
+               if (viewRequest.getEndLine() != viewRequest.getStartLine())
+                  url += "-L" + viewRequest.getEndLine();
+               
+               globalDisplay_.openWindow(url);
+            }
          }
-      
-      };
-      
-      // if we don't have branch info then perform a refresh
-      // before interrogating the git state
-      if (gitState_.getBranchInfo() == null)
-         gitState_.refresh(false, viewOnGithub);
-      else
-         viewOnGithub.execute();
+      });
    }
    
    @Override
@@ -407,7 +400,6 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private final GitPresenterCore gitPresenterCore_;
    private final GitServerOperations server_;
    private final Commands commands_;
-   private final Session session_;
    private final GitState gitState_;
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;

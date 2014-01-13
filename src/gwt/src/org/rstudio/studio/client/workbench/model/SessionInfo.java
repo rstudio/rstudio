@@ -188,8 +188,8 @@ public class SessionInfo extends JavaScriptObject
       return this.default_ssh_key_dir;
    }-*/;
    
-   public native final String getGithubBaseUrl() /*-{
-      return this.github_base_url;
+   public native final boolean isGithubRepository() /*-{
+      return this.is_github_repo;
    }-*/;
 
    // TODO: The check for null was for migration in the presence of 

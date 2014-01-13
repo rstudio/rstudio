@@ -2002,10 +2002,13 @@ public class Source implements InsertSourceHandler,
    
    private void manageVcsCommands()
    {
-      // manage vcs log
-      boolean vcsCommandsEnabled = session_.getSessionInfo().isVcsEnabled() &&
-                                   activeEditor_ != null &&
-                                   activeEditor_.getPath() != null ;
+      // manage availablity of vcs commands
+      boolean vcsCommandsEnabled = 
+            session_.getSessionInfo().isVcsEnabled() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
+            activeEditor_.getPath().startsWith(
+                  session_.getSessionInfo().getActiveProjectDir().getPath());
       
       commands_.vcsFileLog().setVisible(vcsCommandsEnabled);
       commands_.vcsFileLog().setEnabled(vcsCommandsEnabled);
@@ -2022,8 +2025,7 @@ public class Source implements InsertSourceHandler,
          commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
       }
       
-      String githubBaseUrl = session_.getSessionInfo().getGithubBaseUrl();
-      boolean isGithubRepo = !StringUtil.isNullOrEmpty(githubBaseUrl);
+      boolean isGithubRepo = session_.getSessionInfo().isGithubRepository();
       if (vcsCommandsEnabled && isGithubRepo)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
