@@ -74,16 +74,12 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
             },
             {
-               token : "constant.numeric", // explicit integer
-               regex : "\\d+L\\b"
+               token : "constant.numeric", // number + integer
+               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b"
             },
             {
-               token : "constant.numeric", // number
-               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b"
-            },
-            {
-               token : "constant.numeric", // number with leading decimal
-               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b"
+               token : "constant.numeric", // number + integer with leading decimal
+               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b"
             },
             {
                token : "constant.language.boolean",
