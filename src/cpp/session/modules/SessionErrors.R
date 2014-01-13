@@ -126,19 +126,19 @@
            envir = sys.frame(frame))
    }
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
-hideFromDebugger = TRUE)
+attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
