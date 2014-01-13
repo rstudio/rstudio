@@ -14,13 +14,16 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -45,8 +48,14 @@ public class ShinyApplicationPanel extends ResizeComposite
    private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.viewerPopout().createToolbarButton());
-      toolbar.addRightWidget(commands_.reloadShinyApp().createToolbarButton());
+      toolbar.addLeftWidget(commands_.reloadShinyApp().createToolbarButton());
+      urlBox_ = new Label("");
+      Style style = urlBox_.getElement().getStyle();
+      style.setColor("#606060");
+      toolbar.addLeftWidget(urlBox_);
+      ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
+      popout.setText("Open in Browser");
+      toolbar.addRightWidget(popout);
       return toolbar;
    }
    
@@ -60,7 +69,8 @@ public class ShinyApplicationPanel extends ResizeComposite
          rootPanel_.remove(appFrame_);
          appFrame_ = null;
       }
-
+      
+      urlBox_.setText(params.getUrl());
       appFrame_ = new RStudioFrame(appParams_.getUrl());
       appFrame_.setSize("100%", "100%");
       rootPanel_.add(appFrame_);
@@ -92,6 +102,7 @@ public class ShinyApplicationPanel extends ResizeComposite
 
    private LayoutPanel rootPanel_;
    private Toolbar toolbar_;
+   private Label urlBox_;
 
    private RStudioFrame appFrame_;
    private ShinyApplicationParams appParams_;
