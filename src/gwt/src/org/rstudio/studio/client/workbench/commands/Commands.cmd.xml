@@ -1367,7 +1367,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Reload"
         desc="Reload the Shiny application"/>
    <cmd id="shinyRunInPane"
-        menuLabel="Run in Pane"
+        menuLabel="Run in Viewer Pane"
         desc="Run the Shiny application in an RStudio pane"
         checkable="true"/>
    <cmd id="shinyRunInViewer"
@@ -1375,7 +1375,7 @@ well as menu structures (for main menu and popup menus).
         desc="Run the Shiny application in an RStudio viewer window"
         checkable="true"/>
    <cmd id="shinyRunInBrowser"
-        menuLabel="Run in Browser"
+        menuLabel="Run External"
         desc="Run the Shiny application in the system's default Web browser"
         checkable="true"/>
 
