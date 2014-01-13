@@ -226,6 +226,7 @@ bool collectForcePackageRebuild()
 const char * const kRoxygenizePackage = "roxygenize-package";
 const char * const kBuildSourcePackage = "build-source-package";
 const char * const kBuildBinaryPackage = "build-binary-package";
+const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
@@ -614,6 +615,11 @@ private:
          else
             checkPackage(rBinDir, packagePath, pkgOptions, cb);
       }
+
+      else if (type == kTestPackage)
+      {
+         devtoolsTestPackage(packagePath, pkgOptions, cb);
+      }
    }
 
 
@@ -845,6 +851,15 @@ private:
       }
 
       // run it
+      devtoolsExecute(command, packagePath, pkgOptions, cb);
+   }
+
+   void devtoolsTestPackage(const FilePath& packagePath,
+                            const core::system::ProcessOptions& pkgOptions,
+                            const core::system::ProcessCallbacks& cb)
+   {
+      std::string command = "devtools::test()";
+      enqueCommandString(command);
       devtoolsExecute(command, packagePath, pkgOptions, cb);
    }
 

@@ -276,7 +276,11 @@ public class BuildPresenter extends BasePresenter
       startBuild("check-package");
    }
    
-  
+   void onTestPackage()
+   {
+      startBuild("test-package");
+   }
+   
    void onRebuildAll()
    {
       startBuild("rebuild-all");

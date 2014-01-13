@@ -247,9 +247,10 @@ well as menu structures (for main menu and popup menus).
       <menu label="_Build">
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
-         <separator/>
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
+         <separator/>
+         <cmd refid="testPackage"/>
          <separator/>
          <cmd refid="checkPackage"/>
          <separator/>
@@ -449,6 +450,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
          <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
+         <shortcut refid="testPackage" value="Cmd+Shift+T" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="testPackage" value="Cmd+Alt+F7" if="!org.rstudio.studio.client.application.Desktop.isDesktop()"/>
          <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
       </shortcutgroup>
       <shortcutgroup name="Execute">
@@ -1284,6 +1287,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Check"
         menuLabel="_Check Package"
         desc="R CMD check"/>
+        
+   <cmd id="testPackage"
+        menuLabel="_Test Package"
+        desc="Run tests for package"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
