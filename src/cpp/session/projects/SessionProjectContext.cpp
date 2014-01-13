@@ -559,6 +559,8 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
+   uiPrefs["auto_append_newline"] = config_.autoAppendNewline;
+   uiPrefs["strip_trailing_whitespace"] = config_.stripTrailingWhitespace;
    uiPrefs["default_encoding"] = defaultEncoding();
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
    uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
@@ -585,6 +587,9 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    r_util::RProjectConfig defaultConfig;
    defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
    defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
+   defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
+   defaultConfig.stripTrailingWhitespace =
+                              userSettings().stripTrailingWhitespace();
    if (!userSettings().defaultEncoding().empty())
       defaultConfig.encoding = userSettings().defaultEncoding();
    else

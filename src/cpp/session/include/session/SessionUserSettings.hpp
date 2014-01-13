@@ -89,6 +89,8 @@ public:
    // readers for ui prefs
    bool useSpacesForTab() const;
    int numSpacesForTab() const;
+   bool autoAppendNewline() const;
+   bool stripTrailingWhitespace() const;
    std::string defaultEncoding() const;
    std::string defaultSweaveEngine() const;
    std::string defaultLatexProgram() const;
@@ -189,6 +191,8 @@ private:
    // cached prefs values
    mutable boost::scoped_ptr<bool> pUseSpacesForTab_;
    mutable boost::scoped_ptr<int> pNumSpacesForTab_;
+   mutable boost::scoped_ptr<bool> pAutoAppendNewline_;
+   mutable boost::scoped_ptr<bool> pStripTrailingWhitespace_;
    mutable boost::scoped_ptr<std::string> pDefaultEncoding_;
    mutable boost::scoped_ptr<std::string> pDefaultSweaveEngine_;
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;

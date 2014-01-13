@@ -29,6 +29,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String enableCodeIndexing();
       String useSpacesForTab();
       String numberOfTabs();
+      String editingOption();
       String encodingChooser();
       String vcsSelectExtraSpaced();
       String vcsOriginLabel();

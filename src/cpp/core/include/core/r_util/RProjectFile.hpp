@@ -51,6 +51,8 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
+        autoAppendNewline(false),
+        stripTrailingWhitespace(false),
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
@@ -76,6 +78,8 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
+   bool autoAppendNewline;
+   bool stripTrailingWhitespace;
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;

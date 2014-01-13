@@ -32,6 +32,11 @@
    margin-left: 25px;
 }
 
+.editingOption {
+   margin-top: 10px;
+   margin-left: 5px;
+}
+
 .encodingChooser {
    margin-top: 13px; 
    margin-left: 10px;

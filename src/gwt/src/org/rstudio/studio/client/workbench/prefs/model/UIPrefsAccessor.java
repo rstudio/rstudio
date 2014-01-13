@@ -101,6 +101,16 @@ public class UIPrefsAccessor extends Prefs
       return bool("insert_matching", true);
    }
    
+   public PrefValue<Boolean> autoAppendNewline()
+   {
+      return bool("auto_append_newline", false);
+   }
+   
+   public PrefValue<Boolean> stripTrailingWhitespace()
+   {
+      return bool("strip_trailing_whitespace", false);
+   }
+   
    public PrefValue<Boolean> reindentOnPaste()
    {
       return bool("reindent_on_paste", true);

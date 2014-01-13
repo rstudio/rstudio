@@ -247,6 +247,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
+   configJson["auto_append_newline"] = config.autoAppendNewline;
+   configJson["strip_trailing_whitespace"] = config.stripTrailingWhitespace;
    configJson["default_encoding"] = config.encoding;
    configJson["default_sweave_engine"] = config.defaultSweaveEngine;
    configJson["default_latex_program"] = config.defaultLatexProgram;
@@ -405,6 +407,13 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "default_sweave_engine", &(config.defaultSweaveEngine),
                     "default_latex_program", &(config.defaultLatexProgram),
                     "root_document", &(config.rootDocument));
+   if (error)
+      return error;
+
+   error = json::readObject(
+                    configJson,
+                    "auto_append_newline", &(config.autoAppendNewline),
+                    "strip_trailing_whitespace", &(config.stripTrailingWhitespace));
    if (error)
       return error;
 

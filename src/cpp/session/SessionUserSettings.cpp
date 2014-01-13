@@ -244,6 +244,12 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int numSpacesForTab = readPref<int>(prefs, "num_spaces_for_tab", 2);
    pNumSpacesForTab_.reset(new int(numSpacesForTab));
 
+   bool autoAppendNewline = readPref<bool>(prefs, "auto_append_newline", false);
+   pAutoAppendNewline_.reset(new bool(autoAppendNewline));
+
+   bool stripTrailingWhitespace = readPref<bool>(prefs, "strip_trailing_whitespace", false);
+   pStripTrailingWhitespace_.reset(new bool(stripTrailingWhitespace));
+
    std::string enc = readPref<std::string>(prefs, "default_encoding", "");
    pDefaultEncoding_.reset(new std::string(enc));
 
@@ -280,6 +286,16 @@ bool UserSettings::useSpacesForTab() const
 int UserSettings::numSpacesForTab() const
 {
    return readUiPref<int>(pNumSpacesForTab_);
+}
+
+bool UserSettings::autoAppendNewline() const
+{
+   return readUiPref<bool>(pAutoAppendNewline_);
+}
+
+bool UserSettings::stripTrailingWhitespace() const
+{
+   return readUiPref<bool>(pStripTrailingWhitespace_);
 }
 
 std::string UserSettings::defaultEncoding() const

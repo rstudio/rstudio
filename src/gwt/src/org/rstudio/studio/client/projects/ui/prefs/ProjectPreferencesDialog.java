@@ -89,6 +89,10 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
                                            config.getNumSpacesForTab());
+                uiPrefs.autoAppendNewline().setProjectValue(
+                                           config.getAutoAppendNewline());
+                uiPrefs.stripTrailingWhitespace().setProjectValue(
+                                           config.getStripTrailingWhitespace());
                 uiPrefs.defaultEncoding().setProjectValue(
                                            config.getEncoding()); 
                 uiPrefs.defaultSweaveEngine().setProjectValue(

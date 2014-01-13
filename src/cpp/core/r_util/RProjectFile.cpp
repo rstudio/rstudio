@@ -340,6 +340,31 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract auto append newline
+   it = dcfFields.find("AutoAppendNewline");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->autoAppendNewline)))
+         return requiredFieldError("AutoAppendNewline", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->autoAppendNewline = false;
+   }
+
+
+   // extract strip trailing whitespace
+   it = dcfFields.find("StripTrailingWhitespace");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->stripTrailingWhitespace)))
+         return requiredFieldError("StripTrailingWhitespace", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->stripTrailingWhitespace = false;
+   }
+
    // extract encoding
    it = dcfFields.find("Encoding");
    if (it != dcfFields.end())
@@ -565,6 +590,22 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format rootDocFmt("RootDocument: %1%\n");
       std::string rootDoc = boost::str(rootDocFmt % config.rootDocument);
       contents.append(rootDoc);
+   }
+
+   // additional editor settings
+   if (config.autoAppendNewline || config.stripTrailingWhitespace)
+   {
+      contents.append("\n");
+
+      if (config.autoAppendNewline)
+      {
+         contents.append("AutoAppendNewline: Yes\n");
+      }
+
+      if (config.stripTrailingWhitespace)
+      {
+         contents.append("StripTrailingWhitespace: Yes\n");
+      }
    }
 
    // add build-specific settings if necessary

@@ -1446,6 +1446,8 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
+                  fixupCodeBeforeSaving();
+                  
                   docUpdateSentinel_.save(path,
                                           null,
                                           encoding,
@@ -1597,6 +1599,8 @@ public class TextEditingTarget implements
                            {
                               docDisplay_.removeAllBreakpoints();
                            }
+                           
+                           fixupCodeBeforeSaving();
                                  
                            docUpdateSentinel_.save(
                                  saveItem.getPath(),
@@ -1649,6 +1653,30 @@ public class TextEditingTarget implements
                   indicator.onCompleted();
                }
             });
+   }
+   
+   
+   private void fixupCodeBeforeSaving()
+   { 
+      int lineCount = docDisplay_.getRowCount();
+      if (lineCount < 1)
+         return;
+      
+      if (prefs_.stripTrailingWhitespace().getValue())
+      {
+         String code = docDisplay_.getCode();
+         Pattern pattern = Pattern.create("[ \t]+$");
+         String strippedCode = pattern.replaceAll(code, "");
+         if (!strippedCode.equals(code))
+            docDisplay_.setCode(strippedCode, true);
+      }
+      
+      if (prefs_.autoAppendNewline().getValue())
+      {
+         String lastLine = docDisplay_.getLine(lineCount - 1);
+         if (lastLine.length() != 0)
+            docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
+      }
    }
    
    private FileSystemItem getSaveFileDefaultDir()
