@@ -1038,7 +1038,7 @@ private:
    bool useDevtools()
    {
       return projectConfig().packageUseDevtools &&
-             module_context::isPackageVersionInstalled("devtools", "1.4");
+             module_context::isPackageVersionInstalled("devtools", "1.4.1");
    }
 
 public:
