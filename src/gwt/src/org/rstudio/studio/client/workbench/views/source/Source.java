@@ -1400,8 +1400,9 @@ public class Source implements InsertSourceHandler,
                               filePos.getEndLine() - 1,
                               filePos.getEndColumn() + 1);
                         
-                        if (Desktop.isDesktop())
-                           Desktop.getFrame().bringMainFrameToFront();
+                        if (Desktop.isDesktop() && 
+                            navMethod != NavigationMethod.DebugEnd)
+                            Desktop.getFrame().bringMainFrameToFront();
                      }
                      navigate(target, 
                               SourcePosition.create(position.getLine() - 1,

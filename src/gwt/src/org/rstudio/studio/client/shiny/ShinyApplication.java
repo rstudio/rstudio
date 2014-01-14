@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -42,7 +43,8 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
-                                         ConsoleBusyEvent.Handler
+                                         ConsoleBusyEvent.Handler,
+                                         DebugModeChangedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -69,6 +71,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
+      eventBus_.addHandler(DebugModeChangedEvent.TYPE, this);
 
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
@@ -77,9 +80,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
-      currentViewType_ = event.getParams().getViewerType();
       if (event.getParams().getState() == ShinyApplicationParams.STATE_STARTED)
       {
+         currentViewType_ = event.getParams().getViewerType();
+
          // open the window to view the application if needed
          if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
          {
@@ -99,6 +103,20 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    public void onConsoleBusy(ConsoleBusyEvent event)
    {
       isBusy_ = event.isBusy();
+   }
+   
+   @Override
+   public void onDebugModeChanged(DebugModeChangedEvent event)
+   {
+      // When leaving debug mode while the Shiny application is open in a 
+      // browser, automatically return to the app by activating the window.
+      if (!event.debugging() && 
+          currentAppFilePath_ != null &&
+          currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW) 
+      {
+         satelliteManager_.activateSatelliteWindow(
+               ShinyApplicationSatellite.NAME);
+      }
    }
 
    @Handler
