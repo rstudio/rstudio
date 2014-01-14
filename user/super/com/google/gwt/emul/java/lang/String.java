@@ -972,8 +972,8 @@ public final class String implements Comparable<String>, CharSequence,
     if (this.length == 0 || (this[0] > '\u0020' && this[this.length - 1] > '\u0020')) {
       return this;
     }
-    var r1 = this.replace(/^(\s*)/, '');
-    var r2 = r1.replace(/\s*$/, '');
+    var r1 = this.replace(/^([\u0000-\u0020]*)/, '');
+    var r2 = r1.replace(/[\u0000-\u0020]*$/, '');
     return r2;
   }-*/;
 }

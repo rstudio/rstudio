@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * TODO: COMPILER OPTIMIZATIONS HAVE MADE THIS TEST NOT ACTUALLY TEST ANYTHING!
  * NEED A VERSION THAT DOESN'T USE STATICALLY DETERMINABLE STRINGS!
- * 
+ *
  * See individual method TODOs for ones that still need work -- the ones without
  * comments are already protected against optimization.
  */
@@ -83,14 +83,14 @@ public class StringTest extends GWTTestCase {
      * plane -- it may not show properly depending on your fonts, etc. The
      * character is the Gothic letter Faihu, or U+10346. We use it to verify
      * that multi-char UTF16 characters are handled properly.
-     * 
+     *
      * In Windows 2000, registry changes are required to support non-BMP
      * characters (or surrogates in general) -- surrogates are not supported
      * before Win2k and they are enabled by default in WinXP and later.
-     * 
+     *
      * [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows
      * NT\CurrentVersion\LanguagePack] SURROGATE=(REG_DWORD)0x00000002
-     * 
+     *
      * [HKEY_CURRENT_USER\Software\Microsoft\Internet
      * Explorer\International\Scripts\42] IEFixedFontName=[Surrogate Font Face
      * Name] IEPropFontName=[Surrogate Font Face Name]
@@ -364,12 +364,12 @@ public class StringTest extends GWTTestCase {
 
   /**
    * Tests hashing with strings.
-   * 
+   *
    * The specific strings used in this test used to trigger failures because we
    * use a JavaScript object as a hash map to cache the computed hash codes.
    * This conflicts with built-in properties defined on objects -- see issue
    * #631.
-   * 
+   *
    */
   public void testHashCode() {
     String[] testStrings = {
@@ -596,7 +596,7 @@ public class StringTest extends GWTTestCase {
         0));
     // issue 2742
     compareList("issue2742", new String[] {}, hideFromCompiler("/").split("/", 0));
-    
+
     // Splitting an empty string should result in an array containing a single
     // empty string.
     String[] s = "".split(",");
@@ -649,14 +649,34 @@ public class StringTest extends GWTTestCase {
    */
   public void testTrim() {
     trimRightAssertEquals("abc", "   \t abc \n  ");
-    trimRightAssertEquals("abc", "abc".trim());
+    trimRightAssertEquals("abc", "abc");
     trimRightAssertSame("abc", "abc");
     String s = '\u0023' + "hi";
     trimRightAssertSame(s, s);
-    trimRightAssertEquals("abc", " abc".trim());
-    trimRightAssertEquals("abc", "abc ".trim());
-    trimRightAssertEquals("", "".trim());
-    trimRightAssertEquals("", "   \t ".trim());
+    trimRightAssertEquals("abc", " abc");
+    trimRightAssertEquals("abc", "abc ");
+    trimRightAssertEquals("", "");
+    trimRightAssertEquals("", "   \t ");
+
+    // Check for removal of nulls; trim treats nulls as if they are whitespace.
+    // See issue 8534.
+
+    trimRightAssertEquals("abc", "\0\0\0 abc");
+    trimRightAssertEquals("abc", "abc\0\0\0");
+    trimRightAssertEquals("abc", "abc   \0\0\0");
+    trimRightAssertEquals("abc", "   \0 \0 \0" + "abc");
+    trimRightAssertEquals("abc \0 a", "    abc \0 a");
+    trimRightAssertEquals("abc \0 a", "    abc \0 a   \0");
+    trimRightAssertEquals("abc \0 a", "    abc \0 a   \0   ");
+    trimRightAssertEquals("\u0021\u0020abc", "\u0019\u0017\u0021\u0020abc\u0019\u0017\u0018 ");
+    trimRightAssertEquals("\u0021 abc",
+        "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u0009" +
+        "\n" + "\u000b\u000c" + "\r" + "\u000e\u000f" +
+        "\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019" +
+        "\u001A\u001b\u001c\u001d\u001e\u001f\u0020\u0021 " + "abc");
+
+    // JavaScript would trim \u2029 and other unicode whitespace type characters; but Java wont
+    trimRightAssertEquals("\u2029abc\u00a0","\u2029abc\u00a0");
   }
 
   /*
@@ -686,7 +706,7 @@ public class StringTest extends GWTTestCase {
 
   /**
    * Helper method for testTrim to avoid compiler optimizations.
-   * 
+   *
    * TODO: insufficient, compiler now inlines.
    */
   public void trimRightAssertEquals(String left, String right) {
@@ -695,7 +715,7 @@ public class StringTest extends GWTTestCase {
 
   /**
    * Helper method for testTrim to avoid compiler optimizations.
-   * 
+   *
    * TODO: insufficient, compiler now inlines.
    */
   public void trimRightAssertSame(String left, String right) {
