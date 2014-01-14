@@ -31,7 +31,8 @@ public class ShinyApplicationParams extends JavaScriptObject
       return {
          path: path,
          url: url,
-         state: state
+         state: state, 
+         viewer: 0
       };
    }-*/;
    
@@ -43,6 +44,10 @@ public class ShinyApplicationParams extends JavaScriptObject
       return this.url;
    }-*/;
    
+   public final native int getViewerType() /*-{
+      return this.viewer;
+   }-*/;
+
    public final native String getState() /*-{
       return this.state;
    }-*/;

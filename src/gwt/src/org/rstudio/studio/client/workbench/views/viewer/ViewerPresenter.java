@@ -21,6 +21,9 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -28,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEve
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 
 public class ViewerPresenter extends BasePresenter 
+                             implements ShinyApplicationStatusEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ViewerPresenter> {}
    
@@ -50,6 +54,7 @@ public class ViewerPresenter extends BasePresenter
       display_ = display;
       commands_ = commands;
       server_ = server;
+      events_ = eventBus;
       
       binder.bind(commands, this);
       
@@ -69,6 +74,7 @@ public class ViewerPresenter extends BasePresenter
          }
       });
       
+      eventBus.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       initializeEvents();
    }
    
@@ -92,6 +98,21 @@ public class ViewerPresenter extends BasePresenter
       }
    }
    
+   @Override
+   public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
+   {
+      if (event.getParams().getViewerType() == 
+            ShinyViewerType.SHINY_VIEWER_PANE &&
+          event.getParams().getState() == 
+            ShinyApplicationParams.STATE_STARTED)
+      {
+         enableCommands(true);
+         display_.bringToFront();
+         navigate(event.getParams().getUrl());
+         runningShinyAppParams_ = event.getParams();
+      }
+   }
+
    @Handler
    public void onViewerPopout() { display_.popout(); }
    @Handler
@@ -125,6 +146,15 @@ public class ViewerPresenter extends BasePresenter
          commands_.interruptR().execute();
       server_.viewerStopped(new VoidServerRequestCallback());
       
+      // If we were viewing a Shiny application, let the rest of the app know
+      // that the application has been stopped
+      if (runningShinyAppParams_ != null)
+      {
+         runningShinyAppParams_.setState(ShinyApplicationParams.STATE_STOPPED);
+         events_.fireEvent(new ShinyApplicationStatusEvent(
+               runningShinyAppParams_));
+      }
+      runningShinyAppParams_ = null;
    }
    
    private void enableCommands(boolean enable)
@@ -133,8 +163,6 @@ public class ViewerPresenter extends BasePresenter
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
    }
-   
- 
    
    private native void initializeEvents() /*-{  
       var thiz = this;   
@@ -167,4 +195,7 @@ public class ViewerPresenter extends BasePresenter
    private final Display display_ ;
    private final Commands commands_;
    private final ViewerServerOperations server_;
+   private final EventBus events_;
+   
+   private ShinyApplicationParams runningShinyAppParams_;
 }

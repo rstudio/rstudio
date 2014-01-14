@@ -64,6 +64,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       server_ = server;
       display_ = display;
       isBusy_ = false;
+      currentViewType_ = ShinyViewerType.SHINY_VIEWER_NONE;
       interrupt_ = interrupt;
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
@@ -76,12 +77,16 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    @Override
    public void onShinyApplicationStatus(ShinyApplicationStatusEvent event)
    {
+      currentViewType_ = event.getParams().getViewerType();
       if (event.getParams().getState() == ShinyApplicationParams.STATE_STARTED)
       {
-         // open the window 
-         satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
-                                        event.getParams(),
-                                        new Size(960,1100));   
+         // open the window to view the application if needed
+         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+         {
+            satelliteManager_.openSatellite(ShinyApplicationSatellite.NAME,     
+                                           event.getParams(),
+                                           new Size(960,1100));   
+         }
          currentAppFilePath_ = event.getParams().getPath();
       }
       else if (event.getParams().getState() == ShinyApplicationParams.STATE_STOPPED)
@@ -121,8 +126,17 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          // The app being launched is the one already running; open and
          // reload the app.
-         satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
-         satelliteManager_.activateSatelliteWindow(ShinyApplicationSatellite.NAME);
+         if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+         {
+            satelliteManager_.dispatchCommand(commands_.reloadShinyApp());
+            satelliteManager_.activateSatelliteWindow(
+                  ShinyApplicationSatellite.NAME);
+         } 
+         else if (currentViewType_ == ShinyViewerType.SHINY_VIEWER_PANE &&
+                  commands_.viewerRefresh().isEnabled())
+         {
+            commands_.viewerRefresh().execute();
+         }
          return;
       }
       else if (currentAppFilePath_ != null && isBusy_)
@@ -205,4 +219,5 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    private String currentAppFilePath_;
    private boolean isBusy_;
+   private int currentViewType_;
 }

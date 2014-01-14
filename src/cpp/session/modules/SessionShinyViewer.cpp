@@ -43,7 +43,8 @@ namespace {
 std::string s_currentAppUrl;
 std::string s_currentAppPath;
 
-void loadApp(const std::string& url, const std::string& path)
+void enqueStartEvent(const std::string& url, const std::string& path,
+                     int viewerType)
 {
    // record the url and path
    s_currentAppUrl = url;
@@ -55,11 +56,12 @@ void loadApp(const std::string& url, const std::string& path)
    dataJson["path"] =
          module_context::createAliasedPath(FilePath(s_currentAppPath));
    dataJson["state"] = "started";
+   dataJson["viewer"] = viewerType;
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
+SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
 {   
    try
    {
@@ -74,9 +76,11 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP)
          throw r::exec::RErrorException(
             "path must be a single element character vector.");
       }
+      int viewertype = r::sexp::asInteger(viewerSEXP);
 
-      loadApp(r::sexp::safeAsString(urlSEXP),
-              r::sexp::safeAsString(pathSEXP));
+      enqueStartEvent(r::sexp::safeAsString(urlSEXP),
+                      r::sexp::safeAsString(pathSEXP),
+                      viewertype);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -169,7 +173,7 @@ Error initialize()
    R_CallMethodDef methodDefViewer;
    methodDefViewer.name = "rs_shinyviewer";
    methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
-   methodDefViewer.numArgs = 2;
+   methodDefViewer.numArgs = 3;
    r::routines::addCallMethod(methodDefViewer);
 
    userSettings().onChanged.connect(bind(onUserSettingsChanged,

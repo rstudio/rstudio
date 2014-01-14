@@ -14,11 +14,11 @@
 #
 
 .rs.addFunction("invokeShinyPaneViewer", function(url) {
-   invisible(.Call("rs_viewer", url, NULL))
+   invisible(.Call("rs_shinyviewer", url, getwd(), 2))
 }, attrs = list(shinyViewerType = 2))
 
 .rs.addFunction("invokeShinyWindowViewer", function(url) {
-   invisible(.Call("rs_shinyviewer", url, getwd()))
+   invisible(.Call("rs_shinyviewer", url, getwd(), 3))
 }, attrs = list(shinyViewerType = 3))
 
 .rs.addFunction("setShinyViewerType", function(type) {
