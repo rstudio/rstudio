@@ -121,6 +121,24 @@ void onUserSettingsChanged(boost::shared_ptr<int> pShinyViewerType)
    }
 }
 
+Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
+                     const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse*)
+{
+   int viewerType;
+   Error error = json::readParams(request.params, &viewerType);
+   if (error)
+      return error;
+
+   if (viewerType != *pShinyViewerType)
+   {
+      setShinyViewerType(viewerType);
+      *pShinyViewerType = viewerType;
+   }
+
+   return Success();
+}
+
 Error getShinyRunCmd(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
@@ -182,6 +200,9 @@ Error initialize()
    boost::shared_ptr<int> pShinyViewerType =
          boost::make_shared<int>(SHINY_VIEWER_NONE);
 
+   json::JsonRpcFunction setShinyViewerTypeRpc =
+         boost::bind(setShinyViewer, pShinyViewerType, _1, _2);
+
    R_CallMethodDef methodDefViewer;
    methodDefViewer.name = "rs_shinyviewer";
    methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
@@ -195,6 +216,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionShinyViewer.R"))
       (bind(registerRpcMethod, "get_shiny_run_cmd", getShinyRunCmd))
+      (bind(registerRpcMethod, "set_shiny_viewer_type", setShinyViewerTypeRpc))
       (bind(initShinyViewerPref, pShinyViewerType));
 
    return initBlock.execute();

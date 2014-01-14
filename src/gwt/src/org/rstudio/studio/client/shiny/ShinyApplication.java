@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
@@ -186,6 +187,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       UIPrefs prefs = pPrefs_.get();
       prefs.shinyViewerType().setGlobalValue(viewerType);
       prefs.writeUIPrefs();
+      server_.setShinyViewerType(viewerType, new VoidServerRequestCallback());
    }
    
    private void launchShinyAppDir(String dir)

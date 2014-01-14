@@ -3108,6 +3108,18 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void setShinyViewerType(int viewerType,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(viewerType));
+      sendRequest(RPC_SCOPE,
+            SET_SHINY_VIEWER_TYPE,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getShinyRunCmd(String shinyAppDir, 
                               ServerRequestCallback<ShinyRunCmd> requestCallback)
    {
@@ -3394,4 +3406,5 @@ public class RemoteServer implements Server
 
    private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
+   private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
 }
