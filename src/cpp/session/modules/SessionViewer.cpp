@@ -49,22 +49,10 @@ Error viewerStopped(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
 void viewerNavigate(const std::string& url, int height = 0)
 {
-   // if we are in server mode then we need to do port mapping
-   std::string mappedUrl = url;
-   if (session::options().programMode() == kSessionProgramModeServer)
-   {
-      // see if we can form a portmap path for this url
-      std::string path;
-      if (module_context::portmapPathForLocalhostUrl(url, &path))
-         mappedUrl = path;
-   }
-
-
    // record the url (for reloads)
-   s_currentUrl = mappedUrl;
+   s_currentUrl = module_context::mapUrlPorts(url);
 
    // enque the event
    json::Object dataJson;
@@ -154,7 +142,6 @@ void onClientInit()
 }
 
 } // anonymous namespace
-
 
 Error initialize()
 {

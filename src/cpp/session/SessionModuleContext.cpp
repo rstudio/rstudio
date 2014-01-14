@@ -919,7 +919,6 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
-
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package
@@ -1320,6 +1319,21 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
    }
 }
 
+// given a url, return a portmap path if applicable (i.e. we're in server
+// mode and the path needs port mapping), and the unmodified url otherwise
+std::string mapUrlPorts(const std::string& url)
+{
+   // if we are in server mode then we need to do port mapping
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return url;
+
+   // see if we can form a portmap path for this url
+   std::string path;
+   if (portmapPathForLocalhostUrl(url, &path))
+      return path;
+
+   return url;
+}
 
 void activatePane(const std::string& pane)
 {

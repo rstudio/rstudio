@@ -373,6 +373,8 @@ std::string resourceFileAsString(const std::string& fileName);
 
 bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
 
+std::string mapUrlPorts(const std::string& url);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();

@@ -47,7 +47,7 @@ void enqueStartEvent(const std::string& url, const std::string& path,
                      int viewerType)
 {
    // record the url and path
-   s_currentAppUrl = url;
+   s_currentAppUrl = module_context::mapUrlPorts(url);
    s_currentAppPath = path;
 
    // enque the event
@@ -77,6 +77,18 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
             "path must be a single element character vector.");
       }
       int viewertype = r::sexp::asInteger(viewerSEXP);
+
+      // in desktop mode make sure we have the right version of httpuv
+      if (options().programMode() == kSessionProgramModeDesktop)
+      {
+         if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
+         {
+            module_context::consoleWriteError("\nWARNING: To view Shiny "
+              "applications inside RStudio, you need to "
+              "install the latest version of the httpuv package from "
+              "CRAN (version 1.2 or higher is required).\n\n");
+         }
+      }
 
       enqueStartEvent(r::sexp::safeAsString(urlSEXP),
                       r::sexp::safeAsString(pathSEXP),
