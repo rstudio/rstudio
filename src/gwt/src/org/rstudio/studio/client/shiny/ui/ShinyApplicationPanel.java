@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -49,12 +50,18 @@ public class ShinyApplicationPanel extends ResizeComposite
    private Toolbar createToolbar(Commands commands)
    {
       Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(commands_.reloadShinyApp().createToolbarButton());
+      ToolbarButton refreshButton = 
+            commands_.reloadShinyApp().createToolbarButton();
+      refreshButton.setLeftImage(commands_.viewerRefresh().getImageResource());
+      refreshButton.getElement().getStyle().setMarginTop(2, Unit.PX);
+      toolbar.addLeftWidget(refreshButton);
       if (Desktop.isDesktop())
       {
+         toolbar.addLeftSeparator();
          urlBox_ = new Label("");
          Style style = urlBox_.getElement().getStyle();
          style.setColor("#606060");
+         urlBox_.addStyleName(ThemeStyles.INSTANCE.selectableText());
          toolbar.addLeftWidget(urlBox_);
       }
       ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
