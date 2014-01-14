@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 
@@ -49,10 +50,13 @@ public class ShinyApplicationPanel extends ResizeComposite
    {
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.reloadShinyApp().createToolbarButton());
-      urlBox_ = new Label("");
-      Style style = urlBox_.getElement().getStyle();
-      style.setColor("#606060");
-      toolbar.addLeftWidget(urlBox_);
+      if (Desktop.isDesktop())
+      {
+         urlBox_ = new Label("");
+         Style style = urlBox_.getElement().getStyle();
+         style.setColor("#606060");
+         toolbar.addLeftWidget(urlBox_);
+      }
       ToolbarButton popout = commands_.viewerPopout().createToolbarButton();
       popout.setText("Open in Browser");
       toolbar.addRightWidget(popout);
@@ -70,7 +74,10 @@ public class ShinyApplicationPanel extends ResizeComposite
          appFrame_ = null;
       }
       
-      urlBox_.setText(params.getUrl());
+      // We don't show the URL in server mode
+      if (urlBox_ != null)
+         urlBox_.setText(params.getUrl());
+
       appFrame_ = new RStudioFrame(appParams_.getUrl());
       appFrame_.setSize("100%", "100%");
       rootPanel_.add(appFrame_);
