@@ -165,11 +165,6 @@ public:
    // make this path the system current directory
    Error makeCurrentPath(bool autoCreate = false) const ;
 
-   // compute the location of another path relative to this one; like
-   // relativePath but handles any pair of paths
-   std::string pathRelativeTo(const FilePath& targetPath,
-                              const FilePath& userHomePath) const ;
-
    Error open_r(boost::shared_ptr<std::istream>* pStream) const;
    Error open_w(boost::shared_ptr<std::ostream>* pStream, bool truncate = true) const;
 

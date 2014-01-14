@@ -1335,6 +1335,26 @@ std::string mapUrlPorts(const std::string& url)
    return url;
 }
 
+// given a pair of paths, return the second in the context of the first
+std::string pathRelativeTo(const FilePath& sourcePath,
+                           const FilePath& targetPath)
+{
+   std::string relative;
+   if (targetPath == sourcePath)
+   {
+      relative = ".";
+   }
+   else if (targetPath.isWithin(sourcePath))
+   {
+      relative = targetPath.relativePath(sourcePath);
+   }
+   else
+   {
+      relative = createAliasedPath(targetPath);
+   }
+   return relative;
+}
+
 void activatePane(const std::string& pane)
 {
    ClientEvent event(client_events::kActivatePane, pane);

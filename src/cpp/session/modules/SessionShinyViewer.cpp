@@ -150,9 +150,9 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    // Consider: if the shiny namespace is attached to the search path, we
    // don't need to emit "shiny::".
    std::string runCmd = "shiny::runApp(";
-   std::string dir = module_context::safeCurrentPath().pathRelativeTo(
-            module_context::resolveAliasedPath(targetPath),
-            module_context::userHomePath());
+   std::string dir = module_context::pathRelativeTo(
+            module_context::safeCurrentPath(),
+            module_context::resolveAliasedPath(targetPath));
    if (dir != ".")
    {
       // runApp defaults to the current working directory, so don't specify

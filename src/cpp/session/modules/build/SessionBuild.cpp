@@ -1323,9 +1323,9 @@ Error getCppCapabilities(const json::JsonRpcRequest& request,
 Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(module_context::safeCurrentPath().pathRelativeTo(
-            projects::projectContext().buildTargetPath(),
-            module_context::userHomePath()));
+   pResponse->setResult(module_context::pathRelativeTo(
+            module_context::safeCurrentPath(),
+            projects::projectContext().buildTargetPath()));
 
    return Success();
 }

@@ -375,6 +375,9 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
 
 std::string mapUrlPorts(const std::string& url);
 
+std::string pathRelativeTo(const core::FilePath& sourcePath,
+                           const core::FilePath& targetPath);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();

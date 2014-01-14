@@ -1026,25 +1026,6 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
    return false;
 }
 
-std::string FilePath::pathRelativeTo(const FilePath& targetPath,
-                                     const FilePath& userHomePath) const
-{
-   std::string relative;
-   if (targetPath == *this)
-   {
-      relative = ".";
-   }
-   else if (targetPath.isWithin(*this))
-   {
-      relative = targetPath.relativePath(*this);
-   }
-   else
-   {
-      relative = createAliasedPath(targetPath, userHomePath);
-   }
-   return relative;
-}
-
 bool FilePath::operator== (const FilePath& filePath) const 
 {
    return pImpl_->path == filePath.pImpl_->path ;
