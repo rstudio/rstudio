@@ -53,7 +53,7 @@ public class FieldReference {
       } else if (i > 0) {
         b.append(", ");
       }
-      b.append(types[i].getQualifiedSourceName());
+      b.append(types[i]);
     }
 
     return b.toString();
@@ -139,7 +139,7 @@ public class FieldReference {
 
     for (JType leftType : left.types) {
 
-      if (leftType == rightHandType) {
+      if (leftType.equals(rightHandType)) {
         return;
       }
 
@@ -178,7 +178,7 @@ public class FieldReference {
      * fact, which will halt processing.
      */
     logger.error(left.source, "%s required, but %s returns %s", renderTypesList(left.types),
-        FieldReference.this, rightHandType.getQualifiedSourceName());
+        FieldReference.this, rightHandType);
   }
 
   private boolean handleMismatchedNonNumericPrimitives(JType leftType, JType rightHandType,

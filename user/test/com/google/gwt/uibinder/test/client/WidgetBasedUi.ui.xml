@@ -84,6 +84,10 @@
   Tests the static import of a single constant into the local namespace.
 </ui:import>
 
+<ui:import field='com.google.gwt.uibinder.test.client.Constants.CONST_LIST'>
+  Tests the static import of a single constant with generics.
+</ui:import>
+
 <ui:import field='com.google.gwt.uibinder.test.client.Constants.Inner.*'>
   Tests the static import of multiple constants into the local namespace.
 </ui:import>
@@ -698,6 +702,9 @@
 
   <img src="{values.aUrl}" ui:field='myImage'/>
   
+  <gwt:ValueListBox ui:field="myValueListBox" acceptableValues="{CONST_LIST}" />
+  <demo:MyValueListBox acceptableValues="{CONST_LIST}" />
+
   <gwt:HTML ui:field='htmlWithComputedSafeHtml'><ui:safehtml from="{constants.getSafeHtml}" /></gwt:HTML>
   <gwt:HTML ui:field='htmlWithComputedText'><ui:text from="{constants.getText}" /></gwt:HTML>
   <gwt:Label ui:field='labelWithComputedText'><ui:text from="{constants.getText}"/></gwt:Label>

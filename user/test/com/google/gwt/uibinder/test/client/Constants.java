@@ -18,6 +18,9 @@ package com.google.gwt.uibinder.test.client;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Used to test static imports in UiBinder templates.
  */
@@ -42,6 +45,8 @@ public class Constants {
   }
 
   public static String CONST_FOO = "Foo";
+
+  public static List<String> CONST_LIST = Arrays.asList("1", "2", "3");
 
   public SafeHtml getSafeHtml() {
     return SafeHtmlUtils.fromSafeConstant("<b>This text should be bold!</b>");

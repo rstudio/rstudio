@@ -25,7 +25,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.uibinder.rebind.model.OwnerClass;
-import com.google.gwt.uibinder.rebind.model.OwnerField;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
 /**
@@ -155,9 +154,6 @@ class HandlerEvaluator {
                   + "in the template."), boundMethod, objectName);
         }
         JClassType objectType = fieldWriter.getInstantiableType();
-        if (objectType.isGenericType() != null) {
-          objectType = tryEnhancingTypeInfo(objectName, objectType);
-        }
 
         // Retrieves the "add handler" method in the object.
         JMethod addHandlerMethodType = getAddHandlerMethodForObject(objectType, handlerType);
@@ -171,23 +167,6 @@ class HandlerEvaluator {
             addHandlerMethodType.getName(), objectName);
       }
     }
-  }
-
-  private JClassType tryEnhancingTypeInfo(String objectName, JClassType objectType) {
-    OwnerField uiField = ownerClass.getUiField(objectName);
-    if (uiField != null) {
-      JParameterizedType pType = uiField.getRawType().isParameterized();
-      if (pType != null) {
-        // Even field is parameterized, it might be a super class. In that case, if we use the field
-        // type then we might miss some add handlers methods from the objectType itself; something
-        // we don't want to happen!
-        if (pType.getBaseType().equals(objectType)) {
-          // Now we proved type from UiField is more specific, let's use that one
-          return pType;
-        }
-      }
-    }
-    return objectType;
   }
 
   /**

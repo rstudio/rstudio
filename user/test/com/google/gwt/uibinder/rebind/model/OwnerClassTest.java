@@ -20,7 +20,9 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.CompilationState;
@@ -171,20 +173,6 @@ public class OwnerClassTest extends TestCase {
           }
         },
         new MockJavaResource(
-            "com.google.gwt.uibinder.rebind.model.WildcardWidgetFactory") {
-          @Override
-          public CharSequence getContent() {
-            StringBuffer code = new StringBuffer();
-            code.append("package com.google.gwt.uibinder.rebind.model;\n");
-            code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
-            code.append("public class WildcardWidgetFactory {");
-            code.append("  @UiFactory");
-            code.append("  Abstract<?> createOne() { return null; }");
-            code.append("}\n");
-            return code;
-          }
-        },
-        new MockJavaResource(
             "com.google.gwt.uibinder.rebind.model.ParamterizedWidgetFactory") {
           @Override
           public CharSequence getContent() {
@@ -206,6 +194,8 @@ public class OwnerClassTest extends TestCase {
             code.append("package com.google.gwt.uibinder.rebind.model;\n");
             code.append("import com.google.gwt.uibinder.client.UiFactory;\n");
             code.append("public class TooManyGenerics {");
+            code.append("  @UiFactory");
+            code.append("  Abstract create() { return null; }");
             code.append("  @UiFactory");
             code.append("  Abstract<?> createSomething() { return null; }");
             code.append("  @UiFactory");
@@ -307,36 +297,54 @@ public class OwnerClassTest extends TestCase {
   public void testParameterizedWidgets() throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.ParamterizedWidgetFactory");
     JClassType abstractType = types.findType("com.google.gwt.uibinder.rebind.model.Abstract");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
-        uiBinderCtx);
+    JClassType abstractTypeWildcard = createParameterizedWithWildcard(abstractType);
+    JClassType abstractTypeString = createParameterizedWithString(abstractType);
+    JClassType abstractTypeObject = createParameterizedWithObject(abstractType);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
 
     JMethod expected = ownerType.findMethod("createOne", new JType[] {});
-    JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(abstractType);
 
-    assertEquals(expected, uiFactoryMethod);
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractType));
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractTypeWildcard));
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractTypeString));
+    assertEquals(null, ownerClass.getUiFactoryMethod(abstractTypeObject));
   }
 
-  public void testWildcardWidgets() throws UnableToCompleteException {
-    JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.WildcardWidgetFactory");
-    JClassType abstractType = types.findType("com.google.gwt.uibinder.rebind.model.Abstract");
-    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL,
-        uiBinderCtx);
-
-    JMethod expected = ownerType.findMethod("createOne", new JType[] {});
-    JMethod uiFactoryMethod = ownerClass.getUiFactoryMethod(abstractType);
-
-    assertEquals(expected, uiFactoryMethod);
-  }
-
-  public void testHowSuckyWeReallyAreWithGenerics() {
+  public void testOwnerClass_uiFactoryWithMoreGenerics()
+      throws UnableToCompleteException {
     JClassType ownerType = types.findType("com.google.gwt.uibinder.rebind.model.TooManyGenerics");
+    JClassType abstractType = types.findType("com.google.gwt.uibinder.rebind.model.Abstract");
+    JClassType abstractTypeWildcard = createParameterizedWithWildcard(abstractType);
+    JClassType abstractTypeString = createParameterizedWithString(abstractType);
+    JClassType abstractTypeObject = createParameterizedWithObject(abstractType);
+    OwnerClass ownerClass = new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
 
-    try {
-      new OwnerClass(ownerType, MortalLogger.NULL, uiBinderCtx);
-      fail();
-    } catch (UnableToCompleteException e) {
-      /* pass */
-    }
+    JMethod expected;
+
+    expected = ownerType.findMethod("create", new JType[] {});
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractType));
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractTypeObject));
+
+    expected = ownerType.findMethod("createSomething", new JType[] {});
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractTypeWildcard));
+
+    expected = ownerType.findMethod("createStringThing", new JType[] {});
+    assertEquals(expected, ownerClass.getUiFactoryMethod(abstractTypeString));
+  }
+
+  private JParameterizedType createParameterizedWithString(JClassType abstractType) {
+    return types.getParameterizedType(
+        abstractType.isGenericType(), new JClassType[] {types.findType("java.lang.String")});
+  }
+
+  private JParameterizedType createParameterizedWithObject(JClassType abstractType) {
+    return types.getParameterizedType(
+        abstractType.isGenericType(), new JClassType[] {types.getJavaLangObject()});
+  }
+
+  private JParameterizedType createParameterizedWithWildcard(JClassType abstractType) {
+    return types.getParameterizedType(abstractType.isGenericType(),
+        new JClassType[] {types.getWildcardType(BoundType.UNBOUND, types.getJavaLangObject())});
   }
 
   public void testOwnerClass_uiFactoryBadType() {

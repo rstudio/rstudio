@@ -140,7 +140,7 @@ public class BeanParser implements ElementParser {
         writer.die(elem, "Duplicate attribute name: %s", propertyName);
       }
 
-      if (unfilledRequiredParams.keySet().contains(propertyName)) {
+      if (unfilledRequiredParams.containsKey(propertyName)) {
         JType paramType = unfilledRequiredParams.get(propertyName);
         String value = elem.consumeAttributeWithDefault(attribute.getName(),
             null, paramType);

@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -62,6 +63,12 @@ public class OwnerClass {
       new HashMap<JClassType, JMethod>();
 
   /**
+   * Map from raw type to the method that produces it.
+   */
+  private final Map<JClassType, JMethod> uiFactoriesForRawTypes =
+      new HashMap<JClassType, JMethod>();
+
+  /**
    * List of all @UiHandler methods in the owner class.
    */
   private final List<JMethod> uiHandlers = new ArrayList<JMethod>();
@@ -71,6 +78,7 @@ public class OwnerClass {
   private final JClassType ownerType;
 
   private final UiBinderContext context;
+
 
   /**
    * Constructor.
@@ -85,6 +93,7 @@ public class OwnerClass {
     this.context = context;
     findUiFields(ownerType);
     findUiFactories(ownerType);
+    findRawUiFactories();
     findUiHandlers(ownerType);
   }
 
@@ -104,7 +113,26 @@ public class OwnerClass {
       forType = genericType.getRawType();
     }
 
-    return uiFactories.get(forType);
+    // Exact match
+    JMethod jMethod = uiFactories.get(forType);
+
+    // If A<T>, A<String> or A<?> are queried, match to A as backward compatibility:
+    if (jMethod == null && forType.isParameterized() != null) {
+      jMethod = uiFactories.get(forType.getErasedType());
+    }
+
+    // If A or A<?> is queried, match to A<T>, A<String> etc. as it is a valid assignment:
+    if (jMethod == null && (forType.isRawType() != null || isParametrizedWithWildcard(forType))) {
+      jMethod = uiFactoriesForRawTypes.get(forType.getErasedType());
+    }
+
+    return jMethod;
+  }
+
+  private static boolean isParametrizedWithWildcard(JClassType type) {
+    JParameterizedType parameterized = type.isParameterized();
+    return parameterized != null
+        && parameterized.isAssignableFrom(parameterized.getBaseType().asParameterizedByWildcards());
   }
 
   /**
@@ -150,14 +178,13 @@ public class OwnerClass {
   }
 
   /**
-   * Scans the owner class to find all methods annotated with @UiFactory, and
-   * puts them in {@link #uiFactories}.
+   * Scans the owner class to find all methods annotated with @UiFactory, and puts them in
+   * {@link #uiFactories}.
    *
    * @param ownerType the type of the owner class
    * @throws UnableToCompleteException
    */
-  private void findUiFactories(JClassType ownerType)
-      throws UnableToCompleteException {
+  private void findUiFactories(JClassType ownerType) throws UnableToCompleteException {
     JMethod[] methods = ownerType.getMethods();
     for (JMethod method : methods) {
       if (method.isAnnotationPresent(UiFactory.class)) {
@@ -168,11 +195,6 @@ public class OwnerClass {
               + method.getName());
         }
         
-        JParameterizedType paramType = factoryType.isParameterized();
-        if (paramType != null) {
-          factoryType = paramType.getRawType();
-        }
-
         if (uiFactories.containsKey(factoryType)) {
           logger.die("Duplicate factory in class "
               + method.getEnclosingType().getName() + " for type "
@@ -187,6 +209,15 @@ public class OwnerClass {
     JClassType superclass = ownerType.getSuperclass();
     if (superclass != null) {
       findUiFactories(superclass);
+    }
+  }
+
+  private void findRawUiFactories() {
+    for (Entry<JClassType, JMethod> entry : uiFactories.entrySet()) {
+      JParameterizedType parameterizedType = entry.getKey().isParameterized();
+      if (parameterizedType != null) {
+        uiFactoriesForRawTypes.put(parameterizedType.getRawType(), entry.getValue());
+      }
     }
   }
 

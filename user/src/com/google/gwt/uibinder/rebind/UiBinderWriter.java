@@ -917,8 +917,15 @@ public class UiBinderWriter implements Statements {
     // Get the class associated with this element.
     JClassType type = findFieldType(elem);
 
+
+    // If the element has a name then let's try enhancing the type info.
+    String fieldName = getFieldName(elem);
+    if (fieldName != null) {
+      type = tryEnhancingTypeInfo(fieldName, type);
+    }
+
     // Declare its field.
-    FieldWriter field = declareField(elem, type.getQualifiedSourceName());
+    FieldWriter field = declareField(elem, type, fieldName);
 
     /*
      * Push the field that will hold this widget on top of the parsedFieldStack
@@ -1086,17 +1093,10 @@ public class UiBinderWriter implements Statements {
 
   /**
    * Declares a field of the given type name, returning the name of the declared
-   * field. If the element has a field or id attribute, use its value.
-   * Otherwise, create and return a new, private field name for it.
+   * field. If {@code fieldName} is {@code null}, it will be generated.
    */
-  private FieldWriter declareField(XMLElement source, String typeName)
+  private FieldWriter declareField(XMLElement source, JClassType type, String fieldName)
       throws UnableToCompleteException {
-    JClassType type = oracle.findType(typeName);
-    if (type == null) {
-      die(source, "Unknown type %s", typeName);
-    }
-
-    String fieldName = getFieldName(source);
     if (fieldName == null) {
       // TODO(rjrjr) could collide with user declared name, as is
       // also a worry in HandlerEvaluator. Need a general scheme for
@@ -1106,6 +1106,28 @@ public class UiBinderWriter implements Statements {
     }
     fieldName = normalizeFieldName(fieldName);
     return fieldManager.registerField(type, fieldName);
+  }
+
+  /**
+   * This method tries to improve the existing type information by looking at the ui field.
+   * declaration. (Although the ui.xml cannot define the type parameters for generic types, the
+   * field declaration itself inside the class might include this information.)
+   */
+  private JClassType tryEnhancingTypeInfo(String fieldName, JClassType fieldType) {
+    OwnerField uiField = ownerClass.getUiField(fieldName);
+    if (uiField != null) {
+      JParameterizedType pType = uiField.getRawType().isParameterized();
+      if (pType != null) {
+        // Even if the field is parameterized, the type of the field might be a super class of the
+        // type declared in the xml. In that case, the new type would be less specific, we don't
+        // want that to happen:
+        if (pType.getBaseType().equals(fieldType)) {
+          // Now we proved type from UiField is more specific, let's use that one.
+          return pType;
+        }
+      }
+    }
+    return fieldType;
   }
 
   private void dieGettingEventTypeName(JMethod jMethod, Exception e)
