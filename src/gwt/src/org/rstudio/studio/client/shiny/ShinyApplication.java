@@ -31,9 +31,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -43,7 +42,7 @@ import com.google.inject.Singleton;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
-                                         BusyHandler
+                                         ConsoleBusyEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -69,7 +68,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       interrupt_ = interrupt;
       
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
-      eventBus_.addHandler(BusyEvent.TYPE, this);
+      eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
 
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
@@ -97,7 +96,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    }
 
    @Override
-   public void onBusy(BusyEvent event)
+   public void onConsoleBusy(ConsoleBusyEvent event)
    {
       isBusy_ = event.isBusy();
    }
