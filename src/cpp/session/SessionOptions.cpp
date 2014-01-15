@@ -38,6 +38,7 @@ using namespace core ;
 namespace session {  
 
 namespace {
+const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
 } // anonymous namespace
 
@@ -253,7 +254,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         value<std::string>(&mathjaxPath_)->default_value("resources/mathjax"),
         "Path to mathjax library")
       ("external-pandoc-path",
-        value<std::string>(&pandocPath_)->default_value("bin/pandoc"),
+        value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
         "Path to pandoc binaries");
 
    // user options (default user identity to current username)
@@ -400,7 +401,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
-   resolvePath(resourcePath, &pandocPath_);
+   resolvePandocPath(resourcePath, &pandocPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
@@ -471,6 +472,20 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolvePandocPath(const FilePath& resourcePath,
+                                std::string* pPath)
+{
+   if (*pPath == kDefaultPandocPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/pandoc");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 #else
 
 void Options::resolvePostbackPath(const FilePath& resourcePath,
@@ -478,6 +493,14 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 {
    resolvePath(resourcePath, pPath);
 }
+
+void Options::resolvePandocPath(const FilePath& resourcePath,
+                                  std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+
 
 #endif
    

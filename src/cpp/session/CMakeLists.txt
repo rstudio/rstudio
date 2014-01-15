@@ -325,9 +325,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install pandoc
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.3"
-           USE_SOURCE_PERMISSIONS
-           DESTINATION  ${RSTUDIO_INSTALL_BIN})
+   file(GLOB PANDOC_FILES "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.3/pandoc*")
+   install(PROGRAMS ${PANDOC_FILES}
+           DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install 64 bit binaries if we are on win64
    if(WIN32)

@@ -369,7 +369,7 @@ private:
                     std::string* pPath);
    void resolvePostbackPath(const core::FilePath& resourcePath,
                             std::string* pPath);
-
+   void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
