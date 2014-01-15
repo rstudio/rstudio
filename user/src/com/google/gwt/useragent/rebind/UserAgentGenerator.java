@@ -39,9 +39,6 @@ import java.util.Set;
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
 
-  private static ImmutableSet<String> relevantPropertyNames =
-      ImmutableSet.of("user.agent", "user.agent.runtimeWarning");
-
   @Override
   public String generate(TreeLogger logger, GeneratorContext context, String typeName)
       throws UnableToCompleteException {
@@ -110,7 +107,7 @@ public class UserAgentGenerator extends Generator {
 
   @Override
   public Set<String> getAccessedPropertyNames() {
-    return relevantPropertyNames;
+    return ImmutableSet.of(PROPERTY_USER_AGENT);
   }
 
   @Override
