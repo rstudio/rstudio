@@ -15,8 +15,10 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Tests ArrayList class (and by extension, AbstractList).
@@ -29,6 +31,28 @@ public class ArrayListTest extends ListTestBase {
     public void removeRange(int fromIndex, int toIndex) {
       super.removeRange(fromIndex, toIndex);
     }
+  }
+
+  public void testAbstractListUnmodifiableFailedIteratorAddIndexCorruption() {
+    ListIterator<String> i = new AbstractList<String>() {
+      @Override
+      public int size() {
+        return 0;
+      }
+
+      @Override
+      public String get(int index) {
+        throw new IndexOutOfBoundsException();
+      }
+    }.listIterator();
+    try {
+      i.add("bar");
+      fail();
+    } catch (UnsupportedOperationException expected) {
+      // add() is expected to fail but shouldn't put us in a inconsistent state.
+      // See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6533203
+    }
+    assertFalse(i.hasPrevious());
   }
 
   public void testRemoveRange() {

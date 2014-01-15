@@ -79,7 +79,8 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     }
 
     public void add(E o) {
-      AbstractList.this.add(i++, o);
+      AbstractList.this.add(i, o);
+      i++;
       last = -1;
     }
 
