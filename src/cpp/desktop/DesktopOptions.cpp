@@ -24,8 +24,10 @@
 
 #include "DesktopUtils.hpp"
 
+#ifdef _WIN32
 #include <windows.h>
 #include <wingdi.h>
+#endif
 
 using namespace core;
 
