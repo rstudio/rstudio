@@ -235,6 +235,11 @@ public:
       return core::FilePath(mathjaxPath_.c_str());
    }
 
+   core::FilePath pandocPath() const
+   {
+      return core::FilePath(pandocPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
       return allowFileDownloads_;
@@ -427,6 +432,7 @@ private:
    std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+   std::string pandocPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;

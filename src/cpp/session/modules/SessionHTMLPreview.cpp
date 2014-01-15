@@ -34,6 +34,7 @@
 #include <core/HtmlUtils.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -987,6 +988,32 @@ void handlePreviewRequest(const http::Request& request,
 }
 
 
+void addPandocToPath()
+{
+   // ensure that pandoc is on the path for all platforms save for
+   // redhat 5 (where we don't yet have a redistributable pandoc binary)
+#if !defined(_WIN32) && !defined(__APPLE__)
+   FilePath redhatReleaseFile("/etc/redhat-release");
+   if (redhatReleaseFile.exists())
+   {
+      // get redhat release info
+      std::string redhatRelease;
+      Error error = core::readStringFromFile(redhatReleaseFile, &redhatRelease);
+      if (error)
+         LOG_ERROR(error);
+
+      // check for redhat 5
+      if (!boost::algorithm::istarts_with(redhatRelease, "fedora") &&
+          boost::algorithm::icontains(redhatRelease, "release 5"))
+      {
+         return;
+      }
+   }
+#endif
+
+   core::system::addToSystemPath(session::options().pandocPath(), true);
+}
+
    
 } // anonymous namespace
 
@@ -1026,6 +1053,8 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
+   addPandocToPath();
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

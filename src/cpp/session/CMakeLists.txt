@@ -17,12 +17,15 @@ project (SESSION)
 
 add_subdirectory(workers)
 
-# verify that install-dictionaries and install-mathjax have been run
+# verify that install-dictionaries, install-mathjax, and install-pandoc have been run
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax")
   message(FATAL_ERROR "Mathjax not found (re-run install-dependencies script to install)")
+endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
+  message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
 
 # include files
@@ -320,6 +323,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install mathjax for local html preview
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install pandoc
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.3"
+           USE_SOURCE_PERMISSIONS
+           DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
    # install 64 bit binaries if we are on win64
    if(WIN32)
