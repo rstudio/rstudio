@@ -1026,6 +1026,9 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
+   // ensure that pandoc is on the path
+   core::system::addToSystemPath(session::options().pandocPath(), true);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

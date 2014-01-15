@@ -251,7 +251,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "Path to hunspell dictionaries")
       ("external-mathjax-path",
         value<std::string>(&mathjaxPath_)->default_value("resources/mathjax"),
-        "Path to mathjax library");
+        "Path to mathjax library")
+      ("external-pandoc-path",
+        value<std::string>(&pandocPath_)->default_value("bin/pandoc"),
+        "Path to pandoc binaries");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -397,6 +400,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
+   resolvePath(resourcePath, &pandocPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
