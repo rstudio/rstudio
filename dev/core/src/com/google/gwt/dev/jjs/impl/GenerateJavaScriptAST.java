@@ -2974,77 +2974,13 @@ public class GenerateJavaScriptAST {
         new GenerateJavaScriptVisitor(recorder.methodsForJsInlining);
     generator.accept(program);
 
-    final Map<JsName, JMethod> nameToMethodMap = new HashMap<JsName, JMethod>();
-    final HashMap<JsName, JField> nameToFieldMap = new HashMap<JsName, JField>();
-    final HashMap<JsName, JClassType> constructorNameToTypeMap = new HashMap<JsName, JClassType>();
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      JsName typeName = names.get(type);
-      if (type instanceof JClassType && typeName != null) {
-        constructorNameToTypeMap.put(typeName, (JClassType) type);
-      }
-      for (JField field : type.getFields()) {
-        if (field.isStatic()) {
-          JsName fieldName = names.get(field);
-          if (fieldName != null) {
-            nameToFieldMap.put(fieldName, field);
-          }
-        }
-      }
-      for (JMethod method : type.getMethods()) {
-        JsName methodName = names.get(method);
-        if (methodName != null) {
-          nameToMethodMap.put(methodName, method);
-        }
-      }
-    }
-
     jsProgram.setIndexedFields(indexedFields);
     jsProgram.setIndexedFunctions(indexedFunctions);
 
     // TODO(spoon): Instead of gathering the information here, get it via
     // SourceInfo
-    JavaToJavaScriptMap jjsMap = new JavaToJavaScriptMap() {
-
-      @Override
-      public JsName nameForField(JField field) {
-        return names.get(field);
-      }
-
-      @Override
-      public JsName nameForMethod(JMethod method) {
-        return names.get(method);
-      }
-
-      @Override
-      public JsName nameForType(JClassType type) {
-        return names.get(type);
-      }
-
-      @Override
-      public JField nameToField(JsName name) {
-        return nameToFieldMap.get(name);
-      }
-
-      @Override
-      public JMethod nameToMethod(JsName name) {
-        return nameToMethodMap.get(name);
-      }
-
-      @Override
-      public JClassType nameToType(JsName name) {
-        return constructorNameToTypeMap.get(name);
-      }
-
-      @Override
-      public JClassType typeForStatement(JsStatement stat) {
-        return typeForStatMap.get(stat);
-      }
-
-      @Override
-      public JMethod vtableInitToMethod(JsStatement stat) {
-        return vtableInitForMethodMap.get(stat);
-      }
-    };
+    JavaToJavaScriptMap jjsMap = new JavaToJavaScriptMapImpl(program.getDeclaredTypes(),
+        names, typeForStatMap, vtableInitForMethodMap);
 
     return Pair.create(jjsMap, generator.functionsForJsInlining);
   }
