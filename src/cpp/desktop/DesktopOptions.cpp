@@ -24,6 +24,9 @@
 
 #include "DesktopUtils.hpp"
 
+#include <windows.h>
+#include <wingdi.h>
+
 using namespace core;
 
 namespace desktop {
@@ -34,6 +37,30 @@ QString binDirToHomeDir(QString binDir);
 #endif
 
 QString scratchPath;
+
+Options::Options() : settings_(FORMAT, QSettings::UserScope,
+                               QString::fromAscii("RStudio"),
+                               QString::fromAscii("desktop")),
+                     runDiagnostics_(false),
+                     defaultZoomLevel_(1.0)
+{
+#ifdef _WIN32
+   // On Windows, check for high DPI and use a higher default zoom value if present
+   HDC defaultDC = GetDC(NULL);
+   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
+   if (dpi >= 192)
+   {
+      // Corresponds to 200% scaling (introduced in Windows 8.1)
+      defaultZoomLevel_ = 1.5;
+   }
+   else if (dpi >= 144)
+   {
+      // Corresponds to 150% scaling
+      defaultZoomLevel_ = 1.2;
+   }
+   ReleaseDC(NULL, defaultDC);
+#endif
+}
 
 Options& options()
 {
@@ -214,7 +241,8 @@ QString Options::fixedWidthFont() const
 
 double Options::zoomLevel() const
 {
-   QVariant zoom = settings_.value(QString::fromAscii("view.zoomLevel"), 1.0);
+   QVariant zoom = settings_.value(QString::fromAscii("view.zoomLevel"),
+                                   defaultZoomLevel_);
    return zoom.toDouble();
 }
 
