@@ -50,8 +50,20 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
-      # TODO: correct linux paths
-      cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
+      # copy binaries for appropriate distro/arch
+      if [ -x /usr/bin/dpkg ]; then
+        PACKAGING=debian
+      else
+        PACKAGING=rpm
+      fi
+      ARCH=`uname -m`
+
+      # Until we build proper redhat binaries we are going to install the
+      # debian binaries on all targets (this works for all flavors of 
+      # redhat save for RHEL/CentOS 5)
+      #
+      # cp ${PANDOC_NAME}/linux/${PACKAGING}/${ARCH}/pandoc* ${PANDOC_DIR}
+      cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_DIR}
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME
