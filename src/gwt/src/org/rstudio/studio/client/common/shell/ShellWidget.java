@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -75,6 +76,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), 
                                  ElementIds.CONSOLE_OUTPUT);
+      output_.addPasteHandler(secondaryInputHandler);
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
@@ -538,7 +540,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
     * is clicked.
     */
    private class SelectInputClickHandler implements ClickHandler,
-                                                    KeyDownHandler
+                                                    KeyDownHandler,
+                                                    PasteEvent.Handler
    {
       public void onClick(ClickEvent event)
       {
@@ -591,7 +594,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);
       }
-
+      
+      public void onPaste(PasteEvent event)
+      {
+         // When pasting, focus the input so it'll receive the pasted text
+         input_.setFocus(true);
+      }
+      
       public void setInput(AceEditor input)
       {
          input_ = input;
@@ -638,7 +647,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       trailingOutput_ = null;
       trailingOutputConsole_ = null;
    }
-
+   
    public InputEditorDisplay getInputEditorDisplay()
    {
       return input_ ;
