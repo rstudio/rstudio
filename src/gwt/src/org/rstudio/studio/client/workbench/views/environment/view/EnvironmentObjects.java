@@ -35,6 +35,7 @@ import com.google.gwt.view.client.ListDataProvider;
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
@@ -327,19 +328,23 @@ public class EnvironmentObjects extends ResizeComposite
          // create the virtual scrollbars in the DataGrid that drives the
          // environment list (it computes, and then tries to apply, a negative
          // height). This appears to only happen during superdevmode boot,
-         // so if it occurs, wait 5ms and try again.
+         // so try again if we're in superdevmode.
          //
          // Consider: There's a potential for an infinite loop here if we can
          // never create the display.
 
-         Timer t = new Timer() {
-            @Override
-            public void run()
-            {
-               setObjectDisplay(type);
-            }
-         };
-         t.schedule(5);
+         if (SuperDevMode.isActive())
+         {
+            Timer t = new Timer() {
+               @Override
+               public void run()
+               {
+                  setObjectDisplay(type);
+               }
+            };
+            t.schedule(5);
+         }
+
          return;
       }
 
