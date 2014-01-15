@@ -17,10 +17,31 @@
 
 #include <core/Hash.hpp>
 #include <core/Log.hpp>
+#include <core/FilePath.hpp>
+
+#include <core/system/Environment.hpp>
 
 namespace core {
 namespace system {
      
+#ifdef _WIN32
+#define kPathSeparator ";"
+#else
+#define kPathSeparator ":"
+#endif
+
+
+void addToSystemPath(const FilePath& path, bool prepend)
+{
+   std::string systemPath = system::getenv("PATH");
+   if (prepend)
+      systemPath = path.absolutePath() + kPathSeparator + systemPath;
+   else
+      systemPath = systemPath + kPathSeparator + path.absolutePath();
+   system::setenv("PATH", systemPath);
+}
+
+
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
    core::log::logError(error, loggedFromLocation);
