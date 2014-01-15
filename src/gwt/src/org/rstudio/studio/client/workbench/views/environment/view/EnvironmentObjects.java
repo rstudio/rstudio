@@ -1,4 +1,4 @@
-/*
+/*;
  * EnvironmentObjects.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
@@ -15,6 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -24,6 +28,7 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
@@ -34,8 +39,6 @@ import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
-
-import java.util.*;
 
 public class EnvironmentObjects extends ResizeComposite
    implements CallFramePanelHost,
@@ -286,7 +289,7 @@ public class EnvironmentObjects extends ResizeComposite
          return;
       }
 
-      int type = deferredObjectDisplayType_;
+      final int type = deferredObjectDisplayType_;
       
       // if we already have an active display of this type, do nothing
       if (type == objectDisplayType_ && 
@@ -301,18 +304,43 @@ public class EnvironmentObjects extends ResizeComposite
          objectDataProvider_.removeDataDisplay(objectDisplay_);
          splitPanel.remove(objectDisplay_);
       }
-      // create the new object display and wire it to the data source
-      if (type == OBJECT_LIST_VIEW)
+      
+      try
       {
-         objectDisplay_ = new EnvironmentObjectList(
-                                 this, observer_, environmentName_);
-         objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+         // create the new object display and wire it to the data source
+         if (type == OBJECT_LIST_VIEW)
+         {
+            objectDisplay_ = new EnvironmentObjectList(
+                                    this, observer_, environmentName_);
+            objectSort_.setSortType(RObjectEntrySort.SORT_AUTO);
+         }
+         else if (type == OBJECT_GRID_VIEW)
+         {
+            objectDisplay_ = new EnvironmentObjectGrid(
+                                    this, observer_, environmentName_);
+            objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+         }
       }
-      else if (type == OBJECT_GRID_VIEW)
+      catch (Throwable e)
       {
-         objectDisplay_ = new EnvironmentObjectGrid(
-                                 this, observer_, environmentName_);
-         objectSort_.setSortType(RObjectEntrySort.SORT_COLUMN);
+         // For reasons that are unclear, GWT sometimes barfs when trying to
+         // create the virtual scrollbars in the DataGrid that drives the
+         // environment list (it computes, and then tries to apply, a negative
+         // height). This appears to only happen during superdevmode boot,
+         // so if it occurs, wait 5ms and try again.
+         //
+         // Consider: There's a potential for an infinite loop here if we can
+         // never create the display.
+
+         Timer t = new Timer() {
+            @Override
+            public void run()
+            {
+               setObjectDisplay(type);
+            }
+         };
+         t.schedule(5);
+         return;
       }
 
       objectDisplayType_ = type;
