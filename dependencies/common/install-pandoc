@@ -1,0 +1,61 @@
+#!/bin/bash
+
+#
+# install-pandoc
+#
+# Copyright (C) 2009-12 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir
+INSTALL_DIR=`pwd`
+
+# determine platform
+PLATFORM=`uname`
+
+# use curl or wget as appropriate
+download()
+{
+  if [ "$PLATFORM" == "Darwin" ]
+  then
+    curl -L https://s3.amazonaws.com/rstudio-buildtools/$1 > $1
+  else
+    wget https://s3.amazonaws.com/rstudio-buildtools/$1 -O $1
+  fi
+}
+
+# get pandoc
+PANDOC_VERSION=1.12.3
+PANDOC_DIR=pandoc/$PANDOC_VERSION
+if [ -d "$PANDOC_DIR" ]
+then
+   echo "pandoc ${PANDOC_VERSION} already installed"
+else
+   PANDOC_NAME=pandoc-${PANDOC_VERSION}
+   PANDOC_ZIP=${PANDOC_NAME}.zip
+   download $PANDOC_ZIP
+   unzip -q $PANDOC_ZIP
+   mkdir -p ${PANDOC_DIR}
+   if [ "$PLATFORM" == "Darwin" ]
+   then
+      cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
+   else
+      # TODO: correct linux paths
+      cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
+   fi
+   rm $PANDOC_ZIP
+   rm -rf $PANDOC_NAME
+fi
+
+# back to install dir
+cd $INSTALL_DIR
