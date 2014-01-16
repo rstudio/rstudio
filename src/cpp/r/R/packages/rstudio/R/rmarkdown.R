@@ -2,8 +2,14 @@
 
 rmd2pandoc <- function(input,
                        format = c("html", "docx", "latex", "beamer"),
+                       markdown.options = pandoc_rmarkdown_options(),
                        pandoc.options = NULL,
+                       envir = parent.frame(),
+                       quiet = FALSE,
                        encoding = getOption("encoding")) {
+
+  # check that we have the right version of pandoc
+  pandoc_check_version()
 
   # match format
   format <- match.arg(format)
@@ -19,10 +25,11 @@ rmd2pandoc <- function(input,
   # knit document
   render_pandoc_markdown(format)
   md <- paste0(tools::file_path_sans_ext(input), ".md")
-  knit(input, md, encoding = encoding)
+  knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
 
   # call pandoc
-  pandoc_convert(md, output, format, NULL, pandoc.options)
+  pandoc.options <- c(pandoc.options, "--smart")
+  pandoc_convert(md, output, format, markdown.options, pandoc.options)
 
   # return output filename
   invisible(output)
@@ -57,28 +64,12 @@ render_pandoc_markdown <- function(format = c("html",
 pandoc_convert <- function(input,
                            output,
                            format,
-                           markdown.options = NULL,
+                           markdown.options = pandoc_rmarkdown_options(),
                            pandoc.options = NULL) {
   args <- c("--output", output,
             "--from",
-            paste("markdown_github",
-                  "-hard_line_breaks",
-                  "+superscript",
-                  "+tex_math_dollars",
-                  "+raw_html",
-                  "+auto_identifiers",
-                  "+raw_tex",
-                  "+latex_macros",
-                  "+implicit_figures",
-                  "+footnotes",
-                  "+inline_notes",
-                  "+citations",
-                  "+pandoc_title_block",
-                  "+yaml_metadata_block",
-                  markdown.options,
-                  sep=""),
+            paste(markdown.options, sep=""),
             "--to", format,
-            "--smart",
             pandoc.options,
             input, recursive = TRUE)
   cat("pandoc ")
@@ -87,13 +78,30 @@ pandoc_convert <- function(input,
   pandoc_execute(args)
 }
 
+pandoc_rmarkdown_options <- function() {
+  c("markdown_github",
+    "-hard_line_breaks",
+    "+superscript",
+    "+tex_math_dollars",
+    "+raw_html",
+    "+auto_identifiers",
+    "+raw_tex",
+    "+latex_macros",
+    "+implicit_figures",
+    "+footnotes",
+    "+inline_notes",
+    "+citations",
+    "+pandoc_title_block",
+    "+yaml_metadata_block")
+}
+
 pandoc_execute <- function(args, ...) {
   pandoc <- pandoc_path()
   if (nzchar(pandoc)) {
     command <- paste(pandoc, paste(shQuote(args), collapse = " "))
     system(command, ...)
   } else {
-    stop("pandoc was not found on the system path")
+    stop("pandoc was not found on the system path", call. = FALSE)
   }
 }
 
@@ -110,7 +118,7 @@ pandoc_check_version <- function() {
     else
       msg <- paste(msg, "No version of pandoc was found on the path.")
 
-    warning(msg, call.=FALSE)
+    stop(msg, call.=FALSE)
   }
 }
 
