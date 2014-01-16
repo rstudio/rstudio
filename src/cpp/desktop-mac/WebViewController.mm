@@ -12,6 +12,7 @@
 #import "SecondaryWindowController.h"
 #import "Utils.hpp"
 #import "WebViewWithKeyEquiv.h"
+#import "FileDownloader.h"
 
 struct PendingSatelliteWindow
 {
@@ -325,6 +326,14 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       return;
    }
    
+   // open PDFs externally
+   if ([[url pathExtension] isEqual: @"pdf"])
+   {
+      desktop::downloadAndShowFile([self rsessionRequest: request]);
+      [listener ignore];
+      return;
+   }
+   
    NSString* host = [url host];
    BOOL isLocal = [host isEqualTo: @"localhost"] ||
    [host isEqualTo: @"127.0.0.1"];
@@ -441,6 +450,11 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
                   willSendRequest:(NSURLRequest *)request
                   redirectResponse:(NSURLResponse *) redirectResponse
                   fromDataSource:(WebDataSource *) dataSource
+{
+   return [self rsessionRequest: request];
+}
+
+- (NSURLRequest*) rsessionRequest: (NSURLRequest*) request
 {
    NSMutableURLRequest *mutableRequest = [[request mutableCopy] autorelease];
    std::string secret = desktop::options().sharedSecret();
