@@ -263,7 +263,7 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     if (!regexp.isEmpty()) {
       return ""
           + "if (!/^" + regexp.replace("/", "\\/") + "$/.test(devModeUrl)) {\n"
-          + "  if (window.console && console.log) {\n"
+          + "  if (devModeUrl && window.console && console.log) {\n"
           + "    console.log('Ignoring non-whitelisted Dev Mode URL: ' + devModeUrl);\n"
           + "  }\n"
           + "  devModeUrl = '';"
