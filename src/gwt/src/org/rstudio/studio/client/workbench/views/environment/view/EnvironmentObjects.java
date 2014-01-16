@@ -32,6 +32,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.ListDataProvider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.AutoHidingSplitLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
@@ -328,13 +329,17 @@ public class EnvironmentObjects extends ResizeComposite
          // create the virtual scrollbars in the DataGrid that drives the
          // environment list (it computes, and then tries to apply, a negative
          // height). This appears to only happen during superdevmode boot,
-         // so try again if we're in superdevmode.
-         //
-         // Consider: There's a potential for an infinite loop here if we can
-         // never create the display.
+         // so try again (up to 5 times) if we're in superdevmode.
 
          if (SuperDevMode.isActive())
          {
+            if (gridRenderRetryCount_ >= 5)
+            {
+               Debug.log("WARNING: Failed to render environment pane data grid");
+            }
+            gridRenderRetryCount_++;
+            Debug.log("WARNING: Retrying environment data grid render (" + 
+                      gridRenderRetryCount_ + ")");
             Timer t = new Timer() {
                @Override
                public void run()
@@ -687,4 +692,5 @@ public class EnvironmentObjects extends ResizeComposite
    private JsArrayString deferredExpandedObjects_;
    private boolean pendingCallFramePanelSize_ = false;
    private Integer deferredObjectDisplayType_ = new Integer(OBJECT_LIST_VIEW);
+   private int gridRenderRetryCount_ = 0;
 }
