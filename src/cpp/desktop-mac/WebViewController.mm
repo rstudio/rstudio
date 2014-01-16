@@ -446,6 +446,7 @@ decidePolicyForNavigationAction: (NSDictionary *) actionInformation
    std::string secret = desktop::options().sharedSecret();
    [mutableRequest setValue: [NSString stringWithUTF8String: secret.c_str()]
                    forHTTPHeaderField:@"X-Shared-Secret"];
+   [mutableRequest setTimeoutInterval: 300];
    return mutableRequest;
 }
 
