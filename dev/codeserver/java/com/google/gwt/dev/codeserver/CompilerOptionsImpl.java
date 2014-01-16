@@ -18,6 +18,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
@@ -104,6 +105,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public List<String> getModuleNames() {
     return moduleNames;
+  }
+
+  @Override
+  public JsNamespaceOption getNamespace() {
+    return JsNamespaceOption.BY_JAVA_PACKAGE;
   }
 
   @Override

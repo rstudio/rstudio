@@ -19,7 +19,7 @@ import com.google.gwt.dev.util.StringInterner;
 import java.io.Serializable;
 
 /**
- * An abstract base class for named JavaScript objects.
+ * A named JavaScript object.
  */
 public class JsName implements Serializable {
   private final JsScope enclosing;
@@ -31,6 +31,12 @@ public class JsName implements Serializable {
    * A back-reference to the JsNode that the JsName refers to.
    */
   private JsNode staticRef;
+
+  /**
+   * A reference to the namespace this name is in (if any).
+   * If the namespace is set, any reference should be a dotted reference.
+   */
+  private JsName namespace;
 
   /**
    * @param ident the unmangled ident to use for this name
@@ -63,7 +69,11 @@ public class JsName implements Serializable {
   }
 
   public JsNameRef makeRef(SourceInfo sourceInfo) {
-    return new JsNameRef(sourceInfo, this);
+    JsNameRef ref = new JsNameRef(sourceInfo, this);
+    if (namespace != null) {
+      ref.setQualifier(new JsNameRef(sourceInfo, namespace));
+    }
+    return ref;
   }
 
   public void setObfuscatable(boolean isObfuscatable) {
@@ -72,6 +82,14 @@ public class JsName implements Serializable {
 
   public void setShortIdent(String shortIdent) {
     this.shortIdent = StringInterner.get().intern(shortIdent);
+  }
+
+  public JsName getNamespace() {
+    return namespace;
+  }
+
+  public void setNamespace(JsName namespace) {
+    this.namespace = namespace;
   }
 
   /**

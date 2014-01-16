@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -49,6 +50,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean soycHtmlDisabled = false;
   private boolean strict = false;
   private boolean strictResources = false;
+  private JsNamespaceOption namespace = JsNamespaceOption.NONE;
 
   public JJSOptionsImpl() {
   }
@@ -81,6 +83,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setStrict(other.isStrict());
     setEnforceStrictResources(other.enforceStrictResources());
     setSourceLevel(other.getSourceLevel());
+    setNamespace(other.getNamespace());
   }
 
   @Override
@@ -96,6 +99,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public int getFragmentsMerge() {
     return fragmentsMerge;
+  }
+
+  @Override
+  public JsNamespaceOption getNamespace() {
+    return namespace;
   }
 
   @Override
@@ -241,6 +249,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setJsonSoycEnabled(boolean enabled) {
     jsonSoycEnabled = enabled;
+  }
+
+  @Override
+  public void setNamespace(JsNamespaceOption newValue) {
+    namespace = newValue;
   }
 
   @Override
