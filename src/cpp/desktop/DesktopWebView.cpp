@@ -24,12 +24,17 @@
 #include "DesktopWebPage.hpp"
 #include "DesktopUtils.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <wingdi.h>
+#endif
 
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
     QWebView(parent),
-    baseUrl_(baseUrl)
+    baseUrl_(baseUrl),
+    dpiZoomScaling_(1.0)
 {
 #ifdef Q_WS_X11
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
@@ -46,6 +51,24 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
            this, SLOT(downloadRequested(QNetworkRequest)));
    connect(page(), SIGNAL(unsupportedContent(QNetworkReply*)),
            this, SLOT(unsupportedContent(QNetworkReply*)));
+
+#ifdef _WIN32
+   // On Windows, check for high DPI; if present, scale the zoom factors
+   // accordingly.
+   HDC defaultDC = GetDC(NULL);
+   int dpi = GetDeviceCaps(defaultDC, LOGPIXELSX);
+   if (dpi >= 192)
+   {
+      // Corresponds to 200% scaling (introduced in Windows 8.1)
+      dpiZoomScaling_ = 1.5;
+   }
+   else if (dpi >= 144)
+   {
+      // Corresponds to 150% scaling
+      dpiZoomScaling_ = 1.2;
+   }
+   ReleaseDC(NULL, defaultDC);
+#endif
 }
 
 void WebView::setBaseUrl(const QUrl& baseUrl)
@@ -53,7 +76,6 @@ void WebView::setBaseUrl(const QUrl& baseUrl)
    baseUrl_ = baseUrl;
    pWebPage_->setBaseUrl(baseUrl_);
 }
-
 
 void WebView::activateSatelliteWindow(QString name)
 {
@@ -237,6 +259,20 @@ void WebView::openFile(QString fileName)
 #endif
 
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
+}
+
+// QWebView doesn't respect the system DPI and always renders as though
+// it were at 96dpi. To work around this, we take the user-specified zoom level
+// and scale it by a DPI-determined constant before applying it to the view.
+// See: https://bugreports.qt-project.org/browse/QTBUG-29571
+void WebView::setDpiAwareZoomFactor(qreal factor)
+{
+   setZoomFactor(factor * dpiZoomScaling_);
+}
+
+qreal WebView::dpiAwareZoomFactor()
+{
+   zoomFactor() / dpiZoomScaling_;
 }
 
 } // namespace desktop

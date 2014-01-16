@@ -202,8 +202,8 @@ void MainWindow::quit()
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    double zoomLevel = options().zoomLevel();
-   if (zoomLevel != webView()->zoomFactor())
-      webView()->setZoomFactor(zoomLevel);
+   if (zoomLevel != webView()->dpiAwareZoomFactor())
+      webView()->setDpiAwareZoomFactor(zoomLevel);
 
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromAscii("desktop"),
