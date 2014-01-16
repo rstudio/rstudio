@@ -2,7 +2,6 @@
 
 rmd2pandoc <- function(input,
                        format = c("html", "docx", "latex", "beamer"),
-                       markdown.options = NULL,
                        pandoc.options = NULL,
                        encoding = getOption("encoding")) {
 
@@ -23,7 +22,7 @@ rmd2pandoc <- function(input,
   knit(input, md, encoding = encoding)
 
   # call pandoc
-  pandoc_convert(md, output, format, markdown.options, pandoc.options)
+  pandoc_convert(md, output, format, NULL, pandoc.options)
 
   # return output filename
   invisible(output)
