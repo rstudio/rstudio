@@ -30,6 +30,7 @@ configure_file (${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
 set(DESKTOP_MAC_SOURCE_FILES
    AppDelegate.mm
    DockTileView.mm
+   FileDownloader.mm
    GwtCallbacks.mm
    Main.mm
    MainFrameController.mm
