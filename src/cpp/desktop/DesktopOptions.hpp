@@ -89,7 +89,12 @@ public:
    bool runDiagnostics() { return runDiagnostics_; }
 
 private:
-   Options();
+   Options() : settings_(FORMAT, QSettings::UserScope,
+                         QString::fromAscii("RStudio"),
+                         QString::fromAscii("desktop")),
+               runDiagnostics_(false)
+   {
+   }
    friend Options& options();
 
    QSettings settings_;
@@ -99,7 +104,6 @@ private:
    mutable QString portNumber_;
    mutable std::string localPeer_;
    bool runDiagnostics_;
-   double defaultZoomLevel_;
 };
 
 } // namespace desktop
