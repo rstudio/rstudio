@@ -1,5 +1,25 @@
 
 
+
+# In RStudio the default rmarkdown engine for a document is v2
+#
+# To specify v1 use:
+#
+# <!-- rmarkdown v1 -->
+#
+# To specify an alternate engine use a function name:
+#
+# <!-- rmarkdown pubtools::rmd2foo -->
+#
+# Functions must accept an input and encoding argument, and must
+# return the name of the output file generated
+#
+# To pass arguments to the function you do this:
+#
+# <!-- rmarkdown pubtools::rmd2foo toc=TRUE -->
+#
+
+
 rmd2pandoc <- function(input,
                        output = NULL,
                        format = NULL,
@@ -18,8 +38,12 @@ rmd2pandoc <- function(input,
   md <- paste0(tools::file_path_sans_ext(input), ".md")
   knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
 
+  # build options
+  options <-c("--from", paste0(markdown.options, collapse=""))
+  options <- append(options, pandoc.options)
+
   # call pandoc
-  pandoc_convert(md, output, format, markdown.options, pandoc.options, quiet)
+  pandoc_convert(md, output, format, options, quiet)
 
   # return output filename
   invisible(output)
@@ -60,21 +84,19 @@ render_pandoc_markdown <- function(output, format = NULL) {
 pandoc_convert <- function(input,
                            output = NULL,
                            format = NULL,
-                           markdown.options = default_markdown_options(),
-                           pandoc.options = default_pandoc_options(),
+                           options = NULL,
                            quiet = FALSE) {
 
   pandoc_check_version()
 
-  args <- c("--from", paste0(markdown.options, collapse=""))
-
+  args <- c()
   if (!is.null(output))
     args <- append(args, c("--output", output))
 
   if (!is.null(format))
     args <- append(args, c("--to", format))
 
-  args <- append(args, pandoc.options)
+  args <- append(args, options)
   args <- append(args, input)
 
   if (!quiet) {
