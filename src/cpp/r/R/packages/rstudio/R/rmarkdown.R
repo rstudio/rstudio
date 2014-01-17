@@ -16,7 +16,7 @@
 #
 # To pass arguments to the function you do this:
 #
-# <!-- rmarkdown pubtools::rmd2foo toc=TRUE -->
+# <!-- rmarkdown pubtools::rmd2foo format="pdf", toc=TRUE -->
 #
 
 
