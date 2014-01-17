@@ -96,8 +96,11 @@ public class CallFramePanel extends ResizeComposite
                public void onValueChange(ValueChangeEvent<Boolean> event)
                {
                   panelHost_.setShowInternalFunctions(event.getValue());
-                  for (CallFrameItem item: callFrameItems_)
+                  // Ignore the function on the top of the stack; we always
+                  // want to show it since it's the execution point
+                  for (int i = 1; i < callFrameItems_.size(); i++) 
                   {
+                     CallFrameItem item = callFrameItems_.get(i);
                      if (!item.isNavigable())
                      {
                         item.setVisible(event.getValue());
@@ -139,12 +142,17 @@ public class CallFramePanel extends ResizeComposite
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
       {
          CallFrame frame = frameList.get(idx);
+         // Always show the first frame, since that's where execution is 
+         // actually halted. From the remaining frames, show them if they are
+         // "navigable" (user) frames, or if the user has elected to show all
+         // frames.
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
                !panelHost_.getShowInternalFunctions() && 
                   !frame.isNavigable() &&
-                  !allInternal);
+                  !allInternal && 
+                  idx > 0);
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();

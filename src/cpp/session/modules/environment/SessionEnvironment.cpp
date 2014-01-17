@@ -355,7 +355,8 @@ json::Array callFramesAsJson()
          else
          {
             varFrame["real_sourceref"] = false;
-            SEXP simulatedSrcref = simulatedSourceRefsOfContext(pRContext, pPrevContext);
+            SEXP simulatedSrcref = simulatedSourceRefsOfContext(pRContext,
+                                                                pPrevContext);
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
          pSrcContext = pRContext;
