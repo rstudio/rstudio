@@ -19,12 +19,10 @@ $endif$
 $if(quotes)$
   <style type="text/css">q { quotes: "“" "”" "‘" "’"; }</style>
 $endif$
-$if(highlighting-css)$
-  <style type="text/css">
-$highlighting-css$
-  </style>
-$endif$
 
+  <!-- syntax highlighting -->
+  <link rel="stylesheet" href="highlight/highlight.css" $if(html5)$$else$type="text/css" $endif$/>
+  <script src="highlight/highlight.js"></script>
   <style type="text/css">
     pre {
       background-color: white;
