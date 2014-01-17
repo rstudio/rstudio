@@ -1,12 +1,12 @@
 /*
  * Copyright 2006 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.RebindMode;
 import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
@@ -32,6 +33,14 @@ public class RuleReplaceWith extends Rule {
     this.replacementTypeName = typeName;
   }
 
+  @Override
+  public void generateRuntimeRebindClasses(
+      TreeLogger logger, ModuleDef module, GeneratorContext context)
+      throws UnableToCompleteException {
+    runtimeRebindRuleGenerator.generate(
+        generateCreateInstanceExpression(), generateMatchesExpression());
+  }
+
   public String getReplacementTypeName() {
     return replacementTypeName;
   }
@@ -47,5 +56,15 @@ public class RuleReplaceWith extends Rule {
   @Override
   public String toString() {
     return "<replace-with class='" + replacementTypeName + "'/>";
+  }
+
+  @Override
+  protected String generateCreateInstanceExpression() {
+    return "return @" + getReplacementTypeName() + "::new()();";
+  }
+
+  @Override
+  protected String generateMatchesExpression() {
+    return "return " + getRootCondition().toSource() + ";";
   }
 }

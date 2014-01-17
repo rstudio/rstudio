@@ -166,7 +166,7 @@ public class ModuleDef {
    * modules (or the implicit ./public directory). Marked 'lazy' because it does not
    * start searching for resources until a query is made.
    */
-  private ResourceOracleImpl lazyPublicOracle;
+  protected ResourceOracleImpl lazyPublicOracle;
 
   /**
    * Contains files other than .java and .class files (such as CSS and PNG files) from either the
@@ -659,6 +659,10 @@ public class ModuleDef {
 
   public boolean isInherited(String moduleName) {
     return inheritedModules.contains(moduleName);
+  }
+
+  public boolean isMonolithic() {
+    return monolithic;
   }
 
   public long lastModified() {

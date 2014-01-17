@@ -324,6 +324,16 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
+   * Make sure that all possible Types have been read and made available for querying. Some
+   * TypeOracle implementations may choose to load only a part of the world when executing within a
+   * non-global phase of a library compile but may need to be pushed toward having global knowledge
+   * in some circumstances.
+   */
+  public void ensureAllLoaded() {
+    // When the normal TypeOracle is used all Types will have already been loaded.
+  }
+
+  /**
    * Attempts to find a package by name. All requests for the same package
    * return the same package object.
    * 

@@ -46,6 +46,10 @@ public class NonIncrementalGeneratorContext extends DelegatingGeneratorContext {
   }
 
   @Override
+  public void reset() {
+  }
+
+  @Override
   public boolean tryReuseTypeFromCache(String typeName) {
     // disabled
     return false;

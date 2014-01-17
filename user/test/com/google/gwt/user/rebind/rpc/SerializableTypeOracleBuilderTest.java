@@ -86,8 +86,17 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     }
 
     @Override
+    public boolean isGlobalCompile() {
+      return true;
+    }
+
+    @Override
     public boolean isProdMode() {
       return true;
+    }
+
+    @Override
+    public void reset() {
     }
   }
 

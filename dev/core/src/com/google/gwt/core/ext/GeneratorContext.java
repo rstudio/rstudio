@@ -115,11 +115,27 @@ public interface GeneratorContext {
   boolean isGeneratorResultCachingEnabled();
 
   /**
+   * Returns whether the current compile and generator passes are executing in
+   * the global phase of a compile, as opposed to further down in the dependency
+   * tree.
+   */
+  boolean isGlobalCompile();
+
+  /**
    * Returns true if generators are being run to produce code for a production
    * compile. Returns false for dev mode. Generators can use this information to
    * produce code optimized for the target.
    */
   boolean isProdMode();
+
+  /**
+   * Clears all accumulated artifacts and state so that the context can be used
+   * as if from scratch. Is useful for clearing out undesired changes after
+   * having used the context to explore some hypothetical situations, for
+   * example to run Generators for the purpose of discovering the properties
+   * they depend on.
+   */
+  void reset();
 
   /**
    * Attempts to get a <code>PrintWriter</code> so that the caller can generate

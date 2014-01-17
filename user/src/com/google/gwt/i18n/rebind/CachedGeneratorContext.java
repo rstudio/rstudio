@@ -51,6 +51,13 @@ class CachedGeneratorContext extends DelegatingGeneratorContext {
   }
 
   @Override
+  public void reset() {
+    context.reset();
+    generatedResources.clear();
+    generatedTypes.clear();
+  }
+
+  @Override
   public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName) {
     String typeName = packageName + '.' + simpleName;
     if (generatedTypes.contains(typeName)) {
