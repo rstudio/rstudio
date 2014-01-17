@@ -112,6 +112,20 @@ Error getFileNameFromContext(const RCNTXT* pContext,
    }
 }
 
+SEXP simulatedSourceRefsOfContext(const RCNTXT* pContext, const RCNTXT* pLineContext)
+{
+   SEXP simulatedSrcref = NULL;
+   r::sexp::Protect protect;
+   SEXP env = pContext->cloenv;
+   r::sexp::setAttrib(env, "_rs_callfun", pContext->callfun);
+   r::sexp::setAttrib(env, "_rs_callobj", pLineContext->call);
+   Error error = r::exec::RFunction(".rs.simulateSourceRefs", env)
+         .call(&simulatedSrcref, &protect);
+   if (error)
+      LOG_ERROR(error);
+   return simulatedSrcref;
+}
+
 SEXP sourceRefsOfContext(const RCNTXT* pContext)
 {
    return r::sexp::getAttrib(getOriginalFunctionCallObject(pContext), "srcref");
@@ -294,6 +308,7 @@ Error functionNameFromContext(const RCNTXT* pContext,
 json::Array callFramesAsJson()
 {
    RCNTXT* pRContext = r::getGlobalContext();
+   RCNTXT* pPrevContext = pRContext;
    RCNTXT* pSrcContext = pRContext;
    json::Array listFrames;
    int contextDepth = 0;
@@ -330,7 +345,19 @@ json::Array callFramesAsJson()
          if (error)
             LOG_ERROR(error);
          varFrame["file_name"] = filename;
-         sourceRefToJson(pSrcContext->srcref, &varFrame);
+
+         SEXP srcref = pSrcContext->srcref;
+         if (isValidSrcref(srcref))
+         {
+            varFrame["real_sourceref"] = true;
+            sourceRefToJson(pSrcContext->srcref, &varFrame);
+         }
+         else
+         {
+            varFrame["real_sourceref"] = false;
+            SEXP simulatedSrcref = simulatedSourceRefsOfContext(pRContext, pPrevContext);
+            sourceRefToJson(simulatedSrcref, &varFrame);
+         }
          pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
@@ -341,6 +368,12 @@ json::Array callFramesAsJson()
          if (isValidSrcref(srcRef))
          {
             varFrame["function_line_number"] = INTEGER(srcRef)[0];
+         }
+         else
+         {
+            // if we don't have a source ref, we'll debug using a deparsed
+            // version of the function that starts on line 1
+            varFrame["function_line_number"] = 1;
          }
 
          std::string argList;
@@ -369,6 +402,7 @@ json::Array callFramesAsJson()
 
          listFrames.push_back(varFrame);
       }
+      pPrevContext = pRContext;
       pRContext = pRContext->nextcontext;
    }
    return listFrames;

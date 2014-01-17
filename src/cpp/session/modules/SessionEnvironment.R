@@ -131,7 +131,66 @@
 
 .rs.addFunction("sourceCodeFromFunction", function(fun)
 {
-    return(paste(capture.output(attr(fun, "srcref")), collapse="\n"))
+   if (is.null(attr(fun, "srcref")))
+      paste(deparse(fun), collapse="\n")
+   else
+      paste(capture.output(attr(fun, "srcref")), collapse="\n")
+})
+
+.rs.addFunction("simulateSourceRefs", function(env)
+{
+  fun <-  attr(env, "_rs_callfun")
+  call <- attr(env, "_rs_callobj")
+  if (is.null(fun) || is.null(call)) 
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+
+  lines <- deparse(fun)
+
+  # Remember the indentation level on each line (added by deparse), and remove
+  # it along with any other leading or trailing whitespace. 
+  indents <- nchar(sub("\\S.*", "", lines))
+  slines <- sub("\\s+$", "", sub("\\s+", "", lines))
+
+  # Compute the character position of the start of each line, and collapse the
+  # lines to a character vector of length 1. 
+  nchars <- 0
+  offsets <- integer(length(slines))
+  for (i in 1:length(slines)) {
+    nchars <- nchars + nchar(slines[i])
+    offsets[i] <- nchars
+  }
+  singleline <- paste(slines, collapse=" ")
+  
+  # Deparse the call object and find it in the collapsed function. 
+  calltext <- deparse(call)
+  calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
+  calltext <- paste(calltext, collapse=" ")
+  pos <- regexpr(calltext, singleline, fixed = TRUE)
+
+  # message("looking for: ", calltext)
+  # message("in fun: ", singleline) 
+  
+  # Return an empty source ref if 
+  if (pos < 0)
+  {
+     message("not found")
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+  }
+
+  # Compute the character positions  and create the simulated source ref
+  endpos <- pos + attr(pos, "match.length")
+  # message("found at ", pos, " to ", endpos)
+  firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
+  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
+  if (is.na(lastline))
+     lastline <- length(offsets)
+  # message("found at ", firstline, " to ", lastline)
+  firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
+  lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
+  result <- as.integer(c(firstline, firstchar, lastline, 
+                         lastchar, firstchar, lastchar))
+  message(result)
+  return(result)
 })
 
 .rs.addFunction("functionNameFromCall", function(call)
