@@ -24,9 +24,6 @@ $if(highlighting-css)$
 $highlighting-css$
   </style>
 $endif$
-$for(css)$
-  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
-$endfor$
 
   <style type="text/css">
     pre {
@@ -36,6 +33,10 @@ $endfor$
       background-color: #f5f5f5
     }
   </style>
+
+$for(css)$
+  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+$endfor$
 
 $for(header-includes)$
   $header-includes$
