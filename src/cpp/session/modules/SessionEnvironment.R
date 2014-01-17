@@ -149,14 +149,14 @@
   # Remember the indentation level on each line (added by deparse), and remove
   # it along with any other leading or trailing whitespace. 
   indents <- nchar(sub("\\S.*", "", lines))
-  slines <- sub("\\s+$", "", sub("\\s+", "", lines))
+  slines <- sub("\\s+$", "", sub("^\\s+", "", lines))
 
   # Compute the character position of the start of each line, and collapse the
   # lines to a character vector of length 1. 
   nchars <- 0
   offsets <- integer(length(slines))
   for (i in 1:length(slines)) {
-    nchars <- nchars + nchar(slines[i])
+    nchars <- nchars + nchar(slines[i]) + 1
     offsets[i] <- nchars
   }
   singleline <- paste(slines, collapse=" ")
@@ -167,29 +167,22 @@
   calltext <- paste(calltext, collapse=" ")
   pos <- regexpr(calltext, singleline, fixed = TRUE)
 
-  # message("looking for: ", calltext)
-  # message("in fun: ", singleline) 
-  
-  # Return an empty source ref if 
+  # Return an empty source ref if we couldn't find a match
   if (pos < 0)
-  {
-     message("not found")
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
-  }
 
   # Compute the character positions  and create the simulated source ref
   endpos <- pos + attr(pos, "match.length")
-  # message("found at ", pos, " to ", endpos)
   firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
   lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
   if (is.na(lastline))
      lastline <- length(offsets)
-  # message("found at ", firstline, " to ", lastline)
   firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
+  firstchar <- firstchar + indents[firstline]
   lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
+  lastchar <- lastchar + indents[lastline]
   result <- as.integer(c(firstline, firstchar, lastline, 
                          lastchar, firstchar, lastchar))
-  message(result)
   return(result)
 })
 
