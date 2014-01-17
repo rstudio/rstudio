@@ -143,7 +143,7 @@ render_pandoc_markdown <- function(format = NULL) {
 
 pandoc_options_for_format <- function(format) {
   if (identical(format, "html")) {
-    c("--template", system.file("templates/html/default/index.html",
+    c("--template", system.file("templates/html/index.html",
                                 package = "pandoc"))
   } else {
     NULL
