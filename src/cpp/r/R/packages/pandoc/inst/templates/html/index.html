@@ -28,6 +28,15 @@ $for(css)$
   <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
 $endfor$
 
+  <style type="text/css">
+    pre {
+      background-color: white;
+    }
+    pre.r, pre.cpp {
+      background-color: #f5f5f5
+    }
+  </style>
+
 $for(header-includes)$
   $header-includes$
 $endfor$
@@ -46,10 +55,10 @@ $if(subtitle)$
 <h1 class="subtitle">$subtitle$</h1>
 $endif$
 $for(author)$
-<h2 class="author">$author$</h2>
+<h4 class="author">$author$</h4>
 $endfor$
 $if(date)$
-<h3 class="date">$date$</h3>
+<h4 class="date">$date$</h4>
 $endif$
 </div>
 $endif$
