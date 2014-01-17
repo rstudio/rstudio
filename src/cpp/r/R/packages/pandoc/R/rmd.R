@@ -5,7 +5,7 @@
 #
 # To specify v1 use:
 #
-# <!-- rmarkdown v1 -->
+# <!-- rmarkdown 1.0 -->
 #
 # To specify an alternate engine use a function name:
 #
@@ -20,16 +20,16 @@
 #
 
 #' Convert an Rmd file to another type using pandoc
-#' 
-#' Converts R Markdown (Rmd) files to a variety of formats using the pandoc 
+#'
+#' Converts R Markdown (Rmd) files to a variety of formats using the pandoc
 #' rendering engine.
-#' 
+#'
 #' @param input input Rmd document
 #' @param output target output file (defaults to <input>.html if not specified)
 #' @param format format to convert to. If not specified then is deduced from the
 #'   output file extension.
-#' @param markdown.options options that control the dialect of markdown used by 
-#'   pandoc in creating the output file. Defaults to 
+#' @param markdown.options options that control the dialect of markdown used by
+#'   pandoc in creating the output file. Defaults to
 #'   \code{rmd_markdown_options()}.
 #' @param pandoc.options additional options to pass pandoc on the command line.
 #'   Defaults to \code{rmd_pandoc_options()}.
@@ -39,7 +39,7 @@
 #' @param encoding the encoding of the input file; see \code{\link{file}}
 #' @return The compiled document is written into the output file, and the path
 #'   of the output file is returned.
-#'   
+#'
 #' @export
 rmd2pandoc <- function(input,
                        output = NULL,
