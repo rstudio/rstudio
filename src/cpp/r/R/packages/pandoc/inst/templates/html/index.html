@@ -11,6 +11,10 @@ $if(date-meta)$
   <meta name="date" content="$date-meta$" />
 $endif$
   <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
   <style type="text/css">code{white-space: pre;}</style>
 $if(quotes)$
   <style type="text/css">q { quotes: "“" "”" "‘" "’"; }</style>
@@ -23,14 +27,15 @@ $endif$
 $for(css)$
   <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
 $endfor$
-$if(math)$
-  $math$
-$endif$
+
 $for(header-includes)$
   $header-includes$
 $endfor$
 </head>
 <body>
+
+<div class="container">
+
 $for(include-before)$
 $include-before$
 $endfor$
@@ -54,6 +59,27 @@ $toc$
 </div>
 $endif$
 $body$
+
+</div>
+
+<!-- no bootstrap js dependencies for now, comment in if we require them -->
+<!--
+<script src="bootstrap/js/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+-->
+
+<!-- dynamically load mathjax for compatibility with --self-contained -->
+$if(mathjax-url)$
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "$mathjax-url$";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+$endif$
+
 $for(include-after)$
 $include-after$
 $endfor$
