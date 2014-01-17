@@ -165,7 +165,7 @@ render_pandoc_markdown <- function(format = NULL) {
 pandoc_options_for_format <- function(format, mathjax) {
   if (identical(format, "html")) {
     template_dir <- system.file("templates/html", package = "pandoc")
-    options <- c("--template", file.path(template_dir, "index.html"),
+    options <- c("--template", file.path(template_dir, "default.html"),
                  "--data-dir", template_dir,
                  "--self-contained",
                  "--no-highlight")
