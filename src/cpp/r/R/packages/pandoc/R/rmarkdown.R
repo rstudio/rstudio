@@ -89,11 +89,9 @@ rmd_markdown_options <- function() {
     "+auto_identifiers",
     "+raw_tex",
     "+latex_macros",
-    "+implicit_figures",
     "+footnotes",
     "+inline_notes",
     "+citations",
-    "+pandoc_title_block",
     "+yaml_metadata_block")
 }
 
@@ -143,8 +141,12 @@ render_pandoc_markdown <- function(format = NULL) {
 
 pandoc_options_for_format <- function(format) {
   if (identical(format, "html")) {
-    c("--template", system.file("templates/html/index.html",
-                                package = "pandoc"))
+    template_dir <- system.file("templates/html", package = "pandoc")
+    c("--template", file.path(template_dir, "index.html"),
+      "--data-dir", template_dir,
+      "--self-contained",
+      "--mathjax",
+      "--variable=mathjax-url:http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
   } else {
     NULL
   }
