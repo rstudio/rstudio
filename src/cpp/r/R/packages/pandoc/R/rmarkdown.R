@@ -1,6 +1,5 @@
 
 
-
 # In RStudio the default rmarkdown engine for a document is v2
 #
 # To specify v1 use:
@@ -54,8 +53,12 @@ rmd2pandoc <- function(input,
   if (is.null(output))
     output <- paste0(tools::file_path_sans_ext(input), ".html")
 
+  # see if we can identify a known format (this can be used to
+  # customize the knitting and pandoc conversion of the document )
+  known_format <- known_output_format(output, format)
+
   # knit document
-  render_pandoc_markdown(output, format)
+  render_pandoc_markdown(known_format)
   md <- paste0(tools::file_path_sans_ext(input), ".md")
   knitr::knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
 
@@ -63,12 +66,17 @@ rmd2pandoc <- function(input,
   options <-c("--from", paste0(markdown.options, collapse=""))
   options <- append(options, pandoc.options)
 
+  # options for known format
+  if (!is.null(known_format))
+    options <- append(options, pandoc_options_for_format(known_format))
+
   # call pandoc
   convert(md, output, format, options, quiet)
 
   # return output filename
   invisible(output)
 }
+
 
 #' @export
 #' @rdname rmd2pandoc
@@ -93,6 +101,77 @@ rmd_markdown_options <- function() {
 #' @rdname rmd2pandoc
 rmd_pandoc_options <- function() {
   c("--smart")
+}
+
+
+#' Set knitr output hooks for pandoc markdown
+#'
+#' This function sets the built in output hooks for rendering to pandoc
+#' markdown. Output hooks are based on the default
+#' \code{\link[knitr:render_markdown]{knitr::render_markdown}} function with
+#' additional hooks provided for known formats.
+#'
+#' @param format one of the known output formats ( \code{html}, \code{docx},
+#'   \code{latex}, and \code{beamer}) or \code{NULL}.
+#'
+#' @export
+render_pandoc_markdown <- function(format = NULL) {
+
+  if (!is.null(format) && ! (format %in% known_output_formats()))
+    stop("Unknown output format specified")
+
+  # stock markdown options
+  knitr::render_markdown()
+
+  # chunk options (do a figure directory per-format to gracefully handle
+  # switching between formats)
+  if (is.null(format))
+    format <- "unknown"
+  knitr::opts_chunk$set(tidy = FALSE,
+                        error = FALSE,
+                        fig.path=paste("figure-", format, "/", sep = ""))
+
+  # some pdf specific options
+  if (format %in% c("latex", "beamer")) {
+    knitr::opts_chunk$set(dev = 'cairo_pdf')
+    knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+  }
+
+  invisible(NULL)
+}
+
+
+pandoc_options_for_format <- function(format) {
+  if (identical(format, "html")) {
+    c("--template", system.file("templates/html/default/index.html",
+                                package = "pandoc"))
+  } else {
+    NULL
+  }
+}
+
+known_output_format <- function(output, format = NULL) {
+
+  if (is.null(format)) {
+    ext <- tools::file_ext(output)
+    if (ext %in% c("htm", "html"))
+      "html"
+    else if (identical(ext, "docx"))
+      "docx"
+    else if (identical(ext, "pdf"))
+      "latex"
+    else
+      NULL
+  } else if (format %in% known_output_formats()) {
+    format
+  } else {
+    NULL
+  }
+}
+
+
+known_output_formats <- function() {
+  c("html", "docx", "latex", "beamer")
 }
 
 
