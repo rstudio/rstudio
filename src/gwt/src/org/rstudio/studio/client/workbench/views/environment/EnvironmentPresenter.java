@@ -79,6 +79,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
 import java.util.ArrayList;
@@ -235,7 +236,7 @@ public class EnvironmentPresenter extends BasePresenter
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
-               openOrUpdateFileBrowsePoint(true);
+               openOrUpdateFileBrowsePoint(true, false);
             }
             requeryContextTimer_.cancel();
          }
@@ -565,6 +566,7 @@ public class EnvironmentPresenter extends BasePresenter
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
          String newBrowseFile = browseFrame.getFileName().trim();
+         boolean sourceChanged = false;
          
          // check to see if the file we're about to switch to contains unsaved
          // changes. if it does, use the source supplied by the server, even if
@@ -584,21 +586,25 @@ public class EnvironmentPresenter extends BasePresenter
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
          {
-            openOrUpdateFileBrowsePoint(false);
+            openOrUpdateFileBrowsePoint(false, false);
          }
 
          useCurrentBrowseSource_ = useBrowseSources;
-         currentBrowseSource_ = functionCode;
+         if (!currentBrowseSource_.equals(functionCode))
+         {
+            currentBrowseSource_ = functionCode;
+            sourceChanged = true;
+         }
          
          // highlight the active line in the file now being debugged
          currentBrowseFile_ = newBrowseFile;
          currentBrowsePosition_ = browseFrame.getRange();
          currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
-         openOrUpdateFileBrowsePoint(true);
+         openOrUpdateFileBrowsePoint(true, sourceChanged);
       }   
       else
       {
-         openOrUpdateFileBrowsePoint(false);
+         openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
@@ -625,7 +631,8 @@ public class EnvironmentPresenter extends BasePresenter
       return false;
    }
    
-   private void openOrUpdateFileBrowsePoint(boolean debugging)
+   private void openOrUpdateFileBrowsePoint(boolean debugging, 
+                                            boolean sourceChanged)
    {
       String file = currentBrowseFile_;
       
@@ -669,15 +676,28 @@ public class EnvironmentPresenter extends BasePresenter
       {
          if (debugging)
          {
-            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                  SearchPathFunctionDefinition.create(
-                        environmentName_, 
-                        "source unavailable or out of sync", 
-                        currentBrowseSource_,
-                        true),
-                  currentBrowsePosition_.functionRelativePosition(
-                        currentFunctionLineNumber_),
-                  contextDepth_ == 1));
+            if (sourceChanged)
+            {
+               // if this is a different source file than we already have open,
+               // open it 
+               eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                     SearchPathFunctionDefinition.create(
+                           environmentName_, 
+                           "source unavailable or out of sync", 
+                           currentBrowseSource_,
+                           true),
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_),
+                     contextDepth_ == 1));
+            }
+            else if (currentBrowsePosition_.getLine() > 0)
+            {
+               // if this is the same one currently open, just move the 
+               // highlight
+               eventBus_.fireEvent(new CodeBrowserHighlightEvent(
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_)));
+            }
          }
          else
          {

@@ -188,6 +188,14 @@
 
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
   calltext <- paste(calltext, collapse=" ")
+
+  # NULL is output by R when it doesn't have an expression to output; don't
+  # try to match it to code
+  if (identical(calltext, "NULL")) 
+  {
+     return(c(0L, 0L, 0L, 0L, 0L, 0L))
+  }
+
   pos <- regexpr(calltext, singleline, fixed = TRUE)
 
   # Return an empty source ref if we couldn't find a match
