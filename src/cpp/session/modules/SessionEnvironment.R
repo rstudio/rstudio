@@ -174,10 +174,17 @@
   }
   singleline <- paste(slines, collapse=" ")
   
-  # Deparse the call object (if we weren't given text outright) and find it in
-  # the collapsed function. 
   if (is.null(calltext))
+  {
+     # No call text specified; deparse into a list of lines
      calltext <- deparse(call)
+  }
+  else
+  {
+     # Call text specified as a single character vector; split into a list
+     # of lines
+     calltext <- unlist(strsplit(calltext, "\n", fixed = TRUE))
+  }
 
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
   calltext <- paste(calltext, collapse=" ")

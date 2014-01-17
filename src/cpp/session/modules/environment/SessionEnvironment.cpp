@@ -770,6 +770,7 @@ void onDetectChanges(module_context::ChangeSource source)
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
                      boost::shared_ptr<std::string> pLastDebugStatement,
+                     boost::shared_ptr<bool> pCapturingDebugOutput,
                      boost::shared_ptr<RCNTXT*> pCurrentContext)
 {
    // Prevent recursive calls to this function (see notes in
@@ -783,6 +784,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    int depth = 0;
    SEXP environmentTop = NULL;
    RCNTXT* pRContext = NULL;
+
+   // End debug output capture every time a console prompt occurs
+   *pCapturingDebugOutput = false;
 
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
@@ -991,25 +995,34 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
                      const json::JsonRpcRequest&,
                      json::JsonRpcResponse*)
 {
-   onConsolePrompt(pContextDepth, pLastDebugStatement, pCurrentContext);
+   onConsolePrompt(pContextDepth, pLastDebugStatement,
+                   boost::make_shared<bool>(false), pCurrentContext);
    return Success();
 }
 
+// Stores the last "debug: " R output. Used to reconstruct source references
+// when unavailable (see simulatedSourceRefsOfContext).
 void onConsoleOutput(boost::shared_ptr<std::string> pLastDebugStatement,
+                     boost::shared_ptr<bool> pCapturingDebugOutput,
                      module_context::ConsoleOutputType type,
                      const std::string& output)
 {
-   static bool pendingDebugOutput = false;
-   if (pendingDebugOutput)
+   if (*pCapturingDebugOutput)
    {
-      *pLastDebugStatement = output;
-      pendingDebugOutput = false;
-      return;
+      // stop capturing output if non-normal output occurs
+      if (type != module_context::ConsoleOutputNormal)
+      {
+         *pCapturingDebugOutput = false;
+         return;
+      }
+      pLastDebugStatement->append(output);
    }
-   if (type == module_context::ConsoleOutputNormal &&
+   else if (type == module_context::ConsoleOutputNormal &&
        output == "debug: ")
    {
-      pendingDebugOutput = true;
+      // start capturing debug output when R outputs "debug: "
+      *pLastDebugStatement = "";
+      *pCapturingDebugOutput = true;
    }
 }
 
@@ -1038,10 +1051,13 @@ Error initialize()
    boost::shared_ptr<RCNTXT*> pCurrentContext =
          boost::make_shared<RCNTXT*>(r::getGlobalContext());
 
-   // functions that emit call frames also emit source references; this value
-   // is use to help reconstruct references from R output
+   // functions that emit call frames also emit source references; these
+   // values capture and supply the currently executing expression emitted by R
+   // for the purpose of reconstructing references when none are present.
    boost::shared_ptr<std::string> pLastDebugStatement =
          boost::make_shared<std::string>();
+   boost::shared_ptr<bool> pCapturingDebugOutput =
+         boost::make_shared<bool>(false);
 
    // subscribe to events
    using boost::bind;
@@ -1050,10 +1066,12 @@ Error initialize()
    events().onConsolePrompt.connect(bind(onConsolePrompt,
                                          pContextDepth,
                                          pLastDebugStatement,
+                                         pCapturingDebugOutput,
                                          pCurrentContext));
    events().onBeforeExecute.connect(onBeforeExecute);
    events().onConsoleOutput.connect(bind(onConsoleOutput,
-                                         pLastDebugStatement, _1, _2));
+                                         pLastDebugStatement,
+                                         pCapturingDebugOutput, _1, _2));
 
    json::JsonRpcFunction listEnv =
          boost::bind(listEnvironment, pContextDepth, _1, _2);
