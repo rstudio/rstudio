@@ -1,47 +1,45 @@
 
 
 rmd2pandoc <- function(input,
-                       format = c("html", "docx", "latex", "beamer"),
-                       markdown.options = pandoc_rmarkdown_options(),
-                       pandoc.options = NULL,
+                       output = NULL,
+                       format = NULL,
+                       markdown.options = default_markdown_options(),
+                       pandoc.options = default_pandoc_options(),
                        envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
 
-  # check that we have the right version of pandoc
-  pandoc_check_version()
-
-  # match format
-  format <- match.arg(format)
-
-  # choose output filename
-  output <- paste0(tools::file_path_sans_ext(input),
-                   switch(format,
-                          html = ".html",
-                          docx = ".docx",
-                          latex = ".pdf",
-                          beamer = ".pdf"))
+  # default output to html if not provided
+  if (is.null(output))
+    output <- paste0(tools::file_path_sans_ext(input), ".html")
 
   # knit document
-  render_pandoc_markdown(format)
+  render_pandoc_markdown(output, format)
   md <- paste0(tools::file_path_sans_ext(input), ".md")
   knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
 
   # call pandoc
-  pandoc.options <- c(pandoc.options, "--smart")
-  pandoc_convert(md, output, format, markdown.options, pandoc.options)
+  pandoc_convert(md, output, format, markdown.options, pandoc.options, quiet)
 
   # return output filename
   invisible(output)
 }
 
 
-render_pandoc_markdown <- function(format = c("html",
-                                              "docx",
-                                              "latex",
-                                              "beamer")) {
-  # verify format
-  format <- match.arg(format)
+render_pandoc_markdown <- function(output, format = NULL) {
+
+  # guess the format if it's not provided. it's not critical that we
+  # have a format, but when we do then it's possible to customize
+  # markdown rendering to optimize for the intended output
+  if (is.null(format)) {
+    ext <- tools::file_ext(output)
+    if (ext %in% c("html", "docx", "odt", "rtf"))
+      format <- ext
+    else if (identical(ext, "pdf"))
+      format <- "latex"
+    else
+      format <- "unknown"
+  }
 
   # stock markdown options
   knitr::render_markdown()
@@ -59,26 +57,36 @@ render_pandoc_markdown <- function(format = c("html",
   }
 }
 
-
-
 pandoc_convert <- function(input,
-                           output,
-                           format,
-                           markdown.options = pandoc_rmarkdown_options(),
-                           pandoc.options = NULL) {
-  args <- c("--output", output,
-            "--from",
-            paste(markdown.options, sep=""),
-            "--to", format,
-            pandoc.options,
-            input, recursive = TRUE)
-  cat("pandoc ")
-  cat(paste(args, collapse=" "))
-  cat("\n")
+                           output = NULL,
+                           format = NULL,
+                           markdown.options = default_markdown_options(),
+                           pandoc.options = default_pandoc_options(),
+                           quiet = FALSE) {
+
+  pandoc_check_version()
+
+  args <- c("--from", paste0(markdown.options, collapse=""))
+
+  if (!is.null(output))
+    args <- append(args, c("--output", output))
+
+  if (!is.null(format))
+    args <- append(args, c("--to", format))
+
+  args <- append(args, pandoc.options)
+  args <- append(args, input)
+
+  if (!quiet) {
+    cat("pandoc ")
+    cat(paste(args, collapse=" "))
+    cat("\n")
+  }
+
   pandoc_execute(args)
 }
 
-pandoc_rmarkdown_options <- function() {
+default_markdown_options <- function() {
   c("markdown_github",
     "-hard_line_breaks",
     "+superscript",
@@ -93,6 +101,10 @@ pandoc_rmarkdown_options <- function() {
     "+citations",
     "+pandoc_title_block",
     "+yaml_metadata_block")
+}
+
+default_pandoc_options <- function() {
+  c("--smart")
 }
 
 pandoc_execute <- function(args, ...) {
