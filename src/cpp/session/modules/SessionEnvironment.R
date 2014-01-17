@@ -132,16 +132,29 @@
 .rs.addFunction("sourceCodeFromFunction", function(fun)
 {
    if (is.null(attr(fun, "srcref")))
+   {
+      # The function does not have source refs, so deparse it to get a 
+      # formatted representation. 
       paste(deparse(fun), collapse="\n")
+   }
    else
+   {
+      # The function has source refs; use them to get exactly the code that
+      # was used to create the function.
       paste(capture.output(attr(fun, "srcref")), collapse="\n")
+   }
 })
 
-.rs.addFunction("simulateSourceRefs", function(env)
+.rs.addFunction("simulateSourceRefs", function(var)
 {
-  fun <-  attr(env, "_rs_callfun")
-  call <- attr(env, "_rs_callobj")
-  if (is.null(fun) || is.null(call)) 
+  fun <-  attr(var, "_rs_callfun")
+  call <- attr(var, "_rs_callobj")
+  calltext <- attr(var, "_rs_calltext")
+
+  # To proceed, we need the function to look in, and either the raw call
+  # object (which we will deparse later) or the text to look for.
+  if (is.null(fun) || 
+      (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   lines <- deparse(fun)
@@ -161,8 +174,11 @@
   }
   singleline <- paste(slines, collapse=" ")
   
-  # Deparse the call object and find it in the collapsed function. 
-  calltext <- deparse(call)
+  # Deparse the call object (if we weren't given text outright) and find it in
+  # the collapsed function. 
+  if (is.null(calltext))
+     calltext <- deparse(call)
+
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
   calltext <- paste(calltext, collapse=" ")
   pos <- regexpr(calltext, singleline, fixed = TRUE)
@@ -171,12 +187,15 @@
   if (pos < 0)
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
-  # Compute the character positions  and create the simulated source ref
+  # Compute the starting and ending lines
   endpos <- pos + attr(pos, "match.length")
   firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
   lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
   if (is.na(lastline))
      lastline <- length(offsets)
+
+  # Compute the starting and ending character positions within the line, 
+  # taking into account the indents we removed earlier. 
   firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
   firstchar <- firstchar + indents[firstline]
   lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
