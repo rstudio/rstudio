@@ -45,6 +45,7 @@ import com.google.gwt.dev.jjs.impl.ReboundTypeRecorder;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.resource.impl.FileResource;
 import com.google.gwt.dev.util.Pair;
@@ -105,7 +106,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected Map<JsName, String> runDetailedNamer(PropertyOracle[] propertyOracles) {
+    protected Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles) {
       JsVerboseNamer.exec(jsProgram, propertyOracles);
       return null;
     }

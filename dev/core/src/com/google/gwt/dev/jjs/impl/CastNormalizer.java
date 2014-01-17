@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -40,7 +40,10 @@ import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap.JsQueryType;
-import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +60,7 @@ import java.util.TreeSet;
  * Replace cast and instanceof operations with calls to the Cast class. Depends
  * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
  * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
- * 
+ *
  * <p>
  * Object and String always get a queryId of 0 and 1, respectively. The 0
  * queryId always means "always succeeds". In practice, we never generate an
@@ -73,12 +76,10 @@ import java.util.TreeSet;
 public class CastNormalizer {
   private class AssignTypeCastabilityVisitor extends JVisitor {
 
-    private final Set<JReferenceType> alreadyRan = new HashSet<JReferenceType>();
-    private final IdentityHashMap<JReferenceType, JsCastMap> castableTypesMap =
-        new IdentityHashMap<JReferenceType, JsCastMap>();
-    private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
-    private final Map<JReferenceType, Set<JReferenceType>> queriedTypes =
-        new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
+    private final Set<JReferenceType> alreadyRan = Sets.newHashSet();
+    private final Map<JReferenceType, JsCastMap> castableTypesMap = Maps.newIdentityHashMap();
+    private final List<JArrayType> instantiatedArrayTypes = Lists.newArrayList();
+    private final Map<JReferenceType, Set<JReferenceType>> queriedTypes = Maps.newIdentityHashMap();
 
     {
       JTypeOracle typeOracle = program.typeOracle;
@@ -275,8 +276,8 @@ public class CastNormalizer {
       }
 
       // add an entry for me
-      castableTypesMap.put(type, new JsCastMap(SourceOrigin.UNKNOWN, Lists.create(castableTypes),
-          program.getJavaScriptObject()));
+      castableTypesMap.put(type, new JsCastMap(SourceOrigin.UNKNOWN,
+          ImmutableList.copyOf(castableTypes), program.getJavaScriptObject()));
     }
 
     private void recordCast(JType targetType, JExpression rhs) {
@@ -436,15 +437,15 @@ public class CastNormalizer {
          * user tried a cast that couldn't possibly work. Typically this means
          * either the statically resolvable arg type is incompatible with the
          * target type, or the target type was globally uninstantiable.
-         * 
+         *
          * See {@link com.google.gwt.dev.jjs.impl.TypeTightener.TightenTypesVisitor#endVisit(JCastOperation,
          * Context)}
-         * 
+         *
          * We handle this cast by throwing a ClassCastException, unless the
          * argument is null.
          */
         JMethod method = program.getIndexedMethod("Cast.throwClassCastExceptionUnlessNull");
-        // Note, we must update the method call to return the null type. 
+        // Note, we must update the method call to return the null type.
         JMethodCall call = new JMethodCall(info, null, method, toType);
         call.addArg(expr);
         replaceExpr = call;

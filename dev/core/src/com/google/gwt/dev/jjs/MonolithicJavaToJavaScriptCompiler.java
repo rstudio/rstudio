@@ -46,8 +46,9 @@ import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitters;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
-import com.google.gwt.dev.js.JsStringInterner;
+import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.arg.OptionOptimize;
@@ -97,8 +98,9 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected Map<JsName, String> runDetailedNamer(PropertyOracle[] propertyOracles) {
-      Map<JsName, String> internedTextByVariableName = JsStringInterner.exec(jprogram, jsProgram);
+    protected Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles) {
+      Map<JsName, JsLiteral> internedTextByVariableName =
+          JsLiteralInterner.exec(jprogram, jsProgram, JsLiteralInterner.INTERN_ALL);
       JsVerboseNamer.exec(jsProgram, propertyOracles);
       return internedTextByVariableName;
     }

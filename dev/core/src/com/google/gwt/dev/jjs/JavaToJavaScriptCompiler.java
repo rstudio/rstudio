@@ -106,6 +106,7 @@ import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNamespaceChooser;
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
@@ -113,7 +114,6 @@ import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsSourceGenerationVisitorWithSizeBreakdown;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.JsStaticEval;
-import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.SizeBreakdown;
@@ -121,6 +121,7 @@ import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsLabel;
+import com.google.gwt.dev.js.ast.JsLiteral;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
@@ -142,7 +143,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.soyc.SoycDashboard;
 import com.google.gwt.soyc.io.ArtifactsOutputDirectory;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 
 import org.xml.sax.SAXException;
@@ -304,7 +304,7 @@ public abstract class JavaToJavaScriptCompiler {
             splitJsIntoFragments(propertyOracles, permutationId, jjsmap);
 
         // TODO(stalcup): move to optimize.
-        Map<JsName, String> internedTextByVariableName = renameJsSymbols(propertyOracles);
+        Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(propertyOracles);
 
         // TODO(stalcup): move to normalization
         JsBreakUpLargeVarStatements.exec(jsProgram, propertyOracles);
@@ -325,7 +325,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
         addSyntheticArtifacts(unifiedAst, permutation, startTimeMs, permutationId, jjsmap,
-            dependenciesAndRecorder, internedTextByVariableName, isSourceMapsEnabled, jsFragments,
+            dependenciesAndRecorder, internedLiteralByVariableName, isSourceMapsEnabled, jsFragments,
             sizeBreakdowns, sourceInfoMaps, permutationResult);
 
         return permutationResult;
@@ -345,7 +345,7 @@ public abstract class JavaToJavaScriptCompiler {
 
     protected abstract void postNormalizationOptimizeJava();
 
-    protected abstract Map<JsName, String> runDetailedNamer(PropertyOracle[] propertyOracles);
+    protected abstract Map<JsName, JsLiteral> runDetailedNamer(PropertyOracle[] propertyOracles);
 
     protected abstract Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> splitJsIntoFragments(
         PropertyOracle[] propertyOracles, int permutationId, JavaToJavaScriptMap jjsmap);
@@ -406,7 +406,8 @@ public abstract class JavaToJavaScriptCompiler {
     private void addSoycArtifacts(UnifiedAst unifiedAst, int permutationId,
         JavaToJavaScriptMap jjsmap,
         Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder,
-        Map<JsName, String> internedTextByVariableName, String[] js, SizeBreakdown[] sizeBreakdowns,
+        Map<JsName, JsLiteral> internedLiteralByVariableName, String[] js,
+        SizeBreakdown[] sizeBreakdowns,
         List<Map<Range, SourceInfo>> sourceInfoMaps, PermutationResult permutationResult,
         CompilationMetricsArtifact compilationMetrics)
         throws IOException, UnableToCompleteException {
@@ -419,7 +420,7 @@ public abstract class JavaToJavaScriptCompiler {
       } else {
         permutationResult.addArtifacts(makeSoycArtifacts(permutationId, js, sizeBreakdowns,
             options.isSoycExtra() ? sourceInfoMaps : null, dependenciesAndRecorder.getLeft(),
-            jjsmap, internedTextByVariableName, unifiedAst.getModuleMetrics(),
+            jjsmap, internedLiteralByVariableName, unifiedAst.getModuleMetrics(),
             unifiedAst.getPrecompilationMetrics(), compilationMetrics,
             options.isSoycHtmlDisabled()));
       }
@@ -428,14 +429,14 @@ public abstract class JavaToJavaScriptCompiler {
     private void addSyntheticArtifacts(UnifiedAst unifiedAst, Permutation permutation,
         long startTimeMs, int permutationId, JavaToJavaScriptMap jjsmap,
         Pair<SyntheticArtifact, MultipleDependencyGraphRecorder> dependenciesAndRecorder,
-        Map<JsName, String> internedTextByVariableName, boolean isSourceMapsEnabled,
+        Map<JsName, JsLiteral> internedLiteralByVariableName, boolean isSourceMapsEnabled,
         String[] jsFragments, SizeBreakdown[] sizeBreakdowns,
         List<Map<Range, SourceInfo>> sourceInfoMaps, PermutationResult permutationResult)
         throws IOException, UnableToCompleteException {
       CompilationMetricsArtifact compilationMetrics = addCompilerMetricsArtifact(
           unifiedAst, permutation, startTimeMs, sizeBreakdowns, permutationResult);
       addSoycArtifacts(unifiedAst, permutationId, jjsmap, dependenciesAndRecorder,
-          internedTextByVariableName, jsFragments, sizeBreakdowns, sourceInfoMaps,
+          internedLiteralByVariableName, jsFragments, sizeBreakdowns, sourceInfoMaps,
           permutationResult, compilationMetrics);
       addSourceMapArtifacts(permutationId, jjsmap, dependenciesAndRecorder, isSourceMapsEnabled,
           sizeBreakdowns, sourceInfoMaps, permutationResult);
@@ -508,7 +509,8 @@ public abstract class JavaToJavaScriptCompiler {
     private Collection<? extends Artifact<?>> makeSoycArtifacts(int permutationId, String[] js,
         SizeBreakdown[] sizeBreakdowns, List<Map<Range, SourceInfo>> sourceInfoMaps,
         SyntheticArtifact dependencies, JavaToJavaScriptMap jjsmap,
-        Map<JsName, String> internedTextByVariableName, ModuleMetricsArtifact moduleMetricsArtifact,
+        Map<JsName, JsLiteral> internedLiteralByVariableName,
+        ModuleMetricsArtifact moduleMetricsArtifact,
         PrecompilationMetricsArtifact precompilationMetricsArtifact,
         CompilationMetricsArtifact compilationMetrics, boolean htmlReportsDisabled)
         throws IOException, UnableToCompleteException {
@@ -532,7 +534,8 @@ public abstract class JavaToJavaScriptCompiler {
         Event recordSizeMap = SpeedTracerLogger.start(
             CompilerEventType.MAKE_SOYC_ARTIFACTS, "phase", "recordSizeMap");
         baos.reset();
-        SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap, internedTextByVariableName);
+        SizeMapRecorder.recordMap(logger, baos, sizeBreakdowns, jjsmap,
+            internedLiteralByVariableName);
         sizeMaps = new SyntheticArtifact(
             SoycReportLinker.class, "stories" + permutationId + ".xml.gz", baos.toByteArray());
         soycArtifacts.add(sizeMaps);
@@ -757,39 +760,43 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
-    private Map<JsName, String> renameJsSymbols(PropertyOracle[] propertyOracles) {
-      Map<JsName, String> internedTextByVariableName = null;
+    private Map<JsName, JsLiteral> renameJsSymbols(PropertyOracle[] propertyOracles) {
+      Map<JsName, JsLiteral> internedLiteralByVariableName = null;
       switch (options.getOutput()) {
         case OBFUSCATED:
-          internedTextByVariableName = runObfuscateNamer(propertyOracles);
+          internedLiteralByVariableName = runObfuscateNamer(propertyOracles);
           break;
         case PRETTY:
-          internedTextByVariableName = runPrettyNamer(propertyOracles);
+          internedLiteralByVariableName = runPrettyNamer(propertyOracles);
           break;
         case DETAILED:
-          internedTextByVariableName = runDetailedNamer(propertyOracles);
+          internedLiteralByVariableName = runDetailedNamer(propertyOracles);
           break;
         default:
           throw new InternalCompilerException("Unknown output mode");
       }
-      return internedTextByVariableName;
+      return internedLiteralByVariableName;
     }
 
-    private Map<JsName, String> runObfuscateNamer(PropertyOracle[] propertyOracles) {
-      Map<JsName, String> internedTextByVariableName;
-      internedTextByVariableName = JsStringInterner.exec(jprogram, jsProgram);
+    private Map<JsName, JsLiteral> runObfuscateNamer(PropertyOracle[] propertyOracles) {
+      Map<JsName, JsLiteral> internedLiteralByVariableName =
+          JsLiteralInterner.exec(jprogram, jsProgram, JsLiteralInterner.INTERN_ALL);
       FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram, propertyOracles);
       if (options.shouldRemoveDuplicateFunctions()
           && JsStackEmulator.getStackMode(propertyOracles) == JsStackEmulator.StackMode.STRIP) {
         JsDuplicateFunctionRemover.exec(jsProgram, freshNameGenerator);
       }
-      return internedTextByVariableName;
+      return internedLiteralByVariableName;
     }
 
-    private Map<JsName, String> runPrettyNamer(PropertyOracle[] propertyOracles) {
+    private Map<JsName, JsLiteral> runPrettyNamer(PropertyOracle[] propertyOracles) {
       // We don't intern strings in pretty mode to improve readability
+      Map<JsName, JsLiteral> internedLiteralByVariableName = JsLiteralInterner.exec(
+          jprogram, jsProgram,
+          (byte) (JsLiteralInterner.INTERN_ALL & ~JsLiteralInterner.INTERN_STRINGS));
+
       JsPrettyNamer.exec(jsProgram, propertyOracles);
-      return Maps.newHashMap();
+      return internedLiteralByVariableName;
     }
   }
 

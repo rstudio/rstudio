@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -173,7 +173,7 @@ public final class JsHoister {
     public void endVisit(JsNumberLiteral x, JsContext ctx) {
       stack.push(x);
     }
-    
+
     @Override
     public void endVisit(JsNumericEntry x, JsContext ctx) {
       stack.push(x);
@@ -185,6 +185,10 @@ public final class JsHoister {
       List<JsPropertyInitializer> inits = toReturn.getPropertyInitializers();
 
       int size = x.getPropertyInitializers().size();
+      if (x.isInternable()) {
+        toReturn.setInternable();
+      }
+
       while (size-- > 0) {
         /*
          * JsPropertyInitializers are the only non-JsExpression objects that we
@@ -195,7 +199,11 @@ public final class JsHoister {
         JsPropertyInitializer newInit = new JsPropertyInitializer(
             x.getSourceInfo());
         newInit.setValueExpr(stack.pop());
-        newInit.setLabelExpr(stack.pop());
+        if (successful) {
+          newInit.setLabelExpr(stack.pop());
+        } else {
+          stack.pop();
+        }
 
         inits.add(0, newInit);
       }
@@ -251,7 +259,7 @@ public final class JsHoister {
    * caller. This does not perform any name replacement, nor does it verify the
    * scope of referenced elements, but simply constructs a mutable copy of the
    * expression that can be manipulated at-will.
-   * 
+   *
    * @return A copy of the original expression, or <code>null</code> if the
    *         expression cannot be hoisted.
    */

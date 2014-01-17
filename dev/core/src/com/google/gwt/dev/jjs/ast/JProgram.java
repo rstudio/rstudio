@@ -268,9 +268,8 @@ public class JProgram extends JNode {
 
   public final List<JClassType> immortalCodeGenTypes = Lists.newArrayList();
 
-  // TODO(rluble): (Separate compilation) the second parameter (hasWholeWorldKnoledge) must be
-  // false when doing separate compilation.
   public final JTypeOracle typeOracle;
+
   /**
    * Special serialization treatment.
    */

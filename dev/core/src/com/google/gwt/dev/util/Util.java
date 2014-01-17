@@ -146,7 +146,7 @@ public final class Util {
   public static String computeStrongName(byte[] content) {
     return computeStrongName(new byte[][] {content});
   }
-  
+
   /**
    * Computes the MD5 hash of the specified byte arrays.
    *
@@ -180,7 +180,7 @@ public final class Util {
     }
     return StringUtils.toHexString(md5.digest());
   }
-  
+
   public static void copy(InputStream is, OutputStream os) throws IOException {
     try {
       copyNoClose(is, os);
@@ -308,6 +308,16 @@ public final class Util {
         toDelete[i].delete();
       }
     }
+  }
+
+  /**
+   * Equality check through equals() that is also satisfied if both objects are null.
+   */
+  public static boolean equalsNullCheck(Object thisObject, Object thatObject) {
+    if (thisObject == null) {
+      return thatObject == null;
+    }
+    return thisObject.equals(thatObject);
   }
 
   /**
@@ -497,7 +507,7 @@ public final class Util {
 
   /**
    * A 4-digit hex result.
-   * 
+   *
    * @deprecated use {@link StringUtils#hex4(char, StringBuffer)} instead.
    */
   @Deprecated
@@ -989,11 +999,11 @@ public final class Util {
   /**
    * Returns a string representation of the byte array as a series of
    * hexadecimal characters.
-   * 
+   *
    * @param bytes byte array to convert
    * @return a string representation of the byte array as a series of
    *         hexadecimal characters
-   * @deprecated use {@link StringUtils#toHexString(byte[])} instead. 
+   * @deprecated use {@link StringUtils#toHexString(byte[])} instead.
    */
   @Deprecated
   public static String toHexString(byte[] bytes) {
