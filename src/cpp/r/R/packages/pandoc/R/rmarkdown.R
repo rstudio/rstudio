@@ -32,6 +32,8 @@
 #'   \code{rmd_markdown_options()}.
 #' @param pandoc.options additional options to pass pandoc on the command line.
 #'   Defaults to \code{rmd_pandoc_options()}.
+#' @param mathjax include mathjax from the specified url (pass NULL to
+#' not include mathjax)
 #' @param quiet whether to suppress the progress bar and messages
 #' @param envir the environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
@@ -45,6 +47,7 @@ rmd2pandoc <- function(input,
                        format = NULL,
                        markdown.options = rmd_markdown_options(),
                        pandoc.options = rmd_pandoc_options(),
+                       mathjax = mathjax_url(),
                        envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
@@ -68,7 +71,7 @@ rmd2pandoc <- function(input,
 
   # options for known format
   if (!is.null(known_format))
-    options <- append(options, pandoc_options_for_format(known_format))
+    options <- append(options, pandoc_options_for_format(known_format, mathjax))
 
   # call pandoc
   convert(md, output, format, options, quiet)
@@ -99,6 +102,27 @@ rmd_markdown_options <- function() {
 #' @rdname rmd2pandoc
 rmd_pandoc_options <- function() {
   c("--smart")
+}
+
+#' MathJax URL
+#'
+#' Get the URL to the MathJax library.
+#'
+#' @param version version to use
+#' @param config configuration to use
+#' @param https use secure connection
+#' @return URL to MathJax library
+#'
+#' @export
+mathjax_url <- function(version = "latest",
+                        config = "TeX-AMS-MML_HTMLorMML",
+                        https = FALSE) {
+  if (https)
+    baseurl <- "https://c328740.ssl.cf1.rackcdn.com/mathjax"
+  else
+    baseurl <- "http://cdn.mathjax.org/mathjax"
+
+  paste0(baseurl, "/", version, "/MathJax.js?config=", config)
 }
 
 
@@ -138,15 +162,21 @@ render_pandoc_markdown <- function(format = NULL) {
   invisible(NULL)
 }
 
-
-pandoc_options_for_format <- function(format) {
+pandoc_options_for_format <- function(format, mathjax) {
   if (identical(format, "html")) {
     template_dir <- system.file("templates/html", package = "pandoc")
-    c("--template", file.path(template_dir, "index.html"),
-      "--data-dir", template_dir,
-      "--self-contained",
-      "--mathjax",
-      "--variable=mathjax-url:http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
+    options <- c("--template", file.path(template_dir, "index.html"),
+                 "--data-dir", template_dir,
+                 "--self-contained",
+                 "--no-highlight")
+    if (!is.null(mathjax)) {
+      options <- append(options,
+        c("--mathjax",
+          paste0("--variable=mathjax-url:", mathjax)
+        )
+      )
+    }
+    options
   } else {
     NULL
   }
