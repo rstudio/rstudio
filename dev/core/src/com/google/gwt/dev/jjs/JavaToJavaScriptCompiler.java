@@ -104,8 +104,6 @@ import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsInliner;
-import com.google.gwt.dev.js.JsNamespaceChooser;
-import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
@@ -282,9 +280,6 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): move to AST construction
         JsSymbolResolver.exec(jsProgram);
-        if (options.getNamespace() == JsNamespaceOption.BY_JAVA_PACKAGE) {
-          JsNamespaceChooser.exec(jsProgram, jjsmap);
-        }
 
         // TODO(stalcup): move to normalization
         EvalFunctionsAtTopScope.exec(jsProgram, jjsmap);
