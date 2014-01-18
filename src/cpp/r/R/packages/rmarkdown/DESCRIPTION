@@ -15,3 +15,4 @@ License: GPL (>= 2)
 Collate:
     'pandoc.R'
     'rmarkdown.R'
+    'util.R'
