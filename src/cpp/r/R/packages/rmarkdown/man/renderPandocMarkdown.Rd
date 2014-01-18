@@ -1,8 +1,8 @@
-\name{render_pandoc_markdown}
-\alias{render_pandoc_markdown}
+\name{renderPandocMarkdown}
+\alias{renderPandocMarkdown}
 \title{Set knitr output hooks for pandoc markdown}
 \usage{
-  render_pandoc_markdown(format = NULL)
+  renderPandocMarkdown(format = NULL)
 }
 \arguments{
   \item{format}{one of the known output formats (

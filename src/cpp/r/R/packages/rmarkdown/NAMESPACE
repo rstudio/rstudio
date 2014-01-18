@@ -1,0 +1,5 @@
+export(defaultMarkdownOptions)
+export(defaultPandocOptions)
+export(mathjaxURL)
+export(renderPandocMarkdown)
+export(rmd2pandoc)

@@ -1,5 +1,0 @@
-export(convert)
-export(render_pandoc_markdown)
-export(rmd2pandoc)
-export(rmd_markdown_options)
-export(rmd_pandoc_options)

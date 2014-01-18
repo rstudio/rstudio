@@ -1,23 +1,4 @@
 
-
-# In RStudio the default rmarkdown engine for a document is v2
-#
-# To specify v1 use:
-#
-# <!-- rmarkdown 1.0 -->
-#
-# To specify an alternate engine use a function name:
-#
-# <!-- rmarkdown pubtools::rmd2foo -->
-#
-# Functions must accept an input and encoding argument, and must
-# return the name of the output file generated
-#
-# To pass arguments to the function you do this:
-#
-# <!-- rmarkdown pubtools::rmd2foo format="pdf", toc=TRUE -->
-#
-
 #' Convert an Rmd file to another type using pandoc
 #'
 #' Converts R Markdown (Rmd) files to a variety of formats using the pandoc
@@ -29,9 +10,9 @@
 #'   output file extension.
 #' @param markdown.options options that control the dialect of markdown used by
 #'   pandoc in creating the output file. Defaults to
-#'   \code{rmd_markdown_options()}.
+#'   \code{defaultMarkdownOptions()}.
 #' @param pandoc.options additional options to pass pandoc on the command line.
-#'   Defaults to \code{rmd_pandoc_options()}.
+#'   Defaults to \code{defaultPandocOptions()}.
 #' @param mathjax include mathjax from the specified url (pass NULL to
 #' not include mathjax)
 #' @param quiet whether to suppress the progress bar and messages
@@ -45,9 +26,9 @@
 rmd2pandoc <- function(input,
                        output = NULL,
                        format = NULL,
-                       markdown.options = rmd_markdown_options(),
-                       pandoc.options = rmd_pandoc_options(),
-                       mathjax = mathjax_url(),
+                       markdown.options = defaultMarkdownOptions(),
+                       pandoc.options = defaultPandocOptions(),
+                       mathjax = mathjaxURL(),
                        envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
@@ -58,10 +39,10 @@ rmd2pandoc <- function(input,
 
   # see if we can identify a known format (this can be used to
   # customize the knitting and pandoc conversion of the document )
-  known_format <- known_output_format(output, format)
+  knownFormat <- knownOutputFormat(output, format)
 
   # knit document
-  render_pandoc_markdown(known_format)
+  renderPandocMarkdown(knownFormat)
   md <- paste0(tools::file_path_sans_ext(input), ".md")
   knitr::knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
 
@@ -70,11 +51,11 @@ rmd2pandoc <- function(input,
   options <- append(options, pandoc.options)
 
   # options for known format
-  if (!is.null(known_format))
-    options <- append(options, pandoc_options_for_format(known_format, mathjax))
+  if (!is.null(knownFormat))
+    options <- append(options, pandocOptionsForFormat(knownFormat, mathjax))
 
   # call pandoc
-  convert(md, output, format, options, quiet)
+  pandoc(md, output, format, options, quiet)
 
   # return output filename
   invisible(output)
@@ -83,7 +64,7 @@ rmd2pandoc <- function(input,
 
 #' @export
 #' @rdname rmd2pandoc
-rmd_markdown_options <- function() {
+defaultMarkdownOptions <- function() {
   c("markdown_github",
     "-hard_line_breaks",
     "+superscript",
@@ -100,7 +81,7 @@ rmd_markdown_options <- function() {
 
 #' @export
 #' @rdname rmd2pandoc
-rmd_pandoc_options <- function() {
+defaultPandocOptions <- function() {
   c("--smart")
 }
 
@@ -114,7 +95,7 @@ rmd_pandoc_options <- function() {
 #' @return URL to MathJax library
 #'
 #' @export
-mathjax_url <- function(version = "latest",
+mathjaxURL <- function(version = "latest",
                         config = "TeX-AMS-MML_HTMLorMML",
                         https = FALSE) {
   if (https)
@@ -137,9 +118,9 @@ mathjax_url <- function(version = "latest",
 #'   \code{latex}, and \code{beamer}) or \code{NULL}.
 #'
 #' @export
-render_pandoc_markdown <- function(format = NULL) {
+renderPandocMarkdown <- function(format = NULL) {
 
-  if (!is.null(format) && ! (format %in% known_output_formats()))
+  if (!is.null(format) && ! (format %in% knownOutputFormats()))
     stop("Unknown output format specified")
 
   # stock markdown options
@@ -162,11 +143,11 @@ render_pandoc_markdown <- function(format = NULL) {
   invisible(NULL)
 }
 
-pandoc_options_for_format <- function(format, mathjax) {
+pandocOptionsForFormat <- function(format, mathjax) {
   if (identical(format, "html")) {
-    template_dir <- system.file("templates/html", package = "pandoc")
-    options <- c("--template", file.path(template_dir, "default.html"),
-                 "--data-dir", template_dir,
+    templateDir <- system.file("templates/html", package = "rmarkdown")
+    options <- c("--template", file.path(templateDir, "default.html"),
+                 "--data-dir", templateDir,
                  "--self-contained",
                  "--no-highlight")
     if (!is.null(mathjax)) {
@@ -182,7 +163,7 @@ pandoc_options_for_format <- function(format, mathjax) {
   }
 }
 
-known_output_format <- function(output, format = NULL) {
+knownOutputFormat <- function(output, format = NULL) {
 
   if (is.null(format)) {
     ext <- tools::file_ext(output)
@@ -194,7 +175,7 @@ known_output_format <- function(output, format = NULL) {
       "latex"
     else
       NULL
-  } else if (format %in% known_output_formats()) {
+  } else if (format %in% knownOutputFormats()) {
     format
   } else {
     NULL
@@ -202,7 +183,7 @@ known_output_format <- function(output, format = NULL) {
 }
 
 
-known_output_formats <- function() {
+knownOutputFormats <- function() {
   c("html", "docx", "latex", "beamer")
 }
 

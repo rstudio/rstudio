@@ -1,18 +1,18 @@
 \name{rmd2pandoc}
+\alias{defaultMarkdownOptions}
+\alias{defaultPandocOptions}
 \alias{rmd2pandoc}
-\alias{rmd_markdown_options}
-\alias{rmd_pandoc_options}
 \title{Convert an Rmd file to another type using pandoc}
 \usage{
   rmd2pandoc(input, output = NULL, format = NULL,
-    markdown.options = rmd_markdown_options(),
-    pandoc.options = rmd_pandoc_options(),
-    envir = parent.frame(), quiet = FALSE,
-    encoding = getOption("encoding"))
+    markdown.options = defaultMarkdownOptions(),
+    pandoc.options = defaultPandocOptions(),
+    mathjax = mathjaxURL(), envir = parent.frame(),
+    quiet = FALSE, encoding = getOption("encoding"))
 
-  rmd_markdown_options()
+  defaultMarkdownOptions()
 
-  rmd_pandoc_options()
+  defaultPandocOptions()
 }
 \arguments{
   \item{input}{input Rmd document}
@@ -25,11 +25,14 @@
 
   \item{markdown.options}{options that control the dialect
   of markdown used by pandoc in creating the output file.
-  Defaults to \code{rmd_markdown_options()}.}
+  Defaults to \code{defaultMarkdownOptions()}.}
 
   \item{pandoc.options}{additional options to pass pandoc
   on the command line.  Defaults to
-  \code{rmd_pandoc_options()}.}
+  \code{defaultPandocOptions()}.}
+
+  \item{mathjax}{include mathjax from the specified url
+  (pass NULL to not include mathjax)}
 
   \item{quiet}{whether to suppress the progress bar and
   messages}
