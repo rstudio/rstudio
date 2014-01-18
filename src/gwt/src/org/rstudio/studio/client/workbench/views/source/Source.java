@@ -2210,9 +2210,9 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onSuccess(CodeBrowserEditingTarget target)
          {
+            target.showFunction(event.getFunction());
             if (event.getDebugPosition() != null)
             {
-               target.showFunction(event.getFunction());
                highlightDebugBrowserPosition(target, event.getDebugPosition(), 
                                              event.getExecuting());
             }
@@ -2235,6 +2235,10 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
    {
+      // no need to highlight if we don't have a code browser tab to highlight
+      if (indexOfCodeBrowserTab() < 0)
+         return;
+      
       setPendingDebugSelection();
       activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
          @Override
