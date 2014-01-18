@@ -145,7 +145,7 @@ renderPandocMarkdown <- function(format = NULL) {
 
 pandocOptionsForFormat <- function(format, mathjax) {
   if (identical(format, "html")) {
-    templateDir <- system.file("templates/html", package = "rmarkdown")
+    templateDir <- rmarkdownSystemFile("templates/html", package = "rmarkdown")
     options <- c("--template", file.path(templateDir, "default.html"),
                  "--data-dir", templateDir,
                  "--self-contained",
