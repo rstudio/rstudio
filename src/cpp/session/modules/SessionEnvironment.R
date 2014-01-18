@@ -147,9 +147,12 @@
 
 .rs.addFunction("simulateSourceRefs", function(var)
 {
+  # Read arguments from attached attributes to the input (these can't be passed
+  # naked from RStudio)
   fun <-  attr(var, "_rs_callfun")
   call <- attr(var, "_rs_callobj")
   calltext <- attr(var, "_rs_calltext")
+  linepref <- attr(var, "_rs_lastline")
 
   # To proceed, we need the function to look in, and either the raw call
   # object (which we will deparse later) or the text to look for.
@@ -192,18 +195,35 @@
   # NULL is output by R when it doesn't have an expression to output; don't
   # try to match it to code
   if (identical(calltext, "NULL")) 
-  {
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
+
+  pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
+  if (length(pos) > 1) 
+  {
+     # There is more than one instance of the call text in the function; try 
+     # to pick the first match past the preferred line.
+     best <- which(pos > offsets[linepref])
+     if (length(best) == 0)
+     {
+        # No match past the preferred line, just pick the match closest
+        best <- which.min(abs(linepref - pos))
+     }
+     else
+        best <- best[1]
+     endpos <- pos[best] + attr(pos, "match.length")[best]
+     pos <- pos[best]
+  }
+  else
+  {
+     endpos <- pos + attr(pos, "match.length")
   }
 
-  pos <- regexpr(calltext, singleline, fixed = TRUE)
 
   # Return an empty source ref if we couldn't find a match
   if (pos < 0)
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   # Compute the starting and ending lines
-  endpos <- pos + attr(pos, "match.length")
   firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
   lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
   if (is.na(lastline))
