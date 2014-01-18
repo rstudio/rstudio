@@ -843,6 +843,14 @@ private:
       // set a success message
       successMessage_ = "\nR CMD check succeeded\n";
 
+      // bind a success function if appropriate
+      if (userSettings().cleanupAfterRCmdCheck())
+      {
+         successFunction_ = boost::bind(&Build::cleanupAfterCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
       if (userSettings().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
