@@ -1,16 +1,22 @@
 
 #' Set knitr hooks and options for rendering markdown
 #'
-#' This function sets knitr hooks and options for markdown rendering. Hooks are
+#' These functions set knitr hooks and options for markdown rendering. Hooks are
 #' based on the default
 #' \code{\link[knitr:render_markdown]{knitr::render_markdown}} function with
-#' some additional tweaks.
+#' additional customization for various output formats.
 #'
-#' @param figureScope Directory name scope for figures (useful when rendering
-#'   more than one format from a directory)
+#' @param format Pandoc format being rendered (used to create distinct figure
+#'   directories for multiple formats)
+#' @param fig.width Default width for figures
+#' @param fig.height Default height for figures
+#'
+#' @details You typically need to call only one knitr render function, as the
+#' various format-specific functions (e.g. \code{knitrRenderPDF}) all call
+#' the \code{knitrRender} function as part of their implementation.
 #'
 #' @export
-knitrRenderMarkdown <- function(figureScope = NULL) {
+knitrRender <- function(format) {
 
   # stock markdown options
   knitr::render_markdown()
@@ -20,8 +26,7 @@ knitrRenderMarkdown <- function(figureScope = NULL) {
                         comment = NA,    # don't preface output with ##
                         error = FALSE)   # stop immediately on errors
 
-  # figure directory scope if requested
-  if (!is.null(figureScope))
-    knitr::opts_chunk$set(fig.path=paste("figure-", figureScope, "/", sep = ""))
+  # figure directory scope
+  knitr::opts_chunk$set(fig.path=paste("figure-", format, "/", sep = ""))
 }
 
