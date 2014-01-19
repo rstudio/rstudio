@@ -26,6 +26,9 @@ rmd2html <- function(input,
 
   # knitr options
   knitrRenderMarkdown(pandocFormat)
+  knitr::opts_chunk$set(dev = 'png',
+                        fig.width = 7,
+                        fig.height = 7)
 
   # call knitr
   md <- knitr::knit(input, quiet = quiet, encoding = encoding)
@@ -66,14 +69,18 @@ rmd2pdf <- function(input,
   # knitr options
   knitrRenderMarkdown(pandocFormat)
   knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
-  knitr::opts_chunk$set(dev = 'cairo_pdf')
+  knitr::opts_chunk$set(dev = 'cairo_pdf',
+                        fig.width = 6,
+                        fig.height = 5)
 
   # call knitr
   md <- knitr::knit(input, quiet = quiet, encoding = encoding)
 
   # pandoc options
+  geometry <- list()
+  geometry$margin = "1in"
   options <- c(pandocMarkdownOptions(),
-               pandocPDFOptions(),
+               pandocPDFOptions(geometry = geometry),
                recursive = TRUE)
 
   # call pandoc
@@ -128,7 +135,7 @@ knitrRenderMarkdown <- function(figureScope = NULL) {
 
   # figure directory scope if requested
   if (!is.null(figureScope))
-    fig.path=paste("figure-", figureScope, "/", sep = "")
+    knitr::opts_chunk$set(fig.path=paste("figure-", figureScope, "/", sep = ""))
 }
 
 
@@ -138,7 +145,7 @@ knitrRenderMarkdown <- function(figureScope = NULL) {
 #' are used by higher-level rmarkdown renderig functions like
 #' \code{\link{rmd2html}} and can be used to define additional custom renderers.
 #'
-#' @param extra.options Additional flags for customizing the flavor of
+#' @param extraOptions Additional flags for customizing the flavor of
 #' markdown input interpreted by pandoc.
 #' @param template Full path to a custom pandoc template
 #' @param mathjax URL to mathjax library used in HTML output
@@ -147,7 +154,7 @@ knitrRenderMarkdown <- function(figureScope = NULL) {
 #'
 #' @rdname pandocOptions
 #' @export
-pandocMarkdownOptions <- function(extra.options = NULL) {
+pandocMarkdownOptions <- function(extraOptions = NULL) {
   c("--from",
     paste0("markdown_github",
            "-hard_line_breaks",
@@ -161,7 +168,7 @@ pandocMarkdownOptions <- function(extra.options = NULL) {
            "+inline_notes",
            "+citations",
            "+yaml_metadata_block",
-           extra.options),
+           extraOptions),
     "--smart")
 }
 
@@ -174,7 +181,8 @@ pandocHTMLOptions <- function(template, mathjax = NULL) {
                "--no-highlight")
   if (!is.null(mathjax)) {
     options <- c(options,
-                 "--mathjax",paste0("--variable=mathjax-url:", mathjax),
+                 "--mathjax",
+                 "--variable", paste0("mathjax-url:", mathjax),
                  recursive = TRUE)
   }
   options
@@ -182,8 +190,20 @@ pandocHTMLOptions <- function(template, mathjax = NULL) {
 
 #' @rdname pandocOptions
 #' @export
-pandocPDFOptions <- function() {
-  c()
+pandocPDFOptions <- function(geometry = NULL) {
+
+  options <- c()
+
+  if (!is.null(geometry)) {
+    for (name in names(geometry)) {
+      value <- geometry[[name]]
+      options <- c(options,
+                   "--variable",
+                   paste0("geometry:", name, "=", value),
+                   recursive = TRUE)
+    }
+  }
+  options
 }
 
 #' MathJax URL

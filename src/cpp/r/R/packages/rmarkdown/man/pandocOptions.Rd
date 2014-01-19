@@ -4,14 +4,14 @@
 \alias{pandocPDFOptions}
 \title{Compose pandoc options}
 \usage{
-  pandocMarkdownOptions(extra.options = NULL)
+  pandocMarkdownOptions(extraOptions = NULL)
 
   pandocHTMLOptions(template, mathjax = NULL)
 
-  pandocPDFOptions()
+  pandocPDFOptions(geometry = NULL)
 }
 \arguments{
-  \item{extra.options}{Additional flags for customizing the
+  \item{extraOptions}{Additional flags for customizing the
   flavor of markdown input interpreted by pandoc.}
 
   \item{template}{Full path to a custom pandoc template}
