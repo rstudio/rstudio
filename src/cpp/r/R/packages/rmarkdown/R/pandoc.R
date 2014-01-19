@@ -27,7 +27,7 @@ pandocConvert <- function(input,
     format <- "html"
 
   if (is.null(output))
-    pandocOutputFile(input, format)
+    output <- pandocOutputFile(input, format)
 
   args <- c("--output", output,
             "--to", format,

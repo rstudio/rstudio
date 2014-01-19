@@ -19,10 +19,8 @@ rmd2html <- function(input,
                      quiet = FALSE,
                      encoding = getOption("encoding")) {
 
-  # format and output file
+  # define target format
   pandocFormat <- "html"
-  if (is.null(output))
-    output <- pandocOutputFile(input, pandocFormat)
 
   # knitr options
   knitrRenderMarkdown(pandocFormat)

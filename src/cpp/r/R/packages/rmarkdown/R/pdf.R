@@ -17,10 +17,8 @@ rmd2pdf <- function(input,
                     quiet = FALSE,
                     encoding = getOption("encoding")) {
 
-  # format and output file
+  # define target format
   pandocFormat <- "latex"
-  if (is.null(output))
-    output <- pandocOutputFile(input, pandocFormat)
 
   # knitr options
   knitrRenderMarkdown(pandocFormat)
