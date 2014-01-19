@@ -1,97 +1,199 @@
 
-#' Convert an Rmd file to another type using pandoc
+#' Convert R Markdown to HTML
 #'
-#' Converts R Markdown (Rmd) files to a variety of formats using the pandoc
-#' rendering engine.
+#' Converts an R Markdown (Rmd) file to HTML
 #'
 #' @param input input Rmd document
 #' @param output target output file (defaults to <input>.html if not specified)
-#' @param format format to convert to. If not specified then is deduced from the
-#'   output file extension.
-#' @param markdown.options options that control the dialect of markdown used by
-#'   pandoc in creating the output file. Defaults to
-#'   \code{defaultMarkdownOptions()}.
-#' @param pandoc.options additional options to pass pandoc on the command line.
-#'   Defaults to \code{defaultPandocOptions()}.
 #' @param mathjax include mathjax from the specified url (pass NULL to
 #' not include mathjax)
 #' @param quiet whether to suppress the progress bar and messages
-#' @param envir the environment in which the code chunks are to be evaluated
-#'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param encoding the encoding of the input file; see \code{\link{file}}
 #' @return The compiled document is written into the output file, and the path
 #'   of the output file is returned.
 #'
 #' @export
-rmd2pandoc <- function(input,
-                       output = NULL,
-                       format = NULL,
-                       markdown.options = defaultMarkdownOptions(),
-                       pandoc.options = defaultPandocOptions(),
-                       mathjax = mathjaxURL(),
-                       envir = parent.frame(),
-                       quiet = FALSE,
-                       encoding = getOption("encoding")) {
+rmd2html <- function(input,
+                     output = NULL,
+                     mathjax = mathjaxURL(),
+                     quiet = FALSE,
+                     encoding = getOption("encoding")) {
 
-  # default output to html if not provided
+  # format and output file
+  pandocFormat <- "html"
   if (is.null(output))
-    output <- paste0(tools::file_path_sans_ext(input), ".html")
+    output <- pandocOutputFile(input, pandocFormat)
 
-  # see if we can identify a known format (this can be used to
-  # customize the knitting and pandoc conversion of the document )
-  knownFormat <- knownOutputFormat(output, format)
+  # knitr options
+  knitrRenderMarkdown(pandocFormat)
 
-  # knit document
-  renderPandocMarkdown(knownFormat)
-  md <- paste0(tools::file_path_sans_ext(input), ".md")
-  knitr::knit(input, md, envir = envir, quiet = quiet, encoding = encoding)
+  # call knitr
+  md <- knitr::knit(input, quiet = quiet, encoding = encoding)
 
-  # build options
-  options <-c("--from", paste0(markdown.options, collapse=""))
-  options <- append(options, pandoc.options)
-
-  # options for known format
-  if (!is.null(knownFormat))
-    options <- append(options, pandocOptionsForFormat(knownFormat, mathjax))
+  # pandoc options
+  options <- c(pandocMarkdownOptions(),
+               pandocHTMLOptions(systemFile("templates/html/default.html"),
+                                 mathjax),
+               recursive = TRUE)
 
   # call pandoc
-  pandoc(md, output, format, options, quiet)
-
-  # return output filename
-  invisible(output)
+  pandoc(md, output, pandocFormat, options, quiet)
 }
 
 
+#' Convert R Markdown to PDF
+#'
+#' Converts an R Markdown (Rmd) file to PDF
+#'
+#' @param input input Rmd document
+#' @param output target output file (defaults to <input>.pdf if not specified)
+#' @param quiet whether to suppress the progress bar and messages
+#' @param encoding the encoding of the input file; see \code{\link{file}}
+#' @return The compiled document is written into the output file, and the path
+#'   of the output file is returned.
+#'
 #' @export
-#' @rdname rmd2pandoc
-defaultMarkdownOptions <- function() {
-  c("markdown_github",
-    "-hard_line_breaks",
-    "+superscript",
-    "+tex_math_dollars",
-    "+raw_html",
-    "+auto_identifiers",
-    "+raw_tex",
-    "+latex_macros",
-    "+footnotes",
-    "+inline_notes",
-    "+citations",
-    "+yaml_metadata_block")
+rmd2pdf <- function(input,
+                    output = NULL,
+                    quiet = FALSE,
+                    encoding = getOption("encoding")) {
+
+  # format and output file
+  pandocFormat <- "latex"
+  if (is.null(output))
+    output <- pandocOutputFile(input, pandocFormat)
+
+  # knitr options
+  knitrRenderMarkdown(pandocFormat)
+  knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+  knitr::opts_chunk$set(dev = 'cairo_pdf')
+
+  # call knitr
+  md <- knitr::knit(input, quiet = quiet, encoding = encoding)
+
+  # pandoc options
+  options <- c(pandocMarkdownOptions(),
+               pandocPDFOptions(),
+               recursive = TRUE)
+
+  # call pandoc
+  pandoc(md, output, pandocFormat, options, quiet)
 }
 
+
+#' Determine the output file for a pandoc conversion
+#'
+#' Give an input file and pandoc format (e.g. \code{html}, \code{html5},
+#' \code{docx}, \code{latex}, \code{beamer}) determine the name of the
+#' output file to write.
+#'
+#' @param input Input file
+#' @param pandocFormat Pandoc format of the output
+#'
+#' @return Output file
+#'
 #' @export
-#' @rdname rmd2pandoc
-defaultPandocOptions <- function() {
-  c("--smart")
+pandocOutputFile <- function(input, pandocFormat) {
+  if (pandocFormat %in% c("latex", "beamer"))
+    ext <- ".pdf"
+  else if (pandocFormat %in% c("html", "html5", "revealjs"))
+    ext <- ".html"
+  else
+    ext <- paste0(".", pandocFormat)
+  paste0(tools::file_path_sans_ext(input), ext)
+}
+
+
+
+#' Set knitr hooks and options for rendering markdown
+#'
+#' This function sets knitr hooks and options for markdown rendering. Hooks are
+#' based on the default
+#' \code{\link[knitr:render_markdown]{knitr::render_markdown}} function with
+#' some additional tweaks.
+#'
+#' @param figureScope Directory name scope for figures (useful when rendering
+#'   more than one format from a directory)
+#'
+#' @export
+knitrRenderMarkdown <- function(figureScope = NULL) {
+
+  # stock markdown options
+  knitr::render_markdown()
+
+  # chunk options
+  knitr::opts_chunk$set(tidy = FALSE,    # don't reformat R code
+                        comment = NA,    # don't preface output with ##
+                        error = FALSE)   # stop immediately on errors
+
+  # figure directory scope if requested
+  if (!is.null(figureScope))
+    fig.path=paste("figure-", figureScope, "/", sep = "")
+}
+
+
+#' Compose pandoc options
+#'
+#' Convenince functions for composing sets of pandoc options. These functions
+#' are used by higher-level rmarkdown renderig functions like
+#' \code{\link{rmd2html}} and can be used to define additional custom renderers.
+#'
+#' @param extra.options Additional flags for customizing the flavor of
+#' markdown input interpreted by pandoc.
+#' @param template Full path to a custom pandoc template
+#' @param mathjax URL to mathjax library used in HTML output
+#'
+#' @return Character vector of pandoc options
+#'
+#' @rdname pandocOptions
+#' @export
+pandocMarkdownOptions <- function(extra.options = NULL) {
+  c("--from",
+    paste0("markdown_github",
+           "-hard_line_breaks",
+           "+superscript",
+           "+tex_math_dollars",
+           "+raw_html",
+           "+auto_identifiers",
+           "+raw_tex",
+           "+latex_macros",
+           "+footnotes",
+           "+inline_notes",
+           "+citations",
+           "+yaml_metadata_block",
+           extra.options),
+    "--smart")
+}
+
+#' @rdname pandocOptions
+#' @export
+pandocHTMLOptions <- function(template, mathjax = NULL) {
+  options <- c("--template", template,
+               "--data-dir", dirname(template),
+               "--self-contained",
+               "--no-highlight")
+  if (!is.null(mathjax)) {
+    options <- c(options,
+                 "--mathjax",paste0("--variable=mathjax-url:", mathjax),
+                 recursive = TRUE)
+  }
+  options
+}
+
+#' @rdname pandocOptions
+#' @export
+pandocPDFOptions <- function() {
+  c()
 }
 
 #' MathJax URL
 #'
 #' Get the URL to the MathJax library.
 #'
-#' @param version version to use
-#' @param config configuration to use
-#' @param https use secure connection
+#' @param version Version to use
+#' @param config Configuration to use
+#' @param https Use secure connection
+#'
 #' @return URL to MathJax library
 #'
 #' @export
@@ -105,86 +207,3 @@ mathjaxURL <- function(version = "latest",
 
   paste0(baseurl, "/", version, "/MathJax.js?config=", config)
 }
-
-
-#' Set knitr output hooks for pandoc markdown
-#'
-#' This function sets the built in output hooks for rendering to pandoc
-#' markdown. Output hooks are based on the default
-#' \code{\link[knitr:render_markdown]{knitr::render_markdown}} function with
-#' additional hooks provided for known formats.
-#'
-#' @param format one of the known output formats ( \code{html}, \code{docx},
-#'   \code{latex}, and \code{beamer}) or \code{NULL}.
-#'
-#' @export
-renderPandocMarkdown <- function(format = NULL) {
-
-  if (!is.null(format) && ! (format %in% knownOutputFormats()))
-    stop("Unknown output format specified")
-
-  # stock markdown options
-  knitr::render_markdown()
-
-  # chunk options (do a figure directory per-format to gracefully handle
-  # switching between formats)
-  if (is.null(format))
-    format <- "unknown"
-  knitr::opts_chunk$set(tidy = FALSE,
-                        error = FALSE,
-                        fig.path=paste("figure-", format, "/", sep = ""))
-
-  # some pdf specific options
-  if (format %in% c("latex", "beamer")) {
-    knitr::opts_chunk$set(dev = 'cairo_pdf')
-    knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
-  }
-
-  invisible(NULL)
-}
-
-pandocOptionsForFormat <- function(format, mathjax) {
-  if (identical(format, "html")) {
-    templateDir <- systemFile("templates/html")
-    options <- c("--template", file.path(templateDir, "default.html"),
-                 "--data-dir", templateDir,
-                 "--self-contained",
-                 "--no-highlight")
-    if (!is.null(mathjax)) {
-      options <- append(options,
-        c("--mathjax",
-          paste0("--variable=mathjax-url:", mathjax)
-        )
-      )
-    }
-    options
-  } else {
-    NULL
-  }
-}
-
-knownOutputFormat <- function(output, format = NULL) {
-
-  if (is.null(format)) {
-    ext <- tools::file_ext(output)
-    if (ext %in% c("htm", "html"))
-      "html"
-    else if (identical(ext, "docx"))
-      "docx"
-    else if (identical(ext, "pdf"))
-      "latex"
-    else
-      NULL
-  } else if (format %in% knownOutputFormats()) {
-    format
-  } else {
-    NULL
-  }
-}
-
-
-knownOutputFormats <- function() {
-  c("html", "docx", "latex", "beamer")
-}
-
-

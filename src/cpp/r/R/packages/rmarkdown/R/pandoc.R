@@ -1,21 +1,17 @@
 
 pandoc <- function(input,
-                   output = NULL,
-                   format = NULL,
-                   options = c(),
+                   output,
+                   format,
+                   options,
                    quiet = FALSE) {
 
   verifyPandocVersion()
 
-  args <- c()
-  if (!is.null(output))
-    args <- append(args, c("--output", output))
-
-  if (!is.null(format))
-    args <- append(args, c("--to", format))
-
-  args <- append(args, options)
-  args <- append(args, input)
+  args <- c("--output", output,
+            "--to", format,
+            options,
+            input,
+            recursive = TRUE)
 
   if (!quiet) {
     cat("pandoc ")
@@ -24,6 +20,8 @@ pandoc <- function(input,
   }
 
   execPandoc(args)
+
+  invisible(output)
 }
 
 execPandoc <- function(args, ...) {

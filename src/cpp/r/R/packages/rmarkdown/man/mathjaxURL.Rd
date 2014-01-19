@@ -6,11 +6,11 @@
     config = "TeX-AMS-MML_HTMLorMML", https = FALSE)
 }
 \arguments{
-  \item{version}{version to use}
+  \item{version}{Version to use}
 
-  \item{config}{configuration to use}
+  \item{config}{Configuration to use}
 
-  \item{https}{use secure connection}
+  \item{https}{Use secure connection}
 }
 \value{
   URL to MathJax library
