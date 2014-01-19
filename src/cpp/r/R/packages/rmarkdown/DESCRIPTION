@@ -14,5 +14,7 @@ Imports:
 License: GPL (>= 2)
 Collate:
     'pandoc.R'
-    'rmarkdown.R'
     'util.R'
+    'html.R'
+    'knitr.R'
+    'pdf.R'

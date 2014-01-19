@@ -1,5 +1,6 @@
 export(knitrRenderMarkdown)
 export(mathjaxURL)
+export(pandocConvert)
 export(pandocHTMLOptions)
 export(pandocMarkdownOptions)
 export(pandocOutputFile)

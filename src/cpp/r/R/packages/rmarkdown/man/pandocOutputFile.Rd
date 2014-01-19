@@ -7,14 +7,15 @@
 \arguments{
   \item{input}{Input file}
 
-  \item{pandocFormat}{Pandoc format of the output}
+  \item{pandocFormat}{Pandoc format of the output (e.g.
+  \code{html}, \code{html5}, \code{docx}, \code{latex},
+  \code{beamer})}
 }
 \value{
   Output file
 }
 \description{
-  Give an input file and pandoc format (e.g. \code{html},
-  \code{html5}, \code{docx}, \code{latex}, \code{beamer})
-  determine the name of the output file to write.
+  Give an input file and pandoc format determine the name
+  of the output file to write.
 }
 
