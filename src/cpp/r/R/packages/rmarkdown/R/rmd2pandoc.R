@@ -1,4 +1,3 @@
-
 #' Convert an R Markdown document using pandoc
 #'
 #' Convert the \code{input} document to the specified \code{format} and write it
@@ -52,7 +51,7 @@ rmd2pandoc <- function(input,
   }
 
   # run the conversion
-  execPandoc(args)
+  pandocExec(args)
 
   # return the name of the output file
   invisible(output)
@@ -88,58 +87,15 @@ rmdFormat <- function(options = NULL) {
 
 
 
-#' Pandoc options for HTML rendering
-#'
-#' Get pandoc command-line options required for converting R Markdown to HTML.
-#'
-#' @param template Full path to a custom pandoc HTML template
-#' @param mathjax URL to mathjax library used in HTML output
-#'
-#' @return Character vector of pandoc options
-#'
-#' @export
-pandocHTMLOptions <- function(template, mathjax = NULL) {
-  options <- c("--smart",
-               "--template", template,
-               "--data-dir", dirname(template),
-               "--self-contained",
-               "--no-highlight")
-  if (!is.null(mathjax)) {
-    options <- c(options,
-                 "--mathjax",
-                 "--variable", paste0("mathjax-url:", mathjax),
-                 recursive = TRUE)
+pandocExec <- function(args, ...) {
+  pandoc <- pandocPath()
+  if (nzchar(pandoc)) {
+    command <- paste(pandoc, paste(shQuote(args), collapse = " "))
+    system(command, ...)
+  } else {
+    stop("pandoc was not found on the system path", call. = FALSE)
   }
-  options
 }
-
-
-#' Pandoc options for PDF rendering
-#'
-#' Get pandoc command-line options required for converting R Markdown PDF.
-#'
-#' @param geometry List of \code{LaTeX} geometry settings (optional)
-#'
-#' @return Character vector of pandoc options
-#'
-#' @export
-pandocPDFOptions <- function(geometry = NULL) {
-
-  options <- c()
-
-  if (!is.null(geometry)) {
-    for (name in names(geometry)) {
-      value <- geometry[[name]]
-      options <- c(options,
-                   "--variable",
-                   paste0("geometry:", name, "=", value),
-                   recursive = TRUE)
-    }
-  }
-
-  options
-}
-
 
 pandocOutputFile <- function(input, pandocFormat) {
   if (pandocFormat %in% c("latex", "beamer"))
@@ -149,17 +105,6 @@ pandocOutputFile <- function(input, pandocFormat) {
   else
     ext <- paste0(".", pandocFormat)
   paste0(tools::file_path_sans_ext(input), ext)
-}
-
-
-execPandoc <- function(args, ...) {
-  pandoc <- pandocPath()
-  if (nzchar(pandoc)) {
-    command <- paste(pandoc, paste(shQuote(args), collapse = " "))
-    system(command, ...)
-  } else {
-    stop("pandoc was not found on the system path", call. = FALSE)
-  }
 }
 
 pandocPath <- function() {
@@ -185,7 +130,7 @@ verifyPandocVersion <- function() {
 
 hasRequiredPandocVersion <- function() {
   if (nzchar(pandocPath())) {
-    versionInfo <- execPandoc("--version", intern = TRUE)
+    versionInfo <- pandocExec("--version", intern = TRUE)
     version <- strsplit(versionInfo, "\n")[[1]][1]
     version <- strsplit(version, " ")[[1]][2]
     hasRequired <- numeric_version(version) >= requiredPandocVersion()
@@ -203,4 +148,10 @@ hasRequiredPandocVersion <- function() {
 requiredPandocVersion <- function() {
   "1.12.3"
 }
+
+
+systemFile <- function(file) {
+  system.file(file, package = "rmarkdown")
+}
+
 

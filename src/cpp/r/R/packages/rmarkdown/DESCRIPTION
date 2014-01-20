@@ -13,8 +13,8 @@ Imports:
     knitr (>= 1.2)
 License: GPL (>= 2)
 Collate:
-    'pandoc.R'
-    'util.R'
-    'html.R'
-    'knitr.R'
-    'pdf.R'
+    'rmd2beamer.R'
+    'rmd2html.R'
+    'rmd2pandoc.R'
+    'rmd2pdf.R'
+    'knitr-render.R'

@@ -1,4 +1,3 @@
-
 #' Convert R Markdown to HTML
 #'
 #' Converts an R Markdown (Rmd) file to HTML
@@ -34,6 +33,33 @@ rmd2html <- function(input,
              quiet = quiet,
              encoding = encoding)
 }
+
+
+#' Pandoc options for HTML rendering
+#'
+#' Get pandoc command-line options required for converting R Markdown to HTML.
+#'
+#' @param template Full path to a custom pandoc HTML template
+#' @param mathjax URL to mathjax library used in HTML output
+#'
+#' @return Character vector of pandoc options
+#'
+#' @export
+pandocHTMLOptions <- function(template, mathjax = NULL) {
+  options <- c("--smart",
+               "--template", template,
+               "--data-dir", dirname(template),
+               "--self-contained",
+               "--no-highlight")
+  if (!is.null(mathjax)) {
+    options <- c(options,
+                 "--mathjax",
+                 "--variable", paste0("mathjax-url:", mathjax),
+                 recursive = TRUE)
+  }
+  options
+}
+
 
 
 #' MathJax URL
