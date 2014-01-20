@@ -22,57 +22,17 @@ rmd2html <- function(input,
   # knitr options
   knitrRenderHTML("html", 7, 7)
 
-  # call knitr
-  md <- knitr::knit(input, quiet = quiet, encoding = encoding)
-
   # pandoc options
-  options <- c(pandocMarkdownOptions(),
-               pandocHTMLOptions(systemFile("templates/html/default.html"),
-                                 mathjax),
-               recursive = TRUE)
+  options <- pandocHTMLOptions(systemFile("templates/html/default.html"),
+                               mathjax)
 
   # call pandoc
-  pandocConvert(md, output, "html", options, quiet)
-}
-
-
-#' @rdname knitrRender
-#' @export
-knitrRenderHTML <- function(format, fig.width, fig.height) {
-
-  # inherit defaults
-  knitrRender(format)
-
-  # graphics device
-  knitr::opts_chunk$set(dev = 'png',
-                        fig.width = fig.width,
-                        fig.height = fig.height)
-}
-
-
-
-#' Pandoc options for HTML rendering
-#'
-#' Get pandoc command-line options required for converting R Markdown to HTML.
-#'
-#' @param template Full path to a custom pandoc HTML template
-#' @param mathjax URL to mathjax library used in HTML output
-#'
-#' @return Character vector of pandoc options
-#'
-#' @export
-pandocHTMLOptions <- function(template, mathjax = NULL) {
-  options <- c("--template", template,
-               "--data-dir", dirname(template),
-               "--self-contained",
-               "--no-highlight")
-  if (!is.null(mathjax)) {
-    options <- c(options,
-                 "--mathjax",
-                 "--variable", paste0("mathjax-url:", mathjax),
-                 recursive = TRUE)
-  }
-  options
+  rmd2pandoc(input,
+             output,
+             to = "html",
+             options = options,
+             quiet = quiet,
+             encoding = encoding)
 }
 
 

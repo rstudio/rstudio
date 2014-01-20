@@ -21,21 +21,19 @@ rmd2pdf <- function(input,
   # knitr options
   knitrRenderPDF("latex", 6, 5)
 
-  # call knitr
-  md <- knitr::knit(input, quiet = quiet, encoding = encoding)
-
   # pandoc options
   geometry <- list()
   geometry$margin = "1in"
-  options <- c(pandocMarkdownOptions(),
-               pandocPDFOptions(geometry = geometry),
-               recursive = TRUE)
+  options <- pandocPDFOptions(geometry = geometry)
 
   # call pandoc
-  pandocConvert(md, output, "latex", options, quiet)
+  rmd2pandoc(input,
+             output,
+             to = "latex",
+             options = options,
+             quiet = quiet,
+             encoding = encoding)
 }
-
-
 
 
 #' Convert R Markdown to Beamer
@@ -61,60 +59,17 @@ rmd2beamer <- function(input,
   # knitr options
   knitrRenderPDF("beamer", 4.5, 3.5)
 
-  # call knitr
-  md <- knitr::knit(input, quiet = quiet, encoding = encoding)
-
   # pandoc options
-  options <- c(pandocMarkdownOptions(),
-               pandocPDFOptions(),
+  options <- c(pandocPDFOptions(),
                "--variable", paste0("theme:", theme),
                recursive = TRUE)
 
   # call pandoc
-  pandocConvert(md, output, "beamer", options, quiet)
-}
-
-
-#' @rdname knitrRender
-#' @export
-knitrRenderPDF <- function(format, fig.width, fig.height) {
-
-  # inherit defaults
-  knitrRender(format)
-
-  # crop
-  knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
-
-  # graphics device
-  knitr::opts_chunk$set(dev = 'cairo_pdf',
-                        fig.width = fig.width,
-                        fig.height = fig.height)
-}
-
-
-#' Pandoc options for PDF rendering
-#'
-#' Get pandoc command-line options required for converting R Markdown PDF.
-#'
-#' @param geometry List of \code{LaTeX} geometry settings (optional)
-#'
-#' @return Character vector of pandoc options
-#'
-#' @export
-pandocPDFOptions <- function(geometry = NULL) {
-
-  options <- c()
-
-  if (!is.null(geometry)) {
-    for (name in names(geometry)) {
-      value <- geometry[[name]]
-      options <- c(options,
-                   "--variable",
-                   paste0("geometry:", name, "=", value),
-                   recursive = TRUE)
-    }
-  }
-
-  options
+  rmd2pandoc(input,
+             output,
+             to = "beamer",
+             options = options,
+             quiet = quiet,
+             encoding = encoding)
 }
 

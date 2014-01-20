@@ -30,3 +30,35 @@ knitrRender <- function(format) {
   knitr::opts_chunk$set(fig.path=paste("figure-", format, "/", sep = ""))
 }
 
+
+#' @rdname knitrRender
+#' @export
+knitrRenderHTML <- function(format, fig.width, fig.height) {
+
+  # inherit defaults
+  knitrRender(format)
+
+  # graphics device
+  knitr::opts_chunk$set(dev = 'png',
+                        fig.width = fig.width,
+                        fig.height = fig.height)
+}
+
+
+#' @rdname knitrRender
+#' @export
+knitrRenderPDF <- function(format, fig.width, fig.height) {
+
+  # inherit defaults
+  knitrRender(format)
+
+  # crop
+  knitr::knit_hooks$set(crop = knitr::hook_pdfcrop)
+
+  # graphics device
+  knitr::opts_chunk$set(dev = 'cairo_pdf',
+                        fig.width = fig.width,
+                        fig.height = fig.height)
+}
+
+

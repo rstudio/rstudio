@@ -1,12 +1,12 @@
-\name{knitrRenderHTML}
+\name{knitrRender}
 \alias{knitrRender}
 \alias{knitrRenderHTML}
 \alias{knitrRenderPDF}
 \title{Set knitr hooks and options for rendering markdown}
 \usage{
-  knitrRenderHTML(format, fig.width, fig.height)
-
   knitrRender(format)
+
+  knitrRenderHTML(format, fig.width, fig.height)
 
   knitrRenderPDF(format, fig.width, fig.height)
 }
