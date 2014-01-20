@@ -32,6 +32,10 @@ rmd2pandoc <- function(input,
   if (is.null(output))
     output <- pandocOutputFile(input, to)
 
+  # execute within the input file's directory
+  oldwd <- setwd(dirname(tools::file_path_as_absolute(input)))
+  on.exit(setwd(oldwd))
+
   # knit
   md <- knitr::knit(input, quiet = quiet, encoding = encoding)
 
@@ -104,7 +108,8 @@ pandocOutputFile <- function(input, pandocFormat) {
     ext <- ".html"
   else
     ext <- paste0(".", pandocFormat)
-  paste0(tools::file_path_sans_ext(input), ext)
+  output <- paste0(tools::file_path_sans_ext(input), ext)
+  tools::file_path_as_absolute(output)
 }
 
 pandocPath <- function() {
