@@ -5,16 +5,7 @@
 #' @param input Input Rmd document
 #' @param output Target output file (defaults to <input>.html if not specified)
 #' @param options List of HTML rendering options created by calling
-#'   \code{htmlOptions}
-#' @param toc Whether to include a table of contents in the output
-#' @param toc.depth Depth of headers to include in table of contents
-#' @param theme HTML theme ("default", "cerulean", or "slate"). Pass \code{NULL}
-#'   to not use any theme (add your own css using the \code{css} parameter).
-#' @param highlight Syntax highlighting style ("default", "pygments", "kate",
-#'   "monochrome", "espresso", "zenburn", "haddock", or "tango"). Pass
-#'   \code{NULL} to not syntax highlight code.
-#' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
-#'   not include mathjax.
+#'   \code{\link{htmlOptions}}
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet Whether to suppress the progress bar and messages
@@ -39,22 +30,41 @@ rmd2html <- function(input,
 }
 
 
-#' @rdname rmd2html
+#' Options for HTML conversion
+#'
+#' Define the options for converting R Markdown to HTML.
+#'
+#' @param toc Whether to include a table of contents in the output
+#' @param toc.depth Depth of headers to include in table of contents
+#' @param theme HTML theme ("default", "cerulean", or "slate"). Pass \code{NULL}
+#'   to not use any theme (add your own css using the \code{css} parameter).
+#' @param highlight Syntax highlighting style ("default", "pygments", "kate",
+#'   "monochrome", "espresso", "zenburn", "haddock", or "tango"). Pass
+#'   \code{NULL} to not syntax highlight code.
+#' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
+#'   not include mathjax.
+#' @param css One or more css files to include (paths relative to the location
+#' of the input document)
+#'
+#' @return A list of HTML options that can be passed to \code{\link{rmd2html}}.
+#'
 #' @export
 htmlOptions <- function(toc = FALSE,
                         toc.depth = 3,
                         theme = "default",
                         highlight = "default",
-                        mathjax = mathjaxURL()) {
+                        mathjax = mathjaxURL(),
+                        css = NULL) {
   structure(list(toc = toc,
                  toc.depth = toc.depth,
                  theme = theme,
                  highlight = highlight,
-                 mathjax = mathjax),
+                 mathjax = mathjax,
+                 css = css),
             class = "htmlOptions")
 }
 
-#' @rdname rmd2html
+#' @rdname htmlOptions
 #' @export
 mathjaxURL <- function() {
   paste0("https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js",
@@ -104,6 +114,13 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
     options <- c(options,
                  "--mathjax",
                  "--variable", paste0("mathjax-url:", htmlOptions$mathjax))
+  }
+
+  # additional css
+  if (!is.null(htmlOptions$css)) {
+    for (css in htmlOptions$css) {
+      options <- c(options, "--css", css)
+    }
   }
 
   options
