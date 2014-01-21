@@ -1,16 +1,17 @@
-\name{pandocOptions}
+\name{pandocTemplateOptions}
+\alias{pandocBeamerOptions}
 \alias{pandocHTMLOptions}
-\alias{pandocOptions}
 \alias{pandocPDFOptions}
+\alias{pandocTemplateOptions}
 \title{Specify pandoc conversion options}
 \usage{
-  pandocOptions(template = NULL, toc = FALSE)
+  pandocTemplateOptions(template)
 
-  pandocHTMLOptions(template = NULL, toc = FALSE,
-    mathjax = NULL)
+  pandocHTMLOptions(options = htmlOptions())
 
-  pandocPDFOptions(template = NULL, toc = FALSE,
-    geometry = NULL)
+  pandocPDFOptions(options = pdfOptions())
+
+  pandocBeamerOptions(options = beamerOptions)
 }
 \arguments{
   \item{template}{Full path to a custom pandoc template.
@@ -18,14 +19,8 @@
   containing the template so that relative references to
   additional assets work correctly.}
 
-  \item{toc}{Whether to include a table of contents in the
-  output}
-
-  \item{mathjax}{URL to mathjax library used in HTML
-  output}
-
-  \item{geometry}{List of \code{LaTeX} geometry settings
-  for PDF output}
+  \item{options}{List of options to use for genering pandoc
+  command line options}
 }
 \value{
   Character vector of pandoc command line arguments
@@ -37,15 +32,10 @@
   \code{\link{rmd2pandoc}} function.
 }
 \details{
-  This function is used for creating custom rmd rendering
-  functions.  If you are calling a higher-level function
-  like \code{\link{rmd2pdf}} then options are specified
-  using explicit arguments to that function.
-
-  You typically need to call only one pandoc options
-  function, as the various format-specific functions (e.g.
-  \code{pandocPDFOptions}) all call the
-  \code{pandocOptions} function as part of their
-  implementation.
+  These functions are used for creating custom rmd
+  rendering functions. If you are calling higher-level
+  rendering functions like \code{\link{rmd2pdf}} then
+  options are specified using explicit arguments to those
+  functions.
 }
 

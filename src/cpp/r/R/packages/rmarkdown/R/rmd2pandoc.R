@@ -6,8 +6,7 @@
 #' @param input Input file
 #' @param output Output file (if not specified then a default based on the
 #'   specified format is chosen)
-#' @param from Options determining the flavor of markdown supported by the
-#'   conversion
+#' @param from Options to control the flavor of markdown converted from
 #' @param to Pandoc format to convert to (defaults to HTML if not specified)
 #' @param options Command line options to pass to pandoc
 #' @param envir The environment in which the code chunks are to be evaluated

@@ -4,6 +4,8 @@
 #'
 #' @param input input Rmd document
 #' @param output Target output file (defaults to <input>.pdf if not specified)
+#' @param options List of Beamer rendering options created by calling
+#'   \code{beamerOptions}
 #' @param theme Beamer theme
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
@@ -16,7 +18,7 @@
 #' @export
 rmd2beamer <- function(input,
                        output = NULL,
-                       theme = "default",
+                       options = beamerOptions(),
                        envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
@@ -25,8 +27,7 @@ rmd2beamer <- function(input,
   knitrRenderPDF("beamer", 4.5, 3.5)
 
   # pandoc options
-  options <- c(pandocPDFOptions(),
-               "--variable", paste0("theme:", theme))
+  options <- pandocBeamerOptions(options)
 
   # call pandoc
   rmd2pandoc(input,
@@ -37,4 +38,12 @@ rmd2beamer <- function(input,
              quiet = quiet,
              encoding = encoding)
 }
+
+
+#' @rdname rmd2beamer
+#' @export
+beamerOptions <- function(theme = "default") {
+  list(theme = theme)
+}
+
 

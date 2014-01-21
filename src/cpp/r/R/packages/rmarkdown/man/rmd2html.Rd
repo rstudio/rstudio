@@ -1,16 +1,25 @@
 \name{rmd2html}
+\alias{htmlOptions}
 \alias{rmd2html}
 \title{Convert R Markdown to HTML}
 \usage{
-  rmd2html(input, output = NULL, mathjax = mathjaxURL(),
+  rmd2html(input, output = NULL, options = htmlOptions(),
     envir = parent.frame(), quiet = FALSE,
     encoding = getOption("encoding"))
+
+  htmlOptions(toc = FALSE, mathjax = mathjaxURL())
 }
 \arguments{
   \item{input}{Input Rmd document}
 
   \item{output}{Target output file (defaults to
   <input>.html if not specified)}
+
+  \item{options}{List of HTML rendering options created by
+  calling \code{htmlOptions}}
+
+  \item{toc}{Whether to include a table of contents in the
+  output}
 
   \item{mathjax}{Include mathjax from the specified url
   (pass NULL to not include mathjax)}

@@ -4,8 +4,14 @@
 #'
 #' @param input Input Rmd document
 #' @param output Target output file (defaults to <input>.pdf if not specified)
-#' @param envir The environment in which the code chunks are to be evaluated (can use
-#'   \code{\link{new.env}()} to guarantee an empty new environment)
+#' @param options List of PDF rendering options created by calling
+#'   \code{pdfOptions}
+#' @param toc Whether to include a table of contents in the output
+#' @param geometry List of LaTeX geometry options created by calling
+#'   \code{pdfGeometry}
+#' @param margin Size of page margins
+#' @param envir The environment in which the code chunks are to be evaluated
+#'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet Whether to suppress the progress bar and messages
 #' @param encoding The encoding of the input file; see \code{\link{file}}
 #'
@@ -15,6 +21,7 @@
 #' @export
 rmd2pdf <- function(input,
                     output = NULL,
+                    options = pdfOptions(),
                     envir = parent.frame(),
                     quiet = FALSE,
                     encoding = getOption("encoding")) {
@@ -23,11 +30,7 @@ rmd2pdf <- function(input,
   knitrRenderPDF("latex", 6, 5)
 
   # pandoc options
-  geometry <- list()
-  geometry$margin = "1in"
-  options <- pandocPDFOptions(NULL,
-                              toc = FALSE,
-                              geometry = geometry)
+  options <- pandocPDFOptions(options)
 
   # call pandoc
   rmd2pandoc(input,
@@ -38,4 +41,20 @@ rmd2pdf <- function(input,
              quiet = quiet,
              encoding = encoding)
 }
+
+#' @rdname rmd2pdf
+#' @export
+pdfOptions <- function(toc = FALSE, geometry = pdfGeometry()) {
+  list(toc = toc,
+       geometry = geometry)
+}
+
+#' @rdname rmd2pdf
+#' @export
+pdfGeometry <- function(margin = "1in", ...) {
+  geometry <- as.list(...)
+  geometry$margin <- margin
+  geometry
+}
+
 
