@@ -1,13 +1,10 @@
 \name{rmd2beamer}
-\alias{beamerOptions}
 \alias{rmd2beamer}
 \title{Convert R Markdown to Beamer}
 \usage{
   rmd2beamer(input, output = NULL,
     options = beamerOptions(), envir = parent.frame(),
     quiet = FALSE, encoding = getOption("encoding"))
-
-  beamerOptions(theme = "default")
 }
 \arguments{
   \item{input}{input Rmd document}

@@ -31,10 +31,30 @@ rmd2beamer <- function(input,
 }
 
 
-#' @rdname rmd2beamer
+#' Options for Beamer conversion
+#'
+#' Define the options for converting R Markdown to Beamer
+#'
+#' @param toc \code{TRUE} to include a table of contents in the output (only
+#'   level 1 headers will be included in the table of contents).
+#' @param incremental \code{TRUE} to render slide bullets incrementally. Note
+#'   that if you want to reverse the default incremental behavior for an
+#'   individual bullet you can preceded it with \code{>}. For example: \code{> -
+#'   Bullet Text}.
+#' @param slide.level The heading level which defines indvidual slides. By
+#'   default this is level 2, which allows level 1 headers to be used to define
+#'   sections of the presentation.
+#'
+#' @return A list of options that can be passed to \code{\link{rmd2beamer}}.
+#'
+#'
 #' @export
-beamerOptions <- function(theme = "default") {
-  structure(list(theme = theme),
+beamerOptions <- function(toc = FALSE,
+                          incremental = FALSE,
+                          slide.level = 2) {
+  structure(list(toc = toc,
+                 incremental = incremental,
+                 slide.level = slide.level),
             class = "beamerOptions")
 }
 
@@ -45,9 +65,18 @@ pandocOptions.beamerOptions <- function(beamerOptions) {
   # base options for all beamer output
   options <- c()
 
-  # theme
+  # table of contents
+  if (beamerOptions$toc)
+    options <- c(options, "--table-of-contents")
+
+  # incremental
+  if (beamerOptions$incremental)
+    options <- c(options, "--incremental")
+
+  # slide level
   options <- c(options,
-               "--variable", paste0("theme:", beamerOptions$theme))
+               "--slide-level",
+               as.character(beamerOptions$slide.level))
 
   options
 }
