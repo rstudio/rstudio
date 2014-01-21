@@ -238,26 +238,21 @@ public class DebugCommander
    @Handler
    void onDebugStepInto()
    {
+      // Currently, debug step-into is supported only for function debugging
       if (debugMode_ == DebugMode.Function)
       {
          eventBus_.fireEvent(new SendToConsoleEvent("s", true, true));
-      }
-      else if (debugMode_ == DebugMode.TopLevel)
-      {
-         // TODO: what's the right thing here?
       }
    }
    
    @Handler
    void onDebugFinish()
    {
+      // Currently, debug loop/function finish is supported only for function
+      // debugging
       if (debugMode_ == DebugMode.Function)
       {
          eventBus_.fireEvent(new SendToConsoleEvent("f", true, true));
-      }
-      else if (debugMode_ == DebugMode.TopLevel)
-      {
-         // TODO: what's the right thing here?
       }
    }
    
@@ -355,6 +350,7 @@ public class DebugCommander
          setDebugging(true);
          topDebugMode_ = debugMode_;
       }
+      setAdvancedCommandsVisible(mode == DebugMode.Function);
       debugMode_ = mode;
    }
    
@@ -378,6 +374,7 @@ public class DebugCommander
             else
             {
                highlightDebugPosition(previousLineData_, false);
+               setAdvancedCommandsVisible(false);
             }
          }
          else
@@ -490,7 +487,12 @@ public class DebugCommander
       commands_.debugStop().setEnabled(enabled);
       commands_.debugStepInto().setEnabled(enabled);
       commands_.debugFinish().setEnabled(enabled);
-      
+   }
+   
+   private void setAdvancedCommandsVisible(boolean visible)
+   {
+      commands_.debugFinish().setVisible(visible);
+      commands_.debugStepInto().setVisible(visible);
    }
    
    private void stopDebugging()
