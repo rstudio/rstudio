@@ -7,6 +7,7 @@
 #' @param options List of HTML rendering options created by calling
 #'   \code{htmlOptions}
 #' @param toc Whether to include a table of contents in the output
+#' @param theme HTML theme ("default", "cerulean", or "slate")
 #' @param mathjax Include mathjax from the specified URL (pass NULL to
 #' not include mathjax)
 #' @param envir The environment in which the code chunks are to be evaluated
@@ -35,8 +36,11 @@ rmd2html <- function(input,
 
 #' @rdname rmd2html
 #' @export
-htmlOptions <- function(toc = FALSE,  mathjax = mathjaxURL()) {
+htmlOptions <- function(toc = FALSE,
+                        theme = "default",
+                        mathjax = mathjaxURL()) {
   structure(list(toc = toc,
+                 theme = theme,
                  mathjax = mathjax),
             class = "htmlOptions")
 }
@@ -61,6 +65,17 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
   # table of contents
   if (htmlOptions$toc)
     options <- c(options, "--table-of-contents")
+
+  # theme
+  if (!is.null(htmlOptions$theme)) {
+
+    theme <- htmlOptions$theme
+    if (identical(theme, "default"))
+      theme <- "bootstrap"
+
+    options <- c(options,
+                 "--variable", paste0("theme:", theme))
+  }
 
   # mathjax
   if (!is.null(htmlOptions$mathjax)) {

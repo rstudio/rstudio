@@ -27,6 +27,7 @@ used by these components are included below):
 - JSCustomBadge
 - jQuery
 - Bootstrap
+- Bootswatch
 
 RStudio also includes a binary copy of pandoc. This component is licensed
 to you under the GPLv2, the terms of which are included below. You can

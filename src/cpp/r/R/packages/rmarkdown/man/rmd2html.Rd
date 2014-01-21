@@ -8,7 +8,8 @@
     envir = parent.frame(), quiet = FALSE,
     encoding = getOption("encoding"))
 
-  htmlOptions(toc = FALSE, mathjax = mathjaxURL())
+  htmlOptions(toc = FALSE, theme = "default",
+    mathjax = mathjaxURL())
 
   mathjaxURL()
 }
@@ -23,6 +24,9 @@
 
   \item{toc}{Whether to include a table of contents in the
   output}
+
+  \item{theme}{HTML theme ("default", "cerulean", or
+  "slate")}
 
   \item{mathjax}{Include mathjax from the specified URL
   (pass NULL to not include mathjax)}
