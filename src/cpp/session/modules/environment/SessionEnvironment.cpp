@@ -835,8 +835,12 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    }
    else
    {
-       pRContext =
-             getFunctionContext(TOP_FUNCTION, true, &depth, &environmentTop);
+      // If we're not currently debugging, look for user code (we prefer to
+      // show the user their own code on entering debug), but once debugging,
+      // allow the user to explore other code.
+      pRContext =
+             getFunctionContext(TOP_FUNCTION, *pContextDepth == 0,
+                                &depth, &environmentTop);
    }
 
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
