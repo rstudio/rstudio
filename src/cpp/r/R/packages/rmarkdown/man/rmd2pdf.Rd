@@ -2,19 +2,23 @@
 \alias{rmd2pdf}
 \title{Convert R Markdown to PDF}
 \usage{
-  rmd2pdf(input, output = NULL, quiet = FALSE,
-    encoding = getOption("encoding"))
+  rmd2pdf(input, output = NULL, envir = parent.frame(),
+    quiet = FALSE, encoding = getOption("encoding"))
 }
 \arguments{
-  \item{input}{input Rmd document}
+  \item{input}{Input Rmd document}
 
-  \item{output}{target output file (defaults to <input>.pdf
+  \item{output}{Target output file (defaults to <input>.pdf
   if not specified)}
 
-  \item{quiet}{whether to suppress the progress bar and
+  \item{envir}{The environment in which the code chunks are
+  to be evaluated (can use \code{\link{new.env}()} to
+  guarantee an empty new environment)}
+
+  \item{quiet}{Whether to suppress the progress bar and
   messages}
 
-  \item{encoding}{the encoding of the input file; see
+  \item{encoding}{The encoding of the input file; see
   \code{\link{file}}}
 }
 \value{

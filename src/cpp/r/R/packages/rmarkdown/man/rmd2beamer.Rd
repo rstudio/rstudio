@@ -3,7 +3,8 @@
 \title{Convert R Markdown to Beamer}
 \usage{
   rmd2beamer(input, output = NULL, theme = "default",
-    quiet = FALSE, encoding = getOption("encoding"))
+    envir = parent.frame(), quiet = FALSE,
+    encoding = getOption("encoding"))
 }
 \arguments{
   \item{input}{input Rmd document}
@@ -12,6 +13,10 @@
   if not specified)}
 
   \item{theme}{Beamer theme}
+
+  \item{envir}{The environment in which the code chunks are
+  to be evaluated (can use \code{\link{new.env}()} to
+  guarantee an empty new environment)}
 
   \item{quiet}{Whether to suppress the progress bar and
   messages}

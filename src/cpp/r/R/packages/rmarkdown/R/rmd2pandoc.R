@@ -5,11 +5,13 @@
 #'
 #' @param input Input file
 #' @param output Output file (if not specified then a default based on the
-#' specified format is chosen)
-#' @param from Options determining the flavor of markdown
-#' supported by the conversion
+#'   specified format is chosen)
+#' @param from Options determining the flavor of markdown supported by the
+#'   conversion
 #' @param to Pandoc format to convert to (defaults to HTML if not specified)
 #' @param options Command line options to pass to pandoc
+#' @param envir The environment in which the code chunks are to be evaluated
+#'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet \code{TRUE} to supress printing of the pandoc command line
 #' @param encoding the encoding of the input file; see \code{\link{file}}
 #'
@@ -22,6 +24,7 @@ rmd2pandoc <- function(input,
                        from = rmdFormat(),
                        to = "html",
                        options = NULL,
+                       envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
 

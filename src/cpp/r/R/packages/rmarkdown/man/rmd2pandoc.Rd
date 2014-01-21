@@ -3,8 +3,8 @@
 \title{Convert an R Markdown document using pandoc}
 \usage{
   rmd2pandoc(input, output = NULL, from = rmdFormat(),
-    to = "html", options = NULL, quiet = FALSE,
-    encoding = getOption("encoding"))
+    to = "html", options = NULL, envir = parent.frame(),
+    quiet = FALSE, encoding = getOption("encoding"))
 }
 \arguments{
   \item{input}{Input file}
@@ -19,6 +19,10 @@
   if not specified)}
 
   \item{options}{Command line options to pass to pandoc}
+
+  \item{envir}{The environment in which the code chunks are
+  to be evaluated (can use \code{\link{new.env}()} to
+  guarantee an empty new environment)}
 
   \item{quiet}{\code{TRUE} to supress printing of the
   pandoc command line}

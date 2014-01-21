@@ -5,6 +5,8 @@
 #' @param input input Rmd document
 #' @param output Target output file (defaults to <input>.pdf if not specified)
 #' @param theme Beamer theme
+#' @param envir The environment in which the code chunks are to be evaluated
+#'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet Whether to suppress the progress bar and messages
 #' @param encoding The encoding of the input file; see \code{\link{file}}
 #'
@@ -15,6 +17,7 @@
 rmd2beamer <- function(input,
                        output = NULL,
                        theme = "default",
+                       envir = parent.frame(),
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
 
@@ -30,6 +33,7 @@ rmd2beamer <- function(input,
              output,
              to = "beamer",
              options = options,
+             envir = envir,
              quiet = quiet,
              encoding = encoding)
 }
