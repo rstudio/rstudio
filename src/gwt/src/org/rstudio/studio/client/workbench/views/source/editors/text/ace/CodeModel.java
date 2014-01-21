@@ -51,6 +51,14 @@ public class CodeModel extends JavaScriptObject
       });
    }-*/;
 
+   public native final Scope getCurrentSection(Position position) /*-{
+      if (!this.getCurrentScope)
+         return null;
+      return this.getCurrentScope(position, function(scope) {
+         return scope.isSection();
+      });
+   }-*/;
+
    public native final JsArray<Scope> getScopeTree() /*-{
       return this.getScopeTree ? this.getScopeTree() : [];
    }-*/;
@@ -64,6 +72,12 @@ public class CodeModel extends JavaScriptObject
    }-*/;
    
    public native final Position findNextSignificantToken(Position pos) /*-{
-      return this.findNextSignificantToken(pos);
+      // Used to seek past whitespace and comments to find an expression for
+      // breakpoint setting. Use the code model's findNextSignificantToken
+      // method if available; if not, this is a no-op.
+      if (this.findNextSignificantToken)
+         return this.findNextSignificantToken(pos);
+      else
+         return pos;
    }-*/;
 }

@@ -19,19 +19,21 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 
 public class ConsoleInterruptButton extends Composite
 {
    @Inject
-   public ConsoleInterruptButton(EventBus events,
+   public ConsoleInterruptButton(final EventBus events,
                                  Commands commands)
    {
       fadeInHelper_ = new DelayFadeInHelper(this);
@@ -60,6 +62,7 @@ public class ConsoleInterruptButton extends Composite
             {
                fadeInHelper_.beginShow();
                commands_.interruptR().setEnabled(true);
+               events.fireEvent(new ConsoleBusyEvent(true));
             }
          }
       });
@@ -78,6 +81,7 @@ public class ConsoleInterruptButton extends Composite
          {
             fadeInHelper_.hide();
             commands_.interruptR().setEnabled(false);
+            events.fireEvent(new ConsoleBusyEvent(false));
          }
       });
    }

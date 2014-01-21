@@ -51,6 +51,8 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
+        autoAppendNewline(false),
+        stripTrailingWhitespace(false),
         encoding(),
         defaultSweaveEngine(),
         defaultLatexProgram(),
@@ -62,6 +64,7 @@ struct RProjectConfig
         packageBuildBinaryArgs(),
         packageCheckArgs(),
         packageRoxygenize(),
+        packageUseDevtools(false),
         makefilePath(),
         customScriptPath(),
         tutorialPath()
@@ -75,6 +78,8 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
+   bool autoAppendNewline;
+   bool stripTrailingWhitespace;
    std::string encoding;
    std::string defaultSweaveEngine;
    std::string defaultLatexProgram;
@@ -86,6 +91,7 @@ struct RProjectConfig
    std::string packageBuildBinaryArgs;
    std::string packageCheckArgs;
    std::string packageRoxygenize;
+   bool packageUseDevtools;
    std::string makefilePath;
    std::string customScriptPath;
    std::string tutorialPath;

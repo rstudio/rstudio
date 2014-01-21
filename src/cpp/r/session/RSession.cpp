@@ -476,7 +476,7 @@ Error initialize()
    // set default repository if requested
    if (!s_options.rCRANRepos.empty())
    {
-      error = r::exec::RFunction(".rs.setCRANRepos",
+      error = r::exec::RFunction(".rs.setCRANReposAtStartup",
                                  s_options.rCRANRepos).call();
       if (error)
          return error;
@@ -496,9 +496,13 @@ Error initialize()
    // server specific R options options
    if (s_options.serverMode)
    {
+#ifndef __APPLE__
       FilePath serverOptionsFilePath =  s_options.rSourcePath.complete(
                                                          "ServerOptions.R");
       return r::sourceManager().sourceLocal(serverOptionsFilePath);
+#else
+      return Success();
+#endif
    }
    else
    {
@@ -933,9 +937,11 @@ SEXP rs_browseURL(SEXP urlSEXP)
       std::string filePrefix("file://");
       if (URL.find(filePrefix) == 0)
       {
-         // also look for more complete prefix
+         // also look for file:///c: style urls on windows
+#ifdef _WIN32
          if (URL.find(filePrefix + "/") == 0)
              filePrefix = filePrefix + "/";
+#endif
 
          // transform into FilePath
          std::string path = URL.substr(filePrefix.length());

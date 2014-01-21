@@ -59,7 +59,7 @@ void convertLineEndings(std::string* pStr, LineEnding type)
       return;
    }
 
-   *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\xE2\\x80[\\xA8\\xA9]"), replacement);
+   *pStr = boost::regex_replace(*pStr, boost::regex("\\r?\\n|\\r|\\xE2\\x80[\\xA8\\xA9]"), replacement);
 }
 
 std::string utf8ToSystem(const std::string& str,
@@ -293,7 +293,10 @@ bool isalpha(wchar_t c)
 
 bool isalnum(wchar_t c)
 {
-   static std::vector<bool> lookup = initAlnumLookupTable();
+   static std::vector<bool> lookup;
+   if (lookup.empty())
+      lookup = initAlnumLookupTable();
+
    if (c > 0xFFFF)
       return false; // This function only supports BMP
    return lookup.at(c);

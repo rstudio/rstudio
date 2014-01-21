@@ -1,0 +1,20 @@
+Package: rmarkdown
+Type: Package
+Title: What the package does (short line)
+Version: 1.0
+Date: 2014-01-17
+Author: Who wrote it
+Maintainer: Who to complain to <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+Depends:
+    R (>= 3.0)
+Imports:
+    tools,
+    knitr (>= 1.2)
+License: GPL (>= 2)
+Collate:
+    'rmd2beamer.R'
+    'rmd2html.R'
+    'rmd2pandoc.R'
+    'rmd2pdf.R'
+    'knitr-render.R'

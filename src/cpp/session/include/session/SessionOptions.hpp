@@ -124,9 +124,13 @@ public:
 
    int timeoutMinutes() const { return timeoutMinutes_; }
 
+   int disconnectedTimeoutMinutes() { return disconnectedTimeoutMinutes_; }
+
    bool createPublicFolder() const { return createPublicFolder_; }
 
    bool rProfileOnResumeDefault() const { return rProfileOnResumeDefault_; }
+
+   int saveActionDefault() const { return saveActionDefault_; }
 
    unsigned int minimumUserId() const { return 100; }
    
@@ -231,6 +235,11 @@ public:
       return core::FilePath(mathjaxPath_.c_str());
    }
 
+   core::FilePath pandocPath() const
+   {
+      return core::FilePath(pandocPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
       return allowFileDownloads_;
@@ -266,12 +275,22 @@ public:
       return allowRemovePublicFolder_;
    }
 
+   bool allowRpubsPublish() const
+   {
+      return allowRpubsPublish_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
       return std::string(userIdentity_.c_str()); 
    }
    
+   bool showUserIdentity() const
+   {
+      return showUserIdentity_;
+   }
+
    core::FilePath userHomePath() const 
    { 
       return core::FilePath(userHomePath_.c_str());
@@ -350,7 +369,7 @@ private:
                     std::string* pPath);
    void resolvePostbackPath(const core::FilePath& resourcePath,
                             std::string* pPath);
-
+   void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
@@ -380,8 +399,10 @@ private:
    std::string secret_;
    std::string preflightScript_;
    int timeoutMinutes_;
+   int disconnectedTimeoutMinutes_;
    bool createPublicFolder_;
    bool rProfileOnResumeDefault_;
+   int saveActionDefault_;
 
    // r
    std::string coreRSourcePath_;
@@ -411,6 +432,7 @@ private:
    std::string sumatraPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
+   std::string pandocPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;
@@ -419,8 +441,10 @@ private:
    bool allowCRANReposEdit_;
    bool allowVcsExecutableEdit_;
    bool allowRemovePublicFolder_;
+   bool allowRpubsPublish_;
 
    // user info
+   bool showUserIdentity_;
    std::string userIdentity_;
    std::string userHomePath_;
    std::string userScratchPath_;   

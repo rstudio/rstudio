@@ -24,15 +24,21 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
@@ -52,16 +58,19 @@ public class TextEditingTargetWidget
                                   FileTypeRegistry fileTypeRegistry,
                                   DocDisplay editor,
                                   TextFileType fileType,
+                                  String extendedType,
                                   EventBus events)
    {
       commands_ = commands;
       uiPrefs_ = uiPrefs;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
+      extendedType_ = extendedType;
       sourceOnSave_ = new CheckBox();
       srcOnSaveLabel_ =
                   new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
       statusBar_ = new StatusBarWidget();
+      shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       
       findReplace_ = new TextEditingTargetFindReplace(
          new TextEditingTargetFindReplace.Container()
@@ -91,7 +100,7 @@ public class TextEditingTargetWidget
             } 
          });
       
-      panel_ = new PanelWithToolbars(createToolbar(fileType),
+      panel_ = new PanelWithToolbars(toolbar_ = createToolbar(fileType),
                                     editor.asWidget(),
                                     statusBar_);
       adaptToFileType(fileType);
@@ -138,9 +147,9 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
-      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton());
+      toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.executeLastCode().createToolbarButton());
+      toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));
       toolbar.addRightSeparator();
       final String SOURCE_BUTTON_TITLE = "Source the active document"; 
       
@@ -177,13 +186,14 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu sourceMenu = new ToolbarPopupMenu();
       sourceMenu.addItem(commands_.sourceActiveDocument().createMenuItem(false));
       sourceMenu.addItem(commands_.sourceActiveDocumentWithEcho().createMenuItem(false));
+      sourceMenu.addSeparator();
+      sourceMenu.addItem(commands_.compileNotebook().createMenuItem(false));
       
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
 
       toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.compileNotebook().createToolbarButton());
-
+     
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
       chunksMenu.addSeparator();
@@ -199,7 +209,15 @@ public class TextEditingTargetWidget
                        chunksMenu, 
                        true);
       toolbar.addRightWidget(chunksButton_);
-            
+      
+      ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
+      shinyLaunchButton_ = new ToolbarButton(
+                       "", 
+                       StandardIcons.INSTANCE.viewer_window(),
+                       shinyLaunchMenu, 
+                       true);
+      shinyLaunchButton_.setVisible(false);
+      toolbar.addRightWidget(shinyLaunchButton_);
       return toolbar;
    }
    
@@ -216,8 +234,6 @@ public class TextEditingTargetWidget
       return texButton;
    }
    
-  
-  
    private Widget createCodeTransformMenuButton()
    {
       if (codeTransform_ == null)
@@ -239,6 +255,12 @@ public class TextEditingTargetWidget
       }
       return codeTransform_;
    }
+   
+   public void adaptToExtendedFileType(String extendedType)
+   {
+      extendedType_ = extendedType;
+      adaptToFileType(editor_.getFileType());
+   }
 
    public void adaptToFileType(TextFileType fileType)
    {
@@ -246,14 +268,20 @@ public class TextEditingTargetWidget
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
+      boolean canSourceOnSave = fileType.canSourceOnSave();
       boolean canExecuteCode = fileType.canExecuteCode();
       boolean canExecuteChunks = fileType.canExecuteChunks();
       boolean isMarkdown = fileType.isMarkdown();
+      boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isRPresentation = fileType.isRpres();
       boolean isCpp = fileType.isCpp();
       
-      sourceOnSave_.setVisible(fileType.canSourceOnSave());
-      srcOnSaveLabel_.setVisible(fileType.canSourceOnSave());
+      // don't show the run buttons for cpp files, or R files in Shiny
+      runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
+      runLastButton_.setVisible(runButton_.isVisible());
+      
+      sourceOnSave_.setVisible(canSourceOnSave);
+      srcOnSaveLabel_.setVisible(canSourceOnSave);
       if (fileType.isRd())
          srcOnSaveLabel_.setText("Preview on Save");
       else
@@ -262,8 +290,8 @@ public class TextEditingTargetWidget
             (canExecuteCode && !fileType.canAuthorContent()) ||
             fileType.isCpp());   
      
-      sourceButton_.setVisible(canSource);
-      sourceMenuButton_.setVisible(canSourceWithEcho);
+      sourceButton_.setVisible(canSource && !isPlainMarkdown);
+      sourceMenuButton_.setVisible(canSourceWithEcho && !isPlainMarkdown);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);
@@ -272,6 +300,24 @@ public class TextEditingTargetWidget
       
       helpMenuButton_.setVisible(isMarkdown || isRPresentation);
       rcppHelpButton_.setVisible(isCpp);
+      
+      if (isShinyFile())
+      {
+         sourceOnSave_.setVisible(false);
+         srcOnSaveLabel_.setVisible(false);
+         runButton_.setVisible(false);
+         sourceMenuButton_.setVisible(false);
+         chunksButton_.setVisible(false);
+         shinyLaunchButton_.setVisible(true);
+         setSourceButtonFromShinyState();
+      }
+      
+      toolbar_.invalidateSeparators();
+   }
+   
+   private boolean isShinyFile()
+   {
+      return extendedType_.equals("shiny");
    }
 
    public HasValue<Boolean> getSourceOnSave()
@@ -301,7 +347,7 @@ public class TextEditingTargetWidget
          return;
       
       texToolbarButton_.setText(width < 520 ? "" : "Format");
-      runButton_.setText(width < 480 ? "" : "Run");
+      runButton_.setText(((width < 480) || isShinyFile()) ? "" : "Run");
       compilePdfButton_.setText(width < 450 ? "" : "Compile PDF");
       previewHTMLButton_.setText(width < 450 ? "" : "Preview");                                                       
       knitToHTMLButton_.setText(width < 450 ? "" : "Knit HTML");
@@ -310,7 +356,7 @@ public class TextEditingTargetWidget
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
-      sourceButton_.setText(width < 400 ? "" : "Source");
+      sourceButton_.setText(width < 400 ? "" : sourceCommandText_);
       chunksButton_.setText(width < 400 ? "" : "Chunks");
    }
    
@@ -355,6 +401,12 @@ public class TextEditingTargetWidget
    public void findPrevious()
    {
       findReplace_.findPrevious();
+   }
+   
+   @Override
+   public void findFromSelection()
+   {
+      findReplace_.findFromSelection();
    }
    
    @Override
@@ -430,22 +482,66 @@ public class TextEditingTargetWidget
       }).showModal();
    }
 
+   // Called by the owning TextEditingTarget to notify the widget that the 
+   // Shiny application associated with this widget has changed state.
+   @Override
+   public void onShinyApplicationStateChanged(String state)
+   {
+      shinyAppState_ = state;
+      setSourceButtonFromShinyState();
+   }
+   
+   public void setSourceButtonFromShinyState()
+   {
+      sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
+      String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
+      if (isShinyFile())
+      {
+         if (shinyAppState_.equals(ShinyApplicationParams.STATE_STARTED)) 
+         {
+            sourceCommandText_ = "Reload App";
+            sourceCommandDesc = "Save changes and reload the Shiny application";
+            sourceButton_.setLeftImage(
+                  commands_.reloadShinyApp().getImageResource());
+         }
+         else if (shinyAppState_.equals(ShinyApplicationParams.STATE_STOPPED))
+         {
+            sourceCommandText_ = "Run App";
+            sourceCommandDesc = "Run the Shiny application";
+            sourceButton_.setLeftImage(
+                  commands_.debugContinue().getImageResource());
+         }
+      }
+      sourceButton_.setTitle(sourceCommandDesc);
+      sourceButton_.setText(sourceCommandText_);
+   }
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+   
+   @Override
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
    public void onVisibilityChanged(boolean visible)
    {
       editor_.onVisibilityChanged(visible);
    }
-
+   
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
+   private final ShinyViewerTypePopupMenu shinyViewerMenu_;
+   private String extendedType_;
    private CheckBox sourceOnSave_;
    private PanelWithToolbars panel_;
+   private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
    private ToolbarButton codeTransform_;
@@ -453,13 +549,18 @@ public class TextEditingTargetWidget
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitToHTMLButton_;
    private ToolbarButton runButton_;
+   private ToolbarButton runLastButton_;
    private ToolbarButton sourceButton_;
    private ToolbarButton sourceMenuButton_;
    private ToolbarButton chunksButton_;
    private ToolbarButton helpMenuButton_;
    private ToolbarButton rcppHelpButton_;
+   private ToolbarButton shinyLaunchButton_;
    
    private Widget texSeparatorWidget_;
    private ToolbarButton texToolbarButton_;
    private Label srcOnSaveLabel_;
+
+   private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
+   private String sourceCommandText_ = "Source";
 }

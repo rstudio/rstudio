@@ -428,6 +428,14 @@ Error parseXml(const std::string strData,
 
 bool isSvnInstalled()
 {
+   // special check on osx mavericks to make sure we don't run the fake svn
+   if (module_context::isOSXMavericks() &&
+       !module_context::hasOSXMavericksDeveloperTools() &&
+       whichSvnExe().empty())
+   {
+      return false;
+   }
+
    int exitCode;
    Error error = runSvn(ShellArgs() << "help", NULL, NULL, &exitCode);
 
@@ -530,7 +538,20 @@ FilePath detectedSvnExePath()
 #else
    FilePath svnExeFilePath = whichSvnExe();
    if (!svnExeFilePath.empty())
-      return FilePath(svnExeFilePath);
+   {
+      // extra check on mavericks to make sure it's not the fake svn
+      if (module_context::isOSXMavericks())
+      {
+         if (module_context::hasOSXMavericksDeveloperTools())
+            return FilePath(svnExeFilePath);
+         else
+            return FilePath();
+      }
+      else
+      {
+         return FilePath(svnExeFilePath);
+      }
+   }
    else
       return FilePath();
 #endif

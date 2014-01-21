@@ -56,6 +56,8 @@ bool isGitDirectory(const core::FilePath& workingDir);
 
 std::string remoteOriginUrl(const core::FilePath& workingDir);
 
+bool isGithubRepository();
+
 core::Error initializeGit(const core::FilePath& workingDir);
 
 core::FilePath detectedGitExePath();

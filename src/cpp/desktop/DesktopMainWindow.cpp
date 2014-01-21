@@ -42,7 +42,6 @@ MainWindow::MainWindow(QUrl url) :
       GwtWindow(false, false, url, NULL),
       menuCallback_(this),
       gwtCallback_(this, this),
-      updateChecker_(this),
       pSessionLauncher_(NULL),
       pCurrentSessionProcess_(NULL)
 {
@@ -168,9 +167,6 @@ void MainWindow::onWorkbenchInitialized()
       setWindowTitle(QString::fromAscii("RStudio"));
 
    avoidMoveCursorIfNecessary();
-
-   // check for updates
-   updateChecker_.performCheck(false);
 }
 
 void MainWindow::resetMargins()
@@ -206,8 +202,8 @@ void MainWindow::quit()
 void MainWindow::onJavaScriptWindowObjectCleared()
 {
    double zoomLevel = options().zoomLevel();
-   if (zoomLevel != webView()->zoomFactor())
-      webView()->setZoomFactor(zoomLevel);
+   if (zoomLevel != webView()->dpiAwareZoomFactor())
+      webView()->setDpiAwareZoomFactor(zoomLevel);
 
    webView()->page()->mainFrame()->addToJavaScriptWindowObject(
          QString::fromAscii("desktop"),
@@ -314,11 +310,6 @@ void MainWindow::openFileInRStudio(QString path)
 
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromAscii("window.desktopHooks.openFile(\"") + path + QString::fromAscii("\")"));
-}
-
-void MainWindow::checkForUpdates()
-{
-   updateChecker_.performCheck(true);
 }
 
 void MainWindow::onPdfViewerClosed(QString pdfPath)

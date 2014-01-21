@@ -43,8 +43,8 @@ BrowserWindow::BrowserWindow(bool showToolbar,
 
    // set zoom factor
    double zoomLevel = options().zoomLevel();
-   if (zoomLevel != pView_->zoomFactor())
-      pView_->setZoomFactor(options().zoomLevel());
+   if (zoomLevel != pView_->dpiAwareZoomFactor())
+      pView_->setDpiAwareZoomFactor(options().zoomLevel());
 
    // Kind of a hack to new up a toolbar and not attach it to anything.
    // Once it is clear what secondary browser windows look like we can

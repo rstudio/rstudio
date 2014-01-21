@@ -104,4 +104,14 @@ void PersistentState::setAbend(bool abend)
    }
 }
 
+std::string PersistentState::activeEnvironmentName() const
+{
+   return settings_.get("activeEnvironmentName", "R_GlobalEnv");
+}
+
+void PersistentState::setActiveEnvironmentName(std::string environmentName)
+{
+   settings_.set("activeEnvironmentName", environmentName);
+}
+
 } // namespace session

@@ -29,6 +29,8 @@
 
 #include <monitor/MonitorConstants.hpp>
 
+#include <r/session/RSession.hpp>
+
 #include <session/SessionConstants.hpp>
 
 using namespace core ;
@@ -36,6 +38,7 @@ using namespace core ;
 namespace session {  
 
 namespace {
+const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
 } // anonymous namespace
 
@@ -55,7 +58,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // compute the resource path
    FilePath resourcePath;
-   Error error = core::system::installPath("..", argc, argv, &resourcePath);
+   Error error = core::system::installPath("..", argv[0], &resourcePath);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
@@ -117,11 +120,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "port to listen on");
 
    // session options
+   std::string saveActionDefault;
    options_description session("session") ;
    session.add_options()
-      ("session-timeout-minutes",
+      (kTimeoutSessionOption,
          value<int>(&timeoutMinutes_)->default_value(120),
          "session timeout (minutes)" )
+      (kDisconnectedTimeoutSessionOption,
+         value<int>(&disconnectedTimeoutMinutes_)->default_value(0),
+         "session disconnected timeout (minutes)" )
       ("session-preflight-script",
          value<std::string>(&preflightScript_)->default_value(""),
          "session preflight script")
@@ -130,7 +137,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "automatically create public folder")
       ("session-rprofile-on-resume-default",
           value<bool>(&rProfileOnResumeDefault_)->default_value(false),
-          "default user setting for running Rprofile on resume");
+          "default user setting for running Rprofile on resume")
+      ("session-save-action-default",
+       value<std::string>(&saveActionDefault)->default_value(""),
+          "default save action (yes, no, or ask)");
 
    // allow options
    options_description allow("allow");
@@ -155,7 +165,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "allow file downloads from the files pane")
       ("allow-remove-public-folder",
          value<bool>(&allowRemovePublicFolder_)->default_value(true),
-         "allow removal of the user public folder");
+         "allow removal of the user public folder")
+      ("allow-rpubs-publish",
+         value<bool>(&allowRpubsPublish_)->default_value(true),
+        "allow publishing to rpubs");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any
@@ -239,7 +252,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "Path to hunspell dictionaries")
       ("external-mathjax-path",
         value<std::string>(&mathjaxPath_)->default_value("resources/mathjax"),
-        "Path to mathjax library");
+        "Path to mathjax library")
+      ("external-pandoc-path",
+        value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
+        "Path to pandoc binaries");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -247,7 +263,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
        value<std::string>(&userIdentity_)->default_value(currentUsername),
-       "user identity" );
+       "user identity" )
+      (kShowUserIdentitySessionOption,
+       value<bool>(&showUserIdentity_)->default_value(true),
+       "show the user identity");
 
    // overlay options
    options_description overlay("overlay");
@@ -347,6 +366,22 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
 
+   // convert string save action default to intenger
+   if (saveActionDefault == "yes")
+      saveActionDefault_ = r::session::kSaveActionSave;
+   else if (saveActionDefault == "no")
+      saveActionDefault_ = r::session::kSaveActionNoSave;
+   else if (saveActionDefault == "ask" || saveActionDefault.empty())
+      saveActionDefault_ = r::session::kSaveActionAsk;
+   else
+   {
+      program_options::reportWarnings(
+         "Invalid value '" + saveActionDefault + "' for "
+         "session-save-action-default. Valid values are yes, no, and ask.",
+         ERROR_LOCATION);
+      saveActionDefault_ = r::session::kSaveActionAsk;
+   }
+
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
@@ -366,6 +401,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
+   resolvePandocPath(resourcePath, &pandocPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
@@ -436,6 +472,20 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolvePandocPath(const FilePath& resourcePath,
+                                std::string* pPath)
+{
+   if (*pPath == kDefaultPandocPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/pandoc");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 #else
 
 void Options::resolvePostbackPath(const FilePath& resourcePath,
@@ -443,6 +493,14 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 {
    resolvePath(resourcePath, pPath);
 }
+
+void Options::resolvePandocPath(const FilePath& resourcePath,
+                                  std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+
 
 #endif
    

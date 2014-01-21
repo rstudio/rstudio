@@ -29,7 +29,7 @@
 namespace session {
 namespace local_streams {
 
-inline core::Error createStreamsDir()
+inline core::Error ensureStreamsDir()
 {
    core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
    return core::http::initializeStreamDir(sessionStreamsPath);

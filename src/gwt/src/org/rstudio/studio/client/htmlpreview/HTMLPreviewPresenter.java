@@ -65,7 +65,6 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    public interface Binder extends CommandBinder<Commands, HTMLPreviewPresenter>
    {}
 
-   
    public interface Display extends IsWidget
    {
       void showProgress(String caption);
@@ -116,6 +115,12 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
+      
+      // disable rpubs if requested
+      if (!session.getSessionInfo().getAllowRpubsPublish())
+      {
+         commands.publishHTML().remove();
+      }
       
       // map Ctrl-R to our internal refresh handler
       Event.addNativePreviewHandler(new NativePreviewHandler() {
@@ -200,7 +205,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   server_.getApplicationURL(result.getPreviewURL()),
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
-                  isMarkdownFile(result.getSourceFile()),
+                  isMarkdownFile(result.getSourceFile()) &&
+                  session_.getSessionInfo().getAllowRpubsPublish(),
                   result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
 

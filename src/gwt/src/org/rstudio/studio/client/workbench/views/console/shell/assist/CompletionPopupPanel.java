@@ -21,6 +21,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -87,6 +89,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          horiz.add(help_) ;
       
       setWidget(horiz) ;
+      ElementIds.assignElementId(horiz.getElement(), 
+            ElementIds.POPUP_COMPLETIONS);
       
       show(callback) ;
    }

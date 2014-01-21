@@ -28,6 +28,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
 
 using namespace core;
@@ -69,36 +70,17 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   json::Value newPackageJson;
+   json::Value newPackageJson, newShinyAppJson;
    Error error = json::readParams(request.params,
                                   &projectFile,
-                                  &newPackageJson);
+                                  &newPackageJson,
+                                  &newShinyAppJson);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // default project
-   if (newPackageJson.is_null())
-   {
-      // create the project directory if necessary
-      error = projectFilePath.parent().ensureDirectory();
-      if (error)
-         return error;
-
-      // create the project file
-      if (!projectFilePath.exists())
-      {
-         return r_util::writeProjectFile(projectFilePath,
-                                         ProjectContext::defaultConfig());
-      }
-      else
-      {
-         return Success();
-      }
-   }
-
    // package project
-   else
+   if (!newPackageJson.is_null())
    {
       // build list of code files
       bool usingRcpp;
@@ -200,6 +182,59 @@ Error createProject(const json::JsonRpcRequest& request,
       r_util::RProjectConfig projConfig = ProjectContext::defaultConfig();
       return r_util::writeProjectFile(projectFilePath, projConfig);
    }
+
+   else if (!newShinyAppJson.is_null())
+   {
+      // error if the shiny app dir already exists
+      FilePath appDir = projectFilePath.parent();
+      if (appDir.exists())
+         return core::fileExistsError(ERROR_LOCATION);
+
+      // now create it
+      Error error = appDir.ensureDirectory();
+      if (error)
+         return error;
+
+      // copy ui.R and server.R into the project
+      const char * const kUI = "ui.R";
+      const char * const kServer = "server.R";
+      FilePath shinyDir = session::options().rResourcesPath().childPath(
+                                                         "templates/shiny");
+      error = shinyDir.childPath(kUI).copy(appDir.childPath(kUI));
+      if (error)
+         LOG_ERROR(error);
+      error = shinyDir.childPath(kServer).copy(appDir.childPath(kServer));
+      if (error)
+         LOG_ERROR(error);
+
+      // add first run actions for the source files
+      addFirstRunDoc(projectFilePath, kUI);
+      addFirstRunDoc(projectFilePath, kServer);
+
+      // create the project file
+      return r_util::writeProjectFile(projectFilePath,
+                                      ProjectContext::defaultConfig());
+   }
+
+   // default project
+   else
+   {
+      // create the project directory if necessary
+      error = projectFilePath.parent().ensureDirectory();
+      if (error)
+         return error;
+
+      // create the project file
+      if (!projectFilePath.exists())
+      {
+         return r_util::writeProjectFile(projectFilePath,
+                                         ProjectContext::defaultConfig());
+      }
+      else
+      {
+         return Success();
+      }
+   }
 }
 
 json::Object projectConfigJson(const r_util::RProjectConfig& config)
@@ -212,11 +247,14 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
+   configJson["auto_append_newline"] = config.autoAppendNewline;
+   configJson["strip_trailing_whitespace"] = config.stripTrailingWhitespace;
    configJson["default_encoding"] = config.encoding;
    configJson["default_sweave_engine"] = config.defaultSweaveEngine;
    configJson["default_latex_program"] = config.defaultLatexProgram;
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
+   configJson["package_use_devtools"] = config.packageUseDevtools;
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
@@ -374,7 +412,15 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
 
    error = json::readObject(
                     configJson,
+                    "auto_append_newline", &(config.autoAppendNewline),
+                    "strip_trailing_whitespace", &(config.stripTrailingWhitespace));
+   if (error)
+      return error;
+
+   error = json::readObject(
+                    configJson,
                     "build_type", &(config.buildType),
+                    "package_use_devtools", &(config.packageUseDevtools),
                     "package_path", &(config.packagePath),
                     "package_install_args", &(config.packageInstallArgs),
                     "package_build_args", &(config.packageBuildArgs),

@@ -212,6 +212,11 @@ public class TextFileType extends EditableFileType
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
    }
    
+   public boolean isPlainMarkdown()
+   {
+      return FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
    public boolean isC()
    {
       return EditorLanguage.LANG_CPP.equals(getEditorLanguage());
@@ -233,6 +238,8 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsFileLog());
       results.add(commands.vcsFileDiff());
       results.add(commands.vcsFileRevert());
+      results.add(commands.vcsViewOnGitHub());
+      results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
       if (canExecuteCode())
       {
@@ -255,6 +262,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeToCurrentLine());
          results.add(commands.executeFromCurrentLine());
          results.add(commands.executeCurrentFunction());
+         results.add(commands.executeCurrentSection());
       }
       if (canKnitToHTML())
       {
@@ -287,6 +295,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.findReplace());
       results.add(commands.findNext());
       results.add(commands.findPrevious());
+      results.add(commands.findFromSelection());
       results.add(commands.replaceAndFind());
       results.add(commands.setWorkingDirToActiveDoc());
       results.add(commands.debugDumpContents());

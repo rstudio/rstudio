@@ -79,50 +79,47 @@ void addToPathIfNecessary(const std::string& entry, std::string* pPath)
 Error initialize()
 {
 #ifdef __APPLE__
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   // read /etc/paths
+   std::vector<std::string> paths;
+   safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
+
+   // read /etc/paths.d/* (once again failure is not fatal as we
+   // can fall back to the previous setting)
+   FilePath pathsD("/etc/paths.d");
+   if (pathsD.exists())
    {
-      // read /etc/paths
-      std::vector<std::string> paths;
-      safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
+      // enumerate the children
+      std::vector<FilePath> pathsDChildren;
+      Error error = pathsD.children(&pathsDChildren);
+      if (error)
+         LOG_ERROR(error);
 
-      // read /etc/paths.d/* (once again failure is not fatal as we
-      // can fall back to the previous setting)
-      FilePath pathsD("/etc/paths.d");
-      if (pathsD.exists())
-      {
-         // enumerate the children
-         std::vector<FilePath> pathsDChildren;
-         Error error = pathsD.children(&pathsDChildren);
-         if (error)
-            LOG_ERROR(error);
+      // collect their paths
+      std::for_each(pathsDChildren.begin(),
+                    pathsDChildren.end(),
+                    boost::bind(safeReadPathsFromFile, _1, &paths));
 
-         // collect their paths
-         std::for_each(pathsDChildren.begin(),
-                       pathsDChildren.end(),
-                       boost::bind(safeReadPathsFromFile, _1, &paths));
-
-      }
-
-      // build the PATH
-      std::string path = core::system::getenv("PATH");
-      std::for_each(paths.begin(),
-                    paths.end(),
-                    boost::bind(addToPathIfNecessary, _1, &path));
-
-      // do we need to add /usr/texbin (sometimes texlive doesn't get this
-      // written into /etc/paths.d)
-      FilePath texbinPath("/usr/texbin");
-      if (texbinPath.exists())
-         addToPathIfNecessary(texbinPath.absolutePath(), &path);
-
-      // add /opt/local/bin if necessary
-      FilePath optLocalBinPath("/opt/local/bin");
-      if (optLocalBinPath.exists())
-         addToPathIfNecessary(optLocalBinPath.absolutePath(), &path);
-
-      // set the path
-      core::system::setenv("PATH", path);
    }
+
+   // build the PATH
+   std::string path = core::system::getenv("PATH");
+   std::for_each(paths.begin(),
+                 paths.end(),
+                 boost::bind(addToPathIfNecessary, _1, &path));
+
+   // do we need to add /usr/texbin (sometimes texlive doesn't get this
+   // written into /etc/paths.d)
+   FilePath texbinPath("/usr/texbin");
+   if (texbinPath.exists())
+      addToPathIfNecessary(texbinPath.absolutePath(), &path);
+
+   // add /opt/local/bin if necessary
+   FilePath optLocalBinPath("/opt/local/bin");
+   if (optLocalBinPath.exists())
+      addToPathIfNecessary(optLocalBinPath.absolutePath(), &path);
+
+   // set the path
+   core::system::setenv("PATH", path);
 #endif
 
    return Success();

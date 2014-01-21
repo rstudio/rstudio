@@ -53,6 +53,7 @@
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
 #include "ServerInit.hpp"
+#include "ServerMeta.hpp"
 #include "ServerOffline.hpp"
 #include "ServerPAMAuth.hpp"
 #include "ServerSessionProxy.hpp"
@@ -87,9 +88,15 @@ bool mainPageFilter(const core::http::Request& request,
 http::UriHandlerFunction blockingFileHandler()
 {
    Options& options = server::options();
+
+   // determine initJs (none for now)
+   std::string initJs;
+
+   // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    "/",
                                    mainPageFilter,
+                                   initJs,
                                    options.wwwUseEmulatedStack());
 }
 
@@ -166,8 +173,15 @@ void httpServerAddHandlers()
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
    uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
 
+   // proxy localhost if requested
+   if (server::options().wwwProxyLocalhost())
+      uri_handlers::add("/p/", secureAsyncHttpHandler(proxyLocalhostRequest, true));
+
    // establish logging handler
    uri_handlers::addBlocking("/log", secureJsonRpcHandler(gwt::handleLogRequest));
+
+   // establish meta
+   uri_handlers::addBlocking("/meta", secureJsonRpcHandler(meta::handleMetaRequest));
 
    // establish progress handler
    FilePath wwwPath(server::options().wwwLocalPath());
@@ -329,16 +343,22 @@ int main(int argc, char * const argv[])
       const char * const kProgramIdentity = "rserver";
       initializeSystemLog(kProgramIdentity, core::system::kLogLevelWarning);
 
-      // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
-      if (error)
-         LOG_ERROR(error);
+      // ignore SIGPIPE (don't log error because we should never call
+      // syslog prior to daemonizing)
+      core::system::ignoreSignal(core::system::SigPipe);
 
       // read program options 
+      std::ostringstream osWarnings;
       Options& options = server::options();
-      ProgramStatus status = options.read(argc, argv); 
+      ProgramStatus status = options.read(argc, argv, osWarnings);
+      std::string optionsWarnings = osWarnings.str();
       if ( status.exit() )
+      {
+         if (!optionsWarnings.empty())
+            program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
+
          return status.exitCode() ;
+      }
       
       // daemonize if requested
       if (options.serverDaemonize())
@@ -354,6 +374,11 @@ int main(int argc, char * const argv[])
          // set file creation mask to 022 (might have inherted 0 from init)
          setUMask(core::system::OthersNoWriteMask);
       }
+
+      // wait until now to output options warnings (we need to wait for our
+      // first call to logging functions until after daemonization)
+      if (!optionsWarnings.empty())
+         program_options::reportWarnings(optionsWarnings, ERROR_LOCATION);
 
       // detect R environment variables (calls R (and this forks) so must
       // happen after daemonize so that upstart script can correctly track us
@@ -375,7 +400,7 @@ int main(int argc, char * const argv[])
       }
 
       // set working directory
-      error = FilePath(options.serverWorkingDir()).makeCurrentPath();
+      Error error = FilePath(options.serverWorkingDir()).makeCurrentPath();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

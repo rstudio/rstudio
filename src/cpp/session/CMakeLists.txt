@@ -17,12 +17,15 @@ project (SESSION)
 
 add_subdirectory(workers)
 
-# verify that install-dictionaries and install-mathjax have been run
+# verify that install-dictionaries, install-mathjax, and install-pandoc have been run
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax")
   message(FATAL_ERROR "Mathjax not found (re-run install-dependencies script to install)")
+endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
+  message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
 
 # include files
@@ -48,6 +51,7 @@ set (SESSION_SOURCE_FILES
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
+   modules/SessionAbout.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
@@ -64,17 +68,22 @@ set (SESSION_SOURCE_FILES
    modules/SessionGit.cpp
    modules/SessionHelp.cpp
    modules/SessionHistory.cpp
+   modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionPackages.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
+   modules/SessionProfiler.cpp
    modules/SessionRPubs.cpp
+   modules/SessionShinyViewer.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
    modules/SessionSVN.cpp
+   modules/SessionUpdates.cpp
    modules/SessionVCS.cpp
+   modules/SessionViewer.cpp
    modules/SessionWorkbench.cpp
    modules/build/SessionBuild.cpp
    modules/build/SessionBuildEnvironment.cpp
@@ -97,6 +106,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideQuizRenderer.cpp
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
+   modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp
    modules/tex/SessionPdfLatex.cpp
@@ -109,6 +119,7 @@ set (SESSION_SOURCE_FILES
    modules/vcs/SessionVCSUtils.cpp
    projects/SessionProjects.cpp
    projects/SessionProjectContext.cpp
+   projects/SessionProjectFirstRun.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/SessionAddins.cpp
 )
 
@@ -120,6 +131,11 @@ if(UNIX)
    if(RSTUDIO_SERVER)
       set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
          modules/SessionCrypto.cpp
+      )
+   endif()
+   if(APPLE)
+      set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
+         SessionModuleContext.mm
       )
    endif()
 else()
@@ -170,8 +186,8 @@ if(RSTUDIO_ADDINS_PATH)
 endif()
 
 # config file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/session-config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/session-config.h)
 
 # always configure the addins bootstrap file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SessionAddins.cpp.in
@@ -184,6 +200,10 @@ foreach(SESSION_R_FILE ${SESSION_R_FILES})
                   "${CMAKE_CURRENT_BINARY_DIR}/modules/R/${R_FILE_NAME}"
                   COPYONLY)
 endforeach()
+
+# configure the NOTICE file into the resources directory
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../../NOTICE
+               ${CMAKE_CURRENT_SOURCE_DIR}/resources COPYONLY)
 
 # set include directories
 include_directories(
@@ -248,6 +268,7 @@ target_link_libraries(rsession
    rstudio-r
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
+   ${LIBR_LIBRARIES}
 )
 
 # configure and install r-ldpaths script
@@ -285,6 +306,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # presentation
    install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # notice
+   install(FILES "resources/NOTICE"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # R scripts
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")
@@ -299,6 +323,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install mathjax for local html preview
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
+
+   # install pandoc
+   file(GLOB PANDOC_FILES "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.3/pandoc*")
+   install(PROGRAMS ${PANDOC_FILES}
+           DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install 64 bit binaries if we are on win64
    if(WIN32)
@@ -323,7 +352,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 
 
-      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.1.1/SumatraPDF.exe"
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/sumatra/2.4/SumatraPDF.exe"
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
@@ -335,6 +364,11 @@ if(RSTUDIO_SESSION_WIN64)
    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
    install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
            DESTINATION ${RSTUDIO_INSTALL_BIN})
+endif()
+
+# add overlay if it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
+   include(CMakeOverlay.txt)
 endif()
 
 

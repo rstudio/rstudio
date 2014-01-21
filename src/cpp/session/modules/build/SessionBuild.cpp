@@ -58,6 +58,33 @@ namespace session {
 
 namespace {
 
+std::string quoteString(const std::string& str)
+{
+   return "'" + str + "'";
+}
+
+std::string packageArgsVector(std::string args)
+{
+   // spilt the string
+   boost::algorithm::trim(args);
+   std::vector<std::string> argList;
+   boost::algorithm::split(argList,
+                           args,
+                           boost::is_space(),
+                           boost::algorithm::token_compress_on);
+
+   // quote the args
+   std::vector<std::string> quotedArgs;
+   std::transform(argList.begin(),
+                  argList.end(),
+                  std::back_inserter(quotedArgs),
+                  quoteString);
+
+   std::ostringstream ostr;
+   ostr << "c(" << boost::algorithm::join(quotedArgs, ",") << ")";
+   return ostr.str();
+}
+
 shell_utils::ShellCommand buildRCmd(const core::FilePath& rBinDir)
 {
 #if defined(_WIN32)
@@ -199,6 +226,7 @@ bool collectForcePackageRebuild()
 const char * const kRoxygenizePackage = "roxygenize-package";
 const char * const kBuildSourcePackage = "build-source-package";
 const char * const kBuildBinaryPackage = "build-binary-package";
+const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
 const char * const kRebuildAll = "rebuild-all";
@@ -287,9 +315,8 @@ private:
                             const core::system::ProcessOptions& options,
                             const core::system::ProcessCallbacks& cb)
    {
-      // validate that there is a DESCRIPTION file
-      FilePath descFilePath = packagePath.childPath("DESCRIPTION");
-      if (!descFilePath.exists())
+      // validate that this is a package
+      if (!r_util::isPackageDirectory(packagePath))
       {
          boost::format fmt ("ERROR: The build directory does "
                             "not contain a DESCRIPTION\n"
@@ -347,7 +374,8 @@ private:
             return true;
          }
          else if ( (type == kCheckPackage) &&
-                   options_.autoRoxygenizeForCheck)
+                   options_.autoRoxygenizeForCheck &&
+                   !useDevtools())
          {
             return true;
          }
@@ -373,7 +401,12 @@ private:
       {
          roclet = "'" + roclet + "'";
       }
-      boost::format fmt("roxygenize('.', roclets=c(%1%))");
+
+      boost::format fmt;
+      if (useDevtools())
+         fmt = boost::format("devtools::document(roclets=c(%1%))");
+      else
+         fmt = boost::format("roxygen2::roxygenize('.', roclets=c(%1%))");
       std::string roxygenizeCall = boost::str(
          fmt % boost::algorithm::join(roclets, ", "));
 
@@ -387,7 +420,6 @@ private:
             "{oldLC <- Sys.getlocale(category = 'LC_COLLATE'); "
             " Sys.setlocale(category = 'LC_COLLATE', locale = 'C'); "
             " on.exit(Sys.setlocale(category = 'LC_COLLATE', locale = oldLC));"
-            " library(roxygen2); "
             " %1%; }"
           "))");
       std::string cmd = boost::str(cmdFmt % roxygenizeCall);
@@ -504,6 +536,9 @@ private:
       core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
 #endif
 
+      // set the not cran env var
+      core::system::setenv(&childEnv, "NOT_CRAN", "true");
+
       // add r tools to path if necessary
       addRtoolsToPathIfNecessary(&childEnv, &postBuildWarning_);
 
@@ -559,124 +594,318 @@ private:
 
       else if (type == kBuildSourcePackage)
       {
-         // compose the build command
-         RCommand rCmd(rBinDir);
-         rCmd << "build";
-
-         // add extra args if provided
-         std::string extraArgs = projectConfig().packageBuildArgs;
-         rCmd << extraArgs;
-
-         // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
-
-         // show the user the command
-         enqueCommandString(rCmd.commandString());
-
-         // set a success message
-         successMessage_ = buildPackageSuccessMsg("Source");
-
-         // run R CMD build <package-dir>
-         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        pkgOptions,
-                                                        cb);
+         if (useDevtools())
+            devtoolsBuildPackage(packagePath, false, pkgOptions, cb);
+         else
+            buildSourcePackage(rBinDir, packagePath, pkgOptions, cb);
       }
 
       else if (type == kBuildBinaryPackage)
       {
-         // compose the INSTALL --binary
-         RCommand rCmd(rBinDir);
-         rCmd << "INSTALL";
-         rCmd << "--build";
-         rCmd << "--preclean";
-
-         // add extra args if provided
-         std::string extraArgs = projectConfig().packageBuildBinaryArgs;
-         rCmd << extraArgs;
-
-         // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
-
-         // show the user the command
-         enqueCommandString(rCmd.commandString());
-
-         // set a success message
-         successMessage_ = "\n" + buildPackageSuccessMsg("Binary");
-
-         // run R CMD INSTALL --build <package-dir>
-         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        pkgOptions,
-                                                        cb);
+         if (useDevtools())
+            devtoolsBuildPackage(packagePath, true, pkgOptions, cb);
+         else
+            buildBinaryPackage(rBinDir, packagePath, pkgOptions, cb);
       }
 
       else if (type == kCheckPackage)
       {
-         // first build then check
+         if (useDevtools())
+            devtoolsCheckPackage(packagePath, pkgOptions, cb);
+         else
+            checkPackage(rBinDir, packagePath, pkgOptions, cb);
+      }
 
-         // compose the build command
-         RCommand rCmd(rBinDir);
-         rCmd << "build";
+      else if (type == kTestPackage)
+      {
+         devtoolsTestPackage(packagePath, pkgOptions, cb);
+      }
+   }
 
-         // add extra args if provided
-         rCmd << projectConfig().packageBuildArgs;
 
-         // add --no-manual and --no-vignettes if they are in the check options
+   void buildSourcePackage(const FilePath& rBinDir,
+                           const FilePath& packagePath,
+                           const core::system::ProcessOptions& pkgOptions,
+                           const core::system::ProcessCallbacks& cb)
+   {
+      // compose the build command
+      RCommand rCmd(rBinDir);
+      rCmd << "build";
+
+      // add extra args if provided
+      std::string extraArgs = projectConfig().packageBuildArgs;
+      rCmd << extraArgs;
+
+      // add filename as a FilePath so it is escaped
+      rCmd << FilePath(packagePath.filename());
+
+      // show the user the command
+      enqueCommandString(rCmd.commandString());
+
+      // set a success message
+      successMessage_ = buildPackageSuccessMsg("Source");
+
+      // run R CMD build <package-dir>
+      module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                     pkgOptions,
+                                                     cb);
+
+   }
+
+
+   void buildBinaryPackage(const FilePath& rBinDir,
+                           const FilePath& packagePath,
+                           const core::system::ProcessOptions& pkgOptions,
+                           const core::system::ProcessCallbacks& cb)
+   {
+      // compose the INSTALL --binary
+      RCommand rCmd(rBinDir);
+      rCmd << "INSTALL";
+      rCmd << "--build";
+      rCmd << "--preclean";
+
+      // add extra args if provided
+      std::string extraArgs = projectConfig().packageBuildBinaryArgs;
+      rCmd << extraArgs;
+
+      // add filename as a FilePath so it is escaped
+      rCmd << FilePath(packagePath.filename());
+
+      // show the user the command
+      enqueCommandString(rCmd.commandString());
+
+      // set a success message
+      successMessage_ = "\n" + buildPackageSuccessMsg("Binary");
+
+      // run R CMD INSTALL --build <package-dir>
+      module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                     pkgOptions,
+                                                     cb);
+   }
+
+   void checkPackage(const FilePath& rBinDir,
+                     const FilePath& packagePath,
+                     const core::system::ProcessOptions& pkgOptions,
+                     const core::system::ProcessCallbacks& cb)
+   {
+      // first build then check
+
+      // compose the build command
+      RCommand rCmd(rBinDir);
+      rCmd << "build";
+
+      // add extra args if provided
+      rCmd << projectConfig().packageBuildArgs;
+
+      // add --no-manual and --no-build-vignettes if they are in the check options
+      std::string checkArgs = projectConfig().packageCheckArgs;
+      if (checkArgs.find("--no-manual") != std::string::npos)
+         rCmd << "--no-manual";
+      if (checkArgs.find("--no-build-vignettes") != std::string::npos)
+         rCmd << "--no-build-vignettes";
+
+      // add filename as a FilePath so it is escaped
+      rCmd << FilePath(packagePath.filename());
+
+      // compose the check command (will be executed by the onExit
+      // handler of the build cmd)
+      RCommand rCheckCmd(rBinDir);
+      rCheckCmd << "check";
+
+      // add extra args if provided
+      std::string extraArgs = projectConfig().packageCheckArgs;
+      rCheckCmd << extraArgs;
+
+      // add filename as a FilePath so it is escaped
+      rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
+
+      // special callback for build result
+      core::system::ProcessCallbacks buildCb = cb;
+      buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
+                                    Build::shared_from_this(),
+                                    _1,
+                                    rCheckCmd,
+                                    pkgOptions,
+                                    buildCb);
+
+      // show the user the command
+      enqueCommandString(rCmd.commandString());
+
+      // set a success message
+      successMessage_ = "R CMD check succeeded\n";
+
+      // bind a success function if appropriate
+      if (userSettings().cleanupAfterRCmdCheck())
+      {
+         successFunction_ = boost::bind(&Build::cleanupAfterCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
+      if (userSettings().viewDirAfterRCmdCheck())
+      {
+         failureFunction_ = boost::bind(
+                  &Build::viewDirAfterFailedCheck,
+                  Build::shared_from_this(),
+                  pkgInfo_);
+      }
+
+      // run the source build
+      module_context::processSupervisor().runCommand(rCmd.shellCommand(),
+                                                     pkgOptions,
+                                                     buildCb);
+   }
+
+   bool devtoolsExecute(const std::string& command,
+                        const FilePath& packagePath,
+                        core::system::ProcessOptions pkgOptions,
+                        const core::system::ProcessCallbacks& cb)
+   {
+      // Find the path to R
+      FilePath rProgramPath;
+      Error error = module_context::rScriptPath(&rProgramPath);
+      if (error)
+      {
+         terminateWithError("attempting to locate R binary", error);
+         return false;
+      }
+
+      // execute within the package directory
+      pkgOptions.workingDir = packagePath;
+
+      // build args
+      std::vector<std::string> args;
+      args.push_back("--slave");
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+      args.push_back("-e");
+      args.push_back(command);
+
+      // run it
+      module_context::processSupervisor().runProgram(
+               string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+               args,
+               pkgOptions,
+               cb);
+
+      return true;
+   }
+
+   void devtoolsCheckPackage(const FilePath& packagePath,
+                             const core::system::ProcessOptions& pkgOptions,
+                             const core::system::ProcessCallbacks& cb)
+   {
+      // build the call to check
+      std::ostringstream ostr;
+      ostr << "devtools::check(";
+
+      std::vector<std::string> args;
+
+      if (projectConfig().packageRoxygenize.empty() ||
+          !options_.autoRoxygenizeForCheck)
+         args.push_back("document = FALSE");
+
+      if (!userSettings().cleanupAfterRCmdCheck())
+         args.push_back("cleanup = FALSE");
+
+      // optional extra check args
+      if (!projectConfig().packageCheckArgs.empty())
+      {
+         args.push_back("args = " +
+                        packageArgsVector(projectConfig().packageCheckArgs));
+      }
+
+      // optional extra build args
+      if (!projectConfig().packageBuildArgs.empty())
+      {
+         // propagate check vignette args
+         // add --no-manual and --no-build-vignettes if they are specified
+         std::string buildArgs = projectConfig().packageBuildArgs;
          std::string checkArgs = projectConfig().packageCheckArgs;
          if (checkArgs.find("--no-manual") != std::string::npos)
-            rCmd << "--no-manual";
-         if (checkArgs.find("--no-vignettes") != std::string::npos)
-            rCmd << "--no-vignettes";
+            buildArgs.append(" --no-manual");
+         if (checkArgs.find("--no-build-vignettes") != std::string::npos)
+            buildArgs.append(" --no-build-vignettes");
 
-         // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
-
-         // compose the check command (will be executed by the onExit
-         // handler of the build cmd)
-         RCommand rCheckCmd(rBinDir);
-         rCheckCmd << "check";
-
-         // add extra args if provided
-         std::string extraArgs = projectConfig().packageCheckArgs;
-         rCheckCmd << extraArgs;
-
-         // add filename as a FilePath so it is escaped
-         rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
-
-         // special callback for build result
-         core::system::ProcessCallbacks buildCb = cb;
-         buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
-                                       Build::shared_from_this(),
-                                       _1,
-                                       rCheckCmd,
-                                       pkgOptions,
-                                       buildCb);
-
-         // show the user the command
-         enqueCommandString(rCmd.commandString());
-
-         // set a success message
-         successMessage_ = "R CMD check succeeded\n";
-
-         // bind a success function if appropriate
-         if (userSettings().cleanupAfterRCmdCheck())
-         {
-            successFunction_ = boost::bind(&Build::cleanupAfterCheck,
-                                           Build::shared_from_this(),
-                                           pkgInfo_);
-         }
-
-         if (userSettings().viewDirAfterRCmdCheck())
-         {
-            failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
-                                           Build::shared_from_this(),
-                                           pkgInfo_);
-         }
-
-         // run the source build
-         module_context::processSupervisor().runCommand(rCmd.shellCommand(),
-                                                        pkgOptions,
-                                                        buildCb);
+         args.push_back("build_args = " + packageArgsVector(buildArgs));
       }
+
+      // add the args
+      ostr << boost::algorithm::join(args, ", ");
+
+      // enque the command string without the check_dir
+      enqueCommandString(ostr.str() + ")");
+
+      // now complete the command
+      ostr << ", check_dir = dirname(getwd()))";
+      std::string command = ostr.str();
+
+      // set a success message
+      successMessage_ = "\nR CMD check succeeded\n";
+
+      // bind a success function if appropriate
+      if (userSettings().cleanupAfterRCmdCheck())
+      {
+         successFunction_ = boost::bind(&Build::cleanupAfterCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
+      if (userSettings().viewDirAfterRCmdCheck())
+      {
+         failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
+                                        Build::shared_from_this(),
+                                        pkgInfo_);
+      }
+
+      // run it
+      devtoolsExecute(command, packagePath, pkgOptions, cb);
+   }
+
+   void devtoolsTestPackage(const FilePath& packagePath,
+                            const core::system::ProcessOptions& pkgOptions,
+                            const core::system::ProcessCallbacks& cb)
+   {
+      std::string command = "devtools::test()";
+      enqueCommandString(command);
+      devtoolsExecute(command, packagePath, pkgOptions, cb);
+   }
+
+   void devtoolsBuildPackage(const FilePath& packagePath,
+                             bool binary,
+                             const core::system::ProcessOptions& pkgOptions,
+                             const core::system::ProcessCallbacks& cb)
+   {
+      // create the call to build
+      std::ostringstream ostr;
+      ostr << "devtools::build(";
+
+      // args
+      std::vector<std::string> args;
+
+      // binary package?
+      if (binary)
+         args.push_back("binary = TRUE");
+
+       // add R args
+      std::string rArgs = binary ?  projectConfig().packageBuildBinaryArgs :
+                                    projectConfig().packageBuildArgs;
+      if (binary)
+         rArgs.append(" --preclean");
+      if (!rArgs.empty())
+         args.push_back("args = " + packageArgsVector(rArgs));
+
+      ostr << boost::algorithm::join(args, ", ");
+      ostr << ")";
+
+      // set a success message
+      std::string type = binary ? "Binary" : "Source";
+      successMessage_ = "\n" + buildPackageSuccessMsg(type);
+
+      // execute it
+      std::string command = ostr.str();
+      enqueCommandString(command);
+      devtoolsExecute(command, packagePath, pkgOptions, cb);
    }
 
 
@@ -721,15 +950,19 @@ private:
 
    void viewDirAfterFailedCheck(const r_util::RPackageInfo& pkgInfo)
    {
-      FilePath buildPath = projects::projectContext().buildTargetPath().parent();
-      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+      if (!terminationRequested_)
+      {
+         FilePath buildPath = projects::projectContext()
+                                       .buildTargetPath().parent();
+         FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
 
-      json::Object dataJson;
-      dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
-      dataJson["activate"] = true;
-      ClientEvent event(client_events::kDirectoryNavigate, dataJson);
+         json::Object dataJson;
+         dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
+         dataJson["activate"] = true;
+         ClientEvent event(client_events::kDirectoryNavigate, dataJson);
 
-      module_context::enqueClientEvent(event);
+         module_context::enqueClientEvent(event);
+      }
    }
 
    void executeMakefileBuild(const std::string& type,
@@ -808,6 +1041,12 @@ private:
    {
       enqueBuildOutput(kBuildOutputError, msg);
       enqueBuildCompleted();
+   }
+
+   bool useDevtools()
+   {
+      return projectConfig().packageUseDevtools &&
+             module_context::isPackageVersionInstalled("devtools", "1.4.1");
    }
 
 public:
@@ -1092,29 +1331,9 @@ Error getCppCapabilities(const json::JsonRpcRequest& request,
 Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   // compute the path to use for devtools::load_all
-   std::string loadAllPath;
-
-   // start with the build target path
-   FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-   FilePath currentPath = module_context::safeCurrentPath();
-
-   // if the build target path and the current working directory
-   // are the same then return "."
-   if (buildTargetPath == currentPath)
-   {
-      loadAllPath = ".";
-   }
-   else if (buildTargetPath.isWithin(currentPath))
-   {
-      loadAllPath = buildTargetPath.relativePath(currentPath);
-   }
-   else
-   {
-      loadAllPath = module_context::createAliasedPath(buildTargetPath);
-   }
-
-   pResponse->setResult(loadAllPath);
+   pResponse->setResult(module_context::pathRelativeTo(
+            module_context::safeCurrentPath(),
+            projects::projectContext().buildTargetPath()));
 
    return Success();
 }
@@ -1281,6 +1500,32 @@ json::Value buildStateAsJson()
    }
 }
 
+void onDeferredInit(bool newSession)
+{
+   if (newSession)
+   {
+      // if we are on mavericks then provide an .R/Makevars that points
+      // to clang if necessary
+      using namespace module_context;
+      FilePath makevarsPath = userHomePath().childPath(".R/Makevars");
+      if (isOSXMavericks() && !makevarsPath.exists() && !canBuildCpp())
+      {
+         Error error = makevarsPath.parent().ensureDirectory();
+         if (!error)
+         {
+            std::string makevars = "CC=clang\nCXX=clang++\n";
+            error = core::writeStringToFile(makevarsPath, makevars);
+            if (error)
+               LOG_ERROR(error);
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+   }
+}
+
 Error initialize()
 {
    R_CallMethodDef canBuildMethodDef ;
@@ -1307,6 +1552,8 @@ Error initialize()
    installPackageMethodDef.numArgs = 2;
    r::routines::addCallMethod(installPackageMethodDef);
 
+   // subscribe to deferredInit for build tools fixup
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
@@ -1342,12 +1589,7 @@ namespace module_context {
 
 bool haveRcppAttributes()
 {
-   bool haveAttributes = false;
-   Error error = r::exec::RFunction(".rs.haveRcppAttributes")
-                                                        .call(&haveAttributes);
-   if (error)
-      LOG_ERROR(error);
-   return haveAttributes;
+   return module_context::isPackageVersionInstalled("Rcpp", "0.10.1");
 }
 
 bool canBuildCpp()

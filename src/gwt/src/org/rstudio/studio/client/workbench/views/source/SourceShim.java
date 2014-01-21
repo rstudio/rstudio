@@ -27,8 +27,11 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.widget.BeforeShowCallback;
@@ -44,7 +47,7 @@ import org.rstudio.studio.client.workbench.views.source.events.*;
 
 @Singleton
 public class SourceShim extends Composite
-   implements IsWidget, HasEnsureVisibleHandlers, BeforeShowCallback,
+   implements IsWidget, HasEnsureVisibleHandlers, HasEnsureHeightHandlers, BeforeShowCallback,
               ProvidesResize, RequiresResize, RequiresVisibilityChanged
 {
    public interface Binder extends CommandBinder<Commands, AsyncSource> {}
@@ -102,7 +105,9 @@ public class SourceShim extends Composite
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();
-
+      @Handler
+      public abstract void onShowProfiler();
+      
       @Override
       protected void preInstantiationHook(Command continuation)
       {
@@ -121,6 +126,18 @@ public class SourceShim extends Composite
                      public void onEnsureVisible(EnsureVisibleEvent event)
                      {
                         parent_.fireEvent(new EnsureVisibleEvent(event.getActivate()));
+                     }
+                  });
+         }
+         if (child instanceof HasEnsureHeightHandlers)
+         {
+            ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(
+                  new EnsureHeightHandler() {
+
+                     @Override
+                     public void onEnsureHeight(EnsureHeightEvent event)
+                     {
+                        parent_.fireEvent(event);
                      }
                   });
          }
@@ -174,6 +191,11 @@ public class SourceShim extends Composite
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+   
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
    }
 
    public void forceLoad()

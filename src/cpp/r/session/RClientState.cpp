@@ -238,6 +238,23 @@ void ClientState::putProjectPersistent(const std::string& scope,
    putProjectPersistent(stateContainer);
 }
 
+json::Value ClientState::getProjectPersistent(std::string scope,
+                                              std::string name)
+{
+   json::Object::iterator i = projectPersistentState_.find(scope);
+   if (i == projectPersistentState_.end())
+   {
+      return json::Value();
+   }
+   else
+   {
+      if (!json::isType<core::json::Object>(i->second))
+         return json::Value();
+      json::Object& scopeObject = (i->second).get_obj();
+      return scopeObject[name];
+   }
+}
+
 void ClientState::putProjectPersistent(
                               const json::Object& projectPersistentState)
 {

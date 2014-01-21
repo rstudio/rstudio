@@ -38,7 +38,7 @@ public class WebContentFileType extends TextFileType
             icon,
             true,    // word-wrap
             false, 
-            false, 
+            isMarkdown, // allow code execution in markdown 
             false, 
             false,
             true,    // preview-html

@@ -21,7 +21,7 @@
 #include <QtCore>
 #include <QWidget>
 
-#include "config.h"
+#include "desktop-config.h"
 
 namespace desktop {
 

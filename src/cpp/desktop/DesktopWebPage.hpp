@@ -57,6 +57,7 @@ public:
    explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = NULL);
 
    void setBaseUrl(const QUrl& baseUrl);
+   void setViewerUrl(const QString& viewerUrl) { viewerUrl_ = viewerUrl; }
 
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
@@ -73,9 +74,14 @@ protected:
                                 NavigationType type);
 
 private:
+   void handleBase64Download(QWebFrame* pWebFrame, QUrl url);
+
+private:
    QUrl baseUrl_;
+   QString viewerUrl_;
    bool navigated_;
    PendingSatelliteWindow pendingSatelliteWindow_;
+   QDir defaultSaveDir_;
 };
 
 } // namespace desktop

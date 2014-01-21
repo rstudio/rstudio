@@ -17,9 +17,13 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
+import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import com.google.gwt.user.client.ui.CheckBox;
+
 
 public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
 {
@@ -36,9 +40,46 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
     
       setOkButtonCaption("Create Project");
       
-      addPage(new NewDirectoryPage());
+ 
+      openInNewWindow_ = new CheckBox("Open in new window");
+      addLeftWidget(openInNewWindow_);
+      openInNewWindow_.setVisible(false);
+      
+      
+      addPage(new NewDirectoryNavigationPage(sessionInfo));
       addPage(new ExistingDirectoryPage());
+
       if (sessionInfo.getAllowVcs())
          addPage(new VersionControlNavigationPage(sessionInfo));
+   }  
+   
+   @Override
+   protected void onPageActivated(
+                     WizardPage<NewProjectInput,NewProjectResult> page,
+                     boolean okButtonVisible)
+   {
+      openInNewWindow_.setVisible(Desktop.isDesktop() && okButtonVisible);
    }
+   
+   @Override
+   protected void onSelectorActivated()
+   {
+      openInNewWindow_.setVisible(false);
+   }
+   
+   @Override
+   protected NewProjectResult ammendInput(NewProjectResult result)
+   {
+      if (result != null)
+      {
+         result.setOpenInNewWindow(openInNewWindow_.getValue());
+         return result;
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   private final CheckBox openInNewWindow_;
 }

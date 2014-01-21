@@ -29,6 +29,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -78,6 +79,11 @@ public class UrlContentEditingTarget implements EditingTarget
       return doc_.getId();
    }
 
+   @Override
+   public void adaptToExtendedFileType(String extendedType)
+   {
+   }
+
    public HasValue<String> getName()
    {
       String title = getContentTitle();
@@ -125,7 +131,7 @@ public class UrlContentEditingTarget implements EditingTarget
    
    
    @Override
-   public void verifyPrerequisites()
+   public void verifyCppPrerequisites()
    {
    }
       
@@ -218,6 +224,11 @@ public class UrlContentEditingTarget implements EditingTarget
    
    @Override
    public void setCursorPosition(Position position)
+   {
+   }
+   
+   @Override
+   public void ensureCursorVisible()
    {
    }
    
@@ -335,6 +346,16 @@ public class UrlContentEditingTarget implements EditingTarget
          }
       };
    }
+   
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
+   {
+      return new HandlerRegistration()
+      {
+         public void removeHandler()
+         {
+         }
+      };
+   }
 
    public HandlerRegistration addCloseHandler(
          CloseHandler<Void> voidCloseHandler)
@@ -363,6 +384,4 @@ public class UrlContentEditingTarget implements EditingTarget
    private HandlerRegistration commandReg_;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
-
-  
 }

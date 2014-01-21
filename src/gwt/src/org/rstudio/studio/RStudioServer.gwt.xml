@@ -1,4 +1,0 @@
-<module rename-to="rstudio">
-   <inherits name="org.rstudio.studio.RStudio" />
-   <set-property name="rstudio.desktop" value="false" />
-</module>

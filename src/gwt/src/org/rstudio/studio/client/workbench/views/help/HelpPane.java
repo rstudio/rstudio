@@ -37,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -48,6 +49,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
@@ -92,9 +94,10 @@ public class HelpPane extends WorkbenchPane
    @Override 
    protected Widget createMainWidget()
    {
-      frame_ = new Frame() ;
+      frame_ = new RStudioFrame() ;
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame") ;
+      ElementIds.assignElementId(frame_.getElement(), ElementIds.HELP_FRAME);
 
       return new AutoGlassPanel(frame_);
    }
@@ -218,7 +221,8 @@ public class HelpPane extends WorkbenchPane
          if (href.contains(":") || href.endsWith(".pdf"))
          {
             // external links
-            ((AnchorElement)a.cast()).setTarget("_blank") ;
+            AnchorElement aElement = a.cast();
+            aElement.setTarget("_blank") ;
          }
          else
          {
@@ -230,7 +234,6 @@ public class HelpPane extends WorkbenchPane
                            "window.parent.helpNavigate(this.href);return false") ;
          }
       }
-      
       
       String effectiveTitle = getDocTitle(doc);
       title_.setText(effectiveTitle) ;
@@ -633,7 +636,7 @@ public class HelpPane extends WorkbenchPane
    private final ToolbarLinkMenu history_ ;
  
    private Label title_ ;
-   private Frame frame_ ;
+   private RStudioFrame frame_ ;
    private FindTextBox findTextBox_;
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;

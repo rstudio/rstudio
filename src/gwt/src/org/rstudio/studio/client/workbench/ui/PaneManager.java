@@ -63,7 +63,7 @@ public class PaneManager
    
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Build,
-      Presentation, Environment
+      Presentation, Environment, Viewer
    }
 
    class SelectedTabStateValue extends IntStateValue
@@ -110,6 +110,7 @@ public class PaneManager
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
                       @Named("Environment") final WorkbenchTab environmentTab,
+                      @Named("Viewer") final WorkbenchTab viewerTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       final FindOutputTab findOutputTab)
@@ -129,6 +130,7 @@ public class PaneManager
       buildTab_ = buildTab;
       presentationTab_ = presentationTab;
       environmentTab_ = environmentTab;
+      viewerTab_ = viewerTab;
       compilePdfTab_ = compilePdfTab;
       findOutputTab_ = findOutputTab;
       sourceCppTab_ = sourceCppTab;
@@ -139,8 +141,8 @@ public class PaneManager
       initPanes(config);
 
       panes_ = createPanes(config);
-      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left");
-      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right");
+      left_ = createSplitWindow(panes_.get(0), panes_.get(1), "left", 0.4);
+      right_ = createSplitWindow(panes_.get(2), panes_.get(3), "right", 0.6);
 
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
@@ -162,7 +164,7 @@ public class PaneManager
       {
          public void onValueChange(ValueChangeEvent<PaneConfig> evt)
          {
-            ArrayList<LogicalWindow> newPanes = createPanes(evt.getValue());
+            ArrayList<LogicalWindow> newPanes = createPanes(validateConfig(evt.getValue()));
             panes_ = newPanes;
             left_.replaceWindows(newPanes.get(0), newPanes.get(1));
             right_.replaceWindows(newPanes.get(2), newPanes.get(3));
@@ -268,6 +270,8 @@ public class PaneManager
             return presentationTab_;
          case Environment:
             return environmentTab_;
+         case Viewer:
+            return viewerTab_;
       }
       throw new IllegalArgumentException("Unknown tab");
    }
@@ -277,7 +281,7 @@ public class PaneManager
       return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, buildTab_, presentationTab_,
-                                  environmentTab_};
+                                  environmentTab_, viewerTab_};
    }
 
    public void activateTab(Tab tab)
@@ -309,7 +313,8 @@ public class PaneManager
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
                                                    LogicalWindow bottom,
-                                                   String name)
+                                                   String name,
+                                                   double bottomDefaultPct)
    {
       return new DualWindowLayoutPanel(
             eventBus_,
@@ -318,7 +323,7 @@ public class PaneManager
             session_,
             name,
             WindowState.NORMAL,
-            (int) (Window.getClientHeight()*0.6));
+            (int) (Window.getClientHeight()*bottomDefaultPct));
    }
 
    private LogicalWindow createConsole()
@@ -435,6 +440,8 @@ public class PaneManager
             return getTab(tab).getTitle();
          case Environment:
             return "Environment";
+         case Viewer:
+            return "Viewer";
       }
       return "??";
    }
@@ -459,6 +466,8 @@ public class PaneManager
          return Tab.Presentation;
       if (name.equalsIgnoreCase("environment"))
          return Tab.Environment;
+      if (name.equalsIgnoreCase("viewer"))
+         return Tab.Viewer;
       
       return null;
    }
@@ -481,6 +490,7 @@ public class PaneManager
    private final WorkbenchTab buildTab_;
    private final WorkbenchTab presentationTab_;
    private final WorkbenchTab environmentTab_;
+   private final WorkbenchTab viewerTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

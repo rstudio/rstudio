@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -35,11 +36,12 @@ import java.util.HashSet;
 
 public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
+                                       HasEnsureHeightHandlers,
                                        HasCloseHandlers<Void>,
                                        UnsavedChangesTarget
 {
    String getId();
-
+   
    /**
     * Used as the tab name
     */
@@ -50,10 +52,12 @@ public interface EditingTarget extends IsWidget,
    ImageResource getIcon();
    String getTabTooltip();
 
+   void adaptToExtendedFileType(String extendedType);
+   
    HashSet<AppCommand> getSupportedCommands();
    boolean canCompilePdf();
    
-   void verifyPrerequisites();
+   void verifyCppPrerequisites();
 
    void focus();
    void onActivate();
@@ -73,6 +77,7 @@ public interface EditingTarget extends IsWidget,
    void forceLineHighlighting();
    
    void setCursorPosition(Position position);
+   void ensureCursorVisible();
    
    Position search(String regex);
    Position search(Position startPos, String regex);

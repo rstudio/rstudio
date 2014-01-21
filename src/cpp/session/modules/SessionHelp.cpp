@@ -76,15 +76,6 @@ bool s_provideHeaders = false;
 // show in an external browser
 bool s_handleCustom = false;
 
-std::string rLocalHelpPort()
-{
-   std::string port;
-   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
-   if (error)
-      LOG_ERROR(error);
-   return port;
-}
-
 std::string localURL(const std::string& address, const std::string& port)
 {
    return "http://" + address + ":" + port + "/";
@@ -99,16 +90,17 @@ std::string replaceRPort(const std::string& url, const std::string& rPort)
 
 bool isLocalURL(const std::string& url,
                 const std::string& scope,
-                std::string* pLocalURLPath)
+                std::string* pLocalURLPath = NULL)
 {
    // first look for local ip prefix
-   std::string rPort = rLocalHelpPort();
+   std::string rPort = module_context::rLocalHelpPort();
    std::string urlPrefix = localURL("127.0.0.1", rPort);
    size_t pos = url.find(urlPrefix + scope);
    if (pos != std::string::npos)
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
-      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+      if (pLocalURLPath)
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
@@ -118,7 +110,8 @@ bool isLocalURL(const std::string& url,
    if (pos != std::string::npos)
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
-      *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+      if (pLocalURLPath)
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
       return true;
    }
 
@@ -164,6 +157,12 @@ bool handleLocalHttpUrl(const std::string& url)
       }
    }
 
+   // leave portmapped urls alone
+   if (isLocalURL(url, "p/"))
+   {
+      return false;
+   }
+
    // otherwise look for help (which would be all other localhost urls)
    std::string helpPath;
    if (isLocalURL(url, "", &helpPath))
@@ -172,6 +171,19 @@ bool handleLocalHttpUrl(const std::string& url)
       ClientEvent helpEvent(client_events::kShowHelp, helpPath);
       module_context::enqueClientEvent(helpEvent);
       return true;
+   }
+
+   // other localhost URLs can benefit from port mapping -- we map them
+   // all since if we don't do any mapping they'll just fail hard
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      // see if we can form a portmap path for this url
+      std::string path;
+      if (module_context::portmapPathForLocalhostUrl(url, &path))
+      {
+         module_context::enqueClientEvent(browseUrlEvent(path));
+         return true;
+      }
    }
 
    // wasn't a url of interest
@@ -224,19 +236,31 @@ public:
             kHelpLocation);
 
       // fixup hard-coded hrefs
-      Characters tempDest;
+      Characters tempDest1;
       boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest),
+            std::back_inserter(tempDest1),
             boost::make_iterator_range(src.begin(), src.end()),
             "href=\"/",
             "href=\"" + baseUrl + "/");
+      Characters tempDest2;
+      boost::algorithm::replace_all_copy(
+            std::back_inserter(tempDest2),
+            boost::make_iterator_range(tempDest1.begin(), tempDest1.end()),
+            "href='/",
+            "href='" + baseUrl + "/");
       
       // fixup hard-coded src=
+      Characters tempDest3;
       boost::algorithm::replace_all_copy(
-            std::back_inserter(dest),
-            boost::make_iterator_range(tempDest.begin(), tempDest.end()),
+            std::back_inserter(tempDest3),
+            boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
             "src=\"/",
             "src=\"" + baseUrl + "/");
+      boost::algorithm::replace_all_copy(
+            std::back_inserter(dest),
+            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
+            "src='/",
+            "src='" + baseUrl + "/");
       
       // append javascript callbacks
       std::string js(kJsCallbacks);
@@ -777,6 +801,14 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    if (!uri.compare(0, sessionPrefix.length(), sessionPrefix))
       uri = uri.substr(sessionPrefix.length());
 
+   // remove query parameters and anchor
+   std::size_t pos = uri.find("?");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+   pos = uri.find("#");
+   if (pos != std::string::npos)
+      uri.erase(pos);
+
    // ensure that this path does not contain ..
    if (uri.find("..") != std::string::npos)
    {
@@ -789,7 +821,16 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();
-   pResponse->setCacheableFile(tempFilePath, request);
+   if (tempFilePath.mimeContentType() == "text/html")
+   {
+      pResponse->setCacheableFile(tempFilePath,
+                                  request,
+                                  HelpContentsFilter(request));
+   }
+   else
+   {
+      pResponse->setCacheableFile(tempFilePath, request);
+   }
 }
 
 // the ShowHelp event will result in the Help pane requesting the specified

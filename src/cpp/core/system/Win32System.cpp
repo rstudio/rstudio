@@ -240,19 +240,23 @@ std::string username()
    return system::getenv("USERNAME");
 }
 
-FilePath userHomePath(std::string envOverride)
+// home path strategies
+namespace {
+
+FilePath environmentHomePath(std::string envVariables)
 {
    using namespace boost::algorithm;
 
    // use environment override if specified
-   if (!envOverride.empty())
+   if (!envVariables.empty())
    {
       for (split_iterator<std::string::iterator> it =
-           make_split_iterator(envOverride, first_finder("|", is_iequal()));
+           make_split_iterator(envVariables, first_finder("|", is_iequal()));
            it != split_iterator<std::string::iterator>();
            ++it)
       {
-         std::string envHomePath = system::getenv(boost::copy_range<std::string>(*it));
+         std::string envHomePath =
+                  system::getenv(boost::copy_range<std::string>(*it));
          if (!envHomePath.empty())
          {
             FilePath userHomePath(envHomePath);
@@ -262,6 +266,12 @@ FilePath userHomePath(std::string envOverride)
       }
    }
 
+   // no override
+   return FilePath();
+}
+
+FilePath currentCSIDLPersonalHomePath()
+{
    // query for My Documents directory
    const DWORD SHGFP_TYPE_CURRENT = 0;
    wchar_t homePath[MAX_PATH];
@@ -276,10 +286,93 @@ FilePath userHomePath(std::string envOverride)
    }
    else
    {
-      LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
-                        safe_convert::numberToString(hr));
+      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+                          safe_convert::numberToString(hr));
       return FilePath();
    }
+}
+
+FilePath defaultCSIDLPersonalHomePath()
+{
+   // query for default and force creation (works around situations
+   // where redirected path is not available)
+   const DWORD SHGFP_TYPE_DEFAULT = 1;
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(NULL,
+                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+                                   NULL,
+                                   SHGFP_TYPE_DEFAULT,
+                                   homePath);
+   if (SUCCEEDED(hr))
+   {
+      return FilePath(homePath);
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+                          safe_convert::numberToString(hr));
+      return FilePath();
+   }
+}
+
+FilePath homepathHomePath()
+{
+   std::string homeDrive = core::system::getenv("HOMEDRIVE");
+   std::string homePath = core::system::getenv("HOMEPATH");
+   if (!homeDrive.empty() && !homePath.empty())
+      return FilePath(homeDrive + homePath);
+   else
+      return FilePath();
+}
+
+FilePath homedriveHomePath()
+{
+   std::string homeDrive = core::system::getenv("HOMEDRIVE");
+   if (homeDrive.empty())
+      homeDrive = "C:";
+   return FilePath(homeDrive);
+}
+
+typedef std::pair<std::string,boost::function<FilePath()> > HomePathSource;
+
+} // anonymous namespace
+
+FilePath userHomePath(std::string envOverride)
+{
+   using boost::bind;
+   std::vector<HomePathSource> sources;
+   sources.push_back(std::make_pair("R_USER|HOME",
+                                    bind(environmentHomePath, envOverride)));
+   sources.push_back(std::make_pair("SHGFP_TYPE_CURRENT",
+                                    currentCSIDLPersonalHomePath));
+   sources.push_back(std::make_pair("SHGFP_TYPE_DEFAULT",
+                                    defaultCSIDLPersonalHomePath));
+   std::string envFallback = "USERPROFILE";
+   sources.push_back(std::make_pair(envFallback,
+                                    bind(environmentHomePath, envFallback)));
+   sources.push_back(std::make_pair("HOMEPATH",
+                                    homepathHomePath));
+   sources.push_back(std::make_pair("HOMEDRIVE",
+                                    homedriveHomePath));
+
+   BOOST_FOREACH(const HomePathSource& source, sources)
+   {
+      FilePath homePath = source.second();
+      if (!homePath.empty())
+      {
+         // return if we found one that exists
+         if (homePath.exists())
+            return homePath;
+
+         // otherwise warn that we got a value that didn't exist
+         LOG_WARNING_MESSAGE("Home path returned by " + source.first + " (" +
+                             homePath.absolutePath() + ") does not exist.");
+      }
+   }
+
+   // no luck!
+   LOG_ERROR_MESSAGE("No valid home path found for user");
+   return FilePath();
 }
 
 FilePath userSettingsPath(const FilePath& userHomeDirectory,
@@ -450,7 +543,7 @@ PidType currentProcessId()
    return ::GetCurrentProcessId();
 }
 
-Error executablePath(int argc, char * const argv[],
+Error executablePath(const char * argv0,
                      FilePath* pExecutablePath)
 {
    *pExecutablePath = FilePath(_pgmptr);
@@ -459,12 +552,12 @@ Error executablePath(int argc, char * const argv[],
 
 // installation path
 Error installPath(const std::string& relativeToExecutable,
-                  int argc, char * const argv[],
+                  const char * argv0,
                   FilePath* pInstallationPath)
 {
    // get full executable path
    FilePath exePath;
-   Error error = executablePath(argc, argv, &exePath);
+   Error error = executablePath(argv0, &exePath);
    if (error)
       return error;
 

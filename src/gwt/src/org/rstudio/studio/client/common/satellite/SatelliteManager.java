@@ -23,6 +23,7 @@ import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.ScreenUtils;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -68,7 +69,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
       // cascade correctly -- it wouldn't be totally out of the question
-      // to make htis work but we'd rather not have this complexity
+      // to make this work but we'd rather not have this complexity
       // if we don't need to.
       if (isCurrentWindowSatellite())
       {
@@ -187,6 +188,26 @@ public class SatelliteManager implements CloseHandler<Window>
       pendingEventsBySatelliteName_.clear();
    }
    
+   // close one satellite window 
+   public void closeSatelliteWindow(String name)
+   {
+      for (ActiveSatellite satellite : satellites_)
+      {
+         if (satellite.getName().equals(name) && 
+             !satellite.getWindow().isClosed())
+         {
+            try 
+            { 
+               satellite.getWindow().close();
+            }
+            catch(Throwable e)
+            {
+            }
+            break;
+         }
+      }   
+   }
+   
    // dispatch an event to all satellites
    public void dispatchEvent(JavaScriptObject clientEvent)
    {
@@ -240,6 +261,15 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
+   // dispatch a command to all satellites. 
+   public void dispatchCommand(AppCommand command)
+   {
+      for (ActiveSatellite satellite: satellites_)
+      {
+         callDispatchCommand(satellite.getWindow(), command.getId());
+      }
+   }
+
    // close all satellites when we are closed
    @Override
    public void onClose(CloseEvent<Window> event)
@@ -297,7 +327,7 @@ public class SatelliteManager implements CloseHandler<Window>
       }
    }
    
-   // export the global function requried for satellites to register
+   // export the global function required for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
       $wnd.registerAsRStudioSatellite = $entry(
@@ -336,8 +366,14 @@ public class SatelliteManager implements CloseHandler<Window>
       satellite.dispatchEventToRStudioSatellite(clientEvent);
    }-*/;
    
+   // dispatch command to a satellite
+   private native void callDispatchCommand(JavaScriptObject satellite,
+                                           String commandId) /*-{
+      satellite.dispatchCommandToRStudioSatellite(commandId);
+   }-*/;
+
    // check whether the current window is a satellite (note this method
-   // is also implemeted in the Satellite class -- we don't want this class
+   // is also implemented in the Satellite class -- we don't want this class
    // to depend on Satellite so we duplicate the definition)
    private native boolean isCurrentWindowSatellite() /*-{
       return !!$wnd.isRStudioSatellite;

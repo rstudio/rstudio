@@ -118,6 +118,12 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());
+         
+         autoAppendNewline().setGlobalValue(
+                                 newUiPrefs.autoAppendNewline().getGlobalValue());
+         
+         stripTrailingWhitespace().setGlobalValue(
+                       newUiPrefs.stripTrailingWhitespace().getGlobalValue());
       
          // soft wrap R files
          softWrapRFiles().setGlobalValue(
@@ -276,6 +282,14 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // num spaces for tab
          numSpacesForTab().setProjectValue(
                newUiPrefs.numSpacesForTab().getValue());
+         
+         // auto-append newline
+         autoAppendNewline().setProjectValue(
+               newUiPrefs.autoAppendNewline().getValue());
+         
+         // strip trailing whitespace
+         stripTrailingWhitespace().setProjectValue(
+               newUiPrefs.stripTrailingWhitespace().getValue());
    
          // default encoding
          defaultEncoding().setProjectValue(

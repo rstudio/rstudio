@@ -23,6 +23,7 @@
    outline: none;
    border: none;
    white-space: pre-wrap !important;
+   word-break: break-all;
    margin: 0;
    -webkit-user-select: text;
 }
@@ -41,6 +42,7 @@
 
 .console .prompt {
    white-space: pre;
+   -webkit-user-select: text;
 }
 
 .completionPopup {

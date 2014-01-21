@@ -65,6 +65,14 @@ public class CallFrame extends JavaScriptObject
        return this.function_character_number;
    }-*/;
    
+   public final native String getShinyFunctionLabel() /*-{
+       return this.shiny_function_label;
+   }-*/;
+   
+   public final native boolean hasRealSrcref() /*-{
+       return this.real_sourceref;
+   }-*/;
+
    public final DebugFilePosition getRange() 
    {
       return DebugFilePosition.create(
@@ -76,7 +84,7 @@ public class CallFrame extends JavaScriptObject
    
    public final boolean isNavigable()
    {
-      return isNavigableFilename(getFileName());
+      return hasRealSrcref();
    }
    
    public final static boolean isNavigableFilename(String fileName)

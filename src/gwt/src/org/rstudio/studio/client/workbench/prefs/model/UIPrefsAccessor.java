@@ -19,6 +19,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -98,6 +99,16 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> insertMatching()
    {
       return bool("insert_matching", true);
+   }
+   
+   public PrefValue<Boolean> autoAppendNewline()
+   {
+      return bool("auto_append_newline", false);
+   }
+   
+   public PrefValue<Boolean> stripTrailingWhitespace()
+   {
+      return bool("strip_trailing_whitespace", false);
    }
    
    public PrefValue<Boolean> reindentOnPaste()
@@ -227,6 +238,25 @@ public class UIPrefsAccessor extends Prefs
       return string("pdf_previewer", getDefaultPdfPreview());
    }
    
+   // provide a straight value accessor for pdfPreview which will
+   // automatically prevent the use of the internal viewer on osx
+   public String getPdfPreviewValue()
+   {
+      // get the underlying value
+      String pdfPreview = pdfPreview().getValue();
+      
+      // the internal viewer has stability issues on the mac 
+      // so re-route to system viewer
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         if (pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
+            pdfPreview = PDF_PREVIEW_SYSTEM;
+      }
+      
+      // return the (potentially) adjusted value
+      return pdfPreview;
+   }
+   
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
    {
       return bool("always_enable_concordance", true);
@@ -288,6 +318,21 @@ public class UIPrefsAccessor extends Prefs
       return bool("auto_expand_error_tracebacks", false);
    }
    
+   public PrefValue<Boolean> checkForUpdates()
+   {
+      return bool("check_for_updates", true);
+   }
+   
+   public PrefValue<Boolean> showInternalFunctionsInTraceback()
+   {
+      return bool("show_internal_functions", false);
+   }
+   
+   public PrefValue<Integer> shinyViewerType()
+   {
+      return integer("shiny_viewer_type", ShinyViewerType.SHINY_VIEWER_WINDOW);
+   }
+
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

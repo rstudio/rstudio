@@ -14,24 +14,19 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
+import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -42,12 +37,22 @@ public class NewDirectoryPage extends NewProjectWizardPage
 {
    public NewDirectoryPage()
    {
-      super("New Directory", 
-            "Start a project in a brand new working directory",
-            "Create New Project",
-            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
-            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
+      this("Empty Project", 
+           "Create a new project in an empty directory",
+           "Create New Project",
+           NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
+           NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
    }
+   
+   public NewDirectoryPage(String title, 
+                           String subTitle, 
+                           String pageCaption, 
+                           ImageResource image,
+                           ImageResource largeImage)
+   {
+      super(title, subTitle, pageCaption, image, largeImage);
+   }
+
 
    @Override
    protected void onAddWidgets()
@@ -57,34 +62,16 @@ public class NewDirectoryPage extends NewProjectWizardPage
       HorizontalPanel panel = new HorizontalPanel();
       panel.addStyleName(styles.wizardMainColumn());
       
-      // project type
-      String[] labels = {"(Default)", "Package"};
-      String[] values = {"none", "package"};
-      listProjectType_ = new SelectWidget("Type:",
-                                          labels,
-                                          values,
-                                          false);
-      listProjectType_.addChangeHandler(new ChangeHandler() {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            txtProjectName_.setFocus(true);
-            boolean isPackage = !listProjectType_.getValue().equals("none");
-            listCodeFiles_.setVisible(isPackage);
-            if (isPackage)
-               dirNameLabel_.setText("Package name:");
-            else
-               dirNameLabel_.setText("Directory name:");
-         }
-      });
-      panel.add(listProjectType_);
-     
+      // create the dir name label
+      dirNameLabel_ = new Label("Directory name:");
+      dirNameLabel_.addStyleName(styles.wizardTextEntryLabel());
+      
+      // top panel widgets
+      onAddTopPanelWidgets(panel);
       
       // dir name
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.addStyleName(styles.newProjectDirectoryName());
-      dirNameLabel_ = new Label("Directory name:");
-      dirNameLabel_.addStyleName(styles.wizardTextEntryLabel());
       namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
       txtProjectName_.setWidth("100%");
@@ -92,10 +79,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       panel.add(namePanel);
       addWidget(panel);
       
-      // code files panel
-      listCodeFiles_ = new CodeFilesList();
-      listCodeFiles_.setVisible(false);
-      addWidget(listCodeFiles_);
+      onAddBodyWidgets();
       
       addSpacer();
       
@@ -118,14 +102,29 @@ public class NewDirectoryPage extends NewProjectWizardPage
       }
    }
    
+   protected void onAddTopPanelWidgets(HorizontalPanel panel)
+   {
+   }
+   
+   protected void onAddBodyWidgets()
+   {
+   }
+   
+   protected NewPackageOptions getNewPackageOptions()
+   {
+      return null;
+   }
+   
+   protected NewShinyAppOptions getNewShinyAppOptions()
+   {
+      return null;
+   }
+   
    @Override 
    protected void initialize(NewProjectInput input)
    {
       super.initialize(input);
-      
-      if (input.getContext().isRcppAvailable())
-         listProjectType_.addChoice("Package w/ Rcpp", "package-rcpp");
-      
+          
       newProjectParent_.setText(input.getDefaultNewProjectLocation().getPath());
    }
 
@@ -162,20 +161,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
          if (!dir.equals(defaultNewProjectLocation_))
             newDefaultLocation = dir;
          
-         NewPackageOptions newPackageOptions = null;
-         if (!listProjectType_.getValue().equals("none"))
-         {
-            newPackageOptions = NewPackageOptions.create(
-                listProjectType_.getValue().equals("package-rcpp"),  
-                JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
-         }
-         
-         
          return new NewProjectResult(projFile, 
                                      chkGitInit_.getValue(), 
                                      newDefaultLocation, 
                                      null,
-                                     newPackageOptions);
+                                     getNewPackageOptions(),
+                                     getNewShinyAppOptions());
       }
       else
       {
@@ -188,19 +179,10 @@ public class NewDirectoryPage extends NewProjectWizardPage
    public void focus()
    {
       txtProjectName_.setFocus(true);
-      
-      // workaround qt crash on mac desktop
-      if (BrowseCap.isMacintoshDesktop())
-      {
-         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
-                                  listProjectType_.getListBox());
-      }
    }
    
-   private Label dirNameLabel_;
-   private SelectWidget listProjectType_;
-   private TextBox txtProjectName_;
-   private CodeFilesList listCodeFiles_;
+   protected Label dirNameLabel_;
+   protected TextBox txtProjectName_;
    private CheckBox chkGitInit_;
    
    private DirectoryChooserTextBox newProjectParent_;

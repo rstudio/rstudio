@@ -65,7 +65,8 @@ int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
- 
+bool isActiveBinding(const std::string&, const SEXP);
+
 // type checking
 bool isString(SEXP object);
 bool isLanguage(SEXP object);
@@ -84,6 +85,14 @@ bool asLogical(SEXP object);
 
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
+SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);
+
+// weak/external pointers and finalizers
+SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
+void registerFinalizer(SEXP s, R_CFinalizer_t fun);
+SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);
+void* getExternalPtrAddr(SEXP extptr);
+void clearExternalPtr(SEXP extptr);
 
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);
@@ -240,7 +249,6 @@ core::Error setNamedListElement(SEXP listSEXP,
       return error;
    }
 }
-
 
 
 class PreservedSEXP : boost::noncopyable

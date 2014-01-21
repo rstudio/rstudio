@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+
+<!-- standards mode -->
+<html>
+  <head>
+     
+  </head>
+                                     
+  <body>
+     <script>
+       
+           var desktop = window.Desktop;
+           
+           document.write(desktop.proportionalFont() + ' ');
+           document.write(desktop.fixedWidthFont() + '\n');
+           desktop.collectPendingQuitRequest();
+           desktop.workbenchInitialized();
+           desktop.browseUrl("http://www.foo.bar");
+           document.write(desktop.getOpenFileName('caption', 'dir', 'filter'));
+           document.write(desktop.getSaveFileName('caption', 'dir', 'cpp', true));
+           desktop.undo();
+           desktop.redo();
+           desktop.clipboardCut();
+           desktop.clipboardCopy();
+           desktop.clipboardPaste();
+           document.write(desktop.getUriForPath('/var/foo'));
+           
+           document.write(desktop.getRVersion());
+           document.write(desktop.chooseRVersion());
+           document.write('can choose: ' + desktop.canChooseRVersion());
+           document.write('is retina: ' + desktop.isRetina());
+           
+           desktop.openMinimalWindow('foo', 'url', 100, 100);
+           desktop.activateSatelliteWindow('foo');
+           desktop.prepareForSatelliteWindow('foo', 100, 100);
+           desktop.copyImageToClipboard(0,0,100,100);
+           
+           document.write('metafile: ' + desktop.supportsClipboardMetafile());
+           document.write('showMessageBox: ' + desktop.showMessageBox(1, 'foo', 'bar', 'buttons', 1, 1));
+           
+           result = desktop.promptForText("title",
+                                          "caption",
+                                          "defaultValue",
+                                          true,
+                                          "extraOptionPrompt",
+                                          true,
+                                          false,
+                                          0,
+                                          1);
+          document.write('\n' + result);
+          
+          desktop.checkForUpdates();
+          desktop.showAboutDialog();
+          desktop.bringMainFrameToFront();
+          
+          document.write('filterText: ' + desktop.filterText('foo') + '\n');
+          desktop.cleanClipboard();
+          desktop.setPendingQuit();
+          desktop.openProjectInNewWindow('foo');
+          desktop.openTerminal('foo', 'workdir', 'extra');
+          
+          document.write(desktop.getFontList() + '\n');
+          document.write(desktop.getFixedWidthFont() + '\n');
+          desktop.setFixedWidthFont('foo');
+          document.write(desktop.getZoomLevels() + '\n');
+          document.write(desktop.getZoomLevel() + '\n');
+          desktop.setZoomLevel(2);
+          document.write(desktop.forceFastScrollFactor() + '\n');
+          document.write(desktop.getDesktopSynctexViewer() + '\n');
+          
+          desktop.externalSynctexPreview('foo', 3);
+          desktop.externalSynctexView('file', 'src', 1, 1);
+          document.write(desktop.supportsFullscreenMode() + '\n');
+          desktop.toggleFullscreenMode();
+          desktop.showKeyboardShortcutHelp();
+          desktop.launchSession(true);
+          desktop.reloadZoomWindow();
+          desktop.setViewerUrl('foo');
+          
+     </script>
+  </body>
+
+  <a href="progress.htm" target="_blank">progress</a>
+
+
+</html>
+

@@ -4,6 +4,7 @@
 @external fixedWidthFont;
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
+@external ace_sb;
 @external cueText;
 @external search;
 @external highlight, disabled;
@@ -243,6 +244,11 @@ pre {
 	background-image: EXECUTINGLINE;
 }
 
+.ace_sb
+{
+	z-index: 6;
+}
+
 .gwt-MenuBar {
    cursor: default;
 }
@@ -341,6 +347,7 @@ pre {
 
 .gwt-SuggestBoxPopup {
    z-index: 1002;	
+   cursor: default;
 }
 
 .gwt-DialogBox .dialogTopLeft, .miniDialogPopupPanel .popupTopLeft {
@@ -998,7 +1005,7 @@ body.ubuntu_mono .searchBox {
    cursor: pointer;
 }
 
-@sprite tr.environmentDataFrameRow td+td {
+@sprite td.environmentDataFrameCol {
    gwt-image: 'zoomDataset';
    background-position: right center; 
 }

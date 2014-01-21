@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -31,8 +32,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -69,7 +70,8 @@ public class Shell implements ConsoleInputHandler,
                               ConsoleExecutePendingInputEvent.Handler,
                               SendToConsoleHandler,
                               DebugModeChangedEvent.Handler,
-                              RunCommandWithDebugEvent.Handler
+                              RunCommandWithDebugEvent.Handler,
+                              UnhandledErrorEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -132,6 +134,7 @@ public class Shell implements ConsoleInputHandler,
       eventBus.addHandler(SendToConsoleEvent.TYPE, this);
       eventBus.addHandler(DebugModeChangedEvent.TYPE, this);
       eventBus.addHandler(RunCommandWithDebugEvent.TYPE, this);
+      eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
       
       final CompletionManager completionManager
                   = new RCompletionManager(view_.getInputEditorDisplay(),
@@ -245,29 +248,19 @@ public class Shell implements ConsoleInputHandler,
 
    public void onConsoleWriteError(final ConsoleWriteErrorEvent event)
    {
-      // when writing an error, wait for event queue to empty -- if it contains
-      // a callstack emitted from our custom error handler, we'll want to wire 
-      // that up at once. 
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {         
-         @Override
-         public void execute()
-         {
-            UnhandledError err = errorManager_.consumeLastError();
-            if (err != null
-                && err.getErrorMessage().equals(event.getError()))
-            {
-               view_.consoleWriteExtendedError(
-                     event.getError(), err, 
-                     prefs_.autoExpandErrorTracebacks().getValue(),
-                     getHistoryEntry(-1));
-            }
-            else
-            {
-               view_.consoleWriteError(event.getError());
-            }
-         }
-      });
+      view_.consoleWriteError(event.getError());
+   }
+   
+   public void onUnhandledError(UnhandledErrorEvent event)
+   {
+      if (!debugging_)
+      {
+         view_.consoleWriteExtendedError(
+               event.getError().getErrorMessage(),
+               event.getError(), 
+               prefs_.autoExpandErrorTracebacks().getValue(),
+               getHistoryEntry(0));
+      }
    }
    
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
@@ -339,13 +332,20 @@ public class Shell implements ConsoleInputHandler,
    {  
       final InputEditorDisplay display = view_.getInputEditorDisplay();
       
+      // get anything already at the console
+      final String previousInput = StringUtil.notNull(display.getText());
+      
       // define code block we execute at finish
       Command finishSendToConsole = new Command() {
          @Override
          public void execute()
          {
             if (event.shouldExecute())
+            {
                processCommandEntry();
+               if (previousInput.length() > 0)
+                  display.setText(previousInput);
+            }
             
             if (!event.shouldExecute() || event.shouldFocus())
             {
@@ -396,6 +396,7 @@ public class Shell implements ConsoleInputHandler,
       {
          view_.ensureInputVisible();
       }
+      debugging_ = event.debugging();
    }
    
    @Override
@@ -642,4 +643,5 @@ public class Shell implements ConsoleInputHandler,
    private static final String STATE_INPUT = "input";
 
    private boolean restoreFocus_ = true;
+   private boolean debugging_ = false;
 }

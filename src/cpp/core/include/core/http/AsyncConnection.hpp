@@ -19,6 +19,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/io_service.hpp>
 
+#include <core/http/Socket.hpp>
+
 namespace core {
 
 class Error;
@@ -29,7 +31,7 @@ class Request;
 class Response;
 
 // abstract base (insulate clients from knowledge of protocol-specifics)
-class AsyncConnection
+class AsyncConnection : public Socket
 {
 public:
    virtual ~AsyncConnection() {}
@@ -42,10 +44,11 @@ public:
 
    // populate or set response then call writeResponse when done
    virtual http::Response& response() = 0;
-   virtual void writeResponse() = 0;
+   virtual void writeResponse(bool close = true) = 0;
 
    // simple wrappers for writing an existing response or error
-   virtual void writeResponse(const http::Response& response) = 0;
+   virtual void writeResponse(const http::Response& response,
+                              bool close = true) = 0;
    virtual void writeError(const Error& error) = 0;
 };
 

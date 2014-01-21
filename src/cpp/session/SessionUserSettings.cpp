@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include "modules/SessionErrors.hpp"
+#include "modules/SessionShinyViewer.hpp"
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -61,7 +62,8 @@ void setCRANReposOption(const std::string& url)
 {
    if (!url.empty())
    {
-      Error error = r::exec::RFunction(".rs.setCRANRepos", url).call();
+      Error error = r::exec::RFunction(".rs.setCRANReposFromSettings",
+                                       url).call();
       if (error)
          LOG_ERROR(error);
    }
@@ -242,6 +244,12 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    int numSpacesForTab = readPref<int>(prefs, "num_spaces_for_tab", 2);
    pNumSpacesForTab_.reset(new int(numSpacesForTab));
 
+   bool autoAppendNewline = readPref<bool>(prefs, "auto_append_newline", false);
+   pAutoAppendNewline_.reset(new bool(autoAppendNewline));
+
+   bool stripTrailingWhitespace = readPref<bool>(prefs, "strip_trailing_whitespace", false);
+   pStripTrailingWhitespace_.reset(new bool(stripTrailingWhitespace));
+
    std::string enc = readPref<std::string>(prefs, "default_encoding", "");
    pDefaultEncoding_.reset(new std::string(enc));
 
@@ -262,6 +270,9 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
 
    bool handleErrorsInUserCodeOnly = readPref<bool>(prefs, "handle_errors_in_user_code_only", true);
    pHandleErrorsInUserCodeOnly_.reset(new bool(handleErrorsInUserCodeOnly));
+
+   int shinyViewerType = readPref<int>(prefs, "shiny_viewer_type", modules::shiny_viewer::SHINY_VIEWER_WINDOW);
+   pShinyViewerType_.reset(new int(shinyViewerType));
 }
 
 
@@ -275,6 +286,16 @@ bool UserSettings::useSpacesForTab() const
 int UserSettings::numSpacesForTab() const
 {
    return readUiPref<int>(pNumSpacesForTab_);
+}
+
+bool UserSettings::autoAppendNewline() const
+{
+   return readUiPref<bool>(pAutoAppendNewline_);
+}
+
+bool UserSettings::stripTrailingWhitespace() const
+{
+   return readUiPref<bool>(pStripTrailingWhitespace_);
 }
 
 std::string UserSettings::defaultEncoding() const
@@ -305,6 +326,11 @@ std::string UserSettings::spellingLanguage() const
 bool UserSettings::handleErrorsInUserCodeOnly() const
 {
    return readUiPref<bool>(pHandleErrorsInUserCodeOnly_);
+}
+
+int UserSettings::shinyViewerType() const
+{
+   return readUiPref<int>(pShinyViewerType_);
 }
 
 std::vector<std::string> UserSettings::spellingCustomDictionaries() const
@@ -342,8 +368,9 @@ void UserSettings::setRprofileOnResume(bool rProfileOnResume)
 }
 
 int UserSettings::saveAction() const
-{
-   return settings_.getInt(kSaveAction, -1);
+{   
+   return settings_.getInt(kSaveAction,
+                           session::options().saveActionDefault());
 }
 
 void UserSettings::setSaveAction(int saveAction)

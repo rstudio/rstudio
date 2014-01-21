@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent.NavigationMethod;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -50,15 +52,20 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettings;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
@@ -66,20 +73,21 @@ import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentO
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class EnvironmentPresenter extends BasePresenter
         implements OpenDataFileHandler
-
 {
    public interface Binder
            extends CommandBinder<Commands, EnvironmentPresenter> {}
@@ -89,18 +97,25 @@ public class EnvironmentPresenter extends BasePresenter
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
+      void clearSelection();
       void setContextDepth(int contextDepth);
       void removeObject(String object);
-      void setEnvironmentName(String name);
+      void setEnvironmentName(String name, boolean local);
       void setCallFrames(JsArray<CallFrame> frames);
       int getScrollPosition();
       void setScrollPosition(int scrollPosition);
+      void setObjectDisplayType(int type);
+      int getObjectDisplayType();
+      int getSortColumn();
+      boolean getAscendingSort();
+      void setSort(int sortColumn, boolean sortAscending);
       void setExpandedObjects(JsArrayString objects);
       String[] getExpandedObjects();
       boolean clientStateDirty();
       void setClientStateClean();
       void resize();
       void setBrowserRange(DebugFilePosition filePosition);
+      List<String> getSelectedObjects();
    }
    
    @Inject
@@ -135,6 +150,21 @@ public class EnvironmentPresenter extends BasePresenter
       currentBrowsePosition_ = null;
       sourceShim_ = sourceShim;
       debugCommander_ = debugCommander;
+      session_ = session;
+      requeryContextTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            server_.requeryContext(new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+               }
+            });
+         }
+      };
 
       eventBus.addHandler(EnvironmentRefreshEvent.TYPE,
                           new EnvironmentRefreshEvent.Handler()
@@ -146,6 +176,19 @@ public class EnvironmentPresenter extends BasePresenter
          }
       });
       
+      eventBus.addHandler(RestartStatusEvent.TYPE, 
+                          new RestartStatusEvent.Handler()
+      {
+         @Override
+         public void onRestartStatus(RestartStatusEvent event)
+         {
+            if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+            {
+               refreshView();
+            }
+         }
+      });
+
       eventBus.addHandler(ContextDepthChangedEvent.TYPE, 
                           new ContextDepthChangedEvent.Handler()
       {
@@ -153,11 +196,13 @@ public class EnvironmentPresenter extends BasePresenter
          public void onContextDepthChanged(ContextDepthChangedEvent event)
          {
             loadNewContextState(event.getContextDepth(), 
-                  event.getFunctionName(),
+                  event.getEnvironmentName(),
+                  event.environmentIsLocal(),
                   event.getCallFrames(),
                   event.useProvidedSource(),
                   event.getFunctionCode());
             setViewFromEnvironmentList(event.getEnvironmentList());
+            requeryContextTimer_.cancel();
          }
       });
       
@@ -191,14 +236,35 @@ public class EnvironmentPresenter extends BasePresenter
             {
                currentBrowsePosition_ = event.getRange();
                view_.setBrowserRange(currentBrowsePosition_);
-               openOrUpdateFileBrowsePoint(true);
+               openOrUpdateFileBrowsePoint(true, false);
+            }
+            requeryContextTimer_.cancel();
+         }
+      });
+      
+      eventBus.addHandler(ConsoleWriteInputEvent.TYPE,
+            new ConsoleWriteInputHandler()
+      {
+         @Override
+         public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+         {
+            String input = event.getInput().trim();
+            if (input.equals(DebugCommander.STOP_COMMAND) || 
+                input.equals(DebugCommander.NEXT_COMMAND) || 
+                input.equals(DebugCommander.CONTINUE_COMMAND))
+            {
+               // When a debug command is issued, we expect to hear back from
+               // the server--either a context depth change or browser line
+               // change event. If neither has occurred after some reasonable
+               // time, poll the server once for its current status.
+               requeryContextTimer_.schedule(500);
             }
          }
       });
       
       new JSObjectStateValue(
-              "environment-pane",
-              "environmentPaneState",
+              "environment-panel",
+              "environmentPanelSettings",
               ClientState.TEMPORARY,
               session.getSessionInfo().getClientState(),
               false)
@@ -211,6 +277,8 @@ public class EnvironmentPresenter extends BasePresenter
                EnvironmentClientState clientState = value.cast();
                view_.setScrollPosition(clientState.getScrollPosition());
                view_.setExpandedObjects(clientState.getExpandedObjects());
+               view_.setSort(clientState.getSortColumn(), 
+                             clientState.getAscendingSort());
             }
          }
 
@@ -221,7 +289,9 @@ public class EnvironmentPresenter extends BasePresenter
             // our state is clean until the user makes more changes.
             view_.setClientStateClean();
             return EnvironmentClientState.create(view_.getScrollPosition(),
-                                                 view_.getExpandedObjects())
+                                                 view_.getExpandedObjects(),
+                                                 view_.getSortColumn(),
+                                                 view_.getAscendingSort())
                                          .cast();
          }
 
@@ -229,6 +299,28 @@ public class EnvironmentPresenter extends BasePresenter
          protected boolean hasChanged()
          {
             return view_.clientStateDirty();
+         }
+      };
+      
+      // Store the object display type more permanently than the other 
+      // client state settings; it's likely to be a user preference. 
+      new IntStateValue(
+              "environment-grid",
+              "objectDisplayType",
+              ClientState.PERSISTENT,
+              session.getSessionInfo().getClientState())
+      {
+         @Override
+         protected void onInit(Integer value)
+         {
+            if (value != null)
+               view_.setObjectDisplayType(value);
+         }
+
+         @Override
+         protected Integer getValue()
+         {
+            return view_.getObjectDisplayType();
          }
       };
    }
@@ -242,22 +334,44 @@ public class EnvironmentPresenter extends BasePresenter
    void onClearWorkspace()
    {
       view_.bringToFront();
+      final List<String> objectNames = view_.getSelectedObjects();
 
-      new ClearAllDialog(new ProgressOperationWithInput<Boolean>() {
+      new ClearAllDialog(objectNames.size(), 
+                         new ProgressOperationWithInput<Boolean>() {
 
          @Override
          public void execute(Boolean includeHidden, ProgressIndicator indicator)
          {
             indicator.onProgress("Removing objects...");
-            server_.removeAllObjects(
-                    includeHidden,
-                    new VoidServerRequestCallback(indicator) {
-                        @Override
-                        public void onSuccess()
-                        {
-                           view_.clearObjects();
-                        }
-                    });
+            if (objectNames.size() == 0)
+            {
+               server_.removeAllObjects(
+                       includeHidden,
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              view_.clearSelection();
+                              view_.clearObjects();
+                           }
+                       });
+            }
+            else
+            {
+               server_.removeObjects(
+                       objectNames, 
+                       new VoidServerRequestCallback(indicator) {
+                           @Override
+                           public void onSuccess()
+                           {
+                              view_.clearSelection();
+                              for (String obj: objectNames)
+                              {
+                                 view_.removeObject(obj);
+                              }
+                           }
+                       });
+            }
          }
       }).showModal();
    }
@@ -339,10 +453,10 @@ public class EnvironmentPresenter extends BasePresenter
    {
       final String dataFilePath = event.getFile().getPath();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-           "Confirm Load Workspace",
+           "Confirm Load RData",
 
            "Do you want to load the R data file \"" + dataFilePath + "\" " +
-           "into your workspace?",
+           "into the global environment?",
 
            new ProgressOperation() {
               public void execute(ProgressIndicator indicator)
@@ -363,11 +477,28 @@ public class EnvironmentPresenter extends BasePresenter
    {
       super.onBeforeSelected();
 
-      // if the view isn't yet initialized, refresh it to get the initial list
-      // of objects in the environment
+      // if the view isn't yet initialized, initialize it with the list of 
+      // objects in the environment
       if (!initialized_)
       {
-         refreshView();
+         // we may have a cached list of objects in the session info--if
+         // we do, use that list; otherwise, refresh the view to get a new one.
+         // (the list may be empty e.g. on cold session startup when the 
+         // environment was loaded from .RData and therefore not available 
+         // during session init; we also want to fetch a fresh list in this
+         // case).
+         JsArray<RObject> environmentList = 
+              session_.getSessionInfo().getEnvironmentState().environmentList();
+         if (environmentList == null ||
+             environmentList.length() == 0)
+         {
+            refreshView();
+         }
+         else
+         {
+            setViewFromEnvironmentList(environmentList);
+         }
+         initialized_ = true;
       }
    }
 
@@ -384,13 +515,16 @@ public class EnvironmentPresenter extends BasePresenter
       }
    }
 
-   public void initialize(EnvironmentState environmentState)
+   public void initialize(EnvironmentContextData environmentState)
    {
       loadNewContextState(environmentState.contextDepth(),
-            environmentState.functionName(),
+            environmentState.environmentName(),
+            environmentState.environmentIsLocal(),
             environmentState.callFrames(),
-            environmentState.getUseProvidedSource(),
-            environmentState.getFunctionCode());
+            environmentState.useProvidedSource(),
+            environmentState.functionCode());
+      setViewFromEnvironmentList(environmentState.environmentList());
+      initialized_ = true;
    }
    
    public void setContextDepth(int contextDepth)
@@ -416,20 +550,23 @@ public class EnvironmentPresenter extends BasePresenter
 
    private void loadNewContextState(int contextDepth, 
          String environmentName,
+         boolean isLocalEvironment, 
          JsArray<CallFrame> callFrames,
          boolean useBrowseSources,
          String functionCode)
    {
       setContextDepth(contextDepth);
       environmentName_ = environmentName;
-      view_.setEnvironmentName(environmentName_);
+      view_.setEnvironmentName(environmentName_, isLocalEvironment);
       if (callFrames != null && 
-          callFrames.length() > 0)
+          callFrames.length() > 0 &&
+          contextDepth > 0)
       {
          view_.setCallFrames(callFrames);
          CallFrame browseFrame = callFrames.get(
                  contextDepth_ - 1);
          String newBrowseFile = browseFrame.getFileName().trim();
+         boolean sourceChanged = false;
          
          // check to see if the file we're about to switch to contains unsaved
          // changes. if it does, use the source supplied by the server, even if
@@ -449,21 +586,25 @@ public class EnvironmentPresenter extends BasePresenter
                   useBrowseSources != useCurrentBrowseSource_) &&
              !(useBrowseSources && useCurrentBrowseSource_))
          {
-            openOrUpdateFileBrowsePoint(false);
+            openOrUpdateFileBrowsePoint(false, false);
          }
 
          useCurrentBrowseSource_ = useBrowseSources;
-         currentBrowseSource_ = functionCode;
+         if (!currentBrowseSource_.equals(functionCode))
+         {
+            currentBrowseSource_ = functionCode;
+            sourceChanged = true;
+         }
          
          // highlight the active line in the file now being debugged
          currentBrowseFile_ = newBrowseFile;
          currentBrowsePosition_ = browseFrame.getRange();
          currentFunctionLineNumber_ = browseFrame.getFunctionLineNumber();
-         openOrUpdateFileBrowsePoint(true);
+         openOrUpdateFileBrowsePoint(true, sourceChanged);
       }   
       else
       {
-         openOrUpdateFileBrowsePoint(false);
+         openOrUpdateFileBrowsePoint(false, false);
          useCurrentBrowseSource_ = false;
          currentBrowseSource_ = "";
          currentBrowseFile_ = "";
@@ -490,11 +631,14 @@ public class EnvironmentPresenter extends BasePresenter
       return false;
    }
    
-   private void openOrUpdateFileBrowsePoint(boolean debugging)
+   private void openOrUpdateFileBrowsePoint(boolean debugging, 
+                                            boolean sourceChanged)
    {
       String file = currentBrowseFile_;
       
-      if (!CallFrame.isNavigableFilename(file))
+      // if we have no file and no source code, we can do no navigation 
+      if (!CallFrame.isNavigableFilename(file) &&
+          !useCurrentBrowseSource_)
       {
          return;
       }
@@ -532,15 +676,28 @@ public class EnvironmentPresenter extends BasePresenter
       {
          if (debugging)
          {
-            eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                  SearchPathFunctionDefinition.create(
-                        environmentName_, 
-                        "source unavailable or out of sync", 
-                        currentBrowseSource_,
-                        true),
-                  currentBrowsePosition_.functionRelativePosition(
-                        currentFunctionLineNumber_),
-                  contextDepth_ == 1));
+            if (sourceChanged)
+            {
+               // if this is a different source file than we already have open,
+               // open it 
+               eventBus_.fireEvent(new CodeBrowserNavigationEvent(
+                     SearchPathFunctionDefinition.create(
+                           environmentName_, 
+                           "debugging", 
+                           currentBrowseSource_,
+                           true),
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_),
+                     contextDepth_ == 1));
+            }
+            else if (currentBrowsePosition_.getLine() > 0)
+            {
+               // if this is the same one currently open, just move the 
+               // highlight
+               eventBus_.fireEvent(new CodeBrowserHighlightEvent(
+                     currentBrowsePosition_.functionRelativePosition(
+                           currentFunctionLineNumber_)));
+            }
          }
          else
          {
@@ -566,16 +723,17 @@ public class EnvironmentPresenter extends BasePresenter
       // start showing the progress spinner and initiate the request
       view_.setProgress(true);
       refreshingView_ = true;
-      server_.listEnvironment(new ServerRequestCallback<JsArray<RObject>>()
+      server_.getEnvironmentState(
+            new ServerRequestCallback<EnvironmentContextData>()
       {
 
          @Override
-         public void onResponseReceived(JsArray<RObject> objects)
+         public void onResponseReceived(EnvironmentContextData data)
          {
-            setViewFromEnvironmentList(objects);
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
 
          @Override
@@ -599,16 +757,18 @@ public class EnvironmentPresenter extends BasePresenter
               input,
               varname,
               "Import Dataset",
-              new OperationWithInput<ImportFileSettings>()
+              new OperationWithInput<ImportFileSettingsDialogResult>()
               {
                  public void execute(
-                         ImportFileSettings input)
+                       ImportFileSettingsDialogResult result)
                  {
+                    ImportFileSettings input = result.getSettings();
                     String var = StringUtil.toRSymbolName(input.getVarname());
                     String code =
                             var +
                             " <- " +
-                            makeCommand(input) +
+                            makeCommand(input, 
+                                        result.getDefaultStringsAsFactors()) +
                             "\n  View(" + var + ")";
                     eventBus_.fireEvent(new SendToConsoleEvent(code, true));
                  }
@@ -617,21 +777,22 @@ public class EnvironmentPresenter extends BasePresenter
       dialog.showModal();
    }
 
-   private String makeCommand(ImportFileSettings input)
+   private String makeCommand(ImportFileSettings input,
+                              boolean defaultStringsAsFactors)
    {
       HashMap<String, ImportFileSettings> commandDefaults_ =
               new HashMap<String, ImportFileSettings>();
 
       commandDefaults_.put("read.table", new ImportFileSettings(
-              null, null, false, "", ".", "\"'"));
+              null, null, false, "", ".", "\"'", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv", new ImportFileSettings(
-              null, null, true, ",", ".", "\""));
+              null, null, true, ",", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim", new ImportFileSettings(
-              null, null, true, "\t", ".", "\""));
+              null, null, true, "\t", ".", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.csv2", new ImportFileSettings(
-              null, null, true, ";", ",", "\""));
+              null, null, true, ";", ",", "\"", "NA", defaultStringsAsFactors));
       commandDefaults_.put("read.delim2", new ImportFileSettings(
-              null, null, true, "\t", ",", "\""));
+              null, null, true, "\t", ",", "\"", "NA", defaultStringsAsFactors));
 
       String command = "read.table";
       ImportFileSettings settings = commandDefaults_.get("read.table");
@@ -652,13 +813,18 @@ public class EnvironmentPresenter extends BasePresenter
       code.append("(");
       code.append(StringUtil.textToRLiteral(input.getFile().getPath()));
       if (input.isHeader() != settings.isHeader())
-         code.append(", header=" + (input.isHeader() ? "T" : "F"));
+         code.append(", header=" + (input.isHeader() ? "TRUE" : "FALSE"));
       if (!input.getSep().equals(settings.getSep()))
          code.append(", sep=" + StringUtil.textToRLiteral(input.getSep()));
       if (!input.getDec().equals(settings.getDec()))
          code.append(", dec=" + StringUtil.textToRLiteral(input.getDec()));
       if (!input.getQuote().equals(settings.getQuote()))
          code.append(", quote=" + StringUtil.textToRLiteral(input.getQuote()));
+      if (!input.getNAStrings().equals(settings.getNAStrings()))
+         code.append(", na.strings=" + StringUtil.textToRLiteral(input.getNAStrings()));
+      if (input.getStringsAsFactors() != settings.getStringsAsFactors())
+         code.append(", stringsAsFactors=" + (input.getStringsAsFactors() ? "TRUE" : "FALSE"));
+         
       code.append(")");
 
       return code.toString();
@@ -674,6 +840,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final EventBus eventBus_;
    private final SourceShim sourceShim_;
    private final DebugCommander debugCommander_;
+   private final Session session_;
    
    private int contextDepth_;
    private boolean refreshingView_;
@@ -684,4 +851,5 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean useCurrentBrowseSource_;
    private String currentBrowseSource_;
    private String environmentName_;
+   private Timer requeryContextTimer_;
 }

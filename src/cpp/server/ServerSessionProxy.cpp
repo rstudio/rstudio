@@ -19,6 +19,8 @@
 #include <sstream>
 #include <map>
 
+#include <boost/regex.hpp>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <boost/thread/mutex.hpp>
@@ -34,9 +36,11 @@
 #include <core/WaitUtils.hpp>
 
 #include <core/http/SocketUtils.hpp>
+#include <core/http/SocketProxy.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/LocalStreamAsyncClient.hpp>
+#include <core/http/TcpIpAsyncClient.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
@@ -62,7 +66,12 @@ namespace {
 
 void launchSessionRecovery(const std::string& username)
 {
-   Error error = sessionManager().launchSession(username);
+   // recreate streams dir if necessary
+   Error error = session::local_streams::ensureStreamsDir();
+   if (error)
+      LOG_ERROR(error);
+
+   error = sessionManager().launchSession(username);
    if (error)
       LOG_ERROR(error);
 }
@@ -87,6 +96,130 @@ void handleProxyResponse(
 
    // write the response
    ptrConnection->writeResponse(response);
+}
+
+class LocalhostAsyncClient : public http::TcpIpAsyncClient
+{
+public:
+   LocalhostAsyncClient(boost::asio::io_service& ioService,
+                        const std::string& address,
+                        const std::string& port)
+      : http::TcpIpAsyncClient(ioService, address, port)
+   {
+   }
+
+private:
+   // detect when we've got the whole response and force a response and a
+   // close of the socket (this is because the current version of httpuv
+   // expects a close from the client end of the socket)
+   virtual bool stopReadingAndRespond()
+   {
+      return response_.body().length() >= response_.contentLength();
+   }
+
+   // ensure that we don't close the connection when a websockets
+   // upgrade is taking place
+   virtual bool keepConnectionAlive()
+   {
+      return response_.statusCode() == http::status::SwitchingProtocols;
+   }
+};
+
+
+void rewriteLocalhostAddressHeader(const std::string& headerName,
+                                   const http::Request& originalRequest,
+                                   const std::string& port,
+                                   http::Response* pResponse)
+{
+   // get the address and the proxied address
+   std::string address = pResponse->headerValue(headerName);
+   std::string proxiedAddress = "http://localhost:" + port;
+   std::string portPath = "/p/" + port;
+
+   // relative address, just prepend port
+   if (boost::algorithm::starts_with(address, "/"))
+   {
+      address = portPath + address;
+   }
+   // proxied address, substitute base url
+   else if (boost::algorithm::starts_with(address, proxiedAddress))
+   {
+      // find the base url from the original request
+      std::string originalUri = originalRequest.absoluteUri();
+      std::string::size_type pos = originalUri.find(portPath);
+      if (pos != std::string::npos) // precaution, should always be true
+      {
+          // substitute the base url for the proxied address
+         std::string baseUrl = originalUri.substr(0, pos + portPath.length());
+         address = baseUrl + address.substr(proxiedAddress.length());
+      }
+   }
+
+   // replace the header (no-op if both of the above tests fail)
+   pResponse->replaceHeader(headerName, address);
+}
+
+void handleLocalhostResponse(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
+      const std::string& port,
+      const http::Response& response)
+{
+   // check for upgrade to websockets
+   if (response.statusCode() == http::status::SwitchingProtocols)
+   {
+      // write the response but don't close the connection
+      ptrConnection->writeResponse(response, false);
+
+      // cast to generic socket types
+      boost::shared_ptr<http::Socket> ptrClient =
+         boost::static_pointer_cast<http::Socket>(ptrConnection);
+      boost::shared_ptr<http::Socket> ptrServer =
+         boost::static_pointer_cast<http::Socket>(ptrLocalhost);
+
+      // connect the sockets
+      http::SocketProxy::create(ptrClient, ptrServer);
+   }
+   // normal response, write and close (handle redirects if necessary)
+   else
+   {   
+      // re-write location headers if necessary
+      const char * const kLocation = "Location";
+      const char * const kRefresh = "Refresh";
+      std::string location = response.headerValue(kLocation);
+      std::string refresh = response.headerValue(kRefresh);
+      if (!location.empty() || !refresh.empty())
+      {
+         // make a copy of the response to rewrite the headers into
+         http::Response redirectResponse;
+         redirectResponse.assign(response);
+
+         // handle Location
+         if (!location.empty())
+         {
+            rewriteLocalhostAddressHeader(kLocation,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // handle Refresh
+         if (!refresh.empty())
+         {
+            rewriteLocalhostAddressHeader(kRefresh,
+                                          ptrConnection->request(),
+                                          port,
+                                          &redirectResponse);
+         }
+
+         // write the copy
+         ptrConnection->writeResponse(redirectResponse);
+      }
+      else
+      {
+         ptrConnection->writeResponse(response);
+      }
+   }
 }
 
 
@@ -243,7 +376,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 
 Error initialize()
 { 
-   return session::local_streams::createStreamsDir();
+   return session::local_streams::ensureStreamsDir();
 }
 
 Error runVerifyInstallationSession()
@@ -305,6 +438,61 @@ void proxyEventsRequest(
    proxyRequest(username,
                 ptrConnection,
                 boost::bind(handleEventsError, ptrConnection, _1));
+}
+
+void proxyLocalhostRequest(
+      const std::string& username,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   // make a copy of the request for forwarding
+   http::Request request;
+   request.assign(ptrConnection->request());
+
+   // extract the port
+   boost::regex re("/p/(\\d+)/");
+   boost::smatch match;
+   if (!boost::regex_search(request.uri(), match, re))
+   {
+      ptrConnection->response().setError(http::status::NotFound,
+                                         request.uri() + " not found");
+      return;
+   }
+   std::string port = match[1];
+
+   // strip the port part of the uri
+   using namespace boost::algorithm;
+   std::string portPath = match[0];
+   std::string uri = replace_first_copy(request.uri(), portPath, "/");
+   request.setUri(uri);
+
+   // set the host
+   request.setHost("localhost:" + port);
+
+   // remove headers to be a correctly behaving proxy
+   request.removeHeader("Keep-Alive");
+   request.removeHeader("Proxy-Authenticate");
+   request.removeHeader("Proxy-Authorization");
+   request.removeHeader("Trailers");
+   // spec says we should drop these but we're not sure if that's
+   // true for our use case
+   //request.removeHeader("TE");
+   //request.removeHeader("Transfer-Encoding");
+
+   // specify closing of the connection after the request unless this is
+   // an attempt to upgrade to websockets
+   if (!boost::algorithm::iequals(request.headerValue("Connection"), "Upgrade"))
+      request.setHeader("Connection", "close");
+
+   // create async tcp/ip client and assign request
+   boost::shared_ptr<LocalhostAsyncClient> pClient(
+      new LocalhostAsyncClient(ptrConnection->ioService(), "localhost", port));
+   pClient->request().assign(request);
+
+   // execute request
+   pClient->execute(
+         boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, _1),
+         boost::bind(&core::http::AsyncConnection::writeError,
+                     ptrConnection, _1));
 }
 
 } // namespace session_proxy

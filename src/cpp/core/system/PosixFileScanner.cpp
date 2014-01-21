@@ -120,7 +120,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       int res = ::lstat(path.c_str(), &st);
       if (res == -1)
       {
-         if (errno != ENOENT)
+         if (errno != ENOENT && errno != EACCES)
          {
             Error error = systemError(errno, ERROR_LOCATION);
             error.addProperty("path", path);

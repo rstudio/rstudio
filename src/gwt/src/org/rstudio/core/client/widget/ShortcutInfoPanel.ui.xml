@@ -1,0 +1,77 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+	@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+	.shortcutHeader
+	{
+	  font-size: 150%;
+	  width: 66%;
+	}
+
+   .shortcutPanel
+   {
+	  position: absolute;
+	  top: 5%;
+	  left: 5%;
+	  height: 85%;
+	  width: 85%;
+	  overflow: auto;
+	  background-color: rgba(20, 20, 20, 0.8);
+	  color: white;
+	  padding: 20px;
+	  -webkit-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
+	  -moz-box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.8);
+	  box-shadow: 0px 0px 18px rgba(50, 50, 50, 0.66);
+	  border-radius: 10px;
+	}
+	
+	.shortcutOuterPanel
+	{
+	  z-index: 1000;
+	  height: 100%;
+	  width: 100%;
+	}
+	
+	.shortcutPanel:focus 
+	{
+	  outline:none
+	}
+	
+	.shortcutPanel strong
+	{
+	  color: #c0c0ff;
+	  font-family: fixedWidthFont;
+	}
+	
+	.shortcutPanel td
+	{
+	  vertical-align: top;
+	}
+	
+	.shortcutDocLink 
+	{
+	  float: right;
+	  width: 33%;
+	  text-align: right;
+	  vertical-align: top;
+	  text-decoration: underline;
+	  opacity: 0.7;
+	  cursor: pointer;
+	}
+	</ui:style>
+	<g:FocusPanel styleName="{style.shortcutOuterPanel}">
+		<g:FocusPanel ui:field="focusPanel" styleName="{style.shortcutPanel}">
+			<g:HTMLPanel>
+			   <g:Anchor styleName="{style.shortcutDocLink}" 
+			             text="See All Shortcuts..."
+			             ui:field="shortcutDocLink"></g:Anchor>
+			   <g:Label styleName="{style.shortcutHeader}" 
+			            text="Keyboard Shortcut Quick Reference"></g:Label>
+				<g:HTMLPanel ui:field="shortcutPanel">
+				</g:HTMLPanel>
+			</g:HTMLPanel>
+		</g:FocusPanel>
+	</g:FocusPanel>
+</ui:UiBinder> 

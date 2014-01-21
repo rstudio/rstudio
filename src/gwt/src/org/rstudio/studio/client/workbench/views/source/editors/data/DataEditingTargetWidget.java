@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -59,7 +60,7 @@ public class DataEditingTargetWidget extends Composite
 
       commands_ = commands;
 
-      frame_ = new Frame(dataItem.getContentUrl());
+      frame_ = new RStudioFrame(dataItem.getContentUrl());
       frame_.setSize("100%", "100%");
 
       Widget mainWidget = frame_;
@@ -130,5 +131,5 @@ public class DataEditingTargetWidget extends Composite
    }
 
    private final Commands commands_;
-   private Frame frame_;
+   private RStudioFrame frame_;
 }

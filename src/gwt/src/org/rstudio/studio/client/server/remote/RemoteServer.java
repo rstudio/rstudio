@@ -1,5 +1,5 @@
 /*
-kS * RemoteServer.java
+ * RemoteServer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
@@ -31,13 +32,16 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.jsonrpc.*;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.model.ProductInfo;
 import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
@@ -45,6 +49,7 @@ import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.common.shiny.model.ShinyCapabilities;
 import org.rstudio.studio.client.common.synctex.model.PdfLocation;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.common.vcs.*;
@@ -53,10 +58,13 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
+import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
+import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
@@ -71,6 +79,9 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.DownloadInfo;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentFrame;
+import org.rstudio.studio.client.workbench.views.environment.model.ObjectContents;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.model.FileUploadToken;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -337,6 +348,13 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
+   public void getInitMessages(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(META_SCOPE,
+                  GET_INIT_MESSAGES,
+                  requestCallback);
+   }
+   
    public void searchCode(
          String term, 
          int maxResults,
@@ -487,6 +505,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   REMOVE_ALL_OBJECTS,
                   includeHidden,
+                  requestCallback);
+   }
+
+   @Override
+   public void removeObjects(List<String> objectNames,
+                             ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONUtils.toJSONStringArray(objectNames));
+      sendRequest(RPC_SCOPE,
+                  REMOVE_OBJECTS,
+                  params,
                   requestCallback);
    }
 
@@ -980,12 +1010,15 @@ public class RemoteServer implements Server
    
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
+                             NewShinyAppOptions newShinyAppOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(projectFile));
       params.set(1, newPackageOptions != null ?
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
+      params.set(2, newShinyAppOptions != null ?
+            new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    
@@ -1241,6 +1274,13 @@ public class RemoteServer implements Server
                               ServerRequestCallback<Boolean> requestCallback)
    {
       sendRequest(RPC_SCOPE, "is_read_only_file", path, requestCallback);
+   }
+   
+   @Override
+   public void getShinyCapabilities(
+         ServerRequestCallback<ShinyCapabilities> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_shiny_capabilities", requestCallback);
    }
 
    public void getRecentHistory(
@@ -1519,6 +1559,17 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(ignores));
       sendRequest(RPC_SCOPE, GIT_SET_IGNORES, params, callback);
+   }
+   
+   @Override
+   public void gitGithubRemoteUrl(String view, 
+                                  String path,
+                                  ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(view));
+      params.set(1, new JSONString(path));
+      sendRequest(RPC_SCOPE, GIT_GITHUB_REMOTE_URL, params, callback);
    }
    
    @Override
@@ -2470,6 +2521,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SVN_SET_IGNORES, params, requestCallback);
    }
    
+   @Override
+   public void viewerStopped(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "viewer_stopped", requestCallback);
+   }
+
+   
    public void previewHTML(HTMLPreviewParams params,
                            ServerRequestCallback<Boolean> callback)
    {
@@ -2838,6 +2896,70 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void setEnvironment(String environmentName,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(environmentName));
+      sendRequest(RPC_SCOPE,
+                  SET_ENVIRONMENT,
+                  params,
+                  requestCallback);
+   }
+
+   @Override
+   public void setEnvironmentFrame(int frame,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(frame));
+      sendRequest(RPC_SCOPE,
+                  SET_ENVIRONMENT_FRAME,
+                  params,
+                  requestCallback);
+   }
+
+   @Override
+   public void getEnvironmentNames(
+         ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_ENVIRONMENT_NAMES,
+                  requestCallback);
+   }
+   
+   @Override
+   public void getEnvironmentState(
+         ServerRequestCallback<EnvironmentContextData> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  GET_ENVIRONMENT_STATE,
+                  requestCallback);
+   }
+
+   @Override
+   public void requeryContext(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+                  REQUERY_CONTEXT,
+                  requestCallback);
+   }
+
+   @Override
+   public void getObjectContents(
+                 String objectName,
+                 ServerRequestCallback<ObjectContents> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(objectName));
+      sendRequest(RPC_SCOPE,
+                  GET_OBJECT_CONTENTS,
+                  params,
+                  requestCallback);
+   }
+   
+   @Override
    public void getFunctionSteps(
                  String functionName,
                  String fileName,
@@ -2889,11 +3011,13 @@ public class RemoteServer implements Server
    public void getFunctionState(
          String functionName,
          String fileName,
+         int lineNumber,
          ServerRequestCallback<FunctionState> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(functionName));
       params.set(1, new JSONString(fileName));
+      params.set(2, new JSONNumber(lineNumber));
       sendRequest(RPC_SCOPE,
                   GET_FUNCTION_STATE,
                   params,
@@ -2934,6 +3058,79 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
+         boolean set, boolean arm, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray bps = new JSONArray();
+      for (int i = 0; i < breakpoints.size(); i++)
+      {
+         bps.set(i, new JSONObject(breakpoints.get(i)));
+      }
+      
+      JSONArray params = new JSONArray();
+      params.set(0, bps);
+      params.set(1, JSONBoolean.getInstance(set));
+      params.set(2, JSONBoolean.getInstance(arm));
+      sendRequest(RPC_SCOPE, 
+            UPDATE_SHINY_BREAKPOINTS,
+            params, 
+            requestCallback);
+   }
+
+   @Override
+   public void checkForUpdates(
+         boolean manual,
+         ServerRequestCallback<UpdateCheckResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, JSONBoolean.getInstance(manual));
+      sendRequest(RPC_SCOPE, 
+            CHECK_FOR_UPDATES,
+            params, 
+            requestCallback);
+   }
+
+   @Override
+   public void getProductInfo(ServerRequestCallback<ProductInfo> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            GET_PRODUCT_INFO,
+            requestCallback);
+   }
+
+   @Override
+   public void getShinyViewerType(ServerRequestCallback<ShinyViewerType> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+            GET_SHINY_VIEWER_TYPE,
+            requestCallback);
+   }
+
+   @Override
+   public void setShinyViewerType(int viewerType,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONNumber(viewerType));
+      sendRequest(RPC_SCOPE,
+            SET_SHINY_VIEWER_TYPE,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void getShinyRunCmd(String shinyAppDir, 
+                              ServerRequestCallback<ShinyRunCmd> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(shinyAppDir));
+      sendRequest(RPC_SCOPE,
+            GET_SHINY_RUN_CMD,
+            params,
+            requestCallback);
+   }
+
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -2957,6 +3154,7 @@ public class RemoteServer implements Server
    private static final String GRAPHICS_SCOPE = "graphics";
    private static final String SOURCE_SCOPE = "source";
    private static final String LOG_SCOPE = "log";
+   private static final String META_SCOPE = "meta";
    private static final String FILE_SHOW = "file_show";
 
    // session methods
@@ -2995,6 +3193,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
+   private static final String REMOVE_OBJECTS = "remove_objects";
    private static final String DOWNLOAD_DATA_FILE = "download_data_file";
    private static final String GET_DATA_PREVIEW = "get_data_preview";
    private static final String GET_OUTPUT_PREVIEW = "get_output_preview";
@@ -3099,6 +3298,7 @@ public class RemoteServer implements Server
    private static final String GIT_INIT_REPO = "git_init_repo";
    private static final String GIT_GET_IGNORES = "git_get_ignores";
    private static final String GIT_SET_IGNORES = "git_set_ignores";
+   private static final String GIT_GITHUB_REMOTE_URL = "git_github_remote_url";
    private static final String GIT_DIFF_FILE = "git_diff_file";
    private static final String GIT_APPLY_PATCH = "git_apply_patch";
    private static final String GIT_HISTORY_COUNT = "git_history_count";
@@ -3182,13 +3382,29 @@ public class RemoteServer implements Server
 
    private static final String LIST_ENVIRONMENT = "list_environment";
    private static final String SET_CONTEXT_DEPTH = "set_context_depth";
+   private static final String SET_ENVIRONMENT = "set_environment";
+   private static final String SET_ENVIRONMENT_FRAME = "set_environment_frame";
+   private static final String GET_ENVIRONMENT_NAMES = "get_environment_names";
+   private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
+   private static final String GET_OBJECT_CONTENTS = "get_object_contents";
+   private static final String REQUERY_CONTEXT = "requery_context";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";
    private static final String SET_FUNCTION_BREAKPOINTS = "set_function_breakpoints";
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
+   private static final String UPDATE_SHINY_BREAKPOINTS = "update_shiny_breakpoints";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
+   
+   private static final String GET_INIT_MESSAGES = "get_init_messages";
+
+   private static final String CHECK_FOR_UPDATES = "check_for_updates";
+   private static final String GET_PRODUCT_INFO = "get_product_info";
+
+   private static final String GET_SHINY_VIEWER_TYPE = "get_shiny_viewer_type";
+   private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
+   private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
 }

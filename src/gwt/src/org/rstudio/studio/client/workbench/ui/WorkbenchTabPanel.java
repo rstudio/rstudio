@@ -36,7 +36,8 @@ class WorkbenchTabPanel
       implements RequiresResize,
                  ProvidesResize,
                  HasSelectionHandlers<Integer>,
-                 HasEnsureVisibleHandlers
+                 HasEnsureVisibleHandlers,
+                 HasEnsureHeightHandlers
 {
    public WorkbenchTabPanel(WindowFrame owner)
    {
@@ -60,12 +61,20 @@ class WorkbenchTabPanel
 
             if (getSelectedIndex() >= 0)
             {
-               WorkbenchTab lastTab = tabs_.get(getSelectedIndex());
-               lastTab.onBeforeUnselected();
+               int unselectedTab = getSelectedIndex();
+               if (unselectedTab < tabs_.size())
+               {
+                  WorkbenchTab lastTab = tabs_.get(unselectedTab);
+                  lastTab.onBeforeUnselected();
+               }
             }
 
-            WorkbenchTab tab = tabs_.get(event.getItem().intValue());
-            tab.onBeforeSelected();
+            int selectedTab = event.getItem().intValue();
+            if (selectedTab < tabs_.size())
+            {  
+               WorkbenchTab tab = tabs_.get(selectedTab);
+               tab.onBeforeSelected();
+            }
          }
       }));
       releaseOnUnload_.add(tabPanel_.addSelectionHandler(new SelectionHandler<Integer>()
@@ -157,6 +166,15 @@ class WorkbenchTabPanel
                tabPanel_.selectTab(widget);
          }
       });
+      
+      tab.addEnsureHeightHandler(new EnsureHeightHandler() {
+
+         @Override
+         public void onEnsureHeight(EnsureHeightEvent event)
+         {
+            fireEvent(event);
+         }
+      });
    }
 
    public void selectTab(int tabIndex)
@@ -226,6 +244,13 @@ class WorkbenchTabPanel
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
+   @Override
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
 
    public void clear()
    {
@@ -239,4 +264,5 @@ class WorkbenchTabPanel
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
+   
 }

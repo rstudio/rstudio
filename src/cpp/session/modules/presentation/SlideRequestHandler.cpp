@@ -234,11 +234,7 @@ std::string embeddedWebFonts()
 
 bool hasKnitrVersion_1_2()
 {
-   bool hasVersion = false;
-   Error error = r::exec::RFunction(".rs.hasKnitrVersion_1_2").call(&hasVersion);
-   if (error)
-      LOG_ERROR(error);
-   return hasVersion;
+   return module_context::isPackageVersionInstalled("knitr", "1.2");
 }
 
 std::string extractKnitrError(const std::string& stdError)
@@ -320,11 +316,11 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back("--no-restore");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
-                     "opts_knit$set(stop_on_error = 2L); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
                                     "fig.path='%1%-figure/', "
                                     "tidy=FALSE, "
                                     "warning=FALSE, "
+                                    "error=FALSE, "
                                     "message=FALSE, "
                                     "comment=NA); "
                      "render_markdown(); "

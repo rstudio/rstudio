@@ -34,6 +34,7 @@
 #include <core/HtmlUtils.hpp>
 #include <core/http/Util.hpp>
 #include <core/PerformanceTimer.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -198,9 +199,6 @@ private:
          return;
       }
 
-      // determine whether knitr supports an encoding param
-      bool hasEncoding = hasEncodingParam();
-
       // args
       std::vector<std::string> args;
       args.push_back("--silent");
@@ -210,17 +208,10 @@ private:
       if (!knitrOutputFile_.empty())
       {
          boost::format fmt;
-         if (hasEncoding)
-         {
-            fmt = boost::format("require(knitr); "
-                                "knit('%2%', encoding='%1%');");
-         }
-         else
-         {
-            fmt = boost::format("options(encoding='%1%'); "
-                                "require(knitr); "
-                                "knit('%2%');");
-         }
+
+         fmt = boost::format("require(knitr); "
+                              "knit('%2%', encoding='%1%');");
+
          std::string cmd = boost::str(fmt % encoding % targetFile_.filename());
          args.push_back(cmd);
       }
@@ -229,19 +220,9 @@ private:
          std::string tempFilePath = string_utils::utf8ToSystem(
                                            outputFileTempFile.absolutePath());
          boost::format fmt;
-         if (hasEncoding)
-         {
-            fmt = boost::format("require(knitr); "
-                                "knit('%2%', encoding='%1%'); "
-                                "cat(o, file='%3%');");
-         }
-         else
-         {
-            fmt = boost::format("options(encoding='%1%'); "
-                                "require(knitr); "
-                                "o <- knit('%2%'); "
-                                "cat(o, file='%3%');");
-         }
+         fmt = boost::format("require(knitr); "
+                             "knit('%2%', encoding='%1%'); "
+                             "cat(o, file='%3%');");
          std::string cmd = boost::str(fmt % encoding
                                           % targetFile_.filename()
                                           % tempFilePath);
@@ -271,17 +252,6 @@ private:
                                                      args,
                                                      options,
                                                      cb);
-   }
-
-   bool hasEncodingParam() const
-   {
-      bool hasEncoding = false;
-      Error error = r::exec::RFunction(".rs.knitrHasEncodingParam").call(
-                                                                  &hasEncoding);
-      if (error)
-         LOG_ERROR(error);
-
-      return hasEncoding;
    }
 
    bool targetIsRMarkdown()
@@ -1018,6 +988,32 @@ void handlePreviewRequest(const http::Request& request,
 }
 
 
+void addPandocToPath()
+{
+   // ensure that pandoc is on the path for all platforms save for
+   // redhat 5 (where we don't yet have a redistributable pandoc binary)
+#if !defined(_WIN32) && !defined(__APPLE__)
+   FilePath redhatReleaseFile("/etc/redhat-release");
+   if (redhatReleaseFile.exists())
+   {
+      // get redhat release info
+      std::string redhatRelease;
+      Error error = core::readStringFromFile(redhatReleaseFile, &redhatRelease);
+      if (error)
+         LOG_ERROR(error);
+
+      // check for redhat 5
+      if (!boost::algorithm::istarts_with(redhatRelease, "fedora") &&
+          boost::algorithm::icontains(redhatRelease, "release 5"))
+      {
+         return;
+      }
+   }
+#endif
+
+   core::system::addToSystemPath(session::options().pandocPath(), true);
+}
+
    
 } // anonymous namespace
 
@@ -1057,6 +1053,8 @@ core::json::Object capabilitiesAsJson()
 
 Error initialize()
 {  
+   addPandocToPath();
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

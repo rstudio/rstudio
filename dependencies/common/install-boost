@@ -60,7 +60,17 @@ then
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
    then
-     sudo ./bjam --prefix=$BOOST_DIR toolset=clang variant=release threading=multi link=static install
+     # need flags for Mavericks and later instructing the compiler to target
+     # the older libstdc++
+     SYS_MAJOR_VER=`uname -r | cut -d "." -f -1`
+     if [ "$SYS_MAJOR_VER" -gt "12" ]
+     then
+        CXX_STDLIB_FLAGS=cxxflags="-stdlib=libstdc++"
+     else
+        CXX_STDLIB_FLAGS=""
+     fi
+
+     sudo ./bjam --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
    else
      sudo ./bjam --prefix=$BOOST_DIR variant=release install
    fi

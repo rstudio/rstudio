@@ -251,6 +251,23 @@ bool FilePath::isRootPath(const std::string& path)
    }
 }
 
+Error FilePath::tempFilePath(FilePath* pFilePath)
+{
+   using namespace boost::filesystem;
+   try
+   {
+      path_t path = absolute(unique_path(), temp_directory_path());
+      *pFilePath = FilePath(BOOST_FS_PATH2STR(path));
+      return Success();
+   }
+   catch(const filesystem_error& e)
+   {
+      return Error(e.code(), ERROR_LOCATION) ;
+   }
+
+   // keep compiler happy
+   return pathNotFoundError(ERROR_LOCATION);
+}
  
 FilePath::FilePath()
    : pImpl_(new Impl())
@@ -1008,7 +1025,6 @@ bool FilePath::isEquivalentTo(const FilePath& filePath) const
    // keep compiler happy
    return false;
 }
-
 
 bool FilePath::operator== (const FilePath& filePath) const 
 {

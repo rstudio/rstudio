@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export.impl;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.plots.model.ExportPlotOptions;
@@ -35,11 +36,15 @@ public class ExportPlotDesktop extends ExportPlot
                                                       options, 
                                                       onClose).showModal();
       }
-      else
+      else if (!BrowseCap.isCocoaDesktop())
       {
          new CopyPlotToClipboardDesktopDialog(server, 
                                               options, 
                                               onClose).showModal();
+      }
+      else
+      {
+         new CopyPlotToClipboardWebDialog(server, options, onClose).showModal();
       }
    }
 

@@ -27,6 +27,8 @@
 #include <core/SafeConvert.hpp>
 #include <core/text/DcfParser.hpp>
 
+#include <core/r_util/RPackageInfo.hpp>
+
 namespace core {
 namespace r_util {
 
@@ -150,6 +152,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
                              RProjectConfig* pConfig)
 {
    pConfig->buildType = kBuildTypePackage;
+   pConfig->packageUseDevtools = true;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
@@ -158,7 +161,7 @@ std::string detectBuildType(const FilePath& projectFilePath,
                             RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
-   if (projectDir.childPath("DESCRIPTION").exists())
+   if (r_util::isPackageDirectory(projectDir))
    {
       setBuildPackageDefaults("", pConfig);
    }
@@ -337,6 +340,31 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract auto append newline
+   it = dcfFields.find("AutoAppendNewline");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->autoAppendNewline)))
+         return requiredFieldError("AutoAppendNewline", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->autoAppendNewline = false;
+   }
+
+
+   // extract strip trailing whitespace
+   it = dcfFields.find("StripTrailingWhitespace");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->stripTrailingWhitespace)))
+         return requiredFieldError("StripTrailingWhitespace", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->stripTrailingWhitespace = false;
+   }
+
    // extract encoding
    it = dcfFields.find("Encoding");
    if (it != dcfFields.end())
@@ -462,6 +490,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageRoxygenize = "";
    }
 
+   // extract package use devtools
+   it = dcfFields.find("PackageUseDevtools");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageUseDevtools)))
+         return requiredFieldError("PackageUseDevtools", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageUseDevtools = false;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -552,6 +592,22 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(rootDoc);
    }
 
+   // additional editor settings
+   if (config.autoAppendNewline || config.stripTrailingWhitespace)
+   {
+      contents.append("\n");
+
+      if (config.autoAppendNewline)
+      {
+         contents.append("AutoAppendNewline: Yes\n");
+      }
+
+      if (config.stripTrailingWhitespace)
+      {
+         contents.append("StripTrailingWhitespace: Yes\n");
+      }
+   }
+
    // add build-specific settings if necessary
    if (!config.buildType.empty())
    {
@@ -569,6 +625,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
          // extra fields
          if (config.buildType == kBuildTypePackage)
          {
+            if (config.packageUseDevtools)
+            {
+               build.append("PackageUseDevtools: Yes\n");
+            }
+
             if (!config.packagePath.empty())
             {
                boost::format pkgFmt("PackagePath: %1%\n");

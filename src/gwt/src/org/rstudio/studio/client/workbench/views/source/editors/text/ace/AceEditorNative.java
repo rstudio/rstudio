@@ -82,6 +82,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final boolean isFocused() /*-{
       return this.isFocused();
    }-*/;
+   
+   public native final boolean isRowFullyVisible(int row) /*-{
+      return this.isRowFullyVisible(row);
+   }-*/;
 
    public native final void blur() /*-{
       this.blur();

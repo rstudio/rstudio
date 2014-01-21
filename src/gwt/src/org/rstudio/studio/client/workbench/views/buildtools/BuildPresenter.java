@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
-import java.util.ArrayList;
-
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,7 +29,6 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
@@ -43,12 +40,9 @@ import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
-import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -59,7 +53,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 
 public class BuildPresenter extends BasePresenter 
 {
@@ -84,22 +78,22 @@ public class BuildPresenter extends BasePresenter
    @Inject
    public BuildPresenter(Display display, 
                          GlobalDisplay globalDisplay,
-                         SourceShim sourceShim,
                          UIPrefs uiPrefs,
                          BuildServerOperations server,
                          final Commands commands,
                          EventBus eventBus,
-                         FileTypeRegistry fileTypeRegistry)
+                         FileTypeRegistry fileTypeRegistry,
+                         SourceBuildHelper sourceBuildHelper)
    {
       super(display);
       view_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
-      sourceShim_ = sourceShim;
       uiPrefs_ = uiPrefs;
       eventBus_ = eventBus;
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
+      sourceBuildHelper_ = sourceBuildHelper;
         
       eventBus.addHandler(BuildStartedEvent.TYPE, 
                           new BuildStartedEvent.Handler()
@@ -235,7 +229,7 @@ public class BuildPresenter extends BasePresenter
    
    private void sendLoadCommandToConsole(String loadCommand)
    {
-      eventBus_.fireEvent(new SendToConsoleEvent(loadCommand, true));
+      eventBus_.fireEvent(new SendToConsoleEvent(loadCommand, true, true));
    }
    
   
@@ -246,7 +240,7 @@ public class BuildPresenter extends BasePresenter
    
    void onDevtoolsLoadAll()
    {
-      withSaveFilesBeforeBuild(new Command() {
+      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
@@ -259,7 +253,7 @@ public class BuildPresenter extends BasePresenter
                } 
             }); 
          }
-      });
+      }, "Build");
    }
      
    void onBuildSourcePackage()
@@ -282,7 +276,11 @@ public class BuildPresenter extends BasePresenter
       startBuild("check-package");
    }
    
-  
+   void onTestPackage()
+   {
+      startBuild("test-package");
+   }
+   
    void onRebuildAll()
    {
       startBuild("rebuild-all");
@@ -298,7 +296,7 @@ public class BuildPresenter extends BasePresenter
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
-      withSaveFilesBeforeBuild(new Command() {
+      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
@@ -310,55 +308,7 @@ public class BuildPresenter extends BasePresenter
                }
             });
          }
-      });
-   }
-   
-   
-   private void withSaveFilesBeforeBuild(final Command buildCommand)
-   {     
-      if (uiPrefs_.saveAllBeforeBuild().getValue())
-      {
-         sourceShim_.saveAllUnsaved(buildCommand);
-      }
-      else
-      {
-         String alwaysSaveOption = !uiPrefs_.saveAllBeforeBuild().getValue() ?
-                                    "Always save files before build" : null;
-         
-         ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-               sourceShim_.getUnsavedChanges();
-
-         if (unsavedSourceDocs.size() > 0)
-         {
-            new UnsavedChangesDialog(
-                  "Build",
-                  alwaysSaveOption,
-                  unsavedSourceDocs,
-                  new OperationWithInput<UnsavedChangesDialog.Result>() {
-                     @Override
-                     public void execute(Result result)
-                     {
-                        if (result.getAlwaysSave())
-                        {
-                           uiPrefs_.saveAllBeforeBuild().setGlobalValue(true);
-                           uiPrefs_.writeUIPrefs();
-                        }
-                        
-                        sourceShim_.handleUnsavedChangesBeforeExit(
-                                                      result.getSaveTargets(),
-                                                      buildCommand);
-                        
-                        
-                     }
-                   },
-                   null
-            ).showModal(); 
-         }
-         else
-         {
-            buildCommand.execute();
-         }
-      }
+      }, "Build");
    }
    
    void onStopBuild()
@@ -416,11 +366,11 @@ public class BuildPresenter extends BasePresenter
    private String devtoolsLoadAllPath_ = null;
    
    private final GlobalDisplay globalDisplay_;
-   private final SourceShim sourceShim_;
    private final UIPrefs uiPrefs_;
    private final BuildServerOperations server_;
    private final Display view_ ; 
    private final EventBus eventBus_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
+   private final SourceBuildHelper sourceBuildHelper_;
 }

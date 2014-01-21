@@ -346,14 +346,18 @@ public class Projects implements OpenProjectFileHandler,
             server_.createProject(
                   newProject.getProjectFile(),
                   newProject.getNewPackageOptions(),
+                  newProject.getNewShinyAppOptions(),
                   new VoidServerRequestCallback(indicator)
                   {
                      @Override
                      public void onSuccess()
                      {
-                        applicationQuit_.performQuit(
+                        if (!newProject.getOpenInNewWindow())
+                        {
+                           applicationQuit_.performQuit(
                                              saveChanges,
                                              newProject.getProjectFile());
+                        }
 
                         continuation.execute();
                      }
@@ -392,6 +396,21 @@ public class Projects implements OpenProjectFileHandler,
                      });
             }
          }, false);
+      }
+      
+      if (newProject.getOpenInNewWindow())
+      {
+         createProjectCmds.addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               Desktop.getFrame().openProjectInNewWindow(
+                                             newProject.getProjectFile());
+               continuation.execute();
+               
+            }
+         });
       }
 
       // If we get here, dismiss the progress indicator

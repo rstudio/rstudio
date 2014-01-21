@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"$if(lang)$ lang="$lang$" xml:lang="$lang$"$endif$>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+$for(author-meta)$
+  <meta name="author" content="$author-meta$" />
+$endfor$
+$if(date-meta)$
+  <meta name="date" content="$date-meta$" />
+$endif$
+  <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <style type="text/css">code{white-space: pre;}</style>
+$if(quotes)$
+  <style type="text/css">q { quotes: "“" "”" "‘" "’"; }</style>
+$endif$
+
+  <!-- syntax highlighting -->
+  <link rel="stylesheet" href="highlight/highlight.css" $if(html5)$$else$type="text/css" $endif$/>
+  <script src="highlight/highlight.js"></script>
+  <style type="text/css">
+    pre {
+      background-color: white;
+    }
+    pre.r, pre.cpp {
+      background-color: #f5f5f5
+    }
+  </style>
+
+$for(css)$
+  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>
+$endfor$
+
+$for(header-includes)$
+  $header-includes$
+$endfor$
+</head>
+<body>
+
+<div class="container">
+
+$for(include-before)$
+$include-before$
+$endfor$
+$if(title)$
+<div id="$idprefix$header">
+<h1 class="title">$title$</h1>
+$if(subtitle)$
+<h1 class="subtitle">$subtitle$</h1>
+$endif$
+$for(author)$
+<h4 class="author">$author$</h4>
+$endfor$
+$if(date)$
+<h4 class="date">$date$</h4>
+$endif$
+</div>
+$endif$
+$if(toc)$
+<div id="$idprefix$TOC">
+$toc$
+</div>
+$endif$
+$body$
+
+</div>
+
+<!-- no bootstrap js dependencies for now, comment in if we require them -->
+<!--
+<script src="jquery/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
+-->
+
+<!-- dynamically load mathjax for compatibility with --self-contained -->
+$if(mathjax-url)$
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "$mathjax-url$";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+$endif$
+
+$for(include-after)$
+$include-after$
+$endfor$
+</body>
+</html>

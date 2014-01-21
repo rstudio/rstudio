@@ -49,6 +49,14 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
       add(numSpacesForTab_);
       
+      chkAutoAppendNewline_ = new CheckBox("Ensure that source files end with newline");
+      chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
+      add(chkAutoAppendNewline_);
+      
+      chkStripTrailingWhitespace_ = new CheckBox("Strip trailing horizontal whitespace when saving");
+      chkStripTrailingWhitespace_.addStyleName(RESOURCES.styles().editingOption());
+      add(chkStripTrailingWhitespace_);
+      
       encoding_ = new TextBoxWithButton(
             "Text encoding:",
             "Change...",
@@ -109,6 +117,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
       chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
+      chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
+      chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
       setEncoding(initialConfig_.getEncoding());
    }
    
@@ -125,6 +135,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
       config.setUseSpacesForTab(chkSpacesForTab_.getValue());
       config.setNumSpacesForTab(getTabWidth());
+      config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
+      config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
       config.setEncoding(encodingValue_);
       return false;
    }
@@ -152,6 +164,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
+   private CheckBox chkAutoAppendNewline_;
+   private CheckBox chkStripTrailingWhitespace_;
    private TextBoxWithButton encoding_;
    private String encodingValue_;
    private RProjectConfig initialConfig_;

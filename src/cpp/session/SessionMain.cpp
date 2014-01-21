@@ -94,6 +94,7 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
 
+#include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -112,10 +113,14 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPlots.hpp"
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
+#include "modules/SessionProfiler.hpp"
 #include "modules/SessionRPubs.hpp"
+#include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
+#include "modules/SessionUpdates.hpp"
 #include "modules/SessionVCS.hpp"
+#include "modules/SessionViewer.hpp"
 #include "modules/SessionHistory.hpp"
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
@@ -124,6 +129,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/shiny/SessionShiny.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -135,7 +141,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionHttpConnectionListener.hpp>
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core; 
 using namespace session;
@@ -489,11 +495,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["active_project_file"] = module_context::createAliasedPath(
                               projects::projectContext().file());
       sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
+      sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
    }
    else
    {
       sessionInfo["active_project_file"] = json::Value();
       sessionInfo["project_ui_prefs"] = json::Value();
+      sessionInfo["project_open_docs"] = json::Value();
    }
 
    sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
@@ -507,6 +515,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["vcs"] = modules::source_control::activeVCSName();
    sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(
                               modules::source_control::defaultSshKeyDir());
+   sessionInfo["is_github_repo"] = modules::git::isGithubRepository();
 
    // contents of all lists
    sessionInfo["lists"] = modules::lists::allListsAsJson();
@@ -538,11 +547,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
                                       buildTargetDir.childPath("src").exists();
+         sessionInfo["has_pkg_vig"] =
+               (type == r_util::kBuildTypePackage) &&
+               buildTargetDir.childPath("vignettes").exists();
       }
       else
       {
          sessionInfo["build_target_dir"] = json::Value();
          sessionInfo["has_pkg_src"] = false;
+         sessionInfo["has_pkg_vig"] = false;
       }
 
    }
@@ -551,6 +564,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
       sessionInfo["build_target_dir"] = json::Value();
       sessionInfo["has_pkg_src"] = false;
+      sessionInfo["has_pkg_vig"] = false;
    }
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
@@ -559,6 +573,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
                                                                   "devtools");   
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
+
+   sessionInfo["have_srcref_attribute"] =
+         modules::breakpoints::haveSrcrefAttribute();
 
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
@@ -569,7 +586,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               r::session::consoleHistory().capacity();
 
    sessionInfo["disable_packages"] =
-               !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+           !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+
+   sessionInfo["disable_check_for_updates"] =
+          !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
 
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
@@ -578,6 +598,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
+   sessionInfo["allow_rpubs_publish"] = options.allowRpubsPublish();
 
    // check whether a switch project is required
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
@@ -585,6 +606,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["debug_state"] = modules::breakpoints::debugStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
+
+   // send whether we should show the user identity
+   sessionInfo["show_identity"] =
+           (options.programMode() == kSessionProgramModeServer) &&
+           options.showUserIdentity();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1082,14 +1108,33 @@ bool canSuspend(const std::string& prompt)
 
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 {
+   using namespace boost::posix_time;
+
    // never time out in desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
       return false;
 
+   // check for an client disconnection based timeout
+   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
+   if (disconnectedTimeoutMinutes > 0)
+   {
+      ptime lastEventConnection =
+         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
+      if (!lastEventConnection.is_not_a_date_time())
+      {
+         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
+               < second_clock::universal_time()) )
+         {
+            return true;
+         }
+      }
+   }
+
+   // check for a foreground inactivity based timeout
    if (timeoutTime.is_not_a_date_time())
       return false;
    else
-      return boost::posix_time::second_clock::universal_time() > timeoutTime;
+      return second_clock::universal_time() > timeoutTime;
 }
 
 boost::posix_time::ptime timeoutTimeFromNow()
@@ -1521,7 +1566,10 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::presentation::initialize)
       (modules::plots::initialize)
       (modules::packages::initialize)
+      (modules::profiler::initialize)
+      (modules::viewer::initialize)
       (modules::rpubs::initialize)
+      (modules::shiny::initialize)
       (modules::source::initialize)
       (modules::source_control::initialize)
       (modules::authoring::initialize)
@@ -1532,6 +1580,9 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::overlay::initialize)
       (modules::breakpoints::initialize)
       (modules::errors::initialize)
+      (modules::updates::initialize)
+      (modules::about::initialize)
+      (modules::shiny_viewer::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -1829,6 +1880,10 @@ void rBusy(bool busy)
    if (s_wasForked)
       return;
 
+   // screen out busy = true events that occur when R isn't busy
+   if (busy && !s_rProcessingInput)
+      return;
+
    ClientEvent busyEvent(kBusy, busy);
    session::clientEventQueue().add(busyEvent);
 }
@@ -1987,6 +2042,13 @@ void rShowMessage(const std::string& message)
    ClientEvent event = showErrorMessageEvent("R Error", message);
    session::clientEventQueue().add(event);
 }
+
+void logExitEvent(const monitor::Event& precipitatingEvent)
+{
+   using namespace monitor;
+   client().logEvent(precipitatingEvent);
+   client().logEvent(Event(kSessionScope, kSessionExitEvent));
+}
    
 void rSuspended(const r::session::RSuspendOptions& options)
 {
@@ -1995,7 +2057,7 @@ void rSuspended(const r::session::RSuspendOptions& options)
    std::string data;
    if (s_suspendedFromTimeout)
       data = safe_convert::numberToString(session::options().timeoutMinutes());
-   client().logEvent(Event(kSessionScope, kSessionSuspendEvent, data));
+   logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
@@ -2038,7 +2100,7 @@ void rQuit()
 
    // log to monitor
    using namespace monitor;
-   client().logEvent(Event(kSessionScope, kSessionQuitEvent));
+   logExitEvent(Event(kSessionScope, kSessionQuitEvent));
 
    // notify modules
    module_context::events().onQuit();
@@ -2059,7 +2121,7 @@ void rSuicide(const std::string& message)
 
    // log to monitor
    using namespace monitor;
-   client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+   logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
    // log the error
    LOG_ERROR_MESSAGE("R SUICIDE: " + message);
@@ -2227,6 +2289,26 @@ void ensureRLibsUser(const core::FilePath& userHomePath,
       LOG_ERROR(error);
 }
 
+#ifdef __APPLE__
+// we now launch our child processes from the desktop using our standard
+// process management code which closes all file descriptors thereby
+// breaking parent_process_monitor. So on the Mac we use the more simplistic
+// approach of polling for ppid == 1. This is fine because we expect that
+// the Desktop will _always_ outlive us (it waits for us to exit before
+// closing) so anytime it exits before we do it must be a crash). we don't
+// call abort() however because we don't want a crash report to occur
+void detectParentTermination()
+{
+   while(true)
+   {
+      boost::this_thread::sleep(boost::posix_time::milliseconds(500));
+      if (::getppid() == 1)
+      {
+         ::exit(EXIT_FAILURE);
+      }
+   }
+}
+#else
 void detectParentTermination()
 {
    using namespace parent_process_monitor;
@@ -2245,6 +2327,7 @@ void detectParentTermination()
       LOG_ERROR_MESSAGE("waitForParentTermination failed");
    }
 }
+#endif
 
 // NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
 FilePath rEnvironmentDir()
@@ -2827,7 +2910,7 @@ int main (int argc, char * const argv[])
       if (error)
       {
           // this is logically equivilant to R_Suicide
-          client().logEvent(Event(kSessionScope, kSessionSuicideEvent));
+          logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
           // return failure
           return sessionExitFailure(error, ERROR_LOCATION);

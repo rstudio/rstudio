@@ -25,6 +25,8 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -64,6 +66,8 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       frame_.setMarginHeight(0);
       frame_.setUrl("about:blank");
       frame_.setSize("100%", "100%");
+      ElementIds.assignElementId(frame_.getElement(), 
+                                 ElementIds.PLOT_IMAGE_FRAME);
 
       panel_.add(frame_);
       panel_.setWidgetTopBottom(frame_, 0, Unit.PX, 0, Unit.PX);

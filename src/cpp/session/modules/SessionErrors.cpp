@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include "SessionErrors.hpp"
+#include "SessionBreakpoints.hpp"
 
 using namespace core;
 
@@ -48,6 +49,11 @@ Error setErrHandler(int type, bool inMyCode,
 {
    // when setting the error handler to "custom", just leave it as it was
    if (type == ERRORS_CUSTOM)
+      return Success();
+
+   // this feature requires the source reference attribute; don't try to set
+   // the error handler if we don't have that.
+   if (!breakpoints::haveSrcrefAttribute())
       return Success();
 
    // clear the previous error handler; if we don't do this, the error handler
@@ -105,7 +111,11 @@ Error initializeErrManagement(boost::shared_ptr<SEXP> pErrorHandler,
    return Success();
 }
 
-void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler)
+// Detect whether the error handler has changed, and optionally record the
+// change as a permanent. (We don't make changes permanent when they're
+// detected during a session.)
+void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler,
+                         bool recordSetting)
 {
    // check to see if the error option has been changed from beneath us; if
    // it has, emit a client event so the client doesn't show an incorrect
@@ -117,7 +127,8 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler)
       int handlerType = (currentHandler == R_NilValue) ?
                         ERRORS_MESSAGE :
                         ERRORS_CUSTOM;
-      userSettings().setErrorHandlerType(handlerType);
+      if (recordSetting)
+         userSettings().setErrorHandlerType(handlerType);
       enqueErrorHandlerChanged(handlerType);
    }
 }
@@ -161,11 +172,11 @@ Error initialize()
    using namespace module_context;
 
    // Check to see whether the error handler has changed immediately after init
-   // (to find changes from e.g. .Rprofile) and after every console prompt
+   // (to find changes from e.g. .Rprofile) and after every console prompt.
    events().onConsolePrompt.connect(bind(detectHandlerChange,
-                                         pErrorHandler));
+                                         pErrorHandler, false));
    events().onDeferredInit.connect(bind(detectHandlerChange,
-                                        pErrorHandler));
+                                        pErrorHandler, true));
    userSettings().onChanged.connect(bind(onUserSettingsChanged,
                                          pErrorHandler,
                                          pHandleUserErrorsOnly));

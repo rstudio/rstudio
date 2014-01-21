@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.model;
 
+import java.util.List;
+
 import com.google.gwt.core.client.JsArray;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -25,6 +27,9 @@ public interface EnvironmentServerOperations
 
    void removeAllObjects(boolean includeHidden,
                          ServerRequestCallback<Void> requestCallback);
+
+   void removeObjects(List<String> objectNames, 
+                      ServerRequestCallback<Void> requestCallback);
 
    void downloadDataFile(String dataFileURL,
                          ServerRequestCallback<DownloadInfo> requestCallback);
@@ -43,4 +48,22 @@ public interface EnvironmentServerOperations
 
    void setContextDepth(int newContextDepth,
                         ServerRequestCallback<Void> requestCallback);   
+   
+   void setEnvironment(String environmentName,
+                       ServerRequestCallback<Void> requestCallback);
+   
+   void setEnvironmentFrame(int frame, 
+                            ServerRequestCallback<Void> requestCallback);
+
+   void getEnvironmentNames(
+              ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback);
+   
+   void getEnvironmentState(
+              ServerRequestCallback<EnvironmentContextData> requestCallback);
+
+   void getObjectContents(
+              String objectName,
+              ServerRequestCallback<ObjectContents> requestCallback);
+   
+   void requeryContext(ServerRequestCallback<Void> requestCallback);
 }

@@ -44,14 +44,17 @@ public class RObjectEntry
       isCategoryLeader = false;
       visible = isVisible;
       isFirstObject = false;
+      isExpanding = false;
+      contentsAreDeferred = obj.getContentsDeferred();
    }
 
-   // show expander for objects that have contents
+   // show expander for objects that have contents 
    public boolean canExpand()
    {
       return rObject.getLength() > 0 &&
-             rObject.getContents().length() > 0 &&
-             !rObject.getContents().get(0).equals(NO_VALUE) &&
+             (rObject.getContentsDeferred() || 
+                 (rObject.getContents().length() > 0 &&
+                  !rObject.getContents().get(0).equals(NO_VALUE))) &&
              !hasTraceInfo();
    }
    
@@ -63,10 +66,11 @@ public class RObjectEntry
    public int getCategory()
    {
       String type = rObject.getType();
-      if (type.equals("data.frame") ||
+      if (rObject.isData() ||
           type.equals("matrix") ||
           type.equals("data.table") ||
-          type.equals("cast_df"))
+          type.equals("cast_df") ||
+          type.equals("xts"))
       {
          return Categories.Data;
       }
@@ -83,6 +87,14 @@ public class RObjectEntry
    {
       return rObject.getType() == "promise";
    }
+   
+   public String getDisplayValue()
+   {
+      String val = rObject.getValue().trim();
+      return val == RObjectEntry.NO_VALUE ?
+                      rObject.getDescription().trim() :
+                      val;
+   }
 
    public static final String NO_VALUE = "NO_VALUE";
 
@@ -91,4 +103,6 @@ public class RObjectEntry
    boolean isCategoryLeader;
    boolean visible;
    boolean isFirstObject;
+   boolean isExpanding;
+   boolean contentsAreDeferred;
 }

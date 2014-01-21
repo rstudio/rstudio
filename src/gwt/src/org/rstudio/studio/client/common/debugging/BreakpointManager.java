@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -128,20 +129,27 @@ public class BreakpointManager
          final String path,
          final int lineNumber)
    {
-      return addBreakpoint(Breakpoint.create(
+      final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
             currentBreakpointId_++, 
             path, 
             "toplevel", 
             lineNumber, 
             Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
+      
+      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      bps.add(breakpoint);
+      server_.updateShinyBreakpoints(bps, true, true, 
+                                     new VoidServerRequestCallback());
+
+      return breakpoint;
    }
    
    public Breakpoint setBreakpoint(
          final String path,
          final String functionName,
          int lineNumber, 
-         boolean immediately)
+         final boolean immediately)
    {
       // create the new breakpoint and arguments for the server call
       final Breakpoint breakpoint = addBreakpoint(Breakpoint.create(
@@ -164,9 +172,9 @@ public class BreakpointManager
          breakpoint.setPendingDebugCompletion(true);
          markInactiveBreakpoint(breakpoint);
       }      
-      else if (immediately)
+      else 
       {
-         server_.getFunctionState(functionName, path,
+         server_.getFunctionState(functionName, path, lineNumber,
                new ServerRequestCallback<FunctionState>()
          {
             @Override
@@ -176,6 +184,10 @@ public class BreakpointManager
                {
                   breakpoint.markAsPackageBreakpoint(state.getPackageName());
                }
+               // If the breakpoint is not to be set immediately, 
+               // stop processing now
+               if (!immediately)
+                  return;
                
                // if the function lines up with the version on the server, set
                // the breakpoint now
@@ -213,9 +225,17 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoints_.remove(breakpoint);
-         if (breakpoint.getState() == Breakpoint.STATE_ACTIVE)
+         if (breakpoint.getState() == Breakpoint.STATE_ACTIVE &&
+             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
          {
             setFunctionBreakpoints(new FileFunction(breakpoint));
+         }
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+         {
+            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+            bps.add(breakpoint);
+            server_.updateShinyBreakpoints(
+                  bps, false, true, new VoidServerRequestCallback());
          }
       }
       onBreakpointAddOrRemove();
@@ -234,6 +254,17 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoint.markStepsNeedUpdate();
+         // if this is a top-level breakpoint, it may be a Shiny breakpoint. 
+         // update the server's knowledge of the breakpoint so that the next
+         // time this breakpoint is injected, it's injected at the correct 
+         // line.
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL) 
+         {
+            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+            bps.add(breakpoint);
+            server_.updateShinyBreakpoints(bps, true, false,
+                                           new VoidServerRequestCallback());
+         }
       }
    }
    
@@ -274,6 +305,9 @@ public class BreakpointManager
    @Override
    public void onSessionInit(SessionInitEvent sie)
    {
+      // Establish a persistent object for the breakpoints. Note that this 
+      // object is read by the server on init, so the scope/name pair here 
+      // needs to match the pair on the server. 
       new JSObjectStateValue(
             "debug-breakpoints",
             "debugBreakpointsState",
@@ -703,11 +737,17 @@ public class BreakpointManager
    private void clearAllBreakpoints()
    {
       Set<FileFunction> functions = new TreeSet<FileFunction>();
+      ArrayList<Breakpoint> topLevelBPs = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          breakpoint.setState(Breakpoint.STATE_REMOVING);
-         functions.add(new FileFunction(breakpoint));
+         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
+            topLevelBPs.add(breakpoint);
+         else
+            functions.add(new FileFunction(breakpoint));
       }
+      // Remove the breakpoints from each unique function that had breakpoints
+      // set previously
       for (FileFunction function: functions)
       {
          server_.setFunctionBreakpoints(
@@ -727,6 +767,13 @@ public class BreakpointManager
                   }
                });
       }
+      // Let the server know that top-level breakpoints were cleared (if any)
+      if (topLevelBPs.size() > 0)
+      {
+         server_.updateShinyBreakpoints(topLevelBPs, false, true, 
+                                        new VoidServerRequestCallback());
+      }
+      
       notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
       breakpoints_.clear();
       onBreakpointAddOrRemove();
@@ -737,7 +784,7 @@ public class BreakpointManager
       breakpointStateDirty_ = true;
       commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
    }
-     
+   
    // Private classes ---------------------------------------------------------
    
    class FileFunction implements Comparable<FileFunction>

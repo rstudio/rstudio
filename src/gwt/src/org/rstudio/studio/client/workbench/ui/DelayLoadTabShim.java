@@ -51,6 +51,19 @@ public abstract class DelayLoadTabShim<T extends IsWidget,
             }
          });
       }
+      
+      if (child instanceof HasEnsureHeightHandlers)
+      {
+         ((HasEnsureHeightHandlers)child).addEnsureHeightHandler(
+               new EnsureHeightHandler()
+         {
+            @Override
+            public void onEnsureHeight(EnsureHeightEvent event)
+            {
+               parentTab_.ensureHeight(event.getHeight());     
+            }
+         });
+      }
 
       if (child instanceof HasEnsureHiddenHandlers)
       {

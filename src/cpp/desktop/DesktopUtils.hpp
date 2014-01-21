@@ -33,6 +33,8 @@ core::FilePath userLogPath();
 
 bool isRetina(QMainWindow* pMainWindow);
 
+bool isOSXMavericks();
+
 void raiseAndActivateWindow(QWidget* pWindow);
 
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon);
@@ -50,6 +52,10 @@ void showMessageBox(QMessageBox::Icon icon,
 void showWarning(QWidget *parent, const QString &title, const QString& text);
 
 void showInfo(QWidget* parent, const QString& title, const QString& text);
+
+void showFileError(const QString& action,
+                   const QString& file,
+                   const QString& error);
 
 void launchProjectInNewInstance(QString projectFilename);
 

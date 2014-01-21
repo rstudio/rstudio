@@ -22,10 +22,19 @@
 
 namespace server {
 namespace auth {
-   
+
 bool validateUser(
   const std::string& username,
-  const std::string& requiredGroup = server::options().authRequiredUserGroup());
+  const std::string& requiredGroup,
+  bool groupFailureWarning);
+
+inline bool validateUser(const std::string& username)
+{
+   return validateUser(username,
+                       server::options().authRequiredUserGroup(),
+                       true);
+}
+
 
 } // namespace auth
 } // namespace server

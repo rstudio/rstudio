@@ -32,8 +32,9 @@ public class WindowFrame extends Composite
    implements HasWindowStateChangeHandlers,
               ProvidesResize,
               RequiresResize,
-              EnsureVisibleHandler
-{
+              EnsureVisibleHandler,
+              EnsureHeightHandler
+{  
    public WindowFrame(Widget mainWidget)
    {
       this();
@@ -125,6 +126,12 @@ public class WindowFrame extends Composite
    {
       return addHandler(handler, WindowStateChangeEvent.TYPE);
    }
+   
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
 
    /**
     * Puts a widget in the main content area (under the title bar).
@@ -146,6 +153,12 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_.removeHandler();
             ensureVisibleRegistration_ = null;
          }
+         
+         if (ensureHeightRegistration_ != null)
+         {
+            ensureHeightRegistration_.removeHandler();
+            ensureHeightRegistration_ = null;
+         }
       }
 
       main_ = widget;
@@ -156,6 +169,12 @@ public class WindowFrame extends Composite
          {
             ensureVisibleRegistration_ =
                 ((HasEnsureVisibleHandlers)main_).addEnsureVisibleHandler(this);
+         }
+         
+         if (main_ instanceof HasEnsureHeightHandlers)
+         {
+            ensureHeightRegistration_ =
+               ((HasEnsureHeightHandlers)main_).addEnsureHeightHandler(this);
          }
 
          frame_.add(main_);
@@ -222,6 +241,12 @@ public class WindowFrame extends Composite
             ensureVisibleRegistration_.removeHandler();
             ensureVisibleRegistration_ = null;
          }
+         
+         if (ensureHeightRegistration_ != null)
+         {
+            ensureHeightRegistration_.removeHandler();
+            ensureHeightRegistration_ = null;
+         }
       }
 
       fill_ = widget;
@@ -232,6 +257,12 @@ public class WindowFrame extends Composite
          {
             ensureVisibleRegistration_ =
                 ((HasEnsureVisibleHandlers)fill_).addEnsureVisibleHandler(this);
+         }
+         
+         if (fill_ instanceof HasEnsureHeightHandlers)
+         {
+            ensureHeightRegistration_ =
+               ((HasEnsureHeightHandlers)fill_).addEnsureHeightHandler(this);
          }
 
          frame_.add(fill_);
@@ -289,6 +320,12 @@ public class WindowFrame extends Composite
       if (!isVisible())
          fireEvent(new WindowStateChangeEvent(WindowState.NORMAL));
    }
+   
+   @Override
+   public void onEnsureHeight(EnsureHeightEvent event)
+   {
+      fireEvent(event);
+   }
 
    public void onBeforeShow()
    {
@@ -311,5 +348,7 @@ public class WindowFrame extends Composite
    private Widget fill_;
    private Widget contextButton_;
    private HandlerRegistration ensureVisibleRegistration_;
+   private HandlerRegistration ensureHeightRegistration_;
    private Widget previousHeader_;
+   
 }

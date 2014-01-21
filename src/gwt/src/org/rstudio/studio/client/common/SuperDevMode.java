@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.common;
 
-import org.rstudio.studio.client.application.Desktop;
-
 import com.google.gwt.core.client.GWT;
 
 public class SuperDevMode
@@ -36,7 +34,6 @@ public class SuperDevMode
    public static boolean isActive()
    {
       return 
-        !Desktop.isDesktop() &&
         GWT.getModuleBaseURL().equals("http://localhost:8787/rstudio/") &&
         GWT.getModuleBaseForStaticFiles().equals("http://localhost:9876/rstudio/");
    }

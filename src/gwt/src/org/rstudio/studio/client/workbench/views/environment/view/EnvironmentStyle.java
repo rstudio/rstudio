@@ -28,9 +28,7 @@ interface EnvironmentStyle extends CssResource
    String categoryHeaderRow();
    String categoryHeaderText();
    String emptyEnvironmentPanel();
-   String emptyEnvironmentName();
    String emptyEnvironmentMessage();
-   String expandIcon();
    String unclickableIcon();
    String unevaluatedPromise();
    String objectGrid();
@@ -38,5 +36,7 @@ interface EnvironmentStyle extends CssResource
    String dataFrameValueCol();
    String environmentPanel();
    String filterMatch();
+   String environmentPane();
+   String fillHeight();
 }
 

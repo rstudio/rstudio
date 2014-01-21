@@ -30,6 +30,8 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "SessionProjectFirstRun.hpp"
+
 using namespace core;
 
 namespace session {
@@ -197,7 +199,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
 
 void ProjectContext::augmentRbuildignore()
 {
-   if (directory().childPath("DESCRIPTION").exists())
+   if (r_util::isPackageDirectory(directory()))
    {
       // constants
       const char * const kIgnoreRproj = "^.*\\.Rproj$";
@@ -255,6 +257,7 @@ void ProjectContext::augmentRbuildignore()
       }
    }
 }
+
 
 Error ProjectContext::initialize()
 {
@@ -556,6 +559,8 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs["use_spaces_for_tab"] = config_.useSpacesForTab;
    uiPrefs["num_spaces_for_tab"] = config_.numSpacesForTab;
+   uiPrefs["auto_append_newline"] = config_.autoAppendNewline;
+   uiPrefs["strip_trailing_whitespace"] = config_.stripTrailingWhitespace;
    uiPrefs["default_encoding"] = defaultEncoding();
    uiPrefs["default_sweave_engine"] = config_.defaultSweaveEngine;
    uiPrefs["default_latex_program"] = config_.defaultLatexProgram;
@@ -564,6 +569,17 @@ json::Object ProjectContext::uiPrefs() const
    return uiPrefs;
 }
 
+json::Array ProjectContext::openDocs() const
+{
+   json::Array openDocsJson;
+   std::vector<std::string> docs = projects::collectFirstRunDocs(file());
+   BOOST_FOREACH(const std::string& doc, docs)
+   {
+      FilePath docPath = directory().childPath(doc);
+      openDocsJson.push_back(module_context::createAliasedPath(docPath));
+   }
+   return openDocsJson;
+}
 
 r_util::RProjectConfig ProjectContext::defaultConfig()
 {
@@ -571,6 +587,9 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    r_util::RProjectConfig defaultConfig;
    defaultConfig.useSpacesForTab = userSettings().useSpacesForTab();
    defaultConfig.numSpacesForTab = userSettings().numSpacesForTab();
+   defaultConfig.autoAppendNewline = userSettings().autoAppendNewline();
+   defaultConfig.stripTrailingWhitespace =
+                              userSettings().stripTrailingWhitespace();
    if (!userSettings().defaultEncoding().empty())
       defaultConfig.encoding = userSettings().defaultEncoding();
    else

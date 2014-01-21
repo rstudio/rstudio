@@ -276,8 +276,7 @@ FilePath Options::executablePath() const
 {
    if (executablePath_.empty())
    {
-      Error error = core::system::executablePath(QApplication::argc(),
-                                                 QApplication::argv(),
+      Error error = core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
                                                  &executablePath_);
       if (error)
          LOG_ERROR(error);
@@ -291,8 +290,7 @@ FilePath Options::supportingFilePath() const
    {
       // default to install path
       core::system::installPath("..",
-                                QApplication::argc(),
-                                QApplication::argv(),
+                                QApplication::arguments().at(0).toUtf8(),
                                 &supportingFilePath_);
 
       // adapt for OSX resource bundles

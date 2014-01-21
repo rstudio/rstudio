@@ -54,6 +54,8 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -70,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -96,11 +99,13 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 
 import java.util.ArrayList;
 
@@ -444,7 +449,7 @@ public class ClientEventDispatcher
             eventBus_.fireEvent(new UiPrefsChangedEvent(data));
          }
          else if (type.equals(ClientEvent.ContextDepthChanged)) {
-            ContextDepthChangedEvent.ContextData data = event.getData();
+            EnvironmentContextData data = event.getData();
             eventBus_.fireEvent(new ContextDepthChangedEvent(data));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
@@ -508,6 +513,21 @@ public class ClientEventDispatcher
          {
             ErrorHandlerType handlerType = event.getData();
             eventBus_.fireEvent(new ErrorHandlerChangedEvent(handlerType));
+         }
+         else if (type.equals(ClientEvent.ViewerNavigate))
+         {
+            ViewerNavigateEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ViewerNavigateEvent(data));
+         }
+         else if (type.equals(ClientEvent.SourceExtendedTypeDetected))
+         {
+            SourceExtendedTypeDetectedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new SourceExtendedTypeDetectedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ShinyViewer))
+         {
+            ShinyApplicationParams data = event.getData();
+            eventBus_.fireEvent(new ShinyApplicationStatusEvent(data));
          }
          else
          {

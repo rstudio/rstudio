@@ -43,7 +43,9 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOper
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 
 public interface WorkbenchServerOperations extends ConsoleServerOperations,
@@ -71,7 +73,10 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    BuildServerOperations,
                                                    PresentationServerOperations,
                                                    EnvironmentServerOperations,
-                                                   DebuggingServerOperations
+                                                   DebuggingServerOperations,
+                                                   MetaServerOperations,
+                                                   ViewerServerOperations,
+                                                   ProfilerServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

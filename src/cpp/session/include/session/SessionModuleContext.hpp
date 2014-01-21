@@ -31,6 +31,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 namespace core {
    class Error;
@@ -76,6 +77,8 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 core::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
+core::FilePath tempDir();
+
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
@@ -87,8 +90,15 @@ core::Error rBinDir(core::FilePath* pRBinDirPath);
 core::Error rScriptPath(core::FilePath* pRScriptPath);
 core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
 
+// get the R local help port
+std::string rLocalHelpPort();
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName);
+
+// check if a package is installed with a specific version
+bool isPackageVersionInstalled(const std::string& packageName,
+                               const std::string& version);
 
 // find the package name for a source file
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
@@ -213,6 +223,26 @@ enum ChangeSource
    ChangeSourceURI
 };
    
+
+// custom slot combiner that takes the first non empty value
+template<typename T>
+struct firstNonEmpty
+{
+  typedef T result_type;
+
+  template<typename InputIterator>
+  T operator()(InputIterator first, InputIterator last) const
+  {
+     for (InputIterator it = first; it != last; ++it)
+     {
+        if (!it->empty())
+           return *it;
+     }
+     return T();
+  }
+};
+
+
 // session events
 struct Events : boost::noncopyable
 {
@@ -228,6 +258,11 @@ struct Events : boost::noncopyable
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
    boost::signal<void ()>                    onQuit;
+   boost::signal<void (const std::string&)>  onPackageLoaded;
+
+   // signal for detecting extended type of documents
+   boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
+                 firstNonEmpty<std::string> > onDetectSourceExtendedType;
 };
 
 Events& events();
@@ -336,6 +371,13 @@ void showContent(const std::string& title, const core::FilePath& filePath);
 
 std::string resourceFileAsString(const std::string& fileName);
 
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
+
+std::string mapUrlPorts(const std::string& url);
+
+std::string pathRelativeTo(const core::FilePath& sourcePath,
+                           const core::FilePath& targetPath);
+
 void activatePane(const std::string& pane);
 
 int saveWorkspaceAction();
@@ -344,6 +386,20 @@ void syncRSaveAction();
 std::string libPathsString();
 bool canBuildCpp();
 bool haveRcppAttributes();
+
+#ifdef __APPLE__
+bool isOSXMavericks();
+bool hasOSXMavericksDeveloperTools();
+#else
+inline bool isOSXMavericks()
+{
+   return false;
+}
+inline bool hasOSXMavericksDeveloperTools()
+{
+   return false;
+}
+#endif
 
 struct VcsContext
 {

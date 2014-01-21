@@ -62,7 +62,7 @@
 #include "vcs/SessionVCSCore.hpp"
 #include "vcs/SessionVCSUtils.hpp"
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core;
 using namespace core::shell_utils;
@@ -450,8 +450,15 @@ public:
                           std::back_inserter(trackedPaths),
                           boost::bind(isUntracked, statusResult, _1));
 
-      // -f means don't fail on unmerged entries
-      return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+      if (!trackedPaths.empty())
+      {
+         // -f means don't fail on unmerged entries
+         return runGit(ShellArgs() << "checkout" << "-f" << "--" << trackedPaths);
+      }
+      else
+      {
+         return Success();
+      }
    }
 
    core::Error stage(const std::vector<FilePath> &filePaths)
@@ -525,8 +532,16 @@ public:
          args << "reset" << "HEAD" << "--" ;
       else
          args << "rm" << "--cached" << "--";
-      appendPathArgs(trackedPaths, &args);
-      return runGit(args);
+
+      if (!trackedPaths.empty())
+      {
+         appendPathArgs(trackedPaths, &args);
+         return runGit(args);
+      }
+      else
+      {
+         return Success();
+      }
    }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
@@ -1674,6 +1689,138 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
 }
 
 
+std::string getUpstream(const std::string& branch = std::string())
+{
+   // determine the query (no explicit branch means current branch)
+   std::string query = "@{upstream}";
+   if (!branch.empty())
+      query = branch + query;
+
+   // get the upstream
+   std::string upstream;
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                           "rev-parse" << "--abbrev-ref" << query,
+                         s_git_.root(),
+                         &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus == EXIT_SUCCESS)
+   {
+      upstream = boost::algorithm::trim_copy(result.stdOut);
+   }
+
+   return upstream;
+}
+
+std::string githubUrl(const std::string& view,
+                      const FilePath& filePath = FilePath())
+{
+   if (!isGitEnabled())
+      return std::string();
+
+   // get the upstream for the current branch
+   std::string upstream = getUpstream();
+
+   // if there is none then get the upstream for master
+   if (upstream.empty())
+      upstream = getUpstream("master");
+
+   // if there still isn't one then fall back to origin/master
+   if (upstream.empty())
+      upstream = "origin/master";
+
+   // parse out the upstream name and branch
+   std::string::size_type pos = upstream.find_first_of('/');
+   if (pos == std::string::npos)
+   {
+      LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
+      return std::string();
+   }
+   std::string upstreamName = upstream.substr(0, pos);
+   std::string upstreamBranch = upstream.substr(pos + 1);
+
+   // now get the remote url
+   core::system::ProcessResult result;
+   Error error = gitExec(ShellArgs() <<
+                   "config" << "--get" << ("remote." + upstreamName + ".url"),
+                   s_git_.root(),
+                   &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::string();
+   }
+   else if (result.exitStatus != 0)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+      return std::string();
+   }
+
+   // get the url
+   std::string remoteUrl = boost::algorithm::trim_copy(result.stdOut);
+
+   // check for github
+
+   // check for ssh url
+   std::string repo;
+   const std::string kSSHPrefix = "git@github.com:";
+   if (boost::algorithm::starts_with(remoteUrl, kSSHPrefix))
+      repo = remoteUrl.substr(kSSHPrefix.length());
+
+   // check for https url
+   const std::string kHTTPSPrefix = "https://github.com/";
+   if (boost::algorithm::starts_with(remoteUrl, kHTTPSPrefix))
+      repo = remoteUrl.substr(kHTTPSPrefix.length());
+
+   // bail if we didn't get a repo
+   if (repo.empty())
+      return std::string();
+
+   // if the repo starts with / then remove it
+   if (repo[0] == '/')
+      repo = repo.substr(1);
+
+   // strip the .git off the end and form the github url from repo and branch
+   boost::algorithm::replace_last(repo, ".git", "");
+   std::string url = "https://github.com/" +
+                     repo + "/" + view + "/" +
+                     upstreamBranch;
+
+   if (!filePath.empty())
+   {
+      std::string relative = filePath.relativePath(s_git_.root());
+      if (relative.empty())
+         return std::string();
+
+      url = url + "/" + relative;
+   }
+
+   return url;
+}
+
+
+Error vcsGithubRemoteUrl(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   // get the params
+   std::string view, path;
+   Error error = json::readParams(request.params, &view, &path);
+   if (error)
+      return error;
+
+   // resolve path
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // return the github url
+   pResponse->setResult(githubUrl(view, filePath));
+   return Success();
+}
+
+
 Error vcsHistoryCount(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -2375,7 +2522,19 @@ FilePath whichGitExe()
    }
    else
    {
-      return FilePath(whichGit);
+      // if we are on osx mavericks we need to do a further check to make
+      // sure this isn't the fake version of git installed by default
+      if (module_context::isOSXMavericks())
+      {
+         if (module_context::hasOSXMavericksDeveloperTools())
+            return FilePath(whichGit);
+         else
+            return FilePath();
+      }
+      else
+      {
+         return FilePath(whichGit);
+      }
    }
 }
 
@@ -2385,6 +2544,15 @@ bool isGitInstalled()
 {
    if (!userSettings().vcsEnabled())
       return false;
+
+   // special handling for mavericks for case where there is /usr/bin/git
+   // but it's the fake on installed by osx
+   if (module_context::isOSXMavericks() &&
+       !module_context::hasOSXMavericksDeveloperTools() &&
+       whichGitExe().empty())
+   {
+      return false;
+   }
 
    core::system::ProcessResult result;
    Error error = core::system::runCommand(git() << "--version",
@@ -2535,6 +2703,7 @@ bool isGitDirectory(const core::FilePath& workingDir)
    return !detectGitDir(workingDir).empty();
 }
 
+
 std::string remoteOriginUrl(const FilePath& workingDir)
 {
    // default to none
@@ -2558,6 +2727,13 @@ std::string remoteOriginUrl(const FilePath& workingDir)
    // return any url we discovered
    return remoteOriginUrl;
 }
+
+
+bool isGithubRepository()
+{
+   return !githubUrl("blob").empty();
+}
+
 
 core::Error initializeGit(const core::FilePath& workingDir)
 {
@@ -2667,7 +2843,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_has_repo", vcsHasRepo))
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
-      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores));
+      (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
+      (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)
       return error;

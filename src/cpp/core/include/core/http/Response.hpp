@@ -44,6 +44,7 @@ class Cookie ;
    
 namespace status {
 enum Code {
+   SwitchingProtocols = 101,
    Ok = 200,
    Created = 201,
    PartialContent = 206,

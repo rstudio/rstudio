@@ -28,7 +28,7 @@ import org.rstudio.studio.client.common.debugging.model.DebugState;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
-import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentState;
+import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -187,6 +187,10 @@ public class SessionInfo extends JavaScriptObject
    public native final String getDefaultSSHKeyDir() /*-{
       return this.default_ssh_key_dir;
    }-*/;
+   
+   public native final boolean isGithubRepository() /*-{
+      return this.is_github_repo;
+   }-*/;
 
    // TODO: The check for null was for migration in the presence of 
    // sessions that couldn't suspend (3/21/2011). Remove this check
@@ -218,6 +222,12 @@ public class SessionInfo extends JavaScriptObject
       if (!this.project_ui_prefs)
          this.project_ui_prefs = {};
       return this.project_ui_prefs;
+   }-*/;
+   
+   public final native JsArrayString getProjectOpenDocs() /*-{
+      if (!this.project_open_docs)
+         this.project_open_docs = {};
+      return this.project_open_docs;
    }-*/;
 
    public final native JsArray<ConsoleProcessInfo> getConsoleProcesses() /*-{
@@ -252,6 +262,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getHasPackageSrcDir() /*-{
       return this.has_pkg_src;
+   }-*/;
+   
+   public final native boolean getHasPackageVignetteDir() /*-{
+      return this.has_pkg_vig;
    }-*/;
    
    public final String getPresentationName()
@@ -307,11 +321,15 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
+   public final native boolean getAllowRpubsPublish() /*-{
+      return this.allow_rpubs_publish;
+   }-*/;
+   
    public final native String getSwitchToProject() /*-{
       return this.switch_to_project;
    }-*/;
 
-   public final native EnvironmentState getEnvironmentState() /*-{
+   public final native EnvironmentContextData getEnvironmentState() /*-{
       return this.environment_state;
    }-*/;
    
@@ -323,10 +341,22 @@ public class SessionInfo extends JavaScriptObject
       return this.debug_state;
    }-*/;
    
+   public final native boolean getHaveSrcrefAttribute() /*-{
+      return this.have_srcref_attribute;
+   }-*/;
+   
    public final native ErrorManagerState getErrorState() /*-{
       return this.error_state;
    }-*/;
    
+   public final native boolean getDisableCheckForUpdates() /*-{
+      return this.disable_check_for_updates;
+   }-*/;
+   
+   public final native boolean getShowIdentity() /*-{
+      return this.show_identity;
+   }-*/;
+
    public final native boolean getHaveAdvancedStepCommands() /*-{
       return this.have_advanced_step_commands;
    }-*/;

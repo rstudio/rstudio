@@ -31,13 +31,17 @@ public class RObject extends JavaScriptObject
    public final native String getType() /*-{
       return this.type;
    }-*/;
+   
+   public final native boolean isData() /*-{
+      return this.is_data;
+   }-*/;
 
    public final native String getValue() /*-{
-      return this.value;
+      return this.value ? this.value : "NO_VALUE";
    }-*/;
 
    public final native String getDescription() /*-{
-       return this.description;
+       return this.description ? this.description : "";
    }-*/;
 
    public final native JsArrayString getContents() /*-{
@@ -50,6 +54,15 @@ public class RObject extends JavaScriptObject
    
    public final native int getSize() /*-{
       return this.size;
+   }-*/;
+   
+   public final native boolean getContentsDeferred() /*-{
+      return this.contents_deferred;
+   }-*/;
+   
+   public final native void setDeferredContents(JsArrayString contents) /*-{
+      this.contents_deferred = false;
+      this.contents = contents;
    }-*/;
 }
 

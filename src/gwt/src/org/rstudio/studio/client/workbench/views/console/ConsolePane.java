@@ -64,6 +64,12 @@ public class ConsolePane extends WorkbenchPane
    {
       shell_.getDisplay().focus();
    }
+   
+   @Override
+   public void ensureCursorVisible()
+   {
+      shell_.getDisplay().ensureInputVisible();
+   }
 
    @Override
    public IsWidget getConsoleInterruptButton()

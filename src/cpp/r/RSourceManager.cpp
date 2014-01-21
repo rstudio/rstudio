@@ -102,17 +102,24 @@ Error SourceManager::source(const FilePath& filePath, bool local)
    std::string path = filePath.absolutePath();
    boost::algorithm::replace_all(path, "\\", "\\\\");
 
-   // build the code 
+   // Build the code. If this build is targeted for debugging, keep the source
+   // code around; otherwise, turn it off to conserve memory and expose fewer
+   // internals to the user.
    std::string rCode = localPrefix + "source(\"" 
                            + path + "\", " +
                            "local=" + localParam + ", " + 
                            "echo=FALSE, " +
                            "verbose=FALSE, " + 
+#ifdef NDEBUG
+                           "keep.source=FALSE, " +
+#else
+                           "keep.source=TRUE, " +
+#endif
                            "encoding='UTF-8')" + localSuffix;
       
    // record that we sourced the file. 
    recordSourcedFile(filePath, local);
-   
+
    // source the file
    return r::exec::executeString(rCode); 
 }

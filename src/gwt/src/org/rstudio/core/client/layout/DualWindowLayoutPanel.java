@@ -21,6 +21,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.events.WindowStateChangeHandler;
 import org.rstudio.core.client.js.JsObject;
@@ -32,6 +34,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import static org.rstudio.core.client.layout.WindowState.*;
+
 
 /**
  * This class implements the minimizing/maximizing behavior between two
@@ -435,45 +438,68 @@ public class DualWindowLayoutPanel extends SimplePanel
          {
             public void onSplitterResized(SplitterResizedEvent event)
             {
-               int bottom = layout_.getSplitterBottom();
-               int height = layout_.getOffsetHeight();
-
-               // If the height of upper or lower panel is smaller than this
-               // then that panel will minimize
-               final int MIN_HEIGHT = 60;
+               WindowState topState = resizePanes(layout_.getSplitterBottom());
                
-               if (bottom < MIN_HEIGHT)
+               // we're already in normal if the splitter is being invoked
+               if (topState != WindowState.NORMAL)
                {
                   topWindowStateChangeManager_.onWindowStateChange(
-                        new WindowStateChangeEvent(MAXIMIZE));
-                  normalHeight_ = snapMinimizeNormalHeight_;
+                     new WindowStateChangeEvent(topState));
                }
-               else if (bottom >= height - MIN_HEIGHT)
-               {
-                  topWindowStateChangeManager_.onWindowStateChange(
-                        new WindowStateChangeEvent(MINIMIZE));
-                  normalHeight_ = snapMinimizeNormalHeight_;
-               }
-               else
-               {
-                  normalHeight_ = new NormalHeight(bottom,
-                                                   height,
-                                                   Window.getClientHeight());
-               }
-               session_.persistClientState();
-
-               eventBus.fireEvent(new GlassVisibilityEvent(false));
+               
+               eventBus.fireEvent(new GlassVisibilityEvent(false)); 
             }
          });
       }
    }
+   
+   // resize the panes based on the specified bottom height and return the
+   // new window state for the top pane (this implements snap to minimize)
+   private WindowState resizePanes(int bottom)
+   {
+      WindowState topState = null;
+      
+      int height = layout_.getOffsetHeight();
 
+      // If the height of upper or lower panel is smaller than this
+      // then that panel will minimize
+      final int MIN_HEIGHT = 60;
+      
+      if (bottom < MIN_HEIGHT)
+      {
+         topState = WindowState.MAXIMIZE;
+         normalHeight_ = snapMinimizeNormalHeight_;
+      }
+      else if (bottom >= height - MIN_HEIGHT)
+      {
+         topState = WindowState.MINIMIZE;
+         normalHeight_ = snapMinimizeNormalHeight_;
+      }
+      else
+      {
+         topState = WindowState.NORMAL;
+         normalHeight_ = new NormalHeight(bottom,
+                                          height,
+                                          Window.getClientHeight());
+      }
+      
+      session_.persistClientState();
+      
+      return topState;
+   }
+
+  
+   
    private void hookEvents()
    {
       registrations_.add(
             windowA_.addWindowStateChangeHandler(topWindowStateChangeManager_));
       registrations_.add(
             windowB_.addWindowStateChangeHandler(bottomWindowStateChangeManager_));
+      registrations_.add(
+         windowA_.addEnsureHeightHandler(new EnsureHeightChangeManager(true))); 
+      registrations_.add(
+         windowB_.addEnsureHeightHandler(new EnsureHeightChangeManager(false))); 
    }
 
    private void unhookEvents()
@@ -525,6 +551,69 @@ public class DualWindowLayoutPanel extends SimplePanel
    {
       topWindowStateChangeManager_.onWindowStateChange(
             new WindowStateChangeEvent(state));
+   }
+   
+   private class EnsureHeightChangeManager implements EnsureHeightHandler
+   {
+      public EnsureHeightChangeManager(boolean isTopWindow)
+      {
+         isTopWindow_ = isTopWindow;
+      }
+      
+      @Override
+      public void onEnsureHeight(EnsureHeightEvent event)
+      {
+         // constants
+         final int FRAME = 52;
+         final int MINIMUM = 160;
+         
+         // get the target window and target height
+         LogicalWindow targetWindow = isTopWindow_ ? windowA_ : windowB_;
+         int targetHeight = event.getHeight() + FRAME;
+         
+         // ignore if we are already maximized
+         if (targetWindow.getState() == WindowState.MAXIMIZE)
+            return;
+         
+         // ignore if we are already high enough
+         if (targetWindow.getActiveWidget().getOffsetHeight() >= targetHeight)
+            return;
+       
+         // calculate height of other pane
+         int aHeight = windowA_.getActiveWidget().getOffsetHeight();
+         int bHeight = windowB_.getActiveWidget().getOffsetHeight();
+         int chromeHeight = layout_.getOffsetHeight() - aHeight - bHeight;
+         int otherHeight = layout_.getOffsetHeight() - 
+                           chromeHeight - 
+                           targetHeight;
+         
+         // see if we need to offset to acheive minimum other height
+         int offset = 0;
+         if (otherHeight < MINIMUM)
+            offset = MINIMUM - otherHeight;
+         
+         // determine the height (only the bottom can be sizes explicitly
+         // so for the top we need to derive it's height from the implied
+         // bottom height that we already computed)
+         int height = isTopWindow_ ? (otherHeight + offset) :
+                                     (targetHeight - offset);
+         
+         // ignore if this will reduce our size
+         if (height <= targetWindow.getActiveWidget().getOffsetHeight())
+            return;
+         
+         // resize bottom 
+         WindowState topState = resizePanes(height);
+         
+         if (topState != null)
+         {
+            topWindowStateChangeManager_.onWindowStateChange(
+               new WindowStateChangeEvent(topState));  
+         }
+      }
+      
+      private boolean isTopWindow_;
+      
    }
 
    private BinarySplitLayoutPanel layout_;

@@ -119,6 +119,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="findReplace"/>
          <cmd refid="findNext"/>
          <cmd refid="findPrevious"/>
+         <cmd refid="findFromSelection"/>
          <cmd refid="replaceAndFind"/>
          <separator/>
          <cmd refid="findInFiles"/>
@@ -158,6 +159,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="executeToCurrentLine"/>
             <cmd refid="executeFromCurrentLine"/>
             <cmd refid="executeCurrentFunction"/>
+            <cmd refid="executeCurrentSection"/>
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
@@ -176,6 +178,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="showToolbar"/>
          <cmd refid="hideToolbar"/>
          <separator/>
+         <cmd refid="zoomActualSize"/>
          <cmd refid="zoomIn"/>
          <cmd refid="zoomOut"/>
          <separator/>
@@ -244,9 +247,10 @@ well as menu structures (for main menu and popup menus).
       <menu label="_Build">
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
-         <separator/>
          <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
+         <separator/>
+         <cmd refid="testPackage"/>
          <separator/>
          <cmd refid="checkPackage"/>
          <separator/>
@@ -294,6 +298,9 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="vcsFileDiff"/>
             <cmd refid="vcsFileLog"/>
             <cmd refid="vcsFileRevert"/>
+            <separator/>
+            <cmd refid="vcsViewOnGitHub"/>
+            <cmd refid="vcsBlameOnGitHub"/>
             <separator/>
             <cmd refid="vcsCommit"/>
             <separator/>
@@ -362,94 +369,140 @@ well as menu structures (for main menu and popup menus).
       -->
       <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
       <!-- "Cmd" means Ctrl OR Meta -->
-      <shortcut refid="saveSourceDoc" value="Cmd+S"/>
-      <shortcut refid="openSourceDoc" value="Cmd+O"/>
-      <shortcut refid="newSourceDoc" value="Cmd+Shift+N"/>
-      <shortcut refid="closeSourceDoc" value="Cmd+W"/>
-      <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
-      <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
-      <shortcut refid="insertSection" value="Cmd+Shift+R"/>
-      <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
-      <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()"/>
-      <shortcut refid="executeCode" value="Cmd+Enter"/>
-      <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
-      <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
-      <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
-      <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
-      <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
-      <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
-      <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
-      <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
-      <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
-      <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
-      <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
-      <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
-      <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
-      <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
-      <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
-      <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
-      <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
-      <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
-      <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
-      <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
-      <shortcut refid="reindent" value="Cmd+I"/>
-      <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
-      <shortcut refid="consoleClear" value="Ctrl+L"/>
-      <shortcut refid="goToFileFunction" value="Ctrl+."/>
-      <shortcut refid="activateSource" value="Ctrl+1"/>
-      <shortcut refid="activateConsole" value="Ctrl+2"/>
-      <shortcut refid="activateHelp" value="Ctrl+3"/>
-      <shortcut refid="activateHistory" value="Ctrl+4"/>
-      <shortcut refid="activateFiles" value="Ctrl+5"/>
-      <shortcut refid="activatePlots" value="Ctrl+6"/>
-      <shortcut refid="activatePackages" value="Ctrl+7"/>
-      <shortcut refid="activateEnvironment" value="Ctrl+8"/>
-      <shortcut refid="activateVcs" value="Ctrl+9"/>
-      <shortcut refid="activateBuild" value="Ctrl+0"/>
-      <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
-      <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
-      <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
-      <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-      <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-      <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
-      <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-      <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
-      <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
-      <shortcut refid="showRequestLog" value="Ctrl+`" />
-      <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
-      <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
-      <shortcut refid="vcsFileDiff" value="Cmd+Shift+D" />
-      <shortcut refid="vcsCommit" value="Cmd+Shift+M" />
-      <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
-      <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
-      <shortcut refid="synctexSearch" value="Cmd+F8" />
-      <shortcut refid="checkSpelling" value="F7" />
-      <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="foldAll" value="Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="foldAll" value="Cmd+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfoldAll" value="Shift+Alt+0" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-      <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
-      <shortcut refid="jumpToMatching" value="Ctrl+P"/>
-      <shortcut refid="buildAll" value="Cmd+Shift+B"/>
-      <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
-      <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
-      <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
-      <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
-      <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
-      <shortcut refid="restartR" value="Cmd+Shift+0"/>
-      <shortcut refid="debugBreakpoint" value="Shift+F9"/>
-      <shortcut refid="debugStep" value="F10"/>
-      <shortcut refid="debugContinue" value="Shift+F5"/>
-      <shortcut refid="debugStop" value="Shift+F8"/>
+      <shortcutgroup name="Source Editor">
+         <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
+         <shortcut refid="insertSection" value="Cmd+Shift+R"/>
+         <shortcut refid="extractFunction" value="Cmd+Shift+U"/>
+         <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
+         <shortcut refid="reindent" value="Cmd+I"/>
+         <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
+         <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfold" value="Cmd+Shift+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="foldAll" value="Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="foldAll" value="Cmd+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfoldAll" value="Shift+Alt+O" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="unfoldAll" value="Cmd+Shift+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>  
+         <shortcut value="Ctrl+K" title="Delete to Line End" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut value="Alt+Up" title="Move Lines Up" />
+         <shortcut value="Alt+Down" title="Move Lines Down" />
+         <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut value="Ctrl+U" title="Yank Line Up to Cursor" />
+         <shortcut value="Ctrl+K" title="Yank Line After Cursor" />
+         <shortcut value="Ctrl+Y" title="Insert Yanked Text" />
+         <shortcut value="Cmd+Shift+Alt+G" title="Go to Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Shift+Alt+G" title="Go to Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+      </shortcutgroup>
+      <shortcutgroup name="Source Navigation">
+         <shortcut refid="sourceNavigateBack" value="Cmd+F9"/>
+         <shortcut refid="sourceNavigateForward" value="Cmd+F10"/>
+         <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findReplace" value="Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findReplace" value="Cmd+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="findNext" value="Cmd+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
+         <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
+         <shortcut refid="findPrevious" value="Cmd+Shift+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/> 
+         <shortcut refid="findPrevious" value="Shift+F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/> 
+         <shortcut refid="replaceAndFind" value="Cmd+Shift+J"/>
+         <shortcut refid="goToFileFunction" value="Ctrl+."/>
+         <shortcut refid="goToLine" value="Shift+Alt+G" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="goToLine" value="Cmd+Shift+Alt+G" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="jumpTo" value="Shift+Alt+J" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="jumpTo" value="Cmd+Shift+Alt+J" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="jumpToMatching" value="Ctrl+P"/>
+      </shortcutgroup>
+      <shortcutgroup name="Tabs/Panes">
+         <shortcut refid="activateSource" value="Ctrl+1"/>
+         <shortcut refid="activateConsole" value="Ctrl+2"/>
+         <shortcut refid="activateHelp" value="Ctrl+3"/>
+         <shortcut refid="activateHistory" value="Ctrl+4"/>
+         <shortcut refid="activateFiles" value="Ctrl+5"/>
+         <shortcut refid="activatePlots" value="Ctrl+6"/>
+         <shortcut refid="activatePackages" value="Ctrl+7"/>
+         <shortcut refid="activateEnvironment" value="Ctrl+8"/>
+         <shortcut refid="activateVcs" value="Ctrl+9"/>
+         <shortcut refid="activateBuild" value="Ctrl+0"/>
+         <shortcut refid="switchToTab" value="Ctrl+Alt+Down"/>
+         <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
+         <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
+      </shortcutgroup>
+      <shortcutgroup name="Files">
+         <shortcut refid="saveSourceDoc" value="Cmd+S"/>
+         <shortcut refid="saveAllSourceDocs" value= "Cmd+Alt+S"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
+         <shortcut refid="newSourceDoc" value="Cmd+Alt+I" if="org.rstudio.core.client.BrowseCap.isChrome()" title="New R Script"/>
+         <shortcut refid="openSourceDoc" value="Cmd+O"/>
+         <shortcut refid="closeSourceDoc" value="Cmd+W"/>
+         <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
+         <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
+      </shortcutgroup>
+      <shortcutgroup name="Build">
+         <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
+         <shortcut refid="compileNotebook" value="Cmd+Shift+Alt+H" />
+         <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
+         <shortcut refid="knitToHTML" value="Cmd+Shift+H" />
+         <shortcut refid="buildAll" value="Cmd+Shift+B"/>
+         <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
+         <shortcut refid="checkPackage" value="Cmd+Shift+E"/>
+         <shortcut refid="testPackage" value="Cmd+Shift+T" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="testPackage" value="Cmd+Alt+F7" if="!org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="roxygenizePackage" value="Cmd+Shift+D"/>
+      </shortcutgroup>
+      <shortcutgroup name="Execute">
+         <shortcut refid="sourceFile" value="Cmd+Shift+O"/>
+         <shortcut refid="sourceActiveDocument" value="Cmd+Shift+S"/>
+         <shortcut refid="sourceActiveDocumentWithEcho" value="Cmd+Shift+Enter"/>;
+         <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
+         <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()"/>
+         <shortcut refid="executeCode" value="Cmd+Enter"/>
+         <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
+         <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
+         <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
+         <shortcut refid="executeCurrentFunction" value="Cmd+Alt+F"/>
+         <shortcut refid="executeCurrentSection" value="Cmd+Alt+T"/>
+         <shortcut refid="executeCurrentChunk" value="Cmd+Alt+C"/>
+         <shortcut refid="executeNextChunk" value="Cmd+Alt+N"/>
+      </shortcutgroup>
+      <shortcutgroup name="Debug">
+         <shortcut refid="debugBreakpoint" value="Shift+F9"/>
+         <shortcut refid="debugStep" value="F10"/>
+         <shortcut refid="debugContinue" value="Shift+F5"/>
+         <shortcut refid="debugStop" value="Shift+F8"/>
+      </shortcutgroup>
+      <shortcutgroup name="Source Control">
+         <shortcut refid="vcsFileDiff" value="Ctrl+Alt+D" title="Diff Files"/>
+         <shortcut refid="vcsCommit" value="Ctrl+Alt+M" />
+      </shortcutgroup>
+      <shortcutgroup name="Other">
+         <shortcut value="F1" title="Show Function Help" />
+         <shortcut value="F2" title="Show Function Code" />
+         <shortcut value="Tab" title="Complete Code" />
+         <shortcut refid="quitSession" value="Cmd+Q" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="restartR" value="Cmd+Shift+0" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="restartR" value="Cmd+Shift+F10"/>
+         <shortcut refid="previousPlot" value="Cmd+Shift+PageUp" />
+         <shortcut refid="nextPlot" value="Cmd+Shift+PageDown" />
+         <shortcut refid="showRequestLog" value="Ctrl+`" />
+         <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
+         <shortcut refid="setWorkingDir" value="Ctrl+Shift+K" />
+         <shortcut refid="synctexSearch" value="Cmd+F8" />
+         <shortcut refid="checkSpelling" value="F7" />
+         <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F5"/>
+         <shortcut refid="helpKeyboardShortcuts" value="Alt+Shift+K"/>
+         <shortcut refid="toggleFullScreen" value="Ctrl+Meta+F" if="org.rstudio.core.client.BrowseCap.isMacintoshDesktop()"/>
+      </shortcutgroup>
+      <shortcutgroup name="Console">
+         <shortcut refid="consoleClear" value="Ctrl+L"/>
+         <shortcut value="Ctrl+Up" title="Popup Command History"/>
+      </shortcutgroup>
    </shortcuts>
 
    <!--
@@ -562,6 +615,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="vcsFileRevert"
         menuLabel="_Revert"
         desc="Revert changes to the file"/>
+   <cmd id="vcsViewOnGitHub" 
+         menuLabel="_View FILE on GitHub"
+         desc="View this file on Github"/>     
+   <cmd id="vcsBlameOnGitHub" 
+         menuLabel="_Blame FILE on GitHub"
+         desc="Blame view for this file on Github"/>          
    <cmd id="printSourceDoc"
         menuLabel="Pr_int..."
         buttonLabel=""
@@ -625,6 +684,8 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
         menuLabel="Hide _Toolbar"/>
+   <cmd id="zoomActualSize"
+        menuLabel="Actual Size"/>
    <cmd id="zoomIn"
         menuLabel="_Zoom In"/>
    <cmd id="zoomOut"
@@ -672,6 +733,8 @@ well as menu structures (for main menu and popup menus).
    <cmd id="toggleFullScreen"
         menuLabel="Toggle Full Screen"/>
 
+   <cmd id="findFromSelection"
+        menuLabel="_Use Selection for Find"/>
    <cmd id="findReplace"
         menuLabel="_Find..."/>
    <cmd id="findNext"
@@ -717,6 +780,10 @@ well as menu structures (for main menu and popup menus).
    <cmd id="executeCurrentFunction"
         menuLabel="Run _Function Definition"
         desc="Run the top-level function definition, if any, that contains the cursor"/>
+   <cmd id="executeCurrentSection"
+	     buttonLabel="Run Section"
+        menuLabel="Run Code _Section"
+        desc="Run the code section that contains the cursor"/>
    <cmd id="executeLastCode"
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"/>       
@@ -786,7 +853,7 @@ well as menu structures (for main menu and popup menus).
   
    <cmd id="knitToHTML"
         buttonLabel="Knit HTML"
-        menuLabel="Knit HTML"
+        menuLabel="_Knit HTML"
         desc="Knit the current document to HTML"/>
  
    <cmd id="previewHTML"
@@ -796,16 +863,16 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="publishHTML"
         buttonLabel="Publish"
-        menuLabel="Publish to RPubs..."
+        menuLabel="P_ublish to RPubs..."
         desc="Publish the current document"/>      
  
    <cmd id="compilePDF"
         buttonLabel="Compile PDF"
-        menuLabel="Compile PDF"
+        menuLabel="_Compile PDF"
         desc="Compile a PDF from the current LaTeX or Sweave document"/>
 
    <cmd id="compileNotebook"
-        menuLabel="Compile _Notebook..."
+        menuLabel="_Compile Notebook..."
         desc="Compile an HTML notebook from the current R script"/>
 
    <cmd id="synctexSearch"
@@ -1048,8 +1115,8 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="clearWorkspace"
         menuLabel="_Clear Workspace..."
-        buttonLabel=""
-        desc="Clear all objects from the workspace"/>
+        buttonLabel="Clear"
+        desc="Clear objects from the workspace"/>
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."/>
    <cmd id="saveWorkspace"
@@ -1135,6 +1202,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHelp"
         menuLabel="Refresh"
         desc="Refresh topic"/>
+
+   <cmd id="viewerPopout"
+        buttonLabel=""
+        desc="Show in new window"/>
+   <cmd id="viewerRefresh"
+        desc="Refresh page"/> 
+   <cmd id="viewerStop"
+        buttonLabel=""
+        desc="Stop application"/>  
+   <cmd id="viewerClear"
+        buttonLabel=""
+        desc="Clear viewer"/>  
+        
    <cmd id="raiseException"
         menuLabel="Raise Exception"/>
    <cmd id="raiseException2"
@@ -1158,8 +1238,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Quit RStudio..."/>
 
    <cmd id="showAboutDialog"
-        menuLabel="_About RStudio"
-        visible="false"/>
+        menuLabel="_About RStudio"/>
    <cmd id="showLogFiles"
         menuLabel="_Show Log Files"
         visible="false"/>
@@ -1203,13 +1282,17 @@ well as menu structures (for main menu and popup menus).
         desc="Execute devtools::load_all"/>     
         
    <cmd id="roxygenizePackage"
-        menuLabel="Roxygenize"
-        desc="Run roxygenize for the package"/>     
+        menuLabel="_Document"
+        desc="Run roxygen2 to document this package"/>     
 
    <cmd id="checkPackage"
         buttonLabel="Check"
         menuLabel="_Check Package"
         desc="R CMD check"/>
+        
+   <cmd id="testPackage"
+        menuLabel="_Test Package"
+        desc="Run tests for package"/>
 
    <cmd id="stopBuild"
         menuLabel="Sto_p Build"
@@ -1279,4 +1362,31 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Break in Code"
         desc="Break when any unhandled error occurs"
         checkable="true"/>
+        
+   <cmd id="showProfiler"
+        menuLabel= "_Profiler"
+        desc="Show the R code profiler"/>
+   <cmd id="startProfiler"
+        menuLabel="Start Profiling"
+        desc="Start profiling R code"/>
+   <cmd id="stopProfiler"
+        menuLabel="Stop Profiling"
+        desc="Stop profiling R code"/>
+
+   <cmd id="reloadShinyApp"
+        menuLabel="Reload"
+        desc="Reload the Shiny application"/>
+   <cmd id="shinyRunInPane"
+        menuLabel="Run in Viewer Pane"
+        desc="Run the Shiny application in an RStudio pane"
+        checkable="true"/>
+   <cmd id="shinyRunInViewer"
+        menuLabel="Run in Window"
+        desc="Run the Shiny application in an RStudio viewer window"
+        checkable="true"/>
+   <cmd id="shinyRunInBrowser"
+        menuLabel="Run External"
+        desc="Run the Shiny application in the system's default Web browser"
+        checkable="true"/>
+
 </commands>

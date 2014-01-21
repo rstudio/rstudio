@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.RootLayoutPanel;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -42,6 +43,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
+import org.rstudio.studio.client.application.ui.AboutDialogContents;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
@@ -59,6 +61,7 @@ import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.pdfviewer.PDFViewerApplication;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
+import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -115,6 +118,7 @@ public class RStudio implements EntryPoint
       div.getStyle().setMarginTop(200, Style.Unit.PX);
       div.getStyle().setProperty("textAlign", "center");
       div.getStyle().setZIndex(1000);
+      ElementIds.assignElementId(div, ElementIds.LOADING_SPINNER);
       Document.get().getBody().appendChild(div);
 
       return new Command()
@@ -167,6 +171,12 @@ public class RStudio implements EntryPoint
                   else if (HTMLPreviewApplication.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
+                           RootLayoutPanel.get(),
+                           dismissProgressAnimation);
+                  }
+                  else if (ShinyApplicationSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
                            RootLayoutPanel.get(),
                            dismissProgressAnimation);
                   }
@@ -231,6 +241,7 @@ public class RStudio implements EntryPoint
       RPubsUploadDialog.ensureStylesInjected();
       WizardResources.INSTANCE.styles().ensureInjected();
       NewProjectResources.INSTANCE.styles().ensureInjected();
+      AboutDialogContents.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

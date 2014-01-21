@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
+import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import java.util.ArrayList;
@@ -348,6 +349,44 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
                }
             },
             false);
+   }
+   
+   @Override
+   public void viewOnGitHub(final GitHubViewRequest viewRequest)
+   {
+      String view = null;
+      if (viewRequest.getViewType() == GitHubViewRequest.ViewType.View)
+         view = "blob";
+      else if (viewRequest.getViewType() == GitHubViewRequest.ViewType.Blame)
+         view = "blame";
+      
+      final String path = viewRequest.getFile().getPath();
+      server_.gitGithubRemoteUrl(view, 
+                                 path, 
+                                 new SimpleRequestCallback<String>() {
+         
+         @Override
+         public void onResponseReceived(String url)
+         {
+            if (url.length() == 0)
+            {
+               globalDisplay_.showErrorMessage(
+                     "Error", 
+                     "Unable to view " + path + " on GitHub.\n\n" +
+                     "Are you sure that this file is on GithHub and is " + 
+                     "contained in the currently active project?");
+            }
+            else
+            {
+               if (viewRequest.getStartLine() != -1)
+                  url += "#L" + viewRequest.getStartLine();
+               if (viewRequest.getEndLine() != viewRequest.getStartLine())
+                  url += "-L" + viewRequest.getEndLine();
+               
+               globalDisplay_.openWindow(url);
+            }
+         }
+      });
    }
    
    @Override

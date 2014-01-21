@@ -36,6 +36,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.GeneralPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.HistoryPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectsPrefs;
@@ -51,6 +52,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
                                  UIPrefs prefs,
+                                 Session session,
                                  final GlobalDisplay globalDisplay,
                                  SourceServerOperations server)
    {
@@ -58,6 +60,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       fileDialogs_ = fileDialogs;
       prefs_ = prefs;
       server_ = server;
+      session_ = session;
 
       if (Desktop.isDesktop())
       {
@@ -134,14 +137,19 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (!Desktop.isDesktop())
          add(rProfileOnResume_);
            
-      add(checkboxPref(
-            "Use debug error handler only when errors contain my code", 
-            prefs_.handleErrorsInUserCodeOnly()));
-      CheckBox chkTracebacks = checkboxPref(
-            "Automatically expand tracebacks in error inspector", 
-            prefs_.autoExpandErrorTracebacks());
-      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
-      add(chkTracebacks);
+      // The error handler features require source references; if this R
+      // version doesn't support them, don't show these options. 
+      if (session_.getSessionInfo().getHaveSrcrefAttribute())
+      {
+	      add(checkboxPref(
+	            "Use debug error handler only when errors contain my code", 
+	            prefs_.handleErrorsInUserCodeOnly()));
+	      CheckBox chkTracebacks = checkboxPref(
+	            "Automatically expand tracebacks in error inspector", 
+	            prefs_.autoExpandErrorTracebacks());
+	      chkTracebacks.getElement().getStyle().setMarginBottom(15, Unit.PX);
+	      add(chkTracebacks);
+      }
       
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       add(encoding_ = new TextBoxWithButton(
@@ -181,7 +189,16 @@ public class GeneralPreferencesPane extends PreferencesPane
       textBoxWithChooser(encoding_);
       spaced(encoding_);
       setEncoding(prefs.defaultEncoding().getGlobalValue());
-            
+      
+      // provide check for updates option in desktop mode when not
+      // already globally disabled
+      if (Desktop.isDesktop() && 
+          !session.getSessionInfo().getDisableCheckForUpdates())
+      {
+         add(checkboxPref("Automatically notify me of updates to RStudio",
+                          prefs_.checkForUpdates()));
+      }
+      
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
@@ -323,4 +340,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UIPrefs prefs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+   private final Session session_;
 }

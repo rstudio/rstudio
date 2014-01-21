@@ -40,6 +40,7 @@ public class Console
    {
       void bringToFront();
       void focus();
+      void ensureCursorVisible();
       IsWidget getConsoleInterruptButton();
       void setDebugMode(boolean debugMode);
    }
@@ -97,6 +98,7 @@ public class Console
       WindowEx.get().focus();
       view_.bringToFront();
       view_.focus();
+      view_.ensureCursorVisible();
    }
    
    public Display getDisplay()

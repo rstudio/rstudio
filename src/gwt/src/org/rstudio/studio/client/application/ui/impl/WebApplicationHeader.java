@@ -115,7 +115,8 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
              
          AppCommand closeSourceDoc = commands.closeSourceDoc();
          closeSourceDoc.setShortcut(new KeyboardShortcut(modifiers, 'W'));
-         ShortcutManager.INSTANCE.register(modifiers, 'W', closeSourceDoc);
+         ShortcutManager.INSTANCE.register(
+               modifiers, 'W', closeSourceDoc, "", "");
       }
       
       // main menu
@@ -157,7 +158,7 @@ public class WebApplicationHeader extends Composite implements ApplicationHeader
             SessionInfo sessionInfo = session.getSessionInfo();
             
             // only show the user identity if we are in server mode
-           if (sessionInfo.getMode().equals(SessionInfo.SERVER_MODE))
+           if (sessionInfo.getShowIdentity())
                initCommandsPanel(sessionInfo);
             
             // complete toolbar initialization

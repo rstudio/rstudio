@@ -92,7 +92,7 @@ void initializeWorkingDirectory(int argc,
       // wd to the current path
 
       FilePath exePath;
-      Error error = core::system::executablePath(argc, argv, &exePath);
+      Error error = core::system::executablePath(argv[0], &exePath);
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
@@ -107,7 +107,8 @@ void initializeWorkingDirectory(int argc,
 
       // on linux we take the current working dir if we were launched
       // from within a terminal
-      if (core::system::stdoutIsTerminal())
+      if (core::system::stdoutIsTerminal() &&
+         (currentPath != core::system::userHomePath()))
       {
          workingDir = currentPath.absolutePath();
       }
@@ -204,6 +205,13 @@ int main(int argc, char* argv[])
       if (error)
          LOG_ERROR(error);
 
+#ifdef __APPLE__
+      // font substituion for OSX Mavericks
+      // see: https://bugreports.qt-project.org/browse/QTBUG-32789
+      QFont::insertSubstitution(QString::fromUtf8(".Lucida Grande UI"),
+                                QString::fromUtf8("Lucida Grande"));
+#endif
+
       boost::scoped_ptr<QApplication> pApp;
       boost::scoped_ptr<ApplicationLaunch> pAppLaunch;
       ApplicationLaunch::init(QString::fromAscii("RStudio"),
@@ -271,7 +279,7 @@ int main(int argc, char* argv[])
 
       // get install path
       FilePath installPath;
-      error = core::system::installPath("..", argc, argv, &installPath);
+      error = core::system::installPath("..", argv[0], &installPath);
       if (error)
       {
          LOG_ERROR(error);

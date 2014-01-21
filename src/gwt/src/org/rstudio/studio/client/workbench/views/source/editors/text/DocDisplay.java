@@ -138,6 +138,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setCursorPosition(Position position);
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
+   void ensureCursorVisible();
 
    
    InputEditorSelection search(String needle,
@@ -161,7 +162,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentChunk();
    Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
+   Scope getCurrentSection();
    Scope getFunctionAtPosition(Position position);
+   Scope getSectionAtPosition(Position position);
    boolean hasScopeTree();
    JsArray<Scope> getScopeTree();
    InsertChunkInfo getInsertChunkInfo();

@@ -35,11 +35,13 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class ClearAllDialog extends ModalDialogBase
 {  
-   public ClearAllDialog(final ProgressOperationWithInput<Boolean> okOperation)
+   public ClearAllDialog(int numObjects, 
+                         final ProgressOperationWithInput<Boolean> okOperation)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      numObjects_ = numObjects;
       
-      setText("Confirm Clear Workspace");
+      setText("Confirm Remove Objects");
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
       ThemedButton yesButton = new ThemedButton("Yes", new ClickHandler()
@@ -78,8 +80,16 @@ public class ClearAllDialog extends ModalDialogBase
       horizontalPanel.add(image);
 
       // add message widget
+      String objects;
+      if (numObjects_ == 0)
+         objects = "all objects";
+      else if (numObjects_ == 1)
+         objects = "1 object";
+      else
+         objects = numObjects_ + " objects";
       Label label = new MultiLineLabel(
-            "Are you sure you want to remove all objects from the workspace?");
+            "Are you sure you want to remove "  + objects + " from the " +
+            "environment? This operation cannot be undone.");
       label.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
@@ -93,15 +103,19 @@ public class ClearAllDialog extends ModalDialogBase
       
       chkIncludeHidden_ = new CheckBox("Include hidden objects");
       chkIncludeHidden_.setValue(prefs_.clearHidden().getValue());
-      chkIncludeHidden_.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            prefs_.clearHidden().setGlobalValue(event.getValue());
-            prefs_.writeUIPrefs();
-         }
-      });
-      optionPanel.add(chkIncludeHidden_);
+
+      if (numObjects_ == 0)
+      {
+         chkIncludeHidden_.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               prefs_.clearHidden().setGlobalValue(event.getValue());
+               prefs_.writeUIPrefs();
+            }
+         });
+         optionPanel.add(chkIncludeHidden_);
+      }
       panel.add(optionPanel);
       
       return panel;
@@ -110,4 +124,5 @@ public class ClearAllDialog extends ModalDialogBase
    private ProgressIndicator progress_ ;
    private CheckBox chkIncludeHidden_;
    private UIPrefs prefs_;
+   private int numObjects_;
 }

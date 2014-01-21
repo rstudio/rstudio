@@ -35,7 +35,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core;
 
@@ -193,7 +193,13 @@ SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
 
 void initializeRStudioPackages(bool newSession)
 {
-   if (newSession)
+#ifdef RSTUDIO_UNVERSIONED_BUILD
+   bool force = true;
+#else
+   bool force = false;
+#endif
+   
+   if (newSession || (options().programMode() == kSessionProgramModeServer))
    {
       std::string libDir = core::string_utils::utf8ToSystem(
                               options().sessionLibraryPath().absolutePath());
@@ -203,7 +209,8 @@ void initializeRStudioPackages(bool newSession)
       Error error = r::exec::RFunction(".rs.initializeRStudioPackages",
                                                                   libDir,
                                                                   pkgSrcDir,
-                                                                  rsVersion)
+                                                                  rsVersion,
+                                                                  force)
                                                                        .call();
       if (error)
          LOG_ERROR(error);

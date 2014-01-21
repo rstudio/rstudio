@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
-import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentObjects.Observer;
 
 public class CallFrameItem extends Composite
    implements ClickHandler
@@ -45,7 +44,8 @@ public class CallFrameItem extends Composite
       String hiddenFrame();
    }
 
-   public CallFrameItem(CallFrame frame, Observer observer, boolean hidden)
+   public CallFrameItem(CallFrame frame, 
+                        EnvironmentObjectsObserver observer, boolean hidden)
    {
       isActive_ = false;
       isVisible_ = true;
@@ -89,16 +89,26 @@ public class CallFrameItem extends Composite
          observer_.changeContextDepth(frame_.getContextDepth());
       }
    }
-
-   public static boolean isNavigableFilename(String fileName)
+   
+   public void setVisible(boolean visible)
    {
-      if (fileName.length() > 0 &&
-          !fileName.equalsIgnoreCase("NULL") &&
-          !fileName.equalsIgnoreCase("<tmp>"))
+      if (visible != isVisible_)
       {
-         return true;
+         if (visible)
+         {
+            functionName.removeStyleName(style.hiddenFrame());
+         }
+         else
+         {
+            functionName.addStyleName(style.hiddenFrame());
+         }
+         isVisible_ = visible;
       }
-      return false;
+   }
+
+   public boolean isNavigable()
+   {
+      return frame_.isNavigable();
    }
 
    // Private functions -------------------------------------------------------
@@ -116,25 +126,38 @@ public class CallFrameItem extends Composite
                            lineNumber;
          }
          functionName.setText(
-                 frame_.getFunctionName() +
-                 "(" + frame_.getArgumentList() + ")" +
+                 getFrameLabel() + 
                  fileLocation);
       }
       else
       {
-         functionName.setText(frame_.getFunctionName());
+         functionName.setText(getFrameLabel());
       }
    }
 
    private boolean hasFileLocation()
    {
-      return frame_.isNavigable();
+      return CallFrame.isNavigableFilename(frame_.getFileName());
+   }
+   
+   private String getFrameLabel()
+   {
+      if (frame_.getShinyFunctionLabel().isEmpty())
+      {
+         return frame_.getFunctionName() +
+                "(" + frame_.getArgumentList() + ")";
+      }
+      else
+      {
+         return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
+      }
+         
    }
 
    @UiField Label functionName;
    @UiField Style style;
 
-   Observer observer_;
+   EnvironmentObjectsObserver observer_;
    CallFrame frame_;
    boolean isActive_;
    boolean isVisible_;

@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.plots.ui.export;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -103,27 +101,20 @@ public class ExportPlot
    
    
    public static FileSystemItem getDefaultSaveDirectory(
-                                                FileSystemItem workingDir)
+                                                   FileSystemItem defaultDir)
    {
-      // do we have a cached initial dir?
-      if (initialDirectories_.containsKey(workingDir.getPath()))
-         return initialDirectories_.get(workingDir.getPath());
-      else
-         return workingDir;
+      if (defaultSaveDirectory_ == null)
+         defaultSaveDirectory_ = defaultDir;
+      
+      return defaultSaveDirectory_;
    }
    
    public static void setDefaultSaveDirectory(
-                                          FileSystemItem workingDir,
                                           FileSystemItem defaultSaveDirectory)
    {
-      initialDirectories_.put(workingDir.getPath(),
-                              defaultSaveDirectory);
+      defaultSaveDirectory_ = defaultSaveDirectory;
    }
    
-   // remember what directory was chosen for plot export for various
-   // working directories
-   static private HashMap<String, FileSystemItem> initialDirectories_ = 
-                                       new HashMap<String,FileSystemItem>();
-   
-
+   // remember last save directory
+   static private FileSystemItem defaultSaveDirectory_ = null;
 }

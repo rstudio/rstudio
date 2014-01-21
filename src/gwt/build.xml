@@ -32,6 +32,12 @@
       <fileset dir="lib/gin/1.5" includes="*.jar"/>
    </path>
 
+   <path id="test.class.path">
+      <pathelement location="bin"/>
+      <fileset dir="lib/selenium/2.37.0" includes="*.jar"/>
+      <fileset dir="lib/selenium/2.37.0/libs" includes="*.jar"/>
+   </path>
+
    <target name="ext">
       <jscomp compilationLevel="simple" warning="default"
               debug="false" output="${ace.bin}/acesupport.js">
@@ -135,32 +141,12 @@
       </exec>
    </target>
 
-   <target name="desktop-draft" description="Compile desktop using GWT's draft mode">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
-         <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
-      </antcall>
-   </target>
-
    <target name="draft" description="Compile using GWT's draft mode">
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
          <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile" />
       </antcall>
    </target>
-
-   <target name="desktop" description="Compile only desktop permutation">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktop"/>
-      </antcall>
-   </target>
-
-   <target name="server" description="Compile only server permutation">
-      <antcall target="gwtc">
-         <param name="gwt.main.module" value="org.rstudio.studio.RStudioServer"/>
-      </antcall>
-   </target>
-	
 	
    <target name="superdevmode" description="Run super dev mode">
    	<antcall target="gwtc">
@@ -177,27 +163,6 @@
          <arg value="org.rstudio.studio.RStudioSuperDevMode"/>
       </java>
    </target>
-	
-
-   <target name="devmode" depends="ext,javac" description="Run development mode">
-      <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
-         <classpath>
-            <pathelement location="src"/>
-            <path refid="project.class.path"/>
-         </classpath>
-         <jvmarg value="-Xmx2048M"/>
-         <arg value="-war"/>
-         <arg value="www"/>
-         <arg value="-noserver"/>
-         <arg value="-startupUrl"/>
-         <arg value="http://localhost:8787"/>
-         <arg line="-bindAddress 0.0.0.0"/>
-         <!-- Additional arguments like -logLevel DEBUG -->
-         <arg value="org.rstudio.studio.RStudioDraft"/>
-      </java>
-   </target>
-
-   <target name="hosted" depends="devmode"/>
 
    <target name="build" depends="gwtc" description="Build this project" />
 
@@ -208,6 +173,35 @@
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="gen" failonerror="false" />
       <delete dir="extras" failonerror="false" />
+   </target>
+
+   <target name="test" description="Runs Selenium tests" depends="build-tests">
+      <parallel>
+         <daemons>
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-mac" os="Mac OS X" />
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-win.exe" os="Windows NT" />
+            <exec executable="lib/selenium/chromedriver/2.7/chromedriver-linux" os="Linux" />
+         </daemons>
+         <sequential>
+            <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
+               <classpath>
+                  <pathelement location="src"/>
+                  <path refid="test.class.path"/>
+               </classpath>
+               <arg value="org.rstudio.studio.selenium.RStudioTestSuite"/>
+            </java>
+         </sequential>
+      </parallel>
+   </target>
+
+   <target name="build-tests" description="Builds Selenium tests">
+      <javac srcdir="test" includes="org/rstudio/studio/selenium/**" encoding="utf-8"
+             destdir="bin"
+             source="1.5" target="1.5" nowarn="true" deprecation="true"
+             debug="true" debuglevel="lines,vars,source"
+             includeantruntime="false">
+         <classpath refid="test.class.path"/>
+      </javac>
    </target>
 
 </project>

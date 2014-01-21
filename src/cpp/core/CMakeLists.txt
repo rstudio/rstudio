@@ -66,6 +66,7 @@ set (CORE_SOURCE_FILES
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
+   http/SocketProxy.cpp
    http/URL.cpp
    http/UriHandler.cpp
    http/Util.cpp
@@ -155,13 +156,18 @@ if (UNIX)
    )
 
    if(RSTUDIO_SERVER)
-      # require openssl (for crypto)
       find_package(OpenSSL REQUIRED QUIET)
-      set (CORE_SYSTEM_LIBRARIES
+      find_package(PAM REQUIRED)
+      set(CORE_SYSTEM_LIBRARIES
          ${CORE_SYSTEM_LIBRARIES}
          ${OPENSSL_LIBRARIES}
+         ${PAM_LIBRARIES}
       )
-      set(CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIRS})
+      set(CORE_INCLUDE_DIRS
+         ${CORE_INCLUDE_DIRS}
+         ${OPENSSL_INCLUDE_DIRS}
+         ${PAM_INCLUDE_DIRS}
+      )
    endif()
 
    # source files
@@ -171,7 +177,6 @@ if (UNIX)
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
       SyslogLogWriter.cpp
-      system/Pam.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
@@ -187,6 +192,7 @@ if (UNIX)
    if(RSTUDIO_SERVER)
       set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
          system/PosixCrypto.cpp
+         system/Pam.cpp
       )
    endif()
 

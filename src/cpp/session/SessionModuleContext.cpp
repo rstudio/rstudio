@@ -45,6 +45,8 @@
 #include <core/system/Environment.hpp>
 #include <core/system/ShellUtils.hpp>
 
+#include <core/r_util/RPackageInfo.hpp>
+
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
 #include <r/RExec.hpp>
@@ -64,10 +66,11 @@
 
 #include <session/SessionContentUrls.hpp>
 
+#include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
 
-#include "config.h"
+#include "session-config.h"
 
 using namespace core ;
 
@@ -216,10 +219,16 @@ SEXP rs_sourceDiagnostics()
 SEXP rs_packageLoaded(SEXP pkgnameSEXP)
 {
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
+
+   // fire server event
+   events().onPackageLoaded(pkgname);
+
+   // fire client event
    ClientEvent packageLoadedEvent(
             client_events::kPackageLoaded,
             json::Value(pkgname));
    enqueClientEvent(packageLoadedEvent);
+
    return R_NilValue;
 }
 
@@ -731,6 +740,11 @@ FilePath tempFile(const std::string& prefix, const std::string& extension)
    return r::session::utils::tempFile(prefix, extension);
 }
 
+FilePath tempDir()
+{
+   return r::session::utils::tempDir();
+}
+
 FilePath findProgram(const std::string& name)
 {
    std::string which;
@@ -790,7 +804,7 @@ bool isTextFile(const FilePath& targetPath)
 #ifndef _WIN32
    core::shell_utils::ShellCommand cmd("file");
    cmd << "--dereference";
-   cmd << "--mime-type";
+   cmd << "--mime";
    cmd << "--brief";
    cmd << targetPath;
    core::system::ProcessResult result;
@@ -803,7 +817,11 @@ bool isTextFile(const FilePath& targetPath)
       return error;
    }
 
+   // strip encoding
    std::string fileType = boost::algorithm::trim_copy(result.stdOut);
+   fileType = fileType.substr(0, fileType.find(';'));
+
+   // check value
    return boost::algorithm::starts_with(fileType, "text/") ||
           boost::algorithm::ends_with(fileType, "+xml") ||
           boost::algorithm::ends_with(fileType, "x-empty") ||
@@ -868,6 +886,16 @@ shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
 #endif
 }
 
+// get the R local help port
+std::string rLocalHelpPort()
+{
+   std::string port;
+   Error error = r::exec::RFunction(".rs.httpdPort").call(&port);
+   if (error)
+      LOG_ERROR(error);
+   return port;
+}
+
 // check if a package is installed
 bool isPackageInstalled(const std::string& packageName)
 {
@@ -879,12 +907,24 @@ bool isPackageInstalled(const std::string& packageName)
    return !error ? installed : false;
 }
 
+bool isPackageVersionInstalled(const std::string& packageName,
+                               const std::string& version)
+{
+   r::session::utils::SuppressOutputInScope suppressOutput;
+
+   bool installed;
+   r::exec::RFunction func(".rs.isPackageVersionInstalled",
+                           packageName, version);
+   Error error = func.call(&installed);
+   return !error ? installed : false;
+}
+
 std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
 {
    // check whether we are in a package
    FilePath sourceDir = sourceFilePath.parent();
    if (sourceDir.filename() == "R" &&
-       sourceDir.parent().childPath("DESCRIPTION").exists())
+       r_util::isPackageDirectory(sourceDir.parent()))
    {
       r_util::RPackageInfo pkgInfo;
       Error error = pkgInfo.read(sourceDir.parent());
@@ -1036,12 +1076,17 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
    // check extension for special file types which are always visible
    core::FilePath filePath(fileInfo.absolutePath());
    std::string ext = filePath.extensionLowerCase();
+   std::string name = filePath.filename();
    if (ext == ".rprofile" ||
        ext == ".rbuildignore" ||
        ext == ".rdata"    ||
        ext == ".rhistory" ||
        ext == ".renviron" ||
        ext == ".gitignore")
+   {
+      return true;
+   }
+   else if (name == ".travis.yml")
    {
       return true;
    }
@@ -1252,6 +1297,63 @@ std::string resourceFileAsString(const std::string& fileName)
    return fileContents;
 }
 
+bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
+{
+   // extract the port
+   boost::regex re("http[s]?://(?:localhost|127\\.0\\.0\\.1):([0-9]+)(/.*)?");
+   boost::smatch match;
+   if (boost::regex_search(url, match, re))
+   {
+      // calculate the path
+      std::string path = match[2];
+      if (path.empty())
+         path = "/";
+      path = "p/" + match[1] + path;
+      *pPath = path;
+
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+// given a url, return a portmap path if applicable (i.e. we're in server
+// mode and the path needs port mapping), and the unmodified url otherwise
+std::string mapUrlPorts(const std::string& url)
+{
+   // if we are in server mode then we need to do port mapping
+   if (session::options().programMode() != kSessionProgramModeServer)
+      return url;
+
+   // see if we can form a portmap path for this url
+   std::string path;
+   if (portmapPathForLocalhostUrl(url, &path))
+      return path;
+
+   return url;
+}
+
+// given a pair of paths, return the second in the context of the first
+std::string pathRelativeTo(const FilePath& sourcePath,
+                           const FilePath& targetPath)
+{
+   std::string relative;
+   if (targetPath == sourcePath)
+   {
+      relative = ".";
+   }
+   else if (targetPath.isWithin(sourcePath))
+   {
+      relative = targetPath.relativePath(sourcePath);
+   }
+   else
+   {
+      relative = createAliasedPath(targetPath);
+   }
+   return relative;
+}
 
 void activatePane(const std::string& pane)
 {

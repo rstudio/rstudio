@@ -103,6 +103,9 @@ extern const int kPackageUnloaded;
 extern const int kPresentationPaneRequestCompleted;
 extern const int kUnhandledError;
 extern const int kErrorHandlerChanged;
+extern const int kViewerNavigate;
+extern const int kSourceExtendedTypeDetected;
+extern const int kShinyViewer;
 }
    
 class ClientEvent

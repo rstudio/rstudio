@@ -95,12 +95,6 @@ core::system::ProcessConfig sessionProcessConfig(
 
 void onProcessExit(const std::string& username, PidType pid)
 {
-   using namespace monitor;
-   client().logEvent(Event(kSessionScope,
-                           kSessionExitEvent,
-                           "",
-                           username,
-                           pid));
 }
 
 } // anonymous namespace
@@ -167,6 +161,10 @@ Error SessionManager::launchSession(const std::string& username)
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(username);
 
+   // pass the profile to the filter if we have one
+   if (sessionLaunchProfileFilter_)
+      sessionLaunchProfileFilter_(&profile);
+
    // launch the session
    Error error = sessionLaunchFunction_(profile);
    if (error)
@@ -209,6 +207,12 @@ void SessionManager::setSessionLaunchFunction(
                            const SessionLaunchFunction& launchFunction)
 {
    sessionLaunchFunction_ = launchFunction;
+}
+
+void SessionManager::setSessionLaunchProfileFilter(
+                              const SessionLaunchProfileFilter& filter)
+{
+   sessionLaunchProfileFilter_ = filter;
 }
 
 void SessionManager::removePendingLaunch(const std::string& username)

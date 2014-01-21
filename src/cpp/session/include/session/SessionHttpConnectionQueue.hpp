@@ -50,6 +50,8 @@ public:
 
    std::string peekNextConnectionUri();
 
+   boost::posix_time::ptime lastConnectionTime();
+
 private:
    boost::shared_ptr<HttpConnection> doDequeConnection();
    bool waitForConnection(const boost::posix_time::time_duration& waitDuration);
@@ -64,6 +66,7 @@ private:
    boost::condition* pWaitCondition_ ;
 
    // instance data
+   boost::posix_time::ptime lastConnectionTime_;
    std::queue<boost::shared_ptr<HttpConnection> > queue_;
 };
 

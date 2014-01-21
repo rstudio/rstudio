@@ -30,7 +30,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
    {
 
       var keywords = lang.arrayToMap(
-            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass")
+            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass")
                   .split("|")
             );
 
@@ -74,16 +74,12 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
             },
             {
-               token : "constant.numeric", // explicit integer
-               regex : "\\d+L\\b"
+               token : "constant.numeric", // number + integer
+               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b"
             },
             {
-               token : "constant.numeric", // number
-               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b"
-            },
-            {
-               token : "constant.numeric", // number with leading decimal
-               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b"
+               token : "constant.numeric", // number + integer with leading decimal
+               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b"
             },
             {
                token : "constant.language.boolean",

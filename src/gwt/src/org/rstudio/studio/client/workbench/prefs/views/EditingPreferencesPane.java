@@ -43,6 +43,8 @@ public class EditingPreferencesPane extends PreferencesPane
       add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
       add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentIndent()));
       add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
+      add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
+      add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));

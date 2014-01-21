@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -31,10 +32,12 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -42,6 +45,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -78,6 +82,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -112,6 +118,8 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
                              CodeBrowserFinishedHandler,
+                             CodeBrowserHighlightEvent.Handler,
+                             SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler
 {
    public interface Display extends IsWidget,
@@ -169,7 +177,7 @@ public class Source implements InsertSourceHandler,
                  FileDialogs fileDialogs,
                  RemoteFileSystemContext fileContext,
                  EventBus events,
-                 Session session,
+                 final Session session,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
@@ -213,6 +221,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.executeToCurrentLine());
       dynamicCommands_.add(commands.executeFromCurrentLine());
       dynamicCommands_.add(commands.executeCurrentFunction());
+      dynamicCommands_.add(commands.executeCurrentSection());
       dynamicCommands_.add(commands.executeLastCode());
       dynamicCommands_.add(commands.insertChunk());
       dynamicCommands_.add(commands.insertSection());
@@ -232,6 +241,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.findReplace());
       dynamicCommands_.add(commands.findNext());
       dynamicCommands_.add(commands.findPrevious());
+      dynamicCommands_.add(commands.findFromSelection());
       dynamicCommands_.add(commands.replaceAndFind());
       dynamicCommands_.add(commands.extractFunction());
       dynamicCommands_.add(commands.commentUncomment());
@@ -249,6 +259,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
       dynamicCommands_.add(commands.debugBreakpoint());
+      dynamicCommands_.add(commands.vcsViewOnGitHub());
+      dynamicCommands_.add(commands.vcsBlameOnGitHub());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -260,7 +272,18 @@ public class Source implements InsertSourceHandler,
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));
-             
+
+      // See bug 3673 and https://bugs.webkit.org/show_bug.cgi?id=41016
+      if (BrowseCap.isMacintosh())
+      {
+         ShortcutManager.INSTANCE.register(
+               KeyboardShortcut.META | KeyboardShortcut.ALT,
+               192,
+               commands.executeNextChunk(), 
+               "Execute",
+               commands.executeNextChunk().getMenuLabel(false));
+      }
+
       events.addHandler(ShowContentEvent.TYPE, this);
       events.addHandler(ShowDataEvent.TYPE, this);
 
@@ -284,6 +307,8 @@ public class Source implements InsertSourceHandler,
       events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
       
       events.addHandler(CodeBrowserFinishedEvent.TYPE, this);
+
+      events.addHandler(CodeBrowserHighlightEvent.TYPE, this);
 
       events.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
@@ -330,6 +355,8 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
+      
+      events.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
@@ -395,6 +422,9 @@ public class Source implements InsertSourceHandler,
       manageCommands();
       // Same with this event
       fireDocTabsChanged();
+      
+      // open project docs
+      openProjectDocs(session);    
    }
 
    /**
@@ -429,6 +459,58 @@ public class Source implements InsertSourceHandler,
       for (int i = 0; i < docs.length(); i++)
       {
          addTab(docs.get(i));
+      }
+   }
+   
+   private void openProjectDocs(final Session session)
+   {
+      JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
+      if (openDocs.length() > 0)
+      {
+         // set new tab pending for the duration of the continuation
+         newTabPending_++;
+                 
+         // create a continuation for opening the source docs
+         SerializedCommandQueue openCommands = new SerializedCommandQueue();
+         
+         for (int i=0; i<openDocs.length(); i++)
+         {
+            String doc = openDocs.get(i);
+            final FileSystemItem fsi = FileSystemItem.createFile(doc);
+              
+            openCommands.addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  openFile(fsi, 
+                           fileTypeRegistry_.getTextTypeForFile(fsi), 
+                           new CommandWithArg<EditingTarget>() {
+                              @Override
+                              public void execute(EditingTarget arg)
+                              {  
+                                 continuation.execute();
+                              }
+                           });
+               }
+            });
+         }
+         
+         // decrement newTabPending and select first tab when done
+         openCommands.addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               newTabPending_--;
+               onFirstTab();
+               continuation.execute();
+            }
+            
+         });
+         
+         // execute the continuation
+         openCommands.run();
       }
    }
    
@@ -482,6 +564,37 @@ public class Source implements InsertSourceHandler,
             });
    }
    
+   @Handler
+   public void onShowProfiler()
+   {
+      // first try to activate existing
+      for (int idx = 0; idx < editors_.size(); idx++)
+      {
+         String path = editors_.get(idx).getPath();
+         if (ProfilerEditingTarget.PATH.equals(path))
+         {
+            ensureVisible(false);
+            view_.selectTab(idx);
+            return;
+         }
+      }
+      
+      // create new profiler 
+      ensureVisible(true);
+      server_.newDocument(
+            FileTypeRegistry.PROFILER.getTypeId(),
+            null,
+            (JsObject) ProfilerContents.createDefault().cast(),
+            new SimpleRequestCallback<SourceDocument>("Show Profiler")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument response)
+               {
+                  addTab(response);
+               }
+            });
+   }
+   
 
    @Handler
    public void onNewSourceDoc()
@@ -509,7 +622,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(EditingTarget target)
                {
-                  target.verifyPrerequisites(); 
+                  target.verifyCppPrerequisites(); 
                }
              }
          );
@@ -521,7 +634,7 @@ public class Source implements InsertSourceHandler,
                    @Override
                    public void onSuccess(EditingTarget target)
                    {
-                      target.verifyPrerequisites();
+                      target.verifyCppPrerequisites();
                    }
                 });
       }
@@ -530,6 +643,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSweaveDoc()
    {
+      // set concordance value if we need to
       String concordance = new String();
       if (uiPrefs_.alwaysEnableRnwConcordance().getValue())
       {
@@ -538,25 +652,49 @@ public class Source implements InsertSourceHandler,
          if (activeWeave.getInjectConcordance())
             concordance = "\\SweaveOpts{concordance=TRUE}\n";
       }
-      final boolean hasConcordance = concordance.length() > 0;
-      
-      String contents = "\\documentclass{article}\n" +
-                        "\n" +
-                        "\\begin{document}\n" +
-                        concordance +
-                        "\n\n\n\n" +
-                        "\\end{document}";
-      
-      newDoc(FileTypeRegistry.SWEAVE, 
-             contents, 
-             new ResultCallback<EditingTarget, ServerError> () {
-                @Override
-                public void onSuccess(EditingTarget target)
-                {
-                   int startRow = 4 + (hasConcordance ? 1 : 0);
-                   target.setCursorPosition(Position.create(startRow, 0));
-                }
-             });
+      final String concordanceValue = concordance;
+     
+      // show progress
+      final ProgressIndicator indicator = new GlobalProgressDelayer(
+            globalDisplay_, 500, "Creating new document...").getIndicator();
+
+      // get the template
+      server_.getSourceTemplate("", 
+                                "sweave.Rnw", 
+                                new ServerRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String templateContents)
+         {
+            indicator.onCompleted();
+            
+            // add in concordance if necessary
+            final boolean hasConcordance = concordanceValue.length() > 0;
+            if (hasConcordance)
+            {
+               String beginDoc = "\\begin{document}\n";
+               templateContents = templateContents.replace(
+                     beginDoc,
+                     beginDoc + concordanceValue);
+            }
+            
+            newDoc(FileTypeRegistry.SWEAVE, 
+                  templateContents, 
+                  new ResultCallback<EditingTarget, ServerError> () {
+               @Override
+               public void onSuccess(EditingTarget target)
+               {
+                  int startRow = 4 + (hasConcordance ? 1 : 0);
+                  target.setCursorPosition(Position.create(startRow, 0));
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            indicator.onError(error.getUserMessage());
+         }
+      });
    }
    
    @Handler
@@ -799,7 +937,10 @@ public class Source implements InsertSourceHandler,
    {
       ensureVisible(false);
       if (activeEditor_ != null)
+      {
          activeEditor_.focus();
+         activeEditor_.ensureCursorVisible();
+      }
    }
 
    @Handler
@@ -1262,6 +1403,10 @@ public class Source implements InsertSourceHandler,
                         endPosition = SourcePosition.create(
                               filePos.getEndLine() - 1,
                               filePos.getEndColumn() + 1);
+                        
+                        if (Desktop.isDesktop() && 
+                            navMethod != NavigationMethod.DebugEnd)
+                            Desktop.getFrame().bringMainFrameToFront();
                      }
                      navigate(target, 
                               SourcePosition.create(position.getLine() - 1,
@@ -1360,6 +1505,24 @@ public class Source implements InsertSourceHandler,
    }
    
 
+   private void openFile(FileSystemItem file)
+   {
+      openFile(file, fileTypeRegistry_.getTextTypeForFile(file));
+   }
+   
+   private void openFile(FileSystemItem file,  TextFileType fileType)
+   {
+      openFile(file, 
+               fileType, 
+               new CommandWithArg<EditingTarget>() {
+                  @Override
+                  public void execute(EditingTarget arg)
+                  {
+                     
+                  }
+               });
+   }
+   
    private void openFile(final FileSystemItem file,
                          final TextFileType fileType,
                          final CommandWithArg<EditingTarget> executeOnSuccess)
@@ -1844,10 +2007,13 @@ public class Source implements InsertSourceHandler,
    
    private void manageVcsCommands()
    {
-      // manage vcs log
-      boolean vcsCommandsEnabled = session_.getSessionInfo().isVcsEnabled() &&
-                                   activeEditor_ != null &&
-                                   activeEditor_.getPath() != null ;
+      // manage availablity of vcs commands
+      boolean vcsCommandsEnabled = 
+            session_.getSessionInfo().isVcsEnabled() &&
+            (activeEditor_ != null) &&
+            (activeEditor_.getPath() != null) &&
+            activeEditor_.getPath().startsWith(
+                  session_.getSessionInfo().getActiveProjectDir().getPath());
       
       commands_.vcsFileLog().setVisible(vcsCommandsEnabled);
       commands_.vcsFileLog().setEnabled(vcsCommandsEnabled);
@@ -1855,13 +2021,36 @@ public class Source implements InsertSourceHandler,
       commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled);
       commands_.vcsFileRevert().setVisible(vcsCommandsEnabled);
       commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled);
-      
+          
       if (vcsCommandsEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
          commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
          commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
          commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
+      }
+      
+      boolean isGithubRepo = session_.getSessionInfo().isGithubRepository();
+      if (vcsCommandsEnabled && isGithubRepo)
+      {
+         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
+         
+         commands_.vcsViewOnGitHub().setVisible(true);
+         commands_.vcsViewOnGitHub().setEnabled(true);
+         commands_.vcsViewOnGitHub().setMenuLabel(
+                                  "_View \"" + name + "\" on GitHub");
+         
+         commands_.vcsBlameOnGitHub().setVisible(true);
+         commands_.vcsBlameOnGitHub().setEnabled(true);
+         commands_.vcsBlameOnGitHub().setMenuLabel(
+                                  "_Blame \"" + name + "\" on GitHub");
+      }
+      else
+      {
+         commands_.vcsViewOnGitHub().setVisible(false);
+         commands_.vcsViewOnGitHub().setEnabled(false);
+         commands_.vcsBlameOnGitHub().setVisible(false);
+         commands_.vcsBlameOnGitHub().setEnabled(false);
       }
    }
    
@@ -2024,13 +2213,8 @@ public class Source implements InsertSourceHandler,
             target.showFunction(event.getFunction());
             if (event.getDebugPosition() != null)
             {
-               target.highlightDebugLocation(SourcePosition.create(
-                        event.getDebugPosition().getLine(), 
-                        event.getDebugPosition().getColumn() - 1),
-                     SourcePosition.create(
-                        event.getDebugPosition().getEndLine(),
-                        event.getDebugPosition().getEndColumn() + 1),
-                     event.getExecuting());
+               highlightDebugBrowserPosition(target, event.getDebugPosition(), 
+                                             event.getExecuting());
             }
          }
       });
@@ -2047,6 +2231,37 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+
+   @Override
+   public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
+   {
+      // no need to highlight if we don't have a code browser tab to highlight
+      if (indexOfCodeBrowserTab() < 0)
+         return;
+      
+      setPendingDebugSelection();
+      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+         @Override
+         public void onSuccess(CodeBrowserEditingTarget target)
+         {
+            highlightDebugBrowserPosition(target, event.getDebugPosition(), true);
+         }
+      });
+   }
+   
+   private void highlightDebugBrowserPosition(CodeBrowserEditingTarget target,
+                                              DebugFilePosition pos,
+                                              boolean executing)
+   {
+      target.highlightDebugLocation(SourcePosition.create(
+               pos.getLine(), 
+               pos.getColumn() - 1),
+            SourcePosition.create(
+               pos.getEndLine(),
+               pos.getEndColumn() + 1),
+            executing);
+   }
+
    // returns the index of the tab currently containing the code browser, or
    // -1 if the code browser tab isn't currently open;
    private int indexOfCodeBrowserTab()
@@ -2181,6 +2396,20 @@ public class Source implements InsertSourceHandler,
       
       private final SourcePosition restorePosition_;
       private final AppCommand retryCommand_;
+   }
+   
+   @Override
+   public void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e)
+   {
+      // set the extended type of the specified source file
+      for (EditingTarget editor : editors_)
+      {
+         if (editor.getId().equals(e.getDocId()))
+         {
+            editor.adaptToExtendedFileType(e.getExtendedType());
+            break;
+         }
+      }
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

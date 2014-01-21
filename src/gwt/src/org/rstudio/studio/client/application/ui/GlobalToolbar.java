@@ -23,10 +23,12 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 
@@ -119,11 +121,49 @@ public class GlobalToolbar extends Toolbar
       });
       
       searchWidget_ = codeSearch.getSearchWidget();
-      addLeftWidget(searchWidget_);
+      addLeftWidget(searchWidget_); 
    }
    
    public void completeInitialization(SessionInfo sessionInfo)
    { 
+      StandardIcons icons = StandardIcons.INSTANCE;
+      
+      if (sessionInfo.isVcsEnabled())
+      {
+         addLeftSeparator();
+      
+         ToolbarPopupMenu vcsMenu = new ToolbarPopupMenu();
+         vcsMenu.addItem(commands_.vcsFileDiff().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsFileLog().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsFileRevert().createMenuItem(false));
+         vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.vcsViewOnGitHub().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsBlameOnGitHub().createMenuItem(false));
+         vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.vcsCommit().createMenuItem(false));
+         vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.vcsPull().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsCleanup().createMenuItem(false));
+         vcsMenu.addItem(commands_.vcsPush().createMenuItem(false));
+         vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.vcsShowHistory().createMenuItem(false));
+         vcsMenu.addSeparator();
+         vcsMenu.addItem(commands_.versionControlProjectSetup().createMenuItem(false));
+      
+         ImageResource vcsIcon = null;
+         if (sessionInfo.getVcsName().equals(VCSConstants.GIT_ID))
+            vcsIcon = icons.git();
+         else if (sessionInfo.getVcsName().equals(VCSConstants.SVN_ID))
+            vcsIcon = icons.svn();
+         
+         ToolbarButton vcsButton = new ToolbarButton(
+               null,
+               vcsIcon, 
+               vcsMenu);
+         vcsButton.setTitle("Version control");
+         addLeftWidget(vcsButton);
+      }
+      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

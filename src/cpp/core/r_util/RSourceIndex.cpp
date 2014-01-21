@@ -220,6 +220,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
    std::wstring setMethod(L"setMethod");
    std::wstring setClass(L"setClass");
    std::wstring setClassUnion(L"setClassUnion");
+   std::wstring setRefClass(L"setRefClass");
    std::wstring eqOp(L"=");
    std::wstring assignOp(L"<-");
    std::wstring parentAssignOp(L"<<-");
@@ -269,7 +270,8 @@ RSourceIndex::RSourceIndex(const std::string& context,
             setType = RSourceItem::Method;
          }
          else if (token.contentEquals(setClass) ||
-                  token.contentEquals(setClassUnion))
+                  token.contentEquals(setClassUnion) ||
+                  token.contentEquals(setRefClass))
          {
             setType = RSourceItem::Class;
          }

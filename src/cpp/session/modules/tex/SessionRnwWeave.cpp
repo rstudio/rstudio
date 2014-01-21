@@ -258,7 +258,7 @@ public:
       format += "knit('%1%'";
       std::string cmd = boost::str(boost::format(format) % file);
 
-      if (!encoding.empty() && hasEncodingParam())
+      if (!encoding.empty())
          cmd += (", encoding='" + encoding + "'");
 
       cmd += ")";
@@ -338,18 +338,6 @@ public:
       purlFunc.addParam("input", file);
       purlFunc.addParam("output", file + ".R");
       return purlFunc.call();
-   }
-
-private:
-   bool hasEncodingParam() const
-   {
-      bool hasEncoding = false;
-      Error error = r::exec::RFunction(".rs.knitrHasEncodingParam").call(
-                                                                  &hasEncoding);
-      if (error)
-         LOG_ERROR(error);
-
-      return hasEncoding;
    }
 };
 

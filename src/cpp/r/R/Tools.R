@@ -18,11 +18,11 @@
 
 # add a function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addFunction", function(
-   name, FN, hideFromDebugger = FALSE)
+   name, FN, attrs = list())
 { 
    fullName = paste(".rs.", name, sep="")
-   if (hideFromDebugger)
-      attr(FN, "hideFromDebugger") <- TRUE
+   for (attrib in names(attrs))
+     attr(FN, attrib) <- attrs[[attrib]]
    assign(fullName, FN, .rs.Env)
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
@@ -171,7 +171,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
    # make a copy of the snapshot into plot and set its metadata in a way
    # that is compatible with recordPlot
    plot = snapshot
-   attr(plot, "version") <- grDevices:::rversion()
+   attr(plot, "version") <- as.character(getRversion())
    class(plot) <- "recordedplot"
    
    save(plot, file=filename)
@@ -228,6 +228,14 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
        }
      },
      silent = TRUE);
+   }
+
+   # set the pid attribute to the current pid if necessary
+   if (rVersion >= "3.0.2")
+   {
+      plotPid <- attr(plot, "pid")
+      if (is.null(plotPid) || (plotPid != Sys.getpid()))
+        attr(plot, "pid") <- Sys.getpid()
    }
    
    # we suppressWarnings so that R doesnt print a warning if we restore
@@ -390,10 +398,33 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 {
   local({
       r <- getOption("repos");
+      # attribute indicating the repos was set from rstudio prefs
+      attr(r, "RStudio") <- TRUE
       r["CRAN"] <- reposUrl;
       options(repos=r)
     })
 })
+
+.rs.addFunction( "setCRANReposAtStartup", function(reposUrl)
+{
+   # check whether the user has already set a CRAN repository
+   # in their .Rprofile
+   repos = getOption("repos")
+   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+
+   if (!cranMirrorConfigured)
+      .rs.setCRANRepos(reposUrl)
+})
+
+.rs.addFunction( "setCRANReposFromSettings", function(reposUrl)
+{
+   # only set the repository if the repository was set by us
+   # in the first place (it wouldn't be if the user defined a
+   # repository in .Rprofile or called setRepositories directly)
+   if (!is.null(attr(getOption("repos"), "RStudio")))
+      .rs.setCRANRepos(reposUrl)
+})
+
 
 .rs.addFunction( "setMemoryLimit", function(limit)
 {

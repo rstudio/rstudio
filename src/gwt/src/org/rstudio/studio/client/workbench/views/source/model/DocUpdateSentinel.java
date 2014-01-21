@@ -123,8 +123,8 @@ public class DocUpdateSentinel
          {
             if (changesPending_)
                event.setMessage("Some of your source edits are still being " +
-                                "synchronized with the server. If you " +
-                                "continue, your latest changes may be lost.");
+                                "backed up. If you continue, your latest " +
+                                "changes may be lost. Do you want to continue?");
          }
       });
 

@@ -52,6 +52,7 @@ public abstract class
    public abstract AppCommand executeToCurrentLine();
    public abstract AppCommand executeFromCurrentLine();
    public abstract AppCommand executeCurrentFunction();
+   public abstract AppCommand executeCurrentSection();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
    public abstract AppCommand insertSection();
@@ -80,6 +81,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
+   public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
    public abstract AppCommand fold();
@@ -139,6 +141,8 @@ public abstract class
    public abstract AppCommand vcsDiff();
    public abstract AppCommand vcsCommit();
    public abstract AppCommand vcsRevert();
+   public abstract AppCommand vcsViewOnGitHub();
+   public abstract AppCommand vcsBlameOnGitHub();
    public abstract AppCommand vcsShowHistory();
    public abstract AppCommand vcsRefresh();
    public abstract AppCommand vcsRefreshNoError();
@@ -179,6 +183,7 @@ public abstract class
    // View
    public abstract AppCommand showToolbar();
    public abstract AppCommand hideToolbar();
+   public abstract AppCommand zoomActualSize();
    public abstract AppCommand zoomIn();
    public abstract AppCommand zoomOut();
    public abstract AppCommand jumpTo();
@@ -240,6 +245,11 @@ public abstract class
    public abstract AppCommand versionControlShowRsaKey();
    public abstract AppCommand versionControlProjectSetup();
    
+   // Profiler
+   public abstract AppCommand showProfiler();
+   public abstract AppCommand startProfiler();
+   public abstract AppCommand stopProfiler();
+   
    // Tools
    public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
@@ -265,6 +275,13 @@ public abstract class
    public abstract AppCommand debugDumpContents();
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
+   public abstract AppCommand viewShortcuts();
+   
+   // Viewer
+   public abstract AppCommand viewerPopout();
+   public abstract AppCommand viewerRefresh();
+   public abstract AppCommand viewerStop();
+   public abstract AppCommand viewerClear();
 
    // Application
    public abstract AppCommand quitSession();
@@ -285,6 +302,7 @@ public abstract class
    public abstract AppCommand buildBinaryPackage();
    public abstract AppCommand roxygenizePackage();
    public abstract AppCommand checkPackage();
+   public abstract AppCommand testPackage();
    public abstract AppCommand stopBuild();
    public abstract AppCommand buildToolsProjectSetup();
    public abstract AppCommand activateBuild();
@@ -321,8 +339,13 @@ public abstract class
    public abstract AppCommand errorsTraceback();
    public abstract AppCommand errorsBreak();
    
+   // Shiny IDE features
+   public abstract AppCommand reloadShinyApp();
+   public abstract AppCommand shinyRunInPane();
+   public abstract AppCommand shinyRunInViewer();
+   public abstract AppCommand shinyRunInBrowser();
+   
    // Other
    public abstract AppCommand checkSpelling();   
    public abstract AppCommand maximizeConsole();
-   
 }
