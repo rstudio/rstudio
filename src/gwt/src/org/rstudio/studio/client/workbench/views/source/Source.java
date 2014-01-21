@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
@@ -117,6 +118,7 @@ public class Source implements InsertSourceHandler,
                              ShowDataHandler,
                              CodeBrowserNavigationHandler,
                              CodeBrowserFinishedHandler,
+                             CodeBrowserHighlightEvent.Handler,
                              SourceExtendedTypeDetectedEvent.Handler,
                              BeforeShowHandler
 {
@@ -305,6 +307,8 @@ public class Source implements InsertSourceHandler,
       events.addHandler(CodeBrowserNavigationEvent.TYPE, this);
       
       events.addHandler(CodeBrowserFinishedEvent.TYPE, this);
+
+      events.addHandler(CodeBrowserHighlightEvent.TYPE, this);
 
       events.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
@@ -2209,13 +2213,8 @@ public class Source implements InsertSourceHandler,
             target.showFunction(event.getFunction());
             if (event.getDebugPosition() != null)
             {
-               target.highlightDebugLocation(SourcePosition.create(
-                        event.getDebugPosition().getLine(), 
-                        event.getDebugPosition().getColumn() - 1),
-                     SourcePosition.create(
-                        event.getDebugPosition().getEndLine(),
-                        event.getDebugPosition().getEndColumn() + 1),
-                     event.getExecuting());
+               highlightDebugBrowserPosition(target, event.getDebugPosition(), 
+                                             event.getExecuting());
             }
          }
       });
@@ -2232,6 +2231,37 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+
+   @Override
+   public void onCodeBrowserHighlight(final CodeBrowserHighlightEvent event)
+   {
+      // no need to highlight if we don't have a code browser tab to highlight
+      if (indexOfCodeBrowserTab() < 0)
+         return;
+      
+      setPendingDebugSelection();
+      activateCodeBrowser(new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
+         @Override
+         public void onSuccess(CodeBrowserEditingTarget target)
+         {
+            highlightDebugBrowserPosition(target, event.getDebugPosition(), true);
+         }
+      });
+   }
+   
+   private void highlightDebugBrowserPosition(CodeBrowserEditingTarget target,
+                                              DebugFilePosition pos,
+                                              boolean executing)
+   {
+      target.highlightDebugLocation(SourcePosition.create(
+               pos.getLine(), 
+               pos.getColumn() - 1),
+            SourcePosition.create(
+               pos.getEndLine(),
+               pos.getEndColumn() + 1),
+            executing);
+   }
+
    // returns the index of the tab currently containing the code browser, or
    // -1 if the code browser tab isn't currently open;
    private int indexOfCodeBrowserTab()
