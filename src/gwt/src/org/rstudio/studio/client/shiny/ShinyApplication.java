@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
@@ -44,7 +45,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                                          ConsoleBusyEvent.Handler,
-                                         DebugModeChangedEvent.Handler
+                                         DebugModeChangedEvent.Handler,
+                                         RestartStatusEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, ShinyApplication> {}
@@ -72,6 +74,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       eventBus_.addHandler(ShinyApplicationStatusEvent.TYPE, this);
       eventBus_.addHandler(ConsoleBusyEvent.TYPE, this);
       eventBus_.addHandler(DebugModeChangedEvent.TYPE, this);
+      eventBus_.addHandler(RestartStatusEvent.TYPE, this);
 
       binder.bind(commands, this);
       exportShinyAppClosedCallback();
@@ -116,6 +119,21 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          satelliteManager_.activateSatelliteWindow(
                ShinyApplicationSatellite.NAME);
+      }
+   }
+   
+   @Override
+   public void onRestartStatus(RestartStatusEvent event)
+   {
+      // Close the satellite window when R restarts, since this leads to the
+      // Shiny server being terminated. Closing the window triggers a 
+      // ShinyApplicationStatusEvent that allows the rest of the UI a chance
+      // to react to the app's termination.
+      if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED &&
+          currentViewType_ == ShinyViewerType.SHINY_VIEWER_WINDOW)
+      {
+            satelliteManager_.closeSatelliteWindow(
+                  ShinyApplicationSatellite.NAME);
       }
    }
 
