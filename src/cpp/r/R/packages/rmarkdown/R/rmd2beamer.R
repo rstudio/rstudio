@@ -51,10 +51,16 @@ rmd2beamer <- function(input,
 #' @export
 beamerOptions <- function(toc = FALSE,
                           incremental = FALSE,
-                          slide.level = 2) {
+                          slide.level = 2,
+                          include.header = NULL,
+                          include.before = NULL,
+                          include.after = NULL) {
   structure(list(toc = toc,
                  incremental = incremental,
-                 slide.level = slide.level),
+                 slide.level = slide.level,
+                 include.header = include.header,
+                 include.before = include.before,
+                 include.after = include.after),
             class = "beamerOptions")
 }
 
@@ -77,6 +83,9 @@ pandocOptions.beamerOptions <- function(beamerOptions) {
   options <- c(options,
                "--slide-level",
                as.character(beamerOptions$slide.level))
+
+  # content includes
+  options <- c(options, pandocIncludeOptions(beamerOptions))
 
   options
 }

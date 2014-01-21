@@ -3,7 +3,8 @@
 \title{Options for Beamer conversion}
 \usage{
   beamerOptions(toc = FALSE, incremental = FALSE,
-    slide.level = 2)
+    slide.level = 2, include.header = NULL,
+    include.before = NULL, include.after = NULL)
 }
 \arguments{
   \item{toc}{\code{TRUE} to include a table of contents in

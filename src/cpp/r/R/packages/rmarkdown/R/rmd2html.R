@@ -166,17 +166,8 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
     for (css in htmlOptions$css)
       options <- c(options, "--css", css)
 
-    # header content
-    for (header in htmlOptions$include.header)
-      options <- c(options, "--include-in-header", header)
-
-    # body prefix
-    for (before in htmlOptions$include.before)
-      options <- c(options, "--include-before-body", before)
-
-    # body suffix
-    for (after in htmlOptions$include.after)
-      options <- c(options, "--include-after-body", after)
+    # content includes
+    options <- c(options, pandocIncludeOptions(htmlOptions))
   }
 
   # not standalone

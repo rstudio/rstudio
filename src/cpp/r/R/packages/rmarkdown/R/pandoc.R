@@ -18,6 +18,22 @@ pandocTemplate <- function(file) {
   system.file(file.path("templates", file), package = "rmarkdown")
 }
 
+pandocIncludeOptions <- function(includeOptions) {
+
+  options <- c()
+
+  for (header in options$include.header)
+    options <- c(options, "--include-in-header", header)
+
+  for (before in options$include.before)
+    options <- c(options, "--include-before-body", before)
+
+  for (after in options$include.after)
+    options <- c(options, "--include-after-body", after)
+
+  options
+}
+
 pandocOutputFile <- function(input, pandocFormat) {
   if (pandocFormat %in% c("latex", "beamer"))
     ext <- ".pdf"
