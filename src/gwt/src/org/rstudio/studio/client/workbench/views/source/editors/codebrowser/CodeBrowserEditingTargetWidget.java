@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -31,6 +33,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -256,6 +259,33 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       }.schedule(100);
    }
    
+   @Override
+   public void showWarningBar(String warning)
+   {
+      if (warningBar_ == null)
+      {
+         warningBar_ = new InfoBar(InfoBar.WARNING, new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               hideWarningBar();
+            }
+            
+         });
+      }
+      warningBar_.setText(warning);
+      panel_.insertNorth(warningBar_, warningBar_.getHeight(), null);
+   }
+
+   @Override
+   public void hideWarningBar()
+   {
+      if (warningBar_ != null)
+      {
+         panel_.remove(warningBar_);
+      }
+   }
+
    private void navigateToFunction(
          InputEditorLineWithCursorPosition lineWithPos)
    {
@@ -451,5 +481,5 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final DocDisplay docDisplay_;
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
-   
+   private InfoBar warningBar_;
 }

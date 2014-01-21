@@ -683,7 +683,7 @@ public class EnvironmentPresenter extends BasePresenter
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      SearchPathFunctionDefinition.create(
                            environmentName_, 
-                           "source unavailable or out of sync", 
+                           "debugging", 
                            currentBrowseSource_,
                            true),
                      currentBrowsePosition_.functionRelativePosition(
