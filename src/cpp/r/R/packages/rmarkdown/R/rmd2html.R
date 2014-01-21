@@ -8,9 +8,13 @@
 #'   \code{htmlOptions}
 #' @param toc Whether to include a table of contents in the output
 #' @param toc.depth Depth of headers to include in table of contents
-#' @param theme HTML theme ("default", "cerulean", or "slate")
-#' @param mathjax Include mathjax from the specified URL (pass NULL to
-#' not include mathjax)
+#' @param theme HTML theme ("default", "cerulean", or "slate"). Pass \code{NULL}
+#'   to not use any theme (add your own css using the \code{css} parameter).
+#' @param highlight Syntax highlighting style ("default", "pygments", "kate",
+#'   "monochrome", "espresso", "zenburn", "haddock", or "tango"). Pass
+#'   \code{NULL} to not syntax highlight code.
+#' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
+#'   not include mathjax.
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet Whether to suppress the progress bar and messages
