@@ -41,6 +41,13 @@ rmd2pandoc <- function(input,
   # knit
   input <- knitr::knit(input, envir = envir, quiet = quiet, encoding = encoding)
 
+  # re-write the file in UTF-8 for passing to pandoc
+  if (identical(encoding, "native.enc"))
+    encoding <- ""
+  inputText <- readLines(input, encoding = encoding)
+  inputText <- iconv(inputText, from = encoding, to = "UTF-8")
+  writeLines(inputText, input, useBytes = TRUE)
+
   # pandoc: convert to format
   args <- c("--to", to)
 
