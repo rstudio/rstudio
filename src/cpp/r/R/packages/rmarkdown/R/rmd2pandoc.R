@@ -44,8 +44,7 @@ rmd2pandoc <- function(input,
             "--to", to,
             options,
             "--output", output,
-            md,
-            recursive = TRUE)
+            md)
 
   # show pandoc command line if requested
   if (!quiet) {

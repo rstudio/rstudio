@@ -54,8 +54,7 @@ pandocHTMLOptions <- function(template, mathjax = NULL) {
   if (!is.null(mathjax)) {
     options <- c(options,
                  "--mathjax",
-                 "--variable", paste0("mathjax-url:", mathjax),
-                 recursive = TRUE)
+                 "--variable", paste0("mathjax-url:", mathjax))
   }
   options
 }

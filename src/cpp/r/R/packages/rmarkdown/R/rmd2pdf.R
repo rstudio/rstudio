@@ -52,8 +52,7 @@ pandocPDFOptions <- function(geometry = NULL) {
       value <- geometry[[name]]
       options <- c(options,
                    "--variable",
-                   paste0("geometry:", name, "=", value),
-                   recursive = TRUE)
+                   paste0("geometry:", name, "=", value))
     }
   }
 

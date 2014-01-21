@@ -23,8 +23,7 @@ rmd2beamer <- function(input,
 
   # pandoc options
   options <- c(pandocPDFOptions(),
-               "--variable", paste0("theme:", theme),
-               recursive = TRUE)
+               "--variable", paste0("theme:", theme))
 
   # call pandoc
   rmd2pandoc(input,
