@@ -25,18 +25,15 @@ $endif$
   </style>
   $endif$
 
-  <style type="text/css">code{white-space: pre;}</style>
-$if(quotes)$
-  <style type="text/css">q { quotes: "“" "”" "‘" "’"; }</style>
-$endif$
-
-  <!-- syntax highlighting -->
   $if(highlightjs)$
   <link rel="stylesheet" href="highlight/highlight.css" $if(html5)$$else$type="text/css" $endif$/>
   <script src="highlight/highlight.js"></script>
   $endif$
   $if(highlighting-css)$
   <style type="text/css">
+  code {
+    white-space: pre;
+  }
 $highlighting-css$
   </style>
   $endif$
@@ -75,18 +72,21 @@ $if(toc)$
 $toc$
 </div>
 $endif$
+
 $body$
 
 </div>
 
+$if(theme)$
 <!-- no bootstrap js dependencies for now, comment in if we require them -->
 <!--
 <script src="jquery/jquery.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 -->
+$endif$
 
-<!-- dynamically load mathjax for compatibility with --self-contained -->
 $if(mathjax-url)$
+<!-- dynamically load mathjax for compatibility with --self-contained -->
 <script>
   (function () {
     var script = document.createElement("script");
