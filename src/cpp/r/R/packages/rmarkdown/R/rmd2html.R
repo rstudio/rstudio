@@ -43,8 +43,13 @@ rmd2html <- function(input,
 #'   \code{NULL} to not syntax highlight code.
 #' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
 #'   not include mathjax.
-#' @param css One or more css files to include (paths relative to the location
-#' of the input document)
+#' @param css One or more css files to include
+#' @param include.header One more files that include content to be inserted into
+#'   the HTML \code{head}.
+#' @param include.before One more files that include content to be inserted at
+#'   the beginning of the HTML \code{body}.
+#' @param include.after One more files that include content to be inserted at
+#'   the end of the HTML \code{body}.
 #'
 #' @return A list of HTML options that can be passed to \code{\link{rmd2html}}.
 #'
@@ -54,13 +59,19 @@ htmlOptions <- function(toc = FALSE,
                         theme = "default",
                         highlight = "default",
                         mathjax = mathjaxURL(),
-                        css = NULL) {
+                        css = NULL,
+                        include.header = NULL,
+                        include.before = NULL,
+                        include.after = NULL) {
   structure(list(toc = toc,
                  toc.depth = toc.depth,
                  theme = theme,
                  highlight = highlight,
                  mathjax = mathjax,
-                 css = css),
+                 css = css,
+                 include.header = include.header,
+                 include.before = include.before,
+                 include.after = include.after),
             class = "htmlOptions")
 }
 
@@ -117,11 +128,20 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
   }
 
   # additional css
-  if (!is.null(htmlOptions$css)) {
-    for (css in htmlOptions$css) {
-      options <- c(options, "--css", css)
-    }
-  }
+  for (css in htmlOptions$css)
+    options <- c(options, "--css", css)
+
+  # header content
+  for (header in htmlOptions$include.header)
+    options <- c(options, "--include-in-header", header)
+
+  # body prefix
+  for (before in htmlOptions$include.before)
+    options <- c(options, "--include-before-body", before)
+
+  # body suffix
+  for (after in htmlOptions$include.after)
+    options <- c(options, "--include-after-body", after)
 
   options
 }

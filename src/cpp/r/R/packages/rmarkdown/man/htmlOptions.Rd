@@ -5,7 +5,9 @@
 \usage{
   htmlOptions(toc = FALSE, toc.depth = 3,
     theme = "default", highlight = "default",
-    mathjax = mathjaxURL(), css = NULL)
+    mathjax = mathjaxURL(), css = NULL,
+    include.header = NULL, include.before = NULL,
+    include.after = NULL)
 
   mathjaxURL()
 }
@@ -30,6 +32,15 @@
 
   \item{css}{One or more css files to include (paths
   relative to the location of the input document)}
+
+  \item{include.header}{One more files that include content
+  to be inserted into the HTML \code{head}.}
+
+  \item{include.before}{One more files that include content
+  to be inserted at the beginning of the HTML \code{body}.}
+
+  \item{include.after}{One more files that include content
+  to be inserted at the end of the HTML \code{body}.}
 }
 \value{
   A list of HTML options that can be passed to
