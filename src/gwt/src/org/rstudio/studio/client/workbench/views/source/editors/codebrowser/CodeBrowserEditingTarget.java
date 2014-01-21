@@ -58,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCod
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.WarningBarDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CodeBrowserContents;
@@ -73,7 +74,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
 {
    public static final String PATH = "code_browser://";
    
-   public interface Display extends TextDisplay                                                      
+   public interface Display extends TextDisplay,
+                                    WarningBarDisplay
    {
       void showFunction(SearchPathFunctionDefinition functionDef);
       void showFind(boolean defaultForward);
@@ -203,6 +205,10 @@ public class CodeBrowserEditingTarget implements EditingTarget
       currentFunction_ = functionDef;
       view_.showFunction(functionDef);
       view_.scrollToLeft();
+
+      // we only show the warning bar (for debug line matching) once per 
+      // function; don't keep showing it if the user dismisses
+      shownWarningBar_ = false;
       
       // update document properties if necessary
       final CodeBrowserContents contents = 
@@ -622,6 +628,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
          boolean executing)
    {
       docDisplay_.highlightDebugLocation(startPos, endPos, executing); 
+      if (!shownWarningBar_)
+      {
+         view_.showWarningBar("Debug location is approximate because the " + 
+                              "source is not available.");
+         shownWarningBar_ = true;
+      }
    }
 
    @Override
@@ -684,6 +696,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private final FontSizeManager fontSizeManager_;
    private Display view_;
    private HandlerRegistration commandReg_;
+   private boolean shownWarningBar_ = false;
    
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;

@@ -235,6 +235,27 @@ public class DebugCommander
       }
    }
    
+   @Handler
+   void onDebugStepInto()
+   {
+      // Currently, debug step-into is supported only for function debugging
+      if (debugMode_ == DebugMode.Function)
+      {
+         eventBus_.fireEvent(new SendToConsoleEvent("s", true, true));
+      }
+   }
+   
+   @Handler
+   void onDebugFinish()
+   {
+      // Currently, debug loop/function finish is supported only for function
+      // debugging
+      if (debugMode_ == DebugMode.Function)
+      {
+         eventBus_.fireEvent(new SendToConsoleEvent("f", true, true));
+      }
+   }
+   
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
@@ -282,6 +303,12 @@ public class DebugCommander
          setDebugging(true);
          highlightDebugPosition((LineData)debugState.cast(), false);
       }
+      
+      if (!session_.getSessionInfo().getHaveAdvancedStepCommands())
+      {
+         commands_.debugStepInto().remove();
+         commands_.debugFinish().remove();
+      }
    }
    
    @Override
@@ -323,6 +350,7 @@ public class DebugCommander
          setDebugging(true);
          topDebugMode_ = debugMode_;
       }
+      setAdvancedCommandsVisible(mode == DebugMode.Function);
       debugMode_ = mode;
    }
    
@@ -346,6 +374,7 @@ public class DebugCommander
             else
             {
                highlightDebugPosition(previousLineData_, false);
+               setAdvancedCommandsVisible(false);
             }
          }
          else
@@ -456,6 +485,14 @@ public class DebugCommander
       commands_.debugContinue().setEnabled(enabled);
       commands_.debugStep().setEnabled(enabled);
       commands_.debugStop().setEnabled(enabled);
+      commands_.debugStepInto().setEnabled(enabled);
+      commands_.debugFinish().setEnabled(enabled);
+   }
+   
+   private void setAdvancedCommandsVisible(boolean visible)
+   {
+      commands_.debugFinish().setVisible(visible);
+      commands_.debugStepInto().setVisible(visible);
    }
    
    private void stopDebugging()

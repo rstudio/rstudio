@@ -356,4 +356,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getShowIdentity() /*-{
       return this.show_identity;
    }-*/;
+
+   public final native boolean getHaveAdvancedStepCommands() /*-{
+      return this.have_advanced_step_commands;
+   }-*/;
 }
