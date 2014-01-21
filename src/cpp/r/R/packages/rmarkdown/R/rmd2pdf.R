@@ -29,9 +29,6 @@ rmd2pdf <- function(input,
   # knitr options
   knitrRenderPDF("latex", 6, 5)
 
-  # pandoc options
-  options <- pandocPDFOptions(options)
-
   # call pandoc
   rmd2pandoc(input,
              output,
@@ -45,16 +42,39 @@ rmd2pdf <- function(input,
 #' @rdname rmd2pdf
 #' @export
 pdfOptions <- function(toc = FALSE, geometry = pdfGeometry()) {
-  list(toc = toc,
-       geometry = geometry)
+  structure(list(toc = toc,
+                 geometry = geometry),
+            class = "pdfOptions")
 }
 
 #' @rdname rmd2pdf
 #' @export
-pdfGeometry <- function(margin = "1in", ...) {
-  geometry <- as.list(...)
-  geometry$margin <- margin
-  geometry
+pdfGeometry <- function(margin = "1in") {
+  list(margin = margin)
 }
 
+
+#' @S3method pandocOptions pdfOptions
+pandocOptions.pdfOptions <- function(pdfOptions) {
+
+  # base options for all PDF output
+  options <- c()
+
+  # table of contents
+  if (pdfOptions$toc)
+    options <- c(options, "--table-of-contents")
+
+  # geometry
+  if (!is.null(pdfOptions$geometry)) {
+    geometry <- pdfOptions$geometry
+    for (name in names(geometry)) {
+      value <- geometry[[name]]
+      options <- c(options,
+                   "--variable",
+                   paste0("geometry:", name, "=", value))
+    }
+  }
+
+  options
+}
 

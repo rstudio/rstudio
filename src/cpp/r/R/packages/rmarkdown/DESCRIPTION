@@ -17,5 +17,5 @@ Collate:
     'rmd2html.R'
     'rmd2pandoc.R'
     'rmd2pdf.R'
-    'knitr-render.R'
-    'pandoc-options.R'
+    'pandoc.R'
+    'knitr.R'

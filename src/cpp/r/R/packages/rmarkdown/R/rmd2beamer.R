@@ -26,9 +26,6 @@ rmd2beamer <- function(input,
   # knitr options
   knitrRenderPDF("beamer", 4.5, 3.5)
 
-  # pandoc options
-  options <- pandocBeamerOptions(options)
-
   # call pandoc
   rmd2pandoc(input,
              output,
@@ -43,7 +40,24 @@ rmd2beamer <- function(input,
 #' @rdname rmd2beamer
 #' @export
 beamerOptions <- function(theme = "default") {
-  list(theme = theme)
+  structure(list(theme = theme),
+            class = "beamerOptions")
 }
+
+
+#' @S3method pandocOptions beamerOptions
+pandocOptions.beamerOptions <- function(beamerOptions) {
+
+  # base options for all beamer output
+  options <- c()
+
+  # theme
+  options <- c(options,
+               "--variable", paste0("theme:", beamerOptions$theme))
+
+  options
+}
+
+
 
 

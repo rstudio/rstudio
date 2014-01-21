@@ -8,7 +8,9 @@
 #'   specified format is chosen)
 #' @param from Options to control the flavor of markdown converted from
 #' @param to Pandoc format to convert to (defaults to HTML if not specified)
-#' @param options Command line options to pass to pandoc
+#' @param options Command line options to pass to pandoc. This should either
+#' be a character vector of literal command line options or an object that
+#' provices a \code{pandocOptions} S3 method which yields the options.
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet \code{TRUE} to supress printing of the pandoc command line
@@ -44,7 +46,7 @@ rmd2pandoc <- function(input,
   # build pandoc args
   args <- c("--from", from,
             "--to", to,
-            options,
+            pandocOptions(options),
             "--output", output,
             md)
 
@@ -89,75 +91,4 @@ rmdFormat <- function(options = NULL) {
         options,
         collapse = "")
 }
-
-
-
-pandocExec <- function(args, ...) {
-  pandoc <- pandocPath()
-  if (nzchar(pandoc)) {
-    command <- paste(pandoc, paste(shQuote(args), collapse = " "))
-    system(command, ...)
-  } else {
-    stop("pandoc was not found on the system path", call. = FALSE)
-  }
-}
-
-pandocOutputFile <- function(input, pandocFormat) {
-  if (pandocFormat %in% c("latex", "beamer"))
-    ext <- ".pdf"
-  else if (pandocFormat %in% c("html", "html5", "revealjs"))
-    ext <- ".html"
-  else
-    ext <- paste0(".", pandocFormat)
-  output <- paste0(tools::file_path_sans_ext(input), ext)
-  tools::file_path_as_absolute(output)
-}
-
-pandocPath <- function() {
-  Sys.which("pandoc")
-}
-
-verifyPandocVersion <- function() {
-  hasPandoc <- hasRequiredPandocVersion()
-  if (!hasPandoc) {
-    msg <- paste("The pandoc package requires that pandoc version",
-                 requiredPandocVersion(),
-                 "or greater is installed and available on the path.")
-    oldVersion <- attr(hasPandoc, "version")
-    if (!is.null(oldVersion))
-      msg <- paste(msg, "You currently have version", oldVersion, "installed,",
-                   "please update to a newer version.")
-    else
-      msg <- paste(msg, "No version of pandoc was found on the path.")
-
-    stop(msg, call.=FALSE)
-  }
-}
-
-hasRequiredPandocVersion <- function() {
-  if (nzchar(pandocPath())) {
-    versionInfo <- pandocExec("--version", intern = TRUE)
-    version <- strsplit(versionInfo, "\n")[[1]][1]
-    version <- strsplit(version, " ")[[1]][2]
-    hasRequired <- numeric_version(version) >= requiredPandocVersion()
-    if (hasRequired) {
-      TRUE
-    } else {
-      attr(hasRequired, "version") <- version
-      hasRequired
-    }
-  } else {
-    FALSE
-  }
-}
-
-requiredPandocVersion <- function() {
-  "1.12.3"
-}
-
-
-systemFile <- function(file) {
-  system.file(file, package = "rmarkdown")
-}
-
 

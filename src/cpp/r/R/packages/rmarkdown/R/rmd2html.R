@@ -28,10 +28,6 @@ rmd2html <- function(input,
   # knitr options
   knitrRenderHTML("html", 7, 7)
 
-  # pandoc options
-  options <- c(pandocTemplateOptions(systemFile("templates/html/default.html")),
-               pandocHTMLOptions(options))
-
   # call pandoc
   rmd2pandoc(input,
              output,
@@ -46,8 +42,9 @@ rmd2html <- function(input,
 #' @rdname rmd2html
 #' @export
 htmlOptions <- function(toc = FALSE, mathjax = mathjaxURL()) {
-  list(toc = toc,
-       mathjax = mathjax)
+  structure(list(toc = toc,
+                 mathjax = mathjax),
+            class = "htmlOptions")
 }
 
 
@@ -73,6 +70,29 @@ mathjaxURL <- function(version = "latest",
   paste0(baseurl, "/", version, "/MathJax.js?config=", config)
 }
 
+
+#' @S3method pandocOptions htmlOptions
+pandocOptions.htmlOptions <- function(htmlOptions) {
+
+  # base options for all HTML output
+  options <- c(pandocTemplateOptions("html/default.html"),
+               "--smart",
+               "--self-contained",
+               "--no-highlight")
+
+  # table of contents
+  if (htmlOptions$toc)
+    options <- c(options, "--table-of-contents")
+
+  # mathjax
+  if (!is.null(htmlOptions$mathjax)) {
+    options <- c(options,
+                 "--mathjax",
+                 "--variable", paste0("mathjax-url:", htmlOptions$mathjax))
+  }
+
+  options
+}
 
 
 
