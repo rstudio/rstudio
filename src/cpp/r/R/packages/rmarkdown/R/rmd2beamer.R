@@ -27,13 +27,7 @@ rmd2beamer <- function(input,
   knitrRenderPDF("beamer", 4.5, 3.5)
 
   # call pandoc
-  rmd2pandoc(input,
-             output,
-             to = "beamer",
-             options = options,
-             envir = envir,
-             quiet = quiet,
-             encoding = encoding)
+  rmd2pandoc(input, "beamer", output, options, envir, quiet, encoding)
 }
 
 

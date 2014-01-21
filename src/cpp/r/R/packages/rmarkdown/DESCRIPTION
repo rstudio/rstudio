@@ -15,7 +15,6 @@ License: GPL (>= 2)
 Collate:
     'rmd2beamer.R'
     'rmd2html.R'
-    'rmd2pandoc.R'
     'rmd2pdf.R'
     'pandoc.R'
-    'knitr.R'
+    'rmd2pandoc.R'

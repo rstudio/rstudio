@@ -1,22 +1,19 @@
 \name{rmd2pandoc}
 \alias{rmd2pandoc}
-\title{Convert an R Markdown document using pandoc}
+\title{Knit and convert an R Markdown document}
 \usage{
-  rmd2pandoc(input, output = NULL, from = rmdFormat(),
-    to = "html", options = NULL, envir = parent.frame(),
-    quiet = FALSE, encoding = getOption("encoding"))
+  rmd2pandoc(input, to, output = NULL, options = NULL,
+    envir = parent.frame(), quiet = FALSE,
+    encoding = getOption("encoding"))
 }
 \arguments{
   \item{input}{Input file}
 
+  \item{to}{Pandoc format to convert to}
+
   \item{output}{Output file (if not specified then a
-  default based on the specified format is chosen)}
-
-  \item{from}{Options to control the flavor of markdown
-  converted from}
-
-  \item{to}{Pandoc format to convert to (defaults to HTML
-  if not specified)}
+  default based on the specified \code{to} format is
+  chosen)}
 
   \item{options}{Command line options to pass to pandoc.
   This should either be a character vector of literal
@@ -38,7 +35,12 @@
   and the path of the output file is returned.
 }
 \description{
-  Convert the \code{input} document to the specified
-  \code{format} and write it to \code{output}.
+  Knit the specified R Markdown input file and convert it
+  to final output using pandoc.
+}
+\details{
+  Typically one of the \code{\link{knitrRender}} functions
+  is called prior to calling \code{knit2pandoc} to optimize
+  knitr rendering for the intended output format.
 }
 

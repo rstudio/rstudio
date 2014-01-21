@@ -1,5 +1,6 @@
 \name{rmd2html}
 \alias{htmlOptions}
+\alias{mathjaxURL}
 \alias{rmd2html}
 \title{Convert R Markdown to HTML}
 \usage{
@@ -8,6 +9,8 @@
     encoding = getOption("encoding"))
 
   htmlOptions(toc = FALSE, mathjax = mathjaxURL())
+
+  mathjaxURL()
 }
 \arguments{
   \item{input}{Input Rmd document}
@@ -21,7 +24,7 @@
   \item{toc}{Whether to include a table of contents in the
   output}
 
-  \item{mathjax}{Include mathjax from the specified url
+  \item{mathjax}{Include mathjax from the specified URL
   (pass NULL to not include mathjax)}
 
   \item{envir}{The environment in which the code chunks are

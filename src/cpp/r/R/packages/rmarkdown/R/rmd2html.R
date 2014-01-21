@@ -7,7 +7,7 @@
 #' @param options List of HTML rendering options created by calling
 #'   \code{htmlOptions}
 #' @param toc Whether to include a table of contents in the output
-#' @param mathjax Include mathjax from the specified url (pass NULL to
+#' @param mathjax Include mathjax from the specified URL (pass NULL to
 #' not include mathjax)
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
@@ -29,45 +29,23 @@ rmd2html <- function(input,
   knitrRenderHTML("html", 7, 7)
 
   # call pandoc
-  rmd2pandoc(input,
-             output,
-             to = "html",
-             options = options,
-             envir = envir,
-             quiet = quiet,
-             encoding = encoding)
+  rmd2pandoc(input, "html", output, options, envir, quiet, encoding)
 }
 
 
 #' @rdname rmd2html
 #' @export
-htmlOptions <- function(toc = FALSE, mathjax = mathjaxURL()) {
+htmlOptions <- function(toc = FALSE,  mathjax = mathjaxURL()) {
   structure(list(toc = toc,
                  mathjax = mathjax),
             class = "htmlOptions")
 }
 
-
-#' MathJax URL
-#'
-#' Get the URL to the MathJax library.
-#'
-#' @param version Version to use
-#' @param config Configuration to use
-#' @param https Use secure connection
-#'
-#' @return URL to MathJax library
-#'
+#' @rdname rmd2html
 #' @export
-mathjaxURL <- function(version = "latest",
-                       config = "TeX-AMS-MML_HTMLorMML",
-                       https = FALSE) {
-  if (https)
-    baseurl <- "https://c328740.ssl.cf1.rackcdn.com/mathjax"
-  else
-    baseurl <- "http://cdn.mathjax.org/mathjax"
-
-  paste0(baseurl, "/", version, "/MathJax.js?config=", config)
+mathjaxURL <- function() {
+  paste0("https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js",
+         "?config=TeX-AMS-MML_HTMLorMML")
 }
 
 

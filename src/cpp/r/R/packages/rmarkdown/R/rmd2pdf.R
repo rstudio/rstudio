@@ -30,13 +30,7 @@ rmd2pdf <- function(input,
   knitrRenderPDF("latex", 6, 5)
 
   # call pandoc
-  rmd2pandoc(input,
-             output,
-             to = "latex",
-             options = options,
-             envir = envir,
-             quiet = quiet,
-             encoding = encoding)
+  rmd2pandoc(input, "latex", output, options, envir, quiet, encoding)
 }
 
 #' @rdname rmd2pdf
