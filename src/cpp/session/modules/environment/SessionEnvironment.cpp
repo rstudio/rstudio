@@ -390,7 +390,7 @@ json::Array callFramesAsJson(LineDebugState& lineDebugState)
          if (isValidSrcref(srcref))
          {
             varFrame["real_sourceref"] = true;
-            sourceRefToJson(pSrcContext->srcref, &varFrame);
+            sourceRefToJson(srcref, &varFrame);
          }
          else
          {
@@ -401,21 +401,23 @@ json::Array callFramesAsJson(LineDebugState& lineDebugState)
             SEXP simulatedSrcref;
             if (contextDepth == 1 &&
                 lineDebugState.lastDebugText.length() > 0)
-            {
                simulatedSrcref =
                      simulatedSourceRefsOfContext(pRContext, NULL,
                                                   &lineDebugState);
-               int stepLine = INTEGER(simulatedSrcref)[0];
-
-               // store the line stepped over, so we can infer that the next
-               // line stepped over will be near this one
-               if (stepLine > 0)
-                  lineDebugState.lastDebugLine = stepLine;
-            }
             else
                simulatedSrcref =
                      simulatedSourceRefsOfContext(pRContext, pPrevContext,
                                                   NULL);
+
+            // store the line stepped over in the top frame, so we can infer
+            // that the next line stepped over will be near this one
+            if (contextDepth == 1)
+            {
+               int stepLine = INTEGER(simulatedSrcref)[0];
+               if (stepLine > 0)
+                  lineDebugState.lastDebugLine = stepLine;
+            }
+
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
          pSrcContext = pRContext;
