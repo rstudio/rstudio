@@ -12,13 +12,16 @@
   \item{output}{Output file (if not specified then a
   default based on the specified format is chosen)}
 
-  \item{from}{Options determining the flavor of markdown
-  supported by the conversion}
+  \item{from}{Options to control the flavor of markdown
+  converted from}
 
   \item{to}{Pandoc format to convert to (defaults to HTML
   if not specified)}
 
-  \item{options}{Command line options to pass to pandoc}
+  \item{options}{Command line options to pass to pandoc.
+  This should either be a character vector of literal
+  command line options or an object that provices a
+  \code{pandocOptions} S3 method which yields the options.}
 
   \item{envir}{The environment in which the code chunks are
   to be evaluated (can use \code{\link{new.env}()} to

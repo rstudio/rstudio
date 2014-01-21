@@ -10,7 +10,7 @@
 
   pdfOptions(toc = FALSE, geometry = pdfGeometry())
 
-  pdfGeometry(margin = "1in", ...)
+  pdfGeometry(margin = "1in")
 }
 \arguments{
   \item{input}{Input Rmd document}
