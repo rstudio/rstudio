@@ -31,8 +31,15 @@ $if(quotes)$
 $endif$
 
   <!-- syntax highlighting -->
+  $if(highlightjs)$
   <link rel="stylesheet" href="highlight/highlight.css" $if(html5)$$else$type="text/css" $endif$/>
   <script src="highlight/highlight.js"></script>
+  $endif$
+  $if(highlighting-css)$
+  <style type="text/css">
+$highlighting-css$
+  </style>
+  $endif$
 
 $for(css)$
   <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$/>

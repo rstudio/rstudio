@@ -7,6 +7,7 @@
 #' @param options List of HTML rendering options created by calling
 #'   \code{htmlOptions}
 #' @param toc Whether to include a table of contents in the output
+#' @param toc.depth Depth of headers to include in table of contents
 #' @param theme HTML theme ("default", "cerulean", or "slate")
 #' @param mathjax Include mathjax from the specified URL (pass NULL to
 #' not include mathjax)
@@ -37,10 +38,14 @@ rmd2html <- function(input,
 #' @rdname rmd2html
 #' @export
 htmlOptions <- function(toc = FALSE,
+                        toc.depth = 3,
                         theme = "default",
+                        highlight = "default",
                         mathjax = mathjaxURL()) {
   structure(list(toc = toc,
+                 toc.depth = toc.depth,
                  theme = theme,
+                 highlight = highlight,
                  mathjax = mathjax),
             class = "htmlOptions")
 }
@@ -59,12 +64,13 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
   # base options for all HTML output
   options <- c(pandocTemplateOptions("html/default.html"),
                "--smart",
-               "--self-contained",
-               "--no-highlight")
+               "--self-contained")
 
   # table of contents
-  if (htmlOptions$toc)
+  if (htmlOptions$toc) {
     options <- c(options, "--table-of-contents")
+    options <- c(options, "--toc-depth", htmlOptions$toc.depth)
+  }
 
   # theme
   if (!is.null(htmlOptions$theme)) {
@@ -75,6 +81,18 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
 
     options <- c(options,
                  "--variable", paste0("theme:", theme))
+  }
+
+  # highlighting
+  if (is.null(htmlOptions$highlight)) {
+    options <- c(options, "--no-highlight")
+  }
+  else if (identical(htmlOptions$highlight, "default")) {
+    options <- c(options, "--no-highlight",
+                          "--variable", "highlightjs")
+  }
+  else {
+    options <- c(options, "--highlight-style", htmlOptions$highlight)
   }
 
   # mathjax

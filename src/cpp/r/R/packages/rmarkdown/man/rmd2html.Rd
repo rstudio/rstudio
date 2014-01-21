@@ -8,7 +8,8 @@
     envir = parent.frame(), quiet = FALSE,
     encoding = getOption("encoding"))
 
-  htmlOptions(toc = FALSE, theme = "default",
+  htmlOptions(toc = FALSE, toc.depth = 3,
+    theme = "default", highlight = "default",
     mathjax = mathjaxURL())
 
   mathjaxURL()
@@ -24,6 +25,9 @@
 
   \item{toc}{Whether to include a table of contents in the
   output}
+
+  \item{toc.depth}{Depth of headers to include in table of
+  contents}
 
   \item{theme}{HTML theme ("default", "cerulean", or
   "slate")}
