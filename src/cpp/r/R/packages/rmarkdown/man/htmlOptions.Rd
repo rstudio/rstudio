@@ -6,7 +6,7 @@
   htmlOptions(toc = FALSE, toc.depth = 3,
     theme = "default", highlight = "default",
     mathjax = mathjaxURL(), css = NULL,
-    include.head = NULL, include.before = NULL,
+    include.header = NULL, include.before = NULL,
     include.after = NULL, standalone = TRUE,
     self.contained = TRUE)
 
@@ -33,7 +33,7 @@
 
   \item{css}{One or more css files to include}
 
-  \item{include.head}{One or more files that include
+  \item{include.header}{One or more files that include
   content to be inclued within the HTML \code{head}.}
 
   \item{include.before}{One or more files with content to

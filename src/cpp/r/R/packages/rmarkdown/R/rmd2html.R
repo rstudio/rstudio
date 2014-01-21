@@ -44,7 +44,7 @@ rmd2html <- function(input,
 #' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
 #'   not include mathjax.
 #' @param css One or more css files to include
-#' @param include.head One or more files that include content to be inclued
+#' @param include.header One or more files that include content to be inclued
 #'   within the HTML \code{head}.
 #' @param include.before One or more files with content to be included at the
 #'   beginning of the HTML \code{body}.
@@ -73,7 +73,7 @@ htmlOptions <- function(toc = FALSE,
                         highlight = "default",
                         mathjax = mathjaxURL(),
                         css = NULL,
-                        include.head = NULL,
+                        include.header = NULL,
                         include.before = NULL,
                         include.after = NULL,
                         standalone = TRUE,
@@ -84,7 +84,7 @@ htmlOptions <- function(toc = FALSE,
                  highlight = highlight,
                  mathjax = mathjax,
                  css = css,
-                 include.head = include.head,
+                 include.header = include.header,
                  include.before = include.before,
                  include.after = include.after,
                  standalone = standalone,
@@ -167,7 +167,7 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
       options <- c(options, "--css", css)
 
     # header content
-    for (header in htmlOptions$include.head)
+    for (header in htmlOptions$include.header)
       options <- c(options, "--include-in-header", header)
 
     # body prefix
