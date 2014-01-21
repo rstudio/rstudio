@@ -145,6 +145,9 @@
    }
 })
 
+# Given a function and some content inside that function, returns a vector
+# in the standard R source reference format that represents the location of
+# the content in the deparsed representation of the function.
 .rs.addFunction("simulateSourceRefs", function(var)
 {
   # Read arguments from attached attributes to the input (these can't be passed
@@ -233,8 +236,23 @@
   # taking into account the indents we removed earlier. 
   firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
   firstchar <- firstchar + indents[firstline]
-  lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
-  lastchar <- lastchar + indents[lastline]
+
+  # If the match is a block ({ ... }) and contains more than a few lines, 
+  # match the first line instead of the whole block; having the entire contents
+  # of the code browser highlighted is not useful. 
+  if (substr(calltext, 1, 1) == "{" &&
+      substr(calltext, nchar(calltext), nchar(calltext)) == "}" &&
+      lastline - firstline > 5)
+  {
+     lastline <- firstline
+     lastchar <- offsets[firstline] - pos
+  }
+  else
+  {
+     lastchar <- endpos - (if (lastline == 1) 0 else offsets[lastline - 1])
+     lastchar <- lastchar + indents[lastline]
+  }
+
   result <- as.integer(c(firstline, firstchar, lastline, 
                          lastchar, firstchar, lastchar))
   return(result)
