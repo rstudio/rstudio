@@ -138,7 +138,7 @@ SEXP simulatedSourceRefsOfContext(const RCNTXT* pContext,
                                   const RCNTXT* pLineContext,
                                   const LineDebugState* pLineDebugState)
 {
-   SEXP simulatedSrcref = NULL;
+   SEXP simulatedSrcref = R_NilValue;
    r::sexp::Protect protect;
    // The objects we will later transmit to .rs.simulateSourceRefs below
    // include language objects that we need to protect from early evaluation.
@@ -345,7 +345,7 @@ Error functionNameFromContext(const RCNTXT* pContext,
 }
 
 // Return the call frames and debug information as a JSON object.
-json::Array callFramesAsJson(LineDebugState& lineDebugState)
+json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 {
    RCNTXT* pRContext = r::getGlobalContext();
    RCNTXT* pPrevContext = pRContext;
@@ -400,10 +400,11 @@ json::Array callFramesAsJson(LineDebugState& lineDebugState)
             // construct it by deparsing calls in the context stack.
             SEXP simulatedSrcref;
             if (contextDepth == 1 &&
-                lineDebugState.lastDebugText.length() > 0)
+                pLineDebugState != NULL &&
+                pLineDebugState->lastDebugText.length() > 0)
                simulatedSrcref =
                      simulatedSourceRefsOfContext(pRContext, NULL,
-                                                  &lineDebugState);
+                                                  pLineDebugState);
             else
                simulatedSrcref =
                      simulatedSourceRefsOfContext(pRContext, pPrevContext,
@@ -411,11 +412,13 @@ json::Array callFramesAsJson(LineDebugState& lineDebugState)
 
             // store the line stepped over in the top frame, so we can infer
             // that the next line stepped over will be near this one
-            if (contextDepth == 1)
+            if (contextDepth == 1 &&
+                pLineDebugState != NULL &&
+                isValidSrcref(simulatedSrcref))
             {
                int stepLine = INTEGER(simulatedSrcref)[0];
                if (stepLine > 0)
-                  lineDebugState.lastDebugLine = stepLine;
+                  pLineDebugState->lastDebugLine = stepLine;
             }
 
             sourceRefToJson(simulatedSrcref, &varFrame);
@@ -657,7 +660,7 @@ json::Value environmentNames(SEXP env)
 // information about the new environment on a context change
 json::Object commonEnvironmentStateData(
    int depth,
-   LineDebugState& lineDebugState)
+   LineDebugState* pLineDebugState)
 {
    json::Object varJson;
    bool useProvidedSource = false;
@@ -666,7 +669,7 @@ json::Object commonEnvironmentStateData(
 
    varJson["context_depth"] = depth;
    varJson["environment_list"] = environmentListAsJson();
-   varJson["call_frames"] = callFramesAsJson(lineDebugState);
+   varJson["call_frames"] = callFramesAsJson(pLineDebugState);
 
    // if we're in a debug context, add information about the function currently
    // being debugged
@@ -739,12 +742,12 @@ json::Object commonEnvironmentStateData(
 }
 
 void enqueContextDepthChangedEvent(int depth,
-                                   LineDebugState& lineDebugState)
+                                   LineDebugState* pLineDebugState)
 {
    // emit an event to the client indicating the new call frame and the
    // current state of the environment
    ClientEvent event (client_events::kContextDepthChanged,
-                      commonEnvironmentStateData(depth, lineDebugState));
+                      commonEnvironmentStateData(depth, pLineDebugState));
    module_context::enqueClientEvent(event);
 }
 
@@ -759,7 +762,7 @@ void enqueBrowserLineChangedEvent(const SEXP srcref)
 Error setContextDepth(boost::shared_ptr<int> pContextDepth,
                       boost::shared_ptr<LineDebugState> pLineDebugState,
                       const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse*)
 {
    // get the requested depth
    int requestedDepth;
@@ -774,7 +777,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
-   enqueContextDepthChangedEvent(*pContextDepth, *pLineDebugState);
+   enqueContextDepthChangedEvent(*pContextDepth, pLineDebugState.get());
 
    return Success();
 }
@@ -785,7 +788,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(commonEnvironmentStateData(*pContextDepth,
-                                                   *pLineDebugState));
+                                                   pLineDebugState.get()));
    return Success();
 }
 
@@ -861,7 +864,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = pRContext;
-      enqueContextDepthChangedEvent(depth, *pLineDebugState);
+      enqueContextDepthChangedEvent(depth, pLineDebugState.get());
    }
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
@@ -1070,8 +1073,7 @@ json::Value environmentStateAsJson()
    // there are functions on the stack--this is not a user debug session.
    if (!inBrowseContext())
       contextDepth = 0;
-   LineDebugState noDebugState;
-   return commonEnvironmentStateData(contextDepth, noDebugState);
+   return commonEnvironmentStateData(contextDepth, NULL);
 }
 
 Error initialize()
