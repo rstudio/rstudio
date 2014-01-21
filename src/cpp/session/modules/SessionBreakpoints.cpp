@@ -553,6 +553,16 @@ bool haveSrcrefAttribute()
    return haveSrcref;
 }
 
+bool haveAdvancedStepCommands()
+{
+   bool haveCommands = false;
+   Error error = r::exec::RFunction(".rs.haveAdvancedSteppingCommands")
+                                                      .call(&haveCommands);
+   if (error)
+       LOG_ERROR(error);
+   return haveCommands;
+}
+
 Error initialize()
 {
    using boost::bind;
