@@ -25,7 +25,9 @@ rmd2pdf <- function(input,
   # pandoc options
   geometry <- list()
   geometry$margin = "1in"
-  options <- pandocPDFOptions(geometry = geometry)
+  options <- pandocPDFOptions(NULL,
+                              toc = FALSE,
+                              geometry = geometry)
 
   # call pandoc
   rmd2pandoc(input,
@@ -36,31 +38,4 @@ rmd2pdf <- function(input,
              quiet = quiet,
              encoding = encoding)
 }
-
-
-#' Pandoc options for PDF rendering
-#'
-#' Get pandoc command-line options required for converting R Markdown PDF.
-#'
-#' @param geometry List of \code{LaTeX} geometry settings (optional)
-#'
-#' @return Character vector of pandoc options
-#'
-#' @export
-pandocPDFOptions <- function(geometry = NULL) {
-
-  options <- c()
-
-  if (!is.null(geometry)) {
-    for (name in names(geometry)) {
-      value <- geometry[[name]]
-      options <- c(options,
-                   "--variable",
-                   paste0("geometry:", name, "=", value))
-    }
-  }
-
-  options
-}
-
 

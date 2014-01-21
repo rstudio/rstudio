@@ -18,3 +18,4 @@ Collate:
     'rmd2pandoc.R'
     'rmd2pdf.R'
     'knitr-render.R'
+    'pandoc-options.R'
