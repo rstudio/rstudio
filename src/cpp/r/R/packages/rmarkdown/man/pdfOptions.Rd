@@ -1,4 +1,5 @@
 \name{pdfOptions}
+\alias{pdfGeometry}
 \alias{pdfOptions}
 \alias{pdfTemplate}
 \title{Options for PDF conversion}
@@ -7,9 +8,11 @@
     number.sections = FALSE, highlight = TRUE,
     template = pdfTemplate())
 
-  pdfTemplate(margin = "1in", highlight.style = "pygments",
-    include.header = NULL, include.before = NULL,
-    include.after = NULL)
+  pdfTemplate(geometry = pdfGeometry(),
+    highlight.style = "pygments", include.header = NULL,
+    include.before = NULL, include.after = NULL)
+
+  pdfGeometry(margin = "1in", ...)
 }
 \arguments{
   \item{toc}{\code{TRUE} to include a table of contents in
@@ -29,6 +32,9 @@
   document. This should either be the path to a pandoc
   template or an object that provides a
   \code{pandocOptions} S3 method.}
+
+  \item{geometry}{List containing LaTeX geometry options
+  for the document.}
 
   \item{margin}{Size of page margins}
 

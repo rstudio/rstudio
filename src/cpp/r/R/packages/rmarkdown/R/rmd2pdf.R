@@ -41,6 +41,7 @@ rmd2pdf <- function(input,
 #' @param template LaTeX template to use for rendering document. This should
 #'   either be the path to a pandoc template or an object that provides a
 #'   \code{pandocOptions} S3 method.
+#' @param geometry List containing LaTeX geometry options for the document.
 #' @param margin Size of page margins
 #' @param highlight.style Style for syntax highlighting. Options are pygments,
 #'   kate, monochrome, espresso, zenburn, haddock, and tango.
@@ -77,17 +78,26 @@ pdfOptions <- function(toc = FALSE,
 
 #' @rdname pdfOptions
 #' @export
-pdfTemplate <- function(margin = "1in",
+pdfTemplate <- function(geometry = pdfGeometry(),
                         highlight.style = "pygments",
                         include.header = NULL,
                         include.before = NULL,
                         include.after = NULL) {
-  structure(list(margin = margin,
+  structure(list(geometry = geometry,
                  highlight.style = highlight.style,
                  include.header = include.header,
                  include.before = include.before,
                  include.after = include.after),
             class = "pdfTemplate")
+}
+
+#' @rdname pdfOptions
+#' @export
+pdfGeometry <- function(margin = "1in", ...) {
+  geometry <- list(...)
+  geometry$margin <- margin
+  structure(geometry,
+            class = "pdfGeometry")
 }
 
 
@@ -130,17 +140,25 @@ pandocOptions.pdfTemplate <- function(pdfTemplate) {
   options <- c()
 
   # geometry
-  geometry <- list()
-  geometry$margin <- pdfTemplate$margin
-  for (name in names(geometry)) {
-    value <- geometry[[name]]
+  options <- c(options, pandocOptions(pdfTemplate$geometry))
+
+  # content includes
+  options <- c(options, pandocIncludeOptions(pdfTemplate))
+
+  options
+}
+
+#' @S3method pandocOptions pdfGeometry
+pandocOptions.pdfGeometry <- function(pdfGeometry) {
+
+  options <- c()
+
+  for (name in names(pdfGeometry)) {
+    value <- pdfGeometry[[name]]
     options <- c(options,
                  "--variable",
                  paste0("geometry:", name, "=", value))
   }
-
-  # content includes
-  options <- c(options, pandocIncludeOptions(pdfTemplate))
 
   options
 }
