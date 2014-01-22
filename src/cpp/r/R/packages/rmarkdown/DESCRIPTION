@@ -10,6 +10,7 @@ Depends:
     R (>= 3.0)
 Imports:
     tools,
+    methods,
     knitr (>= 1.2)
 License: GPL (>= 2)
 Collate:

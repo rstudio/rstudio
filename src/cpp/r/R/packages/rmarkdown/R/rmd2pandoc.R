@@ -9,7 +9,7 @@
 #'   specified \code{to} format is chosen)
 #' @param options Command line options to pass to pandoc. This should either be
 #'   a character vector of literal command line options or an object that
-#'   provices a \code{pandocOptions} S3 method which yields the options.
+#'   provides a \code{pandocOptions} S3 method which yields the options.
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet \code{TRUE} to supress printing of the pandoc command line

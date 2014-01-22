@@ -1,13 +1,16 @@
 \name{htmlOptions}
 \alias{htmlOptions}
+\alias{htmlTemplate}
 \alias{mathjaxURL}
-\title{Options for HTML conversion}
+\title{Options for HTML Conversion}
 \usage{
-  htmlOptions(toc = FALSE, toc.depth = 3, bootstrap = TRUE,
-    highlight = TRUE, mathjax = mathjaxURL(), css = NULL,
+  htmlOptions(toc = FALSE, toc.depth = 3,
+    template = htmlTemplate())
+
+  htmlTemplate(bootstrap = TRUE, highlight = TRUE,
+    mathjax = mathjaxURL(), css = NULL,
     include.header = NULL, include.before = NULL,
-    include.after = NULL, standalone = TRUE,
-    self.contained = TRUE)
+    include.after = NULL)
 
   mathjaxURL()
 }
@@ -17,6 +20,12 @@
 
   \item{toc.depth}{Depth of headers to include in table of
   contents}
+
+  \item{template}{HTML template to use for rendering
+  document. This should either be the path to a pandoc
+  template or an object that provides a
+  \code{pandocOptions} S3 method. Pass \code{NULL} to
+  create an HTML fragment rather than a full document.}
 
   \item{bootstrap}{\code{TRUE} to style the document using
   \href{http://getbootstrap.com}{Bootstrap}. If you pass
@@ -39,19 +48,6 @@
 
   \item{include.after}{One or more files with HTML content
   to be included after the document body.}
-
-  \item{standalone}{\code{TRUE} to produce a fully valid
-  HTML document (rather than a fragment). If this is
-  \code{FALSE} then the \code{bootstrap}, \code{highlight},
-  \code{css}, and \code{include} options are not applied.}
-
-  \item{self.contained}{\code{TRUE} to produce a standalone
-  HTML file with no external dependencies, using data: URIs
-  to incorporate the contents of linked scripts,
-  stylesheets, and images (note that MathJax is still
-  referenced externally). If this is \code{FALSE} then the
-  \code{bootstrap} and \code{highlight} options are not
-  applied.}
 }
 \value{
   A list of HTML options that can be passed to
@@ -61,6 +57,10 @@
   Define the options for converting R Markdown to HTML.
 }
 \details{
+  The \code{htmlTemplate} function provides a default
+  template that includes Bootstrap CSS, syntax
+  highlighting, MathJax, and a self-contained HTML file.
+
   Paths for resources referenced from the \code{css},
   \code{include.header}, \code{include.before}, and
   \code{include.after} parameters are resolved relative to

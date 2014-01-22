@@ -17,7 +17,7 @@
 
   \item{options}{Command line options to pass to pandoc.
   This should either be a character vector of literal
-  command line options or an object that provices a
+  command line options or an object that provides a
   \code{pandocOptions} S3 method which yields the options.}
 
   \item{envir}{The environment in which the code chunks are
