@@ -17,6 +17,8 @@
 
 #include <core/system/Environment.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace core ;
@@ -50,8 +52,12 @@ void initPandocPath()
    }
 #endif
 
-   core::system::setenv("RSTUDIO_PANDOC",
-                        session::options().pandocPath().absolutePath());
+   r::exec::RFunction sysSetenv("Sys.setenv");
+   sysSetenv.addParam("RSTUDIO_PANDOC",
+                      session::options().pandocPath().absolutePath());
+   Error error = sysSetenv.call();
+   if (error)
+      LOG_ERROR(error);
 }
 
 

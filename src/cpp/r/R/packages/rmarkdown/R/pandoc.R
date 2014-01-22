@@ -69,7 +69,7 @@ pandocOutputFile <- function(input, pandocFormat) {
   else
     ext <- paste0(".", pandocFormat)
   output <- paste0(tools::file_path_sans_ext(input), ext)
-  tools::file_path_as_absolute(output)
+  output
 }
 
 pandocExec <- function(pandoc, args, ...) {
