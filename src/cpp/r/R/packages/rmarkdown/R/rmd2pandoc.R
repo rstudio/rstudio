@@ -45,8 +45,14 @@ rmd2pandoc <- function(input,
   inputText <- iconv(inputText, from = encoding, to = "UTF-8")
   writeLines(inputText, input, useBytes = TRUE)
 
+  # get the path to pandoc
+  pandoc <- pandocPath()
+
+  # build pandoc args
+  args <- c(input)
+
   # pandoc: convert to format
-  args <- c("--to", to)
+  args <- c(args, "--to", to)
 
   # pandoc: support full syntax of pandoc markdown with some additional
   # features for backward compatibility with github flavored markdown
@@ -56,6 +62,9 @@ rmd2pandoc <- function(input,
                    "+ascii_identifiers",
                    "+tex_math_single_backslash"))
 
+  # citeproc filter
+  args <- c(args, "--filter", file.path(dirname(pandoc), "pandoc-citeproc"))
+
   # pandoc: additional command line options
   args <- c(args, pandocOptions(options))
 
@@ -64,18 +73,15 @@ rmd2pandoc <- function(input,
     output <- pandocOutputFile(input, to)
   args <- c(args, "--output", output)
 
-  # pandoc: input file
-  args <- c(args, input)
-
   # show pandoc command line if requested
   if (!quiet) {
-    cat("pandoc ")
+    cat(paste0(pandoc, " "))
     cat(paste(args, collapse=" "))
     cat("\n")
   }
 
   # run the conversion
-  pandocExec(args)
+  pandocExec(pandoc, args)
 
   # return the name of the output file
   invisible(output)

@@ -72,8 +72,7 @@ pandocOutputFile <- function(input, pandocFormat) {
   tools::file_path_as_absolute(output)
 }
 
-pandocExec <- function(args, ...) {
-  pandoc <- pandocPath()
+pandocExec <- function(pandoc, args, ...) {
   command <- paste(pandoc, paste(shQuote(args), collapse = " "))
   system(command, ...)
 }
