@@ -16,9 +16,7 @@
 package com.google.gwt.dev.javac.testing.impl;
 
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.impl.ClassPathEntry;
-import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.dev.resource.ResourceOracle;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,15 +25,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A simple ResourceOracle for testing.
+ * A simple {@link ResourceOracle} for testing.
  */
-public class MockResourceOracle extends ResourceOracleImpl {
+public class MockResourceOracle implements ResourceOracle {
 
   private Map<String, Resource> exportedMap = Collections.emptyMap();
   private Set<Resource> exportedValues = Collections.emptySet();
 
   public MockResourceOracle(Resource... resources) {
-    super(Lists.<ClassPathEntry>newArrayList());
     add(resources);
   }
 
@@ -60,21 +57,17 @@ public class MockResourceOracle extends ResourceOracleImpl {
     export(newMap);
   }
 
-  @Override
   public void clear() {
   }
 
-  @Override
   public Set<String> getPathNames() {
     return exportedMap.keySet();
   }
 
-  @Override
   public Map<String, Resource> getResourceMap() {
     return exportedMap;
   }
 
-  @Override
   public Set<Resource> getResources() {
     return exportedValues;
   }

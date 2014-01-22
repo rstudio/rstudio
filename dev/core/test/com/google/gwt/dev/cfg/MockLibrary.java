@@ -61,8 +61,6 @@ public class MockLibrary implements Library {
   private Set<String> dependencyLibraryNames = Sets.newLinkedHashSet();
   private String libraryName;
   private Multimap<String, String> newBindingPropertyValuesByName = ArrayListMultimap.create();
-  private Multimap<String, String> newConfigurationPropertyValuesByName =
-      ArrayListMultimap.create();
   private Set<String> ranGeneratorNames = Sets.newHashSet();
   private Set<String> reboundTypeNames = Sets.newHashSet();
   private Set<String> superSourceCompilationUnitTypeNames = Sets.newHashSet();
@@ -124,7 +122,7 @@ public class MockLibrary implements Library {
 
   @Override
   public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    return newConfigurationPropertyValuesByName;
+    return null;
   }
 
   @Override

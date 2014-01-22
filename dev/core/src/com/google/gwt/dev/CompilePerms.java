@@ -290,13 +290,10 @@ public class CompilePerms {
     return subPermsList.toArray(new Permutation[subPermsList.size()]);
   }
 
-  private CompilerContext compilerContext;
-  private CompilerContext.Builder compilerContextBuilder;
   private final CompilePermsOptionsImpl options;
 
   public CompilePerms(CompilePermsOptions options) {
     this.options = new CompilePermsOptionsImpl(options);
-    compilerContextBuilder = new CompilerContext.Builder();
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -320,10 +317,8 @@ public class CompilePerms {
           return false;
         }
       } else {
-        compilerContext = compilerContextBuilder.options(options).build();
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
-        compilerContext = compilerContextBuilder.module(module).build();
         Precompilation precompilation = (Precompilation) precompileResults;
+        CompilerContext compilerContext = new CompilerContext.Builder().options(options).build();
         // Choose which permutations go with this permutation
         Permutation[] subPerms = selectPermutationsForPrecompilation(
             permsToRun, precompilation);
@@ -346,7 +341,8 @@ public class CompilePerms {
       throws UnableToCompleteException {
     precompilationOptions.setOptimizePrecompile(false);
     precompilationOptions.setGenDir(null);
-    compilerContext = compilerContextBuilder.options(precompilationOptions).build();
+    CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
+    CompilerContext compilerContext = compilerContextBuilder.options(precompilationOptions).build();
 
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();

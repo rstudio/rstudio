@@ -88,11 +88,6 @@ public abstract class DelegatingGeneratorContext implements GeneratorContext {
   }
 
   @Override
-  public boolean isGlobalCompile() {
-    return baseContext.isGlobalCompile();
-  }
-
-  @Override
   public boolean isProdMode() {
     return baseContext.isProdMode();
   }

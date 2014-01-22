@@ -260,6 +260,7 @@ public class StandardGeneratorContextTest extends TestCase {
    * file is already on the public path.
    *
    * @throws UnableToCompleteException
+   * @throws IOException
    */
   public void testTryCreateResource_outputFileOnPublicPath()
       throws UnableToCompleteException {

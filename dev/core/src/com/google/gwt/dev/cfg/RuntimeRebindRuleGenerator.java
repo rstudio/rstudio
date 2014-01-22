@@ -24,7 +24,8 @@ public class RuntimeRebindRuleGenerator {
 
   public static final Map<String, String> RUNTIME_REBIND_RULE_SOURCES_BY_NAME =
       Maps.newLinkedHashMap();
-  public static int runtimeRebindRuleCount = 0;
+
+  private static int runtimeRebindRuleCount = 0;
 
   /**
    * Generates and stores a runtime rebind rule class definition for the given match expression and

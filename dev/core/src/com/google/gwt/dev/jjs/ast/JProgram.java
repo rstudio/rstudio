@@ -21,13 +21,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
-import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
-import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Function;
-import com.google.gwt.thirdparty.guava.common.collect.BiMap;
 import com.google.gwt.thirdparty.guava.common.collect.Collections2;
-import com.google.gwt.thirdparty.guava.common.collect.HashBiMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -55,7 +50,6 @@ import java.util.Set;
 public class JProgram extends JNode {
 
   private static final class ArrayTypeComparator implements Comparator<JArrayType>, Serializable {
-    @Override
     public int compare(JArrayType o1, JArrayType o2) {
       int comp = o1.getDims() - o2.getDims();
       if (comp != 0) {
@@ -65,23 +59,8 @@ public class JProgram extends JNode {
     }
   }
 
-  private static final class TreeStatistics extends JVisitor {
-    private int nodeCount = 0;
-
-    public int getNodeCount() {
-      return nodeCount;
-    }
-
-    @Override
-    public boolean visit(JNode x, Context ctx) {
-      nodeCount++;
-      return true;
-    }
-  }
-
   public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(Arrays.asList(
       "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-      "com.google.gwt.core.client.RuntimePropertyRegistry",
       "com.google.gwt.lang.CollapsedPropertyHolder", "com.google.gwt.lang.Exceptions",
       "com.google.gwt.lang.LongLib", "com.google.gwt.lang.Stats", "com.google.gwt.lang.Util"));
 
@@ -269,24 +248,22 @@ public class JProgram extends JNode {
   }
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
-
   public final List<JClassType> immortalCodeGenTypes = new ArrayList<JClassType>();
 
   // TODO(rluble): (Separate compilation) the second parameter (hasWholeWorldKnoledge) must be
   // false when doing separate compilation.
-  public final JTypeOracle typeOracle;
+  public final JTypeOracle typeOracle = new JTypeOracle(this, true);
+
   /**
    * Special serialization treatment.
    */
-  // TODO(stalcup): make this a set, or take special care to make updates unique when lazily loading
-  // in types. At the moment duplicates are accumulating.
   private transient List<JDeclaredType> allTypes = new ArrayList<JDeclaredType>();
 
   private final HashMap<JType, JArrayType> arrayTypes = new HashMap<JType, JArrayType>();
 
   private IdentityHashMap<JReferenceType, JsCastMap> castMaps;
 
-  private BiMap<JType, JField> classLiteralFieldsByType;
+  private Map<JType, JField> classLiteralFields;
 
   private final List<JMethod> entryMethods = new ArrayList<JMethod>();
 
@@ -307,11 +284,6 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
-  private String propertyProviderRegistratorTypeName;
-
-  // wrap up .add here, and filter out forced source
-  private Set<String> referenceOnlyTypeNames = new HashSet<String>();
-
   private Map<JReferenceType, Integer> queryIdsByType;
 
   /**
@@ -322,8 +294,6 @@ public class JProgram extends JNode {
   private LinkedHashSet<JRunAsync> initialAsyncSequence = new LinkedHashSet<JRunAsync>();
 
   private List<Integer> initialFragmentIdSequence = Lists.newArrayList();
-
-  private String runtimeRebindRegistratorTypeName;
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -341,8 +311,6 @@ public class JProgram extends JNode {
 
   private List<JReferenceType> typesByQueryId;
 
-  private Map<JField, JType> typesByClassLiteralField;
-
   private JClassType typeSpecialClassLiteralHolder;
 
   private JClassType typeSpecialJavaScriptObject;
@@ -353,12 +321,6 @@ public class JProgram extends JNode {
 
   public JProgram() {
     super(SourceOrigin.UNKNOWN);
-    typeOracle = new JTypeOracle(this, true);
-  }
-
-  public JProgram(boolean hasWholeWorldKnowledge) {
-    super(SourceOrigin.UNKNOWN);
-    typeOracle = new JTypeOracle(this, hasWholeWorldKnowledge);
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -372,10 +334,6 @@ public class JProgram extends JNode {
    */
   public void addIndexedTypeName(String typeName) {
     typeNamesToIndex.add(typeName);
-  }
-
-  public void addReferenceOnlyType(JDeclaredType type) {
-    referenceOnlyTypeNames.add(type.getName());
   }
 
   public void addType(JDeclaredType type) {
@@ -645,7 +603,7 @@ public class JProgram extends JNode {
   }
 
   public JField getClassLiteralField(JType type) {
-    return classLiteralFieldsByType.get(isJavaScriptObject(type) ? getJavaScriptObject() : type);
+    return classLiteralFields.get(isJavaScriptObject(type) ? getJavaScriptObject() : type);
   }
 
   public String getClassLiteralName(JType type) {
@@ -756,26 +714,6 @@ public class JProgram extends JNode {
     return new JStringLiteral(sourceInfo, s, typeString);
   }
 
-  public List<JDeclaredType> getModuleDeclaredTypes() {
-    List<JDeclaredType> moduleDeclaredTypes = new ArrayList<JDeclaredType>();
-    for (JDeclaredType type : allTypes) {
-      if (isReferenceOnly(type)) {
-        continue;
-      }
-      moduleDeclaredTypes.add(type);
-    }
-    return moduleDeclaredTypes;
-  }
-
-  public int getNodeCount() {
-    Event countEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "countNodes");
-    TreeStatistics treeStats = new TreeStatistics();
-    treeStats.accept(this);
-    int numNodes = treeStats.getNodeCount();
-    countEvent.end();
-    return numNodes;
-  }
-
   public JField getNullField() {
     return JField.NULL_FIELD;
   }
@@ -794,20 +732,12 @@ public class JProgram extends JNode {
     return integer.intValue();
   }
 
-  public String getPropertyProviderRegistratorTypeName() {
-    return propertyProviderRegistratorTypeName;
-  }
-
   public List<JRunAsync> getRunAsyncs() {
     return runAsyncs;
   }
 
   public int getCommonAncestorFragmentId(int thisFragmentId, int thatFragmentId) {
     return fragmentPartitioninResult.getCommonAncestorFragmentId(thisFragmentId, thatFragmentId);
-  }
-
-  public String getRuntimeRebindRegistratorTypeName() {
-    return runtimeRebindRegistratorTypeName;
   }
 
   public JMethod getStaticImpl(JMethod method) {
@@ -832,10 +762,6 @@ public class JProgram extends JNode {
       --dimensions;
     }
     return result;
-  }
-
-  public JType getTypeByClassLiteralField(JField field) {
-    return typesByClassLiteralField.get(field);
   }
 
   public JClassType getTypeClassLiteralHolder() {
@@ -949,13 +875,6 @@ public class JProgram extends JNode {
     return false;
   }
 
-  public boolean isReferenceOnly(JDeclaredType type) {
-    if (type != null) {
-      return referenceOnlyTypeNames.contains(type.getName());
-    }
-    return false;
-  }
-
   public boolean isStaticImpl(JMethod method) {
     return staticToInstanceMap.containsKey(method);
   }
@@ -975,8 +894,7 @@ public class JProgram extends JNode {
   }
 
   public void recordClassLiteralFields(Map<JType, JField> classLiteralFields) {
-    this.classLiteralFieldsByType = HashBiMap.create(classLiteralFields);
-    this.typesByClassLiteralField = classLiteralFieldsByType.inverse();
+    this.classLiteralFields = classLiteralFields;
   }
 
   public void recordQueryIds(Map<JReferenceType, Integer> queryIdsByType,
@@ -1019,14 +937,6 @@ public class JProgram extends JNode {
     this.initialAsyncSequence = initialAsyncSequence;
   }
 
-  public void setPropertyProviderRegistratorTypeName(String propertyProviderRegistratorTypeName) {
-    this.propertyProviderRegistratorTypeName = propertyProviderRegistratorTypeName;
-  }
-
-  public void setRuntimeRebindRegistratorTypeName(String runtimeRebindRegistratorTypeName) {
-    this.runtimeRebindRegistratorTypeName = runtimeRebindRegistratorTypeName;
-  }
-
   /**
    * If <code>method</code> is a static impl method, returns the instance method
    * that <code>method</code> is the implementation of. Otherwise, returns
@@ -1067,10 +977,9 @@ public class JProgram extends JNode {
     return type1;
   }
 
-  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitModuleTypes(visitor);
+      visitor.accept(allTypes);
     }
     visitor.endVisit(this, ctx);
   }
@@ -1095,19 +1004,6 @@ public class JProgram extends JNode {
         "com.google.gwt.core.client.prefetch.RunAsyncCode"));
     typeNamesToIndex.addAll(CODEGEN_TYPES_SET);
     return typeNamesToIndex;
-  }
-
-  public void visitAllTypes(JVisitor visitor) {
-    visitor.accept(allTypes);
-  }
-
-  public void visitModuleTypes(JVisitor visitor) {
-    for (JDeclaredType type : allTypes) {
-      if (isReferenceOnly(type)) {
-        continue;
-      }
-      visitor.accept(type);
-    }
   }
 
   private int classifyType(JReferenceType type) {

@@ -18,7 +18,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.ZipEntryBackedObject;
-import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -32,10 +32,7 @@ public class MockLibraryWriter implements LibraryWriter {
   private Set<String> buildResourcePaths = Sets.newHashSet();
   private Set<String> dependencyLibraryNames = Sets.newHashSet();
   private String libraryName;
-  private Multimap<String, String> newBindingPropertyValuesByName = ArrayListMultimap.create();
-  private Multimap<String, String> newConfigurationPropertyValuesByName =
-      ArrayListMultimap.create();
-  private Set<String> reboundTypeNames;
+  private Set<String> strings = ImmutableSet.of();
 
   @Override
   public void addBuildResource(Resource buildResource) {
@@ -63,13 +60,11 @@ public class MockLibraryWriter implements LibraryWriter {
   @Override
   public void addNewBindingPropertyValuesByName(
       String propertyName, Iterable<String> propertyValues) {
-    newBindingPropertyValuesByName.putAll(propertyName, propertyValues);
   }
 
   @Override
   public void addNewConfigurationPropertyValuesByName(
       String propertyName, Iterable<String> propertyValues) {
-    newConfigurationPropertyValuesByName.putAll(propertyName, propertyValues);
   }
 
   @Override
@@ -94,12 +89,12 @@ public class MockLibraryWriter implements LibraryWriter {
 
   @Override
   public Multimap<String, String> getNewBindingPropertyValuesByName() {
-    return newBindingPropertyValuesByName;
+    return null;
   }
 
   @Override
   public Multimap<String, String> getNewConfigurationPropertyValuesByName() {
-    return newConfigurationPropertyValuesByName;
+    return null;
   }
 
   @Override
@@ -109,7 +104,7 @@ public class MockLibraryWriter implements LibraryWriter {
 
   @Override
   public Set<String> getReboundTypeNames() {
-    return reboundTypeNames;
+    return strings;
   }
 
   @Override
@@ -119,7 +114,6 @@ public class MockLibraryWriter implements LibraryWriter {
 
   @Override
   public void setReboundTypeNames(Set<String> reboundTypeNames) {
-    this.reboundTypeNames = reboundTypeNames;
   }
 
   @Override

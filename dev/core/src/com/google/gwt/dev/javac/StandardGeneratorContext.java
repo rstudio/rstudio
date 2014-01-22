@@ -478,12 +478,12 @@ public class StandardGeneratorContext implements GeneratorContext {
    * @throw UnableToCompleteException if the compiler aborted (not
    * a normal compile error).</p>
    */
-  public ArtifactSet finish(TreeLogger logger) throws UnableToCompleteException {
+  public final ArtifactSet finish(TreeLogger logger) throws UnableToCompleteException {
     abortUncommittedResources(logger);
 
     try {
       TreeLogger branch;
-      if (isDirty()) {
+      if (!committedGeneratedCups.isEmpty()) {
         // Assimilate the new types into the type oracle.
         //
         String msg = "Assimilating generated source";
@@ -517,21 +517,12 @@ public class StandardGeneratorContext implements GeneratorContext {
         }
       }
 
-      reset();
+      uncommittedGeneratedCupsByPrintWriter.clear();
+      committedGeneratedCups.clear();
+      newlyGeneratedTypeNames.clear();
+      newlyGeneratedArtifacts = new ArtifactSet();
+      cachedTypeNamesToReuse = null;
     }
-  }
-
-  public boolean isDirty() {
-    return !committedGeneratedCups.isEmpty();
-  }
-
-  @Override
-  public void reset() {
-    uncommittedGeneratedCupsByPrintWriter.clear();
-    committedGeneratedCups.clear();
-    newlyGeneratedTypeNames.clear();
-    newlyGeneratedArtifacts = new ArtifactSet();
-    cachedTypeNamesToReuse = null;
   }
 
   public Set<String> getActiveLinkerNames() {
@@ -574,13 +565,8 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   @Override
-  public boolean isGlobalCompile() {
-    return compilerContext.getOptions().shouldLink();
-  }
-
-  @Override
   public ResourceOracle getResourcesOracle() {
-    return compilerContext.getBuildResourceOracle();
+    return compilerContext.getModule().getBuildResourceOracle();
   }
 
   @Override
@@ -748,7 +734,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   @Override
-  public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
+  public final PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
     String typeName;
     if (packageName.length() == 0) {
       typeName = simpleTypeName;
@@ -835,7 +821,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Check for public path collision.
-    if (compilerContext.getPublicResourceOracle().getResourceMap().containsKey(partialPath)) {
+    if (compilerContext.getModule().findPublicFile(partialPath) != null) {
       logger.log(TreeLogger.WARN, "Cannot create resource '" + partialPath
           + "' because it already exists on the public path", null);
       return null;
