@@ -1,9 +1,12 @@
 \name{beamerOptions}
 \alias{beamerOptions}
+\alias{beamerTemplate}
 \title{Options for Beamer conversion}
 \usage{
   beamerOptions(toc = FALSE, slide.level = 2,
-    incremental = FALSE, include.header = NULL,
+    incremental = FALSE, template = beamerTemplate())
+
+  beamerTemplate(include.header = NULL,
     include.before = NULL, include.after = NULL)
 }
 \arguments{
@@ -22,6 +25,11 @@
   can preceded it with \code{>}. For example: \emph{\code{>
   - Bullet Text}}}
 
+  \item{template}{Beamer template to use for rendering
+  document. This should either be the path to a pandoc
+  template or an object that provides a
+  \code{pandocOptions} S3 method.}
+
   \item{include.header}{One or more files with LaTeX
   content to be included in the header of the document.}
 
@@ -37,5 +45,16 @@
 }
 \description{
   Define the options for converting R Markdown to Beamer
+}
+\details{
+  The \code{beamerTemplate} function provides the default
+  pandoc beamer template along with the abilty to add
+  additional LaTeX to the beginning and end of the
+  document. and footer.
+
+  Paths for resources referenced from the
+  \code{include.header}, \code{include.before}, and
+  \code{include.after} parameters are resolved relative to
+  the directory of the input document.
 }
 

@@ -43,6 +43,9 @@ rmd2beamer <- function(input,
 #'   that if you want to reverse the default incremental behavior for an
 #'   individual bullet you can preceded it with \code{>}. For example:
 #'   \emph{\code{> - Bullet Text}}
+#' @param template Beamer template to use for rendering document. This should
+#'   either be the path to a pandoc template or an object that provides a
+#'   \code{pandocOptions} S3 method.
 #' @param include.header One or more files with LaTeX content to be included in
 #'   the header of the document.
 #' @param include.before One or more files with LaTeX content to be included
@@ -50,22 +53,37 @@ rmd2beamer <- function(input,
 #' @param include.after One or more files with LaTeX content to be included
 #'   after the document body.
 #'
+#' @details The \code{beamerTemplate} function provides the default pandoc
+#'   beamer template along with the abilty to add additional LaTeX to the
+#'   beginning and end of the document. and footer.
+#'
+#'   Paths for resources referenced from the \code{include.header},
+#'   \code{include.before}, and \code{include.after} parameters are resolved
+#'   relative to the directory of the input document.
+#'
 #' @return A list of options that can be passed to \code{\link{rmd2beamer}}.
 #'
 #' @export
 beamerOptions <- function(toc = FALSE,
                           slide.level = 2,
                           incremental = FALSE,
-                          include.header = NULL,
-                          include.before = NULL,
-                          include.after = NULL) {
+                          template = beamerTemplate()) {
   structure(list(toc = toc,
                  slide.level = slide.level,
                  incremental = incremental,
-                 include.header = include.header,
+                 template = template),
+            class = "beamerOptions")
+}
+
+#' @rdname beamerOptions
+#' @export
+beamerTemplate <- function(include.header = NULL,
+                           include.before = NULL,
+                           include.after = NULL) {
+  structure(list(include.header = include.header,
                  include.before = include.before,
                  include.after = include.after),
-            class = "beamerOptions")
+            class = "beamerTemplate")
 }
 
 
@@ -88,8 +106,30 @@ pandocOptions.beamerOptions <- function(beamerOptions) {
   if (beamerOptions$incremental)
     options <- c(options, "--incremental")
 
+  # check for a template path
+  if (is.character(beamerOptions$template)) {
+
+    # template and data dir
+    template <- tools::file_path_as_absolute(beamerOptions$template)
+    options <- c(options,
+                 "--template", template,
+                 "--data-dir", dirname(template))
+  }
+  # dispatch to S3
+  else  {
+    options <- c(options, pandocOptions(beamerOptions$template))
+  }
+
+  options
+}
+
+#' @S3method pandocOptions beamerTemplate
+pandocOptions.beamerTemplate <- function(beamerTemplate) {
+
+  options <- c()
+
   # content includes
-  options <- c(options, pandocIncludeOptions(beamerOptions))
+  options <- c(options, pandocIncludeOptions(beamerTemplate))
 
   options
 }
