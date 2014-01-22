@@ -15,7 +15,9 @@
 
 #include "SessionRMarkdown.hpp"
 
-#include <core/system/Environment.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
 
