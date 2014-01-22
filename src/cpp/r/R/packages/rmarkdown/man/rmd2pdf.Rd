@@ -1,16 +1,10 @@
 \name{rmd2pdf}
-\alias{pdfGeometry}
-\alias{pdfOptions}
 \alias{rmd2pdf}
 \title{Convert R Markdown to PDF}
 \usage{
   rmd2pdf(input, output = NULL, options = pdfOptions(),
     envir = parent.frame(), quiet = FALSE,
     encoding = getOption("encoding"))
-
-  pdfOptions(toc = FALSE, geometry = pdfGeometry())
-
-  pdfGeometry(margin = "1in")
 }
 \arguments{
   \item{input}{Input Rmd document}

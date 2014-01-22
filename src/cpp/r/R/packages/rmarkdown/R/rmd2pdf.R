@@ -33,18 +33,24 @@ rmd2pdf <- function(input,
   rmd2pandoc(input, "latex", output, options, envir, quiet, encoding)
 }
 
-#' @rdname rmd2pdf
+#' Options for PDF conversion
+#'
+#' Define the options for converting R Markdown to PDF.
+#'
+#' @param toc \code{TRUE} to include a table of contents in the output
+#' @param toc.depth Depth of headers to include in table of contents
+#' @param margin Size of page margins
+#'
+#' @return A list of PDF options that can be passed to \code{\link{rmd2pdf}}.
+#'
 #' @export
-pdfOptions <- function(toc = FALSE, geometry = pdfGeometry()) {
+pdfOptions <- function(toc = FALSE,
+                       toc.depth = 2,
+                       margin = "1in") {
   structure(list(toc = toc,
-                 geometry = geometry),
+                 toc.depth = toc.depth,
+                 margin = margin),
             class = "pdfOptions")
-}
-
-#' @rdname rmd2pdf
-#' @export
-pdfGeometry <- function(margin = "1in") {
-  list(margin = margin)
 }
 
 
@@ -55,18 +61,16 @@ pandocOptions.pdfOptions <- function(pdfOptions) {
   options <- c()
 
   # table of contents
-  if (pdfOptions$toc)
-    options <- c(options, "--table-of-contents")
+  options <- c(options, pandocTableOfContentsOptions(pdfOptions))
 
   # geometry
-  if (!is.null(pdfOptions$geometry)) {
-    geometry <- pdfOptions$geometry
-    for (name in names(geometry)) {
-      value <- geometry[[name]]
-      options <- c(options,
-                   "--variable",
-                   paste0("geometry:", name, "=", value))
-    }
+  geometry <- list()
+  geometry$margin <- pdfOptions$margin
+  for (name in names(geometry)) {
+    value <- geometry[[name]]
+    options <- c(options,
+                 "--variable",
+                 paste0("geometry:", name, "=", value))
   }
 
   options

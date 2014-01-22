@@ -106,10 +106,7 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
   options <- c("--smart", "--no-highlight")
 
   # table of contents
-  if (htmlOptions$toc) {
-    options <- c(options, "--table-of-contents")
-    options <- c(options, "--toc-depth", htmlOptions$toc.depth)
-  }
+  options <- c(options, pandocTableOfContentsOptions(htmlOptions))
 
   # mathjax
   if (!is.null(htmlOptions$mathjax)) {

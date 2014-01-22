@@ -18,6 +18,18 @@ pandocTemplate <- function(file) {
   system.file(file.path("templates", file), package = "rmarkdown")
 }
 
+pandocTableOfContentsOptions <- function(tocOptions) {
+
+  options <- c()
+
+  if (tocOptions$toc) {
+    options <- c(options, "--table-of-contents")
+    options <- c(options, "--toc-depth", tocOptions$toc.depth)
+  }
+
+  options
+}
+
 pandocIncludeOptions <- function(includeOptions) {
 
   options <- c()
