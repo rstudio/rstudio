@@ -123,7 +123,7 @@
           <systemProperties>
             <property>
               <name>gwt.args</name>
-              <value>-out target/www</value>
+              <value>-war target/www</value>
             </property>
           </systemProperties>
         </configuration>
