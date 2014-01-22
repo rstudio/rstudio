@@ -276,16 +276,6 @@ public class DebugCommander
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      RegExp sourceExp = RegExp.compile("debugSource\\('([^']*)'.*");
-      MatchResult fileMatch = sourceExp.exec(event.getInput());
-      if (fileMatch == null || fileMatch.getGroupCount() == 0)
-      {
-         return;
-      }     
-      String path = FilePathUtils.normalizePath(
-            fileMatch.getGroup(1), 
-            workbench_.getCurrentWorkingDir().getPath());
-      beginTopLevelDebugSession(path);      
    }
 
    @Override

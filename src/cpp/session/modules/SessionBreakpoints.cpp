@@ -434,6 +434,33 @@ void rs_registerShinyFunction(SEXP params)
    }
 }
 
+// Executes the contents of the given file under the debugger
+void rs_debugSource(SEXP filename)
+{
+   // Get the file that was sourced
+   std::string path;
+   Error error = r::sexp::extract(filename, &path);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // Find all the lines in the file that have breakpoints
+   std::vector<int> lines;
+   BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
+   {
+      if (module_context::resolveAliasedPath(pbp->path) == filePath)
+         lines.push_back(pbp->lineNumber);
+   }
+
+   // Execute the contents with breakpoints
+   error = r::exec::RFunction(".rs.executeDebugSource", filename, lines).call();
+   if (error)
+      LOG_ERROR(error);
+}
+
 // Initializes the set of breakpoints the server knows about by populating it
 // from client state (any of these may become a Shiny breakpoint at app boot);
 // registers the callback from Shiny into RStudio to register a running function
@@ -445,6 +472,12 @@ Error initBreakpoints()
    registerShiny.fun = (DL_FUNC)rs_registerShinyFunction;
    registerShiny.numArgs = 1;
    r::routines::addCallMethod(registerShiny);
+
+   R_CallMethodDef debugSource;
+   debugSource.name = "rs_debugSource" ;
+   debugSource.fun = (DL_FUNC)rs_debugSource;
+   debugSource.numArgs = 1;
+   r::routines::addCallMethod(debugSource);
 
    // Load breakpoints from client state
    json::Value breakpointStateValue =
