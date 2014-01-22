@@ -74,54 +74,58 @@ pandocOutputFile <- function(input, pandocFormat) {
 
 pandocExec <- function(args, ...) {
   pandoc <- pandocPath()
-  if (nzchar(pandoc)) {
-    command <- paste(pandoc, paste(shQuote(args), collapse = " "))
-    system(command, ...)
-  } else {
-    stop("pandoc was not found on the system path", call. = FALSE)
-  }
+  command <- paste(pandoc, paste(shQuote(args), collapse = " "))
+  system(command, ...)
 }
 
 pandocPath <- function() {
-  Sys.which("pandoc")
-}
 
-verifyPandocVersion <- function() {
-  hasPandoc <- hasRequiredPandocVersion()
-  if (!hasPandoc) {
-    msg <- paste("The pandoc package requires that pandoc version",
-                 requiredPandocVersion(),
-                 "or greater is installed and available on the path.")
-    oldVersion <- attr(hasPandoc, "version")
-    if (!is.null(oldVersion))
-      msg <- paste(msg, "You currently have version", oldVersion, "installed,",
-                   "please update to a newer version.")
+  # check for versions of pandoc in rstudio and on the path
+  rstudioPandocPath <- Sys.getenv("RSTUDIO_PANDOC")
+  if (nzchar(rstudioPandocPath))
+    rstudioPandocPath <- file.path(rstudioPandocPath, "pandoc")
+  systemPandocPath = Sys.which("pandoc")
+
+  # determine which one is more recent
+  if (!nzchar(rstudioPandocPath) && !nzchar(systemPandocPath)) {
+    stop("No version of pandoc was found on the path.", call.=FALSE)
+  }
+  else if (!nzchar(rstudioPandocPath))
+    pandoc <- systemPandocPath
+  else if (!nzchar(systemPandocPath))
+    pandoc <- rstudioPandocPath
+  else {
+    rstudioVersion <- pandocVersion(rstudioPandocPath)
+    systemVersion <- pandocVersion(systemPandocPath)
+    if (rstudioVersion >= systemVersion)
+      pandoc <- rstudioPandocPath
     else
-      msg <- paste(msg, "No version of pandoc was found on the path.")
-
-    stop(msg, call.=FALSE)
+      pandoc <- systemPandocPath
   }
+
+  # verify the version
+  version <- pandocVersion(pandoc)
+  if (version < requiredPandocVersion()) {
+    stop("The rmarkdown package requires pandoc version ",
+         as.character(requiredPandocVersion()), " ",
+         "or greater. You currently have version ", as.character(version), " ",
+         "installed. Please update to a newer version.",
+         call. = FALSE)
+  }
+
+  # return the path to pandoc
+  pandoc
 }
 
-hasRequiredPandocVersion <- function() {
-  if (nzchar(pandocPath())) {
-    versionInfo <- pandocExec("--version", intern = TRUE)
-    version <- strsplit(versionInfo, "\n")[[1]][1]
-    version <- strsplit(version, " ")[[1]][2]
-    hasRequired <- numeric_version(version) >= requiredPandocVersion()
-    if (hasRequired) {
-      TRUE
-    } else {
-      attr(hasRequired, "version") <- version
-      hasRequired
-    }
-  } else {
-    FALSE
-  }
+pandocVersion <- function(pandocPath) {
+  versionInfo <- system(paste(shQuote(pandocPath), "--version"), intern = TRUE)
+  version <- strsplit(versionInfo, "\n")[[1]][1]
+  version <- strsplit(version, " ")[[1]][2]
+  numeric_version(version)
 }
 
 requiredPandocVersion <- function() {
-  "1.12.3"
+  numeric_version("1.12.3")
 }
 
 

@@ -114,6 +114,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionProfiler.hpp"
+#include "modules/SessionRMarkdown.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
@@ -1568,6 +1569,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::packages::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
+      (modules::rmarkdown::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::source::initialize)

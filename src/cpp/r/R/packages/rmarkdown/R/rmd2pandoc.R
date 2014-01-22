@@ -31,9 +31,6 @@ rmd2pandoc <- function(input,
                        quiet = FALSE,
                        encoding = getOption("encoding")) {
 
-  # verify we have the minimum version
-  verifyPandocVersion()
-
   # execute within the input file's directory
   oldwd <- setwd(dirname(tools::file_path_as_absolute(input)))
   on.exit(setwd(oldwd), add = TRUE)
