@@ -39,6 +39,7 @@ public class ShinyApplicationPresenter
    {
       String getDocumentTitle();
       String getUrl();
+      String getAbsoluteUrl();
       void showApp(ShinyApplicationParams params);
       void reloadApp();
    }
@@ -115,8 +116,10 @@ public class ShinyApplicationPresenter
    {  
       if ("disconnected".equals(data))
       {
-         // ensure the frame url starts with the specified origin
-         if (view_.getUrl().startsWith(origin)) 
+         // ensure the frame url starts with the specified origin; we need to
+         // use the absolute url since 'origin' includes the hostname and 
+         // portmapped urls may be relative (i.e. just p/XXXX).
+         if (view_.getAbsoluteUrl().startsWith(origin)) 
          {
             appStopped_ = true;
             closeShinyApp();
