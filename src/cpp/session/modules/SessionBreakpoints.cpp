@@ -435,7 +435,7 @@ void rs_registerShinyFunction(SEXP params)
 }
 
 // Executes the contents of the given file under the debugger
-void rs_debugSource(SEXP filename)
+SEXP rs_debugSourceFile(SEXP filename)
 {
    // Get the file that was sourced
    std::string path;
@@ -443,7 +443,7 @@ void rs_debugSource(SEXP filename)
    if (error)
    {
       LOG_ERROR(error);
-      return;
+      return R_NilValue;
    }
    FilePath filePath = module_context::resolveAliasedPath(path);
 
@@ -452,13 +452,22 @@ void rs_debugSource(SEXP filename)
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
       if (module_context::resolveAliasedPath(pbp->path) == filePath)
+      {
          lines.push_back(pbp->lineNumber);
+      }
    }
 
    // Execute the contents with breakpoints
-   error = r::exec::RFunction(".rs.executeDebugSource", filename, lines).call();
+   Protect protect;
+   SEXP lineSEXP = lines.size() > 0 ?
+                        r::sexp::create(lines, &protect) :
+                        R_NilValue;
+   error = r::exec::RFunction(".rs.executeDebugSource", filename,
+                              lineSEXP).call();
    if (error)
       LOG_ERROR(error);
+
+   return R_NilValue;
 }
 
 // Initializes the set of breakpoints the server knows about by populating it
@@ -466,18 +475,18 @@ void rs_debugSource(SEXP filename)
 // registers the callback from Shiny into RStudio to register a running function
 Error initBreakpoints()
 {
+   R_CallMethodDef debugSource;
+   debugSource.name = "rs_debugSourceFile";
+   debugSource.fun = (DL_FUNC)rs_debugSourceFile;
+   debugSource.numArgs = 1;
+   r::routines::addCallMethod(debugSource);
+
    // Register rs_registerShinyFunction; called from registerShinyDebugHook
    R_CallMethodDef registerShiny;
-   registerShiny.name = "rs_registerShinyFunction" ;
+   registerShiny.name = "rs_registerShinyFunction";
    registerShiny.fun = (DL_FUNC)rs_registerShinyFunction;
    registerShiny.numArgs = 1;
    r::routines::addCallMethod(registerShiny);
-
-   R_CallMethodDef debugSource;
-   debugSource.name = "rs_debugSource" ;
-   debugSource.fun = (DL_FUNC)rs_debugSource;
-   debugSource.numArgs = 1;
-   r::routines::addCallMethod(debugSource);
 
    // Load breakpoints from client state
    json::Value breakpointStateValue =

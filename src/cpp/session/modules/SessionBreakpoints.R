@@ -348,9 +348,12 @@
    env$fun <- .rs.makeSourceEquivFunction(fileName)
 
    # Inject the breakpoints
-   steps <- .rs.getFunctionSteps(env$fun, "fun", breaklines)
-   suppressWarnings(.rs.setFunctionBreakpoints(
-         "fun", env, lapply(steps, function(step) { step$at } )))
+   if (length(breaklines) > 0)
+   {
+      steps <- .rs.getFunctionSteps(env$fun, "fun", breaklines)
+      suppressWarnings(.rs.setFunctionBreakpoints(
+            "fun", env, lapply(steps, function(step) { step$at } )))
+   }
 
    # Run it!
    env$fun()
@@ -428,7 +431,7 @@
 
 .rs.addGlobalFunction("debugSource", function(fileName)
 {
-   .Call("rs_debugSource", fileName)
+   .Call("rs_debugSourceFile", fileName)
 })
 
 # Parameters expected to be in environment:
@@ -458,21 +461,6 @@
    lineNumbers)
 {
    .rs.getSteps(functionName, fileName, packageName, lineNumbers)
-})
-
-.rs.addJsonRpcHandler("execute_debug_source", function(
-   fileName,
-   topBreakLines,
-   functionBreakLines,
-   step,
-   mode)
-{
-   .rs.executeDebugSource(
-      fileName,
-      topBreakLines,
-      functionBreakLines,
-      step,
-      mode)
 })
 
 .rs.addFunction("haveAdvancedSteppingCommands", function() {
