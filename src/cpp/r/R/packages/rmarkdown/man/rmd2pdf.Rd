@@ -15,14 +15,6 @@
   \item{options}{List of PDF rendering options created by
   calling \code{pdfOptions}}
 
-  \item{toc}{Whether to include a table of contents in the
-  output}
-
-  \item{geometry}{List of LaTeX geometry options created by
-  calling \code{pdfGeometry}}
-
-  \item{margin}{Size of page margins}
-
   \item{envir}{The environment in which the code chunks are
   to be evaluated (can use \code{\link{new.env}()} to
   guarantee an empty new environment)}

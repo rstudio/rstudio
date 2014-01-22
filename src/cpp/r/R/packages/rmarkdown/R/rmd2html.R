@@ -56,8 +56,9 @@ rmd2html <- function(input,
 #'   the document body.
 #'
 #' @details The \code{htmlTemplate} function provides a default template that
-#'   includes Bootstrap CSS, syntax highlighting, MathJax, and a self-contained
-#'   HTML file.
+#'   includes Bootstrap CSS, syntax highlighting, and MathJax. Additional css
+#'   and header and footer content can also be included, and the resulting HTML
+#'   file is fully standalone.
 #'
 #'   Paths for resources referenced from the \code{css}, \code{include.header},
 #'   \code{include.before}, and \code{include.after} parameters are resolved

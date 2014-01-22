@@ -14,6 +14,21 @@ pandocTemplateOptions <- function(template) {
     "--data-dir", dirname(template))
 }
 
+pandocPdfHighlightOptions <- function(highlightOptions) {
+
+  options <- c()
+
+  if (!highlightOptions$highlight) {
+    options <- c(options, "--no-highlight")
+  }
+  else if (!is.null(highlightOptions$template)) {
+    options <- c(options, "--highlight-style",
+                          highlightOptions$template$highlight.style)
+  }
+
+  options
+}
+
 pandocTemplate <- function(file) {
   system.file(file.path("templates", file), package = "rmarkdown")
 }

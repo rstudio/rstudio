@@ -43,9 +43,13 @@ rmd2beamer <- function(input,
 #'   that if you want to reverse the default incremental behavior for an
 #'   individual bullet you can preceded it with \code{>}. For example:
 #'   \emph{\code{> - Bullet Text}}
+#' @param highlight \code{TRUE} to syntax highlight code (see
+#'   \code{highlight.style} for customizing the rendering of highlighted code).
 #' @param template Beamer template to use for rendering document. This should
 #'   either be the path to a pandoc template or an object that provides a
 #'   \code{pandocOptions} S3 method.
+#' @param highlight.style Style for syntax highlighting. Options are pygments,
+#'   kate, monochrome, espresso, zenburn, haddock, and tango.
 #' @param include.header One or more files with LaTeX content to be included in
 #'   the header of the document.
 #' @param include.before One or more files with LaTeX content to be included
@@ -55,7 +59,7 @@ rmd2beamer <- function(input,
 #'
 #' @details The \code{beamerTemplate} function provides the default pandoc
 #'   beamer template along with the abilty to add additional LaTeX to the
-#'   beginning and end of the document. and footer.
+#'   beginning and end of the document.
 #'
 #'   Paths for resources referenced from the \code{include.header},
 #'   \code{include.before}, and \code{include.after} parameters are resolved
@@ -67,20 +71,24 @@ rmd2beamer <- function(input,
 beamerOptions <- function(toc = FALSE,
                           slide.level = 2,
                           incremental = FALSE,
+                          highlight = TRUE,
                           template = beamerTemplate()) {
   structure(list(toc = toc,
                  slide.level = slide.level,
                  incremental = incremental,
+                 highlight = highlight,
                  template = template),
             class = "beamerOptions")
 }
 
 #' @rdname beamerOptions
 #' @export
-beamerTemplate <- function(include.header = NULL,
+beamerTemplate <- function(highlight.style = "pygments",
+                           include.header = NULL,
                            include.before = NULL,
                            include.after = NULL) {
-  structure(list(include.header = include.header,
+  structure(list(highlight.style = highlight.style,
+                 include.header = include.header,
                  include.before = include.before,
                  include.after = include.after),
             class = "beamerTemplate")
@@ -105,6 +113,9 @@ pandocOptions.beamerOptions <- function(beamerOptions) {
   # incremental
   if (beamerOptions$incremental)
     options <- c(options, "--incremental")
+
+  # highlighting
+  options <- c(options, pandocPdfHighlightOptions(beamerOptions))
 
   # check for a template path
   if (is.character(beamerOptions$template)) {

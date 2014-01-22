@@ -4,10 +4,12 @@
 \title{Options for Beamer conversion}
 \usage{
   beamerOptions(toc = FALSE, slide.level = 2,
-    incremental = FALSE, template = beamerTemplate())
+    incremental = FALSE, highlight = TRUE,
+    template = beamerTemplate())
 
-  beamerTemplate(include.header = NULL,
-    include.before = NULL, include.after = NULL)
+  beamerTemplate(highlight.style = "pygments",
+    include.header = NULL, include.before = NULL,
+    include.after = NULL)
 }
 \arguments{
   \item{toc}{\code{TRUE} to include a table of contents in
@@ -25,10 +27,18 @@
   can preceded it with \code{>}. For example: \emph{\code{>
   - Bullet Text}}}
 
+  \item{highlight}{\code{TRUE} to syntax highlight code
+  (see \code{highlight.style} for customizing the rendering
+  of highlighted code).}
+
   \item{template}{Beamer template to use for rendering
   document. This should either be the path to a pandoc
   template or an object that provides a
   \code{pandocOptions} S3 method.}
+
+  \item{highlight.style}{Style for syntax highlighting.
+  Options are pygments, kate, monochrome, espresso,
+  zenburn, haddock, and tango.}
 
   \item{include.header}{One or more files with LaTeX
   content to be included in the header of the document.}
@@ -50,7 +60,7 @@
   The \code{beamerTemplate} function provides the default
   pandoc beamer template along with the abilty to add
   additional LaTeX to the beginning and end of the
-  document. and footer.
+  document.
 
   Paths for resources referenced from the
   \code{include.header}, \code{include.before}, and

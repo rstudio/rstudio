@@ -59,7 +59,9 @@
 \details{
   The \code{htmlTemplate} function provides a default
   template that includes Bootstrap CSS, syntax
-  highlighting, MathJax, and a self-contained HTML file.
+  highlighting, and MathJax. Additional css and header and
+  footer content can also be included, and the resulting
+  HTML file is fully standalone.
 
   Paths for resources referenced from the \code{css},
   \code{include.header}, \code{include.before}, and
