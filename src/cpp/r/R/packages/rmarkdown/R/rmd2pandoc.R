@@ -51,22 +51,13 @@ rmd2pandoc <- function(input,
   # pandoc: convert to format
   args <- c("--to", to)
 
-  # pandoc: convert from format
+  # pandoc: support full syntax of pandoc markdown with some additional
+  # features for backward compatibility with github flavored markdown
   args <- c(args, "--from",
-            paste0("markdown_github",
-                   "-hard_line_breaks",
-                   "+superscript",
-                   "+tex_math_dollars",
-                   "+tex_math_single_backslash",
-                   "+raw_html",
-                   "+auto_identifiers",
-                   "+header_attributes",
-                   "+raw_tex",
-                   "+latex_macros",
-                   "+footnotes",
-                   "+inline_notes",
-                   "+citations",
-                   "+yaml_metadata_block"))
+            paste0("markdown",
+                   "+autolink_bare_uris",
+                   "+ascii_identifiers",
+                   "+tex_math_single_backslash"))
 
   # pandoc: additional command line options
   args <- c(args, pandocOptions(options))
