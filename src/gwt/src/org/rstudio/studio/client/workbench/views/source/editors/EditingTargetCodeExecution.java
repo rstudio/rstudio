@@ -104,8 +104,8 @@ public class EditingTargetCodeExecution
       // strip roxygen off the beginning of lines
       if (isRoxygenExampleRange(range))
       {
-         code = code.replaceFirst("^\\s*#'\\s?", "");
-         code = code.replaceAll("\n\\s*#'\\s?", "\n");
+         code = code.replaceFirst("^[ \\t]*#'[ \\t]?", "");
+         code = code.replaceAll("\n[ \\t]*#'[ \\t]?", "\n");
       }
       
       // send to console
