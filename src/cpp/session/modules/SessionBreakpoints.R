@@ -526,6 +526,43 @@
    .rs.setShinyFunction(name, where, env$fun)
 })
 
+# Given a filename, creates a source-equivalent function: a function that,
+# when executed, has the same effect as sourcing the file.
+.rs.addFunction("makeSourceEquivFunction", function(filename)
+{ 
+   content <- parse(filename)
+
+   # Create an empty function to host the expressions in the file
+   fun <- function() 
+   {
+      evalq({ 1 }, envir = globalenv())
+   }
+
+   # Copy each statement from the file into the eval body of the function
+   for (i in 1:length(content)) {
+     body(fun)[[2]][[2]][[i + 1]] <- content[[i]]
+   }
+
+   # Set up the source references 
+   refs <- attr(content, "srcref")
+   lastref <- length(refs)
+   attr(body(fun), "srcfile") <- attr(content, "srcfile")
+   ref <- structure(c(refs[[1]][1], refs[[1]][2], 
+                      refs[[lastref]][3], refs[[lastref]][[4]], 
+                      refs[[1]][5], refs[[lastref]][6], 
+                      refs[[1]][1], refs[[lastref]][3]), 
+                    srcfile = attr(content, "srcfile"), 
+                    class = "srcref")
+   attr(body(fun), "srcref")[[2]] <- ref
+   linerefs <- list(attr(content, "srcref")[[1]])
+   for (i in 1:length(content)) {
+      linerefs[[i + 1]] <- attr(content, "srcref")[[i]]
+   }
+   attr(body(fun)[[2]][[2]], "srcref") <- linerefs
+   attr(fun, "srcref") <- ref
+   return(fun)
+})
+
 # Parameters expected to be in environment:
 # where - environment or reference object 
 # name - name of function or reference field name
