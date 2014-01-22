@@ -223,7 +223,7 @@
 
 
   # Return an empty source ref if we couldn't find a match
-  if (pos < 0)
+  if (length(pos) == 0 || pos < 0)
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   # Compute the starting and ending lines
@@ -258,9 +258,13 @@
   return(result)
 })
 
-.rs.addFunction("functionNameFromCall", function(call)
+.rs.addFunction("functionNameFromCall", function(val)
 {
-    return(as.character(substitute(call)))
+   call <- attr(val, "_rs_call")
+   if (is.function(call[[1]]))
+      "[Anonymous function]"
+   else
+      as.character(substitute(call))
 })
 
 .rs.addFunction("argumentListSummary", function(args)

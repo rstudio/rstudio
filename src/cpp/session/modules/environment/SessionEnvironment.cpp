@@ -331,7 +331,9 @@ Error functionNameFromContext(const RCNTXT* pContext,
 {
    SEXP functionName;
    r::sexp::Protect protect;
-   Error error = r::exec::RFunction(".rs.functionNameFromCall", pContext->call)
+   SEXP val = r::sexp::create("_rs_callval", &protect);
+   r::sexp::setAttrib(val, "_rs_call", pContext->call);
+   Error error = r::exec::RFunction(".rs.functionNameFromCall", val)
                             .call(&functionName, &protect);
    if (!error && r::sexp::length(functionName) > 0)
    {

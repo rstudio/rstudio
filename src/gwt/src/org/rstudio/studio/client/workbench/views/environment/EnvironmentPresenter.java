@@ -678,11 +678,19 @@ public class EnvironmentPresenter extends BasePresenter
          {
             if (sourceChanged)
             {
+               // create the function name for the code browser by removing the
+               // () indicator supplied by the server
+               String functionName = environmentName_;
+               int idx = functionName.indexOf('(');
+               if (idx > 0)
+               {
+                  functionName = functionName.substring(0, idx);
+               }
                // if this is a different source file than we already have open,
                // open it 
                eventBus_.fireEvent(new CodeBrowserNavigationEvent(
                      SearchPathFunctionDefinition.create(
-                           environmentName_, 
+                           functionName, 
                            "debugging", 
                            currentBrowseSource_,
                            true),
