@@ -15,8 +15,6 @@
   \item{options}{List of Beamer rendering options created
   by calling \code{beamerOptions}}
 
-  \item{theme}{Beamer theme}
-
   \item{envir}{The environment in which the code chunks are
   to be evaluated (can use \code{\link{new.env}()} to
   guarantee an empty new environment)}

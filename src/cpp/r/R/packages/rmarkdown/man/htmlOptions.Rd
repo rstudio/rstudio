@@ -3,9 +3,8 @@
 \alias{mathjaxURL}
 \title{Options for HTML conversion}
 \usage{
-  htmlOptions(toc = FALSE, toc.depth = 3,
-    theme = "default", highlight = TRUE,
-    mathjax = mathjaxURL(), css = NULL,
+  htmlOptions(toc = FALSE, toc.depth = 3, bootstrap = TRUE,
+    highlight = TRUE, mathjax = mathjaxURL(), css = NULL,
     include.header = NULL, include.before = NULL,
     include.after = NULL, standalone = TRUE,
     self.contained = TRUE)
@@ -19,9 +18,10 @@
   \item{toc.depth}{Depth of headers to include in table of
   contents}
 
-  \item{theme}{HTML theme ("default", "cerulean", or
-  "slate"). Pass \code{NULL} to not use any theme (add your
-  own css using the \code{css} parameter).}
+  \item{bootstrap}{\code{TRUE} to style the document using
+  \href{http://getbootstrap.com}{Bootstrap}. If you pass
+  \code{FALSE} you can provide your own styles using the
+  \code{css} and/or \code{include.header} parameters.}
 
   \item{highlight}{\code{TRUE} to syntax highlight R code
   within the document.}
@@ -42,7 +42,7 @@
 
   \item{standalone}{\code{TRUE} to produce a fully valid
   HTML document (rather than a fragment). If this is
-  \code{FALSE} then the \code{theme}, \code{highlight},
+  \code{FALSE} then the \code{bootstrap}, \code{highlight},
   \code{css}, and \code{include} options are not applied.}
 
   \item{self.contained}{\code{TRUE} to produce a standalone
@@ -50,7 +50,7 @@
   to incorporate the contents of linked scripts,
   stylesheets, and images (note that MathJax is still
   referenced externally). If this is \code{FALSE} then the
-  \code{theme} and \code{highlight} options are not
+  \code{bootstrap} and \code{highlight} options are not
   applied.}
 }
 \value{

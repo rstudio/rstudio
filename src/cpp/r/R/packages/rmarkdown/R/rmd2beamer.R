@@ -6,7 +6,6 @@
 #' @param output Target output file (defaults to <input>.pdf if not specified)
 #' @param options List of Beamer rendering options created by calling
 #'   \code{beamerOptions}
-#' @param theme Beamer theme
 #' @param envir The environment in which the code chunks are to be evaluated
 #'   (can use \code{\link{new.env}()} to guarantee an empty new environment)
 #' @param quiet Whether to suppress the progress bar and messages
