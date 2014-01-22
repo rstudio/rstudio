@@ -44,12 +44,12 @@ rmd2html <- function(input,
 #' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
 #'   not include mathjax.
 #' @param css One or more css files to include
-#' @param include.header One or more files that include content to be inclued
-#'   within the HTML \code{head}.
-#' @param include.before One or more files with content to be included at the
-#'   beginning of the HTML \code{body}.
-#' @param include.after One or more files with content to be inserted at the end
-#'   of the HTML \code{body}.
+#' @param include.header One or more files with HTML content to be included
+#'   within the HTML \code{head} tag.
+#' @param include.before One or more files with HTML content to be included
+#'   before the document body.
+#' @param include.after One or more files with HTML content to be included after
+#'   the document body.
 #' @param standalone \code{TRUE} to produce a fully valid HTML document (rather
 #'   than a fragment). If this is \code{FALSE} then the \code{theme},
 #'   \code{highlight}, \code{mathjax}, \code{css}, and content inclusion options

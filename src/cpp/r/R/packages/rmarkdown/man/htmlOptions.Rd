@@ -33,14 +33,14 @@
 
   \item{css}{One or more css files to include}
 
-  \item{include.header}{One or more files that include
-  content to be inclued within the HTML \code{head}.}
+  \item{include.header}{One or more files with HTML content
+  to be included within the HTML \code{head} tag.}
 
-  \item{include.before}{One or more files with content to
-  be included at the beginning of the HTML \code{body}.}
+  \item{include.before}{One or more files with HTML content
+  to be included before the document body.}
 
-  \item{include.after}{One or more files with content to be
-  inserted at the end of the HTML \code{body}.}
+  \item{include.after}{One or more files with HTML content
+  to be included after the document body.}
 
   \item{standalone}{\code{TRUE} to produce a fully valid
   HTML document (rather than a fragment). If this is
