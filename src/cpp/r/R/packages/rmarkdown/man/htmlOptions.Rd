@@ -4,7 +4,7 @@
 \title{Options for HTML conversion}
 \usage{
   htmlOptions(toc = FALSE, toc.depth = 3,
-    theme = "default", highlight = "default",
+    theme = "default", highlight = TRUE,
     mathjax = mathjaxURL(), css = NULL,
     include.header = NULL, include.before = NULL,
     include.after = NULL, standalone = TRUE,
@@ -23,10 +23,8 @@
   "slate"). Pass \code{NULL} to not use any theme (add your
   own css using the \code{css} parameter).}
 
-  \item{highlight}{Syntax highlighting style ("default",
-  "pygments", "kate", "monochrome", "espresso", "zenburn",
-  "haddock", or "tango"). Pass \code{NULL} to not syntax
-  highlight code.}
+  \item{highlight}{\code{TRUE} to syntax highlight R code
+  within the document.}
 
   \item{mathjax}{Include mathjax from the specified URL.
   Pass \code{NULL} to not include mathjax.}
@@ -45,8 +43,7 @@
   \item{standalone}{\code{TRUE} to produce a fully valid
   HTML document (rather than a fragment). If this is
   \code{FALSE} then the \code{theme}, \code{highlight},
-  \code{mathjax}, \code{css}, and content inclusion options
-  are not applied.}
+  \code{css}, and \code{include} options are not applied.}
 
   \item{self.contained}{\code{TRUE} to produce a standalone
   HTML file with no external dependencies, using data: URIs

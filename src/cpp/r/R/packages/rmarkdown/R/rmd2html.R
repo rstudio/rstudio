@@ -38,9 +38,7 @@ rmd2html <- function(input,
 #' @param toc.depth Depth of headers to include in table of contents
 #' @param theme HTML theme ("default", "cerulean", or "slate"). Pass \code{NULL}
 #'   to not use any theme (add your own css using the \code{css} parameter).
-#' @param highlight Syntax highlighting style ("default", "pygments", "kate",
-#'   "monochrome", "espresso", "zenburn", "haddock", or "tango"). Pass
-#'   \code{NULL} to not syntax highlight code.
+#' @param highlight \code{TRUE} to syntax highlight R code within the document.
 #' @param mathjax Include mathjax from the specified URL. Pass \code{NULL} to
 #'   not include mathjax.
 #' @param css One or more css files to include
@@ -52,8 +50,7 @@ rmd2html <- function(input,
 #'   the document body.
 #' @param standalone \code{TRUE} to produce a fully valid HTML document (rather
 #'   than a fragment). If this is \code{FALSE} then the \code{theme},
-#'   \code{highlight}, \code{mathjax}, \code{css}, and content inclusion options
-#'   are not applied.
+#'   \code{highlight}, \code{css}, and \code{include} options are not applied.
 #' @param self.contained \code{TRUE} to produce a standalone HTML file with no
 #'   external dependencies, using data: URIs to incorporate the contents of
 #'   linked scripts, stylesheets, and images (note that MathJax is still
@@ -70,7 +67,7 @@ rmd2html <- function(input,
 htmlOptions <- function(toc = FALSE,
                         toc.depth = 3,
                         theme = "default",
-                        highlight = "default",
+                        highlight = TRUE,
                         mathjax = mathjaxURL(),
                         css = NULL,
                         include.header = NULL,
@@ -104,7 +101,7 @@ mathjaxURL <- function() {
 pandocOptions.htmlOptions <- function(htmlOptions) {
 
   # base options for all HTML output
-  options <- c("--smart")
+  options <- c("--smart", "--no-highlight")
 
   # table of contents
   if (htmlOptions$toc) {
@@ -139,18 +136,9 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
       }
 
       # highlighting
-      if (is.null(htmlOptions$highlight)) {
-        options <- c(options, "--no-highlight")
+      if (htmlOptions$highlight) {
+        options <- c(options, "--variable", "highlightjs")
       }
-      else if (identical(htmlOptions$highlight, "default")) {
-        options <- c(options, "--no-highlight",
-                     "--variable", "highlightjs")
-      }
-      else {
-        options <- c(options, "--highlight-style", htmlOptions$highlight)
-      }
-    } else {
-      options <- c(options, "--no-highlight")
     }
 
     # mathjax url
@@ -172,9 +160,6 @@ pandocOptions.htmlOptions <- function(htmlOptions) {
 
   # not standalone
   else {
-
-    # no highlighting since we can't include the highlighting js/css
-    options <- c(options, "--no-highlight")
 
     # use ascii since we weren't able to include a content-type in the head
     options <- c(options, "--ascii")
