@@ -36,13 +36,13 @@ rmd2beamer <- function(input,
 #'
 #' @param toc \code{TRUE} to include a table of contents in the output (only
 #'   level 1 headers will be included in the table of contents).
+#' @param slide.level The heading level which defines indvidual slides. By
+#'   default this is level 2, which allows level 1 headers to be used to define
+#'   sections of the presentation.
 #' @param incremental \code{TRUE} to render slide bullets incrementally. Note
 #'   that if you want to reverse the default incremental behavior for an
 #'   individual bullet you can preceded it with \code{>}. For example:
 #'   \emph{\code{> - Bullet Text}}
-#' @param slide.level The heading level which defines indvidual slides. By
-#'   default this is level 2, which allows level 1 headers to be used to define
-#'   sections of the presentation.
 #' @param include.header One or more files with LaTeX content to be included in
 #'   the header of the document.
 #' @param include.before One or more files with LaTeX content to be included
@@ -54,14 +54,14 @@ rmd2beamer <- function(input,
 #'
 #' @export
 beamerOptions <- function(toc = FALSE,
-                          incremental = FALSE,
                           slide.level = 2,
+                          incremental = FALSE,
                           include.header = NULL,
                           include.before = NULL,
                           include.after = NULL) {
   structure(list(toc = toc,
-                 incremental = incremental,
                  slide.level = slide.level,
+                 incremental = incremental,
                  include.header = include.header,
                  include.before = include.before,
                  include.after = include.after),
@@ -79,14 +79,14 @@ pandocOptions.beamerOptions <- function(beamerOptions) {
   if (beamerOptions$toc)
     options <- c(options, "--table-of-contents")
 
-  # incremental
-  if (beamerOptions$incremental)
-    options <- c(options, "--incremental")
-
   # slide level
   options <- c(options,
                "--slide-level",
                as.character(beamerOptions$slide.level))
+
+  # incremental
+  if (beamerOptions$incremental)
+    options <- c(options, "--incremental")
 
   # content includes
   options <- c(options, pandocIncludeOptions(beamerOptions))
