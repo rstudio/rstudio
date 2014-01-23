@@ -109,9 +109,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public JsNamespaceOption getNamespace() {
-    // TODO: enable in a separate patch, so we don't have to roll this back again.
-    // return JsNamespaceOption.BY_JAVA_PACKAGE;
-    return JsNamespaceOption.NONE;
+    return JsNamespaceOption.BY_JAVA_PACKAGE;
   }
 
   @Override
