@@ -684,7 +684,6 @@ json::Object commonEnvironmentStateData(
       {
          LOG_ERROR(error);
       }
-      varJson["function_name"] = functionName;
 
       // If the environment currently monitored is the function's environment,
       // return that environment
@@ -696,14 +695,23 @@ json::Object commonEnvironmentStateData(
          inFunctionEnvironment = true;
       }
 
-      // see if the function to be debugged is out of sync with its saved
-      // sources (if available).
-      if (pContext)
+      if (functionName == "eval" &&
+          isValidSrcref(r::getGlobalContext()->srcref))
       {
+         // the 'eval' function gets source references (to the code being
+         // evaluated) during top-level debugging; in this case, label
+         // the function 'source'
+         functionName = "source";
+      }
+      else if (pContext)
+      {
+         // see if the function to be debugged is out of sync with its saved
+         // sources (if available).
          useProvidedSource =
                functionIsOutOfSync(pContext, &functionCode) &&
                functionCode != "NULL";
       }
+      varJson["function_name"] = functionName;
    }
    else
    {

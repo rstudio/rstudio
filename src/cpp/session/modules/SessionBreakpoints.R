@@ -357,7 +357,8 @@
 
    # Run it!
    env$fun()
-})
+
+}, attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("getShinyFunction", function(name, where)
 {
@@ -431,7 +432,7 @@
 
 .rs.addGlobalFunction("debugSource", function(fileName)
 {
-   .Call("rs_debugSourceFile", fileName)
+   invisible(.Call("rs_debugSourceFile", fileName))
 })
 
 # Parameters expected to be in environment:
