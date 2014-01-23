@@ -16,6 +16,7 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 
@@ -23,43 +24,38 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public class MockModuleDef extends ModuleDef {
-    public MockModuleDef() {
-      super("mock");
-      normalize(TreeLogger.NULL);
+
+  private Resource publicResource = new Resource() {
+
+    @Override
+    public long getLastModified() {
+      return 0;
     }
 
     @Override
-    public Resource findPublicFile(String partialPath) {
-      if ("onPublicPath.txt".equals(partialPath)) {
-        return new Resource() {
-
-          @Override
-          public long getLastModified() {
-            return 0;
-          }
-
-          @Override
-          public String getLocation() {
-            return "/mock/onPublicPath.txt";
-          }
-
-          @Override
-          public String getPath() {
-            return "onPublicPath.txt";
-          }
-
-          @Override
-          public InputStream openContents() {
-            return new ByteArrayInputStream(Util.getBytes("w00t!"));
-          }
-
-          @Override
-          public boolean wasRerooted() {
-            return false;
-          }
-
-        };
-      }
-      return null;
+    public String getLocation() {
+      return "/mock/onPublicPath.txt";
     }
+
+    @Override
+    public String getPath() {
+      return "onPublicPath.txt";
+    }
+
+    @Override
+    public InputStream openContents() {
+      return new ByteArrayInputStream(Util.getBytes("w00t!"));
+    }
+
+    @Override
+    public boolean wasRerooted() {
+      return false;
+    }
+  };
+
+  public MockModuleDef() {
+    super("mock");
+    normalize(TreeLogger.NULL);
+    lazyPublicOracle = new MockResourceOracle(publicResource);
+  }
 }

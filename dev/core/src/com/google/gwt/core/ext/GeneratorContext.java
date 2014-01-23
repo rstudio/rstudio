@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,7 +31,7 @@ public interface GeneratorContext {
   /**
    * Checks whether a rebind rule is available for a given sourceTypeName, such
    * as can appear in a replace-with or generate-with rule.
-   * 
+   *
    * @param sourceTypeName the name of a type to check for rebind rule
    *          availability.
    * @return true if a rebind rule is available
@@ -52,7 +52,7 @@ public interface GeneratorContext {
    * equivalent to calling
    * {@link com.google.gwt.core.ext.linker.ArtifactSet#replace(Artifact)} if an
    * equivalent Artifact had previously been committed.
-   * 
+   *
    * @param logger a logger; normally the logger passed into the currently
    *          invoked generator or a branch thereof
    * @param artifact the Artifact to provide to the Linker chain.
@@ -62,7 +62,7 @@ public interface GeneratorContext {
   /**
    * Commits resource generation begun with
    * {@link #tryCreateResource(TreeLogger, String)}.
-   * 
+   *
    * @return the GeneratedResource that was created as a result of committing
    *         the OutputStream.
    * @throws UnableToCompleteException if the resource cannot be written to
@@ -76,7 +76,7 @@ public interface GeneratorContext {
    * Get the cached rebind result that has been provided to the context, if
    * available. The provided result will be the most recent previously generated
    * result for the currently active rebind rule and requested type name.
-   * 
+   *
    * @return A {@link CachedGeneratorResult} object, if one has been provided to
    *         the context. Null is returned if there is no previous result
    *         available.
@@ -103,7 +103,7 @@ public interface GeneratorContext {
   /**
    * Gets the type oracle for the current generator context. Generators can use
    * the type oracle to ask questions about the entire translatable code base.
-   * 
+   *
    * @return a TypeOracle over all the relevant translatable compilation units
    *         in the source path
    */
@@ -127,7 +127,7 @@ public interface GeneratorContext {
    * <code>null</code> is returned to indicate that no work needs to be done.
    * The file is not committed until {@link #commit(TreeLogger, PrintWriter)} is
    * called.
-   * 
+   *
    * @param logger a logger; normally the logger passed into the currently
    *          invoked generator, or a branch thereof
    * @param packageName the name of the package to which the create type belongs
@@ -142,7 +142,7 @@ public interface GeneratorContext {
    * file contents into the named file underneath the compilation output
    * directory. The file is not committed until
    * {@link #commitResource(TreeLogger, OutputStream)} is called.
-   * 
+   *
    * @param logger a logger; normally the logger passed into the currently
    *          invoked generator, or a branch thereof
    * @param partialPath the name of the file whose contents are to be written;
@@ -164,7 +164,7 @@ public interface GeneratorContext {
    * will be added to the context once the calling generator returns from
    * {@link IncrementalGenerator#generateIncrementally}, with a result
    * containing {@link RebindMode#USE_PARTIAL_CACHED}.
-   * 
+   *
    * @param typeName the fully qualified source name of a type.
    * @return true if the requested type is available from the generator result
    *         cache, false otherwise.

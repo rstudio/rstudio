@@ -39,6 +39,7 @@ public class CompilerContext {
   public static class Builder {
 
     private ResourceOracle buildResourceOracle;
+    private boolean compileMonolithic = true;
     private LibraryGroup libraryGroup;
     private LibraryWriter libraryWriter = new NullLibraryWriter();
     private ModuleDef module;
@@ -55,11 +56,20 @@ public class CompilerContext {
       compilerContext.libraryWriter = libraryWriter;
       compilerContext.libraryGroup = libraryGroup;
       compilerContext.module = module;
+      compilerContext.compileMonolithic = compileMonolithic;
       compilerContext.options = options;
       compilerContext.publicResourceOracle = publicResourceOracle;
       compilerContext.sourceResourceOracle = sourceResourceOracle;
       compilerContext.unitCache = unitCache;
       return compilerContext;
+    }
+
+    /**
+     * Sets whether compilation should proceed monolithically or separately.
+     */
+    public Builder compileMonolithic(boolean compileMonolithic) {
+      this.compileMonolithic = compileMonolithic;
+      return this;
     }
 
     /**
@@ -133,8 +143,15 @@ public class CompilerContext {
   }
 
   private ResourceOracle buildResourceOracle;
+  /**
+   * Whether compilation should proceed monolithically or separately. It is an example of a
+   * configuration property that is not assignable by command line args. If more of these accumulate
+   * they should be grouped together instead of floating free here.
+   */
+  private boolean compileMonolithic = true;
   private LibraryGroup libraryGroup;
   private LibraryWriter libraryWriter = new NullLibraryWriter();
+
   private ModuleDef module;
 
   // TODO(stalcup): split this into module parsing, precompilation, compilation, and linking option
@@ -218,5 +235,9 @@ public class CompilerContext {
 
   public UnitCache getUnitCache() {
     return unitCache;
+  }
+
+  public boolean shouldCompileMonolithic() {
+    return compileMonolithic;
   }
 }

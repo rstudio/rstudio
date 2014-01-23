@@ -30,13 +30,14 @@ import junit.framework.TestCase;
 public class ModuleDefLoaderTest extends TestCase {
 
   private MockLibraryWriter mockLibraryWriter = new MockLibraryWriter();
-  private CompilerContext compilerContext =
-      new CompilerContext.Builder().libraryWriter(mockLibraryWriter).build();
+  private CompilerContext compilerContext;
+  private CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     ModuleDefLoader.getModulesCache().clear();
+    compilerContext = compilerContextBuilder.libraryWriter(mockLibraryWriter).build();
   }
 
   public void assertHonorsStrictResources(boolean strictResources)
@@ -140,7 +141,7 @@ public class ModuleDefLoaderTest extends TestCase {
     UnitTestTreeLogger logger = builder.createLogger();
     try {
       ModuleDefLoader.loadFromClassPath(logger,
-          compilerContext, "com.google.gwt.dev.cfg.testdata.naming.NestedInvalid", false, true);
+          compilerContext, "com.google.gwt.dev.cfg.testdata.naming.NestedInvalid", false);
       fail("Expected exception from invalid module name.");
     } catch (UnableToCompleteException expected) {
     }
@@ -152,11 +153,11 @@ public class ModuleDefLoaderTest extends TestCase {
   }
 
   public void testSeparateRootFilesetFail() {
+    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
     TreeLogger logger = TreeLogger.NULL;
     try {
       ModuleDefLoader.loadFromClassPath(logger,
-          compilerContext, "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne", false,
-          false);
+          compilerContext, "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne", false);
       fail("Expected a fileset loaded as the root of a module tree to fail, but it didn't.");
     } catch (UnableToCompleteException e) {
       // Expected behavior.
@@ -164,16 +165,18 @@ public class ModuleDefLoaderTest extends TestCase {
   }
 
   public void testSeparateLibraryName() throws UnableToCompleteException {
+    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
     ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
 
     assertEquals("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
         mockLibraryWriter.getLibraryName());
   }
 
   public void testSeparateLibraryModuleReferences() throws UnableToCompleteException {
+    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
     ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
 
     // The library writer was given the module and it's direct fileset module xml files as build
     // resources.
@@ -187,8 +190,9 @@ public class ModuleDefLoaderTest extends TestCase {
   }
 
   public void testSeparateModuleReferences() throws UnableToCompleteException {
+    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
     ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
 
     // The module sees itself and it's direct fileset module as "target" modules.
     assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
@@ -200,8 +204,9 @@ public class ModuleDefLoaderTest extends TestCase {
   }
 
   public void testSeparateModuleResourcesLibraryOne() throws UnableToCompleteException {
+    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
     ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false, false);
+        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
 
     // Includes own source.
     assertNotNull(libraryOneModule.findSourceFile(

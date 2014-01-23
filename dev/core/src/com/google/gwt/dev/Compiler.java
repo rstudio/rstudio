@@ -127,8 +127,7 @@ public class Compiler {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
-      modules[i++] =
-          ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName, true, true);
+      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName, true);
     }
     return run(logger, modules);
   }

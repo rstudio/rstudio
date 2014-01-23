@@ -212,7 +212,7 @@ class Recompiler {
     this.resourceLoader.set(resources);
 
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
-        logger, compilerContext, originalModuleName, resources, true, true);
+        logger, compilerContext, originalModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
 
     // We need a cross-site linker. Automatically replace the default linker.

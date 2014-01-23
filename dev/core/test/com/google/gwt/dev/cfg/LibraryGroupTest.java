@@ -123,8 +123,31 @@ public class LibraryGroupTest extends TestCase {
   }
 
   /**
-   * Test library tree looks like:
-   *
+   * See buildVariedPropertyGeneratorLibraryGroup() for test library group structure.
+   */
+  public void testPropertyCollectionByGenerator() {
+    LibraryGroup libraryGroup = buildVariedPropertyGeneratorLibraryGroup();
+
+    // Collect "new" legal binding property values from the perspective of each generator.
+    Collection<String> newUserAgentsForUserAgentAsserter =
+        libraryGroup.gatherNewBindingPropertyValuesForGenerator("UserAgentAsserter").get(
+            "user.agent");
+    Collection<String> newUserAgentsForLocalizedDatePickerGenerator =
+        libraryGroup.gatherNewBindingPropertyValuesForGenerator("LocalizedDatePickerGenerator").get(
+            "user.agent");
+    Collection<String> newLocalesForLocalizedDatePickerGenerator =
+        libraryGroup.gatherNewBindingPropertyValuesForGenerator("LocalizedDatePickerGenerator").get(
+            "locale");
+
+    // Verify that the results are as expected.
+    assertEquals(
+        Sets.newHashSet("webkit_phone", "webkit_tablet"), newUserAgentsForUserAgentAsserter);
+    assertEquals(Sets.newHashSet("webkit_phone", "webkit_tablet", "webkit", "mozilla", "ie"),
+        newUserAgentsForLocalizedDatePickerGenerator);
+    assertEquals(Sets.newHashSet("ru"), newLocalesForLocalizedDatePickerGenerator);
+  }
+
+  /**
    * <pre>
    * root library: {
    *   user.agent: [webkit_phone, webkit_tablet],
@@ -145,50 +168,43 @@ public class LibraryGroupTest extends TestCase {
    * }
    * </pre>
    */
-  public void testPropertyCollectionByGenerator() {
+  private LibraryGroup buildVariedPropertyGeneratorLibraryGroup() {
+    String generatorNameOne = "UserAgentAsserter";
+    String generatorNameTwo = "LocalizedDatePickerGenerator";
+    return buildVariedPropertyGeneratorLibraryGroup(
+        generatorNameOne, Sets.<String>newHashSet(), generatorNameTwo, Sets.<String>newHashSet());
+  }
+
+  public static LibraryGroup buildVariedPropertyGeneratorLibraryGroup(String generatorNameOne,
+      Set<String> reboundTypeNamesOne, String generatorNameTwo, Set<String> reboundTypeNamesTwo) {
     // A root library that adds more legal user.agent and locale values but for which no generators
     // have been run.
     MockLibrary rootLibrary = new MockLibrary("RootLibrary");
-    rootLibrary.getDependencyLibraryNames().addAll(
-        Lists.newArrayList("SubLibrary1", "SubLibrary2"));
-    rootLibrary.getNewBindingPropertyValuesByName().putAll(
-        "user.agent", Lists.newArrayList("webkit_phone", "webkit_tablet"));
+    rootLibrary.getDependencyLibraryNames()
+        .addAll(Lists.newArrayList("SubLibrary1", "SubLibrary2"));
+    rootLibrary.getNewBindingPropertyValuesByName()
+        .putAll("user.agent", Lists.newArrayList("webkit_phone", "webkit_tablet"));
     rootLibrary.getNewBindingPropertyValuesByName().putAll("locale", Lists.newArrayList("ru"));
 
     // A library that adds legal user.agent values and has already run the UserAgentAsserter
     // generator.
     MockLibrary subLibrary1 = new MockLibrary("SubLibrary1");
-    subLibrary1.getNewBindingPropertyValuesByName().putAll(
-        "user.agent", Lists.newArrayList("webkit", "mozilla", "ie"));
-    subLibrary1.getRanGeneratorNames().add("UserAgentAsserter");
+    subLibrary1.getNewBindingPropertyValuesByName()
+        .putAll("user.agent", Lists.newArrayList("webkit", "mozilla", "ie"));
+    subLibrary1.getRanGeneratorNames().add(generatorNameOne);
+    subLibrary1.getReboundTypeNames().addAll(reboundTypeNamesOne);
 
     // A library that adds legal locale values and has already run the LocaleMessageGenerator
     // generator.
     MockLibrary subLibrary2 = new MockLibrary("SubLibrary2");
-    subLibrary2.getNewBindingPropertyValuesByName().putAll(
-        "locale", Lists.newArrayList("en", "fr"));
-    subLibrary2.getRanGeneratorNames().add("LocalizedDatePickerGenerator");
+    subLibrary2.getNewBindingPropertyValuesByName()
+        .putAll("locale", Lists.newArrayList("en", "fr"));
+    subLibrary2.getRanGeneratorNames().add(generatorNameTwo);
+    subLibrary2.getReboundTypeNames().addAll(reboundTypeNamesTwo);
 
     LibraryGroup libraryGroup = LibraryGroup.fromLibraries(
-        Lists.<Library> newArrayList(rootLibrary, subLibrary1, subLibrary2), true);
-
-    // Collect "new" legal binding property values from the perspective of each generator.
-    Collection<String> newUserAgentsForUserAgentAsserter =
-        libraryGroup.gatherNewBindingPropertyValuesForGenerator("UserAgentAsserter").get(
-            "user.agent");
-    Collection<String> newUserAgentsForLocalizedDatePickerGenerator =
-        libraryGroup.gatherNewBindingPropertyValuesForGenerator("LocalizedDatePickerGenerator").get(
-            "user.agent");
-    Collection<String> newLocalesForLocalizedDatePickerGenerator =
-        libraryGroup.gatherNewBindingPropertyValuesForGenerator("LocalizedDatePickerGenerator").get(
-            "locale");
-
-    // Verify that the results are as expected.
-    assertEquals(
-        Sets.newHashSet("webkit_phone", "webkit_tablet"), newUserAgentsForUserAgentAsserter);
-    assertEquals(Sets.newHashSet("webkit_phone", "webkit_tablet", "webkit", "mozilla", "ie"),
-        newUserAgentsForLocalizedDatePickerGenerator);
-    assertEquals(Sets.newHashSet("ru"), newLocalesForLocalizedDatePickerGenerator);
+        Lists.<Library>newArrayList(rootLibrary, subLibrary1, subLibrary2), true);
+    return libraryGroup;
   }
 
   public void testSuperSourceOverridesRegularCompilationUnitAccess() {

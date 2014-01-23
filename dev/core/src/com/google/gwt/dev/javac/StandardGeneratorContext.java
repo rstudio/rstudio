@@ -478,12 +478,12 @@ public class StandardGeneratorContext implements GeneratorContext {
    * @throw UnableToCompleteException if the compiler aborted (not
    * a normal compile error).</p>
    */
-  public final ArtifactSet finish(TreeLogger logger) throws UnableToCompleteException {
+  public ArtifactSet finish(TreeLogger logger) throws UnableToCompleteException {
     abortUncommittedResources(logger);
 
     try {
       TreeLogger branch;
-      if (!committedGeneratedCups.isEmpty()) {
+      if (isDirty()) {
         // Assimilate the new types into the type oracle.
         //
         String msg = "Assimilating generated source";
@@ -517,12 +517,27 @@ public class StandardGeneratorContext implements GeneratorContext {
         }
       }
 
-      uncommittedGeneratedCupsByPrintWriter.clear();
-      committedGeneratedCups.clear();
-      newlyGeneratedTypeNames.clear();
-      newlyGeneratedArtifacts = new ArtifactSet();
-      cachedTypeNamesToReuse = null;
+      reset();
     }
+  }
+
+  public boolean isDirty() {
+    return !committedGeneratedCups.isEmpty();
+  }
+
+  /**
+   * Clears all accumulated artifacts and state so that the context can be used
+   * as if from scratch. Is useful for clearing out undesired changes after
+   * having used the context to explore some hypothetical situations, for
+   * example to run Generators for the purpose of discovering the properties
+   * they depend on.
+   */
+  public void reset() {
+    uncommittedGeneratedCupsByPrintWriter.clear();
+    committedGeneratedCups.clear();
+    newlyGeneratedTypeNames.clear();
+    newlyGeneratedArtifacts = new ArtifactSet();
+    cachedTypeNamesToReuse = null;
   }
 
   public Set<String> getActiveLinkerNames() {
@@ -564,9 +579,18 @@ public class StandardGeneratorContext implements GeneratorContext {
     return propertyOracle;
   }
 
+  /**
+   * Returns whether the current compile and generator passes are executing in
+   * the global phase of a compile, as opposed to further down in the dependency
+   * tree.
+   */
+  public boolean isGlobalCompile() {
+    return compilerContext.getOptions().shouldLink();
+  }
+
   @Override
   public ResourceOracle getResourcesOracle() {
-    return compilerContext.getModule().getBuildResourceOracle();
+    return compilerContext.getBuildResourceOracle();
   }
 
   @Override
@@ -734,7 +758,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   @Override
-  public final PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
+  public PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleTypeName) {
     String typeName;
     if (packageName.length() == 0) {
       typeName = simpleTypeName;
@@ -821,7 +845,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Check for public path collision.
-    if (compilerContext.getModule().findPublicFile(partialPath) != null) {
+    if (compilerContext.getPublicResourceOracle().getResourceMap().containsKey(partialPath)) {
       logger.log(TreeLogger.WARN, "Cannot create resource '" + partialPath
           + "' because it already exists on the public path", null);
       return null;

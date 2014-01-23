@@ -114,31 +114,32 @@ public class ModuleDefLoader {
   }
 
   /**
-   * Loads a new (assumed monolithic) module from the class path and defers scanning associated
-   * directories for resources.
+   * Loads a new module from the class path and defers scanning associated directories for
+   * resources.
    */
   public static ModuleDef loadFromClassPath(
       TreeLogger logger, CompilerContext compilerContext, String moduleName)
       throws UnableToCompleteException {
-    return loadFromClassPath(logger, compilerContext, moduleName, false, true);
+    return loadFromClassPath(logger, compilerContext, moduleName, false);
   }
 
   /**
    * Loads a new module from the class path and may or may not immediately scan associated
-   * directories for resources or consider it monolithic, depending on parameters.
+   * directories for resources.
    */
-  public static ModuleDef loadFromClassPath(TreeLogger logger, CompilerContext compilerContext,
-      String moduleName, boolean refresh, boolean monolithic) throws UnableToCompleteException {
+  public static ModuleDef loadFromClassPath(
+      TreeLogger logger, CompilerContext compilerContext, String moduleName, boolean refresh)
+      throws UnableToCompleteException {
     ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
-    return loadFromResources(logger, compilerContext, moduleName, resources, refresh, monolithic);
+    return loadFromResources(logger, compilerContext, moduleName, resources, refresh);
   }
 
   /**
    * Loads a new module from the given ResourceLoader and may or may not immediately scan associated
-   * directories for resources or consider it monolithic, depending on parameters.
+   * directories for resources.
    */
   public static ModuleDef loadFromResources(TreeLogger logger, CompilerContext compilerContext,
-      String moduleName, ResourceLoader resources, boolean refresh, boolean monolithic)
+      String moduleName, ResourceLoader resources, boolean refresh)
       throws UnableToCompleteException {
 
     Event moduleDefLoadFromClassPathEvent = SpeedTracerLogger.start(
@@ -155,8 +156,8 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
-      ModuleDef module =
-          ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, monolithic);
+      ModuleDef module = ModuleDefLoader.doLoadModule(
+          loader, logger, moduleName, resources, compilerContext.shouldCompileMonolithic());
 
       LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
       libraryWriter.setLibraryName(module.getName());

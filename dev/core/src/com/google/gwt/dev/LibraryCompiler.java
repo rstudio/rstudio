@@ -26,6 +26,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ZipLibraryWriter;
 import com.google.gwt.dev.javac.LibraryGroupUnitCache;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.PermutationResult;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PersistenceBackedObject;
@@ -122,7 +123,8 @@ public class LibraryCompiler {
 
   public LibraryCompiler(CompilerOptions compilerOptions) {
     this.compilerOptions = new CompilerOptionsImpl(compilerOptions);
-    this.compilerContext = compilerContextBuilder.options(compilerOptions).build();
+    this.compilerContext =
+        compilerContextBuilder.options(compilerOptions).compileMonolithic(false).build();
   }
 
   private void compileModule(TreeLogger logger) throws UnableToCompleteException {
@@ -216,13 +218,16 @@ public class LibraryCompiler {
 
   private void loadModule(TreeLogger logger) throws UnableToCompleteException {
     module = ModuleDefLoader.loadFromClassPath(
-        logger, compilerContext, compilerOptions.getModuleNames().get(0), false, false);
+        logger, compilerContext, compilerOptions.getModuleNames().get(0), false);
     compilerContext = compilerContextBuilder.module(module).build();
   }
 
   private void normalizeOptions(TreeLogger logger) throws UnableToCompleteException {
     Preconditions.checkArgument(compilerOptions.getModuleNames().size() == 1);
 
+    compilerOptions.setOutput(JsOutputOption.DETAILED);
+    compilerOptions.setRunAsyncEnabled(false);
+    compilerOptions.setClosureCompilerEnabled(false);
     if (compilerOptions.getWorkDir() == null) {
       try {
         compilerOptions.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));

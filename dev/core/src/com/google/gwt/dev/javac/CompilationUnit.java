@@ -214,14 +214,14 @@ public abstract class CompilationUnit implements Serializable {
     }
   }
 
-  protected static final DiskCache diskCache = DiskCache.INSTANCE;
-
   public static final Comparator<CompilationUnit> COMPARATOR = new Comparator<CompilationUnit>() {
     @Override
     public int compare(CompilationUnit o1, CompilationUnit o2) {
       return o1.getResourcePath().compareTo(o2.getResourcePath());
     }
   };
+
+  protected static final DiskCache diskCache = DiskCache.INSTANCE;
 
   private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 
@@ -347,6 +347,18 @@ public abstract class CompilationUnit implements Serializable {
    * @see com.google.gwt.dev.resource.Resource#getPathPrefix()
    */
   public abstract String getResourcePath();
+
+  /**
+   * Returns the contained type with the given name.
+   */
+  public JDeclaredType getTypeByName(String typeName) {
+    for (JDeclaredType type : getTypes()) {
+      if (type.getName().equals(typeName)) {
+        return type;
+      }
+    }
+    return null;
+  }
 
   /**
    * Returns the fully-qualified name of the top level public type.

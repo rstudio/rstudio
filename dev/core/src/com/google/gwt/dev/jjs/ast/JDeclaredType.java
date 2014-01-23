@@ -22,6 +22,7 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -89,26 +90,6 @@ public abstract class JDeclaredType extends JReferenceType {
    */
   private List<JInterfaceType> superInterfaces = Lists.create();
 
-  /**
-   * Determines whether a subclass of this type is in the collection <code>types</code>.
-   *
-   * @param types a collections of types.
-   * @return the first subtype found in the collection  if the collection <code>types</code>
-   *             contains a subtype of this type; null otherwise.
-   */
-  public JDeclaredType findSubtype(Iterable<JDeclaredType> types) {
-    for (JDeclaredType type : types) {
-      JDeclaredType tp = type;
-      while (tp != null) {
-        if (this == tp) {
-          return type;
-        }
-        tp = tp.getSuperClass();
-      }
-    }
-    return null;
-  }
-
   public JDeclaredType(SourceInfo info, String name) {
     super(info, name);
   }
@@ -174,23 +155,28 @@ public abstract class JDeclaredType extends JReferenceType {
     return this.getClinitTarget() != targetType.getClinitTarget();
   }
 
-  public List<JNode> getArtificialRescues() {
-    return artificialRescues;
+  /**
+   * Determines whether a subclass of this type is in the collection <code>types</code>.
+   *
+   * @param types a collections of types.
+   * @return the first subtype found in the collection  if the collection <code>types</code>
+   *             contains a subtype of this type; null otherwise.
+   */
+  public JDeclaredType findSubtype(Iterable<JDeclaredType> types) {
+    for (JDeclaredType type : types) {
+      JDeclaredType tp = type;
+      while (tp != null) {
+        if (this == tp) {
+          return type;
+        }
+        tp = tp.getSuperClass();
+      }
+    }
+    return null;
   }
 
-  /**
-   * Returns the instance initializer ($init) method.
-   * Can only be called after making sure the class has an instance initializer method.
-   *
-   * @return The instance initializer method.
-   */
-  public final JMethod getInitMethod() {
-    assert getMethods().size() > 1;
-    JMethod init = this.getMethods().get(1);
-
-    assert init != null;
-    assert init.getName().equals("$init");
-    return init;
+  public List<JNode> getArtificialRescues() {
+    return artificialRescues;
   }
 
   /**
@@ -241,6 +227,21 @@ public abstract class JDeclaredType extends JReferenceType {
     return superInterfaces;
   }
 
+  /**
+   * Returns the instance initializer ($init) method.
+   * Can only be called after making sure the class has an instance initializer method.
+   *
+   * @return The instance initializer method.
+   */
+  public final JMethod getInitMethod() {
+    assert getMethods().size() > 1;
+    JMethod init = this.getMethods().get(1);
+
+    assert init != null;
+    assert init.getName().equals("$init");
+    return init;
+  }
+
   @Override
   public String getJavahSignatureName() {
     return "L" + name.replaceAll("_", "_1").replace('.', '_') + "_2";
@@ -281,6 +282,22 @@ public abstract class JDeclaredType extends JReferenceType {
   @Override
   public boolean isExternal() {
     return isExternal;
+  }
+
+  /**
+   * Returns whether this type can be instantiated.
+   */
+  public boolean isInstantiable() {
+    if (isAbstract()) {
+      return false;
+    }
+    if (!(this instanceof JClassType) && !(this instanceof JEnumType)) {
+      return false;
+    }
+    if (getDefaultConstructor() == null) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -429,5 +446,25 @@ public abstract class JDeclaredType extends JReferenceType {
     for (JMethod method : methods) {
       method.writeBody(stream);
     }
+  }
+
+  private List<JMethod> getConstructors() {
+    List<JMethod> constructors = new ArrayList<JMethod>();
+    for (JMethod method : methods) {
+      if (method instanceof JConstructor) {
+        constructors.add(method);
+      }
+    }
+    return constructors;
+  }
+
+  private JMethod getDefaultConstructor() {
+    List<JMethod> constructors = getConstructors();
+    for (JMethod constructor : constructors) {
+      if (constructor.getOriginalParamTypes().size() == 0) {
+        return constructor;
+      }
+    }
+    return null;
   }
 }
