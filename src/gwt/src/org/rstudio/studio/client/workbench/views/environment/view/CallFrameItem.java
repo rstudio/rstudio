@@ -53,7 +53,7 @@ public class CallFrameItem extends Composite
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       functionName.addClickHandler(this);
-      if (!frame.isNavigable())
+      if (!frame.isNavigable() || hidden)
       {
          functionName.addStyleName(style.noSourceFrame());
          
@@ -142,19 +142,18 @@ public class CallFrameItem extends Composite
    
    private String getFrameLabel()
    {
+      if (frame_.isSourceEquiv())
+      {
+         return "[Debug source]";
+      }
       if (frame_.getShinyFunctionLabel().isEmpty())
       {
-         String functionName = frame_.getFunctionName();
-         // Don't show the argument list for the debug source function
-         if (!functionName.equals("[Debug source]"))
-            functionName += "(" + frame_.getArgumentList() + ")";
-         return functionName;
+         return frame_.getFunctionName() + "(" + frame_.getArgumentList() + ")";
       }
       else
       {
          return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
       }
-         
    }
 
    @UiField Label functionName;

@@ -27,12 +27,11 @@ namespace modules {
 namespace breakpoints {
 
 core::Error initialize();
-core::json::Value debugStateAsJson();
 bool haveSrcrefAttribute();
 bool haveAdvancedStepCommands();
 
 } // namespace breakpoints
-} // namepace modules
-} // namesapce session
+} // namespace modules
+} // namespace session
 
 #endif // SESSIONBREAKPOINTS_HPP

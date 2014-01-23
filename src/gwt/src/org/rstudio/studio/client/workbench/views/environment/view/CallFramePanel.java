@@ -131,12 +131,15 @@ public class CallFramePanel extends ResizeComposite
       // If it is, the traceback window may appear empty, so show everything
       // to give the user some context.
       boolean allInternal = true;
+      int idxSourceEquiv = -1;
       for (int idx = 0; idx < frameList.length(); idx++)
       {
-         if (frameList.get(idx).isNavigable()) {
+         CallFrame frame = frameList.get(idx);
+         if (frame.isNavigable()) {
             allInternal = false;
-            break;
          }
+         if (frame.isSourceEquiv())
+            idxSourceEquiv = idx;
       }
       
       for (int idx = frameList.length() - 1; idx >= 0; idx--)
@@ -150,8 +153,8 @@ public class CallFramePanel extends ResizeComposite
                frame, 
                observer_, 
                !panelHost_.getShowInternalFunctions() && 
-                  !frame.isNavigable() &&
-                  !allInternal && 
+                  ((!frame.isNavigable()) || idx > idxSourceEquiv) &&
+                  !allInternal &&
                   idx > 0);
          if (contextDepth == frame.getContextDepth())
          {
@@ -166,7 +169,6 @@ public class CallFramePanel extends ResizeComposite
       {
          callFramePanel.add(item);
       }
-      
    }
 
    public void updateLineNumber(int newLineNumber)

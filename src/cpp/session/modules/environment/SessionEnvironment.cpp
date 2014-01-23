@@ -339,13 +339,6 @@ Error functionNameFromContext(const RCNTXT* pContext,
    if (!error && r::sexp::length(functionName) > 0)
    {
       error = r::sexp::extract(functionName, pFunctionName);
-      // special case: if we're evaluating an expression with source refs as
-      // the first call on the stack, indicate as much.
-      if (depth == 1 && !error && *pFunctionName == "eval" &&
-          isValidSrcref(r::getGlobalContext()->srcref))
-      {
-         *pFunctionName = "[Debug source]";
-      }
    }
    else
    {
@@ -478,12 +471,6 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["shiny_function_label"] = shinyLabel;
 
          listFrames.push_back(varFrame);
-
-         // Hide frames beneath the debug source frame
-         if (functionName == "[Debug source]")
-         {
-            break;
-         }
       }
       pPrevContext = pRContext;
       pRContext = pRContext->nextcontext;
@@ -711,7 +698,7 @@ json::Object commonEnvironmentStateData(
          inFunctionEnvironment = true;
       }
 
-      if (pContext && functionName != "[Debug source]")
+      if (pContext && functionName != "eval")
       {
          // see if the function to be debugged is out of sync with its saved
          // sources (if available).
