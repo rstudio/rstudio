@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.test.AutoboxTest;
 import com.google.gwt.dev.jjs.test.BlankInterfaceTest;
 import com.google.gwt.dev.jjs.test.ClassCastTest;
 import com.google.gwt.dev.jjs.test.ClassObjectTest;
+import com.google.gwt.dev.jjs.test.CodeSplitterCollapsedPropertiesTest;
 import com.google.gwt.dev.jjs.test.CompilerMiscRegressionTest;
 import com.google.gwt.dev.jjs.test.CompilerTest;
 import com.google.gwt.dev.jjs.test.CoverageTest;
@@ -74,6 +75,7 @@ public class CompilerSuite {
     suite.addTestSuite(BlankInterfaceTest.class);
     suite.addTestSuite(ClassCastTest.class);
     suite.addTestSuite(ClassObjectTest.class);
+    suite.addTestSuite(CodeSplitterCollapsedPropertiesTest.class);
     suite.addTestSuite(CompilerTest.class);
     suite.addTestSuite(CompilerMiscRegressionTest.class);
     suite.addTestSuite(CoverageTest.class);
