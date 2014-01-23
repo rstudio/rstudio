@@ -120,8 +120,7 @@ public class ShinyApplicationPanel extends ResizeComposite
       // make it absolute by prepending the relevant portion of this window's 
       // URL
       String url = appParams_.getUrl();
-      if (!url.startsWith("http://") ||
-          url.startsWith("https://"))
+      if (!(url.startsWith("http://") || url.startsWith("https://")))
       {
          String thisUrl = Window.Location.getProtocol() + "//" +
                           Window.Location.getHost() + "/" + 
