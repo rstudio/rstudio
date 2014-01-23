@@ -327,6 +327,7 @@ bool insideDebugHiddenFunction()
 }
 
 Error functionNameFromContext(const RCNTXT* pContext,
+                              int depth,
                               std::string* pFunctionName)
 {
    SEXP functionName;
@@ -337,7 +338,14 @@ Error functionNameFromContext(const RCNTXT* pContext,
                             .call(&functionName, &protect);
    if (!error && r::sexp::length(functionName) > 0)
    {
-      return r::sexp::extract(functionName, pFunctionName);
+      error = r::sexp::extract(functionName, pFunctionName);
+      // special case: if we're evaluating an expression with source refs as
+      // the first call on the stack, indicate as much.
+      if (depth == 1 && !error && *pFunctionName == "eval" &&
+          isValidSrcref(r::getGlobalContext()->srcref))
+      {
+         *pFunctionName = "[Debug source]";
+      }
    }
    else
    {
@@ -369,12 +377,14 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
       {
          json::Object varFrame;
          std::string functionName;
-         error = functionNameFromContext(pRContext, &functionName);
+         varFrame["context_depth"] = ++contextDepth;
+
+         error = functionNameFromContext(pRContext, contextDepth,
+                                         &functionName);
          if (error)
          {
             LOG_ERROR(error);
          }
-         varFrame["context_depth"] = ++contextDepth;
          varFrame["function_name"] = functionName;
 
          // in the linked list of R contexts, the srcref associated with each
@@ -468,6 +478,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["shiny_function_label"] = shinyLabel;
 
          listFrames.push_back(varFrame);
+
+         // Hide frames beneath the debug source frame
+         if (functionName == "[Debug source]")
+         {
+            break;
+         }
       }
       pPrevContext = pRContext;
       pRContext = pRContext->nextcontext;
@@ -679,7 +695,7 @@ json::Object commonEnvironmentStateData(
    {
       RCNTXT* pContext = getFunctionContext(depth);
       std::string functionName;
-      Error error = functionNameFromContext(pContext, &functionName);
+      Error error = functionNameFromContext(pContext, depth, &functionName);
       if (error)
       {
          LOG_ERROR(error);
@@ -695,15 +711,7 @@ json::Object commonEnvironmentStateData(
          inFunctionEnvironment = true;
       }
 
-      if (functionName == "eval" &&
-          isValidSrcref(r::getGlobalContext()->srcref))
-      {
-         // the 'eval' function gets source references (to the code being
-         // evaluated) during top-level debugging; in this case, label
-         // the function 'source'
-         functionName = "source";
-      }
-      else if (pContext)
+      if (pContext && functionName != "[Debug source]")
       {
          // see if the function to be debugged is out of sync with its saved
          // sources (if available).
@@ -887,7 +895,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // a debug-hidden function
       if (!insideDebugHiddenFunction())
       {
-         // check to see if we have real source references for the currently
+         // check to see if we have real source ferences for the currently
          // executing context
          SEXP srcref = r::getGlobalContext()->srcref;
          if (!isValidSrcref(srcref))

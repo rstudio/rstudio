@@ -144,8 +144,11 @@ public class CallFrameItem extends Composite
    {
       if (frame_.getShinyFunctionLabel().isEmpty())
       {
-         return frame_.getFunctionName() +
-                "(" + frame_.getArgumentList() + ")";
+         String functionName = frame_.getFunctionName();
+         // Don't show the argument list for the debug source function
+         if (!functionName.equals("[Debug source]"))
+            functionName += "(" + frame_.getArgumentList() + ")";
+         return functionName;
       }
       else
       {
