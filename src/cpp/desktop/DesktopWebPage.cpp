@@ -197,11 +197,9 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       {
          handleBase64Download(pWebFrame, url);
       }
-      else
+      else if (navType == QWebPage::NavigationTypeLinkClicked)
       {
-         // don't open iframes externally
-         if (pWebFrame->parentFrame() == NULL)
-            desktop::openUrl(url);
+         desktop::openUrl(url);
       }
 
       if (!navigated_)
