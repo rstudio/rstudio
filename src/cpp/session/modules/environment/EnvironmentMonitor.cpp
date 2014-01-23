@@ -93,6 +93,10 @@ void EnvironmentMonitor::enqueAssignedEvent(const r::sexp::Variable& variable)
 void EnvironmentMonitor::setMonitoredEnvironment(SEXP pEnvironment,
                                                  bool refresh)
 {
+   // ignore if we're already monitoring this environment
+   if (getMonitoredEnvironment() == pEnvironment)
+      return;
+
    environment_.set(pEnvironment);
 
    // init the environment by doing an initial check for changes

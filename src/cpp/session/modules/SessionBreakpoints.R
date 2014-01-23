@@ -358,6 +358,8 @@
    # Run it!
    env$fun()
 
+   return(NULL)
+
 }, attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("getShinyFunction", function(name, where)

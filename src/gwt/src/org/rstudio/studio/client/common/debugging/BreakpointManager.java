@@ -399,7 +399,8 @@ public class BreakpointManager
          String fileName = frames.get(idx).getFileName();
          if (functionName.equals(".doTrace"))
          {
-            events_.fireEvent(new SendToConsoleEvent("n", true));
+            events_.fireEvent(new SendToConsoleEvent(
+                  DebugCommander.NEXT_COMMAND, true));
          }
          activeFunctions.add(
                new FileFunction(functionName, fileName, "", false));
