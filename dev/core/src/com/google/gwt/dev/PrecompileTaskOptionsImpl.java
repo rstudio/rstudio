@@ -19,6 +19,7 @@ package com.google.gwt.dev;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
@@ -91,6 +92,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public int getMaxPermsPerPrecompile() {
     return maxPermsPerPrecompile;
+  }
+
+  @Override
+  public JsNamespaceOption getNamespace() {
+    return jjsOptions.getNamespace();
   }
 
   @Override
@@ -278,6 +284,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setMaxPermsPerPrecompile(int maxPermsPerPrecompile) {
     this.maxPermsPerPrecompile = maxPermsPerPrecompile;
+  }
+
+  @Override
+  public void setNamespace(JsNamespaceOption newValue) {
+    jjsOptions.setNamespace(newValue);
   }
 
   @Override

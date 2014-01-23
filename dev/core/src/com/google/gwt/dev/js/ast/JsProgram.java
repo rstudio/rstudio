@@ -19,7 +19,9 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A JavaScript program.
@@ -33,6 +35,8 @@ public final class JsProgram extends JsNode {
   private final Map<String, JsName> indexedFields = new HashMap<String, JsName>();
 
   private final Map<String, JsFunction> indexedFunctions = new HashMap<String, JsFunction>();
+
+  private final Set<JsFunction> indexedFunctionSet = new HashSet<JsFunction>();
 
   private final JsScope objectScope;
 
@@ -100,6 +104,10 @@ public final class JsProgram extends JsNode {
     return indexedFunctions.get(name);
   }
 
+  public boolean isIndexedFunction(JsFunction func) {
+    return indexedFunctionSet.contains(func);
+  }
+
   @Override
   public NodeKind getKind() {
     return NodeKind.PROGRAM;
@@ -131,6 +139,8 @@ public final class JsProgram extends JsNode {
   public void setIndexedFunctions(Map<String, JsFunction> indexedFunctions) {
     this.indexedFunctions.clear();
     this.indexedFunctions.putAll(indexedFunctions);
+    this.indexedFunctionSet.clear();
+    this.indexedFunctionSet.addAll(indexedFunctions.values());
   }
 
   @Override
