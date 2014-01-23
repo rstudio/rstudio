@@ -136,11 +136,10 @@ public class BreakpointManager
             lineNumber, 
             Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
+      notifyServer(breakpoint, true, true);
       
       ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
       bps.add(breakpoint);
-      server_.updateBreakpoints(bps, true, true, 
-                                new VoidServerRequestCallback());
       return breakpoint;
    }
    
@@ -160,6 +159,7 @@ public class BreakpointManager
                   Breakpoint.STATE_PROCESSING :
                   Breakpoint.STATE_INACTIVE,
             Breakpoint.TYPE_FUNCTION));
+      notifyServer(breakpoint, true, false);
       
       // If the breakpoint is in a function that is active on the callstack, 
       // it's being set on the stored rather than the executing copy. It's 
@@ -229,13 +229,8 @@ public class BreakpointManager
          {
             setFunctionBreakpoints(new FileFunction(breakpoint));
          }
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-         {
-            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
-            bps.add(breakpoint);
-            server_.updateBreakpoints(
-                  bps, false, true, new VoidServerRequestCallback());
-         }
+         notifyServer(breakpoint, false, 
+               breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL);
       }
       onBreakpointAddOrRemove();
    }
@@ -253,17 +248,7 @@ public class BreakpointManager
       if (breakpoint != null)
       {
          breakpoint.markStepsNeedUpdate();
-         // if this is a top-level breakpoint, it may be a Shiny breakpoint. 
-         // update the server's knowledge of the breakpoint so that the next
-         // time this breakpoint is injected, it's injected at the correct 
-         // line.
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL) 
-         {
-            ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
-            bps.add(breakpoint);
-            server_.updateBreakpoints(bps, true, false,
-                                           new VoidServerRequestCallback());
-         }
+         notifyServer(breakpoint, true, false);
       }
    }
    
@@ -778,6 +763,14 @@ public class BreakpointManager
    {
       breakpointStateDirty_ = true;
       commands_.debugClearBreakpoints().setEnabled(breakpoints_.size() > 0);
+   }
+   
+   private void notifyServer(Breakpoint breakpoint, boolean added, boolean arm)
+   {
+      ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
+      bps.add(breakpoint);
+      server_.updateBreakpoints(bps, added, arm, 
+                                new VoidServerRequestCallback());
    }
    
    // Private classes ---------------------------------------------------------
