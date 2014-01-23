@@ -126,6 +126,10 @@ private:
 // rs_registerShinyFunction for an explanation of how this memory is managed)
 std::vector<boost::shared_ptr<ShinyFunction> > s_shinyFunctions;
 
+// Breakpoint data known by the server (subset of fields known by the client)
+#define TYPE_FUNCTION 0
+#define TYPE_TOPLEVEL 1
+
 class Breakpoint : boost::noncopyable
 {
 public:
@@ -182,7 +186,8 @@ std::vector<int> getShinyBreakpointLines(const ShinyFunction& sf)
    std::vector<int> lines;
    BOOST_FOREACH(boost::shared_ptr<Breakpoint> pbp, s_breakpoints)
    {
-      if (sf.contains(pbp->path, pbp->lineNumber))
+      if (sf.contains(pbp->path, pbp->lineNumber) &&
+          pbp->type == TYPE_TOPLEVEL)
          lines.push_back(pbp->lineNumber);
    }
    return lines;
@@ -511,10 +516,8 @@ Error initBreakpoints()
 }
 
 
-// Called by the client whenever a top-level breakpoint is set or cleared;
-// updates breakpoints on the corresponding Shiny functions, if any.
-Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse*)
+Error updateBreakpoints(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse*)
 {
    json::Array breakpointArr;
    bool set = false, arm = false;
@@ -539,7 +542,7 @@ Error updateShinyBreakpoints(const json::JsonRpcRequest& request,
 
       // Is this breakpoint associated with a running Shiny function? If it is,
       // and the caller wants the changes armed immediately, reflect them
-      if (arm) {
+      if (arm && breakpoint->type == TYPE_TOPLEVEL) {
          boost::shared_ptr<ShinyFunction> psf =
                findShinyFunction(breakpoint->path, breakpoint->lineNumber);
          if (psf)
@@ -588,7 +591,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
-      (bind(registerRpcMethod, "update_shiny_breakpoints", updateShinyBreakpoints))
+      (bind(registerRpcMethod, "update_breakpoints", updateBreakpoints))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"))
       (bind(initBreakpoints));
 

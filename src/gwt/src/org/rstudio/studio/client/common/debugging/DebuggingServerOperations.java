@@ -51,7 +51,7 @@ public interface DebuggingServerOperations
          int type,
          ServerRequestCallback<Void> requestCallback);
    
-   public void updateShinyBreakpoints(
+   public void updateBreakpoints(
          ArrayList<Breakpoint> breakpoints,
          boolean set, 
          boolean arm, 

@@ -3059,7 +3059,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void updateShinyBreakpoints(ArrayList<Breakpoint> breakpoints,
+   public void updateBreakpoints(ArrayList<Breakpoint> breakpoints,
          boolean set, boolean arm, ServerRequestCallback<Void> requestCallback)
    {
       JSONArray bps = new JSONArray();
@@ -3073,7 +3073,7 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(set));
       params.set(2, JSONBoolean.getInstance(arm));
       sendRequest(RPC_SCOPE, 
-            UPDATE_SHINY_BREAKPOINTS,
+            UPDATE_BREAKPOINTS,
             params, 
             requestCallback);
    }
@@ -3394,7 +3394,7 @@ public class RemoteServer implements Server
    private static final String GET_FUNCTION_STATE = "get_function_state";
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
-   private static final String UPDATE_SHINY_BREAKPOINTS = "update_shiny_breakpoints";
+   private static final String UPDATE_BREAKPOINTS = "update_breakpoints";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";

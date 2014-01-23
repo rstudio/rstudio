@@ -416,6 +416,10 @@
    refs <- attr(content, "srcref")
    lastref <- length(refs)
    attr(body(fun), "srcfile") <- attr(content, "srcfile")
+
+   # Simulate a source reference that contains the whole function by 
+   # combining the first and last source references of each statement in 
+   # the function
    ref <- structure(c(refs[[1]][1], refs[[1]][2], 
                       refs[[lastref]][3], refs[[lastref]][[4]], 
                       refs[[1]][5], refs[[lastref]][6], 

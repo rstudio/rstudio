@@ -139,9 +139,8 @@ public class BreakpointManager
       
       ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
       bps.add(breakpoint);
-      server_.updateShinyBreakpoints(bps, true, true, 
-                                     new VoidServerRequestCallback());
-
+      server_.updateBreakpoints(bps, true, true, 
+                                new VoidServerRequestCallback());
       return breakpoint;
    }
    
@@ -234,7 +233,7 @@ public class BreakpointManager
          {
             ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
             bps.add(breakpoint);
-            server_.updateShinyBreakpoints(
+            server_.updateBreakpoints(
                   bps, false, true, new VoidServerRequestCallback());
          }
       }
@@ -262,7 +261,7 @@ public class BreakpointManager
          {
             ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
             bps.add(breakpoint);
-            server_.updateShinyBreakpoints(bps, true, false,
+            server_.updateBreakpoints(bps, true, false,
                                            new VoidServerRequestCallback());
          }
       }
@@ -738,13 +737,10 @@ public class BreakpointManager
    private void clearAllBreakpoints()
    {
       Set<FileFunction> functions = new TreeSet<FileFunction>();
-      ArrayList<Breakpoint> topLevelBPs = new ArrayList<Breakpoint>();
       for (Breakpoint breakpoint: breakpoints_)
       {
          breakpoint.setState(Breakpoint.STATE_REMOVING);
-         if (breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL)
-            topLevelBPs.add(breakpoint);
-         else
+         if (breakpoint.getType () == Breakpoint.TYPE_FUNCTION)
             functions.add(new FileFunction(breakpoint));
       }
       // Remove the breakpoints from each unique function that had breakpoints
@@ -768,12 +764,10 @@ public class BreakpointManager
                   }
                });
       }
-      // Let the server know that top-level breakpoints were cleared (if any)
-      if (topLevelBPs.size() > 0)
-      {
-         server_.updateShinyBreakpoints(topLevelBPs, false, true, 
-                                        new VoidServerRequestCallback());
-      }
+
+      // Let the server know that breakpoints were cleared 
+      server_.updateBreakpoints(breakpoints_, false, true, 
+                                new VoidServerRequestCallback());
       
       notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
       breakpoints_.clear();
