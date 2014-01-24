@@ -689,9 +689,10 @@ json::Object commonEnvironmentStateData(
       }
 
       // If the environment currently monitored is the function's environment,
-      // return that environment
-      if (s_pEnvironmentMonitor->getMonitoredEnvironment() ==
-          pContext->cloenv)
+      // return that environment, unless the environment is the global
+      // environment.
+      SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
+      if (env != R_GlobalEnv && env == pContext->cloenv)
       {
          varJson["environment_name"] = functionName + "()";
          varJson["environment_is_local"] = true;

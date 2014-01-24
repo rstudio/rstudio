@@ -131,7 +131,8 @@ public class CallFramePanel extends ResizeComposite
       // If it is, the traceback window may appear empty, so show everything
       // to give the user some context.
       boolean allInternal = true;
-      int idxSourceEquiv = -1;
+      int idxSourceEquiv = Integer.MAX_VALUE;
+
       for (int idx = 0; idx < frameList.length(); idx++)
       {
          CallFrame frame = frameList.get(idx);
