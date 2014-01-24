@@ -190,6 +190,7 @@
 .rs.addFunction("getFunctionSteps", function(fun, functionName, lineNumbers)
 {
    funBody <- body(fun)
+   lineNumbers <- unique(lineNumbers)
 
    # attempt to find the end line of the function
    funStartLine <- 0

@@ -462,20 +462,24 @@ SEXP rs_debugSourceFile(SEXP filename)
       }
    }
 
-   // Execute the contents with breakpoints
+   // Execute the contents with breakpoints. Don't log errors here, since it's
+   // acceptable for errors to be raised from the code in the file, and we want
+   // those to bubble through.
    Protect protect;
    SEXP lineSEXP = lines.size() > 0 ?
                         r::sexp::create(lines, &protect) :
                         R_NilValue;
    error = r::exec::RFunction(".rs.executeDebugSource", filename,
                               lineSEXP).call();
-   if (error)
-      LOG_ERROR(error);
 
-   // Let the client know we're done; this is the client's cue to re-inject
-   // breakpoints (as it does for ordinary source commands).
-   ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted, path);
-   module_context::enqueClientEvent(debugSourceCompleted);
+   // If everything succeeded, let the client know we're done; this is the
+   // client's cue to re-inject breakpoints (as it does for ordinary source
+   // commands).
+   if (!error)
+   {
+      ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted, path);
+      module_context::enqueClientEvent(debugSourceCompleted);
+   }
 
    return R_NilValue;
 }
