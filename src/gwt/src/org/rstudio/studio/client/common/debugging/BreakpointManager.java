@@ -375,7 +375,8 @@ public class BreakpointManager
       {
          String functionName = frames.get(idx).getFunctionName();
          String fileName = frames.get(idx).getFileName();
-         if (functionName.equals(".doTrace"))
+         if (functionName.equals(".doTrace") &&
+             event.isServerInitiated())
          {
             events_.fireEvent(new SendToConsoleEvent(
                   DebugCommander.NEXT_COMMAND, true));

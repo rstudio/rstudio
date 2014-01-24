@@ -450,7 +450,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ContextDepthChanged)) {
             EnvironmentContextData data = event.getData();
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data, true));
          }
          else if (type.equals(ClientEvent.HandleUnsavedChanges))
          {

@@ -733,7 +733,7 @@ public class EnvironmentPresenter extends BasePresenter
             view_.setProgress(false);
             refreshingView_ = false;
             initialized_ = true;
-            eventBus_.fireEvent(new ContextDepthChangedEvent(data));
+            eventBus_.fireEvent(new ContextDepthChangedEvent(data, false));
          }
 
          @Override
