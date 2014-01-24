@@ -346,17 +346,30 @@
    # Create a function containing the parsed contents of the file
    env <- new.env(parent = emptyenv())
    env$fun <- .rs.makeSourceEquivFunction(fileName)
+   breakSteps <- character()
 
    # Inject the breakpoints
    if (length(breaklines) > 0)
    {
       steps <- .rs.getFunctionSteps(env$fun, "fun", breaklines)
+      breakSteps <- unlist(lapply(steps, function(step) step$at))
       suppressWarnings(.rs.setFunctionBreakpoints(
             "fun", env, lapply(steps, function(step) { step$at } )))
    }
 
    # Run it!
    env$fun()
+
+   # We injected function breakpoints above, but we don't want to leave them
+   # in the source. Remove them and then replay the assignments. 
+   env$fun <- .rs.removeBreakpoints(env$fun)
+   breakSteps <- breakSteps[nchar(breakSteps) > 6]
+   for (steps in breakSteps) {
+      step <- as.numeric(strsplit(breakSteps, ",")[[1]][3]) 
+      op <- deparse(body(env$fun)[[2]][[2]][[step]][[1]]) 
+      if (op == "<-" || op == "=") 
+         eval(body(env$fun)[[2]][[2]][[step]], envir = globalenv())
+   }
 
    return(NULL)
 

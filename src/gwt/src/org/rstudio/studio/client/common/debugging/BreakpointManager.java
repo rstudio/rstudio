@@ -265,25 +265,6 @@ public class BreakpointManager
       return breakpoints;
    }
    
-   public boolean injectBreakpointsDuringSource(
-         String fileName, 
-         int startLine, 
-         int endLine)
-   {
-      for (Breakpoint breakpoint: breakpoints_)
-      {
-         if (breakpoint.isInFile(fileName) && 
-             breakpoint.getLineNumber() >= startLine &&
-             breakpoint.getLineNumber() <= endLine &&
-             breakpoint.getType() == Breakpoint.TYPE_FUNCTION)
-         {
-            prepareAndSetFunctionBreakpoints(new FileFunction(breakpoint));
-            return true;
-         }
-      }
-      return false;
-   }
-   
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -358,12 +339,19 @@ public class BreakpointManager
       // when a file is sourced, replay all the breakpoints in the file.
       RegExp sourceExp = RegExp.compile("source(.with.encoding)?\\('([^']*)'.*");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
+      int group = 2;
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
-         return;
+         // if we didn't match the regular source commands, try debugSource
+         // (which also leaves breakpoints in a file unset)
+         sourceExp = RegExp.compile("debugSource\\('([^']*)'.*");
+         fileMatch = sourceExp.exec(event.getInput());
+         group = 1;
+         if (fileMatch == null || fileMatch.getGroupCount() == 0)
+            return;
       }      
       String path = FilePathUtils.normalizePath(
-            fileMatch.getGroup(2), 
+            fileMatch.getGroup(group), 
             workbench_.getCurrentWorkingDir().getPath());
       resetBreakpointsInPath(path, true);
    }
