@@ -73,6 +73,14 @@ public class CallFrame extends JavaScriptObject
        return this.real_sourceref;
    }-*/;
    
+   public final native boolean isErrorHandler() /*-{
+       return this.is_error_handler;
+   }-*/;
+   
+   public final native boolean isHidden() /*-{
+       return this.is_hidden;
+   }-*/;
+   
    public final boolean isSourceEquiv() 
    {
       return getFunctionName() == "eval" && hasRealSrcref();

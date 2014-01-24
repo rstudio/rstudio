@@ -110,6 +110,11 @@ public class CallFrameItem extends Composite
    {
       return frame_.isNavigable();
    }
+   
+   public boolean isHidden()
+   {
+      return frame_.isHidden();
+   }
 
    // Private functions -------------------------------------------------------
 

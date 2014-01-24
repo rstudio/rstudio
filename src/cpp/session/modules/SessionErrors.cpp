@@ -127,15 +127,14 @@ void detectHandlerChange(boost::shared_ptr<SEXP> pErrorHandler,
       if (currentHandler != R_NilValue &&
           r::sexp::isLanguage(currentHandler))
       {
-         // it's possible for the SEXP to change (it's a pointer) even though the
-         // handler is correct; check the attribute and compare to user settings.
+         // it's possible for the SEXP to change (it's a pointer) even though
+         // the handler is correct; check the attribute of the function invoked
+         // by the handler and compare to the user preference.
          SEXP fun = CAR(currentHandler);
          SEXP typeSEXP = r::sexp::getAttrib(fun, "errorHandlerType");
          if (typeSEXP != NULL && !r::sexp::isNull(typeSEXP))
          {
             Error error = r::sexp::extract(typeSEXP, &handlerType);
-            if (error)
-               LOG_ERROR(error);
             if (!error && handlerType == userSettings().errorHandlerType())
             {
                // the SEXP is different but the attribute matches; update our

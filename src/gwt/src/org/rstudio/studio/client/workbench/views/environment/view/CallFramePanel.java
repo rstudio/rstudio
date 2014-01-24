@@ -101,7 +101,7 @@ public class CallFramePanel extends ResizeComposite
                   for (int i = 1; i < callFrameItems_.size(); i++) 
                   {
                      CallFrameItem item = callFrameItems_.get(i);
-                     if (!item.isNavigable())
+                     if (!item.isNavigable() && !item.isHidden())
                      {
                         item.setVisible(event.getValue());
                      }
@@ -153,10 +153,11 @@ public class CallFramePanel extends ResizeComposite
          CallFrameItem item = new CallFrameItem(
                frame, 
                observer_, 
-               !panelHost_.getShowInternalFunctions() && 
-                  ((!frame.isNavigable()) || idx > idxSourceEquiv) &&
-                  !allInternal &&
-                  idx > 0);
+               frame.isHidden() ||
+                  (!panelHost_.getShowInternalFunctions() && 
+                     ((!frame.isNavigable()) || idx > idxSourceEquiv) &&
+                     !allInternal &&
+                     idx > 0));
          if (contextDepth == frame.getContextDepth())
          {
             item.setActive();
