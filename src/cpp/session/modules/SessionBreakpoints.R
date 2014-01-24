@@ -362,7 +362,9 @@
    env$fun()
 
    # We injected function breakpoints above, but we don't want to leave them
-   # in the source. Remove them and then replay the assignments. 
+   # in the in-memory copies of the functions. Replay the assignment that 
+   # created the original copy of the function. The client will set proper
+   # breakpoints on the functions later.
    env$fun <- .rs.removeBreakpoints(env$fun)
    breakSteps <- breakSteps[nchar(breakSteps) > 6]
    for (steps in breakSteps) {
@@ -450,8 +452,11 @@
    return(fun)
 })
 
-.rs.addGlobalFunction("debugSource", function(fileName)
+.rs.addGlobalFunction("debugSource", function(fileName, echo)
 {
+   # NYI: Consider whether we need to implement source with echo for debugging.
+   # This would likely involve injecting print statements into the generated
+   # source-equivalent function.
    invisible(.Call("rs_debugSourceFile", fileName))
 })
 

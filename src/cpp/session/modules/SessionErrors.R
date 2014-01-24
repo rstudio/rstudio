@@ -128,24 +128,42 @@
 },
 attrs = list(hideFromDebugger = TRUE))
 
+.rs.addFunction("recordAnyTraceback", function()
+{
+   .rs.recordTraceback(FALSE)
+},
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 1L))
+
+.rs.addFunction("recordUserTraceback", function()
+{
+   .rs.recordTraceback(TRUE)
+},
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 1L))
+
 .rs.addFunction("breakOnAnyError", function()
 {
    .rs.breakOnError(FALSE)
 },
-attrs = list(hideFromDebugger = TRUE))
+attrs = list(hideFromDebugger = TRUE, 
+             errorHandlerType = 2L))
 
 .rs.addFunction("breakOnUserError", function()
 {
    .rs.breakOnError(TRUE)
 },
-attrs = list(hideFromDebugger = TRUE))
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 2L))
 
 .rs.addFunction("setErrorManagementType", function(type, userOnly)
 {
    if (type == 0)
       options(error = NULL)
-   else if (type == 1)
-      options(error = function() { .rs.recordTraceback(userOnly) })
+   else if (type == 1 && userOnly)
+      options(error = .rs.recordUserTraceback) 
+   else if (type == 1 && !userOnly)
+      options(error = .rs.recordAnyTraceback)
    else if (type == 2 && userOnly)
       options(error = .rs.breakOnUserError)
    else if (type == 2 && !userOnly)
