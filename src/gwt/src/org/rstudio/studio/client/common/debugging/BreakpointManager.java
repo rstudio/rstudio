@@ -745,10 +745,7 @@ public class BreakpointManager
                });
       }
 
-      // Let the server know that breakpoints were cleared 
-      server_.updateBreakpoints(breakpoints_, false, true, 
-                                new VoidServerRequestCallback());
-      
+      server_.removeAllBreakpoints(new VoidServerRequestCallback());
       notifyBreakpointsSaved(new ArrayList<Breakpoint>(breakpoints_), false);
       breakpoints_.clear();
       onBreakpointAddOrRemove();

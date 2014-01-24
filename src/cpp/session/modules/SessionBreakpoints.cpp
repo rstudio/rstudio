@@ -520,7 +520,6 @@ Error initBreakpoints()
    return Success();
 }
 
-
 Error updateBreakpoints(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse*)
 {
@@ -565,6 +564,13 @@ Error updateBreakpoints(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error removeAllBreakpoints(const json::JsonRpcRequest&,
+                           json::JsonRpcResponse*)
+{
+   s_breakpoints.clear();
+   return Success();
+}
+
 } // anonymous namespace
 
 bool haveSrcrefAttribute()
@@ -596,6 +602,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_function_state", getFunctionState))
       (bind(registerRpcMethod, "set_function_breakpoints", setBreakpoints))
+      (bind(registerRpcMethod, "remove_all_breakpoints", removeAllBreakpoints))
       (bind(registerRpcMethod, "update_breakpoints", updateBreakpoints))
       (bind(sourceModuleRFile, "SessionBreakpoints.R"))
       (bind(initBreakpoints));

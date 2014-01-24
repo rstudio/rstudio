@@ -56,4 +56,7 @@ public interface DebuggingServerOperations
          boolean set, 
          boolean arm, 
          ServerRequestCallback<Void> requestCallback);
+
+   public void removeAllBreakpoints(
+         ServerRequestCallback<Void> requestCallback);
 }

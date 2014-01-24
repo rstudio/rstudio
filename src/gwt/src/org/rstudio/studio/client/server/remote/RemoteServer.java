@@ -3079,6 +3079,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void removeAllBreakpoints(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, 
+            REMOVE_ALL_BREAKPOINTS,
+            requestCallback);
+   }
+
+   @Override
    public void checkForUpdates(
          boolean manual,
          ServerRequestCallback<UpdateCheckResult> requestCallback)
@@ -3395,6 +3403,7 @@ public class RemoteServer implements Server
    private static final String EXECUTE_DEBUG_SOURCE = "execute_debug_source";
    private static final String SET_ERROR_MANAGEMENT_TYPE = "set_error_management_type";
    private static final String UPDATE_BREAKPOINTS = "update_breakpoints";
+   private static final String REMOVE_ALL_BREAKPOINTS = "remove_all_breakpoints";
    
    private static final String LOG = "log";
    private static final String LOG_EXCEPTION = "log_exception";
