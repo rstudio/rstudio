@@ -137,10 +137,18 @@ public class BreakpointManager
             path, 
             "toplevel", 
             lineNumber, 
-            Breakpoint.STATE_ACTIVE, 
+            path.equals(activeSource_) ? 
+                  Breakpoint.STATE_INACTIVE :
+                  Breakpoint.STATE_ACTIVE, 
             Breakpoint.TYPE_TOPLEVEL));
-      notifyServer(breakpoint, true, true);
       
+      // If we're actively sourcing this file, we can't set breakpoints in 
+      // it just yet
+      if (path.equals(activeSource_))
+         breakpoint.setPendingDebugCompletion(true);
+
+      notifyServer(breakpoint, true, true);
+
       ArrayList<Breakpoint> bps = new ArrayList<Breakpoint>();
       bps.add(breakpoint);
       return breakpoint;
@@ -355,11 +363,14 @@ public class BreakpointManager
    @Override
    public void onDebugSourceCompleted(DebugSourceCompletedEvent event)
    {
-      resetBreakpointsInPath(
-            FilePathUtils.normalizePath(
-                  event.getPath(), 
-                  workbench_.getCurrentWorkingDir().getPath()),
-            true);
+      if (event.getSucceeded())
+      {
+         resetBreakpointsInPath(
+               FilePathUtils.normalizePath(
+                     event.getPath(), 
+                     workbench_.getCurrentWorkingDir().getPath()),
+               true);
+      }
    }
    
    @Override
@@ -371,10 +382,12 @@ public class BreakpointManager
       // immediately.
       JsArray<CallFrame> frames = event.getCallFrames();
       Set<FileFunction> activeFunctions = new TreeSet<FileFunction>();
+      boolean hasSourceEquiv = false;
       for (int idx = 0; idx < frames.length(); idx++)
       {
-         String functionName = frames.get(idx).getFunctionName();
-         String fileName = frames.get(idx).getFileName();
+         CallFrame frame = frames.get(idx);
+         String functionName = frame.getFunctionName();
+         String fileName = frame.getFileName();
          if (functionName.equals(".doTrace") &&
              event.isServerInitiated())
          {
@@ -383,6 +396,11 @@ public class BreakpointManager
          }
          activeFunctions.add(
                new FileFunction(functionName, fileName, "", false));
+         if (frame.isSourceEquiv())
+         {
+            activeSource_ = fileName;
+            hasSourceEquiv = true;
+         }
       }
       
       // For any functions that were previously active in the callstack but
@@ -412,6 +430,14 @@ public class BreakpointManager
       
       // Record the new frame list.
       activeFunctions_ = activeFunctions;
+      
+      // When we finish executing a top-level source, activate the top-level
+      // breakpoints in the file we were sourcing.
+      if (!hasSourceEquiv && activeSource_ != null)
+      {
+         activateTopLevelBreakpoints(activeSource_);
+         activeSource_ = null;
+      }
    }
    
    @Handler
@@ -769,6 +795,28 @@ public class BreakpointManager
                                 new VoidServerRequestCallback());
    }
    
+   private void activateTopLevelBreakpoints(String path)
+   {
+      for (Breakpoint breakpoint: breakpoints_)
+      {
+         ArrayList<Breakpoint> activatedBreakpoints = 
+               new ArrayList<Breakpoint>();
+         if (breakpoint.isPendingDebugCompletion() &&
+             breakpoint.getState() == Breakpoint.STATE_INACTIVE &&
+             breakpoint.getType() == Breakpoint.TYPE_TOPLEVEL &&
+             breakpoint.getPath().equals(path))
+         {
+            // If this is a top-level breakpoint in the file that we 
+            // just finished sourcing, activate the breakpoint.
+            breakpoint.setPendingDebugCompletion(false);
+            breakpoint.setState(Breakpoint.STATE_ACTIVE);
+            activatedBreakpoints.add(breakpoint);
+         }
+         if (activatedBreakpoints.size() > 0)
+            notifyBreakpointsSaved(activatedBreakpoints, true);
+      }
+   }
+   
    // Private classes ---------------------------------------------------------
    
    class FileFunction implements Comparable<FileFunction>
@@ -843,6 +891,7 @@ public class BreakpointManager
 
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
    private Set<FileFunction> activeFunctions_ = new TreeSet<FileFunction>();
+   private String activeSource_;
 
    private boolean breakpointStateDirty_ = false;
    private int currentBreakpointId_ = 0;

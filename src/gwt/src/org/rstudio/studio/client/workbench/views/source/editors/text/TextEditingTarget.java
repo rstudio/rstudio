@@ -906,8 +906,8 @@ public class TextEditingTarget implements
          String message = "";
          if (hasDebugPendingBreakpoints) 
          {
-            message = "Breakpoints will be activated when the function is " +
-                      "finished running.";
+            message = "Breakpoints will be activated when the file or " +
+                      "function is finished executing.";
          }
          else if (isPackageFile())
          {

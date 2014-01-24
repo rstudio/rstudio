@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.data.model.DataView;
 import org.rstudio.studio.client.workbench.views.edit.events.ShowEditorEvent;
 import org.rstudio.studio.client.workbench.views.edit.model.ShowEditorData;
 import org.rstudio.studio.client.workbench.views.environment.events.*;
+import org.rstudio.studio.client.workbench.views.environment.model.DebugSourceResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
@@ -531,8 +532,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.DebugSourceCompleted))
          {
-            String path = (String)event.getData();
-            eventBus_.fireEvent(new DebugSourceCompletedEvent(path));
+            DebugSourceResult result = (DebugSourceResult)event.getData();
+            eventBus_.fireEvent(new DebugSourceCompletedEvent(result));
          }
          else
          {

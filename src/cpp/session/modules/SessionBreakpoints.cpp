@@ -472,14 +472,14 @@ SEXP rs_debugSourceFile(SEXP filename)
    error = r::exec::RFunction(".rs.executeDebugSource", filename,
                               lineSEXP).call();
 
-   // If everything succeeded, let the client know we're done; this is the
-   // client's cue to re-inject breakpoints (as it does for ordinary source
-   // commands).
-   if (!error)
-   {
-      ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted, path);
-      module_context::enqueClientEvent(debugSourceCompleted);
-   }
+   // Let the client know we're done; this is the client's cue to re-inject
+   // breakpoints.
+   json::Object result;
+   result["path"] = path;
+   result["succeeded"] = error ? false : true;
+   ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted,
+                                    result);
+   module_context::enqueClientEvent(debugSourceCompleted);
 
    return R_NilValue;
 }

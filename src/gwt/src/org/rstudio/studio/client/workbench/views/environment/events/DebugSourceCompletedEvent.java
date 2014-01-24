@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.events;
 
+import org.rstudio.studio.client.workbench.views.environment.model.DebugSourceResult;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -29,14 +31,19 @@ public class DebugSourceCompletedEvent
    public static final GwtEvent.Type<DebugSourceCompletedEvent.Handler> TYPE =
       new GwtEvent.Type<DebugSourceCompletedEvent.Handler>();
    
-   public DebugSourceCompletedEvent(String path)
+   public DebugSourceCompletedEvent(DebugSourceResult result)
    {
-      path_ = path ;
+      result_ = result;
    }
    
    public String getPath()
    {
-      return path_;
+      return result_.getPath();
+   }
+   
+   public boolean getSucceeded()
+   {
+      return result_.getSucceeded();
    }
    
    @Override
@@ -51,5 +58,5 @@ public class DebugSourceCompletedEvent
       return TYPE;
    }
    
-   private final String path_;
+   private DebugSourceResult result_;
 }
