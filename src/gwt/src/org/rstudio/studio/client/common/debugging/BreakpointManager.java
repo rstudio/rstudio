@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInpu
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.DebugSourceCompletedEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 import com.google.gwt.core.client.JsArray;
@@ -87,7 +88,8 @@ public class BreakpointManager
                           PackageLoadedEvent.Handler,
                           PackageUnloadedEvent.Handler,
                           ConsoleWriteInputHandler,
-                          RestartStatusEvent.Handler
+                          RestartStatusEvent.Handler,
+                          DebugSourceCompletedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, BreakpointManager> {}
@@ -119,6 +121,7 @@ public class BreakpointManager
       events_.addHandler(PackageLoadedEvent.TYPE, this);
       events_.addHandler(PackageUnloadedEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
+      events_.addHandler(DebugSourceCompletedEvent.TYPE, this);
       
       binder.bind(commands, this);
    }
@@ -339,21 +342,24 @@ public class BreakpointManager
       // when a file is sourced, replay all the breakpoints in the file.
       RegExp sourceExp = RegExp.compile("source(.with.encoding)?\\('([^']*)'.*");
       MatchResult fileMatch = sourceExp.exec(event.getInput());
-      int group = 2;
       if (fileMatch == null || fileMatch.getGroupCount() == 0)
       {
-         // if we didn't match the regular source commands, try debugSource
-         // (which also leaves breakpoints in a file unset)
-         sourceExp = RegExp.compile("debugSource\\('([^']*)'.*");
-         fileMatch = sourceExp.exec(event.getInput());
-         group = 1;
-         if (fileMatch == null || fileMatch.getGroupCount() == 0)
-            return;
+         return;
       }      
       String path = FilePathUtils.normalizePath(
-            fileMatch.getGroup(group), 
+            fileMatch.getGroup(2), 
             workbench_.getCurrentWorkingDir().getPath());
       resetBreakpointsInPath(path, true);
+   }
+   
+   @Override
+   public void onDebugSourceCompleted(DebugSourceCompletedEvent event)
+   {
+      resetBreakpointsInPath(
+            FilePathUtils.normalizePath(
+                  event.getPath(), 
+                  workbench_.getCurrentWorkingDir().getPath()),
+            true);
    }
    
    @Override

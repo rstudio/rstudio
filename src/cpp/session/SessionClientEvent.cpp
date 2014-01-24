@@ -108,6 +108,7 @@ const int kErrorHandlerChanged = 83;
 const int kViewerNavigate = 84;
 const int kSourceExtendedTypeDetected = 85;
 const int kShinyViewer = 86;
+const int kDebugSourceCompleted = 87;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -283,6 +284,8 @@ std::string ClientEvent::typeName() const
          return "source_extended_type_detected";
       case client_events::kShinyViewer:
          return "shiny_viewer";
+      case client_events::kDebugSourceCompleted:
+         return "debug_source_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

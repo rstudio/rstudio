@@ -106,6 +106,7 @@ extern const int kErrorHandlerChanged;
 extern const int kViewerNavigate;
 extern const int kSourceExtendedTypeDetected;
 extern const int kShinyViewer;
+extern const int kDebugSourceCompleted;
 }
    
 class ClientEvent

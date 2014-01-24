@@ -472,6 +472,11 @@ SEXP rs_debugSourceFile(SEXP filename)
    if (error)
       LOG_ERROR(error);
 
+   // Let the client know we're done; this is the client's cue to re-inject
+   // breakpoints (as it does for ordinary source commands).
+   ClientEvent debugSourceCompleted(client_events::kDebugSourceCompleted, path);
+   module_context::enqueClientEvent(debugSourceCompleted);
+
    return R_NilValue;
 }
 

@@ -529,6 +529,11 @@ public class ClientEventDispatcher
             ShinyApplicationParams data = event.getData();
             eventBus_.fireEvent(new ShinyApplicationStatusEvent(data));
          }
+         else if (type.equals(ClientEvent.DebugSourceCompleted))
+         {
+            String path = (String)event.getData();
+            eventBus_.fireEvent(new DebugSourceCompletedEvent(path));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
