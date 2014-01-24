@@ -583,9 +583,13 @@ public class BreakpointManager
       Set<FileFunction> functionsToBreak = new TreeSet<FileFunction>();
       for (Breakpoint breakpoint: breakpoints_)
       {
-         boolean processBreakpoint = isFile ?
-               breakpoint.isInFile(path) :
-               breakpoint.isInPath(path);
+         // set this breakpoint if it's a function breakpoint in the file 
+         // (or path) given
+         boolean processBreakpoint = 
+               (breakpoint.getType() == Breakpoint.TYPE_FUNCTION) && 
+               (isFile ?
+                  breakpoint.isInFile(path) :
+                  breakpoint.isInPath(path));
          if (processBreakpoint)
          {
             functionsToBreak.add(new FileFunction(breakpoint));
