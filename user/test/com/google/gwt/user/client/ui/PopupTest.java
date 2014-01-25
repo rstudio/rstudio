@@ -36,6 +36,7 @@ public class PopupTest extends GWTTestCase {
    * The Widget adder used to set the widget in a {@link PopupPanel}.
    */
   private static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((PopupPanel) container).setWidget(child);
     }
@@ -367,6 +368,7 @@ public class PopupTest extends GWTTestCase {
     // Ensure that hiding the popup fires the appropriate events.
     delayTestFinish(1000);
     popup.addCloseHandler(new CloseHandler<PopupPanel>() {
+      @Override
       public void onClose(CloseEvent<PopupPanel> event) {
         finishTest();
       }

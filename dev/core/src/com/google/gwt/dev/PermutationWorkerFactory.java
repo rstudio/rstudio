@@ -60,6 +60,7 @@ public abstract class PermutationWorkerFactory {
         this.worker = worker;
       }
 
+      @Override
       public void run() {
         Result threadDeathResult = Result.FAIL;
         try {

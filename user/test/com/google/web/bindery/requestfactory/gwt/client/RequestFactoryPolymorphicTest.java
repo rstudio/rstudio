@@ -461,10 +461,12 @@ public class RequestFactoryPolymorphicTest extends GWTTestCase {
 
     private String z = "z";
 
+    @Override
     public int getId() {
       return id;
     }
 
+    @Override
     public int getVersion() {
       return 0;
     }

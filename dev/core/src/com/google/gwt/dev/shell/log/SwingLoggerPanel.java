@@ -123,6 +123,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       JButton nextButton = new JButton("+");
       top.add(nextButton);
       nextButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           nextMatch();
         }
@@ -130,12 +131,14 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       JButton prevButton = new JButton("-");
       top.add(prevButton);
       prevButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           prevMatch();
         }
       });
       CloseButton closeButton = new CloseButton("Close this search box");
       closeButton.setCallback(new Callback() {
+        @Override
         public void onCloseRequest() {
           hideFindBox();
         }
@@ -146,6 +149,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       key = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       getInputMap(WHEN_IN_FOCUSED_WINDOW).put(key, "find-search");
       getActionMap().put("find-search", new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           lastSearch = searchField.getText();
           matches = doFind(lastSearch);
@@ -154,6 +158,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
         }
       });
       AbstractAction closeFindBox = new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           hideFindBox();
         }
@@ -306,6 +311,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     JButton expandButton = new JButton("Expand All");
     expandButton.setMnemonic(KeyEvent.VK_E);
     expandButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         expandAll();
       }
@@ -314,6 +320,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     JButton collapseButton = new JButton("Collapse All");
     collapseButton.setMnemonic(KeyEvent.VK_O);
     collapseButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         collapseAll();
       }
@@ -337,6 +344,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       levelComboBox.setSelectedIndex(levelComboBox.getItemCount() - 1);
       topPanel.add(levelComboBox);
       levelComboBox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           setLevelFilter((TreeLogger.Type) levelComboBox.getSelectedItem());
         }
@@ -345,6 +353,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       logButtons.add(regexField);
       JButton applyRegexButton = new JButton("Apply Regex");
       applyRegexButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           setRegexFilter(regexField.getText());
         }
@@ -352,6 +361,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
       logButtons.add(applyRegexButton);
       JButton clearRegexButton = new JButton("Clear Regex");
       clearRegexButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           regexField.setText("");
           setRegexFilter("");
@@ -362,6 +372,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     closeLogger = new CloseButton("Close this log window");
     closeLogger.setCallback(new Callback() {
       // TODO(jat): add support for closing active session when SWT is removed
+      @Override
       public void onCloseRequest() {
         if (disconnected && closeHandler != null) {
           closeHandler.onCloseRequest(SwingLoggerPanel.this);
@@ -437,6 +448,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     KeyStroke key = getCommandKeyStroke(KeyEvent.VK_F, false);
     getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "find");
     getActionMap().put("find", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         showFindBox();
       }
@@ -444,6 +456,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     key = getCommandKeyStroke(KeyEvent.VK_C, false);
     tree.getInputMap().put(key, "copy");
     tree.getActionMap().put("copy", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         treeCopy();
       }
@@ -452,6 +465,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     key = getCommandKeyStroke(KeyEvent.VK_G, false);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findnext");
     tree.getActionMap().put("findnext", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         findBox.nextMatch();
       }
@@ -459,6 +473,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     key = getCommandKeyStroke(KeyEvent.VK_G, true);
     tree.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(key, "findprev");
     tree.getActionMap().put("findprev", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         findBox.prevMatch();
       }
@@ -511,6 +526,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     return logger;
   }
 
+  @Override
   public void hyperlinkUpdate(HyperlinkEvent event) {
     EventType eventType = event.getEventType();
     if (eventType == HyperlinkEvent.EventType.ACTIVATED) {
@@ -549,6 +565,7 @@ public class SwingLoggerPanel extends JPanel implements TreeSelectionListener,
     closeLogger.setVisible(true);
   }
 
+  @Override
   public void valueChanged(TreeSelectionEvent e) {
     if (e.isAddedPath()) {
       TreePath path = e.getPath();

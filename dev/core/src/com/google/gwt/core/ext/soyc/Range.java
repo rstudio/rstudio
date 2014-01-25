@@ -29,6 +29,7 @@ public final class Range {
    * it.
    */
   public static final Comparator<Range> DEPENDENCY_ORDER_COMPARATOR = new Comparator<Range>() {
+    @Override
     public int compare(Range o1, Range o2) {
       int a = o1.start - o2.start;
       if (a != 0) {
@@ -44,6 +45,7 @@ public final class Range {
    * based on start position and end position.
    */
   public static final Comparator<Range> SOURCE_ORDER_COMPARATOR = new Comparator<Range>() {
+    @Override
     public int compare(Range o1, Range o2) {
       int a = o1.start - o2.start;
       if (a != 0) {

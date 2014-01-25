@@ -33,10 +33,12 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
       return key == entry.getKey() && value == entry.getValue();
     }
 
+    @Override
     public K getKey() {
       return key;
     }
 
+    @Override
     public V getValue() {
       return value;
     }
@@ -46,6 +48,7 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
       return System.identityHashCode(key) ^ System.identityHashCode(value);
     }
 
+    @Override
     public V setValue(V value) {
       throw new UnsupportedOperationException();
     }
@@ -73,18 +76,22 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
     this.value = value;
   }
 
+  @Override
   public void clear() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public boolean containsKey(Object k) {
     return key == k;
   }
 
+  @Override
   public boolean containsValue(Object v) {
     return value == v;
   }
 
+  @Override
   public Set<Entry<K, V>> entrySet() {
     return Sets.<Entry<K, V>> create(new IdentityEntry());
   }
@@ -99,6 +106,7 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
     return entrySet().equals(other.entrySet());
   }
 
+  @Override
   public V get(Object k) {
     return (key == k) ? value : null;
   }
@@ -108,26 +116,32 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
     return System.identityHashCode(key) ^ System.identityHashCode(value);
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @Override
   public Set<K> keySet() {
     return Sets.create(key);
   }
 
+  @Override
   public V put(K key, V value) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> m) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public V remove(Object key) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public int size() {
     return 1;
   }
@@ -142,6 +156,7 @@ class IdentitySingletonMap<K, V> implements Map<K, V>, Serializable {
     return buf.toString();
   }
 
+  @Override
   public Collection<V> values() {
     return Sets.create(value);
   }

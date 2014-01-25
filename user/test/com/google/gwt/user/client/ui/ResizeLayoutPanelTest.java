@@ -46,6 +46,7 @@ public class ResizeLayoutPanelTest extends
       resizeFired = false;
     }
 
+    @Override
     public void onResize(ResizeEvent event) {
       assertFalse(resizeFired);
       resizeFired = true;
@@ -70,6 +71,7 @@ public class ResizeLayoutPanelTest extends
     delayTestFinish(10000);
     RootPanel.get().add(panel);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         handler.assertResizeFired(true);
         panel.removeFromParent();
@@ -103,6 +105,7 @@ public class ResizeLayoutPanelTest extends
     // Wait for the resize event from attaching.
     delayTestFinish(10000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         handler.assertResizeFired(true); // Triggered by attach.
         handler.assertResizeFired(false);
@@ -129,6 +132,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(100, 100);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setHeight("101px");
       }
@@ -143,6 +147,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(100, 100);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setWidth("101px");
       }
@@ -158,6 +163,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(20, 20);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setHeight("21px");
       }
@@ -173,6 +179,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(20, 20);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setWidth("21px");
       }
@@ -193,6 +200,7 @@ public class ResizeLayoutPanelTest extends
     delayTestFinish(10000);
     RootPanel.get().add(panel);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertEquals(1, resized.size());
         finishTest();
@@ -208,6 +216,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(100, 100);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setHeight("99px");
       }
@@ -222,6 +231,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(100, 100);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setWidth("99px");
       }
@@ -237,6 +247,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(21, 21);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setHeight("20px");
       }
@@ -252,6 +263,7 @@ public class ResizeLayoutPanelTest extends
     final SimplePanel container = new SimplePanel();
     container.setPixelSize(21, 21);
     testResizeContainer(container, new Command() {
+      @Override
       public void execute() {
         container.setWidth("20px");
       }
@@ -287,6 +299,7 @@ public class ResizeLayoutPanelTest extends
     // Wait for the resize event from attaching.
     delayTestFinish(10000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         handler.assertResizeFired(true); // Triggered by attach.
 

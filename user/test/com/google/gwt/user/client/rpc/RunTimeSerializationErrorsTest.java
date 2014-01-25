@@ -38,10 +38,12 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.NonSerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             finishTest();
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             fail("RPC request should have failed");
           }
@@ -54,10 +56,12 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     Request req = getService().echoRequest(
         new MixedSerializable.NonSerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             callbackFired[0] = true;
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             fail("RPC request should have failed");
           }
@@ -74,11 +78,13 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     RequestBuilder rb = getService().echoRequestBuilder(
         new MixedSerializable.NonSerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             assertFalse("callback fired twice", callbackFired[0]);
             callbackFired[0] = true;
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             fail("RPC request should have failed");
           }
@@ -93,10 +99,12 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             fail(caught.toString());
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             finishTest();
           }
@@ -107,10 +115,12 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     delayTestFinishForRpc();
     getService().echoRequest(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             fail(caught.toString());
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             finishTest();
           }
@@ -121,10 +131,12 @@ public class RunTimeSerializationErrorsTest extends RpcTestBase {
     delayTestFinishForRpc();
     getService().echoVoid(new MixedSerializable.SerializableSub(),
         new AsyncCallback<MixedSerializable>() {
+          @Override
           public void onFailure(Throwable caught) {
             fail(caught.toString());
           }
 
+          @Override
           public void onSuccess(MixedSerializable result) {
             finishTest();
           }

@@ -39,6 +39,7 @@ public class JInstanceOf extends JExpression {
     return testType;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.BOOLEAN;
   }
@@ -56,6 +57,7 @@ public class JInstanceOf extends JExpression {
     testType = newType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       expr = visitor.accept(expr);

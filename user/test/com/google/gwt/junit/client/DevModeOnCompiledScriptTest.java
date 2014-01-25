@@ -42,10 +42,12 @@ public class DevModeOnCompiledScriptTest extends GWTTestCase {
   public Strategy getStrategy() {
     final Strategy impl = super.getStrategy();
     return new Strategy() {
+      @Override
       public String getSyntheticModuleExtension() {
         return impl.getSyntheticModuleExtension();
       }
 
+      @Override
       public void processModule(ModuleDef module) {
         impl.processModule(module);
         try {

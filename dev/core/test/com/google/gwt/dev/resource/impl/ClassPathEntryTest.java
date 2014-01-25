@@ -201,6 +201,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     {
       // Create a pps with a filter.
       ResourceFilter excludeXmlFiles = new ResourceFilter() {
+        @Override
         public boolean allows(String path) {
           return !path.endsWith(".xml");
         }
@@ -236,6 +237,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
        */
       PathPrefixSet pps = new PathPrefixSet();
       pps.add(new PathPrefix("", new ResourceFilter() {
+        @Override
         public boolean allows(String path) {
           // Exclude everything.
           return false;
@@ -260,6 +262,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     PathPrefixSet pps = new PathPrefixSet();
     ResourceFilter excludeXmlFiles = new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return !path.endsWith(".xml");
       }

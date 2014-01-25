@@ -28,6 +28,7 @@ public class CSSResourceTest extends GWTTestCase {
   interface ChildResources extends Resources {
     ChildResources INSTANCE = GWT.create(ChildResources.class);
 
+    @Override
     @Source("16x16.png")
     ImageResource spriteMethod();
   }
@@ -128,6 +129,7 @@ public class CSSResourceTest extends GWTTestCase {
   }
 
   interface MyCssResource extends CssResource, MyNonCssResource {
+    @Override
     @ClassName("replacement-not-java-ident")
     String nameOverride();
   }
@@ -136,6 +138,7 @@ public class CSSResourceTest extends GWTTestCase {
     String local();
 
     // This shouldn't make a difference
+    @Override
     String replacement();
   }
 
@@ -143,6 +146,7 @@ public class CSSResourceTest extends GWTTestCase {
   interface MyCssResourceB extends MyCssResource, SharedClasses {
     String local();
 
+    @Override
     String sharedOverrideClass();
   }
 

@@ -71,26 +71,32 @@ public class JsonString implements JsonValue {
     this.value = value;
   }
 
+  @Override
   public JsonArray asArray() {
     return null;
   }
 
+  @Override
   public JsonBoolean asBoolean() {
     return null;
   }
 
+  @Override
   public JsonNumber asNumber() {
     return null;
   }
 
+  @Override
   public JsonObject asObject() {
     return null;
   }
 
+  @Override
   public JsonString asString() {
     return this;
   }
 
+  @Override
   public JsonString copyDeeply() {
     return new JsonString(value);
   }
@@ -99,26 +105,32 @@ public class JsonString implements JsonValue {
     return value;
   }
 
+  @Override
   public boolean isArray() {
     return false;
   }
 
+  @Override
   public boolean isBoolean() {
     return false;
   }
 
+  @Override
   public boolean isNumber() {
     return false;
   }
 
+  @Override
   public boolean isObject() {
     return false;
   }
 
+  @Override
   public boolean isString() {
     return true;
   }
 
+  @Override
   public void write(Writer writer) throws IOException {
     write(value, writer);
   }

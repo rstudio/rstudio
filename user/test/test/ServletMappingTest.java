@@ -28,6 +28,7 @@ public class ServletMappingTest extends GWTTestCase {
 
   private static final int RPC_WAIT = 5000;
 
+  @Override
   public String getModuleName() {
     return "test.ServletMappingTest";
   }
@@ -37,10 +38,12 @@ public class ServletMappingTest extends GWTTestCase {
    */
   public void testServletMapping1() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test", new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         finishTest();
         assertEquals(new Integer(1), result);
@@ -53,10 +56,12 @@ public class ServletMappingTest extends GWTTestCase {
    */
   public void testServletMapping2() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/longer", new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         finishTest();
         assertEquals(new Integer(2), result);
@@ -69,10 +74,12 @@ public class ServletMappingTest extends GWTTestCase {
    */
   public void testServletMapping3() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/long", new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         finishTest();
         assertEquals(new Integer(3), result);
@@ -86,10 +93,12 @@ public class ServletMappingTest extends GWTTestCase {
   public void testBadRequestWithExtraPath() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/bogus/extra/path",
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             finishTest();
           }
 
+          @Override
           public void onSuccess(Object result) {
             finishTest();
             assertEquals(new Integer(1), result);
@@ -103,10 +112,12 @@ public class ServletMappingTest extends GWTTestCase {
   public void testBadRequestWithQueryString() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/bogus?a=b&c=d",
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             finishTest();
           }
 
+          @Override
           public void onSuccess(Object result) {
             finishTest();
             assertEquals(new Integer(1), result);
@@ -120,10 +131,12 @@ public class ServletMappingTest extends GWTTestCase {
   public void testServletMapping3WithQueryString() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/long?a=b&c=d",
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             finishTest();
             assertEquals(new Integer(3), result);
@@ -137,10 +150,12 @@ public class ServletMappingTest extends GWTTestCase {
   public void testTotallyDifferentServletMapping3() {
     makeAsyncCall(GWT.getModuleBaseURL()
         + "totally/different/but/valid?a=b&c=d", new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         finishTest();
         assertEquals(new Integer(3), result);

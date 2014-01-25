@@ -36,6 +36,7 @@ public class ActionCellTest extends CellTestBase<String> {
       assertEquals(expected, lastObject);
     }
 
+    @Override
     public void execute(T object) {
       assertNull(lastObject);
       lastObject = object;

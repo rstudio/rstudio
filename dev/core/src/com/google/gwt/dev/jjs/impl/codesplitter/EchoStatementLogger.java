@@ -36,6 +36,7 @@ class EchoStatementLogger implements FragmentExtractor.StatementLogger {
     this.map = map;
   }
 
+  @Override
   public void log(JsStatement statement, boolean include) {
     if (!include) {
       return;

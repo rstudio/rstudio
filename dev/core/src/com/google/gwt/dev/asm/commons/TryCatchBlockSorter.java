@@ -72,6 +72,7 @@ public class TryCatchBlockSorter extends MethodNode {
         // Compares TryCatchBlockNodes by the length of their "try" block.
         Comparator<TryCatchBlockNode> comp = new Comparator<TryCatchBlockNode>() {
 
+            @Override
             public int compare(TryCatchBlockNode t1, TryCatchBlockNode t2) {
                 int len1 = blockLength(t1);
                 int len2 = blockLength(t2);

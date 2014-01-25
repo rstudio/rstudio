@@ -34,6 +34,7 @@ public class JArrayLength extends JExpression {
     return instance;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.INT;
   }
@@ -43,6 +44,7 @@ public class JArrayLength extends JExpression {
     return instance.hasSideEffects();
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       instance = visitor.accept(instance);

@@ -29,6 +29,7 @@ import junit.framework.AssertionFailedError;
 public class GWTTestCaseUncaughtExceptionHandlerTest extends GWTTestCaseTestBase {
 
   private UncaughtExceptionHandler myHandler = new UncaughtExceptionHandler() {
+    @Override
     public void onUncaughtException(Throwable e) { /* NO_OP */}
   };
 

@@ -41,6 +41,7 @@ public class Scripts implements Iterable<Script> {
   /**
    * An iterator over {@link Script} objects.
    */
+  @Override
   public Iterator<Script> iterator() {
     return list.iterator();
   }

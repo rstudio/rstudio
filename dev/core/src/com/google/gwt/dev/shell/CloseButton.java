@@ -62,6 +62,7 @@ public class CloseButton extends JPanel {
     }
     add(button);
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (callback != null) {
           callback.onCloseRequest();

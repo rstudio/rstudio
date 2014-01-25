@@ -37,30 +37,37 @@ public class JVisitor {
 
   protected static final Context LVALUE_CONTEXT = new Context() {
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return false;
     }
 
+    @Override
     public void insertAfter(JNode node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void insertBefore(JNode node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isLvalue() {
       return true;
     }
 
+    @Override
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void replaceMe(JNode node) {
       throw new UnsupportedOperationException();
     }
@@ -68,30 +75,37 @@ public class JVisitor {
 
   protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return false;
     }
 
+    @Override
     public void insertAfter(JNode node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void insertBefore(JNode node) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void replaceMe(JNode node) {
       throw new UnsupportedOperationException();
     }

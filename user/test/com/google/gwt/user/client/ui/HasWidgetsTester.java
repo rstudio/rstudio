@@ -47,6 +47,7 @@ public abstract class HasWidgetsTester {
    * {@link HasWidgets#add(Widget)} will not throw an exception.
    */
   static class DefaultWidgetAdder implements WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       container.add(child);
     }

@@ -95,6 +95,7 @@ public class JMultiExpression extends JExpression {
    * Returns the multi expression type, i.e. the type of the last expression in the list or
    * {@code void} if empty.
    */
+  @Override
   public JType getType() {
     int size = expressions.size();
     if (size == 0) {

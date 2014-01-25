@@ -95,6 +95,7 @@ public abstract class EditableCellTestBase<T, V> extends CellTestBase<T> {
     final AbstractEditableCell<T, V> cell = createCell();
     cell.setViewData(DEFAULT_KEY, viewData);
     Event.setEventListener(parent, new EventListener() {
+      @Override
       public void onBrowserEvent(Event event) {
         try {
           DOM.setEventListener(parent, null);

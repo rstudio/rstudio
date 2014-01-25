@@ -61,10 +61,12 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
       }
     }
 
+    @Override
     public String getName() {
       return "In-process PermutationWorker " + id;
     }
 
+    @Override
     public void shutdown() {
       // No-op
     }

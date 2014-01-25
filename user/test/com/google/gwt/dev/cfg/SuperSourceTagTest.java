@@ -34,6 +34,7 @@ public class SuperSourceTagTest extends TestSuperAndSourceTags {
    * Return the logical path for a given class.  For super source, the logical
    * path does not include the path component from the tag.
    */
+  @Override
   protected String getLogicalPath(Class<?> clazz) {
     String name = clazz.getCanonicalName();
     name = name.substring(getClass().getPackage().getName().length() + 1);

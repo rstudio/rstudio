@@ -52,6 +52,7 @@ public abstract class RequestFactoryTestBase extends GWTTestCase {
     int totalEventCount = 0;
     int updateEventCount = 0;
 
+    @Override
     public void onProxyChange(EntityProxyChange<P> event) {
       totalEventCount++;
       switch (event.getWriteOperation()) {

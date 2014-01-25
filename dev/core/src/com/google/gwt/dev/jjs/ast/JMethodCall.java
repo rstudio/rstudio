@@ -162,6 +162,7 @@ public class JMethodCall extends JExpression {
     return method;
   }
 
+  @Override
   public JType getType() {
     if (overrideReturnType != null) {
       return overrideReturnType;
@@ -237,6 +238,7 @@ public class JMethodCall extends JExpression {
     polymorphism = Polymorphism.VOLATILE;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitChildren(visitor);

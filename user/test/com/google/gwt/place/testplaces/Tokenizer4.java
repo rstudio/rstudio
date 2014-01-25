@@ -19,6 +19,7 @@ package com.google.gwt.place.testplaces;
  * Used by tests of {@link com.google.gwt.place.rebind.PlaceHistoryMapperGenerator}.
  */
 public class Tokenizer4 extends AbstractTokenizer<Place4> {
+  @Override
   public Place4 getPlace(String token) {
     return new Place4(token);
   }

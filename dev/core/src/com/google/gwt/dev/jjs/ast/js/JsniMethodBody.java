@@ -117,6 +117,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
     stringLiterals = Sets.normalize(result);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       classRefs = visitor.acceptImmutable(classRefs);

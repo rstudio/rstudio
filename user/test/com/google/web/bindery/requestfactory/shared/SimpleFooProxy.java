@@ -28,5 +28,6 @@ public interface SimpleFooProxy extends BaseFooProxy {
 
   void setFooField(SimpleFooProxy fooField);
 
+  @Override
   EntityProxyId<SimpleFooProxy> stableId();
 }

@@ -54,18 +54,22 @@ public class StandardSelectionProperty implements SelectionProperty {
         Arrays.asList(p.getDefinedValues())));
   }
 
+  @Override
   public String getFallbackValue() {
     return fallback;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public SortedSet<String> getPossibleValues() {
     return values;
   }
 
+  @Override
   public String getPropertyProvider(TreeLogger logger,
       SortedSet<ConfigurationProperty> configProperties)
       throws UnableToCompleteException {
@@ -89,6 +93,7 @@ public class StandardSelectionProperty implements SelectionProperty {
     return generatorResult != null ? generatorResult : provider;
   }
 
+  @Override
   public boolean isDerived() {
     return isDerived;
   }
@@ -104,6 +109,7 @@ public class StandardSelectionProperty implements SelectionProperty {
     return b.toString();
   }
 
+  @Override
   public String tryGetValue() {
     return activeValue;
   }

@@ -52,8 +52,10 @@ final class ConstantConditionTransformation implements
     this.node = node;
   }
 
+  @Override
   public CfgTransformer getGraphTransformer() {
     return new CfgTransformer() {
+      @Override
       public boolean transform(CfgNode<?> cfgNode, Cfg cfgGraph) {
         Preconditions.checkArgument(cfgNode == node);
         if (cfgNode instanceof CfgCaseNode) {
@@ -84,6 +86,7 @@ final class ConstantConditionTransformation implements
     };
   }
 
+  @Override
   public Cfg getNewSubgraph() {
     Cfg newSubgraph = new Cfg();
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());

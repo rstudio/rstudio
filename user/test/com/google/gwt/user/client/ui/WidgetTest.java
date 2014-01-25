@@ -31,12 +31,14 @@ public class WidgetTest extends GWTTestCase {
 
   ClickHandler handlerA = new ClickHandler() {
 
+    @Override
     public void onClick(ClickEvent event) {
     }
   };
 
   ClickHandler handlerB = new ClickHandler() {
 
+    @Override
     public void onClick(ClickEvent event) {
     }
   };

@@ -31,6 +31,7 @@ public class FutureValidatorForDateTest extends
   @Future
   private Date defaultField;
 
+  @Override
   protected FutureValidatorForDate createValidator() {
     return new FutureValidatorForDate();
   }

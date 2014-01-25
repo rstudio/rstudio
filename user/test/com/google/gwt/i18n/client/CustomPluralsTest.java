@@ -34,7 +34,8 @@ public class CustomPluralsTest extends GWTTestCase {
      * A custom plural rule that returns "0", "1", or "other".
      */
     public static class CustomPluralRule implements PluralRule {
-       public PluralForm[] pluralForms() {
+       @Override
+      public PluralForm[] pluralForms() {
           return new PluralForm[] {
              new PluralForm("other", "other"),
              new PluralForm("0", "first"),
@@ -42,7 +43,8 @@ public class CustomPluralsTest extends GWTTestCase {
           };
        }
 
-       public int select(int n) {
+       @Override
+      public int select(int n) {
           if (0 <= n && n <= 1) {
              return n + 1;
           }

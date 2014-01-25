@@ -146,11 +146,13 @@ public class ImageResourceTest extends GWTTestCase {
     // See if the size of the image strip is what we expect
     Image i = new Image(a.getSafeUri());
     i.addLoadHandler(new LoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         finishTest();
       }
     });
     i.addErrorHandler(new ErrorHandler() {
+      @Override
       public void onError(ErrorEvent event) {
         fail("ErrorEvent");
       }

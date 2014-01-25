@@ -60,11 +60,13 @@ public class ExternalTextResourceTest extends GWTTestCase {
         return done;
       }
       
+      @Override
       public void onError(ResourceException e) {
         e.printStackTrace();
         fail("Unable to fetch " + e.getResource().getName());
       }
 
+      @Override
       public void onSuccess(TextResource resource) {
         assertEquals(name, resource.getName());
         assertEquals(contents, resource.getText());

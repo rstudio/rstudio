@@ -78,6 +78,7 @@ public class MemberShadowingTest extends GWTTestCase {
     void f();
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

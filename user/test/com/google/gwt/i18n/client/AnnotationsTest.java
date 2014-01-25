@@ -65,6 +65,7 @@ public class AnnotationsTest extends GWTTestCase {
    */
   @DefaultLocale("en")
   public interface Inherit2_en extends Inherit2 {
+    @Override
     @DefaultStringValue("en def")
     String def();
   }
@@ -87,6 +88,7 @@ public class AnnotationsTest extends GWTTestCase {
     @DefaultStringValue("p2 annot")
     String p2();
 
+    @Override
     String shared();
   }
   

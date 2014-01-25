@@ -57,6 +57,7 @@ public final class LinkedHashMap_CustomFieldSerializer extends
     return instance.@java.util.LinkedHashMap::accessOrder;
   }-*/;
 
+  @Override
   public void deserializeInstance(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
     deserialize(streamReader, instance);
@@ -73,6 +74,7 @@ public final class LinkedHashMap_CustomFieldSerializer extends
     return instantiate(streamReader);
   }
 
+  @Override
   public void serializeInstance(SerializationStreamWriter streamWriter,
       LinkedHashMap instance) throws SerializationException {
     serialize(streamWriter, instance);

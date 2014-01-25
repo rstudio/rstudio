@@ -36,58 +36,72 @@ abstract class ForwardingTestResult extends TestResult {
     delegate = result;
   }
 
+  @Override
   public void addError(Test test, Throwable t) {
     delegate.addError(test, t);
   }
 
+  @Override
   public void addFailure(Test test, AssertionFailedError t) {
     delegate.addFailure(test, t);
   }
 
+  @Override
   public void addListener(TestListener listener) {
     delegate.addListener(listener);
   }
 
+  @Override
   public void removeListener(TestListener listener) {
     delegate.removeListener(listener);
   }
 
+  @Override
   public void endTest(Test test) {
     delegate.endTest(test);
   }
 
+  @Override
   public int errorCount() {
     return delegate.errorCount();
   }
 
+  @Override
   public Enumeration<TestFailure> errors() {
     return delegate.errors();
   }
 
+  @Override
   public int failureCount() {
     return delegate.failureCount();
   }
 
+  @Override
   public Enumeration<TestFailure> failures() {
     return delegate.failures();
   }
 
+  @Override
   public int runCount() {
     return delegate.runCount();
   }
 
+  @Override
   public boolean shouldStop() {
     return delegate.shouldStop();
   }
 
+  @Override
   public void startTest(Test test) {
     delegate.startTest(test);
   }
 
+  @Override
   public void stop() {
     delegate.stop();
   }
 
+  @Override
   public boolean wasSuccessful() {
     return delegate.wasSuccessful();
   }

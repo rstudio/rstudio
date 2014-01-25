@@ -28,6 +28,7 @@ public abstract class Property implements Comparable<Property>, Serializable {
     this.name = name;
   }
 
+  @Override
   public int compareTo(Property o) {
     return name.compareTo(o.name);
   }

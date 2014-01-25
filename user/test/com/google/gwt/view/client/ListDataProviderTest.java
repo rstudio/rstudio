@@ -456,6 +456,7 @@ public class ListDataProviderTest extends AbstractDataProviderTest {
     oldList.set(0, "newValue");
     delayTestFinish(2000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertNull(display.getLastRowData());
         finishTest();

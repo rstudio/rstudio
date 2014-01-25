@@ -30,6 +30,7 @@ public class StandardCastableTypeMap implements CastableTypeMap {
     this.jsonData = jsonData.equals(EMPTY_JSON_REF) ? EMPTY_JSON_REF : jsonData;
   }
 
+  @Override
   public String toJs() {
     return jsonData;
   }

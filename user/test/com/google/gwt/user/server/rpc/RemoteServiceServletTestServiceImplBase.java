@@ -35,9 +35,11 @@ public class RemoteServiceServletTestServiceImplBase extends
     }
   }
 
+  @Override
   public void test() {
   }
 
+  @Override
   public void testExpectCustomHeader() {
     HttpServletRequest req = getThreadLocalRequest();
     if (!Boolean.parseBoolean(req.getHeader("X-Custom-Header"))) {
@@ -45,6 +47,7 @@ public class RemoteServiceServletTestServiceImplBase extends
     }
   }
 
+  @Override
   public void testExpectPermutationStrongName(String expectedStrongName) {
     if (getPermutationStrongName() == null) {
       throw new NullPointerException("getPermutationStrongName()");
@@ -56,10 +59,12 @@ public class RemoteServiceServletTestServiceImplBase extends
     }
   }
 
+  @Override
   public void throwDeclaredRuntimeException() {
     throw new NullPointerException("expected");
   }
 
+  @Override
   public void throwUnknownRuntimeException() {
     throw new FooException();
   }

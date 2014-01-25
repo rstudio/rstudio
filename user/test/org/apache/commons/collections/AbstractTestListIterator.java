@@ -61,6 +61,7 @@ public abstract class AbstractTestListIterator extends TestIterator {
    * 
    * @return an empty iterator
    */
+  @Override
   public Iterator makeEmptyIterator() {
     return makeEmptyListIterator();
   }
@@ -70,6 +71,7 @@ public abstract class AbstractTestListIterator extends TestIterator {
    * 
    * @return a full iterator
    */
+  @Override
   public Iterator makeFullIterator() {
     return makeFullListIterator();
   }

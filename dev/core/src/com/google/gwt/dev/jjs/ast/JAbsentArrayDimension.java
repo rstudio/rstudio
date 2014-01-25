@@ -30,10 +30,12 @@ public class JAbsentArrayDimension extends JLiteral {
     super(sourceInfo);
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.VOID;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

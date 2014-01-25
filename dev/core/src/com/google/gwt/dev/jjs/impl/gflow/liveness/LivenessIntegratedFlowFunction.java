@@ -36,6 +36,7 @@ public class LivenessIntegratedFlowFunction implements
     LivenessAssumption> {
   private final LivenessFlowFunction flowFunction = new LivenessFlowFunction();
   
+  @Override
   public Transformation<CfgTransformer, Cfg> 
   interpretOrReplace(CfgNode<?> node, Cfg graph,
       AssumptionMap<CfgEdge, LivenessAssumption> assumptionMap) {

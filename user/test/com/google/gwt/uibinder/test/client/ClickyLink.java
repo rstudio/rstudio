@@ -49,6 +49,7 @@ public class ClickyLink extends Widget implements HasText {
     sinkEvents(Event.ONCLICK);
 
     addDomHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         if (popupText != null) {
           Window.alert(popupText);
@@ -72,6 +73,7 @@ public class ClickyLink extends Widget implements HasText {
     return popupText;
   }
 
+  @Override
   public String getText() {
     return getElement().getInnerText();
   }
@@ -80,6 +82,7 @@ public class ClickyLink extends Widget implements HasText {
     popupText = text;
   }
 
+  @Override
   public void setText(String text) {
     getElement().setInnerText(text);
   }

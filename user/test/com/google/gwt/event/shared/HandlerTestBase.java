@@ -36,10 +36,12 @@ public abstract class HandlerTestBase extends GWTTestCase {
 
   class Adaptor implements ClickHandler, MouseDownHandler {
 
+    @Override
     public void onClick(ClickEvent event) {
       add(this);
     }
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(this);
     }
@@ -55,6 +57,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
   private HashSet<EventHandler> active = new HashSet<EventHandler>();
 
   MouseDownHandler mouse1 = new MouseDownHandler() {
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(mouse1);
     }
@@ -66,6 +69,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
   };
 
   MouseDownHandler mouse2 = new MouseDownHandler() {
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(mouse2);
     }
@@ -77,6 +81,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
   };
 
   MouseDownHandler mouse3 = new MouseDownHandler() {
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(mouse3);
     }
@@ -89,6 +94,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
 
   ClickHandler click1 = new ClickHandler() {
 
+    @Override
     public void onClick(ClickEvent event) {
       add(click1);
     }
@@ -101,6 +107,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
 
   ClickHandler click2 = new ClickHandler() {
 
+    @Override
     public void onClick(ClickEvent event) {
       add(click2);
     }
@@ -113,6 +120,7 @@ public abstract class HandlerTestBase extends GWTTestCase {
 
   ClickHandler click3 = new ClickHandler() {
 
+    @Override
     public void onClick(ClickEvent event) {
       add(click3);
     }

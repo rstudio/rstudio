@@ -66,6 +66,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     return superClass;
   }
 
+  @Override
   public boolean isAbstract() {
     return isAbstract;
   }
@@ -77,10 +78,12 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     return null;
   }
 
+  @Override
   public boolean isFinal() {
     return isFinal;
   }
 
+  @Override
   public void setFinal() {
     isFinal = true;
   }
@@ -92,6 +95,7 @@ public class JClassType extends JDeclaredType implements CanBeSetFinal {
     this.superClass = superClass;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       fields = visitor.acceptWithInsertRemoveImmutable(fields);

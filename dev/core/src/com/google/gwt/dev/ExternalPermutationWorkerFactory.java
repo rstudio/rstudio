@@ -165,12 +165,14 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
       }
     }
 
+    @Override
     public String getName() {
       return "External worker "
           + (workerSocket != null ? workerSocket.getRemoteSocketAddress()
               : "unconnected");
     }
 
+    @Override
     public void shutdown() {
       if (out != null) {
         try {
@@ -286,6 +288,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
       // Threads to copy stdout, stderr to the logger
       new Thread(new Runnable() {
+        @Override
         public void run() {
           while (true) {
             try {
@@ -305,6 +308,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
       }).start();
 
       new Thread(new Runnable() {
+        @Override
         public void run() {
           while (true) {
             try {
@@ -325,6 +329,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
       // The child process should not outlive this JVM
       Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        @Override
         public void run() {
           try {
             proc.exitValue();

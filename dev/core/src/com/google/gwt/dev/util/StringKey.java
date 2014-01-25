@@ -45,6 +45,7 @@ public abstract class StringKey implements Comparable<StringKey>, Serializable {
   /**
    * Compares based on concrete type name and then value.
    */
+  @Override
   public final int compareTo(StringKey o) {
     if (getClass() == o.getClass()) {
       if (value == null) {

@@ -92,6 +92,7 @@ public class JavaObject extends ScriptableObject implements Function {
    * If this function fails for any reason, we return Undefined instead of
    * throwing an Exception in all cases except when Java throws an Exception.
    */
+  @Override
   public Object call(Context cx, Scriptable scope, Scriptable thisObj,
       Object[] args) {
 
@@ -132,6 +133,7 @@ public class JavaObject extends ScriptableObject implements Function {
     return ret;
   }
 
+  @Override
   public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
     throw Context.reportRuntimeError("JavaObject can't be used as a "
         + "constructor");

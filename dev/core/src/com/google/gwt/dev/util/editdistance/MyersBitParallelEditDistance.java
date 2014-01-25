@@ -490,6 +490,7 @@ public abstract class MyersBitParallelEditDistance
     idx = CharIndex.getInstance(s);
   }
 
+  @Override
   public GeneralEditDistance duplicate() {
     try {
       return (MyersBitParallelEditDistance) clone();
@@ -502,6 +503,7 @@ public abstract class MyersBitParallelEditDistance
    * Computes distance from the pattern to a given string, bounded by
    * a limiting distance @see(GeneralEditDistance.getDistance(CharSequence,int)).
    */
+  @Override
   public abstract int getDistance(CharSequence s, int k);
 
   @Override

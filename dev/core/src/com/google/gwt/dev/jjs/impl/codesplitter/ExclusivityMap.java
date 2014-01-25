@@ -60,22 +60,27 @@ class ExclusivityMap {
       this.fragment = fragment;
     }
 
+    @Override
     public boolean isLive(JDeclaredType type) {
       return isLiveInFragment(fragment, type);
     }
 
+    @Override
     public boolean isLive(JField field) {
       return isLiveInFragment(fragment, field);
     }
 
+    @Override
     public boolean isLive(JMethod method) {
       return isLiveInFragment(fragment, method);
     }
 
+    @Override
     public boolean isLive(String literal) {
       return isLiveInFragment(fragment, literal);
     }
 
+    @Override
     public boolean miscellaneousStatementsAreLive() {
       return true;
     }

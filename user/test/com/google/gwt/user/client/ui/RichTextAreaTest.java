@@ -58,6 +58,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea area = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     area.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         RootPanel.get().remove(area);
         RootPanel.get().add(area);
@@ -76,6 +77,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea rta = new RichTextArea();
     final List<String> actual = new ArrayList<String>();
     rta.addFocusHandler(new FocusHandler() {
+      @Override
       public void onFocus(FocusEvent event) {
         actual.add("test");
       }
@@ -101,6 +103,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea rta = new RichTextArea();
     final List<String> actual = new ArrayList<String>();
     rta.addFocusHandler(new FocusHandler() {
+      @Override
       public void onFocus(FocusEvent event) {
         actual.add("test");
       }
@@ -150,6 +153,7 @@ public class RichTextAreaTest extends GWTTestCase {
 
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     area.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         BasicFormatter formatter = area.getBasicFormatter();
         if (formatter != null) {
@@ -186,6 +190,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea area = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     area.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         area.setVisible(false);
         BasicFormatter formatter = area.getBasicFormatter();
@@ -208,6 +213,7 @@ public class RichTextAreaTest extends GWTTestCase {
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     final RichTextArea richTextArea = new RichTextArea();
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         finishTest();
       }
@@ -223,6 +229,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setEnabled(false);
         assertEquals(false, richTextArea.isEnabled());
@@ -245,6 +252,7 @@ public class RichTextAreaTest extends GWTTestCase {
     assertEquals(false, richTextArea.isEnabled());
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         assertEquals(false, richTextArea.isEnabled());
         finishTest();
@@ -264,6 +272,7 @@ public class RichTextAreaTest extends GWTTestCase {
 
     final List<String> actual = new ArrayList<String>();
     rta.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         assertNotNull(Event.getCurrentEvent());
         actual.add("test");
@@ -295,6 +304,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();    
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setHTML("<b>foo</b>");
         assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
@@ -313,6 +323,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         new Timer() {
           @Override
@@ -337,6 +348,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setHTML(SafeHtmlUtils.fromSafeConstant(html));
         assertEquals(html, richTextArea.getHTML().toLowerCase());
@@ -356,6 +368,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         new Timer() {
           @Override
@@ -380,6 +393,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         richTextArea.setText("foo");
         assertEquals("foo", richTextArea.getText());
@@ -399,6 +413,7 @@ public class RichTextAreaTest extends GWTTestCase {
     richTextArea.setText("foo");
     delayTestFinish(RICH_TEXT_ASYNC_DELAY);
     richTextArea.addInitializeHandler(new InitializeHandler() {
+      @Override
       public void onInitialize(InitializeEvent event) {
         assertEquals("foo", richTextArea.getText());
         finishTest();

@@ -72,10 +72,12 @@ public class UiChildTest extends GWTTestCase {
       initWidget(new Label());
     }
 
+    @Override
     public String getName() {
       return asLabel().getText();
     }
 
+    @Override
     public void setName(String name) {
       asLabel().setText(name);
     }

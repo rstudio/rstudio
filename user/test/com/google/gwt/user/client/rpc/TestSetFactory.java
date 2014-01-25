@@ -346,6 +346,7 @@ public class TestSetFactory {
 
     // if getValue() returns null, a null-pointer expection will be thrown,
     // which is the intended effect
+    @Override
     public int compareTo(MarkerTypeTreeSet arg0) {
       return getValue().compareTo(arg0.getValue());
     }
@@ -472,6 +473,7 @@ public class TestSetFactory {
     public ReverseSorter() {
     }
 
+    @Override
     public int compare(T a, T b) {
       // Explicit null check to match JRE specs
       if (a == null || b == null) {

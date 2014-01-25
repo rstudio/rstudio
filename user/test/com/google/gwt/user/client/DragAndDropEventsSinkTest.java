@@ -47,42 +47,49 @@ import com.google.gwt.user.client.ui.Widget;
 public class DragAndDropEventsSinkTest extends GWTTestCase {
 
   private static class DragEndHandlerImpl extends HandlerImpl implements DragEndHandler {
+    @Override
     public void onDragEnd(DragEndEvent event) {
       eventFired();
     }
   }
 
   private static class DragEnterHandlerImpl extends HandlerImpl implements DragEnterHandler {
+    @Override
     public void onDragEnter(DragEnterEvent event) {
       eventFired();
     }
   }
 
   private static class DragHandlerImpl extends HandlerImpl implements DragHandler {
+    @Override
     public void onDrag(DragEvent event) {
       eventFired();
     }
   }
 
   private static class DragLeaveHandlerImpl extends HandlerImpl implements DragLeaveHandler {
+    @Override
     public void onDragLeave(DragLeaveEvent event) {
       eventFired();
     }
   }
 
   private static class DragOverHandlerImpl extends HandlerImpl implements DragOverHandler {
+    @Override
     public void onDragOver(DragOverEvent event) {
       eventFired();
     }
   }
 
   private static class DragStartHandlerImpl extends HandlerImpl implements DragStartHandler {
+    @Override
     public void onDragStart(DragStartEvent event) {
       eventFired();
     }
   }
 
   private static class DropHandlerImpl extends HandlerImpl implements DropHandler {
+    @Override
     public void onDrop(DropEvent event) {
       eventFired();
     }

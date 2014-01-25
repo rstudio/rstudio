@@ -110,6 +110,7 @@ public class DisclosurePanelTest extends GWTTestCase {
         panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
     panel.addCloseHandler(new CloseHandler<DisclosurePanel>() {
 
+      @Override
       public void onClose(CloseEvent<DisclosurePanel> event) {
         // for now nothing.
       }
@@ -128,21 +129,25 @@ public class DisclosurePanelTest extends GWTTestCase {
     final DisclosurePanel panel = createTestPanel();
 
     DisclosureHandler handleA = new DisclosureHandler() {
+      @Override
       public void onClose(DisclosureEvent event) {
         aDidFire[CLOSE] = true;
       }
 
+      @Override
       public void onOpen(DisclosureEvent event) {
         aDidFire[OPEN] = true;
       }
     };
 
     DisclosureHandler handleB = new DisclosureHandler() {
+      @Override
       public void onClose(DisclosureEvent event) {
         assertEquals(event.getSource(), panel);
         bDidFire[CLOSE] = true;
       }
 
+      @Override
       public void onOpen(DisclosureEvent event) {
         assertEquals(event.getSource(), panel);
         bDidFire[OPEN] = true;

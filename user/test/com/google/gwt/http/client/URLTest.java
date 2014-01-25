@@ -28,6 +28,7 @@ public class URLTest extends GWTTestCase {
   private final String ENCODED_URL_COMPONENT = "-_.!~*'()%3A%2F%23%3F%40%20%C3%A9%2B";
   private final String ENCODED_URL_COMPONENT_QS = "-_.!~*'()%3A%2F%23%3F%40+%C3%A9%2B";
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.http.HttpSuite";
   }

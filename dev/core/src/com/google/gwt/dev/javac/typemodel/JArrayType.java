@@ -75,6 +75,7 @@ public class JArrayType extends JClassType implements
     return TypeOracle.NO_ANNOTATIONS;
   }
 
+  @Override
   public JType getComponentType() {
     return componentType;
   }
@@ -210,6 +211,7 @@ public class JArrayType extends JClassType implements
     return lazyQualifiedName;
   }
 
+  @Override
   public int getRank() {
     JArrayType componentArrayType = (JArrayType) componentType.isArray();
     if (componentArrayType != null) {

@@ -34,6 +34,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
   public void testSelectedChangeEvent() {
     NoSelectionModel<String> model = createSelectionModel(null);
     SelectionChangeEvent.Handler handler = new SelectionChangeEvent.Handler() {
+      @Override
       public void onSelectionChange(SelectionChangeEvent event) {
         finishTest();
       }
@@ -57,6 +58,7 @@ public class NoSelectionModelTest extends AbstractSelectionModelTest {
 
   public void testSetSelectedWithKeyProvider() {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      @Override
       public Object getKey(String item) {
         return item.toUpperCase();
       }

@@ -76,6 +76,7 @@ public class JMethodBody extends JAbstractMethodBody {
     locals = Lists.sort(locals, sort);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       locals = visitor.acceptImmutable(locals);

@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Window;
  * TODO: document me.
  */
 public class ServletMappingTestApp implements EntryPoint {
+  @Override
   public void onModuleLoad() {
     Window.alert("ServletMappingTest onModuleLoad()");
   }

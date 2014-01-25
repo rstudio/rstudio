@@ -39,6 +39,7 @@ public class JLabeledStatement extends JStatement {
     return label;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(label);

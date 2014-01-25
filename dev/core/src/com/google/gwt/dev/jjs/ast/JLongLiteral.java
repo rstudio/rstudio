@@ -49,6 +49,7 @@ public class JLongLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.LONG;
   }
@@ -62,6 +63,7 @@ public class JLongLiteral extends JValueLiteral {
     return Long.valueOf(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

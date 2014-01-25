@@ -27,6 +27,7 @@ public class TreeMapIntegerDoubleWithComparatorTest extends
   @Override
   protected SortedMap<Integer, Double> createSortedMap() {
     setComparator(new Comparator<Integer>() {
+      @Override
       public int compare(Integer o1, Integer o2) {
         if (o1 == null) {
           return o2 == null ? 0 : -1;

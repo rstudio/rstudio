@@ -79,28 +79,34 @@ public class ResolveGenericsTest extends AsmTestCase {
       this.delegate = resolver;
     }
 
+    @Override
     public void addImplementedInterface(JRealClassType type, JClassType intf) {
       delegate.addImplementedInterface(type, intf);
     }
 
+    @Override
     public void addThrows(JAbstractMethod method, JClassType exception) {
       delegate.addThrows(method, exception);
     }
 
+    @Override
     public Map<String, JRealClassType> getInternalMapper() {
       return delegate.getInternalMapper();
     }
 
+    @Override
     public TypeOracle getTypeOracle() {
       return delegate.getTypeOracle();
     }
 
+    @Override
     public JMethod newMethod(JClassType type, String name,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
         JTypeParameter[] typeParams) {
       return delegate.newMethod(type, name, declaredAnnotations, typeParams);
     }
 
+    @Override
     public void newParameter(JAbstractMethod method, JType argType,
         String argName,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
@@ -109,6 +115,7 @@ public class ResolveGenericsTest extends AsmTestCase {
           argNamesAreReal);
     }
 
+    @Override
     public JRealClassType newRealClassType(JPackage pkg,
         String enclosingTypeName, boolean isLocalType, String className,
         boolean isIntf) {
@@ -116,26 +123,31 @@ public class ResolveGenericsTest extends AsmTestCase {
           className, isIntf);
     }
 
+    @Override
     public boolean resolveAnnotation(TreeLogger logger,
         CollectAnnotationData annotVisitor,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
       return true;
     }
 
+    @Override
     public boolean resolveAnnotations(TreeLogger logger,
         List<CollectAnnotationData> annotations,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
       return true;
     }
 
+    @Override
     public boolean resolveClass(TreeLogger logger, JRealClassType type) {
       return true;
     }
 
+    @Override
     public void setReturnType(JAbstractMethod method, JType returnType) {
       delegate.setReturnType(method, returnType);
     }
 
+    @Override
     public void setSuperClass(JRealClassType type, JClassType superType) {
       delegate.setSuperClass(type, superType);
     }

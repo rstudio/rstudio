@@ -64,18 +64,23 @@ public class CodeSplitterTest extends JJSTestBase {
    */
   private static final MultipleDependencyGraphRecorder NULL_RECORDER =
       new MultipleDependencyGraphRecorder() {
+        @Override
         public void close() {
         }
 
+        @Override
         public void endDependencyGraph() {
         }
 
+        @Override
         public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
         }
 
+        @Override
         public void open() {
         }
 
+        @Override
         public void startDependencyGraph(String name, String extnds) {
         }
       };

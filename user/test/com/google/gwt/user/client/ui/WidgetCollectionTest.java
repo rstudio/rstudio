@@ -25,6 +25,7 @@ import java.util.NoSuchElementException;
  */
 public class WidgetCollectionTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -33,16 +34,20 @@ public class WidgetCollectionTest extends GWTTestCase {
 
     public WidgetCollection collection = new WidgetCollection(this);
 
+    @Override
     public void add(Widget w) {
     }
 
+    @Override
     public void clear() {
     }
 
+    @Override
     public Iterator<Widget> iterator() {
       return null;
     }
 
+    @Override
     public boolean remove(Widget w) {
       if (!collection.contains(w)) {
         return false;

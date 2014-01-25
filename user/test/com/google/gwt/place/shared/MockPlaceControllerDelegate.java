@@ -24,9 +24,11 @@ class MockPlaceControllerDelegate implements PlaceController.Delegate {
   boolean confirm = false;
   ClosingHandler handler = null;
 
+  @Override
   public HandlerRegistration addWindowClosingHandler(ClosingHandler handler) {
     this.handler = handler;
     return new HandlerRegistration() {
+      @Override
       public void removeHandler() {
         throw new UnsupportedOperationException("Auto-generated method stub");
       }
@@ -39,6 +41,7 @@ class MockPlaceControllerDelegate implements PlaceController.Delegate {
     message = event.getMessage();
   }
   
+  @Override
   public boolean confirm(String message) {
     this.message = message;
     return confirm;

@@ -23,6 +23,7 @@ import java.util.Comparator;
  * use {@link Member#TYPE_AND_SOURCE_NAME_COMPARATOR}.
  */
 class TypeAndSourceNameComparator implements Comparator<Member>, Serializable {
+  @Override
   public int compare(Member o1, Member o2) {
     int r = o1.getClass().getName().compareTo(o2.getClass().getName());
     if (r != 0) {

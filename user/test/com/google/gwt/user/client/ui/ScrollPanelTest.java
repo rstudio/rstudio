@@ -38,6 +38,7 @@ public class ScrollPanelTest extends SimplePanelTestBase<ScrollPanel> {
 
     delayTestFinish(3000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         int maxHorizontalPos = scrollPanel.getMaximumHorizontalScrollPosition();
         int maxVerticalPos = scrollPanel.getMaximumVerticalScrollPosition();
@@ -63,6 +64,7 @@ public class ScrollPanelTest extends SimplePanelTestBase<ScrollPanel> {
     
     delayTestFinish(3000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         scrollPanel.scrollToBottom();
         assertEquals(scrollPanel.getMaximumVerticalScrollPosition(), scrollPanel

@@ -48,6 +48,7 @@ public abstract class GWTTestCase extends TestCase {
       schedule(timeoutMillis);
     }
 
+    @Override
     public void run() {
       if (timer == this) {
         // The test has failed due to timeout

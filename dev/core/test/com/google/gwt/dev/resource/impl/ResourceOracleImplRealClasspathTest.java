@@ -31,6 +31,7 @@ public class ResourceOracleImplRealClasspathTest extends
 
   private static PathPrefix makeJunitPrefix() {
     return new PathPrefix("junit/framework/", new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return path.endsWith("TestCase.class");
       }
@@ -40,6 +41,7 @@ public class ResourceOracleImplRealClasspathTest extends
   private static PathPrefix makeThisClassPrefix() {
     return new PathPrefix("com/google/gwt/dev/resource/impl/",
         new ResourceFilter() {
+          @Override
           public boolean allows(String path) {
             return path.endsWith("ResourceOracleImplRealClasspathTest.class");
           }
@@ -49,6 +51,7 @@ public class ResourceOracleImplRealClasspathTest extends
   private static PathPrefix makeThisClassPrefixPlus() {
     return new PathPrefix("com/google/gwt/dev/resource/impl/",
         new ResourceFilter() {
+          @Override
           public boolean allows(String path) {
             return path.endsWith("ResourceOracleImpl.class")
                 || path.endsWith("ResourceOracleImplRealClasspathTest.class");

@@ -31,6 +31,7 @@ import java.util.List;
  */
 public class StackLayoutPanelTest extends WidgetTestBase {
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((StackLayoutPanel) container).add(child, new Label("Header"), 1);
     }
@@ -51,11 +52,13 @@ public class StackLayoutPanelTest extends WidgetTestBase {
       assertEquals(expected, onSelectionFired);
     }
 
+    @Override
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
       assertFalse(onSelectionFired);
       onBeforeSelectionFired = true;
     }
 
+    @Override
     public void onSelection(SelectionEvent<Integer> event) {
       assertTrue(onBeforeSelectionFired);
       onSelectionFired = true;

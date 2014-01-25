@@ -64,10 +64,12 @@ public class ScriptOnlyTest extends GWTTestCase {
     assertTrue(b.callCodeNotInSourcePath());
 
     b.callCallback(new AsyncCallback<ScriptOnlyClass>() {
+      @Override
       public void onFailure(Throwable caught) {
         fail(caught.getMessage());
       }
 
+      @Override
       public void onSuccess(ScriptOnlyClass result) {
         assertSame(b, result);
       }

@@ -66,6 +66,7 @@ public interface JClassType extends JType, HasAnnotations, HasMetaData {
    */
   JClassType getEnclosingType();
 
+  @Override
   JClassType getErasedType();
 
   JField getField(String name);

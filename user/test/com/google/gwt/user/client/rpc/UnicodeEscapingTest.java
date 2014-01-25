@@ -243,11 +243,13 @@ public class UnicodeEscapingTest extends GWTTestCase {
         new AsyncCallback<Boolean>() {
           List<Throwable> fails = new ArrayList<Throwable>();
 
+          @Override
           public void onFailure(Throwable caught) {
             fails.add(caught);
             onSuccess(false);
           }
 
+          @Override
           public void onSuccess(Boolean ignored) {
             current += step;
             if (current < end) {
@@ -281,11 +283,13 @@ public class UnicodeEscapingTest extends GWTTestCase {
         Math.min(end, current + size), new AsyncCallback<String>() {
           List<Throwable> fails = new ArrayList<Throwable>();
 
+          @Override
           public void onFailure(Throwable caught) {
             fails.add(caught);
             nextBatch();
           }
 
+          @Override
           public void onSuccess(String str) {
             try {
               verifyStringContainingCharacterRange(current, Math.min(end,

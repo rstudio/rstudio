@@ -19,6 +19,7 @@ package com.google.gwt.i18n.client;
  * TODO: document me.
  */
 public abstract class TestLeafBundle implements TestBinding {
+  @Override
   abstract public String b();
 }
 
@@ -29,6 +30,7 @@ class TestLeafBundleImpl extends TestLeafBundle {
     return "TestLeafBundleImpl";
   }
 
+  @Override
   public String a() {
     throw new IllegalStateException("bad");
   }

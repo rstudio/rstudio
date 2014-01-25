@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 public class UnreachabeIntegratedTransformationFunction implements
     IntegratedFlowFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
                            UnreachableAssumptions> {
+  @Override
   public Transformation<CfgTransformer, Cfg> 
   interpretOrReplace(CfgNode<?> node, Cfg graph,
       AssumptionMap<CfgEdge, UnreachableAssumptions> assumptionMap) {

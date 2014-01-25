@@ -124,6 +124,7 @@ public class AutoBeanTest extends GWTTestCase {
 
     HasMoreChainedSetters setBoolean(boolean value);
 
+    @Override
     HasMoreChainedSetters setInt(int value);
   }
 
@@ -164,6 +165,7 @@ public class AutoBeanTest extends GWTTestCase {
       return (o instanceof Intf) && (((Intf) o).getInt() == getInt());
     }
 
+    @Override
     public int getInt() {
       return i;
     }
@@ -173,6 +175,7 @@ public class AutoBeanTest extends GWTTestCase {
       return property;
     }
 
+    @Override
     public String getString() {
       return string;
     }
@@ -182,6 +185,7 @@ public class AutoBeanTest extends GWTTestCase {
       return i;
     }
 
+    @Override
     public void setInt(int number) {
       this.i = number;
     }
@@ -191,10 +195,12 @@ public class AutoBeanTest extends GWTTestCase {
       this.property = value;
     }
 
+    @Override
     public void setString(String value) {
       this.string = value;
     }
 
+    @Override
     public String toString() {
       return "toString";
     }

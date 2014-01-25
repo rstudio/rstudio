@@ -83,6 +83,7 @@ public class ArtifactsOutputDirectory implements OutputDirectory {
     return artifacts;
   }
 
+  @Override
   public OutputStream getOutputStream(String path) throws IOException {
     return new OutputStreamForArtifact(path);
   }

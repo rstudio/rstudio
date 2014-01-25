@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * TODO: document me.
  */
 public class ObjectTest extends GWTTestCase {
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

@@ -60,6 +60,7 @@ public class ListBoxTest extends GWTTestCase {
 
     delayTestFinish(5000);
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         UIObjectTest.assertDebugIdContents("myList-item0", "option0");
         UIObjectTest.assertDebugIdContents("myList-item1", "option1");

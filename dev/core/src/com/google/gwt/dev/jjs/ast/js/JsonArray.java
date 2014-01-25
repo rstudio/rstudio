@@ -42,6 +42,7 @@ public class JsonArray extends JExpression {
     return exprs;
   }
 
+  @Override
   public JClassType getType() {
     return jsoType;
   }
@@ -64,6 +65,7 @@ public class JsonArray extends JExpression {
     this.jsoType = jsoType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(exprs);

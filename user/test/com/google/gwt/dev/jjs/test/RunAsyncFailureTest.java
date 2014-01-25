@@ -106,6 +106,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   private void runAsync1(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
+      @Override
       public void onFailure(Throwable caught) {
         onFailureHelper(caught, new Timer() {
           @Override
@@ -115,6 +116,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
         });
       }
 
+      @Override
       public void onSuccess() {
         if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_1")) { finishTest(); }
       }
@@ -123,6 +125,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   private void runAsync2(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
+      @Override
       public void onFailure(Throwable caught) {
         onFailureHelper(caught, new Timer() {
           @Override
@@ -132,6 +135,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
         });
       }
 
+      @Override
       public void onSuccess() {
         if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_2")) { finishTest(); }
       }
@@ -140,6 +144,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   private void runAsync3(final int attempt, final int expectedSuccessfulAttempt) {
     GWT.runAsync(new MyRunAsyncCallback(attempt, expectedSuccessfulAttempt) {
+      @Override
       public void onFailure(Throwable caught) {
         onFailureHelper(caught, new Timer() {
           @Override
@@ -149,6 +154,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
         });
       }
 
+      @Override
       public void onSuccess() {
         if (onSuccessHelper("DOWNLOAD_FAILURE_TEST_3")) { finishTest(); }
       }
@@ -157,11 +163,13 @@ public class RunAsyncFailureTest extends GWTTestCase {
   
   private void runAsync4() {
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         // This call should fail since no retries are done if the code downloads
         // successfully, but fails to install.
         finishTest();
       }
+      @Override
       public void onSuccess() {
         // Use the string "INSTALL_FAILURE_TEST" so we can identify this
         // fragment on the server.  In the fail message is good enough.
@@ -172,9 +180,11 @@ public class RunAsyncFailureTest extends GWTTestCase {
 
   private void runAsync5() {
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         staticWrittenByAsync++;
       }
+      @Override
       public void onSuccess() {
         // Use the string "INSTALL_FAILURE_TEST" so we can identify this
         // fragment on the server.  In the fail message is good enough.

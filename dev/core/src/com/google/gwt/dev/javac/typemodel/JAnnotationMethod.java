@@ -43,6 +43,7 @@ public class JAnnotationMethod extends JMethod implements
    * @return default value for this annotation method or <code>null</code> if
    *         there is not one
    */
+  @Override
   public Object getDefaultValue() {
     return defaultValue;
   }

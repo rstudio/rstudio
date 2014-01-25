@@ -42,6 +42,7 @@ public class JGenericType extends JRealClassType implements
     }
   }
 
+  @Override
   public JParameterizedType asParameterizedByWildcards() {
     JClassType[] typeArgs = new JClassType[typeParams.size()];
     for (int i = 0; i < typeArgs.length; ++i) {
@@ -82,6 +83,7 @@ public class JGenericType extends JRealClassType implements
     return sb.toString();
   }
 
+  @Override
   public JRawType getRawType() {
     if (lazyRawType == null) {
       lazyRawType = new JRawType(this);
@@ -90,6 +92,7 @@ public class JGenericType extends JRealClassType implements
     return lazyRawType;
   }
 
+  @Override
   public JTypeParameter[] getTypeParameters() {
     return typeParams.toArray(new JTypeParameter[typeParams.size()]);
   }

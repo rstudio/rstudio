@@ -30,51 +30,63 @@ import java.math.BigInteger;
 public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     ValueTypesTestService {
 
+  @Override
   public byte echo(byte value) {
     return value;
   }
 
+  @Override
   public char echo(char value) {
     return value;
   }
 
+  @Override
   public double echo(double value) {
     return value;
   }
 
+  @Override
   public float echo(float value) {
     return value;
   }
 
+  @Override
   public int echo(int value) {
     return value;
   }
 
+  @Override
   public long echo(long value) {
     return value;
   }
 
+  @Override
   public short echo(short value) {
     return value;
   }
 
+  @Override
   public BigDecimal echo(BigDecimal value) {
     return value;
   }
 
+  @Override
   public BigInteger echo(BigInteger value) {
     return value;
   }
 
+  @Override
   public SerializableGenericWrapperType<Void> echo(
       SerializableGenericWrapperType<Void> value) {
     return value;
   }
 
+  @Override
   public String echo(String value) {
     return value;
   }
 
+  @Override
   public boolean echo_FALSE(boolean value) {
     if (value != false) {
       throw new RuntimeException();
@@ -83,6 +95,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public byte echo_MAX_VALUE(byte value) {
     if (value != Byte.MAX_VALUE) {
       throw new RuntimeException();
@@ -91,6 +104,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public char echo_MAX_VALUE(char value) {
     if (value != Character.MAX_VALUE) {
       throw new RuntimeException();
@@ -99,6 +113,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public double echo_MAX_VALUE(double value) {
     if (value != Double.MAX_VALUE) {
       throw new RuntimeException();
@@ -107,6 +122,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public float echo_MAX_VALUE(float value) {
     if (value != Float.MAX_VALUE) {
       throw new RuntimeException();
@@ -115,6 +131,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public int echo_MAX_VALUE(int value) {
     if (value != Integer.MAX_VALUE) {
       throw new RuntimeException();
@@ -123,6 +140,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public long echo_MAX_VALUE(long value) {
     if (value != Long.MAX_VALUE) {
       throw new RuntimeException("expected: " + Long.toString(Long.MAX_VALUE)
@@ -132,6 +150,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public short echo_MAX_VALUE(short value) {
     if (value != Short.MAX_VALUE) {
       throw new RuntimeException();
@@ -140,6 +159,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public byte echo_MIN_VALUE(byte value) {
     if (value != Byte.MIN_VALUE) {
       throw new RuntimeException();
@@ -148,6 +168,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public char echo_MIN_VALUE(char value) {
     if (value != Character.MIN_VALUE) {
       throw new RuntimeException();
@@ -156,6 +177,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public double echo_MIN_VALUE(double value) {
     if (value != Double.MIN_VALUE) {
       throw new RuntimeException();
@@ -164,6 +186,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public float echo_MIN_VALUE(float value) {
     if (value != Float.MIN_VALUE) {
       throw new RuntimeException();
@@ -172,6 +195,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public int echo_MIN_VALUE(int value) {
     if (value != Integer.MIN_VALUE) {
       throw new RuntimeException();
@@ -180,6 +204,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public long echo_MIN_VALUE(long value) {
     if (value != Long.MIN_VALUE) {
       throw new RuntimeException("expected: " + Long.toString(Long.MIN_VALUE)
@@ -189,6 +214,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public short echo_MIN_VALUE(short value) {
     if (value != Short.MIN_VALUE) {
       throw new RuntimeException();
@@ -197,6 +223,7 @@ public class ValueTypesTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public boolean echo_TRUE(boolean value) {
     if (value != true) {
       throw new RuntimeException();

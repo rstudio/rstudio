@@ -63,12 +63,14 @@ public class XsrfProtectionTest extends RpcTestBase {
     delayTestFinishForRpc();
 
     service.drink("kumys", new AsyncCallback<Void>() {
+      @Override
       public void onFailure(Throwable caught) {
         RpcTokenException e = (RpcTokenException) caught;
         assertTrue(e.getMessage().contains("XSRF token missing"));
         checkServerState("kumys", false);
       }
 
+      @Override
       public void onSuccess(Void result) {
         fail("Should've failed without XSRF token");
       }
@@ -83,10 +85,12 @@ public class XsrfProtectionTest extends RpcTestBase {
 
     service.drink("maksym", new AsyncCallback<Void>() {
 
+      @Override
       public void onSuccess(Void result) {
         fail("Should've failed with bad XSRF token");
       }
 
+      @Override
       public void onFailure(Throwable caught) {
         checkServerState("maksym", false);
       }
@@ -99,6 +103,7 @@ public class XsrfProtectionTest extends RpcTestBase {
     delayTestFinishForRpc();
 
     xsrfService.getNewXsrfToken(new AsyncCallback<XsrfToken>() {
+      @Override
       public void onSuccess(XsrfToken result) {
         assertNotNull(result);
         assertNotNull(result.getToken());
@@ -107,6 +112,7 @@ public class XsrfProtectionTest extends RpcTestBase {
         finishTest();
       }
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
@@ -120,20 +126,24 @@ public class XsrfProtectionTest extends RpcTestBase {
 
     xsrfService.getNewXsrfToken(new AsyncCallback<XsrfToken>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(XsrfToken result) {
         XsrfTestServiceAsync service = getAsyncService();
 
         ((HasRpcToken) service).setRpcToken(result);
         service.drink("airan", new AsyncCallback<Void>() {
 
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Void result) {
             checkServerState("airan", true);
           }
@@ -151,10 +161,12 @@ public class XsrfProtectionTest extends RpcTestBase {
 
     xsrfService.getNewXsrfToken(new AsyncCallback<XsrfToken>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(XsrfToken result) {
         // Ensure it's MD5
         assertEquals(32, result.getToken().length());
@@ -167,6 +179,7 @@ public class XsrfProtectionTest extends RpcTestBase {
 
         service.drink("bozo", new AsyncCallback<Void>() {
 
+          @Override
           public void onFailure(Throwable caught) {
             RpcTokenException e = (RpcTokenException) caught;
             assertTrue(e.getMessage().contains(
@@ -174,6 +187,7 @@ public class XsrfProtectionTest extends RpcTestBase {
             checkServerState("bozo", false);
           }
 
+          @Override
           public void onSuccess(Void result) {
             fail("Should've failed since session cookie has changed");
           }
@@ -187,11 +201,13 @@ public class XsrfProtectionTest extends RpcTestBase {
 
     service.checkIfDrankDrink(drink, new AsyncCallback<Boolean>() {
 
+      @Override
       public void onSuccess(Boolean result) {
         assertTrue(stateShouldChange == result);
         finishTest();
       }
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }

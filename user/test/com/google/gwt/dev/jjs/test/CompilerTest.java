@@ -36,6 +36,7 @@ public class CompilerTest extends GWTTestCase {
   interface Silly { }
 
   interface SillyComparable<T extends Silly> extends Comparable<T> {
+    @Override
     int compareTo(T obj);
   }
 
@@ -60,6 +61,7 @@ public class CompilerTest extends GWTTestCase {
 
   private static class Bm2KeyNav<E extends Bm2ComponentEvent> implements
       Bm2Listener<E> {
+    @Override
     public int handleEvent(Bm2ComponentEvent ce) {
       return 5;
     }
@@ -431,6 +433,7 @@ public class CompilerTest extends GWTTestCase {
    */
   public void testBridgeMethods4() {
     abstract class MyMapAbstract<V> implements MyMap {
+      @Override
       public String get(String key) {
         return null;
       }

@@ -163,6 +163,7 @@ public class AbstractDataProviderTest extends GWTTestCase {
     
     // Set a key provider
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+      @Override
       public Object getKey(String item) {
         return item == null ? item : item.toUpperCase();
       }

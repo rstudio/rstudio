@@ -118,6 +118,7 @@ public class CheckForUpdates {
     final String entryPoint = computeEntryPoint();
     FutureTask<UpdateResult> task = new FutureTask<UpdateResult>(
         new Callable<UpdateResult>() {
+          @Override
           public UpdateResult call() throws Exception {
             final CheckForUpdates updateChecker = createUpdateChecker(logger,
                 entryPoint);
@@ -469,14 +470,17 @@ public class CheckForUpdates {
     //
     builder.setErrorHandler(new ErrorHandler() {
 
+      @Override
       public void error(SAXParseException exception) throws SAXException {
         // fail quietly
       }
 
+      @Override
       public void fatalError(SAXParseException exception) throws SAXException {
         // fail quietly
       }
 
+      @Override
       public void warning(SAXParseException exception) throws SAXException {
         // fail quietly
       }
@@ -606,10 +610,12 @@ public class CheckForUpdates {
     }
     final URL finalUrl = url;
     return new UpdateResult() {
+      @Override
       public GwtVersion getNewVersion() {
         return serverVersion;
       }
 
+      @Override
       public URL getURL() {
         return finalUrl;
       }

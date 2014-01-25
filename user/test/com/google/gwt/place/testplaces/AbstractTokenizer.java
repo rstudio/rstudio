@@ -22,8 +22,10 @@ import com.google.gwt.place.shared.PlaceTokenizer;
  * @param <P> A place type (for testing generics).
  */
 public abstract class AbstractTokenizer<P extends Place1> implements PlaceTokenizer<P> {
+  @Override
   public abstract P getPlace(String token);
 
+  @Override
   public String getToken(P place) {
     return place.content;
   }

@@ -36,18 +36,22 @@ public abstract class AbstractTextOutput implements TextOutput {
     this.compact = compact;
   }
 
+  @Override
   public int getColumn() {
     return column;
   }
 
+  @Override
   public int getLine() {
     return line;
   }
 
+  @Override
   public int getPosition() {
     return position;
   }
 
+  @Override
   public void indentIn() {
     ++identLevel;
     if (identLevel >= indents.length) {
@@ -62,10 +66,12 @@ public abstract class AbstractTextOutput implements TextOutput {
     }
   }
 
+  @Override
   public void indentOut() {
     --identLevel;
   }
 
+  @Override
   public void newline() {
     if (compact) {
       out.print('\n');
@@ -78,6 +84,7 @@ public abstract class AbstractTextOutput implements TextOutput {
     justNewlined = true;
   }
 
+  @Override
   public void newlineOpt() {
     if (!compact) {
       out.print('\n');
@@ -88,6 +95,7 @@ public abstract class AbstractTextOutput implements TextOutput {
     }
   }
 
+  @Override
   public void print(char c) {
     maybeIndent();
     out.print(c);
@@ -96,18 +104,21 @@ public abstract class AbstractTextOutput implements TextOutput {
     justNewlined = false;
   }
 
+  @Override
   public void print(char[] s) {
     maybeIndent();
     printAndCount(s);
     justNewlined = false;
   }
 
+  @Override
   public void print(String s) {
     maybeIndent();
     printAndCount(s.toCharArray());
     justNewlined = false;
   }
 
+  @Override
   public void printOpt(char c) {
     if (!compact) {
       maybeIndent();
@@ -117,6 +128,7 @@ public abstract class AbstractTextOutput implements TextOutput {
     }
   }
 
+  @Override
   public void printOpt(char[] s) {
     if (!compact) {
       maybeIndent();
@@ -124,6 +136,7 @@ public abstract class AbstractTextOutput implements TextOutput {
     }
   }
 
+  @Override
   public void printOpt(String s) {
     if (!compact) {
       maybeIndent();

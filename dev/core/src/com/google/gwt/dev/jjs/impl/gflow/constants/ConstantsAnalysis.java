@@ -35,14 +35,17 @@ public class ConstantsAnalysis implements
     Analysis<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption>,
     IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, ConstantsAssumption> {
 
+  @Override
   public ConstantsFlowFunction getFlowFunction() {
     return new ConstantsFlowFunction();
   }
 
+  @Override
   public ConstantsIntegratedFlowFunction getIntegratedFlowFunction() {
     return new ConstantsIntegratedFlowFunction();
   }
 
+  @Override
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, ConstantsAssumption> assumptionMap) {
     AssumptionUtil.setAssumptions(graph.getGraphInEdges(), 

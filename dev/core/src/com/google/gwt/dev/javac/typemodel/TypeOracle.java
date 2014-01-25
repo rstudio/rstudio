@@ -149,6 +149,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   public static void sort(JClassType[] types) {
     Arrays.sort(types, new Comparator<JClassType>() {
+      @Override
       public int compare(JClassType type1, JClassType type2) {
         String name1 = type1.getQualifiedSourceName();
         String name2 = type2.getQualifiedSourceName();
@@ -164,6 +165,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   public static void sort(JConstructor[] ctors) {
     Arrays.sort(ctors, new Comparator<JConstructor>() {
+      @Override
       public int compare(JConstructor o1, JConstructor o2) {
         // Nothing for now; could enhance to sort based on parameter list
         return 0;
@@ -178,6 +180,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   public static void sort(JField[] fields) {
     Arrays.sort(fields, new Comparator<JField>() {
+      @Override
       public int compare(JField f1, JField f2) {
         String name1 = f1.getName();
         String name2 = f2.getName();
@@ -193,6 +196,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
    */
   public static void sort(JMethod[] methods) {
     Arrays.sort(methods, new Comparator<JMethod>() {
+      @Override
       public int compare(JMethod m1, JMethod m2) {
         String name1 = m1.getName();
         String name2 = m2.getName();
@@ -619,6 +623,7 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     Collection<JRealClassType> values = allTypes.values();
     JClassType[] result = values.toArray(new JClassType[values.size()]);
     Arrays.sort(result, new Comparator<JClassType>() {
+      @Override
       public int compare(JClassType o1, JClassType o2) {
         return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
       }

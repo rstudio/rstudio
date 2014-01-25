@@ -28,12 +28,14 @@ public interface TestBinding extends Localizable {
 class Wrapper {
 
   static class TestBinding_aa extends TestBinding_ {
+    @Override
     public String a() {
       return "a";
     }
   }
 
   static class TestBinding_bb_CC_DDDDD extends TestBinding_ {
+    @Override
     public String a() {
       return "b_c_d";
     }
@@ -41,10 +43,12 @@ class Wrapper {
 
   static class TestBinding_bb implements TestBinding {
 
+    @Override
     public String a() {
       return "b";
     }
 
+    @Override
     public String b() {
       return "b";
     }
@@ -52,10 +56,12 @@ class Wrapper {
 
   static class TestBinding_ implements TestBinding {
 
+    @Override
     public String a() {
       return "default";
     }
 
+    @Override
     public String b() {
       return "default";
     }
@@ -70,16 +76,19 @@ class Wrapper2 {
   }
 
   static class TestBindingImpl_aa extends TestBindingImpl_bb_CC_DDDDD {
+    @Override
     public String a() {
       return "a";
     }
   }
 
   static class TestBindingImpl_bb_CC_DDDDD extends TestBindingImpl {
+    @Override
     public String a() {
       return "b_c_d";
     }
 
+    @Override
     public String b() {
       return "b_c_d";
     }
@@ -87,10 +96,12 @@ class Wrapper2 {
 
   static class TestBinding extends TestBindingImpl {
 
+    @Override
     public String a() {
       return "never should be here";
     }
 
+    @Override
     public String b() {
       return "never should be here";
     }
@@ -98,10 +109,12 @@ class Wrapper2 {
 
   static class TestBindingImpl_ extends TestBindingImpl {
 
+    @Override
     public String a() {
       return "default";
     }
 
+    @Override
     public String b() {
       return "default";
     }

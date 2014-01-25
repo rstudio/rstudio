@@ -57,10 +57,12 @@ public class DefaultConfigurationProperty implements ConfigurationProperty {
         && values.equals(other.values);
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public List<String> getValues() {
     return values;
   }

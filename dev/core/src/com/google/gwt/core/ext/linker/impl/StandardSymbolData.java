@@ -84,18 +84,22 @@ public class StandardSymbolData implements SymbolData {
     this.seedId = seedId;
   }
   
+  @Override
   public CastableTypeMap getCastableTypeMap() {
     return castableTypeMap;
   }
 
+  @Override
   public String getClassName() {
     return className;
   }
 
+  @Override
   public int getFragmentNumber() {
     return fragmentNumber;
   }
 
+  @Override
   public String getJsniIdent() {
     if (memberName == null) {
       return null;
@@ -106,38 +110,47 @@ public class StandardSymbolData implements SymbolData {
     return className + "::" + memberName + methodSig;
   }
 
+  @Override
   public String getMemberName() {
     return memberName;
   }
 
+  @Override
   public int getQueryId() {
     return queryId;
   }
 
+  @Override
   public int getSeedId() {
     return seedId;
   }
 
+  @Override
   public int getSourceLine() {
     return sourceLine;
   }
 
+  @Override
   public String getSourceUri() {
     return sourceUri;
   }
 
+  @Override
   public String getSymbolName() {
     return symbolName;
   }
 
+  @Override
   public boolean isClass() {
     return memberName == null;
   }
 
+  @Override
   public boolean isField() {
     return memberName != null && methodSig == null;
   }
 
+  @Override
   public boolean isMethod() {
     return methodSig != null;
   }

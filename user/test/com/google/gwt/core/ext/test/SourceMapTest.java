@@ -201,6 +201,7 @@ public class SourceMapTest extends TestCase {
       return ++counter;
     }
 
+    @Override
     public String toString() {
       return jsniIdent + " -> " + jsName;
     }

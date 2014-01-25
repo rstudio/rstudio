@@ -60,20 +60,24 @@ class ImmutableAnnotations implements HasAnnotations {
     return new ImmutableAnnotations(this, additions);
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotationClass.cast(members.get(annotationClass));
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     return getDeclaredAnnotations();
   }
 
+  @Override
   public Annotation[] getDeclaredAnnotations() {
     List<Annotation> values = new ArrayList<Annotation>(members.values());
     Collections.sort(values, Annotations.ANNOTATION_COMPARATOR);
     return values.toArray(new Annotation[values.size()]);
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return getAnnotation(annotationClass) != null;
   }

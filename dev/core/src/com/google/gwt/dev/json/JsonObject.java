@@ -33,15 +33,18 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
       this.iter = iter;
     }
 
+    @Override
     public boolean hasNext() {
       return iter.hasNext();
     }
 
+    @Override
     public Pair<String, JsonValue> next() {
       final Map.Entry<String, JsonValue> entry = iter.next();
       return new Pair<String, JsonValue>(entry.getKey(), entry.getValue());
     }
 
+    @Override
     public void remove() {
       iter.remove();
     }
@@ -115,26 +118,32 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
   public JsonObject() {
   }
 
+  @Override
   public JsonArray asArray() {
     return null;
   }
 
+  @Override
   public JsonBoolean asBoolean() {
     return null;
   }
 
+  @Override
   public JsonNumber asNumber() {
     return null;
   }
 
+  @Override
   public JsonObject asObject() {
     return this;
   }
 
+  @Override
   public JsonString asString() {
     return null;
   }
 
+  @Override
   public JsonObject copyDeeply() {
     final JsonObject copy = new JsonObject();
     for (Map.Entry<String, JsonValue> entry : properties.entrySet()) {
@@ -150,10 +159,12 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
     return (value == null) ? JsonValue.NULL : value;
   }
 
+  @Override
   public boolean isArray() {
     return false;
   }
 
+  @Override
   public boolean isBoolean() {
     return false;
   }
@@ -162,18 +173,22 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
     return properties.isEmpty();
   }
 
+  @Override
   public boolean isNumber() {
     return false;
   }
 
+  @Override
   public boolean isObject() {
     return true;
   }
 
+  @Override
   public boolean isString() {
     return false;
   }
 
+  @Override
   public Iterator<Pair<String, JsonValue>> iterator() {
     return new Iter(properties.entrySet().iterator());
   }
@@ -198,6 +213,7 @@ public class JsonObject implements JsonValue, Iterable<Pair<String, JsonValue>> 
     put(key, JsonString.create(val));
   }
 
+  @Override
   public void write(Writer writer) throws IOException {
     boolean first = true;
     writer.write('{');

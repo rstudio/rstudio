@@ -90,6 +90,7 @@ public class GenericClass<T extends Serializable> implements Comparable<T>,
     this.typeParameterField = t;
   }
 
+  @Override
   public int compareTo(T o) {
     // TODO Auto-generated method stub
     return 0;

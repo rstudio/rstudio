@@ -234,6 +234,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
      * Returns true to indicate that the collection supports equals() comparisons.
      * This implementation returns false;
      */
+    @Override
     public boolean isEqualsCheckable() {
         return false;
     }
@@ -375,6 +376,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
     /**
      *  Returns an empty collection for Object tests.
      */
+    @Override
     public Object makeObject() {
         return makeCollection();
     }
@@ -1301,6 +1303,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
         }
     }
 
+    @Override
     public void testSerializeDeserializeThenCompare() throws Exception {
         Object obj = makeCollection();
         if (obj instanceof Serializable && isTestSerialization()) {

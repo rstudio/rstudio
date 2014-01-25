@@ -38,6 +38,7 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
     private int index = 0;
     private int last = -1;
 
+    @Override
     public boolean hasNext() {
       if (coModCheckTable != table) {
         throw new ConcurrentModificationException();
@@ -46,6 +47,7 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
       return index < table.length;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public E next() {
       if (!hasNext()) {
@@ -55,6 +57,7 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
       return (E) unmaskNull(table[index++]);
     }
 
+    @Override
     public void remove() {
       if (last < 0) {
         throw new IllegalStateException();

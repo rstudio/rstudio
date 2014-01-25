@@ -111,6 +111,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
   /**
    * Computes union of all live variables.
    */
+  @Override
   public LivenessAssumption join(LivenessAssumption value) {
     if (value == null || value.liveVariables.isEmpty()) {
       return this;
@@ -129,6 +130,7 @@ public class LivenessAssumption implements Assumption<LivenessAssumption> {
     result.append("{");
     List<JVariable> vars = new ArrayList<JVariable>(liveVariables);
     Collections.sort(vars, new Comparator<JVariable>() {
+      @Override
       public int compare(JVariable o1, JVariable o2) {
         return o1.getName().compareTo(o2.getName());
       }

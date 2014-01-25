@@ -29,10 +29,12 @@ public class ExceptionsTest extends RpcTestBase {
   public void testUmbrellaException() {
     final UmbrellaException expected = TestSetFactory.createUmbrellaException();
     checkException(expected, new AsyncCallback<UmbrellaException>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(UmbrellaException result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValid(expected, result));
@@ -48,10 +50,12 @@ public class ExceptionsTest extends RpcTestBase {
     expected.initCause(new SerializableThrowable(null, "cause"));
 
     checkException(expected, new AsyncCallback<SerializableThrowable>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(SerializableThrowable result) {
         assertNotNull(result);
         assertEquals("msg", result.getMessage());

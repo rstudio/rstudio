@@ -88,11 +88,13 @@ public class HandlerManagerTest extends HandlerTestBase {
   public void testConcurrentAdd() {
     final HandlerManager manager = new HandlerManager("bogus source");
     final MouseDownHandler two = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
       }
     };
     MouseDownHandler one = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         manager.addHandler(MouseDownEvent.getType(), two);
         add(this);
@@ -116,6 +118,7 @@ public class HandlerManagerTest extends HandlerTestBase {
   class ShyHandler implements MouseDownHandler {
     HandlerRegistration r;
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(this);
       r.removeHandler();
@@ -145,6 +148,7 @@ public class HandlerManagerTest extends HandlerTestBase {
   public void testConcurrentAddAndRemoveByNastyUsersTryingToHurtUs() {
     final HandlerManager manager = new HandlerManager("bogus source");
     final MouseDownHandler two = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
       }
@@ -155,6 +159,7 @@ public class HandlerManagerTest extends HandlerTestBase {
       }
     };
     MouseDownHandler one = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         manager.addHandler(MouseDownEvent.getType(), two).removeHandler();
         add(this);
@@ -185,6 +190,7 @@ public class HandlerManagerTest extends HandlerTestBase {
     final HandlerManager manager = new HandlerManager("bogus source");
 
     MouseDownHandler one = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         manager.removeHandler(MouseDownEvent.getType(), mouse1);
         manager.addHandler(MouseDownEvent.getType(), mouse1);
@@ -228,6 +234,7 @@ public class HandlerManagerTest extends HandlerTestBase {
 
     manager.addHandler(MouseDownEvent.getType(), new MouseDownHandler() {
 
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         manager2.fireEvent(event);
       }
@@ -237,6 +244,7 @@ public class HandlerManagerTest extends HandlerTestBase {
     manager2.addHandler(MouseDownEvent.getType(), adaptor1);
     manager2.addHandler(MouseDownEvent.getType(), new MouseDownHandler() {
 
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         assertEquals("source2", event.getSource());
         assertSame(masterEvent, event);
@@ -245,6 +253,7 @@ public class HandlerManagerTest extends HandlerTestBase {
     });
     manager.addHandler(MouseDownEvent.getType(), new MouseDownHandler() {
 
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         assertEquals("source1", event.getSource());
         assertSame(masterEvent, event);
@@ -282,17 +291,20 @@ public class HandlerManagerTest extends HandlerTestBase {
     // Add some handlers to a manager
     final HandlerManager manager = new HandlerManager("source1", true);
     final MouseDownHandler handler0 = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
       }
     };
     final MouseDownHandler handler1 = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         assertNotFired(handler0);
         add(this);
       }
     };
     final MouseDownHandler handler2 = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         assertNotFired(handler0, handler1);
         add(this);
@@ -316,6 +328,7 @@ public class HandlerManagerTest extends HandlerTestBase {
       this.e = e;
     }
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       throw e;
     }    
@@ -355,6 +368,7 @@ public class HandlerManagerTest extends HandlerTestBase {
     SimpleEventBus reg = new SimpleEventBus();
     
     MouseDownHandler handler = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
         assertNull(event.getSource());

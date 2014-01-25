@@ -223,6 +223,7 @@ public class PropertyPermutations implements Iterable<String[]> {
    * each string in the array corresponds to the property at the same index in
    * the array returned from {@link #getOrderedProperties()}.
    */
+  @Override
   public Iterator<String[]> iterator() {
     return values.iterator();
   }

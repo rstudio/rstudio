@@ -37,11 +37,13 @@ public class DateChangeEventTest extends TestCase {
     private final HandlerManager handlers = new HandlerManager(this);
     private Date value;
 
+    @Override
     public HandlerRegistration addValueChangeHandler(
         ValueChangeHandler<Date> handler) {
       return handlers.addHandler(ValueChangeEvent.getType(), handler);
     }
 
+    @Override
     public void fireEvent(GwtEvent<?> event) {
       handlers.fireEvent(event);
     }
@@ -50,14 +52,17 @@ public class DateChangeEventTest extends TestCase {
       return handlers;
     }
 
+    @Override
     public Date getValue() {
       return value;
     }
 
+    @Override
     public void setValue(Date value) {
       setValue(value, false);
     }
 
+    @Override
     public void setValue(Date value, boolean fireEvents) {
       Date oldValue = this.value;
       this.value = value;

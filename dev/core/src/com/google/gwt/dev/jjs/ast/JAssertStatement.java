@@ -39,6 +39,7 @@ public class JAssertStatement extends JStatement {
     return testExpr;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       testExpr = visitor.accept(testExpr);

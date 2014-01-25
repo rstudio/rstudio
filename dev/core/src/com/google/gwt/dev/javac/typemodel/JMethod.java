@@ -68,6 +68,7 @@ public class JMethod extends JAbstractMethod implements
     return getReadableDeclaration(getModifierBits());
   }
 
+  @Override
   public String getReadableDeclaration(boolean noAccess, boolean noNative,
       boolean noStatic, boolean noFinal, boolean noAbstract) {
     int bits = getModifierBits();
@@ -89,10 +90,12 @@ public class JMethod extends JAbstractMethod implements
     return getReadableDeclaration(bits);
   }
 
+  @Override
   public JType getReturnType() {
     return returnType;
   }
 
+  @Override
   public boolean isAbstract() {
     return 0 != (getModifierBits() & TypeOracle.MOD_ABSTRACT);
   }
@@ -102,6 +105,7 @@ public class JMethod extends JAbstractMethod implements
     return null;
   }
 
+  @Override
   public boolean isFinal() {
     return 0 != (getModifierBits() & TypeOracle.MOD_FINAL);
   }
@@ -111,10 +115,12 @@ public class JMethod extends JAbstractMethod implements
     return this;
   }
 
+  @Override
   public boolean isNative() {
     return 0 != (getModifierBits() & TypeOracle.MOD_NATIVE);
   }
 
+  @Override
   public boolean isStatic() {
     return 0 != (getModifierBits() & TypeOracle.MOD_STATIC);
   }

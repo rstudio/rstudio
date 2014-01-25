@@ -40,6 +40,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
       return wasCalled;
     }
 
+    @Override
     public void loadTerminated(Throwable reason) {
       wasCalled = true;
     }
@@ -60,6 +61,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
       }
     }
 
+    @Override
     public void startLoadingFragment(int fragment,
         LoadTerminatedHandler loadErrorHandler) {
       errorHandlers.put(fragment, loadErrorHandler);
@@ -128,6 +130,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
           + events.size(), events.size() == 0);
     }
 
+    @Override
     public void logEventProgress(String eventGroup, String type,
         int fragment, int size) {
       events.add(new MockProgressEvent(eventGroup, type, fragment));
@@ -139,6 +142,7 @@ public class AsyncFragmentLoaderTest extends TestCase {
   private static final String LEFTOVERS_DOWNLOAD = "leftoversDownload";
 
   private static final LoadTerminatedHandler NULL_ERROR_HANDLER = new LoadTerminatedHandler() {
+    @Override
     public void loadTerminated(Throwable reason) {
     }
   };

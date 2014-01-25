@@ -40,6 +40,7 @@ public class JsniRefLookupTest extends JJSTestBase {
       assertTrue("Unexpected error: " + error, error == null);
     }
 
+    @Override
     public void reportError(String error) {
       this.error = error;
     }

@@ -42,10 +42,12 @@ public class BadServletsTest extends GWTTestCase {
     RequestBuilder req = new RequestBuilder(RequestBuilder.GET, url);
     delayTestFinish(5000);
     req.sendRequest(null, new RequestCallback() {
+      @Override
       public void onError(Request request, Throwable exception) {
         fail(exception.toString());
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(200, response.getStatusCode());
         assertEquals("ok", response.getText());

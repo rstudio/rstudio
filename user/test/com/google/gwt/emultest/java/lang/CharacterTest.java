@@ -37,14 +37,17 @@ public class CharacterTest extends GWTTestCase {
       this.end = end;
     }
     
+    @Override
     public char charAt(int index) {
       return charArray[index + start];
     }
 
+    @Override
     public int length() {
       return end - start;
     }
 
+    @Override
     public java.lang.CharSequence subSequence(int start, int end) {
       return new CharSequenceAdapter(charArray, this.start + start,
           this.start + end);
@@ -101,6 +104,7 @@ public class CharacterTest extends GWTTestCase {
       super(s);
     }
 
+    @Override
     public boolean pass(char c) {
       return Character.isLowerCase(c);
     }
@@ -111,6 +115,7 @@ public class CharacterTest extends GWTTestCase {
       super(s);
     }
 
+    @Override
     public boolean pass(char c) {
       return Character.isUpperCase(c);
     }
@@ -129,39 +134,46 @@ public class CharacterTest extends GWTTestCase {
   }
 
   Judge digitJudge = new Judge(allChars) {
+    @Override
     public boolean pass(char c) {
       return Character.isDigit(c);
     }
   };
   Judge letterJudge = new Judge(allChars) {
+    @Override
     public boolean pass(char c) {
       return Character.isLetter(c);
     }
   };
   Judge letterOrDigitJudge = new Judge(allChars) {
+    @Override
     public boolean pass(char c) {
       return Character.isLetterOrDigit(c);
     }
   };
   Changer lowerCaseChanger = new Changer(allChars) {
+    @Override
     public char change(char c) {
       return Character.toLowerCase(c);
     }
   };
   Judge lowerCaseJudge = new LowerCaseJudge(allChars);
   Judge spaceJudge = new Judge(allChars) {
+    @Override
     @SuppressWarnings("deprecation") // Character.isSpace()
     public boolean pass(char c) {
       return Character.isSpace(c); // suppress deprecation
     }
   };
   Changer upperCaseChanger = new Changer(allChars) {
+    @Override
     public char change(char c) {
       return Character.toUpperCase(c);
     }
   };
   Judge upperCaseJudge = new UpperCaseJudge(allChars);
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

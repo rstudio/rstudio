@@ -23,6 +23,7 @@ class MockParser implements Parser<String> {
   public boolean throwException;
   public boolean parseCalled;
 
+  @Override
   public String parse(CharSequence text) throws ParseException {
     parseCalled = true;
     

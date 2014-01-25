@@ -59,6 +59,7 @@ public class JNonNullType extends JReferenceType {
     return ref;
   }
 
+  @Override
   public boolean isAbstract() {
     return ref.isAbstract();
   }
@@ -68,10 +69,12 @@ public class JNonNullType extends JReferenceType {
     return ref.isExternal();
   }
 
+  @Override
   public boolean isFinal() {
     return ref.isFinal();
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     visitor.accept(ref);
   }

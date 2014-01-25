@@ -133,14 +133,17 @@ public class EnumMapTest extends GWTTestCase {
       E key = entry.getKey();
       Integer value = entry.getValue();
       
+      @Override
       public E getKey() {
         return key;
       }
 
+      @Override
       public Integer getValue() {
         return value;
       }
 
+      @Override
       public Integer setValue(Integer value) {
         Integer oldValue = this.value;
         this.value = value;
@@ -176,6 +179,7 @@ public class EnumMapTest extends GWTTestCase {
     return list;
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

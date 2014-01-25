@@ -38,6 +38,7 @@ public class CustomFieldSerializerTestServiceImpl extends HybridServiceServlet
    */
   private ServletContext wrappedServletContext;
 
+  @Override
   public ManuallySerializedClass echo(
       ManuallySerializedClass unserializableClass) {
     if (!CustomFieldSerializerTestSetValidator.isValid(unserializableClass)) {
@@ -47,6 +48,7 @@ public class CustomFieldSerializerTestServiceImpl extends HybridServiceServlet
     return unserializableClass;
   }
 
+  @Override
   public ManuallySerializedImmutableClass[] echo(
       ManuallySerializedImmutableClass[] manuallySerializableImmutables) {
     if (!CustomFieldSerializerTestSetValidator.isValid(manuallySerializableImmutables)) {
@@ -56,6 +58,7 @@ public class CustomFieldSerializerTestServiceImpl extends HybridServiceServlet
     return manuallySerializableImmutables;
   }
 
+  @Override
   public SerializableSubclass echo(SerializableSubclass serializableClass) {
     if (!CustomFieldSerializerTestSetValidator.isValid(serializableClass)) {
       throw new RuntimeException();

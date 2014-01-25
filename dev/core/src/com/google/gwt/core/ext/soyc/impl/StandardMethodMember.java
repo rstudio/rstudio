@@ -44,6 +44,7 @@ public class StandardMethodMember extends AbstractMemberWithDependencies impleme
     this.sourceName = sb.toString();
   }
 
+  @Override
   public ClassMember getEnclosing() {
     return enclosing;
   }

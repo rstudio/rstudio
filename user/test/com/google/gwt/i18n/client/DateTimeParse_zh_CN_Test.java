@@ -26,6 +26,7 @@ import java.util.Date;
  */
 public class DateTimeParse_zh_CN_Test extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_zh_CN";
   }

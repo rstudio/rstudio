@@ -22,6 +22,7 @@ import com.google.web.bindery.requestfactory.shared.ServiceLocator;
  */
 public class InstanceServiceLocator implements ServiceLocator {
 
+  @Override
   public Object getInstance(Class<?> clazz) {
     assert InstanceService.class.equals(clazz);
     return clazz.cast(new InstanceServiceImpl(5));

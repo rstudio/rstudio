@@ -41,6 +41,7 @@ public class ModifiedBerghelRoachEditDistanceTest extends junit.framework.TestCa
     }
   }
   private static class Factory implements GeneralEditDistanceTest.Factory {
+    @Override
     public GeneralEditDistance getInstance(CharSequence s) {
       return ModifiedBerghelRoachEditDistance.getInstance(s.toString());
     }

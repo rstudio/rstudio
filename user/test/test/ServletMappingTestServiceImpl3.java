@@ -23,6 +23,7 @@ import com.google.gwt.user.server.rpc.HybridServiceServlet;
 public class ServletMappingTestServiceImpl3 extends HybridServiceServlet
     implements ServletMappingTestService {
 
+  @Override
   public int which() {
     return 3;
   }

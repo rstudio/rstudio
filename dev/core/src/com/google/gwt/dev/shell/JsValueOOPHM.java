@@ -45,6 +45,7 @@ public class JsValueOOPHM extends JsValue {
       classLoader = ccl;
     }
 
+    @Override
     public JsValue getField(int dispId) {
       JsValueOOPHM jsValue = new JsValueOOPHM();
       if (javaDispatch.isField(dispId)) {
@@ -64,6 +65,7 @@ public class JsValueOOPHM extends JsValue {
       return jsValue;
     }
 
+    @Override
     public JsValue getField(String name) {
       int dispId = getFieldId(name);
       if (dispId < 0) {
@@ -73,14 +75,17 @@ public class JsValueOOPHM extends JsValue {
       return getField(dispId);
     }
 
+    @Override
     public int getFieldId(String name) {
       return classLoader.getDispId(name);
     }
 
+    @Override
     public Object getTarget() {
       return javaDispatch.getTarget();
     }
 
+    @Override
     public void setField(int dispId, JsValue jsValue) {
       if (javaDispatch.isMethod(dispId)) {
         throw new RuntimeException("Cannot reassign method "
@@ -92,6 +97,7 @@ public class JsValueOOPHM extends JsValue {
       javaDispatch.setFieldValue(dispId, val);
     }
 
+    @Override
     public void setField(String name, JsValue jsValue) {
       int dispId = getFieldId(name);
       if (dispId < 0) {

@@ -73,6 +73,7 @@ public class PathPrefixSetTest extends TestCase {
      */
     PathPrefixSet pps = new PathPrefixSet();
     ResourceFilter allowsGifs = new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return path.toLowerCase(Locale.ENGLISH).endsWith(".gif");
       }
@@ -134,6 +135,7 @@ public class PathPrefixSetTest extends TestCase {
     PathPrefix pp1 = new PathPrefix("", null);
     PathPrefix pp2 = new PathPrefix("a/", null);
     PathPrefix pp3 = new PathPrefix("a/b/", new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         // Disallow anything ending with "FILTERMEOUT".
         return !path.endsWith("FILTERMEOUT");
@@ -141,6 +143,7 @@ public class PathPrefixSetTest extends TestCase {
     });
     PathPrefix pp4 = new PathPrefix("a/b/c/", null);
     PathPrefix pp5 = new PathPrefix("a/", new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return !path.endsWith("X.java");
       }
@@ -192,6 +195,7 @@ public class PathPrefixSetTest extends TestCase {
      */
     PathPrefixSet pps = new PathPrefixSet();
     PathPrefix pp1 = new PathPrefix("", new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return path.endsWith("Y.java");
       }

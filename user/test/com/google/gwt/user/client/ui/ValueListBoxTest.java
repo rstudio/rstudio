@@ -42,6 +42,7 @@ public class ValueListBoxTest extends GWTTestCase {
   }
 
   static class FooRenderer extends AbstractRenderer<Foo> {
+    @Override
     public String render(Foo object) {
       if (object == null) {
         return "";
@@ -51,6 +52,7 @@ public class ValueListBoxTest extends GWTTestCase {
   }
 
   static class KeyProvider implements ProvidesKey<Foo> {
+    @Override
     public String getKey(Foo item) {
       return item.value;
     }

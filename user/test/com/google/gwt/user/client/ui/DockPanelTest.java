@@ -26,6 +26,7 @@ import com.google.gwt.user.client.DOM;
 public class DockPanelTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((DockPanel) container).add(child, DockPanel.NORTH);
     }

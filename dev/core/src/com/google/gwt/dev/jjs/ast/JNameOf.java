@@ -72,6 +72,7 @@ public class JNameOf extends JExpression {
     return node;
   }
 
+  @Override
   public JNonNullType getType() {
     return stringType.getNonNull();
   }
@@ -91,6 +92,7 @@ public class JNameOf extends JExpression {
     this.stringType = stringType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       // Intentionally not visiting referenced node

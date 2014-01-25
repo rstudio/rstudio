@@ -26,6 +26,7 @@ import com.google.gwt.user.client.DeferredCommand;
 public class StackPanelTest extends PanelTestBase<StackPanel> {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((StackPanel) container).add(child, "foo");
     }
@@ -79,6 +80,7 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
 
     // Check the header IDs
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         UIObjectTest.assertDebugIdContents("myStack-text0", "header a");
         UIObjectTest.assertDebugIdContents("myStack-text1", "header b");

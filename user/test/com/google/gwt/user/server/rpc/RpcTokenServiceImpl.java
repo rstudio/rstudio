@@ -26,12 +26,15 @@ import javax.servlet.http.HttpServletRequest;
 public class RpcTokenServiceImpl extends RpcTokenAwareRemoteService 
     implements RpcTokenTestService {
 
+  @Override
   public void test() { }
   
+  @Override
   public String capitalize(String input) {
     return input.toUpperCase();
   }
   
+  @Override
   public RpcToken getRpcTokenFromRequest() {
     HttpServletRequest req = getThreadLocalRequest();
     RpcToken token = (RpcToken) req.getAttribute(RpcTokenAwareRemoteService.TOKEN);

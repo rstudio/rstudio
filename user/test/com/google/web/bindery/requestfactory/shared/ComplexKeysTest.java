@@ -75,6 +75,7 @@ public class ComplexKeysTest extends GWTTestCase {
   interface DomainWithEntityKeyProxy extends EntityProxy {
     EntityKeyProxy getId();
 
+    @Override
     EntityProxyId<DomainWithEntityKeyProxy> stableId();
   }
 
@@ -109,6 +110,7 @@ public class ComplexKeysTest extends GWTTestCase {
   interface DomainWithValueKeyProxy extends EntityProxy {
     ValueKeyProxy getId();
 
+    @Override
     EntityProxyId<DomainWithValueKeyProxy> stableId();
   }
 

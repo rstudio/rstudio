@@ -95,6 +95,7 @@ public class JNewArray extends JExpression {
     return classLiterals;
   }
 
+  @Override
   public JNonNullType getType() {
     return type.getNonNull();
   }
@@ -123,6 +124,7 @@ public class JNewArray extends JExpression {
     this.type = type;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       assert ((dims != null) ^ (initializers != null));

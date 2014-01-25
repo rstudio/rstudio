@@ -41,6 +41,7 @@ public abstract class AbstractMemberWithDependencies extends AbstractMember impl
     return dependencies.add(member);
   }
 
+  @Override
   public SortedSet<Member> getDependencies() {
     return dependenciesView;
   }

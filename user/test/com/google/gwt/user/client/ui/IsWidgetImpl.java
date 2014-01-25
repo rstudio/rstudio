@@ -25,6 +25,7 @@ public class IsWidgetImpl implements IsWidget {
     this.w = w;
   }
 
+  @Override
   public Widget asWidget() {
     return w;
   }

@@ -52,6 +52,7 @@ public class DefaultMapEntry implements Map.Entry {
      *  Implemented per API documentation of 
      *  {@link java.util.Map.Entry#equals(Object)}
      **/
+    @Override
     public boolean equals(Object o) {
         if( o == null ) return false;
         if( o == this ) return true;        
@@ -70,6 +71,7 @@ public class DefaultMapEntry implements Map.Entry {
      *  Implemented per API documentation of 
      *  {@link java.util.Map.Entry#hashCode()}
      **/
+    @Override
     public int hashCode() {
         return ( ( getKey() == null ? 0 : getKey().hashCode() ) ^
                  ( getValue() == null ? 0 : getValue().hashCode() ) ); 
@@ -85,6 +87,7 @@ public class DefaultMapEntry implements Map.Entry {
      *
      *  @return the key 
      */
+    @Override
     public Object getKey() {
         return key;
     }
@@ -95,6 +98,7 @@ public class DefaultMapEntry implements Map.Entry {
      *
      *  @return the value
      */
+    @Override
     public Object getValue() {
         return value;
     }
@@ -117,6 +121,7 @@ public class DefaultMapEntry implements Map.Entry {
       * @return the old value of the value
       * @param value the new value
       */
+    @Override
     public Object setValue(Object value) {
         Object answer = this.value;
         this.value = value;

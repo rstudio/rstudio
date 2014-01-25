@@ -121,10 +121,12 @@ public class LoggingRPCTest extends GWTTestCase {
     LoggingRPCTestServiceAsync service = getServiceAsync();
     delayTestFinish(15000);
     service.echoLogRecord(expectedLogRecord, new AsyncCallback<LogRecord>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(LogRecord result) {
         assertNotNull(result);
         assertTrue(isValid(result));
@@ -149,10 +151,12 @@ public class LoggingRPCTest extends GWTTestCase {
         } catch (Exception e) {
           service.deobfuscateLogRecord(createLogRealRecord(e), new AsyncCallback<LogRecord>() {
 
+            @Override
             public void onFailure(Throwable caught) {
               TestSetValidator.rethrowException(caught);
             }
 
+            @Override
             public void onSuccess(LogRecord record) {
               Throwable thrown = record.getThrown();
               boolean found = false;

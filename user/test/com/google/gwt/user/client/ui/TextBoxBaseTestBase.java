@@ -31,6 +31,7 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
   private static class Handler implements ValueChangeHandler<String> {
     String received = null;
 
+    @Override
     public void onValueChange(ValueChangeEvent<String> event) {
       received = event.getValue();
     }

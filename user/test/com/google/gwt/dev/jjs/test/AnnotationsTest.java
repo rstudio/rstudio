@@ -25,14 +25,17 @@ import java.lang.annotation.Annotation;
 public class AnnotationsTest extends GWTTestCase {
 
   private static class Foo implements IFoo {
+    @Override
     public Class<? extends Annotation> annotationType() {
       return IFoo.class;
     }
 
+    @Override
     public NestedEnum value() {
       return IFoo.NestedEnum.FOO2;
     }
 
+    @Override
     public Class<? extends NestedEnum> valueClass() {
       return IFoo.NestedEnum.class;
     }
@@ -50,6 +53,7 @@ public class AnnotationsTest extends GWTTestCase {
     Class<? extends NestedEnum> valueClass() default com.google.gwt.dev.jjs.test.AnnotationsTest.IFoo.NestedEnum.class;
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

@@ -196,6 +196,7 @@ public class ShellMainWindow extends JPanel {
     defaultBrowserButton.setEnabled(false);
     defaultBrowserButton.setVisible(false);
     defaultBrowserButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         launch(new DefaultBrowserLauncher());
       }
@@ -206,6 +207,7 @@ public class ShellMainWindow extends JPanel {
     copyToClipboardButton.setEnabled(false);
     copyToClipboardButton.setVisible(false);
     copyToClipboardButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         launch(new CopyToClipboardLauncher());
       }

@@ -505,14 +505,17 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     Map<K, V> map = createMap();
     try {
       map.entrySet().add(new Entry<K, V>() {
+        @Override
         public K getKey() {
           return null;
         }
 
+        @Override
         public V getValue() {
           return null;
         }
 
+        @Override
         public V setValue(V value) {
           return null;
         }

@@ -31,6 +31,7 @@ public class SizeValidatorForArrayOfByteTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForArrayOfByte createValidator() {
     return new SizeValidatorForArrayOfByte();
   }

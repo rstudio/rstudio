@@ -44,6 +44,7 @@ class MethodDispatch implements DispatchMethod {
    * @return <code>true</code> if an exception was thrown
    * @throws RuntimeException if improper arguments are supplied
    */
+  @Override
   public boolean invoke(JsValue jsthis, JsValue[] jsargs, JsValue returnValue) {
     Class<?>[] paramTypes = method.getParameterTypes();
     int argc = paramTypes.length;

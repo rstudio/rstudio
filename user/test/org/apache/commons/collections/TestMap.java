@@ -305,6 +305,7 @@ public abstract class TestMap extends TestObject{
         return m;
     }
 
+    @Override
     public Object makeObject() {
         return makeEmptyMap();
     }
@@ -718,6 +719,7 @@ public abstract class TestMap extends TestObject{
         }
 
         // Have to implement manually; entrySet doesn't support addAll
+        @Override
         protected Object[] getFullElements() {
             Object[] k = getSampleKeys();
             Object[] v = getSampleValues();
@@ -725,42 +727,50 @@ public abstract class TestMap extends TestObject{
         }
         
         // Have to implement manually; entrySet doesn't support addAll
+        @Override
         protected Object[] getOtherElements() {
             Object[] k = getOtherKeys();
             Object[] v = getOtherValues();
             return makeEntryArray(k, v);
         }
         
+        @Override
         protected Set makeEmptySet() {
             return makeEmptyMap().entrySet();
         }
         
+        @Override
         protected Set makeFullSet() {
             return makeFullMap().entrySet();
         }
         
+        @Override
         protected boolean isAddSupported() {
             // Collection views don't support add operations.
             return false;
         }
         
+        @Override
         protected boolean isRemoveSupported() {
             // Entry set should only support remove if map does
             return isAddRemoveModifiable();
         }
         
+        @Override
         protected void resetFull() {
             TestMap.this.resetFull();
             collection = map.entrySet();
             TestMapEntrySet.this.confirmed = TestMap.this.confirmed.entrySet();
         }
         
+        @Override
         protected void resetEmpty() {
             TestMap.this.resetEmpty();
             collection = map.entrySet();
             TestMapEntrySet.this.confirmed = TestMap.this.confirmed.entrySet();
         }
         
+        @Override
         protected void verify() {
             super.verify();
             TestMap.this.verify();
@@ -773,42 +783,51 @@ public abstract class TestMap extends TestObject{
         public TestMapKeySet() {
             super("");
         }
+        @Override
         protected Object[] getFullElements() {
             return getSampleKeys();
         }
         
+        @Override
         protected Object[] getOtherElements() {
             return getOtherKeys();
         }
         
+        @Override
         protected Set makeEmptySet() {
             return makeEmptyMap().keySet();
         }
         
+        @Override
         protected Set makeFullSet() {
             return makeFullMap().keySet();
         }
         
+        @Override
         protected boolean isAddSupported() {
             return false;
         }
         
+        @Override
         protected boolean isRemoveSupported() {
             return isAddRemoveModifiable();
         }
         
+        @Override
         protected void resetEmpty() {
             TestMap.this.resetEmpty();
             collection = map.keySet();
             TestMapKeySet.this.confirmed = TestMap.this.confirmed.keySet();
         }
         
+        @Override
         protected void resetFull() {
             TestMap.this.resetFull();
             collection = map.keySet();
             TestMapKeySet.this.confirmed = TestMap.this.confirmed.keySet();
         }
         
+        @Override
         protected void verify() {
             super.verify();
             TestMap.this.verify();
@@ -822,58 +841,70 @@ public abstract class TestMap extends TestObject{
             
         }
 
+        @Override
         protected Object[] getFullElements() {
             return getSampleValues();
         }
         
+        @Override
         protected Object[] getOtherElements() {
             return getOtherValues();
         }
         
+        @Override
         protected Collection makeCollection() {
             return makeEmptyMap().values();
         }
         
+        @Override
         protected Collection makeFullCollection() {
             return makeFullMap().values();
         }
         
+        @Override
         protected boolean isAddSupported() {
             return false;
         }
         
+        @Override
         protected boolean isRemoveSupported() {
             return isAddRemoveModifiable();
         }
 
+        @Override
         protected boolean areEqualElementsDistinguishable() {
             // equal values are associated with different keys, so they are
             // distinguishable.  
             return true;
         }
 
+        @Override
         protected Collection makeConfirmedCollection() {
             // never gets called, reset methods are overridden
             return null;
         }
         
+        @Override
         protected Collection makeConfirmedFullCollection() {
             // never gets called, reset methods are overridden
             return null;
         }
         
+        @Override
         protected void resetFull() {
             TestMap.this.resetFull();
             collection = map.values();
             TestMapValues.this.confirmed = TestMap.this.confirmed.values();
         }
         
+        @Override
         protected void resetEmpty() {
             TestMap.this.resetEmpty();
             collection = map.values();
             TestMapValues.this.confirmed = TestMap.this.confirmed.values();
         }
 
+        @Override
         protected void verify() {
             super.verify();
             TestMap.this.verify();

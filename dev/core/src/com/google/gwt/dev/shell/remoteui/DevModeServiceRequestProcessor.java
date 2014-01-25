@@ -42,6 +42,7 @@ public class DevModeServiceRequestProcessor implements RequestProcessor {
     this.remoteUI = remoteUI;
   }
 
+  @Override
   public Response execute(Request request) throws Exception {
     if (request.getServiceType() != Request.ServiceType.DEV_MODE) {
       throw new IllegalArgumentException(

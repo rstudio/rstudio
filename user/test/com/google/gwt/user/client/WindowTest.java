@@ -226,6 +226,7 @@ public class WindowTest extends GWTTestCase {
     RootPanel.get().add(largeDOM);
     delayTestFinish(1000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         int newClientHeight = Window.getClientHeight();
         int newClientWidth = Window.getClientWidth();
@@ -242,6 +243,7 @@ public class WindowTest extends GWTTestCase {
     private int width;
     private boolean called;
 
+    @Override
     public void onResize(ResizeEvent event) {
       width = event.getWidth();
       height = event.getHeight();
@@ -286,6 +288,7 @@ public class WindowTest extends GWTTestCase {
 
     delayTestFinish(1000);
     Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+      @Override
       public boolean execute() {
         if (!handler.isCalled()) {
           return true; // we still didn't receive the callback, let's wait more
@@ -332,6 +335,7 @@ public class WindowTest extends GWTTestCase {
   static class ListenerTester implements WindowResizeListener {
     static int resize = 0;
 
+    @Override
     public void onWindowResized(int width, int height) {
       ++resize;
     }

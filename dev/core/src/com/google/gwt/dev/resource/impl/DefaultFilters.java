@@ -50,6 +50,7 @@ public class DefaultFilters {
 
     /* used when defaultExcludes is false */
     private final ResourceFilter justThisFileTypeFilter = new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return defaultAntIncludes.allows(path) && matches(path);
       }
@@ -57,6 +58,7 @@ public class DefaultFilters {
 
     private final ResourceFilter defaultFilter = new ResourceFilter() {
 
+      @Override
       public boolean allows(String path) {
         return getFileTypeFilter().allows(path)
         && !isDefaultExcluded(path);
@@ -93,6 +95,7 @@ public class DefaultFilters {
 
   // accepts all but paths starting with '/'. Default include list is '**'
   private static final ResourceFilter defaultAntIncludes = new ResourceFilter() {
+    @Override
     public boolean allows(String path) {
       return path.charAt(0) != '/';
     }
@@ -279,6 +282,7 @@ public class DefaultFilters {
   }
 
   private final ResourceFilter rejectAll = new ResourceFilter() {
+    @Override
     public boolean allows(String path) {
       return false;
     }
@@ -327,6 +331,7 @@ public class DefaultFilters {
     }
     // another common-case
     ResourceFilter filter = new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         // do not handle the case when pattern ends in '/'
         if (path.endsWith("/")) {
@@ -366,6 +371,7 @@ public class DefaultFilters {
       ZipScanner scanner = getScanner(includeList, excludeList, skipList,
           defaultExcludes, caseSensitive);
 
+      @Override
       public boolean allows(String path) {
         return filterFileType.matches(path) && scanner.match(path);
       }
@@ -412,6 +418,7 @@ public class DefaultFilters {
 
     final Pattern pattern = getPatternFromStrings(patternStrings);
     return new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return pattern.matcher(path).matches();
       }

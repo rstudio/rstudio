@@ -56,10 +56,12 @@ public class ResponseTest extends RequestTestBase {
    */
   public void testGetStatusCode() {
     executeTest(new RequestCallback() {
+      @Override
       public void onError(Request request, Throwable exception) {
         fail();
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(200, response.getStatusCode());
         finishTest();
@@ -81,6 +83,7 @@ public class ResponseTest extends RequestTestBase {
 
     executeTest(getHTTPRequestBuilder(getTestBaseURL() + "noResponseText"),
         new RequestCallback() {
+          @Override
           public void onError(Request request, Throwable exception) {
             if (exception instanceof RuntimeException) {
               finishTest();
@@ -89,6 +92,7 @@ public class ResponseTest extends RequestTestBase {
             }
           }
 
+          @Override
           public void onResponseReceived(Request request, Response response) {
             try {
               int statusCode = response.getStatusCode();
@@ -106,6 +110,7 @@ public class ResponseTest extends RequestTestBase {
    */
   public void testGetStatusText() {
     executeTest(new RequestCallback() {
+      @Override
       public void onError(Request request, Throwable exception) {
         if (exception instanceof RuntimeException) {
 
@@ -114,6 +119,7 @@ public class ResponseTest extends RequestTestBase {
         }
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals("OK", response.getStatusText());
         finishTest();
@@ -132,6 +138,7 @@ public class ResponseTest extends RequestTestBase {
 
     executeTest(getHTTPRequestBuilder(getTestBaseURL() + "noResponseText"),
         new RequestCallback() {
+          @Override
           public void onError(Request request, Throwable exception) {
             if (exception instanceof RuntimeException) {
               finishTest();
@@ -140,6 +147,7 @@ public class ResponseTest extends RequestTestBase {
             }
           }
 
+          @Override
           public void onResponseReceived(Request request, Response response) {
             try {
               String statusText = response.getStatusText();

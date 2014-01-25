@@ -43,18 +43,22 @@ public class InheritanceTestServiceImpl extends HybridServiceServlet implements
    */
   private ServletContext wrappedServletContext;
 
+  @Override
   public AnonymousClassInterface echo(AnonymousClassInterface serializable) {
     return serializable;
   }
 
+  @Override
   public Circle echo(Circle circle) {
     return circle;
   }
 
+  @Override
   public JavaSerializableClass echo(JavaSerializableClass javaSerializableClass) {
     return javaSerializableClass;
   }
 
+  @Override
   public SerializableClass echo(SerializableClass serializableClass) {
     if (!InheritanceTestSetValidator.isValid(serializableClass)) {
       throw new RuntimeException();
@@ -63,6 +67,7 @@ public class InheritanceTestServiceImpl extends HybridServiceServlet implements
     return serializableClass;
   }
 
+  @Override
   public SerializableClassWithTransientField echo(
       SerializableClassWithTransientField serializableClass) {
     if (!InheritanceTestSetValidator.isValid(serializableClass)) {
@@ -76,19 +81,23 @@ public class InheritanceTestServiceImpl extends HybridServiceServlet implements
     return serializableClass;
   }
 
+  @Override
   public void foo() {
   }
 
+  @Override
   public AbstractClass getAbstractClass() {
     // never actually called, used in testing the RPC generator
     return null;
   }
 
+  @Override
   public MySerializableInterface getSerializableInterface1() {
     // never actually called, used in testing the RPC generator
     return null;
   }
 
+  @Override
   public MySerializableInterface getSerializableInterface2() {
     // never actually called, used in testing the RPC generator
     return null;
@@ -117,6 +126,7 @@ public class InheritanceTestServiceImpl extends HybridServiceServlet implements
     return wrappedServletContext;
   }
 
+  @Override
   public SerializableClass getUnserializableClass() {
     return InheritanceTestSetFactory.createNonStaticInnerClass();
   }

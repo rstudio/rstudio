@@ -37,6 +37,7 @@ public class JEnumConstant extends JField implements
    * 
    * @return ordinal value for this enumeration constant
    */
+  @Override
   public int getOrdinal() {
     return ordinal;
   }

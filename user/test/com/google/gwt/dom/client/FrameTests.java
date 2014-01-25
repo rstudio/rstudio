@@ -47,6 +47,7 @@ public class FrameTests extends GWTTestCase {
     delayTestFinish(FRAME_LOAD_DELAY);
 
     Frame frame = new Frame() {
+      @Override
       public void onBrowserEvent(Event event) {
         if (event.getTypeInt() == Event.ONLOAD) {
           finishTest();
@@ -65,6 +66,7 @@ public class FrameTests extends GWTTestCase {
 
     Frame frame = new Frame();
     frame.addLoadHandler(new LoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         finishTest();
       }
@@ -80,6 +82,7 @@ public class FrameTests extends GWTTestCase {
     Frame frame = new Frame() {
       {
         addDomHandler(new LoadHandler() {
+          @Override
           public void onLoad(LoadEvent event) {
             finishTest();
           }

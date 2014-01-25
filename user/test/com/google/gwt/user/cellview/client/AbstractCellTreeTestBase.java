@@ -73,6 +73,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       }
     }
 
+    @Override
     public <T> NodeInfo<?> getNodeInfo(T value) {
       if (value == ROOT_VALUE) {
         return new DefaultNodeInfo<String>(rootDataProvider, cell,
@@ -90,6 +91,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       throw new IllegalArgumentException("Unrecognized value type");
     }
 
+    @Override
     public boolean isLeaf(Object value) {
       if (value == ROOT_VALUE) {
         return false;
@@ -148,6 +150,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       return toRet;
     }
 
+    @Override
     public void onClose(CloseEvent<TreeNode> event) {
       assertNull(lastEvent);
       this.lastEvent = event;
@@ -167,6 +170,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
       return toRet;
     }
 
+    @Override
     public void onOpen(OpenEvent<TreeNode> event) {
       assertNull(lastEvent);
       this.lastEvent = event;
@@ -261,9 +265,11 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
 
     // Create a model with only one level, and three values at that level.
     TreeViewModel model = new TreeViewModel() {
+      @Override
       public NodeInfo<?> getNodeInfo(Object value) {
         // The key provider returns the first char as an integer.
         ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
+          @Override
           public Object getKey(String item) {
             return Integer.parseInt(item.substring(0, 1));
           }
@@ -276,6 +282,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
         return new DefaultNodeInfo<String>(dataProvider, cell);
       }
 
+      @Override
       public boolean isLeaf(Object value) {
         return value != null;
       }
@@ -285,6 +292,7 @@ public abstract class AbstractCellTreeTestBase extends GWTTestCase {
     createAbstractCellTree(model, null);
     delayTestFinish(5000);
     Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+      @Override
       public void execute() {
         assertEquals("Cell#render() should be called exactly thrice", 3,
             rendered.size());

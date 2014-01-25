@@ -582,6 +582,7 @@ public class DefaultFiltersTest extends TestCase {
     final ZipScanner scanner = DefaultFilters.getScanner(includes, excludes,
         skips, defaultExcludes, true);
     return new ResourceFilterString(new ResourceFilter() {
+      @Override
       public boolean allows(String path) {
         return fileTypeMatches(filterFileType, path) && scanner.match(path);
       }

@@ -39,6 +39,7 @@ class HostedModeServletConfigProxy implements ServletConfig {
    * @return
    * @see javax.servlet.ServletConfig#getInitParameter(java.lang.String)
    */
+  @Override
   public String getInitParameter(String arg0) {
     return config.getInitParameter(arg0);
   }
@@ -47,6 +48,7 @@ class HostedModeServletConfigProxy implements ServletConfig {
    * @return
    * @see javax.servlet.ServletConfig#getInitParameterNames()
    */
+  @Override
   @SuppressWarnings("unchecked")
   public Enumeration<String> getInitParameterNames() {
     return config.getInitParameterNames();
@@ -56,6 +58,7 @@ class HostedModeServletConfigProxy implements ServletConfig {
    * @return
    * @see javax.servlet.ServletConfig#getServletContext()
    */
+  @Override
   public ServletContext getServletContext() {
     return context;
   }
@@ -64,6 +67,7 @@ class HostedModeServletConfigProxy implements ServletConfig {
    * @return
    * @see javax.servlet.ServletConfig#getServletName()
    */
+  @Override
   public String getServletName() {
     return config.getServletName();
   }

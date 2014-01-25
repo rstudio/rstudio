@@ -23,5 +23,6 @@ public interface JArrayType extends JClassType {
 
   int getRank();
 
+  @Override
   JArrayType[] getSubtypes();
 }

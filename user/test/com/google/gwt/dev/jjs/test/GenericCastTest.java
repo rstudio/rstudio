@@ -42,6 +42,7 @@ public class GenericCastTest extends GWTTestCase {
   static class LiarFoo extends Liar<Foo> {
     public void testOuterField() {
       new Runnable() {
+        @Override
         public void run() {
           // Should succeed
           Object a = value;
@@ -67,6 +68,7 @@ public class GenericCastTest extends GWTTestCase {
 
     public void testOuterMethod() {
       new Runnable() {
+        @Override
         public void run() {
           // Should succeed
           Object a = get();
@@ -134,6 +136,7 @@ public class GenericCastTest extends GWTTestCase {
 
     void testInternalAccess() {
       new Runnable() {
+        @Override
         public void run() {
           Object a = get();
           try {
@@ -181,6 +184,7 @@ public class GenericCastTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

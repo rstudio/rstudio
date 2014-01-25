@@ -194,6 +194,7 @@ public class GestureEventSinkTest extends GWTTestCase {
     }
 
     w.addGestureChangeHandler(new GestureChangeHandler() {
+      @Override
       public void onGestureChange(GestureChangeEvent event) {
       }
     });
@@ -221,6 +222,7 @@ public class GestureEventSinkTest extends GWTTestCase {
     }
 
     w.addGestureEndHandler(new GestureEndHandler() {
+      @Override
       public void onGestureEnd(GestureEndEvent event) {
       }
     });
@@ -249,6 +251,7 @@ public class GestureEventSinkTest extends GWTTestCase {
     }
 
     w.addGestureStartHandler(new GestureStartHandler() {
+      @Override
       public void onGestureStart(GestureStartEvent event) {
       }
     });

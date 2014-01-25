@@ -384,6 +384,7 @@ public class BindingProperty extends Property {
 
     // Sort the list
     Lists.sort(collapsedValues, new Comparator<SortedSet<String>>() {
+      @Override
       public int compare(SortedSet<String> o1, SortedSet<String> o2) {
         String s1 = o1.toString();
         String s2 = o2.toString();

@@ -24,6 +24,7 @@ import java.util.Comparator;
  * Exists as a real class to allow TreeMaps to be serialized.
  */
 public class StoryImplComparator implements Comparator<Story>, Serializable {
+  @Override
   public int compare(Story o1, Story o2) {
     return ((StoryImpl) o1).getId() - ((StoryImpl) o2).getId();
   }

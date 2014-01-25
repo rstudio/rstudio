@@ -145,6 +145,7 @@ public class BuiltinConstraintsGwtTest extends GWTTestCase {
     delegate.testSizeConstraint();
   }
 
+  @Override
   public String toString() {
     return delegate.toString();
   }

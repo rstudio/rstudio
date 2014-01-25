@@ -67,6 +67,7 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
       final Class<? extends Annotation> annotationClass) {
     return new Predicate<Method>() {
 
+      @Override
       public boolean apply(Method method) {
         return method.getAnnotation(annotationClass) != null;
       }
@@ -75,6 +76,7 @@ public class TckTestSuiteWrapper extends GWTTestSuite {
 
   private static <T> Predicate<T> createHasProperty(final String property) {
     return new Predicate<T>() {
+      @Override
       public boolean apply(T notUsed) {
         String value = System.getProperty(property);
         return Boolean.parseBoolean(value);

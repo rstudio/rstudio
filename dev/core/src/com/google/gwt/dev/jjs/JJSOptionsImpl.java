@@ -121,6 +121,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return sourceLevel;
   }
 
+  @Override
   @Deprecated
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;

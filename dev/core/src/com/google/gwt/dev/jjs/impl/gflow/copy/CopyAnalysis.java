@@ -33,15 +33,18 @@ import com.google.gwt.dev.jjs.impl.gflow.cfg.CfgTransformer;
 public class CopyAnalysis implements
     Analysis<CfgNode<?>, CfgEdge, Cfg, CopyAssumption>,
     IntegratedAnalysis<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, CopyAssumption> {
+  @Override
   public FlowFunction<CfgNode<?>, CfgEdge, Cfg, CopyAssumption> getFlowFunction() {
     return new CopyFlowFunction();
   }
 
+  @Override
   public IntegratedFlowFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, CopyAssumption> 
   getIntegratedFlowFunction() {
     return new CopyIntegratedFlowFunction();
   }
 
+  @Override
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, CopyAssumption> assumptionMap) {
     AssumptionUtil.setAssumptions(graph.getGraphInEdges(), 

@@ -178,6 +178,7 @@ public class GWTTestCaseAsyncTest extends GWTTestCaseTestBase {
     new Timer() {
       private int i = 0;
 
+      @Override
       public void run() {
         if (++i < 4) {
           delayTestFinish(200);

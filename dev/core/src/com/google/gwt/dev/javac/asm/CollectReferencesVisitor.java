@@ -44,61 +44,77 @@ public class CollectReferencesVisitor extends EmptyVisitor {
       super(Opcodes.ASM4);
     }
 
+    @Override
     public SignatureVisitor visitArrayType() {
       return this;
     }
 
+    @Override
     public void visitBaseType(char descriptor) {
     }
 
+    @Override
     public SignatureVisitor visitClassBound() {
       return this;
     }
 
+    @Override
     public void visitClassType(String name) {
       referencedTypes.add(name);
     }
 
+    @Override
     public void visitEnd() {
     }
 
+    @Override
     public SignatureVisitor visitExceptionType() {
       return this;
     }
 
+    @Override
     public void visitFormalTypeParameter(String name) {
     }
 
+    @Override
     public void visitInnerClassType(String name) {
     }
 
+    @Override
     public SignatureVisitor visitInterface() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitInterfaceBound() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitParameterType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitReturnType() {
       return this;
     }
 
+    @Override
     public SignatureVisitor visitSuperclass() {
       return this;
     }
 
+    @Override
     public void visitTypeArgument() {
     }
 
+    @Override
     public SignatureVisitor visitTypeArgument(char wildcard) {
       return this;
     }
 
+    @Override
     public void visitTypeVariable(String name) {
     }
   }

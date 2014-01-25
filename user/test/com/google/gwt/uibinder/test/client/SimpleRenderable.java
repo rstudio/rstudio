@@ -69,6 +69,7 @@ public class SimpleRenderable extends Widget implements IsRenderable, HasText, H
     setElement(element);
   }
 
+  @Override
   public String getText() {
     return text;
   }

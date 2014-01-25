@@ -415,6 +415,7 @@ public class ArraysTest extends EmulTestBase {
   @SuppressWarnings("unchecked")
   public void testBinarySearchObjectComparator() {
     Comparator inverseSort = new Comparator() {
+      @Override
       public int compare(Object o1, Object o2) {
         return ((Comparable) o2).compareTo(o1);
       }
@@ -555,6 +556,7 @@ public class ArraysTest extends EmulTestBase {
     Object[] sorted = {"a", "b", "b", "c"};
     assertEquals(x, sorted);
     Comparator<Object> t = new Comparator<Object>() {
+      @Override
       @SuppressWarnings("unchecked")
       public int compare(Object o1, Object o2) {
         return ((Comparable<Object>) o2).compareTo(o1);
@@ -584,6 +586,7 @@ public class ArraysTest extends EmulTestBase {
     while (validPermutation(permutation, origData.length)) {
       TestObject[] permutedArray = getPermutation(origData, permutation);
       Arrays.sort(permutedArray, new Comparator<TestObject>() {
+        @Override
         public int compare(TestObject a, TestObject b) {
           return a.getValue() - b.getValue();
         }

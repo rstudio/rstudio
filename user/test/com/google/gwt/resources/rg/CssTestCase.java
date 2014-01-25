@@ -79,47 +79,57 @@ public class CssTestCase extends TestCase {
    * Total fake, no implementations.
    */
   private static class FakeContext implements ResourceContext {
+    @Override
     public String deploy(String suggestedFileName, String mimeType,
         byte[] data, boolean forceExternal) throws UnableToCompleteException {
       return null;
     }
 
+    @Override
     @Deprecated
     public String deploy(URL resource, boolean forceExternal)
         throws UnableToCompleteException {
       return null;
     }
 
+    @Override
     public String deploy(URL resource, String mimeType, boolean forceExternal)
         throws UnableToCompleteException {
       return null;
     }
 
+    @Override
     public <T> T getCachedData(String key, Class<T> clazz) {
       return null;
     }
 
+    @Override
     public JClassType getClientBundleType() {
       return null;
     }
 
+    @Override
     public GeneratorContext getGeneratorContext() {
       return null;
     }
 
+    @Override
     public String getImplementationSimpleSourceName()
         throws IllegalStateException {
       return null;
     }
     
+    @Override
     public ClientBundleRequirements getRequirements() {
       return null;
     }
 
+    @Override
     public <T> boolean putCachedData(String key, T value) {
       return false;
     }
 
+    @Override
     public boolean supportsDataUrls() {
       return true;
     }

@@ -45,6 +45,7 @@ public class InheritanceTestSetFactory {
    */
   public static class AnonymousClassInterfaceImplementor implements
       AnonymousClassInterface {
+    @Override
     public void foo() {
     }
   }
@@ -241,6 +242,7 @@ public class InheritanceTestSetFactory {
 
   public static SerializableClass createNonStaticInnerClass() {
     return new SerializableClass() {
+      @Override
       public String toString() {
         return "foo";
       }

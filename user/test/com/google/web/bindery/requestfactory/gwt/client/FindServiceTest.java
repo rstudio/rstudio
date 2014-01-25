@@ -306,6 +306,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
     final HandlerRegistration registration =
         EntityProxyChange.registerForProxyType(req.getEventBus(), SimpleFooProxy.class,
             new EntityProxyChange.Handler<SimpleFooProxy>() {
+              @Override
               public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
                 count[0]++;
               }
@@ -365,6 +366,7 @@ public class FindServiceTest extends RequestFactoryTestBase {
     final HandlerRegistration registration =
         EntityProxyChange.registerForProxyType(req.getEventBus(), SimpleFooProxy.class,
             new EntityProxyChange.Handler<SimpleFooProxy>() {
+              @Override
               public void onProxyChange(EntityProxyChange<SimpleFooProxy> event) {
                 count[0]++;
               }

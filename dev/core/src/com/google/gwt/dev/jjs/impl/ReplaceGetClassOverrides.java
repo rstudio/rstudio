@@ -45,6 +45,7 @@ public class ReplaceGetClassOverrides {
       clazzField = program.getIndexedField("Object.___clazz");
     }
 
+    @Override
     public void endVisit(JMethod x, Context ctx) {
       // don't prune JSO.getClass()
       if (x.getEnclosingType() == program.getJavaScriptObject()) {
@@ -55,6 +56,7 @@ public class ReplaceGetClassOverrides {
       }
     }
 
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       // don't inline JSO.getClass()
       if (x.getTarget().getEnclosingType() == program.getJavaScriptObject()) {

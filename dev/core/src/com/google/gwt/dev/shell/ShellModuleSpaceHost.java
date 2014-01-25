@@ -72,16 +72,19 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     this.rebindCache = rebindCache;
   }
 
+  @Override
   public CompilingClassLoader getClassLoader() {
     checkForModuleSpace();
     return classLoader;
   }
 
+  @Override
   public String[] getEntryPointTypeNames() {
     checkForModuleSpace();
     return module.getEntryPointTypeNames();
   }
 
+  @Override
   public TreeLogger getLogger() {
     return logger;
   }
@@ -95,6 +98,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     rebindOracle.invalidateRebind(sourceTypeName);
   }
 
+  @Override
   public void onModuleReady(ModuleSpace readySpace)
       throws UnableToCompleteException {
     this.space = readySpace;
@@ -140,11 +144,13 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     }
   }
 
+  @Override
   public String rebind(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException {
     synchronized (rebindLock) {
       checkForModuleSpace();
       return rebindOracle.rebind(logger, sourceTypeName, new ArtifactAcceptor() {
+        @Override
         public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
         throws UnableToCompleteException {
           artifactAcceptor.accept(logger, newlyGeneratedArtifacts);

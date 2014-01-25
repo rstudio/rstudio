@@ -71,6 +71,7 @@ public class TestSuite implements Test {
   public void addTestSuite(Class<? extends TestCase> testClass) {
   }
 
+  @Override
   public int countTestCases() {
     return 0;
   }

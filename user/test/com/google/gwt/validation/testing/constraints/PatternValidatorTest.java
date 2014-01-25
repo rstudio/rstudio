@@ -47,6 +47,7 @@ public class PatternValidatorTest extends
     assertConstraintValidator("this is not good", false);
   }
 
+  @Override
   protected PatternValidator createValidator() {
     return new PatternValidator();
   }

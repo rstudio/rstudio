@@ -50,6 +50,7 @@ public class MockHasData<T> implements HasData<T> {
       return lastRowCountExact;
     }
 
+    @Override
     public void onRowCountChange(RowCountChangeEvent event) {
       this.lastRowCount = event.getNewRowCount();
       this.lastRowCountExact = event.isNewRowCountExact();
@@ -73,6 +74,7 @@ public class MockHasData<T> implements HasData<T> {
       return lastRange;
     }
 
+    @Override
     public void onRangeChange(RangeChangeEvent event) {
       this.lastRange = event.getNewRange();
     }
@@ -93,15 +95,18 @@ public class MockHasData<T> implements HasData<T> {
   private HandlerRegistration selectionHandler;
   private SelectionModel<? super T> selectionModel;
 
+  @Override
   public HandlerRegistration addCellPreviewHandler(Handler<T> handler) {
     return handlerManager.addHandler(CellPreviewEvent.getType(), handler);
   }
 
+  @Override
   public HandlerRegistration addRangeChangeHandler(
       RangeChangeEvent.Handler handler) {
     return handlerManager.addHandler(RangeChangeEvent.getType(), handler);
   }
 
+  @Override
   public HandlerRegistration addRowCountChangeHandler(
       RowCountChangeEvent.Handler handler) {
     return handlerManager.addHandler(RowCountChangeEvent.getType(), handler);
@@ -115,18 +120,22 @@ public class MockHasData<T> implements HasData<T> {
     lastRange = null;
   }
 
+  @Override
   public void fireEvent(GwtEvent<?> event) {
     handlerManager.fireEvent(event);
   }
 
+  @Override
   public T getVisibleItem(int indexOnPage) {
     return lastRowData.get(indexOnPage);
   }
 
+  @Override
   public int getVisibleItemCount() {
     return lastRowData == null ? 0 : lastRowData.size();
   }
 
+  @Override
   public List<T> getVisibleItems() {
     return lastRowData;
   }
@@ -159,31 +168,38 @@ public class MockHasData<T> implements HasData<T> {
     return lastRange;
   }
 
+  @Override
   public int getRowCount() {
     return rowCount;
   }
 
+  @Override
   public SelectionModel<? super T> getSelectionModel() {
     return selectionModel;
   }
 
+  @Override
   public Range getVisibleRange() {
     return new Range(pageStart, pageSize);
   }
 
+  @Override
   public boolean isRowCountExact() {
     return rowCountExact;
   }
 
+  @Override
   public void setRowData(int start, List<? extends T> values) {
     lastRange = new Range(start, values.size());
     lastRowData = new ArrayList<T>(values);
   }
 
+  @Override
   public final void setRowCount(int count) {
     setRowCount(count, true);
   }
 
+  @Override
   public void setRowCount(int count, boolean isExact) {
     if (this.rowCount == count && this.rowCountExact == isExact) {
       return;
@@ -193,19 +209,23 @@ public class MockHasData<T> implements HasData<T> {
     RowCountChangeEvent.fire(this, count, isExact);
   }
 
+  @Override
   public final void setVisibleRange(int start, int length) {
     setVisibleRange(new Range(start, length));
   }
 
+  @Override
   public void setVisibleRange(Range range) {
     setVisibleRange(range, false, false);
   }
 
+  @Override
   public void setVisibleRangeAndClearData(
       Range range, boolean forceRangeChangeEvent) {
     setVisibleRange(range, true, forceRangeChangeEvent);
   }
 
+  @Override
   public void setSelectionModel(SelectionModel<? super T> selectionModel) {
     // Remove the old selection handler.
     if (selectionHandler != null) {
@@ -218,6 +238,7 @@ public class MockHasData<T> implements HasData<T> {
     if (selectionModel != null) {
       selectionHandler = selectionModel.addSelectionChangeHandler(
           new SelectionChangeEvent.Handler() {
+            @Override
             public void onSelectionChange(SelectionChangeEvent event) {
             }
           });

@@ -41,10 +41,12 @@ public class HeadlessUI extends DevModeUI {
       String url, String tabKey, String moduleName, String sessionKey,
       String agentTag, byte[] agentIcon, Type logLevel) {
     return new ModuleHandle() {
+      @Override
       public TreeLogger getLogger() {
         return getConsoleLogger();
       }
 
+      @Override
       public void unload() {
       }
     };

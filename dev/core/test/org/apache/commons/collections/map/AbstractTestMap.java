@@ -420,6 +420,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
      * 
      * @return the map to be tested
      */
+    @Override
     public Object makeObject() {
         return makeEmptyMap();
     }
@@ -445,6 +446,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
     /**
      * Gets the compatability version, needed for package access.
      */
+    @Override
     public String getCompatibilityVersion() {
         return super.getCompatibilityVersion();
     }
@@ -1251,6 +1253,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
         }
 
         // Have to implement manually; entrySet doesn't support addAll
+        @Override
         public Object[] getFullElements() {
             Object[] k = getSampleKeys();
             Object[] v = getSampleValues();
@@ -1258,24 +1261,29 @@ public abstract class AbstractTestMap extends AbstractTestObject {
         }
         
         // Have to implement manually; entrySet doesn't support addAll
+        @Override
         public Object[] getOtherElements() {
             Object[] k = getOtherKeys();
             Object[] v = getOtherValues();
             return makeEntryArray(k, v);
         }
         
+        @Override
         public Set makeEmptySet() {
             return makeEmptyMap().entrySet();
         }
         
+        @Override
         public Set makeFullSet() {
             return makeFullMap().entrySet();
         }
         
+        @Override
         public boolean isAddSupported() {
             // Collection views don't support add operations.
             return false;
         }
+        @Override
         public boolean isRemoveSupported() {
             // Entry set should only support remove if map does
             return AbstractTestMap.this.isRemoveSupported();
@@ -1283,16 +1291,19 @@ public abstract class AbstractTestMap extends AbstractTestObject {
         public boolean isGetStructuralModify() {
             return AbstractTestMap.this.isGetStructuralModify();
         }
+        @Override
         public boolean isTestSerialization() {
             return false;
         }
 
+        @Override
         public void resetFull() {
             AbstractTestMap.this.resetFull();
             collection = map.entrySet();
             TestMapEntrySet.this.confirmed = AbstractTestMap.this.confirmed.entrySet();
         }
         
+        @Override
         public void resetEmpty() {
             AbstractTestMap.this.resetEmpty();
             collection = map.entrySet();
@@ -1392,6 +1403,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
             assertEquals(false, getSet().remove(new Object()));
         }
         
+        @Override
         public void verify() {
             super.verify();
             AbstractTestMap.this.verify();
@@ -1415,47 +1427,58 @@ public abstract class AbstractTestMap extends AbstractTestObject {
         public TestMapKeySet() {
             super("");
         }
+        @Override
         public Object[] getFullElements() {
             return getSampleKeys();
         }
         
+        @Override
         public Object[] getOtherElements() {
             return getOtherKeys();
         }
         
+        @Override
         public Set makeEmptySet() {
             return makeEmptyMap().keySet();
         }
         
+        @Override
         public Set makeFullSet() {
             return makeFullMap().keySet();
         }
         
+        @Override
         public boolean isNullSupported() {
             return AbstractTestMap.this.isAllowNullKey();
         }
+        @Override
         public boolean isAddSupported() {
             return false;
         }
+        @Override
         public boolean isRemoveSupported() {
             return AbstractTestMap.this.isRemoveSupported();
         }
+        @Override
         public boolean isTestSerialization() {
             return false;
         }
         
+        @Override
         public void resetEmpty() {
             AbstractTestMap.this.resetEmpty();
             collection = map.keySet();
             TestMapKeySet.this.confirmed = AbstractTestMap.this.confirmed.keySet();
         }
         
+        @Override
         public void resetFull() {
             AbstractTestMap.this.resetFull();
             collection = map.keySet();
             TestMapKeySet.this.confirmed = AbstractTestMap.this.confirmed.keySet();
         }
         
+        @Override
         public void verify() {
             super.verify();
             AbstractTestMap.this.verify();
@@ -1481,63 +1504,77 @@ public abstract class AbstractTestMap extends AbstractTestObject {
             super("");
         }
 
+        @Override
         public Object[] getFullElements() {
             return getSampleValues();
         }
         
+        @Override
         public Object[] getOtherElements() {
             return getOtherValues();
         }
         
+        @Override
         public Collection makeCollection() {
             return makeEmptyMap().values();
         }
         
+        @Override
         public Collection makeFullCollection() {
             return makeFullMap().values();
         }
         
+        @Override
         public boolean isNullSupported() {
             return AbstractTestMap.this.isAllowNullKey();
         }
+        @Override
         public boolean isAddSupported() {
             return false;
         }
+        @Override
         public boolean isRemoveSupported() {
             return AbstractTestMap.this.isRemoveSupported();
         }
+        @Override
         public boolean isTestSerialization() {
             return false;
         }
         
+        @Override
         public boolean areEqualElementsDistinguishable() {
             // equal values are associated with different keys, so they are
             // distinguishable.  
             return true;
         }
 
+        @Override
         public Collection makeConfirmedCollection() {
             // never gets called, reset methods are overridden
             return null;
         }
         
+        @Override
         public Collection makeConfirmedFullCollection() {
             // never gets called, reset methods are overridden
             return null;
         }
         
+        @Override
         public void resetFull() {
             AbstractTestMap.this.resetFull();
             collection = map.values();
             TestMapValues.this.confirmed = AbstractTestMap.this.confirmed.values();
         }
         
+        @Override
         public void resetEmpty() {
             AbstractTestMap.this.resetEmpty();
             collection = map.values();
             TestMapValues.this.confirmed = AbstractTestMap.this.confirmed.values();
         }
 
+        @Override
         public void verify() {
             super.verify();
             AbstractTestMap.this.verify();
@@ -1690,6 +1727,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
     /**
      * Erases any leftover instance variables by setting them to null.
      */
+    @Override
     public void tearDown() throws Exception {
         map = null;
         keySet = null;

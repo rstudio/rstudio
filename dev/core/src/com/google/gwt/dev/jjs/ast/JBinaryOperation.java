@@ -48,6 +48,7 @@ public class JBinaryOperation extends JExpression {
     return rhs;
   }
 
+  @Override
   public JType getType() {
     if (isAssignment()) {
       // Use the type of the lhs
@@ -71,6 +72,7 @@ public class JBinaryOperation extends JExpression {
     type = newType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (isAssignment()) {

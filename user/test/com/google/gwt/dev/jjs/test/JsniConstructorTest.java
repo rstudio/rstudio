@@ -51,21 +51,26 @@ public class JsniConstructorTest extends GWTTestCase {
     static void s2() {
     }
 
+    @Override
     public void a1() {
     }
 
+    @Override
     public void a2() {
     }
 
+    @Override
     public void a3() {
     }
 
+    @Override
     public void c1() {
     }
 
     public void c2() {
     }
 
+    @Override
     public String toString() {
       return "";
     }

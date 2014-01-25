@@ -23,6 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class IntegerTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

@@ -43,10 +43,12 @@ public class RunAsyncTest extends GWTTestCase {
     delayTestFinish(RUNASYNC_TIMEOUT);
 
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         throw new RuntimeException(caught);
       }
 
+      @Override
       public void onSuccess() {
         finishTest();
       }
@@ -64,10 +66,12 @@ public class RunAsyncTest extends GWTTestCase {
     staticWrittenInBaseButReadLater = HELLO;
 
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         throw new RuntimeException(caught);
       }
 
+      @Override
       public void onSuccess() {
         // This read happens later
         assertEquals(HELLO, staticWrittenInBaseButReadLater);
@@ -104,9 +108,11 @@ public class RunAsyncTest extends GWTTestCase {
   private void assertRunAsyncIsAsync() {
     final int lastValue = staticWrittenByAsync;
     GWT.runAsync(RunAsyncTest.class, new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         throw new RuntimeException(caught);
       }
+      @Override
       public void onSuccess() {
         staticWrittenByAsync++;
       }
@@ -127,10 +133,12 @@ public class RunAsyncTest extends GWTTestCase {
 
         GWT.runAsync(new RunAsyncCallback() {
 
+          @Override
           public void onFailure(Throwable caught) {
             throw new RuntimeException(caught);
           }
 
+          @Override
           public void onSuccess() {
             assertEquals(seen, thisCallNumber);
             seen++;
@@ -163,6 +171,7 @@ public class RunAsyncTest extends GWTTestCase {
 
     // set a handler that looks for toThrow
     GWT.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
       public void onUncaughtException(Throwable e) {
         if (e == toThrow) {
           // expected
@@ -173,9 +182,11 @@ public class RunAsyncTest extends GWTTestCase {
     delayTestFinish(RUNASYNC_TIMEOUT);
 
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
       }
 
+      @Override
       public void onSuccess() {
         throw toThrow;
       }

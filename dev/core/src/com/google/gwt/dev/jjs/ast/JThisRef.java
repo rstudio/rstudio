@@ -33,6 +33,7 @@ public class JThisRef extends JExpression {
     return type;
   }
 
+  @Override
   public JNonNullType getType() {
     return type.getNonNull();
   }
@@ -42,6 +43,7 @@ public class JThisRef extends JExpression {
     return false;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

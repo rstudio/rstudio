@@ -31,6 +31,7 @@ public abstract class SuggestionDisplayTestBase extends WidgetTestBase {
    * A no-op callback used for testing.
    */
   protected static final SuggestionCallback NULL_CALLBACK = new SuggestionCallback() {
+    @Override
     public void onSuggestionSelected(Suggestion suggestion) {
     }
   };
@@ -47,10 +48,12 @@ public abstract class SuggestionDisplayTestBase extends WidgetTestBase {
       this.text = text;
     }
 
+    @Override
     public String getDisplayString() {
       return text;
     }
 
+    @Override
     public String getReplacementString() {
       return text;
     }

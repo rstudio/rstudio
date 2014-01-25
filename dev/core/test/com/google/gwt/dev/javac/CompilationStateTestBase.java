@@ -60,30 +60,37 @@ public abstract class CompilationStateTestBase extends TestCase {
     Set<GeneratedUnit> units = new HashSet<GeneratedUnit>();
     for (final MockResource sourceFile : sourceFiles) {
       units.add(new GeneratedUnit() {
+        @Override
         public long creationTime() {
           return sourceFile.getLastModified();
         }
 
+        @Override
         public String getSource() {
           return sourceFile.getString();
         }
 
+        @Override
         public String getSourceMapPath() {
           return getTypeName().replace(".", "/") + ".java";
         }
 
+        @Override
         public long getSourceToken() {
           return -1;
         }
 
+        @Override
         public String getStrongHash() {
           return Util.computeStrongName(Util.getBytes(getSource()));
         }
 
+        @Override
         public String getTypeName() {
           return Shared.getTypeName(sourceFile);
         }
 
+        @Override
         public String optionalFileLocation() {
           return sourceFile.getLocation();
         }

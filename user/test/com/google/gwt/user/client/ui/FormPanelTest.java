@@ -55,11 +55,13 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     form.setAction("http://www.google.com/search");
 
     form.addSubmitHandler(new SubmitHandler() {
+      @Override
       public void onSubmit(SubmitEvent event) {
         event.cancel();
       }
     });
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      @Override
       public void onSubmitComplete(SubmitCompleteEvent event) {
         fail("Form was canceled and should not have been submitted");
       }
@@ -83,6 +85,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
     delayTestFinish(TEST_DELAY);
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      @Override
       public void onSubmitComplete(SubmitCompleteEvent event) {
         // The server just echoes the contents of the request. The following
         // string should have been present in it.
@@ -150,6 +153,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     delayTestFinish(TEST_DELAY);
 
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      @Override
       public void onSubmitComplete(SubmitCompleteEvent event) {
         // The server just echoes the query string. This is what it should look
         // like.
@@ -186,6 +190,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     // Submit the form using the submit button and make sure the submit event fires.
     delayTestFinish(TEST_DELAY);
     form.addSubmitHandler(new SubmitHandler() {
+      @Override
       public void onSubmit(SubmitEvent event) {
         finishTest();
       }
@@ -223,6 +228,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
 
     delayTestFinish(TEST_DELAY);
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      @Override
       public void onSubmitComplete(SubmitCompleteEvent event) {
         // Make sure we get our results back.
         assertTrue(event.getResults().equals("tb=text"));
@@ -336,6 +342,7 @@ public class FormPanelTest extends SimplePanelTestBase<FormPanel> {
     // Give the submit 5s to complete.
     delayTestFinish(TEST_DELAY);
     form.addSubmitCompleteHandler(new SubmitCompleteHandler() {
+      @Override
       public void onSubmitComplete(SubmitCompleteEvent event) {
         // Make sure we get our results back.
         assertTrue(event.getResults().equals("tb=text"));

@@ -31,6 +31,7 @@ public class SizeValidatorForArrayOfFloatTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForArrayOfFloat createValidator() {
     return new SizeValidatorForArrayOfFloat();
   }

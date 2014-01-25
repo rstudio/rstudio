@@ -77,6 +77,7 @@ public class Properties implements Iterable<Property> {
     return configProps;
   }
 
+  @Override
   public Iterator<Property> iterator() {
     return map.values().iterator();
   }

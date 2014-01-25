@@ -118,6 +118,7 @@ public class MethodCallTest extends GWTTestCase {
 
   private int value;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

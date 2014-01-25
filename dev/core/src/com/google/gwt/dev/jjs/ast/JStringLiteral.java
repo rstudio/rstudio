@@ -37,6 +37,7 @@ public class JStringLiteral extends JValueLiteral {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public JNonNullType getType() {
     return stringType.getNonNull();
   }
@@ -58,6 +59,7 @@ public class JStringLiteral extends JValueLiteral {
     this.stringType = stringType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

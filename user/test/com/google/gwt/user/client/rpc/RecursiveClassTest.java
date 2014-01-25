@@ -32,10 +32,12 @@ public class RecursiveClassTest extends RpcTestBase {
     delayTestFinishForRpc();
    
     service.greetServer("Hello", new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(result instanceof ResultNode);

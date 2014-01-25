@@ -63,12 +63,14 @@ public class DomEventTest extends HandlerTestBase {
     manager = new HandlerManager(flag);
     HandlerRegistration downRegistration = manager.addHandler(
         KeyDownEvent.getType(), new KeyDownHandler() {
+          @Override
           public void onKeyDown(KeyDownEvent event) {
             flag.flag = true;
           }
         });
     HandlerRegistration upRegistration = manager.addHandler(
         KeyUpEvent.getType(), new KeyUpHandler() {
+          @Override
           public void onKeyUp(KeyUpEvent event) {
             flag.flag = true;
           }
@@ -76,6 +78,7 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration pressRegistration = manager.addHandler(
         KeyPressEvent.getType(), new KeyPressHandler() {
+          @Override
           public void onKeyPress(KeyPressEvent event) {
             flag.flag = true;
           }
@@ -92,12 +95,14 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration downRegistration = manager.addHandler(
         MouseDownEvent.getType(), new MouseDownHandler() {
+          @Override
           public void onMouseDown(MouseDownEvent event) {
             flag.flag = true;
           }
         });
     HandlerRegistration upRegistration = manager.addHandler(
         MouseUpEvent.getType(), new MouseUpHandler() {
+          @Override
           public void onMouseUp(MouseUpEvent event) {
             flag.flag = true;
           }
@@ -105,6 +110,7 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration clickRegistration = manager.addHandler(
         ClickEvent.getType(), new ClickHandler() {
+          @Override
           public void onClick(ClickEvent event) {
             flag.flag = true;
           }
@@ -112,6 +118,7 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration dblclickRegistration = manager.addHandler(
         DoubleClickEvent.getType(), new DoubleClickHandler() {
+          @Override
           public void onDoubleClick(DoubleClickEvent event) {
             flag.flag = true;
           }
@@ -119,12 +126,14 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration outRegistration = manager.addHandler(
         MouseOutEvent.getType(), new MouseOutHandler() {
+          @Override
           public void onMouseOut(MouseOutEvent event) {
             flag.flag = true;
           }
         });
     HandlerRegistration overRegistration = manager.addHandler(
         MouseOverEvent.getType(), new MouseOverHandler() {
+          @Override
           public void onMouseOver(MouseOverEvent event) {
             flag.flag = true;
           }
@@ -132,6 +141,7 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration moveRegistration = manager.addHandler(
         MouseMoveEvent.getType(), new MouseMoveHandler() {
+          @Override
           public void onMouseMove(MouseMoveEvent event) {
             flag.flag = true;
           }
@@ -139,6 +149,7 @@ public class DomEventTest extends HandlerTestBase {
 
     HandlerRegistration wheelRegistration = manager.addHandler(
         MouseWheelEvent.getType(), new MouseWheelHandler() {
+          @Override
           public void onMouseWheel(MouseWheelEvent event) {
             flag.flag = true;
           }
@@ -161,6 +172,7 @@ public class DomEventTest extends HandlerTestBase {
 
     final Flag flag = new Flag();
     b.addMouseDownHandler(new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         assertEquals("", 16, event.getX());
         assertEquals("", 8, event.getY());

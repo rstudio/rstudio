@@ -46,6 +46,7 @@ public class CoverageTest extends CoverageBase {
       super(i);
     }
 
+    @Override
     public void foo() {
       final int z = this.y;
 
@@ -61,6 +62,7 @@ public class CoverageTest extends CoverageBase {
           CoverageTest.super.x = z;
         }
 
+        @Override
         public void foo() {
           x = z;
           this.x = z;
@@ -74,6 +76,7 @@ public class CoverageTest extends CoverageBase {
       };
 
       class NamedLocal extends Inner {
+        @Override
         @SuppressWarnings("unused")
         public void foo() {
           CoverageTest.this.getNext();
@@ -85,6 +88,7 @@ public class CoverageTest extends CoverageBase {
         // JDT bug? This works in 5.0 but not in 1.4
         // TODO: will javac compile it?
         class NamedLocalSub extends NamedLocal {
+          @Override
           @SuppressWarnings("unused")
           public void foo() {
             Inner.this.bar();
@@ -758,6 +762,7 @@ public class CoverageTest extends CoverageBase {
     public void foo() {
     }
 
+    @Override
     public String toString() {
       return String.valueOf(x);
     }
@@ -869,9 +874,11 @@ public class CoverageTest extends CoverageBase {
     next = this;
   }
 
+  @Override
   public void foo() {
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

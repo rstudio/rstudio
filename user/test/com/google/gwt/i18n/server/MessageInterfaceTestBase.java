@@ -46,6 +46,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
 
     private final FormVisitorDriver selectorTracker = new FormVisitorDriver();
 
+    @Override
     public void beginForm(int level, String formName)
         throws MessageProcessingException {
       switch (visitState) {
@@ -153,6 +154,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
       visitState++;
     }
 
+    @Override
     public void beginSelector(int level, Parameter selectorArg)
         throws MessageProcessingException {
       switch (visitState) {
@@ -202,6 +204,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
       visitState++;
     }
 
+    @Override
     public void endForm(int level, String formName) {
       switch (visitState) {
         case 7:
@@ -321,6 +324,7 @@ public abstract class MessageInterfaceTestBase extends TestCase {
       // TODO Auto-generated method stub
     }
 
+    @Override
     public void endSelector(int level, Parameter selectorArg) {
       switch (visitState) {
         case 14:

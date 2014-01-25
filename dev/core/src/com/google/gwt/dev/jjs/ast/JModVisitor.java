@@ -39,30 +39,36 @@ public class JModVisitor extends JVisitor {
       this.list = list;
     }
 
+    @Override
     public boolean canInsert() {
       return true;
     }
 
+    @Override
     public boolean canRemove() {
       return true;
     }
 
+    @Override
     public void insertAfter(JNode node) {
       checkRemoved();
       list.add(index + 1, (T) node);
       ++numVisitorChanges;
     }
 
+    @Override
     public void insertBefore(JNode node) {
       checkRemoved();
       list.add(index++, (T) node);
       ++numVisitorChanges;
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       checkState();
       list.remove(index--);
@@ -70,6 +76,7 @@ public class JModVisitor extends JVisitor {
       ++numVisitorChanges;
     }
 
+    @Override
     public void replaceMe(JNode node) {
       checkState();
       checkReplacement(list.get(index), node);
@@ -121,30 +128,36 @@ public class JModVisitor extends JVisitor {
       this.list = list;
     }
 
+    @Override
     public boolean canInsert() {
       return true;
     }
 
+    @Override
     public boolean canRemove() {
       return true;
     }
 
+    @Override
     public void insertAfter(JNode node) {
       checkRemoved();
       list = Lists.add(list, index + 1, (T) node);
       ++numVisitorChanges;
     }
 
+    @Override
     public void insertBefore(JNode node) {
       checkRemoved();
       list = Lists.add(list, index++, (T) node);
       ++numVisitorChanges;
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       checkState();
       list = Lists.remove(list, index--);
@@ -152,6 +165,7 @@ public class JModVisitor extends JVisitor {
       ++numVisitorChanges;
     }
 
+    @Override
     public void replaceMe(JNode node) {
       checkState();
       checkReplacement(list.get(index), node);
@@ -209,26 +223,32 @@ public class JModVisitor extends JVisitor {
       this.canRemove = canRemove;
     }
 
+    @Override
     public boolean canInsert() {
       return false;
     }
 
+    @Override
     public boolean canRemove() {
       return this.canRemove;
     }
 
+    @Override
     public void insertAfter(JNode node) {
       throw new UnsupportedOperationException("Can't insert after " + node);
     }
 
+    @Override
     public void insertBefore(JNode node) {
       throw new UnsupportedOperationException("Can't insert before " + node);
     }
 
+    @Override
     public boolean isLvalue() {
       return false;
     }
 
+    @Override
     public void removeMe() {
       if (!canRemove) {
         throw new UnsupportedOperationException("Can't remove " + node);
@@ -238,6 +258,7 @@ public class JModVisitor extends JVisitor {
       ++numVisitorChanges;
     }
 
+    @Override
     public void replaceMe(JNode node) {
       if (replaced) {
         throw new InternalCompilerException("Node was already replaced");

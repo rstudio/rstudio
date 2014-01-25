@@ -48,6 +48,7 @@ public class JsCastMap extends JsonArray {
       return queryType;
     }
 
+    @Override
     public void traverse(JVisitor visitor, Context ctx) {
       if (visitor.visit(this, ctx)) {
       }
@@ -60,6 +61,7 @@ public class JsCastMap extends JsonArray {
     getExprs().addAll(queryTypes);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(getExprs());

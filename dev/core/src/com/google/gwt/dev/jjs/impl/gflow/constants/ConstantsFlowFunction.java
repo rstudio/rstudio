@@ -42,6 +42,7 @@ import java.util.ArrayList;
  */
 public class ConstantsFlowFunction implements
     FlowFunction<CfgNode<?>, CfgEdge, Cfg, ConstantsAssumption> {
+  @Override
   public void interpret(CfgNode<?> node,
       final Cfg graph, AssumptionMap<CfgEdge, ConstantsAssumption> assumptionMap) {
     ConstantsAssumption in = AssumptionUtil.join(graph.getInEdges(node), assumptionMap);

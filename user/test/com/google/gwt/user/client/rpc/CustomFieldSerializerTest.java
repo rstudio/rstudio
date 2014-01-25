@@ -44,12 +44,14 @@ public class CustomFieldSerializerTest extends RpcTestBase {
     service.echo(
         CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             assertTrue("Should be a SerializationException",
                 caught instanceof SerializationException);
             finishTest();
           }
 
+          @Override
           public void onSuccess(Object result) {
             fail("Class UnserializableSubclass should not be serializable");
           }
@@ -67,6 +69,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
     service.echo(
         CustomFieldSerializerTestSetFactory.createUnserializableClass(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             AssertionFailedError er = new AssertionFailedError(
                 "Class UnserializableClass should be serializable because it has a custom field serializer");
@@ -74,6 +77,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
             throw er;
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(CustomFieldSerializerTestSetValidator.isValid((ManuallySerializedClass) result));
@@ -95,6 +99,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
     service.echo(
         CustomFieldSerializerTestSetFactory.createSerializableImmutablesArray(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             AssertionFailedError er = new AssertionFailedError(
                 "Could not serialize/deserialize immutable classes");
@@ -102,6 +107,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
             throw er;
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(CustomFieldSerializerTestSetValidator.isValid((ManuallySerializedImmutableClass[]) result));
@@ -120,6 +126,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
     service.echo(
         CustomFieldSerializerTestSetFactory.createSerializableSubclass(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             AssertionFailedError er = new AssertionFailedError(
                 "Class SerializableSubclass should be serializable automatically");
@@ -127,6 +134,7 @@ public class CustomFieldSerializerTest extends RpcTestBase {
             throw er;
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(CustomFieldSerializerTestSetValidator.isValid((SerializableSubclass) result));

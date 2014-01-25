@@ -28,6 +28,7 @@ public class A extends JavaScriptObject implements IA {
     return JavaScriptObject.createObject().cast();
   }
 
+  @Override
   public final String whoAmI() {
     return "A";
   }

@@ -36,26 +36,32 @@ public class JsonBoolean implements JsonValue {
     this.value = value;
   }
 
+  @Override
   public JsonArray asArray() {
     return null;
   }
 
+  @Override
   public JsonBoolean asBoolean() {
     return this;
   }
 
+  @Override
   public JsonNumber asNumber() {
     return null;
   }
 
+  @Override
   public JsonObject asObject() {
     return null;
   }
 
+  @Override
   public JsonString asString() {
     return null;
   }
 
+  @Override
   public JsonBoolean copyDeeply() {
     return this;
   }
@@ -64,26 +70,32 @@ public class JsonBoolean implements JsonValue {
     return value;
   }
 
+  @Override
   public boolean isArray() {
     return false;
   }
 
+  @Override
   public boolean isBoolean() {
     return true;
   }
 
+  @Override
   public boolean isNumber() {
     return false;
   }
 
+  @Override
   public boolean isObject() {
     return false;
   }
 
+  @Override
   public boolean isString() {
     return false;
   }
 
+  @Override
   public void write(Writer writer) throws IOException {
     writer.write(Boolean.toString(value));
   }

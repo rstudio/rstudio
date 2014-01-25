@@ -33,6 +33,7 @@ public abstract class JavaSource implements Source {
     this.path = Shared.toPath(typeName);
   }
 
+  @Override
   public String getPath() {
     return path;
   }

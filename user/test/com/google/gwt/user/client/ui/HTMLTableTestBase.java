@@ -35,6 +35,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   static class Adder implements HasWidgetsTester.WidgetAdder {
     private int row = -1;
 
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((HTMLTable) container).setWidget(++row, 0, child);
     }

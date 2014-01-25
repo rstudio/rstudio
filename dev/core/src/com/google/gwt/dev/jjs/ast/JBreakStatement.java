@@ -33,6 +33,7 @@ public class JBreakStatement extends JStatement {
     return label;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (label != null) {

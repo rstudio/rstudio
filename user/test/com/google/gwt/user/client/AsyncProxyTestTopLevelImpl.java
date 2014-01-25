@@ -20,52 +20,65 @@ package com.google.gwt.user.client;
  */
 public class AsyncProxyTestTopLevelImpl implements AsyncProxyTest.Test {
 
+  @Override
   public boolean defaultBool() {
     return false;
   }
 
+  @Override
   public byte defaultByte() {
     return 3;
   }
 
+  @Override
   public char defaultChar() {
     return 0;
   }
 
+  @Override
   public double defaultDouble() {
     return 0;
   }
 
+  @Override
   public float defaultFloat() {
     return 0;
   }
 
+  @Override
   public int defaultInt() {
     return 0;
   }
 
+  @Override
   public long defaultLong() {
     return 0;
   }
 
+  @Override
   public Object defaultObject() {
     return null;
   }
 
+  @Override
   public short defaultShort() {
     return 0;
   }
 
+  @Override
   public String defaultString() {
     return null;
   }
 
+  @Override
   public void one() {
   }
 
+  @Override
   public void three() {
   }
 
+  @Override
   public void two() {
   }
 

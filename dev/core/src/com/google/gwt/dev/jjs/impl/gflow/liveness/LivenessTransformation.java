@@ -44,8 +44,10 @@ public class LivenessTransformation implements
     this.writeToKill = writeToKill;
   }
 
+  @Override
   public CfgTransformer getGraphTransformer() {
     return new CfgTransformer() {
+      @Override
       public boolean transform(CfgNode<?> node, Cfg cfgGraph) {
         JModVisitor visitor = new JModVisitor() {
           @Override
@@ -103,6 +105,7 @@ public class LivenessTransformation implements
     };
   }
 
+  @Override
   public Cfg getNewSubgraph() {
     CfgNode<?> newNode = new CfgNopNode(writeToKill.getParent(), 
         writeToKill.getJNode());

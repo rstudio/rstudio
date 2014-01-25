@@ -29,6 +29,7 @@ public class AssertFalseValidatorTest extends
   @AssertFalse
   private Boolean defaultField;
 
+  @Override
   protected AssertFalseValidator createValidator() {
     return new AssertFalseValidator();
   }

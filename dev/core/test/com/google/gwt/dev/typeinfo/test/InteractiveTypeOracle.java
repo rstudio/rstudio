@@ -161,10 +161,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdAllTypes = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "all-types";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
@@ -187,6 +189,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return false;
     }
@@ -194,10 +197,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdHelp = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "help";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       TreeLogger sublogger = null;
       Set<String> keySet = handlers.keySet();
@@ -212,6 +217,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return false;
     }
@@ -219,10 +225,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdSelectType = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "select";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 1) {
         logger.log(TreeLogger.WARN, "Expected a type name", null);
@@ -243,6 +251,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return false;
     }
@@ -250,10 +259,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdSubtypes = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "subtypes";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
@@ -280,6 +291,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -287,10 +299,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdFields = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "fields";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
@@ -315,6 +329,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -322,10 +337,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdMethods = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "methods";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
@@ -350,6 +367,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -357,10 +375,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdNested = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "nested";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
@@ -385,6 +405,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -392,10 +413,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdParse = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "parse";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length == 0) {
         logger.log(TreeLogger.WARN, "At least one argument expected", null);
@@ -426,6 +449,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return false;
     }
@@ -433,10 +457,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdEnclosing = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "enclosing";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments", null);
@@ -455,6 +481,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -462,10 +489,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdConstructors = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "ctors";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments", null);
@@ -490,6 +519,7 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
@@ -497,10 +527,12 @@ public class InteractiveTypeOracle {
 
   private final CommandHandler cmdOverloads = new CommandHandler() {
 
+    @Override
     public String getCommandToken() {
       return "overloads";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 1) {
         logger.log(TreeLogger.WARN, "One argument is expected", null);
@@ -526,16 +558,19 @@ public class InteractiveTypeOracle {
       return true;
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }
   };
 
   private final CommandHandler cmdSupertypes = new CommandHandler() {
+    @Override
     public String getCommandToken() {
       return "supertypes";
     }
 
+    @Override
     public boolean process(TreeLogger logger, String[] args) {
       if (args.length != 0) {
         logger.log(TreeLogger.WARN, "No arguments", null);
@@ -572,6 +607,7 @@ public class InteractiveTypeOracle {
       }
     }
 
+    @Override
     public boolean requiresCurrentType() {
       return true;
     }

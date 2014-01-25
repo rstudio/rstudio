@@ -54,6 +54,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
     private static final int EXPECTED_NUM_ARGS = 0;
     private static final long serialVersionUID = 1592865718416163348L;
 
+    @Override
     public Object call(Context context, Scriptable scope, Scriptable thisObj,
         Object[] args) {
       // Allow extra arguments for forward compatibility
@@ -73,6 +74,7 @@ public class HtmlUnitSessionHandler extends SessionHandlerClient {
           returnValue.getReturnValue());
     }
 
+    @Override
     public Scriptable construct(Context cx, Scriptable scope, Object[] args) {
       throw Context.reportRuntimeError("Function connect can't be used as a "
           + "constructor");

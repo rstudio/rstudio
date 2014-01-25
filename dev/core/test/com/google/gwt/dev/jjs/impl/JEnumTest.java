@@ -30,6 +30,7 @@ import java.util.Set;
  */
 public class JEnumTest extends JJSTestBase {
 
+  @Override
   public void setUp() {
     sourceOracle.addOrReplace(new MockJavaResource("test.Simple") {
       @Override

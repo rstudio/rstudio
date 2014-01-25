@@ -119,6 +119,7 @@ public class CodeSplitters {
       final String lookupErrorHolder[] = new String[1];
       JNode referent =
           JsniRefLookup.findJsniRefTarget(jsniRef, program, new JsniRefLookup.ErrorReporter() {
+            @Override
             public void reportError(String error) {
               lookupErrorHolder[0] = error;
             }

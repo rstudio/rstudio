@@ -30,10 +30,12 @@ public class JLabel extends JNode implements HasName {
     this.name = StringInterner.get().intern(name);
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

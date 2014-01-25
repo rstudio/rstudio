@@ -37,6 +37,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   class AddressCoEditorView extends LeafAddressEditor implements IsEditor<LeafAddressEditor> {
     private LeafAddressEditor addressEditor = new LeafAddressEditor();
 
+    @Override
     public LeafAddressEditor asEditor() {
       return addressEditor;
     }
@@ -53,6 +54,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   class AddressEditorView implements IsEditor<LeafAddressEditor> {
     LeafAddressEditor addressEditor = new LeafAddressEditor();
 
+    @Override
     public LeafAddressEditor asEditor() {
       return addressEditor;
     }
@@ -109,11 +111,13 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     int setValueCalled;
     Address value;
 
+    @Override
     public Address getValue() {
       getValueCalled++;
       return value;
     }
 
+    @Override
     public void setValue(Address value) {
       setValueCalled++;
       value = new Address();
@@ -161,6 +165,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
   static class PersonEditorWithDelegate extends PersonEditor implements HasEditorDelegate<Person> {
     EditorDelegate<Person> delegate;
 
+    @Override
     public void setDelegate(EditorDelegate<Person> delegate) {
       this.delegate = delegate;
     }
@@ -277,6 +282,7 @@ public class SimpleBeanEditorTest extends GWTTestCase {
       super(value);
     }
 
+    @Override
     public void setDelegate(EditorDelegate<T> delegate) {
       this.delegate = delegate;
     }
@@ -288,17 +294,21 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     int setValueCalled;
     Address value;
 
+    @Override
     public void flush() {
       flushCalled++;
     }
 
+    @Override
     public void onPropertyChange(String... paths) {
     }
 
+    @Override
     public void setDelegate(EditorDelegate<Address> delegate) {
       setDelegateCalled++;
     }
 
+    @Override
     public void setValue(Address value) {
       setValueCalled++;
       this.value = value;
@@ -312,13 +322,16 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     int flushCalled;
     int setDelegateCalled;
 
+    @Override
     public void flush() {
       flushCalled++;
     }
 
+    @Override
     public void onPropertyChange(String... paths) {
     }
 
+    @Override
     public void setDelegate(EditorDelegate<Address> delegate) {
       setDelegateCalled++;
     }
@@ -571,17 +584,20 @@ public class SimpleBeanEditorTest extends GWTTestCase {
     @SuppressWarnings("unchecked")
     final SimpleEditor<String>[] disposed = new SimpleEditor[1];
     class StringSource extends EditorSource<SimpleEditor<String>> {
+      @Override
       public SimpleEditor<String> create(int index) {
         SimpleEditor<String> editor = SimpleEditor.of();
         positionMap.put(index, editor);
         return editor;
       }
 
+      @Override
       public void dispose(SimpleEditor<String> editor) {
         disposed[0] = editor;
         positionMap.values().remove(editor);
       }
 
+      @Override
       public void setIndex(SimpleEditor<String> editor, int index) {
         positionMap.values().remove(editor);
         positionMap.put(index, editor);

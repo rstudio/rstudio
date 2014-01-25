@@ -129,6 +129,7 @@ public class CreateEventTest extends GWTTestCase {
       cancelled = true;
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       if (cancelled) {
         return;
@@ -178,6 +179,7 @@ public class CreateEventTest extends GWTTestCase {
   private static class CurrentEventListener implements EventListener {
     public boolean gotClick, gotKeyPress, gotFocus;
 
+    @Override
     public void onBrowserEvent(Event event) {
       switch (Event.getCurrentEvent().getTypeInt()) {
         case Event.ONCLICK:
@@ -209,6 +211,7 @@ public class CreateEventTest extends GWTTestCase {
       cancelled = true;
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       if (cancelled) {
         return;
@@ -246,6 +249,7 @@ public class CreateEventTest extends GWTTestCase {
       this.eventType = eventType;
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       if (event.getType().equals(eventType)) {
         if (event.getEventTarget().equals(img)) {
@@ -511,6 +515,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerKeyDownEvent() {
     KeyCodeEventListener listener = new KeyCodeEventListener("keydown");
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createKeyDownEvent(ctrlKey, altKey, shiftKey,
@@ -530,6 +535,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerKeyPressEvent() {
     KeyPressEventListener listener = new KeyPressEventListener();
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createKeyPressEvent(ctrlKey, altKey, shiftKey,
@@ -546,6 +552,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerKeyUpEvent() {
     KeyCodeEventListener listener = new KeyCodeEventListener("keyup");
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createKeyUpEvent(ctrlKey, altKey, shiftKey,
@@ -575,6 +582,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerMouseDownEvent() {
     MouseEventListener listener = new MouseEventListener("mousedown");
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createMouseDownEvent(MOUSE_DETAIL, SCREEN_X,
@@ -592,6 +600,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerMouseMoveEvent() {
     MouseEventListener listener = new MouseEventListener("mousemove");
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createMouseMoveEvent(MOUSE_DETAIL, SCREEN_X,
@@ -619,6 +628,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createMouseOutEvent(MOUSE_DETAIL, SCREEN_X,
@@ -646,6 +656,7 @@ public class CreateEventTest extends GWTTestCase {
       }
     };
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createMouseOverEvent(MOUSE_DETAIL, SCREEN_X,
@@ -663,6 +674,7 @@ public class CreateEventTest extends GWTTestCase {
   public void testTriggerMouseUpEvent() {
     MouseEventListener listener = new MouseEventListener("mouseup");
     EventCreator creator = new EventCreator() {
+      @Override
       public NativeEvent createEvent(boolean ctrlKey, boolean altKey,
           boolean shiftKey, boolean metaKey) {
         return Document.get().createMouseUpEvent(MOUSE_DETAIL, SCREEN_X,

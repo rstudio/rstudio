@@ -50,6 +50,7 @@ public class EventTest extends GWTTestCase {
       this.doCancel = doCancel;
     }
 
+    @Override
     @Deprecated
     public boolean onEventPreview(Event event) {
       assertFalse(isFired);
@@ -81,6 +82,7 @@ public class EventTest extends GWTTestCase {
       this.doPreventCancel = doPreventCancel;
     }
 
+    @Override
     public void onPreviewNativeEvent(NativePreviewEvent event) {
       assertFalse(isFired);
       isFired = true;
@@ -102,6 +104,7 @@ public class EventTest extends GWTTestCase {
    */
   private static class TestLabel extends Label implements
       HasDoubleClickHandlers {
+    @Override
     public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
       return addDomHandler(handler, DoubleClickEvent.getType());
     }
@@ -160,12 +163,14 @@ public class EventTest extends GWTTestCase {
     // Add some handlers
     final EventInfo clickInfo = new EventInfo();
     label.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         clickInfo.fireCount++;
       }
     });
     final EventInfo dblclickInfo = new EventInfo();
     label.addDoubleClickHandler(new DoubleClickHandler() {
+      @Override
       public void onDoubleClick(DoubleClickEvent event) {
         dblclickInfo.fireCount++;
       }
@@ -330,6 +335,7 @@ public class EventTest extends GWTTestCase {
     NativePreviewHandler handler = new NativePreviewHandler() {
       private boolean first = true;
 
+      @Override
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         if (first) {
           event.cancel();

@@ -27,6 +27,7 @@ public abstract class TestComparator extends TestObject {
     public abstract Comparator makeComparator();
     public abstract List getComparableObjectsOrdered();
 
+    @Override
     public Object makeObject() {
         return makeComparator();
     }
@@ -36,6 +37,7 @@ public abstract class TestComparator extends TestObject {
      * 
      * @return 2
      */
+    @Override
     public int getCompatibilityVersion() {
         return 2;
     }
@@ -58,10 +60,12 @@ public abstract class TestComparator extends TestObject {
 
     }
 
+    @Override
     public boolean supportsEmptyCollections() {
         return false;
     }
 
+    @Override
     public boolean supportsFullCollections() {
         return false;
     }

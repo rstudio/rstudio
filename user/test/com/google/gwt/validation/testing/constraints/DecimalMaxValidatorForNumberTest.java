@@ -32,6 +32,7 @@ public class DecimalMaxValidatorForNumberTest extends
   @DecimalMax("922392239223.09")
   private double defaultField;
 
+  @Override
   protected DecimalMaxValidatorForNumber createValidator() {
     return new DecimalMaxValidatorForNumber();
   }

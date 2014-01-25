@@ -53,10 +53,12 @@ public enum DevModeEventType implements EventType {
     this.cssColor = cssColor;
   }
 
+  @Override
   public String getColor() {
     return cssColor;
   }
 
+  @Override
   public String getName() {
     return name;
   }

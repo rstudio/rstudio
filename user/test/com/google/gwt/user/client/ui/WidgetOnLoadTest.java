@@ -110,6 +110,7 @@ public class WidgetOnLoadTest extends GWTTestCase {
       int handleAttachOrder;
       int handleDetachOrder;
 
+      @Override
       public void onAttachOrDetach(AttachEvent event) {
         if (event.isAttached()) {
           handleAttachOrder = ++orderIndex;

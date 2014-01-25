@@ -23,18 +23,22 @@ import junit.framework.TestCase;
 public class SessionModuleTest extends TestCase {
   
   public static final Disconnectable mockDisc1 = new Disconnectable() {
+    @Override
     public void disconnect() {
     }
 
+    @Override
     public boolean isDisconnected() {
       return false;
     }
   };
   
   public static final Disconnectable mockDisc2 = new Disconnectable() {
+    @Override
     public void disconnect() {
     }
 
+    @Override
     public boolean isDisconnected() {
       return false;
     }

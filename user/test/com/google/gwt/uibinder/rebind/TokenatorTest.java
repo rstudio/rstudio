@@ -66,6 +66,7 @@ public class TokenatorTest extends TestCase {
         new Tokenator.Resolver() {
           int i = 0;
 
+          @Override
           public String resolveToken(String token) {
             return String.format("%d", i++);
           }

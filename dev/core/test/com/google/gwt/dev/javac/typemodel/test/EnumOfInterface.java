@@ -32,6 +32,7 @@ public enum EnumOfInterface implements EnumInterface {
   B;
 
   // Default just returns null
+  @Override
   public String getExtra() {
     return null;
   }

@@ -47,6 +47,7 @@ public class GWTRunner implements EntryPoint {
     /**
      * Delegate to the {@link TestBlockListener}.
      */
+    @Override
     public void onFailure(Throwable caught) {
       testBlockListener.onFailure(caught);
     }
@@ -55,6 +56,7 @@ public class GWTRunner implements EntryPoint {
      * Update our client info with the server-provided session id then delegate
      * to the {@link TestBlockListener}.
      */
+    @Override
     public void onSuccess(InitialResponse result) {
       clientInfo = new ClientInfo(result.getSessionId(),
           clientInfo.getUserAgent());
@@ -77,6 +79,7 @@ public class GWTRunner implements EntryPoint {
     /**
      * A call to junitHost failed.
      */
+    @Override
     public void onFailure(Throwable caught) {
       if (maxRetryCount < 0 || curRetryCount < maxRetryCount) {
         reportWarning("Retrying syncing back to junit backend. (Exception: " + caught + ")");
@@ -96,6 +99,7 @@ public class GWTRunner implements EntryPoint {
     /**
      * A call to junitHost succeeded; run the next test case.
      */
+    @Override
     public void onSuccess(TestBlock nextTestBlock) {
       curRetryCount = 0;
       currentBlock = nextTestBlock;
@@ -209,6 +213,7 @@ public class GWTRunner implements EntryPoint {
     GWT.setUncaughtExceptionHandler(null);
   }
 
+  @Override
   public void onModuleLoad() {
     testAccessor = new GWTTestAccessor();
     clientInfo = new ClientInfo(parseQueryParamInteger(SESSIONID_QUERY_PARAM, -1), getUserAgent());
@@ -249,6 +254,7 @@ public class GWTRunner implements EntryPoint {
     if (currentTestIndex < currentBlock.getTests().length) {
       // Run the next test after a short delay.
       Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+        @Override
         public void execute() {
           doRunTest();
         }

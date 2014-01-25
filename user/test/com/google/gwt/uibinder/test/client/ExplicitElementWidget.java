@@ -30,18 +30,22 @@ public class ExplicitElementWidget extends Widget implements HasHTML {
     setElement(Document.get().createElement(tag));
   }
   
+  @Override
   public String getHTML() {
     return getElement().getInnerHTML();
   }
 
+  @Override
   public String getText() {
     return getElement().getInnerText();
   }
 
+  @Override
   public void setHTML(String html) {
     getElement().setInnerHTML(html);
   }
 
+  @Override
   public void setText(String text) {
     getElement().setInnerText(text);
   }

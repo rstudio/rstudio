@@ -69,6 +69,7 @@ public class JdtBehaviorTest extends TestCase {
    * Hook point to accept results.
    */
   private class ICompilerRequestorImpl implements ICompilerRequestor {
+    @Override
     public void acceptResult(CompilationResult result) {
       if (result.hasErrors()) {
         StringBuilder sb = new StringBuilder();
@@ -107,14 +108,17 @@ public class JdtBehaviorTest extends TestCase {
    * How JDT receives files from the environment.
    */
   private class INameEnvironmentImpl implements INameEnvironment {
+    @Override
     public void cleanup() {
       // intentionally blank
     }
 
+    @Override
     public NameEnvironmentAnswer findType(char[] type, char[][] pkg) {
       return findType(CharOperation.arrayConcat(pkg, type));
     }
 
+    @Override
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
       final char[] typeChars = CharOperation.concatWith(compoundTypeName, '.');
       String typeName = String.valueOf(typeChars);
@@ -134,6 +138,7 @@ public class JdtBehaviorTest extends TestCase {
       return null;
     }
 
+    @Override
     public boolean isPackage(char[][] parentPkg, char[] pkg) {
       final char[] pathChars = CharOperation.concatWith(parentPkg, pkg, '.');
       String packageName = String.valueOf(pathChars);
@@ -150,6 +155,7 @@ public class JdtBehaviorTest extends TestCase {
       sourceFile = resource;
     }
 
+    @Override
     public char[] getContents() {
       try {
         return Shared.readSource(sourceFile).toCharArray();
@@ -159,18 +165,22 @@ public class JdtBehaviorTest extends TestCase {
       return null;
     }
 
+    @Override
     public char[] getFileName() {
       return sourceFile.getLocation().toCharArray();
     }
 
+    @Override
     public char[] getMainTypeName() {
       return Shared.getShortName(Shared.getTypeName(sourceFile)).toCharArray();
     }
 
+    @Override
     public boolean ignoreOptionalProblems() {
       return false;
     }
 
+    @Override
     public char[][] getPackageName() {
       return CharOperation.splitOn('.', Shared.getPackageName(
           Shared.getTypeName(sourceFile)).toCharArray());

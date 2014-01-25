@@ -78,6 +78,7 @@ public class JBlock extends JStatement {
     statements = Lists.remove(statements, index);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       statements = visitor.acceptWithInsertRemoveImmutable(statements);

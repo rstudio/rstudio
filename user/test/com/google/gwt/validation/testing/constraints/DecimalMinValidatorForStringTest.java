@@ -32,6 +32,7 @@ public class DecimalMinValidatorForStringTest extends
   @DecimalMin("922392239223.09")
   private double defaultField;
 
+  @Override
   protected DecimalMinValidatorForString createValidator() {
     return new DecimalMinValidatorForString();
   }

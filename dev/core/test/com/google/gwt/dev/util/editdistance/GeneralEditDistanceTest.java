@@ -88,6 +88,7 @@ public class GeneralEditDistanceTest extends TestCase {
   public static class GenericLevenshteinTest extends AbstractLevenshteinTestCase {
     public GenericLevenshteinTest() {
       super(new Factory() {
+          @Override
           public GeneralEditDistance getInstance(CharSequence s1) {
             return GeneralEditDistances.getLevenshteinDistance(s1);
           }

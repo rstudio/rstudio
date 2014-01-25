@@ -29,6 +29,7 @@ public class StackTest extends GWTTestCase {
   private static final int TEST_SIZE = 10;
 
   /** Sets module name so that javascript compiler can operate. */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

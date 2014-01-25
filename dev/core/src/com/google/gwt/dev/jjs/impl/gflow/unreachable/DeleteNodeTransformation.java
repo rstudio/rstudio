@@ -35,8 +35,10 @@ class DeleteNodeTransformation implements Transformation<CfgTransformer, Cfg> {
     this.node = node;
   }
 
+  @Override
   public CfgTransformer getGraphTransformer() {
     return new CfgTransformer() {
+      @Override
       public boolean transform(CfgNode<?> node, Cfg cfgGraph) {
         if (node.getParent() == null) {
           throw new IllegalArgumentException("Null parent in " + node);
@@ -61,6 +63,7 @@ class DeleteNodeTransformation implements Transformation<CfgTransformer, Cfg> {
     };
   }
 
+  @Override
   public Cfg getNewSubgraph() {
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());
     return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);

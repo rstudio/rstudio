@@ -85,6 +85,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
     edge.start = node;
   }
 
+  @Override
   public Object getEdgeData(CfgEdge edge) {
     return edge.data;
   }
@@ -92,6 +93,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public CfgNode<?> getEnd(CfgEdge e) {
     return e.getEnd();
   }
@@ -99,6 +101,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public ArrayList<CfgEdge> getGraphInEdges() {
     return graphInEdges;
   }
@@ -106,6 +109,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public ArrayList<CfgEdge> getGraphOutEdges() {
     return graphOutEdges;
   }
@@ -113,6 +117,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<CfgEdge> getInEdges(CfgNode<?> cfgNode) {
     return cfgNode.in;
   }
@@ -120,6 +125,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public ArrayList<CfgNode<?>> getNodes() {
     return nodes;
   }
@@ -127,6 +133,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public List<CfgEdge> getOutEdges(CfgNode<?> cfgNode) {
     return cfgNode.out;
   }
@@ -134,6 +141,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public CfgNode<?> getStart(CfgEdge e) {
     return e.getStart();
   }
@@ -141,6 +149,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public String print() {
     return new CfgPrinter(this).print();
   }
@@ -148,11 +157,13 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public <A extends Assumption<A>> String printWithAssumptions(
       Map<CfgEdge, A> map) {
     return new AssumptionsPrinter<A>(this, map).print();
   }
 
+  @Override
   public void setEdgeData(CfgEdge edge, Object data) {
     edge.data = data;
   }
@@ -165,6 +176,7 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   /**
    * {@inheritDoc}
    */
+  @Override
   public boolean transform(CfgNode<?> node, CfgTransformer actualizer) {
     if (actualizer == null) {
       throw new IllegalArgumentException();

@@ -40,6 +40,7 @@ public class TreeSetIntegerTest extends TreeSetTest<Integer> {
   
   private static class RecordCompare implements Comparator<Record> {
     // Handle nulls as less than any other key
+    @Override
     public int compare(Record r1, Record r2) {
       if (r1 == null) {
         return r2 == null ? 0 : -1;

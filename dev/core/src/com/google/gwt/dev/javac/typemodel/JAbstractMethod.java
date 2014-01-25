@@ -64,6 +64,7 @@ public abstract class JAbstractMethod implements
     }
   }
 
+  @Override
   public JParameter findParameter(String name) {
     for (JParameter param : params) {
       if (param.getName().equals(name)) {
@@ -73,14 +74,17 @@ public abstract class JAbstractMethod implements
     return null;
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     return annotations.getAnnotations();
   }
 
+  @Override
   public Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
   }
@@ -88,8 +92,10 @@ public abstract class JAbstractMethod implements
   /**
    * Gets the type in which this method or constructor was declared.
    */
+  @Override
   public abstract JClassType getEnclosingType();
 
+  @Override
   public JType[] getErasedParameterTypes() {
     JType[] types = new JType[params.size()];
     for (int i = 0; i < types.length; ++i) {
@@ -103,27 +109,33 @@ public abstract class JAbstractMethod implements
    * 
    * @return <code>@package.Class::method(Lpackage/Param;...)</code>
    */
+  @Override
   public abstract String getJsniSignature();
 
+  @Override
   @Deprecated
   public final String[][] getMetaData(String tagName) {
     return TypeOracle.NO_STRING_ARR_ARR;
   }
 
+  @Override
   @Deprecated
   public final String[] getMetaDataTags() {
     return TypeOracle.NO_STRINGS;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public JParameter[] getParameters() {
     // TODO(jat): where do we handle fake arg names?
     return params.toArray(TypeOracle.NO_JPARAMS);
   }
 
+  @Override
   public JType[] getParameterTypes() {
     final JType[] paramTypes = new JType[params.size()];
     for (int i = 0; i < paramTypes.length; ++i) {
@@ -132,44 +144,56 @@ public abstract class JAbstractMethod implements
     return paramTypes;
   }
 
+  @Override
   public abstract String getReadableDeclaration();
 
+  @Override
   public JClassType[] getThrows() {
     return thrownTypes.toArray(TypeOracle.NO_JCLASSES);
   }
 
+  @Override
   public JTypeParameter[] getTypeParameters() {
     return typeParams.toArray(new JTypeParameter[typeParams.size()]);
   }
 
+  @Override
   public JAnnotationMethod isAnnotationMethod() {
     return null;
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return annotations.isAnnotationPresent(annotationClass);
   }
 
+  @Override
   public abstract JConstructor isConstructor();
 
+  @Override
   public boolean isDefaultAccess() {
     return 0 == (modifierBits & (TypeOracle.MOD_PUBLIC | TypeOracle.MOD_PRIVATE | TypeOracle.MOD_PROTECTED));
   }
 
+  @Override
   public abstract JMethod isMethod();
 
+  @Override
   public boolean isPrivate() {
     return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
   }
 
+  @Override
   public boolean isProtected() {
     return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
   }
 
+  @Override
   public boolean isPublic() {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
 
+  @Override
   public boolean isVarArgs() {
     return isVarArgs;
   }

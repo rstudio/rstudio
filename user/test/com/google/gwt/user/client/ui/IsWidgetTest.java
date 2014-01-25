@@ -30,10 +30,12 @@ public class IsWidgetTest extends TestCase {
   }
 
   static class SomeViewMock implements SomeView {
+    @Override
     public Widget asWidget() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void blah() {
       throw new UnsupportedOperationException();
     }
@@ -42,26 +44,32 @@ public class IsWidgetTest extends TestCase {
   static class MockPanel implements HasWidgets.ForIsWidget {
     List<IsWidget> children = new ArrayList<IsWidget>();
     
+    @Override
     public void add(Widget w) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void clear() {
       children.clear();
     }
 
+    @Override
     public Iterator<Widget> iterator() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean remove(Widget w) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void add(IsWidget w) {
       children.add(w);
     }
 
+    @Override
     public boolean remove(IsWidget w) {
       return children.remove(w);
     }
@@ -70,6 +78,7 @@ public class IsWidgetTest extends TestCase {
   static class MockDisplay implements AcceptsOneWidget {
     IsWidget w;
 
+    @Override
     public void setWidget(IsWidget w) {
       this.w = w;
     }

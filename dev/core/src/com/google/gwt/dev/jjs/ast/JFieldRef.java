@@ -53,6 +53,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     this.overriddenType = overriddenType;
   }
 
+  @Override
   public JDeclaredType getEnclosingType() {
     return enclosingType;
   }
@@ -105,6 +106,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     target = newField;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (instance != null) {

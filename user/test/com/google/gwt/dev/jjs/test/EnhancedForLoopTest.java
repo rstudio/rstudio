@@ -26,6 +26,7 @@ import java.util.ArrayList;
  */
 public class EnhancedForLoopTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

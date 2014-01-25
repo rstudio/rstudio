@@ -36,31 +36,38 @@ public class JPackage implements com.google.gwt.core.ext.typeinfo.JPackage {
     this.name = name;
   }
 
+  @Override
   public JClassType findType(String typeName) {
     String[] parts = typeName.split("\\.");
     return findType(parts);
   }
 
+  @Override
   public JClassType findType(String[] typeName) {
     return findTypeImpl(typeName, 0);
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     return annotations.getAnnotations();
   }
 
+  @Override
   public Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public JClassType getType(String typeName) throws NotFoundException {
     JClassType result = findType(typeName);
     if (result == null) {
@@ -69,14 +76,17 @@ public class JPackage implements com.google.gwt.core.ext.typeinfo.JPackage {
     return result;
   }
 
+  @Override
   public JClassType[] getTypes() {
     return types.values().toArray(TypeOracle.NO_JCLASSES);
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return annotations.isAnnotationPresent(annotationClass);
   }
 
+  @Override
   public boolean isDefault() {
     return "".equals(name);
   }

@@ -43,108 +43,133 @@ abstract class LogFilterServletContext implements ServletContext {
     this.realContext = realContext;
   }
 
+  @Override
   public Object getAttribute(String name) {
     return realContext.getAttribute(name);
   }
 
+  @Override
   public Enumeration getAttributeNames() {
     return realContext.getAttributeNames();
   }
 
+  @Override
   public ServletContext getContext(String uripath) {
     return realContext.getContext(uripath);
   }
 
+  @Override
   public String getContextPath() {
     return realContext.getContextPath();
   }
 
+  @Override
   public String getInitParameter(String name) {
     return realContext.getInitParameter(name);
   }
 
+  @Override
   public Enumeration getInitParameterNames() {
     return realContext.getInitParameterNames();
   }
 
+  @Override
   public int getMajorVersion() {
     return realContext.getMajorVersion();
   }
 
+  @Override
   public String getMimeType(String file) {
     return realContext.getMimeType(file);
   }
 
+  @Override
   public int getMinorVersion() {
     return realContext.getMinorVersion();
   }
 
+  @Override
   public RequestDispatcher getNamedDispatcher(String name) {
     return realContext.getNamedDispatcher(name);
   }
 
+  @Override
   public String getRealPath(String path) {
     return realContext.getRealPath(path);
   }
 
+  @Override
   public RequestDispatcher getRequestDispatcher(String path) {
     return realContext.getRequestDispatcher(path);
   }
 
+  @Override
   public URL getResource(String path) throws MalformedURLException {
     return realContext.getResource(path);
   }
 
+  @Override
   public InputStream getResourceAsStream(String path) {
     return realContext.getResourceAsStream(path);
   }
 
+  @Override
   public Set getResourcePaths(String path) {
     return realContext.getResourcePaths(path);
   }
 
+  @Override
   public String getServerInfo() {
     return realContext.getServerInfo();
   }
 
+  @Override
   public Servlet getServlet(String name) throws ServletException {
     return realContext.getServlet(name);
   }
 
+  @Override
   public String getServletContextName() {
     return realContext.getServletContextName();
   }
 
+  @Override
   public Enumeration getServletNames() {
     return realContext.getServletNames();
   }
 
+  @Override
   public Enumeration getServlets() {
     return realContext.getServlets();
   }
 
+  @Override
   public void log(Exception exception, String msg) {
     if (shouldLog(exception, msg)) {
       realContext.log(exception, msg);
     }
   }
 
+  @Override
   public void log(String msg) {
     if (shouldLog(null, msg)) {
       realContext.log(msg);
     }
   }
 
+  @Override
   public void log(String msg, Throwable throwable) {
     if (shouldLog(throwable, msg)) {
       realContext.log(msg, throwable);
     }
   }
 
+  @Override
   public void removeAttribute(String name) {
     realContext.removeAttribute(name);
   }
 
+  @Override
   public void setAttribute(String name, Object object) {
     realContext.setAttribute(name, object);
   }

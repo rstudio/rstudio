@@ -27,6 +27,7 @@ public class UnicodeEscapingServiceImpl extends HybridServiceServlet implements
   /**
    * @see UnicodeEscapingService#echo(String)
    */
+  @Override
   public String echo(String str) {
     return str;
   }
@@ -34,6 +35,7 @@ public class UnicodeEscapingServiceImpl extends HybridServiceServlet implements
   /**
    * @see UnicodeEscapingService#getStringContainingCharacterRange(int, int)
    */
+  @Override
   public String getStringContainingCharacterRange(int start, int end) {
     return UnicodeEscapingTest.getStringContainingCharacterRange(start, end);
   }
@@ -42,6 +44,7 @@ public class UnicodeEscapingServiceImpl extends HybridServiceServlet implements
    * @see UnicodeEscapingService#verifyStringContainingCharacterRange(int, int,
    *      String)
    */
+  @Override
   public boolean verifyStringContainingCharacterRange(int start, int end,
       String str) throws InvalidCharacterException {
     UnicodeEscapingTest.verifyStringContainingCharacterRange(start, end, str);

@@ -106,11 +106,13 @@ public class JsParser {
       Reader r) throws JsParserException, IOException {
     // Create a custom error handler so that we can throw our own exceptions.
     Context.enter().setErrorReporter(new ErrorReporter() {
+      @Override
       public void error(String msg, String loc, int ln, String src, int col) {
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
             src, col, rootSourceInfo.getFileName()));
       }
 
+      @Override
       public EvaluatorException runtimeError(String msg, String loc, int ln,
           String src, int col) {
         // Never called, but just in case.
@@ -118,6 +120,7 @@ public class JsParser {
             src, col, rootSourceInfo.getFileName()));
       }
 
+      @Override
       public void warning(String msg, String loc, int ln, String src, int col) {
         // Ignore warnings.
       }

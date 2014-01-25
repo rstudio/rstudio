@@ -28,11 +28,13 @@ public class FailingRequestBuilderTest extends RpcTestBase {
 
     RequestBuilder rb = new FailingRequestBuilder(new SerializationException(),
         new AsyncCallback<Void>() {
+          @Override
           public void onFailure(Throwable caught) {
             assertFalse(callbackCalled[0]);
             callbackCalled[0] = true;
           }
 
+          @Override
           public void onSuccess(Void result) {
             fail("expected this to fail");
           }

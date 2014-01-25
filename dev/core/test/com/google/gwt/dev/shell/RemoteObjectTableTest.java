@@ -37,6 +37,7 @@ public class RemoteObjectTableTest extends TestCase {
       this.refId = refId;
     }
 
+    @Override
     public int getRefid() {
       return refId;
     }

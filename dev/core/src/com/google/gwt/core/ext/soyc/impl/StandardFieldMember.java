@@ -34,6 +34,7 @@ public class StandardFieldMember extends AbstractMember implements FieldMember {
     this.sourceName = field.getEnclosingType().getName() + "::" + field.getName();
   }
 
+  @Override
   public ClassMember getEnclosing() {
     return enclosing;
   }

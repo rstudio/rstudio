@@ -25,10 +25,12 @@ import java.util.List;
  * TODO: document me.
  */
 public class ComparatorTest extends TestComparator {
+  @Override
   public Comparator<Object> makeComparator() {
     return new DummyComparator();
   }
 
+  @Override
   public List<Object> getComparableObjectsOrdered() {
     List<Object> l = new ArrayList<Object>();
     l.add("x");
@@ -45,6 +47,7 @@ class DummyComparator implements Comparator<Object> {
   /**
    * Compares returns reverse hash order.
    */
+  @Override
   public int compare(Object arg0, Object arg1) {
     int a = arg0.hashCode();
     int b = arg1.hashCode();

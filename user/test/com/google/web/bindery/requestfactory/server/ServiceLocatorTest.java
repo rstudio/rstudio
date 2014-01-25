@@ -35,6 +35,7 @@ public class ServiceLocatorTest extends TestCase {
   static class ServiceLocatorImpl implements ServiceLocator {
     static final ServiceLocatorImpl INSTANCE = new ServiceLocatorImpl();
 
+    @Override
     public Object getInstance(Class<?> clazz) {
       return new Object();
     }

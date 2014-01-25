@@ -40,6 +40,7 @@ public class ButtonTest extends GWTTestCase {
     boolean clicked;
     EventTarget target;
 
+    @Override
     public void onClick(ClickEvent event) {
       target = event.getNativeEvent().getEventTarget();
       clicked = true;
@@ -49,6 +50,7 @@ public class ButtonTest extends GWTTestCase {
   private static class H2 implements SubmitHandler {
     boolean submitted;
 
+    @Override
     public void onSubmit(SubmitEvent event) {
       submitted = true;
       event.cancel();

@@ -69,10 +69,12 @@ public class StandardClassMember extends AbstractMemberWithDependencies implemen
     methods.add(method);
   }
 
+  @Override
   public SortedSet<FieldMember> getFields() {
     return fieldsView;
   }
 
+  @Override
   public SortedSet<MethodMember> getMethods() {
     return methodsView;
   }
@@ -86,6 +88,7 @@ public class StandardClassMember extends AbstractMemberWithDependencies implemen
     }
   }
 
+  @Override
   public String getPackage() {
     return packageName;
   }

@@ -61,10 +61,12 @@ public class AstConstructor {
         return new String[0];
       }
 
+      @Override
       public CompilationState getCompilationState() {
         return state;
       }
 
+      @Override
       public StandardGeneratorContext getGeneratorContext() {
         return null;
       }

@@ -68,6 +68,7 @@ public class SwingUI extends DevModeUI {
       this.tab = tab;
     }
 
+    @Override
     public TreeLogger getLogger() {
       return tab.getLogger();
     }
@@ -79,6 +80,7 @@ public class SwingUI extends DevModeUI {
       return tab;
     }
 
+    @Override
     public void unload() {
       if (tab != null) {
         tab.disconnect();
@@ -176,6 +178,7 @@ public class SwingUI extends DevModeUI {
       final byte[] agentIcon, final TreeLogger.Type logLevel) {
     // TODO(jat): add support for closing an active module
     ModuleHandle handle = invokeAndGet(new Callable<ModuleHandle>() {
+          @Override
           public ModuleHandle call() throws Exception {
             ModuleTabPanel tabPanel = findModuleTab(userAgent, remoteSocket,
                 url, tabKey, moduleName, agentIcon);
@@ -223,6 +226,7 @@ public class SwingUI extends DevModeUI {
           RestartServerEvent.getType());
       if (callback != null) {
         restartAction = new RestartAction() {
+          @Override
           public void restartServer(TreeLogger logger) {
             callback.onRestartServer(logger);
           }
@@ -243,6 +247,7 @@ public class SwingUI extends DevModeUI {
   public void initialize(final Type logLevel) {
     super.initialize(logLevel);
     invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         ImageIcon gwtIcon16 = loadImageIcon("icon16.png");
         ImageIcon gwtIcon24 = loadImageIcon("icon24.png");
@@ -282,6 +287,7 @@ public class SwingUI extends DevModeUI {
   @Override
   public void moduleLoadComplete(final boolean success) {
     EventQueue.invokeLater(new Runnable() {
+      @Override
       public void run() {
         mainWnd.moduleLoadComplete(success);
       }
@@ -291,6 +297,7 @@ public class SwingUI extends DevModeUI {
   @Override
   public void setStartupUrls(final Map<String, URL> urls) {
     invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         mainWnd.setStartupUrls(urls);
       }
@@ -301,6 +308,7 @@ public class SwingUI extends DevModeUI {
   public void setWebServerSecure(TreeLogger serverLogger) {
     if (webServerLog != null && serverLogger == webServerLog.getLogger()) {
       EventQueue.invokeLater(new Runnable() {
+        @Override
         public void run() {
           // TODO(jat): if the web server has an icon, should combine with the
           // secure icon or perhaps switch to a different one.
@@ -344,6 +352,7 @@ public class SwingUI extends DevModeUI {
     if (moduleTabPanel == null) {
       moduleTabPanel = new ModuleTabPanel(userAgent, remoteSocket, url,
           agentIcon, new TabPanelCollection() {
+            @Override
             public void addTab(ModuleTabPanel tabPanel, ImageIcon icon,
                 String title, String tooltip) {
               synchronized (tabs) {
@@ -352,6 +361,7 @@ public class SwingUI extends DevModeUI {
               }
             }
   
+            @Override
             public void removeTab(ModuleTabPanel tabPanel) {
               synchronized (tabs) {
                 tabs.remove(tabPanel);

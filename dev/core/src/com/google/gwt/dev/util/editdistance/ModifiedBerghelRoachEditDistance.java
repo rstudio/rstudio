@@ -221,10 +221,12 @@ public class ModifiedBerghelRoachEditDistance implements GeneralEditDistance {
     this.pattern = pattern;
   }
 
+  @Override
   public ModifiedBerghelRoachEditDistance duplicate() {
     return new ModifiedBerghelRoachEditDistance(pattern);
   }
 
+  @Override
   public int getDistance(CharSequence targetSequence, int limit) {
     final int targetLength = targetSequence.length();
 

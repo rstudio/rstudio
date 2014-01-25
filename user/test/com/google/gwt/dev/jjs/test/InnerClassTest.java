@@ -172,6 +172,7 @@ public class InnerClassTest extends GWTTestCase {
 
   private StringBuffer testAppend = new StringBuffer();
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
@@ -225,6 +226,7 @@ public class InnerClassTest extends GWTTestCase {
     List<AppendToStringBuffer> results = new ArrayList<AppendToStringBuffer>();
     for (int i = 0; i < 10; i++) {
       AppendToStringBuffer ap = new AppendToStringBuffer(i) {
+        @Override
         public void act() {
           b.append(num);
           testAppend.append(num);

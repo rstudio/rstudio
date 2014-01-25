@@ -53,21 +53,25 @@ public class CompositeTest extends GWTTestCase {
       sinkEvents(Event.FOCUSEVENTS);
 
       tb.addFocusListener(new FocusListener() {
+        @Override
         public void onLostFocus(Widget sender) {
           widgetLostFocusFired = true;
         }
 
+        @Override
         public void onFocus(Widget sender) {
           widgetFocusFired = true;
         }
       });
 
       tb.addFocusHandler(new FocusHandler() {
+        @Override
         public void onFocus(FocusEvent event) {
           widgetFocusHandlerFired = true;
         }
       });
       tb.addBlurHandler(new BlurHandler() {
+        @Override
         public void onBlur(BlurEvent event) {
           widgetBlurHandlerFired = true;
         }
@@ -104,8 +108,10 @@ public class CompositeTest extends GWTTestCase {
     // deferred commands, because focus events usually require the event loop
     // to be pumped in order to fire.
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         DeferredCommand.addCommand(new Command() {
+          @Override
           public void execute() {
             // Ensure all events fired as expected.
             assertTrue(c.domFocusFired);
@@ -141,6 +147,7 @@ public class CompositeTest extends GWTTestCase {
       int delegateAttachOrder;
       int delegateDetachOrder;
 
+      @Override
       public void onAttachOrDetach(AttachEvent event) {
         if (event.isAttached()) {
           delegateAttachOrder = ++orderIndex;

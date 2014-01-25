@@ -141,10 +141,12 @@ public final class ViewerServiceTreeLogger extends AbstractTreeLogger {
     assert isSent();
     viewerServiceClient.addLogBranch(branch.getBranchedIndex(), type, msg,
         caught, helpInfo, logHandle, new Callback<Integer>() {
+          @Override
           public void onDone(Integer result) {
             branch.initLogHandle(result);
           }
 
+          @Override
           public void onError(Throwable t) {
             System.err.println("An error occurred while attempting to add a log branch.");
             t.printStackTrace(System.err);

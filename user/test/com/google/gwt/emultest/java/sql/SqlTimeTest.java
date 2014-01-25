@@ -30,6 +30,7 @@ public class SqlTimeTest extends GWTTestCase {
   /**
    * Sets module name so that javascript compiler can operate.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

@@ -45,6 +45,7 @@ public class JIfStatement extends JStatement {
     return thenStmt;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       ifExpr = visitor.accept(ifExpr);

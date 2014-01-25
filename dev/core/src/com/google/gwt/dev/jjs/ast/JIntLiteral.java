@@ -49,6 +49,7 @@ public class JIntLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.INT;
   }
@@ -62,6 +63,7 @@ public class JIntLiteral extends JValueLiteral {
     return Integer.valueOf(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

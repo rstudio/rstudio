@@ -19,6 +19,7 @@ package com.google.gwt.core.ext.typeinfo;
  * Type representing an annotation type.
  */
 public interface JAnnotationType extends JRealClassType {
+  @Override
   JAnnotationMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException;
 }

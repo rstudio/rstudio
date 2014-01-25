@@ -60,82 +60,102 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
       this.qualifiedTypeName = typeName;
     }
 
+    @Override
     public IBinaryAnnotation[] getAnnotations() {
       return null;
     }
 
+    @Override
     public char[] getEnclosingMethod() {
       return null;
     }
 
+    @Override
     public char[] getEnclosingTypeName() {
       return null;
     }
 
+    @Override
     public IBinaryField[] getFields() {
       return null;
     }
 
+    @Override
     public char[] getFileName() {
       return (qualifiedTypeName.replace('.', File.separatorChar) + ".java").toCharArray();
     }
 
+    @Override
     public char[] getGenericSignature() {
       return qualifiedTypeName.toCharArray();
     }
 
+    @Override
     public char[][] getInterfaceNames() {
       return null;
     }
 
+    @Override
     public IBinaryNestedType[] getMemberTypes() {
       return null;
     }
 
+    @Override
     public IBinaryMethod[] getMethods() {
       return null;
     }
 
+    @Override
     public char[][][] getMissingTypeNames() {
       return null;
     }
 
+    @Override
     public int getModifiers() {
       return 0;
     }
 
+    @Override
     public char[] getName() {
       return qualifiedTypeName.toCharArray();
     }
 
+    @Override
     public char[] getSourceName() {
       return null;
     }
 
+    @Override
     public char[] getSuperclassName() {
       return null;
     }
 
+    @Override
     public long getTagBits() {
       return 0;
     }
 
+    @Override
     public boolean isAnonymous() {
       return false;
     }
 
+    @Override
     public boolean isBinaryType() {
       return true;
     }
 
+    @Override
     public boolean isLocal() {
       return false;
     }
 
+    @Override
     public boolean isMember() {
       return false;
     }
 
+    @Override
     public char[] sourceFileName() {
       return null;
     }

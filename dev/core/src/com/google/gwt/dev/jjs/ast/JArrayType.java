@@ -72,6 +72,7 @@ public class JArrayType extends JReferenceType {
     return leafType;
   }
 
+  @Override
   public boolean isAbstract() {
     return false;
   }
@@ -81,6 +82,7 @@ public class JArrayType extends JReferenceType {
     return elementType.isExternal();
   }
 
+  @Override
   public boolean isFinal() {
     return elementType.isFinal();
   }
@@ -91,6 +93,7 @@ public class JArrayType extends JReferenceType {
         && elementType.replaces(((JArrayType) originalType).getElementType());
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

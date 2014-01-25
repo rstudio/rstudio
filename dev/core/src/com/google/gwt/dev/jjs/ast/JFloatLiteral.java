@@ -58,6 +58,7 @@ public class JFloatLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.FLOAT;
   }
@@ -71,6 +72,7 @@ public class JFloatLiteral extends JValueLiteral {
     return new Float(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

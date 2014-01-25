@@ -64,56 +64,69 @@ public class AsyncProxyTest extends GWTTestCase {
 
     private int value = 0;
 
+    @Override
     public boolean defaultBool() {
       return true;
     }
 
+    @Override
     public byte defaultByte() {
       return 1;
     }
 
+    @Override
     public char defaultChar() {
       return 1;
     }
 
+    @Override
     public double defaultDouble() {
       return 1;
     }
 
+    @Override
     public float defaultFloat() {
       return 1;
     }
 
+    @Override
     public int defaultInt() {
       return 1;
     }
 
+    @Override
     public long defaultLong() {
       return 1;
     }
 
+    @Override
     public Object defaultObject() {
       return this;
     }
 
+    @Override
     public short defaultShort() {
       return 1;
     }
 
+    @Override
     public String defaultString() {
       return "";
     }
 
+    @Override
     public void one() {
       GWTTestCase.assertEquals(0, value);
       value = 1;
     }
 
+    @Override
     public void three() {
       GWTTestCase.assertEquals(2, value);
       testInstance.finishTest();
     }
 
+    @Override
     public void two() {
       GWTTestCase.assertEquals(1, value);
       value = 2;
@@ -130,6 +143,7 @@ public class AsyncProxyTest extends GWTTestCase {
 
   private static AsyncProxyTest testInstance;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }

@@ -83,10 +83,12 @@ public class SingleJsoImplTest extends GWTTestCase {
   }
 
   static class JavaAdder implements Adder {
+    @Override
     public double add(double a, int b) {
       return a + b;
     }
 
+    @Override
     public long returnLong() {
       return 5L;
     }
@@ -97,12 +99,14 @@ public class SingleJsoImplTest extends GWTTestCase {
    * the CreatedWithCast test isn't short-circuited due to type tightening.
    */
   static class JavaCreatedWithCast implements CreatedWithCast {
+    @Override
     public String foo() {
       return "foo";
     }
   }
 
   static class JavaCreatedWithCastToTag implements CreatedWithCastToTagSub {
+    @Override
     public String foo() {
       return "foo";
     }
@@ -113,6 +117,7 @@ public class SingleJsoImplTest extends GWTTestCase {
    */
   static class JavaDivider extends JavaMultiplier implements Divider,
       Multiplier, Tag {
+    @Override
     public int divide(int a, int b) {
       return a / b;
     }
@@ -123,62 +128,76 @@ public class SingleJsoImplTest extends GWTTestCase {
    * regular Java types.
    */
   static class JavaLog2 extends JavaDivider implements Log2 {
+    @Override
     public double log2(int a) {
       return Math.log(a) / Math.log(2);
     }
   }
 
   static class JavaMultiplier implements Multiplier {
+    @Override
     public int multiply(int a, int b) {
       return a * b;
     }
   }
 
   static class JavaUsesArrays implements UsesArrays {
+    @Override
     public void acceptInt3Array(int[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptIntArray(int[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public void acceptObject3Array(Object[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptObjectArray(Object[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public void acceptString3Array(String[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptStringArray(String[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public int[][][] returnInt3Array() {
       return new int[3][2][1];
     }
 
+    @Override
     public int[] returnIntArray() {
       return new int[1];
     }
 
+    @Override
     public Object[][][] returnObject3Array() {
       return new Object[3][2][1];
     }
 
+    @Override
     public Object[] returnObjectArray() {
       return new Object[1];
     }
 
+    @Override
     public String[][][] returnString3Array() {
       return new String[3][2][1];
     }
 
+    @Override
     public String[] returnStringArray() {
       return new String[1];
     }
@@ -188,10 +207,12 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoAdder() {
     }
 
+    @Override
     public final native double add(double a, int b) /*-{
       return this.offset * (a + b);
     }-*/;
 
+    @Override
     public final long returnLong() {
       return 5L;
     }
@@ -202,6 +223,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoCallsStaticMethodInSubclass() {
     }
 
+    @Override
     public final native String call(int a, int b) /*-{
       return "foo" + @com.google.gwt.dev.jjs.test.SingleJsoImplTest.JsoCallsStaticMethodInSubclassSubclass::actual(II)(a, b);
     }-*/;
@@ -222,6 +244,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoCreatedWithCast() {
     }
 
+    @Override
     public final String foo() {
       return "foo";
     }
@@ -232,6 +255,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoCreatedWithCastToTag() {
     }
 
+    @Override
     public final String foo() {
       return "foo";
     }
@@ -241,6 +265,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoDivider() {
     }
 
+    @Override
     public final native int divide(int a, int b) /*-{
       return this.offset * a / b;
     }-*/;
@@ -252,10 +277,12 @@ public class SingleJsoImplTest extends GWTTestCase {
       protected InnerType() {
       }
 
+      @Override
       public final native void call(int a) /*-{
         this.foo = a;
       }-*/;
 
+      @Override
       public final native int get() /*-{
         return this.foo;
       }-*/;
@@ -264,6 +291,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoHasInnerJsoType() {
     }
 
+    @Override
     public final InnerInterface call(InnerInterface o, int a) {
       o.call(a);
       return o;
@@ -274,6 +302,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoMultiplier() {
     }
 
+    @Override
     public final native int multiply(int a, int b) /*-{
       return this.offset * a * b;
     }-*/;
@@ -287,14 +316,17 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoRandom() {
     }
 
+    @Override
     public int add(int a, int b) {
       return -1;
     }
 
+    @Override
     public int divide(int a, int b) {
       return -1;
     }
 
+    @Override
     public int multiply(int a, int b) {
       return -1;
     }
@@ -308,18 +340,22 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoSimple() {
     }
 
+    @Override
     public String a() {
       return "a";
     }
 
+    @Override
     public String a(boolean overload) {
       return overload ? "Kaboom!" : "OK";
     }
 
+    @Override
     public String ex() throws IOException {
       throw new IOException();
     }
 
+    @Override
     public String rte() {
       throw new IllegalArgumentException();
     }
@@ -330,50 +366,62 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoUsesArrays() {
     }
 
+    @Override
     public void acceptInt3Array(int[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptIntArray(int[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public void acceptObject3Array(Object[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptObjectArray(Object[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public void acceptString3Array(String[][][] arr) {
       assertTrue(arr.length == 3);
     }
 
+    @Override
     public void acceptStringArray(String[] arr) {
       assertTrue(arr.length == 1);
     }
 
+    @Override
     public int[][][] returnInt3Array() {
       return new int[3][2][1];
     }
 
+    @Override
     public int[] returnIntArray() {
       return new int[1];
     }
 
+    @Override
     public Object[][][] returnObject3Array() {
       return new Object[3][2][1];
     }
 
+    @Override
     public Object[] returnObjectArray() {
       return new Object[1];
     }
 
+    @Override
     public String[][][] returnString3Array() {
       return new String[3][2][1];
     }
 
+    @Override
     public String[] returnStringArray() {
       return new String[1];
     }
@@ -387,10 +435,12 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoUsesGeneric() {
     }
 
+    @Override
     public final native <T> String acceptsGeneric(T chars) /*-{
       return chars + this.suffix;
     }-*/;
 
+    @Override
     public final native <T> void callback(AsyncCallback<T> callback, T chars) /*-{
       callback.@com.google.gwt.user.client.rpc.AsyncCallback::onSuccess(Ljava/lang/Object;)(chars + this.suffix);
     }-*/;
@@ -400,6 +450,7 @@ public class SingleJsoImplTest extends GWTTestCase {
      * would break with a ClassCastException if accessed via JsoIsGenericFinal
      * in normal Java.
      */
+    @Override
     public final native <T> T returnsGeneric(String chars) /*-{
       return chars + this.suffix;
     }-*/;
@@ -449,6 +500,7 @@ public class SingleJsoImplTest extends GWTTestCase {
   }
 
   static class JavaDualSimple implements DualSimple {
+    @Override
     public String a() {
       return "object";
     }
@@ -458,6 +510,7 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoDualSimple() {
     }
 
+    @Override
     public String a() {
       return "jso";
     }
@@ -467,6 +520,7 @@ public class SingleJsoImplTest extends GWTTestCase {
    * Ensure that a Java-only implementation of a SingleJsoImpl interface works.
    */
   static class SimpleOnlyJava implements SimpleOnlyJavaInterface {
+    @Override
     public String simpleOnlyJava() {
       return "simpleOnlyJava";
     }
@@ -758,9 +812,11 @@ public class SingleJsoImplTest extends GWTTestCase {
     assertEquals("Hello42", j.acceptsGeneric("Hello"));
     assertEquals("Hello42", j.returnsGeneric("Hello"));
     j.callback(new AsyncCallback<CharSequence>() {
+      @Override
       public void onFailure(Throwable caught) {
       }
 
+      @Override
       public void onSuccess(CharSequence result) {
         assertEquals("Hello42", result);
       }

@@ -35,6 +35,7 @@ public class JEnumType extends JRealClassType implements
    * 
    * @return enumeration constants declared by this enumeration
    */
+  @Override
   public JEnumConstant[] getEnumConstants() {
     if (lazyEnumConstants == null) {
       List<JEnumConstant> enumConstants = new ArrayList<JEnumConstant>();

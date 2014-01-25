@@ -36,6 +36,7 @@ public class PropertyDefiningGWTTest extends GWTTestCase {
    * Implementation used in one deferred binding.
    */
   public static class TestImplOne implements TestInterface {
+    @Override
     public String value() {
       return "one";
     }
@@ -45,6 +46,7 @@ public class PropertyDefiningGWTTest extends GWTTestCase {
    * Implementation used in the other deferred binding.
    */
   public static class TestImplTwo implements TestInterface {
+    @Override
     public String value() {
       return "two";
     }

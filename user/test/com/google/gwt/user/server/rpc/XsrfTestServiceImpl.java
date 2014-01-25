@@ -33,10 +33,12 @@ public class XsrfTestServiceImpl extends XsrfProtectedServiceServlet
     sessionCookieName = XsrfProtectionTest.SESSION_COOKIE_NAME;
   }
 
+  @Override
   public void drink(String drink) {
     drinks.add(drink);
   }
 
+  @Override
   public boolean checkIfDrankDrink(String drink) {
     return drinks.contains(drink);
   }

@@ -57,6 +57,7 @@ public abstract class BrowserChannel {
       this.refId = refId;
     }
 
+    @Override
     public int getRefid() {
       return Math.abs(refId);
     }
@@ -92,6 +93,7 @@ public abstract class BrowserChannel {
       return (o instanceof JsObjectRef) && ((JsObjectRef) o).refId == refId;
     }
 
+    @Override
     public int getRefid() {
       // exceptions are negative, so we get the absolute value
       return Math.abs(refId);

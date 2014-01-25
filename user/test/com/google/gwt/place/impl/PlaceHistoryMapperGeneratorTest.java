@@ -54,9 +54,11 @@ public class PlaceHistoryMapperGeneratorTest extends GWTTestCase {
    * generate anything either).
    */
   static class LocalConcreteClass implements LocalNoFactory {
+    @Override
     public Place getPlace(String token) {
       return null;
     }
+    @Override
     public String getToken(Place place) {
       return null;
     }

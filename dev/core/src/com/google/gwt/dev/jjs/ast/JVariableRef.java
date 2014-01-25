@@ -33,6 +33,7 @@ public abstract class JVariableRef extends JExpression {
     return target;
   }
 
+  @Override
   public JType getType() {
     return target.getType();
   }

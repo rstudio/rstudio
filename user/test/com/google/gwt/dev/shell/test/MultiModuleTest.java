@@ -95,6 +95,7 @@ public class MultiModuleTest extends GWTTestCase {
    * 
    * @return the fully-qualified module name
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.shell.MultiModuleTest";
   }

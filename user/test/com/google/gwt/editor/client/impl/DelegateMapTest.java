@@ -38,6 +38,7 @@ public class DelegateMapTest extends GWTTestCase {
   class AddressCoEditorView extends AddressEditor implements IsEditor<AddressEditor> {
     private AddressEditor addressEditor = new AddressEditor();
 
+    @Override
     public AddressEditor asEditor() {
       return addressEditor;
     }
@@ -62,6 +63,7 @@ public class DelegateMapTest extends GWTTestCase {
       super(value);
     }
 
+    @Override
     public void setDelegate(EditorDelegate<T> delegate) {
       this.delegate = delegate;
     }

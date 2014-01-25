@@ -225,6 +225,7 @@ public class OwnerFieldClassTest extends TestCase {
     public void setValue3(@SuppressWarnings("unused") Integer b) {
     }
     
+    @Override
     public void setValue4(int b) {
     }
   }

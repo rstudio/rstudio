@@ -43,6 +43,7 @@ public class JBooleanLiteral extends JValueLiteral {
     return value instanceof JBooleanLiteral ? value : null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.BOOLEAN;
   }
@@ -56,6 +57,7 @@ public class JBooleanLiteral extends JValueLiteral {
     return Boolean.valueOf(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

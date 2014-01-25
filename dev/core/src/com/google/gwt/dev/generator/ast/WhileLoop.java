@@ -37,10 +37,12 @@ public class WhileLoop implements Statements {
     this.test = test;
   }
 
+  @Override
   public List<Statements> getStatements() {
     return body.getStatements();
   }
 
+  @Override
   public String toCode() {
     return "while ( " + test + " ) {\n" +
         body.toCode() + "\n" +

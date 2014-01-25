@@ -26,6 +26,7 @@ import com.google.gwt.junit.Platform;
 public class SplitLayoutPanelTest extends DockLayoutPanelTest {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((SplitLayoutPanel) container).addNorth(child, 10);
     }

@@ -33,12 +33,14 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   static class PolyA implements IFoo {
+    @Override
     public String toString() {
       return "A";
     }
   }
 
   static class PolyB implements IBar {
+    @Override
     public String toString() {
       return "B";
     }
@@ -93,6 +95,7 @@ public class MiscellaneousTest extends GWTTestCase {
     var a; a.asdf();
   }-*/;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
@@ -342,6 +345,7 @@ public class MiscellaneousTest extends GWTTestCase {
     assertTrue(c instanceof String);
   }
 
+  @Override
   public String toString() {
     return "com.google.gwt.dev.jjs.test.MiscellaneousTest";
   }

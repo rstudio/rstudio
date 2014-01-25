@@ -30,6 +30,7 @@ import java.util.Comparator;
 public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   private static final Comparator<? super Annotation> ANNOTATION_COMPARATOR = new Comparator<Annotation>() {
+    @Override
     public int compare(Annotation o1, Annotation o2) {
       // Just use toString, it contains all info.
       return o1.toString().compareTo(o2.toString());

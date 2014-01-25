@@ -445,6 +445,7 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
     }
 
+    @Override
     public String findOriginalDeclaringClass(String desc, String signature) {
       // Lookup the method.
       Set<JClassType> declaringClasses = signatureToDeclaringClasses.get(signature);
@@ -651,12 +652,14 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
     }
 
+    @Override
     public List<com.google.gwt.dev.asm.commons.Method> getDeclarations(
         String mangledName) {
       List<com.google.gwt.dev.asm.commons.Method> toReturn = mangledNamesToDeclarations.get(mangledName);
       return toReturn == null ? null : Collections.unmodifiableList(toReturn);
     }
 
+    @Override
     public List<com.google.gwt.dev.asm.commons.Method> getImplementations(
         String mangledName) {
       List<com.google.gwt.dev.asm.commons.Method> toReturn = mangledNamesToImplementations.get(mangledName);
@@ -664,10 +667,12 @@ public final class CompilingClassLoader extends ClassLoader implements
           : Collections.unmodifiableList(toReturn);
     }
 
+    @Override
     public SortedSet<String> getMangledNames() {
       return unmodifiableNames;
     }
 
+    @Override
     public Set<String> getSingleJsoIntfTypes() {
       return unmodifiableIntfNames;
     }
@@ -1008,6 +1013,7 @@ public final class CompilingClassLoader extends ClassLoader implements
    * @return {@link DispatchClassInfo} for a given dispatch id or null if one
    *         does not exist
    */
+  @Override
   public DispatchClassInfo getClassInfoByDispId(int dispId) {
     return dispClassInfoOracle.getClassInfoByDispId(dispId);
   }
@@ -1018,6 +1024,7 @@ public final class CompilingClassLoader extends ClassLoader implements
    * @param jsniMemberRef a JSNI member reference
    * @return dispatch id or -1 if the JSNI member reference could not be found
    */
+  @Override
   public int getDispId(String jsniMemberRef) {
     return dispClassInfoOracle.getDispId(jsniMemberRef);
   }

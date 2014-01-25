@@ -82,10 +82,12 @@ public class BrowserChannelServer extends BrowserChannel
       remoteObjectTable = new RemoteObjectTable<JsObjectRef>();
     }
 
+    @Override
     public JavaObjectRef getJavaObjectRef(int refId) {
       return new JavaObjectRef(refId);
     }
 
+    @Override
     public JsObjectRef getJsObjectRef(int refId) {
       JsObjectRef objectRef = remoteObjectTable.getRemoteObjectRef(refId);
       if (objectRef == null) {
@@ -95,6 +97,7 @@ public class BrowserChannelServer extends BrowserChannel
       return objectRef;
     }
 
+    @Override
     public Set<Integer> getRefIdsForCleanup() {
       return remoteObjectTable.getRefIdsForCleanup();
     }
@@ -359,6 +362,7 @@ public class BrowserChannelServer extends BrowserChannel
     } while (true);
   }
 
+  @Override
   public void run() {
     try {
       processConnection();

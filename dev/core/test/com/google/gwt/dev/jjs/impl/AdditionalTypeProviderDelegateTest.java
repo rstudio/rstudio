@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,20 +36,24 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
   private class JavaWrapperCompilationUnit implements GeneratedUnit {
     private final long createTime = System.currentTimeMillis();
 
+    @Override
     public String optionalFileLocation() {
       return null; // not used
     }
 
+    @Override
     public String getStrongHash() {
       return "InsertedClass";
     }
 
+    @Override
     public long creationTime() {
       return createTime;
     }
 
-   public String getSource() {
-      String classSource = 
+    @Override
+    public String getSource() {
+      String classSource =
           "package myPackage;\n" +
           "public class InsertedClass {\n" +
           "  public static int getSmallNumber() {\n" +
@@ -65,18 +69,21 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
       // or else the file won't get compiled correctly.
       return "myPackage/InsertedClass.notjava";
     }
-   
+
+    @Override
     public String getTypeName() {
       return "myPackage.InsertedClass";
     }
+    @Override
     public long getSourceToken() {
       return -1;
     }
   }
 
-   public boolean insertInsertedClass = false;
+  public boolean insertInsertedClass = false;
 
-   public void setUp() {
+  @Override
+  public void setUp() {
      // Create a source class that passes fine (just to test infrastructure.)
      sourceOracle.addOrReplace(new MockJavaResource("test.A") {
        @Override
@@ -90,7 +97,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
          return code;
        }
      });
-     
+
      // Create a source file containing a reference to a class in another
      // package that we don't yet know about.  That code will be inserted
      // by the AdditionalTypeProviderDelegate.
@@ -109,7 +116,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
          return code;
        }
      });
-     
+
      // Create a source file containing a reference to a class in another
      // package, but that lacks an import directive.  Are we creating the
      // class anyway?
@@ -131,22 +138,22 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
 
   public void testInsertedClass() throws UnableToCompleteException {
     JProgram program = compileSnippet("void", "new test.B().func();");
-    
+
     // Make sure the compiled classes appeared.
     JDeclaredType bType = findType(program, "test.B");
     assertNotNull("Unknown type B", bType);
     JDeclaredType insertedClassType = findType(program, "myPackage.InsertedClass");
-    assertNotNull("Unknown type InsertedClass", insertedClassType);  
+    assertNotNull("Unknown type InsertedClass", insertedClassType);
   }
-  
+
   public void testInsertedClass2() throws UnableToCompleteException {
     JProgram program = compileSnippet("void", "new test.B1().func();");
-    
+
     // Make sure the compiled classes appeared.
     JDeclaredType bType = findType(program, "test.B1");
     assertNotNull("Unknown type B1", bType);
     JDeclaredType insertedClassType = findType(program, "myPackage.InsertedClass");
-    assertNotNull("Unknown type InsertedClass", insertedClassType);  
+    assertNotNull("Unknown type InsertedClass", insertedClassType);
   }
 
   // Make sure regular code not using the AdditionalTypeProviderDelegate still works.
@@ -209,6 +216,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     // We'll provide a simple compiler delegate that will provide source
     // for a class called myPackage.InsertedClass.
     return new AdditionalTypeProviderDelegate() {
+      @Override
       public boolean doFindAdditionalPackage(String slashedPackageName) {
         if (slashedPackageName.compareTo("myPackage") == 0) {
             return true;
@@ -216,6 +224,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
         return false;
       }
 
+      @Override
       public GeneratedUnit doFindAdditionalType(String binaryName) {
         if (binaryName.compareTo("myPackage/InsertedClass") == 0) {
           return new JavaWrapperCompilationUnit();
@@ -225,6 +234,7 @@ public class AdditionalTypeProviderDelegateTest extends OptimizerTestBase {
     };
   }
 
+  @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     return false;
   }

@@ -110,6 +110,7 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     service.test(new AsyncCallback<Void>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         if (caught instanceof StatusCodeException) {
           assertEquals(Response.SC_NOT_FOUND,
@@ -121,6 +122,7 @@ public class RemoteServiceServletTest extends RpcTestBase {
         }
       }
 
+      @Override
       public void onSuccess(Void result) {
         fail("Should not have succeeded");
       }
@@ -138,12 +140,14 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     service.throwDeclaredRuntimeException(new AsyncCallback<Void>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         assertTrue(caught instanceof NullPointerException);
         assertEquals("expected", caught.getMessage());
         finishTest();
       }
 
+      @Override
       public void onSuccess(Void result) {
         fail();
       }
@@ -157,10 +161,12 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     RequestBuilder builder = service.testExpectCustomHeader(new AsyncCallback<Void>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Void result) {
         assertTrue(!req.isPending());
         finishTest();
@@ -181,10 +187,12 @@ public class RemoteServiceServletTest extends RpcTestBase {
     service.testExpectPermutationStrongName(GWT.getPermutationStrongName(),
         new AsyncCallback<Void>() {
 
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Void result) {
             finishTest();
           }
@@ -221,12 +229,14 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     delayTestFinishForRpc();
     service.test(new AsyncCallback<Void>() {
+      @Override
       public void onFailure(Throwable caught) {
         assertTrue(caught instanceof StatusCodeException);
         assertEquals(500, ((StatusCodeException) caught).getStatusCode());
         finishTest();
       }
 
+      @Override
       public void onSuccess(Void result) {
         fail();
       }
@@ -243,10 +253,12 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     delayTestFinishForRpc();
     service.test(new AsyncCallback<Void>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Void result) {
         builder.check();
         finishTest();
@@ -261,10 +273,12 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     req = service.test(new AsyncCallback<Void>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Void result) {
         assertTrue(!req.isPending());
         finishTest();
@@ -284,11 +298,13 @@ public class RemoteServiceServletTest extends RpcTestBase {
 
     service.throwUnknownRuntimeException(new AsyncCallback<Void>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         assertTrue(caught instanceof InvocationException);
         finishTest();
       }
 
+      @Override
       public void onSuccess(Void result) {
         fail();
       }

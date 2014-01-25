@@ -222,6 +222,7 @@ public abstract class StorageTest extends GWTTestCase {
     delayTestFinish(2000);
     storage.setItem("tcseFoo", "tcseBar");
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         assertNull(event.getKey());
         assertNull(event.getOldValue());
@@ -245,6 +246,7 @@ public abstract class StorageTest extends GWTTestCase {
     storage.setItem("tsiseFoo", "tsiseBarOld");
 
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         assertEquals("tsiseFoo", event.getKey());
         assertEquals("tsiseBarNew", event.getNewValue());
@@ -268,6 +270,7 @@ public abstract class StorageTest extends GWTTestCase {
     storage.setItem("triseFoo", "triseBarOld");
 
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         assertEquals("triseFoo", event.getKey());
         finishTest();
@@ -288,6 +291,7 @@ public abstract class StorageTest extends GWTTestCase {
     delayTestFinish(3000);
 
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         fail("Storage change should not have fired.");
         eventFired[0] = true;
@@ -321,6 +325,7 @@ public abstract class StorageTest extends GWTTestCase {
     storage.setItem("teieFoo", "teieBar");
 
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         if ("teieFoo".equals(event.getKey())) {
           storage.clear();
@@ -350,6 +355,7 @@ public abstract class StorageTest extends GWTTestCase {
     storage.setItem("tmehFoo", "tmehBar");
 
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         if ("tmehFoo".equals(event.getKey())) {
           eventHandledCount[0]++;
@@ -362,6 +368,7 @@ public abstract class StorageTest extends GWTTestCase {
     storage.addStorageEventHandler(handler);
 
     handler2 = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         if ("tmehFoo".equals(event.getKey())) {
           eventHandledCount[0]++;
@@ -383,6 +390,7 @@ public abstract class StorageTest extends GWTTestCase {
     delayTestFinish(2000);
     storage.setItem("tesaFoo", "tesaBar");
     handler = new StorageEvent.Handler() {
+      @Override
       public void onStorageChange(StorageEvent event) {
         Storage eventStorage = event.getStorageArea();
         assertEquals(storage, eventStorage);

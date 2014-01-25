@@ -40,6 +40,7 @@ public class EmptySignatureVisitor extends SignatureVisitor {
   /**
    * Treated as a visitEnd for this visitor.
    */
+  @Override
   public SignatureVisitor visitArrayType() {
     return ignore;
   }
@@ -47,52 +48,66 @@ public class EmptySignatureVisitor extends SignatureVisitor {
   /**
    * Treated as a visitEnd for this visitor.
    */
+  @Override
   public void visitBaseType(char descriptor) {
   }
 
+  @Override
   public SignatureVisitor visitClassBound() {
     return ignore;
   }
 
+  @Override
   public void visitClassType(String name) {
   }
 
+  @Override
   public void visitEnd() {
   }
 
+  @Override
   public SignatureVisitor visitExceptionType() {
     return ignore;
   }
 
+  @Override
   public void visitFormalTypeParameter(String name) {
   }
 
+  @Override
   public void visitInnerClassType(String name) {
   }
 
+  @Override
   public SignatureVisitor visitInterface() {
     return ignore;
   }
 
+  @Override
   public SignatureVisitor visitInterfaceBound() {
     return ignore;
   }
 
+  @Override
   public SignatureVisitor visitParameterType() {
     return ignore;
   }
 
+  @Override
   public SignatureVisitor visitReturnType() {
     return ignore;
   }
 
+  @Override
   public SignatureVisitor visitSuperclass() {
     return ignore;
   }
 
+  @Override
   public void visitTypeArgument() {
   }
 
+  @Override
   public SignatureVisitor visitTypeArgument(char wildcard) {
     return ignore;
   }
@@ -100,6 +115,7 @@ public class EmptySignatureVisitor extends SignatureVisitor {
   /**
    * Treated as a visitEnd for this visitor.
    */
+  @Override
   public void visitTypeVariable(String name) {
   }
 }

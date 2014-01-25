@@ -44,6 +44,7 @@ public abstract class Artifact<C extends Artifact<C>> implements
     this.linker = linker;
   }
 
+  @Override
   public final int compareTo(Artifact<?> o) {
     if (getComparableArtifactType().equals(o.getComparableArtifactType())) {
       return compareToComparableArtifact(getComparableArtifactType().cast(o));

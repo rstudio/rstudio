@@ -32,12 +32,14 @@ public class UnreachableAnalysis implements IntegratedAnalysis<CfgNode<?>,
   private static final UnreachabeIntegratedTransformationFunction 
   INTEGRATED_FLOW_FUNCTION = new UnreachabeIntegratedTransformationFunction();
 
+  @Override
   public IntegratedFlowFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
                                 UnreachableAssumptions> 
   getIntegratedFlowFunction() {
     return INTEGRATED_FLOW_FUNCTION;
   }
 
+  @Override
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, UnreachableAssumptions> assumptionMap) {
     AssumptionUtil.setAssumptions(graph.getGraphInEdges(), 

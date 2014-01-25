@@ -88,26 +88,32 @@ public class JsonArray implements JsonValue {
     add(JsonString.create(value));
   }
 
+  @Override
   public JsonArray asArray() {
     return this;
   }
 
+  @Override
   public JsonBoolean asBoolean() {
     return null;
   }
 
+  @Override
   public JsonNumber asNumber() {
     return null;
   }
 
+  @Override
   public JsonObject asObject() {
     return null;
   }
 
+  @Override
   public JsonString asString() {
     return null;
   }
 
+  @Override
   public JsonArray copyDeeply() {
     final JsonArray copy = new JsonArray();
     for (JsonValue value : values) {
@@ -125,26 +131,32 @@ public class JsonArray implements JsonValue {
     return values.size();
   }
 
+  @Override
   public boolean isArray() {
     return true;
   }
 
+  @Override
   public boolean isBoolean() {
     return false;
   }
 
+  @Override
   public boolean isNumber() {
     return false;
   }
 
+  @Override
   public boolean isObject() {
     return false;
   }
 
+  @Override
   public boolean isString() {
     return false;
   }
 
+  @Override
   public void write(Writer writer) throws IOException {
     writer.write('[');
     for (int i = 0, n = values.size(); i < n; ++i) {

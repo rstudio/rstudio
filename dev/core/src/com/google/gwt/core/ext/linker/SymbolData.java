@@ -39,6 +39,7 @@ public interface SymbolData extends Serializable {
    * orders SymbolData objects by their class names or JSNI idents.
    */
   class ClassIdentComparator implements Comparator<SymbolData>, Serializable {
+    @Override
     public int compare(SymbolData o1, SymbolData o2) {
       if (o1 == o2) {
         return 0;

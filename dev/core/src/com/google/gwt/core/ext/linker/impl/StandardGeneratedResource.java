@@ -59,6 +59,7 @@ public class StandardGeneratedResource extends GeneratedResource {
     return new ByteArrayInputStream(diskCache.readByteArray(token));
   }
 
+  @Override
   public long getLastModified() {
     return lastModified;
   }

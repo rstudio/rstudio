@@ -26,6 +26,7 @@ import java.math.MathContext;
  */
 public class CoreJavaTestServiceImpl extends HybridServiceServlet implements CoreJavaTestService {
 
+  @Override
   public MathContext echoMathContext(MathContext value) throws CoreJavaTestServiceException {
     if (!CoreJavaTest.isValid(value)) {
       throw new CoreJavaTestServiceException();

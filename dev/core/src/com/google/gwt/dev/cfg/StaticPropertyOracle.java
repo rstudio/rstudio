@@ -90,6 +90,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     return orderedPropValues;
   }
 
+  @Override
   public com.google.gwt.core.ext.SelectionProperty getSelectionProperty(
       TreeLogger logger, String propertyName)
       throws BadPropertyValueException {

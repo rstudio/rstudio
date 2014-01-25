@@ -25,14 +25,17 @@ import junit.framework.TestCase;
 public class FieldReferenceConverterTest extends TestCase {
 
   FieldReferenceConverter.Delegate frDelegate = new FieldReferenceConverter.Delegate() {
+    @Override
     public String handleFragment(String path) {
       return "*" + path + "*";
     }
 
+    @Override
     public String handleReference(String reference) {
       return String.format(" & %s & ", reference);
     }
     
+    @Override
     public JType[] getTypes() {
       return null;
     }

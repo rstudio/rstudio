@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class ScriptInjectionEncodingTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.module.ScriptInjectionEncodingTest";
   }

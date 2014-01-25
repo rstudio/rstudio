@@ -56,8 +56,10 @@ public class CopyIntegratedFlowFunction implements
       this.graph = graph;
     }
 
+    @Override
     public CfgTransformer getGraphTransformer() {
       return new CfgTransformer() {
+        @Override
         public boolean transform(final CfgNode<?> node, Cfg cfgGraph) {
           JModVisitor visitor = new JModVisitor() {
             @Override
@@ -76,6 +78,7 @@ public class CopyIntegratedFlowFunction implements
       };
     }
 
+    @Override
     public Cfg getNewSubgraph() {
       CfgReadNode newNode = new CfgReadNode(node.getParent(), 
           createRef(node.getJNode().getSourceInfo(), original));
@@ -100,6 +103,7 @@ public class CopyIntegratedFlowFunction implements
 
   private static final CopyFlowFunction FLOW_FUNCTION = new CopyFlowFunction();
 
+  @Override
   public Transformation<CfgTransformer, Cfg> 
   interpretOrReplace(final CfgNode<?> node, final Cfg graph, 
       AssumptionMap<CfgEdge, CopyAssumption> assumptionMap) {

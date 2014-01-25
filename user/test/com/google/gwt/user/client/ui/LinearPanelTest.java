@@ -24,6 +24,7 @@ import com.google.gwt.user.client.DOM;
  */
 public class LinearPanelTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }

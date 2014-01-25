@@ -29,6 +29,7 @@ public class NullValidatorTest extends
   @Null
   private Object defaultField;
 
+  @Override
   protected NullValidator createValidator() {
     return new NullValidator();
   }

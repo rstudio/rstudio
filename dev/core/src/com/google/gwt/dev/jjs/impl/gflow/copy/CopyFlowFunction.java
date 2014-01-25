@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.impl.gflow.copy.CopyAssumption.Updater;
  */
 public class CopyFlowFunction implements
     FlowFunction<CfgNode<?>, CfgEdge, Cfg, CopyAssumption> {
+  @Override
   public void interpret(CfgNode<?> node,
       Cfg g, AssumptionMap<CfgEdge, CopyAssumption> assumptionMap) {
     CopyAssumption in = AssumptionUtil.join(g.getInEdges(node), assumptionMap);

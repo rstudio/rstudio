@@ -30,6 +30,7 @@ public class JavaAccessFromJavaScriptTest extends GWTTestCase {
       return x + 1.01;
     }
 
+    @Override
     public int addOne(int x) {
       return x + 1;
     }

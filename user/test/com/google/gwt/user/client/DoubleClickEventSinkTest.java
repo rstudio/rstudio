@@ -124,6 +124,7 @@ public class DoubleClickEventSinkTest extends GWTTestCase {
     }
 
     w.addDoubleClickHandler(new DoubleClickHandler() {
+      @Override
       public void onDoubleClick(DoubleClickEvent event) {
       }
     });

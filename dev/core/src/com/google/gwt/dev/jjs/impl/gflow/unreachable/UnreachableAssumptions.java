@@ -28,6 +28,7 @@ public class UnreachableAssumptions implements Assumption<UnreachableAssumptions
     return in == REACHABLE;
   }
 
+  @Override
   public UnreachableAssumptions join(UnreachableAssumptions value) {
     if (this == REACHABLE || value == REACHABLE) {
       return REACHABLE;

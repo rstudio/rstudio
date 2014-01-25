@@ -26,6 +26,7 @@ public class JSeedIdOf extends JNameOf {
     super(info, stringType, node);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       // Intentionally not visiting referenced node

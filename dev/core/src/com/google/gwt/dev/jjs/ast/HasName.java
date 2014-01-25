@@ -30,6 +30,7 @@ public interface HasName {
   public static final class Util {
     public static <T extends HasName> void sortByName(List<T> list) {
       Collections.sort(list, new Comparator<T>() {
+        @Override
         public int compare(T o1, T o2) {
           return o1.getName().compareTo(o2.getName());
         }

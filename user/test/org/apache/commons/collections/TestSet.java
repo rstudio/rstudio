@@ -57,6 +57,7 @@ public abstract class TestSet extends TestCollection {
      *
      *  @return an empty collection
      */
+    @Override
     protected final Collection makeCollection() {
         return makeEmptySet();
     }
@@ -67,6 +68,7 @@ public abstract class TestSet extends TestCollection {
      *
      *  @return a full collection
      */
+    @Override
     protected final Collection makeFullCollection() {
         return makeFullSet();
     }
@@ -84,6 +86,7 @@ public abstract class TestSet extends TestCollection {
      *
      *  @return a confirmed empty collection
      */
+    @Override
     protected Collection makeConfirmedCollection() {
         return new HashSet();
     }
@@ -94,6 +97,7 @@ public abstract class TestSet extends TestCollection {
      *
      *  @return a confirmed full collection
      */
+    @Override
     protected Collection makeConfirmedFullCollection() {
         HashSet set = new HashSet();
         set.addAll(Arrays.asList(getFullElements()));
@@ -173,6 +177,7 @@ public abstract class TestSet extends TestCollection {
     /**
      *  Provides additional verifications for sets.
      */
+    @Override
     protected void verify() {
         super.verify();
         assertEquals("Sets should be equal", confirmed, collection);

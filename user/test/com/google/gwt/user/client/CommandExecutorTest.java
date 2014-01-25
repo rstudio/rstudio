@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class CommandExecutorTest extends GWTTestCase {
 
   private static class NonRestartingCommandExecutor extends CommandExecutor {
+    @Override
     protected void maybeStartExecutionTimer() {
       // keeps the executing timer for interfering with the test
     }
@@ -36,6 +37,7 @@ public class CommandExecutorTest extends GWTTestCase {
       return executed;
     }
 
+    @Override
     public void execute() {
       executed = true;
     }
@@ -45,6 +47,7 @@ public class CommandExecutorTest extends GWTTestCase {
     private boolean done = false;
     private int executeCount;
 
+    @Override
     public boolean execute() {
       ++executeCount;
 
@@ -69,6 +72,7 @@ public class CommandExecutorTest extends GWTTestCase {
    */
   private static final int TEST_FINISH_DELAY_MILLIS = 40000;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -253,6 +257,7 @@ public class CommandExecutorTest extends GWTTestCase {
     ce.submit(new IncrementalCommand() {
       private int executionCount = 0;
 
+      @Override
       public boolean execute() {
         if (++executionCount > 10) {
           fail("IncrementalCommand was fired more than 10 times");
@@ -269,6 +274,7 @@ public class CommandExecutorTest extends GWTTestCase {
 
   private Command createFinishTestCommand() {
     return new Command() {
+      @Override
       public void execute() {
         finishTest();
       }

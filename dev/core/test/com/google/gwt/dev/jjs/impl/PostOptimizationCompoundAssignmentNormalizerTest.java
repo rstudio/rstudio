@@ -55,6 +55,7 @@ public class PostOptimizationCompoundAssignmentNormalizerTest
         "float x=2; double d=3.0; x += d;");
   }
   
+  @Override
   protected boolean optimizeMethod(JProgram program, JMethod method) {
     PostOptimizationCompoundAssignmentNormalizer.exec(program);
     LongCastNormalizer.exec(program);

@@ -39,6 +39,7 @@ public class JsonpRequestTest extends GWTTestCase {
       this.expectedMessage = expectedMessage;
     }
 
+    @Override
     public void onFailure(Throwable throwable) {
       if (id == currentTestId) {
         assertEquals(expectedMessage, throwable.getMessage());
@@ -46,6 +47,7 @@ public class JsonpRequestTest extends GWTTestCase {
       }
     }
 
+    @Override
     public void onSuccess(T value) {
       if (id == currentTestId) {
         fail();
@@ -71,12 +73,14 @@ public class JsonpRequestTest extends GWTTestCase {
       this.expectedValue = expectedValue;
     }
 
+    @Override
     public void onFailure(Throwable throwable) {
       if (id == currentTestId) {
         fail();
       }
     }
 
+    @Override
     public void onSuccess(T value) {
       if (id == currentTestId) {
         assertEquals(expectedValue, value);
@@ -93,11 +97,13 @@ public class JsonpRequestTest extends GWTTestCase {
    * Checks that a timeout happens.
    */
   private class AssertTimeoutExceptionCallback<T> implements AsyncCallback<T> {
+    @Override
     public void onFailure(Throwable throwable) {
       assertTrue(throwable instanceof TimeoutException);
       finishTest();
     }
 
+    @Override
     public void onSuccess(T value) {
       fail();
     }

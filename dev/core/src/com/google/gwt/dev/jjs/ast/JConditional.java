@@ -48,6 +48,7 @@ public class JConditional extends JExpression {
     return thenExpr;
   }
 
+  @Override
   public JType getType() {
     return type;
   }
@@ -61,6 +62,7 @@ public class JConditional extends JExpression {
     type = newType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       ifTest = visitor.accept(ifTest);

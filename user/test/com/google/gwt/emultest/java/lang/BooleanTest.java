@@ -33,6 +33,7 @@ public class BooleanTest extends GWTTestCase {
   static volatile String true2 = "TRUE";
   static volatile String true3 = "TrUe";
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

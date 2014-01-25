@@ -90,6 +90,7 @@ public class MessageTransportTest extends TestCase {
      * requests (any responses).
      */
     RequestProcessor requestProcessor = new RequestProcessor() {
+      @Override
       public Response execute(Request request) throws Exception {
         fail("Should not reach here.");
         return null;
@@ -101,8 +102,10 @@ public class MessageTransportTest extends TestCase {
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.ErrorCallback() {
+          @Override
           public void onResponseException(Exception e) {
           }
+          @Override
           public void onTermination(Exception e) {
           }
         });
@@ -168,6 +171,7 @@ public class MessageTransportTest extends TestCase {
      * requests (any responses).
      */
     RequestProcessor requestProcessor = new RequestProcessor() {
+      @Override
       public Response execute(Request request) throws Exception {
         fail("Should not reach here.");
         return null;
@@ -238,6 +242,7 @@ public class MessageTransportTest extends TestCase {
      * requests (any responses).
      */
     RequestProcessor requestProcessor = new RequestProcessor() {
+      @Override
       public Response execute(Request request) throws Exception {
         fail("Should not reach here.");
         return null;
@@ -249,8 +254,10 @@ public class MessageTransportTest extends TestCase {
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.ErrorCallback() {
+          @Override
           public void onResponseException(Exception e) {
           }
+          @Override
           public void onTermination(Exception e) {
           }
         });
@@ -334,6 +341,7 @@ public class MessageTransportTest extends TestCase {
      * we've defined, and then return the response that we've defined.
      */
     RequestProcessor requestProcessor = new RequestProcessor() {
+      @Override
       public Response execute(Request request) throws Exception {
         assertEquals(clientRequest, request);
         return clientResponse;
@@ -345,8 +353,10 @@ public class MessageTransportTest extends TestCase {
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.ErrorCallback() {
+          @Override
           public void onResponseException(Exception e) {
           }
+          @Override
           public void onTermination(Exception e) {
           }
         });
@@ -392,6 +402,7 @@ public class MessageTransportTest extends TestCase {
      * the client side.
      */
     RequestProcessor requestProcessor = new RequestProcessor() {
+      @Override
       public Response execute(Request request) throws Exception {
         throw new Exception("There was an exception processing this request.");
       }
@@ -402,8 +413,10 @@ public class MessageTransportTest extends TestCase {
         network.getClientSocket().getInputStream(),
         network.getClientSocket().getOutputStream(), requestProcessor,
         new MessageTransport.ErrorCallback() {
+          @Override
           public void onResponseException(Exception e) {
           }
+          @Override
           public void onTermination(Exception e) {
           }
         });

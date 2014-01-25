@@ -34,6 +34,7 @@ public class SchedulerImplTest extends GWTTestCase {
       this.values = values;
     }
 
+    @Override
     public void execute() {
       values[0] = true;
     }
@@ -47,6 +48,7 @@ public class SchedulerImplTest extends GWTTestCase {
       this.values = values;
     }
 
+    @Override
     public boolean execute() {
       assertTrue("Called too many times", values[0] < values[1]);
       values[0] = values[0] + 1;
@@ -58,6 +60,7 @@ public class SchedulerImplTest extends GWTTestCase {
    * A no-op command used to test internal datastructures.
    */
   static class NullCommand implements ScheduledCommand {
+    @Override
     public void execute() {
     }
   }
@@ -113,6 +116,7 @@ public class SchedulerImplTest extends GWTTestCase {
     assertSame(nullCommand, impl.deferredCommands.get(1).getScheduled());
 
     impl.scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertTrue(values[0]);
         assertNull(impl.deferredCommands);
@@ -166,18 +170,22 @@ public class SchedulerImplTest extends GWTTestCase {
     final SchedulerImpl impl = new SchedulerImpl();
 
     testQueue(new QueueTester() {
+      @Override
       public void flush() {
         impl.flushEntryCommands();
       }
 
+      @Override
       public JsArray<Task> queue() {
         return impl.entryCommands;
       }
 
+      @Override
       public void schedule(RepeatingCommand cmd) {
         impl.scheduleEntry(cmd);
       }
 
+      @Override
       public void schedule(ScheduledCommand cmd) {
         impl.scheduleEntry(cmd);
       }
@@ -188,18 +196,22 @@ public class SchedulerImplTest extends GWTTestCase {
     final SchedulerImpl impl = new SchedulerImpl();
 
     testQueue(new QueueTester() {
+      @Override
       public void flush() {
         impl.flushFinallyCommands();
       }
 
+      @Override
       public JsArray<Task> queue() {
         return impl.finallyCommands;
       }
 
+      @Override
       public void schedule(RepeatingCommand cmd) {
         impl.scheduleFinally(cmd);
       }
 
+      @Override
       public void schedule(ScheduledCommand cmd) {
         impl.scheduleFinally(cmd);
       }
@@ -216,6 +228,7 @@ public class SchedulerImplTest extends GWTTestCase {
 
     // Busy wait for the counter
     impl.scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         if (values[0] == values[1]) {
           finishTest();
@@ -238,6 +251,7 @@ public class SchedulerImplTest extends GWTTestCase {
 
     // Busy wait for the counter
     impl.scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         if (values[0] == values[1]) {
           finishTest();
@@ -261,6 +275,7 @@ public class SchedulerImplTest extends GWTTestCase {
     assertEquals(1, impl.deferredCommands.length());
 
     impl.scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         // After the incremental command has fired, it's moved to a new queue
         assertNull(impl.deferredCommands);
@@ -293,6 +308,7 @@ public class SchedulerImplTest extends GWTTestCase {
     impl.schedule(new ArraySetterCommand(oneShotValues));
     impl.schedule(new CountingCommand(counterValues));
     impl.schedule(new ScheduledCommand() {
+      @Override
       public void execute() {
         // Schedule another entry
         impl.schedule(new ArraySetterCommand(chainedValues));

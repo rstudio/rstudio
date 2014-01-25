@@ -33,6 +33,7 @@ public class JReturnStatement extends JStatement {
     return expr;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       if (expr != null) {

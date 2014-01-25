@@ -174,6 +174,7 @@ public class BulkTest extends TestCase implements Cloneable {
      *
      *  @return  a clone of this <code>BulkTest</code>
      */
+    @Override
     public Object clone() {
         try {
             return super.clone();
@@ -226,6 +227,7 @@ public class BulkTest extends TestCase implements Cloneable {
      *
      *  @return the display name of this <code>BulkTest</code>
      */
+    @Override
     public String toString() {
         return getName() + "(" + verboseName + ") ";
     }

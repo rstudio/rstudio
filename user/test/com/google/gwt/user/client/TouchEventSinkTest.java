@@ -215,6 +215,7 @@ public class TouchEventSinkTest extends GWTTestCase {
     }
 
     w.addTouchCancelHandler(new TouchCancelHandler() {
+      @Override
       public void onTouchCancel(TouchCancelEvent event) {
       }
     });
@@ -242,6 +243,7 @@ public class TouchEventSinkTest extends GWTTestCase {
     }
 
     w.addTouchEndHandler(new TouchEndHandler() {
+      @Override
       public void onTouchEnd(TouchEndEvent event) {
       }
     });
@@ -270,6 +272,7 @@ public class TouchEventSinkTest extends GWTTestCase {
 
     w.addTouchMoveHandler(new TouchMoveHandler() {
 
+      @Override
       public void onTouchMove(TouchMoveEvent event) {
       }
     });
@@ -297,6 +300,7 @@ public class TouchEventSinkTest extends GWTTestCase {
     }
 
     w.addTouchStartHandler(new TouchStartHandler() {
+      @Override
       public void onTouchStart(TouchStartEvent event) {
       }
     });

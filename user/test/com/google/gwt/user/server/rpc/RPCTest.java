@@ -527,6 +527,7 @@ public class RPCTest extends TestCase {
       }
     }
     class TestPolicyProvider implements SerializationPolicyProvider {      
+      @Override
       public SerializationPolicy getSerializationPolicy(
           String moduleBaseURL, String serializationPolicyStrongName) {
         return new TestPolicy();
@@ -567,12 +568,14 @@ public class RPCTest extends TestCase {
     class TestPolicy extends SerializationPolicy implements TypeNameObfuscator {
       private static final String C_NAME = "__c__";
 
+      @Override
       public String getClassNameForTypeId(String id)
           throws SerializationException {
         assertEquals(C_NAME, id);
         return C.class.getName();
       }
 
+      @Override
       public String getTypeIdForClass(Class<?> clazz)
           throws SerializationException {
         assertEquals(C.class, clazz);
@@ -773,6 +776,7 @@ public class RPCTest extends TestCase {
     // Case 2
     try {
       RPC.invokeAndEncodeResponse(new B() {
+        @Override
         public void method1() {
         }
       }, A_method1, null);
@@ -784,13 +788,16 @@ public class RPCTest extends TestCase {
     // Case 3
     try {
       RPC.invokeAndEncodeResponse(new A() {
+        @Override
         public void method1() throws SerializableException {
         }
 
+        @Override
         public int method2() {
           return 0;
         }
 
+        @Override
         public int method3(int val) {
           return 0;
         }
@@ -803,14 +810,17 @@ public class RPCTest extends TestCase {
     // Case 4
     try {
       RPC.invokeAndEncodeResponse(new A() {
+        @Override
         public void method1() throws SerializableException {
           throw new IllegalArgumentException();
         }
 
+        @Override
         public int method2() {
           return 0;
         }
 
+        @Override
         public int method3(int val) {
           return 0;
         }
@@ -822,14 +832,17 @@ public class RPCTest extends TestCase {
 
     // Case 5
     RPC.invokeAndEncodeResponse(new A() {
+      @Override
       public void method1() throws SerializableException {
         throw new SerializableException();
       }
 
+      @Override
       public int method2() {
         return 0;
       }
 
+      @Override
       public int method3(int val) {
         return 0;
       }

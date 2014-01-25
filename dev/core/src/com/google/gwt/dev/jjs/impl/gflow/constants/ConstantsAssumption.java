@@ -234,6 +234,7 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     return values.isEmpty();
   }
 
+  @Override
   public ConstantsAssumption join(ConstantsAssumption other) {
     if (other == null) {
       return this;

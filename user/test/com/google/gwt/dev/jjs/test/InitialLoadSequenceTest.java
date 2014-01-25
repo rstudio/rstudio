@@ -54,10 +54,12 @@ public class InitialLoadSequenceTest extends GWTTestCase {
 
   private void callback1() {
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable reason) {
         fail(reason.toString());
       }
 
+      @Override
       public void onSuccess() {
         countCallback();
       }
@@ -66,10 +68,12 @@ public class InitialLoadSequenceTest extends GWTTestCase {
 
   private void callback2() {
     GWT.runAsync(Callback2Marker.class, new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable reason) {
         fail(reason.toString());
       }
 
+      @Override
       public void onSuccess() {
         countCallback();
       }
@@ -78,10 +82,12 @@ public class InitialLoadSequenceTest extends GWTTestCase {
 
   private void callback3() {
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable reason) {
         fail(reason.toString());
       }
 
+      @Override
       public void onSuccess() {
         countCallback();
       }

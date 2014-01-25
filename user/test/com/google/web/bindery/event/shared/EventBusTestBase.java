@@ -30,10 +30,12 @@ public abstract class EventBusTestBase extends TestCase {
    */
   protected class Adaptor implements FooEvent.Handler, BarEvent.Handler {
 
+    @Override
     public void onFoo(FooEvent event) {
       add(this);
     }
 
+    @Override
     public void onBar(BarEvent event) {
       add(this);
     }
@@ -49,6 +51,7 @@ public abstract class EventBusTestBase extends TestCase {
   private HashSet<Object> active = new HashSet<Object>();
 
   protected FooEvent.Handler fooHandler1 = new FooEvent.Handler() {
+    @Override
     public void onFoo(FooEvent event) {
       add(fooHandler1);
     }
@@ -60,6 +63,7 @@ public abstract class EventBusTestBase extends TestCase {
   };
 
   protected FooEvent.Handler fooHandler2 = new FooEvent.Handler() {
+    @Override
     public void onFoo(FooEvent event) {
       add(fooHandler2);
     }
@@ -71,6 +75,7 @@ public abstract class EventBusTestBase extends TestCase {
   };
 
   protected FooEvent.Handler fooHandler3 = new FooEvent.Handler() {
+    @Override
     public void onFoo(FooEvent event) {
       add(fooHandler3);
     }
@@ -83,6 +88,7 @@ public abstract class EventBusTestBase extends TestCase {
 
   protected BarEvent.Handler barHandler1 = new BarEvent.Handler() {
 
+    @Override
     public void onBar(BarEvent event) {
       add(barHandler1);
     }
@@ -95,6 +101,7 @@ public abstract class EventBusTestBase extends TestCase {
 
   protected BarEvent.Handler barHandler2 = new BarEvent.Handler() {
 
+    @Override
     public void onBar(BarEvent event) {
       add(barHandler2);
     }
@@ -107,6 +114,7 @@ public abstract class EventBusTestBase extends TestCase {
 
   protected BarEvent.Handler barHandler3 = new BarEvent.Handler() {
 
+    @Override
     public void onBar(BarEvent event) {
       add(barHandler3);
     }

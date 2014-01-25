@@ -39,6 +39,7 @@ public class JCastOperation extends JExpression {
     return expr;
   }
 
+  @Override
   public JType getType() {
     return castType;
   }
@@ -60,6 +61,7 @@ public class JCastOperation extends JExpression {
     castType = newType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       expr = visitor.accept(expr);

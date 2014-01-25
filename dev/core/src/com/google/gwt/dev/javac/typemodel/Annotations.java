@@ -41,6 +41,7 @@ class Annotations implements HasAnnotations {
      * type. So we only need to sort by annotation type name, since there won't
      * be any duplicates.
      */
+    @Override
     public int compare(Annotation o1, Annotation o2) {
       return o1.annotationType().getName().compareTo(
           o2.annotationType().getName());
@@ -85,11 +86,13 @@ class Annotations implements HasAnnotations {
     }
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     initializeAnnotations();
     return annotationClass.cast(lazyAnnotations.get(annotationClass));
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     initializeAnnotations();
     List<Annotation> values = new ArrayList<Annotation>(lazyAnnotations.values());
@@ -97,6 +100,7 @@ class Annotations implements HasAnnotations {
     return values.toArray(new Annotation[values.size()]);
   }
 
+  @Override
   public Annotation[] getDeclaredAnnotations() {
     List<Annotation> values = new ArrayList<Annotation>(
         declaredAnnotations.values());
@@ -104,6 +108,7 @@ class Annotations implements HasAnnotations {
     return values.toArray(new Annotation[values.size()]);
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return getAnnotation(annotationClass) != null;
   }

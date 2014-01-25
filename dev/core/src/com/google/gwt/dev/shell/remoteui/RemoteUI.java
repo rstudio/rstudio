@@ -79,10 +79,12 @@ public class RemoteUI extends DevModeUI implements
     moduleLogger.initLogHandle(logHandle);
     moduleLogger.setMaxDetail(getLogLevel());
     ModuleHandle handle = new ModuleHandle() {
+      @Override
       public TreeLogger getLogger() {
         return moduleLogger;
       }
 
+      @Override
       public void unload() {
         synchronized (modulesLock) {
           if (!modules.contains(this)) {
@@ -136,11 +138,13 @@ public class RemoteUI extends DevModeUI implements
     viewerServiceClient.checkCapabilities();
   }
 
+  @Override
   public void onResponseException(Exception e) {
     getTopLogger().log(TreeLogger.INFO,
         "An exception occured while attempting to send a response message.", e);
   }
 
+  @Override
   public void onTermination(Exception e) {
     getConsoleLogger().log(TreeLogger.INFO,
         "Remote UI connection terminated due to exception: " + e);

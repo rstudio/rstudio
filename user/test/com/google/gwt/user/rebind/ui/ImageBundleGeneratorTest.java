@@ -52,30 +52,37 @@ public class ImageBundleGeneratorTest extends TestCase {
       this.height = height;
     }
 
+    @Override
     public int getHeight() {
       return height;
     }
 
+    @Override
     public int getLeft() {
       return left;
     }
 
+    @Override
     public String getName() {
       return name;
     }
 
+    @Override
     public int getTop() {
       return top;
     }
 
+    @Override
     public int getWidth() {
       return width;
     }
 
+    @Override
     public boolean hasBeenPositioned() {
       return hasBeenPositioned;
     }
 
+    @Override
     public void setPosition(int left, int top) {
       this.left = left;
       this.top = top;
@@ -315,14 +322,17 @@ public class ImageBundleGeneratorTest extends TestCase {
   private JMethodOracle createJMethodOracle(final String methodName,
       final String packageName, final Resource resourceAnnotation) {
     return new JMethodOracle() {
+      @Override
       public Resource getAnnotation(Class<Resource> clazz) {
         return resourceAnnotation;
       }
 
+      @Override
       public String getName() {
         return methodName;
       }
 
+      @Override
       public String getPackageName() {
         return packageName;
       }
@@ -336,6 +346,7 @@ public class ImageBundleGeneratorTest extends TestCase {
         new ImageBundleGenerator.ResourceLocator() {
           private final List<String> resList = Arrays.asList(pretendResources);
 
+          @Override
           public boolean isResourcePresent(String resName) {
             return resList.contains(resName);
           }

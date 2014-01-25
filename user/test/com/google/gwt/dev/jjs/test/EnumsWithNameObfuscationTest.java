@@ -34,6 +34,7 @@ public class EnumsWithNameObfuscationTest extends EnumsTest {
     APPLE, BERRY, CHERRY
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.EnumsWithNameObfuscationSuite";
   }

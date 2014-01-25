@@ -55,6 +55,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
     this.finalOutput = out;
   }
 
+  @Override
   public void close() {
     printPost();
     flushOutput();
@@ -65,6 +66,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
     }
   }
 
+  @Override
   public void endDependencyGraph() {
     builder.append("</table>");
     flushOutput();
@@ -73,10 +75,12 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
   /**
    * Used to record the dependencies of a specific method.
    */
+  @Override
   public void methodIsLiveBecause(JMethod liveMethod, ArrayList<JMethod> dependencyChain) {
     printMethodDependency(dependencyChain);
   }
 
+  @Override
   public void open() {
     try {
       this.writer = new OutputStreamWriter(new GZIPOutputStream(finalOutput), "UTF-8");
@@ -89,6 +93,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
     printPre();
   }
 
+  @Override
   public void startDependencyGraph(String identifier, String extnds) {
     builder.append("<table name=\"");
     builder.append(identifier);

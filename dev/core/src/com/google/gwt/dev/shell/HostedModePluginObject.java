@@ -42,6 +42,7 @@ public class HostedModePluginObject extends ScriptableObject {
     private static final long serialVersionUID = -8799481412144205779L;
     private static final int EXPECTED_NUM_ARGS = 5;
 
+    @Override
     public Object call(Context context, Scriptable scope, Scriptable thisObj,
         Object[] args) {
       // Allow extra arguments for forward compatibility
@@ -65,6 +66,7 @@ public class HostedModePluginObject extends ScriptableObject {
       }
     }
 
+    @Override
     public Scriptable construct(Context context, Scriptable scope, Object[] args) {
       throw Context.reportRuntimeError("Function connect can't be used as a "
           + "constructor");
@@ -84,12 +86,14 @@ public class HostedModePluginObject extends ScriptableObject {
 
     private static final long serialVersionUID = -8799481412144519779L;
 
+    @Override
     public Object call(Context context, Scriptable scope, Scriptable thisObj,
         Object[] args) {
       // Allow extra arguments for forward compatibility
       return disconnect();
     }
 
+    @Override
     public Scriptable construct(Context context, Scriptable scope, Object[] args) {
       throw Context.reportRuntimeError("Function disconnect can't be used as a "
           + "constructor");
@@ -109,6 +113,7 @@ public class HostedModePluginObject extends ScriptableObject {
     private static final long serialVersionUID = -8799481412144205779L;
     private static final String VERSION = "2.0";
 
+    @Override
     public Object call(Context context, Scriptable scope, Scriptable thisObj,
         Object[] args) {
       // Allow extra arguments for forward compatibility
@@ -125,6 +130,7 @@ public class HostedModePluginObject extends ScriptableObject {
       }
     }
 
+    @Override
     public Scriptable construct(Context context, Scriptable scope, Object[] args) {
       throw Context.reportRuntimeError("Function init can't be used as a "
           + "constructor");

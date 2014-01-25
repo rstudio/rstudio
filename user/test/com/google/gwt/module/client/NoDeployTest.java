@@ -101,10 +101,12 @@ public class NoDeployTest extends GWTTestCase {
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
+      @Override
       public void onError(Request request, Throwable exception) {
         fail();
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(200, response.getStatusCode());
         assertEquals(path, response.getText());
@@ -129,10 +131,12 @@ public class NoDeployTest extends GWTTestCase {
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
+      @Override
       public void onError(Request request, Throwable exception) {
         throw new RuntimeException(exception);
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(404, response.getStatusCode());
         finishTest();
@@ -157,10 +161,12 @@ public class NoDeployTest extends GWTTestCase {
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
+      @Override
       public void onError(Request request, Throwable exception) {
         throw new RuntimeException(exception);
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(404, response.getStatusCode());
         finishTest();
@@ -185,10 +191,12 @@ public class NoDeployTest extends GWTTestCase {
     delayTestFinish(RESPONSE_DELAY);
     builder.sendRequest("", new RequestCallback() {
 
+      @Override
       public void onError(Request request, Throwable exception) {
         fail();
       }
 
+      @Override
       public void onResponseReceived(Request request, Response response) {
         assertEquals(200, response.getStatusCode());
         assertEquals(path, response.getText().trim());

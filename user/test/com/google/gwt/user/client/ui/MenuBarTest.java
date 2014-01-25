@@ -39,6 +39,7 @@ public class MenuBarTest extends WidgetTestBase {
    * A blank command.
    */
   private static final Command BLANK_COMMAND = new Command() {
+    @Override
     public void execute() {
     }
   };
@@ -47,6 +48,7 @@ public class MenuBarTest extends WidgetTestBase {
    * A blank scheduled command.
    */
   private static final ScheduledCommand BLANK_SCHEDULED_COMMAND = new ScheduledCommand() {
+    @Override
     public void execute() {
     }
   };
@@ -308,6 +310,7 @@ public class MenuBarTest extends WidgetTestBase {
 
     delayTestFinish(5000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
         UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");

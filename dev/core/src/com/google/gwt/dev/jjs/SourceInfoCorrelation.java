@@ -57,6 +57,7 @@ public class SourceInfoCorrelation implements SourceInfo {
   /**
    * Add a Correlation to the SourceInfo.
    */
+  @Override
   public void addCorrelation(Correlation c) {
     if (primaryCorrelations == null) {
       primaryCorrelations = new Correlation[NUM_AXES];
@@ -65,6 +66,7 @@ public class SourceInfoCorrelation implements SourceInfo {
     primaryCorrelations[index] = c;
   }
 
+  @Override
   public Correlation getCorrelation(Axis axis) {
     if (primaryCorrelations != null) {
       Correlation c = primaryCorrelations[axis.ordinal()];
@@ -78,6 +80,7 @@ public class SourceInfoCorrelation implements SourceInfo {
     return null;
   }
 
+  @Override
   public Correlation[] getCorrelations() {
     if (parent == null) {
       if (primaryCorrelations == null) {
@@ -99,18 +102,22 @@ public class SourceInfoCorrelation implements SourceInfo {
     }
   }
 
+  @Override
   public CorrelationFactory getCorrelator() {
     return RealCorrelationFactory.INSTANCE;
   }
 
+  @Override
   public int getEndPos() {
     return getOrigin().getEndPos();
   }
 
+  @Override
   public String getFileName() {
     return getOrigin().getFileName();
   }
 
+  @Override
   public SourceOrigin getOrigin() {
     return origin;
   }
@@ -150,18 +157,22 @@ public class SourceInfoCorrelation implements SourceInfo {
     return null;
   }
 
+  @Override
   public int getStartLine() {
     return getOrigin().getStartLine();
   }
 
+  @Override
   public int getStartPos() {
     return getOrigin().getStartPos();
   }
 
+  @Override
   public SourceInfo makeChild() {
     return new SourceInfoCorrelation(this, this.origin);
   }
 
+  @Override
   public SourceInfo makeChild(SourceOrigin origin) {
     return new SourceInfoCorrelation(this, origin);
   }

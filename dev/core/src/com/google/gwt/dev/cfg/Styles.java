@@ -41,6 +41,7 @@ public class Styles implements Iterable<String> {
   /**
    * An iterator over stylesheet urls (each one is a String).
    */
+  @Override
   public Iterator<String> iterator() {
     return list.iterator();
   }

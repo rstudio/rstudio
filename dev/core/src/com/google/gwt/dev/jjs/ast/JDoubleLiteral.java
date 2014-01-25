@@ -58,6 +58,7 @@ public class JDoubleLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.DOUBLE;
   }
@@ -71,6 +72,7 @@ public class JDoubleLiteral extends JValueLiteral {
     return new Double(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

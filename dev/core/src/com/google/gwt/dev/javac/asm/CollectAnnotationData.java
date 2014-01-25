@@ -82,32 +82,39 @@ public class CollectAnnotationData extends AnnotationVisitor {
       this.callback = callback;
     }
 
+    @Override
     public void visit(String name, Object value) {
       values.add(value);
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(String name, String desc) {
       // TODO(jat): what should visible be set to?
       return new CollectAnnotationData(desc, true,
           new Callback<CollectAnnotationData.AnnotationData>() {
+            @Override
             public void call(CollectAnnotationData.AnnotationData value) {
               values.add(value);
             }
           });
     }
 
+    @Override
     public AnnotationVisitor visitArray(String name) {
       return new MyAnnotationArrayVisitor(new Callback<Object>() {
+        @Override
         public void call(Object value) {
           values.add(value);
         }
       });
     }
 
+    @Override
     public void visitEnd() {
       callback.call(values.toArray());
     }
 
+    @Override
     public void visitEnum(String name, String desc, String value) {
       values.add(new AnnotationEnum(desc, value));
     }
@@ -162,20 +169,24 @@ public class CollectAnnotationData extends AnnotationVisitor {
     return annotation;
   }
 
+  @Override
   public void visit(String name, Object value) {
     annotation.addValue(name, value);
   }
 
+  @Override
   public AnnotationVisitor visitAnnotation(final String name, String desc) {
     // TODO(jat): what should visible be set to?
     return new CollectAnnotationData(desc, true,
         new Callback<CollectAnnotationData.AnnotationData>() {
+          @Override
           public void call(CollectAnnotationData.AnnotationData value) {
             annotation.addValue(name, value);
           }
         });
   }
 
+  @Override
   public AnnotationVisitor visitArray(final String name) {
     return new MyAnnotationArrayVisitor(new Callback<Object>() {
 
@@ -184,18 +195,21 @@ public class CollectAnnotationData extends AnnotationVisitor {
        * 
        * @param value
        */
+      @Override
       public void call(Object value) {
         annotation.addValue(name, value);
       }
     });
   }
 
+  @Override
   public void visitEnd() {
     if (callback != null) {
       callback.call(annotation);
     }
   }
 
+  @Override
   public void visitEnum(String name, String desc, String value) {
     annotation.addValue(name, new AnnotationEnum(desc, value));
   }

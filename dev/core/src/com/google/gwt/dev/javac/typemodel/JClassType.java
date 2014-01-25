@@ -349,6 +349,7 @@ public abstract class JClassType implements
    */
   private boolean isEnhanced = false;
 
+  @Override
   public JParameterizedType asParameterizationOf(
       com.google.gwt.core.ext.typeinfo.JGenericType type) {
     Set<JClassType> supertypes = getFlattenedSuperTypeHierarchy(this);
@@ -393,6 +394,7 @@ public abstract class JClassType implements
    * @return the desired annotation or <code>null</code> if the annotation is
    *         not present in the type's type hierarchy
    */
+  @Override
   public <T extends Annotation> T findAnnotationInTypeHierarchy(
       Class<T> annotationType) {
 
@@ -434,32 +436,45 @@ public abstract class JClassType implements
     return toReturn;
   }
 
+  @Override
   public abstract JConstructor findConstructor(JType[] paramTypes);
 
+  @Override
   public abstract JField findField(String name);
 
+  @Override
   public abstract JMethod findMethod(String name, JType[] paramTypes);
 
+  @Override
   public abstract JClassType findNestedType(String typeName);
 
+  @Override
   public abstract <T extends Annotation> T getAnnotation(
       Class<T> annotationClass);
 
+  @Override
   public abstract Annotation[] getAnnotations();
 
+  @Override
   public abstract JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException;
 
+  @Override
   public abstract JConstructor[] getConstructors();
 
+  @Override
   public abstract Annotation[] getDeclaredAnnotations();
 
+  @Override
   public abstract JClassType getEnclosingType();
 
+  @Override
   public abstract JClassType getErasedType();
 
+  @Override
   public abstract JField getField(String name);
 
+  @Override
   public abstract JField[] getFields();
 
   /**
@@ -468,11 +483,13 @@ public abstract class JClassType implements
    * breadth-first ordering of the type, followed by its interfaces (and their
    * super-interfaces), then the supertype and its interfaces, and so on.
    */
+  @Override
   public Set<JClassType> getFlattenedSupertypeHierarchy() {
     // Retuns an immutable set
     return getFlattenedSuperTypeHierarchy(this);
   }
 
+  @Override
   public abstract JClassType[] getImplementedInterfaces();
 
   /**
@@ -488,24 +505,30 @@ public abstract class JClassType implements
    * @return an array of {@link JMethod} objects representing inheritable
    *         methods
    */
+  @Override
   public abstract JMethod[] getInheritableMethods();
 
+  @Override
   public abstract String getJNISignature();
 
+  @Override
   public JType getLeafType() {
     return this;
   }
 
+  @Override
   @Deprecated
   public final String[][] getMetaData(String tagName) {
     return TypeOracle.NO_STRING_ARR_ARR;
   }
 
+  @Override
   @Deprecated
   public final String[] getMetaDataTags() {
     return TypeOracle.NO_STRINGS;
   }
 
+  @Override
   public abstract JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException;
 
@@ -513,17 +536,23 @@ public abstract class JClassType implements
    * Returns the declared methods of this class (not any superclasses or
    * superinterfaces).
    */
+  @Override
   public abstract JMethod[] getMethods();
 
+  @Override
   public abstract String getName();
 
+  @Override
   public abstract JClassType getNestedType(String typeName)
       throws NotFoundException;
 
+  @Override
   public abstract JClassType[] getNestedTypes();
 
+  @Override
   public abstract TypeOracle getOracle();
 
+  @Override
   public abstract JMethod[] getOverloads(String name);
 
   /**
@@ -543,10 +572,13 @@ public abstract class JClassType implements
    * @return an array of {@link JMethod} objects representing overridable
    *         methods
    */
+  @Override
   public abstract JMethod[] getOverridableMethods();
 
+  @Override
   public abstract JPackage getPackage();
 
+  @Override
   public String getParameterizedQualifiedSourceName() {
     return getQualifiedSourceName();
   }
@@ -554,10 +586,13 @@ public abstract class JClassType implements
   /**
    * TODO(scottb): remove if we can resolve param names differently.
    */
+  @Override
   public abstract String getQualifiedBinaryName();
 
+  @Override
   public abstract String getQualifiedSourceName();
 
+  @Override
   public abstract String getSimpleSourceName();
 
   /**
@@ -579,8 +614,10 @@ public abstract class JClassType implements
    *   they themselves are generic.</li>
    * </ol>
    */
+  @Override
   public abstract JClassType[] getSubtypes();
 
+  @Override
   public abstract JClassType getSuperclass();
 
   /**
@@ -591,6 +628,7 @@ public abstract class JClassType implements
     return super.hashCode();
   }
 
+  @Override
   public abstract boolean isAbstract();
 
   /**
@@ -600,13 +638,16 @@ public abstract class JClassType implements
    * @return this instance if it is a annotation or <code>null</code> if it is
    *         not
    */
+  @Override
   public JAnnotationType isAnnotation() {
     return null;
   }
 
+  @Override
   public abstract boolean isAnnotationPresent(
       Class<? extends Annotation> annotationClass);
 
+  @Override
   public abstract JArrayType isArray();
 
   /**
@@ -620,6 +661,7 @@ public abstract class JClassType implements
    * @throws NullPointerException if <code>possibleSubtype</code> is
    *           <code>null</code>
    */
+  @Override
   public boolean isAssignableFrom(
       com.google.gwt.core.ext.typeinfo.JClassType possibleSubtype) {
     if (possibleSubtype == null) {
@@ -640,6 +682,7 @@ public abstract class JClassType implements
    * @throws NullPointerException if <code>possibleSupertype</code> is
    *           <code>null</code>
    */
+  @Override
   public boolean isAssignableTo(
       com.google.gwt.core.ext.typeinfo.JClassType possibleSupertype) {
     if (possibleSupertype == null) {
@@ -649,8 +692,10 @@ public abstract class JClassType implements
     return areClassTypesAssignable(possibleSupertype, this);
   }
 
+  @Override
   public abstract JClassType isClass();
 
+  @Override
   public JClassType isClassOrInterface() {
     JClassType type = isClass();
     if (type != null) {
@@ -671,6 +716,7 @@ public abstract class JClassType implements
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
+  @Override
   public abstract boolean isDefaultInstantiable();
 
   /**
@@ -679,6 +725,7 @@ public abstract class JClassType implements
    * 
    * @return <code>true</code> if the type might be enhanced on the server
    */
+  @Override
   public final boolean isEnhanced() {
     return isEnhanced;
   }
@@ -690,17 +737,22 @@ public abstract class JClassType implements
    * @return this instance if it is an enumeration or <code>null</code> if it is
    *         not
    */
+  @Override
   public abstract JEnumType isEnum();
 
+  @Override
   public abstract boolean isFinal();
 
+  @Override
   public abstract JGenericType isGenericType();
 
+  @Override
   public abstract JClassType isInterface();
 
   /**
    * @deprecated local types are not modeled
    */
+  @Override
   @Deprecated
   public final boolean isLocalType() {
     return false;
@@ -712,27 +764,37 @@ public abstract class JClassType implements
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
+  @Override
   public abstract boolean isMemberType();
 
+  @Override
   public abstract JParameterizedType isParameterized();
 
+  @Override
   public abstract JPrimitiveType isPrimitive();
 
+  @Override
   public abstract boolean isPrivate();
 
+  @Override
   public abstract boolean isProtected();
 
+  @Override
   public abstract boolean isPublic();
 
   // TODO: Rename this to isRaw
+  @Override
   public abstract JRawType isRawType();
 
+  @Override
   public abstract boolean isStatic();
 
+  @Override
   public JTypeParameter isTypeParameter() {
     return null;
   }
 
+  @Override
   public abstract JWildcardType isWildcard();
 
   /**
@@ -741,6 +803,7 @@ public abstract class JClassType implements
    * 
    * TODO(rice): find a better way to do this.
    */
+  @Override
   public void setEnhanced() {
     this.isEnhanced = true;
   }

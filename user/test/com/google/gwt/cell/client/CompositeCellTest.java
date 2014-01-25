@@ -110,6 +110,7 @@ public class CompositeCellTest extends CellTestBase<String> {
 
     // Add an event listener.
     EventListener listener = new EventListener() {
+      @Override
       public void onBrowserEvent(Event event) {
         Context context = new Context(3, 4, "key");
         cell.onBrowserEvent(context, parent, "test-x", event, null);
@@ -188,14 +189,17 @@ public class CompositeCellTest extends CellTestBase<String> {
    */
   private void addCell(final Cell<String> cell, List<HasCell<String, ?>> cells) {
     cells.add(new HasCell<String, String>() {
+      @Override
       public Cell<String> getCell() {
         return cell;
       }
 
+      @Override
       public FieldUpdater<String, String> getFieldUpdater() {
         return null;
       }
 
+      @Override
       public String getValue(String object) {
         return object;
       }
@@ -214,14 +218,17 @@ public class CompositeCellTest extends CellTestBase<String> {
       final int index = i;
       final MockCell<String> inner = new MockCell<String>(false, "fromCell" + i);
       cells.add(new HasCell<String, String>() {
+        @Override
         public Cell<String> getCell() {
           return inner;
         }
 
+        @Override
         public FieldUpdater<String, String> getFieldUpdater() {
           return null;
         }
 
+        @Override
         public String getValue(String object) {
           return object == null ? null : object + "-" + index;
         }

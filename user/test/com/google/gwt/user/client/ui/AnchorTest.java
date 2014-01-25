@@ -31,6 +31,7 @@ public class AnchorTest extends GWTTestCase {
     private int clicks = 0;
     private Object lastSender;
 
+    @Override
     public void onClick(ClickEvent event) {
       clicks++;
       lastSender = event.getSource();
@@ -84,6 +85,7 @@ public class AnchorTest extends GWTTestCase {
     private int clicks = 0;
     private Widget lastSender;
 
+    @Override
     public void onClick(Widget sender) {
       clicks++;
       lastSender = sender;

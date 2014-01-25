@@ -37,16 +37,19 @@ public class LivenessAnalysis implements Analysis<CfgNode<?>, CfgEdge, Cfg,
   private static final LivenessIntegratedFlowFunction INTEGRATED_FLOW_FUNCTION = 
     new LivenessIntegratedFlowFunction();
   
+  @Override
   public FlowFunction<CfgNode<?>, CfgEdge, Cfg, LivenessAssumption> getFlowFunction() {
     return FLOW_FUNCTION;
   }
 
+  @Override
   public IntegratedFlowFunction<CfgNode<?>, CfgEdge, CfgTransformer, Cfg, 
                                 LivenessAssumption> 
   getIntegratedFlowFunction() {
     return INTEGRATED_FLOW_FUNCTION;
   }
 
+  @Override
   public void setInitialGraphAssumptions(Cfg graph,
       AssumptionMap<CfgEdge, LivenessAssumption> assumptionMap) {
     // bottom assumptions.

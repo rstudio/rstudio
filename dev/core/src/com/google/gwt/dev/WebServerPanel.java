@@ -58,6 +58,7 @@ public class WebServerPanel extends JPanel {
       JButton restartButton = new JButton("Restart Server");
       restartButton.setMnemonic(KeyEvent.VK_R);
       restartButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           restartServerAction.restartServer(getLogger());
         }

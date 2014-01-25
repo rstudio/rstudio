@@ -95,6 +95,7 @@ public class JRunAsync extends JExpression {
     return true;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       /*

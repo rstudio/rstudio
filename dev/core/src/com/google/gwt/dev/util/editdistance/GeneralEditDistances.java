@@ -82,6 +82,7 @@ public class GeneralEditDistances {
       this.patternLength = pattern.length();
     }
 
+    @Override
     public GeneralEditDistance duplicate() {
       Levenshtein dup = new Levenshtein(pattern);
 
@@ -95,6 +96,7 @@ public class GeneralEditDistances {
       return dup;
     }
 
+    @Override
     public int getDistance(CharSequence target, int limit) {
       /* When the limit is 0 or 1, specialized comparisons are much faster. */
       if (limit <= 1) {

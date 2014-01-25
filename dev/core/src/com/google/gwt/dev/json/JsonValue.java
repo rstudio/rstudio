@@ -27,50 +27,62 @@ public interface JsonValue {
    */
   JsonValue NULL = new JsonValue() {
 
+    @Override
     public JsonArray asArray() {
       return null;
     }
 
+    @Override
     public JsonBoolean asBoolean() {
       return null;
     }
 
+    @Override
     public JsonNumber asNumber() {
       return null;
     }
 
+    @Override
     public JsonObject asObject() {
       return null;
     }
 
+    @Override
     public JsonString asString() {
       return null;
     }
 
+    @Override
     public JsonValue copyDeeply() {
       return this;
     }
 
+    @Override
     public boolean isArray() {
       return false;
     }
 
+    @Override
     public boolean isBoolean() {
       return false;
     }
 
+    @Override
     public boolean isNumber() {
       return false;
     }
 
+    @Override
     public boolean isObject() {
       return false;
     }
 
+    @Override
     public boolean isString() {
       return false;
     }
 
+    @Override
     public void write(Writer writer) throws IOException {
       writer.append("null");
     }

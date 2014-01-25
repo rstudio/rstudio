@@ -46,6 +46,7 @@ public class InnerOuterSuperTest extends GWTTestCase {
         super(i);
       }
 
+      @Override
       public int checkDispatch() {
         return 2;
       }
@@ -100,6 +101,7 @@ public class InnerOuterSuperTest extends GWTTestCase {
 
   private final Outer.OuterIsSuper outerIsSuper = outer.new OuterIsSuper(2);
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

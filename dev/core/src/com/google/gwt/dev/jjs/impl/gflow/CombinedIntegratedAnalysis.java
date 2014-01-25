@@ -151,6 +151,7 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
     /**
      * Joins combined assumption by joining all individual components.
      */
+    @Override
     @SuppressWarnings("unchecked")
     public CombinedAssumption join(CombinedAssumption value) {
       if (value == null) {
@@ -191,6 +192,7 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
    */
   private final class CombinedIntegratedFlowFunction implements
       IntegratedFlowFunction<N, E, T, G, CombinedAssumption> {
+    @Override
     @SuppressWarnings("unchecked")
     public Transformation interpretOrReplace(final N node, final G graph,
         final AssumptionMap<E, CombinedAssumption> assumptionMap) {
@@ -205,6 +207,7 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
         Transformation transformation = 
           function.interpretOrReplace(node, graph, 
               new AssumptionMap() {
+                @Override
                 public Assumption getAssumption(Object edge) {
                   CombinedAssumption combinedAssumption = assumptionMap.getAssumption((E) edge);
                   if (combinedAssumption == null) {
@@ -213,6 +216,7 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
                   return combinedAssumption.get(slice);
                 }
 
+                @Override
                 public void setAssumption(Object edge, Assumption assumption) {
                   CombinedAssumption.CopyOnWrite newAssumption = newAssumptions.get(edge);
                   if (newAssumption == null) {
@@ -272,11 +276,13 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
     functions.add(analysis.getIntegratedFlowFunction());
   }
 
+  @Override
   public IntegratedFlowFunction<N, E, T, G, CombinedAssumption> 
   getIntegratedFlowFunction() {
     return new CombinedIntegratedFlowFunction();
   }
   
+  @Override
   @SuppressWarnings("unchecked")
   public void setInitialGraphAssumptions(G graph,
       final AssumptionMap<E, CombinedAssumption> assumptionMap) {
@@ -284,10 +290,12 @@ public class CombinedIntegratedAnalysis<N, E, T, G extends Graph<N, E, T>>
       final int slice = i;
       IntegratedAnalysis<N, E, T, G, ?> analysis = analyses.get(slice);
       analysis.setInitialGraphAssumptions(graph, new AssumptionMap() {
+        @Override
         public Assumption getAssumption(Object edge) {
           throw new UnsupportedOperationException();
         }
 
+        @Override
         public void setAssumption(Object edge,Assumption assumption) {
           CombinedAssumption combinedAssumption = assumptionMap.getAssumption((E) edge);
           if (combinedAssumption == null) {

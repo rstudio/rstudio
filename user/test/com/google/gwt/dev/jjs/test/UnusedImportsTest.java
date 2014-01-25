@@ -21,6 +21,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * Tests unused imports removal.
  */
 public class UnusedImportsTest extends GWTTestCase {
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

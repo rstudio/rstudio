@@ -100,12 +100,14 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   public static final Comparator<ConfigurationProperty> CONFIGURATION_PROPERTY_COMPARATOR =
       new Comparator<ConfigurationProperty>() {
+        @Override
         public int compare(ConfigurationProperty o1, ConfigurationProperty o2) {
           return o1.getName().compareTo(o2.getName());
         }
       };
 
   static final Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
+    @Override
     public int compare(SelectionProperty o1, SelectionProperty o2) {
       return o1.getName().compareTo(o2.getName());
     }
@@ -281,6 +283,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return artifacts;
   }
 
+  @Override
   public SortedSet<ConfigurationProperty> getConfigurationProperties() {
     return configurationProperties;
   }
@@ -303,18 +306,22 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return linkerShortNames.get(linkerType) + '/' + partialPath;
   }
 
+  @Override
   public String getModuleFunctionName() {
     return moduleFunctionName;
   }
 
+  @Override
   public long getModuleLastModified() {
     return moduleLastModified;
   }
 
+  @Override
   public String getModuleName() {
     return moduleName;
   }
 
+  @Override
   public SortedSet<SelectionProperty> getProperties() {
     return selectionProperties;
   }
@@ -410,6 +417,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return workingArtifacts;
   }
 
+  @Override
   public boolean isOutputCompact() {
     return jjsOptions.getOutput().shouldMinimize();
   }
@@ -420,6 +428,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String optimizeJavaScript(TreeLogger logger, String program)
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Attempting to optimize JS", null);

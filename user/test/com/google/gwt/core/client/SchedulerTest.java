@@ -38,6 +38,7 @@ public class SchedulerTest extends GWTTestCase {
     final boolean[] ranEntry = {false};
 
     final ScheduledCommand finallyCommand = new ScheduledCommand() {
+      @Override
       public void execute() {
         assertTrue(ranEntry[0]);
         finishTest();
@@ -45,6 +46,7 @@ public class SchedulerTest extends GWTTestCase {
     };
 
     Scheduler.get().scheduleEntry(new ScheduledCommand() {
+      @Override
       public void execute() {
         ranEntry[0] = true;
         Scheduler.get().scheduleFinally(finallyCommand);
@@ -52,6 +54,7 @@ public class SchedulerTest extends GWTTestCase {
     });
 
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertTrue(ranEntry[0]);
       }

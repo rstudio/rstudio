@@ -43,6 +43,7 @@ public class CheckBoxTest extends GWTTestCase {
       });
     }
 
+    @Override
     public void onClick(Widget sender) {
       ++fired;
     }
@@ -51,6 +52,7 @@ public class CheckBoxTest extends GWTTestCase {
   private static class Handler implements ValueChangeHandler<Boolean> {
     Boolean received = null;
 
+    @Override
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       received = event.getValue();
     }
@@ -183,6 +185,7 @@ public class CheckBoxTest extends GWTTestCase {
 
     check.setText("Burger");
     check.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent arg0) {
         clickCount[0]++;
       }

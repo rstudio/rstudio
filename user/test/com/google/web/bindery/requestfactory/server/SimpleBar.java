@@ -146,6 +146,7 @@ public class SimpleBar implements HasId {
     return findFails;
   }
 
+  @Override
   public String getId() {
     return unpersisted ? null : id;
   }
@@ -171,6 +172,7 @@ public class SimpleBar implements HasId {
     version++;
   }
 
+  @Override
   public SimpleBar persistAndReturnSelf() {
     persist();
     return this;

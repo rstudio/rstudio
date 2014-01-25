@@ -39,6 +39,7 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
         "Created ModuleSpaceOOPHM for " + moduleName, null);
   }
 
+  @Override
   public void createNativeMethods(TreeLogger logger,
       List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle) {
     if (jsniMethods.isEmpty()) {

@@ -122,6 +122,7 @@ public class SourceOrigin implements SourceInfo {
     this.startLine = startLine;
   }
 
+  @Override
   public void addCorrelation(Correlation c) {
   }
 
@@ -135,34 +136,42 @@ public class SourceOrigin implements SourceInfo {
         && getStartPos() == other.getStartPos() && fileName.equals(other.fileName);
   }
 
+  @Override
   public Correlation getCorrelation(Axis axis) {
     return null;
   }
 
+  @Override
   public Correlation[] getCorrelations() {
     return NO_CORRELATIONS;
   }
 
+  @Override
   public CorrelationFactory getCorrelator() {
     return DummyCorrelationFactory.INSTANCE;
   }
 
+  @Override
   public int getEndPos() {
     return -1;
   }
 
+  @Override
   public String getFileName() {
     return fileName;
   }
 
+  @Override
   public SourceOrigin getOrigin() {
     return this;
   }
 
+  @Override
   public int getStartLine() {
     return startLine;
   }
 
+  @Override
   public int getStartPos() {
     return -1;
   }
@@ -172,10 +181,12 @@ public class SourceOrigin implements SourceInfo {
     return 2 + 13 * fileName.hashCode() + 17 * startLine + 29 * getStartPos() + 31 * getEndPos();
   }
 
+  @Override
   public SourceInfo makeChild() {
     return this;
   }
 
+  @Override
   public SourceInfo makeChild(SourceOrigin origin) {
     return origin;
   }

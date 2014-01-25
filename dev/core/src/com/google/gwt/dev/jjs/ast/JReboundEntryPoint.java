@@ -50,6 +50,7 @@ public class JReboundEntryPoint extends JStatement {
     return sourceType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(entryCalls);

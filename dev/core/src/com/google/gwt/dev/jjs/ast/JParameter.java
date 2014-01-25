@@ -44,6 +44,7 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
     this.isThis = isThis;
   }
 
+  @Override
   public JMethod getEnclosingMethod() {
     return enclosingMethod;
   }
@@ -56,10 +57,12 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
     return isThis;
   }
 
+  @Override
   public void setInitializer(JDeclarationStatement declStmt) {
     throw new UnsupportedOperationException("A JParameter cannot have an initializer");
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

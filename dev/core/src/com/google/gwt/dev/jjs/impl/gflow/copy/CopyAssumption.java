@@ -143,6 +143,7 @@ public class CopyAssumption implements Assumption<CopyAssumption> {
     return copyToOriginal.hashCode();
   }
 
+  @Override
   public CopyAssumption join(CopyAssumption value) {
     if (value == null) {
       return this;

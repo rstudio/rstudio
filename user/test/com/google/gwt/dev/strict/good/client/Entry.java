@@ -22,6 +22,7 @@ import com.google.gwt.core.client.EntryPoint;
  * Used by {@link com.google.gwt.dev.StrictModeTest}.
  */
 public class Entry implements EntryPoint {
+  @Override
   public void onModuleLoad() {
   }
 }

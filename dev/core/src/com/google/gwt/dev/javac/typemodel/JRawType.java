@@ -28,6 +28,7 @@ import java.util.Map;
 public class JRawType extends JMaybeParameterizedType implements
     com.google.gwt.core.ext.typeinfo.JRawType {
   private static final Substitution ERASURE_SUBSTITUTION = new Substitution() {
+    @Override
     public JClassType getSubstitution(JClassType type) {
       return type.getErasedType();
     }
@@ -42,6 +43,7 @@ public class JRawType extends JMaybeParameterizedType implements
     members = new DelegateMembers(this, getBaseType(), ERASURE_SUBSTITUTION);
   }
 
+  @Override
   public JParameterizedType asParameterizedByWildcards() {
     return getBaseType().asParameterizedByWildcards();
   }
@@ -87,6 +89,7 @@ public class JRawType extends JMaybeParameterizedType implements
     return members.getFields();
   }
 
+  @Override
   public JGenericType getGenericType() {
     return getBaseType();
   }

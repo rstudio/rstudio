@@ -39,16 +39,19 @@ public class PlaceHistoryHandlerTest extends TestCase {
     ValueChangeHandler<String> handler;
     String token = "";
 
+    @Override
     public HandlerRegistration addValueChangeHandler(
         ValueChangeHandler<String> valueChangeHandler) {
       this.handler = valueChangeHandler;
       return registration;
     }
 
+    @Override
     public String getToken() {
       return token;
     }
 
+    @Override
     public void newItem(String token, boolean issueEvent) {
       assertFalse(issueEvent);
       this.token = token;
@@ -62,6 +65,7 @@ public class PlaceHistoryHandlerTest extends TestCase {
   
   private static class MockPlaceHistoryMapper implements PlaceHistoryMapper {
 
+    @Override
     public Place getPlace(String token) {
       if (TOKEN1.equals(token)) {
         return PLACE1;
@@ -73,6 +77,7 @@ public class PlaceHistoryHandlerTest extends TestCase {
       return null;
     }
 
+    @Override
     public String getToken(Place place) {
       if (place == PLACE1) {
         return TOKEN1;
@@ -86,6 +91,7 @@ public class PlaceHistoryHandlerTest extends TestCase {
   }
 
   private static class Registration implements HandlerRegistration {
+    @Override
     public void removeHandler() {
       throw new UnsupportedOperationException("Auto-generated method stub");
     }

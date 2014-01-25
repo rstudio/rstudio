@@ -34,6 +34,7 @@ public class SourceTagTest extends TestSuperAndSourceTags {
    * Return the logical path for a given class. For example, java.lang.Object's
    * logical path would be java/lang/Object.
    */
+  @Override
   protected String getLogicalPath(Class<?> clazz) {
     return clazz.getCanonicalName();
   }

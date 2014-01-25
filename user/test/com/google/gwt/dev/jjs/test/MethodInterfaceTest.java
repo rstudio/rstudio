@@ -22,21 +22,26 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class MethodInterfaceTest extends GWTTestCase implements MethodsOnly {
 
+  @Override
   public void f() {
   }
 
+  @Override
   public char[] g() {
     return null;
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  @Override
   public int i() {
     return 0;
   }
 
+  @Override
   public String s() {
     return null;
   }

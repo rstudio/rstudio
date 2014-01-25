@@ -31,26 +31,32 @@ public class LogicalEventsTest extends TestCase {
       OpenHandler<String>, ResizeHandler, ValueChangeHandler<String> {
     public boolean flag = false;
 
+    @Override
     public void onBeforeSelection(BeforeSelectionEvent<String> event) {
       flag = true;
     }
 
+    @Override
     public void onClose(CloseEvent<String> event) {
       flag = true;
     }
 
+    @Override
     public void onOpen(OpenEvent<String> event) {
       flag = true;
     }
 
+    @Override
     public void onResize(ResizeEvent event) {
       flag = true;
     }
 
+    @Override
     public void onSelection(SelectionEvent<String> event) {
       flag = true;
     }
 
+    @Override
     public void onValueChange(ValueChangeEvent<String> event) {
       flag = true;
     }

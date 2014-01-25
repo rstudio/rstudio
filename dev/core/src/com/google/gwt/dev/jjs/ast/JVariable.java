@@ -37,6 +37,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
     this.isFinal = isFinal;
   }
 
+  @Override
   public JLiteral getConstInitializer() {
     JExpression initializer = getInitializer();
     if (isFinal() && initializer instanceof JLiteral) {
@@ -56,22 +57,27 @@ public abstract class JVariable extends JNode implements CanBeSetFinal, CanHaveI
     return null;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public JType getType() {
     return type;
   }
 
+  @Override
   public boolean hasInitializer() {
     return declStmt != null;
   }
 
+  @Override
   public boolean isFinal() {
     return isFinal;
   }
 
+  @Override
   public void setFinal() {
     isFinal = true;
   }

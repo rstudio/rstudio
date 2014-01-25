@@ -42,30 +42,37 @@ import java.util.TreeSet;
 public class SelectionScriptLinkerUnitTest extends TestCase {
   private static class MockLinkerContext implements LinkerContext {
 
+    @Override
     public SortedSet<ConfigurationProperty> getConfigurationProperties() {
       return new TreeSet<ConfigurationProperty>();
     }
 
+    @Override
     public String getModuleFunctionName() {
       return MOCK_MODULE_NAME;
     }
 
+    @Override
     public long getModuleLastModified() {
       return MOCK_MODULE_LAST_MODIFIED;
     }
 
+    @Override
     public String getModuleName() {
       return MOCK_MODULE_NAME;
     }
 
+    @Override
     public SortedSet<SelectionProperty> getProperties() {
       return new TreeSet<SelectionProperty>();
     }
 
+    @Override
     public boolean isOutputCompact() {
       return true;
     }
 
+    @Override
     public String optimizeJavaScript(TreeLogger logger, String jsProgram) {
       return jsProgram;
     }

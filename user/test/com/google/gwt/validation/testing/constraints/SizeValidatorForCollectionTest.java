@@ -34,6 +34,7 @@ public class SizeValidatorForCollectionTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForCollection createValidator() {
     return new SizeValidatorForCollection();
   }

@@ -90,22 +90,27 @@ public class DefaultSelectionProperty implements SelectionProperty {
         && possibleValues.equals(other.possibleValues);
   }
 
+  @Override
   public String getCurrentValue() {
     return currentValue;
   }
 
+  @Override
   public String getFallbackValue() {
     return fallbackValue;
   }
 
+  @Override
   public List<? extends Set<String>> getFallbackValues(String value) {
     return (null != fallbackValueMap) ? fallbackValueMap.get(value) : null;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public SortedSet<String> getPossibleValues() {
     return possibleValues;
   }

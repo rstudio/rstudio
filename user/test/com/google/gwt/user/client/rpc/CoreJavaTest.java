@@ -46,10 +46,12 @@ public class CoreJavaTest extends RpcTestBase {
 
     delayTestFinishForRpc();
     service.echoMathContext(expected, new AsyncCallback<MathContext>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(MathContext result) {
         assertNotNull(result);
         assertTrue(isValid(result));

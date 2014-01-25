@@ -23,8 +23,9 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class ThrowableTest extends GWTTestCase {
 
   // Line number for exception thrown in throwException below.
-  private static final int THROWN_EXCEPTION_LINE_NUMBER = 36;
+  private static final int THROWN_EXCEPTION_LINE_NUMBER = 37;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -39,7 +40,7 @@ public class ThrowableTest extends GWTTestCase {
   public void testStackTraceContainsConstructorLineNumber() {
     // NOTE: changing the line number of this object creation will affect
     // the test case.
-    final int lineNumber = 43;  // should be the next line.
+    final int lineNumber = 44;  // should be the next line.
     Throwable throwable = new Throwable("stacktrace");
     StackTraceElement[] trace = throwable.getStackTrace();
     assertNotNull(trace);

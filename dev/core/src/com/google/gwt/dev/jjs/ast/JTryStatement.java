@@ -87,6 +87,7 @@ public class JTryStatement extends JStatement {
     return tryBlock;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(tryBlock);

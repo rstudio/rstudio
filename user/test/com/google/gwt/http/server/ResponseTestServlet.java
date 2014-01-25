@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ResponseTestServlet extends HttpServlet {
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     response.addHeader("header1", "value1");

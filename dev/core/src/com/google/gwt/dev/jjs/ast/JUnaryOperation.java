@@ -39,6 +39,7 @@ public abstract class JUnaryOperation extends JExpression {
     return op;
   }
 
+  @Override
   public JType getType() {
     // Unary operators don't change the type of their expression
     return arg.getType();
@@ -49,6 +50,7 @@ public abstract class JUnaryOperation extends JExpression {
     return getOp().isModifying() || arg.hasSideEffects();
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (getOp().isModifying()) {
       arg = visitor.acceptLvalue(arg);

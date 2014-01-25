@@ -195,6 +195,7 @@ public class EnumOrdinalizer {
             }
 
             Collections.sort(infos, new Comparator<SourceInfo>() {
+              @Override
               public int compare(SourceInfo s1, SourceInfo s2) {
                 int fileNameComp = s1.getFileName().compareTo(s2.getFileName());
                 if (fileNameComp != 0) {

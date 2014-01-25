@@ -25,6 +25,7 @@ public class CharArrayComparator implements Comparator<char[]>, Serializable {
 
   public static final CharArrayComparator INSTANCE = new CharArrayComparator();
 
+  @Override
   public int compare(char[] a, char[] b) {
     int ai = 0;
     int bi = 0;

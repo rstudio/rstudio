@@ -28,14 +28,17 @@ class TestBrowserChannel extends BrowserChannel {
   public TestBrowserChannel(InputStream inputStream,
       OutputStream outputStream) throws IOException {
     super(inputStream, outputStream, new ObjectRefFactory() {
+      @Override
       public JavaObjectRef getJavaObjectRef(int refId) {
         return new JavaObjectRef(refId);
       }
 
+      @Override
       public JsObjectRef getJsObjectRef(int refId) {
         return new JsObjectRef(refId);
       }
 
+      @Override
       public Set<Integer> getRefIdsForCleanup() {
         return Collections.emptySet();
       }

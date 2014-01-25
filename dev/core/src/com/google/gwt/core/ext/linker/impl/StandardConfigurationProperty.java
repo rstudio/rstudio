@@ -42,19 +42,23 @@ public class StandardConfigurationProperty implements ConfigurationProperty {
     }
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   @Deprecated
   public String getValue() {
     return values.isEmpty() ? null : values.get(0);
   }
 
+  @Override
   public List<String> getValues() {
     return values;
   }
 
+  @Override
   public boolean hasMultipleValues() {
     return values.size() > 1;
   }

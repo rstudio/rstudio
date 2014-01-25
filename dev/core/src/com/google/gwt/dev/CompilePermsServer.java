@@ -193,36 +193,44 @@ public class CompilePermsServer {
       setLogLevel(other.getLogLevel());
     }
 
+    @Override
     public String getCompileHost() {
       return compileHost;
     }
 
+    @Override
     public int getCompilePort() {
       return compilePort;
     }
 
+    @Override
     public String getCookie() {
       return cookie;
     }
 
+    @Override
     public Type getLogLevel() {
       return logLevel;
     }
 
+    @Override
     public void setCompileHost(String host) {
       assert host != null;
       compileHost = host;
     }
 
+    @Override
     public void setCompilePort(int port) {
       assert port > 0;
       compilePort = port;
     }
 
+    @Override
     public void setCookie(String cookie) {
       this.cookie = cookie;
     }
 
+    @Override
     public void setLogLevel(Type logLevel) {
       this.logLevel = logLevel;
     }

@@ -108,6 +108,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     
     // sort the indices according to size of statement range
     Collections.sort(functionIndices, new Comparator<Integer>() {
+      @Override
       public int compare(Integer index1, Integer index2) {
         return stmtSize(index1) - (stmtSize(index2));
       }

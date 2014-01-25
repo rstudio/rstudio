@@ -41,6 +41,7 @@ public class JDeclarationStatement extends JStatement {
     return variableRef;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       variableRef = (JVariableRef) visitor.acceptLvalue(variableRef);

@@ -71,6 +71,7 @@ public class IdentityHashMapTest extends TestMap {
   private static final String KEY_TEST_PUT = "testPut";
   private static final String KEY_TEST_REMOVE = "testRemove";
   private static final Object ODD_ZERO_KEY = new Object() {
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -125,6 +126,7 @@ public class IdentityHashMapTest extends TestMap {
     assertFalse(hashMap.entrySet().iterator().hasNext());
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -733,10 +735,12 @@ public class IdentityHashMapTest extends TestMap {
     assertEquals(val, VALUE_VAL);
   }
 
+  @Override
   protected Map makeConfirmedMap() {
     return new IdentityHashMap();
   }
 
+  @Override
   protected Map makeEmptyMap() {
     return new IdentityHashMap();
   }

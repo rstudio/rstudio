@@ -65,6 +65,7 @@ public class SizeMapRecorder {
    * Sorts by JsName.getIdent().
    */
   private static final Comparator<JsName> JSNAME_SORT = new Comparator<JsName>() {
+    @Override
     public int compare(JsName o1, JsName o2) {
       return o1.getIdent().compareTo(o2.getIdent());
     }

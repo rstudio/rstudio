@@ -44,6 +44,7 @@ public class JsonObject extends JExpression {
       this.valueExpr = valueExpr;
     }
 
+    @Override
     public void traverse(JVisitor visitor, Context ctx) {
       if (visitor.visit(this, ctx)) {
         labelExpr = visitor.accept(labelExpr);
@@ -61,6 +62,7 @@ public class JsonObject extends JExpression {
     this.jsoType = jsoType;
   }
 
+  @Override
   public JClassType getType() {
     return jsoType;
   }
@@ -83,6 +85,7 @@ public class JsonObject extends JExpression {
     this.jsoType = jsoType;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(propInits);

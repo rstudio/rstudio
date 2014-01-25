@@ -43,6 +43,7 @@ public class JWildcardType extends JDelegatingClassType implements
     return getBaseType().findMethod(name, paramTypes);
   }
 
+  @Override
   public BoundType getBoundType() {
     return boundType;
   }
@@ -62,6 +63,7 @@ public class JWildcardType extends JDelegatingClassType implements
     return getBaseType().getFields();
   }
 
+  @Override
   public JClassType getFirstBound() {
     return getBaseType();
   }
@@ -72,6 +74,7 @@ public class JWildcardType extends JDelegatingClassType implements
    * 
    * @return the lower bounds of this wildcard type
    */
+  @Override
   public JClassType[] getLowerBounds() {
     if (lazyLowerBounds == null) {
       if (isUpperBound()) {
@@ -134,6 +137,7 @@ public class JWildcardType extends JDelegatingClassType implements
     return getOracle().getJavaLangObject();
   }
 
+  @Override
   public JClassType getUpperBound() {
     if (isUpperBound()) {
       return getFirstBound();
@@ -148,6 +152,7 @@ public class JWildcardType extends JDelegatingClassType implements
    * 
    * @return the upper bounds of this wildcard type
    */
+  @Override
   public JClassType[] getUpperBounds() {
     if (lazyUpperBounds == null) {
       if (isUpperBound()) {

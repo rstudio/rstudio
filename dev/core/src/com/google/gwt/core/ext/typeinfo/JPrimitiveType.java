@@ -74,22 +74,27 @@ public enum JPrimitiveType implements JType {
     this.defaultValue = defaultValue;
   }
 
+  @Override
   public JType getErasedType() {
     return this;
   }
 
+  @Override
   public String getJNISignature() {
     return jni;
   }
 
+  @Override
   public JType getLeafType() {
     return this;
   }
 
+  @Override
   public String getParameterizedQualifiedSourceName() {
     return name;
   }
 
+  @Override
   public String getQualifiedBinaryName() {
     return name;
   }
@@ -98,10 +103,12 @@ public enum JPrimitiveType implements JType {
     return "java.lang." + boxedName;
   }
 
+  @Override
   public String getQualifiedSourceName() {
     return name;
   }
 
+  @Override
   public String getSimpleSourceName() {
     return name;
   }
@@ -110,50 +117,62 @@ public enum JPrimitiveType implements JType {
     return defaultValue;
   }
 
+  @Override
   public JAnnotationType isAnnotation() {
     return null;
   }
 
+  @Override
   public JArrayType isArray() {
     return null;
   }
 
+  @Override
   public JClassType isClass() {
     return null;
   }
 
+  @Override
   public JClassType isClassOrInterface() {
     return null;
   }
 
+  @Override
   public JEnumType isEnum() {
     return null;
   }
 
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
 
+  @Override
   public JClassType isInterface() {
     return null;
   }
 
+  @Override
   public JParameterizedType isParameterized() {
     return null;
   }
 
+  @Override
   public JPrimitiveType isPrimitive() {
     return this;
   }
 
+  @Override
   public JRawType isRawType() {
     return null;
   }
 
+  @Override
   public JTypeParameter isTypeParameter() {
     return null;
   }
 
+  @Override
   public JWildcardType isWildcard() {
     return null;
   }

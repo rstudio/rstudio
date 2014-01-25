@@ -67,6 +67,7 @@ public abstract class AbstractTestIterator extends AbstractTestObject {
      * 
      * @return a full iterator
      */
+    @Override
     public Object makeObject() {
         return makeFullIterator();
     }

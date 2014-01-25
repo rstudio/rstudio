@@ -32,6 +32,7 @@ import java.util.Iterator;
 public class TabPanelTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((TabPanel) container).add(child, "foo");
     }
@@ -50,11 +51,13 @@ public class TabPanelTest extends GWTTestCase {
       assertEquals(expected, onSelectionFired);
     }
 
+    @Override
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
       assertFalse(onSelectionFired);
       onBeforeSelectionFired = true;
     }
 
+    @Override
     public void onSelection(SelectionEvent<Integer> event) {
       assertTrue(onBeforeSelectionFired);
       onSelectionFired = true;

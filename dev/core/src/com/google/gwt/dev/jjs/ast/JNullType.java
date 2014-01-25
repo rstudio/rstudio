@@ -45,14 +45,17 @@ public class JNullType extends JReferenceType {
     return "N";
   }
 
+  @Override
   public boolean isAbstract() {
     return false;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

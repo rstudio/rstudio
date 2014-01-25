@@ -47,10 +47,12 @@ public class JTypeParameter extends JDelegatingClassType implements
     return getBaseType().findMethod(name, paramTypes);
   }
 
+  @Override
   public JClassType[] getBounds() {
     return bounds;
   }
 
+  @Override
   public JGenericType getDeclaringClass() {
     return declaringClass;
   }
@@ -71,6 +73,7 @@ public class JTypeParameter extends JDelegatingClassType implements
     return getBaseType().getFields();
   }
 
+  @Override
   public JClassType getFirstBound() {
     return getBaseType();
   }
@@ -91,6 +94,7 @@ public class JTypeParameter extends JDelegatingClassType implements
     return typeName;
   }
 
+  @Override
   public int getOrdinal() {
     return ordinal;
   }

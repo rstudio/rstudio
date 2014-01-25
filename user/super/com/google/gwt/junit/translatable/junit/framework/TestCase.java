@@ -22,6 +22,7 @@ public class TestCase extends Assert implements Test {
 
   private String name;
 
+  @Override
   public int countTestCases() {
     return 1;
   }
@@ -47,6 +48,7 @@ public class TestCase extends Assert implements Test {
     this.name = name;
   }
 
+  @Override
   public String toString() {
     return getName() + "(" + this.getClass().getName() + ")";
   }

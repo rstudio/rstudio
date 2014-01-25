@@ -355,6 +355,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   /**
    * Called by the UI on a restart server event.
    */
+  @Override
   public void onRestartServer(TreeLogger logger) {
     try {
       server.refresh();
@@ -421,6 +422,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   protected boolean doStartup() {
     // Background scan the classpath to warm the cache.
     Thread scanThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         ResourceOracleImpl.preload(TreeLogger.NULL);
       }
@@ -552,6 +554,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return;
     }
     for (File htmlFile : warDir.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File dir, String name) {
         return STARTUP_FILE_PATTERN.matcher(name).matches();
       }

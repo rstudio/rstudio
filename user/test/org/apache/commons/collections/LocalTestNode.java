@@ -73,6 +73,7 @@ class LocalTestNode implements Comparable {
      *
      * @return int
      */
+    @Override
     public int compareTo(Object o) {
 
         LocalTestNode other = (LocalTestNode) o;
@@ -92,6 +93,7 @@ class LocalTestNode implements Comparable {
      *
      * @return true if equal
      */
+    @Override
     public boolean equals(Object o) {
 
         if (o == null) {
@@ -111,6 +113,7 @@ class LocalTestNode implements Comparable {
     /**
      * @return hash code
      */
+    @Override
     public int hashCode() {
         return getKey().hashCode() ^ getValue().hashCode();
     }

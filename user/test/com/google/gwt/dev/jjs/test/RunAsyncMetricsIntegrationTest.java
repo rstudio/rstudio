@@ -126,13 +126,16 @@ public class RunAsyncMetricsIntegrationTest extends GWTTestCase {
     }
     delayTestFinish(TIMEOUT);
     GWT.runAsync(new RunAsyncCallback() {
+      @Override
       public void onFailure(Throwable reason) {
         fail();
       }
 
+      @Override
       public void onSuccess() {
         DeferredCommand.addCommand(new Command() {
 
+          @Override
           public void execute() {
             checkMetrics();
             finishTest();

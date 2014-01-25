@@ -43,11 +43,13 @@ public class HashSetTest extends TestSet {
     assertTrue(s.contains("watch"));
   }
 
+  @Override
   @SuppressWarnings("rawtypes")
   protected Set makeEmptySet() {
     return new HashSet();
   }
 
+  @Override
   @SuppressWarnings("rawtypes")
   public Object makeObject() {
     return new HashSet();

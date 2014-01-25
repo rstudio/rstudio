@@ -50,6 +50,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
       JButton compileButton = new JButton("Compile (not yet implemented)");
       compileButton.setEnabled(false);
       compileButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           JOptionPane.showMessageDialog(null, "Compiling not implemented yet", 
               "Alert: Not Implemented", JOptionPane.INFORMATION_MESSAGE);
@@ -66,6 +67,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
   /* (non-Javadoc)
    * @see com.google.gwt.dev.Disconnectable#disconnect()
    */
+  @Override
   public void disconnect() {
     setDisconnected();
   }
@@ -77,6 +79,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
   /* (non-Javadoc)
    * @see com.google.gwt.dev.Disconnectable#isDisconnected()
    */
+  @Override
   public boolean isDisconnected() {
     return disconnected;
   }
@@ -89,6 +92,7 @@ public class ModulePanel extends JPanel implements Disconnectable {
     loggerPanel.disconnected();
     // TODO(jat): allow closing open connections once we do away with SWT
     loggerPanel.setCloseHandler(new CloseHandler() {
+      @Override
       public void onCloseRequest(SwingLoggerPanel loggerPanelToClose) {
         session.disconnectModule(ModulePanel.this);
       }

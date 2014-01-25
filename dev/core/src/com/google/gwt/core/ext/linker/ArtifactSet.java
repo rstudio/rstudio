@@ -37,26 +37,32 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     addAll(copyFrom);
   }
 
+  @Override
   public boolean add(Artifact<?> o) {
     return treeSet.add(o);
   }
 
+  @Override
   public boolean addAll(Collection<? extends Artifact<?>> c) {
     return treeSet.addAll(c);
   }
 
+  @Override
   public void clear() {
     treeSet.clear();
   }
 
+  @Override
   public Comparator<? super Artifact<?>> comparator() {
     return treeSet.comparator();
   }
 
+  @Override
   public boolean contains(Object o) {
     return treeSet.contains(o);
   }
 
+  @Override
   public boolean containsAll(Collection<?> c) {
     return treeSet.containsAll(c);
   }
@@ -93,6 +99,7 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     return toReturn;
   }
 
+  @Override
   public Artifact<?> first() {
     return treeSet.first();
   }
@@ -113,26 +120,32 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     return treeSet.hashCode();
   }
 
+  @Override
   public SortedSet<Artifact<?>> headSet(Artifact<?> toElement) {
     return treeSet.headSet(toElement);
   }
 
+  @Override
   public boolean isEmpty() {
     return treeSet.isEmpty();
   }
 
+  @Override
   public Iterator<Artifact<?>> iterator() {
     return treeSet.iterator();
   }
 
+  @Override
   public Artifact<?> last() {
     return treeSet.last();
   }
 
+  @Override
   public boolean remove(Object o) {
     return treeSet.remove(o);
   }
 
+  @Override
   public boolean removeAll(Collection<?> c) {
     return treeSet.removeAll(c);
   }
@@ -149,27 +162,33 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     return toReturn;
   }
 
+  @Override
   public boolean retainAll(Collection<?> c) {
     return treeSet.retainAll(c);
   }
 
+  @Override
   public int size() {
     return treeSet.size();
   }
 
+  @Override
   public SortedSet<Artifact<?>> subSet(Artifact<?> fromElement,
       Artifact<?> toElement) {
     return treeSet.subSet(fromElement, toElement);
   }
 
+  @Override
   public SortedSet<Artifact<?>> tailSet(Artifact<?> fromElement) {
     return treeSet.tailSet(fromElement);
   }
 
+  @Override
   public Object[] toArray() {
     return treeSet.toArray();
   }
 
+  @Override
   public <T> T[] toArray(T[] a) {
     return treeSet.toArray(a);
   }

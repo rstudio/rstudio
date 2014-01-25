@@ -48,27 +48,32 @@ public class HasDataEditorTest extends GWTTestCase {
 
     private ArrayList<Integer> rowData = new ArrayList<Integer>();
 
+    @Override
     public HandlerRegistration addCellPreviewHandler(
         CellPreviewEvent.Handler<Integer> handler) {
       fail("HasDataEditor should never call HasData#addCellPreviewHandler");
       return null;
     }
 
+    @Override
     public HandlerRegistration addRangeChangeHandler(Handler handler) {
       fail("HasDataEditor should never call HasData#addRangeChangeHandler");
       return null;
     }
 
+    @Override
     public HandlerRegistration addRowCountChangeHandler(
         RowCountChangeEvent.Handler handler) {
       fail("HasDataEditor should never call HasData#addRowCountChangeHandler");
       return null;
     }
 
+    @Override
     public void fireEvent(GwtEvent<?> event) {
       fail("HasDataEditor should never call HasData#fireEvent");
     }
 
+    @Override
     public int getRowCount() {
       return rowData.size();
     }
@@ -77,39 +82,47 @@ public class HasDataEditorTest extends GWTTestCase {
       return Collections.unmodifiableList(rowData);
     }
 
+    @Override
     public SelectionModel<? super Integer> getSelectionModel() {
       fail("HasDataEditor should never call HasData#getSelectionModel");
       return null;
     }
 
+    @Override
     public Integer getVisibleItem(int indexOnPage) {
       fail("HasDataEditor should never call HasData#getVisibleItem");
       return null;
     }
 
+    @Override
     public int getVisibleItemCount() {
       fail("HasDataEditor should never call HasData#getVisibleItemCount");
       return 0;
     }
 
+    @Override
     public Iterable<Integer> getVisibleItems() {
       fail("HasDataEditor should never call HasData#getVisibleItems");
       return null;
     }
 
+    @Override
     public Range getVisibleRange() {
       fail("HasDataEditor should never call HasData#getVisibleRange");
       return null;
     }
 
+    @Override
     public boolean isRowCountExact() {
       return true;
     }
 
+    @Override
     public void setRowCount(int count) {
       setRowCount(count, true);
     }
 
+    @Override
     public void setRowCount(int count, boolean isExact) {
       assertTrue(isExact);
       assertTrue("HasDataEditor should only setRowCount to resize down",
@@ -119,6 +132,7 @@ public class HasDataEditorTest extends GWTTestCase {
       }
     }
 
+    @Override
     public void setRowData(int start, List<? extends Integer> values) {
       // sets within the list or adds to it
       assertTrue(0 <= start && start <= rowData.size());
@@ -134,18 +148,22 @@ public class HasDataEditorTest extends GWTTestCase {
       }
     }
 
+    @Override
     public void setSelectionModel(SelectionModel<? super Integer> selectionModel) {
       fail("HasDataEditor should never call HasData#setSelectionModel");
     }
 
+    @Override
     public void setVisibleRange(int start, int length) {
       fail("HasDataEditor should never call HasData#setVisibleRange");
     }
 
+    @Override
     public void setVisibleRange(Range range) {
       fail("HasDataEditor should never call HasData#setVisibleRange");
     }
 
+    @Override
     public void setVisibleRangeAndClearData(Range range,
         boolean forceRangeChangeEvent) {
       fail("HasDataEditor should never call HasData#setVisibleRangeAndClearData");
@@ -238,6 +256,7 @@ public class HasDataEditorTest extends GWTTestCase {
 
   /** A visitor that visits synthetic composite editors. */
   private static class SyntheticVisitor extends EditorVisitor {
+    @Override
     public <T> boolean visit(EditorContext<T> ctx) {
       if (ctx.asCompositeEditor() != null) {
         ctx.traverseSyntheticCompositeEditor(this);

@@ -52,6 +52,7 @@ public class JClassLiteral extends JLiteral {
     return refType;
   }
 
+  @Override
   public JType getType() {
     return field.getType();
   }
@@ -72,6 +73,7 @@ public class JClassLiteral extends JLiteral {
     this.field = field;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

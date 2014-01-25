@@ -89,6 +89,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
   // The name of the last event fired
   private String lastEventName;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -104,6 +105,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
+  @Override
   public void onKeyDown(Widget sender, char keyCode, int modifiers) {
     this.handleKeyEvent(sender, "onKeyDown");
   }
@@ -119,6 +121,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
+  @Override
   public void onKeyPress(Widget sender, char keyCode, int modifiers) {
     this.handleKeyEvent(sender, "onKeyPress");
   }
@@ -134,6 +137,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
+  @Override
   public void onKeyUp(Widget sender, char keyCode, int modifiers) {
     this.handleKeyEvent(sender, "onKeyUp");
   }

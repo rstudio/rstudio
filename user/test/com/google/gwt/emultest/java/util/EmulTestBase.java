@@ -42,6 +42,7 @@ public class EmulTestBase extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }

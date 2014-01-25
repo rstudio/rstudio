@@ -35,6 +35,7 @@ public class ResetButtonTest extends GWTTestCase {
     boolean clicked;
     EventTarget target;
 
+    @Override
     public void onClick(ClickEvent event) {
       target = event.getNativeEvent().getEventTarget();
       clicked = true;

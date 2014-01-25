@@ -42,10 +42,12 @@ public class RequestTest extends RequestTestBase {
         getTestBaseURL() + "/cancel");
     try {
       Request request = builder.sendRequest(null, new RequestCallback() {
+        @Override
         public void onResponseReceived(Request request, Response response) {
           fail("Request was canceled - no response should be received");
         }
 
+        @Override
         public void onError(Request request, Throwable exception) {
           fail("Request was canceled - no timeout should occur");
         }
@@ -67,9 +69,11 @@ public class RequestTest extends RequestTestBase {
    */
   public void testRequest() {
     RequestCallback callback = new RequestCallback() {
+      @Override
       public void onResponseReceived(Request request, Response response) {
       }
 
+      @Override
       public void onError(Request request, Throwable exception) {
       }
     };
@@ -112,10 +116,12 @@ public class RequestTest extends RequestTestBase {
         getTestBaseURL() + "isPending");
     try {
       Request request = builder.sendRequest(null, new RequestCallback() {
+        @Override
         public void onResponseReceived(Request request, Response response) {
           finishTest();
         }
 
+        @Override
         public void onError(Request request, Throwable exception) {
           finishTest();
         }

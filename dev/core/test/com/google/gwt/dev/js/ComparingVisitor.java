@@ -371,11 +371,13 @@ public class ComparingVisitor extends JsVisitor {
     return false;
   }
 
+  @Override
   public boolean visit(JsVars x, JsContext ctx) {
     TestCase.assertTrue(other instanceof JsVars);
     return false;
   }
 
+  @Override
   public boolean visit(JsWhile x, JsContext ctx) {
     TestCase.assertTrue(other instanceof JsWhile);
     return false;

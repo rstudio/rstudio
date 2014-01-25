@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
  */
 public class FlexTableTest extends HTMLTableTestBase {
 
+  @Override
   public HTMLTable getTable(int row, int column) {
     return new FlexTable();
   }

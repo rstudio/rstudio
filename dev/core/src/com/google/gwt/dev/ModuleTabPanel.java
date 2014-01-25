@@ -320,6 +320,7 @@ public class ModuleTabPanel extends JPanel {
     sessionDropdownPanel.add(new JLabel("Session: "));
     sessionDropdown = new JComboBox();
     sessionDropdown.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         Session session = (Session) sessionDropdown.getSelectedItem();
         selectSession(session);
@@ -335,6 +336,7 @@ public class ModuleTabPanel extends JPanel {
     moduleDropdownPanel.add(new JLabel("Module: "));
     moduleDropdown = new JComboBox();
     moduleDropdown.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         SessionModule sessionModule = (SessionModule)
             moduleDropdown.getSelectedItem();

@@ -28,10 +28,12 @@ public class ApacheMapTest extends TestMap {
   public ApacheMapTest() {
   }
 
+  @Override
   public Object makeObject() {
     return new HashMap();
   }
 
+  @Override
   protected Map makeEmptyMap() {
     return new HashMap();
   }

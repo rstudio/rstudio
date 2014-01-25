@@ -28,6 +28,7 @@ import com.google.gwt.user.client.EventListener;
  */
 abstract class GWTTestCaseTestBase extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.junit.JUnit";
   }
@@ -42,6 +43,7 @@ abstract class GWTTestCaseTestBase extends GWTTestCase {
     Event.sinkEvents(btn, Event.ONCLICK);
 
     EventListener listener = new EventListener() {
+      @Override
       public void onBrowserEvent(Event event) {
         failNow(failMsg);
       }

@@ -54,6 +54,7 @@ public class ImageTest extends GWTTestCase {
       this.image = image;
     }
 
+    @Override
     public void onError(ErrorEvent event) {
       fail("The image " + image.getUrl() + " failed to load.");
     }
@@ -119,6 +120,7 @@ public class ImageTest extends GWTTestCase {
       return finished;
     }
 
+    @Override
     public void onError(Widget sender) {
       fail("The image " + image.getUrl() + " failed to load.");
     }
@@ -221,6 +223,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         ++onLoadEventCount;
         if (onLoadEventCount == 1) { // Set the url after the first image loads
@@ -252,6 +255,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (getCurrentImageStateName(image).equals("unclipped")) {
           image.setVisibleRect(12, 13, 8, 8);
@@ -291,6 +295,7 @@ public class ImageTest extends GWTTestCase {
 
     image.addErrorHandler(new TestErrorHandler(image));
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired twice. Expected it to fire only once.");
@@ -338,6 +343,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (++onLoadEventCount == 1) {
           assertEquals(32, image.getWidth());
@@ -362,11 +368,13 @@ public class ImageTest extends GWTTestCase {
 
     delayTestFinish(DEFAULT_TEST_TIMEOUT);
     image.addErrorHandler(new ErrorHandler() {
+      @Override
       public void onError(ErrorEvent event) {
         finishTest();
       }
     });
     image.addLoadHandler(new LoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         fail("The image " + image.getUrl() + " should have failed to load.");
       }
@@ -388,6 +396,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (++onLoadEventCount == 2) {
           finishTest();
@@ -416,6 +425,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (getCurrentImageStateName(image).equals("unclipped")) {
           image.setUrlAndVisibleRect("counting-forwards.png", 0, 16, 16, 16);
@@ -446,6 +456,7 @@ public class ImageTest extends GWTTestCase {
     final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(Widget sender) {
         if (++onLoadEventCount == 1) {
           assertEquals(16, image.getWidth());
@@ -459,6 +470,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (++onLoadEventCount == 1) {
           assertEquals(16, image.getWidth());
@@ -485,10 +497,12 @@ public class ImageTest extends GWTTestCase {
 
     im.addLoadListener(new LoadListener() {
 
+      @Override
       public void onError(Widget sender) {
         ++firedError;
       }
 
+      @Override
       public void onLoad(Widget sender) {
         ++firedLoad;
       }
@@ -512,6 +526,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png");
 
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired multiple times.");
@@ -552,6 +567,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadHandler(new LoadHandler() {
       private int onLoadEventCount = 0;
 
+      @Override
       public void onLoad(LoadEvent event) {
         if (++onLoadEventCount == 1) {
           RootPanel.get().remove(image);
@@ -571,6 +587,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png");
 
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired multiple times.");
@@ -596,6 +613,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png", 12, 13, 8, 8);
 
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired multiple times.");
@@ -670,6 +688,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-backwards.png", 12, 12, 12, 12);
 
     final TestLoadListener listener = new TestLoadListener(image) {
+      @Override
       public void onLoad(Widget sender) {
         if (isFinished()) {
           fail("LoadListener fired twice. Expected it to fire only once.");
@@ -686,6 +705,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadListener(listener);
 
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired twice. Expected it to fire only once.");
@@ -730,6 +750,7 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 
     final TestLoadListener listener = new TestLoadListener(image) {
+      @Override
       public void onLoad(Widget sender) {
         if (isFinished()) {
           fail("LoadListener fired twice. Expected it to fire only once.");
@@ -740,6 +761,7 @@ public class ImageTest extends GWTTestCase {
     image.addLoadListener(listener);
 
     final TestLoadHandler loadHandler = new TestLoadHandler() {
+      @Override
       public void onLoad(LoadEvent event) {
         if (isFinished()) {
           fail("LoadHandler fired twice. Expected it to fire only once.");

@@ -24,6 +24,7 @@ import java.util.Comparator;
  * Comparator for <code>HasName</code> instances.
  */
 public class HasNameSort implements Comparator<HasName>, Serializable {
+  @Override
   public int compare(HasName h1, HasName h2) {
     return h1.getName().compareTo(h2.getName());
   }

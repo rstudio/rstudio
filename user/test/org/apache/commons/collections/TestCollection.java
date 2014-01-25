@@ -370,6 +370,7 @@ public abstract class TestCollection extends TestObject {
     /**
      *  Returns an empty collection for Object tests.
      */
+    @Override
     public Object makeObject() {
         return makeCollection();
     }

@@ -69,6 +69,7 @@ public class ActivityManagerTest extends TestCase {
   private static class MyDisplay implements AcceptsOneWidget {
     IsWidget widget = null;
 
+    @Override
     public void setWidget(IsWidget widget) {
       this.widget = widget;
     }
@@ -78,6 +79,7 @@ public class ActivityManagerTest extends TestCase {
   }
 
   private static class MyView implements IsWidget {
+    @Override
     public Widget asWidget() {
       return null;
     }
@@ -94,18 +96,22 @@ public class ActivityManagerTest extends TestCase {
       this.view = view;
     }
 
+    @Override
     public String mayStop() {
       return stopWarning;
     }
 
+    @Override
     public void onCancel() {
       canceled = true;
     }
 
+    @Override
     public void onStop() {
       stopped = true;
     }
 
+    @Override
     public void start(AcceptsOneWidget display, EventBus eventBus) {
       this.display = display;
       this.bus = eventBus;
@@ -122,6 +128,7 @@ public class ActivityManagerTest extends TestCase {
 
   private final MyDisplay realDisplay = new MyDisplay();
   private final ActivityMapper myMap = new ActivityMapper() {
+    @Override
     public Activity getActivity(Place place) {
       if (place.equals(place1)) {
         return activity1;
@@ -144,6 +151,7 @@ public class ActivityManagerTest extends TestCase {
     final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
 
     ActivityMapper map = new ActivityMapper() {
+      @Override
       public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
@@ -175,6 +183,7 @@ public class ActivityManagerTest extends TestCase {
     final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
 
     ActivityMapper map = new ActivityMapper() {
+      @Override
       public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
@@ -237,6 +246,7 @@ public class ActivityManagerTest extends TestCase {
     final AsyncActivity ayncActivity2 = new AsyncActivity(new MyView());
 
     ActivityMapper map = new ActivityMapper() {
+      @Override
       public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
@@ -457,6 +467,7 @@ public class ActivityManagerTest extends TestCase {
     final AsyncActivity asyncActivity2 = new AsyncActivity(new MyView());
 
     ActivityMapper map = new ActivityMapper() {
+      @Override
       public Activity getActivity(Place place) {
         if (place.equals(place1)) {
           return asyncActivity1;
@@ -558,6 +569,7 @@ public class ActivityManagerTest extends TestCase {
     final TwoViewActivity activity = new TwoViewActivity(new MyView(), new MyView());
     
     ActivityMapper map = new ActivityMapper() {
+      @Override
       public Activity getActivity(Place place) {
         return activity;
       }

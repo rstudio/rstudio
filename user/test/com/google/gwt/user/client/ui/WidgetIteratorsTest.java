@@ -29,25 +29,30 @@ public class WidgetIteratorsTest extends GWTTestCase {
    * Provides a class from which to construct mock containers in this test.
    */
   private static class MockWidget implements HasWidgets {
+    @Override
     public void add(Widget w) {
       fail("Unexpected call to add(Widget)");
     }
 
+    @Override
     public void clear() {
       fail("Unexpected call to clear()");
     }
 
+    @Override
     public Iterator<Widget> iterator() {
       fail("Unexpected call to iterator()");
       return null;
     }
 
+    @Override
     public boolean remove(Widget w) {
       fail("Unexpected call to remove(Widget)");
       return false;
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -74,6 +79,7 @@ public class WidgetIteratorsTest extends GWTTestCase {
         null, createTestWidget(), null, createTestWidget(), null, null};
 
     final MockWidget mock = new MockWidget() {
+      @Override
       public boolean remove(Widget w) {
         assertEquals(widgets[expectedRemoveIndex[0]], w);
         return true;

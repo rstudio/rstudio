@@ -57,6 +57,7 @@ public class Inners {
      * Inner Localizable Impl.
      */
     protected static class InnerLoc_ extends InnerLoc {
+      @Override
       public String string() {
         return "InnerLoc";
       }
@@ -80,6 +81,7 @@ public class Inners {
    */
   public static class LocalizableSimpleInner_ implements LocalizableSimpleInner {
 
+    @Override
     public String getLocalizableInner() {
       return "getLocalizableInner";
     }
@@ -112,6 +114,7 @@ public class Inners {
 
     /** Test inner inner and static localizable. */
     public static class LocalizableInnerInner_ extends LocalizableInnerInner {
+      @Override
       public String string() {
         return "localizableInnerInner";
       }
@@ -134,6 +137,7 @@ public class Inners {
      * OuterLoc piglatin binding.
      */
     public static class OuterLoc_piglatin extends OuterLoc {
+      @Override
       public String string() {
         return "piglatin";
       }
@@ -180,6 +184,7 @@ public class Inners {
        */
       public static interface InnerInnerInnerMessages extends
           InnerInnerMessages {
+        @Override
         String innerClassMessages(String a);
       }
     }

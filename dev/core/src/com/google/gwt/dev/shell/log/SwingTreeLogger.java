@@ -335,6 +335,7 @@ public final class SwingTreeLogger extends AbstractTreeLogger {
   private void addUpdate(final LogEvent logEvent) {
     // TODO(jat): investigate not running all of this on the event thread
     EventQueue.invokeLater(new Runnable() {
+      @Override
       public void run() {
         // TODO(jat): apply filter criteria
         SwingTreeLogger logger = logEvent.childLogger;

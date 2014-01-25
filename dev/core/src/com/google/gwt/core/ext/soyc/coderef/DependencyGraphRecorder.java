@@ -55,12 +55,14 @@ public class DependencyGraphRecorder extends DependencyRecorder {
     return this.codeModel;
   }
 
+  @Override
   public void startDependencyGraph(String name, String extendz) {
     super.startDependencyGraph(name, extendz);
 
     currentGraph = name;
   }
 
+  @Override
   protected void printMethodDependencyBetween(JMethod curMethod, JMethod depMethod) {
     super.printMethodDependencyBetween(curMethod, depMethod);
 

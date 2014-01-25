@@ -32,6 +32,7 @@ public class PlaceControllerTest extends TestCase {
     Place calledWith = null;
     String warning = "Stop fool!";
 
+    @Override
     public void onPlaceChangeRequest(PlaceChangeRequestEvent event) {
       calledWith = event.getNewPlace();
       event.setWarning(warning);
@@ -44,6 +45,7 @@ public class PlaceControllerTest extends TestCase {
   private class SimpleHandler implements PlaceChangeEvent.Handler {
     MyPlace calledWith = null;
 
+    @Override
     public void onPlaceChange(PlaceChangeEvent event) {
       calledWith = (MyPlace) event.getNewPlace();
     }

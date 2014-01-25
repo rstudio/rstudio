@@ -108,6 +108,7 @@ public class BrowserLauncher {
     protected Object browseObject;
     protected Method browseMethod;
 
+    @Override
     public void browse(String url) throws IOException, URISyntaxException {
       Object arg = convertUrl(url);
       Throwable caught = null;
@@ -179,6 +180,7 @@ public class BrowserLauncher {
       throw new UnsupportedOperationException("no suitable browser found");
     }
 
+    @Override
     public void browse(String url) throws IOException {
       Runtime.getRuntime().exec(new String[] { browserExecutable, url });
       // TODO(jat): do we need to wait for it to exit and check exit status?
@@ -191,6 +193,7 @@ public class BrowserLauncher {
    */
   private static class WindowsLauncher implements Launcher {
 
+    @Override
     public void browse(String url) throws IOException {
       Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
       // TODO(jat): do we need to wait for it to exit and check exit status?

@@ -23,6 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class BlankInterfaceTest extends GWTTestCase implements
     NoMethodsOrFields {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

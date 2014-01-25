@@ -67,6 +67,7 @@ public class LoggingRPCTestServiceImpl extends HybridServiceServlet implements
     }
   }
 
+  @Override
   public LogRecord echoLogRecord(LogRecord value) throws LoggingRPCTestServiceException {
     /*
      * Don't check the stack trace on the server side, because the expected

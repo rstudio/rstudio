@@ -25,16 +25,20 @@ import com.google.gwt.core.ext.soyc.MethodMember;
  */
 public abstract class AbstractMember implements Member {
 
+  @Override
   public abstract String getSourceName();
 
+  @Override
   public ClassMember isClass() {
     return this instanceof ClassMember ? (ClassMember) this : null;
   }
 
+  @Override
   public FieldMember isField() {
     return this instanceof FieldMember ? (FieldMember) this : null;
   }
 
+  @Override
   public MethodMember isMethod() {
     return this instanceof MethodMember ? (MethodMember) this : null;
   }

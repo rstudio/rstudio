@@ -26,6 +26,7 @@ public class TreeSetIntegerWithComparatorTest extends TreeSetIntegerTest {
   @Override
   protected SortedSet<Integer> createSortedSet() {
     setComparator(new Comparator<Integer>() {
+      @Override
       public int compare(Integer o1, Integer o2) {
         if (o1 == null) {
           return o2 == null ? 0 : -1;

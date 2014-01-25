@@ -63,6 +63,7 @@ public class UiBinderTestApp implements EntryPoint {
   /**
    * Entry point method, called only when this is run as an application.
    */
+  @Override
   public void onModuleLoad() {
     setAndInitInstance(this);
   }

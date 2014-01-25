@@ -61,6 +61,7 @@ public class UtilTest extends TestCase {
       this.cookies = cookies;
     }
 
+    @Override
     public Cookie[] getCookies() {
       return cookies;
     }

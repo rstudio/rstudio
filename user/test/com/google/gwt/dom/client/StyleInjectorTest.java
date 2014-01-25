@@ -46,6 +46,7 @@ public class StyleInjectorTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         assertEquals(100, elt.getOffsetLeft());
         assertEquals(100, elt.getClientHeight());
@@ -81,6 +82,7 @@ public class StyleInjectorTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         assertEquals(100, elt.getOffsetLeft());
         assertEquals(100, elt.getClientHeight());
@@ -117,6 +119,7 @@ public class StyleInjectorTest extends GWTTestCase {
     StyleInjector.injectAtEnd("#" + testName + " {height: 100px;}", immediate);
 
     Command command = new Command() {
+      @Override
       public void execute() {
         assertEquals(100, elt.getOffsetLeft());
         assertEquals(100, elt.getClientHeight());

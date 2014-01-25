@@ -69,10 +69,12 @@ public class CssImportScopeSample extends Widget implements HasText {
     setElement(binder.createAndBindUi(this));
   }
 
+  @Override
   public String getText() {
     return outer.getInnerText();
   }
 
+  @Override
   public void setText(String text) {
     outer.setInnerText(text);
   }

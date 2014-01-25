@@ -60,6 +60,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param dispId the unique number of a field
    * @return the field
    */
+  @Override
   public Field getField(int dispId) {
     if (dispId < 0) {
       throw new RuntimeException("Field does not exist.");
@@ -84,6 +85,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return true the value of the field
    * @throws IllegalArgumentException
    */
+  @Override
   public Object getFieldValue(int dispId) {
     if (dispId < 0) {
       throw new RuntimeException("Field does not exist.");
@@ -109,6 +111,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param dispId the unique number of a method
    * @return the method
    */
+  @Override
   public MethodAdaptor getMethod(int dispId) {
     if (dispId < 0) {
       throw new RuntimeException("Method does not exist.");
@@ -124,6 +127,7 @@ public class JavaDispatchImpl implements JavaDispatch {
     }
   }
 
+  @Override
   public Object getTarget() {
     return target;
   }
@@ -132,6 +136,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param dispId the unique number of a method or field
    * @return true if the dispId represents a field
    */
+  @Override
   public boolean isField(int dispId) {
     if (dispId < 0) {
       return false;
@@ -145,6 +150,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param dispId the unique number of a method or field
    * @return true if the dispId represents a method
    */
+  @Override
   public boolean isMethod(int dispId) {
     if (dispId < 0) {
       return false;
@@ -159,6 +165,7 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param value the value to assign to the field
    * @throws IllegalArgumentException
    */
+  @Override
   public void setFieldValue(int dispId, Object value) {
     Field field = (Field) getMember(dispId);
     try {

@@ -56,6 +56,7 @@ public class EditorTest extends RequestFactoryTestBase {
     protected final SimpleEditor<String> userName = SimpleEditor.of();
     RequestContext ctx;
 
+    @Override
     public void setRequestContext(RequestContext ctx) {
       this.ctx = ctx;
     }
@@ -70,6 +71,7 @@ public class EditorTest extends RequestFactoryTestBase {
     @Path("barField.userName")
     final SimpleEditor<String> barName = SimpleEditor.of();
 
+    @Override
     public void setRequestContext(RequestContext ctx) {
       this.ctx = ctx;
     }
@@ -94,6 +96,7 @@ public class EditorTest extends RequestFactoryTestBase {
 
     List<EditorError> errors;
 
+    @Override
     public void showErrors(List<EditorError> errors) {
       this.errors = errors;
     }
@@ -111,6 +114,7 @@ public class EditorTest extends RequestFactoryTestBase {
       HasEditorDelegate<SimpleFooProxy> {
     EditorDelegate<SimpleFooProxy> delegate;
 
+    @Override
     public void setDelegate(EditorDelegate<SimpleFooProxy> delegate) {
       this.delegate = delegate;
     }
@@ -356,6 +360,7 @@ public class EditorTest extends RequestFactoryTestBase {
           public void onSuccess(SimpleFooProxy response) {
             // EventBus notifications occur after the onSuccess()
             Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
+              @Override
               public boolean execute() {
                 if ("updated".equals(editor.userName.getValue())) {
                   assertEquals("updated", editor.userName.getValue());

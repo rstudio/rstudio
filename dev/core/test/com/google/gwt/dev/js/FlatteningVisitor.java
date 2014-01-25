@@ -46,6 +46,7 @@ class FlatteningVisitor extends JsVisitor {
     root = new TreeNode(null);
   }
 
+  @Override
   protected <T extends JsVisitable> T doAccept(T node) {
     TreeNode oldRoot = root;
     root = new TreeNode(node);
@@ -55,6 +56,7 @@ class FlatteningVisitor extends JsVisitor {
     return node;
   }
 
+  @Override
   protected <T extends JsVisitable> void doAcceptList(List<T> collection) {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {
       doAccept(it.next());

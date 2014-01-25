@@ -131,6 +131,7 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
 
     final Map<String, JsName> assignments = new HashMap<String, JsName>();
 
+    @Override
     public void endVisit(JsBinaryOperation expr, JsContext ctx) {
       if (expr.getOperator() != JsBinaryOperator.ASG || !(expr.getArg1() instanceof JsNameRef) ||
           !(expr.getArg2() instanceof JsNameRef)) {
@@ -199,6 +200,7 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
 
   private static void setAllFromJava(JsProgram program) {
     new JsModVisitor() {
+      @Override
       public void endVisit(JsFunction func, JsContext ctx) {
         func.setFromJava(true);
       }

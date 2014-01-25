@@ -51,6 +51,7 @@ public class ColumnSortEventTest extends TestCase {
     MockHasData<String> hasData = new MockHasData<String>();
     final List<Range> events = new ArrayList<Range>();
     hasData.addRangeChangeHandler(new RangeChangeEvent.Handler() {
+      @Override
       public void onRangeChange(RangeChangeEvent event) {
         events.add(event.getNewRange());
       }
@@ -75,6 +76,7 @@ public class ColumnSortEventTest extends TestCase {
     ListHandler<String> handler = new ListHandler<String>(values);
     IdentityColumn<String> col0 = new IdentityColumn<String>(new TextCell());
     Comparator<String> col0Comparator = new Comparator<String>() {
+      @Override
       public int compare(String o1, String o2) {
         return o1.compareTo(o2);
       }

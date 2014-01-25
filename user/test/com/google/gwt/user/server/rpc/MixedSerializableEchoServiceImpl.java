@@ -24,14 +24,17 @@ import com.google.gwt.user.client.rpc.MixedSerializableEchoService;
  */
 public class MixedSerializableEchoServiceImpl extends HybridServiceServlet
     implements MixedSerializableEchoService {
+  @Override
   public MixedSerializable echoVoid(MixedSerializable mixed) {
     return mixed;
   }
 
+  @Override
   public MixedSerializable echoRequest(MixedSerializable mixed) {
     return mixed;
   }
 
+  @Override
   public MixedSerializable echoRequestBuilder(MixedSerializable mixed) {
     return mixed;
   }

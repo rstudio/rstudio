@@ -40,10 +40,12 @@ final class FoldConstantsTransformation implements
     this.graph = graph;
   }
 
+  @Override
   public CfgTransformer getGraphTransformer() {
     return new FoldConstantTransformer(assumption, node);
   }
 
+  @Override
   public Cfg getNewSubgraph() {
     CfgNode<?> newNode = new CfgNopNode(node.getParent(), node.getJNode());
     return CfgUtil.createSingleNodeReplacementGraph(graph, node, newNode);

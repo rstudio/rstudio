@@ -42,11 +42,13 @@ public class TabBarTest extends GWTTestCase {
       assertEquals(expected, onSelectionFired);
     }
 
+    @Override
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
       assertFalse(onSelectionFired);
       onBeforeSelectionFired = true;
     }
 
+    @Override
     public void onSelection(SelectionEvent<Integer> event) {
       assertTrue(onBeforeSelectionFired);
       onSelectionFired = true;
@@ -126,6 +128,7 @@ public class TabBarTest extends GWTTestCase {
     bar.selectTab(-1);
     assertEquals(-1, bar.getSelectedTab());
     TabListener listener = new TabListener() {
+      @Override
       public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
         beforeSelection = tabIndex;
         if (tabIndex == 1) {
@@ -135,6 +138,7 @@ public class TabBarTest extends GWTTestCase {
         }
       }
 
+      @Override
       public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
         selected = tabIndex;
       }

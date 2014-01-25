@@ -196,6 +196,7 @@ public class MessageTransport {
    * A callable that does nothing.
    */
   private static final Callable<Response> DUMMY_CALLABLE = new Callable<Response>() {
+    @Override
     public Response call() throws Exception {
       return null;
     }
@@ -265,10 +266,12 @@ public class MessageTransport {
     PendingRequest pendingRequest = new PendingRequest(message,
         new Callback<Response>() {
 
+          @Override
           public void onDone(Response result) {
             future.set(result);
           }
 
+          @Override
           public void onError(Throwable t) {
             future.setException(t);
           }
@@ -314,6 +317,7 @@ public class MessageTransport {
 
     // This thread terminates on interruption, IO failure or EOF
     Thread messageProcessingThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         try {
           while (true) {
@@ -337,6 +341,7 @@ public class MessageTransport {
 
     // This thread only terminates if it is interrupted
     Thread sendThread = new Thread(new Runnable() {
+      @Override
       public void run() {
         while (true) {
           try {

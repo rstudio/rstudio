@@ -27,6 +27,7 @@ public final class UnreferencedImplOfJsoInterface extends JavaScriptObject imple
   protected UnreferencedImplOfJsoInterface() {
   }
 
+  @Override
   public boolean isOk() {
     if (2 + 2 == 4) {
       return true;

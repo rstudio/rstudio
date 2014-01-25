@@ -23,10 +23,12 @@ import com.google.gwt.user.client.rpc.EnumsTestService;
 public class EnumsTestServiceImpl extends HybridServiceServlet implements
     EnumsTestService {
 
+  @Override
   public Basic echo(Basic value) {
     return value;
   }
 
+  @Override
   public Complex echo(Complex value) throws EnumStateModificationException {
     if ("client".equals(value.value)) {
       throw new EnumStateModificationException(
@@ -36,10 +38,12 @@ public class EnumsTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public Subclassing echo(Subclassing value) {
     return value;
   }
   
+  @Override
   public FieldEnumWrapper echo(FieldEnumWrapper value) {
     return value;
   }

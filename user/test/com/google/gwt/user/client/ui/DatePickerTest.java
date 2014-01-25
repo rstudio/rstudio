@@ -156,6 +156,7 @@ public class DatePickerTest extends GWTTestCase {
     datesLaterList.add(dateLater5);
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }

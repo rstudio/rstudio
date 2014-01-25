@@ -35,6 +35,7 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
     this.info = info;
   }
 
+  @Override
   public SourceInfo getSourceInfo() {
     return info;
   }

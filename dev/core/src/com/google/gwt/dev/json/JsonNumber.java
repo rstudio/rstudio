@@ -29,6 +29,7 @@ public abstract class JsonNumber implements JsonValue {
       this.value = value;
     }
 
+    @Override
     public JsonDecimal copyDeeply() {
       return new JsonDecimal(value);
     }
@@ -43,6 +44,7 @@ public abstract class JsonNumber implements JsonValue {
       return (long) value;
     }
 
+    @Override
     public void write(Writer writer) throws IOException {
       writer.write(Double.toString(value));
     }
@@ -55,6 +57,7 @@ public abstract class JsonNumber implements JsonValue {
       this.value = value;
     }
 
+    @Override
     public JsonInteger copyDeeply() {
       return new JsonInteger(value);
     }
@@ -69,6 +72,7 @@ public abstract class JsonNumber implements JsonValue {
       return value;
     }
 
+    @Override
     public void write(Writer writer) throws IOException {
       writer.write(Long.toString(value));
     }
@@ -89,22 +93,27 @@ public abstract class JsonNumber implements JsonValue {
   private JsonNumber() {
   }
 
+  @Override
   public JsonArray asArray() {
     return null;
   }
 
+  @Override
   public JsonBoolean asBoolean() {
     return null;
   }
 
+  @Override
   public JsonNumber asNumber() {
     return this;
   }
 
+  @Override
   public JsonObject asObject() {
     return null;
   }
 
+  @Override
   public JsonString asString() {
     return null;
   }
@@ -113,22 +122,27 @@ public abstract class JsonNumber implements JsonValue {
 
   public abstract long getInteger();
 
+  @Override
   public boolean isArray() {
     return false;
   }
 
+  @Override
   public boolean isBoolean() {
     return false;
   }
 
+  @Override
   public boolean isNumber() {
     return true;
   }
 
+  @Override
   public boolean isObject() {
     return false;
   }
 
+  @Override
   public boolean isString() {
     return false;
   }

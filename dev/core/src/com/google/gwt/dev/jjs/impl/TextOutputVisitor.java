@@ -40,46 +40,57 @@ public class TextOutputVisitor extends JVisitor implements TextOutput {
     return textOutput.getLine();
   }
 
+  @Override
   public int getPosition() {
     return textOutput.getPosition();
   }
 
+  @Override
   public void indentIn() {
     textOutput.indentIn();
   }
 
+  @Override
   public void indentOut() {
     textOutput.indentOut();
   }
 
+  @Override
   public void newline() {
     textOutput.newline();
   }
 
+  @Override
   public void newlineOpt() {
     textOutput.newlineOpt();
   }
 
+  @Override
   public void print(char c) {
     textOutput.print(c);
   }
 
+  @Override
   public void print(char[] s) {
     textOutput.print(s);
   }
 
+  @Override
   public void print(String s) {
     textOutput.print(s);
   }
 
+  @Override
   public void printOpt(char c) {
     textOutput.printOpt(c);
   }
 
+  @Override
   public void printOpt(char[] s) {
     textOutput.printOpt(s);
   }
 
+  @Override
   public void printOpt(String s) {
     textOutput.printOpt(s);
   }

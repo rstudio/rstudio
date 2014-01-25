@@ -151,6 +151,7 @@ public class CollectionsTest extends EmulTestBase {
    */
   public void testBinarySearchObjectComparator() {
     Comparator<String> inverseSort = new Comparator<String>() {
+      @Override
       public int compare(String o1, String o2) {
         return o2.compareTo(o1);
       }
@@ -229,6 +230,7 @@ public class CollectionsTest extends EmulTestBase {
 
   public void testSortWithComparator() {
     Comparator<String> x = new Comparator<String>() {
+      @Override
       public int compare(String s1, String s2) {
         // sort into reverse order
         return s2.compareTo(s1);

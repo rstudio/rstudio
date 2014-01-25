@@ -20,6 +20,7 @@ package com.google.gwt.dev.generator.ast;
  */
 public abstract class BaseNode implements Node {
 
+  @Override
   public abstract String toCode();
 
   @Override

@@ -33,6 +33,7 @@ public class DefaultNodeInfoTest extends TestCase {
     SingleSelectionModel<String> selectionModel = new SingleSelectionModel<String>(
         null);
     ValueUpdater<String> valueUpdater = new ValueUpdater<String>() {
+      @Override
       public void update(String value) {
       }
     };

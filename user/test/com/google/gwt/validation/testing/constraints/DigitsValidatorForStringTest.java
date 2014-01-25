@@ -35,6 +35,7 @@ public class DigitsValidatorForStringTest extends
   @Digits(integer = 4, fraction = 2)
   private double defaultField;
 
+  @Override
   protected DigitsValidatorForString createValidator() {
     return new DigitsValidatorForString();
   }

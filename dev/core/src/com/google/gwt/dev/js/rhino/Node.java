@@ -54,10 +54,12 @@ public class Node implements Cloneable {
             this.number = number;
         }
 
+        @Override
         public double getDouble() {
           return this.number;
         }
 
+        @Override
         public boolean equals(Object o) {
             return o instanceof NumberNode
                 && getDouble() == ((NumberNode) o).getDouble();
@@ -79,6 +81,7 @@ public class Node implements Cloneable {
         /** returns the string content.
           * @return non null.
           */
+        @Override
         public String getString() {
             return this.str;
         }
@@ -86,6 +89,7 @@ public class Node implements Cloneable {
         /** sets the string content.
           * @param str the new value.  Non null.
           */
+        @Override
         public void setString(String str) {
             if (null == str) {
                 throw new IllegalArgumentException("StringNode: str is null");
@@ -93,6 +97,7 @@ public class Node implements Cloneable {
             this.str = str;
         }
 
+        @Override
         public boolean equals(Object o) {
             if (!(o instanceof StringNode)) { return false; }
             return o instanceof StringNode
@@ -537,11 +542,13 @@ public class Node implements Cloneable {
     /**
      * Not usefully implemented.
      */
+    @Override
     public final int hashCode() {
         assert false : "hashCode not designed";
         return 42; // any arbitrary constant will do
     }
 
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof Node)) { return false; }
         return hasLineno()
@@ -579,6 +586,7 @@ public class Node implements Cloneable {
 
 
 
+    @Override
     public String toString() {
         if (Context.printTrees) {
             StringBuffer sb = new StringBuffer(TokenStream.tokenToName(type));

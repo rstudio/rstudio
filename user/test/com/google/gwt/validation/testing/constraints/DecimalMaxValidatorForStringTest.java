@@ -32,6 +32,7 @@ public class DecimalMaxValidatorForStringTest extends
   @DecimalMax("922392239223.09")
   private String defaultField;
 
+  @Override
   protected DecimalMaxValidatorForString createValidator() {
     return new DecimalMaxValidatorForString();
   }

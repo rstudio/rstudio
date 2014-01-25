@@ -29,6 +29,7 @@ public class ServiceInheritanceTest extends GWTTestCase {
    * specified in the @{@link Service} annotation.
    */
   public static class SumServiceLocator implements ServiceLocator {
+    @Override
     public Object getInstance(Class<?> clazz) {
       if (BaseImpl.class.equals(clazz)) {
         return new BaseImpl();

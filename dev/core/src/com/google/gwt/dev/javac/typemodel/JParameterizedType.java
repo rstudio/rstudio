@@ -96,6 +96,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
 
     final JParameterizedType parameterizedType = this;
     members = new DelegateMembers(this, baseType, new Substitution() {
+      @Override
       public JClassType getSubstitution(JClassType type) {
         return type.getSubstitutedType(parameterizedType);
       }
@@ -197,6 +198,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
   /**
    * @deprecated See {@link #getQualifiedSourceName()}
    */
+  @Override
   @Deprecated
   public String getNonParameterizedQualifiedSourceName() {
     return getQualifiedSourceName();
@@ -261,6 +263,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
     return getBaseType().getQualifiedSourceName();
   }
 
+  @Override
   public JClassType getRawType() {
     return getBaseType().getRawType();
   }
@@ -325,6 +328,7 @@ public class JParameterizedType extends JMaybeParameterizedType implements
     return lazySuperclass;
   }
 
+  @Override
   public JClassType[] getTypeArgs() {
     return typeArgs.toArray(TypeOracle.NO_JCLASSES);
   }

@@ -108,6 +108,7 @@ public abstract class CellTestBase<T> extends GWTTestCase {
       lastValue = null;
     }
 
+    @Override
     public void update(T value) {
       assertNull(lastValue);
       assertNotNull(value);
@@ -273,6 +274,7 @@ public abstract class CellTestBase<T> extends GWTTestCase {
     // Pass the event to the cell.
     final MockValueUpdater valueUpdater = new MockValueUpdater();
     Event.setEventListener(parent, new EventListener() {
+      @Override
       public void onBrowserEvent(Event event) {
         try {
           DOM.setEventListener(parent, null);

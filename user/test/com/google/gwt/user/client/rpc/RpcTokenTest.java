@@ -63,10 +63,12 @@ public class RpcTokenTest extends RpcTestBase {
 
     service.getRpcTokenFromRequest(new AsyncCallback<RpcToken>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(RpcToken token) {
         assertNull(token);
         finishTest();
@@ -85,10 +87,12 @@ public class RpcTokenTest extends RpcTestBase {
 
     service.getRpcTokenFromRequest(new AsyncCallback<RpcToken>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(RpcToken rpcToken) {
         assertNotNull(rpcToken);
         assertTrue(rpcToken instanceof TestRpcToken);
@@ -103,6 +107,7 @@ public class RpcTokenTest extends RpcTestBase {
     ((ServiceDefTarget) service).setServiceEntryPoint(GWT.getModuleBaseURL()
         + "rpctokentest?throw=true");
     ((HasRpcToken) service).setRpcTokenExceptionHandler(new RpcTokenExceptionHandler() {
+      @Override
       public void onRpcTokenException(RpcTokenException exception) {
         assertNotNull(exception);
         finishTest();
@@ -113,10 +118,12 @@ public class RpcTokenTest extends RpcTestBase {
 
     service.getRpcTokenFromRequest(new AsyncCallback<RpcToken>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(RpcToken rpcToken) {
         fail("Should've called RpcTokenExceptionHandler");
       }
@@ -147,6 +154,7 @@ public class RpcTokenTest extends RpcTestBase {
 
     service.getRpcTokenFromRequest(new AsyncCallback<RpcToken>() {
 
+      @Override
       public void onSuccess(RpcToken result) {
         assertNotNull(result);
         assertTrue(result instanceof AnotherTestRpcToken);
@@ -154,6 +162,7 @@ public class RpcTokenTest extends RpcTestBase {
         finishTest();
       }
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }

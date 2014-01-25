@@ -64,10 +64,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_FALSE(false, new AsyncCallback<Boolean>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Boolean result) {
         assertNotNull("Was null", result);
         assertFalse("Should have been false", result.booleanValue());
@@ -81,10 +83,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_TRUE(true, new AsyncCallback<Boolean>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Boolean result) {
         assertNotNull(result);
         assertTrue(result.booleanValue());
@@ -98,10 +102,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo((byte) (Byte.MAX_VALUE / (byte) 2), new AsyncCallback<Byte>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Byte result) {
         assertNotNull(result);
         assertEquals(Byte.MAX_VALUE / 2, result.byteValue());
@@ -115,10 +121,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Byte.MAX_VALUE, new AsyncCallback<Byte>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Byte result) {
         assertNotNull(result);
         assertEquals(Byte.MAX_VALUE, result.byteValue());
@@ -132,10 +140,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Byte.MIN_VALUE, new AsyncCallback<Byte>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Byte result) {
         assertNotNull(result);
         assertEquals(Byte.MIN_VALUE, result.byteValue());
@@ -150,10 +160,12 @@ public class ValueTypesTest extends RpcTestBase {
     final char value = (char) (Character.MAX_VALUE / (char) 2);
     service.echo(value, new AsyncCallback<Character>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Character result) {
         assertNotNull(result);
         assertEquals(value, result.charValue());
@@ -167,10 +179,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Character.MAX_VALUE, new AsyncCallback<Character>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Character result) {
         assertNotNull(result);
         assertEquals(Character.MAX_VALUE, result.charValue());
@@ -184,10 +198,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Character.MIN_VALUE, new AsyncCallback<Character>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Character result) {
         assertNotNull(result);
         assertEquals(Character.MIN_VALUE, result.charValue());
@@ -201,10 +217,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Double.MAX_VALUE / 2, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         assertEquals(Double.MAX_VALUE / 2, result.doubleValue(), 0.0);
@@ -218,10 +236,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Double.MAX_VALUE, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         assertEquals(Double.MAX_VALUE, result.doubleValue(), 0.0);
@@ -235,10 +255,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Double.MIN_VALUE, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         assertEquals(Double.MIN_VALUE, result.doubleValue(), 0.0);
@@ -255,10 +277,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Double.NaN, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         assertTrue(Double.isNaN(result.doubleValue()));
@@ -275,10 +299,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         double doubleValue = result.doubleValue();
@@ -296,10 +322,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Double.POSITIVE_INFINITY, new AsyncCallback<Double>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Double result) {
         assertNotNull(result);
         double doubleValue = result.doubleValue();
@@ -314,10 +342,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Float.MAX_VALUE / 2, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         assertEquals(Float.MAX_VALUE / 2, result.floatValue(), 0.0);
@@ -331,10 +361,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Float.MAX_VALUE, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         assertEquals(Float.MAX_VALUE, result.floatValue(), 0.0);
@@ -348,10 +380,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Float.MIN_VALUE, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         assertEquals(Float.MIN_VALUE, result.floatValue(), 0.0);
@@ -368,10 +402,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Float.NaN, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         assertTrue(Float.isNaN(result.floatValue()));
@@ -388,10 +424,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         float floatValue = result.floatValue();
@@ -409,10 +447,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Float.POSITIVE_INFINITY, new AsyncCallback<Float>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Float result) {
         assertNotNull(result);
         float floatValue = result.floatValue();
@@ -427,10 +467,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Integer.MAX_VALUE / 2, new AsyncCallback<Integer>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Integer result) {
         assertNotNull(result);
         assertEquals(Integer.MAX_VALUE / 2, result.intValue());
@@ -444,10 +486,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Integer.MAX_VALUE, new AsyncCallback<Integer>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Integer result) {
         assertNotNull(result);
         assertEquals(Integer.MAX_VALUE, result.intValue());
@@ -461,10 +505,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Integer.MIN_VALUE, new AsyncCallback<Integer>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Integer result) {
         assertNotNull(result);
         assertEquals(Integer.MIN_VALUE, result.intValue());
@@ -478,10 +524,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(Long.MAX_VALUE / 2, new AsyncCallback<Long>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Long result) {
         assertNotNull(result);
         long expected = Long.MAX_VALUE / 2;
@@ -496,10 +544,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback<Long>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Long result) {
         assertNotNull(result);
         assertEquals(Long.MAX_VALUE, result.longValue());
@@ -513,10 +563,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback<Long>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Long result) {
         assertNotNull(result);
         assertEquals(Long.MIN_VALUE, result.longValue());
@@ -531,10 +583,12 @@ public class ValueTypesTest extends RpcTestBase {
     final short value = (short) (Short.MAX_VALUE / 2);
     service.echo(value , new AsyncCallback<Short>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Short result) {
         assertNotNull(result);
         assertEquals(value, result.shortValue());
@@ -548,10 +602,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MAX_VALUE(Short.MAX_VALUE, new AsyncCallback<Short>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Short result) {
         assertNotNull(result);
         assertEquals(Short.MAX_VALUE, result.shortValue());
@@ -565,10 +621,12 @@ public class ValueTypesTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_MIN_VALUE(Short.MIN_VALUE, new AsyncCallback<Short>() {
 
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Short result) {
         assertNotNull(result);
         assertEquals(Short.MIN_VALUE, result.shortValue());
@@ -583,10 +641,12 @@ public class ValueTypesTest extends RpcTestBase {
     service.echo(new SerializableGenericWrapperType<Void>(),
         new AsyncCallback<SerializableGenericWrapperType<Void>>() {
 
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(SerializableGenericWrapperType<Void> result) {
             assertNotNull(result);
             assertNull(result.getValue());
@@ -628,10 +688,12 @@ public class ValueTypesTest extends RpcTestBase {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(value, new AsyncCallback<BigDecimal>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(BigDecimal result) {
         assertEquals(value, result);
         finishTest();
@@ -643,10 +705,12 @@ public class ValueTypesTest extends RpcTestBase {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(value, new AsyncCallback<BigInteger>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(BigInteger result) {
         assertEquals(value, result);
         finishTest();
@@ -658,10 +722,12 @@ public class ValueTypesTest extends RpcTestBase {
     ValueTypesTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(value, new AsyncCallback<String>() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(String result) {
         assertEquals(value, result);
         finishTest();

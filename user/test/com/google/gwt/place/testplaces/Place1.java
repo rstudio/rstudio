@@ -36,10 +36,12 @@ public class Place1 extends Place {
   public static class Tokenizer implements PlaceTokenizer<Place1> {
     public static final String PREFIX = "T1";
 
+    @Override
     public Place1 getPlace(String token) {
       return new Place1(token);
     }
 
+    @Override
     public String getToken(Place1 place) {
       return place.content;
     }

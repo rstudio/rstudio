@@ -31,6 +31,7 @@ public class SizeValidatorForArrayOfBooleanTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForArrayOfBoolean createValidator() {
     return new SizeValidatorForArrayOfBoolean();
   }

@@ -72,6 +72,7 @@ public abstract class TestList extends TestCollection {
      *
      *  @return an empty list to be used for testing
      */
+    @Override
     final protected Collection makeCollection() {
         return makeEmptyList();
     }
@@ -82,6 +83,7 @@ public abstract class TestList extends TestCollection {
      *
      *  @return a full list to be used for testing
      */
+    @Override
     final protected Collection makeFullCollection() {
         return makeFullList();
     }
@@ -133,32 +135,39 @@ public abstract class TestList extends TestCollection {
 
       public class TestListIterator extends AbstractTestListIterator {
 
+        @Override
         public Object addSetValue() {
           return TestList.this.getOtherElements()[0];
         }
 
+        @Override
         public boolean supportsRemove() {
           return TestList.this.isRemoveSupported();
         }
 
+        @Override
         public boolean supportsAdd() {
           return TestList.this.isAddSupported();
         }
 
+        @Override
         public boolean supportsSet() {
           return TestList.this.isSetSupported();
         }
 
+        @Override
         public ListIterator makeEmptyListIterator() {
           resetEmpty();
           return ((List) TestList.this.collection).listIterator();
         }
 
+        @Override
         public ListIterator makeFullListIterator() {
           resetFull();
           return ((List) TestList.this.collection).listIterator();
         }
 
+        @Override
         public Object makeObject() {
           return ((List) TestList.this.collection).listIterator();
         }
@@ -503,10 +512,12 @@ public abstract class TestList extends TestCollection {
 
         final List listForC = Arrays.asList(getFullElements());
         Collection c = new AbstractCollection() {
+            @Override
             public int size() {
                 return listForC.size();
             }
 
+            @Override
             public Iterator iterator() {
                 return listForC.iterator();
             }
@@ -631,6 +642,7 @@ public abstract class TestList extends TestCollection {
     /**
      *  Returns an empty {@link ArrayList}.
      */
+    @Override
     protected Collection makeConfirmedCollection() {
         ArrayList list = new ArrayList();
         return list;
@@ -640,6 +652,7 @@ public abstract class TestList extends TestCollection {
     /**
      *  Returns a full {@link ArrayList}.
      */
+    @Override
     protected Collection makeConfirmedFullCollection() {
         ArrayList list = new ArrayList();
         list.addAll(Arrays.asList(getFullElements()));
@@ -651,6 +664,7 @@ public abstract class TestList extends TestCollection {
      *  Verifies that the test list implementation matches the confirmed list
      *  implementation.
      */
+    @Override
     protected void verify() {
         super.verify();
 

@@ -84,6 +84,7 @@ public class LocatorTest extends GWTTestCase {
 
   @ProxyFor(value = Domain.class, locator = DomainLocator.class)
   interface DomainProxy extends EntityProxy {
+    @Override
     EntityProxyId<DomainProxy> stableId();
   };
 

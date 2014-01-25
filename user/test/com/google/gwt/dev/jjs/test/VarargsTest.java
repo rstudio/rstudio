@@ -24,6 +24,7 @@ import java.util.Arrays;
  */
 public class VarargsTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

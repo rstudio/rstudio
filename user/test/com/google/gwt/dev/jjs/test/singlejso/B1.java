@@ -19,10 +19,12 @@ package com.google.gwt.dev.jjs.test.singlejso;
  * B1 class.
  */
 public class B1 implements IB {
+  @Override
   public String sayHello() {
     return "Hey, I'm " + whoAmI();
   }
 
+  @Override
   public String whoAmI() {
     return "B1";
   }

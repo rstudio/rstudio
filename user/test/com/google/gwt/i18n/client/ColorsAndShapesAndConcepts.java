@@ -22,6 +22,7 @@ public interface ColorsAndShapesAndConcepts extends ColorsAndShapes {
   /**
    * Circle overload.
    */
+  @Override
   String circle();
 
   String internationalization();

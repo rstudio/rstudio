@@ -47,6 +47,7 @@ public class JArrayRef extends JExpression {
     return instance;
   }
 
+  @Override
   public JType getType() {
     JArrayType arrayType = getArrayType();
     return (arrayType == null) ? JNullType.INSTANCE : arrayType.getElementType();
@@ -59,6 +60,7 @@ public class JArrayRef extends JExpression {
         || instance.getType() == JNullType.INSTANCE;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       instance = visitor.accept(instance);

@@ -53,78 +53,96 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
     annotations = ImmutableAnnotations.EMPTY.plus(declaredAnnotations);
   }
 
+  @Override
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     return annotations.getAnnotations();
   }
 
+  @Override
   public Annotation[] getDeclaredAnnotations() {
     return annotations.getDeclaredAnnotations();
   }
 
+  @Override
   public JClassType getEnclosingType() {
     return enclosingType;
   }
 
+  @Override
   @Deprecated
   public final String[][] getMetaData(String tagName) {
     return TypeOracle.NO_STRING_ARR_ARR;
   }
 
+  @Override
   @Deprecated
   public final String[] getMetaDataTags() {
     return TypeOracle.NO_STRINGS;
   }
 
+  @Override
   public String getName() {
     assert (name != null);
     return name;
   }
 
+  @Override
   public JType getType() {
     assert (type != null);
     return type;
   }
 
+  @Override
   public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
     return annotations.isAnnotationPresent(annotationClass);
   }
 
+  @Override
   public boolean isDefaultAccess() {
     return 0 == (modifierBits & (TypeOracle.MOD_PUBLIC | TypeOracle.MOD_PRIVATE | TypeOracle.MOD_PROTECTED));
   }
 
+  @Override
   public JEnumConstant isEnumConstant() {
     return null;
   }
 
+  @Override
   public boolean isFinal() {
     return 0 != (modifierBits & TypeOracle.MOD_FINAL);
   }
 
+  @Override
   public boolean isPrivate() {
     return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
   }
 
+  @Override
   public boolean isProtected() {
     return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
   }
 
+  @Override
   public boolean isPublic() {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
 
+  @Override
   public boolean isStatic() {
     return 0 != (modifierBits & TypeOracle.MOD_STATIC);
   }
 
+  @Override
   public boolean isTransient() {
     return 0 != (modifierBits & TypeOracle.MOD_TRANSIENT);
   }
 
+  @Override
   public boolean isVolatile() {
     return 0 != (modifierBits & TypeOracle.MOD_VOLATILE);
   }

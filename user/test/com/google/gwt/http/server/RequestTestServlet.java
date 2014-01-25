@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class RequestTestServlet extends HttpServlet {
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     if (request.getRequestURI().endsWith("/204NoContent")) {

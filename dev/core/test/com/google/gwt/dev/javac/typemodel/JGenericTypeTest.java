@@ -154,6 +154,7 @@ public class JGenericTypeTest extends TestCase {
 
     JDelegatingClassTypeTestBase.validateTypeSubstitution(genericClass,
         genericClass.getRawType(), new Substitution() {
+          @Override
           public JClassType getSubstitution(JClassType type) {
             return type.getErasedType();
           }

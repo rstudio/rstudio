@@ -131,6 +131,7 @@ public class JdtCompiler {
       return Lists.normalizeUnmodifiable(results);
     }
 
+    @Override
     public void process(CompilationUnitBuilder builder, CompilationUnitDeclaration cud,
         List<CompiledClass> compiledClasses) {
       builder.setClasses(compiledClasses).setTypes(Collections.<JDeclaredType> emptyList())
@@ -207,18 +208,22 @@ public class JdtCompiler {
       return builder;
     }
 
+    @Override
     public char[] getContents() {
       return builder.getSource().toCharArray();
     }
 
+    @Override
     public char[] getFileName() {
       return builder.getLocation().toCharArray();
     }
 
+    @Override
     public char[] getMainTypeName() {
       return Shared.getShortName(builder.getTypeName()).toCharArray();
     }
 
+    @Override
     public char[][] getPackageName() {
       String packageName = Shared.getPackageName(builder.getTypeName());
       return CharOperation.splitOn('.', packageName.toCharArray());
@@ -377,6 +382,7 @@ public class JdtCompiler {
    * Hook point to accept results.
    */
   private static class ICompilerRequestorImpl implements ICompilerRequestor {
+    @Override
     public void acceptResult(CompilationResult result) {
     }
   }
@@ -385,13 +391,16 @@ public class JdtCompiler {
    * How JDT receives files from the environment.
    */
   private class INameEnvironmentImpl implements INameEnvironment {
+    @Override
     public void cleanup() {
     }
 
+    @Override
     public NameEnvironmentAnswer findType(char[] type, char[][] pkg) {
       return findType(CharOperation.arrayConcat(pkg, type));
     }
 
+    @Override
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
       char[] internalNameChars = CharOperation.concatWith(compoundTypeName, '/');
       String internalName = String.valueOf(internalNameChars);
@@ -431,6 +440,7 @@ public class JdtCompiler {
       return null;
     }
 
+    @Override
     public boolean isPackage(char[][] parentPkg, char[] pkg) {
       char[] pathChars = CharOperation.concatWith(parentPkg, pkg, '/');
       String packageName = String.valueOf(pathChars);

@@ -57,15 +57,18 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
       flowFunction = analysis.getIntegratedFlowFunction();
     }
 
+    @Override
     public void interpret(final N node, G graph, 
         final AssumptionMap<E, A> assumptionMap) {
       final boolean[] mapWasModified = new boolean[1];
       Transformation<T, G> transformation = flowFunction.interpretOrReplace(
           node, graph, new AssumptionMap<E, A>() {
+            @Override
             public A getAssumption(E edge) {
               return assumptionMap.getAssumption(edge);
             }
 
+            @Override
             public void setAssumption(E edge, A assumption) {
               mapWasModified[0] = true;
               assumptionMap.setAssumption(edge, assumption);
@@ -99,11 +102,13 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
 
       iterate(newSubgraph,
           new IntegratedAnalysis<N, E, T, G, A>() {
+            @Override
             public IntegratedFlowFunction<N, E, T, G, A> 
             getIntegratedFlowFunction() {
               return flowFunction;
             }
 
+            @Override
             public void setInitialGraphAssumptions(G graph,
                 AssumptionMap<E, A> newAssumptionMap) {
               for (int i = 0; i < inEdges.size(); ++i) {
@@ -183,17 +188,20 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
       final IntegratedAnalysis<N, E, T, G, A> analysis) {
     TransformationFunction<N, E, T, G, A> function = 
       new TransformationFunction<N, E, T, G, A>() {
+      @Override
       public Transformation<T, G> transform(final N node, final G graph,
           AssumptionMap<E, A> assumptionMap) {
         final boolean[] didAssumptionChange = new boolean[1];
         Transformation<T, G> transformation = analysis.getIntegratedFlowFunction().interpretOrReplace(
               node, graph, new AssumptionMap<E, A>() {
+                @Override
                 public A getAssumption(E edge) {
                   Preconditions.checkArgument(graph.getStart(edge) == node
                       || graph.getEnd(edge) == node);
                   return getEdgeAssumption(graph, edge);
                 }
 
+                @Override
                 public void setAssumption(E edge, A assumption) {
                   Preconditions.checkArgument(graph.getStart(edge) == node
                       || graph.getEnd(edge) == node);
@@ -215,12 +223,14 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
     for (final N node : graph.getNodes()) {
       Transformation<T, G> transformation = transformationFunction.transform(
           node, graph, new AssumptionMap<E, A>() {
+            @Override
             public A getAssumption(E edge) {
               Preconditions.checkArgument(graph.getStart(edge) == node
                   || graph.getEnd(edge) == node);
               return getEdgeAssumption(graph, edge);
             }
 
+            @Override
             public void setAssumption(E edge, A assumption) {
               throw new IllegalStateException(
                   "Transformations should not change assumptions");
@@ -254,10 +264,12 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
 
   private void initGraphAssumptions(Analysis<N, E, G, A> analysis, final G graph) {
     analysis.setInitialGraphAssumptions(graph, new AssumptionMap<E, A>() {
+      @Override
       public A getAssumption(E edge) {
         return getEdgeAssumption(graph, edge);
       }
 
+      @Override
       public void setAssumption(E edge, A assumption) {
         setEdgeAssumption(graph, edge, assumption);
       }
@@ -281,10 +293,12 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
       new IntegratedFlowFunctionAdapter(integratedAnalysis);
 
     Analysis<N, E, G, A> analysis = new Analysis<N, E, G, A>() {
+      @Override
       public FlowFunction<N, E, G, A> getFlowFunction() {
         return adapter;
       }
 
+      @Override
       public void setInitialGraphAssumptions(G graph,
           AssumptionMap<E, A> assumptionMap) {
         integratedAnalysis.setInitialGraphAssumptions(graph, assumptionMap);
@@ -357,12 +371,14 @@ public class AnalysisSolver<N, E, T, G extends Graph<N, E, T>,
       iterator.remove();
 
       flowFunction.interpret(node, graph, new AssumptionMap<E, A>() {
+        @Override
         public A getAssumption(E edge) {
           Preconditions.checkArgument(graph.getStart(edge) == node
               || graph.getEnd(edge) == node);
           return getEdgeAssumption(graph, edge);
         }
 
+        @Override
         public void setAssumption(E edge, A assumption) {
           N start = graph.getStart(edge);
           N end = graph.getEnd(edge);

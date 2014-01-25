@@ -28,18 +28,22 @@ public class SyntheticClassMember implements Member {
     this.clazz = clazz;
   }
 
+  @Override
   public Class<?> getDeclaringClass() {
     return clazz;
   }
 
+  @Override
   public int getModifiers() {
     return Member.PUBLIC;
   }
 
+  @Override
   public String getName() {
     return "class";
   }
 
+  @Override
   public boolean isSynthetic() {
     return false;
   }

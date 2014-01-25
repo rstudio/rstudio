@@ -65,9 +65,11 @@ public @interface NotEmpty {
    * Sample composite validator.
    */
   class NotEmptyValidator implements ConstraintValidator<NotEmpty, String> {
+    @Override
     public void initialize(NotEmpty constraintAnnotation) {
     }
 
+    @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
       return true;
     }

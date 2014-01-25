@@ -21,10 +21,12 @@ import com.google.gwt.place.shared.PlaceTokenizer;
  * Used by tests of {@link com.google.gwt.place.rebind.PlaceHistoryMapperGenerator}.
  */
 public class Tokenizer2 implements PlaceTokenizer<Place2> {
+  @Override
   public Place2 getPlace(String token) {
     return new Place2(token);
   }
 
+  @Override
   public String getToken(Place2 place) {
     return place.content;
   }

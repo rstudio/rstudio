@@ -104,6 +104,7 @@ public class GwtIncompatibleTest extends GWTTestCase {
     assertNull(instance);
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

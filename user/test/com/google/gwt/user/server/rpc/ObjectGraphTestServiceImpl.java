@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     ObjectGraphTestService {
 
+  @Override
   public SerializableDoublyLinkedNode echo_AcyclicGraph(
       SerializableDoublyLinkedNode root) {
     if (!TestSetValidator.isValidAcyclicGraph(root)) {
@@ -37,6 +38,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return root;
   }
 
+  @Override
   public SerializableDoublyLinkedNode echo_ComplexCyclicGraph(
       SerializableDoublyLinkedNode root) {
     if (!TestSetValidator.isValidComplexCyclicGraph(root)) {
@@ -46,6 +48,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return root;
   }
 
+  @Override
   public SerializableGraphWithCFS echo_ComplexCyclicGraphWithCFS(
       SerializableGraphWithCFS root) {
     if (!TestSetValidator.isValidComplexCyclicGraphWithCFS(root)) {
@@ -55,6 +58,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return root;
   }
 
+  @Override
   public SerializableDoublyLinkedNode echo_TrivialCyclicGraph(
       SerializableDoublyLinkedNode root) {
     if (!TestSetValidator.isValidTrivialCyclicGraph(root)) {
@@ -64,6 +68,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return root;
   }
 
+  @Override
   public SerializablePrivateNoArg echo_PrivateNoArg(
       SerializablePrivateNoArg node) {
     if (!TestSetValidator.isValid(node)) {
@@ -73,6 +78,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return node;
   }
 
+  @Override
   public SerializableWithTwoArrays echo_SerializableWithTwoArrays(
       SerializableWithTwoArrays node) {
     if (!TestSetValidator.isValid(node)) {
@@ -82,6 +88,7 @@ public class ObjectGraphTestServiceImpl extends HybridServiceServlet implements
     return node;
   }
 
+  @Override
   public SerializableDoublyLinkedNode echo_ComplexCyclicGraph(
       SerializableDoublyLinkedNode node1, SerializableDoublyLinkedNode node2) {
     if (node1 != node2) {

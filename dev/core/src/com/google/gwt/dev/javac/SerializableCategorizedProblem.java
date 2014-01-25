@@ -49,6 +49,7 @@ public class SerializableCategorizedProblem extends CategorizedProblem implement
     this.formattedString = problem.toString();
   }
 
+  @Override
   public String[] getArguments() {
     return arguments;
   }
@@ -58,6 +59,7 @@ public class SerializableCategorizedProblem extends CategorizedProblem implement
     return categoryId;
   }
 
+  @Override
   public int getID() {
     return categoryId;
   }
@@ -67,42 +69,52 @@ public class SerializableCategorizedProblem extends CategorizedProblem implement
     return markerType;
   }
 
+  @Override
   public String getMessage() {
     return message;
   }
 
+  @Override
   public char[] getOriginatingFileName() {
     return originatingFileName;
   }
 
+  @Override
   public int getSourceEnd() {
     return sourceEnd;
   }
 
+  @Override
   public int getSourceLineNumber() {
     return sourceLineNumber;
   }
 
+  @Override
   public int getSourceStart() {
     return sourceStart;
   }
 
+  @Override
   public boolean isError() {
     return isError;
   }
 
+  @Override
   public boolean isWarning() {
     return isWarning;
   }
 
+  @Override
   public void setSourceEnd(int sourceEnd) {
     throw new RuntimeException("read only object");
   }
 
+  @Override
   public void setSourceLineNumber(int lineNumber) {
     throw new RuntimeException("read only object");
   }
 
+  @Override
   public void setSourceStart(int sourceStart) {
     throw new RuntimeException("read only object");
   }

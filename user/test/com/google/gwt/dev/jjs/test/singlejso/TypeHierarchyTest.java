@@ -51,6 +51,7 @@ public class TypeHierarchyTest extends GWTTestCase {
     protected DiamondImpl() {
     }
 
+    @Override
     public final native int size() /*-{
       return this.size;
     }-*/;
@@ -79,6 +80,7 @@ public class TypeHierarchyTest extends GWTTestCase {
    * Used for testing virtual overrides.
    */
   static class Narrow extends Wide {
+    @Override
     public String toString() {
       return "Narrow";
     }
@@ -127,6 +129,7 @@ public class TypeHierarchyTest extends GWTTestCase {
   }
 
   private static class JvmNode implements Node {
+    @Override
     public JvmNode appendChild(Node node) {
       return (JvmNode) node;
     }
@@ -148,6 +151,7 @@ public class TypeHierarchyTest extends GWTTestCase {
   }
 
   private static class JsNode extends JavaScriptObject implements Node {
+    @Override
     public final native JsNode appendChild(Node node) /*-{
       return node;
     }-*/;

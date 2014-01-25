@@ -37,6 +37,7 @@ public class GeneratedClassnameFinderTest extends TestCase {
     static class NestedClass {
       void foo() {
         TestInterface c = new TestInterface() {
+          @Override
           public void foo() {
           }
         };
@@ -46,6 +47,7 @@ public class GeneratedClassnameFinderTest extends TestCase {
             break;
         }
         TestInterface d = new TestInterface() {
+          @Override
           public void foo() {
           }
         };
@@ -54,6 +56,7 @@ public class GeneratedClassnameFinderTest extends TestCase {
 
     void foo() {
       TestInterface a = new TestInterface() {
+        @Override
         public void foo() {
         }
       };
@@ -63,6 +66,7 @@ public class GeneratedClassnameFinderTest extends TestCase {
           break;
       }
       TestInterface b = new TestInterface() {
+        @Override
         public void foo() {
         }
       };
@@ -141,6 +145,7 @@ class AbstractNativeTester {
       abstract void foo();
     }
     Fooer a = new Fooer() {
+      @Override
       native void foo();
     };
     a.foo();
@@ -162,6 +167,7 @@ class AnonymousTester {
 
   void foo() {
     TestInterface a = new TestInterface() {
+      @Override
       public void foo() {
       }
     };
@@ -362,11 +368,13 @@ class StaticTester {
   }
 
   private static class Fuji extends Apple {
+    @Override
     public void bar() {
     }
   }
 
   private static class Granny extends Apple {
+    @Override
     public void bar() {
     }
   }
@@ -385,6 +393,7 @@ class StaticTester {
 class TopLevelTester {
   public void foo() {
     GeneratedClassnameFinderTest.TestInterface a = new GeneratedClassnameFinderTest.TestInterface() {
+      @Override
       public void foo() {
       }
     };

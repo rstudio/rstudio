@@ -24,6 +24,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class DoubleScriptInjectionTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.module.DoubleScriptInjectionTest";
   }

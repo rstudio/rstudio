@@ -31,6 +31,7 @@ public class SizeValidatorForStringTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForString createValidator() {
     return new SizeValidatorForString();
   }

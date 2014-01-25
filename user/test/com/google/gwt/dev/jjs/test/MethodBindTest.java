@@ -27,6 +27,7 @@ public class MethodBindTest extends GWTTestCase {
    */
   private static abstract class Abstract implements Go {
     private final class Nested implements Go {
+      @Override
       public void go() {
         result = "wrong";
       }
@@ -37,6 +38,7 @@ public class MethodBindTest extends GWTTestCase {
     }
 
     private final class Nested2 extends Abstract {
+      @Override
       public void go() {
         result = "wrong";
       }
@@ -56,6 +58,7 @@ public class MethodBindTest extends GWTTestCase {
   }
 
   private final class Concrete extends Abstract {
+    @Override
     public void go() {
       result = "right";
     }
@@ -67,6 +70,7 @@ public class MethodBindTest extends GWTTestCase {
 
   private static String result;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }

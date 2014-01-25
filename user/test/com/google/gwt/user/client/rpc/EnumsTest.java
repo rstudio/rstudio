@@ -48,10 +48,12 @@ public class EnumsTest extends RpcTestBase {
   public void testBasicEnums() {
     delayTestFinishForRpc();
     getService().echo(Basic.A, new AsyncCallback<Basic>() {
+      @Override
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Basic result) {
         assertNotNull("Was null", result);
         assertEquals(Basic.A, result);
@@ -70,10 +72,12 @@ public class EnumsTest extends RpcTestBase {
 
     delayTestFinishForRpc();
     getService().echo(Complex.A, new AsyncCallback<Complex>() {
+      @Override
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Complex result) {
         assertNotNull("Was null", result);
         assertEquals(Complex.A, result);
@@ -93,10 +97,12 @@ public class EnumsTest extends RpcTestBase {
     delayTestFinishForRpc();
 
     getService().echo((Basic) null, new AsyncCallback<Basic>() {
+      @Override
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Basic result) {
         assertNull(result);
         finishTest();
@@ -111,10 +117,12 @@ public class EnumsTest extends RpcTestBase {
     delayTestFinishForRpc();
 
     getService().echo(Subclassing.A, new AsyncCallback<Subclassing>() {
+      @Override
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Subclassing result) {
         assertNotNull("Was null", result);
         assertEquals(Subclassing.A, result);
@@ -132,10 +140,12 @@ public class EnumsTest extends RpcTestBase {
     FieldEnumWrapper wrapper = new FieldEnumWrapper();
     wrapper.setFieldEnum(FieldEnum.X);
     getService().echo(wrapper, new AsyncCallback<FieldEnumWrapper>() {
+      @Override
       public void onFailure(Throwable caught) {
         rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(FieldEnumWrapper result) {
         assertNotNull("Was null", result);
         FieldEnum fieldEnum = result.getFieldEnum();

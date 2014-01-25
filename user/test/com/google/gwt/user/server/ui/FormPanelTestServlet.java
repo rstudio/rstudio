@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class FormPanelTestServlet extends HttpServlet {
 
+  @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse rsp)
       throws ServletException, IOException {
 
@@ -40,6 +41,7 @@ public class FormPanelTestServlet extends HttpServlet {
     }
   }
 
+  @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse rsp)
       throws ServletException, IOException {
 

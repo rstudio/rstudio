@@ -34,6 +34,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
   class ShyHandler implements FooEvent.Handler {
     HandlerRegistration r;
 
+    @Override
     public void onFoo(FooEvent event) {
       add(this);
       r.removeHandler();
@@ -47,6 +48,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
       this.expectedSource = source;
     }
 
+    @Override
     public void onFoo(FooEvent event) {
       add(this);
       assertEquals(expectedSource, event.getSource());
@@ -60,6 +62,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
       this.e = e;
     }
 
+    @Override
     public void onFoo(FooEvent event) {
       throw e;
     }
@@ -124,6 +127,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
 
     try {
       assertThrowsNpe(new Command() {
+        @Override
         public void execute() {
           FooEvent.register(eventBus, fooHandler1);
         }
@@ -137,11 +141,13 @@ public class SimpleEventBusTest extends EventBusTestBase {
   public void testConcurrentAdd() {
     final SimpleEventBus eventBus = new SimpleEventBus();
     final FooEvent.Handler two = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         add(this);
       }
     };
     FooEvent.Handler one = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         FooEvent.register(eventBus, two);
         add(this);
@@ -166,6 +172,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
     FooEvent.Handler one = new FooEvent.Handler() {
       HandlerRegistration reg = addIt();
 
+      @Override
       public void onFoo(FooEvent event) {
         reg.removeHandler();
         addIt();
@@ -191,6 +198,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
   public void testConcurrentAddAndRemoveByNastyUsersTryingToHurtUs() {
     final SimpleEventBus eventBus = new SimpleEventBus();
     final FooEvent.Handler two = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         add(this);
       }
@@ -201,6 +209,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
       }
     };
     FooEvent.Handler one = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         FooEvent.register(eventBus, two).removeHandler();
         add(this);
@@ -316,46 +325,54 @@ public class SimpleEventBusTest extends EventBusTestBase {
   public void testNullChecks() {
     final SimpleEventBus eventBus = new SimpleEventBus();
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.addHandler(null, fooHandler1);
       }
     });
 
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         FooEvent.register(eventBus, "foo", null);
       }
     });
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         FooEvent.register(eventBus, null, fooHandler1);
       }
     });
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.addHandlerToSource(null, "foo", fooHandler1);
       }
     });
 
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.fireEvent(null);
       }
     });
 
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(null, "");
       }
     });
 
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(new FooEvent() {
         }, null);
       }
     });
     assertThrowsNpe(new Command() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(null, "baker");
       }
@@ -366,6 +383,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
     SimpleEventBus reg = new SimpleEventBus();
 
     FooEvent.Handler handler = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         add(this);
         assertNull(event.getSource());
@@ -382,6 +400,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
     FooEvent.Handler h = new FooEvent.Handler() {
       HandlerRegistration reg = FooEvent.register(eventBus, this);
 
+      @Override
       public void onFoo(FooEvent event) {
         add(this);
         reg.removeHandler();
@@ -401,17 +420,20 @@ public class SimpleEventBusTest extends EventBusTestBase {
     @SuppressWarnings("deprecation")
     final SimpleEventBus eventBus = new SimpleEventBus(true);
     final FooEvent.Handler handler0 = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         add(this);
       }
     };
     final FooEvent.Handler handler1 = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         assertNotFired(handler0);
         add(this);
       }
     };
     final FooEvent.Handler handler2 = new FooEvent.Handler() {
+      @Override
       public void onFoo(FooEvent event) {
         assertNotFired(handler0, handler1);
         add(this);

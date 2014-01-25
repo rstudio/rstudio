@@ -331,6 +331,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   @Override
   protected Substitution getSubstitution() {
     return new Substitution() {
+      @Override
       public JClassType getSubstitution(JClassType type) {
         return type;
       }

@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.impl.gflow.liveness.LivenessAssumption.Updater;
  */
 public class LivenessFlowFunction implements FlowFunction<CfgNode<?>, CfgEdge,
     Cfg, LivenessAssumption> {
+  @Override
   public void interpret(CfgNode<?> node, Cfg g,
       AssumptionMap<CfgEdge, LivenessAssumption> assumptionMap) {
     final Updater result = new Updater(

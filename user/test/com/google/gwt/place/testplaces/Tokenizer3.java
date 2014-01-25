@@ -22,10 +22,12 @@ import com.google.gwt.place.shared.PlaceTokenizer;
  */
 public class Tokenizer3 implements PlaceTokenizer<Place3> {
 
+  @Override
   public Place3 getPlace(String token) {
     return new Place3(token);
   }
 
+  @Override
   public String getToken(Place3 place) {
     return place.content;
   }

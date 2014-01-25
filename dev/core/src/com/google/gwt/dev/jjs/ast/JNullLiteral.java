@@ -29,6 +29,7 @@ public class JNullLiteral extends JValueLiteral {
     super(sourceInfo);
   }
 
+  @Override
   public JType getType() {
     return JNullType.INSTANCE;
   }
@@ -38,6 +39,7 @@ public class JNullLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

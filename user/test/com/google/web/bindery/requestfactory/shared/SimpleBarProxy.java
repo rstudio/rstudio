@@ -39,5 +39,6 @@ public interface SimpleBarProxy extends EntityProxy {
 
   void setUserName(String userName);
 
+  @Override
   EntityProxyId<SimpleBarProxy> stableId();
 }

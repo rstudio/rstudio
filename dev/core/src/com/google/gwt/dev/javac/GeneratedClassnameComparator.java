@@ -30,6 +30,7 @@ import java.util.Comparator;
  */
 class GeneratedClassnameComparator implements Comparator<String>, Serializable {
 
+  @Override
   public int compare(String arg0, String arg1) {
     String pattern = "\\$";
     String splits0[] = arg0.split(pattern);

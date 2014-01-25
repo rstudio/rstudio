@@ -117,6 +117,7 @@ public class JRawTypeTest extends JDelegatingClassTypeTestBase {
   @Override
   protected Substitution getSubstitution() throws NotFoundException {
     return new Substitution() {
+      @Override
       public JClassType getSubstitution(JClassType type) {
         return type.getErasedType();
       }

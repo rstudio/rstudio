@@ -40,6 +40,7 @@ public class CustomButtonTest extends GWTTestCase {
   private static class Handler implements ValueChangeHandler<Boolean> {
     Boolean received = null;
     
+    @Override
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       received = event.getValue();
     }
@@ -47,6 +48,7 @@ public class CustomButtonTest extends GWTTestCase {
 
   private static final String html = "<b>hello</b><i>world</i>";
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -160,6 +162,7 @@ public class CustomButtonTest extends GWTTestCase {
     Handler h = new Handler();
 
     b.addClickHandler(new ClickHandler() {
+      @Override
       public void onClick(ClickEvent event) {
         events.add(event.getNativeEvent().getType());
       }

@@ -35,11 +35,13 @@ public class SimpleEventBusTest extends HandlerTestBase {
   public void testConcurrentAdd() {
     final SimpleEventBus eventBus = new SimpleEventBus();
     final MouseDownHandler two = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
       }
     };
     MouseDownHandler one = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         eventBus.addHandler(MouseDownEvent.getType(), two);
         add(this);
@@ -63,6 +65,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
   class ShyHandler implements MouseDownHandler {
     HandlerRegistration r;
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(this);
       r.removeHandler();
@@ -76,6 +79,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
       this.expectedSource = source;
     }
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       add(this);
       assertEquals(expectedSource, event.getSource());
@@ -87,6 +91,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
 
     try {
       assertThrowsNpe(new ScheduledCommand() {
+        @Override
         public void execute() {
           eventBus.addHandler(MouseDownEvent.getType(), mouse1);
         }
@@ -102,46 +107,54 @@ public class SimpleEventBusTest extends HandlerTestBase {
     final Type<MouseDownHandler> type = MouseDownEvent.getType();
 
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.addHandler(null, mouse1);
       }
     });
 
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.addHandlerToSource(type, "foo", null);
       }
     });
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.addHandlerToSource(type, null, mouse1);
       }
     });
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.addHandlerToSource(null, "foo", mouse1);
       }
     });
 
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.fireEvent(null);
       }
     });
 
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(null, "");
       }
     });
 
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(new MouseDownEvent() {
         }, null);
       }
     });
     assertThrowsNpe(new ScheduledCommand() {
+      @Override
       public void execute() {
         eventBus.fireEventFromSource(null, "baker");
       }
@@ -194,6 +207,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
   public void testConcurrentAddAndRemoveByNastyUsersTryingToHurtUs() {
     final SimpleEventBus eventBus = new SimpleEventBus();
     final MouseDownHandler two = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
       }
@@ -204,6 +218,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
       }
     };
     MouseDownHandler one = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         eventBus.addHandler(MouseDownEvent.getType(), two).removeHandler();
         add(this);
@@ -237,6 +252,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
       this.e = e;
     }
 
+    @Override
     public void onMouseDown(MouseDownEvent event) {
       throw e;
     }
@@ -283,6 +299,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
     SimpleEventBus reg = new SimpleEventBus();
 
     MouseDownHandler handler = new MouseDownHandler() {
+      @Override
       public void onMouseDown(MouseDownEvent event) {
         add(this);
         assertNull(event.getSource());

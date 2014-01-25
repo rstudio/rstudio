@@ -31,6 +31,7 @@ public class SizeValidatorForArrayOfObjectTest extends
   @Size(min = 2, max = 5)
   private Date defaultField;
 
+  @Override
   protected SizeValidatorForArrayOfObject createValidator() {
     return new SizeValidatorForArrayOfObject();
   }

@@ -63,6 +63,7 @@ public class BytecodeSignatureMaker {
       return Util.computeStrongName(Util.getBytes(getRawString()));
     }
 
+    @Override
     public void visit(int version, int access, String name, String signature, String superName,
         String[] interfaces) {
       StringBuilder headerBuilder = new StringBuilder();
@@ -88,19 +89,23 @@ public class BytecodeSignatureMaker {
       header = headerBuilder.toString();
     }
 
+    @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       // ignore
       return null;
     }
 
+    @Override
     public void visitAttribute(Attribute attr) {
       // ignore
     }
 
+    @Override
     public void visitEnd() {
       // unused
     }
 
+    @Override
     public FieldVisitor visitField(int access, String name, String desc, String signature,
         Object value) {
       StringBuilder fieldBuilder = new StringBuilder();
@@ -126,10 +131,12 @@ public class BytecodeSignatureMaker {
       return null;
     }
 
+    @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
       // ignored
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature,
         String[] exceptions) {
       // We don't care about synthetic methods
@@ -157,10 +164,12 @@ public class BytecodeSignatureMaker {
       return null;
     }
 
+    @Override
     public void visitOuterClass(String owner, String name, String desc) {
       // ignored
     }
 
+    @Override
     public void visitSource(String source, String debug) {
       // ignore
     }

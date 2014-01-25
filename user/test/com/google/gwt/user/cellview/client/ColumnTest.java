@@ -78,6 +78,7 @@ public class ColumnTest extends GWTTestCase {
       assertEquals(expected, value);
     }
 
+    @Override
     public void update(int index, T object, C value) {
       assertFalse("Update called twice", updateCalled);
       this.updateCalled = true;

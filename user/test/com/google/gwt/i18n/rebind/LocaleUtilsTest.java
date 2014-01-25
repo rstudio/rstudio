@@ -146,22 +146,27 @@ public class LocaleUtilsTest extends TestCase {
       return true;
     }
 
+    @Override
     public String getCurrentValue() {
       return value;
     }
 
+    @Override
     public String getFallbackValue() {
       return fallbackValue;
     }
 
+    @Override
     public List<? extends Set<String>> getFallbackValues(String value) {
       return Collections.emptyList();
     }
 
+    @Override
     public String getName() {
       return name;
     }
 
+    @Override
     public SortedSet<String> getPossibleValues() {
       return possibleValues;
     }

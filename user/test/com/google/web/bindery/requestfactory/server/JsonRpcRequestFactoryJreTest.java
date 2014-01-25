@@ -29,6 +29,7 @@ public class JsonRpcRequestFactoryJreTest extends JsonRpcRequestFactoryTest {
     return null;
   }
 
+  @Override
   protected SimpleJsonRpcRequestFactory createFactory() {
     return RequestFactorySource.create(SimpleJsonRpcRequestFactory.class);
   }

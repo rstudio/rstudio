@@ -105,6 +105,7 @@ public class JSONTest extends GWTTestCase {
   /**
    * Returns the module name for GWT unit test running.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.json.JSON";
   }

@@ -86,10 +86,12 @@ public class IdentitySets {
       this.item = item;
     }
 
+    @Override
     public boolean hasNext() {
       return item != EMPTY;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public T next() {
       if (!hasNext()) {
@@ -100,6 +102,7 @@ public class IdentitySets {
       return toReturn;
     }
 
+    @Override
     public void remove() {
       throw new UnsupportedOperationException();
     }

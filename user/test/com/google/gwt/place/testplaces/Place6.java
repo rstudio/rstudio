@@ -34,10 +34,12 @@ public class Place6 extends Place {
    */
   @Prefix("")
   public static class Tokenizer implements PlaceTokenizer<Place6> {
+    @Override
     public Place6 getPlace(String token) {
       return new Place6(token);
     }
 
+    @Override
     public String getToken(Place6 place) {
       return place.content;
     }

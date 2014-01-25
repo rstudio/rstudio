@@ -66,6 +66,7 @@ public final class GwtVersion implements Comparable<GwtVersion> {
     suffix = parse(versionString);
   }
 
+  @Override
   public int compareTo(GwtVersion other) {
     for (int i = 0; i < COMPONENT_COUNT; ++i) {
       int c = components[i] - other.components[i];

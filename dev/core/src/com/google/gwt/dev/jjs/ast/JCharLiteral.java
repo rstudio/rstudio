@@ -48,6 +48,7 @@ public class JCharLiteral extends JValueLiteral {
     return null;
   }
 
+  @Override
   public JType getType() {
     return JPrimitiveType.CHAR;
   }
@@ -61,6 +62,7 @@ public class JCharLiteral extends JValueLiteral {
     return Character.valueOf(value);
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }

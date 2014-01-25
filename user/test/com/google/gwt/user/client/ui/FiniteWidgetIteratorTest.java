@@ -55,6 +55,7 @@ public class FiniteWidgetIteratorTest extends GWTTestCase {
       widgets.put(index, w);
     }
 
+    @Override
     public Widget get(int index) {
       if (!widgets.containsKey(index)) {
         fail("A widget was not specified for index: " + index);

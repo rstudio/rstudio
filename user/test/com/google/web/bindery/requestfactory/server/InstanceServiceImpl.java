@@ -26,6 +26,7 @@ public class InstanceServiceImpl implements InstanceService {
     this.base = base;
   }
 
+  @Override
   public Integer add(int value) {
     return base + value;
   }

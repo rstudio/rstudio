@@ -36,6 +36,7 @@ import java.util.List;
 public class TabLayoutPanelTest extends GWTTestCase {
 
   static class Adder implements HasWidgetsTester.WidgetAdder {
+    @Override
     public void addChild(HasWidgets container, Widget child) {
       ((TabLayoutPanel) container).add(child, "foo");
     }
@@ -54,11 +55,13 @@ public class TabLayoutPanelTest extends GWTTestCase {
       assertEquals(expected, onSelectionFired);
     }
 
+    @Override
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
       assertFalse(onSelectionFired);
       onBeforeSelectionFired = true;
     }
 
+    @Override
     public void onSelection(SelectionEvent<Integer> event) {
       assertTrue(onBeforeSelectionFired);
       onSelectionFired = true;
@@ -91,12 +94,14 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
     delayTestFinish(2000);
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         assertEquals(128, foo.getOffsetWidth());
         assertEquals(128 - 32, foo.getOffsetHeight());
 
         p.selectTab(1);
         DeferredCommand.addCommand(new Command() {
+          @Override
           public void execute() {
             assertEquals(128, bar.getOffsetWidth());
             assertEquals(128 - 32, bar.getOffsetHeight());
@@ -132,9 +137,11 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
     delayTestFinish(2000);
     DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         p.selectTab(1);
         DeferredCommand.addCommand(new Command() {
+          @Override
           public void execute() {
             // Assert that the 'bar' label is of non-zero size on both axes.
             // The problem fixed in issue 4694 was causing its height to be
@@ -280,6 +287,7 @@ public class TabLayoutPanelTest extends GWTTestCase {
     class Handler implements SelectionHandler<Integer> {
       boolean fired = false;
 
+      @Override
       public void onSelection(SelectionEvent<Integer> event) {
         fired = true;
       }

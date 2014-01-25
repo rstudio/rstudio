@@ -100,10 +100,12 @@ public class StoryImpl implements Story {
     return length;
   }
 
+  @Override
   public String getLiteralTypeName() {
     return literalDescription;
   }
 
+  @Override
   public SortedSet<Member> getMembers() {
     return members;
   }

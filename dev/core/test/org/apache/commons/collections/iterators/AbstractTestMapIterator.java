@@ -85,6 +85,7 @@ public abstract class AbstractTestMapIterator extends AbstractTestIterator {
      * 
      * @return an empty iterator
      */
+    @Override
     public final Iterator makeEmptyIterator() {
         return makeEmptyMapIterator();
     }
@@ -94,6 +95,7 @@ public abstract class AbstractTestMapIterator extends AbstractTestIterator {
      * 
      * @return a full iterator
      */
+    @Override
     public final Iterator makeFullIterator() {
         return makeFullMapIterator();
     }
@@ -254,6 +256,7 @@ public abstract class AbstractTestMapIterator extends AbstractTestIterator {
     }
 
     //-----------------------------------------------------------------------
+    @Override
     public void testRemove() { // override
         MapIterator it = makeFullMapIterator();
         Map map = getMap();

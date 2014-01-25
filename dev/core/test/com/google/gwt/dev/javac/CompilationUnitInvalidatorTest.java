@@ -107,6 +107,7 @@ public class CompilationUnitInvalidatorTest extends TestCase {
       @Override
       public Dependencies getDependencies() {
         return new Dependencies() {
+          @Override
           public List<String> getApiRefs() {
             return Arrays.asList(apiRefs);
           }

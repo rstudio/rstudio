@@ -43,6 +43,7 @@ final class FoldConstantTransformer implements CfgTransformer {
     cloner = new CloneExpressionVisitor();
   }
 
+  @Override
   public boolean transform(CfgNode<?> node, Cfg cfgGraph) {
     Preconditions.checkArgument(nodeToFold == node);
     JModVisitor visitor = new JModVisitor() {

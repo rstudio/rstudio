@@ -39,6 +39,7 @@ public class StandardSelectionPropertyTest extends TestCase {
   public static class MyProviderGenerator
       implements PropertyProviderGenerator {
 
+    @Override
     public String generate(TreeLogger logger, SortedSet<String> possibleValues,
         String fallback, SortedSet<ConfigurationProperty> configProperties)
         throws UnableToCompleteException {

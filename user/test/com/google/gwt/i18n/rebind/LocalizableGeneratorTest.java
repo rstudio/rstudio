@@ -216,10 +216,12 @@ public class LocalizableGeneratorTest extends TestCase {
     testClass = typeOracle.getType("foo.TestClass");
     bufs = new HashMap<String, StringWriter>();
     ctx = new CodeGenContext() {
+      @Override
       public JavaSourceWriterBuilder addClass(String pkgName, String className) {
         return addClass(null, pkgName, className);
       }
       
+      @Override
       public JavaSourceWriterBuilder addClass(String superPath, String pkgName, String className) {
         StringWriter buf = new StringWriter();
         bufs.put(className, buf);
@@ -227,26 +229,32 @@ public class LocalizableGeneratorTest extends TestCase {
         return new JavaSourceWriterBuilder(apw, pkgName, className);
       }
       
+      @Override
       public void error(String msg) {
         fail(msg);
       }
       
+      @Override
       public void error(String msg, Throwable cause) {
         fail(msg);
       }
       
+      @Override
       public void error(Throwable cause) {
         fail(cause.getMessage());
       }
       
+      @Override
       public void warn(String msg) {
         System.out.println(msg);
       }
       
+      @Override
       public void warn(String msg, Throwable cause) {
         System.out.println(msg);
       }
       
+      @Override
       public void warn(Throwable cause) {
         System.out.println(cause.getMessage());
       }

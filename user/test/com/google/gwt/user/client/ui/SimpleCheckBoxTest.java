@@ -28,6 +28,7 @@ public class SimpleCheckBoxTest extends GWTTestCase {
   private static class Handler implements ValueChangeHandler<Boolean> {
     Boolean received = null;
 
+    @Override
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       received = event.getValue();
     }

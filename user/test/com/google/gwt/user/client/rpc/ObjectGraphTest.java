@@ -32,10 +32,12 @@ public class ObjectGraphTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_AcyclicGraph(TestSetFactory.createAcyclicGraph(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValidAcyclicGraph((SerializableDoublyLinkedNode) result));
@@ -49,10 +51,12 @@ public class ObjectGraphTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_ComplexCyclicGraph(TestSetFactory.createComplexCyclicGraph(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValidComplexCyclicGraph((SerializableDoublyLinkedNode) result));
@@ -67,10 +71,12 @@ public class ObjectGraphTest extends RpcTestBase {
     service.echo_ComplexCyclicGraphWithCFS(
         TestSetFactory.createComplexCyclicGraphWithCFS(),
         new AsyncCallback<SerializableGraphWithCFS>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(SerializableGraphWithCFS result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValidComplexCyclicGraphWithCFS(result));
@@ -84,10 +90,12 @@ public class ObjectGraphTest extends RpcTestBase {
     final SerializableDoublyLinkedNode node = TestSetFactory.createComplexCyclicGraph();
     delayTestFinishForRpc();
     service.echo_ComplexCyclicGraph(node, node, new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValidComplexCyclicGraph((SerializableDoublyLinkedNode) result));
@@ -101,10 +109,12 @@ public class ObjectGraphTest extends RpcTestBase {
     final SerializableWithTwoArrays node = TestSetFactory.createDoublyReferencedArray();
     delayTestFinishForRpc();
     service.echo_SerializableWithTwoArrays(node, new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValid((SerializableWithTwoArrays) result));
@@ -135,10 +145,12 @@ public class ObjectGraphTest extends RpcTestBase {
     final SerializablePrivateNoArg node = TestSetFactory.createPrivateNoArg();
     delayTestFinishForRpc();
     service.echo_PrivateNoArg(node, new AsyncCallback() {
+      @Override
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
+      @Override
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValid((SerializablePrivateNoArg) result));
@@ -152,10 +164,12 @@ public class ObjectGraphTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo_TrivialCyclicGraph(TestSetFactory.createTrivialCyclicGraph(),
         new AsyncCallback() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(TestSetValidator.isValidTrivialCyclicGraph((SerializableDoublyLinkedNode) result));

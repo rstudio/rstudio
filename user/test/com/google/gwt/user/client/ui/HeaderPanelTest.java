@@ -152,6 +152,7 @@ public class HeaderPanelTest extends PanelTestBase<HeaderPanel> {
 
     delayTestFinish(5000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertEquals(300, content.getOffsetHeight());
 
@@ -189,6 +190,7 @@ public class HeaderPanelTest extends PanelTestBase<HeaderPanel> {
 
     delayTestFinish(5000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+      @Override
       public void execute() {
         assertEquals(300, content.getOffsetHeight());
 

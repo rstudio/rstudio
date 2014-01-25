@@ -69,6 +69,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return Arrays.asList(values).toString();
   }
 
+  @Override
   public ArrayList<MarkerTypeArrayList> echo(ArrayList<MarkerTypeArrayList> list)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(list)) {
@@ -78,6 +79,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return list;
   }
 
+  @Override
   public boolean[] echo(boolean[] actual)
       throws CollectionsTestServiceException {
     boolean[] expected = TestSetFactory.createPrimitiveBooleanArray();
@@ -89,6 +91,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Boolean[] echo(Boolean[] actual)
       throws CollectionsTestServiceException {
     Boolean[] expected = TestSetFactory.createBooleanArray();
@@ -100,6 +103,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public byte[] echo(byte[] actual) throws CollectionsTestServiceException {
     byte[] expected = TestSetFactory.createPrimitiveByteArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -110,6 +114,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Byte[] echo(Byte[] actual) throws CollectionsTestServiceException {
     Byte[] expected = TestSetFactory.createByteArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -120,6 +125,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public char[] echo(char[] actual) throws CollectionsTestServiceException {
     char[] expected = TestSetFactory.createPrimitiveCharArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -130,6 +136,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Character[] echo(Character[] actual)
       throws CollectionsTestServiceException {
     Character[] expected = TestSetFactory.createCharArray();
@@ -141,6 +148,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Date[] echo(Date[] actual) throws CollectionsTestServiceException {
     Date[] expected = TestSetFactory.createDateArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -151,6 +159,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public double[] echo(double[] actual) throws CollectionsTestServiceException {
     double[] expected = TestSetFactory.createPrimitiveDoubleArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -161,6 +170,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Double[] echo(Double[] actual) throws CollectionsTestServiceException {
     Double[] expected = TestSetFactory.createDoubleArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -171,6 +181,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Enum<?>[] echo(Enum<?>[] actual)
       throws CollectionsTestServiceException {
     Enum<?>[] expected = TestSetFactory.createEnumArray();
@@ -182,6 +193,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public float[] echo(float[] actual) throws CollectionsTestServiceException {
     float[] expected = TestSetFactory.createPrimitiveFloatArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -192,6 +204,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echo(
       EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
       throws CollectionsTestServiceException {
@@ -204,6 +217,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Float[] echo(Float[] actual) throws CollectionsTestServiceException {
     Float[] expected = TestSetFactory.createFloatArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -214,6 +228,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> echo(
       HashMap<MarkerTypeHashMapKey, MarkerTypeHashMapValue> actual)
       throws CollectionsTestServiceException {
@@ -226,6 +241,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public HashSet<MarkerTypeHashSet> echo(HashSet<MarkerTypeHashSet> actual)
       throws CollectionsTestServiceException {
     HashSet<MarkerTypeHashSet> expected = TestSetFactory.createHashSet();
@@ -237,6 +253,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> echo(
       IdentityHashMap<MarkerTypeIdentityHashMapKey, MarkerTypeIdentityHashMapValue> actual)
       throws CollectionsTestServiceException {
@@ -249,6 +266,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public int[] echo(int[] actual) throws CollectionsTestServiceException {
     int[] expected = TestSetFactory.createPrimitiveIntegerArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -264,6 +282,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Integer[] echo(Integer[] actual)
       throws CollectionsTestServiceException {
     Integer[] expected = TestSetFactory.createIntegerArray();
@@ -275,6 +294,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public java.sql.Date[] echo(java.sql.Date[] actual)
       throws CollectionsTestServiceException {
     java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
@@ -286,6 +306,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> echo(
       LinkedHashMap<MarkerTypeLinkedHashMapKey, MarkerTypeLinkedHashMapValue> actual)
       throws CollectionsTestServiceException {
@@ -297,6 +318,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public LinkedHashSet<MarkerTypeLinkedHashSet> echo(
       LinkedHashSet<MarkerTypeLinkedHashSet> actual)
       throws CollectionsTestServiceException {
@@ -308,6 +330,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public LinkedList<MarkerTypeLinkedList> echo(LinkedList<MarkerTypeLinkedList> actual)
       throws CollectionsTestServiceException {
     LinkedList<MarkerTypeLinkedList> expected = TestSetFactory.createLinkedList();
@@ -319,6 +342,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public List<MarkerTypeEmptyList> echo(List<MarkerTypeEmptyList> list)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(list)) {
@@ -328,6 +352,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return list;
   }
 
+  @Override
   public long[] echo(long[] actual) throws CollectionsTestServiceException {
     long[] expected = TestSetFactory.createPrimitiveLongArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -338,6 +363,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Long[] echo(Long[] actual) throws CollectionsTestServiceException {
     Long[] expected = TestSetFactory.createLongArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -348,6 +374,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> echo(
       Map<MarkerTypeEmptyKey, MarkerTypeEmptyValue> map)
       throws CollectionsTestServiceException {
@@ -358,6 +385,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return map;
   }
 
+  @Override
   public Set<MarkerTypeEmptySet> echo(Set<MarkerTypeEmptySet> set)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(set)) {
@@ -367,6 +395,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return set;
   }
 
+  @Override
   public short[] echo(short[] actual) throws CollectionsTestServiceException {
     short[] expected = TestSetFactory.createPrimitiveShortArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -377,6 +406,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Short[] echo(Short[] actual) throws CollectionsTestServiceException {
     Short[] expected = TestSetFactory.createShortArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -387,6 +417,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public String[] echo(String[] actual) throws CollectionsTestServiceException {
     String[] expected = TestSetFactory.createStringArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -397,11 +428,13 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public String[][] echo(String[][] value)
       throws CollectionsTestServiceException {
     return value;
   }
 
+  @Override
   public Time[] echo(Time[] actual) throws CollectionsTestServiceException {
     Time[] expected = TestSetFactory.createSqlTimeArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -412,6 +445,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Timestamp[] echo(Timestamp[] actual)
       throws CollectionsTestServiceException {
     Timestamp[] expected = TestSetFactory.createSqlTimestampArray();
@@ -423,6 +457,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public TreeMap<String, MarkerTypeTreeMap> echo(
       TreeMap<String, MarkerTypeTreeMap> actual, boolean option)
       throws CollectionsTestServiceException {
@@ -435,6 +470,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public TreeSet<MarkerTypeTreeSet> echo(TreeSet<MarkerTypeTreeSet> actual,
       boolean option) throws CollectionsTestServiceException {
     TreeSet<MarkerTypeTreeSet> expected = TestSetFactory.createTreeSet(option);
@@ -446,6 +482,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> actual)
       throws CollectionsTestServiceException {
     Vector<MarkerTypeVector> expected = TestSetFactory.createVector();
@@ -457,6 +494,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public ArrayList<Void> echoArrayListVoid(ArrayList<Void> value)
       throws CollectionsTestServiceException {
     ArrayList<Void> expected = TestSetFactory.createArrayListVoid();
@@ -468,6 +506,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public List<MarkerTypeArraysAsList> echoArraysAsList(
       List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException {
@@ -478,6 +517,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return value;
   }
 
+  @Override
   public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEmptyEnumMap(
       EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
       throws CollectionsTestServiceException {
@@ -490,6 +530,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
   
+  @Override
   public IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> echoEnumKey(
       IdentityHashMap<MarkerTypeEnum, MarkerTypeIdentityHashMapValue> actual)
       throws CollectionsTestServiceException {
@@ -502,6 +543,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> echoEnumKey(
       EnumMap<MarkerTypeEnum, MarkerTypeEnumMapValue> actual)
       throws CollectionsTestServiceException {
@@ -515,6 +557,7 @@ public class CollectionsTestServiceImpl extends HybridServiceServlet implements
     return actual;
   }
 
+  @Override
   public List<MarkerTypeSingleton> echoSingletonList(
       List<MarkerTypeSingleton> value) throws CollectionsTestServiceException {
     if (!TestSetValidator.isValidSingletonList(value)) {

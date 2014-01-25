@@ -52,6 +52,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
       this.parameterizedType = parameterizedType;
     }
 
+    @Override
     public JClassType getSubstitution(JClassType type) {
       return type.getSubstitutedType(parameterizedType);
     }

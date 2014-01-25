@@ -92,10 +92,12 @@ public class ViewerServiceClient {
         viewerRequestBuilder).build();
 
     transport.executeRequestAsync(requestMessage, new Callback<Response>() {
+      @Override
       public void onDone(Response result) {
         callback.onDone(result.getViewerResponse().getAddLogBranch().getLogHandle());
       }
 
+      @Override
       public void onError(Throwable t) {
         callback.onError(t);
       }
@@ -131,9 +133,11 @@ public class ViewerServiceClient {
         viewerRequestBuilder).build();
 
     transport.executeRequestAsync(requestMessage, new Callback<Response>() {
+      @Override
       public void onDone(Response result) {
       }
 
+      @Override
       public void onError(Throwable t) {
         unexpectedErrorLogger.log(TreeLogger.WARN,
             "An error occurred while attempting to add a log entry.", t);

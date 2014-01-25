@@ -37,14 +37,17 @@ public class InheritanceTest extends RpcTestBase {
     InheritanceTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.echo(new AnonymousClassInterface() {
+      @Override
       public void foo() {
         // purposely empty
       }
     }, new AsyncCallback<Object>() {
+      @Override
       public void onFailure(Throwable caught) {
         finishTest();
       }
 
+      @Override
       public void onSuccess(Object result) {
         fail("Anonymous inner classes should not be serializable");
       }
@@ -63,10 +66,12 @@ public class InheritanceTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createCircle(),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             Circle circle = (Circle) result;
             assertNotNull(circle.getName());
@@ -83,10 +88,12 @@ public class InheritanceTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(new InheritanceTestSetFactory.JavaSerializableClass(3),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             finishTest();
@@ -103,10 +110,12 @@ public class InheritanceTest extends RpcTestBase {
         new InheritanceTestSetFactory.JavaSerializableClass(3);
     AsyncCallback<Object> resendCallback = new AsyncCallback<Object>() {
         private boolean resend = true;
+        @Override
         public void onFailure(Throwable caught) {
           TestSetValidator.rethrowException(caught);
         }
 
+        @Override
         public void onSuccess(Object result) {
           assertEquals(first, result);
           if (resend) {
@@ -129,10 +138,12 @@ public class InheritanceTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             finishTest();
           }
 
+          @Override
           public void onSuccess(Object result) {
             fail("Non-static inner classes should not be serializable");
           }
@@ -143,10 +154,12 @@ public class InheritanceTest extends RpcTestBase {
     InheritanceTestServiceAsync service = getServiceAsync();
     delayTestFinishForRpc();
     service.getUnserializableClass(new AsyncCallback<Object>() {
+      @Override
       public void onFailure(Throwable caught) {
         finishTest();
       }
 
+      @Override
       public void onSuccess(Object result) {
         fail("Returning an unserializable class from the server should fail");
       }
@@ -161,10 +174,12 @@ public class InheritanceTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createSerializableClass(),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(InheritanceTestSetValidator.isValid((SerializableClass) result));
@@ -181,10 +196,12 @@ public class InheritanceTest extends RpcTestBase {
     delayTestFinishForRpc();
     service.echo(InheritanceTestSetFactory.createSerializableSubclass(),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(InheritanceTestSetValidator.isValid((SerializableSubclass) result));
@@ -207,10 +224,12 @@ public class InheritanceTest extends RpcTestBase {
 
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(new AnonymousClassInterface() {
+      @Override
       public void foo() {
         // purposely empty
       }
     }, new AsyncCallback<Object>() {
+      @Override
       public void onFailure(Throwable caught) {
         assertTrue(
             "onFailure: got something other than a SerializationException ("
@@ -219,6 +238,7 @@ public class InheritanceTest extends RpcTestBase {
         serializationExceptionCaught[0] = true;
       }
 
+      @Override
       public void onSuccess(Object result) {
         fail("onSuccess: call should not have succeeded");
       }
@@ -234,10 +254,12 @@ public class InheritanceTest extends RpcTestBase {
     service.echo(
         InheritanceTestSetFactory.createSerializableClassWithTransientField(),
         new AsyncCallback<Object>() {
+          @Override
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
+          @Override
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(InheritanceTestSetValidator.isValid((SerializableClassWithTransientField) result));

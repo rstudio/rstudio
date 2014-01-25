@@ -31,6 +31,7 @@ public class PastValidatorForDateTest extends
   @Past
   private Date defaultField;
 
+  @Override
   protected PastValidatorForDate createValidator() {
     return new PastValidatorForDate();
   }

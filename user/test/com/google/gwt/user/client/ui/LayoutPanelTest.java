@@ -48,11 +48,14 @@ public class LayoutPanelTest extends WidgetTestBase {
     delayTestFinish(5000);
     // Fully qualified to avoid the deprecation warning in the import section
     com.google.gwt.user.client.DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         p.animate(100, new AnimationCallback() {
+          @Override
           public void onLayout(Layer layer, double progress) {
           }
 
+          @Override
           public void onAnimationComplete() {
             // If LayoutCommand is broken, this will never happen.
             finishTest();
@@ -81,6 +84,7 @@ public class LayoutPanelTest extends WidgetTestBase {
     delayTestFinish(2000);
     // Fully qualified to avoid the deprecation warning in the import section
     com.google.gwt.user.client.DeferredCommand.addCommand(new Command() {
+      @Override
       public void execute() {
         int offsetWidth = lp.getOffsetWidth();
         int offsetHeight = lp.getOffsetHeight();
@@ -469,6 +473,7 @@ public class LayoutPanelTest extends WidgetTestBase {
     delayTestFinish(2000);
     Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
+      @Override
       public void execute() {
         Layer layer = (Layout.Layer) widget.getLayoutData();
         LayerFriend helper = new LayerFriend(layer);

@@ -30,6 +30,7 @@ public class FileSystemOutputDirectory implements OutputDirectory {
     this.outDir = outDir;
   }
 
+  @Override
   public OutputStream getOutputStream(String path) throws IOException {
     File outFile = new File(outDir, path);
     outFile.getParentFile().mkdirs();

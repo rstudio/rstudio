@@ -36,6 +36,7 @@ public class JExpressionStatement extends JStatement {
     return expr;
   }
 
+  @Override
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       expr = visitor.accept(expr);
