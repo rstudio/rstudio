@@ -520,6 +520,18 @@ public class MenuBarTest extends WidgetTestBase {
     assertNull(bar.getSelectedItem());
   }
 
+  public void testClearSelectionAfterCommand() {
+    MenuBar bar = new MenuBar();
+    MenuItem item1 = bar.addItem("item1", BLANK_COMMAND);
+    RootPanel.get().add(bar);
+
+
+    bar.itemOver(item1, true);
+    assertNotNull(bar.getSelectedItem());
+
+    bar.itemOver(null, false);
+    assertNull(bar.getSelectedItem());
+  }
   public void testSelectItem() {
     MenuBar bar = new MenuBar(false);
     MenuItem item1 = new MenuItem("item1", BLANK_COMMAND);

@@ -614,7 +614,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
       case Event.ONMOUSEOUT: {
         if (item != null) {
-          itemOver(null, true);
+          itemOver(null, false);
         }
         break;
       }
@@ -885,6 +885,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       // Close this menu and all of its parents.
       closeAllParents();
 
+      // Remove the focus from the menu
+      FocusPanel.impl.blur(getElement());
+
       // Fire the item's command. The command must be fired in the same event
       // loop or popup blockers will prevent popups from opening.
       final ScheduledCommand cmd = item.getScheduledCommand();
@@ -936,7 +939,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   void itemOver(MenuItem item, boolean focus) {
     if (item == null) {
       // Don't clear selection if the currently selected item's menu is showing.
-      if ((selectedItem != null)
+      if ((selectedItem != null) && shownChildMenu != null
           && (shownChildMenu == selectedItem.getSubMenu())) {
         return;
       }
