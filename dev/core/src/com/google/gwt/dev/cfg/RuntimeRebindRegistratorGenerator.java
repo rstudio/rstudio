@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public class RuntimeRebindRegistratorGenerator extends Generator {
 
-  private static final String PACKAGE_PATH = "com.google.gwt.core.client";
+  private static final String PACKAGE_PATH = "com.google.gwt.lang";
 
   /**
    * The extension for all generated runtime rebind registrator classes. Is exposed publicly so

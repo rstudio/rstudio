@@ -57,14 +57,14 @@ public class ZipLibrariesTest extends TestCase {
     Set<String> expectedLocaleConfigurationValues = Sets.newHashSet("en", "fr");
     Set<String> expectedDependencyLibraryNames = Sets.newHashSet("FooLib", "BarLib");
     MockCompilationUnit expectedCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.core.client.RuntimeRebinder", "blah");
-    MockCompilationUnit expectedSuperSourceCompilationUnit =
-        new MockCompilationUnit("com.google.gwt.core.client.SuperRuntimeRebinder", "superblah") {
-            @Override
-          public boolean isSuperSource() {
-            return true;
-          }
-        };
+        new MockCompilationUnit("com.google.gwt.lang.RuntimeRebinder", "blah");
+    MockCompilationUnit expectedSuperSourceCompilationUnit = new MockCompilationUnit(
+        "com.google.gwt.lang.SuperRuntimeRebinder", "superblah") {
+      @Override
+      public boolean isSuperSource() {
+        return true;
+      }
+    };
 
     // Put data in the library and save it.
     ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
@@ -93,9 +93,9 @@ public class ZipLibrariesTest extends TestCase {
     // Read data back from disk.
     ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
     CompilationUnit actualCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.core.client.RuntimeRebinder");
+        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.lang.RuntimeRebinder");
     CompilationUnit actualSuperSourceCompilationUnit =
-        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.core.client.SuperRuntimeRebinder");
+        zipLibrary.getCompilationUnitByTypeName("com.google.gwt.lang.SuperRuntimeRebinder");
 
     // Compare it.
     assertEquals(expectedLibraryName, zipLibrary.getLibraryName());

@@ -353,7 +353,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
 
     // JProgram was informed of the newly created PropertyProviderRegistrator type and its name
     // reflects the name of the module currently being processed.
-    assertEquals("com.google.gwt.core.client.mock_RuntimeRebindRegistrator",
+    assertEquals("com.google.gwt.lang.mock_RuntimeRebindRegistrator",
         compiler.jprogram.getRuntimeRebindRegistratorTypeName());
     // The allRootTypes list was augmented to know about this newly created type.
     assertTrue(allRootTypes.contains(compiler.jprogram.getRuntimeRebindRegistratorTypeName()));
