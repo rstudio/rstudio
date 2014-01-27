@@ -217,6 +217,9 @@ utils:::rc.settings(files=T)
    
    packages = sub('^package:', '', .rs.which(results))
 
+   # ensure spaces around =
+   results <- sub("=$", " = ", results)
+
    choose = packages == '.GlobalEnv'
    results.sorted = c(results[choose], results[!choose])
    packages.sorted = c(packages[choose], packages[!choose])
