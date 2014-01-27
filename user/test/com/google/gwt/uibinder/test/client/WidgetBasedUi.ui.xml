@@ -691,6 +691,7 @@
 
   <gwt3:google.gwt.user.client.ui.ValueLabel ui:field='myValueLabel' renderer='{doubleRenderer}' />
 
+  <gwt:IntegerBox ui:field='myIntegerBox'  />
   <gwt:DoubleBox ui:field='myDoubleBox'  />
   <demo:ValueChangeWidget ui:field='myValueChangeWidget' />
   <demo:ValueChangeWidget ui:field='myValueChangeWidget_raw' />

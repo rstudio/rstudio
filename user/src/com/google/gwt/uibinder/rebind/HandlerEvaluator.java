@@ -223,9 +223,8 @@ class HandlerEvaluator {
     writer.newline();
     // Create the anonymous class extending the raw type to avoid errors under the new JDT
     // if the type has a wildcard.
-    writer.write("final %1$s %2$s = (%1$s) new %3$s() {",
-        handlerType.getParameterizedQualifiedSourceName(), handlerVarName,
-        handlerType.getQualifiedSourceName());
+    writer.write("final %1$s %2$s = new %1$s() {",
+        handlerType.getQualifiedSourceName(), handlerVarName);
     writer.indent();
     writer.write("public void %1$s(%2$s event) {", methods[0].getName(),
         // Use the event raw type to match the signature as we are using implementing the raw type
@@ -303,7 +302,10 @@ class HandlerEvaluator {
           continue;
         }
 
-        JType methodParam = parameters[0].getType();
+        JClassType methodParam = parameters[0].getType().isClassOrInterface();
+        if (methodParam == null) {
+          continue;
+        }
 
         if (handlerType.equals(methodParam)) {
 
@@ -330,16 +332,12 @@ class HandlerEvaluator {
          * This is done as an alternative handler method to preserve the
          * original logic.
          */
-        JParameterizedType ptype = handlerType.isParameterized();
-        if (ptype != null) {
-          // Alt 1: TableHandler<String> => TableHandler
-          if (methodParam.equals(ptype.getRawType())) {
-            alternativeHandlerMethod = method;
-          }
-
+        if (handlerType.isAssignableFrom(methodParam)) {
+          // Alt 1: TableHandler<String> => TableHandler or TableHandler<?> => TableHandler<String>
+          alternativeHandlerMethod = method;
+        } else if (handlerType.isParameterized() != null && objectType.isGenericType() != null) {
           // Alt 2: TableHandler<String> => TableHandler<T>
-          if (objectType.isGenericType() != null
-              && methodParam.getErasedType().equals(ptype.getRawType())) {
+          if (methodParam.getErasedType().equals(handlerType.isParameterized().getErasedType())) {
             // Unfortunately this is overly lenient but it was always like this
             alternativeHandlerMethod2 = method;
           }
