@@ -173,11 +173,12 @@ public:
       params_.push_back(Param(name, paramSEXP));
    }
                         
-   core::Error call(SEXP evalNS = R_GlobalEnv);
+   core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
 
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
- 
+   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect,
+                    bool safely = true);
+
    template <typename T>
    core::Error call(T* pValue)
    {

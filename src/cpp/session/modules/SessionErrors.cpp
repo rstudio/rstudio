@@ -56,12 +56,9 @@ Error setErrHandler(int type, bool inMyCode,
    if (!breakpoints::haveSrcrefAttribute())
       return Success();
 
-   // clear the previous error handler; if we don't do this, the error handler
-   // we set will be unset by DisableErrorHandlerScope during call evaluation
-   r::options::setErrorOption(R_NilValue);
-
    Error error = r::exec::RFunction(
-            ".rs.setErrorManagementType", type, inMyCode).call();
+            ".rs.setErrorManagementType", type, inMyCode)
+            .call(R_GlobalEnv, false);
    if (error)
       return error;
 

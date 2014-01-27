@@ -148,7 +148,7 @@ public:
 // A list of the breakpoints we know about. Note that this is a slave list;
 // the client maintains the master copy and is responsible for synchronizing
 // with this list. This list is maintained so we can inject breakpoints
-// synchronously when Shiny creates an anonymous function object.
+// synchronously.
 std::vector<boost::shared_ptr<Breakpoint> > s_breakpoints;
 
 // Returns the Shiny function that contains the given line, if any.
@@ -463,13 +463,15 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding)
    }
 
    // Execute the contents with breakpoints. Don't log errors here, since it's
-   // acceptable for errors to be raised from the code in the file.
+   // acceptable for errors to be raised from the code in the file, and don't
+   // disable the user's error handlers.
    Protect protect;
    SEXP lineSEXP = lines.size() > 0 ?
                         r::sexp::create(lines, &protect) :
                         R_NilValue;
    error = r::exec::RFunction(".rs.executeDebugSource", filename, encoding,
-                              lineSEXP).call();
+                              lineSEXP)
+                             .call(R_GlobalEnv, false);
 
    // Let the client know we're done; this is the client's cue to re-inject
    // breakpoints.
