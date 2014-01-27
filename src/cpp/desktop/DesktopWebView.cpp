@@ -272,7 +272,7 @@ void WebView::setDpiAwareZoomFactor(qreal factor)
 
 qreal WebView::dpiAwareZoomFactor()
 {
-   zoomFactor() / dpiZoomScaling_;
+   return zoomFactor() / dpiZoomScaling_;
 }
 
 } // namespace desktop
