@@ -52,6 +52,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.IntegerBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MenuBar;
@@ -201,6 +202,7 @@ public class WidgetBasedUi extends Composite {
   @UiField(provided = true) @SuppressWarnings("rawtypes")
   Renderer doubleRenderer = DoubleRenderer.instance();
   @UiField ValueLabel<Double> myValueLabel;
+  @UiField IntegerBox myIntegerBox;
   @UiField DoubleBox myDoubleBox;
   @SuppressWarnings("rawtypes")
   @UiField ValueChangeWidget<List> myValueChangeWidget;
@@ -218,6 +220,9 @@ public class WidgetBasedUi extends Composite {
   void onValueChange(ValueChangeEvent<Double> event) {
     this.doubleValueChangeEvent = event;
   }
+
+  @UiHandler({"myIntegerBox", "myDoubleBox"})
+  void onWildcardValueChange_Multi(ValueChangeEvent<?> event) { /* EMPTY */}
 
   @UiHandler("myValueChangeWidget")
   void onWildcardValueChange(ValueChangeEvent<?> event) { /* EMPTY */}
