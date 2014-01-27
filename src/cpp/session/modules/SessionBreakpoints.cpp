@@ -440,7 +440,7 @@ void rs_registerShinyFunction(SEXP params)
 }
 
 // Executes the contents of the given file under the debugger
-SEXP rs_debugSourceFile(SEXP filename)
+SEXP rs_debugSourceFile(SEXP filename, SEXP encoding)
 {
    // Get the file that was sourced
    std::string path;
@@ -463,13 +463,12 @@ SEXP rs_debugSourceFile(SEXP filename)
    }
 
    // Execute the contents with breakpoints. Don't log errors here, since it's
-   // acceptable for errors to be raised from the code in the file, and we want
-   // those to bubble through.
+   // acceptable for errors to be raised from the code in the file.
    Protect protect;
    SEXP lineSEXP = lines.size() > 0 ?
                         r::sexp::create(lines, &protect) :
                         R_NilValue;
-   error = r::exec::RFunction(".rs.executeDebugSource", filename,
+   error = r::exec::RFunction(".rs.executeDebugSource", filename, encoding,
                               lineSEXP).call();
 
    // Let the client know we're done; this is the client's cue to re-inject
@@ -484,15 +483,13 @@ SEXP rs_debugSourceFile(SEXP filename)
    return R_NilValue;
 }
 
-// Initializes the set of breakpoints the server knows about by populating it
-// from client state (any of these may become a Shiny breakpoint at app boot);
-// registers the callback from Shiny into RStudio to register a running function
 Error initBreakpoints()
 {
+   // Register rs_debugSourceFile; called from the console (as debugSource)
    R_CallMethodDef debugSource;
    debugSource.name = "rs_debugSourceFile";
    debugSource.fun = (DL_FUNC)rs_debugSourceFile;
-   debugSource.numArgs = 1;
+   debugSource.numArgs = 2;
    r::routines::addCallMethod(debugSource);
 
    // Register rs_registerShinyFunction; called from registerShinyDebugHook
@@ -502,7 +499,9 @@ Error initBreakpoints()
    registerShiny.numArgs = 1;
    r::routines::addCallMethod(registerShiny);
 
-   // Load breakpoints from client state
+   // Initializes the set of breakpoints the server knows about by populating
+   // it from client state. This set is used for synchronous breakpoint 
+   // injection when a Shiny function is registered or debugSource is run.
    json::Value breakpointStateValue =
       r::session::clientState().getProjectPersistent("debug-breakpoints",
                                                      "debugBreakpointsState");

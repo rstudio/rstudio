@@ -342,11 +342,11 @@
 })
 
 # Parses and executes a file for debugging
-.rs.addFunction("executeDebugSource", function(fileName, breaklines)
+.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines)
 {
    # Create a function containing the parsed contents of the file
    env <- new.env(parent = emptyenv())
-   env$fun <- .rs.makeSourceEquivFunction(fileName)
+   env$fun <- .rs.makeSourceEquivFunction(fileName, encoding)
    breakSteps <- character()
 
    # Inject the breakpoints
@@ -413,9 +413,9 @@
 
 # Given a filename, creates a source-equivalent function: a function that,
 # when executed, has the same effect as sourcing the file.
-.rs.addFunction("makeSourceEquivFunction", function(filename)
+.rs.addFunction("makeSourceEquivFunction", function(filename, encoding)
 { 
-   content <- parse(filename)
+   content <- suppressWarnings(parse(filename, encoding))
 
    # Create an empty function to host the expressions in the file
    fun <- function() 
@@ -452,12 +452,13 @@
    return(fun)
 })
 
-.rs.addGlobalFunction("debugSource", function(fileName, echo)
+.rs.addGlobalFunction("debugSource", function(fileName, echo=FALSE, 
+                                              encoding="unknown")
 {
    # NYI: Consider whether we need to implement source with echo for debugging.
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
-   invisible(.Call("rs_debugSourceFile", fileName))
+   invisible(.Call("rs_debugSourceFile", fileName, encoding))
 })
 
 # Parameters expected to be in environment:

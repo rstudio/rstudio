@@ -343,7 +343,6 @@ bool insideDebugHiddenFunction()
 }
 
 Error functionNameFromContext(const RCNTXT* pContext,
-                              int depth,
                               std::string* pFunctionName)
 {
    SEXP functionName;
@@ -381,8 +380,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          std::string functionName;
          varFrame["context_depth"] = ++contextDepth;
 
-         error = functionNameFromContext(pRContext, contextDepth,
-                                         &functionName);
+         error = functionNameFromContext(pRContext, &functionName);
          if (error)
          {
             LOG_ERROR(error);
@@ -693,7 +691,7 @@ json::Object commonEnvironmentStateData(
    {
       RCNTXT* pContext = getFunctionContext(depth);
       std::string functionName;
-      Error error = functionNameFromContext(pContext, depth, &functionName);
+      Error error = functionNameFromContext(pContext, &functionName);
       if (error)
       {
          LOG_ERROR(error);
@@ -701,7 +699,7 @@ json::Object commonEnvironmentStateData(
 
       // If the environment currently monitored is the function's environment,
       // return that environment, unless the environment is the global
-      // environment.
+      // environment (which happens for source-equivalent functions).
       SEXP env = s_pEnvironmentMonitor->getMonitoredEnvironment();
       if (env != R_GlobalEnv && env == pContext->cloenv)
       {
@@ -894,7 +892,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // a debug-hidden function
       if (!insideDebugHiddenFunction())
       {
-         // check to see if we have real source ferences for the currently
+         // check to see if we have real source references for the currently
          // executing context
          SEXP srcref = r::getGlobalContext()->srcref;
          if (!isValidSrcref(srcref))
