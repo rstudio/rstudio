@@ -174,10 +174,12 @@ public:
    }
                         
    core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
+   core::Error callUnsafe();
 
    core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect,
-                    bool safely = true);
+   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
+   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+                    sexp::Protect* pProtect);
 
    template <typename T>
    core::Error call(T* pValue)

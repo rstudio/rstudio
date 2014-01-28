@@ -58,7 +58,7 @@ Error setErrHandler(int type, bool inMyCode,
 
    Error error = r::exec::RFunction(
             ".rs.setErrorManagementType", type, inMyCode)
-            .call(R_GlobalEnv, false);
+            .callUnsafe();
    if (error)
       return error;
 

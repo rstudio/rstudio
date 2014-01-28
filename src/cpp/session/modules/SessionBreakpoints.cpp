@@ -471,7 +471,7 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding)
                         R_NilValue;
    error = r::exec::RFunction(".rs.executeDebugSource", filename, encoding,
                               lineSEXP)
-                             .call(R_GlobalEnv, false);
+                             .callUnsafe();
 
    // Let the client know we're done; this is the client's cue to re-inject
    // breakpoints.
