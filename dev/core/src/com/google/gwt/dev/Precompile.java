@@ -233,7 +233,7 @@ public class Precompile {
     // doesn't block when the library is accessed for the first time.
     new GraphicsInitThread().start();
 
-    ArchivePreloader.preloadArchives(logger, compilerContext.getModule());
+    ArchivePreloader.preloadArchives(logger, compilerContext);
 
     try {
       ModuleDef module = compilerContext.getModule();

@@ -26,7 +26,7 @@ import java.util.Map;
  * Only one unit is cached per resource path. If the contentId of the unit
  * changes, the old unit is discarded and replaced with the new unit.
  */
-class MemoryUnitCache implements UnitCache {
+public class MemoryUnitCache implements UnitCache {
   /**
    * Storage for a compilation unit in the map.
    */

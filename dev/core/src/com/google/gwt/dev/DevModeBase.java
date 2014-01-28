@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.CompilationStateBuilder;
+import com.google.gwt.dev.javac.UnitCacheFactory;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserChannelServer;
 import com.google.gwt.dev.shell.BrowserListener;
@@ -99,7 +99,7 @@ public abstract class DevModeBase implements DoneCallback {
         ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
-        ArchivePreloader.preloadArchives(logger, moduleDef);
+        ArchivePreloader.preloadArchives(logger, compilerContext);
 
         CompilationState compilationState = moduleDef.getCompilationState(logger, compilerContext);
         ShellModuleSpaceHost host =
@@ -922,7 +922,8 @@ public abstract class DevModeBase implements DoneCallback {
     ui.initialize(options.getLogLevel());
     topLogger = ui.getTopLogger();
 
-    CompilationStateBuilder.init(getTopLogger(), persistentCacheDir);
+    compilerContext = compilerContextBuilder.unitCache(
+        UnitCacheFactory.get(getTopLogger(), persistentCacheDir)).build();
 
     // Set done callback
     ui.setCallback(DoneEvent.getType(), this);

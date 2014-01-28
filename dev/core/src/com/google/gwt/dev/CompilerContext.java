@@ -20,6 +20,7 @@ import com.google.gwt.dev.cfg.LibraryGroupPublicResourceOracle;
 import com.google.gwt.dev.cfg.LibraryWriter;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.NullLibraryWriter;
+import com.google.gwt.dev.javac.MemoryUnitCache;
 import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -46,7 +47,7 @@ public class CompilerContext {
     private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     private ResourceOracle publicResourceOracle;
     private ResourceOracle sourceResourceOracle;
-    private UnitCache unitCache;
+    private UnitCache unitCache = new MemoryUnitCache();
 
     public CompilerContext build() {
       initializeResourceOracles();
@@ -159,7 +160,7 @@ public class CompilerContext {
   private PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
   private ResourceOracle publicResourceOracle;
   private ResourceOracle sourceResourceOracle;
-  private UnitCache unitCache;
+  private UnitCache unitCache = new MemoryUnitCache();
 
   /**
    * Walks the parts of the library dependency graph that have not run the given generator

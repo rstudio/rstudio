@@ -270,7 +270,7 @@ public class CompileModule {
           try {
             CompilationUnitArchive archive = CompilationUnitArchive.createFromURL(archiveURL);
             // Pre-populate CompilationStateBuilder with .gwtar files
-            CompilationStateBuilder.addArchive(archive);
+            CompilationStateBuilder.addArchive(compilerContext, archive);
 
             // Remember already archived units - we don't want to add them back.
             if (!archive.getTopModuleName().equals(moduleToCompile)) {

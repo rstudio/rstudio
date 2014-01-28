@@ -41,7 +41,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -229,6 +228,7 @@ public class CompilationStateBuilder {
         Collection<CompilationUnitBuilder> builders,
         Map<CompilationUnitBuilder, CompilationUnit> cachedUnits, EventType eventType)
         throws UnableToCompleteException {
+      UnitCache unitCache = compilerContext.getUnitCache();
       // Initialize the set of valid classes to the initially cached units.
       for (CompilationUnit unit : cachedUnits.values()) {
         for (CompiledClass cc : unit.getCompiledClasses()) {
@@ -389,12 +389,12 @@ public class CompilationStateBuilder {
   private static final CompilationStateBuilder instance = new CompilationStateBuilder();
 
   /**
-   * Use previously compiled {@link CompilationUnit}s to pre-populate the unit
-   * cache.
+   * Use previously compiled {@link CompilationUnit}s to pre-populate the unit cache.
    */
-  public static void addArchive(CompilationUnitArchive module) {
-    UnitCache unitCache = instance.unitCache;
-    for (CachedCompilationUnit archivedUnit : module.getUnits().values()) {
+  public static void addArchive(
+      CompilerContext compilerContext, CompilationUnitArchive compilationUnitArchive) {
+    UnitCache unitCache = compilerContext.getUnitCache();
+    for (CachedCompilationUnit archivedUnit : compilationUnitArchive.getUnits().values()) {
       if (archivedUnit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
         continue;
       }
@@ -442,20 +442,6 @@ public class CompilationStateBuilder {
   }
 
   /**
-   * Called to setup the directory where the persistent {@link CompilationUnit}
-   * cache should be stored. Only the first call to init() will have an effect.
-   */
-  public static synchronized void init(TreeLogger logger, File cacheDirectory) {
-    instance.unitCache = UnitCacheFactory.get(logger, cacheDirectory);
-  }
-
-  /**
-   * A cache to store compilation units. This value may be overridden with an
-   * explicit call to {@link #init(TreeLogger, File)}.
-   */
-  private UnitCache unitCache = new MemoryUnitCache();
-
-  /**
    * Build a new compilation state from a source oracle. Allow the caller to
    * specify a compiler delegate that will handle undefined names.
    *
@@ -465,6 +451,7 @@ public class CompilationStateBuilder {
       CompilerContext compilerContext, Set<Resource> resources,
       AdditionalTypeProviderDelegate compilerDelegate)
     throws UnableToCompleteException {
+    UnitCache unitCache = compilerContext.getUnitCache();
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
@@ -528,6 +515,7 @@ public class CompilationStateBuilder {
   synchronized Collection<CompilationUnit> doBuildGeneratedTypes(TreeLogger logger,
       CompilerContext compilerContext, Collection<GeneratedUnit> generatedUnits,
       CompileMoreLater compileMoreLater) throws UnableToCompleteException {
+    UnitCache unitCache = compilerContext.getUnitCache();
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = new ArrayList<CompilationUnitBuilder>();
