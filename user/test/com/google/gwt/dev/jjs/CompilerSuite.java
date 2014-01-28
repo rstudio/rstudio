@@ -116,5 +116,4 @@ public class CompilerSuite {
 
     return suite;
   }
-
 }

@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -230,7 +230,7 @@ public class GwtAstBuilder {
    * Visit the JDT AST and produce our own AST. By the end of this pass, the
    * produced AST should contain every piece of information we'll ever need
    * about the code. The JDT nodes should never again be referenced after this.
-   * 
+   *
    * NOTE ON JDT FORCED OPTIMIZATIONS - If JDT statically determines that a
    * section of code in unreachable, it won't fully resolve that section of
    * code. This invalid-state code causes us major problems. As a result, we
@@ -1913,7 +1913,7 @@ public class GwtAstBuilder {
       }
 
       // Implement getClass() implementation for all non-Object classes.
-      if (type.getSuperClass() != null && !JSORestrictionsChecker.isJsoSubclass(x.binding)) {
+      if (isSyntheticGetClassNeeded(x, type)) {
         implementGetClass(type);
       }
 
@@ -2080,7 +2080,7 @@ public class GwtAstBuilder {
      * inherits that implements an interface method but that has a different
      * erased signature from the interface method.
      * </p>
-     * 
+     *
      * <p>
      * The need for these bridges was pointed out in issue 3064. The goal is
      * that virtual method calls through an interface type are translated to
@@ -2095,7 +2095,7 @@ public class GwtAstBuilder {
      * case, a bridge method should be added that overrides the interface method
      * and then calls the implementation method.
      * </p>
-     * 
+     *
      * <p>
      * This method should only be called once all regular, non-bridge methods
      * have been installed on the GWT types.
@@ -2697,7 +2697,7 @@ public class GwtAstBuilder {
          * primitive with a modified prototype. This requires funky handling of
          * constructor calls. We find a method named _String() whose signature
          * matches the requested constructor
-         * 
+         *
          * TODO(scottb): consider moving this to a later pass.
          */
         MethodBinding staticBinding =
@@ -2825,7 +2825,7 @@ public class GwtAstBuilder {
         /*
          * Make an inner class to hold a lazy-init name-value map. We use a
          * class to take advantage of its clinit.
-         * 
+         *
          * class Map { $MAP = Enum.createValueOfMap($VALUES); }
          */
         SourceInfo info = type.getSourceInfo();
@@ -2925,7 +2925,7 @@ public class GwtAstBuilder {
 
   /**
    * Manually tracked version count.
-   * 
+   *
    * TODO(zundel): something much more awesome?
    */
   private static final long AST_VERSION = 3;
@@ -3221,8 +3221,8 @@ public class GwtAstBuilder {
         createSyntheticMethod(info, "$init", type, JPrimitiveType.VOID, false, false, true,
             AccessModifier.PRIVATE);
 
-        // Add a getClass() implementation for all non-Object classes.
-        if (type != javaLangObject && !JSORestrictionsChecker.isJsoSubclass(binding)) {
+        // Add a getClass() implementation for all non-Object, non-String classes.
+        if (isSyntheticGetClassNeeded(x, type)) {
           assert type.getMethods().size() == 2;
           createSyntheticMethod(info, "getClass", type, javaLangClass, false, false, false,
               AccessModifier.PUBLIC);
@@ -3270,6 +3270,13 @@ public class GwtAstBuilder {
       ice.addNode(x.getClass().getName(), sb.toString(), type.getSourceInfo());
       throw ice;
     }
+  }
+
+  private boolean isSyntheticGetClassNeeded(TypeDeclaration typeDeclaration, JDeclaredType type) {
+    // TODO(rluble): We should check whether getClass is implemented by type and only
+    // instead of blacklisting.
+    return type != javaLangObject && type != javaLangString  && type.getSuperClass() != null &&
+        !JSORestrictionsChecker.isJsoSubclass(typeDeclaration.binding);
   }
 
   private void createMethod(AbstractMethodDeclaration x) {

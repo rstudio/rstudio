@@ -26,6 +26,24 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
  * Tests for the {@link JsoDevirtualizer} visitor.
  */
 public class JsoDevirtualizerTest extends OptimizerTestBase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Cast") {
+      @Override
+      public CharSequence getContent() {
+        StringBuffer code = new StringBuffer();
+        code.append("package com.google.gwt.lang;");
+        code.append("public class Cast {");
+        code.append("  public static boolean isNonStringJavaObject(Object o) { return true; }");
+        code.append("  public static boolean isJavaString(Object o) { return true; }");
+        code.append("  public static boolean isJavaScriptObject(Object o) { return true; }");
+        code.append("}");
+        return code;
+      }
+    });
+
+  }
 
   /**
    * JsoDevirtualizer should allow dual Java/JSO implementations of the same
@@ -33,19 +51,6 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
    * methods with the same method name, it should distinguish between them.
    */
   public void testDualJsoImpl() throws UnableToCompleteException {
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Cast") {
-      @Override
-      public CharSequence getContent() {
-        StringBuffer code = new StringBuffer();
-        code.append("package com.google.gwt.lang;");
-        code.append("public class Cast {");
-        code.append("  public static boolean isJavaObject(Object o) { return true; };");
-        code.append("  public static boolean isJavaScriptObject(Object o) { return true; };");
-        code.append("}");
-        return code;
-      }
-    });
 
     addSnippetImport("com.google.gwt.lang.Cast");
     addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
@@ -101,6 +106,47 @@ public class JsoDevirtualizerTest extends OptimizerTestBase {
     result.classHasMethodSnippets("EntryPoint$Jso1", Lists.newArrayList("public final int a();",
         "public final int b();", "public static final int $a(EntryPoint$Jso1 this$static);",
         "public static final int $b(EntryPoint$Jso1 this$static);"));
+  }
+
+  public void testDevirtualizeString() throws UnableToCompleteException {
+
+    addSnippetImport("com.google.gwt.lang.Cast");
+    addSnippetImport("com.google.gwt.core.client.JavaScriptObject");
+
+    // Defines a JSO and a Java object that implements Comparable.
+    addSnippetClassDecl(
+        "static class J1 implements Comparable<J1> {",
+        "  public int compareTo(J1 other) { return 1; }",
+        "}",
+        "static class Jso1 extends JavaScriptObject implements Comparable<Jso1> {",
+        "  protected Jso1() { }",
+        "  final public int compareTo(Jso1 other) { return 2; }",
+        "  public static native Jso1 create() /*-{ return {} }-*/;",
+        "}",
+        "static Comparable javaVal = new J1();",
+        "static Comparable jsoVal = Jso1.create();",
+        "static Comparable stringVal = \"string\";",
+        "static CharSequence stringCharSeq = \"string\";");
+
+    // Constructs a code snippet that calls a() but NOT b().
+    StringBuilder code = new StringBuilder();
+    code.append("int result = javaVal.compareTo(javaVal) + jsoVal.compareTo(jsoVal) +"
+        + " stringVal.compareTo(stringVal) + stringCharSeq.length();");
+
+    // Constructs an expectation about the resulting devirtualized method calls of a(). The salient
+    // point in the results below is that the JSO method used for val1 and val1 has a different name
+    // the method used for val2 and val3.
+    StringBuffer expected = new StringBuffer();
+    expected.append("int result = ");
+    expected.append(
+        "JavaScriptObject.compareTo__devirtual$(EntryPoint.javaVal, EntryPoint.javaVal) + " +
+        "JavaScriptObject.compareTo__devirtual$(EntryPoint.jsoVal, EntryPoint.jsoVal) + " +
+        "JavaScriptObject.compareTo__devirtual$(EntryPoint.stringVal, EntryPoint.stringVal) + " +
+        "JavaScriptObject.length__devirtual$(EntryPoint.stringCharSeq);");
+
+    Result result = optimize("void", code.toString());
+    // Asserts that a() method calls were redirected to the devirtualized version.
+    result.intoString(expected.toString());
   }
 
   @Override

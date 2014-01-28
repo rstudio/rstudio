@@ -1,12 +1,12 @@
 /*
  * Copyright 2011 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,6 @@ import com.google.gwt.core.client.JavaScriptObject;
  * Utility class for fetching prototype-seed functions for injection into JsAST.
  */
 public class SeedUtil {
-
   /*
   * Holds a map of seedId to anonymous Javascript functions (prototypes for class vtables).
   */
@@ -29,13 +28,16 @@ public class SeedUtil {
 
   /**
    * If not already created, generates an anonymous function and assigns it a slot in the global
-   * seedTable. If superSeed is > -1, it creates an instance of the superSeed by invoking
+   * seedTable. If superSeed is not null, it creates an instance of the superSeed by invoking
    * newSeed() and then assigns it as the prototype of the seed being defined. It also sets up the
    * castableTypeMap, as well as any ctors which are passed in via Javascript varargs. Finally, if
    * the class literal for this seed id was setup first, which can happen if they are in separate
    * code-split fragments, the Class.createFor* methods will have created a placeholder seedTable
    * entry containing the Class literal, and this will be copied from the placeholder location
-   * onto the current prototype.
+   * onto the current prototype.<p>
+   *
+   * As a prerequisite if superSeed is not null, it is assumed that defineSeed for the supertype
+   * has already been called.
    */
   public static native JavaScriptObject defineSeed(int id, int superSeed,
       JavaScriptObject castableTypeMap) /*-{
@@ -48,11 +50,12 @@ public class SeedUtil {
         seed = @com.google.gwt.lang.SeedUtil::seedTable[id] = function() {
         };
       }
-      _ = seed.prototype = (superSeed < 0) ? {}
+      _ = seed.prototype = (!superSeed) ? {}
           : @com.google.gwt.lang.SeedUtil::newSeed(I)(superSeed);
       _.@java.lang.Object::castableTypeMap = castableTypeMap;
     }
     for (var i = 3; i < arguments.length; ++i) {
+      // Assign the seed prototype to each constructor.
       arguments[i].prototype = _;
     }
     if (seed.@java.lang.Object::___clazz) {

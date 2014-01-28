@@ -36,7 +36,8 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JSeedIdOf;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -124,8 +125,8 @@ public class ImplementClassLiteralsAsFields {
    * Class:
    *
    * <pre>
-   * Class.createForClass("java.lang.", "Object", /JSeedIdOf/"java.lang.Object", null)
-   * Class.createForClass("java.lang.", "Exception", /JSeedIdOf/"java.lang.Exception", Throwable.class)
+   * Class.createForClass("java.lang.", "Object", /JRuntimeTypeReference/"java.lang.Object", null)
+   * Class.createForClass("java.lang.", "Exception", /JRuntimeTypeReference/"java.lang.Exception", Throwable.class)
    * </pre>
    *
    * Interface:
@@ -143,21 +144,21 @@ public class ImplementClassLiteralsAsFields {
    * Array:
    *
    * <pre>
-   * Class.createForArray("", "[I", /JSeedIdOf/"com.google.gwt.lang.Array", int.class)
-   * Class.createForArray("[Lcom.example.", "Foo;", /JSeedIdOf/"com.google.gwt.lang.Array", Foo.class)
+   * Class.createForArray("", "[I", /JRuntimeTypeReference/"com.google.gwt.lang.Array", int.class)
+   * Class.createForArray("[Lcom.example.", "Foo;", /JRuntimeTypeReference/"com.google.gwt.lang.Array", Foo.class)
    * </pre>
    *
    * Enum:
    *
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum", /JSeedIdOf/"com.example.MyEnum", Enum.class,
+   * Class.createForEnum("com.example.", "MyEnum", /JRuntimeTypeReference/"com.example.MyEnum", Enum.class,
    *     public static MyEnum[] values(), public static MyEnum valueOf(String name))
    * </pre>
    *
    * Enum subclass:
    *
    * <pre>
-   * Class.createForEnum("com.example.", "MyEnum$1", /JSeedIdOf/"com.example.MyEnum$1", MyEnum.class,
+   * Class.createForEnum("com.example.", "MyEnum$1", /JRuntimeTypeReference/"com.example.MyEnum$1", MyEnum.class,
    *     null, null))
    * </pre>
    */
@@ -188,7 +189,8 @@ public class ImplementClassLiteralsAsFields {
 
     if (type instanceof JArrayType || type instanceof JClassType) {
       // Add the name of the seed function for concrete types
-      call.addArg(new JSeedIdOf(info, program.getTypeJavaLangString(), type));
+      call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
+          (JReferenceType) type));
     } else if (type instanceof JPrimitiveType) {
       // And give primitive types an illegal, though meaningful, value
       call.addArg(program.getLiteralString(info, " " + type.getJavahSignatureName()));

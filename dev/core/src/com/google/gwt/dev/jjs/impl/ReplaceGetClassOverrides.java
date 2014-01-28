@@ -47,8 +47,8 @@ public class ReplaceGetClassOverrides {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      // don't prune JSO.getClass()
-      if (x.getEnclosingType() == program.getJavaScriptObject()) {
+      // Don't prune getClass() for objects where it is devirtualized (String, JSOs for now)
+      if (JsoDevirtualizer.isGetClassDevirtualized(program, x.getEnclosingType())) {
         return;
       }
       if (x.getOverrides().contains(getClassMethod)) {
@@ -58,8 +58,8 @@ public class ReplaceGetClassOverrides {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      // don't inline JSO.getClass()
-      if (x.getTarget().getEnclosingType() == program.getJavaScriptObject()) {
+      // Don't inline getClass() for objects where it is devirtualized (String, JSOs for now)
+      if (JsoDevirtualizer.isGetClassDevirtualized(program, x.getTarget().getEnclosingType())) {
         return;
       }
       // replace overridden getClass() with reference to Object.clazz field

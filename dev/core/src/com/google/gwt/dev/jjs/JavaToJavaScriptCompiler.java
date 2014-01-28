@@ -54,11 +54,13 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
@@ -87,6 +89,7 @@ import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferencesIntoIntLiterals;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
@@ -104,9 +107,9 @@ import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateCaseFolder;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
 import com.google.gwt.dev.js.JsInliner;
+import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsNamespaceChooser;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
@@ -262,14 +265,19 @@ public abstract class JavaToJavaScriptCompiler {
         // (3) Normalize the resolved Java AST
         normalizeSemantics();
 
+        // TODO(rluble): This pass seems to fit in the normalize semantics.
+        Map<JType, JLiteral> typeIdLiteralssByType =
+            ResolveRuntimeTypeReferencesIntoIntLiterals.exec(jprogram);
+
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
         jprogram.typeOracle.recomputeAfterOptimizations();
 
+
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
-            GenerateJavaScriptAST.exec(
-                jprogram, jsProgram, options.getOutput(), symbolTable, propertyOracles);
+            GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput(),
+                typeIdLiteralssByType,  symbolTable, propertyOracles);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass

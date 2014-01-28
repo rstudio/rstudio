@@ -25,8 +25,18 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 final class Cast {
 
+  /**
+   * As plain JavaScript Strings (not monkey patcheed) are used to model Java Strings,
+   * {@code  stringCastMap} stores runtime type info for cast purposes for string objects.
+   *
+   * NOTE: it is important that it is initialized to null so that Cast does not require a clinit.
+   */
+  private static JavaScriptObject stringCastMap = null;
+
   static native boolean canCast(Object src, int dstId) /*-{
-    return src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId];
+    return src.@java.lang.Object::castableTypeMap && !!src.@java.lang.Object::castableTypeMap[dstId]
+        || @com.google.gwt.lang.Cast::isJavaString(Ljava/lang/Object;)(src) &&
+        !!@com.google.gwt.lang.Cast::stringCastMap[dstId];
   }-*/;
 
   // Not functional yet. Works under the assumption that queryId is seedId. This will become true
@@ -38,20 +48,12 @@ final class Cast {
             !!srcSeed.prototype.@java.lang.Object::castableTypeMap[dstId]);
   }-*/;
 
-  /**
-   * Danger: value not coerced to boolean; use the result only in a boolean
-   * context.
-   */
-  static native boolean canCastUnsafe(Object src, int dstId) /*-{
-    return src.@java.lang.Object::castableTypeMap && src.@java.lang.Object::castableTypeMap[dstId];
-  }-*/;
-
   static native String charToString(char x) /*-{
     return String.fromCharCode(x);
   }-*/;
 
   static Object dynamicCast(Object src, int dstId) {
-    if (src != null && !canCastUnsafe(src, dstId)) {
+    if (src != null && !canCast(src, dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -62,7 +64,7 @@ final class Cast {
    */
   static Object dynamicCastAllowJso(Object src, int dstId) {
     if (src != null && !isJavaScriptObject(src) &&
-        !canCastUnsafe(src, dstId)) {
+        !canCast(src, dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -215,19 +217,12 @@ final class Cast {
   /**
    * Returns whether the Object is a Java String.
    *
-   * Depends on the requirement that queryId = 1 is reserved for String,
-   * and that the trivial cast String to String is explicitly added to the
-   * castableTypeMap for String, and String cannot be the target of a cast from
-   * anything else (except for the trivial cast from Object), since
-   * java.lang.String is a final class.
-   * (See the constructor for the CastNormalizer.AssignTypeCastabilityVisitor).
-   *
-   * Since java Strings are translated as JavaScript strings, Strings need to be
-   * interchangeable between GWT modules, unlike other Java Objects.
+   * Java strings are translated to JavaScript strings.
    */
-  private static boolean isJavaString(Object src) {
-    return canCast(src, 1);
-  }
+  // Visible for getIndexedMethod()
+  static native boolean isJavaString(Object src) /*-{
+    return typeof src.valueOf() == "string";
+  }-*/;
 
   /**
    * Returns whether the Object is a Java Object but not a String.
@@ -238,7 +233,8 @@ final class Cast {
    * GWT module.  Java Objects from external GWT modules are not recognizable as
    * Java Objects in this context.
    */
-  private static boolean isNonStringJavaObject(Object src) {
+  // Visible for getIndexedMethod()
+  static boolean isNonStringJavaObject(Object src) {
     return Util.getTypeMarker(src) == getNullMethod();
   }
 }

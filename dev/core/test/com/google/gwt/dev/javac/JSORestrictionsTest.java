@@ -311,7 +311,7 @@ public class JSORestrictionsTest extends TestCase {
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
     buggyCode.append("  protected Buggy() { }\n");
-    buggyCode.append("  public final Object clone() { return this; }\n");
+    buggyCode.append("  public final int hashCode() { return 0; }\n");
     buggyCode.append("}\n");
 
     shouldGenerateError(buggyCode, "Line 4: "

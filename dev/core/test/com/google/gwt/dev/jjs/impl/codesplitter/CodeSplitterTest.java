@@ -30,9 +30,11 @@ import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
@@ -40,6 +42,7 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JJSTestBase;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferencesIntoIntLiterals;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -521,11 +524,12 @@ public class CodeSplitterTest extends JJSTestBase {
     ArrayNormalizer.exec(jProgram, false);
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);
+    Map<JType, JLiteral> typeIdsByType = ResolveRuntimeTypeReferencesIntoIntLiterals.exec(jProgram);
 
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
     JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(
-        jProgram, jsProgram, JsOutputOption.PRETTY, symbolTable, new PropertyOracle[]{
+        jProgram, jsProgram, JsOutputOption.PRETTY, typeIdsByType, symbolTable, new PropertyOracle[]{
         new StaticPropertyOracle(orderedProps, orderedPropValues, configProps)}).getLeft();
     CodeSplitter.exec(logger, jProgram, jsProgram, map, expectedFragmentCount, leftOverMergeSize,
         NULL_RECORDER);
@@ -544,7 +548,7 @@ public class CodeSplitterTest extends JJSTestBase {
 
   private static String createNamedRunAsyncCallback(String className, String body) {
     StringBuffer code = new StringBuffer();
-    code.append("private static class " + className + " extends RunAsyncCallback {\n");
+    code.append("private static class " + className + " implements RunAsyncCallback {\n");
     code.append("  public void onFailure(Throwable reason) {}\n");
     code.append("  public void onSuccess() {\n");
     code.append("    " + body);
@@ -574,25 +578,8 @@ public class CodeSplitterTest extends JJSTestBase {
    * Add some of the compiler intrinsic
    */
   private void addMockIntrinsic() {
-    sourceOracle.addOrReplace(new MockJavaResource("java.lang.Comparable") {
-      @Override
-      public CharSequence getContent() {
-        return "package java.lang; public interface Comparable {}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("java.lang.Object") {
-      @Override
-      public CharSequence getContent() {
-        return "package java.lang; public class Object {" +
-               "public Object castableTypeMap = null;" +
-               "public Object typeMarker = null;" +
-               "public Object ___clazz = null;" +
-               "public Object getClass() {return null;}" +
-               "public String toString() {return null;} }";
-      }
-    });
-
+    // TODO(rluble): Unify all compiler intrinsic into either JavaResourceBase or
+    // JavaASTConstructor.
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Array") {
       @Override
       public CharSequence getContent() {
@@ -605,14 +592,6 @@ public class CodeSplitterTest extends JJSTestBase {
                "}";
       }
     });
-
-    sourceOracle.addOrReplace(new MockJavaResource("java.lang.CharSequence") {
-      @Override
-      public CharSequence getContent() {
-        return "package java.lang; public interface CharSequence {}";
-      }
-    });
-
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.SeedUtil") {
       @Override
       public CharSequence getContent() {
@@ -637,30 +616,12 @@ public class CodeSplitterTest extends JJSTestBase {
       }
     });
 
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.JavaScriptObject") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.core.client; public class JavaScriptObject {" +
-               "public static Object createArray() {return null;}" +
-               "public static Object createObject() {return null;}}";
-      }
-    });
-
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.GWT") {
       @Override
       public CharSequence getContent() {
         return "package com.google.gwt.core.client; public class GWT {" +
             "public static void runAsync(RunAsyncCallback cb){}"+
             "public static void runAsync(Class<?> clazz, RunAsyncCallback cb){}}";
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.core.client.RunAsyncCallback") {
-      @Override
-      public CharSequence getContent() {
-        return "package com.google.gwt.core.client; public class RunAsyncCallback {" +
-        		"public void onFailure(Throwable reason) {}" +
-        		"public void onSuccess() {}}";
       }
     });
   }

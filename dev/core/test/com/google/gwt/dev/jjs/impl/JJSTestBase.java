@@ -257,17 +257,6 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
 
-    sourceOracle.addOrReplace(new MockJavaResource("java.lang.AutoCloseable") {
-      @Override
-      public CharSequence getContent() {
-        return ""
-            + "package java.lang;"
-            + "public interface AutoCloseable { "
-            + "  void close() throws Exception;"
-            + "}";
-      }
-    });
-
     sourceOracle.addOrReplace(new MockJavaResource("com.google.gwt.lang.Exceptions") {
       @Override
       public CharSequence getContent() {
@@ -281,19 +270,6 @@ public abstract class JJSTestBase extends TestCase {
             + "  static <T> T checkNotNull(T value) { return value; }"
             + "}";
         }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("java.lang.String") {
-      @Override
-      public CharSequence getContent() {
-        return "package java.lang;" +
-          "public class String {" +
-          "  public int length() { return 0; }" +
-          "  public char charAt(int pos) { return 0; }" +
-          "  public String toString() { return this; }" +
-          "  public int hashCode() { return 0; }" +
-          "}";
-      }
     });
   }
 

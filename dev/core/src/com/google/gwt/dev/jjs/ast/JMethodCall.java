@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -80,13 +80,14 @@ public class JMethodCall extends JExpression {
     this.polymorphism = other.polymorphism;
   }
 
-  public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
     super(info);
     assert (method != null);
     assert (instance != null || method.isStatic() || this instanceof JNewInstance);
     this.instance = instance;
     this.method = method;
     this.overrideReturnType = null;
+    addArgs(args);
   }
 
   /**
@@ -94,7 +95,7 @@ public class JMethodCall extends JExpression {
    * ignoring the return type of the target method. This constructor is used
    * during normalizing transformations to preserve type semantics when calling
    * externally-defined compiler implementation methods.
-   * 
+   *
    * For example, Cast.dynamicCast() returns Object but that method is used to
    * implement the cast operation. Using a stronger type on the call expression
    * allows us to preserve type information during the latter phases of

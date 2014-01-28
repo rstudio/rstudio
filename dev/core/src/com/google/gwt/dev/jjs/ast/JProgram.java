@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
-import com.google.gwt.dev.jjs.ast.js.JsCastMap;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -279,7 +278,7 @@ public class JProgram extends JNode {
 
   private final Map<JType, JArrayType> arrayTypes = Maps.newHashMap();
 
-  private Map<JReferenceType, JsCastMap> castMaps;
+  private Map<JReferenceType, JCastMap> castMaps;
 
   private BiMap<JType, JField> classLiteralFieldsByType;
 
@@ -630,7 +629,11 @@ public class JProgram extends JNode {
     return result;
   }
 
-  public JsCastMap getCastMap(JReferenceType referenceType) {
+  public Collection<JCastMap> getCastMaps() {
+    return Collections.unmodifiableCollection(castMaps.values());
+  }
+
+  public JCastMap getCastMap(JReferenceType referenceType) {
     // ensure jsonCastableTypeMaps has been initialized
     // it might not have been if the CastNormalizer has not been run
     if (castMaps == null) {
@@ -779,16 +782,6 @@ public class JProgram extends JNode {
     return JMethod.NULL_METHOD;
   }
 
-  public int getQueryId(JReferenceType elementType) {
-    assert (elementType == elementType.getUnderlyingType());
-    Integer integer = queryIdsByType.get(elementType);
-    if (integer == null) {
-      return 0;
-    }
-
-    return integer.intValue();
-  }
-
   public String getPropertyProviderRegistratorTypeName() {
     return propertyProviderRegistratorTypeName;
   }
@@ -928,8 +921,8 @@ public class JProgram extends JNode {
     return JPrimitiveType.VOID;
   }
 
-  public void initTypeInfo(Map<JReferenceType, JsCastMap> instantiatedCastableTypesMap) {
-    castMaps = instantiatedCastableTypesMap;
+  public void initTypeInfo(Map<JReferenceType, JCastMap> castMapForType) {
+    castMaps = castMapForType;
     if (castMaps == null) {
       castMaps = Maps.newIdentityHashMap();
     }
@@ -974,12 +967,6 @@ public class JProgram extends JNode {
   public void recordClassLiteralFields(Map<JType, JField> classLiteralFields) {
     this.classLiteralFieldsByType = HashBiMap.create(classLiteralFields);
     this.typesByClassLiteralField = classLiteralFieldsByType.inverse();
-  }
-
-  public void recordQueryIds(Map<JReferenceType, Integer> queryIdsByType,
-      List<JReferenceType> typesByQueryId) {
-    this.queryIdsByType = queryIdsByType;
-    this.typesByQueryId = typesByQueryId;
   }
 
   public void removeStaticImplMapping(JMethod staticImpl) {

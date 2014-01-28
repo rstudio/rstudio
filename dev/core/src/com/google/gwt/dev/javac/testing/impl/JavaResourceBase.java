@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -76,6 +76,15 @@ public class JavaResourceBase {
           "  public char charValue() { return value; }",
           "}");
 
+  public static final MockJavaResource CHAR_SEQUENCE =
+      createMockJavaResource("java.lang.CharSequence",
+          "package java.lang;",
+          "public interface CharSequence {",
+          "  char charAt(int index);",
+          "  int length();",
+          "  String toString();",
+          "}");
+
   public static final MockJavaResource CLASS =
       createMockJavaResource("java.lang.Class",
           "package java.lang;",
@@ -99,6 +108,13 @@ public class JavaResourceBase {
       createMockJavaResource("java.util.Collection",
           "package java.util;",
           "public interface Collection<E> {",
+          "}");
+
+  public static final MockJavaResource COMPARABLE =
+      createMockJavaResource("java.lang.Comparable",
+          "package java.lang;",
+          "public interface Comparable<T extends Comparable<T> > {",
+          "  public int compareTo(T other);",
           "}");
 
   public static final MockJavaResource DOUBLE =
@@ -178,6 +194,7 @@ public class JavaResourceBase {
       createMockJavaResource("com.google.gwt.core.client.JavaScriptObject",
           "package com.google.gwt.core.client;",
           "public class JavaScriptObject {",
+          "  public static Object createArray() {return null;}",
           "  public static native JavaScriptObject createObject() /*-{ return {}; }-*/;",
           "  protected JavaScriptObject() { }",
           "  public final String toString() { return \"JavaScriptObject\"; }",
@@ -219,11 +236,13 @@ public class JavaResourceBase {
           "package java.lang;",
           "public class Object {",
           "  private Class<?> ___clazz;",
+          "  public Object castableTypeMap = null;",
+          "  public Object typeMarker = null;",
           "  public boolean equals(Object that){return this == that;}",
           "  public int hashCode() { return 0; }",
           "  public String toString() { return \"Object\"; }",
-          "  public Object clone() { return this; }",
-          "  public Class<?> getClass() { return ___clazz; }",
+          "  public Class<?> getClass() { return ___clazz; }"
+          ,
           "}");
 
   public static final MockJavaResource SERIALIZABLE =
@@ -247,25 +266,25 @@ public class JavaResourceBase {
       createMockJavaResource("java.lang.String",
           "package java.lang;",
           "import java.io.Serializable;",
-          "public final class String implements Serializable {",
+          "public final class String implements Comparable<String>, CharSequence, Serializable {",
           "  public String() { }",
           "  public String(char c) { }",
           "  public String(String s) { }",
           "  public static String _String() { return \"\"; }",
           "  public static String _String(char c) { return \"\" + c; }",
           "  public static String _String(String s) { return s; }",
-          "  private static final long serialVersionUID = 0L;",
           "  public char charAt(int index) { return 'a'; }",
+          "  public int compareTo(String other) { return -1; }",
           "  public boolean equals(Object obj) { return false; }",
           "  public boolean equalsIgnoreCase(String str) { return false; }",
           "  public int length() { return 0; }",
           "  public static String valueOf(int i) { return \"\" + i; }",
           "  public static String valueOf(char c) { return \"\" + c; }",
-          "  public static String valueOf(long l) { return \"\" + l; }",
           "  public int hashCode() { return 0; }",
           "  public String replace(char c1, char c2) { return null; }",
           "  public boolean startsWith(String str) { return false; }",
           "  public String toLowerCase() { return null; }",
+          "  public String toString() { return this; }",
           "  public static String valueOf(boolean b) { return null; }",
           "}");
 
@@ -293,10 +312,10 @@ public class JavaResourceBase {
 
   public static MockJavaResource[] getStandardResources() {
     return new MockJavaResource[]{
-        AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CLASS, CLASS_NOT_FOUND_EXCEPTION,
-        COLLECTION, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT, INTEGER, IS_SERIALIZABLE,
-        JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER, OBJECT, SERIALIZABLE, SHORT,
-        STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
+        AUTOCLOSEABLE, ANNOTATION, BYTE, BOOLEAN, CHARACTER, CHAR_SEQUENCE, CLASS,
+        CLASS_NOT_FOUND_EXCEPTION, COLLECTION, COMPARABLE, DOUBLE, ENUM, EXCEPTION, ERROR, FLOAT,
+        INTEGER, IS_SERIALIZABLE, JAVASCRIPTOBJECT, LONG, MAP, NO_CLASS_DEF_FOUND_ERROR, NUMBER,
+        OBJECT, SERIALIZABLE, SHORT, STRING, STRING_BUILDER, SUPPRESS_WARNINGS, THROWABLE};
   }
 
   /**

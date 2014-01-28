@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -72,17 +72,17 @@ public final class Array {
     }-*/;
   }
 
-  /*
-   * TODO: static init instead of lazy init when we can elide the clinit calls.
-   */
+  // Array initialization values types
+  private static final int INIT_TO_NULL = 0;
+  private static final int INIT_TO_ZERO_INT  = 1;
+  private static final int INIT_TO_FALSE = 2;
+  private static final int INIT_TO_ZERO_LONG = 3;
 
-  static final int FALSE_SEED_TYPE = 2;
-
-  static final int LONG_SEED_TYPE = 3;
-
-  static final int NULL_SEED_TYPE = 0;
-
-  static final int ZERO_SEED_TYPE = 1;
+  // Array element type classes
+  private static final int TYPE_JAVA_OBJECT = 0;
+  private static final int TYPE_JAVA_OBJECT_OR_JSO = 1;
+  private static final int TYPE_JSO = 2;
+  private static final int TYPE_JAVA_LANG_OBJECT = 3;
 
   /**
    * Creates a copy of the specified array.
@@ -97,7 +97,8 @@ public final class Array {
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), a.queryId, result);
+    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,
+        a.elementTypeClass, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -115,8 +116,9 @@ public final class Array {
    */
   public static <T> T[] createFrom(T[] array, int length) {
     Array a = asArrayType(array);
-    Array result = createFromSeed(NULL_SEED_TYPE, length);
-    initValues(a.getClass(), Util.getCastableTypeMap(a), a.queryId, result);
+    Array result = initializeArrayElementsWithDefaults(INIT_TO_NULL, length);
+    initValues(a.getClass(), Util.getCastableTypeMap(a), a.elementTypeId,
+        a.elementTypeClass, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -124,102 +126,114 @@ public final class Array {
   /**
    * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
    * array, [a, b, c].
-   * 
+   *
    * @param arrayClass the class of the array
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
-   * @param queryId the queryId of the array
+   * @param elementTypeId the typeId of array elements
+   * @param elementTypeClass whether the element type is java.lang.Object (TYPE_JAVA_LANG_OBJECT),
+   *        is guaranteed to be a java object (TYPE_JAVA_OBJECT), is guaranteed to be a JSO
+   *        (TYPE_JSO) or can be either (TYPE_JAVA_OBJECT_OR_JSO).
    * @param length the length of the array
-   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false; 3: long
+   * @param initValueType what is the initial value for elements;
+   *           INIT_TO_NULL: null; INIT_TO_ZERO_INT: zero; INIT_TO_FALSE: false;
+   *           INIT_TO_ZERO_LONG: long
    * @return the new array
    */
-  public static Array initDim(Class<?> arrayClass, 
-        JavaScriptObject castableTypeMap, int queryId, int length, int seedType) {
-    Array result = createFromSeed(seedType, length);
-    initValues(arrayClass, castableTypeMap, queryId, result);
+  public static Array initDim(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+      int elementTypeId, int length, int elementTypeClass, int initValueType) {
+    Array result = initializeArrayElementsWithDefaults(initValueType, length);
+    initValues(arrayClass, castableTypeMap, elementTypeId, elementTypeClass, result);
     return result;
   }
 
   /**
    * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
    * array, [a, b, c].
-   * 
+   *
    * @param arrayClasses the class of each dimension of the array
    * @param castableTypeMapExprs the JSON castableTypeMap of each dimension,
    *          from highest to lowest
-   * @param queryIdExprs the queryId of each dimension, from highest to lowest
+   * @param elementTypeIds the elementTypeId of each dimension, from highest to lowest
+   * @param leafElementTypeClass whether the leaf element type is java.lang.Object
+   *        (TYPE_JAVA_LANG_OBJECT), is guaranteed to be a java object (TYPE_JAVA_OBJECT),
+   *        is guaranteed to be a JSO (TYPE_JSO) or can be either (TYPE_JAVA_OBJECT_OR_JSO).
    * @param dimExprs the length of each dimension, from highest to lower
-   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false; 3: long
+   * @param leafElementInitValueType what is the initial value for leaf elements;
+   *           INIT_TO_NULL: null; INIT_TO_ZERO_INT: zero; INIT_TO_FALSE: false;
+   *           INIT_TO_ZERO_LONG: long
    * @return the new array
    */
-  public static Array initDims(Class<?> arrayClasses[], 
-      JavaScriptObject[] castableTypeMapExprs, int[] queryIdExprs, 
-      int[] dimExprs, int count, int seedType) {
-    return initDims(arrayClasses, castableTypeMapExprs, queryIdExprs, 
-        dimExprs, 0, count, seedType);
+  public static Array initDims(Class<?> arrayClasses[],
+      JavaScriptObject[] castableTypeMapExprs, int[] elementTypeIds,
+      int leafElementTypeClass, int[] dimExprs, int count, int leafElementInitValueType) {
+    return initDims(arrayClasses, castableTypeMapExprs, elementTypeIds, leafElementTypeClass,
+        dimExprs, 0, count, leafElementInitValueType);
   }
 
   /**
    * Creates an array like "new T[][]{a,b,c,d}" by passing in a native JSON
    * array, [a, b, c, d].
-   * 
+   *
    * @param arrayClass the class of the array
    * @param castableTypeMap the map of types to which this array can be casted,
    *          in the form of a JSON map object
-   * @param queryId the queryId of the array
+   * @param elementTypeId the typeId of array elements
+   * @param elementTypeClass whether the element type is java.lang.Object
+   *        ({@link TYPE_JAVA_LANG_OBJECT}), is guaranteed to be a java object
+   *        ({@link TYPE_JAVA_OBJECT}), is guaranteed to be a JSO
+   *        ({@link TYPE_JSO}) or can be either ({@link TYPE_JAVA_OBJECT_OR_JSO}).
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static Array initValues(Class<?> arrayClass,
-      JavaScriptObject castableTypeMap, int queryId, Array array) {
+  public static Array initValues(Class<?> arrayClass, JavaScriptObject castableTypeMap,
+      int elementTypeId, int elementTypeClass, Array array) {
     ExpandoWrapper.wrapArray(array);
     setClass(array, arrayClass);
     Util.setCastableTypeMap(array, castableTypeMap);
-    array.queryId = queryId;
+    array.elementTypeId = elementTypeId;
+    array.elementTypeClass = elementTypeClass;
     return array;
   }
 
   /**
    * Performs an array assignment, after validating the type of the value being
-   * stored. The form of the type check depends on the value of queryId, as
-   * follows:
+   * stored. The form of the type check depends on the value of elementTypeId and elementTypeClass
+   * as follows:
    * <p>
-   * If the queryId is > 0, this indicates a normal cast check should be
-   * performed, using the queryId as the cast destination type.
+   * If the elementTypeClass is {@link TYPE_JAVA_OBJECT}, this indicates a normal cast check should
+   * be performed, using the elementTypeId as the cast destination type.
    * JavaScriptObjects cannot be stored in this case.
    * <p>
-   * If the queryId == 0, this is the cast target for the Object type, in which
-   * case all types can be stored, including JavaScriptObject.
+   * If the elementTypeId is {@link TYPE_JAVA_LANG_OBJECT}, this is the cast target for the Object
+   * type, in which case all types can be stored, including JavaScriptObject.
    * <p>
-   * If the queryId == -1, this indicates that only JavaScriptObjects can be
-   * stored (-1 is the cast target for JavaScriptObject, by convention).
+   * If the elementTypeId is {@link TYPE_JSO}, this indicates that only JavaScriptObjects can be
+   * stored.
    * <p>
-   * If the queryId is < -1, this indicates that both JavaScriptObjects, and
-   * Java types can be stored. In the case of Java types, the inverse of the
-   * queryId is used for castability testing. This case is provided to support
-   * arrays declared with an interface type, which has dual implementations
-   * (i.e. interface types which have both Java and JavaScriptObject
+   * If the elementTypeId is {@link TYPE_JAVA_OBJECT_OR_JSO}, this indicates that both
+   * JavaScriptObjects, and Java types can be stored. In the case of Java types, a normal cast check
+   * should be performed, using the elementTypeId as the cast destination type.
+   * This case is provided to support arrays declared with an interface type, which has dual
+   * implementations (i.e. interface types which have both Java and JavaScriptObject
    * implementations).
-   * <p>
-   * Note, by convention, a queryId of 1 is reserved for String, which is a
-   * final class, and can't implement an interface, and thus, it's inverse, -1,
-   * can safely be interpreted as a special case, as stated above.
    * <p>
    * Attempting to store an object that cannot satisfy the castability check
    * throws an {@link ArrayStoreException}.
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
-      if (array.queryId > 0 && !Cast.canCastUnsafe(value, array.queryId)) {
-        // value must be castable to queryId
+      if (array.elementTypeClass == TYPE_JAVA_OBJECT
+          && !Cast.canCast(value, array.elementTypeId)) {
+        // value must be castable to elementType.
         throw new ArrayStoreException();
-      } else if (array.queryId == -1 && Cast.isJavaObject(value)) {
+      } else if (array.elementTypeClass == TYPE_JSO && Cast.isJavaObject(value)) {
         // value must be a JavaScriptObject
         throw new ArrayStoreException();
-      } else if (array.queryId < -1 && !Cast.isJavaScriptObject(value)
-          && !Cast.canCastUnsafe(value, -array.queryId)) {
-        // value must be a JavaScriptObject, or else castable to the inverse of
-        // queryId
+      } else if (array.elementTypeClass == TYPE_JAVA_OBJECT_OR_JSO
+          && !Cast.isJavaScriptObject(value)
+          && !Cast.canCast(value, array.elementTypeId)) {
+        // value must be a JavaScriptObject, or else castable to the elementType.
         throw new ArrayStoreException();
       }
     }
@@ -246,48 +260,58 @@ public final class Array {
 
   /**
    * Creates a primitive JSON array of a given seedType.
-   * 
+   *
    * @param seedType the primitive type of the array; 0: null; 1: zero;
    *     2: false; 3: (long) 0
    * @param length the requested length
-   * @see #NULL_SEED_TYPE
-   * @see #ZERO_SEED_TYPE
-   * @see #FALSE_SEED_TYPE
-   * @see #LONG_SEED_TYPE
+   * @see #INIT_TO_NULL
+   * @see #INIT_TO_ZERO_INT
+   * @see #INIT_TO_FALSE
+   * @see #INIT_TO_ZERO_LONG
    * @return the new JSON array
    */
-  private static native Array createFromSeed(int seedType, int length) /*-{
+  private static native Array initializeArrayElementsWithDefaults(int initValueType,
+      int length) /*-{
     var array = new Array(length);
-    if (seedType == 3) {
+    if (initValueType == @com.google.gwt.lang.Array::INIT_TO_NULL) {
+      // Do not initialize as undefined is equivalent to null
+      return array;
+    }
+
+    var initValue;
+    if (initValueType == @com.google.gwt.lang.Array::INIT_TO_ZERO_LONG) {
       // Fill array with the type used by LongLib
-      for ( var i = 0; i < length; ++i) {
-        array[i] = {l: 0, m: 0, h:0};
-      }
-    } else if (seedType > 0 && seedType < 3) {
-      var value = seedType == 1 ? 0 : false;
-      for ( var i = 0; i < length; ++i) {
-        array[i] = value;
-      }
+      initValue = {l: 0, m: 0, h:0};
+    } else if (initValueType ==  @com.google.gwt.lang.Array::INIT_TO_ZERO_INT) {
+      initValue = 0;
+    } else { // initValueType == @com.google.gwt.lang.Array::INIT_TO_FALSE
+      initValue = false;
+    }
+
+    for ( var i = 0; i < length; ++i) {
+      array[i] = initValue;
     }
     return array;
   }-*/;
 
-  private static Array initDims(Class<?> arrayClasses[],
-      JavaScriptObject[] castableTypeMapExprs, int[] queryIdExprs, int[] dimExprs, 
-      int index, int count, int seedType) {
+  private static Array initDims(Class<?> arrayClasses[], JavaScriptObject[] castableTypeMapExprs,
+      int[] elementTypeIds, int leafElementTypeClass, int[] dimExprs,
+      int index, int count, int leafInitValueType) {
     int length = dimExprs[index];
     boolean isLastDim = (index == (count - 1));
 
-    Array result = createFromSeed(isLastDim ? seedType : NULL_SEED_TYPE, length);
-    initValues(arrayClasses[index], castableTypeMapExprs[index], 
-        queryIdExprs[index], result);
+    // All dimensions but the last are reference types hence initied to null
+    Array result = initializeArrayElementsWithDefaults(isLastDim ? leafInitValueType :
+       INIT_TO_NULL, length);
+    initValues(arrayClasses[index], castableTypeMapExprs[index],
+        elementTypeIds[index], isLastDim ? leafElementTypeClass : TYPE_JAVA_OBJECT, result);
 
     if (!isLastDim) {
       // Recurse to next dimension.
       ++index;
       for (int i = 0; i < length; ++i) {
         set(result, i, initDims(arrayClasses, castableTypeMapExprs,
-            queryIdExprs, dimExprs, index, count, seedType));
+            elementTypeIds, leafElementTypeClass, dimExprs, index, count, leafInitValueType));
       }
     }
     return result;
@@ -313,8 +337,9 @@ public final class Array {
   /**
    * A representation of the necessary cast target for objects stored into this
    * array.
-   * 
+   *
    * @see #setCheck
    */
-  protected int queryId = 0;
+  protected int elementTypeId = 0;
+  protected int elementTypeClass = 0;
 }
